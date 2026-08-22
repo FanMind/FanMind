@@ -173,17 +173,17 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 ## RECEIPT-FM-RST-001-FAILCLOSED-20260822
 - Task: FM-RST-001
 - Started: 2026-08-22 with the owner's exact one-run R4 database-Restore authorization.
-- Finished: runtime failure and independent read-only reconciliation completed; repository reconciliation remains active pending exact-head PR checks/merge.
-- Branch/PR: `restore-failclosed-reconciliation-20260822` / #995; runtime used exact `main` `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db`.
+- Finished: 2026-08-22 after runtime failure, independent read-only reconciliation, exact-head PR checks/countercheck and merge.
+- Branch/PR: `restore-failclosed-reconciliation-20260822` / #995 exact head `ce2b63c606ca1a9aa701d24a569e21d66cfe13ea`, squash merge `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`; runtime used exact `main` `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db`.
 - Preflight checked: accepted run `32582640853`, runtime drift from `b75f68ecc7999a9b492051aecc2421b9b597dd18` to authorized main, mutable GitHub/runner/host/target/backup/TLS evidence, exact backup/verification/source binding, runner-group workflow scope, target reset receipt and two fresh sequential one-job JIT boundaries.
 - Prior attempts found: the earlier controller call-depth defect was corrected before dispatch. The successful minimal readiness contract did not prove the selected receipt's full five-extension authorization contract. Prior trusted `uuid-ossp` recreation alone produced the wrong internal-member ownership/fingerprint and must not be repeated.
 - Dependency result: run `32594374666` deterministically localized the first unproven dependency to the three missing extensions and stopped before write; no infrastructure rebuild is needed.
 - Planned evidence: exact GitHub jobs/steps/logs, positive TLS marker, pre-write ordering, JIT teardown, local read-only target/host reconciliation, issue #944 record and Project Memory exact-head CI.
 - Changes made: consumed exactly one authorized database dispatch and two fresh JITs; made no target change. Added issue comments and repository-only reconciliation records; changed the next protected action from database Restore to extension-baseline provisioning.
 - Checks/tests: gate and Host-1 jobs succeeded; Host-2 checkout/resource/baseline checks succeeded; full authorization emitted `AUTHORIZATION=ERROR` and `database_authorization_preflight_failed`; cleanup succeeded. Follow-up controller returned `READ_ONLY_RECONCILIATION=PASS` with empty target and no private residue.
-- Final diff counterchecked: runtime/log/target evidence yes; repository diff and exact-head CI pending.
+- Final diff counterchecked: yes. All 21 changed files were under `project-memory/`, no secret signature was found, and the exact head passed Guard, Status, Quality, Landing, FanMind CI including PG17, Browser E2E and CodeQL before merge.
 - Regression/security countercheck: fail-closed. Any applied target object, plaintext residue, runner credential/JIT residue, TLS verification skip, Production write or Supabase-Staging write would invalidate the result; none was found.
 - Evidence produced: run `32594374666`, jobs `97082934347`/`97082943319`/`97082992861`, issue #944 comments `5382274967`/`5382336892`, FM-EV-016 and this reconciliation branch.
 - Result status: RECONCILIATION_REQUIRED; highest accepted Restore progression remains `TARGET_COMPATIBLE`.
 - Open follow-up: `FM-RST-OWNER-003` exact extension-baseline authorization. No database retry until the exact 97-record fingerprint and unchanged full receipt authorization pass.
-- Work lock released: no; `LOCK-FM-RST-001-FAILCLOSED-RECONCILIATION-20260822` remains active through PR acceptance/merge reconciliation.
+- Work lock released: yes; `LOCK-FM-RST-001-FAILCLOSED-RECONCILIATION-20260822` was released after #995 exact-head acceptance and merge.

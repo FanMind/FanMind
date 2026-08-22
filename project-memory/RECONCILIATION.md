@@ -43,5 +43,5 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Actual state: run `32594374666` stopped before the first write; independent read-only reconciliation proves an empty, TLS-verified, clean target with retained quarantine and exactly three missing trusted extensions.
 - Memory state: readiness evidence was valid but described only the smaller baseline contract; the database authorization owner action was still shown as unused/deferred.
 - Required correction: mark the one-run authorization consumed fail-closed, preserve highest accepted state `TARGET_COMPATIBLE`, add side state `RECONCILIATION_REQUIRED`, route the next owner action to exact rollback-capable extension-baseline provisioning/full receipt postcheck, and prohibit automatic retry.
-- Status: OPEN
-- Resolved: after this exact reconciliation PR passes required checks and merges; runtime acceptance remains open.
+- Status: RESOLVED
+- Resolved: PR #995 exact head `ce2b63c606ca1a9aa701d24a569e21d66cfe13ea` passed Guard/Status/Quality, Landing, FanMind CI including PostgreSQL 17, both Browser E2E jobs and CodeQL, then squash-merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`. Runtime Restore acceptance remains open and owner-deferred at `FM-RST-OWNER-003`.

@@ -11,18 +11,21 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
-## LOCK-FM-RST-001-FAILCLOSED-RECONCILIATION-20260822
-- Task: FM-RST-001
-- Status: ACTIVE
-- Holder: ChatGPT database-Restore fail-closed reconciliation session 2026-08-22
-- Branch/PR: `restore-failclosed-reconciliation-20260822` / #995.
-- Acquired: 2026-08-22 after independent read-only reconciliation of run `32594374666`.
-- Risk: R4 evidence reconciliation; repository documentation only.
-- Scope: record the consumed protected database-Restore run, prove the pre-write failure/cleanup/empty-target state, preserve the exact 2-of-5 extension blocker and define the separately authorized provisioning boundary.
-- Resume from: Issue #944 comments `5382274967` and `5382336892`; no workflow retry and no target/Production/Supabase-Staging mutation.
-- Safety: this lock authorizes only repository evidence reconciliation. Extension/role/config changes, target reset, database Restore and every other R4 mutation require a new exact protected authorization.
+None.
 
 ## Released locks
+
+## LOCK-FM-RST-001-FAILCLOSED-RECONCILIATION-20260822
+- Task: FM-RST-001
+- Status: RELEASED
+- Holder: ChatGPT database-Restore fail-closed reconciliation session 2026-08-22
+- Branch/PR: `restore-failclosed-reconciliation-20260822` / #995; exact head `ce2b63c606ca1a9aa701d24a569e21d66cfe13ea`, squash merge `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`; lock closeout PR #996.
+- Acquired: 2026-08-22 after independent read-only reconciliation of run `32594374666`.
+- Released: 2026-08-22 22:22 Europe/Vienna after exact-head CI/countercheck and merge.
+- Risk: R4 evidence reconciliation; repository documentation only.
+- Scope: record the consumed protected database-Restore run, prove the pre-write failure/cleanup/empty-target state, preserve the exact 2-of-5 extension blocker and define the separately authorized provisioning boundary.
+- Resume from: no repository reconciliation resume remains. Runtime work is owner-deferred as `FM-RST-OWNER-003`; no workflow retry and no target/Production/Supabase-Staging mutation.
+- Safety: this lock authorizes only repository evidence reconciliation. Extension/role/config changes, target reset, database Restore and every other R4 mutation require a new exact protected authorization.
 
 ## LOCK-FM-RST-001-CHECKOUT-CA-TRUSTSTORE-20260822
 - Task: FM-RST-001
