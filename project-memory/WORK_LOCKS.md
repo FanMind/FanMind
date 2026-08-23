@@ -11,17 +11,21 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
-## LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823
-- Task: FM-RST-001
-- Status: ACTIVE
-- Holder: ChatGPT extension-baseline evidence closeout session 2026-08-23
-- Branch/PR: `restore-extension-baseline-evidence-20260823` / pending.
-- Acquired: 2026-08-23 13:53 Europe/Vienna after the final controller reported committed provisioning plus complete read-only postcheck PASS.
-- Risk: R4 evidence reconciliation; repository documentation only.
-- Scope: record the exact successful isolated extension-baseline provisioning, close the prior 2-of-5 blocker and preserve the separate new-authorization boundary for any database Restore.
-- Safety: this lock authorizes only repository/Issue evidence closeout. No database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or other runtime mutation.
+None.
 
 ## Released locks
+
+## LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823
+- Task: FM-RST-001
+- Status: RELEASED
+- Holder: ChatGPT extension-baseline evidence closeout session 2026-08-23
+- Branch/PR: `restore-extension-baseline-evidence-20260823` / #997; exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8`, squash merge `733e2f12464f746ee5dff0be71defe22d18ce33a`.
+- Acquired: 2026-08-23 13:53 Europe/Vienna after the final controller reported committed provisioning plus complete read-only postcheck PASS.
+- Released: 2026-08-23 after exact-head Project Memory Guard/Status/Quality, Landing, FanMind CI, Browser E2E and CodeQL all passed and #997 merged.
+- Risk: R4 evidence reconciliation; repository documentation only.
+- Scope: record the exact successful isolated extension-baseline provisioning, close the prior 2-of-5 blocker and preserve the separate new-authorization boundary for any database Restore.
+- Resume from: no extension evidence reconciliation remains. Runtime work is owner-deferred as `FM-RST-OWNER-004`; no database workflow/JIT or target/Production/Supabase-Staging mutation is authorized.
+- Safety: this lock authorized only repository/Issue evidence closeout. No database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or other runtime mutation occurred.
 
 ## LOCK-FM-RST-001-FAILCLOSED-RECONCILIATION-20260822
 - Task: FM-RST-001

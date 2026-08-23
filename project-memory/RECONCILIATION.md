@@ -53,5 +53,5 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Actual state: extension provisioning and full receipt-bound read-only postchecks passed on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`; no database Restore/reset/JIT/workflow or Production/Supabase-Staging write occurred.
 - Memory state: highest accepted progression `TARGET_COMPATIBLE` plus stale side state `RECONCILIATION_REQUIRED` and pending `FM-RST-OWNER-003`.
 - Required correction: mark `FM-RST-OWNER-003` completed/consumed, remove the stale extension blocker, preserve `TARGET_COMPATIBLE`, add `FM-RST-OWNER-004` for a new exact database-Restore authorization and record all success/rollback/negative evidence.
-- Status: OPEN
-- Resolved: pending exact-head repository checks, merge and lock closeout.
+- Status: RESOLVED
+- Resolved: PR #997 exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8` passed Project Memory Guard/Status/Quality, Landing, FanMind CI, Browser E2E and CodeQL, then squash-merged as `733e2f12464f746ee5dff0be71defe22d18ce33a`. The evidence lock is released; `FM-RST-OWNER-004` remains the separate new database-Restore boundary.

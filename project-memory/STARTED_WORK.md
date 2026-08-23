@@ -17,16 +17,16 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: PARTIAL
 - Risk: R4
 - Scope: Complete the isolated real FanMind Restore drill without touching Production or Supabase Staging; preserve the accepted read-only chain and the now receipt-bound five-extension baseline while keeping every later Restore transition separately protected.
-- Branch/PR: `restore-extension-baseline-evidence-20260823` / pending; reconciliation PR #995 exact head `ce2b63c606ca1a9aa701d24a569e21d66cfe13ea` merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`; prior evidence PR #992 merged as `cb04829c378285c24c3c53b5fab2d03177c19165`.
-- Work lock: `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823` ACTIVE for repository evidence closeout only.
+- Branch/PR: extension evidence PR #997 exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8` merged as `733e2f12464f746ee5dff0be71defe22d18ce33a`; reconciliation PR #995 merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`; prior evidence PR #992 merged as `cb04829c378285c24c3c53b5fab2d03177c19165`.
+- Work lock: `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823` RELEASED after #997 exact-head acceptance and merge.
 - Dependencies: FM-DEP-001; exact Schema-2 Full Backup/Verification/source binding; existing isolated host/empty target/quarantine; full receipt-bound roles/database-container/extensions; protected authorization for any later mutation.
 - Assumptions: database reset does not change cluster-global roles; prior full role/container authorization success remains navigation evidence only and must be freshly receipt-checked after extension provisioning. Mutable host, target, backup, runner-policy and TLS evidence must be revalidated before any mutation.
 - Completed so far: protected read-only run `32582640853` accepted through `TARGET_COMPATIBLE`. Exactly authorized database run `32594374666` failed closed before its first target write. The separately authorized final extension controller on `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6` then committed only the three missing extensions and proven member-owner correction. Its precommit contract, mutation commit, full receipt contract, canonical schema-ACL postcheck and independent postcommit read-only postcheck all passed.
 - Latest reconciled result: the isolated target now matches all five required extension descriptors. Extension fingerprint is exactly `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` over 97 records; schema-ACL fingerprint is exactly `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. The Full Backup, Verification, Source commit and reset receipt bindings remained exact. No database Restore, target reset, JIT/workflow dispatch, Production write or Supabase-Staging write occurred.
 - Still open: a newly authorized protected database Restore, DB postcheck, Storage, server config, disposable-target cleanup, independent countercheck and final acceptance.
 - Evidence so far: PRs #943/#987/#990/#991/#992; issue #944 comments `5381530143`, `5382274967`, `5382336892`, `5385843508`; runs `32582640853` and `32594374666`; final controller output with `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`.
-- Exact next step: finish this repository evidence closeout, then require a fresh exact R4 authorization plus current mutable runner/host/target/backup/TLS preflight before any new database-Restore dispatch. Do not reuse run `32594374666` or its runners/authorization.
-- Owner action needed: yes, for a new exact protected database-Restore authorization only after this evidence closeout; the extension authorization and prior database authorization are consumed.
+- Exact next step: require a fresh exact R4 authorization plus current mutable runner/host/target/backup/TLS preflight before any new database-Restore dispatch. Do not reuse run `32594374666` or its runners/authorization.
+- Owner action needed: yes, for `FM-RST-OWNER-004`, a new exact protected database-Restore authorization. The extension authorization and prior database authorization are consumed.
 ## FM-MOB-001
 - Started: before 2026-08-19
 - Updated: 2026-08-21

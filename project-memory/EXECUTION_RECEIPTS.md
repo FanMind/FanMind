@@ -191,17 +191,17 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 ## RECEIPT-FM-RST-001-EXTENSION-BASELINE-20260823
 - Task: FM-RST-001
 - Started: 2026-08-23 after the separately authorized final extension-only controller completed.
-- Finished: runtime step complete; repository exact-head checks/merge pending.
-- Branch/PR: runtime used exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`; evidence branch `restore-extension-baseline-evidence-20260823` / pending.
+- Finished: 2026-08-23 after runtime success, exact-head repository countercheck and merge.
+- Branch/PR: runtime used exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`; evidence branch `restore-extension-baseline-evidence-20260823` / #997 exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8`, squash merge `733e2f12464f746ee5dff0be71defe22d18ce33a`.
 - Preflight checked: AGENTS, Source of Truth, Project Memory execution/current/finishline/state/NBA/deferred/handoff/active/locks/loops/task/dependency/decision/failed-attempt/evidence registers, drift and freshness checks, exact main, issue #944 and the final controller output.
 - Prior attempts found: earlier controller candidates failed closed and automatically rolled back on direct recursion, SSH reachability, superuser-only extension creation, malformed predicate and ACL hash-canonicalization mismatches. Separate rollback-only diagnostics proved the candidate contract and exact ACL rows.
 - Dependency result: the exact isolated host/target and accepted Backup/Verification/Source/reset-receipt tuple were reused. The final controller began from the proven 42-record baseline and no active Restore workflow/JIT dispatch existed.
 - Planned evidence: exact controller preflight, precommit/full receipt predicates, commit marker, canonical ACL and extension fingerprints, independent postcommit read-only postcheck, explicit proof of forbidden non-actions, issue #944 record and exact-head Project Memory/CI countercheck.
 - Changes made: the authorized runtime transaction committed only the three missing extensions plus proven member-owner correction. This branch records the result and replaces the stale extension owner action with a new, separate database-Restore authorization boundary.
-- Checks/tests: runtime returned `PRECOMMIT_RECEIPT_BOUND_CONTRACT=PASS`, `MUTATION_COMMIT=PASS`, `EXTENSION_BASELINE_PROVISIONING=PASS`, `FULL_RECEIPT_BOUND_CONTRACT=PASS`, `SCHEMA_ACL_CANONICAL_POSTCHECK=PASS`, `POSTCOMMIT_READ_ONLY_POSTCHECK=PASS` and `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`; repository checks pending.
-- Final diff counterchecked: pending exact-head CI.
+- Checks/tests: runtime returned `PRECOMMIT_RECEIPT_BOUND_CONTRACT=PASS`, `MUTATION_COMMIT=PASS`, `EXTENSION_BASELINE_PROVISIONING=PASS`, `FULL_RECEIPT_BOUND_CONTRACT=PASS`, `SCHEMA_ACL_CANONICAL_POSTCHECK=PASS`, `POSTCOMMIT_READ_ONLY_POSTCHECK=PASS` and `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`. Exact PR head passed Project Memory Guard/Status/Quality, Landing, FanMind CI, Browser E2E and CodeQL.
+- Final diff counterchecked: yes; all 23 evidence-PR files were under `project-memory/` and #997 merged only after the exact head was fully green.
 - Regression/security countercheck: runtime reported no database Restore, target reset, JIT/workflow dispatch, Production write or Supabase-Staging write. Extension fingerprint is exact at 97 records and ACL fingerprint matches the canonical receipt helper.
 - Evidence produced: FM-EV-017 and issue #944 comment `5385843508`.
 - Result status: COUNTERCHECKED_EXTENSION_BASELINE at runtime; overall Restore remains PARTIAL at `TARGET_COMPATIBLE` pending later database/Storage/config/cleanup/countercheck.
-- Open follow-up: exact-head evidence PR checks/merge, then a new exact R4 database-Restore authorization with fresh mutable-evidence preflight.
-- Work lock released: no; `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823` remains active until repository acceptance and merge.
+- Open follow-up: `FM-RST-OWNER-004`, a new exact R4 database-Restore authorization with fresh mutable-evidence preflight.
+- Work lock released: yes; `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823` was released after #997 exact-head acceptance and merge.
