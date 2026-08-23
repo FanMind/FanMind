@@ -179,8 +179,22 @@ Implementation status and acceptance status are deliberately separate.
 - Independent evidence: follow-up read-only controller returned `READ_ONLY_RECONCILIATION=PASS`, listener/credentials/JIT/plaintext absent, Host-2 exit receipt 0, TLS `verify-full`, server-enforced read-only transaction, empty baseline target, 2/2 baseline extensions, 3/3 baseline roles and retained connection-disabled quarantine.
 - Negative evidence: no `RESTORE_DRILL_DATABASE=PASS`, no applied Restore, no target reset, no Production write, no Supabase-Staging write, no certificate-verification skip and no private artifact upload.
 - Prior accepted repair path: exact five-extension state requires fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` over 97 records, including the proven 36-`pgcrypto` and 10-`uuid-ossp` member-owner correction; recreating `uuid-ossp` alone previously produced the wrong fingerprint.
-- Limitations: the extension baseline is not currently provisioned and the unchanged full receipt-bound role/container authorization must be rerun after provisioning. Database/Storage/config/cleanup/final acceptance remain open.
-- State-machine result: highest accepted progression `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED`.
+- Limitations at observation time: the extension baseline was not yet provisioned and the unchanged full receipt-bound role/container authorization still had to run after provisioning. FM-EV-017 now supersedes that blocker; database/Storage/config/cleanup/final acceptance remain open.
+- State-machine result at observation time: highest accepted progression `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED`, later cleared by FM-EV-017.
 - Acceptance: COUNTERCHECKED_FAIL_CLOSED
+
+## FM-EV-017
+- Related: FM-RST-001 / issue #944
+- Date: 2026-08-23
+- Target: exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`, isolated Exoscale `fanmind-restore-01` PostgreSQL 17.11 database `fanmind_restore`
+- Type: separately authorized R4 extension-only mutation + receipt-bound precommit/postcommit and independent read-only postchecks
+- Reference: Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c`; Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1`; Source commit `14a1e2d0e100f2ec8cfa14486c96f128fb431878`; reset receipt `/home/fanmind-restore/secure/target-reset-receipt-20260821_193331.json`; issue #944 comment `5385843508`; final controller SHA-256 `4f5afa39c6f8b25ded4593d1dfac9f31f4347e11187ebfa0c0d2e55e957f9880`.
+- Result: GitHub/auth/active-workflow preflights passed. The controller started from the proven 42-record baseline, passed the precommit receipt contract, committed only the three missing extensions plus proven member-owner correction, then passed the full receipt contract, canonical schema-ACL postcheck and postcommit read-only postcheck.
+- Exact post-state: five required extensions; 97 extension records; extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012`; schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
+- Rollback evidence: every earlier candidate provisioning mismatch emitted `AUTOMATIC_ROLLBACK=PASS`; the successful candidate committed only after the exact bound predicates passed. Separate rollback-only predicate and ACL diagnostics proved candidate semantics without committing.
+- Negative evidence: `DATABASE_RESTORE=NOT_DISPATCHED`, `TARGET_RESET=NOT_ATTEMPTED`, `JIT_WORKFLOW_DISPATCH=NOT_ATTEMPTED`, `PRODUCTION_WRITE=NOT_ATTEMPTED`, `SUPABASE_STAGING_WRITE=NOT_ATTEMPTED`.
+- Limitations: this evidence satisfies only the receipt-bound extension prerequisite. It does not prove `DB_RESTORED` or authorize a database workflow. Mutable runner-policy/host/target/backup/TLS evidence must be refreshed for a new exact R4 database authorization.
+- State-machine result: highest accepted progression remains `TARGET_COMPATIBLE`; extension prerequisite satisfied.
+- Acceptance: COUNTERCHECKED_EXTENSION_BASELINE
 
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

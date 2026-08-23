@@ -1,6 +1,6 @@
 # FanMind Current State
 
-Last reconciled: 2026-08-22
+Last reconciled: 2026-08-23
 
 ## Mandatory restart point
 
@@ -86,7 +86,7 @@ Do not create artificial browser RLS policies merely to silence INFO advisories 
 - New encrypted Schema-2 Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c` succeeded, validated and uploaded offsite.
 - Checksum-only Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1` succeeded/passed.
 - Historical privilege-less backups are not valid Gate-2 recovery evidence.
-- Highest accepted Restore progression remains `TARGET_COMPATIBLE`; current side state is `RECONCILIATION_REQUIRED` after a consumed fail-closed database attempt. `DB_RESTORED` was not reached.
+- Highest accepted Restore progression remains `TARGET_COMPATIBLE`; the separately protected receipt-bound five-extension baseline is now proven. `DB_RESTORED` was not reached.
 - PR #987 merged the bounded schema-ACL recovery as `b6bc368915d50dd2903b83b87c7ca25eb0ed6e18`; the disposable target was later independently reset to the empty baseline and the prior populated database retained as connection-disabled quarantine.
 - PR #990 merged the `GIT_SSL_NO_VERIFY` checkout repair as `1735a5f552c0c20c180fb96be6fa9000cbffc360`.
 - Protected read-only run `32568632008` passed dispatch and Host-1 but protected job `97020836458` failed in `actions/checkout` because path-valued CA variables were present with empty values. Resource Readiness and Target Compatibility were skipped, one-job runner ID `40` cleaned itself, and no DB/Production/Supabase-Staging mutation occurred.
@@ -97,8 +97,9 @@ Do not create artificial browser RLS policies merely to silence INFO advisories 
 - Evidence PR #992 exact head `53308fa43b258e4570b67d675f38f16e15e3bb69` passed all applicable repository/security/browser gates and merged as `cb04829c378285c24c3c53b5fab2d03177c19165`; the evidence-reconciliation lock is released.
 - The owner then authorized exactly one database-Restore run on `main` `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db`. Run `32594374666` consumed that authorization: gate job `97082934347` and Host-1 job `97082943319` succeeded; protected Host-2 job `97082992861` failed at the receipt-bound database authorization preflight.
 - Code order and logs prove the failure occurred before the empty-target write path and before `pg_restore --single-transaction`. Receipt upload was skipped, private workflow cleanup succeeded, both one-job credentials/configurations were removed, and the independent read-only follow-up found no JIT, listener, credential or plaintext residue. Target TLS remained `verify-full`; `fanmind_restore` remained empty; the rollback quarantine remained connection-disabled.
-- Root blocker: reset v10 intentionally recreated only `plpgsql` and `pgcrypto`, while the selected Schema-2 receipt requires five exact extension descriptors. Exactly `pg_stat_statements`, `supabase_vault` and `uuid-ossp` are absent, although their root-owned PostgreSQL-17 control files are present. Prior host evidence already reached the exact 97-record receipt fingerprint after installing those extensions and correcting 36 `pgcrypto` plus 10 `uuid-ossp` internal member owners; do not repeat the insufficient trusted-`uuid-ossp` recreation alone.
-- Run `32594374666`, runner IDs `43`/`44` and their authorization are consumed. Automatic retry, target reset, extension/role/config mutation and any Production/Supabase-Staging write remain forbidden.
+- The separately authorized extension-baseline provisioning on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6` committed only `pg_stat_statements` 1.11, `supabase_vault` 0.3.1 and `uuid-ossp` 1.1 plus the already proven member-owner correction. Precommit receipt binding, mutation commit, full receipt contract, canonical ACL postcheck and postcommit read-only postcheck all passed.
+- Current extension evidence is exact: five required descriptors, 97 records, extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. Backup, Verification, Source commit and reset receipt bindings remained unchanged. Issue #944 comment `5385843508` records the success and all forbidden non-actions.
+- Run `32594374666`, runner IDs `43`/`44`, the prior database authorization and the extension authorization are consumed. Any database Restore still requires a new exact R4 authorization and fresh mutable-evidence preflight. Automatic retry, target reset and any Production/Supabase-Staging write remain forbidden.
 
 ### Operator-session foundation — revalidate before use
 
@@ -158,7 +159,7 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 ## Exact next safe sequence
 
 1. **FM-SEC-001:** read-only Production trigger-hardening verify on exact deployed commit; classify Staging RPC/leaked-password settings; no mutation yet.
-2. Keep Restore at `TARGET_COMPATIBLE`. The next transition is the separately protected isolated database Restore only after a new exact R4 authorization; revalidate all mutable runner/host/target/backup/TLS evidence immediately beforehand.
+2. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. The next transition is the separately protected isolated database Restore only after a new exact R4 authorization; revalidate all mutable runner/host/target/backup/TLS evidence immediately beforehand.
 3. Mobile external read-only resource reconciliation, then signing/device/store acceptance.
 4. Plus/Ultra product/quality/cost/Stripe lifecycle closure.
 5. Meta Events Manager + final non-Social security acceptance.

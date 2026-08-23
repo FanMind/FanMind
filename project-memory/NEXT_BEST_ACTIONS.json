@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-22",
+  "updated": "2026-08-23",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-RESTORE-EXTENSION-BASELINE",
+      "id": "NBA-RESTORE-DATABASE",
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "Isolierte Extension-Baseline geschützt herstellen",
+      "title": "Isolierten Datenbank-Restore neu und exakt autorisieren",
       "requires_owner": true,
       "parallel_safe": false,
-      "deferred_owner_id": "FM-RST-OWNER-003",
+      "deferred_owner_id": "FM-RST-OWNER-004",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Proceed only after a new exact R4 authorization bound to the existing isolated PostgreSQL-17.11 target, accepted backup/verification/source tuple and expected 97-record extension fingerprint. Provision only the three missing trusted extensions plus the already-proven exact member-owner correction in a rollback-capable transaction, then run the unchanged full receipt-bound authorization read-only. Do not dispatch the database workflow, reset the target, decrypt the backup, or write Production/Supabase Staging."
+      "instruction": "Proceed only after this extension-evidence closeout is merged and the owner grants a new exact R4 authorization bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Never reuse run 32594374666 or its consumed authorization. Do not reset the target or write Production/Supabase Staging."
     },
     {
       "id": "NBA-SECURITY-READONLY",

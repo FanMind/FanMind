@@ -45,3 +45,13 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Required correction: mark the one-run authorization consumed fail-closed, preserve highest accepted state `TARGET_COMPATIBLE`, add side state `RECONCILIATION_REQUIRED`, route the next owner action to exact rollback-capable extension-baseline provisioning/full receipt postcheck, and prohibit automatic retry.
 - Status: RESOLVED
 - Resolved: PR #995 exact head `ce2b63c606ca1a9aa701d24a569e21d66cfe13ea` passed Guard/Status/Quality, Landing, FanMind CI including PostgreSQL 17, both Browser E2E jobs and CodeQL, then squash-merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`. Runtime Restore acceptance remains open and owner-deferred at `FM-RST-OWNER-003`.
+
+## RECON-2026-012
+- Detected: 2026-08-23 after the final ACL-fingerprint-corrected extension controller completed successfully.
+- Task: `FM-RST-001`.
+- Mismatch: Project Memory still records a 2-of-5 extension blocker and owner-deferred extension provisioning, while current bound runtime evidence proves five exact descriptors, 97 records and the canonical ACL fingerprint after a committed extension-only transaction.
+- Actual state: extension provisioning and full receipt-bound read-only postchecks passed on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`; no database Restore/reset/JIT/workflow or Production/Supabase-Staging write occurred.
+- Memory state: highest accepted progression `TARGET_COMPATIBLE` plus stale side state `RECONCILIATION_REQUIRED` and pending `FM-RST-OWNER-003`.
+- Required correction: mark `FM-RST-OWNER-003` completed/consumed, remove the stale extension blocker, preserve `TARGET_COMPATIBLE`, add `FM-RST-OWNER-004` for a new exact database-Restore authorization and record all success/rollback/negative evidence.
+- Status: OPEN
+- Resolved: pending exact-head repository checks, merge and lock closeout.

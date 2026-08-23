@@ -1,6 +1,6 @@
 # Deferred Owner Actions
 
-Updated: 2026-08-22 22:10 Europe/Vienna
+Updated: 2026-08-23 13:53 Europe/Vienna
 
 ## FM-RST-OWNER-001 — GitHub runner-group policy evidence
 - Related task: `FM-RST-001`.
@@ -19,15 +19,19 @@ Updated: 2026-08-22 22:10 Europe/Vienna
 
 ## FM-RST-OWNER-003 — Exact isolated extension-baseline provisioning
 - Related task: `FM-RST-001`.
+- Status: COMPLETED.
+- Decision: The exact extension-only authorization was consumed successfully on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`.
+- Result: only `pg_stat_statements` 1.11, `supabase_vault` 0.3.1 and `uuid-ossp` 1.1 plus the proven member-owner correction were committed. The final read-only receipt checks returned the exact 97-record extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and canonical ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
+- Evidence: issue #944 comment `5385843508`; final controller `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`.
+- Safety: no database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or unrelated R4 mutation occurred. This authorization is consumed and must not be reused.
+
+## FM-RST-OWNER-004 — New exact isolated database-Restore authorization
+- Related task: `FM-RST-001`.
 - Status: DEFERRED_BY_OWNER.
-- Decision: The first unproven R4 transition is now the isolated target extension baseline, not another database-Restore dispatch.
-- Deferred actions:
-  1. Bind the existing `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore` target and retained reset receipt to the accepted Full Backup, Verification, Source commit and expected 97-record extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012`.
-  2. Revalidate the current cluster preload/runtime boundary and trusted control/library files read-only before mutation.
-  3. In one separately authorized, rollback-capable protected transaction, provision only `pg_stat_statements` 1.11 in `extensions` owned by `postgres`, `supabase_vault` 0.3.1 in `vault` owned by `supabase_admin`, and `uuid-ossp` 1.1 in `extensions` owned by `postgres`; preserve `pgcrypto` 1.3 and `plpgsql` 1.0, and apply the already-proven exact member-owner correction for 36 `pgcrypto` plus 10 `uuid-ossp` members.
-  4. Run the unchanged full receipt-bound role/container/extension authorization read-only and require the exact 97-record fingerprint before considering any later database Restore.
-- Resume rule: do not provision, create a JIT, dispatch a workflow or request `restore-drill` approval until the owner explicitly authorizes this exact protected extension-only step.
-- Safety: no target reset, backup decryption, `pg_restore`, database Restore, Production write, Supabase-Staging write or unrelated R4 mutation is included.
+- Decision: the receipt-bound extension prerequisite is satisfied, but `TARGET_COMPATIBLE -> DB_RESTORED` remains a distinct R4 write boundary.
+- Deferred actions: after this repository evidence closeout, bind a new single-run authorization to the then-current reviewed `main`, the same accepted Backup/Verification/Source/target/reset receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs under the protected `restore-drill` environment.
+- Resume rule: do not dispatch a database workflow, create a JIT or request environment approval until the owner explicitly authorizes the new exact database-Restore scope. Never reuse run `32594374666`, runner IDs `43`/`44` or either consumed authorization.
+- Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.

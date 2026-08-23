@@ -21,12 +21,13 @@ No state may be skipped. A later state does not retroactively prove an earlier s
 
 ## Current state
 
-- Current side state: `RECONCILIATION_REQUIRED`; highest accepted progression remains `TARGET_COMPATIBLE`. `DB_RESTORED` was not reached.
+- Current progression: `TARGET_COMPATIBLE`; the previously open receipt-bound extension-baseline prerequisite is now satisfied. `DB_RESTORED` was not reached.
 - Immutable foundation: PR #943 merge `14a1e2d0e100f2ec8cfa14486c96f128fb431878`; Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c`; checksum Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1`.
 - Accepted transition evidence: protected read-only run `32582640853` on exact commit `b75f68ecc7999a9b492051aecc2421b9b597dd18`; jobs `97054217701`, `97054234003` and `97054248185` all succeeded. Checkout certificate verification passed with the pinned Ubuntu truststore; resource checksum-only readiness and PostgreSQL-17 baseline target compatibility with TLS `verify-full` passed; writes remained disabled.
 - Consumed write attempt: exactly authorized run `32594374666` on commit `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db` passed dispatch, Host-1, checkout, checksum readiness and baseline target compatibility, then protected Host-2 job `97082992861` failed at `database_authorization_preflight_failed` before the first target write and before `pg_restore`.
-- Independent read-only reconciliation proved no listener/JIT/credential/plaintext residue, listener exit 0, TLS `verify-full`, unchanged empty target and retained connection-disabled quarantine. The target has exactly two baseline extensions while the selected receipt requires five; the trusted PostgreSQL-17 control files for the three missing extensions are already present.
-- The exact run authorization is consumed. No retry or JIT reuse is permitted. The next possible mutation is a separately authorized, bounded isolated-target extension-baseline provisioning transaction with receipt-bound postcheck and rollback; only after that succeeds may a new database-Restore authorization be considered.
+- Independent read-only reconciliation proved no listener/JIT/credential/plaintext residue, listener exit 0, TLS `verify-full`, unchanged empty target and retained connection-disabled quarantine after that failed database attempt.
+- Subsequent separately authorized extension-only provisioning on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6` committed successfully. Its full receipt-bound read-only postchecks prove five required extensions, exact 97-record fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and canonical schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`; no database Restore, reset, JIT/workflow dispatch, Production write or Supabase-Staging write occurred.
+- Both earlier authorizations are consumed. No retry or JIT reuse is permitted. A new database-Restore authorization may now be considered only after fresh mutable runner-policy/host/target/backup/TLS preflight.
 
 ## Transition contract
 

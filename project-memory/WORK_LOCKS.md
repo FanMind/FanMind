@@ -11,7 +11,15 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
-None.
+## LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823
+- Task: FM-RST-001
+- Status: ACTIVE
+- Holder: ChatGPT extension-baseline evidence closeout session 2026-08-23
+- Branch/PR: `restore-extension-baseline-evidence-20260823` / pending.
+- Acquired: 2026-08-23 13:53 Europe/Vienna after the final controller reported committed provisioning plus complete read-only postcheck PASS.
+- Risk: R4 evidence reconciliation; repository documentation only.
+- Scope: record the exact successful isolated extension-baseline provisioning, close the prior 2-of-5 blocker and preserve the separate new-authorization boundary for any database Restore.
+- Safety: this lock authorizes only repository/Issue evidence closeout. No database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or other runtime mutation.
 
 ## Released locks
 

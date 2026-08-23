@@ -5,10 +5,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-001
 - Related: FM-RST-001
 - Status: OPEN
-- Updated: 2026-08-22
+- Updated: 2026-08-23
 - Gap: Recovery code/backup/host foundation is advanced, but the complete isolated DB/Storage/Server-config/Cleanup/Evidence drill is not accepted end-to-end.
 - Close when: exact artifact-bound isolated restore has passed current R4 quorum and independent countercheck, including cleanup and final evidence.
-- Next check: run `32594374666` consumed the database-Restore authorization and failed closed before the first write because the empty target has only 2 of 5 receipt-bound extensions. Do not rerun it. The first unproven gate is a separately authorized extension-only baseline provision plus unchanged full receipt-bound read-only authorization; only after its exact 97-record fingerprint passes may a newly authorized database Restore be planned.
+- Next check: the separately authorized extension-only baseline and unchanged receipt-bound read-only postcheck passed at the exact 97-record extension and canonical ACL fingerprints. The first unproven state transition is now `TARGET_COMPATIBLE -> DB_RESTORED`; require a new exact R4 authorization and fresh mutable-evidence preflight. Do not rerun `32594374666` or repeat the extension controller.
 
 ## FM-LOOP-002
 - Related: FM-MEM-005

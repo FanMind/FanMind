@@ -133,7 +133,7 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
 ## CTR-FM-010
 - Date: 2026-08-22
-- Updated: 2026-08-22
+- Updated: 2026-08-23
 - Related task/change: FM-RST-001
 - Risk: R4
 - Source A: successful protected read-only run `32582640853` and `RESTORE_TARGET_COMPATIBILITY=PASS`.
@@ -141,9 +141,9 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Source B: protected database run `32594374666` and independent read-only reconciliation.
 - Claim B: the same empty target fails the selected receipt's larger authorization contract because only 2/5 exact extensions are present.
 - Stronger/current evidence: both sources are valid at different contract layers; the later receipt-bound preflight is authoritative for database-Restore eligibility.
-- Status: RECONCILIATION_REQUIRED
-- Resolution/action: keep baseline `TARGET_COMPATIBLE`, add side state `RECONCILIATION_REQUIRED`, provision the exact extension baseline under a separate R4 authorization and require the unchanged full receipt fingerprint before a new database authorization. Future workflow/design work should make the two compatibility layers unmistakable without weakening either fail-closed check.
-- Evidence: runs `32582640853` and `32594374666`; jobs `97054248185` and `97082992861`; issue #944 comments `5382274967`/`5382336892`; FM-EV-015/FM-EV-016.
+- Status: RESOLVED
+- Resolution/action: preserve baseline `TARGET_COMPATIBLE`; separately authorized extension-only provisioning and unchanged receipt-bound postchecks passed at the exact 97-record extension and canonical ACL fingerprints. The first unproven transition is now the separately authorized database Restore, not extension provisioning.
+- Evidence: runs `32582640853` and `32594374666`; jobs `97054248185` and `97082992861`; issue #944 comments `5382274967`/`5382336892`/`5385843508`; FM-EV-015/FM-EV-016/FM-EV-017.
 - Falsification question: What observation would prove this conclusion wrong? A current read-only full receipt authorization matching the exact five-extension/97-record fingerprint would close the blocker; any evidence of a target write would invalidate the current no-write reconciliation.
 
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.

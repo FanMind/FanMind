@@ -43,3 +43,9 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Status: DONE
 - Decision: Database-Restore run `32594374666` consumed its exact authorization and may not be retried. Its pre-write receipt-bound failure creates a separate extension-baseline R4 boundary: provision and verify the exact five-extension/97-record contract first, then require a new exact authorization for any later database Restore.
 - Reason: Independent evidence proves the target stayed empty and clean, while the deterministic 2-of-5 extension mismatch would make an unchanged retry fail again. Separating provisioning from Restore preserves least privilege, rollback and evidence clarity.
+
+## FM-DEC-008
+- Date: 2026-08-23
+- Status: DONE
+- Decision: The successful separately authorized extension-only transaction closes the receipt-bound 2-of-5 blocker but does not advance the state machine beyond `TARGET_COMPATIBLE`. Any database Restore remains a new exact R4 authorization with fresh mutable-evidence preflight.
+- Reason: The controller proved exact extension and ACL fingerprints while explicitly not dispatching a Restore, reset or JIT/workflow and not writing Production/Supabase Staging. Preserving the transition boundary prevents extension evidence from being overstated as restored data.
