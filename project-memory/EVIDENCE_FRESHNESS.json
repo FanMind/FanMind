@@ -32,6 +32,14 @@
       "status": "COUNTERCHECKED",
       "observed_at": "2026-08-22T19:40:57Z",
       "source": "Run 32594374666 / Host-2 job 97082992861 plus independent read-only reconciliation recorded in issue #944 comments 5382274967 and 5382336892"
+    },
+    {
+      "id": "EV-RESTORE-EXTENSION-BASELINE-20260823",
+      "gate": "restore",
+      "class": "restore_host",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-08-23T13:53:00+02:00",
+      "source": "Exact main c627fc2d8956768091c88e3a3baaf0b882b8d2d6 / final extension controller PASS / issue #944 comment 5385843508"
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

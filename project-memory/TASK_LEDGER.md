@@ -65,16 +65,16 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not recreate Staging host/Supabase/Stripe test baseline absent verified drift.
 
 ## FM-RST-001
-- Date: 2026-08-17 to 2026-08-22
-- Updated: 2026-08-22
+- Date: 2026-08-17 to 2026-08-23
+- Updated: 2026-08-23
 - Status: PARTIAL
 - Goal: Complete isolated real restore drill.
 - Starting state: Dedicated restore host, PostgreSQL 17 target, runner group/workflows, accepted backup tuple and protected environment already exist.
-- Action: Protected read-only run `32582640853` first established baseline readiness through `TARGET_COMPATIBLE`. The owner then authorized exactly one database run on `main` `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db`. Run `32594374666` used fresh one-job JIT runner IDs `43`/`44`; gate and Host-1 passed, while Host-2 job `97082992861` stopped at the full receipt-bound database authorization preflight before decryption/first target write.
-- Result: fail-closed. The minimal readiness contract saw the empty target baseline (`plpgsql`, `pgcrypto`), but the selected receipt requires five exact extensions. `pg_stat_statements`, `supabase_vault` and `uuid-ossp` are missing. Independent read-only reconciliation proved TLS `verify-full`, read-only transaction, empty target, baseline roles/extensions intact, quarantine retained, Host-2 exit 0 and no listener/JIT/credentials/plaintext residue. No Restore was applied and Production/Supabase Staging were not written.
-- Evidence: prior PRs #943/#987/#990/#991/#992; issue #944 comments `5381530143`, `5382274967`, `5382336892`; readiness run `32582640853`; consumed database run `32594374666`; jobs `97082934347`, `97082943319`, `97082992861`; runner IDs `43`/`44`; exact accepted extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` at 97 records.
-- Next step: merge repository-only reconciliation, then await a new exact R4 authorization for isolated extension-baseline provisioning plus unchanged full receipt-bound read-only verification. Only after the exact fingerprint passes may a newly authorized database Restore be planned.
-- Do not repeat: no automatic retry/rerun of `32594374666`; no JIT reuse/regeneration, target reset, quarantine deletion, `uuid-ossp`-only recreation, host/PG/TLS rebuild, backup decryption or Production/Supabase-Staging target. Do not infer the full receipt contract from the minimal readiness marker.
+- Action: Protected read-only run `32582640853` first established baseline readiness through `TARGET_COMPATIBLE`. Exactly authorized database run `32594374666` then failed closed before its first target write and localized the missing five-extension prerequisite. After rollback-only predicate/ACL diagnostics, the owner separately authorized the final ACL-fingerprint-corrected extension-only controller on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`.
+- Result: the final controller's precommit receipt contract, mutation commit, full receipt contract, canonical ACL check and postcommit read-only postcheck all passed. The target now exposes all five required descriptors, extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` over 97 records and schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. No database Restore, target reset, JIT/workflow dispatch, Production write or Supabase-Staging write occurred.
+- Evidence: prior PRs #943/#987/#990/#991/#992; issue #944 comments `5381530143`, `5382274967`, `5382336892`, `5385843508`; readiness run `32582640853`; consumed database run `32594374666`; final controller output `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`.
+- Next step: merge repository-only success reconciliation, then require a new exact R4 database-Restore authorization bound to the new reviewed `main` and fresh mutable runner/host/target/backup/TLS preflight.
+- Do not repeat: no automatic retry/rerun of `32594374666`; no reuse of its JITs/authorization; no repeat extension provisioning, target reset, quarantine deletion, host/PG/TLS rebuild or Production/Supabase-Staging target. Do not treat extension success as `DB_RESTORED`.
 
 ## FM-MOB-001
 - Date: through 2026-08-19

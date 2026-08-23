@@ -7,9 +7,9 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Requires: reviewed restore workflows, protected `restore-drill` environment, exact Organization runner-group/workflow-allowlist/JIT policy, isolated existing PostgreSQL-17.11 target, TLS `verify-full`, exact accepted Schema-2 Full Backup/Receipt, current host gate/toolchain and the complete receipt-bound database authorization contract.
 - Type: internal + external control
 - Status: ACTIVE
-- Updated: 2026-08-22
-- Current evidence: read-only run `32582640853` proved the baseline chain through `TARGET_COMPATIBLE`. Authorized run `32594374666` then proved the full database authorization preflight fails before write at 2/5 required extensions; independent read-only reconciliation proved the target remains empty and clean.
-- Rule: Continue from the first unproven gate. Before any database retry, separately authorize and prove the exact five-extension/97-record baseline (`6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012`) plus the unchanged full role/container contract. Do not recreate established infrastructure, automatically retry the consumed run, target Production/Supabase Staging or infer full receipt compatibility from the minimal readiness check.
+- Updated: 2026-08-23
+- Current evidence: read-only run `32582640853` proved the baseline chain through `TARGET_COMPATIBLE`; run `32594374666` failed closed before write; the later separately authorized extension-only transaction and full receipt-bound postcheck proved the exact five-extension/97-record fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` plus canonical ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
+- Rule: Continue from the first unproven gate, now `TARGET_COMPATIBLE -> DB_RESTORED`. Revalidate mutable policy/host/target/backup/TLS evidence and obtain a new exact database-Restore authorization. Do not recreate established infrastructure, repeat extension provisioning, automatically retry the consumed run, target Production/Supabase Staging or infer `DB_RESTORED` from the extension baseline.
 
 ## FM-DEP-002
 - From: FM-MOB-001

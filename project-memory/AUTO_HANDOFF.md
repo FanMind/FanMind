@@ -24,7 +24,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 ## Deferred owner actions
 
-- FM-RST-OWNER-003 — Exact isolated extension-baseline provisioning
+- FM-RST-OWNER-004 — New exact isolated database-Restore authorization
 - FM-GOV-OWNER-001 — Protect `main`
 
 ## Mandatory new-chat / project-entry rule

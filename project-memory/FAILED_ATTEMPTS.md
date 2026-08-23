@@ -111,3 +111,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: the readiness workflow validates a deliberately smaller host/target baseline, while the database runner validates the selected receipt's exact five-extension descriptor and 97-record fingerprint. The earlier state label did not distinguish these contracts clearly enough.
 - Decision: preserve `TARGET_COMPATIBLE` as the highest accepted baseline state but add `RECONCILIATION_REQUIRED`; require a separately authorized extension-baseline transaction and exact full receipt-bound read-only postcheck before any new database dispatch.
 - Do not repeat: do not rerun the database workflow unchanged, infer receipt compatibility from the minimal marker, recreate only `uuid-ossp`, or skip the proven 36-`pgcrypto`/10-`uuid-ossp` member-owner correction.
+
+## FM-FAIL-012
+- Date: 2026-08-23
+- Status: DONE
+- Area: isolated extension-baseline controller predicate/ACL verification
+- Attempt: early extension-controller candidates used the non-superuser restore login for a superuser-only extension, an invalid `\quit` predicate form, and two inconsistent ACL-fingerprint newline encodings.
+- Result: each candidate failed before commit and reported `AUTOMATIC_ROLLBACK=PASS`; the target returned to the exact 42-record baseline. Rollback-only diagnostics later proved the candidate five-extension state and exact 14 ACL rows without committing.
+- Cause: execution identity and controller-local predicate/hash implementations differed from the already proven receipt helper semantics.
+- Decision: use the authorized bootstrap-superuser boundary only for the bounded extension transaction, compare the exact predicate values directly, and compute the ACL fingerprint with the same canonical LF encoding as the receipt helper.
+- Do not repeat: do not weaken the expected receipt, accept semantic ACL rows with a mismatched hash, bypass the canonical hash, rerun an earlier controller SHA or treat automatic rollback as successful provisioning.

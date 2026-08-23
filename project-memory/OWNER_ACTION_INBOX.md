@@ -20,15 +20,22 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Do not repeat: no rerun/retry, JIT reuse or inference that the prior authorization remains available.
 
 ## FM-RST-OWNER-003 — Exact isolated extension-baseline provisioning
+- Status: COMPLETED
+- Where: only `fanmind-restore-01` / PostgreSQL 17.11 / database `fanmind_restore`.
+- Result: exact extension-only provisioning committed successfully; full receipt and canonical ACL read-only postchecks passed at 97 records with fingerprints `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
+- Evidence: issue #944 comment `5385843508`; final controller PASS output.
+- Safety: no database Restore, target reset, JIT/workflow dispatch or Production/Supabase-Staging write. Authorization consumed; do not repeat.
+
+## FM-RST-OWNER-004 — New exact isolated database-Restore authorization
 - Status: DEFERRED_BY_OWNER
-- Where: only `fanmind-restore-01` / PostgreSQL 17.11 / database `fanmind_restore`, followed by receipt-bound read-only authorization verification.
-- Why: reset v10 left the intended empty 2-extension baseline, but the selected Full Backup requires five exact extensions before the first Restore write. The three missing trusted packages are already installed on the host.
-- Exact permitted scope when resumed: add only `pg_stat_statements` 1.11, `supabase_vault` 0.3.1 and `uuid-ossp` 1.1 with their receipt-bound schemas/owners, apply only the already proven internal member-owner correction, verify the exact 97-record extension fingerprint, and automatically restore the proven 2-extension baseline on postcheck failure.
-- Forbidden: database Restore/rerun, target reset, quarantine deletion, Production/Supabase-Staging target or write, any other role/database/config mutation.
+- Where: only the existing isolated `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore` target through the reviewed protected database-Restore workflow.
+- Why: the five-extension receipt prerequisite is now satisfied, but the state machine remains at `TARGET_COMPATIBLE`; the database write is a separate R4 transition.
+- Exact permitted scope when resumed: one new exact-main-bound database Restore using the accepted Backup/Verification/Source/reset-receipt tuple, fresh mutable policy/host/target/backup/TLS preflight, protected `restore-drill` approval and fresh sequential one-job JITs.
+- Forbidden: Production/Supabase-Staging target or write, target reset, reuse of run `32594374666`, reuse of runners `43`/`44`, automatic retry or any unrelated R4 mutation.
 - Risk: R4
-- Duration class: protected bounded transaction
-- Resume trigger: owner grants a fresh exact authorization naming this target, selected backup/receipt/source binding, expected extension fingerprint and rollback boundary.
-- Do not ask before: explicit owner resume. A later database-Restore authorization is separate and may be considered only after this provisioning passes.
+- Duration class: protected single database-Restore run
+- Resume trigger: owner grants a fresh exact authorization after this evidence closeout is merged and the new exact `main` SHA is known.
+- Do not ask before: repository evidence closeout and exact new binding are ready.
 ## FM-GOV-OWNER-001 — Protect `main`
 - Status: DEFERRED_BY_OWNER
 - Where: GitHub repository/organization Rulesets or Branch Protection UI
