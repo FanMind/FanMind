@@ -3,9 +3,9 @@
 Update this file at the end of a substantial work session or whenever work is paused at a non-obvious state. It is the fastest safe restart point, but it never overrides code, tests or canonical source-of-truth documents.
 
 ## Current handoff
-- Updated: 2026-08-23 13:53 Europe/Vienna
-- Active focus: `FM-RST-001` remains `PARTIAL` at `TARGET_COMPATIBLE`, but the exact five-extension receipt prerequisite is now proven. The final extension-only controller committed successfully and every full/canonical/read-only postcheck passed. Repository evidence closeout is active under `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823`; no database-Restore authorization is active.
-- Start here: run the complete Project Memory/Restore preflight, inspect current GitHub `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`, issue #944 comment `5385843508`, FM-EV-017 and the extension-baseline evidence PR. Current GitHub/runtime evidence overrides older memory prose.
+- Updated: 2026-08-23 14:12 Europe/Vienna
+- Active focus: `FM-RST-001` remains `PARTIAL` at `TARGET_COMPATIBLE`, with the exact five-extension receipt prerequisite proven and reconciled through fully green PR #997 merge `733e2f12464f746ee5dff0be71defe22d18ce33a`. No Restore work lock or database-Restore authorization is active.
+- Start here: run the complete Project Memory/Restore preflight, inspect current GitHub `main` from merge `733e2f12464f746ee5dff0be71defe22d18ce33a`, issue #944 comment `5385843508`, FM-EV-017 and accepted PR #997. Current GitHub/runtime evidence overrides older memory prose.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.
@@ -15,9 +15,9 @@ Update this file at the end of a substantial work session or whenever work is pa
 - Extension result: exact five descriptors, 97 records, extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and canonical schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`; Backup, Verification, Source and reset-receipt bindings remained exact.
 - Restore do-not-repeat: do not rerun run `32594374666`, reuse runner IDs `43`/`44`, repeat the extension controller, dispatch a database workflow without new exact authorization, reset the target, remove quarantine, rebuild the host/PG/TLS/runner foundation, or touch Production/Supabase Staging.
 - Security deviation: both Supabase targets are currently `ACTIVE_HEALTHY`, but Production/Staging security findings in issue #982 remain open. They are unrelated to and forbidden from this Restore path.
-- Exact current step: complete and merge the repository evidence closeout. Then wait for `FM-RST-OWNER-004`, a new exact database-Restore authorization bound to the new reviewed `main` and fresh mutable evidence.
+- Exact current step: wait for `FM-RST-OWNER-004`, a new exact database-Restore authorization bound to the current reviewed `main` and fresh mutable evidence.
 - Generated Next Best Action remains `FM-SEC-001` read-only because the earlier Restore action is owner-deferred; no Production/Auth mutation is included.
-- User input still required: only the exact `FM-RST-OWNER-004` R4 authorization after the repository evidence closeout; routine repository analysis/fixes/PR/green merge remain standing-authorized.
+- User input still required: only the exact `FM-RST-OWNER-004` R4 authorization; routine repository analysis/fixes/PR/green merge remain standing-authorized.
 
 ## Mandatory handoff fields for future sessions
 - Updated date/time
