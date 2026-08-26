@@ -111,9 +111,15 @@ nicht als ausgeführte Abnahme.
   Migration ist nur checksum-geprüft und nicht angewendet; Staging-, Meta-,
   Legal- und Production-Freigaben bleiben offen. Kein Kanal darf allgemein
   live erscheinen.
-- **Staging/Infrastruktur:** Meta-Continuation und Catch-up-Queue kontrolliert
-  anwenden, rollback-only Acceptances, Workspace-Processing und echten
-  synthetischen Webhook-/Cursor-E2E ausführen. Für WhatsApp sind die
+- **Staging/Infrastruktur:** Die am 26. August 2026 beobachteten
+  Meta-Continuation-Objekte vor jeder späteren Datenbankaktion zusammen mit
+  ihrem exakten Ledger-Zeitstempel frisch als `skip`, `apply` oder `block`
+  klassifizieren. Die absichtlich ledgerfreie Catch-up Queue über ihren
+  vollständigen Objekt-/ACL-/Funktions-Postflight als `verify`, `apply` oder
+  `block` klassifizieren; nur bei eindeutigem `apply` kontrolliert anwenden.
+  Danach rollback-only
+  Acceptances, Workspace-Processing und echten synthetischen
+  Webhook-/Cursor-E2E ausführen. Für WhatsApp sind die
   providerfreien Cloud-API-Fixtures grün; Controlled Migration, reale
   Tenant-Bindung, Signatur-/Idempotenz-/Lease-Reclaim-/Disconnect-E2E und
   Cleanup müssen noch isoliert in Staging abgenommen werden.

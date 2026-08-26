@@ -167,7 +167,10 @@ export function deriveStagingDatabaseRolloutActions({
       objectState: objects.metaContent,
     }),
     metaCatchup: deriveControlledObjectAction(objects.metaCatchup),
-    metaContinuation: deriveControlledObjectAction(objects.metaContinuation),
+    metaContinuation: deriveMigrationBlockAction({
+      ledgerApplied: ledger.metaContinuation,
+      objectState: objects.metaContinuation,
+    }),
     triggerHardening: deriveTriggerAction(objects.triggerHardening),
   });
 

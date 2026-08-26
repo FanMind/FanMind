@@ -50,12 +50,13 @@
       "source": "Owner-supplied controller 45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946 terminal output / source-order countercheck / no later Restore run"
     },
     {
-      "id": "EV-META-STAGING-20260826",
+      "id": "EV-META-STAGING-FOUNDATION-20260826",
       "gate": "meta_security",
       "class": "provider_console",
       "status": "COUNTERCHECKED",
-      "observed_at": "2026-08-26T19:52:53Z",
-      "source": "FM-EV-023 / exact-main runs 33007156552, 33007311870 and 33007481167 / transaction-level read-only Staging catalog observation"
+      "observed_at": "2026-08-26T19:49:00Z",
+      "source": "FM-EV-023 / transaction-level read-only Staging catalog observation / exact-main runs 33007156552, 33007311870 and 33007481167",
+      "revalidate_on": ["staging_schema_or_acl_change", "workflow_contract_change", "target_binding_change", "before_new_meta_staging_database_action"]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

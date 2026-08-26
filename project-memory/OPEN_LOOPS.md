@@ -38,9 +38,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-META-001
 - Status: OPEN
 - Updated: 2026-08-26
-- Gap: Pixel technical path is Production-confirmed and the current Meta Staging content/continuation/catch-up foundation is read-only counterchecked in FM-EV-023, but external Events Manager/browser reception, provider-side no-PII/no-unexpected-conversion evidence, App Review/permissions, real Meta account E2E and legal acceptance remain incomplete.
+- Gap: Pixel technical path is Production-confirmed and the 2026-08-26 Meta Staging content/continuation/catch-up foundation is read-only counterchecked in FM-EV-023, with freshness tracked by `EV-META-STAGING-FOUNDATION-20260826`; external Events Manager/browser reception, provider-side no-PII/no-unexpected-conversion evidence, App Review/permissions, real Meta account E2E and legal acceptance remain incomplete.
 - Close when: all applicable Meta external/security/legal acceptance evidence is current.
-- Next check: owner-controlled normal-browser Events Manager acceptance under #714. Do not rerun `33007156552`, `33007311870` or `33007481167`, repeat Production activation/deploy, apply SQL or activate Meta workers/providers.
+- Next check: owner-controlled normal-browser Events Manager acceptance under #714. Do not rerun `33007156552`, `33007311870` or `33007481167` merely for this closeout, repeat Production activation/deploy, apply SQL or activate Meta workers/providers. If the Staging observation is later relied upon after expiry/invalidation, acquire a new lock and run a fresh shared rollout-state-first read-only verification.
 
 ## FM-LOOP-006
 - Related: FM-SOC3-001

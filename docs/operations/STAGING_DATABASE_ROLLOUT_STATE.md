@@ -32,7 +32,8 @@ im Ledger fehlt.
 
 Der Zustandscheck verbindet deshalb zwei unabhängige Nachweise:
 
-1. die exakten vier Migrationszeitstempel im Supabase-Ledger;
+1. die exakten fünf Migrationszeitstempel im Supabase-Ledger, einschließlich
+   `20260811220000_meta_conversation_sync_continuation`;
 2. die bereits bestehenden vollständigen Metadaten-Postflights der
    ledger- und controlled-geführten Pfade.
 
@@ -52,6 +53,14 @@ Auch die Catch-up Queue liegt unter `supabase/controlled/` und besitzt keinen
 Ledger-Eintrag. Ihr vollständiger Queue-Postflight entscheidet deshalb direkt:
 `absent` ergibt `apply`, ein vollständig gültiger Zustand `verify` und jeder
 partielle oder abweichende Zustand `block`.
+
+Die Conversation Continuation liegt dagegen unter `supabase/migrations/` und
+ist ledger-geführt. Der Zustandscheck kombiniert ihren exakten Zeitstempel
+`20260811220000` mit dem vollständigen Spalten-/Constraint-/ACL-Postflight:
+gemeinsam abwesend ergibt `apply`, gemeinsam vorhanden `verify`, vorhandene
+Objekte bei fehlendem Ledger `skip` und ein Ledger-Eintrag bei fehlenden oder
+ungültigen Objekten `block`. Damit wird weder aus Objektpräsenz ein Apply
+behauptet noch bei einem Ledger-/Objektwiderspruch erneut angewendet.
 
 Dasselbe Prinzip gilt für die Workspace-Member-Datengrenze. Nur gemeinsam
 abwesende drei Funktionen und null der 42 benannten Boundary-Policies ergeben
@@ -100,7 +109,9 @@ verboten.
 
 Für Meta müssen Foundation und History im Ledger beide vorhanden oder beide
 abwesend sein. Ein einzelner Eintrag, ein partielles Schema oder ein roter
-Postflight ergibt immer `block`.
+Postflight ergibt immer `block`. Die getrennte Continuation verwendet zusätzlich
+ihren eigenen exakten Ledger-/Objektentscheid; die kontrollierte Catch-up Queue
+bleibt absichtlich ledgerfrei.
 
 Für bereits angelegte KI-Stufen- oder Mobile-Push-Tabellen entfernt die
 Migration
@@ -199,7 +210,7 @@ STAGING_DATABASE_ROLLOUT_AI_TIER=verify|skip|apply|block
 STAGING_DATABASE_ROLLOUT_MOBILE_PUSH=verify|skip|apply|block
 STAGING_DATABASE_ROLLOUT_META_CONTENT=verify|skip|apply|block
 STAGING_DATABASE_ROLLOUT_META_CATCHUP=verify|apply|block
-STAGING_DATABASE_ROLLOUT_META_CONTINUATION=verify|apply|block
+STAGING_DATABASE_ROLLOUT_META_CONTINUATION=verify|skip|apply|block
 STAGING_DATABASE_ROLLOUT_TRIGGER_HARDENING=verify|skip|apply|block
 STAGING_DATABASE_ROLLOUT_GENERIC_MIGRATION=disabled
 STAGING_DATABASE_ROLLOUT_STATE=PASS|BLOCKED

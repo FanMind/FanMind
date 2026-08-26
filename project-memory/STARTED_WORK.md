@@ -67,14 +67,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: PARTIAL
 - Risk: R3
 - Scope: Meta Events Manager/external Meta acceptance and final non-Social security proof.
-- Branch/PR: technical reconciliation #1014 passed all seven triggered checks at exact head `12a479f00cce95d0031970c98c2d3933477ab804` and squash-merged as `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; existing Meta foundation remains on `main`.
-- Work lock: `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` RELEASED through repository-only closeout; do not revive it.
+- Branch/PR: technical reconciliation `meta-technical-reconciliation-20260826` / #1014, final head `12a479f00cce95d0031970c98c2d3933477ab804`, squash merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; repository-only closeout #1015 head `355f1ce580045598527c51bff49d2a52c80275df`, merge `d727b53470653844b50fa6a4ca2fc98f7fb2c89b`; canonical freshness follow-up `meta-canonical-freshness-fix-20260826` / #1017, evidence head `dd8246efe399f03180c675b245cc7277d46060ca`.
+- Work lock: `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` RELEASED through the repository-only closeout; do not revive it.
 - Dependencies: normal-browser Meta Events Manager access, Meta app/test assets, App Review/permissions, legal/privacy acceptance.
 - Assumptions: technical pixel calls and Staging migrations are not external Events Manager/App Review acceptance.
-- Completed so far: consent-gated parameterless PageView-only Pixel Production path; advanced Facebook/Instagram OAuth/token/content/conversation foundation; 95/95 focused local tests; direct transaction-level read-only Staging catalog countercheck; exact-main protected read-only runs `33007156552`, `33007311870` and `33007481167` all passed with Apply not requested, runtime activation disabled where applicable and postflight rollback markers.
+- Completed so far: consent-gated parameterless PageView-only Pixel Production path; advanced Facebook/Instagram OAuth/token/content/conversation foundation; 95/95 focused local tests; direct transaction-level read-only Staging catalog countercheck; exact-main protected read-only runs `33007156552`, `33007311870` and `33007481167` all passed with Apply not requested, runtime activation disabled where applicable and postflight rollback markers. Canonical readers now record that continuation and queue schemas are present in isolated Staging, and `EV-META-STAGING-FOUNDATION-20260826` expires the mutable observation. FM-FAIL-015 preserves the read-before-rollout sequencing deviation.
 - Still open: external Events Manager positive/negative browser reception and provider-side no-PII/no-unexpected-conversion proof; App Review/permissions and real account/webhook/conversation E2E; final relevant security/legal acceptance.
 - Evidence so far: FM-EV-007, FM-EV-023, `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`, #714, Source of Truth and the three exact-main runs/jobs.
-- Exact next step: external Events Manager/App Review/provider/legal work remains owner-controlled under `FM-META-OWNER-001`. Do not rerun the three workflows or direct catalog query. Keep conversion events, Advanced Matching and CAPI disabled; the generated next action returns to `FM-RST-OWNER-005`.
+- Exact next step: external Events Manager/App Review/provider/legal work remains owner-controlled under `FM-META-OWNER-001`; keep conversion events, Advanced Matching and CAPI disabled. Do not repeat the evidence runs merely for closeout. After Staging freshness expiry/invalidation or before another Meta database action, acquire a new lock and revalidate shared rollout state first.
 - Owner action needed: external Meta account/access and legal approval where required.
 
 ## FM-SOC3-001

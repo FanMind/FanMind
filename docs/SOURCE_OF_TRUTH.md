@@ -395,26 +395,30 @@ zwingende externe Freigabe noch fehlt.
   `docs/operations/META_CONTENT_STAGING_MIGRATION.md`.
 - Die begrenzte Facebook-/Instagram-Conversation-Pagination und ihre
   server-only Fortsetzungsfelder sind mit
-  `20260811220000_meta_conversation_sync_continuation.sql` vorbereitet. Pro
+  `20260811220000_meta_conversation_sync_continuation.sql` vorbereitet. Die
+  zugehörigen Spalten und Constraints wurden am 26. August 2026 im getrennten
+  Supabase-Staging als vorhanden beobachtet; FM-EV-023 hat den exakten
+  Migration-Ledger-Zeitstempel jedoch nicht separat nachgewiesen. Production
+  bleibt unangewendet. Pro
   Ausführung wird innerhalb eines festen 45-Sekunden-Zeitbudgets höchstens eine
   Provider-Seite mit bis zu 25 Conversations verarbeitet. Solange Meta eine
   Folgeseite liefert, bleibt
   `last_messenger_sync_at` unverändert; erst nach vollständiger Erschöpfung
   rückt der globale Abschlusszeitpunkt auf den Start des ursprünglichen
   Intervalls vor. Fehler bewahren den Cursor und Wiederholungen bleiben über
-  externe Nachrichten-IDs idempotent. Für die in isoliertem Staging
-  installierte, aber nicht in Production angewendete Migration besteht ein
-  checksum-gebundener, exakter-Commit-, TLS- und Staging-gebundener
-  Apply-/Verify-Pfad.
-  Er verlangt vor Apply und Verify den gemeinsamen read-only Rollout-Entscheid,
-  blockiert partielle Schemata und prüft Paar-/Cursor-Constraint sowie
-  Browser-Sperren rollback-only. Die Migration ist inzwischen im isolierten
-  Staging installiert; der exakte read-only Verify-Lauf `33007311870` hat den
-  gemeinsamen Rollout-State, die beiden Fortsetzungsfelder, das Constraint und
-  die Browser-Sperren mit zurückgerolltem Postflight bestätigt. Sie ist nicht
-  in Production angewendet. Ein erneutes Staging-Apply ist kein offener Schritt
-  und darf nicht anstelle der weiterhin offenen Acceptance, Worker-Aktivierung
-  oder des echten Meta-Kontotests wiederholt werden. Runbook:
+  externe Nachrichten-IDs idempotent. Der exakte read-only Staging-Verify-Lauf
+  `33007311870` bestätigte am 26. August 2026 die vorhandenen Spalten, den
+  gemeinsamen Rollout-State `PASS`, Paar-/Cursor-Constraint, Browser-Sperren
+  und den vollständigen Transaktions-Rollback; Apply wurde nicht angefordert.
+  Der checksum-gebundene, exakter-Commit-, TLS- und Staging-gebundene
+  Apply-/Verify-Pfad bleibt für kontrollierte Revalidierung erhalten. Vor jeder
+  späteren Staging-Datenbankaktion muss zuerst ein frischer gemeinsamer
+  read-only Rollout-Entscheid für denselben Commit und dasselbe Ziel vorliegen;
+  aus vorhandenen Objekten allein darf weder „Apply abgeschlossen“ noch ein
+  erneutes Apply abgeleitet werden. Eine spätere Aktion muss Ledger und Objekte
+  gemeinsam als `verify`, `skip`, `apply` oder `block` klassifizieren; partielle oder
+  widersprüchliche Zustände blockieren. Der echte Meta-Kontotest und jede
+  Production-Migration bleiben vor Aktivierung getrennt offen. Runbook:
   docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md.
 - Inbound-Meta-Webhooks führen keine Graph-Historien- oder Profilabfrage mehr
   innerhalb des HTTP-Requests aus. Die vorbereitete
@@ -426,21 +430,26 @@ zwingende externe Freigabe noch fehlt.
   vorgesehen; Worker-Protokolle enthalten nur feste Status-/Fehlercodes und
   Zähler. Vertragsende oder fehlender Verarbeitungsanspruch stoppt den
   Hintergrundabruf fail-closed, ohne vorhandene CRM-Historie zu löschen.
-  Die checksum-gebundene Controlled Migration ist im isolierten Staging
-  installiert; der exakte read-only Verify-Lauf `33007481167` hat Tabelle,
-  Funktionen, Browser-Sperren und den zurückgerollten Postflight bestätigt.
-  Worker und Systemd-Vorlage bleiben vorbereitet,
-  `FANMIND_META_CATCHUP_QUEUE_ENABLED` ist standardmäßig aus, und Production
-  bleibt unverändert. Migration und Worker-Aktivierung werden nicht durch den
-  normalen Web-Deploy ausgeführt. Zusätzlich ist ein exakter-Commit-gebundener,
+  Controlled SQL ist vorbereitet; Queue-Tabelle, Indizes und drei server-only
+  Funktionen wurden am 26. August 2026 im getrennten Supabase-Staging als
+  vorhanden beobachtet. Als kontrollierter Schritt liegt die Queue absichtlich
+  nicht im Supabase-Migrationsledger. Der exakte read-only Lauf `33007481167`
+  bestätigte Postflight und vollständigen Transaktions-Rollback, ohne Apply
+  anzufordern. Erst der vollständige Objekt-/ACL-/Funktions-Postflight, nicht
+  die bloße Tabellenpräsenz, entscheidet zwischen `verify`, `apply` und
+  `block`. Worker und Systemd-Vorlage
+  bleiben nur vorbereitet; `FANMIND_META_CATCHUP_QUEUE_ENABLED` ist
+  standardmäßig aus. Weder Worker-Aktivierung noch Staging-/Production-Deploy
+  werden durch den normalen Web-Deploy ausgeführt. Zusätzlich ist ein
+  exakter-Commit-gebundener,
   rollback-only Staging-Acceptance-Pfad vorbereitet. Er akzeptiert nur den
   markierten synthetischen Workspace, verlangt eine bereits vollständig
   verifizierte Queue-Migration und prüft ohne Meta-, Analyse- oder Versandaufruf
   Browser-Sperren, Workspace-/Connection-/Kontakt-Scope, Coalescing,
   Generationserhalt, Lease-Exklusivität und -Übernahme sowie fünf Retries bis
   `dead_letter`; danach müssen alle synthetischen Zeilen verschwunden sein. Der
-  getrennte Ablauf steht in `docs/operations/META_CATCHUP_QUEUE.md`. Das
-  Migration-Apply darf nicht wiederholt werden; rollback-only Acceptance,
+  getrennte synthetische Acceptance-Ablauf steht in
+  `docs/operations/META_CATCHUP_QUEUE.md` und ist noch nicht extern ausgeführt.
   Worker-/Webhook-E2E, Aktivierung und Meta-Testkonto bleiben eigene offene
   Gates.
 - Die gemeinsame Workspace-Verarbeitungsgrenze besitzt zusätzlich einen

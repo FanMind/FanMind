@@ -56,8 +56,8 @@ Freigabe und aktiviert keine externe Verbindung.
 | Instagram Business Login/OAuth und Professional-Kontobindung | implementiert; echter Staging-/Meta-Kontotest noch offen |
 | Post-/Account-Cache, Metrik-Snapshots und Formeln | implementiert; Schema im isolierten Staging angewendet und read-only nachgeprüft; echter Meta-Datentest offen |
 | Fan-/Gesprächs-/Schreibstil-Provenienz und Reviewstatus | implementiert; Schema im isolierten Staging angewendet und read-only nachgeprüft; Analyse-Aktivierung bleibt gesperrt |
-| Begrenzte Conversation-Pagination | Implementierung und Migration im isolierten Staging installiert; exakter read-only Verify mit gemeinsamem Rollout-State und zurückgerolltem Postflight bestanden; Production, Acceptance, Aktivierung und realer Meta-Test offen |
-| Langlebige Webhook-Catch-up-Queue | Controlled Migration im isolierten Staging installiert und read-only verifiziert; Worker bleibt inaktiv; rollback-only Acceptance, Worker-/Webhook-E2E, Production und Aktivierung offen |
+| Begrenzte Conversation-Pagination | Implementierung und Fortsetzungsobjekte am 26. August 2026 im isolierten Staging als vorhanden/read-only korrekt beobachtet; Migration-Ledger-Zeitstempel nicht separat bewiesen; Production, realer Meta-Test und Aktivierung offen |
+| Langlebige Webhook-Catch-up-Queue | Queue-Tabelle/Indizes/server-only Funktionen am 26. August 2026 im isolierten Staging als vorhanden/read-only korrekt beobachtet; kontrollierter Schritt absichtlich ohne Supabase-Migrationsledger-Eintrag; Worker bleibt deaktiviert, synthetische Staging-Acceptance, Worker-/Webhook-E2E und Aktivierung offen |
 | Workspace-Verarbeitung nach Vertragsende | gemeinsame fail-closed Policy in Meta-Ingress, manuellem Sync und Queue-Worker umgesetzt; rollback-only Staging-Abnahmepfad vorbereitet, externer Lauf und Meta-E2E offen |
 | Isolierter Staging-Migrationspfad | beide Meta-Content-Migrationen im getrennten Supabase-Staging angewendet und read-only nachgeprüft; Production unverändert |
 | Meta App Review, Advanced Access und Business Verification | extern offen |
@@ -259,12 +259,20 @@ behaupten.
 3. explizite Facebook-Seitenauswahl und Instagram-Professional-Kontobindung
    mit Testkonten verifizieren.
 4. Bereits angewendetes isoliertes Staging-Schema für den jeweils geprüften Commit read-only nachweisen und die RLS-/Token-Negativtests wiederholen; bei Drift fail-closed stoppen.
-5. Die server-only Conversation-Continuation-Migration über den getrennten
-   exakter-Commit- und Staging-gebundenen Apply-Pfad anwenden und mit dem
-   read-only Workflow nachprüfen. Paar-/Cursor-Constraint und Browser-Sperren
-   müssen vollständig bestehen; Meta-Abruf und Analyse bleiben aus.
-6. Die Controlled Migration der Meta-Catch-up-Queue getrennt anwenden und
-   read-only nachprüfen. Danach den vorbereiteten rollback-only Workflow für
+5. Vor jeder weiteren Conversation-Continuation-Datenbankaktion einen frischen
+   gemeinsamen Rollout-State für denselben Commit und dasselbe Ziel erzeugen,
+   der Migration-Ledger und Objekte gemeinsam als `verify`, `skip`, `apply`
+   oder `block` klassifiziert. Bei `verify` nur read-only nachprüfen, bei
+   `skip` keine Migration oder Acceptance starten und den Ledger separat
+   reconciliieren, bei `apply` ausschließlich den kontrollierten Pfad
+   verwenden und bei `block` stoppen. Paar-/Cursor-Constraint und
+   Browser-Sperren müssen vollständig bestehen; Meta-Abruf und Analyse bleiben
+   aus. Die am 26. August beobachtete Objektpräsenz allein autorisiert kein
+   Apply.
+6. Für die absichtlich ledgerfreie Meta-Catch-up-Queue zuerst Queue-Objekte und
+   vollständigen ACL-/Index-/Funktions-Postflight frisch als `verify`, `apply`
+   oder `block` klassifizieren; niemals aus bloßer Tabellenpräsenz einen Apply
+   ableiten. Danach den vorbereiteten rollback-only Workflow für
    Browser-Sperren, service-role-only RPCs, Scope, Duplikat-Coalescing,
    exklusive Leases, Restart-Übernahme und fünf Retries bis Dead Letter mit dem
    markierten synthetischen Workspace ausführen. Entitlement-/Disconnect-
@@ -287,8 +295,13 @@ Meta-Content-Migrationen wurden im getrennten Supabase-Staging angewendet und
 read-only nachgeprüft. Ein normaler Web-Deploy wendet sie weiterhin nicht an;
 Production blieb unverändert und weder Verbindung noch Analyse wurden aktiviert.
 Der separate Continuation-Pfad ist in
-docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md beschrieben; sein
-externer Apply-/Verify-Lauf ist noch offen und wird nicht vom normalen
+docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md beschrieben. Der
+read-only Objekt-/Postflight-Verify vom 26. August 2026 ist abgeschlossen; der
+Migration-Ledger-Zeitstempel wurde dabei nicht separat nachgewiesen. Deshalb
+ist weder ein abgeschlossener Apply noch ein erneutes Apply allein aus dieser
+Beobachtung ableitbar. Ein späterer kontrollierter Schritt muss Ledger und
+Objekte frisch gemeinsam klassifizieren. Synthetische Acceptance, realer
+Meta-Test und Aktivierung bleiben offen und werden nicht vom normalen
 Web-Deploy ausgeführt.
 
 Offizielle Prüfeinstiege:

@@ -99,10 +99,10 @@ This is the single compact queue for actions that genuinely require the owner, a
 ## FM-META-OWNER-001 — Complete external Meta acceptance
 - Status: DEFERRED_BY_OWNER
 - Where: owner-controlled normal browser, exact Meta Business/Dataset Events Manager/Test Events, privacy/legal review and later Meta App Review/provider assets.
-- Proven foundation: FM-EV-007 confirms the consent-gated parameterless PageView-only Production path. FM-EV-023 confirms exact-main repository no-PII/security controls and isolated Staging content/continuation/catch-up metadata without writes, activation or provider events.
+- Proven foundation: FM-EV-007 confirms the consent-gated parameterless PageView-only Production path. FM-EV-023 confirms the 2026-08-26 exact-main repository no-PII/security controls and the observed isolated Staging content/continuation/catch-up objects/metadata without writes, activation or provider events; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. The mutable Staging observation is TTL-bound by `EV-META-STAGING-FOUNDATION-20260826`.
 - Required evidence: no event before consent; exactly one PageView after consent and each safe navigation; no CompleteRegistration/Lead/Purchase or other unexpected conversion; no PII/Advanced Matching; final privacy/legal approval. App Review and real Facebook/Instagram E2E remain part of the later Social gate.
 - Risk: R3
-- Forbidden: rerunning `33007156552`, `33007311870` or `33007481167`; repeating Production ENV/build/deploy; secrets/customer data in issues or Project Memory; CAPI/Advanced Matching/conversion activation; provider/account/OAuth/App Review, SQL Apply or worker/runtime change without separate exact authorization.
+- Forbidden: rerunning `33007156552`, `33007311870` or `33007481167` merely for the current closeout; repeating Production ENV/build/deploy; secrets/customer data in issues or Project Memory; CAPI/Advanced Matching/conversion activation; provider/account/OAuth/App Review, SQL Apply or worker/runtime change without separate exact authorization. Fresh Staging revalidation after expiry/invalidation must use a new lock and the shared rollout-state first.
 - Resume trigger: owner provides the external account/browser/legal readiness; then acquire a new exact external-acceptance lock before any real Meta event or provider action.
 
 ## FM-GOV-OWNER-001 — Protect `main`

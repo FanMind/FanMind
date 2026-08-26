@@ -748,11 +748,9 @@ RLS-Erwartung:
 - `messenger_sync_continuation_after` und
   `messenger_sync_continuation_started_at` bilden einen server-only
   Fortsetzungszustand: beide sind gemeinsam leer oder gesetzt und besitzen
-  keine Browser-Spaltenrechte. Die Migration
-  `20260811220000_meta_conversation_sync_continuation.sql` ist im isolierten
-  Staging installiert und read-only nachgeprüft, aber nicht in Production
-  angewendet. Sie darf im Staging nicht erneut angewendet werden; Acceptance,
-  Aktivierung und realer Meta-Test bleiben getrennt offen.
+  keine Browser-Spaltenrechte. Die vorbereitete Migration
+  `20260811220000_meta_conversation_sync_continuation.sql` muss vor Aktivierung
+  kontrolliert im jeweiligen Ziel angewendet und nachgeprüft werden.
 - Aktive `(platform, external_account_id)`-Bindungen sind global eindeutig,
   damit ein externes Konto nicht zwei Workspaces zugeordnet werden kann.
 - Der vorbereitete WhatsApp-Cloud-Inbound-Pfad benötigt zusätzlich die nicht
@@ -817,7 +815,7 @@ RLS-Erwartung:
 - Lesen nur eigener Workspace/Admin.
 - `raw_payload` kann sensible Kontextdaten enthalten und darf nicht öffentlich sichtbar sein.
 
-### `meta_conversation_catchup_jobs` (auf Staging angewendet)
+### `meta_conversation_catchup_jobs` (kontrolliert, in Staging beobachtet)
 
 Zweck: langlebige, gezielte Facebook-/Instagram-Conversation-Nachholarbeit
 außerhalb des Webhook-Requests.
@@ -844,10 +842,14 @@ RLS-/Privilege-Erwartung:
   und Worker-ID verhindern gleichzeitige Claims derselben Zeile.
 - Der Schritt liegt checksum-gebunden unter
   `supabase/controlled/20260811230000_meta_conversation_catchup_queue.sql`.
-  Er ist im isolierten Staging installiert und read-only nachgeprüft, aber nicht
-  in Production angewendet; im Staging darf er nicht erneut angewendet werden.
-  Kein normaler Web-Deploy entdeckt ihn. Rollback-only Acceptance,
-  Worker-/Webhook-E2E, Aktivierung und Rollback folgen
+  Tabelle, Indizes und server-only Funktionen wurden am 26. August 2026 im
+  isolierten Staging als vorhanden/read-only korrekt beobachtet. Als
+  kontrollierter Schritt besitzt er absichtlich keinen Eintrag im
+  Supabase-Migrationsledger. Production bleibt unverändert, und kein normaler
+  Web-Deploy führt den Schritt aus. Vor jeder späteren Datenbankaktion müssen
+  Queue-Objekte und vollständiger Postflight frisch als `verify`, `apply` oder
+  `block` klassifiziert werden; bloße Tabellenpräsenz reicht nicht.
+  Aktivierung und Rollback folgen
   `docs/operations/META_CATCHUP_QUEUE.md`.
 
 ## 8. Billing-Grundlagen

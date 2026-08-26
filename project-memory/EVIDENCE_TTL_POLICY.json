@@ -6,7 +6,7 @@
     "production_smoke": {"ttl_hours": 24, "revalidate_on": ["production_deploy", "runtime_config_change"]},
     "runner_admin_policy": {"ttl_hours": 1, "revalidate_on": ["runner_group_change", "repository_visibility_change", "workflow_change"]},
     "restore_host": {"ttl_hours": 4, "revalidate_on": ["host_maintenance", "runner_re_registration", "toolchain_change"]},
-    "provider_console": {"ttl_hours": 24, "revalidate_on": ["provider_config_change", "credential_rotation", "app_review_change"]},
+    "provider_console": {"ttl_hours": 24, "revalidate_on": ["provider_config_change", "schema_or_privilege_change", "target_binding_change", "credential_rotation", "app_review_change"]},
     "signed_mobile_build": {"ttl_hours": null, "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]},
     "legal_tax": {"ttl_hours": null, "revalidate_on": ["business_fact_change", "contract_version_change", "law_or_provider_term_change"]}
   },
