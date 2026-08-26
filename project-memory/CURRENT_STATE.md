@@ -163,7 +163,7 @@ PR #1012 passed all 10 exact-head checks and merged as `d1b9d7e94b3bc78a1720e197
 
 FM-EV-023 records the 2026-08-26 Meta technical read-only reconciliation on exact `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`. Runs `33007156552`, `33007311870` and `33007481167` all passed with Apply not requested and no activation/write; do not rerun them. Production Pixel activation/deploy is already technically confirmed and is not an open prerequisite. External Events Manager, provider-side no-PII evidence, App Review/provider E2E and legal acceptance remain open.
 
-Finish the already active #1014 evidence PR and repository-only lock release before selecting another action.
+PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970c98c2d3933477ab804`, its tree matched the final squash-merge tree, and it merged as `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`. The repository-only closeout releases the Meta evidence lock; do not rerun the three workflows or direct catalog query.
 
 ## Exact next safe sequence
 

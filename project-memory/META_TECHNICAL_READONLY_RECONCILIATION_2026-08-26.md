@@ -2,13 +2,13 @@
 
 ## Result
 
-The bounded FM-META-001 technical reconciliation is `COUNTERCHECKED_READ_ONLY_FOUNDATION` on exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`.
+The bounded FM-META-001 technical reconciliation is `COUNTERCHECKED_READ_ONLY_FOUNDATION` on exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`. PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970c98c2d3933477ab804`; its tree `03155ed292ce3b7230eab2aacac1e6fc5263de70` matched the squash-merge tree and merged as `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`.
 
 This result confirms the current repository and isolated Staging metadata. It does not constitute Meta Events Manager/Test Events, Meta Business/App Review, real provider-account E2E or legal acceptance.
 
 ## Scope and safety boundary
 
-- PR/lock: #1014 evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f` / `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826`; issue evidence comment `5430454777`.
+- PR/lock: #1014 evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`, final exact head `12a479f00cce95d0031970c98c2d3933477ab804`, squash merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4` / released `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826`; issue evidence comment `5430454777`.
 - Local focused Meta/privacy/RLS/webhook/security tests: 95/95 passed.
 - Direct Supabase inspection used only `BEGIN; SET TRANSACTION READ ONLY; ...; ROLLBACK;` and catalog metadata.
 - Each protected GitHub workflow below was dispatched exactly once, sequentially, against the exact reviewed `main`.
