@@ -11,18 +11,19 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## Released locks
+
 ## LOCK-FM-SEC-001-READONLY-REFRESH-20260826
 - Task: FM-SEC-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT read-only Supabase security refresh session 2026-08-26
-- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / pending
+- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / #1006; exact head `d9408c825aa735c5062a87cfc1b927312d094ad3`, squash merge `78333aae9d075a67a2d550a266d24cb8b9f443a4`.
 - Acquired: 2026-08-26 Europe/Vienna
+- Released: 2026-08-26 after #1006 passed every exact-head gate, merged, and issue #982 comment `5428919200` recorded the read-only result.
 - Risk: R3 evidence reconciliation; provider reads and repository documentation only
 - Scope: refresh Production/Staging advisor and exact function/ACL evidence, compare it with the existing controlled hardening contract, and preserve the separate mutation boundary.
-- Safety: no SQL Apply, Auth setting, grant, RLS policy, Production/Staging write or other provider mutation is authorized by this lock.
-- Resume from: publish/countercheck the evidence branch; then decide the separately protected exact-commit verify and owner/provider actions.
-
-## Released locks
+- Safety: no SQL Apply, Auth setting, grant, RLS policy, Production/Staging write or other provider mutation was authorized or performed by this lock.
+- Resume from: acquire a new scoped lock for the protected exact-deployed-commit verify or any separately authorized owner/provider action; do not revive this evidence-refresh lock.
 
 ## LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826
 - Task: FM-RST-001

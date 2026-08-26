@@ -119,20 +119,20 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 ## RECEIPT-FM-SEC-001-READONLY-REFRESH-20260826
 - Task: FM-SEC-001
 - Started: 2026-08-26 Europe/Vienna
-- Finished: pending exact-head PR countercheck
-- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / pending
+- Finished: 2026-08-26 after exact-head CI, merge and issue closeout
+- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / #1006; exact head `d9408c825aa735c5062a87cfc1b927312d094ad3`, squash merge `78333aae9d075a67a2d550a266d24cb8b9f443a4`
 - Preflight checked: current main, Project Memory governance/finishline/NBA/security records, issue #982 baseline, Supabase skill guidance, current Production/Staging projects, existing controlled SQL/runner/tests/runbook and exact relevant migration/function references.
 - Prior attempts found: FM-EV-014 already classified the same warning set; the checksum-pinned transactional Production remediation exists and must not be rebuilt or auto-applied; Staging workspace RPC is intentionally authenticated-callable in the migration.
 - Dependency result: provider advisor and direct catalog reads are available; protected exact-deployed-commit workflow verify and every mutation remain separate.
 - Planned evidence: current advisors, exact function `proconfig`/`prosecdef`/ACL rows, offline hardening-contract check, Project Memory validators and eventual exact-head CI.
 - Changes made: refreshed live evidence and active task/lock records only; no SQL/Auth/provider/product change.
 - Checks/tests: direct Production/Staging catalog queries succeeded; `node scripts/operations/trigger-function-hardening-production-runner.mjs --check` returned `status=ready`.
-- Final diff counterchecked: yes locally; drift, freshness, NBA, Memory v8 and Project Memory Quality checks passed. Exact-head PR CI remains pending publication.
+- Final diff counterchecked: yes. Drift, freshness, NBA, Memory v8, Project Memory Quality, Project Memory Guard/Status, Landing, FanMind CI, CodeQL and both Browser E2E jobs passed on the exact PR head.
 - Regression/security countercheck: fail-closed. No Apply, Auth change, grant, RLS policy or broad INFO-advisor suppression occurred.
-- Evidence produced: FM-EV-019.
+- Evidence produced: FM-EV-019, PR #1006 and issue #982 comment `5428919200`.
 - Result status: COUNTERCHECKED_READ_ONLY_NOT_REMEDIATED.
-- Open follow-up: publish and countercheck this read-only evidence; separately run the protected exact-commit verify and obtain exact authorization before any Production/Auth mutation.
-- Work lock released: no; `LOCK-FM-SEC-001-READONLY-REFRESH-20260826` remains active pending publication/countercheck.
+- Open follow-up: separately run the protected exact-deployed-commit verify, explicitly review the Staging RPC exception and leaked-password setting, and obtain exact authorization before any Production/Auth mutation.
+- Work lock released: yes; `LOCK-FM-SEC-001-READONLY-REFRESH-20260826` was released after #1006 exact-head acceptance, merge and issue #982 closeout.
 
 ## RECEIPT-FM-RST-001-SCHEMA-ACL-20260820
 - Task: FM-RST-001
