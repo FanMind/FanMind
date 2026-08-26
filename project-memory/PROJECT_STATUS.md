@@ -62,7 +62,7 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: `FM-RST-001` remains `PARTIAL` at `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED` after controller `45054c41...` timed out on its first SSH connection before JIT/dispatch/database access. PR #1005 reconciled that failure and released the repository-only lock; owner-PC connectivity evidence remains pending.
+- Active focus: `FM-RST-001` remains `PARTIAL` at `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED` after controller `45054c41...` timed out on its first SSH connection before JIT/dispatch/database access. PR #1005 exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8` passed all gates and merged as `dd9d986c387040b213355e0ba1bf60ce31fa7b32`; issue #944 comment `5428771745` records the fail-closed result and the repository-only lock is released.
 - Start here: run the complete Project Memory/Restore preflight, inspect current GitHub `main` `618bce9bc00fe4722c91d5fcf5fed3657a3d8372`, issue #944 comments `5385992305`/`5386014235`, FM-EV-017/FM-EV-018 and the owner-supplied timeout output. Current GitHub/runtime evidence overrides older memory prose.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
