@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-23",
+  "updated": "2026-08-26",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -8,13 +8,13 @@
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "Isolierten Datenbank-Restore neu und exakt autorisieren",
+      "title": "SSH-Zugang reconciliieren und Restore neu autorisieren",
       "requires_owner": true,
       "parallel_safe": false,
-      "deferred_owner_id": "FM-RST-OWNER-004",
+      "deferred_owner_id": "FM-RST-OWNER-005",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Proceed only after this extension-evidence closeout is merged and the owner grants a new exact R4 authorization bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Never reuse run 32594374666 or its consumed authorization. Do not reset the target or write Production/Supabase Staging."
+      "instruction": "Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging."
     },
     {
       "id": "NBA-SECURITY-READONLY",

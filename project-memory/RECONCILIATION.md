@@ -55,3 +55,13 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Required correction: mark `FM-RST-OWNER-003` completed/consumed, remove the stale extension blocker, preserve `TARGET_COMPATIBLE`, add `FM-RST-OWNER-004` for a new exact database-Restore authorization and record all success/rollback/negative evidence.
 - Status: RESOLVED
 - Resolved: PR #997 exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8` passed Project Memory Guard/Status/Quality, Landing, FanMind CI, Browser E2E and CodeQL, then squash-merged as `733e2f12464f746ee5dff0be71defe22d18ce33a`. The evidence lock is released; `FM-RST-OWNER-004` remains the separate new database-Restore boundary.
+
+## RECON-2026-013
+- Detected: 2026-08-26 after the owner ran database-Restore controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946`.
+- Task: `FM-RST-001`.
+- Mismatch: Project Memory still showed `FM-RST-OWNER-004` as deferred and unused, while the owner had authorized and attempted the exact controller. The attempt stopped at the first SSH connection and was never reconciled into GitHub/Project Memory.
+- Actual state: local accepted-readiness/main-drift checks passed; SSH to `138.124.213.66:22` timed out before remote preflight, JIT, environment approval, workflow dispatch or PostgreSQL access. Current GitHub evidence contains no later Restore run.
+- Memory state: highest accepted Restore state `TARGET_COMPATIBLE` remained correct, but the owner-action and exact-next-step records were stale.
+- Required correction: mark `FM-RST-OWNER-004` consumed pre-dispatch fail-closed, add `FM-RST-OWNER-005` for owner-PC public-IP/TCP-22 evidence and possible separately authorized exact `/32` allowlist reconciliation, add `FM-RST-OWNER-006` for a later new exact Restore authorization/controller, record proof of forbidden non-actions and prohibit retry/reuse.
+- Status: OPEN
+- Resolved: pending exact-head repository checks, PR merge and issue #944 evidence comment; no runtime/provider mutation is part of this reconciliation.

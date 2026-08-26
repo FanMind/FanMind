@@ -98,6 +98,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 
 A receipt is required for meaningful code/config/infra/governance work. Never include secrets, credentials, private backup material or protected evidence values here.
 
+## RECEIPT-FM-RST-001-SSH-TIMEOUT-20260826
+- Task: FM-RST-001
+- Started: 2026-08-26 Europe/Vienna
+- Finished: pending exact-head checks, PR merge and issue evidence comment
+- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / pending
+- Preflight checked: AGENTS, Source of Truth, Protocol, Current State, Finishline, NBA, Auto Handoff, Owner Inbox, Session Handoff, Started Work, Locks, Open Loops, Task Ledger, Dependencies, Decisions, Failed Attempts, Restore state machine/runbook, drift/freshness selectors, current GitHub repository/issue/open-PR state and exact controller bytes/source order.
+- Prior attempts found: run `32594374666` and its runners/authorization are consumed; extension provisioning is complete; controller `45054c41...` is a later one-shot controller whose automatic retry is forbidden.
+- Dependency result: first missing evidence is owner-PC public-IP/TCP-22 reachability. No Restore/runtime/provider mutation is allowed by this reconciliation branch.
+- Planned evidence: exact owner-supplied timeout output, controller source-order proof, current GitHub absence of a later Restore run, Project Memory validators, diff/secret/scope countercheck and exact-head CI before merge.
+- Changes made: reconciled the pre-SSH failure across Current State, Restore state machine, NBA, owner actions, tasks, started work, open loop, failure/evidence/reconciliation/handoff/lock records.
+- Checks/tests: `git diff --check`, drift preflight, evidence freshness, generated next-best-action check, Memory v8 check and Project Memory Quality all passed. `npm run test:operations` completed 1,019 checks: 1,012 passed and 7 test modules could not load because this workspace lacks/could not install required local Node packages (`next`, `sharp`, `brace-expansion` and dependent imports); both `npm ci` attempts were blocked by the unavailable/corrupt local npm cache, so exact-head CI remains the decisive full-suite evidence.
+- Final diff counterchecked: yes for the local governance-only scope; exact-head PR diff/CI countercheck remains pending.
+- Regression/security countercheck: fail-closed. No JIT, environment approval, workflow dispatch, PostgreSQL connection, database Restore, target reset, Production/Supabase-Staging write or Exoscale mutation occurred or is authorized.
+- Evidence produced: FM-EV-018 and RECON-2026-013.
+- Result status: RECONCILIATION_REQUIRED; highest accepted Restore progression remains `TARGET_COMPATIBLE`.
+- Open follow-up: `FM-RST-OWNER-005` owner-PC connectivity evidence; later any exact `/32` provider mutation and `FM-RST-OWNER-006` authorization remain separate.
+- Work lock released: no; `LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826` remains active until exact-head closeout.
+
 ## RECEIPT-FM-RST-001-SCHEMA-ACL-20260820
 - Task: FM-RST-001
 - Started: 2026-08-20 16:10 Europe/Vienna

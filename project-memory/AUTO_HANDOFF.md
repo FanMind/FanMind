@@ -24,7 +24,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 ## Deferred owner actions
 
-- FM-RST-OWNER-004 — New exact isolated database-Restore authorization
+- FM-RST-OWNER-005 — Restore-host SSH reachability evidence
+- FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - FM-GOV-OWNER-001 — Protect `main`
 
 ## Mandatory new-chat / project-entry rule
