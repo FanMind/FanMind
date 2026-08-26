@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826
+- Task: FM-SEC-001
+- Status: ACTIVE
+- Holder: ChatGPT protected Production read-only verification session 2026-08-26
+- Branch/PR: `security-production-readonly-verify-20260826` / pending
+- Acquired: 2026-08-26 20:02 Europe/Vienna
+- Risk: R3 protected Production evidence collection; read-only database verification and repository evidence only
+- Scope: bind the existing checksum-pinned Production trigger-function hardening verifier to exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`, run exactly one `verify` action, and reconcile the preflight/action/postflight evidence.
+- Safety: `apply`, SQL/Auth/RLS/ACL/provider mutations, Restore/JIT/controller retry and Production/Supabase-Staging writes are outside this lock. The expected current-state result is fail-closed `hardening_not_ready`; any other result requires reconciliation before continuation.
+- Resume from: inspect the exact workflow run and all three control stages, then update the open execution receipt and issue #982 before releasing this lock.
+
 ## Released locks
 
 ## LOCK-FM-SEC-001-READONLY-REFRESH-20260826

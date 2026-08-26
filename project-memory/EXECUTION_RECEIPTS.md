@@ -241,3 +241,21 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Result status: COUNTERCHECKED_EXTENSION_BASELINE at runtime; overall Restore remains PARTIAL at `TARGET_COMPATIBLE` pending later database/Storage/config/cleanup/countercheck.
 - Open follow-up: `FM-RST-OWNER-004`, a new exact R4 database-Restore authorization with fresh mutable-evidence preflight.
 - Work lock released: yes; `LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823` was released after #997 exact-head acceptance and merge.
+
+## RECEIPT-FM-SEC-001-PRODUCTION-VERIFY-20260826-2002
+- Task: FM-SEC-001
+- Started: 2026-08-26 20:02 Europe/Vienna
+- Finished: pending exact workflow evidence and repository countercheck
+- Branch/PR: `security-production-readonly-verify-20260826` / pending
+- Preflight checked: AGENTS, Source of Truth, Project Memory Protocol/Execution Policy/Current State/Finishline/NBA/Deferred Owner Actions/Handoff/Started Work/Locks/Open Loops/Task Ledger/Dependencies/Decisions/Authorizations/External Acceptance/Failed Attempts/Assumptions/Contradictions/Change Requests, current repository/PR state, issue #982, exact Production deploy evidence, controlled hardening workflow/runner/log verifier/tests/runbook, current Supabase guidance and provider evidence.
+- Prior attempts found: the provider/catalog refresh was accepted in #1006 and its lock closed in #1007. The checksum-pinned control already exists and must not be rebuilt. The three Production trigger helpers remain expected pre-apply, while `trim_conversation_messages_to_latest_50` and leaked-password protection remain separate findings; no prior protected Production hardening verify has been accepted.
+- Dependency result: exact GitHub `main` and Production release are both `5cb9c193e262f8939b5fc0c700fce154dde616e6` via deploy run `32996396550` job `98266724400`; the protected workflow and root-owned installed verifier are available. Restore remains independently owner-deferred and untouched.
+- Planned evidence: local checksum/source-policy tests; visible active repository lock; exactly one workflow-dispatch `verify` on exact deployed main; full preflight, fixed `hardening_not_ready` or reconciled success diagnostic, always-run postflight audit, exact run/job/step logs, issue #982 record and exact-head CI/countercheck.
+- Changes made: opened the scoped work lock and execution receipt, refreshed the generated Project Status, and bound the pending verify to exact deployed `main`; no runtime/provider/database/Auth mutation.
+- Checks/tests: Production runner offline source/checksum contract returned `status=ready`; focused Production hardening tests passed 5/5; Project Memory drift, freshness, next-action, quality, status, product-truth and milestone checks passed; `git diff --check` passed.
+- Final diff counterchecked: yes for the pre-dispatch lock scope; final workflow evidence update and exact-head PR checks remain pending.
+- Regression/security countercheck: fail-closed boundary established. The workflow input must be `verify` with `trigger-function-hardening-production-verify`; `apply`, SQL/Auth/RLS/ACL/provider mutations, Restore/JIT/controller retry and Production/Supabase-Staging writes are forbidden.
+- Evidence produced: exact deploy binding and existing FM-EV-019 baseline; protected verify run pending.
+- Result status: IN_PROGRESS_READ_ONLY.
+- Open follow-up: dispatch only after the lock branch/PR is visible; reconcile any result before further action. A later `apply` or leaked-password provider change requires separate exact authorization.
+- Work lock released: no; `LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826` is active.
