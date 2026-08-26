@@ -15,7 +15,7 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-META-001
 - Status: ACTIVE
 - Holder: ChatGPT Meta technical read-only reconciliation session 2026-08-26
-- Branch/PR: `meta-technical-reconciliation-20260826` / pending
+- Branch/PR: `meta-technical-reconciliation-20260826` / #1014, initial published head `75cbed27dc2daa0d0de2a9688e89ebc3ef65f5d6`
 - Acquired: 2026-08-26 Europe/Vienna
 - Risk: R3 protected Staging evidence and canonical-reader reconciliation; read-only checks only
 - Scope: reconcile Pixel/no-PII/security tests and current Meta Staging foundations against exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; inspect issue #714 and current readers; run at most one exact-main read-only execution each of `meta-content-staging-resource-readiness.yml`, `meta-conversation-continuation-staging-verify.yml` and `meta-catchup-queue-staging-verify.yml`; use only explicit transaction-level read-only Supabase catalog SQL.

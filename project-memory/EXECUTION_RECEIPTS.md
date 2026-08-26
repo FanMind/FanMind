@@ -102,18 +102,18 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Task: FM-META-001
 - Started: 2026-08-26 Europe/Vienna
 - Finished: pending bounded read-only Staging evidence and repository countercheck
-- Branch/PR: `meta-technical-reconciliation-20260826` / pending
+- Branch/PR: `meta-technical-reconciliation-20260826` / #1014, initial published head `75cbed27dc2daa0d0de2a9688e89ebc3ef65f5d6`
 - Preflight checked: Project Memory protocol/current state/finishline/NBA/handoff/start/locks/open loops/task/dependencies/external acceptance; exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; issue #714; Source of Truth; Pixel policy/loader/consent/privacy/runbook; Meta content, continuation, catch-up and webhook foundations; protected workflow definitions and existing safety boundaries.
 - Prior attempts found: FM-EV-007 already classifies the consent-gated parameterless PageView-only path as Production-confirmed while Events Manager/legal acceptance remains external. Issue #714 records the same technical completion. `docs/analytics/META_PIXEL.md` still contains a pre-activation checklist that is now stale and must be synchronized rather than causing a repeated Production activation.
 - Dependency result: repository-only technical reconciliation is standing-authorized and parallel-safe. Events Manager/Test Events, Meta Business/App Review, real provider assets, legal acceptance and every state-changing Staging/Production action remain external/owner-protected.
 - Planned evidence: 95-test focused Meta/privacy/RLS/webhook/security set; visible repository lock; explicit read-only Supabase catalog inventory; at most one exact-main protected read-only run each for Meta content resources, conversation continuation and catch-up queue; exact run/job/log review; issue/reader reconciliation; final diff, Project Memory checks and exact-head CI.
-- Changes made: opened the bounded technical reconciliation lock/receipt and corrected the handoff to current `main`; no workflow dispatched or provider/database/runtime state changed yet.
+- Changes made: opened the bounded technical reconciliation lock/receipt, corrected the handoff to current `main` and published that fail-closed scope as #1014 head `75cbed27dc2daa0d0de2a9688e89ebc3ef65f5d6`; no workflow dispatched or provider/database/runtime state changed yet.
 - Checks/tests: focused Meta/privacy/RLS/webhook/security set passed 95/95 locally.
 - Final diff counterchecked: yes for the pre-dispatch lock scope; runtime evidence and final reader diff pending.
 - Regression/security countercheck: fail-closed. No Meta consent grant/event, provider call, credential, OAuth/App Review action, SQL Apply, acceptance write, queue/worker/runtime activation, Production deploy/configuration, Supabase write or legal conclusion is authorized.
 - Evidence produced: local 95-test result and current repository/issue contradiction map; protected evidence pending.
 - Result status: IN_PROGRESS_READ_ONLY.
-- Open follow-up: publish the lock before any protected check, then collect each bounded result once and update only true current capabilities/gaps.
+- Open follow-up: with the lock visible in #1014, collect each bounded result once and update only true current capabilities/gaps.
 - Work lock released: no; release only after issue evidence, exact-head CI/countercheck and merge.
 
 ## RECEIPT-FM-AI-001-READONLY-RECONCILIATION-20260826-2101
