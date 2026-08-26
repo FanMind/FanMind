@@ -17,15 +17,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: PARTIAL
 - Risk: R4
 - Scope: Complete the isolated real FanMind Restore drill without touching Production or Supabase Staging; preserve the accepted read-only chain and the now receipt-bound five-extension baseline while keeping every later Restore transition separately protected.
-- Branch/PR: extension evidence PR #997 exact head `6642c3c95bbb33f9a4b5f5a36afa068798e252e8` merged as `733e2f12464f746ee5dff0be71defe22d18ce33a`; reconciliation PR #995 merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`; prior evidence PR #992 merged as `cb04829c378285c24c3c53b5fab2d03177c19165`.
-- Work lock: `LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826` ACTIVE for repository-only fail-closed reconciliation; prior extension evidence lock remains RELEASED.
+- Branch/PR: SSH-timeout reconciliation PR #1005 exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8` merged as `dd9d986c387040b213355e0ba1bf60ce31fa7b32`; extension evidence PR #997 merged as `733e2f12464f746ee5dff0be71defe22d18ce33a`; prior fail-closed evidence PR #995 merged as `86bf2657996c45bfe03fadd4af689ffa89e7ea6e`.
+- Work lock: no active Restore repository lock; `LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826` and the prior extension evidence lock are RELEASED. The runtime task remains owner-blocked at `FM-RST-OWNER-005`.
 - Dependencies: FM-DEP-001; exact Schema-2 Full Backup/Verification/source binding; existing isolated host/empty target/quarantine; full receipt-bound roles/database-container/extensions; protected authorization for any later mutation.
 - Assumptions: database reset does not change cluster-global roles; prior full role/container authorization success remains navigation evidence only and must be freshly receipt-checked after extension provisioning. Mutable host, target, backup, runner-policy and TLS evidence must be revalidated before any mutation.
 - Completed so far: protected read-only run `32582640853` accepted through `TARGET_COMPATIBLE`. Exactly authorized database run `32594374666` failed closed before its first target write. The separately authorized final extension controller on `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6` then committed only the three missing extensions and proven member-owner correction. Its precommit contract, mutation commit, full receipt contract, canonical schema-ACL postcheck and independent postcommit read-only postcheck all passed.
 - Latest reconciled result: the isolated target now matches all five required extension descriptors. Extension fingerprint is exactly `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` over 97 records; schema-ACL fingerprint is exactly `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. The Full Backup, Verification, Source commit and reset receipt bindings remained exact. No database Restore, target reset, JIT/workflow dispatch, Production write or Supabase-Staging write occurred.
 - Latest attempt: owner authorization comment `5385992305` produced controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946`. On 2026-08-26 it passed only the accepted-readiness and main-drift markers, then its first SSH connection to `138.124.213.66:22` timed out. Source order and live GitHub evidence prove no remote preflight, JIT, environment approval, workflow dispatch or database connection occurred.
 - Still open: owner-PC public-IP/TCP-22 evidence, possible separately authorized Exoscale `/32` allowlist reconciliation, a new exact protected database Restore after fresh mutable preflight, DB postcheck, Storage, server config, disposable-target cleanup, independent countercheck and final acceptance.
-- Evidence so far: PRs #943/#987/#990/#991/#992/#997/#998; issue #944 comments `5381530143`, `5382274967`, `5382336892`, `5385843508`, `5385992305`, `5386014235`; runs `32582640853` and `32594374666`; final extension controller PASS; exact failed database controller output supplied by the owner on 2026-08-26.
+- Evidence so far: PRs #943/#987/#990/#991/#992/#997/#998/#1005; issue #944 comments `5381530143`, `5382274967`, `5382336892`, `5385843508`, `5385992305`, `5386014235`, `5428771745`; runs `32582640853` and `32594374666`; final extension controller PASS; exact failed database controller output supplied by the owner on 2026-08-26.
 - Exact next step: do not rerun controller `45054c41...`. Capture the Windows public IP and detailed TCP-22 result; reconcile Exoscale SSH allowlisting only if that evidence confirms drift. Then require a new exact R4 Restore authorization and freshly generated controller.
 - Owner action needed: yes, first for `FM-RST-OWNER-005` connectivity evidence and, only after reconciliation, `FM-RST-OWNER-006` new exact protected database-Restore authorization.
 ## FM-MOB-001
@@ -142,17 +142,17 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SEC-001
 - Started: 2026-08-20
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Status: RECONCILIATION_REQUIRED
 - Risk: R3
 - Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
-- Branch/PR: `automation/postmerge-reconcile-20260820`; issue #982.
-- Work lock: read-only audit/reconciliation only; acquire a new mutating lock before any Production DB/Auth change.
+- Branch/PR: `security-readonly-refresh-after-timeout-20260826` pending exact-head PR countercheck; prior discovery branch `automation/postmerge-reconcile-20260820`; issue #982.
+- Work lock: `LOCK-FM-SEC-001-READONLY-REFRESH-20260826`; read-only audit/reconciliation only. Acquire a separate mutating lock and exact authorization before any Production DB/Auth change.
 - Dependencies: FM-DEP-010; exact deployed Production commit; controlled trigger-hardening checksum/runner; current Production/Staging Supabase projects; provider/Auth access for leaked-password decision.
 - Assumptions: Production trigger warnings indicate pre-apply/not-accepted state; Staging authenticated workspace RPC may be intentional but its exception status must be explicitly reviewed.
-- Completed so far: fresh target health and security advisors read; repository SQL/runbook compared; issue #982 opened with V5 risk/evidence/falsification contract.
-- Still open: exact read-only Production verify; catalog/ACL confirmation; Staging RPC exception review; leaked-password setting decision/evidence; only then any separately authorized mutation and post-advisor countercheck.
-- Evidence so far: live Supabase security advisors plus current `supabase/controlled/20260806203023_harden_trigger_function_privileges.sql`, Production hardening runbook and workspace provisioning migration.
+- Completed so far: 2026-08-26 provider advisors and direct Production/Staging function/ACL catalogs reconfirm the prior state without drift; the existing controlled Production SQL/runner offline contract reports ready. Staging RPC exposure matches the intentional migration ACL/search-path design and remains an exception-review item rather than unexplained drift.
+- Still open: protected exact-deployed-commit Production verify; explicit Staging RPC exception acceptance; leaked-password setting decision/evidence; only then any separately authorized mutation and post-advisor countercheck.
+- Evidence so far: FM-EV-014 and refreshed FM-EV-019; live Supabase security advisors/catalog ACLs; current controlled SQL, Production hardening runbook and workspace provisioning migration.
 - Exact next step: run the existing read-only Production hardening verify against the exact deployed commit; do not Apply in this reconciliation.
 - Owner action needed: only for protected Production DB/Auth mutations or provider-only setting changes when the read-only evidence is ready.
 

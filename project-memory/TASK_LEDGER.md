@@ -188,3 +188,4 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Related issue: #982.
 - Falsification question: What observation would prove our conclusion wrong? A fresh advisor/catalog/ACL read showing Production already hardened, or evidence that the controlled migration/runbook no longer matches the deployed target, would invalidate this baseline and require a new reconciliation before mutation.
 - Next step: run the existing read-only Production hardening verify against the exact deployed commit; separately review the Staging RPC exception and leaked-password setting; do not Apply/mutate under this reconciliation task.
+- 2026-08-26 refresh: FM-EV-019 reconfirmed the same live Production/Staging advisor and exact function/ACL state with no drift. The offline Production hardening contract is ready; the protected exact-deployed-commit verify, exception acceptance and Auth-setting decision remain open. No provider mutation occurred.

@@ -11,18 +11,30 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-SEC-001-READONLY-REFRESH-20260826
+- Task: FM-SEC-001
+- Status: ACTIVE
+- Holder: ChatGPT read-only Supabase security refresh session 2026-08-26
+- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / pending
+- Acquired: 2026-08-26 Europe/Vienna
+- Risk: R3 evidence reconciliation; provider reads and repository documentation only
+- Scope: refresh Production/Staging advisor and exact function/ACL evidence, compare it with the existing controlled hardening contract, and preserve the separate mutation boundary.
+- Safety: no SQL Apply, Auth setting, grant, RLS policy, Production/Staging write or other provider mutation is authorized by this lock.
+- Resume from: publish/countercheck the evidence branch; then decide the separately protected exact-commit verify and owner/provider actions.
+
+## Released locks
+
 ## LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826
 - Task: FM-RST-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Restore SSH-timeout reconciliation session 2026-08-26
-- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / pending.
+- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / #1005; exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8`, squash merge `dd9d986c387040b213355e0ba1bf60ce31fa7b32`.
 - Acquired: 2026-08-26 Europe/Vienna after exact controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` stopped at its first SSH call with a TCP timeout.
+- Released: 2026-08-26 after #1005 passed every exact-head gate, merged, and issue #944 comment `5428771745` recorded the fail-closed result.
 - Risk: R4 evidence reconciliation; repository documentation and read-only provider checks only.
 - Scope: record the owner authorization, controller attempt, pre-SSH/pre-JIT/pre-dispatch failure, preserve `TARGET_COMPATIBLE`, and define the owner-only connectivity and later reauthorization boundary.
 - Resume from: no Restore controller retry. First obtain the Windows public-IP/TCP-22 result, then reconcile the Exoscale `/32` allowlist through a separately authorized provider action if required.
-- Safety: this lock authorizes no database Restore, target reset, JIT, workflow dispatch, environment approval, Production/Supabase-Staging write or Exoscale security-group mutation.
-
-## Released locks
+- Safety: this lock authorized no database Restore, target reset, JIT, workflow dispatch, environment approval, Production/Supabase-Staging write or Exoscale security-group mutation.
 
 ## LOCK-FM-RST-001-EXTENSION-BASELINE-EVIDENCE-20260823
 - Task: FM-RST-001
