@@ -84,6 +84,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Meta Events Manager / normal browser
 - Acceptance: no event before consent; exact PageView after consent/navigation; no CompleteRegistration/Lead; no PII/Advanced Matching.
+- Current evidence: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only technical path. FM-EV-023 confirms the current repository no-PII/security boundary and isolated Staging metadata read-only, but no Meta event was emitted and no provider-side Events Manager observation was made.
 - Repository evidence alone sufficient: no
 
 ## EXT-META-APP-REVIEW
@@ -92,6 +93,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Meta Business/App Review
 - Acceptance: required permissions/accounts approved and real Facebook/Instagram E2E passes.
+- Current evidence: technical data/token/content/conversation foundations exist and FM-EV-023 confirms their current server-only Staging metadata boundaries; no Meta account, OAuth, permission, App Review or real provider E2E action was performed.
 - Repository evidence alone sufficient: no
 
 ## EXT-WHATSAPP

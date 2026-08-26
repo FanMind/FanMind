@@ -71,10 +71,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Work lock: `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` ACTIVE for bounded read-only technical evidence only.
 - Dependencies: normal-browser Meta Events Manager access, Meta app/test assets, App Review/permissions, legal/privacy acceptance.
 - Assumptions: technical pixel calls and Staging migrations are not external Events Manager/App Review acceptance.
-- Completed so far: consent-gated PageView-only Pixel production code; advanced Facebook/Instagram OAuth/token/content/conversation foundation; relevant Staging migrations/controls; current focused Meta/privacy/RLS/webhook/security set passes 95/95 locally.
-- Still open: Events Manager positive/negative browser evidence; no-PII evidence; App Review/permissions and real account/webhook/conversation E2E; final relevant security/legal evidence.
-- Evidence so far: #714, Source of Truth, Meta tests/migrations and current exact-main technical reconciliation receipt.
-- Exact next step: with the read-only evidence lock visible in #1014, run each of the three bounded Staging metadata checks at most once, reconcile the stale Pixel runbook status and list only true Events Manager/App Review/provider/legal/acceptance gaps. Keep conversion events, advanced matching and CAPI disabled.
+- Completed so far: consent-gated parameterless PageView-only Pixel Production path; advanced Facebook/Instagram OAuth/token/content/conversation foundation; 95/95 focused local tests; direct transaction-level read-only Staging catalog countercheck; exact-main protected read-only runs `33007156552`, `33007311870` and `33007481167` all passed with Apply not requested, runtime activation disabled where applicable and postflight rollback markers.
+- Still open: external Events Manager positive/negative browser reception and provider-side no-PII/no-unexpected-conversion proof; App Review/permissions and real account/webhook/conversation E2E; final relevant security/legal acceptance.
+- Evidence so far: FM-EV-007, FM-EV-023, `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`, #714, Source of Truth and the three exact-main runs/jobs.
+- Exact next step: finish the #1014 reader/evidence diff and exact-head CI, post the bounded issue evidence and merge; then release this repository-only lock. External Events Manager/App Review/provider/legal work remains owner-controlled and separately authorized. Keep conversion events, Advanced Matching and CAPI disabled.
 - Owner action needed: external Meta account/access and legal approval where required.
 
 ## FM-SOC3-001

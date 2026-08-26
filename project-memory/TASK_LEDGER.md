@@ -99,13 +99,13 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-META-001
 - Date: through 2026-08-19
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Status: PARTIAL
 - Goal: Finish Meta Events Manager, Meta external acceptance and final Meta/Security evidence.
-- Result: Consent-gated PageView-only Pixel code is production-confirmed; Meta Facebook/Instagram data/token/content/conversation foundations are advanced and Staging foundations exist. External Events Manager/Test Events, App Review/permissions, real account/webhook/conversation E2E and required legal acceptance remain open.
-- Evidence: Issue #714, Source of Truth, Meta migration/tests and recent Meta commits.
-- Next step: complete normal-browser Events Manager negative/positive evidence and final security check; later perform real Facebook/Instagram E2E in Social Gate.
-- Do not repeat: Do not re-add CompleteRegistration/Lead, Advanced Matching or CAPI without new technical/legal approval.
+- Result: Consent-gated parameterless PageView-only Pixel behavior is Production-confirmed. Current exact-main protected read-only evidence additionally confirms the isolated Staging content, conversation-continuation and catch-up metadata, its RLS/ACL/index/function boundaries and disabled runtime/apply gates. Meta Facebook/Instagram foundations remain advanced. External Events Manager/Test Events, provider-side no-PII confirmation, App Review/permissions, real account/webhook/conversation E2E and required legal acceptance remain open.
+- Evidence: FM-EV-007; FM-EV-023; `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`; runs `33007156552`/`33007311870`/`33007481167`; issue #714; Source of Truth.
+- Next step: external owner-controlled normal-browser Events Manager positive/negative/no-PII acceptance and legal review; later real Facebook/Instagram App Review/E2E in the Social gate. Any provider event, SQL Apply or runtime activation remains separately authorized.
+- Do not repeat: Do not rerun the three FM-EV-023 workflows, repeat Production ENV/build/deploy, or re-add CompleteRegistration/Lead, Advanced Matching or CAPI without new technical/legal approval.
 
 ## FM-SOC3-001
 - Date: 2026-08-19 reconciliation of prior work

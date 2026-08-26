@@ -146,4 +146,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: runs `32582640853` and `32594374666`; jobs `97054248185` and `97082992861`; issue #944 comments `5382274967`/`5382336892`/`5385843508`; FM-EV-015/FM-EV-016/FM-EV-017.
 - Falsification question: What observation would prove this conclusion wrong? A current read-only full receipt authorization matching the exact five-extension/97-record fingerprint would close the blocker; any evidence of a target write would invalidate the current no-write reconciliation.
 
+## CTR-FM-011
+- Date: 2026-08-26
+- Updated: 2026-08-26
+- Related task/change: FM-META-001 / issue #714
+- Risk: R3
+- Source A: `docs/analytics/META_PIXEL.md` pre-activation checklist.
+- Claim A: Production ENV, build/deploy and technical activation still need to occur before external acceptance.
+- Source B: FM-EV-007 and issue #714.
+- Claim B: the consent-gated parameterless PageView-only technical Production path is already confirmed; only external Events Manager/provider/no-PII/legal acceptance remains.
+- Stronger/current evidence: FM-EV-007 plus FM-EV-023 exact-main repository/Staging read-only countercheck; issue #714 records the Production technical result.
+- Status: RESOLVED
+- Resolution/action: update the runbook to treat Production ENV/build/deploy as completed technical foundation and prevent accidental repetition. Keep normal-browser Events Manager/Test Events, provider-side no-PII/no-unexpected-conversion observation, App Review/real provider E2E and legal acceptance explicitly open under `FM-META-OWNER-001`.
+- Evidence: FM-EV-007; FM-EV-023; `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`; issue #714; runs `33007156552`, `33007311870`, `33007481167`.
+- Falsification question: What observation would prove our conclusion wrong? A current exact Production configuration/release check showing the Pixel path is no longer deployed or fail-closed would require a fresh technical reconciliation before external acceptance.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.

@@ -4,19 +4,19 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Selected action: `NBA-META-TECHNICAL-RECONCILE`
-- Task: `FM-META-001`
-- Gate: `meta_security` (`PARTIAL`)
-- Selection status: `EXECUTABLE`
-- Title: Meta/Security technischen Restpfad vorbereiten
+- Selected action: `NBA-RESTORE-DATABASE`
+- Task: `FM-RST-001`
+- Gate: `restore` (`PARTIAL`)
+- Selection status: `DEFERRED_BY_OWNER`
+- Title: SSH-Zugang reconciliieren und Restore neu autorisieren
 
 ## Instruction
 
-Reconcile Pixel/no-PII/security tests, Meta foundations and current non-Social smoke evidence. Keep Events Manager, App Review and provider-account acceptance external.
+Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging.
 
 ## Why this action
 
-standing-authorized safe work
+FM-RST-OWNER-005
 
 ## Candidate evaluation
 
@@ -24,7 +24,7 @@ standing-authorized safe work
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-001
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001
-- `NBA-META-TECHNICAL-RECONCILE` priority 40: **EXECUTABLE** — standing-authorized safe work
+- `NBA-META-TECHNICAL-RECONCILE` priority 40: **DEFERRED_BY_OWNER** — FM-META-OWNER-001
 - `NBA-PHASE3-SOCIAL` priority 60: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL
 - `NBA-PHASE7-SOCIAL` priority 70: **WAITING_PREREQUISITE** — phase3_social=PARTIAL
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL

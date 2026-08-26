@@ -20,7 +20,7 @@ Prevents two agents/sessions from independently working the same task.
 - Risk: R3 protected Staging evidence and canonical-reader reconciliation; read-only checks only
 - Scope: reconcile Pixel/no-PII/security tests and current Meta Staging foundations against exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; inspect issue #714 and current readers; run at most one exact-main read-only execution each of `meta-content-staging-resource-readiness.yml`, `meta-conversation-continuation-staging-verify.yml` and `meta-catchup-queue-staging-verify.yml`; use only explicit transaction-level read-only Supabase catalog SQL.
 - Safety: no Meta consent grant or PageView emission, Meta Events Manager/App Review/account/OAuth/token/provider call, SQL Apply, rollback-only acceptance, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision is authorized. Failed or stale runs are recorded without automatic retry.
-- Resume from: publish this lock and receipt before protected workflow dispatch; then inspect each exact run/job/log once and classify only the verified technical foundation and true external/protected gaps.
+- Resume from: all three bounded runs and direct catalog evidence are counterchecked in FM-EV-023. Finish the #1014 reader diff, issue evidence and exact-head CI/merge; do not rerun any workflow. Release this lock only in a repository closeout after the accepted merge.
 
 ## Released locks
 

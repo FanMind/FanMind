@@ -183,9 +183,21 @@ Browser-E2E setzt die öffentliche Test-ID nur im CI-Build und fängt `connect.f
 8. Widerruf blockiert weitere Events;
 9. Policy-Tests blockieren geschützte Routen, dynamische CRM-Pfade und unsichere Querystrings.
 
-## Production-Abnahme im Browser
+## Production-Status und erneute Browser-Regression
 
-Nach Merge, gesetzter Production-ENV und erneutem Build:
+Der technische Production-Pfad ist bereits bestätigt und in Issue #714 sowie
+Project-Memory-Evidence `FM-EV-007` festgehalten. Insbesondere sind die
+Production-ENV, der zugehörige Build/Deploy und der consent-gated
+PageView-only-Pfad kein noch ausstehender Aktivierungsschritt und dürfen nicht
+allein aufgrund dieses Runbooks wiederholt werden.
+
+Die Codeintegration allein bedeutet nicht, dass der Pixel bereits auf Production aktiv ist.
+Für den aktuellen FanMind-Stand stammt diese Bestätigung deshalb aus der
+separaten Production-Evidence und nicht allein aus dem vorhandenen Code.
+
+Die folgende Prüfung ist nur bei einer separat freigegebenen erneuten
+Production-Regression oder als Teil der noch offenen externen Events-Manager-
+Abnahme auszuführen:
 
 1. Browser-Cookies für `fanmind.ch` löschen oder privates Fenster verwenden.
 2. `/` öffnen.
@@ -200,7 +212,8 @@ Nach Merge, gesetzter Production-ENV und erneutem Build:
 
 ## Meta Events Manager / Test Events
 
-Nach der kontrollierten Production-Aktivierung:
+Für die noch offene externe Abnahme auf dem bereits technisch bestätigten
+Production-Pfad:
 
 1. Meta Events Manager öffnen.
 2. Dataset `FanMind Dataset` auswählen.
@@ -215,13 +228,26 @@ Nach der kontrollierten Production-Aktivierung:
 
 Keine Screenshots oder Tickets dürfen Tokens, Session-Cookies, Kundeninhalte oder vollständige Browser-Netzwerk-Response-Bodies enthalten.
 
-## Offene Freigaben vor Production-Aktivierung
+## Aktueller Abnahmestatus
 
-- technische und rechtliche Schlussprüfung des aktualisierten Datenschutztexts;
-- `NEXT_PUBLIC_META_PIXEL_ID=2069553844439892` kontrolliert in `/var/www/fanmind/.env.production` setzen;
-- Production neu bauen und deployen;
-- Consent-/Widerruf-/PageView-/Routengrenz-Abnahme gemäß diesem Runbook;
-- Test-Events-Nachweis im richtigen Meta Dataset;
-- erst danach Issue #714 schließen.
+Technisch bestätigt und nicht zu wiederholen:
 
-Die Codeintegration allein bedeutet nicht, dass der Pixel bereits auf Production aktiv ist.
+- Production-ENV, Build/Deploy und consent-gated PageView-only-Pfad;
+- keine Parameterübergabe, kein Advanced Matching und keine Conversions API;
+- Fail-closed Routengrenze und Widerrufslogik im Repository/CI;
+- aktuelle Staging-Metadaten für Content, Conversation-Continuation und
+  Catch-up-Queue im Read-only-Postflight.
+
+Weiterhin extern beziehungsweise separat freigabepflichtig:
+
+- normaler Browser plus Meta Events Manager/Test Events: kein Event vor
+  Consent, genaues `PageView` nach Consent/Navigation und keine unerwarteten
+  Conversion-Events;
+- Provider-seitige Sichtprüfung, dass keine PII- oder Advanced-Matching-Daten
+  empfangen werden;
+- rechtliche/Datenschutz-Schlussabnahme;
+- Meta Business/App Review und echte Facebook-/Instagram-E2E-Abnahme als
+  separater Social-Gate.
+
+Issue #714 bleibt bis zu diesen externen Nachweisen offen. Eine technische
+Production-Aktivierung oder ein Deploy ist dafür nicht erneut erforderlich.
