@@ -169,6 +169,19 @@ Implementation status and acceptance status are deliberately separate.
 - State-machine result: `TARGET_COMPATIBLE`.
 - Acceptance: COUNTERCHECKED_READ_ONLY
 
+## FM-EV-019
+- Related: FM-SEC-001 / issue #982
+- Date: 2026-08-26
+- Target: live FanMind Production Supabase `drqkpdvtbbrrdwmtrodz` and FanMind Staging `vshyhvgcmrlagvfnvomc`
+- Type: refreshed independent provider advisor + direct read-only catalog/ACL evidence
+- Reference: current Supabase security advisors; direct read-only `pg_proc`/ACL queries; local offline contract check for `trigger-function-hardening-production-runner.mjs --check`
+- Result: the 2026-08-20 security baseline has not drifted. Production still has no function-level `search_path` on the three ordinary trigger helpers and their ACL still grants `EXECUTE` to `PUBLIC`, `anon` and `authenticated`. The retired `trim_conversation_messages_to_latest_50()` remains `SECURITY DEFINER`, pinned only to `search_path=public, pg_temp`, and directly executable by those browser roles. Staging `ensure_current_user_workspace(text,text,boolean)` remains `SECURITY DEFINER`, pinned to `search_path=pg_catalog, public, pg_temp`, executable by `authenticated` and `service_role`, and not executable by `PUBLIC`/`anon`.
+- Advisor countercheck: Production reports the same three mutable-search-path warnings, browser execution of the retired definer function and leaked-password protection disabled. Staging reports the authenticated workspace RPC and leaked-password protection disabled. RLS-enabled/no-policy INFO findings remain informational until table ownership/use is classified; no artificial policies are inferred.
+- Repository countercheck: the existing Production controlled SQL remains checksum/contract valid and the offline runner check returned `status=ready`; no new hardening implementation is needed. The current provider state is still the exact pre-apply state, not accepted post-apply evidence.
+- Limitations: the protected exact-deployed-commit Production workflow verify was not dispatched. No SQL Apply, Auth setting, grant, RLS policy or other Production/Staging/provider mutation was performed or authorized.
+- Falsification: a later exact catalog/ACL/advisor read, deployed-commit mismatch or protected verify result inconsistent with this state reopens reconciliation before any mutation.
+- Acceptance: COUNTERCHECKED_READ_ONLY_NOT_REMEDIATED
+
 ## FM-EV-016
 - Related: FM-RST-001 / issue #944
 - Date: 2026-08-22

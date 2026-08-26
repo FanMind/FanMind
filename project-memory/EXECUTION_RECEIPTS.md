@@ -101,20 +101,38 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 ## RECEIPT-FM-RST-001-SSH-TIMEOUT-20260826
 - Task: FM-RST-001
 - Started: 2026-08-26 Europe/Vienna
-- Finished: pending exact-head checks, PR merge and issue evidence comment
-- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / pending
+- Finished: 2026-08-26 after exact-head checks, PR merge and issue evidence comment
+- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / #1005; exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8`, squash merge `dd9d986c387040b213355e0ba1bf60ce31fa7b32`
 - Preflight checked: AGENTS, Source of Truth, Protocol, Current State, Finishline, NBA, Auto Handoff, Owner Inbox, Session Handoff, Started Work, Locks, Open Loops, Task Ledger, Dependencies, Decisions, Failed Attempts, Restore state machine/runbook, drift/freshness selectors, current GitHub repository/issue/open-PR state and exact controller bytes/source order.
 - Prior attempts found: run `32594374666` and its runners/authorization are consumed; extension provisioning is complete; controller `45054c41...` is a later one-shot controller whose automatic retry is forbidden.
 - Dependency result: first missing evidence is owner-PC public-IP/TCP-22 reachability. No Restore/runtime/provider mutation is allowed by this reconciliation branch.
 - Planned evidence: exact owner-supplied timeout output, controller source-order proof, current GitHub absence of a later Restore run, Project Memory validators, diff/secret/scope countercheck and exact-head CI before merge.
 - Changes made: reconciled the pre-SSH failure across Current State, Restore state machine, NBA, owner actions, tasks, started work, open loop, failure/evidence/reconciliation/handoff/lock records.
-- Checks/tests: `git diff --check`, drift preflight, evidence freshness, generated next-best-action check, Memory v8 check and Project Memory Quality all passed. `npm run test:operations` completed 1,019 checks: 1,012 passed and 7 test modules could not load because this workspace lacks/could not install required local Node packages (`next`, `sharp`, `brace-expansion` and dependent imports); both `npm ci` attempts were blocked by the unavailable/corrupt local npm cache, so exact-head CI remains the decisive full-suite evidence.
-- Final diff counterchecked: yes for the local governance-only scope; exact-head PR diff/CI countercheck remains pending.
+- Checks/tests: local `git diff --check`, drift preflight, evidence freshness, generated next-best-action check, Memory v8 check and Project Memory Quality passed. Exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8` then passed Project Memory Guard/Quality/Status, Landing, FanMind CI including PostgreSQL 17, both Browser E2E jobs and CodeQL.
+- Final diff counterchecked: yes; the exact PR head used unchanged tree `d48a26cb7763e4cb0338e9bcde2f5ed9809e04d6`, and all 18 changed files stayed under `project-memory/`.
 - Regression/security countercheck: fail-closed. No JIT, environment approval, workflow dispatch, PostgreSQL connection, database Restore, target reset, Production/Supabase-Staging write or Exoscale mutation occurred or is authorized.
-- Evidence produced: FM-EV-018 and RECON-2026-013.
-- Result status: RECONCILIATION_REQUIRED; highest accepted Restore progression remains `TARGET_COMPATIBLE`.
+- Evidence produced: FM-EV-018, RECON-2026-013, PR #1005 and issue #944 comment `5428771745`.
+- Result status: COUNTERCHECKED_FAIL_CLOSED; highest accepted Restore progression remains `TARGET_COMPATIBLE` and SSH reachability remains owner-blocked.
 - Open follow-up: `FM-RST-OWNER-005` owner-PC connectivity evidence; later any exact `/32` provider mutation and `FM-RST-OWNER-006` authorization remain separate.
-- Work lock released: no; `LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826` remains active until exact-head closeout.
+- Work lock released: yes; `LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826` was released after #1005 exact-head acceptance, merge and issue closeout.
+
+## RECEIPT-FM-SEC-001-READONLY-REFRESH-20260826
+- Task: FM-SEC-001
+- Started: 2026-08-26 Europe/Vienna
+- Finished: pending exact-head PR countercheck
+- Branch/PR: `security-readonly-refresh-after-timeout-20260826` / pending
+- Preflight checked: current main, Project Memory governance/finishline/NBA/security records, issue #982 baseline, Supabase skill guidance, current Production/Staging projects, existing controlled SQL/runner/tests/runbook and exact relevant migration/function references.
+- Prior attempts found: FM-EV-014 already classified the same warning set; the checksum-pinned transactional Production remediation exists and must not be rebuilt or auto-applied; Staging workspace RPC is intentionally authenticated-callable in the migration.
+- Dependency result: provider advisor and direct catalog reads are available; protected exact-deployed-commit workflow verify and every mutation remain separate.
+- Planned evidence: current advisors, exact function `proconfig`/`prosecdef`/ACL rows, offline hardening-contract check, Project Memory validators and eventual exact-head CI.
+- Changes made: refreshed live evidence and active task/lock records only; no SQL/Auth/provider/product change.
+- Checks/tests: direct Production/Staging catalog queries succeeded; `node scripts/operations/trigger-function-hardening-production-runner.mjs --check` returned `status=ready`.
+- Final diff counterchecked: yes locally; drift, freshness, NBA, Memory v8 and Project Memory Quality checks passed. Exact-head PR CI remains pending publication.
+- Regression/security countercheck: fail-closed. No Apply, Auth change, grant, RLS policy or broad INFO-advisor suppression occurred.
+- Evidence produced: FM-EV-019.
+- Result status: COUNTERCHECKED_READ_ONLY_NOT_REMEDIATED.
+- Open follow-up: publish and countercheck this read-only evidence; separately run the protected exact-commit verify and obtain exact authorization before any Production/Auth mutation.
+- Work lock released: no; `LOCK-FM-SEC-001-READONLY-REFRESH-20260826` remains active pending publication/countercheck.
 
 ## RECEIPT-FM-RST-001-SCHEMA-ACL-20260820
 - Task: FM-RST-001
