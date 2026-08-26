@@ -52,7 +52,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
 - Branch/PR: read-only evidence PR #1012 passed all 10 checks at exact head `b53e000228bf99801b327c1d7b81646edce32d6f` and squash-merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; implementation foundations remain on `main`.
-- Work lock: `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` RELEASED; do not revive it or rerun its three evidence jobs.
+- Work lock: `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` RELEASED through repository-only closeout #1013; do not revive it or rerun its three evidence jobs.
 - Dependencies: written product decisions, private quality/cost evidence, current Staging lifecycle, Legal/Tax, explicit Production activation.
 - Assumptions: Staging Test prices existing does not mean Plus/Ultra is activated or fully accepted.
 - Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, five-price Stripe Test catalog, signed webhook smoke, lifecycle controls, applied AI-tier event ledger, monitoring/recommendation/eval tooling. Current exact-main runs `33003378162`, `33003452287` and `33003526741` pass the protected read-only AI-resource, five-price Test-catalog and exact 22-event webhook checks. Direct read-only catalog evidence confirms both AI ledger functions and all three tables with forced RLS, exact role boundaries, zero events and zero unresolved reconciliations. The 50/100/150 context limits are already approved and tested.

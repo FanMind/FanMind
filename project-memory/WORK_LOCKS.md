@@ -17,7 +17,7 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-AI-001
 - Status: RELEASED
 - Holder: ChatGPT AI/Billing read-only reconciliation session 2026-08-26
-- Branch/PR: `ai-billing-readonly-reconciliation-20260826` / #1012; final exact head `b53e000228bf99801b327c1d7b81646edce32d6f`, squash merge `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`
+- Branch/PR: evidence `ai-billing-readonly-reconciliation-20260826` / #1012, final exact head `b53e000228bf99801b327c1d7b81646edce32d6f`, squash merge `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; repository-only closeout `ai-billing-readonly-reconciliation-closeout-20260826` / #1013.
 - Acquired: 2026-08-26 21:01 Europe/Vienna
 - Released: 2026-08-26 after the final head passed all 10 Guard/Quality/Status, Landing, FanMind CI including PostgreSQL 17, CodeQL and Browser E2E checks; issues #560/#874 were updated and #1012 merged SHA-bound.
 - Risk: R3 protected Staging/Stripe evidence collection; read-only database and provider checks only
