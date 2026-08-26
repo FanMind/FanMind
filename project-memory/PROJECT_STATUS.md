@@ -62,8 +62,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: Restore and Security mutations remain owner-deferred. Parallel Mobile read-only run `33000433320`, job `98280538304`, is complete and failed closed before public-environment verification because `mobile-preview` supplied no Expo token or expected bindings. PR #1010 and its evidence lock remain active only until exact-head countercheck/merge; no retry or Mobile mutation.
-- Start here: inspect exact GitHub/Production `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`, normal deploy `32999368887`/`98276820016`, Mobile run `33000433320`/`98280538304`, PRs #988/#1010, FM-EV-021 and owner action `FM-MOB-OWNER-001`. Current GitHub/runtime evidence overrides older memory prose.
+- Active focus: Restore and Security mutations remain owner-deferred. Mobile read-only run `33000433320`, job `98280538304`, failed closed on missing protected preview configuration; evidence PR #1010 passed every exact-head gate, merged as `e6b3d9715726ede77ce7230cefa824edba16b2d4`, and its lock is released. No retry or Mobile mutation.
+- Start here: inspect exact GitHub `main` `e6b3d9715726ede77ce7230cefa824edba16b2d4`, Mobile run `33000433320`/`98280538304`, PRs #988/#1010, issue #690 comment `5429569941`, FM-EV-021 and owner action `FM-MOB-OWNER-001`. Current GitHub/runtime evidence overrides older memory prose.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.

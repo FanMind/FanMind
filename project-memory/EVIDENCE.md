@@ -200,7 +200,7 @@ Implementation status and acceptance status are deliberately separate.
 - Date: 2026-08-26
 - Target: exact GitHub `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`; protected GitHub Environment `mobile-preview`; Expo/EAS read-only resource path
 - Type: protected exact-main read-only resource-readiness workflow + independent job/log countercheck
-- Reference: `mobile-release-resource-readiness.yml` run `33000433320`, job `98280538304`; PR #988 binding verifier; evidence PR #1010.
+- Reference: `mobile-release-resource-readiness.yml` run `33000433320`, job `98280538304`; PR #988 binding verifier; issue #690 comment `5429569941`; evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`.
 - Result: checkout, Node setup and Mobile dependency installation passed. The exact EAS project lookup failed closed with the runtime-emitted marker `MOBILE_RELEASE_READINESS_ERROR=eas_project_lookup_failed`; the selected release environment was `preview` and the public EAS environment step was skipped.
 - Root-cause evidence: the job environment supplied blank `EXPO_TOKEN`, expected EAS owner/project ID, expected Mobile/Production Supabase refs and expected Mobile API origin. No project-info report reached the exact binding verifier, so no owner/slug/project ID was accepted.
 - Negative evidence: workflow source has no build/sign/submit/update/init path and all release-write gates remain fixed false. No EAS build, credential creation, Store action, Supabase/Auth/DB mutation, Restore/JIT/controller action or Production/Supabase-Staging data write occurred; no secret value was copied into Project Memory.
