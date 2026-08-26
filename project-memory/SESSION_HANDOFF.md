@@ -4,8 +4,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: FM-META-001 technical read-only reconciliation is counterchecked under `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` and PR #1014; final reader diff, exact-head CI/merge and repository-only lock release remain. No provider or database mutation is authorized.
-- Start here: inspect exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`, FM-EV-023, `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`, issue #714 and PR #1014. All three bounded runs passed once; do not rerun them. Keep Events Manager/App Review/provider/legal acceptance external.
+- Active focus: FM-META-001 technical read-only reconciliation is accepted at exact PR #1014 head `12a479f00cce95d0031970c98c2d3933477ab804`, squash-merged as `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`, and its evidence lock is released. External Meta/provider/legal acceptance remains open.
+- Start here: inspect exact GitHub `main` `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`, FM-EV-023 and `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`. Do not rerun the three bounded workflows or direct query. The generated next action is `FM-RST-OWNER-005`: owner-PC public IPv4 and TCP/22 evidence before any new Restore authorization.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.

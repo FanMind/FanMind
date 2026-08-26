@@ -11,18 +11,19 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## Released locks
+
 ## LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826
 - Task: FM-META-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Meta technical read-only reconciliation session 2026-08-26
-- Branch/PR: `meta-technical-reconciliation-20260826` / #1014, evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`
+- Branch/PR: evidence `meta-technical-reconciliation-20260826` / #1014, evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`, final exact head `12a479f00cce95d0031970c98c2d3933477ab804`, squash merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; repository-only closeout `meta-technical-reconciliation-closeout-20260826`.
 - Acquired: 2026-08-26 Europe/Vienna
+- Released: 2026-08-26 after the final head passed all seven triggered Guard/Quality/Status, Landing, FanMind CI, Browser E2E and CodeQL checks; issue #714 was updated and #1014 merged SHA-bound.
 - Risk: R3 protected Staging evidence and canonical-reader reconciliation; read-only checks only
-- Scope: reconcile Pixel/no-PII/security tests and current Meta Staging foundations against exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; inspect issue #714 and current readers; run at most one exact-main read-only execution each of `meta-content-staging-resource-readiness.yml`, `meta-conversation-continuation-staging-verify.yml` and `meta-catchup-queue-staging-verify.yml`; use only explicit transaction-level read-only Supabase catalog SQL. `FM-FAIL-015` records that the direct query preceded the required shared rollout-state classification; no further catalog query is allowed under this lock, and any future Meta Staging database action must first consume a fresh same-commit/same-target shared rollout-state decision.
-- Safety: no Meta consent grant or PageView emission, Meta Events Manager/App Review/account/OAuth/token/provider call, SQL Apply, rollback-only acceptance, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision is authorized. Failed or stale runs are recorded without automatic retry.
-- Resume from: all three bounded runs and direct catalog evidence are counterchecked in FM-EV-023, with the sequencing deviation preserved in FM-FAIL-015. Finish the #1014 reader diff, issue evidence and exact-head CI/merge; do not rerun any workflow or direct query. Release this lock only in a repository closeout after the accepted merge.
-
-## Released locks
+- Scope: bound the current Pixel/no-PII/security tests and Meta Staging content/continuation/catch-up metadata to exact `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83` through exactly three protected read-only runs and one transaction-level read-only catalog query. `FM-FAIL-015` preserves the sequencing deviation.
+- Safety: no Meta consent grant or PageView, provider/account/OAuth/App Review call, SQL Apply, acceptance write, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision occurred.
+- Resume from: do not revive this lock or rerun its workflows/direct query. External Meta acceptance is owner-controlled under `FM-META-OWNER-001`; the generated next action is `FM-RST-OWNER-005`.
 
 ## LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826
 - Task: FM-AI-001
