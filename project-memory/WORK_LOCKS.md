@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826
+- Task: FM-META-001
+- Status: ACTIVE
+- Holder: ChatGPT Meta technical read-only reconciliation session 2026-08-26
+- Branch/PR: `meta-technical-reconciliation-20260826` / pending
+- Acquired: 2026-08-26 Europe/Vienna
+- Risk: R3 protected Staging evidence and canonical-reader reconciliation; read-only checks only
+- Scope: reconcile Pixel/no-PII/security tests and current Meta Staging foundations against exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; inspect issue #714 and current readers; run at most one exact-main read-only execution each of `meta-content-staging-resource-readiness.yml`, `meta-conversation-continuation-staging-verify.yml` and `meta-catchup-queue-staging-verify.yml`; use only explicit transaction-level read-only Supabase catalog SQL.
+- Safety: no Meta consent grant or PageView emission, Meta Events Manager/App Review/account/OAuth/token/provider call, SQL Apply, rollback-only acceptance, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision is authorized. Failed or stale runs are recorded without automatic retry.
+- Resume from: publish this lock and receipt before protected workflow dispatch; then inspect each exact run/job/log once and classify only the verified technical foundation and true external/protected gaps.
+
 ## Released locks
 
 ## LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826

@@ -4,8 +4,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: FM-AI-001 read-only reconciliation is accepted and its evidence lock is released. Exact-main runs `33003378162`, `33003452287` and `33003526741` passed without writes; PR #1012 passed all 10 exact-head checks and merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`. Remaining AI work is owner/protected/private, not another read-only rerun.
-- Start here: inspect exact GitHub `main` `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`, FM-EV-022 and `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`. Current evidence overrides older #560/#874 checkboxes; generated standing-authorized work moves to `FM-META-001`.
+- Active focus: FM-AI-001 read-only evidence and closeout are accepted through #1012/#1013; its lock is released. FM-META-001 technical read-only reconciliation is active under `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826`; no provider or database mutation is authorized.
+- Start here: inspect exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`, issue #714, FM-EV-007, `docs/analytics/META_PIXEL.md`, current Meta tests/workflows and the active Meta lock. Reconcile Pixel/no-PII/security plus current Staging metadata; keep Events Manager/App Review/provider/legal acceptance external.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.

@@ -63,18 +63,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-META-001
 - Started: before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-08-26
 - Status: PARTIAL
 - Risk: R3
 - Scope: Meta Events Manager/external Meta acceptance and final non-Social security proof.
-- Branch/PR: existing Meta foundation on main.
-- Work lock: acquire before Meta app/permission/production activation changes.
+- Branch/PR: active technical reconciliation `meta-technical-reconciliation-20260826` / pending; existing Meta foundation remains on `main`.
+- Work lock: `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` ACTIVE for bounded read-only technical evidence only.
 - Dependencies: normal-browser Meta Events Manager access, Meta app/test assets, App Review/permissions, legal/privacy acceptance.
 - Assumptions: technical pixel calls and Staging migrations are not external Events Manager/App Review acceptance.
-- Completed so far: consent-gated PageView-only Pixel production code; advanced Facebook/Instagram OAuth/token/content/conversation foundation; relevant Staging migrations/controls.
+- Completed so far: consent-gated PageView-only Pixel production code; advanced Facebook/Instagram OAuth/token/content/conversation foundation; relevant Staging migrations/controls; current focused Meta/privacy/RLS/webhook/security set passes 95/95 locally.
 - Still open: Events Manager positive/negative browser evidence; no-PII evidence; App Review/permissions and real account/webhook/conversation E2E; final relevant security/legal evidence.
-- Evidence so far: #714, Source of Truth, Meta tests/migrations.
-- Exact next step: external normal-browser Events Manager acceptance, keeping conversion events/advanced matching/CAPI disabled.
+- Evidence so far: #714, Source of Truth, Meta tests/migrations and current exact-main technical reconciliation receipt.
+- Exact next step: publish the read-only evidence lock, run each of the three bounded Staging metadata checks at most once, reconcile the stale Pixel runbook status and list only true Events Manager/App Review/provider/legal/acceptance gaps. Keep conversion events, advanced matching and CAPI disabled.
 - Owner action needed: external Meta account/access and legal approval where required.
 
 ## FM-SOC3-001
