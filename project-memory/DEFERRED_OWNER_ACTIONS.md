@@ -1,6 +1,6 @@
 # Deferred Owner Actions
 
-Updated: 2026-08-23 13:53 Europe/Vienna
+Updated: 2026-08-26 Europe/Vienna
 
 ## FM-RST-OWNER-001 — GitHub runner-group policy evidence
 - Related task: `FM-RST-001`.
@@ -25,12 +25,26 @@ Updated: 2026-08-23 13:53 Europe/Vienna
 - Evidence: issue #944 comment `5385843508`; final controller `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`.
 - Safety: no database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or unrelated R4 mutation occurred. This authorization is consumed and must not be reused.
 
-## FM-RST-OWNER-004 — New exact isolated database-Restore authorization
+## FM-RST-OWNER-004 — Exact isolated database-Restore authorization after extension closeout
+- Related task: `FM-RST-001`.
+- Status: CONSUMED_PRE_DISPATCH_FAIL_CLOSED.
+- Decision: owner authorization comment `5385992305` and controller SHA-256 `45054c41...` were attempted on 2026-08-26, but the controller stopped at its first SSH connection before remote preflight/JIT/approval/dispatch/database access.
+- Result: no Restore workflow or database mutation occurred; highest accepted state remains `TARGET_COMPATIBLE` with side state `RECONCILIATION_REQUIRED`.
+- Resume rule: never reuse this controller or authorization and never automatically retry.
+- Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
+
+## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
 - Related task: `FM-RST-001`.
 - Status: DEFERRED_BY_OWNER.
-- Decision: the receipt-bound extension prerequisite is satisfied, but `TARGET_COMPATIBLE -> DB_RESTORED` remains a distinct R4 write boundary.
-- Deferred actions: after this repository evidence closeout, bind a new single-run authorization to the then-current reviewed `main`, the same accepted Backup/Verification/Source/target/reset receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs under the protected `restore-drill` environment.
-- Resume rule: do not dispatch a database workflow, create a JIT or request environment approval until the owner explicitly authorizes the new exact database-Restore scope. Never reuse run `32594374666`, runner IDs `43`/`44` or either consumed authorization.
+- Deferred action: on the owner's Windows PC, capture current public IPv4 and detailed TCP-22 reachability to `138.124.213.66`. Do not rerun the Restore controller.
+- Provider boundary: if the evidence proves a stale Exoscale SSH allowlist, any exact `/32` security-group change requires a separate narrow authorization and read-only target/scope confirmation.
+- Safety: no broad CIDR, unrelated security-group/VM/database change, Restore/JIT/workflow action or Production/Supabase-Staging access.
+
+## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
+- Related task: `FM-RST-001`.
+- Status: DEFERRED_BY_OWNER.
+- Deferred action: after SSH/allowlist reconciliation and merged evidence closeout, bind a new one-run authorization/controller to the then-current reviewed `main`, accepted Backup/Verification/Source/target/reset receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs.
+- Resume rule: do not create a JIT, request environment approval or dispatch a database workflow before the new exact authorization. Never reuse controller `45054c41...`, authorization `5385992305`, run `32594374666` or runner IDs `43`/`44`.
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection

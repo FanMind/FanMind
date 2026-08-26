@@ -20,7 +20,7 @@ standing-authorized safe work
 
 ## Candidate evaluation
 
-- `NBA-RESTORE-DATABASE` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-004
+- `NBA-RESTORE-DATABASE` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-005
 - `NBA-SECURITY-READONLY` priority 15: **EXECUTABLE** — standing-authorized safe work
 - `NBA-MOBILE-READONLY` priority 20: **EXECUTABLE** — standing-authorized safe work
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **EXECUTABLE** — standing-authorized safe work

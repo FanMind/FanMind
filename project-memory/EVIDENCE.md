@@ -197,4 +197,17 @@ Implementation status and acceptance status are deliberately separate.
 - State-machine result: highest accepted progression remains `TARGET_COMPATIBLE`; extension prerequisite satisfied.
 - Acceptance: COUNTERCHECKED_EXTENSION_BASELINE
 
+## FM-EV-018
+- Related: FM-RST-001 / issue #944
+- Date: 2026-08-26
+- Target: exact reviewed `main` `618bce9bc00fe4722c91d5fcf5fed3657a3d8372`; controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946`; SSH endpoint `138.124.213.66:22`
+- Type: owner-supplied controller terminal output + controller source-order countercheck + current GitHub absence evidence
+- Reference: owner authorization issue #944 comment `5385992305`; prepared-controller comment `5386014235`; accepted read-only run `32582640853` and Host-2 job `97054248185` referenced by the controller.
+- Result: the controller emitted `ACCEPTED_READINESS_EVIDENCE=PASS` and `READINESS_TO_AUTHORIZED_MAIN_RUNTIME_DRIFT=NONE`, then failed with `ssh: connect to host 138.124.213.66 port 22: Connection timed out` and `DATABASE_RESTORE_CONTROLLER=FAIL`.
+- Independent/source-order evidence: the exact controller bytes hash correctly and call the first restricted remote SSH preflight before JIT generation, protected-environment approval and database workflow dispatch. Current issue/run evidence shows no later Restore workflow run after the last recorded extension closeout.
+- Negative evidence: no remote R4 preflight marker, no JIT, no environment approval, no workflow dispatch, no PostgreSQL connection, no database Restore, no target reset and no Production/Supabase-Staging mutation.
+- Limitations: this does not prove whether the root cause is public-IP/allowlist drift, host firewall, VM/network state or another connectivity fault. Owner-PC public-IP/TCP-22 evidence and exact Exoscale security-group comparison remain required.
+- State-machine result: highest accepted progression remains `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED`. Controller `45054c41...` and authorization `5385992305` are non-reusable; automatic retry forbidden.
+- Acceptance: COUNTERCHECKED_PRE_DISPATCH_FAIL_CLOSED
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

@@ -1,6 +1,6 @@
 # FanMind Current State
 
-Last reconciled: 2026-08-23
+Last reconciled: 2026-08-26
 
 ## Mandatory restart point
 
@@ -100,6 +100,9 @@ Do not create artificial browser RLS policies merely to silence INFO advisories 
 - The separately authorized extension-baseline provisioning on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6` committed only `pg_stat_statements` 1.11, `supabase_vault` 0.3.1 and `uuid-ossp` 1.1 plus the already proven member-owner correction. Precommit receipt binding, mutation commit, full receipt contract, canonical ACL postcheck and postcommit read-only postcheck all passed.
 - Current extension evidence is exact: five required descriptors, 97 records, extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. Backup, Verification, Source commit and reset receipt bindings remained unchanged. Issue #944 comment `5385843508` records the success and all forbidden non-actions.
 - Run `32594374666`, runner IDs `43`/`44`, the prior database authorization and the extension authorization are consumed. Any database Restore still requires a new exact R4 authorization and fresh mutable-evidence preflight. Automatic retry, target reset and any Production/Supabase-Staging write remain forbidden.
+- The owner later granted the next exact database-Restore scope in issue #944 comment `5385992305`; controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` was prepared in comment `5386014235` for reviewed `main` `618bce9bc00fe4722c91d5fcf5fed3657a3d8372`.
+- On 2026-08-26 that controller printed only `ACCEPTED_READINESS_EVIDENCE=PASS` and `READINESS_TO_AUTHORIZED_MAIN_RUNTIME_DRIFT=NONE`, then its first SSH call to `138.124.213.66:22` timed out. The controller source places that SSH preflight before JIT creation, environment approval and workflow dispatch; current GitHub evidence contains no later Restore run. Therefore no remote preflight, JIT, protected approval, workflow dispatch, PostgreSQL connection or database/Production/Supabase-Staging mutation occurred.
+- The controller explicitly forbids automatic retry. Authorization/comment `5385992305` and controller `45054c41...` must not be reused. Current side state is `RECONCILIATION_REQUIRED` at the unchanged highest accepted progression `TARGET_COMPATIBLE`.
 
 ### Operator-session foundation — revalidate before use
 
@@ -159,7 +162,7 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 ## Exact next safe sequence
 
 1. **FM-SEC-001:** read-only Production trigger-hardening verify on exact deployed commit; classify Staging RPC/leaked-password settings; no mutation yet.
-2. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. The next transition is the separately protected isolated database Restore only after a new exact R4 authorization; revalidate all mutable runner/host/target/backup/TLS evidence immediately beforehand.
+2. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
 3. Mobile external read-only resource reconciliation, then signing/device/store acceptance.
 4. Plus/Ultra product/quality/cost/Stripe lifecycle closure.
 5. Meta Events Manager + final non-Social security acceptance.

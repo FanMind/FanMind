@@ -40,6 +40,14 @@
       "status": "COUNTERCHECKED",
       "observed_at": "2026-08-23T13:53:00+02:00",
       "source": "Exact main c627fc2d8956768091c88e3a3baaf0b882b8d2d6 / final extension controller PASS / issue #944 comment 5385843508"
+    },
+    {
+      "id": "EV-RESTORE-SSH-TIMEOUT-20260826",
+      "gate": "restore",
+      "class": "restore_host",
+      "status": "RECONCILIATION_REQUIRED",
+      "observed_at": "2026-08-26T18:00:00+02:00",
+      "source": "Owner-supplied controller 45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946 terminal output / source-order countercheck / no later Restore run"
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

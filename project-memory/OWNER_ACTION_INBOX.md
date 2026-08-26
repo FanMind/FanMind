@@ -26,16 +26,30 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Evidence: issue #944 comment `5385843508`; final controller PASS output.
 - Safety: no database Restore, target reset, JIT/workflow dispatch or Production/Supabase-Staging write. Authorization consumed; do not repeat.
 
-## FM-RST-OWNER-004 — New exact isolated database-Restore authorization
+## FM-RST-OWNER-004 — Exact isolated database-Restore authorization after extension closeout
+- Status: CONSUMED_PRE_DISPATCH_FAIL_CLOSED
+- Where: only the existing isolated `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore` target through the reviewed protected database-Restore workflow.
+- Result: authorization comment `5385992305` and controller SHA-256 `45054c41...` were attempted on 2026-08-26. The controller stopped at its first SSH connection to `138.124.213.66:22` after local readiness/main-drift markers. No remote preflight, JIT, protected approval, workflow dispatch, PostgreSQL connection or write occurred.
+- Forbidden: no automatic retry or reuse of controller `45054c41...`/authorization `5385992305`; no Production/Supabase-Staging target or write, target reset, reuse of run `32594374666`, runners `43`/`44` or unrelated R4 mutation.
+- Risk: R4
+- Evidence: issue #944 comments `5385992305`/`5386014235`; exact owner-supplied controller output; controller source order; absence of a later Restore run in current GitHub evidence.
+
+## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
+- Status: DEFERRED_BY_OWNER
+- Where: the owner's Windows PC and, only if the result proves allowlist drift, Exoscale security group for `fanmind-restore-01`.
+- Required first evidence: current public IPv4 plus detailed `Test-NetConnection 138.124.213.66 -Port 22`; do not rerun the Restore controller.
+- Possible later action: replace only the stale SSH source `/32` with the observed owner IPv4 after a separate exact infrastructure authorization and read-only target/scope confirmation.
+- Forbidden: broad CIDR, `0.0.0.0/0`, unrelated firewall/security-group edits, VM/database changes, Restore/JIT/workflow actions or Production/Supabase-Staging access.
+- Risk: R4
+- Duration class: short owner-PC diagnostic; provider mutation remains separate.
+
+## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - Status: DEFERRED_BY_OWNER
 - Where: only the existing isolated `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore` target through the reviewed protected database-Restore workflow.
-- Why: the five-extension receipt prerequisite is now satisfied, but the state machine remains at `TARGET_COMPATIBLE`; the database write is a separate R4 transition.
-- Exact permitted scope when resumed: one new exact-main-bound database Restore using the accepted Backup/Verification/Source/reset-receipt tuple, fresh mutable policy/host/target/backup/TLS preflight, protected `restore-drill` approval and fresh sequential one-job JITs.
-- Forbidden: Production/Supabase-Staging target or write, target reset, reuse of run `32594374666`, reuse of runners `43`/`44`, automatic retry or any unrelated R4 mutation.
+- Resume trigger: SSH reachability and any allowlist drift are reconciled, repository evidence closeout is merged, exact new `main` is known, and all mutable runner/host/target/backup/TLS preflights are fresh.
+- Required scope: one new controller and one exact protected database-Restore authorization; never reuse controller `45054c41...` or authorization `5385992305`.
 - Risk: R4
-- Duration class: protected single database-Restore run
-- Resume trigger: owner grants a fresh exact authorization after this evidence closeout is merged and the new exact `main` SHA is known.
-- Do not ask before: repository evidence closeout and exact new binding are ready.
+- Forbidden: Production/Supabase-Staging target or write, target reset, automatic retry or unrelated R4 mutation.
 ## FM-GOV-OWNER-001 — Protect `main`
 - Status: DEFERRED_BY_OWNER
 - Where: GitHub repository/organization Rulesets or Branch Protection UI

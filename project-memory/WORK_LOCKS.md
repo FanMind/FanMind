@@ -11,7 +11,16 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
-None.
+## LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826
+- Task: FM-RST-001
+- Status: ACTIVE
+- Holder: ChatGPT Restore SSH-timeout reconciliation session 2026-08-26
+- Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / pending.
+- Acquired: 2026-08-26 Europe/Vienna after exact controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` stopped at its first SSH call with a TCP timeout.
+- Risk: R4 evidence reconciliation; repository documentation and read-only provider checks only.
+- Scope: record the owner authorization, controller attempt, pre-SSH/pre-JIT/pre-dispatch failure, preserve `TARGET_COMPATIBLE`, and define the owner-only connectivity and later reauthorization boundary.
+- Resume from: no Restore controller retry. First obtain the Windows public-IP/TCP-22 result, then reconcile the Exoscale `/32` allowlist through a separately authorized provider action if required.
+- Safety: this lock authorizes no database Restore, target reset, JIT, workflow dispatch, environment approval, Production/Supabase-Staging write or Exoscale security-group mutation.
 
 ## Released locks
 

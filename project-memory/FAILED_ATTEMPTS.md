@@ -121,3 +121,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: execution identity and controller-local predicate/hash implementations differed from the already proven receipt helper semantics.
 - Decision: use the authorized bootstrap-superuser boundary only for the bounded extension transaction, compare the exact predicate values directly, and compute the ACL fingerprint with the same canonical LF encoding as the receipt helper.
 - Do not repeat: do not weaken the expected receipt, accept semantic ACL rows with a mismatched hash, bypass the canonical hash, rerun an earlier controller SHA or treat automatic rollback as successful provisioning.
+
+## FM-FAIL-013
+- Date: 2026-08-26
+- Status: RECONCILED_FAIL_CLOSED
+- Area: owner-PC SSH reachability to isolated Restore host
+- Attempt: run exactly authorized database-Restore controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` against `138.124.213.66`.
+- Result: local GitHub/readiness binding passed, then the first SSH connection timed out on port 22. No remote preflight, JIT generation, protected-environment approval, workflow dispatch, PostgreSQL connection or write occurred.
+- Cause: not yet proven. Most likely candidates are owner public-IP drift versus the Exoscale SSH source `/32`, or host/network reachability. Do not assert the cause until the Windows public-IP/TCP-22 evidence and exact security-group state are compared.
+- Decision: preserve `TARGET_COMPATIBLE`, set side state `RECONCILIATION_REQUIRED`, require owner-PC reachability evidence, and treat any Exoscale allowlist mutation plus later Restore authorization as separate exact R4 boundaries.
+- Do not repeat: no automatic retry and no reuse of controller `45054c41...` or authorization `5385992305`; never broaden SSH to `0.0.0.0/0` or another non-exact CIDR.
