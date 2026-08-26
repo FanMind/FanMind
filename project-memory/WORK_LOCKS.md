@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-MOB-001-PREVIEW-READINESS-20260826
+- Task: FM-MOB-001
+- Status: ACTIVE
+- Holder: ChatGPT Mobile preview read-only readiness session 2026-08-26
+- Branch/PR: `mobile-preview-readonly-readiness-20260826` / pending
+- Acquired: 2026-08-26 20:30 Europe/Vienna
+- Risk: R3 external resource evidence; protected read-only Expo/EAS lookup only
+- Scope: reconcile the five historical fail-closed resource-readiness runs, bind the current hardened workflow to exact `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`, and run at most one `preview` resource-readiness check.
+- Safety: no EAS build, signing, submit, update, project initialization, credential creation, Supabase/Auth/DB change, Store action, Restore/JIT/controller retry or Production/Supabase-Staging data write is authorized by this lock. Any missing or mismatched binding must fail closed and be recorded without retry.
+- Resume from: publish this lock and receipt before dispatch; then inspect the exact workflow job and reconcile the result before any further Mobile action.
+
 ## Released locks
 
 ## LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826

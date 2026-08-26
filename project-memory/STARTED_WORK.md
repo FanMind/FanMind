@@ -30,18 +30,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: yes, first for `FM-RST-OWNER-005` connectivity evidence and, only after reconciliation, `FM-RST-OWNER-006` new exact protected database-Restore authorization.
 ## FM-MOB-001
 - Started: before 2026-08-19
-- Updated: 2026-08-21
+- Updated: 2026-08-26
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
-- Branch/PR: `main`; PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
-- Work lock: `LOCK-FM-MOB-001-EAS-PROJECT-BINDING-20260821` RELEASED.
+- Branch/PR: active read-only evidence branch `mobile-preview-readonly-readiness-20260826` / pending; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
+- Work lock: `LOCK-FM-MOB-001-PREVIEW-READINESS-20260826` ACTIVE for at most one protected `preview` resource-readiness check. The prior EAS-project-binding lock is released.
 - Dependencies: Supabase redirect, EAS project/environments/token, signing credentials, Apple Developer/App Store Connect for iOS.
 - Assumptions: repository CI/build evidence does not prove a signed device build; a successful EAS lookup alone does not prove that the returned owner, slug and project ID match the protected FanMind binding.
-- Completed so far: native app core, auth/recovery, SecureStore/Purge, contacts/knowledge/AI/followups, offline cache, push foundation, icon/splash/privacy/store metadata and CI/control workflows. PR #988 added a bounded verifier for the redacted `eas project:info` report, rejects owner/slug/ID drift and unsafe report files, wires it before both read-only readiness and any signed internal build queue, and exercises parser plus workflow wiring through positive and negative CI self-tests. Exact head `6f42a5897aabb3387a74149010dee2b5fb2c92cd` passed Project Memory Guard/Quality/Status, FanMind CI, Landing Language CI, Supply Chain Security, CodeQL and Browser E2E before merge `e20efd475e475101226f266118b9cfed7972243a`.
+- Completed so far: native app core, auth/recovery, SecureStore/Purge, contacts/knowledge/AI/followups, offline cache, push foundation, icon/splash/privacy/store metadata and CI/control workflows. PR #988 added a bounded verifier for the redacted `eas project:info` report, rejects owner/slug/ID drift and unsafe report files, wires it before both read-only readiness and any signed internal build queue, and exercises parser plus workflow wiring through positive and negative CI self-tests. Exact head `6f42a5897aabb3387a74149010dee2b5fb2c92cd` passed Project Memory Guard/Quality/Status, FanMind CI, Landing Language CI, Supply Chain Security, CodeQL and Browser E2E before merge `e20efd475e475101226f266118b9cfed7972243a`. On 2026-08-26 all five historical resource-readiness jobs were reconciled: development job `91521865376`, preview jobs `91521865677`/`93228923133`/`95410943740` and production job `91521871719` all had blank `EXPO_TOKEN` plus all four expected binding variables and failed closed with `eas_project_lookup_failed` before public-environment verification. The latest was 2026-08-17 and predates #988.
 - Still open: real read-only EAS environment verification; redirect/device recovery; EAS/signing; signed Android + real device; iOS/TestFlight + real device; push/store portal evidence.
-- Evidence so far: issues #584/#690, Source of Truth, mobile docs/tests, Expo EAS CLI `project:info` source contract, PR #988 exact-head workflow set, countercheck comment and merge commit.
-- Exact next step: run the existing protected, main-bound Mobile release resource-readiness workflow for the intended non-Production environment and bind its external EAS result to the exact merged commit. Do not queue a build or mutate credentials in that read-only step.
+- Evidence so far: issues #584/#690, Source of Truth, mobile docs/tests, Expo EAS CLI `project:info` source contract, PR #988 exact-head workflow set, countercheck comment and merge commit, historical runs `30757411663`/`30757411853`/`30757414324`/`31307035292`/`32037572256` and their redacted job logs.
+- Exact next step: after the active lock/receipt is visible, run exactly one protected `preview` resource-readiness workflow on exact current `main` and reconcile its fail-closed or successful result. Do not queue a build, sign, submit, update or mutate credentials/providers.
 - Owner action needed: only where protected EAS environment/account access, Supabase Redirect, signing, stores and real-device acceptance require external action.
 
 ## FM-AI-001

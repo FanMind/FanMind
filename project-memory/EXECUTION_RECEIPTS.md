@@ -259,3 +259,21 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Result status: COUNTERCHECKED_READ_ONLY_PRESTATE_CONFIRMED; overall FM-SEC-001 remains open and unremediated.
 - Open follow-up: any later `apply`, Auth provider change or Staging exception acceptance is separate under `FM-SEC-OWNER-001`/`002`; do not dispatch verify again. Continue the generated parallel-safe Mobile read-only task while those and Restore remain deferred.
 - Work lock released: yes; `LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826` was released after #1008 exact-head acceptance, issue evidence and merge.
+
+## RECEIPT-FM-MOB-001-PREVIEW-READINESS-20260826-2030
+- Task: FM-MOB-001
+- Started: 2026-08-26 20:30 Europe/Vienna
+- Finished: pending exact protected workflow evidence and repository countercheck
+- Branch/PR: `mobile-preview-readonly-readiness-20260826` / pending
+- Preflight checked: Project Memory current/NBA/started-work/locks/external-acceptance registers; current Mobile release runbooks, app identity/EAS profiles, protected resource-readiness and signed-build workflows; exact EAS-project-info verifier; all five historical resource-readiness runs/jobs/logs; current GitHub `main` and latest normal Production deploy evidence.
+- Prior attempts found: all five historical readiness runs failed closed in the exact EAS project lookup step. Development job `91521865376`, preview jobs `91521865677`/`93228923133`/`95410943740` and production job `91521871719` each had blank Expo token and blank expected owner/project/Supabase/API bindings, then emitted `eas_project_lookup_failed`; the public-environment step was skipped. The latest run predates the exact project-binding verifier merged in #988, so none is current acceptance evidence.
+- Dependency result: repository workflow is main-only, protected-environment-bound and contains only pinned `project:info` plus `env:exec`; build/submit/update gates are fixed false. Exact current reviewed `main` is `32c08ba6877d6aaaf61110c02464ee95d6bc6301`. External `mobile-preview` values remain unproven until one current runtime check.
+- Planned evidence: local verifier/policy tests; visible active repository lock; at most one `preview` workflow dispatch with confirmation `verify-mobile-release-resources`; exact run/job/step logs; redacted EAS project/public-environment result; proof that build/sign/submit/update/credential/provider paths stayed unused; exact-head Project Memory/CI countercheck.
+- Changes made: opened the scoped work lock and execution receipt and recorded the historical fail-closed baseline. No workflow dispatch, EAS/Supabase/Store mutation or signed build has occurred yet.
+- Checks/tests: `mobile-eas-project-info-verify.mjs --self-test` passed; focused Mobile release/device/store tests passed 28/28. Project Memory and exact-head checks remain pending after this pre-dispatch record.
+- Final diff counterchecked: yes for the pre-dispatch documentation scope; final runtime-evidence update and exact-head PR checks remain pending.
+- Regression/security countercheck: fail-closed. Missing/mismatched protected values must stop before public-environment acceptance, and any build, signing, submit, update, project initialization, credential creation, Supabase/Auth/DB change, Restore/JIT/controller retry or Production/Supabase-Staging data write is forbidden.
+- Evidence produced: historical runs/jobs and local focused checks; current protected `preview` run pending.
+- Result status: IN_PROGRESS_READ_ONLY.
+- Open follow-up: publish the lock/receipt before dispatch, then run at most one current `preview` check and reconcile its result without retry.
+- Work lock released: no; `LOCK-FM-MOB-001-PREVIEW-READINESS-20260826` is active.
