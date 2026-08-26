@@ -146,11 +146,11 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: RECONCILIATION_REQUIRED
 - Risk: R3
 - Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
-- Branch/PR: `security-readonly-refresh-after-timeout-20260826` pending exact-head PR countercheck; prior discovery branch `automation/postmerge-reconcile-20260820`; issue #982.
-- Work lock: `LOCK-FM-SEC-001-READONLY-REFRESH-20260826`; read-only audit/reconciliation only. Acquire a separate mutating lock and exact authorization before any Production DB/Auth change.
+- Branch/PR: read-only refresh PR #1006 exact head `d9408c825aa735c5062a87cfc1b927312d094ad3`, squash merge `78333aae9d075a67a2d550a266d24cb8b9f443a4`; prior discovery branch `automation/postmerge-reconcile-20260820`; issue #982 comment `5428919200`.
+- Work lock: `LOCK-FM-SEC-001-READONLY-REFRESH-20260826` released after exact-head acceptance and merge. Acquire a new scoped lock plus exact authorization before any Production DB/Auth change.
 - Dependencies: FM-DEP-010; exact deployed Production commit; controlled trigger-hardening checksum/runner; current Production/Staging Supabase projects; provider/Auth access for leaked-password decision.
 - Assumptions: Production trigger warnings indicate pre-apply/not-accepted state; Staging authenticated workspace RPC may be intentional but its exception status must be explicitly reviewed.
-- Completed so far: 2026-08-26 provider advisors and direct Production/Staging function/ACL catalogs reconfirm the prior state without drift; the existing controlled Production SQL/runner offline contract reports ready. Staging RPC exposure matches the intentional migration ACL/search-path design and remains an exception-review item rather than unexplained drift.
+- Completed so far: 2026-08-26 provider advisors and direct Production/Staging function/ACL catalogs reconfirm the prior state without drift; the existing controlled Production SQL/runner offline contract reports ready. Staging RPC exposure matches the intentional migration ACL/search-path design and remains an exception-review item rather than unexplained drift. PR #1006 passed every exact-head gate, merged, and was recorded in issue #982.
 - Still open: protected exact-deployed-commit Production verify; explicit Staging RPC exception acceptance; leaked-password setting decision/evidence; only then any separately authorized mutation and post-advisor countercheck.
 - Evidence so far: FM-EV-014 and refreshed FM-EV-019; live Supabase security advisors/catalog ACLs; current controlled SQL, Production hardening runbook and workspace provisioning migration.
 - Exact next step: run the existing read-only Production hardening verify against the exact deployed commit; do not Apply in this reconciliation.
