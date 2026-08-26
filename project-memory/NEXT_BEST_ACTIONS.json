@@ -60,12 +60,13 @@
       "priority": 40,
       "task": "FM-META-001",
       "gate": "meta_security",
-      "title": "Meta/Security technischen Restpfad vorbereiten",
-      "requires_owner": false,
+      "title": "Externe Meta-Abnahme bereitstellen",
+      "requires_owner": true,
       "parallel_safe": true,
+      "deferred_owner_id": "FM-META-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Reconcile Pixel/no-PII/security tests, Meta foundations and current non-Social smoke evidence. Keep Events Manager, App Review and provider-account acceptance external."
+      "instruction": "FM-EV-023 completes the bounded technical read-only reconciliation. Do not rerun its three workflows or repeat Production activation/deploy. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
     },
     {
       "id": "NBA-PHASE3-SOCIAL",

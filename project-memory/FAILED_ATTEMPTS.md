@@ -141,3 +141,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: the protected `mobile-preview` environment supplied blank `EXPO_TOKEN` and blank expected EAS owner/project, Supabase project refs and API origin. The project-info verifier was never reached, so no external binding was accepted.
 - Decision: defer the exact protected environment/account configuration to `FM-MOB-OWNER-001`, preserve `IMPLEMENTED_NOT_VERIFIED`, and continue only parallel-safe work.
 - Do not repeat: do not rerun this failed job/run, invent owner/project values, initialize a new EAS project, expose credentials, queue a signed build, submit/update, or mutate Supabase/Auth/Production. After configuration require a new lock and exactly one fresh read-only check.
+
+## FM-FAIL-015
+- Date: 2026-08-26
+- Status: RECONCILED_READ_ONLY_PROCESS_FAILURE
+- Area: Meta Staging rollout-state sequencing
+- Attempt: collect a direct transaction-level read-only Meta catalog inventory under the visible #1014 lock before the shared read-only rollout-state workflow had classified the exact Staging schema.
+- Result: the query succeeded with `transaction_read_only=on`, selected only catalog metadata and rolled back; the later exact-main continuation workflow returned `STAGING_DATABASE_ROLLOUT_STATE=PASS`. No row/schema write, Apply, acceptance, runtime activation or provider action occurred, but the order violated the mandatory `AGENTS.md` gate.
+- Cause: the work-lock scope permitted both evidence types but did not explicitly bind the direct query behind the shared rollout-state decision, so the safe read-only evidence was collected in the wrong sequence.
+- Decision: preserve the result only as bounded read-only evidence with this process finding; do not rerun it. No further direct Meta Staging catalog access is allowed under the current lock. Any future Meta Staging database action must first consume a fresh shared rollout-state decision for the same exact commit and target and stop on partial, drifted, stale, mismatched or `block` state.
+- Do not repeat: never treat transaction-level read-only mode as a substitute for the required shared rollout-state gate, and never erase an ordering failure merely because a later workflow returns `PASS`.

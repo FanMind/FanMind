@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Next action: `NBA-META-TECHNICAL-RECONCILE`
-- Next action title: Meta/Security technischen Restpfad vorbereiten
+- Next action: `NBA-RESTORE-DATABASE`
+- Next action title: SSH-Zugang reconciliieren und Restore neu autorisieren
 
 ## Finishline gates
 
@@ -31,6 +31,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - FM-MOB-OWNER-001 — Configure protected Mobile preview resources
 - FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
 - FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
+- FM-META-OWNER-001 — Complete external Meta acceptance
 - FM-GOV-OWNER-001 — Protect `main`
 
 ## Mandatory new-chat / project-entry rule

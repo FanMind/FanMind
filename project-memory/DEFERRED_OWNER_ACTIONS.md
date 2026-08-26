@@ -83,6 +83,14 @@ Updated: 2026-08-26 Europe/Vienna
 - Deferred action: after the Stripe conformance code review, separately authorize exact-commit Staging write freeze -> controlled general Billing ledger Apply/postflight -> capture-only cutover -> canonical/downstream reconciliation -> zero conflicts -> exactly one rollback-only AI lifecycle acceptance through the applied ledger.
 - Safety: no live Stripe action, Production, automatic projection enablement, unpinned SQL, paid-tier activation or acceptance without full rollback and exact job/log countercheck.
 
+## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
+- Related task: `FM-META-001` / `FM-SOC3-001`.
+- Status: DEFERRED_BY_OWNER.
+- Proven foundation: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only technical path. FM-EV-023 counterchecks the current exact-main repository no-PII/security boundary and isolated Staging content/continuation/catch-up metadata without writes, activation or provider events.
+- Deferred action: in an owner-controlled normal browser and the correct Meta Business/Dataset, capture positive and negative Events Manager/Test Events evidence: no event before consent, exact PageView-only reception after consent/safe navigation, no unexpected conversions and no PII/Advanced Matching. Obtain final privacy/legal acceptance separately. Meta Business permissions/App Review and real Facebook/Instagram provider E2E remain part of the later Social gate.
+- Resume rule: do not rerun FM-EV-023 workflows or repeat Production ENV/build/deploy. Any real event emission, provider/account/OAuth/App Review action, credential use, SQL Apply, worker/runtime activation or Production change requires its own exact scope and current evidence.
+- Safety: no CompleteRegistration/Lead/Purchase, Advanced Matching, CAPI, customer data, CRM identifiers or secret values may be introduced through this action.
+
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
 - Status: DEFERRED_BY_OWNER.

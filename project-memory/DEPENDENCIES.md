@@ -30,11 +30,12 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-004
 - From: FM-META-001
-- Requires: Meta Events Manager normal-browser evidence, Meta test/business assets, App Review/permissions for real integrations, no-PII/privacy acceptance and final Security/Production smoke.
+- Requires: Meta Events Manager normal-browser evidence, Meta test/business assets, App Review/permissions for real integrations, provider-side no-PII/no-unexpected-conversion evidence, privacy/legal acceptance and final Security/Production smoke.
 - Type: provider + legal + technical
 - Status: ACTIVE
-- Updated: 2026-08-19
-- Rule: technical Pixel code and Staging migrations are not external Meta acceptance.
+- Updated: 2026-08-26
+- Current evidence: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only path. FM-EV-023 read-only counterchecks the exact-main Meta Staging content, continuation and catch-up foundation without writes or activation.
+- Rule: the technical Pixel path and current Staging metadata are proven foundations, not external Meta Events Manager/App Review/legal acceptance. Do not repeat Production activation or the FM-EV-023 read-only runs as a substitute for external evidence.
 
 ## FM-DEP-005
 - From: FM-SOC3-001
