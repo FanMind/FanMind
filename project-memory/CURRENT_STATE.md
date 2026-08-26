@@ -54,9 +54,9 @@ Project Memory V8 is **ACCEPTED on `main`**.
 6. **Phase 7 — FM-SOC7-001, R3:** TikTok/X/Discord/conditional OnlyFans real connectors not accepted.
 7. **Sales handoff — FM-SALES-001, R2:** blocked until required Phase-3/Phase-7 acceptance and final Production demo truth.
 8. **Legal/Tax/AVV — FM-LEGAL-001, R3:** external approvals remain separate; do not guess.
-9. **Live Supabase security reconciliation — FM-SEC-001, R3:** issue #982; provider warnings are current and not yet accepted/remediated.
+9. **Live Supabase security reconciliation — FM-SEC-001, R3:** issue #982; protected read-only run `32997946812` confirmed the exact pre-hardening Production state, but remediation and the separate Auth-setting changes are not authorized or accepted.
 
-## Live Supabase target/security evidence — 2026-08-20
+## Live Supabase target/security evidence — 2026-08-26
 
 Both Supabase projects are currently `ACTIVE_HEALTHY` in `eu-west-3`.
 
@@ -69,11 +69,11 @@ Fresh advisors report:
 - leaked-password protection disabled;
 - RLS-enabled/no-policy INFO findings on multiple service-only/internal tables.
 
-Repository truth already contains the checksum-pinned transactional control `supabase/controlled/20260806203023_harden_trigger_function_privileges.sql` and `docs/operations/TRIGGER_FUNCTION_HARDENING_PRODUCTION.md`. That runbook explicitly states merge/deploy does **not** auto-apply the Production DB mutation. Therefore code-present is not live-accepted. Do not rebuild the hardening path; first run its existing read-only exact-commit verify, then use only the protected Apply if separately authorized, followed by postflight/advisor re-scan.
+Repository truth already contains the checksum-pinned transactional control `supabase/controlled/20260806203023_harden_trigger_function_privileges.sql` and `docs/operations/TRIGGER_FUNCTION_HARDENING_PRODUCTION.md`. Protected run `32997946812` on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` passed the full read-only Production preflight, returned the expected fixed `hardening_not_ready` diagnostic, and passed the always-run read-only postflight on the same release. Fresh advisors remained unchanged. Therefore code-present is implementation evidence and the exact live pre-state is now proven, but no remediation was applied. Use only the separate protected Apply when explicitly authorized, followed by postflight and advisor re-scan.
 
 ### Staging
 
-Fresh advisors report authenticated execution of `ensure_current_user_workspace(...)` as `SECURITY DEFINER` and leaked-password protection disabled. The migration intentionally grants this RPC to authenticated users, pins search path, checks `auth.uid()`/`auth.role()` and derives commercial terms server-side. Treat it as an intentional-exception candidate requiring explicit current security review, not as permission to revoke blindly.
+Fresh advisors report authenticated execution of `ensure_current_user_workspace(...)` as `SECURITY DEFINER` and leaked-password protection disabled. Direct catalog evidence plus 24/24 focused provisioning tests confirm that the migration revokes `PUBLIC`/`anon`, grants only the intended authenticated call path, pins search path, checks `auth.uid()`/`auth.role()`, serializes per-user provisioning and derives commercial terms server-side. Classify it as a technically constrained intentional-exposure candidate pending explicit policy acceptance, not as permission to revoke blindly. Disabled leaked-password protection on both targets is a separate real Auth-control gap, not an accepted exception.
 
 Do not create artificial browser RLS policies merely to silence INFO advisories for service-only tables.
 
@@ -161,9 +161,9 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 
 ## Exact next safe sequence
 
-1. **FM-SEC-001:** read-only Production trigger-hardening verify on exact deployed commit; classify Staging RPC/leaked-password settings; no mutation yet.
-2. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
-3. Mobile external read-only resource reconciliation, then signing/device/store acceptance.
+1. **FM-MOB-001:** continue the generated parallel-safe Mobile external resource reconciliation while earlier Restore and Security mutations remain owner-deferred; do not create credentials, sign, submit or mutate providers.
+2. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions; do not infer authorization from the read-only verify.
+3. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
 4. Plus/Ultra product/quality/cost/Stripe lifecycle closure.
 5. Meta Events Manager + final non-Social security acceptance.
 6. Real Phase-3 channels.

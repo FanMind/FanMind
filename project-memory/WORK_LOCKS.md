@@ -15,12 +15,12 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-SEC-001
 - Status: ACTIVE
 - Holder: ChatGPT protected Production read-only verification session 2026-08-26
-- Branch/PR: `security-production-readonly-verify-20260826` / pending
+- Branch/PR: `security-production-readonly-verify-20260826` / #1008; initial exact head `cf24e854c8abab35cb1bde2c801c98b76a0fc9f3`, final evidence head pending
 - Acquired: 2026-08-26 20:02 Europe/Vienna
 - Risk: R3 protected Production evidence collection; read-only database verification and repository evidence only
 - Scope: bind the existing checksum-pinned Production trigger-function hardening verifier to exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`, run exactly one `verify` action, and reconcile the preflight/action/postflight evidence.
 - Safety: `apply`, SQL/Auth/RLS/ACL/provider mutations, Restore/JIT/controller retry and Production/Supabase-Staging writes are outside this lock. The expected current-state result is fail-closed `hardening_not_ready`; any other result requires reconciliation before continuation.
-- Resume from: inspect the exact workflow run and all three control stages, then update the open execution receipt and issue #982 before releasing this lock.
+- Resume from: run `32997946812` job `98271985321` is fully inspected and fail-closed as expected. Publish the final evidence head, record issue #982, complete exact-head checks, merge #1008, then release this lock. Do not dispatch again.
 
 ## Released locks
 

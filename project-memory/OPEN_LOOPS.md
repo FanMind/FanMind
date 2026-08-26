@@ -101,10 +101,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-013
 - Related: FM-SEC-001 / issue #982
 - Status: OPEN
-- Updated: 2026-08-20
-- Gap: live Supabase advisors show Production trigger-function privilege/search-path warnings and leaked-password protection disabled; Staging reports an authenticated `SECURITY DEFINER` workspace RPC plus leaked-password protection disabled. Repository hardening code exists but live accepted post-state is not yet proven.
+- Updated: 2026-08-26
+- Gap: protected read-only run `32997946812` now proves the exact Production pre-hardening state, and the Staging RPC is classified as technically constrained intentional exposure. Production remediation, explicit Staging exception acceptance and leaked-password protection on both targets remain unaccepted/unapplied.
 - Close when: exact-target read-only catalog/ACL/advisor evidence classifies every warning as remediated or explicitly accepted by policy; any approved state-changing action follows the existing R3 protected path with rollback/postflight; fresh advisor scans are bound to exact targets.
-- Next check: existing read-only Production trigger-hardening verify against the exact deployed commit; separately review Staging RPC intent and leaked-password provider setting. No mutation from this loop.
+- Next check: only after explicit owner resume, run one exact protected Production Apply and post-advisor scan under `FM-SEC-OWNER-001`; decide the separate Staging exception/Auth setting path under `FM-SEC-OWNER-002`. No mutation is standing-authorized.
 
 ## Rules
 - Every `PARTIAL`, `BLOCKED`, `IMPLEMENTED_NOT_VERIFIED` or `RECONCILIATION_REQUIRED` task must have either an open-loop entry or an explicit reason why no follow-up is required.

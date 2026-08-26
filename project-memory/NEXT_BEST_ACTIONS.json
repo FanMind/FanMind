@@ -17,16 +17,17 @@
       "instruction": "Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging."
     },
     {
-      "id": "NBA-SECURITY-READONLY",
+      "id": "NBA-SECURITY-PROTECTED",
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Live Supabase Security read-only reconciliieren",
-      "requires_owner": false,
+      "title": "Production-Härtung und Auth-Schutz separat freigeben",
+      "requires_owner": true,
       "parallel_safe": true,
+      "deferred_owner_id": "FM-SEC-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Run the existing read-only Production trigger-hardening verify against the exact deployed commit; classify the current Staging ensure_current_user_workspace SECURITY DEFINER exposure and leaked-password settings; record current evidence and contradictions. Do not Apply SQL, change Auth settings or mutate Production/Staging in this action."
+      "instruction": "Read-only run 32997946812 proved hardening_not_ready on exact deployed main. Require a separate exact authorization before the protected Production trigger-hardening Apply. Keep Staging RPC exception acceptance and leaked-password protection changes explicit and separate; no provider mutation is standing-authorized."
     },
     {
       "id": "NBA-MOBILE-READONLY",

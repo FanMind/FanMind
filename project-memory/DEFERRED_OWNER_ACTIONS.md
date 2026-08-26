@@ -47,6 +47,20 @@ Updated: 2026-08-26 Europe/Vienna
 - Resume rule: do not create a JIT, request environment approval or dispatch a database workflow before the new exact authorization. Never reuse controller `45054c41...`, authorization `5385992305`, run `32594374666` or runner IDs `43`/`44`.
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
+## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
+- Related task: `FM-SEC-001`.
+- Status: DEFERRED_BY_OWNER.
+- Proven pre-state: protected read-only run `32997946812`, job `98271985321`, on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; both full Production audits passed and the fresh advisor set remained unchanged.
+- Deferred action: separately authorize exactly one protected `apply` through `trigger-function-hardening-production-control.yml`, bound to the then-current reviewed and deployed commit, checksum-pinned controlled SQL, full preflight/postflight and fresh advisor re-scan.
+- Safety: this read-only session does not authorize Apply. No unrelated SQL, Auth, RLS, provider, Restore or Supabase-Staging mutation may be bundled into the action.
+
+## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- Related task: `FM-SEC-001`.
+- Status: DEFERRED_BY_OWNER.
+- Current classification: leaked-password protection is disabled on both exact Supabase targets and is a real Auth-control gap. Staging `ensure_current_user_workspace(...)` is technically constrained and intentionally authenticated-callable, but explicit exception acceptance is still missing.
+- Deferred action: decide and separately authorize the exact provider setting change for leaked-password protection on each target; explicitly accept or reject the documented Staging RPC exception after reviewing the evidence. Keep these actions separate from trigger hardening and Restore.
+- Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
+
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
 - Status: DEFERRED_BY_OWNER.

@@ -81,8 +81,9 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Requires: exact live Production/Staging Supabase target identity and health; exact deployed Production commit; read-only catalog/ACL/advisor evidence; checksum-pinned controlled trigger-hardening runner/runbook; explicit provider/owner authorization before any Production DB or Auth-setting mutation; fresh post-action advisor evidence.
 - Type: security + external provider + protected mutation
 - Status: ACTIVE
-- Updated: 2026-08-20
-- Rule: read-only reconciliation may proceed automatically. Production DB/Auth mutation must remain fail-closed under its existing protected control; do not revoke intentional RPC access or add browser RLS policies merely to silence an advisor without policy review.
+- Updated: 2026-08-26
+- Evidence: FM-EV-020 and protected read-only run `32997946812` prove the exact Production pre-state and healthy pre/post runtime without mutation; 24/24 focused tests support the constrained Staging RPC classification.
+- Rule: read-only reconciliation is complete for the current state. Production DB/Auth mutation must remain fail-closed under its existing protected control and explicit owner actions `FM-SEC-OWNER-001`/`002`; do not revoke intentional RPC access or add browser RLS policies merely to silence an advisor without policy review.
 
 ## Dependency states
 `ACTIVE`, `SATISFIED`, `BLOCKED`, `SUPERSEDED`.

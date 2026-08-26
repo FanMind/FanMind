@@ -114,14 +114,14 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 
 ## ASM-FM-010
 - Date: 2026-08-20
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Related task: FM-SEC-001
 - Risk: R3
 - Assumption: The Staging `ensure_current_user_workspace(...)` authenticated `SECURITY DEFINER` exposure is safe and intentionally accepted merely because the migration grants it to `authenticated`.
 - Why it matters: intentional code design is not equivalent to current security acceptance of a privileged RPC.
-- Verification source/evidence: migration sets a pinned search path, checks `auth.uid()`/`auth.role()`, constrains commercial options and derives server-owned values, but the live Staging advisor still flags the authenticated SECURITY DEFINER call.
+- Verification source/evidence: direct catalog evidence and 24/24 focused tests confirm the migration revokes `PUBLIC`/`anon`, grants only the intended authenticated call path, pins search path, checks `auth.uid()`/`auth.role()`, serializes per-user provisioning and derives commercial values server-side. The live advisor still correctly reports that an authenticated SECURITY DEFINER path exists.
 - Status: NEEDS_VERIFICATION
-- Recheck trigger: before accepting the advisor exception, changing its grants, or promoting equivalent behavior to Production.
-- Action if false: keep fail-closed; review current catalog ACL/function behavior and tests, then either document an explicit accepted exception or remediate through a separately reviewed migration.
+- Recheck trigger: explicit policy/owner exception decision, any function/grant/catalog drift, or promotion of equivalent behavior to Production.
+- Action if false: current technical classification is constrained intentional exposure, not final policy acceptance. Keep fail-closed; under `FM-SEC-OWNER-002`, explicitly accept the exception or remediate through a separately reviewed migration. Do not revoke blindly.
 
 Do not delete invalid assumptions; preserve them so the same mistaken premise is not reused later.
