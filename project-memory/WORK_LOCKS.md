@@ -11,18 +11,19 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## Released locks
+
 ## LOCK-FM-MOB-001-PREVIEW-READINESS-20260826
 - Task: FM-MOB-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Mobile preview read-only readiness session 2026-08-26
-- Branch/PR: `mobile-preview-readonly-readiness-20260826` / #1010; initial remote head `f00e7b9655b266e3fca19b44bc57b4ae6d6c8acd`, final evidence head pending
+- Branch/PR: `mobile-preview-readonly-readiness-20260826` / #1010; final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`
 - Acquired: 2026-08-26 20:30 Europe/Vienna
+- Released: 2026-08-26 after exact-head Guard/Status/Quality, Landing, FanMind CI, CodeQL and both Browser E2E jobs passed, issue #690 comment `5429569941` recorded the blocker, and #1010 merged.
 - Risk: R3 external resource evidence; protected read-only Expo/EAS lookup only
-- Scope: reconciled the five historical fail-closed runs and exactly one current `preview` run `33000433320`/job `98280538304` on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`; the run failed closed on missing protected configuration.
-- Safety: no EAS build, signing, submit, update, project initialization, credential creation, Supabase/Auth/DB change, Store action, Restore/JIT/controller retry or Production/Supabase-Staging data write is authorized by this lock. Any missing or mismatched binding must fail closed and be recorded without retry.
-- Resume from: publish the final fail-closed evidence, run exact-head PR checks, merge #1010 and release this lock. Do not dispatch again; Mobile then remains deferred to `FM-MOB-OWNER-001`.
-
-## Released locks
+- Scope: reconciled five historical fail-closed runs and exactly one current `preview` run `33000433320`/job `98280538304` on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`; the run failed closed on missing protected configuration.
+- Safety: no EAS build, signing, submit, update, project initialization, credential creation, Supabase/Auth/DB change, Store action, Restore/JIT/controller retry or Production/Supabase-Staging data write occurred.
+- Resume from: do not revive this lock or rerun `33000433320`. Mobile is owner-deferred to `FM-MOB-OWNER-001`; the generated safe task is AI/Billing read-only reconciliation.
 
 ## LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826
 - Task: FM-SEC-001
