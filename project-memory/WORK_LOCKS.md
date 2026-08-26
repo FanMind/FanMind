@@ -11,18 +11,19 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## Released locks
+
 ## LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826
 - Task: FM-SEC-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT protected Production read-only verification session 2026-08-26
-- Branch/PR: `security-production-readonly-verify-20260826` / #1008; initial exact head `cf24e854c8abab35cb1bde2c801c98b76a0fc9f3`, final evidence head pending
+- Branch/PR: `security-production-readonly-verify-20260826` / #1008; final exact head `ed64255f3786eea257011778a40492d6c7c9447e`, squash merge `4efb4eeef07d850fd0fd9117244187cf94bfed41`.
 - Acquired: 2026-08-26 20:02 Europe/Vienna
+- Released: 2026-08-26 after exact-head Guard/Status/Quality, FanMind CI, Landing, CodeQL and Browser E2E passed, issue #982 comment `5429302086` recorded the evidence, and #1008 merged.
 - Risk: R3 protected Production evidence collection; read-only database verification and repository evidence only
-- Scope: bind the existing checksum-pinned Production trigger-function hardening verifier to exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`, run exactly one `verify` action, and reconcile the preflight/action/postflight evidence.
-- Safety: `apply`, SQL/Auth/RLS/ACL/provider mutations, Restore/JIT/controller retry and Production/Supabase-Staging writes are outside this lock. The expected current-state result is fail-closed `hardening_not_ready`; any other result requires reconciliation before continuation.
-- Resume from: run `32997946812` job `98271985321` is fully inspected and fail-closed as expected. Publish the final evidence head, record issue #982, complete exact-head checks, merge #1008, then release this lock. Do not dispatch again.
-
-## Released locks
+- Scope: bound the checksum-pinned Production trigger-function hardening verifier to exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`, ran exactly one `verify`, and reconciled preflight/action/postflight/provider evidence.
+- Safety: no `apply`, SQL/Auth/RLS/ACL/provider mutation, Restore/JIT/controller retry or Production/Supabase-Staging write was authorized or performed.
+- Resume from: do not revive this lock or rerun verify. Protected Apply and Auth/exception decisions are separately owner-deferred as `FM-SEC-OWNER-001`/`002`; the generated safe task is Mobile read-only reconciliation.
 
 ## LOCK-FM-SEC-001-READONLY-REFRESH-20260826
 - Task: FM-SEC-001
