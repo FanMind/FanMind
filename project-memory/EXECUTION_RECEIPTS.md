@@ -98,6 +98,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 
 A receipt is required for meaningful code/config/infra/governance work. Never include secrets, credentials, private backup material or protected evidence values here.
 
+## RECEIPT-FM-AI-001-READONLY-RECONCILIATION-20260826-2101
+- Task: FM-AI-001
+- Started: 2026-08-26 21:01 Europe/Vienna
+- Finished: pending protected read-only runtime evidence and repository countercheck
+- Branch/PR: `ai-billing-readonly-reconciliation-20260826` / pending
+- Preflight checked: Project Memory Protocol/Current State/Finishline/NBA/Handoff/Started Work/Locks/Open Loops/Task Ledger/Dependencies/Decisions/Failed Attempts/External Acceptance; current AI tier configuration, entitlement/lifecycle/ledger policies, controlled SQL, Stripe catalog/webhook/smoke workflows, issue #560, issue #874, historical workflow runs and exact current GitHub/Production main `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`.
+- Prior attempts found: five-price Stripe Test catalog run `31714030044`, webhook-readiness run `31743766290` and signed no-write smoke `31781263978` passed; lifecycle run `31735315959` passed rollback-only while the database was still in legacy service-role CRUD mode; the AI ledger was applied later by run `32038152382`. The general Billing ledger workflow has never run. Historical AI resource-readiness failures are superseded by later Staging evidence and must not be retried automatically.
+- Dependency result: direct 2026-08-26 read-only Supabase catalog evidence confirms the AI ledger tables/functions/ACL/RLS boundary is installed on Staging with zero events and zero unresolved reconciliations. The four general Billing ledger tables are absent, matching their controlled, unapplied design. Plus/Ultra remain fail-closed and no current provider evidence may be treated as activation approval.
+- Planned evidence: local focused regression/offline contract set; visible active repository lock; at most one exact-main read-only run for AI resource readiness, five-price Stripe test catalog and Stripe test webhook endpoint; exact run/job/log review; issue evidence; Project Memory truth reconciliation and exact-head CI/countercheck.
+- Changes made: opened the bounded read-only work lock and receipt; inspected existing implementation/evidence; ran one explicit `BEGIN; SET TRANSACTION READ ONLY` Staging metadata query. No GitHub workflow has been dispatched under this receipt yet.
+- Checks/tests: focused AI/Stripe/Billing policy set passed 175/175; AI tier readiness correctly reports Standard READY and Plus/Ultra BLOCKED; offline Staging acceptance, catalog, webhook, signed-smoke, AI-ledger and Billing-ledger contracts all pass. Direct Staging metadata confirms forced RLS, no browser/direct ledger rights, exact service-role execute boundary and no ledger runtime rows.
+- Final diff counterchecked: yes for the pre-dispatch evidence/lock scope; final runtime-evidence diff and exact-head checks remain pending.
+- Regression/security countercheck: fail-closed. Fixed internal-card and pinned webhook-version differences are findings for explicit review, not automatic code/provider changes. SQL Apply, transactional lifecycle acceptance, Stripe/provider mutation, payment/refund, Tax configuration, paid-tier activation, Production/Restore/Mobile/Security mutation and Supabase writes are forbidden.
+- Evidence produced: local 175-test result, seven offline readiness/control markers, direct redacted Staging catalog result and historical GitHub run reconciliation; fresh protected runs pending.
+- Result status: IN_PROGRESS_READ_ONLY.
+- Open follow-up: publish the lock/receipt, collect the three bounded current read-only workflow results, then record only current verified capabilities and remaining owner/protected actions.
+- Work lock released: no; release only after issue evidence, exact-head CI/countercheck, merge and closeout reconciliation.
+
 ## RECEIPT-FM-RST-001-SSH-TIMEOUT-20260826
 - Task: FM-RST-001
 - Started: 2026-08-26 Europe/Vienna

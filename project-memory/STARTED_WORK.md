@@ -47,18 +47,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-AI-001
 - Started: before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-08-26
 - Status: PARTIAL
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
-- Branch/PR: current AI/billing foundations on main.
-- Work lock: acquire before modifying tier policy, Stripe lifecycle or controlled SQL.
+- Branch/PR: active read-only evidence branch `ai-billing-readonly-reconciliation-20260826` / pending; implementation foundations remain on `main`.
+- Work lock: `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` ACTIVE for bounded Staging/Stripe evidence only. It authorizes no policy, Stripe resource, controlled SQL or runtime change.
 - Dependencies: written product decisions, private quality/cost evidence, current Staging lifecycle, Legal/Tax, explicit Production activation.
 - Assumptions: Staging Test prices existing does not mean Plus/Ultra is activated or fully accepted.
-- Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, Test catalog foundation, lifecycle/ledger controls, monitoring/recommendation/eval tooling.
-- Still open: final models/quotas/overage/context/switch/refund decisions; private quality/cost evidence; full current Staging lifecycle; legal/tax; explicit production activation.
-- Evidence so far: issue #560, issue #874, Source of Truth, `src/config/aiTiers.mjs`.
-- Exact next step: reconcile current Staging lifecycle evidence against Gate 4 and list only truly missing decisions/tests.
+- Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, five-price Stripe Test catalog, signed webhook smoke, lifecycle controls, applied AI-tier event ledger, monitoring/recommendation/eval tooling. A 2026-08-26 direct read-only Staging catalog check confirms the AI entitlement/event/reconciliation tables and both fixed-search-path service-role-only ledger functions are present with forced RLS, zero stored events and zero unresolved reconciliations.
+- Still open: final models/quotas/overage/context/switch/refund decisions; private quality/cost evidence; a current full transactional Staging lifecycle through the applied AI ledger; the separately designed general Billing event ledger is not applied; legal/tax; explicit Production activation. Current Stripe contract drift also needs a bounded decision for the internal test's fixed card method and the pinned webhook API version before activation.
+- Evidence so far: issue #560, issue #874, Source of Truth, `src/config/aiTiers.mjs`, historical catalog run `31714030044`, webhook-readiness run `31743766290`, signed-smoke run `31781263978`, pre-ledger lifecycle run `31735315959`, AI-ledger apply run `32038152382`, 175/175 focused local tests and the 2026-08-26 read-only Supabase catalog result.
+- Exact next step: after this lock/receipt is visible, run at most one current protected read-only resource, catalog and webhook verification on exact `main`; reconcile true gaps without applying SQL or activating paid tiers.
 - Owner action needed: yes for product/financial decisions and any protected external activation.
 
 ## FM-META-001

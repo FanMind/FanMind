@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826
+- Task: FM-AI-001
+- Status: ACTIVE
+- Holder: ChatGPT AI/Billing read-only reconciliation session 2026-08-26
+- Branch/PR: `ai-billing-readonly-reconciliation-20260826` / pending
+- Acquired: 2026-08-26 21:01 Europe/Vienna
+- Risk: R3 protected Staging/Stripe evidence collection; read-only database and provider checks only
+- Scope: bind the current AI entitlement ledger, all five isolated Stripe test prices, the exact Staging webhook endpoint and the synthetic AI workspace/resource boundary to exact `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`; dispatch at most one fresh read-only run for each of `ai-tier-staging-resource-readiness.yml`, `staging-stripe-catalog-readiness.yml` and `staging-stripe-webhook-readiness.yml`.
+- Safety: no Plus/Ultra activation, product/price/webhook creation or update, payment, refund, Tax registration, SQL Apply, transactional lifecycle acceptance, runtime-ledger gate, Production/Restore/Mobile/Security mutation or Supabase data write is authorized. Any failed or stale binding must be recorded without automatic retry.
+- Resume from: publish this lock and receipt before any workflow dispatch; then inspect each exact run/job/log once and reconcile only evidence and true remaining owner decisions.
+
 ## Released locks
 
 ## LOCK-FM-MOB-001-PREVIEW-READINESS-20260826
