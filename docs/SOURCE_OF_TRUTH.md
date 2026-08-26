@@ -402,13 +402,19 @@ zwingende externe Freigabe noch fehlt.
   `last_messenger_sync_at` unverändert; erst nach vollständiger Erschöpfung
   rückt der globale Abschlusszeitpunkt auf den Start des ursprünglichen
   Intervalls vor. Fehler bewahren den Cursor und Wiederholungen bleiben über
-  externe Nachrichten-IDs idempotent. Für die weiterhin weder in Staging noch
-  Production angewendete Migration ist jetzt ein checksum-gebundener,
-  exakter-Commit-, TLS- und Staging-gebundener Apply-/Verify-Pfad vorbereitet.
+  externe Nachrichten-IDs idempotent. Für die in isoliertem Staging
+  installierte, aber nicht in Production angewendete Migration besteht ein
+  checksum-gebundener, exakter-Commit-, TLS- und Staging-gebundener
+  Apply-/Verify-Pfad.
   Er verlangt vor Apply und Verify den gemeinsamen read-only Rollout-Entscheid,
   blockiert partielle Schemata und prüft Paar-/Cursor-Constraint sowie
-  Browser-Sperren rollback-only. Der externe Apply-/Verify-Lauf und der echte
-  Meta-Kontotest bleiben vor Aktivierung getrennt offen. Runbook:
+  Browser-Sperren rollback-only. Die Migration ist inzwischen im isolierten
+  Staging installiert; der exakte read-only Verify-Lauf `33007311870` hat den
+  gemeinsamen Rollout-State, die beiden Fortsetzungsfelder, das Constraint und
+  die Browser-Sperren mit zurückgerolltem Postflight bestätigt. Sie ist nicht
+  in Production angewendet. Ein erneutes Staging-Apply ist kein offener Schritt
+  und darf nicht anstelle der weiterhin offenen Acceptance, Worker-Aktivierung
+  oder des echten Meta-Kontotests wiederholt werden. Runbook:
   docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md.
 - Inbound-Meta-Webhooks führen keine Graph-Historien- oder Profilabfrage mehr
   innerhalb des HTTP-Requests aus. Die vorbereitete
@@ -420,19 +426,23 @@ zwingende externe Freigabe noch fehlt.
   vorgesehen; Worker-Protokolle enthalten nur feste Status-/Fehlercodes und
   Zähler. Vertragsende oder fehlender Verarbeitungsanspruch stoppt den
   Hintergrundabruf fail-closed, ohne vorhandene CRM-Historie zu löschen.
-  Controlled SQL, Worker und Systemd-Vorlage sind nur vorbereitet;
-  `FANMIND_META_CATCHUP_QUEUE_ENABLED` ist standardmäßig aus. Weder Migration,
-  Worker-Aktivierung noch Staging-/Production-Deploy werden durch den normalen
-  Web-Deploy ausgeführt. Zusätzlich ist ein exakter-Commit-gebundener,
+  Die checksum-gebundene Controlled Migration ist im isolierten Staging
+  installiert; der exakte read-only Verify-Lauf `33007481167` hat Tabelle,
+  Funktionen, Browser-Sperren und den zurückgerollten Postflight bestätigt.
+  Worker und Systemd-Vorlage bleiben vorbereitet,
+  `FANMIND_META_CATCHUP_QUEUE_ENABLED` ist standardmäßig aus, und Production
+  bleibt unverändert. Migration und Worker-Aktivierung werden nicht durch den
+  normalen Web-Deploy ausgeführt. Zusätzlich ist ein exakter-Commit-gebundener,
   rollback-only Staging-Acceptance-Pfad vorbereitet. Er akzeptiert nur den
   markierten synthetischen Workspace, verlangt eine bereits vollständig
   verifizierte Queue-Migration und prüft ohne Meta-, Analyse- oder Versandaufruf
   Browser-Sperren, Workspace-/Connection-/Kontakt-Scope, Coalescing,
   Generationserhalt, Lease-Exklusivität und -Übernahme sowie fünf Retries bis
   `dead_letter`; danach müssen alle synthetischen Zeilen verschwunden sein. Der
-  getrennte Ablauf steht in `docs/operations/META_CATCHUP_QUEUE.md` und ist
-  noch nicht extern ausgeführt. Worker-/Webhook-E2E und Meta-Testkonto bleiben
-  eigene offene Gates.
+  getrennte Ablauf steht in `docs/operations/META_CATCHUP_QUEUE.md`. Das
+  Migration-Apply darf nicht wiederholt werden; rollback-only Acceptance,
+  Worker-/Webhook-E2E, Aktivierung und Meta-Testkonto bleiben eigene offene
+  Gates.
 - Die gemeinsame Workspace-Verarbeitungsgrenze besitzt zusätzlich einen
   getrennten rollback-only Staging-Acceptance-Pfad. Er ist an `main`, den
   exakten geprüften Commit, das geschützte Staging, den gemeinsamen read-only

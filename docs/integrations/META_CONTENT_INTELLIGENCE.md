@@ -1,6 +1,6 @@
 # Meta-Kanäle und Content Intelligence
 
-Stand: 13. August 2026
+Stand: 26. August 2026
 
 Dieses Dokument ist die technische und rechtliche Arbeitsgrundlage für
 Facebook-/Instagram-Verbindungen, Nachrichtenimport, Post-Reichweitenanalyse,
@@ -56,8 +56,8 @@ Freigabe und aktiviert keine externe Verbindung.
 | Instagram Business Login/OAuth und Professional-Kontobindung | implementiert; echter Staging-/Meta-Kontotest noch offen |
 | Post-/Account-Cache, Metrik-Snapshots und Formeln | implementiert; Schema im isolierten Staging angewendet und read-only nachgeprüft; echter Meta-Datentest offen |
 | Fan-/Gesprächs-/Schreibstil-Provenienz und Reviewstatus | implementiert; Schema im isolierten Staging angewendet und read-only nachgeprüft; Analyse-Aktivierung bleibt gesperrt |
-| Begrenzte Conversation-Pagination | Implementierung sowie checksum-gebundener, exakter-Commit-/TLS-/Staging-Apply- und read-only Verify-Pfad vorbereitet; externer Lauf und realer Meta-Test vor Aktivierung offen |
-| Langlebige Webhook-Catch-up-Queue | Implementierung, checksum-gebundene Controlled Migration, inaktiver Worker und rollback-only synthetischer Staging-Acceptance-Pfad vorbereitet; externer Apply-/Acceptance-Lauf, Worker-/Webhook-E2E und Aktivierung offen |
+| Begrenzte Conversation-Pagination | Implementierung und Migration im isolierten Staging installiert; exakter read-only Verify mit gemeinsamem Rollout-State und zurückgerolltem Postflight bestanden; Production, Acceptance, Aktivierung und realer Meta-Test offen |
+| Langlebige Webhook-Catch-up-Queue | Controlled Migration im isolierten Staging installiert und read-only verifiziert; Worker bleibt inaktiv; rollback-only Acceptance, Worker-/Webhook-E2E, Production und Aktivierung offen |
 | Workspace-Verarbeitung nach Vertragsende | gemeinsame fail-closed Policy in Meta-Ingress, manuellem Sync und Queue-Worker umgesetzt; rollback-only Staging-Abnahmepfad vorbereitet, externer Lauf und Meta-E2E offen |
 | Isolierter Staging-Migrationspfad | beide Meta-Content-Migrationen im getrennten Supabase-Staging angewendet und read-only nachgeprüft; Production unverändert |
 | Meta App Review, Advanced Access und Business Verification | extern offen |
