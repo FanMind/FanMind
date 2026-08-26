@@ -159,7 +159,7 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 - no bypass of red/pending security/governance gates;
 - no parallel project-memory/finishline system.
 
-Before the next product task, close/countercheck PR #1012 and release the FM-AI-001 evidence lock; never rerun `33003378162`, `33003452287` or `33003526741`. Remaining AI product/private/protected work is deferred to `FM-AI-OWNER-001`/`002`, and Plus/Ultra stay fail-closed.
+PR #1012 passed all 10 exact-head checks and merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; its FM-AI-001 evidence lock is released. Never rerun `33003378162`, `33003452287` or `33003526741`. Remaining AI product/private/protected work is deferred to `FM-AI-OWNER-001`/`002`, and Plus/Ultra stay fail-closed.
 
 ## Exact next safe sequence
 

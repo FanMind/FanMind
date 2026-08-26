@@ -11,19 +11,20 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## Released locks
+
 ## LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826
 - Task: FM-AI-001
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT AI/Billing read-only reconciliation session 2026-08-26
-- Branch/PR: `ai-billing-readonly-reconciliation-20260826` / #1012; initial remote head `6e5a54546e1793b1b68c600b94d92f2a4114bab5`
+- Branch/PR: evidence `ai-billing-readonly-reconciliation-20260826` / #1012, final exact head `b53e000228bf99801b327c1d7b81646edce32d6f`, squash merge `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; repository-only closeout `ai-billing-readonly-reconciliation-closeout-20260826` / #1013.
 - Acquired: 2026-08-26 21:01 Europe/Vienna
+- Released: 2026-08-26 after the final head passed all 10 Guard/Quality/Status, Landing, FanMind CI including PostgreSQL 17, CodeQL and Browser E2E checks; issues #560/#874 were updated and #1012 merged SHA-bound.
 - Risk: R3 protected Staging/Stripe evidence collection; read-only database and provider checks only
-- Scope: bind the current AI entitlement ledger, all five isolated Stripe test prices, the exact Staging webhook endpoint and the synthetic AI workspace/resource boundary to exact `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`; dispatch at most one fresh read-only run for each of `ai-tier-staging-resource-readiness.yml`, `staging-stripe-catalog-readiness.yml` and `staging-stripe-webhook-readiness.yml`.
-- Safety: no Plus/Ultra activation, product/price/webhook creation or update, payment, refund, Tax registration, SQL Apply, transactional lifecycle acceptance, runtime-ledger gate, Production/Restore/Mobile/Security mutation or Supabase data write is authorized. Any failed or stale binding must be recorded without automatic retry.
-- Runtime result: exact-main runs `33003378162`/`98290675487`, `33003452287`/`98290922265` and `33003526741`/`98291186923` each passed once in read-only mode; issue #560 comment `5429960286` and issue #874 comment `5429960711` record the classification. No rerun is permitted.
-- Resume from: publish and countercheck the final FM-EV-022 evidence head in PR #1012; after exact-head green merge, release this lock in a separate repository-only closeout. Remaining AI work is owner/protected under `FM-AI-OWNER-001`/`002`.
-
-## Released locks
+- Scope: bound the current AI entitlement ledger, all five isolated Stripe Test prices, exact Staging webhook and synthetic AI resource boundary to exact `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb` through exactly three read-only runs.
+- Runtime result: runs `33003378162`/`98290675487`, `33003452287`/`98290922265` and `33003526741`/`98291186923` each passed once; issue #560 comment `5429960286` and issue #874 comment `5429960711` record the classification.
+- Safety: no Plus/Ultra activation, product/price/webhook mutation, payment, refund, Tax registration, SQL Apply, transactional lifecycle acceptance, runtime-ledger activation, Production/Restore/Mobile/Security mutation or Supabase write occurred.
+- Resume from: do not revive this lock or rerun its three jobs. Remaining AI work is owner/protected under `FM-AI-OWNER-001`/`002`; the generated parallel-safe task is `FM-META-001`.
 
 ## LOCK-FM-MOB-001-PREVIEW-READINESS-20260826
 - Task: FM-MOB-001
