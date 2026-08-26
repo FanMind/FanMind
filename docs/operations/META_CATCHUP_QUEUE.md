@@ -13,6 +13,12 @@ Der SQL-Schritt
 von keinem normalen Web-Deploy ausgeführt. Die Vorbereitung installiert,
 aktiviert oder startet auch den Worker nicht. Production ist ausgeschlossen.
 
+Punktstand 26. August 2026: Queue-Tabelle, Indizes und server-only Funktionen
+wurden im isolierten Staging als vorhanden/read-only korrekt beobachtet. Der
+kontrollierte Schritt liegt absichtlich nicht im Supabase-Migrationsledger.
+Sein vollständiger Tabellen-/Index-/ACL-/Funktions-Postflight ist deshalb die
+maßgebliche Zustandsgrenze; bloße Tabellenpräsenz reicht nicht.
+
 ## Offline-Prüfung
 
 ```bash
@@ -30,10 +36,13 @@ den exakten `reviewed_commit`, im GitHub-Environment `staging`, über TLS und
 gegen eine explizit von Production abweichende Supabase-Projektreferenz.
 Die getrennte Conversation-Continuation-Migration ist keine Nebenwirkung
 dieses Queue-Schritts. Sie muss zuvor über
-docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md angewendet und
+docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md für denselben Commit
+und dasselbe Ziel über Ledger und Objekte als vollständig klassifiziert und
 read-only nachgeprüft sein.
 
-1. Nach Review und Merge den Workflow
+1. Nach Review und Merge zuerst den gemeinsamen read-only Rollout-State für
+   denselben Commit und dasselbe Ziel ausführen. Nur wenn er Queue-Objekte und
+   vollständigen Postflight konsistent als `apply` klassifiziert, den Workflow
    `FanMind Meta Catch-up Queue Staging Apply` mit dem exakten Main-Commit und
    der Bestätigung `apply-meta-catchup-queue` starten. Vor dem schreibenden
    Schritt führt er den gemeinsamen Staging-Rollout-Zustand read-only aus und
@@ -43,7 +52,8 @@ read-only nachgeprüft sein.
    `META_CATCHUP_QUEUE_POSTFLIGHT=PASS`,
    `META_CATCHUP_QUEUE_POSTFLIGHT_TRANSACTION=ROLLED_BACK` und
    `SECRETS_WURDEN_NICHT_AUSGEGEBEN=true` akzeptieren.
-3. Anschließend `FanMind Meta Catch-up Queue Staging Verify` mit demselben
+3. Bei `verify` den Apply überspringen; bei erfolgreichem bedingtem Apply
+   anschließend `FanMind Meta Catch-up Queue Staging Verify` mit demselben
    Commit und `verify-meta-catchup-queue` ausführen. Dieser Lauf ist read-only.
 
 Meldet der gemeinsame Zustand für die Queue `verify`, ist sie bereits
@@ -60,8 +70,10 @@ in einer zurückgerollten Transaktion.
 ## Rollback-only Queue-Acceptance
 
 Der manuelle Workflow `FanMind Meta Catch-up Queue Staging Acceptance` ist
-vorbereitet. Er darf erst nach dem Apply und dem read-only Postflight mit dem
-exakten Main-Commit sowie der Bestätigung
+vorbereitet. Er darf erst nach einer frischen vollständigen Ledger-/Objekt-
+Klassifikation der ledger-geführten Voraussetzungen sowie der vollständigen
+Queue-Objektklassifikation und dem read-only Postflight (mit Apply nur bei
+`apply`) mit dem exakten Main-Commit sowie der Bestätigung
 `run-meta-catchup-queue-staging-acceptance` gestartet werden. Der gemeinsame
 Rollout-State muss exakt `STAGING_DATABASE_ROLLOUT_META_CATCHUP=verify` und
 `STAGING_DATABASE_ROLLOUT_STATE=PASS` liefern.
@@ -94,7 +106,7 @@ Vertrag ohne Datenbankzugriff prüfen:
 npm run meta:catchup-queue:staging:check
 ```
 
-Der echte externe Workflow-Lauf ist weiterhin offen und darf keine realen
+Die synthetische Acceptance ist weiterhin offen und darf keine realen
 Kunden-, Meta- oder Production-Daten verwenden. Die gleichzeitige
 Mehrprozess-Abnahme mit laufendem Worker, Entitlement-/Disconnect-Abbruch über
 den internen Endpunkt und der Webhook-/Meta-Testkonto-E2E bleiben getrennte

@@ -66,7 +66,7 @@
       "deferred_owner_id": "FM-META-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "FM-EV-023 completes the bounded technical read-only reconciliation. Do not rerun its three workflows or repeat Production activation/deploy. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
+      "instruction": "FM-EV-023 completes the bounded 2026-08-26 technical read-only reconciliation; mutable Staging freshness is tracked by EV-META-STAGING-FOUNDATION-20260826. Do not rerun its workflows merely for closeout or repeat Production activation/deploy. After expiry/invalidation or before a later Meta Staging database action, use a new lock and shared rollout-state-first verification. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
     },
     {
       "id": "NBA-PHASE3-SOCIAL",

@@ -525,9 +525,11 @@ test("profiles are server-owned while authorized webhooks preserve chats without
 });
 
 
-test("Meta reader docs reflect applied Staging schema without claiming generally live channels", async () => {
-  const [sourceOfTruth, metaContent, socialIntake] = await Promise.all([
+test("Meta reader docs distinguish base migration state from observed continuation and queue objects", async () => {
+  const [readme, sourceOfTruth, currentSchema, metaContent, socialIntake] = await Promise.all([
+    source("README.md"),
     source("docs/SOURCE_OF_TRUTH.md"),
+    source("docs/database/fanmind_current_schema.md"),
     source("docs/integrations/META_CONTENT_INTELLIGENCE.md"),
     source("docs/social-intake-standard.md"),
   ]);
@@ -543,6 +545,17 @@ test("Meta reader docs reflect applied Staging schema without claiming generally
   assert.doesNotMatch(
     metaContent,
     /Migration noch nicht angewendet|noch nicht ausgeführt/u,
+  );
+  assert.match(readme, /Ledger-Zeitstempel der ledger-geführten Fortsetzung/u);
+  assert.match(readme, /kontrollierte Queue absichtlich ledgerfrei/u);
+  assert.match(sourceOfTruth, /Migration-Ledger-Zeitstempel[\s\S]{0,100}nicht separat nachgewiesen/u);
+  assert.match(sourceOfTruth, /Queue[\s\S]{0,500}absichtlich[\s\S]{0,80}nicht im Supabase-Migrationsledger/u);
+  assert.match(currentSchema, /kontrollierter Schritt[\s\S]{0,100}absichtlich keinen Eintrag im[\s\S]{0,40}Supabase-Migrationsledger/u);
+  assert.match(metaContent, /Fortsetzungsobjekte[\s\S]{0,180}Migration-Ledger-Zeitstempel nicht separat bewiesen/u);
+  assert.match(metaContent, /Catch-up-Queue[\s\S]{0,220}absichtlich ohne Supabase-Migrationsledger-Eintrag/u);
+  assert.doesNotMatch(
+    metaContent,
+    /Fortsetzungsschema im isolierten Staging angewendet|Queue-Schema\/Indizes\/server-only Funktionen im isolierten Staging angewendet/u,
   );
   assert.match(
     socialIntake,

@@ -17,13 +17,15 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-META-001
 - Status: RELEASED
 - Holder: ChatGPT Meta technical read-only reconciliation session 2026-08-26
-- Branch/PR: evidence `meta-technical-reconciliation-20260826` / #1014, evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`, final exact head `12a479f00cce95d0031970c98c2d3933477ab804`, squash merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; repository-only closeout `meta-technical-reconciliation-closeout-20260826`.
+- Branch/PR: evidence `meta-technical-reconciliation-20260826` / #1014, evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`, final exact head `12a479f00cce95d0031970c98c2d3933477ab804`, squash merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; repository-only closeout #1015 head `355f1ce580045598527c51bff49d2a52c80275df`, merge `d727b53470653844b50fa6a4ca2fc98f7fb2c89b`; canonical freshness follow-up `meta-canonical-freshness-fix-20260826` / #1017, evidence head `dd8246efe399f03180c675b245cc7277d46060ca`.
 - Acquired: 2026-08-26 Europe/Vienna
-- Released: 2026-08-26 after the final head passed all seven triggered Guard/Quality/Status, Landing, FanMind CI, Browser E2E and CodeQL checks; issue #714 was updated and #1014 merged SHA-bound.
+- Released: 2026-08-26 after #1014 passed all seven triggered exact-head checks and merged, then repository-only closeout #1015 merged; no protected action was repeated.
 - Risk: R3 protected Staging evidence and canonical-reader reconciliation; read-only checks only
-- Scope: bound the current Pixel/no-PII/security tests and Meta Staging content/continuation/catch-up metadata to exact `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83` through exactly three protected read-only runs and one transaction-level read-only catalog query. `FM-FAIL-015` preserves the sequencing deviation.
-- Safety: no Meta consent grant or PageView, provider/account/OAuth/App Review call, SQL Apply, acceptance write, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision occurred.
-- Resume from: do not revive this lock or rerun its workflows/direct query. External Meta acceptance is owner-controlled under `FM-META-OWNER-001`; the generated next action is `FM-RST-OWNER-005`.
+- Scope: reconciled Pixel/no-PII/security tests and the 2026-08-26 Meta Staging foundations against exact GitHub `main` `966ffe3b105321e1350ec8c4fdb111341e99dd83`; exactly one permitted run each of the three protected read-only workflows and one transaction-level read-only catalog query produced FM-EV-023.
+- Runtime result: runs `33007156552`/`98303773974`, `33007311870`/`98304322162` and `33007481167`/`98304886826` passed once; 95/95 focused tests passed. Continuation and queue schemas are present in isolated Staging, while worker/analysis activation, synthetic queue acceptance, provider E2E, legal acceptance and Production remain open. Mutable Staging evidence is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
+- Process result: FM-FAIL-015 preserves that the direct query preceded the mandatory shared rollout-state classification. It was server-enforced read-only and rolled back; the later shared state was `PASS`; no query or workflow was repeated. Any later Meta Staging database action requires a new lock and fresh same-commit/same-target rollout-state classification first.
+- Safety: no Meta consent grant or PageView emission, Meta Events Manager/App Review/account/OAuth/token/provider call, SQL Apply, rollback-only acceptance, worker/queue/runtime activation, Production deploy/configuration, Supabase row/schema write, Restore/Mobile/AI/Security mutation or legal decision occurred.
+- Resume from: do not revive this lock. External work is deferred to `FM-META-OWNER-001`; after freshness expiry/invalidation or before another Meta Staging database action, acquire a new lock and revalidate shared rollout state first.
 
 ## LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826
 - Task: FM-AI-001

@@ -28,6 +28,7 @@ import {
 } from "./mobile-push-registration-migration-runner.mjs";
 import { POSTFLIGHT_SQL as META_CATCHUP_POSTFLIGHT_SQL } from "./meta-catchup-queue-migration-runner.mjs";
 import {
+  MIGRATION_ID as META_CONTINUATION_MIGRATION_ID,
   POSTFLIGHT_SQL as META_CONTINUATION_POSTFLIGHT_SQL,
   STATE_SQL as META_CONTINUATION_STATE_SQL,
 } from "./meta-conversation-continuation-migration-runner.mjs";
@@ -192,11 +193,12 @@ function ledgerSql({
     AI_TIER_MIGRATION_ID,
     MOBILE_PUSH_MIGRATION_ID,
     ...ledgerMetaMigrations.map((migration) => migration.id),
+    META_CONTINUATION_MIGRATION_ID,
   ];
   const versions = migrationIds.map((migrationId) =>
     migrationVersion(migrationId),
   );
-  if (versions.length !== 4 || new Set(versions).size !== 4) {
+  if (versions.length !== 5 || new Set(versions).size !== 5) {
     fail("migration_manifest_invalid");
   }
   const flags = migrationIds.map(
@@ -689,7 +691,7 @@ function requiredProbe(sql, environment, passfilePath, probeName) {
 
 function parseLedger(output) {
   const match =
-    /STAGING_DATABASE_LEDGER=([01]):([01]):([01]):([01]):([01]):([01]):([01])/u.exec(
+    /STAGING_DATABASE_LEDGER=([01]):([01]):([01]):([01]):([01]):([01]):([01]):([01])/u.exec(
       output,
     );
   if (!match) fail("ledger_probe_invalid");
@@ -698,9 +700,10 @@ function parseLedger(output) {
     mobilePush: match[2] === "1",
     metaFoundation: match[3] === "1",
     metaHistory: match[4] === "1",
-    workspaceMemberPrerequisite: match[5] === "1",
-    workspaceMemberInGenericLedger: match[6] === "1",
-    whatsappCloudInboundInGenericLedger: match[7] === "1",
+    metaContinuation: match[5] === "1",
+    workspaceMemberPrerequisite: match[6] === "1",
+    workspaceMemberInGenericLedger: match[7] === "1",
+    whatsappCloudInboundInGenericLedger: match[8] === "1",
   });
 }
 
@@ -822,6 +825,7 @@ async function inspectDatabase(environment) {
           mobilePush: false,
           metaFoundation: false,
           metaHistory: false,
+          metaContinuation: false,
           workspaceMemberPrerequisite: false,
           workspaceMemberInGenericLedger: false,
           whatsappCloudInboundInGenericLedger: false,

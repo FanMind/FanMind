@@ -34,8 +34,8 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Type: provider + legal + technical
 - Status: ACTIVE
 - Updated: 2026-08-26
-- Current evidence: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only path. FM-EV-023 read-only counterchecks the exact-main Meta Staging content, continuation and catch-up foundation without writes or activation.
-- Rule: the technical Pixel path and current Staging metadata are proven foundations, not external Meta Events Manager/App Review/legal acceptance. Do not repeat Production activation or the FM-EV-023 read-only runs as a substitute for external evidence.
+- Current evidence: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only path. FM-EV-023 read-only counterchecks the 2026-08-26 exact-main Meta Staging content, continuation and catch-up foundation without writes or activation; its mutable Staging observation is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
+- Rule: the technical Pixel path and observed Staging metadata are proven foundations, not external Meta Events Manager/App Review/legal acceptance. Do not repeat Production activation or the FM-EV-023 runs as a substitute for external evidence. After freshness expiry/invalidation or before another Meta Staging database action, use a new lock and fresh shared rollout-state-first verification.
 
 ## FM-DEP-005
 - From: FM-SOC3-001

@@ -13,6 +13,11 @@ Der Schritt verbindet kein Meta-Konto, startet keinen Abruf, aktiviert keine
 Analyse und versendet nichts. Ein normaler Web-Deploy darf ihn nicht anwenden.
 Production ist von den hier beschriebenen Workflows ausgeschlossen.
 
+Punktstand 26. August 2026: Beide Fortsetzungsfelder und ihr Constraint wurden
+im isolierten Staging als vorhanden/read-only korrekt beobachtet. Der exakte
+Migration-Ledger-Zeitstempel wurde dabei nicht separat bewiesen. Diese
+Objektpräsenz allein autorisiert weder Apply noch Re-Apply.
+
 ## Offline-Prüfung
 
     npm run db:meta-conversation-continuation:check
@@ -23,9 +28,11 @@ Zeichensatz-Check und den Entzug der neuen Browser-Spaltenrechte. Daten-
 änderungen, Grants und destruktive SQL-Anweisungen sind nicht Teil des
 Vertrags.
 
-## Manuelles Apply im isolierten Staging
+## Bedingtes manuelles Apply im isolierten Staging
 
-1. Nach Review und Merge den Workflow
+1. Nach Review und Merge zuerst den gemeinsamen read-only Rollout-State für
+   denselben Commit und dasselbe Ziel ausführen. Nur wenn er Ledger und Objekte
+   konsistent als `apply` klassifiziert, den Workflow
    FanMind Meta Conversation Continuation Staging Apply auf main starten.
 2. Als reviewed_commit exakt den geprüften Main-Commit eintragen.
 3. Als Bestätigung apply-meta-conversation-continuation eintragen.
@@ -48,6 +55,12 @@ Ein vorhandener vollständiger Zustand wird nicht erneut verändert. Ein
 partieller oder driftender Zustand stoppt vor dem Apply. Das Apply läuft
 atomar; der anschließende Metadaten-Postflight ist read-only und wird
 zurückgerollt.
+
+Meldet der gemeinsame Zustand `skip`, sind die vollständigen Objekte vorhanden,
+aber der exakte Ledger-Eintrag fehlt. Dann weder Apply noch Acceptance starten
+und den Ledger-Widerspruch nur in einem getrennt freigegebenen Ablauf
+reconciliieren. `verify` ist ausschließlich der gemeinsam vorhandene
+Ledger-/Objektzustand; `block` stoppt jede weitere Datenbankaktion.
 
 ## Read-only Verify
 
@@ -83,7 +96,8 @@ erneut read-only ausgeführt. Keine Spalte und keine bestehende CRM-Historie
 löschen. Eine Schema-Rücknahme benötigt einen separaten, ausdrücklich
 freigegebenen und datenverlustgeprüften Ablauf.
 
-Nach erfolgreichem Apply und Verify bleiben der echte Facebook-/Instagram-
+Nach erfolgreicher vollständiger Rollout-State-Klassifikation und read-only
+Verify (mit Apply nur bei zuvor eindeutigem `apply`) bleiben der echte Facebook-/Instagram-
 Testkontoabruf, Queue-/Worker-E2E, Meta App Review und die Rechtsfreigabe
 eigenständige Gates. Erst diese Nachweise dürfen zu einem begrenzten
 Workspace-Pilot führen.

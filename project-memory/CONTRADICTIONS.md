@@ -161,4 +161,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: FM-EV-007; FM-EV-023; `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`; issue #714; runs `33007156552`, `33007311870`, `33007481167`.
 - Falsification question: What observation would prove our conclusion wrong? A current exact Production configuration/release check showing the Pixel path is no longer deployed or fail-closed would require a fresh technical reconciliation before external acceptance.
 
+## CTR-FM-012
+- Date: 2026-08-26
+- Updated: 2026-08-26
+- Related task/change: FM-META-001 / issue #714
+- Risk: R3
+- Source A: pre-closeout `docs/SOURCE_OF_TRUTH.md` and `docs/integrations/META_CONTENT_INTELLIGENCE.md`.
+- Claim A: the conversation-continuation migration is unapplied in Staging, and the catch-up queue migration is only prepared with its external migration path still open.
+- Source B: FM-EV-023 direct catalog metadata plus exact-main protected read-only runs `33007311870` and `33007481167`.
+- Claim B: continuation columns and queue table/index/functions are already present in isolated Staging with the expected read-only postflight boundaries; Apply was not requested during the evidence runs. Worker/analysis activation, synthetic queue acceptance, provider E2E and Production remain open.
+- Stronger/current evidence: point-in-time catalog and protected workflow evidence on 2026-08-26, tracked as mutable `EV-META-STAGING-FOUNDATION-20260826`.
+- Status: RESOLVED
+- Resolution/action: synchronize canonical readers to the observed-present Staging objects without claiming historical Apply, worker, acceptance, provider or Production completion. The ledger-managed continuation timestamp was not proven by FM-EV-023; the controlled catch-up queue is intentionally absent from the Supabase migration ledger. After freshness expiry/invalidation or before another Meta Staging database action, use a new lock and fresh same-commit/same-target shared rollout state: combine the continuation ledger timestamp with its objects and classify the queue through its complete ledger-free postflight.
+- Evidence: FM-EV-023; `EV-META-STAGING-FOUNDATION-20260826`; #1014 final head `12a479f00cce95d0031970c98c2d3933477ab804`, merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; runs `33007311870` and `33007481167`.
+- Falsification question: What observation would prove our conclusion wrong? A fresh shared rollout-state result showing absent, partial or drifted continuation/queue objects invalidates the current-state claim and blocks every later database action until separately reconciled.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.
