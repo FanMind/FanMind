@@ -8,7 +8,7 @@ This result confirms the current repository and isolated Staging metadata. It do
 
 ## Scope and safety boundary
 
-- PR/lock: #1014 / `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826`.
+- PR/lock: #1014 evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f` / `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826`; issue evidence comment `5430454777`.
 - Local focused Meta/privacy/RLS/webhook/security tests: 95/95 passed.
 - Direct Supabase inspection used only `BEGIN; SET TRANSACTION READ ONLY; ...; ROLLBACK;` and catalog metadata.
 - Each protected GitHub workflow below was dispatched exactly once, sequentially, against the exact reviewed `main`.

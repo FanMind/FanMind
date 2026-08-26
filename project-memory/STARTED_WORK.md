@@ -67,7 +67,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: PARTIAL
 - Risk: R3
 - Scope: Meta Events Manager/external Meta acceptance and final non-Social security proof.
-- Branch/PR: active technical reconciliation `meta-technical-reconciliation-20260826` / #1014, initial published head `75cbed27dc2daa0d0de2a9688e89ebc3ef65f5d6`; existing Meta foundation remains on `main`.
+- Branch/PR: active technical reconciliation `meta-technical-reconciliation-20260826` / #1014, evidence head `5b63b1e2de8fc37daaef5f26451d4f037d9cf65f`; existing Meta foundation remains on `main`.
 - Work lock: `LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826` ACTIVE for bounded read-only technical evidence only.
 - Dependencies: normal-browser Meta Events Manager access, Meta app/test assets, App Review/permissions, legal/privacy acceptance.
 - Assumptions: technical pixel calls and Staging migrations are not external Events Manager/App Review acceptance.
