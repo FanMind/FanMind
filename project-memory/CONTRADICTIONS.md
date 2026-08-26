@@ -118,17 +118,17 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
 ## CTR-FM-009
 - Date: 2026-08-20
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Related task/change: FM-SEC-001 / issue #982
 - Risk: R3
 - Source A: current repository controlled Production hardening SQL/runbook
 - Claim A: code exists to pin the three trigger helper search paths and revoke direct browser execution of the optional retired retention function, but the runbook explicitly says merge/deploy does not auto-apply this Production database mutation.
 - Source B: fresh live Production Supabase security advisors
 - Claim B: the three mutable-search-path warnings and both browser-execution warnings for `trim_conversation_messages_to_latest_50()` are still present; leaked-password protection is also disabled.
-- Stronger/current evidence: both sources agree that implementation exists but accepted live post-state is not yet proven; any older wording implying Production hardening is complete would be stale.
-- Status: RECONCILIATION_REQUIRED
-- Resolution/action: run the existing exact-commit read-only Production verify; if the allowed pre-state is confirmed, use only the separately protected controlled Apply when explicitly authorized, then postflight and re-scan advisors. Keep Auth leaked-password setting as a separate provider decision/evidence path. Do not invent browser RLS policies for intentional service-only tables.
-- Evidence: live Supabase advisor scan 2026-08-20; `supabase/controlled/20260806203023_harden_trigger_function_privileges.sql`; `docs/operations/TRIGGER_FUNCTION_HARDENING_PRODUCTION.md`.
+- Stronger/current evidence: protected exact-release read-only run `32997946812` proves both claims are compatible: the implementation is deployed but the database hardening is not applied. Preflight/postflight Production audits passed; the fixed database diagnostic was `hardening_not_ready`; fresh advisors remained unchanged.
+- Status: RESOLVED
+- Resolution/action: preserve the now-proven implementation/live-state distinction. Use only the separately protected controlled Apply when explicitly authorized under `FM-SEC-OWNER-001`, then postflight and re-scan advisors. Keep leaked-password settings and Staging exception acceptance separate under `FM-SEC-OWNER-002`. Do not invent browser RLS policies for intentional service-only tables.
+- Evidence: FM-EV-019/FM-EV-020; run `32997946812`, job `98271985321`; fresh post-run Production advisor scan; `supabase/controlled/20260806203023_harden_trigger_function_privileges.sql`; `docs/operations/TRIGGER_FUNCTION_HARDENING_PRODUCTION.md`.
 - Falsification question: What observation would prove our conclusion wrong? A fresh catalog/ACL/advisor read showing the live Production state is already hardened, or evidence that the deployed target no longer matches the controlled migration/runbook, would invalidate this reconciliation before mutation.
 
 ## CTR-FM-010

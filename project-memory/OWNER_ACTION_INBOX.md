@@ -50,6 +50,25 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Required scope: one new controller and one exact protected database-Restore authorization; never reuse controller `45054c41...` or authorization `5385992305`.
 - Risk: R4
 - Forbidden: Production/Supabase-Staging target or write, target reset, automatic retry or unrelated R4 mutation.
+
+## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
+- Status: DEFERRED_BY_OWNER
+- Where: protected GitHub `production` environment through `trigger-function-hardening-production-control.yml` only.
+- Proven pre-state: read-only run `32997946812` job `98271985321` on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; preflight/postflight Production audits passed.
+- Required scope: one exact `apply`, bound to the then-current reviewed/deployed commit and checksum-pinned controlled SQL, followed by the built-in postflight and fresh Production advisor scan.
+- Risk: R3
+- Forbidden: inferred authorization from the verify, unrelated SQL/Auth/RLS/provider changes, Restore or Supabase-Staging mutation.
+- Do not ask before: explicit owner resume.
+
+## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- Status: DEFERRED_BY_OWNER
+- Where: exact Production/Staging Supabase Auth settings and the documented Staging RPC security exception record.
+- Required decision: enable leaked-password protection per exact target under a separate provider authorization; explicitly accept or reject the constrained authenticated `ensure_current_user_workspace(...)` exposure.
+- Evidence: FM-EV-020; current advisor scans; 24/24 focused provisioning tests; pinned search path, identity/role checks, server-derived prices and no `PUBLIC`/`anon` execution.
+- Risk: R3
+- Forbidden: automatic provider change, blind RPC revoke/grant or artificial browser RLS policy.
+- Do not ask before: explicit owner resume.
+
 ## FM-GOV-OWNER-001 — Protect `main`
 - Status: DEFERRED_BY_OWNER
 - Where: GitHub repository/organization Rulesets or Branch Protection UI
