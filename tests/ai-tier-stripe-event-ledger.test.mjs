@@ -194,7 +194,9 @@ test("the redacted entitlement loader rejects unresolved or legacy projections",
 
 test("the runbook keeps canonical reconciliation and base billing blockers explicit", async () => {
   const runbook = await readFile(runbookPath, "utf8");
-  assert.match(runbook, /auf keiner Datenbank\s+angewendet/iu);
+  assert.match(runbook, /ausschließlich auf Supabase Staging angewendet/iu);
+  assert.match(runbook, /Production wurde nicht angewendet oder verändert/iu);
+  assert.match(runbook, /keine aktuelle rollback-only Post-Ledger-Lifecycle-Abnahme/iu);
   assert.match(runbook, /kanonischen[\s\S]*(?:Stripe-)?Subscription-Stand/iu);
   assert.match(runbook, /Basis-Billing[\s\S]*separat/iu);
   assert.match(runbook, /Plus\/Ultra[\s\S]*fail-closed/iu);

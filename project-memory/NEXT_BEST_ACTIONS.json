@@ -47,12 +47,13 @@
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Restpunkte gegen aktuellen Staging-Lifecycle abgleichen",
-      "requires_owner": false,
+      "title": "KI/Billing Entscheidungen und aktuellen Ledger-Lifecycle freigeben",
+      "requires_owner": true,
       "parallel_safe": true,
+      "deferred_owner_id": "FM-AI-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Map old Gate-4 checkboxes to current Stripe Test catalog, entitlements, webhook/lifecycle code and existing evidence. Produce only the true remaining product, quality, cost and external-decision gaps; do not activate paid tiers."
+      "instruction": "FM-EV-022 supersedes the old missing-resource/catalog claims: exact-main read-only resource, five-price catalog, webhook and AI-ledger evidence are current. Require FM-AI-OWNER-001 for product/private/financial/Legal evidence and FM-AI-OWNER-002 for the separately authorized general Billing-ledger cutover plus one post-ledger rollback-only lifecycle acceptance. Do not rerun the read-only jobs or activate paid tiers."
     },
     {
       "id": "NBA-META-TECHNICAL-RECONCILE",

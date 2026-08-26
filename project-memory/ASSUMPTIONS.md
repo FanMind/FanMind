@@ -42,12 +42,12 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 
 ## ASM-FM-004
 - Date: 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-08-26
 - Related task: FM-AI-001
 - Risk: R3
 - Assumption: Existence of Plus/Ultra Stripe Test prices means Plus/Ultra are productively ready.
 - Why it matters: would incorrectly activate or sell unfinished tiers.
-- Verification source/evidence: Source of Truth and #560 require models, quotas, quality/cost, lifecycle, legal/tax and explicit Production activation in addition to Test prices.
+- Verification source/evidence: FM-EV-022 and Source of Truth/#560 confirm current Test prices, resources, webhook and AI ledger, while models, quotas, private quality/cost, current post-ledger lifecycle, general Billing ledger/cutover, legal/tax, runtime integration and explicit Production activation remain required.
 - Status: INVALIDATED
 - Recheck trigger: any Plus/Ultra activation proposal.
 - Action if false: keep Plus/Ultra fail-closed until full tier quorum.

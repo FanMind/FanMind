@@ -89,12 +89,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-AI-001
 - Date: through 2026-08-19
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Status: PARTIAL
 - Goal: Close KI Standard/Plus/Ultra product, quality, cost, Stripe-lifecycle and activation evidence.
-- Result: Standard is part of the active core. Plus/Ultra pricing/policy, fail-closed entitlement foundation, Staging storage, Test catalog foundation, lifecycle/ledger controls and monitoring/eval tooling exist. Plus/Ultra remain intentionally not productively active.
-- Evidence: `src/config/aiTiers.mjs`, Source of Truth, issue #560, issue #874 Gate 4, recent AI/ledger/Staging commits.
-- Next step: close written model/quota/overage/switching/refund decisions, private quality/cost evidence and full current Staging Upgrade/Downgrade/Cancellation/Failed-Payment/Webhook/Entitlement lifecycle; then legal/tax and explicit Production activation if approved.
+- Result: Standard is part of the active core. Current exact-main protected read-only evidence confirms the dedicated synthetic AI resource, both Plus/Ultra Test prices, the complete five-price Test catalog, exact enabled 22-event Staging webhook and installed empty AI event ledger with forced-RLS/function-only write boundary. The 50/100/150 context policy is already accepted. Plus/Ultra remain intentionally not productively active.
+- Evidence: FM-EV-022; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; runs `33003378162`/`33003452287`/`33003526741`; `src/config/aiTiers.mjs`; Source of Truth; issue #560; issue #874 Gate 4.
+- Next step: owner decisions/private evidence under `FM-AI-OWNER-001`; separately authorize the general Billing ledger/cutover and one current post-ledger transactional lifecycle acceptance under `FM-AI-OWNER-002`; then legal/tax, runtime integration and explicit Production activation if approved. First resolve the bounded Stripe client/payment-method/API-version conformance review in code without provider mutation.
 - Do not repeat: Do not invent models/quotas or activate Plus/Ultra through a merge alone.
 
 ## FM-META-001

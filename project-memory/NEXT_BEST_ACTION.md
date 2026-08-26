@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Selected action: `NBA-AI-LIFECYCLE-RECONCILE`
-- Task: `FM-AI-001`
-- Gate: `ai_billing` (`PARTIAL`)
+- Selected action: `NBA-META-TECHNICAL-RECONCILE`
+- Task: `FM-META-001`
+- Gate: `meta_security` (`PARTIAL`)
 - Selection status: `EXECUTABLE`
-- Title: KI/Billing Restpunkte gegen aktuellen Staging-Lifecycle abgleichen
+- Title: Meta/Security technischen Restpfad vorbereiten
 
 ## Instruction
 
-Map old Gate-4 checkboxes to current Stripe Test catalog, entitlements, webhook/lifecycle code and existing evidence. Produce only the true remaining product, quality, cost and external-decision gaps; do not activate paid tiers.
+Reconcile Pixel/no-PII/security tests, Meta foundations and current non-Social smoke evidence. Keep Events Manager, App Review and provider-account acceptance external.
 
 ## Why this action
 
@@ -23,7 +23,7 @@ standing-authorized safe work
 - `NBA-RESTORE-DATABASE` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-005
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-001
-- `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **EXECUTABLE** — standing-authorized safe work
+- `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **EXECUTABLE** — standing-authorized safe work
 - `NBA-PHASE3-SOCIAL` priority 60: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL
 - `NBA-PHASE7-SOCIAL` priority 70: **WAITING_PREREQUISITE** — phase3_social=PARTIAL

@@ -48,7 +48,7 @@ Project Memory V8 is **ACCEPTED on `main`**.
 
 1. **Restore — FM-RST-001, R4:** real isolated DB/Storage/Server-config/Cleanup/Evidence acceptance still open.
 2. **Mobile — FM-MOB-001, R3:** signed Android/iOS builds, redirect/EAS/signing, real devices, TestFlight/store/push acceptance open.
-3. **AI/Billing — FM-AI-001, R3:** Plus/Ultra product decisions, quality/cost evidence, full current Staging lifecycle and explicit activation open.
+3. **AI/Billing — FM-AI-001, R3:** FM-EV-022 currently proves the synthetic Staging resource, Plus/Ultra and complete five-price Test catalog, exact 22-event webhook, installed empty AI ledger and 50/100/150 context policy. Product/private evidence, Stripe conformance review, unapplied general Billing ledger/cutover, current post-ledger lifecycle, Legal/Tax, runtime integration and explicit activation remain open.
 4. **Meta/Security — FM-META-001, R3:** external Events Manager/browser evidence, remaining external Meta/App Review E2E and final finishline security evidence open.
 5. **Phase 3 — FM-SOC3-001, R3:** Facebook/Instagram/WhatsApp final real E2E not accepted.
 6. **Phase 7 — FM-SOC7-001, R3:** TikTok/X/Discord/conditional OnlyFans real connectors not accepted.
@@ -159,13 +159,12 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 - no bypass of red/pending security/governance gates;
 - no parallel project-memory/finishline system.
 
+Before the next product task, close/countercheck PR #1012 and release the FM-AI-001 evidence lock; never rerun `33003378162`, `33003452287` or `33003526741`. Remaining AI product/private/protected work is deferred to `FM-AI-OWNER-001`/`002`, and Plus/Ultra stay fail-closed.
+
 ## Exact next safe sequence
 
-1. **FM-AI-001:** reconcile Plus/Ultra product, quality, cost and current Stripe-Staging lifecycle evidence read-only; do not activate paid tiers or invent owner decisions.
+1. **FM-META-001:** continue the generated parallel-safe technical reconciliation for Pixel/no-PII/security tests and existing Meta foundations; external Events Manager/App Review/provider acceptance remains separate.
 2. **FM-MOB-001:** keep run `33000433320` as fail-closed evidence. Mobile external configuration is deferred to `FM-MOB-OWNER-001`; do not rerun, build, sign, submit or mutate providers before that action.
-3. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions; do not infer authorization from the read-only verify.
-4. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
-5. Meta Events Manager + final non-Social security acceptance.
-6. Real Phase-3 channels.
-7. Real Phase-7 channels / OnlyFans feasibility.
-8. Final Production sales demo + sales handoff.
+3. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions.
+4. Keep Restore at `TARGET_COMPATIBLE`. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift; then require new exact R4 authorization. Do not rerun controller `45054c41...`.
+5. After all non-Social gates: real Phase-3, Phase-7/OnlyFans feasibility, then final Production demo and sales handoff.

@@ -4,8 +4,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: Restore and Security mutations remain owner-deferred. Mobile read-only run `33000433320`, job `98280538304`, failed closed on missing protected preview configuration; evidence PR #1010 passed every exact-head gate, merged as `e6b3d9715726ede77ce7230cefa824edba16b2d4`, and its lock is released. No retry or Mobile mutation.
-- Start here: inspect exact GitHub `main` `e6b3d9715726ede77ce7230cefa824edba16b2d4`, Mobile run `33000433320`/`98280538304`, PRs #988/#1010, issue #690 comment `5429569941`, FM-EV-021 and owner action `FM-MOB-OWNER-001`. Current GitHub/runtime evidence overrides older memory prose.
+- Active focus: FM-AI-001 read-only reconciliation is runtime-complete under PR #1012 and its active evidence lock. Exact-main runs `33003378162`, `33003452287` and `33003526741` all passed without writes; FM-EV-022 records the current resource/catalog/webhook/ledger truth. Remaining AI work is owner/protected/private, not another read-only rerun.
+- Start here: inspect exact GitHub/Production `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`, PR #1012, FM-EV-022 and `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; then close/countercheck the PR and evidence lock. Current GitHub/runtime evidence overrides older #560/#874 checkboxes.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.
@@ -17,8 +17,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 - Restore do-not-repeat: do not rerun controller `45054c41...`, reuse authorization `5385992305`, rerun `32594374666`, reuse runner IDs `43`/`44`, repeat the extension controller, reset the target, remove quarantine, rebuild the host/PG/TLS/runner foundation, or touch Production/Supabase Staging.
 - Security deviation: both Supabase targets are `ACTIVE_HEALTHY`; FM-EV-020 proves Production is still pre-hardening and unchanged after read-only verification. Staging RPC is constrained intentional exposure pending explicit exception acceptance; leaked-password protection is a real separate Auth gap. `FM-SEC-OWNER-001`/`002` are owner-deferred, and no remediation is authorized from this session or Restore path.
 - Exact current step: `FM-RST-OWNER-005` owner-PC public-IP/TCP-22 evidence. If that proves stale allowlisting, make only a separately authorized exact Exoscale `/32` correction. Afterwards require `FM-RST-OWNER-006`, a new exact database-Restore authorization/controller bound to then-current reviewed `main` and fresh mutable evidence.
-- Generated Next Best Action moves to parallel-safe `FM-AI-001` reconciliation because Restore, Security mutations and Mobile external configuration are owner-deferred; no paid-tier activation or protected mutation is included.
-- User input still required: the Windows public-IP/TCP-22 diagnostic and later exact Restore authorization; separately, explicit resume for Production hardening Apply and Auth-setting/exception decisions. Routine repository analysis/fixes/PR/green merge and the generated Mobile read-only reconciliation remain standing-authorized.
+- Generated Next Best Action moves to parallel-safe `FM-META-001` technical reconciliation because Restore, Security mutations, Mobile external configuration and remaining AI decisions/protected lifecycle are owner-deferred; no provider mutation is included.
+- User input still required: `FM-RST-OWNER-005`/`006`, `FM-SEC-OWNER-001`/`002`, `FM-MOB-OWNER-001`, and AI decisions/protected lifecycle under `FM-AI-OWNER-001`/`002`. Routine repository analysis/fixes/PR/green merge and generated read-only reconciliation remain standing-authorized.
 
 ## Mandatory handoff fields for future sessions
 - Updated date/time

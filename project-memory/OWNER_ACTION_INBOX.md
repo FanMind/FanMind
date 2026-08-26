@@ -78,6 +78,24 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Forbidden: invented project IDs, secrets in chat/issues, EAS initialization/build/sign/submit/update, Production crossover or Supabase/Auth/DB mutation under this read-only evidence item.
 - Resume trigger: owner/platform configuration is complete; then use a new lock and exactly one fresh read-only preview check. Do not rerun `33000433320`.
 
+## FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
+- Status: DEFERRED_BY_OWNER
+- Where: written FanMind product/financial decision record plus private quality/cost evidence; Legal/Tax acceptance remains separately external.
+- Already fixed: Standard included; Plus +100 EUR/month; Ultra +200 EUR/month; no automatic send; no AI-add-on referral discount; 50/100/150 server-owned context limits; current Test prices/resources/webhook/AI ledger proven by FM-EV-022.
+- Required decision/evidence: tier-specific model classes and distinct fallbacks, request/token quotas, 80/100-percent and Overage behavior, upgrade/downgrade/cancellation/proration/refund, cost/margin; four representative weeks of privacy-safe usage/cost evidence; real blinded private quality result through the existing validator.
+- Risk: R3
+- Forbidden: provider model names, prompts/replies, reviewer identities or secrets in issues/Project Memory; treating the recommendation matrix as approval; Plus/Ultra activation before full tier quorum.
+- Resume trigger: complete written decisions and private validators, then re-run only offline/read-only readiness before any protected lifecycle or activation step.
+
+## FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
+- Status: DEFERRED_BY_OWNER
+- Where: exact protected GitHub `staging` workflows and isolated Stripe Test/Supabase Staging only.
+- Proven pre-state: FM-EV-022 confirms the AI ledger is installed/empty, resources and Test catalog/webhook are current, while the general Billing ledger is absent and the last transactional lifecycle acceptance predates the AI ledger.
+- Required sequence: first resolve the reviewed Stripe client/payment-method/API-version conformance findings; then separately authorize the documented Staging write freeze, controlled general Billing ledger Apply/postflight, capture-only cutover, canonical reconciliation/downstream AI/referral reconciliation, zero cutover/conflict counters, and exactly one rollback-only current AI lifecycle acceptance.
+- Risk: R3
+- Forbidden: live mode/payment/refund, Production, automatic projection enablement, SQL outside the checksum-pinned control, skipping cutover reconciliation, or bundling paid-tier activation.
+- Resume trigger: explicit exact-commit protected Staging authorization after the conformance review and fresh read-only rollout state.
+
 ## FM-GOV-OWNER-001 — Protect `main`
 - Status: DEFERRED_BY_OWNER
 - Where: GitHub repository/organization Rulesets or Branch Protection UI

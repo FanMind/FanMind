@@ -255,13 +255,15 @@ Erst `AI_TIER_STAGING_ACCEPTANCE=PASS` zusammen mit
 Das beweist noch keine Production-Freigabe und aktiviert Plus oder Ultra
 nicht.
 
-Danach bleibt die getrennte Erweiterung `FanMind AI Tier Stripe Event Ledger
-Staging` offen. Ihr kontrolliertes SQL und der checksum-gebundene Runner sind
-vorbereitet, wurden aber nicht ausgeführt. Vor einem Lauf ist die ergänzende
+Die getrennte Erweiterung `FanMind AI Tier Stripe Event Ledger Staging` wurde
+inzwischen kontrolliert auf Staging angewendet. Der aktuelle read-only
+Katalog-Postcheck bestätigt den leeren Ledger, beide Funktionen, `FORCE RLS`
+und die vorgesehenen Rechte-/`search_path`-Grenzen. Die ergänzende aktuelle
 rollback-only Ledger-Abnahme für Replay, stale Event, gleiche Sekunde,
-Reconciliation und entzogenes direktes Service-Role-Write zu prüfen. Das
-Runtime-Flag `FANMIND_AI_TIER_STRIPE_EVENT_LEDGER_ENABLED` bleibt bis zu diesem
-Nachweis `false`; der Workflow setzt es nicht automatisch.
+Reconciliation und entzogenes direktes Service-Role-Write bleibt offen, weil
+die frühere Lifecycle-Abnahme vor dem Ledger-Apply lief. Das Runtime-Flag
+`FANMIND_AI_TIER_STRIPE_EVENT_LEDGER_ENABLED` darf bis zu diesem Nachweis nicht
+aktiviert werden; der Apply-Workflow setzt es nicht automatisch.
 
 Danach bleibt auch das allgemeine Basis-Billing-Ledger getrennt. Sein
 kontrolliertes SQL deckt Checkout, Invoice, Subscription, PaymentIntent,

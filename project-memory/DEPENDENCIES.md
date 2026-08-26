@@ -22,11 +22,11 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-003
 - From: FM-AI-001
-- Requires: tier-specific written model/quota/overage/context/switch/refund decisions, private quality/cost evidence, full current Staging Stripe/Webhook/Entitlement lifecycle, Legal/Tax boundary and explicit Production activation.
+- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; Stripe conformance review; general Billing ledger Staging cutover; full current post-ledger Stripe/Webhook/Entitlement lifecycle; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact webhook configuration and AI ledger installation are already current evidence.
 - Type: product + financial + technical + external
 - Status: ACTIVE
-- Updated: 2026-08-19
-- Rule: Plus/Ultra stay fail-closed until every applicable prerequisite is current; Staging Test price existence alone is insufficient.
+- Updated: 2026-08-26
+- Rule: Plus/Ultra stay fail-closed until every applicable prerequisite is current; current read-only resource/catalog/webhook/ledger evidence alone is insufficient.
 
 ## FM-DEP-004
 - From: FM-META-001
