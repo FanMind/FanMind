@@ -14,6 +14,26 @@ This result confirms the current repository and isolated Staging metadata. It do
 - Each protected GitHub workflow below was dispatched exactly once, sequentially, against the exact reviewed `main`.
 - No Meta consent grant, PageView, provider call, OAuth/App Review action, SQL Apply, acceptance write, worker/queue activation, Production deploy/configuration, Supabase row/schema write, Restore, Mobile, AI or Security mutation occurred.
 
+## Sequencing finding and correction
+
+The direct transaction-level catalog inspection occurred before the shared
+read-only rollout-state workflow had returned its classification. That order
+did not satisfy the `AGENTS.md` requirement to run the shared rollout-state
+check before any Meta Staging database action. It is recorded as
+`FM-FAIL-015`, not hidden by the later successful result.
+
+The impact stayed bounded: the direct inspection was server-enforced
+read-only, selected only catalog metadata and rolled back; the later exact-main
+workflow classified the schema as current with
+`STAGING_DATABASE_ROLLOUT_STATE=PASS`; no Apply, row/schema write, runtime
+activation or provider action occurred. No query or workflow was repeated.
+
+Correction: no further direct Meta Staging catalog action is permitted under
+this lock. Any future lock that permits one must first run and consume a fresh
+shared read-only rollout-state result for the same exact commit and target;
+`block`, partial, drifted, stale or mismatched results must stop before the
+direct query.
+
 ## Direct Staging catalog evidence
 
 Target: isolated Staging Supabase project `vshyhvgcmrlagvfnvomc`.
@@ -69,4 +89,4 @@ Still open:
 
 ## Do not repeat
 
-Do not rerun `33007156552`, `33007311870` or `33007481167`. Do not reinterpret this read-only technical evidence as external Meta acceptance, legal approval or permission to emit events, apply SQL, activate workers, change providers or redeploy Production.
+Do not rerun `33007156552`, `33007311870` or `33007481167`, and do not repeat the direct catalog query. Do not reinterpret this read-only technical evidence as external Meta acceptance, legal approval or permission to emit events, apply SQL, activate workers, change providers or redeploy Production.
