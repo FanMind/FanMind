@@ -1,21 +1,26 @@
 # Kontrolliertes Stripe-Event-Ledger für KI-Stufen
 
-Stand: 16. August 2026
+Stand: 26. August 2026
 
 ## Status
 
-Der Code- und SQL-Vertrag ist vorbereitet, aber auf keiner Datenbank
-angewendet. Insbesondere wurde weder Staging noch Production verändert. Die
-Datei
+Der kontrollierte Vertrag wurde durch den geschützten Lauf `32038152382`
+ausschließlich auf Supabase Staging angewendet. Eine aktuelle read-only
+Katalogprüfung bestätigt dort beide atomaren Funktionen, alle drei Tabellen,
+`FORCE RLS`, die festen Rechte- und `search_path`-Grenzen sowie 0 Events und
+0 ungelöste Reconciliations. Production wurde nicht angewendet oder verändert.
+Die Datei
 `supabase/controlled/20260816190000_workspace_ai_tier_stripe_event_ledger.sql`
 liegt absichtlich außerhalb von `supabase/migrations/`. Merge, Web-Deploy und
 `supabase db push` dürfen sie nicht ausführen.
 
 Die bestehende Webhook-Brücke verlangt zusätzlich
 `FANMIND_AI_TIER_STRIPE_EVENT_LEDGER_ENABLED=true`. Dieser Schalter darf erst
-nach zielgebundenem Apply, Metadaten-Postflight und rollback-only Staging-
-Abnahme gesetzt werden. Ohne ihn bleibt die Brücke vollständig inaktiv;
-Plus/Ultra bleiben unabhängig davon durch die zentrale Readiness fail-closed.
+nach zielgebundenem Apply, Metadaten-Postflight und einer aktuellen
+rollback-only Staging-Abnahme durch den angewendeten Ledger gesetzt werden.
+Apply und Postflight sind belegt; die aktuelle Post-Ledger-Abnahme und jede
+Runtime-Aktivierung bleiben offen. Plus/Ultra bleiben unabhängig davon durch
+die zentrale Readiness fail-closed.
 
 ## Behobene Grenze
 
@@ -126,6 +131,11 @@ ein partieller Stand blockiert.
 
 ## Verbindliche spätere Rollout-Reihenfolge
 
+Aktueller Staging-Stand: Schritte 1 bis 5 sind abgeschlossen. Die historische
+rollback-only Lifecycle-Abnahme `31735315959` lief vor dem Ledger-Apply und
+belegt deshalb nicht die Schritte 6 und 7 des angewendeten Ledger-Pfads. Die
+Schritte 6 bis 9 bleiben separat freizugeben und auszuführen.
+
 1. Offline-Checksum- und Vertragscheck des kontrollierten SQL ausführen.
 2. Exakten `main`-Commit auf das getrennte Staging deployen und denselben
    40-stelligen Commit beim manuellen Workflow erneut bestätigen; Ledger-Gate
@@ -175,9 +185,14 @@ Reconciliation-Operator ist noch nicht implementiert oder freigegeben.
 
 ## Nicht behauptet
 
-- kein Datenbank-Apply;
-- kein Stripe-API-Aufruf oder echter Reconciliation-Lauf;
-- kein Stripe-Testmode-End-to-End-Nachweis;
+- kein Production-Datenbank-Apply und kein Apply des separaten
+  Basis-Billing-Ledgers;
+- keine aktuelle rollback-only Post-Ledger-Lifecycle-Abnahme;
+- kein echter Stripe-gelieferter Lifecycle-Event oder kanonischer
+  Reconciliation-Lauf; die read-only Stripe-Katalog-/Webhook-Abfragen und der
+  erfolgreich signierte mutationsfreie Smoke sind ausdrücklich keine solche
+  Zustellung;
+- kein Stripe-Testmode-End-to-End-Lifecycle-Nachweis;
 - keine Product-/Price-/Tax-/Legal-Freigabe;
 - keine Aktivierung von KI Plus oder KI Ultra;
 - keine Anwendung, Aktivierung oder externe Abnahme des separaten

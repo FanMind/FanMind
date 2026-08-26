@@ -69,6 +69,20 @@ Updated: 2026-08-26 Europe/Vienna
 - Resume rule: after owner/platform configuration, acquire a new lock and run exactly one fresh read-only `preview` resource check. Do not reuse or rerun `33000433320`.
 - Safety: no EAS project initialization, build, signing, submit, update, Store action, Supabase/Auth/DB mutation or Production-target crossover is authorized by this deferred item.
 
+## FM-AI-OWNER-001 — AI product, quality and financial decision pack
+- Related task: `FM-AI-001`.
+- Status: DEFERRED_BY_OWNER.
+- Proven foundation: FM-EV-022 currently verifies the synthetic Staging resource, Plus/Ultra and five-price Test catalog, exact 22-event Test webhook, installed empty AI ledger and 50/100/150 context policy. These are not activation evidence.
+- Deferred action: decide model classes/distinct fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin; provide four representative weeks of privacy-safe usage/cost evidence and the real blinded private quality result; obtain Legal/Tax acceptance separately.
+- Safety: no guessing, no private raw evaluation material or provider mapping in Git/issues, no environment flag or Plus/Ultra activation from the recommendation alone.
+
+## FM-AI-OWNER-002 — Protected Staging Billing-ledger and post-ledger lifecycle acceptance
+- Related task: `FM-AI-001`.
+- Status: DEFERRED_BY_OWNER.
+- Proven pre-state: the AI-specific ledger is applied and empty; the general Billing ledger is absent; the last full transactional AI lifecycle run used pre-ledger legacy CRUD. Current read-only runs must not be repeated.
+- Deferred action: after the Stripe conformance code review, separately authorize exact-commit Staging write freeze -> controlled general Billing ledger Apply/postflight -> capture-only cutover -> canonical/downstream reconciliation -> zero conflicts -> exactly one rollback-only AI lifecycle acceptance through the applied ledger.
+- Safety: no live Stripe action, Production, automatic projection enablement, unpinned SQL, paid-tier activation or acceptance without full rollback and exact job/log countercheck.
+
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
 - Status: DEFERRED_BY_OWNER.

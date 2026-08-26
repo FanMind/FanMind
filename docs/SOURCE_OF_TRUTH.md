@@ -447,8 +447,11 @@ zwingende externe Freigabe noch fehlt.
 - Das separate Supabase-Staging-Projekt sowie die getrennte Web-Staging-
   Runtime mit eigenem `fanmind-staging`-Runner, eigener DNS-/TLS-Bindung und
   eigenem Exoscale-Ziel sind vorhanden. Der isolierte Stripe-Testkatalog mit
-  fünf Testpreisen einschließlich KI Plus/Ultra ist read-only nachgewiesen;
-  Webhook-Smoke und Billing-Lifecycle bleiben getrennt offen. Für die
+  fünf Testpreisen einschließlich KI Plus/Ultra ist read-only nachgewiesen.
+  Die exakte Test-Webhook-Konfiguration ist read-only nachgewiesen und der
+  signierte mutationsfreie Bindungs-Smoke wurde mit HTTP 200 abgeschlossen;
+  eine echte Stripe-Testzustellung und der Billing-Lifecycle bleiben getrennt
+  offen. Für die
   dauerhaften synthetischen E2E-Identitäten ist ein kontrollierter,
   commit-genauer Staging-Provisionierungspfad vorbereitet. Er verwendet die
   vorhandene Workspace-Provisionierungs-RPC, erzeugt zwei getrennte Workspaces
@@ -594,7 +597,8 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
   Subscription-Event das zuvor
   gespeicherte Plus-/Ultra-Item, wird der Datensatz `canceled` statt stale
   aktiv belassen. Insert und Update verwenden ohne Upsert eine persistente
-  Event-Grenze. Die noch nicht angewendete kontrollierte Erweiterung
+  Event-Grenze. Die auf Staging angewendete, aber nicht für die Runtime
+  aktivierte kontrollierte Erweiterung
   `workspace_ai_tier_stripe_event_ledger` ersetzt direkte Lifecycle-Writes
   durch ein service-role-only Event-Ledger und eine atomare RPC mit internem
   Revisions-CAS. Gleichzeitige Events werden weder nach Event-ID noch
@@ -608,8 +612,12 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
   wird als dauerhafte Event-Cutoff-Grenze in der Quittung gespeichert und
   schützt dadurch auch einen Starter-only-Zustand ohne Entitlement-Zeile vor
   verspäteter Reaktivierung. Der dafür nötige
-  kanonische Stripe-Abruf ist noch nicht verdrahtet. Die Brücke aktiviert
-  keine KI-Stufe und bleibt ohne ihr zusätzliches Ledger-Gate inaktiv.
+  kanonische Stripe-Abruf ist noch nicht verdrahtet. Der aktuelle read-only
+  Katalog-Postcheck bestätigt den installierten leeren Ledger und seine
+  Rechte-/RLS-Grenzen. Die ältere rollback-only Lifecycle-Abnahme lief vor
+  diesem Apply und belegt den angewendeten Ledger-Pfad deshalb nicht. Die
+  Brücke aktiviert keine KI-Stufe und bleibt ohne ihr zusätzliches
+  Ledger-Gate inaktiv.
 - Dieses KI-Ledger umfasst nicht die allgemeinen Billing-Felder auf
   `workspaces`. Checkout-, Invoice-, Subscription-, PaymentIntent-, Refund-
   und Tax-Mutationen besitzen nun ein kontrolliertes, noch nicht angewendetes

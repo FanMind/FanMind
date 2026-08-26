@@ -42,7 +42,7 @@ gibt. Die stabilen IDs werden durch einen Regressionstest geschützt.
 | A-08 | Abschlussblock | KI Standard/Plus/Ultra | 87 % | **89 %** | Stripe-Testpreise, Lifecycle- sowie Qualitäts-/Kostenabnahme |
 | W-01 | Arbeitszeile | Restore-Datenbankkontrolle und checksum-only Prüfung | – | neues verschlüsseltes Full-Backup mit Datenbank-, Storage- und Serverkonfigurationsanteil erfolgreich validiert und Offsite übertragen; schema-2 Authorization-/Extension-Vertrag und separater checksum-only Verifikationslauf bestanden | kontrollierten externen Restore-Lauf samt drei privaten Receipts ausführen |
 | W-02 | Arbeitszeile | Isolierter Restore-Drill | – | Host-Readiness für zwei frische JIT-Runner, verschlüsseltes Full-Backup und receipt-gebundener Transaktions-/5-5-5-Postcheck-Pfad vorhanden | isolierten selbst kontrollierten PG17-Zielcluster bereitstellen, Wegwerfziel löschen sowie Storage-, Server-Konfigurations- und finalen Evidenznachweis abschließen |
-| W-03 | Arbeitszeile | KI Plus/Ultra und Stripe-Abnahme | – | Entitlement-Schema auf Staging; read-only Katalog-/Webhook-Abnahmen und signierter mutationsfreier Bindungs-Smoke vorbereitet | Stripe-Testkatalog, minimalen Testwebhook, Bindungs-Smoke und rollback-only Acceptance extern ausführen |
+| W-03 | Arbeitszeile | KI Plus/Ultra und Stripe-Abnahme | – | AI-Ledger auf Staging installiert und leer/rechtegebunden verifiziert; fünf Testpreise, exakter Test-Webhook und signierter mutationsfreier Bindungs-Smoke nachgewiesen | allgemeinen Billing-Ledger/Cutover, aktuelle Post-Ledger-Rollback-Acceptance, echte Stripe-Testzustellung sowie Qualitäts-/Kostenbelege getrennt abnehmen |
 | W-04 | Arbeitszeile | Meta-Abschluss | – | Foundation, History und Tenant-Idempotenz auf Staging; Providerfehlergrenzen gehärtet | E2E, App Review und Rechtsfreigabe abschließen |
 | W-05 | Arbeitszeile | Mobile Signing, Android-Beta und TestFlight | – | kontrollierte Workflows und geschützter Android-APK-Handoff vorbereitet | signierte Binaries, Realgeräte und Verteilung extern nachweisen |
 | W-06 | Arbeitszeile | Push, Gerätetests und Store-Unterlagen | – | Push-Schema auf Staging und Unterlagen vorbereitet | Acceptance und externe Nachweise abschließen |
@@ -56,9 +56,11 @@ gibt. Die stabilen IDs werden durch einen Regressionstest geschützt.
 
 Das echte isolierte Staging mit eigenem Host/Runner, DNS/TLS, separatem
 Supabase-Projekt, commit-genauem Deploy und grüner Readiness ist abgeschlossen.
-Fehlende Stripe-Testpreise, Webhook-/Billing-E2E und KI-Lifecycle-Nachweise sind
-keine offene Staging-Infrastruktur und werden ausschließlich unter A-08/W-03
-gezählt.
+Die fünf Stripe-Testpreise, die read-only Webhook-Konfiguration und der
+signierte mutationsfreie Bindungs-Smoke sind nachgewiesen. Die echte
+Stripe-Testzustellung, Billing-/Ledger-Cutover- und aktuelle KI-Post-Ledger-
+Lifecycle-Nachweise sind keine offene Staging-Infrastruktur und werden
+ausschließlich unter A-08/W-03 gezählt.
 
 ### Arbeits- und Umsatzsystem als eigener Produktquerschnitt
 
@@ -210,9 +212,10 @@ Diese Punkte benötigen einen eigenen externen oder produktiven Nachweis und dü
 - tatsächlicher Production-Commit und Live-HTML nach dem Merge;
 - signierter Android-Build und iOS-TestFlight-Build;
 - Apple-/Google-Store-Konten und Signing Credentials;
-- Stripe-Testkatalog ist read-only nachgewiesen; Webhook-Smoke, Billing-
-  Lifecycle und der reale Lauf der vorbereiteten dauerhaften synthetischen
-  Billing-/E2E-Fixtures bleiben offen. Web-Staging-Host, eigener Runner,
+- Stripe-Testkatalog, Webhook-Konfiguration und signierter mutationsfreier
+  Bindungs-Smoke sind nachgewiesen; echte Stripe-Testzustellung, Billing-
+  Lifecycle durch den angewendeten Ledger und der reale Lauf der vorbereiteten
+  dauerhaften synthetischen Billing-/E2E-Fixtures bleiben offen. Web-Staging-Host, eigener Runner,
   DNS/TLS und das separate Supabase-Staging-Projekt sind vorhanden. Die
   Staging-Datenbank darf nicht als Restore-Ziel dienen;
 - externe Rechts- und Steuerfreigabe;

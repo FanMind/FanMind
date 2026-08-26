@@ -29,10 +29,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-004
 - Related: FM-AI-001
 - Status: OPEN
-- Updated: 2026-08-19
-- Gap: Plus/Ultra foundation exists but final product decisions, quality/cost proof, full current Staging lifecycle and activation evidence are incomplete.
+- Updated: 2026-08-26
+- Gap: Current synthetic resource, Test catalog/webhook and installed AI ledger are read-only verified, but final product decisions, private quality/cost proof, Stripe conformance review, unapplied general Billing ledger/cutover, full current post-ledger Staging lifecycle, Legal/Tax, runtime integration and activation evidence remain incomplete.
 - Close when: tier-specific risk quorum is satisfied and any Production activation is explicit and current.
-- Next check: reconcile #560/#874 Gate 4 against current Test catalog/lifecycle runs to avoid repeating completed Staging setup.
+- Next check: do not rerun read-only runs `33003378162`, `33003452287` or `33003526741`. Resume only from `FM-AI-OWNER-001`/`002` and the bounded Stripe conformance code review; keep Plus/Ultra fail-closed.
 
 ## FM-LOOP-005
 - Related: FM-META-001

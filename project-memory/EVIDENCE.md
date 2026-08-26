@@ -208,6 +208,22 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a later fresh exact-main protected run with nonblank but mismatched bindings, project-info mismatch or Production crossover reopens the classification; only a complete read-only PASS may advance external EAS readiness.
 - Acceptance: COUNTERCHECKED_FAIL_CLOSED_EXTERNAL_BLOCKER
 
+## FM-EV-022
+- Related: FM-AI-001 / issues #560 and #874 Gate 4
+- Date: 2026-08-26
+- Target: exact GitHub `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`; protected GitHub Environment `staging`; isolated Stripe Test Mode and Staging Supabase project
+- Type: three protected exact-main read-only workflows + direct read-only Supabase catalog query + focused local regression set
+- Reference: AI resource run `33003378162`, job `98290675487`; five-price catalog run `33003452287`, job `98290922265`; webhook-readiness run `33003526741`, job `98291186923`; issue #560 comment `5429960286`; issue #874 comment `5429960711`; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; evidence PR #1012.
+- Result: AI resource readiness passed with exact database binding, offline lifecycle contract, both Plus/Ultra Test prices and the dedicated synthetic workspace; the catalog independently passed for all five isolated Test prices; the enabled Staging webhook passed for the exact URL, Test Mode, configured signing secret and 22 handled events at its pinned API version. All three jobs used the exact reviewed commit.
+- Database boundary: explicit `BEGIN; SET TRANSACTION READ ONLY` catalog evidence confirms the AI entitlement/event/reconciliation tables and both atomic security-definer functions are installed; ledger tables use forced RLS with no policies/direct runtime-table rights, browser roles cannot execute the functions, service role has only the required entitlement read and function execute boundary, and the fixed search path is present. There are 0 AI ledger events and 0 unresolved reconciliations.
+- Current limitation: the successful historical transactional lifecycle run `31735315959` predates the applied AI ledger and used legacy service-role CRUD; AI ledger apply run `32038152382` occurred later. The separately controlled general Billing ledger tables/functions are absent and its workflow has never run. Therefore current post-ledger Upgrade/Downgrade/Cancellation/Failed-payment/Entitlement acceptance is not proven.
+- Product/quality classification: 50/100/150 context limits are already approved, server-owned and tested; they are not an open decision. Models/fallbacks, request/token quotas, usage/overage rules, commercial switching/refund decisions, representative cost evidence and the real private blinded quality result remain open.
+- Stripe conformance observations: the internal daily-test Checkout still fixes card-only `payment_method_types`, the endpoint is pinned to `2026-06-24.dahlia`, and server calls use raw REST rather than the current client pattern. No automatic provider/code change is implied; resolve these in a separate reviewed change before activation.
+- Negative evidence: write flags stayed false/blank, no SQL Apply or transactional acceptance ran, and no Stripe product/price/webhook/payment/refund, Supabase row/schema, paid-tier, Production, Restore, Mobile or Security mutation occurred. Focused local policies passed 175/175 and all offline control checks passed.
+- Classification: synthetic resource, Test prices, webhook configuration and AI-ledger installation are current read-only `PASS`; overall FM-AI-001 remains `PARTIAL` and is deferred to `FM-AI-OWNER-001`/`002` plus private/external evidence.
+- Falsification: any later catalog drift, ledger schema/ACL drift, nonzero unresolved reconciliation, changed price/webhook contract, or lifecycle run inconsistent with this evidence reopens reconciliation before activation.
+- Acceptance: COUNTERCHECKED_READ_ONLY_FOUNDATION
+
 ## FM-EV-016
 - Related: FM-RST-001 / issue #944
 - Date: 2026-08-22

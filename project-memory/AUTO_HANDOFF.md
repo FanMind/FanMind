@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Next action: `NBA-AI-LIFECYCLE-RECONCILE`
-- Next action title: KI/Billing Restpunkte gegen aktuellen Staging-Lifecycle abgleichen
+- Next action: `NBA-META-TECHNICAL-RECONCILE`
+- Next action title: Meta/Security technischen Restpfad vorbereiten
 
 ## Finishline gates
 
@@ -29,6 +29,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - FM-MOB-OWNER-001 — Configure protected Mobile preview resources
+- FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
+- FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
 - FM-GOV-OWNER-001 — Protect `main`
 
 ## Mandatory new-chat / project-entry rule

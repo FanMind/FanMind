@@ -49,7 +49,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Related: FM-AI-001
 - Status: BLOCKED
 - Risk: R3
-- External/owner decision: model/fallback, request/token quota, context/overage, switching/proration/refund, cost/margin.
+- External/owner decision: model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin. The 50/100/150 context limits are already approved and are not part of this unresolved decision.
 - Acceptance: written tier-specific decisions recorded without guessing.
 - Repository evidence alone sufficient: no
 
@@ -67,6 +67,15 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: legal/tax review
 - Acceptance: applicable tier billing/tax/legal treatment approved before Production activation.
+- Repository evidence alone sufficient: no
+
+## EXT-AI-STAGING-LIFECYCLE
+- Related: FM-AI-001
+- Status: BLOCKED
+- Risk: R3
+- External/protected action: controlled general Billing ledger Staging Apply/capture/reconciliation plus one current rollback-only AI lifecycle acceptance through the already applied AI ledger.
+- Current evidence: FM-EV-022 verifies resources, five Test prices, the exact 22-event webhook and installed empty AI ledger read-only. Historical lifecycle acceptance predates the ledger; the general Billing ledger is absent.
+- Acceptance: exact reviewed-commit Staging write freeze and ledger postflight; zero unresolved cutover state; Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary paths pass; transaction fully rolls back; no Production or live payment.
 - Repository evidence alone sufficient: no
 
 ## EXT-META-EVENTS

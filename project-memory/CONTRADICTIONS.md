@@ -62,17 +62,17 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
 ## CTR-FM-005
 - Date: 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-08-26
 - Related task/change: FM-AI-001
 - Risk: R3
 - Source A: older #560/#874 checkboxes saying separate Plus/Ultra Test prices are absent.
 - Claim A: Test prices still need creation.
 - Source B: later Source of Truth/#874 Staging evidence
 - Claim B: isolated Stripe Test catalog including Plus/Ultra is now read-only/finishline verified, while complete lifecycle/product/quality activation remains open.
-- Stronger/current evidence: later Staging truth.
-- Status: RECONCILIATION_REQUIRED
-- Resolution/action: before Gate 4 action, verify current Test catalog IDs/status read-only and focus on missing lifecycle/product evidence rather than blindly recreating prices.
-- Evidence: Source of Truth Staging section; #874 Gate 1.
+- Stronger/current evidence: exact-main protected read-only AI-resource, five-price catalog and webhook runs plus direct Staging AI-ledger catalog evidence.
+- Status: RESOLVED
+- Resolution/action: runs `33003378162`, `33003452287` and `33003526741` prove the synthetic resource, Plus/Ultra prices, all five Test prices and exact webhook are current; FM-EV-022 records the result. Do not recreate or rerun them. Focus only on the current post-ledger lifecycle, general Billing ledger/cutover, product/private/legal/runtime/activation gaps.
+- Evidence: FM-EV-022; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; Source of Truth; #560/#874.
 
 ## CTR-FM-006
 - Date: 2026-08-19
