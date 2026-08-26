@@ -51,14 +51,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: PARTIAL
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
-- Branch/PR: active read-only evidence branch `ai-billing-readonly-reconciliation-20260826` / #1012; initial remote head `6e5a54546e1793b1b68c600b94d92f2a4114bab5`; implementation foundations remain on `main`.
-- Work lock: `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` ACTIVE for bounded Staging/Stripe evidence only. It authorizes no policy, Stripe resource, controlled SQL or runtime change.
+- Branch/PR: read-only evidence PR #1012 passed all 10 checks at exact head `b53e000228bf99801b327c1d7b81646edce32d6f` and squash-merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; implementation foundations remain on `main`.
+- Work lock: `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` RELEASED; do not revive it or rerun its three evidence jobs.
 - Dependencies: written product decisions, private quality/cost evidence, current Staging lifecycle, Legal/Tax, explicit Production activation.
 - Assumptions: Staging Test prices existing does not mean Plus/Ultra is activated or fully accepted.
 - Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, five-price Stripe Test catalog, signed webhook smoke, lifecycle controls, applied AI-tier event ledger, monitoring/recommendation/eval tooling. Current exact-main runs `33003378162`, `33003452287` and `33003526741` pass the protected read-only AI-resource, five-price Test-catalog and exact 22-event webhook checks. Direct read-only catalog evidence confirms both AI ledger functions and all three tables with forced RLS, exact role boundaries, zero events and zero unresolved reconciliations. The 50/100/150 context limits are already approved and tested.
 - Still open: final models/fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; a current full transactional Staging lifecycle through the applied AI ledger; the separately designed general Billing event ledger is not applied; Stripe client/method/API-version conformance review; legal/tax; runtime integration and explicit Production activation.
 - Evidence so far: issue #560, issue #874, Source of Truth, `src/config/aiTiers.mjs`, current runs/jobs recorded in FM-EV-022, historical signed-smoke run `31781263978`, pre-ledger lifecycle run `31735315959`, AI-ledger apply run `32038152382`, 175/175 focused local tests and the 2026-08-26 read-only Supabase catalog result.
-- Exact next step: publish/countercheck FM-EV-022 and release this evidence lock. Then defer product/private/protected work to `FM-AI-OWNER-001`/`002`; do not rerun the three read-only jobs, apply SQL or activate paid tiers.
+- Exact next step: defer product/private/protected work to `FM-AI-OWNER-001`/`002`; do not rerun the three read-only jobs, apply SQL or activate paid tiers. The generated parallel-safe task is `FM-META-001`.
 - Owner action needed: yes for product/financial decisions and any protected external activation.
 
 ## FM-META-001

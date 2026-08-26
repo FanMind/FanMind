@@ -7,6 +7,7 @@
 - GitHub Environment: `staging`
 - Evidence mode: repository tests, protected read-only GitHub workflows and explicit read-only Supabase catalog SQL
 - Forbidden and not performed: Stripe/Supabase resource mutation, payment/refund, SQL Apply, transactional lifecycle acceptance, runtime-ledger activation, Plus/Ultra activation, Production/Restore/Mobile/Security mutation
+- Repository acceptance: PR #1012 passed all 10 checks at exact head `b53e000228bf99801b327c1d7b81646edce32d6f` and squash-merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`
 
 ## Current protected evidence
 

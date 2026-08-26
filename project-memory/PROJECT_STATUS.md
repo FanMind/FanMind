@@ -62,8 +62,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Current handoff
 - Updated: 2026-08-26 Europe/Vienna
-- Active focus: FM-AI-001 read-only reconciliation is runtime-complete under PR #1012 and its active evidence lock. Exact-main runs `33003378162`, `33003452287` and `33003526741` all passed without writes; FM-EV-022 records the current resource/catalog/webhook/ledger truth. Remaining AI work is owner/protected/private, not another read-only rerun.
-- Start here: inspect exact GitHub/Production `main` `2f8d9ca989e87ad88a76a514308618a9ce5d6fbb`, PR #1012, FM-EV-022 and `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; then close/countercheck the PR and evidence lock. Current GitHub/runtime evidence overrides older #560/#874 checkboxes.
+- Active focus: FM-AI-001 read-only reconciliation is accepted and its evidence lock is released. Exact-main runs `33003378162`, `33003452287` and `33003526741` passed without writes; PR #1012 passed all 10 exact-head checks and merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`. Remaining AI work is owner/protected/private, not another read-only rerun.
+- Start here: inspect exact GitHub `main` `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`, FM-EV-022 and `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`. Current evidence overrides older #560/#874 checkboxes; generated standing-authorized work moves to `FM-META-001`.
 - Accepted governance: `FM-MEM-005` V6 accepted; `FM-MEM-008` V8 accepted after final PR #980 head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard/Quality/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E run #915, then merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Active IDs: `FM-RST-001`, `FM-MOB-001`, `FM-AI-001`, `FM-META-001`, `FM-SOC3-001`, `FM-SOC7-001`, `FM-SALES-001`, `FM-LEGAL-001`, `FM-SEC-001`.
 - Accepted foundation: `FM-STG-001`; Production operations baseline: `FM-OPS-001` verified; `sales_ready=false`; Phase 8 not started.
