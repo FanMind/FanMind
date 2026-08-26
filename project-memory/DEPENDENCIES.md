@@ -16,8 +16,9 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Requires: exact Supabase redirect, EAS project/environments/token, existing or approved signing credentials, signed Android/iOS builds, Apple Developer/App Store Connect for iOS, real devices and separate Push/Store evidence.
 - Type: external platform + technical acceptance
 - Status: ACTIVE
-- Updated: 2026-08-19
-- Rule: repository CI/simulator/debug builds do not satisfy signed real-device acceptance.
+- Updated: 2026-08-26
+- Current evidence: exact read-only `preview` run `33000433320` failed closed because `mobile-preview` still has no Expo token or expected EAS/Supabase/API bindings; public-environment verification never ran.
+- Rule: repository CI/simulator/debug builds do not satisfy signed real-device acceptance. Complete `FM-MOB-OWNER-001` before any new read-only check; do not build/sign/submit or invent external identifiers.
 
 ## FM-DEP-003
 - From: FM-AI-001

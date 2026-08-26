@@ -161,10 +161,10 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 
 ## Exact next safe sequence
 
-1. **FM-MOB-001:** continue the generated parallel-safe Mobile external resource reconciliation while earlier Restore and Security mutations remain owner-deferred; do not create credentials, sign, submit or mutate providers.
-2. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions; do not infer authorization from the read-only verify.
-3. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
-4. Plus/Ultra product/quality/cost/Stripe lifecycle closure.
+1. **FM-AI-001:** reconcile Plus/Ultra product, quality, cost and current Stripe-Staging lifecycle evidence read-only; do not activate paid tiers or invent owner decisions.
+2. **FM-MOB-001:** keep run `33000433320` as fail-closed evidence. Mobile external configuration is deferred to `FM-MOB-OWNER-001`; do not rerun, build, sign, submit or mutate providers before that action.
+3. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions; do not infer authorization from the read-only verify.
+4. Keep Restore at `TARGET_COMPATIBLE` with the receipt-bound extension sub-gate satisfied. First reconcile owner-PC public IP/TCP-22 reachability and any exact Exoscale `/32` allowlist drift. Do not rerun controller `45054c41...`. The next Restore transition remains a separately protected isolated database Restore only after a new exact R4 authorization and fresh mutable runner/host/target/backup/TLS evidence.
 5. Meta Events Manager + final non-Social security acceptance.
 6. Real Phase-3 channels.
 7. Real Phase-7 channels / OnlyFans feasibility.

@@ -21,10 +21,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-003
 - Related: FM-MOB-001
 - Status: OPEN
-- Updated: 2026-08-19
+- Updated: 2026-08-26
 - Gap: native app repository/CI exists; signed Android/iOS, real-device Recovery/Login/Purge, TestFlight, push and store evidence remain external.
 - Close when: required Android/iOS signed-build and device/store acceptance is evidence-bound to exact builds/commit.
-- Next check: Supabase redirect and read-only EAS resource state before build/signing.
+- Next check: `FM-MOB-OWNER-001` must populate the exact protected `mobile-preview` EAS/Supabase/API bindings and separately prove the Supabase redirect. Run `33000433320` is fail-closed evidence, not reusable acceptance; after configuration use a new lock and one fresh read-only check before any build/signing.
 
 ## FM-LOOP-004
 - Related: FM-AI-001

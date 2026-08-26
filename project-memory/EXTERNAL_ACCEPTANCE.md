@@ -14,10 +14,11 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 
 ## EXT-MOBILE-EAS
 - Related: FM-MOB-001
-- Status: OPEN
+- Status: BLOCKED
 - Risk: R3
 - External system: Expo/EAS
 - Acceptance: exact owner/project/environments validated, token access works, no Production target drift.
+- Current evidence: exact `preview` run `33000433320`, job `98280538304`, on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the protected token and expected bindings blank and failed closed before public-environment verification. Owner/platform action `FM-MOB-OWNER-001` is required; no retry is authorized until configured.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-ANDROID

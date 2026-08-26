@@ -79,12 +79,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MOB-001
 - Date: through 2026-08-19
-- Updated: 2026-08-20
+- Updated: 2026-08-26
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Goal: Deliver the native FanMind Mobile app through signed Android/iOS builds and real-device/store acceptance.
 - Result: Native Expo/React-Native core, auth/recovery, SecureStore/Purge, contact CRUD/knowledge, AI, follow-ups, offline cache, push foundation, icon/splash/privacy/store metadata and CI/build-control paths are implemented and repository-verified. External signed-build/device/store acceptance is not complete.
-- Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth.
-- Next step: verify Supabase redirect and EAS project/environments, establish signing credentials, produce signed internal Android build and real-device evidence, then iOS/TestFlight and remaining push/store evidence.
+- Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth; PR #988; exact fail-closed preview run `33000433320`/job `98280538304`.
+- Next step: owner/platform action `FM-MOB-OWNER-001` must configure the protected preview token/bindings and separately prove the Supabase redirect. Then run one new read-only preview check before any signing or build.
 - Do not repeat: Do not restart the mobile app or replace it with a WebView.
 
 ## FM-AI-001

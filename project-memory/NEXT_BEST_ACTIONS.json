@@ -34,12 +34,13 @@
       "priority": 20,
       "task": "FM-MOB-001",
       "gate": "mobile",
-      "title": "Mobile externen Restpfad read-only reconciliieren",
-      "requires_owner": false,
+      "title": "Mobile Preview-Ressourcen geschützt konfigurieren",
+      "requires_owner": true,
       "parallel_safe": true,
+      "deferred_owner_id": "FM-MOB-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Reconcile current repository, Supabase redirect contract, EAS resource contracts, signing prerequisites and device/store runbooks. Do not create credentials, sign, submit or mutate external resources without the required owner/platform step."
+      "instruction": "Read-only run 33000433320 proved that mobile-preview still lacks its protected Expo token and exact EAS/Supabase/API bindings. Require FM-MOB-OWNER-001 before a new one-shot preview verification. Never expose credentials, invent IDs, initialize a project, build, sign, submit, update or mutate Supabase/Production from this step."
     },
     {
       "id": "NBA-AI-LIFECYCLE-RECONCILE",
