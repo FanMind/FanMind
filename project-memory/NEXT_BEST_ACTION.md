@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Selected action: `NBA-MOBILE-READONLY`
-- Task: `FM-MOB-001`
-- Gate: `mobile` (`IMPLEMENTED_NOT_VERIFIED`)
+- Selected action: `NBA-AI-LIFECYCLE-RECONCILE`
+- Task: `FM-AI-001`
+- Gate: `ai_billing` (`PARTIAL`)
 - Selection status: `EXECUTABLE`
-- Title: Mobile externen Restpfad read-only reconciliieren
+- Title: KI/Billing Restpunkte gegen aktuellen Staging-Lifecycle abgleichen
 
 ## Instruction
 
-Reconcile current repository, Supabase redirect contract, EAS resource contracts, signing prerequisites and device/store runbooks. Do not create credentials, sign, submit or mutate external resources without the required owner/platform step.
+Map old Gate-4 checkboxes to current Stripe Test catalog, entitlements, webhook/lifecycle code and existing evidence. Produce only the true remaining product, quality, cost and external-decision gaps; do not activate paid tiers.
 
 ## Why this action
 
@@ -22,7 +22,7 @@ standing-authorized safe work
 
 - `NBA-RESTORE-DATABASE` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-005
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
-- `NBA-MOBILE-READONLY` priority 20: **EXECUTABLE** — standing-authorized safe work
+- `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-001
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **EXECUTABLE** — standing-authorized safe work
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **EXECUTABLE** — standing-authorized safe work
 - `NBA-PHASE3-SOCIAL` priority 60: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL

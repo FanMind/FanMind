@@ -69,6 +69,15 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Forbidden: automatic provider change, blind RPC revoke/grant or artificial browser RLS policy.
 - Do not ask before: explicit owner resume.
 
+## FM-MOB-OWNER-001 — Configure protected Mobile preview resources
+- Status: DEFERRED_BY_OWNER
+- Where: exact Expo/EAS FanMind account/project and GitHub Environment `mobile-preview`; Supabase Auth redirect is a separate external acceptance check.
+- Proven blocker: read-only run `33000433320`, job `98280538304`, on exact `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the Expo token and all four expected binding values blank and stopped with `eas_project_lookup_failed`; the public-environment step was skipped.
+- Required action: confirm the exact existing EAS owner/project, then set the protected `EXPO_TOKEN`, `FANMIND_MOBILE_EAS_OWNER`, `FANMIND_MOBILE_EAS_PROJECT_ID`, `FANMIND_MOBILE_SUPABASE_PROJECT_REF`, `FANMIND_PRODUCTION_SUPABASE_PROJECT_REF` and `FANMIND_MOBILE_API_ORIGIN` according to the runbook without exposing their values. Separately confirm `fanmind://reset-password` in the exact Supabase Auth allowlist.
+- Risk: R3
+- Forbidden: invented project IDs, secrets in chat/issues, EAS initialization/build/sign/submit/update, Production crossover or Supabase/Auth/DB mutation under this read-only evidence item.
+- Resume trigger: owner/platform configuration is complete; then use a new lock and exactly one fresh read-only preview check. Do not rerun `33000433320`.
+
 ## FM-GOV-OWNER-001 — Protect `main`
 - Status: DEFERRED_BY_OWNER
 - Where: GitHub repository/organization Rulesets or Branch Protection UI

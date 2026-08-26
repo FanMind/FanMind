@@ -131,3 +131,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: not yet proven. Most likely candidates are owner public-IP drift versus the Exoscale SSH source `/32`, or host/network reachability. Do not assert the cause until the Windows public-IP/TCP-22 evidence and exact security-group state are compared.
 - Decision: preserve `TARGET_COMPATIBLE`, set side state `RECONCILIATION_REQUIRED`, require owner-PC reachability evidence, and treat any Exoscale allowlist mutation plus later Restore authorization as separate exact R4 boundaries.
 - Do not repeat: no automatic retry and no reuse of controller `45054c41...` or authorization `5385992305`; never broaden SSH to `0.0.0.0/0` or another non-exact CIDR.
+
+## FM-FAIL-014
+- Date: 2026-08-26
+- Status: RECONCILED_FAIL_CLOSED
+- Area: protected Mobile `preview` resource readiness
+- Attempt: after reconciling five stale failed runs and publishing PR #1010's evidence lock, dispatch exactly one current `mobile-release-resource-readiness.yml` run on exact `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` with `release_environment=preview`.
+- Result: run `33000433320`, job `98280538304`, passed checkout, Node setup and dependency install, then failed in the exact EAS project lookup with emitted marker `MOBILE_RELEASE_READINESS_ERROR=eas_project_lookup_failed`. The public-environment step was skipped.
+- Cause: the protected `mobile-preview` environment supplied blank `EXPO_TOKEN` and blank expected EAS owner/project, Supabase project refs and API origin. The project-info verifier was never reached, so no external binding was accepted.
+- Decision: defer the exact protected environment/account configuration to `FM-MOB-OWNER-001`, preserve `IMPLEMENTED_NOT_VERIFIED`, and continue only parallel-safe work.
+- Do not repeat: do not rerun this failed job/run, invent owner/project values, initialize a new EAS project, expose credentials, queue a signed build, submit/update, or mutate Supabase/Auth/Production. After configuration require a new lock and exactly one fresh read-only check.

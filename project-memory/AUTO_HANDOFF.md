@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `false`
-- Next action: `NBA-MOBILE-READONLY`
-- Next action title: Mobile externen Restpfad read-only reconciliieren
+- Next action: `NBA-AI-LIFECYCLE-RECONCILE`
+- Next action title: KI/Billing Restpunkte gegen aktuellen Staging-Lifecycle abgleichen
 
 ## Finishline gates
 
@@ -28,6 +28,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- FM-MOB-OWNER-001 — Configure protected Mobile preview resources
 - FM-GOV-OWNER-001 — Protect `main`
 
 ## Mandatory new-chat / project-entry rule

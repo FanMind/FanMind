@@ -61,6 +61,14 @@ Updated: 2026-08-26 Europe/Vienna
 - Deferred action: decide and separately authorize the exact provider setting change for leaked-password protection on each target; explicitly accept or reject the documented Staging RPC exception after reviewing the evidence. Keep these actions separate from trigger hardening and Restore.
 - Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
 
+## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
+- Related task: `FM-MOB-001`.
+- Status: DEFERRED_BY_OWNER.
+- Proven blocker: exact read-only run `33000433320`, job `98280538304`, on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the `mobile-preview` `EXPO_TOKEN` and all expected EAS-owner/project/Supabase/API binding variables blank, then failed closed with `eas_project_lookup_failed` before public-environment verification.
+- Deferred action: establish or confirm the exact existing Expo/EAS FanMind project/account; populate only the protected `mobile-preview` GitHub Environment secret/variables defined by the runbook; separately prove the Supabase Auth redirect `fanmind://reset-password`. Never paste credential values into issues, Project Memory or chat.
+- Resume rule: after owner/platform configuration, acquire a new lock and run exactly one fresh read-only `preview` resource check. Do not reuse or rerun `33000433320`.
+- Safety: no EAS project initialization, build, signing, submit, update, Store action, Supabase/Auth/DB mutation or Production-target crossover is authorized by this deferred item.
+
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
 - Status: DEFERRED_BY_OWNER.

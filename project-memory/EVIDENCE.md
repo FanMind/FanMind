@@ -195,6 +195,19 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a later exact log, catalog/ACL/advisor read or release mismatch inconsistent with these results reopens reconciliation before any mutation.
 - Acceptance: COUNTERCHECKED_READ_ONLY_PRESTATE_CONFIRMED
 
+## FM-EV-021
+- Related: FM-MOB-001 / issues #584 and #690
+- Date: 2026-08-26
+- Target: exact GitHub `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301`; protected GitHub Environment `mobile-preview`; Expo/EAS read-only resource path
+- Type: protected exact-main read-only resource-readiness workflow + independent job/log countercheck
+- Reference: `mobile-release-resource-readiness.yml` run `33000433320`, job `98280538304`; PR #988 binding verifier; evidence PR #1010.
+- Result: checkout, Node setup and Mobile dependency installation passed. The exact EAS project lookup failed closed with the runtime-emitted marker `MOBILE_RELEASE_READINESS_ERROR=eas_project_lookup_failed`; the selected release environment was `preview` and the public EAS environment step was skipped.
+- Root-cause evidence: the job environment supplied blank `EXPO_TOKEN`, expected EAS owner/project ID, expected Mobile/Production Supabase refs and expected Mobile API origin. No project-info report reached the exact binding verifier, so no owner/slug/project ID was accepted.
+- Negative evidence: workflow source has no build/sign/submit/update/init path and all release-write gates remain fixed false. No EAS build, credential creation, Store action, Supabase/Auth/DB mutation, Restore/JIT/controller action or Production/Supabase-Staging data write occurred; no secret value was copied into Project Memory.
+- Classification: current external Mobile preview resources are `BLOCKED`, not an application-code regression. `FM-MOB-OWNER-001` must configure the protected exact values and redirect acceptance before a new one-shot read-only check.
+- Falsification: a later fresh exact-main protected run with nonblank but mismatched bindings, project-info mismatch or Production crossover reopens the classification; only a complete read-only PASS may advance external EAS readiness.
+- Acceptance: COUNTERCHECKED_FAIL_CLOSED_EXTERNAL_BLOCKER
+
 ## FM-EV-016
 - Related: FM-RST-001 / issue #944
 - Date: 2026-08-22
