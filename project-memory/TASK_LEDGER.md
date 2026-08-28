@@ -2,6 +2,17 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-GOV-OWNER-001
+- Date: 2026-08-28
+- Status: IN_PROGRESS
+- Goal: Enforce the existing FanMind `main` branch-governance contract through one active GitHub repository ruleset without blocking legitimate pull requests.
+- Starting state: live GitHub API returned no rulesets and `404 Branch not protected`; the repository contract used workflow display names, while GitHub requires check-run contexts, and the Supply Chain workflow was path-filtered.
+- Action: acquire the R3 governance lock; reconcile live PR #1017 contexts; make Supply Chain Security run on every PR; prepare the contract and quality control for the owner-resumed/active lifecycle.
+- Result: readiness implementation is pending exact-head CI and PR merge; remote ruleset creation has not occurred yet.
+- Evidence: live rulesets/protection APIs, PR #1017 checks, `BRANCH_PROTECTION_CONTRACT.json`, active work/lock records.
+- Next step: merge the readiness PR, activate the single ruleset, verify positive and negative enforcement, then close through a protected PR.
+- Do not repeat: do not create a second ruleset, parallel legacy protection or require a path-filtered status context.
+
 ## FM-MEM-001
 - Date: 2026-08-19
 - Status: DONE

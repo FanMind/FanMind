@@ -11,6 +11,22 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-GOV-OWNER-001
+- Started: 2026-08-28
+- Updated: 2026-08-28
+- Status: IN_PROGRESS
+- Risk: R3
+- Scope: Activate one GitHub repository ruleset for `main` that requires pull requests, the exact always-emitted FanMind/Project-Memory check-run contexts and conversation resolution, while blocking force pushes, deletion and routine direct updates.
+- Branch/PR: `governance-main-ruleset-preparation-20260828`; preparation PR pending.
+- Work lock: `LOCK-FM-GOV-OWNER-001-MAIN-RULESET-20260828` ACTIVE.
+- Dependencies: repository-admin GitHub CLI; current `main`; live check-run names; Supply Chain Security must emit its required context on every pull request.
+- Assumptions: workflow display names are not valid required-status contexts; a path-filtered required workflow can deadlock an unrelated PR; zero approving reviews preserves single-owner operation while still enforcing the PR boundary.
+- Completed so far: live API confirms no rulesets and no legacy branch protection. Latest fully green PR #1017 identifies the always-emitted check-run contexts. The local drift-preflight alert was counterchecked as a Windows CRLF/raw-byte false positive because every filtered Git hash equals the exact baseline blob.
+- Still open: merge readiness PR; create exactly one active ruleset; verify live API configuration, PR check enforcement and direct-update rejection; record receipt and release lock through a protected closeout PR.
+- Evidence so far: live GitHub rulesets `[]`, branch-protection `404`, PR #1017 check runs, exact local `HEAD == origin/main == eae545f033ee329d40bc4ba42882f1fafd9a50f3` and filtered Git-blob countercheck.
+- Exact next step: run local governance checks, push the readiness branch, wait for every exact-head check and merge by PR before remote ruleset creation.
+- Owner action needed: none unless GitHub itself requires an interactive confirmation or the repository plan rejects repository rulesets.
+
 ## FM-RST-001
 - Started: 2026-08-17
 - Updated: 2026-08-26
