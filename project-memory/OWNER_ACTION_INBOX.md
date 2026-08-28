@@ -105,14 +105,14 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Forbidden: rerunning `33007156552`, `33007311870` or `33007481167` merely for the current closeout; repeating Production ENV/build/deploy; secrets/customer data in issues or Project Memory; CAPI/Advanced Matching/conversion activation; provider/account/OAuth/App Review, SQL Apply or worker/runtime change without separate exact authorization. Fresh Staging revalidation after expiry/invalidation must use a new lock and the shared rollout-state first.
 - Resume trigger: owner provides the external account/browser/legal readiness; then acquire a new exact external-acceptance lock before any real Meta event or provider action.
 
-## FM-GOV-OWNER-001 — Protect `main`
-- Status: DEFERRED_BY_OWNER
-- Where: GitHub repository/organization Rulesets or Branch Protection UI
+## FM-GOV-OWNER-001 - Protect `main`
+- Status: OWNER_RESUMED_IN_PROGRESS
+- Where: GitHub repository Rulesets API/UI for `FanMind/FanMind`
 - Why: `main` should require PRs/checks and block force-push/delete/direct routine pushes.
 - Risk: R3
 - Duration class: short
-- Resume trigger: owner chooses to complete GitHub governance setup.
-- Do not ask before: explicit owner resume.
+- Current action: merge the readiness PR, create exactly one active repository ruleset from `BRANCH_PROTECTION_CONTRACT.json`, verify enforcement, and close the active governance lock through a protected PR.
+- Do not duplicate: no parallel legacy Branch Protection configuration and no second ruleset for `main`.
 
 ## Rules
 - `DEFERRED_BY_OWNER` means keep visible but do not repeatedly interrupt the owner.

@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-GOV-OWNER-001-MAIN-RULESET-20260828
+- Task: FM-GOV-OWNER-001
+- Status: ACTIVE
+- Holder: ChatGPT PC/infrastructure completion session 2026-08-28
+- Branch/PR: `governance-main-ruleset-preparation-20260828`; preparation PR pending
+- Acquired: 2026-08-28 Europe/Berlin
+- Risk: R3 GitHub repository governance/security configuration
+- Scope: prepare and activate exactly one `main` repository ruleset from the canonical contract, using real always-emitted check-run contexts and no bypass actors; then prove enforcement and close through a protected PR.
+- Safety: no product code, deploy, database/provider/secret/billing/store mutation; no weakening/removal of existing CI; no second ruleset or parallel legacy branch protection.
+- Resume from: complete the exact-head readiness PR first, then create and verify the single ruleset, write the execution receipt and release this lock only after the protected closeout PR merges.
+
 ## Released locks
 
 ## LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826

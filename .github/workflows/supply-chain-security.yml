@@ -4,16 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - ".github/**"
-      - "package.json"
-      - "package-lock.json"
-      - "apps/mobile/package.json"
-      - "apps/mobile/package-lock.json"
-      - "scripts/security/**"
-      - "scripts/verify-actions-pinned.mjs"
-      - "tests/dependency-audit-policy.test.mjs"
-      - "tests/github-actions-supply-chain.test.mjs"
   push:
     branches:
       - main

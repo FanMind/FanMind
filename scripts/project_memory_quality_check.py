@@ -132,10 +132,21 @@ else:
 branch_contract = json.loads((PM / "BRANCH_PROTECTION_CONTRACT.json").read_text(encoding="utf-8"))
 if branch_contract.get("branch") != "main" or branch_contract.get("require_pull_request") is not True:
     errors.append("branch-protection-contract-invalid")
-if branch_contract.get("owner_activation") != "DEFERRED_OWNER_ACTION":
-    errors.append("branch-protection-owner-boundary-not-recorded")
+owner_activation = branch_contract.get("owner_activation")
+allowed_owner_activation_states = {
+    "DEFERRED_OWNER_ACTION",
+    "OWNER_RESUMED_IN_PROGRESS",
+    "ACTIVE_REMOTE_RULESET",
+}
+if owner_activation not in allowed_owner_activation_states:
+    errors.append("branch-protection-owner-boundary-invalid")
+if (
+    owner_activation == "ACTIVE_REMOTE_RULESET"
+    and branch_contract.get("current_remote_state") != "ACTIVE_REMOTE_RULESET"
+):
+    errors.append("branch-protection-active-state-mismatch")
 deferred = (PM / "DEFERRED_OWNER_ACTIONS.md").read_text(encoding="utf-8")
-if "FM-GOV-OWNER-001" not in deferred:
+if owner_activation != "ACTIVE_REMOTE_RULESET" and "FM-GOV-OWNER-001" not in deferred:
     errors.append("branch-protection-deferred-owner-action-missing")
 
 for script_name in [

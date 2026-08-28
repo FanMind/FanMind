@@ -91,20 +91,15 @@ Updated: 2026-08-26 Europe/Vienna
 - Resume rule: do not rerun FM-EV-023 merely to close the technical reconciliation or repeat Production ENV/build/deploy. After its Staging freshness expires/invalidation or before any later Meta Staging database action, use a new lock and fresh shared rollout-state-first verification. Any real event emission, provider/account/OAuth/App Review action, credential use, SQL Apply, worker/runtime activation or Production change requires its own exact scope and current evidence.
 - Safety: no CompleteRegistration/Lead/Purchase, Advanced Matching, CAPI, customer data, CRM identifiers or secret values may be introduced through this action.
 
-## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
+## FM-GOV-OWNER-001 - Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
-- Status: DEFERRED_BY_OWNER.
-- Current remote fact: `main` is not protected as of 2026-08-19; branch API reports `protected=false` and no required status checks.
-- Why deferred: the connected GitHub app can read the branch protection state but exposes no write action for Branch Protection or Rulesets.
+- Status: OWNER_RESUMED_IN_PROGRESS.
+- Current remote fact: live GitHub API on 2026-08-28 returns no repository rulesets and `404 Branch not protected` for `main`.
+- Why resumed: the owner explicitly resumed the complete PC/infrastructure setup, including GitHub Branch Protection/Rulesets, and the authenticated GitHub CLI has repository-admin access.
 - Required remote settings are defined in `BRANCH_PROTECTION_CONTRACT.json`.
-- Deferred actions:
-  1. Enable protection/ruleset for `main`.
-  2. Require pull requests for changes to `main`.
-  3. Require the listed FanMind/Project-Memory status checks.
-  4. Block force pushes and branch deletion.
-  5. Require conversation resolution.
-  6. Do not allow routine direct pushes to `main`.
-- Resume rule: perform this once together when convenient. Until then, agents must still follow the repository branch+PR policy even though GitHub does not technically enforce it.
+- Controlled sequence: merge the ruleset-readiness PR, activate one repository ruleset for `main`, verify positive enforcement and an unauthorized/direct-update negative path, then close the Project Memory lock through a protected PR.
+- Remaining actions: require PRs and the exact listed check-run contexts; block force pushes, deletion and routine direct pushes; require conversation resolution; record the live ruleset ID/configuration and closeout evidence.
+- Resume rule: continue only through the active `LOCK-FM-GOV-OWNER-001-MAIN-RULESET-20260828`; do not create a second ruleset or use legacy Branch Protection in parallel.
 - Safety: do not weaken or remove existing checks in order to make the ruleset easier to satisfy.
 
 ## General rule

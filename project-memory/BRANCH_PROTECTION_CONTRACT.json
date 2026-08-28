@@ -1,24 +1,28 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "FanMind/FanMind",
   "branch": "main",
   "required": true,
-  "current_remote_state": "UNPROTECTED_AS_OF_2026-08-19",
+  "current_remote_state": "UNPROTECTED_CONFIRMED_2026-08-28",
   "required_status_checks": [
-    "Project Memory Guard",
-    "Project Memory Quality",
-    "Project Memory Status",
-    "FanMind CI",
-    "FanMind Browser E2E",
-    "FanMind Landing Language CI",
-    "FanMind Supply Chain Security",
-    "FanMind CodeQL"
+    "project-memory-guard",
+    "project-memory-quality",
+    "generate-status",
+    "Truth, lint, tests and build",
+    "PostgreSQL 17 authorization roundtrip",
+    "Public no-write flows on desktop and mobile Chromium",
+    "Synthetic regular-user core flow on local providers",
+    "language-runtime-guard",
+    "Immutable Actions, dependency audit and CycloneDX SBOM",
+    "JavaScript and TypeScript security analysis"
   ],
   "require_pull_request": true,
   "block_force_pushes": true,
   "block_deletions": true,
   "require_conversation_resolution": true,
   "allow_direct_push_to_main": false,
-  "owner_activation": "DEFERRED_OWNER_ACTION",
-  "notes": "The connected GitHub app can read but not configure branch protection/rulesets. This contract is machine-checked in-repo; remote activation is tracked in DEFERRED_OWNER_ACTIONS.md."
+  "required_approving_review_count": 0,
+  "strict_required_status_checks_policy": false,
+  "owner_activation": "OWNER_RESUMED_IN_PROGRESS",
+  "notes": "The owner resumed FM-GOV-OWNER-001 on 2026-08-28. Required status checks are the live GitHub check-run contexts rather than workflow display names. Supply Chain Security now runs on every pull request so requiring its job cannot deadlock documentation-only changes. Remote activation remains pending until this reviewed preparation merges."
 }
