@@ -82,6 +82,8 @@ export default function ContactDetailScreen() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [memories, setMemories] = useState<ContactMemory[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [messageError, setMessageError] = useState<string | null>(null);
+  const [messagesBusy, setMessagesBusy] = useState(false);
   const [incomingMessage, setIncomingMessage] = useState("");
   const [instruction, setInstruction] = useState("");
   const [suggestions, setSuggestions] = useState<ReplySuggestions | null>(null);
@@ -98,6 +100,7 @@ export default function ContactDetailScreen() {
       setContact(null);
       setMemories([]);
       setMessages([]);
+      setMessageError(null);
       setError("Kontakt-ID fehlt.");
       setLoading(false);
       return;
@@ -107,6 +110,7 @@ export default function ContactDetailScreen() {
       setContact(null);
       setMemories([]);
       setMessages([]);
+      setMessageError(null);
       setError(null);
       setLoading(false);
       return;
@@ -121,13 +125,23 @@ export default function ContactDetailScreen() {
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
     setMessages(messagesResult.messages);
-    setError(contactResult.error ?? memoriesResult.error ?? messagesResult.error);
+    setMessageError(messagesResult.error);
+    setError(contactResult.error ?? memoriesResult.error);
     setLoading(false);
   }, [contactId, workspace?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const refreshMessages = useCallback(async () => {
+    if (!workspace?.id || !contactId) return;
+    setMessagesBusy(true);
+    const result = await listContactMessages(workspace.id, contactId);
+    if (!result.error) setMessages(result.messages);
+    setMessageError(result.error);
+    setMessagesBusy(false);
+  }, [contactId, workspace?.id]);
 
   const tags = useMemo(() => contact?.tags ?? [], [contact?.tags]);
 
@@ -298,8 +312,18 @@ export default function ContactDetailScreen() {
       </Card>
 
       <Card>
-        <SectionTitle eyebrow="Nachrichten">Gesprächsverlauf</SectionTitle>
-        {messages.length ? (
+        <View style={styles.messageHeader}>
+          <SectionTitle eyebrow="Nachrichten">Gesprächsverlauf</SectionTitle>
+          <SecondaryButton
+            disabled={messagesBusy}
+            onPress={() => void refreshMessages()}
+          >
+            {messagesBusy ? "Lädt…" : "Aktualisieren"}
+          </SecondaryButton>
+        </View>
+        {messageError ? (
+          <Text style={mobileStyles.error}>{messageError}</Text>
+        ) : messages.length ? (
           <View style={styles.messageList}>
             {messages.map((message) => {
               const outbound = message.direction === "outbound";
@@ -483,6 +507,12 @@ const styles = StyleSheet.create({
     marginTop: 7,
     borderRadius: 5,
     backgroundColor: colors.cyan,
+  },
+  messageHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
   },
   messageList: { gap: spacing.md },
   messageRow: { alignItems: "flex-start" },

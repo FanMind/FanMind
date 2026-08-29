@@ -18,7 +18,8 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
 - Kontaktanlage und Kontaktbearbeitung;
 - sichtbarer read-only Gesprächsverlauf mit höchstens 100 aktuellen,
   ausdrücklich nach Workspace und Kontakt gefilterten Nachrichten; keine
-  Nachrichtenpersistenz im Offline-Cache;
+  Nachrichtenpersistenz im Offline-Cache; neueste Nachrichten zuerst und mit
+  sichtbarer manueller Aktualisierung/Fehleranzeige;
 - Antwortvorschläge kopieren oder über die native Android-/iOS-Teilen-Auswahl
   weitergeben; der Share-Payload enthält ausschließlich den ausgewählten
   Antworttext, niemals Kontakt-, Workspace-, Kontext-, Notiz- oder

@@ -282,3 +282,17 @@ Implementation status and acceptance status are deliberately separate.
 - Acceptance: COUNTERCHECKED_PRE_DISPATCH_FAIL_CLOSED
 
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
+
+## FM-EV-024
+- Related: FM-MOB-002 / FM-MOB-001 / FM-CR-002
+- Date: 2026-08-29
+- Target: branch `fix/mobile-contact-message-history-20260829`, PR #1019, implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`; isolated Mobile/Staging demo account
+- Type: authenticated bounded data observation + source inspection + implementation diff + local automated/native-build counterchecks
+- Reference: `apps/mobile/app/(app)/contacts/[id].tsx`; `apps/mobile/src/lib/data.ts`; `apps/mobile/src/types.ts`; `tests/mobile-recovery-contact-crud.test.mjs`; owner Android screenshots.
+- Result: the demo workspace contains 13 demo contacts and 37 stored conversation messages. The prior Mobile contact screen did not load them. The new implementation selects at most 100 recent rows with exact `workspace_id` and `contact_id` filters, keeps the latest inbound context immediately visible through newest-first rendering, offers an explicit refresh with a message-specific failure state, visually separates inbound/outbound/note messages and keeps the history read-only with explicit no-auto-send disclosure.
+- Security/privacy boundary: the query uses the authenticated Supabase client and existing RLS; no service-role key, message write, automatic send or offline message cache was added. The implementation changes no database schema or rows.
+- Checks: Mobile `npm run check` passed including TypeScript, Expo Doctor 20/20, boundary/store checks and Android/iOS prebuild; Android and iOS Expo exports passed; root truth/lint passed; focused Mobile/security tests passed 40/40; full operations suite passed 1052/1052; `git diff --check` passed.
+- Current limitation: repository/local evidence does not prove the replacement UI on a signed real device. Exact-head PR checks, merge, a new signed Android internal build and owner visual confirmation are still required.
+- Rollback/recovery: revert the bounded data-query/UI change; no provider/database rollback is required. The previous APK remains usable until replacement acceptance.
+- Falsification: a same-account, same-workspace, same-contact authenticated query returning messages while the exact replacement build renders none would invalidate the current presentation-only classification and require runtime binding/model-mapping reconciliation.
+- Acceptance: IMPLEMENTED_NOT_VERIFIED

@@ -84,7 +84,8 @@ Mobile uses direct Supabase queries only for tables already protected by RLS:
 - the parameterless member-safe Workspace RPC / `workspace_members`; only an Owner lookup reads the base `workspaces` table;
 - `contacts`;
 - `conversation_messages` (read-only, höchstens 100 aktuelle Nachrichten je
-  Kontakt; zusätzlich nach `workspace_id` und `contact_id` gefiltert);
+  Kontakt; zusätzlich nach `workspace_id` und `contact_id` gefiltert; neueste
+  zuerst und mit expliziter Aktualisierung);
 - `memories`;
 - `followups`.
 

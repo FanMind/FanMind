@@ -418,8 +418,7 @@ export async function listContactMessages(
   if (result.error) {
     return { messages: [], error: "Nachrichtenverlauf konnte nicht geladen werden." };
   }
-  const recentMessages = (result.data ?? []) as ConversationMessage[];
-  return { messages: recentMessages.reverse(), error: null };
+  return { messages: (result.data ?? []) as ConversationMessage[], error: null };
 }
 
 export async function createContactMemory(input: {
