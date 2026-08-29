@@ -26,20 +26,20 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 ## RECEIPT-FM-MOB-003-20260829
 - Task: FM-MOB-003
 - Started: 2026-08-29 Europe/Vienna
-- Finished: pending
-- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`
+- Finished: 2026-08-29 after exact-head merge and protected signed Android preview
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`, squash merge `93496a4afac9b3b315c9985afbbce02b8524fc44`
 - Preflight checked: AGENTS, Source of Truth, Project Memory Protocol/Execution Policy/Current State/Finishline/NBA/Handoff/Started Work/Locks/Change Requests/Task Ledger/Open Loops/Dependencies/Decisions/Failed Attempts/Assumptions/Contradictions/Evidence/Receipts/Quality/Countercheck/External Acceptance, Mobile dashboard/contact/follow-up/data code, database `seen_at` contract, web unread behavior, current Git status and current GitHub `main`.
 - Prior attempts found: FM-MOB-002/#1019 already provides the bounded message query/history and exact merged Android preview; it must be extended, not rebuilt. Existing Web behavior already defines unseen inbound as `direction=inbound AND seen_at IS NULL` and owner contact-open marking.
 - Dependency result: no schema, permission or demo-row change is required. Existing authenticated RLS plus owner-only Mobile mutation controls are sufficient; FM-DEP-002 remains relevant to the new signed preview/device evidence.
 - Planned evidence: pure policy tests; bounded authenticated query/mutation source checks; TypeScript/Expo/native exports; full regression and Project Memory checks; exact-head PR gates; merged commit; one protected Android preview and owner confirmation.
 - Changes made: unseen-inbound-only Start dashboard, dynamic `Alle` plus stored-platform tabs for every fan, Owner-only manual Follow-up form, exact Workspace/contact/seen-state data bounds, and removal of the rejected decorative symbol from the shared wordmark. Documentation and regression tests were updated; no schema, permission, provider, Production or demo-row change was made.
-- Checks/tests: Mobile `npm run check` PASS; Android and iOS Expo export PASS; focused Mobile/security 48/48 PASS; complete operations 1054/1054 PASS; root `verify:truth`, lint and Project Memory quality PASS; `git diff --check` PASS. Drift review remains intentionally open until the reconciled Source-of-Truth blob is rebound in the same PR.
-- Final diff counterchecked: yes at PR #1021 pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`; GitHub reports exactly 27 intended files, and all 27 remote blob SHAs equal the locally tested files. Final exact-head recheck remains required after this receipt-only update.
+- Checks/tests: Mobile `npm run check` PASS; Android and iOS Expo export PASS; focused Mobile/security 48/48 PASS; complete operations 1054/1054 PASS; root truth/lint and Project Memory checks PASS. PR #1021 final head passed FanMind CI, Mobile CI, Browser E2E, CodeQL, Landing and all three Project Memory workflows. Protected run `33260695232` / job `99122008690` verified the exact merge, preview environment, Android platform, internal distribution and HTTPS artifact, then stored the redacted receipt and cleaned temporary state.
+- Final diff counterchecked: yes; GitHub reported exactly 27 intended files, all 27 remote blob SHAs matched the locally tested files, no review threads existed, and the exact final PR head was terminal green before squash merge.
 - Regression/security countercheck: PASS locally for Workspace/contact filters, Owner-only mutation, Member read-only behavior, absence of message offline caching/service-role/automatic sending, and no schema/provider/Production mutation. Read-only Staging aggregate evidence found unseen inbound rows and three stored channels for Lena without selecting message contents.
 - Evidence produced: FM-EV-025.
-- Result status: IMPLEMENTED_NOT_VERIFIED.
-- Open follow-up: exact-head PR/CI, merge, one exact-merge Android preview and owner device confirmation.
-- Work lock released: no.
+- Result status: VERIFIED_NOT_ACCEPTED.
+- Open follow-up: owner installs the existing exact-merge preview and confirms the four requested behaviors; iOS/TestFlight/push/Store remain separate.
+- Work lock released: yes.
 
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
