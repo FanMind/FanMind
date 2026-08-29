@@ -136,6 +136,11 @@ uses `created_at` plus `id` as a stable boundary. The compact dashboard renders
 at most the first 20 and links to the central Follow-up screen. Null or custom
 legacy priorities are loaded in a final fallback group. Its read error is
 section-specific and gates the empty state.
+The open-status predicate keeps legacy `NULL` rows readable alongside normal
+open rows while excluding both `completed` and historical `done`. The central
+Follow-up screen loads the complete open result in stable 200-row pages ordered
+by due date, creation time and ID; it is therefore a real destination for work
+outside the compact dashboard selection.
 Per-contact Follow-up load errors remain section-specific on initial load and
 after either manual or suggestion-based creation, so a failed refresh can never
 be rendered as a valid empty list next to a save-success notice. The bounded
@@ -144,7 +149,10 @@ Contact-knowledge reads have the same section-specific error/empty-state split.
 
 Model-generated unreviewed analysis confidence remains capped below 100.
 Fallback-only guidance saved without an available OpenAI key is capped at a low
-20-point scale and is never presented with model-level confidence.
+20-point scale and is never presented with model-level confidence. A report is
+not generated or persisted unless at least one bounded source message provides
+a valid source period; that condition returns a typed unprocessable-context
+failure before any provider call or report write.
 
 Server-only functions remain server-only:
 

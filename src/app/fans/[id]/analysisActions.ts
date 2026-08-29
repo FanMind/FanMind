@@ -485,13 +485,23 @@ export async function analyzeFanCommunication(
   const sourceToAt = sourceMessageTimes.length
     ? new Date(sourceMessageTimes[sourceMessageTimes.length - 1]!).toISOString()
     : null;
+  if (!sourceMessages.length || !sourceFromAt || !sourceToAt) {
+    return {
+      ok: false,
+      failure_reason: "unprocessable_context",
+      message:
+        locale === "en"
+          ? "A communication overview requires messages with a valid source period."
+          : "Eine Kommunikationsübersicht benötigt Nachrichten mit einem gültigen Herkunftszeitraum.",
+    };
+  }
   const model = getFanMindAiModel();
   const apiKey = process.env.OPENAI_API_KEY;
   // Message count is only a conservative provenance signal, never a quality
   // guarantee. Model-generated reports stay below 100; generic fallback-only
   // guidance stays explicitly low-confidence even with many source messages.
   const confidenceScore =
-    apiKey && sourceMessages.length > 0
+    apiKey
       ? Math.min(80, sourceMessages.length * 10)
       : Math.min(20, sourceMessages.length * 2);
   const lowDataHint =
@@ -510,7 +520,7 @@ export async function analyzeFanCommunication(
       locale === "en"
         ? "OpenAI is not configured. A careful interim overview was saved."
         : "OpenAI ist serverseitig nicht konfiguriert. Eine vorsichtige Zwischenübersicht wurde gespeichert.";
-  } else if (sourceMessages.length > 0) {
+  } else {
     try {
       const response = await fetch(OPENAI_RESPONSES_URL, {
         method: "POST",
@@ -616,11 +626,6 @@ export async function analyzeFanCommunication(
             : "Die Kommunikationsübersicht konnte nicht erstellt werden. Bitte erneut versuchen.",
       };
     }
-  } else {
-    userMessage =
-      locale === "en"
-        ? "No messages are stored yet. A careful interim overview was saved."
-        : "Noch keine Nachrichten gespeichert. Eine vorsichtige Zwischenübersicht wurde gespeichert.";
   }
 
   const result = await upsertFanAnalysisReport({
@@ -629,11 +634,9 @@ export async function analyzeFanCommunication(
     reportJson: report,
     summary: report.kurzprofil,
     model:
-      apiKey && sourceMessages.length > 0
+      apiKey
         ? model
-        : apiKey
-          ? "fallback-no-messages"
-          : "fallback-no-api-key",
+        : "fallback-no-api-key",
     sourceMessageCount: sourceMessages.length,
     sourceFromAt,
     sourceToAt,

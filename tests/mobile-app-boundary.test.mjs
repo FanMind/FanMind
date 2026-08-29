@@ -222,7 +222,11 @@ test("mobile uses completed as canonical follow-up status and still hides legacy
 
   assert.match(statusPolicy, /CANONICAL_COMPLETED_FOLLOWUP_STATUS = "completed"/u);
   assert.match(statusPolicy, /LEGACY_COMPLETED_FOLLOWUP_STATUS = "done"/u);
-  assert.match(data, /\.not\("status", "in", COMPLETED_FOLLOWUP_FILTER\)/u);
+  assert.match(
+    statusPolicy,
+    /OPEN_FOLLOWUP_FILTER[\s\S]*status\.is\.null,status\.not\.in\.\$\{COMPLETED_FOLLOWUP_FILTER\}/u,
+  );
+  assert.match(data, /\.or\(OPEN_FOLLOWUP_FILTER\)/u);
   assert.match(data, /update\(\{ status: CANONICAL_COMPLETED_FOLLOWUP_STATUS \}\)/u);
   assert.doesNotMatch(data, /\.neq\("status", "done"\)/u);
   assert.doesNotMatch(data, /update\(\{ status: "done" \}\)/u);

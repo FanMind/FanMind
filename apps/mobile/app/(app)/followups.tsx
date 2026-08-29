@@ -198,12 +198,12 @@ export default function FollowupsScreen() {
             tintColor={colors.cyan}
           />
         }
-        ListEmptyComponent={
+        ListEmptyComponent={error ? null : (
           <EmptyState
             title="Keine offenen Follow-ups"
             description="Neue Follow-ups kannst du direkt im Fan-Detail oder aus einem KI-Vorschlag speichern."
           />
-        }
+        )}
       />
     </Screen>
   );

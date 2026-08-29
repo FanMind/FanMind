@@ -139,9 +139,12 @@ Aktiv im App-Kern:
 - Follow-ups als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag
   anlegen, global oder pro Fan anzeigen, aus globaler Liste und Dashboard zum
   jeweiligen Fan öffnen und mit dem kanonischen Status `completed`
-  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten
-  bleiben lesekompatibel. Die Fan-Detail-Liste liefert einen exakten Zähler und
-  weist eine Begrenzung auf 100 sichtbare offene Einträge ausdrücklich aus;
+  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten bleiben
+  lesekompatibel und ein historisch leerer Status gilt weiterhin als offen.
+  Die globale Liste lädt alle offenen Einträge stabil in 200er-Seiten, statt
+  ältere Aufgaben nach einer festen Grenze auszublenden. Die Fan-Detail-Liste
+  liefert einen exakten Zähler und weist eine Begrenzung auf 100 sichtbare
+  offene Einträge ausdrücklich aus;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,

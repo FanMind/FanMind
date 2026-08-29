@@ -312,10 +312,11 @@ test("Mobile contact mutations stay workspace-bound and fail on duplicates", asy
 });
 
 test("Mobile contact detail loads a bounded RLS-protected message history", async () => {
-  const [data, detail, dashboard] = await Promise.all([
+  const [data, detail, dashboard, followups] = await Promise.all([
     read("apps/mobile/src/lib/data.ts"),
     read("apps/mobile/app/(app)/contacts/[id].tsx"),
     read("apps/mobile/app/(app)/index.tsx"),
+    read("apps/mobile/app/(app)/followups.tsx"),
   ]);
 
   assert.match(data, /export async function listContactMessages/u);
@@ -358,12 +359,16 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(data, /export async function listContactFollowups/u);
   assert.match(
     data,
-    /listContactFollowups[\s\S]*\.select\(FOLLOWUP_COLUMNS, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)[\s\S]*truncated: followups\.length < totalCount/u,
+    /listContactFollowups[\s\S]*\.select\(FOLLOWUP_COLUMNS, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)[\s\S]*\.limit\(100\)[\s\S]*truncated: followups\.length < totalCount/u,
+  );
+  assert.match(
+    data,
+    /listFollowups[\s\S]*pageSize = 200[\s\S]*while \(true\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)[\s\S]*\.order\("due_date"[\s\S]*\.order\("created_at"[\s\S]*\.order\("id"[\s\S]*\.range\(offset, offset \+ pageSize - 1\)[\s\S]*pageRows\.length < pageSize/u,
   );
   assert.match(data, /export async function listTodaysFollowups/u);
   assert.match(
     data,
-    /listTodaysFollowups[\s\S]*\.select\("id", \{ count: "exact", head: true \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)/u,
+    /listTodaysFollowups[\s\S]*\.select\("id", \{ count: "exact", head: true \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)/u,
   );
   assert.match(data, /maximumLoadedRows = 1_000/u);
   assert.match(
@@ -396,6 +401,10 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
     /todayFollowupError[\s\S]*mobileStyles\.error[\s\S]*todayFollowups\.length[\s\S]*Heute nichts fällig/u,
   );
   assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
+  assert.match(
+    followups,
+    /ListEmptyComponent=\{error \? null : \([\s\S]*Keine offenen Follow-ups/u,
+  );
 });
 
 test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
@@ -435,8 +444,13 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
   assert.match(
     action,
-    /const confidenceScore =[\s\S]*apiKey && sourceMessages\.length > 0[\s\S]*Math\.min\(80, sourceMessages\.length \* 10\)[\s\S]*Math\.min\(20, sourceMessages\.length \* 2\)/u,
+    /if \(!sourceMessages\.length \|\| !sourceFromAt \|\| !sourceToAt\)[\s\S]*failure_reason: "unprocessable_context"[\s\S]*gültigen Herkunftszeitraum/u,
   );
+  assert.match(
+    action,
+    /const confidenceScore =[\s\S]*apiKey[\s\S]*Math\.min\(80, sourceMessages\.length \* 10\)[\s\S]*Math\.min\(20, sourceMessages\.length \* 2\)/u,
+  );
+  assert.doesNotMatch(action, /fallback-no-messages/u);
   assert.match(action, /review_status: result\.report\.review_status/u);
   assert.match(report, /hasCompleteReportProvenance/u);
   assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);

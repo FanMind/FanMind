@@ -334,8 +334,9 @@ Bereits vorhanden:
   native Android-/iOS-Teilen-Auswahl weitergeben; FanMind wählt weder Ziel noch
   Empfänger und sendet nicht selbst;
 - Follow-ups als Owner direkt beim Fan oder aus einem KI-Vorschlag anlegen,
-  offene Follow-ups anzeigen und mit `completed` abschließen; Teammitglieder
-  lesen nur, Altdaten mit `done` bleiben kompatibel;
+  offene Follow-ups vollständig seitenweise anzeigen und mit `completed`
+  abschließen; Teammitglieder lesen nur, Altdaten mit `done` bleiben
+  abgeschlossen und Altdaten mit leerem Status bleiben als offen sichtbar;
 - verschlüsselte, höchstens 24 Stunden alte Offline-Übersicht mit maximal 50 Kontakten; nur Name, Handle, Plattform, Status und Änderungszeit, ausschließlich lesbar;
 - sicherer lokaler Logout mit Purge aller registrierten FanMind-SecureStore-Schlüssel und des Workspace-Zustands;
 - native Push-Grundlage mit validierter Follow-up-Navigation, sicherem

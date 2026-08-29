@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import {
   CANONICAL_COMPLETED_FOLLOWUP_STATUS,
-  COMPLETED_FOLLOWUP_FILTER,
+  OPEN_FOLLOWUP_FILTER,
 } from "@/lib/followupStatus";
 import {
   normalizeContactDraft,
@@ -559,17 +559,29 @@ export async function createContactMemory(input: {
 export async function listFollowups(
   workspaceId: string,
 ): Promise<{ followups: Followup[]; error: string | null }> {
-  const result = await supabase
-    .from("followups")
-    .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
-    .eq("workspace_id", workspaceId)
-    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
-    .order("due_date", { ascending: true, nullsFirst: false })
-    .limit(200);
-  if (result.error) {
-    return { followups: [], error: "Follow-ups konnten nicht geladen werden." };
+  const pageSize = 200;
+  const rows: Followup[] = [];
+  let offset = 0;
+
+  while (true) {
+    const result = await supabase
+      .from("followups")
+      .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
+      .eq("workspace_id", workspaceId)
+      .or(OPEN_FOLLOWUP_FILTER)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) {
+      return { followups: [], error: "Follow-ups konnten nicht vollständig geladen werden." };
+    }
+    const pageRows = (result.data ?? []) as unknown as Followup[];
+    rows.push(...pageRows);
+    if (pageRows.length < pageSize) break;
+    offset += pageRows.length;
   }
-  return { followups: (result.data ?? []) as unknown as Followup[], error: null };
+  return { followups: rows, error: null };
 }
 
 export async function listContactFollowups(
@@ -586,7 +598,7 @@ export async function listContactFollowups(
     .select(FOLLOWUP_COLUMNS, { count: "exact" })
     .eq("workspace_id", workspaceId)
     .eq("contact_id", contactId)
-    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+    .or(OPEN_FOLLOWUP_FILTER)
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(100);
   if (result.error) {
@@ -635,7 +647,7 @@ export async function listTodaysFollowups(
     .select("id", { count: "exact", head: true })
     .eq("workspace_id", workspaceId)
     .eq("due_date", dueDate)
-    .not("status", "in", COMPLETED_FOLLOWUP_FILTER);
+    .or(OPEN_FOLLOWUP_FILTER);
   if (countResult.error) {
     return {
       followups: [],
@@ -657,7 +669,7 @@ export async function listTodaysFollowups(
         .select(selectColumns)
         .eq("workspace_id", workspaceId)
         .eq("due_date", dueDate)
-        .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+        .or(OPEN_FOLLOWUP_FILTER)
         .order("created_at", { ascending: true, nullsFirst: false })
         .order("id", { ascending: true });
       pageQuery =
@@ -767,7 +779,7 @@ export async function loadDashboardCounts(workspaceId: string): Promise<{
       .from("followups")
       .select("id", { count: "exact", head: true })
       .eq("workspace_id", workspaceId)
-      .not("status", "in", COMPLETED_FOLLOWUP_FILTER),
+      .or(OPEN_FOLLOWUP_FILTER),
   ]);
   if (contactsResult.error || followupsResult.error) {
     return { contacts: 0, followups: 0, error: "Kennzahlen konnten nicht geladen werden." };
