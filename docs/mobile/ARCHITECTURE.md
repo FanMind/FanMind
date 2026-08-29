@@ -133,12 +133,18 @@ Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows and explicit truncation state. Priority groups are loaded in semantic
 order (`urgent`, `high`, `normal|medium`, `low`) before that cap, and every page
 uses `created_at` plus `id` as a stable boundary. The compact dashboard renders
-at most the first 20 and links to the central Follow-up screen. Its read error is
+at most the first 20 and links to the central Follow-up screen. Null or custom
+legacy priorities are loaded in a final fallback group. Its read error is
 section-specific and gates the empty state.
 Per-contact Follow-up load errors remain section-specific on initial load and
 after either manual or suggestion-based creation, so a failed refresh can never
-be rendered as a valid empty list next to a save-success notice.
+be rendered as a valid empty list next to a save-success notice. The bounded
+100-row fan list has an exact count and an explicit truncation notice.
 Contact-knowledge reads have the same section-specific error/empty-state split.
+
+Model-generated unreviewed analysis confidence remains capped below 100.
+Fallback-only guidance saved without an available OpenAI key is capped at a low
+20-point scale and is never presented with model-level confidence.
 
 Server-only functions remain server-only:
 

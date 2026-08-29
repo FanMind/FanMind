@@ -575,19 +575,36 @@ export async function listFollowups(
 export async function listContactFollowups(
   workspaceId: string,
   contactId: string,
-): Promise<{ followups: Followup[]; error: string | null }> {
+): Promise<{
+  followups: Followup[];
+  totalCount: number;
+  truncated: boolean;
+  error: string | null;
+}> {
   const result = await supabase
     .from("followups")
-    .select(FOLLOWUP_COLUMNS)
+    .select(FOLLOWUP_COLUMNS, { count: "exact" })
     .eq("workspace_id", workspaceId)
     .eq("contact_id", contactId)
     .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(100);
   if (result.error) {
-    return { followups: [], error: "Follow-ups des Fans konnten nicht geladen werden." };
+    return {
+      followups: [],
+      totalCount: 0,
+      truncated: false,
+      error: "Follow-ups des Fans konnten nicht geladen werden.",
+    };
   }
-  return { followups: (result.data ?? []) as Followup[], error: null };
+  const followups = (result.data ?? []) as Followup[];
+  const totalCount = result.count ?? followups.length;
+  return {
+    followups,
+    totalCount,
+    truncated: followups.length < totalCount,
+    error: null,
+  };
 }
 
 export async function listTodaysFollowups(
@@ -602,12 +619,16 @@ export async function listTodaysFollowups(
   const pageSize = 200;
   const maximumLoadedRows = 1_000;
   const selectColumns = `${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`;
-  const rankedPriorityGroups = [
-    ["urgent"],
-    ["high"],
-    ["normal", "medium"],
-    ["low"],
-  ] as const;
+  const rankedPriorityGroups: Array<{
+    priorities: readonly string[];
+    fallback?: boolean;
+  }> = [
+    { priorities: ["urgent"] },
+    { priorities: ["high"] },
+    { priorities: ["normal", "medium"] },
+    { priorities: ["low"] },
+    { priorities: [], fallback: true },
+  ];
 
   const countResult = await supabase
     .from("followups")
@@ -627,7 +648,7 @@ export async function listTodaysFollowups(
   const rows: Followup[] = [];
   const totalCount = countResult.count ?? 0;
   const loadTarget = Math.min(totalCount, maximumLoadedRows);
-  for (const priorities of rankedPriorityGroups) {
+  for (const group of rankedPriorityGroups) {
     let groupOffset = 0;
     while (rows.length < loadTarget) {
       const pageLimit = Math.min(pageSize, loadTarget - rows.length);
@@ -640,9 +661,13 @@ export async function listTodaysFollowups(
         .order("created_at", { ascending: true, nullsFirst: false })
         .order("id", { ascending: true });
       pageQuery =
-        priorities.length === 1
-          ? pageQuery.eq("priority", priorities[0])
-          : pageQuery.in("priority", [...priorities]);
+        group.fallback
+          ? pageQuery.or(
+              "priority.is.null,priority.not.in.(urgent,high,normal,medium,low)",
+            )
+          : group.priorities.length === 1
+            ? pageQuery.eq("priority", group.priorities[0]!)
+            : pageQuery.in("priority", [...group.priorities]);
       const pageResult = await pageQuery.range(
         groupOffset,
         groupOffset + pageLimit - 1,

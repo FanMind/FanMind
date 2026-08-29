@@ -15,7 +15,7 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-MOB-004
 - Status: ACTIVE
 - Holder: ChatGPT Mobile fan-sections/analysis/follow-up/splash session 2026-08-29
-- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; superseded green heads `2feba6f63d611a8461e2a9bb3402147f7fff8dd5`, `c7226cab1a991a514f3fd9d19e58b00e250135a4` and `67e02276ede02bb919088f3aa61e0e1343be52e0`, final corrective exact head pending
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; superseded green heads `2feba6f63d611a8461e2a9bb3402147f7fff8dd5`, `c7226cab1a991a514f3fd9d19e58b00e250135a4`, `67e02276ede02bb919088f3aa61e0e1343be52e0` and `cca0b7e2cc650b886a0a10653d49a15536e27d0a`, final corrective exact head pending
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile authenticated reads/AI action plus signed Android preview
 - Scope: three fan sections, one-line identifier, provenance-bound stored fan analysis with inactive generation clearly marked as preparation, fan-bound/today Follow-up navigation with explicit error/count/truncation handling, corrected splash, exact-head checks, merge and one replacement Android preview.

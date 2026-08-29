@@ -485,9 +485,15 @@ export async function analyzeFanCommunication(
   const sourceToAt = sourceMessageTimes.length
     ? new Date(sourceMessageTimes[sourceMessageTimes.length - 1]!).toISOString()
     : null;
+  const model = getFanMindAiModel();
+  const apiKey = process.env.OPENAI_API_KEY;
   // Message count is only a conservative provenance signal, never a quality
-  // guarantee. Unreviewed generated reports are intentionally capped below 100.
-  const confidenceScore = Math.min(80, sourceMessages.length * 10);
+  // guarantee. Model-generated reports stay below 100; generic fallback-only
+  // guidance stays explicitly low-confidence even with many source messages.
+  const confidenceScore =
+    apiKey && sourceMessages.length > 0
+      ? Math.min(80, sourceMessages.length * 10)
+      : Math.min(20, sourceMessages.length * 2);
   const lowDataHint =
     sourceMessages.length < 3
       ? locale === "en"
@@ -495,8 +501,6 @@ export async function analyzeFanCommunication(
         : "Es ist erst wenig Nachrichtenkontext vorhanden."
       : "";
   const fallback = fallbackReport(locale, mode, lowDataHint);
-  const model = getFanMindAiModel();
-  const apiKey = process.env.OPENAI_API_KEY;
   const startedAt = Date.now();
   let report = fallback;
   let userMessage = lowDataHint;

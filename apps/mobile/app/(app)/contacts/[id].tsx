@@ -198,6 +198,8 @@ export default function ContactDetailScreen() {
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [contactFollowups, setContactFollowups] = useState<Followup[]>([]);
+  const [contactFollowupCount, setContactFollowupCount] = useState(0);
+  const [contactFollowupsTruncated, setContactFollowupsTruncated] = useState(false);
   const [contactFollowupError, setContactFollowupError] = useState<string | null>(null);
   const [analysisReport, setAnalysisReport] = useState<DisplayAnalysisReport | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -239,6 +241,8 @@ export default function ContactDetailScreen() {
       setMemoryError(null);
       setMessages([]);
       setContactFollowups([]);
+      setContactFollowupCount(0);
+      setContactFollowupsTruncated(false);
       setContactFollowupError(null);
       setAnalysisReport(null);
       setMessageError(null);
@@ -254,6 +258,8 @@ export default function ContactDetailScreen() {
       setMemoryError(null);
       setMessages([]);
       setContactFollowups([]);
+      setContactFollowupCount(0);
+      setContactFollowupsTruncated(false);
       setContactFollowupError(null);
       setAnalysisReport(null);
       setMessageError(null);
@@ -290,6 +296,8 @@ export default function ContactDetailScreen() {
     setMemoryError(memoriesResult.error);
     setMessages(messagesResult.messages);
     setContactFollowups(followupsResult.followups);
+    setContactFollowupCount(followupsResult.totalCount);
+    setContactFollowupsTruncated(followupsResult.truncated);
     setContactFollowupError(followupsResult.error);
     setAnalysisReport(analysisResult.report);
     setAnalysisError(analysisResult.error);
@@ -439,6 +447,8 @@ export default function ContactDetailScreen() {
       );
       const followupsResult = await listContactFollowups(workspace.id, contact.id);
       setContactFollowups(followupsResult.followups);
+      setContactFollowupCount(followupsResult.totalCount);
+      setContactFollowupsTruncated(followupsResult.truncated);
       setContactFollowupError(followupsResult.error);
     }
     setManualFollowupBusy(false);
@@ -466,6 +476,8 @@ export default function ContactDetailScreen() {
       setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
       const followupsResult = await listContactFollowups(workspace.id, contact.id);
       setContactFollowups(followupsResult.followups);
+      setContactFollowupCount(followupsResult.totalCount);
+      setContactFollowupsTruncated(followupsResult.truncated);
       setContactFollowupError(followupsResult.error);
     }
     setFollowupBusy(false);
@@ -713,6 +725,11 @@ export default function ContactDetailScreen() {
                     </StatusPill>
                   </View>
                 ))}
+                {contactFollowupsTruncated ? (
+                  <Text style={mobileStyles.muted}>
+                    Es werden {contactFollowups.length} von {contactFollowupCount} offenen Follow-ups angezeigt. Öffne die zentrale Follow-up-Liste für die weitere Bearbeitung.
+                  </Text>
+                ) : null}
               </View>
             ) : (
               <Text style={mobileStyles.muted}>Für diesen Fan ist kein Follow-up offen.</Text>

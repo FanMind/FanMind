@@ -106,9 +106,9 @@ Aktiv im App-Kern:
   betroffenen Fan. Der Tageszähler ist exakt; Einträge werden begrenzt
   seitenweise und mit stabiler `created_at`-/`id`-Reihenfolge je semantischer
   Prioritätsgruppe geladen, sodass die wichtigsten Einträge bereits vor der
-  1.000er-Grenze ausgewählt werden; jede Begrenzung und jeder Ladefehler wird
-  im Follow-up-Bereich sichtbar ausgewiesen. Dazu Kontaktliste, Suche und
-  Kontaktdetail;
+  1.000er-Grenze ausgewählt werden; unbekannte/null Altdaten bilden die letzte
+  Fallback-Gruppe. Jede Begrenzung und jeder Ladefehler wird im Follow-up-Bereich
+  sichtbar ausgewiesen. Dazu Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
@@ -140,7 +140,8 @@ Aktiv im App-Kern:
   anlegen, global oder pro Fan anzeigen, aus globaler Liste und Dashboard zum
   jeweiligen Fan öffnen und mit dem kanonischen Status `completed`
   abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten
-  bleiben lesekompatibel;
+  bleiben lesekompatibel. Die Fan-Detail-Liste liefert einen exakten Zähler und
+  weist eine Begrenzung auf 100 sichtbare offene Einträge ausdrücklich aus;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,

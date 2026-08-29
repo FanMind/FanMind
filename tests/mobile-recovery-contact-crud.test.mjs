@@ -358,7 +358,7 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(data, /export async function listContactFollowups/u);
   assert.match(
     data,
-    /listContactFollowups[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)/u,
+    /listContactFollowups[\s\S]*\.select\(FOLLOWUP_COLUMNS, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)[\s\S]*truncated: followups\.length < totalCount/u,
   );
   assert.match(data, /export async function listTodaysFollowups/u);
   assert.match(
@@ -368,11 +368,11 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(data, /maximumLoadedRows = 1_000/u);
   assert.match(
     data,
-    /rankedPriorityGroups[\s\S]*\["urgent"\][\s\S]*\["high"\][\s\S]*\["normal", "medium"\][\s\S]*\["low"\]/u,
+    /rankedPriorityGroups[\s\S]*priorities: \["urgent"\][\s\S]*priorities: \["high"\][\s\S]*priorities: \["normal", "medium"\][\s\S]*priorities: \["low"\][\s\S]*fallback: true/u,
   );
   assert.match(
     data,
-    /for \(const priorities of rankedPriorityGroups\)[\s\S]*\.order\("created_at", \{ ascending: true, nullsFirst: false \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*\.range\(/u,
+    /for \(const group of rankedPriorityGroups\)[\s\S]*\.order\("created_at", \{ ascending: true, nullsFirst: false \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*priority\.is\.null,priority\.not\.in\.[\s\S]*\.range\(/u,
   );
   assert.match(data, /priorityRank[\s\S]*urgent: 4[\s\S]*high: 3[\s\S]*normal: 2[\s\S]*medium: 2[\s\S]*low: 1/u);
   assert.match(data, /totalCount[\s\S]*truncated: rows\.length < totalCount/u);
@@ -382,6 +382,11 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
     (detail.match(/setContactFollowupError\(followupsResult\.error\)/gu) ?? []).length,
     3,
   );
+  assert.equal(
+    (detail.match(/setContactFollowupCount\(followupsResult\.totalCount\)/gu) ?? []).length,
+    3,
+  );
+  assert.match(detail, /contactFollowupsTruncated[\s\S]*von \{contactFollowupCount\} offenen Follow-ups/u);
   assert.match(dashboard, /Fällige Follow-ups/u);
   assert.match(dashboard, /section=followups/u);
   assert.match(dashboard, /todayResult\.totalCount/u);
@@ -428,6 +433,10 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
     /explicitAccessToken[\s\S]*requireContactInActiveAuthorizedWorkspaceMember/u,
   );
   assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
+  assert.match(
+    action,
+    /const confidenceScore =[\s\S]*apiKey && sourceMessages\.length > 0[\s\S]*Math\.min\(80, sourceMessages\.length \* 10\)[\s\S]*Math\.min\(20, sourceMessages\.length \* 2\)/u,
+  );
   assert.match(action, /review_status: result\.report\.review_status/u);
   assert.match(report, /hasCompleteReportProvenance/u);
   assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);
