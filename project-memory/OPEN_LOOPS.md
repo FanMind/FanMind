@@ -22,9 +22,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-MOB-001 / FM-MOB-003
 - Status: OPEN
 - Updated: 2026-08-29
-- Gap: the installed Android preview now exposes stored history, while FM-MOB-003 locally implements the remaining phone demo loop: unseen-fan Start inbox, per-fan platform switching, direct manual Follow-up and removal of the rejected placeholder symbol. Exact PR/merge/build/device evidence plus the broader Recovery/Purge, iOS/TestFlight, push and store acceptance remain open.
+- Gap: FM-MOB-003 is merged and bound to one successful signed Android preview, but owner real-device confirmation plus the broader Recovery/Purge, iOS/TestFlight, push and Store acceptance remain open.
 - Close when: required Android/iOS signed-build and device/store acceptance is evidence-bound to exact builds/commit.
-- Next check: finish FM-MOB-003 under `LOCK-FM-MOB-003-FAN-INBOX-20260829`, merge only on terminal-green exact-head checks, create exactly one replacement Android preview and obtain owner confirmation of the unseen inbox, channel tabs, direct Follow-up and absent placeholder symbol. Do not treat the prior APK or local tests as proof of the new build.
+- Next check: install the already completed preview for merge `93496a4afac9b3b315c9985afbbce02b8524fc44` and confirm unseen-only Start, per-fan platform tabs, direct manual Follow-up and absent rejected symbol. Do not queue another build for this check. Keep iOS/TestFlight/push/Store separate.
 
 ## FM-LOOP-004
 - Related: FM-AI-001
