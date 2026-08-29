@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
@@ -38,15 +39,22 @@ function FollowupRow({
   onComplete,
   busy,
   readOnly,
+  onOpen,
 }: {
   item: Followup;
   onComplete: () => void;
   busy: boolean;
   readOnly: boolean;
+  onOpen: () => void;
 }) {
   const due = dueLabel(item.due_date);
   return (
-    <View style={styles.row}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${item.contact?.display_name || "Kontakt"} öffnen`}
+      onPress={onOpen}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+    >
       <View style={styles.rowHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.contact}>{item.contact?.display_name || "Kontakt"}</Text>
@@ -61,7 +69,10 @@ function FollowupRow({
           <StatusPill tone="warning">Nur lesen</StatusPill>
         ) : (
           <Pressable
-            onPress={onComplete}
+            onPress={(event) => {
+              event.stopPropagation();
+              onComplete();
+            }}
             disabled={busy}
             style={({ pressed }) => [
               styles.completeButton,
@@ -73,7 +84,8 @@ function FollowupRow({
           </Pressable>
         )}
       </View>
-    </View>
+      <Text style={styles.openContact}>Fan öffnen →</Text>
+    </Pressable>
   );
 }
 
@@ -171,6 +183,9 @@ export default function FollowupsScreen() {
             busy={busyId === item.id}
             readOnly={workspace.role !== "owner"}
             onComplete={() => void complete(item)}
+            onOpen={() =>
+              router.push(`/(app)/contacts/${item.contact_id}?section=followups`)
+            }
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
@@ -204,6 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.lg,
   },
+  rowPressed: { opacity: 0.72 },
   rowHeader: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   contact: { color: colors.text, fontSize: typography.body, fontWeight: "900" },
   handle: { color: colors.textMuted, fontSize: typography.small },
@@ -215,4 +231,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   completeText: { color: colors.background, fontWeight: "900", fontSize: typography.small },
+  openContact: { color: colors.cyan, fontSize: typography.small, fontWeight: "800" },
 });

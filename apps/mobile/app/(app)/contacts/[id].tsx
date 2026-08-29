@@ -22,11 +22,13 @@ import {
   StatusPill,
   mobileStyles,
 } from "@/components/ui";
-import { requestReplySuggestions } from "@/lib/api";
+import { requestFanAnalysis, requestReplySuggestions } from "@/lib/api";
 import {
   createContactMemory,
   createFollowup,
+  getContactFanAnalysisReport,
   getContact,
+  listContactFollowups,
   listContactMemories,
   listContactMessages,
   markContactInboundMessagesSeen,
@@ -46,8 +48,39 @@ import type {
   Contact,
   ContactMemory,
   ConversationMessage,
+  FanAnalysisReport,
+  Followup,
   ReplySuggestions,
 } from "@/types";
+
+type ContactSection = "messages" | "followups" | "knowledge";
+type DisplayAnalysisReport = Pick<
+  FanAnalysisReport,
+  "report_json" | "summary" | "source_message_count" | "generated_at" | "updated_at"
+>;
+
+const CONTACT_SECTIONS: Array<{ key: ContactSection; label: string }> = [
+  { key: "messages", label: "Nachrichten" },
+  { key: "followups", label: "Follow-ups" },
+  { key: "knowledge", label: "Kontaktwissen" },
+];
+
+const ANALYSIS_FIELDS = [
+  ["kurzprofil", "Kurzprofil"],
+  ["kommunikationsstil", "Kommunikationsstil"],
+  ["stimmung", "Stimmung"],
+  ["interessen_trigger", "Interessen & Auslöser"],
+  ["kauf_reaktion", "Kaufreaktion"],
+  ["antwortstil", "Empfohlener Antwortstil"],
+  ["no_gos", "Nicht verwenden"],
+] as const;
+
+function normalizeContactSection(value: string | string[] | undefined): ContactSection {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return normalized === "followups" || normalized === "knowledge"
+    ? normalized
+    : "messages";
+}
 
 function formatMessageDate(value: string | null): string {
   if (!value) return "Zeit unbekannt";
@@ -93,8 +126,14 @@ function manualFollowupError(errors: string[]): string {
 }
 
 export default function ContactDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    id?: string | string[];
+    section?: string | string[];
+  }>();
   const contactId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [activeSection, setActiveSection] = useState<ContactSection>(() =>
+    normalizeContactSection(params.section),
+  );
   const { session } = useAuth();
   const {
     workspace,
@@ -104,6 +143,13 @@ export default function ContactDetailScreen() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [memories, setMemories] = useState<ContactMemory[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [contactFollowups, setContactFollowups] = useState<Followup[]>([]);
+  const [analysisReport, setAnalysisReport] = useState<DisplayAnalysisReport | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<"short" | "standard" | "detailed">("short");
+  const [analysisInstruction, setAnalysisInstruction] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
   const [messageSeenError, setMessageSeenError] = useState<string | null>(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
@@ -140,6 +186,8 @@ export default function ContactDetailScreen() {
       setContact(null);
       setMemories([]);
       setMessages([]);
+      setContactFollowups([]);
+      setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
       setError("Kontakt-ID fehlt.");
@@ -151,6 +199,8 @@ export default function ContactDetailScreen() {
       setContact(null);
       setMemories([]);
       setMessages([]);
+      setContactFollowups([]);
+      setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
       setError(null);
@@ -159,10 +209,18 @@ export default function ContactDetailScreen() {
     }
 
     setLoading(true);
-    const [contactResult, memoriesResult, messagesResult] = await Promise.all([
+    const [
+      contactResult,
+      memoriesResult,
+      messagesResult,
+      followupsResult,
+      analysisResult,
+    ] = await Promise.all([
       getContact(workspace.id, contactId),
       listContactMemories(workspace.id, contactId),
       listContactMessages(workspace.id, contactId),
+      listContactFollowups(workspace.id, contactId),
+      getContactFanAnalysisReport(workspace.id, contactId),
     ]);
     const seenError =
       !messagesResult.error && contactResult.contact
@@ -175,9 +233,12 @@ export default function ContactDetailScreen() {
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
     setMessages(messagesResult.messages);
+    setContactFollowups(followupsResult.followups);
+    setAnalysisReport(analysisResult.report);
+    setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
     setMessageSeenError(seenError);
-    setError(contactResult.error ?? memoriesResult.error);
+    setError(contactResult.error ?? memoriesResult.error ?? followupsResult.error);
     setLoading(false);
   }, [contactId, workspace?.id, workspace?.role]);
 
@@ -220,9 +281,27 @@ export default function ContactDetailScreen() {
 
   useEffect(() => {
     setSelectedMessageChannel(ALL_MESSAGE_CHANNELS);
+    setActiveSection(normalizeContactSection(params.section));
     setManualFollowupFormError(null);
     setManualFollowupNotice(null);
-  }, [contactId]);
+  }, [contactId, params.section]);
+
+  async function generateFanAnalysis() {
+    if (!session?.access_token || !contact || workspace?.role !== "owner") return;
+    setAnalysisBusy(true);
+    setAnalysisError(null);
+    setAnalysisNotice(null);
+    const result = await requestFanAnalysis({
+      accessToken: session.access_token,
+      contactId: contact.id,
+      analysisMode,
+      analysisInstruction,
+    });
+    setAnalysisError(result.error);
+    setAnalysisNotice(result.data?.message ?? null);
+    if (result.data?.report) setAnalysisReport(result.data.report);
+    setAnalysisBusy(false);
+  }
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;
@@ -318,6 +397,8 @@ export default function ContactDetailScreen() {
       setManualFollowupNotice(
         `Follow-up für ${manualFollowupDueDate} wurde gespeichert.`,
       );
+      const followupsResult = await listContactFollowups(workspace.id, contact.id);
+      setContactFollowups(followupsResult.followups);
     }
     setManualFollowupBusy(false);
   }
@@ -340,7 +421,11 @@ export default function ContactDetailScreen() {
       priority: "normal",
     });
     setError(result);
-    if (!result) setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
+    if (!result) {
+      setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
+      const followupsResult = await listContactFollowups(workspace.id, contact.id);
+      setContactFollowups(followupsResult.followups);
+    }
     setFollowupBusy(false);
   }
 
@@ -392,10 +477,19 @@ export default function ContactDetailScreen() {
   }
 
   return (
-    <Screen
-      title={contact.display_name}
-      subtitle={`${contact.handle || "ohne Handle"} · ${contact.source_platform || "manuell"}`}
-      right={
+    <Screen>
+      <View style={styles.contactHeader}>
+        <View style={styles.contactHeaderText}>
+          <Text style={styles.contactName}>{contact.display_name}</Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+            numberOfLines={1}
+            style={styles.contactIdentifier}
+          >
+            {contact.handle || "ohne Handle"} · {contact.source_platform || "manuell"}
+          </Text>
+        </View>
         <View style={styles.headerActions}>
           {workspace.role === "owner" ? (
             <SecondaryButton
@@ -406,23 +500,53 @@ export default function ContactDetailScreen() {
           ) : null}
           <SecondaryButton onPress={() => router.back()}>Zurück</SecondaryButton>
         </View>
-      }
-    >
-      <View style={styles.pills}>
-        <StatusPill tone="accent">{contact.status || "neu"}</StatusPill>
-        <StatusPill>{contact.language || "de"}</StatusPill>
-        {tags.slice(0, 3).map((tag) => (
-          <StatusPill key={tag}>{tag}</StatusPill>
-        ))}
       </View>
 
-      <Card>
-        <SectionTitle eyebrow="Profil">Kurzüberblick</SectionTitle>
-        <Text style={mobileStyles.body}>
-          {contact.summary || "Noch keine Zusammenfassung gespeichert."}
-        </Text>
-      </Card>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sectionTabs}
+        accessibilityRole="tablist"
+      >
+        {CONTACT_SECTIONS.map((section) => {
+          const selected = section.key === activeSection;
+          return (
+            <Pressable
+              key={section.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              onPress={() => setActiveSection(section.key)}
+              style={({ pressed }) => [
+                styles.sectionTab,
+                selected && styles.sectionTabSelected,
+                pressed && styles.messageChannelPressed,
+              ]}
+            >
+              <Text style={[styles.sectionTabText, selected && styles.sectionTabTextSelected]}>
+                {section.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
+      {activeSection === "knowledge" ? (
+        <>
+          <View style={styles.pills}>
+            <StatusPill tone="accent">{contact.status || "neu"}</StatusPill>
+            <StatusPill>{contact.language || "de"}</StatusPill>
+            {tags.map((tag) => <StatusPill key={tag}>{tag}</StatusPill>)}
+          </View>
+          <Card>
+            <SectionTitle eyebrow="Profil">Kurzüberblick</SectionTitle>
+            <Text style={mobileStyles.body}>
+              {contact.summary || "Noch keine Zusammenfassung gespeichert."}
+            </Text>
+          </Card>
+        </>
+      ) : null}
+
+      {activeSection === "messages" ? (
       <Card>
         <View style={styles.messageHeader}>
           <SectionTitle eyebrow="Nachrichten">Gesprächsverlauf</SectionTitle>
@@ -524,6 +648,32 @@ export default function ContactDetailScreen() {
           <Text style={mobileStyles.error}>{messageSeenError}</Text>
         ) : null}
       </Card>
+      ) : null}
+
+      {activeSection === "followups" ? (
+        <>
+          <Card>
+            <SectionTitle eyebrow="Offen">Follow-ups dieses Fans</SectionTitle>
+            {contactFollowups.length ? (
+              <View style={styles.contactFollowupList}>
+                {contactFollowups.map((item) => (
+                  <View key={item.id} style={styles.contactFollowupRow}>
+                    <View style={{ flex: 1, gap: spacing.xs }}>
+                      <Text style={mobileStyles.body}>{item.reason}</Text>
+                      <Text style={mobileStyles.muted}>
+                        {item.due_date || "ohne Datum"} · {item.priority || "normal"}
+                      </Text>
+                    </View>
+                    <StatusPill tone={item.due_date === addLocalDaysDate(0) ? "warning" : "neutral"}>
+                      {item.due_date === addLocalDaysDate(0) ? "Heute" : "Offen"}
+                    </StatusPill>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={mobileStyles.muted}>Für diesen Fan ist kein Follow-up offen.</Text>
+            )}
+          </Card>
 
       <Card>
         <SectionTitle eyebrow="Follow-up">Direkt beim Fan anlegen</SectionTitle>
@@ -624,7 +774,10 @@ export default function ContactDetailScreen() {
           </Text>
         )}
       </Card>
+        </>
+      ) : null}
 
+      {activeSection === "knowledge" ? (
       <Card>
         <SectionTitle eyebrow="Kontaktwissen">Was FanMind berücksichtigen darf</SectionTitle>
         {memories.length ? (
@@ -643,7 +796,82 @@ export default function ContactDetailScreen() {
           <Text style={mobileStyles.muted}>Noch kein Kontaktwissen gespeichert.</Text>
         )}
       </Card>
+      ) : null}
 
+      {activeSection === "knowledge" ? (
+        <Card>
+          <SectionTitle eyebrow="Fan-Analyse">Kommunikation einordnen</SectionTitle>
+          <Text style={mobileStyles.muted}>
+            Vorsichtige Hinweise aus freigegebenem Verlauf und Kontaktwissen. Keine Diagnose und keine sensiblen Ableitungen.
+          </Text>
+          {analysisReport ? (
+            <View style={styles.analysisFields}>
+              {ANALYSIS_FIELDS.map(([key, label]) => {
+                const value = analysisReport.report_json?.[key];
+                return typeof value === "string" && value.trim() ? (
+                  <View key={key} style={styles.analysisField}>
+                    <Text style={styles.analysisLabel}>{label}</Text>
+                    <Text style={mobileStyles.body}>{value}</Text>
+                  </View>
+                ) : null;
+              })}
+              <Text style={mobileStyles.muted}>
+                Grundlage: {analysisReport.source_message_count ?? 0} Nachrichten
+              </Text>
+            </View>
+          ) : (
+            <Text style={mobileStyles.muted}>Noch keine Fan-Analyse gespeichert.</Text>
+          )}
+          {workspace.role === "owner" ? (
+            <>
+              <View style={styles.followupChoiceRow}>
+                {[
+                  { key: "short" as const, label: "Kurz" },
+                  { key: "standard" as const, label: "Standard" },
+                  { key: "detailed" as const, label: "Detailliert" },
+                ].map((mode) => {
+                  const selected = mode.key === analysisMode;
+                  return (
+                    <Pressable
+                      key={mode.key}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => setAnalysisMode(mode.key)}
+                      style={({ pressed }) => [
+                        styles.followupChoice,
+                        selected && styles.followupChoiceSelected,
+                        pressed && styles.messageChannelPressed,
+                      ]}
+                    >
+                      <Text style={selected ? styles.followupChoiceTextSelected : styles.followupChoiceText}>
+                        {mode.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <TextInput
+                value={analysisInstruction}
+                onChangeText={setAnalysisInstruction}
+                placeholder="Optional: Worauf soll FanMind besonders achten?"
+                placeholderTextColor={colors.textMuted}
+                maxLength={500}
+                style={mobileStyles.input}
+                accessibilityLabel="Optionale Anweisung für die Fan-Analyse"
+              />
+              {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
+              {analysisNotice ? <Text style={mobileStyles.success}>{analysisNotice}</Text> : null}
+              <PrimaryButton busy={analysisBusy} onPress={() => void generateFanAnalysis()}>
+                Fan analysieren
+              </PrimaryButton>
+            </>
+          ) : (
+            <Text style={mobileStyles.muted}>Teamzugänge können die gespeicherte Analyse nur lesen.</Text>
+          )}
+        </Card>
+      ) : null}
+
+      {activeSection === "messages" ? (
       <Card>
         <SectionTitle eyebrow="Neue Nachricht">Antworten vorbereiten</SectionTitle>
         {workspace.role === "owner" ? (
@@ -688,8 +916,9 @@ export default function ContactDetailScreen() {
           </Text>
         )}
       </Card>
+      ) : null}
 
-      {suggestions ? (
+      {activeSection === "messages" && suggestions ? (
         <>
           <Card>
             <SectionTitle eyebrow="KI Standard">Antwortvorschläge</SectionTitle>
@@ -743,6 +972,24 @@ export default function ContactDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  contactHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  contactHeaderText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  contactName: {
+    color: colors.text,
+    fontSize: typography.title,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+  },
+  contactIdentifier: {
+    color: colors.textMuted,
+    fontSize: typography.body,
+    flexShrink: 1,
+  },
   headerActions: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -750,6 +997,48 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  sectionTabs: { gap: spacing.sm, paddingRight: spacing.lg },
+  sectionTab: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  sectionTabSelected: {
+    borderColor: colors.cyan,
+    backgroundColor: colors.cyan,
+  },
+  sectionTabText: {
+    color: colors.textMuted,
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  sectionTabTextSelected: { color: colors.background, fontWeight: "900" },
+  contactFollowupList: { gap: spacing.sm },
+  contactFollowupRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    padding: spacing.md,
+  },
+  analysisFields: { gap: spacing.md },
+  analysisField: {
+    gap: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: spacing.md,
+  },
+  analysisLabel: {
+    color: colors.cyan,
+    fontSize: typography.small,
+    fontWeight: "900",
+  },
   memoryRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   memoryDot: {
     width: 9,

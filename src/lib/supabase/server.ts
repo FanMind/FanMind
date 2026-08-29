@@ -4069,8 +4069,9 @@ export async function getRecentContactMemories(
   workspaceId: string,
   contactId: string,
   limit: number,
+  explicitAccessToken?: string,
 ): Promise<MemoriesResult> {
-  const accessToken = await getAccessToken();
+  const accessToken = await getAccessToken(explicitAccessToken);
 
   if (!accessToken) {
     return memoriesError(

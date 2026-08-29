@@ -353,6 +353,46 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(detail, /Direkt beim Fan anlegen/u);
   assert.match(detail, /normalizeManualFollowupDraft/u);
   assert.match(detail, /Follow-up speichern/u);
+  assert.match(detail, /Nachrichten[\s\S]*Follow-ups[\s\S]*Kontaktwissen/u);
+  assert.match(detail, /numberOfLines=\{1\}[\s\S]*contactIdentifier/u);
+  assert.match(data, /export async function listContactFollowups/u);
+  assert.match(
+    data,
+    /listContactFollowups[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)/u,
+  );
+  assert.match(data, /export async function listTodaysFollowups/u);
+  assert.match(
+    data,
+    /listTodaysFollowups[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.limit\(100\)/u,
+  );
+  assert.match(dashboard, /Fällige Follow-ups/u);
+  assert.match(dashboard, /section=followups/u);
+});
+
+test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
+  const [data, detail, api, route, action, server] = await Promise.all([
+    read("apps/mobile/src/lib/data.ts"),
+    read("apps/mobile/app/(app)/contacts/[id].tsx"),
+    read("apps/mobile/src/lib/api.ts"),
+    read("src/app/api/ai/fan-analysis/route.ts"),
+    read("src/app/fans/[id]/analysisActions.ts"),
+    read("src/lib/supabase/server.ts"),
+  ]);
+
+  assert.match(
+    data,
+    /fan_analysis_reports[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(1\)/u,
+  );
+  assert.match(detail, /Fan analysieren/u);
+  assert.match(detail, /Keine Diagnose und keine sensiblen Ableitungen/u);
+  assert.match(api, /Authorization: `Bearer \$\{input\.accessToken\}`[\s\S]*\/api\/ai\/fan-analysis/u);
+  assert.match(route, /readBoundedJsonRequest/u);
+  assert.match(route, /analyzeFanCommunication[\s\S]*accessToken/u);
+  assert.match(
+    action,
+    /explicitAccessToken[\s\S]*requireContactInActiveAuthorizedWorkspaceMember/u,
+  );
+  assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {

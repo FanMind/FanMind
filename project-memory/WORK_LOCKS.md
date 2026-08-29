@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
+- Task: FM-MOB-004
+- Status: ACTIVE
+- Holder: ChatGPT Mobile fan-sections/analysis/follow-up/splash session 2026-08-29
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / pending
+- Acquired: 2026-08-29 Europe/Vienna
+- Risk: R3 Mobile authenticated reads/AI action plus signed Android preview
+- Scope: three fan sections, one-line identifier, fan-analysis reuse, fan-bound/today Follow-up navigation, corrected splash, exact-head checks, merge and one replacement Android preview.
+- Resume from: merged FM-MOB-003 foundation on current `main`; extend existing RLS, owner-only mutation and server AI controls without recreating them.
+- Safety: no automatic sending, service-role key in Mobile, offline message/analysis cache, schema/demo-row/provider/Production mutation, iOS submission or Store publication is authorized.
+
 ## LOCK-FM-MOB-003-FAN-INBOX-20260829
 - Task: FM-MOB-003
 - Status: RELEASED

@@ -91,7 +91,10 @@ Mobile uses direct Supabase queries only for tables already protected by RLS:
   Workspace-/Kontakt-gebundenen Zeilen über das vorhandene `seen_at`-Feld als
   gesehen markieren;
 - `memories`;
-- `followups`.
+- `fan_analysis_reports` (read-only mit Workspace- und Kontaktfilter; die
+  Neuerzeugung läuft ausschließlich über die autorisierte Serveraktion);
+- `followups` (global, pro Kontakt und für das aktuelle Tagesdatum jeweils
+  explizit nach `workspace_id` begrenzt).
 
 All queries include the current `workspace_id` even though RLS remains the final authorization layer.
 
@@ -107,6 +110,11 @@ Owner contact create and update additionally:
 Owner Follow-up create uses the existing RLS-protected `followups` contract,
 validates reason, non-past calendar date and `low|normal|high` priority in the
 client policy, and always includes both current Workspace and contact IDs.
+
+The Mobile contact detail exposes the same three sections for every fan:
+`Nachrichten`, `Follow-ups` and `Kontaktwissen`. The fan-analysis endpoint
+accepts a Mobile Bearer token, reuses the existing authorized Web action and
+never moves provider credentials or service-role access into the app.
 
 Server-only functions remain server-only:
 

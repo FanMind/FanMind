@@ -11,6 +11,23 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-MOB-004
+- Started: 2026-08-29
+- Updated: 2026-08-29
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Scope: Deliver the owner-requested three-section fan detail, one-line identifier, safe Mobile fan analysis, fan-bound Follow-up navigation, today's Dashboard Follow-ups and corrected square native splash; then produce one exact-merge Android preview.
+- Change request: FM-CR-005.
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / pending.
+- Work lock: `LOCK-FM-MOB-004-FAN-SECTIONS-20260829` ACTIVE.
+- Dependencies: existing RLS and Mobile Bearer authorization, server-side analysis action/capability gates, exact-head CI and one protected Android preview build.
+- Assumptions: stored Fan-analysis reports remain read-only in the app; only Owners may request regeneration, while Members remain read-only. Follow-up navigation carries only the contact ID and selected section.
+- Planned evidence: Mobile typecheck/Expo/native checks, focused authorization/UI tests, full repository regression, exact-head PR gates, SHA-bound merge and exactly one merged-commit Android preview.
+- Completed so far: implementation/docs are complete; Mobile check including Expo Doctor 20/20 and native prebuild passed, 32 focused tests and the complete 1055-test Operations suite passed, and root lint/build plus Project Memory truth/drift/quality checks passed. No schema, row, provider or Production mutation was made.
+- Still open: exact-head PR, merge, Android preview and owner device confirmation.
+- Exact next step: publish the explicitly authorized checked commit and require terminal-green exact-head gates before merge/build.
+- Rollback/recovery: revert the Mobile/API commit; no database migration or destructive action is part of this change.
+
 ## FM-MOB-003
 - Started: 2026-08-29
 - Updated: 2026-08-29

@@ -22,6 +22,7 @@ import {
 } from "@/lib/supabase/server";
 import {
   requireContactInActiveAuthorizedWorkspace,
+  requireContactInActiveAuthorizedWorkspaceMember,
   requireContactInAuthorizedWorkspace,
 } from "@/lib/workspaceAuthorization";
 import { getResolvedWorkspaceAiTier } from "@/lib/workspaceAiTierEntitlements";
@@ -292,6 +293,7 @@ function normalizeReport(
 export async function analyzeFanCommunication(
   _previousState: FanAnalysisActionState,
   formData: FormData,
+  explicitAccessToken?: string,
 ): Promise<FanAnalysisActionState> {
   const contactId = formValue(formData, "contact_id");
   const locale = formValue(formData, "locale") === "en" ? "en" : "de";
@@ -305,8 +307,12 @@ export async function analyzeFanCommunication(
     return { ok: false, message: "Kontakt fehlt." };
   }
 
-  const { workspace, user, contact } =
-    await requireContactInActiveAuthorizedWorkspace(contactId);
+  const { workspace, user, contact } = explicitAccessToken
+    ? await requireContactInActiveAuthorizedWorkspaceMember(
+        contactId,
+        explicitAccessToken,
+      )
+    : await requireContactInActiveAuthorizedWorkspace(contactId);
   // Lifecycle guard only. Billing authorization requires server-owned
   // entitlement state before Standard/Plus/Ultra can be activated.
   if (isWorkspaceArchivedAfterSubscriptionEnd(workspace)) {
@@ -371,11 +377,13 @@ export async function analyzeFanCommunication(
       workspace.id,
       contactId,
       contextMessageLimit,
+      explicitAccessToken,
     ),
     getRecentContactMemories(
       workspace.id,
       contactId,
       AI_ANALYSIS_MEMORY_ROW_LIMIT,
+      explicitAccessToken,
     ),
   ]);
 

@@ -173,6 +173,7 @@ test("productive JSON and form routes parse only through bounded readers", async
     "src/app/api/admin/operations/backup-jobs/route.ts",
     "src/app/api/ai/prompt-settings/route.ts",
     "src/app/api/ai/reply-suggestions/route.ts",
+    "src/app/api/ai/fan-analysis/route.ts",
     "src/app/api/account-deletion/route.ts",
   ];
   const formPaths = [

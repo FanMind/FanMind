@@ -41,6 +41,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Open follow-up: owner installs the existing exact-merge preview and confirms the four requested behaviors; iOS/TestFlight/push/Store remain separate.
 - Work lock released: yes.
 
+## RECEIPT-FM-MOB-004-20260829
+- Task: FM-MOB-004
+- Started: 2026-08-29 Europe/Vienna
+- Finished: pending exact-head merge, Android preview and device confirmation
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / pending
+- Preflight checked: current main, FM-MOB-001/002/003 evidence, FM-CR-004, Project Memory active registers, Mobile data/UI/API boundaries, existing Web fan-analysis action, RLS-protected report/follow-up contracts and signed-build workflow.
+- Prior attempts found: FM-MOB-003 already solved unseen fan inbox/channel/manual Follow-up and produced a valid preview; the owner device observation identified bounded UI/navigation/splash gaps. Recreating demo data, schema or AI controls would address the wrong layer.
+- Dependency result: existing tables/RLS, Mobile Bearer session and server analysis policy are sufficient. A new API route may reuse the existing action with the explicit user token; no service key is exposed to Mobile.
+- Planned evidence: Mobile/native checks, focused security/UI tests, full operations/lint/build, Project Memory checks, exact-head PR gates, merge and exactly one protected preview Android build.
+- Changes made: three universal fan sections, one-line identifier, moved profile/tags, bounded analysis report read and authorized regeneration, per-fan/today Follow-up reads/navigation, and square splash; docs/tests updated.
+- Checks/tests: Mobile check PASS including TypeScript, Expo Doctor 20/20, Store/boundary and 33-file native prebuild; Android and iOS Expo exports PASS; focused Mobile/security 32/32 PASS plus the post-hardening 30/30 authorization set; complete Operations 1055/1055 PASS; root lint/build PASS including `/api/ai/fan-analysis`; Project Memory status/quality/truth/drift and `git diff --check` PASS.
+- Final diff counterchecked: no; pending final exact head.
+- Regression/security countercheck: PASS locally for explicit Workspace/contact/date filters and limits, RLS read boundary, Owner-only analysis generation, Member read-only UI, token propagation into the existing authorized action, bounded JSON input and absence of schema, demo-row, provider, Production, automatic-send or client-secret changes.
+- Evidence produced: pending.
+- Result status: IMPLEMENTED_NOT_VERIFIED.
+- Open follow-up: exact-head PR/merge/build and owner device confirmation.
+- Work lock released: no.
+
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
 - Started: 2026-08-19 12:14 Europe/Vienna

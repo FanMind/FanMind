@@ -102,19 +102,27 @@ Aktiv im App-Kern:
 - verschlüsselte Sitzung über `expo-secure-store` und zentralen lokalen Purge beim Abmelden;
 - geschützte Expo-Router-Navigation;
 - Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
-  Nachrichten, Kontaktliste, Suche und Kontaktdetail;
+  Nachrichten und den heute fälligen Follow-ups; beide führen direkt zum
+  betroffenen Fan. Dazu Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
   vollständig vom Offline-Cache ausgeschlossen; der Verlauf lässt sich für
   jeden Fan über `Alle` und seine tatsächlich vorhandenen Plattformen filtern;
 - Kontaktwissen;
+- pro Fan die drei Mobile-Bereiche `Nachrichten`, `Follow-ups` und
+  `Kontaktwissen`; die Kontaktkennung bleibt einzeilig, Profil/Tags liegen im
+  Kontaktwissen;
+- gespeicherte Fan-Analyse im Kontaktwissen und Owner-only Neuerzeugung über
+  eine Bearer-authentifizierte Serverroute, unter den bestehenden
+  Datenschutz-, Berechtigungs-, Raten-, Kontext- und Speichergrenzen;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand
   bleiben beim Menschen;
 - Follow-ups als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag
-  anlegen, offene Follow-ups anzeigen und mit dem kanonischen Status `completed`
+  anlegen, global oder pro Fan anzeigen, aus globaler Liste und Dashboard zum
+  jeweiligen Fan öffnen und mit dem kanonischen Status `completed`
   abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten
   bleiben lesekompatibel;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;

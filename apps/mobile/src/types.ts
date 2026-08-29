@@ -78,6 +78,26 @@ export type Followup = {
   contact?: Pick<Contact, "id" | "display_name" | "handle"> | null;
 };
 
+export type FanAnalysisReport = {
+  id: string;
+  workspace_id: string;
+  contact_id: string;
+  report_json: Record<string, unknown> | null;
+  summary: string | null;
+  source_message_count: number | null;
+  generated_at: string | null;
+  updated_at: string | null;
+};
+
+export type FanAnalysisResponse = {
+  ok: boolean;
+  message: string;
+  report?: Pick<
+    FanAnalysisReport,
+    "report_json" | "summary" | "source_message_count" | "generated_at" | "updated_at"
+  > | null;
+};
+
 export type ReplyOption = {
   tone: string;
   label: string;

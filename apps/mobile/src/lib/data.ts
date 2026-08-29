@@ -16,6 +16,7 @@ import type {
   ContactMemory,
   ConversationMessage,
   DashboardUnreadFan,
+  FanAnalysisReport,
   Followup,
   Workspace,
 } from "@/types";
@@ -31,6 +32,8 @@ const CONVERSATION_MESSAGE_COLUMNS =
 const UNSEEN_MESSAGE_COLUMNS = "contact_id,source_platform,created_at";
 const FOLLOWUP_COLUMNS =
   "id,workspace_id,contact_id,due_date,priority,reason,status,created_at";
+const FAN_ANALYSIS_REPORT_COLUMNS =
+  "id,workspace_id,contact_id,report_json,summary,source_message_count,generated_at,updated_at";
 const MEMBER_SAFE_WORKSPACE_RPC =
   "get_current_workspace_member_safe_dashboard";
 const MEMBER_MUTATIONS_DISABLED_ERROR =
@@ -424,6 +427,26 @@ export async function listContactMessages(
   return { messages: (result.data ?? []) as ConversationMessage[], error: null };
 }
 
+export async function getContactFanAnalysisReport(
+  workspaceId: string,
+  contactId: string,
+): Promise<{ report: FanAnalysisReport | null; error: string | null }> {
+  const result = await supabase
+    .from("fan_analysis_reports")
+    .select(FAN_ANALYSIS_REPORT_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .eq("contact_id", contactId)
+    .limit(1)
+    .maybeSingle();
+  if (result.error) {
+    return { report: null, error: "Fan-Analyse konnte nicht geladen werden." };
+  }
+  return {
+    report: (result.data as FanAnalysisReport | null) ?? null,
+    error: null,
+  };
+}
+
 export async function listUnseenInboundFans(
   workspaceId: string,
 ): Promise<{ fans: DashboardUnreadFan[]; error: string | null }> {
@@ -541,6 +564,43 @@ export async function listFollowups(
     .limit(200);
   if (result.error) {
     return { followups: [], error: "Follow-ups konnten nicht geladen werden." };
+  }
+  return { followups: (result.data ?? []) as unknown as Followup[], error: null };
+}
+
+export async function listContactFollowups(
+  workspaceId: string,
+  contactId: string,
+): Promise<{ followups: Followup[]; error: string | null }> {
+  const result = await supabase
+    .from("followups")
+    .select(FOLLOWUP_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .eq("contact_id", contactId)
+    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .limit(100);
+  if (result.error) {
+    return { followups: [], error: "Follow-ups des Fans konnten nicht geladen werden." };
+  }
+  return { followups: (result.data ?? []) as Followup[], error: null };
+}
+
+export async function listTodaysFollowups(
+  workspaceId: string,
+  dueDate: string,
+): Promise<{ followups: Followup[]; error: string | null }> {
+  const result = await supabase
+    .from("followups")
+    .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
+    .eq("workspace_id", workspaceId)
+    .eq("due_date", dueDate)
+    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+    .order("priority", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: true, nullsFirst: false })
+    .limit(100);
+  if (result.error) {
+    return { followups: [], error: "Heutige Follow-ups konnten nicht geladen werden." };
   }
   return { followups: (result.data ?? []) as unknown as Followup[], error: null };
 }

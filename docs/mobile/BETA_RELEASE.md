@@ -25,6 +25,11 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
   kein `seen_at` besitzen; ausgehende Nachrichten erzeugen dort keinen Eintrag;
 - direktes manuelles Owner-Follow-up im Fan-Detail mit Grund, Datum und
   Priorität; Member bleiben read-only;
+- drei einheitliche Fan-Bereiche für Nachrichten, Follow-ups und
+  Kontaktwissen, einzeilige Kennung, vorsichtige Owner-Fan-Analyse sowie
+  klickbare globale/heutige Follow-ups mit Navigation zum jeweiligen Fan;
+- quadratischer nativer Splashscreen mit `FM` über `FanMind`, damit die
+  Wortmarke auf schmalen Android-Startflächen nicht beschnitten wird;
 - Antwortvorschläge kopieren oder über die native Android-/iOS-Teilen-Auswahl
   weitergeben; der Share-Payload enthält ausschließlich den ausgewählten
   Antworttext, niemals Kontakt-, Workspace-, Kontext-, Notiz- oder
