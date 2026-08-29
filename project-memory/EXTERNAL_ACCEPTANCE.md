@@ -31,11 +31,13 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-IOS
-- Related: FM-MOB-001
+- Related: FM-MOB-001 / FM-DEC-009
 - Status: OPEN
 - Risk: R3
+- Phase: 8 — future scope, not part of the current through-Phase-7 finishline.
 - External system: Apple Developer / App Store Connect / TestFlight
-- Acceptance: signed exact-commit iOS build, TestFlight and real-device acceptance.
+- Acceptance: signed exact-commit iOS build, TestFlight and real-device acceptance once Phase 8 is explicitly started.
+- Current-finishline effect: none. This open future control does not block FM-MOB-001/current sales finishline after the owner moved `iOS-TestFlight` from Phase 6 to Phase 8.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-PUSH-STORE
@@ -43,7 +45,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Status: OPEN
 - Risk: R3
 - External system: Expo push + Apple/Google store portals
-- Acceptance: separated push gates plus final screenshots/privacy/data-safety/store evidence from signed builds.
+- Acceptance: separated push gates plus final screenshots/privacy/data-safety/store evidence from signed builds, limited to the platform scope currently being accepted; iOS/TestFlight-specific portal acceptance is Phase 8 per FM-DEC-009.
 - Repository evidence alone sufficient: no
 
 ## EXT-AI-PRODUCT-DECISION
