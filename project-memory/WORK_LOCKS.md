@@ -13,14 +13,16 @@ Prevents two agents/sessions from independently working the same task.
 
 ## LOCK-FM-MOB-003-FAN-INBOX-20260829
 - Task: FM-MOB-003
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Mobile fan-inbox/channel/follow-up completion session 2026-08-29
-- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`, merge `93496a4afac9b3b315c9985afbbce02b8524fc44`
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile read/seen state plus signed Android preview build
 - Scope: dynamic message-channel switch for every contact, unseen-inbound-only start dashboard, manual owner Follow-up creation in the contact detail, exact-head checks, merge and one replacement Android preview; no schema/provider/Production mutation.
 - Resume from: existing message-history UI on merged `main` `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; use existing `seen_at`, authenticated RLS and owner-only Follow-up contracts.
 - Safety: no automatic sending, service-role key, offline message cache, new demo rows, schema migration, Production deploy, provider activation, iOS submission or Store publication is authorized.
+- Released: 2026-08-29 after terminal-green merge and protected Android run `33260695232` / job `99122008690` completed one verified exact-merge preview artifact with cleanup.
+- Resume from: owner device acceptance only. A visual/runtime failure reopens FM-MOB-003 with the exact build evidence; it does not authorize an automatic rebuild, schema change or duplicate demo data.
 
 ## Released locks
 
