@@ -26,13 +26,16 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
 - verschlüsselte, in Chunks gespeicherte Supabase-Sitzung über `expo-secure-store`;
 - PKCE-basierte Passwort-Recovery über `fanmind://reset-password`;
 - geschützte App-Navigation;
-- Dashboard mit Kontakt- und Follow-up-Kennzahlen;
+- Start-Dashboard mit ausschließlich den Fans, die noch ungesehene eingehende
+  Nachrichten besitzen, plus offenem Follow-up-Zähler; beim erneuten Fokus
+  wird der Zustand frisch geladen;
 - Kontaktliste und Suche;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten; Teammitglieder sehen CRM-Daten nur lesend;
 - Kontaktdetail mit Profil, Kontaktwissen und einem sichtbaren, read-only
   Gesprächsverlauf aus bis zu 100 aktuellen, per Workspace und Kontakt
-  gefilterten Nachrichten; neueste Nachrichten erscheinen zuerst und der
-  Verlauf lässt sich sichtbar aktualisieren;
+  gefilterten Nachrichten; neueste Nachrichten erscheinen zuerst, der Verlauf
+  lässt sich sichtbar aktualisieren und pro Fan dynamisch über `Alle` sowie
+  jede tatsächlich vorhandene Plattform filtern;
 - KI-Antwortvorschläge über Bearer-authentifizierte FanMind-API;
 - gespeicherter Gesprächsverlauf ausschließlich serverseitig aus dem
   autorisierten Workspace; die App sendet keinen frei eingefügten
@@ -43,7 +46,7 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   bewusst weitergeben; ausschließlich der ausgewählte Antworttext wird
   übergeben, Zielwahl und finaler Versand bleiben beim Menschen;
 - Kontaktwissen aus KI-Vorschlag speichern;
-- Follow-up als Owner aus KI-Vorschlag speichern;
+- Follow-up als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag speichern;
 - offene Follow-ups anzeigen und als Owner abschließen; Teammitglieder bleiben read-only;
 - verschlüsselte, maximal 24 Stunden alte Offline-Kontaktübersicht mit höchstens 50 Einträgen im Nur-Lesen-Modus;
 - native Push-Grundlage mit streng validierter Navigation zu Follow-ups sowie
