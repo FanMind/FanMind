@@ -22,7 +22,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Postflight sind getrennt vom Web-Deploy; Meta-Verbindungen und Analysen
   bleiben deaktiviert. Ablauf:
   `docs/operations/META_CONTENT_STAGING_MIGRATION.md`.
-- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge; signierte interne Builds und Store-Verteilung bleiben separat abzunehmen.
+- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, sichtbarem read-only Gesprächsverlauf, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge; signierte interne Builds und Store-Verteilung bleiben separat abzunehmen.
 - Mobile-Signing-Gate: ein manueller `main`-gebundener Ablauf kann nach
   erfolgreichem Ressourcencheck genau einen credential-frozen internen
   Development-/Preview-Build einreihen und dessen EAS-Endstatus read-only bis
@@ -323,6 +323,9 @@ Bereits vorhanden:
 - native E-Mail-/Passwort-Anmeldung und sichere Gerätesitzung;
 - PKCE-basierte Passwort-Recovery über `fanmind://reset-password` mit strikter Callback-Validierung;
 - Dashboard, Kontaktliste, Suche und Kontaktdetail;
+- sichtbarer, auf Workspace und Kontakt begrenzter read-only Gesprächsverlauf
+  mit bis zu 100 aktuellen Nachrichten; Nachrichten bleiben vom Offline-Cache
+  ausgeschlossen;
 - Kontakte als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - Kontaktwissen und serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext über die

@@ -26,13 +26,49 @@ import {
   createFollowup,
   getContact,
   listContactMemories,
+  listContactMessages,
 } from "@/lib/data";
 import { addLocalDaysDate } from "@/lib/localDate";
 import { createReplyShareContent } from "@/lib/replySharePolicy.mjs";
 import { useAuth } from "@/providers/AuthProvider";
 import { useWorkspace } from "@/providers/WorkspaceProvider";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
-import type { Contact, ContactMemory, ReplySuggestions } from "@/types";
+import type {
+  Contact,
+  ContactMemory,
+  ConversationMessage,
+  ReplySuggestions,
+} from "@/types";
+
+function formatMessageDate(value: string | null): string {
+  if (!value) return "Zeit unbekannt";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Zeit unbekannt";
+  return new Intl.DateTimeFormat("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function messageAuthor(
+  message: ConversationMessage,
+  contactName: string,
+): string {
+  const storedAuthor = message.author_label?.trim();
+  if (storedAuthor) return storedAuthor;
+  if (message.direction === "inbound") return contactName;
+  if (message.direction === "note") return "Interne Notiz";
+  return "FanMind Team";
+}
+
+function messageContext(message: ConversationMessage): string {
+  return [message.source_platform, message.message_type]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(" · ");
+}
 
 export default function ContactDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -45,6 +81,7 @@ export default function ContactDetailScreen() {
   } = useWorkspace();
   const [contact, setContact] = useState<Contact | null>(null);
   const [memories, setMemories] = useState<ContactMemory[]>([]);
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [incomingMessage, setIncomingMessage] = useState("");
   const [instruction, setInstruction] = useState("");
   const [suggestions, setSuggestions] = useState<ReplySuggestions | null>(null);
@@ -60,6 +97,7 @@ export default function ContactDetailScreen() {
     if (!contactId) {
       setContact(null);
       setMemories([]);
+      setMessages([]);
       setError("Kontakt-ID fehlt.");
       setLoading(false);
       return;
@@ -68,19 +106,22 @@ export default function ContactDetailScreen() {
     if (!workspace?.id) {
       setContact(null);
       setMemories([]);
+      setMessages([]);
       setError(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    const [contactResult, memoriesResult] = await Promise.all([
+    const [contactResult, memoriesResult, messagesResult] = await Promise.all([
       getContact(workspace.id, contactId),
       listContactMemories(workspace.id, contactId),
+      listContactMessages(workspace.id, contactId),
     ]);
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
-    setError(contactResult.error ?? memoriesResult.error);
+    setMessages(messagesResult.messages);
+    setError(contactResult.error ?? memoriesResult.error ?? messagesResult.error);
     setLoading(false);
   }, [contactId, workspace?.id]);
 
@@ -257,6 +298,60 @@ export default function ContactDetailScreen() {
       </Card>
 
       <Card>
+        <SectionTitle eyebrow="Nachrichten">Gesprächsverlauf</SectionTitle>
+        {messages.length ? (
+          <View style={styles.messageList}>
+            {messages.map((message) => {
+              const outbound = message.direction === "outbound";
+              const note = message.direction === "note";
+              return (
+                <View
+                  key={message.id}
+                  style={[
+                    styles.messageRow,
+                    outbound && styles.messageRowOutbound,
+                    note && styles.messageRowNote,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      outbound && styles.messageBubbleOutbound,
+                      note && styles.messageBubbleNote,
+                    ]}
+                  >
+                    <View style={styles.messageMeta}>
+                      <Text style={styles.messageAuthor}>
+                        {messageAuthor(message, contact.display_name)}
+                      </Text>
+                      <Text style={styles.messageTime}>
+                        {formatMessageDate(message.created_at)}
+                      </Text>
+                    </View>
+                    <Text selectable style={styles.messageContent}>
+                      {message.content}
+                    </Text>
+                    {messageContext(message) ? (
+                      <Text style={styles.messageContext}>
+                        {messageContext(message)}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={mobileStyles.muted}>
+            Noch kein gespeicherter Nachrichtenverlauf.
+          </Text>
+        )}
+        <Text style={mobileStyles.muted}>
+          Der Verlauf ist nur lesbar. FanMind sendet keine Nachricht automatisch.
+        </Text>
+      </Card>
+
+      <Card>
         <SectionTitle eyebrow="Kontaktwissen">Was FanMind berücksichtigen darf</SectionTitle>
         {memories.length ? (
           memories.slice(0, 8).map((memory) => (
@@ -388,6 +483,53 @@ const styles = StyleSheet.create({
     marginTop: 7,
     borderRadius: 5,
     backgroundColor: colors.cyan,
+  },
+  messageList: { gap: spacing.md },
+  messageRow: { alignItems: "flex-start" },
+  messageRowOutbound: { alignItems: "flex-end" },
+  messageRowNote: { alignItems: "center" },
+  messageBubble: {
+    width: "88%",
+    gap: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    padding: spacing.md,
+  },
+  messageBubbleOutbound: {
+    borderColor: colors.cyan,
+    backgroundColor: colors.surfaceMuted,
+  },
+  messageBubbleNote: {
+    borderStyle: "dashed",
+    backgroundColor: colors.surface,
+  },
+  messageMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  messageAuthor: {
+    flexShrink: 1,
+    color: colors.text,
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  messageTime: {
+    color: colors.textMuted,
+    fontSize: typography.micro,
+  },
+  messageContent: {
+    color: colors.text,
+    fontSize: typography.body,
+    lineHeight: 24,
+  },
+  messageContext: {
+    color: colors.textMuted,
+    fontSize: typography.micro,
+    textTransform: "capitalize",
   },
   safety: {
     color: colors.amber,

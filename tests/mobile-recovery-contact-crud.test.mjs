@@ -244,6 +244,24 @@ test("Mobile contact mutations stay workspace-bound and fail on duplicates", asy
   assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY|service_role/u);
 });
 
+test("Mobile contact detail loads a bounded RLS-protected message history", async () => {
+  const [data, detail] = await Promise.all([
+    read("apps/mobile/src/lib/data.ts"),
+    read("apps/mobile/app/(app)/contacts/[id].tsx"),
+  ]);
+
+  assert.match(data, /export async function listContactMessages/u);
+  assert.match(
+    data,
+    /\.from\("conversation_messages"\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)/u,
+  );
+  assert.match(data, /recentMessages\.reverse\(\)/u);
+  assert.match(detail, /listContactMessages\(workspace\.id, contactId\)/u);
+  assert.match(detail, /Gesprächsverlauf/u);
+  assert.match(detail, /messages\.map/u);
+  assert.match(detail, /FanMind sendet keine Nachricht automatisch/u);
+});
+
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {
   const [login, forgot, reset, list, detail, create, edit, settings] = await Promise.all([
     read("apps/mobile/app/(auth)/login.tsx"),
