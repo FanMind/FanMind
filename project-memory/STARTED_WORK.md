@@ -14,18 +14,19 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-MOB-003
 - Started: 2026-08-29
 - Updated: 2026-08-29
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: VERIFIED_NOT_ACCEPTED
 - Risk: R3
 - Scope: Turn the Mobile start screen into a real unseen-inbound dashboard without the owner's rejected placeholder icon, add a dynamic per-contact message-channel switch for every fan, and allow owners to create a manual Follow-up directly in the contact detail; then deliver one exact-commit Android preview for owner verification.
 - Change request: FM-CR-003.
-- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`.
-- Work lock: `LOCK-FM-MOB-003-FAN-INBOX-20260829` ACTIVE.
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`, squash merge `93496a4afac9b3b315c9985afbbce02b8524fc44`.
+- Work lock: `LOCK-FM-MOB-003-FAN-INBOX-20260829` RELEASED.
 - Dependencies: existing RLS-protected `conversation_messages.seen_at` and `followups` contracts; FM-DEP-002 for the replacement signed Android preview; exact-head CI and owner device confirmation.
 - Assumptions: unseen means an inbound message with `seen_at is null`; opening a contact may mark its unseen inbound messages as seen only through the existing Workspace-bound authenticated mutation. Channel options must be derived from that fan's stored messages and support unknown future platform names.
 - Planned evidence: pure-policy tests for channel filtering and Follow-up validation; bounded dashboard/query tests; TypeScript/Expo/native checks; full repository regression; exact-head PR checks; one merged-commit Android preview and owner device confirmation.
 - Completed result: the Mobile start screen now lists only fans with inbound `seen_at is null` messages; contact history offers `Alle` plus every stored platform for that fan; owners can create a validated manual Follow-up directly in the contact detail; and the rejected decorative icon is absent from both Start and the shared wordmark. TypeScript, Expo Doctor, Store/native boundary checks, Android/iOS prebuild and exports, root truth/lint, 48 focused Mobile/security tests and the complete 1054-test operations suite passed locally.
-- Still open: exact remote scope-diff reconciliation, PR/CI, merge, one exact-merge Android preview and owner real-device confirmation.
-- Exact next step: publish only the reconciled FM-MOB-003 delta from current `main`, require terminal-green exact-head PR checks, merge once, then queue one protected Android preview for the merged commit.
+- Verified result: PR #1021 final head passed all eight exact-head GitHub gates and merged as `93496a4afac9b3b315c9985afbbce02b8524fc44`. Protected signed-build run `33260695232`, job `99122008690`, completed exactly one `preview` Android internal build for that merge, verified the HTTPS artifact, stored the redacted receipt and cleaned temporary state; Submit and Update remained disabled.
+- Still open: owner installation and real-device confirmation of the unseen inbox, per-fan channel tabs, direct Follow-up and absent rejected symbol; broader Recovery/Purge, iOS/TestFlight, push and Store acceptance remain separate under FM-MOB-001.
+- Exact next step: owner installs the already completed exact-merge Android preview and reports the four visible checks. Do not queue another build for this confirmation.
 - Rollback/recovery: revert the Mobile UI/data-policy commit. Marking messages seen uses the already accepted product field and is not automatically reversible; no message content, Follow-up history, schema or provider state may be deleted.
 
 ## FM-MOB-002
