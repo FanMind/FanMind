@@ -11,21 +11,38 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
-## FM-MOB-002
+## FM-MOB-003
 - Started: 2026-08-29
 - Updated: 2026-08-29
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
+- Scope: Turn the Mobile start screen into a real unseen-inbound dashboard without the owner's rejected placeholder icon, add a dynamic per-contact message-channel switch for every fan, and allow owners to create a manual Follow-up directly in the contact detail; then deliver one exact-commit Android preview for owner verification.
+- Change request: FM-CR-003.
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / pending.
+- Work lock: `LOCK-FM-MOB-003-FAN-INBOX-20260829` ACTIVE.
+- Dependencies: existing RLS-protected `conversation_messages.seen_at` and `followups` contracts; FM-DEP-002 for the replacement signed Android preview; exact-head CI and owner device confirmation.
+- Assumptions: unseen means an inbound message with `seen_at is null`; opening a contact may mark its unseen inbound messages as seen only through the existing Workspace-bound authenticated mutation. Channel options must be derived from that fan's stored messages and support unknown future platform names.
+- Planned evidence: pure-policy tests for channel filtering and Follow-up validation; bounded dashboard/query tests; TypeScript/Expo/native checks; full repository regression; exact-head PR checks; one merged-commit Android preview and owner device confirmation.
+- Completed result: the Mobile start screen now lists only fans with inbound `seen_at is null` messages; contact history offers `Alle` plus every stored platform for that fan; owners can create a validated manual Follow-up directly in the contact detail; and the rejected decorative icon is absent from both Start and the shared wordmark. TypeScript, Expo Doctor, Store/native boundary checks, Android/iOS prebuild and exports, root truth/lint, 48 focused Mobile/security tests and the complete 1054-test operations suite passed locally.
+- Still open: exact remote scope-diff reconciliation, PR/CI, merge, one exact-merge Android preview and owner real-device confirmation.
+- Exact next step: publish only the reconciled FM-MOB-003 delta from current `main`, require terminal-green exact-head PR checks, merge once, then queue one protected Android preview for the merged commit.
+- Rollback/recovery: revert the Mobile UI/data-policy commit. Marking messages seen uses the already accepted product field and is not automatically reversible; no message content, Follow-up history, schema or provider state may be deleted.
+
+## FM-MOB-002
+- Started: 2026-08-29
+- Updated: 2026-08-29
+- Status: ACCEPTED
+- Risk: R3
 - Scope: Expose the existing RLS-protected `conversation_messages` for each demo contact as a visible read-only newest-first conversation history in Mobile, then produce a replacement signed Android internal build for owner verification.
 - Change request: FM-CR-002.
 - Branch/PR: `fix/mobile-contact-message-history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`.
-- Work lock: `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829` ACTIVE.
+- Work lock: `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829` RELEASED.
 - Dependencies: FM-DEP-002; existing Staging demo workspace/contact/message rows; exact Supabase/RLS binding; current Expo SDK 57 patch contract; exact-head CI; Android preview signing/build path.
 - Assumptions: ASM-FM-005 remains binding. The authenticated owner screenshots prove that the previous Android build can log in and render contact details, but they do not prove this new message-history change or complete the remaining iOS/store acceptance.
-- Completed so far: root cause isolated to the Mobile contact screen, which never queried `conversation_messages`; added a workspace-and-contact-bound, 100-row query; newest-first read-only message bubbles; explicit refresh and history-specific error/empty states; no-auto-send text; docs and regression coverage. Local TypeScript, Expo Doctor, native prebuild, Android/iOS export, truth/lint and the complete operations suite passed. Exact-head Mobile CI then exposed newly published Expo SDK 57 patch requirements; a temporary read-only GitHub job generated the official dependency contract, which is being committed without the temporary workflow.
-- Still open: exact-head PR gates, merge to `main`, a replacement signed Android internal build from the merged change and owner confirmation that the stored demo messages are visible on the device.
+- Completed result: PR #1019 passed its final exact-head repository and native gates and merged as `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`. Protected signed-build run `33254230496` produced a receipt-bound exact-commit Android preview; the owner's next Mobile observation confirmed that messages are visible and isolated the follow-on absence of channel switching.
+- Still open: broader FM-MOB-001 iOS/TestFlight/store/push and complete external acceptance remain separate; the new bounded Mobile request is FM-MOB-003.
 - Evidence so far: FM-EV-024; PR #1019; local 2026-08-29 checks; authenticated Android screenshots supplied by the owner; existing database observation of 13 demo contacts and 37 stored conversation messages.
-- Exact next step: obtain terminal-green exact-head checks with the refreshed Expo SDK 57 patch lock, merge, queue one new Android preview build and ask the owner only for the final visible-message device confirmation.
+- Exact next step: continue only through FM-MOB-003; do not reopen #1019 or duplicate the stored demo messages.
 - Rollback/recovery: revert the bounded Mobile UI/data-query commit; no database schema or row mutation is part of the implementation. The previous signed APK remains available to the owner until the replacement is accepted.
 - Owner action needed: only final installation/device confirmation after the new build is produced.
 
