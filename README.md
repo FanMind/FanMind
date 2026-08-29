@@ -322,16 +322,20 @@ Bereits vorhanden:
 
 - native E-Mail-/Passwort-Anmeldung und sichere Gerätesitzung;
 - PKCE-basierte Passwort-Recovery über `fanmind://reset-password` mit strikter Callback-Validierung;
-- Dashboard, Kontaktliste, Suche und Kontaktdetail;
+- Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
+  Nachrichten, Kontaktliste, Suche und Kontaktdetail;
 - sichtbarer, auf Workspace und Kontakt begrenzter read-only Gesprächsverlauf
   mit bis zu 100 aktuellen Nachrichten; Nachrichten bleiben vom Offline-Cache
-  ausgeschlossen;
+  ausgeschlossen und lassen sich für jeden Fan über `Alle` sowie seine
+  tatsächlich vorhandenen Plattformen umschalten;
 - Kontakte als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - Kontaktwissen und serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext über die
   native Android-/iOS-Teilen-Auswahl weitergeben; FanMind wählt weder Ziel noch
   Empfänger und sendet nicht selbst;
-- offene Follow-ups anzeigen und als Owner mit `completed` abschließen; Teammitglieder lesen nur, Altdaten mit `done` bleiben kompatibel;
+- Follow-ups als Owner direkt beim Fan oder aus einem KI-Vorschlag anlegen,
+  offene Follow-ups anzeigen und mit `completed` abschließen; Teammitglieder
+  lesen nur, Altdaten mit `done` bleiben kompatibel;
 - verschlüsselte, höchstens 24 Stunden alte Offline-Übersicht mit maximal 50 Kontakten; nur Name, Handle, Plattform, Status und Änderungszeit, ausschließlich lesbar;
 - sicherer lokaler Logout mit Purge aller registrierten FanMind-SecureStore-Schlüssel und des Workspace-Zustands;
 - native Push-Grundlage mit validierter Follow-up-Navigation, sicherem
