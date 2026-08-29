@@ -83,6 +83,9 @@ Mobile uses direct Supabase queries only for tables already protected by RLS:
 
 - the parameterless member-safe Workspace RPC / `workspace_members`; only an Owner lookup reads the base `workspaces` table;
 - `contacts`;
+- `conversation_messages` (read-only, höchstens 100 aktuelle Nachrichten je
+  Kontakt; zusätzlich nach `workspace_id` und `contact_id` gefiltert; neueste
+  zuerst und mit expliziter Aktualisierung);
 - `memories`;
 - `followups`.
 
@@ -134,7 +137,7 @@ Upgrades probe the former colon-delimited v1 SecureStore namespace through a rea
     ├── contacts
     │   ├── index             Contact search/list and create entry point
     │   ├── new               Create contact
-    │   ├── [id]              Contact knowledge and AI workflow
+    │   ├── [id]              Read-only message history, contact knowledge and AI workflow
     │   └── [id]/edit         Edit contact
     ├── followups             Open tasks
     └── settings              Session, purge and architecture boundary
@@ -175,6 +178,7 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 ### Phase B — repository implementation
 
 - [x] create/edit contacts;
+- [x] bounded read-only contact message history without offline persistence;
 - [x] copy replies or hand only the selected reply text to the native
       Android/iOS share sheet; FanMind selects no recipient or channel and
       performs no send;
@@ -224,7 +228,7 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 ### Phase C
 
 - approved channel integrations;
-- richer native message timeline;
+- richer native message timeline with attachments and channel actions;
 - biometric session unlock;
 - externally approved store privacy declarations and signed-binary portal
   submission;

@@ -124,4 +124,16 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 - Recheck trigger: explicit policy/owner exception decision, any function/grant/catalog drift, or promotion of equivalent behavior to Production.
 - Action if false: current technical classification is constrained intentional exposure, not final policy acceptance. Keep fail-closed; under `FM-SEC-OWNER-002`, explicitly accept the exception or remediate through a separately reviewed migration. Do not revoke blindly.
 
+## ASM-FM-011
+- Date: 2026-08-29
+- Updated: 2026-08-29
+- Related task: FM-MOB-002
+- Risk: R3
+- Assumption: The demo contacts appear without messages because Staging failed to store them or requires a new database permission/schema change.
+- Why it matters: accepting this assumption would duplicate demo data or alter RLS instead of fixing the actual Mobile presentation defect.
+- Verification source/evidence: bounded authenticated Staging observation found 13 demo contacts and 37 matching `conversation_messages`; source inspection showed the Mobile detail screen loaded only the contact and contact memories and contained no message query or history renderer.
+- Status: INVALIDATED
+- Recheck trigger: any future empty-history report after the replacement build is installed.
+- Action if false: keep the database unchanged; query by both workspace and contact through the authenticated RLS path and diagnose exact account/workspace/build binding before considering data creation or policy changes.
+
 Do not delete invalid assumptions; preserve them so the same mistaken premise is not reused later.

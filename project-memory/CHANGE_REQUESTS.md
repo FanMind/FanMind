@@ -12,6 +12,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Related task: FM-MEM-001
 - Decision: Implement Project Memory Protocol v1 across active FanMind/WellFit repositories.
 
+## FM-CR-002
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: The authenticated demo account must show the already stored sample messages for all demo contacts directly in the Mobile contact detail.
+- Classification: Bounded Mobile product correction and replacement Android preview build.
+- Affected areas: `apps/mobile` contact detail/data access, Mobile documentation, regression tests and signed Android preview evidence.
+- Existing task/decision checked: FM-MOB-001, FM-DEC-003, FM-DEP-002, ASM-FM-005 and FM-LOOP-003.
+- Dependencies: Existing RLS-protected `conversation_messages` rows, current Mobile Supabase binding, exact-head repository checks and a new exact-commit Android internal build.
+- Decision: Track the implementation and replacement build as FM-MOB-002 without reopening or replacing the native Mobile foundation.
+- Related task: FM-MOB-002
+
 ## Intake template
 
 ```text

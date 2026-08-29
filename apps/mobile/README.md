@@ -29,7 +29,10 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
 - Dashboard mit Kontakt- und Follow-up-Kennzahlen;
 - Kontaktliste und Suche;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten; Teammitglieder sehen CRM-Daten nur lesend;
-- Kontaktdetail mit Profil und Kontaktwissen;
+- Kontaktdetail mit Profil, Kontaktwissen und einem sichtbaren, read-only
+  Gesprächsverlauf aus bis zu 100 aktuellen, per Workspace und Kontakt
+  gefilterten Nachrichten; neueste Nachrichten erscheinen zuerst und der
+  Verlauf lässt sich sichtbar aktualisieren;
 - KI-Antwortvorschläge über Bearer-authentifizierte FanMind-API;
 - gespeicherter Gesprächsverlauf ausschließlich serverseitig aus dem
   autorisierten Workspace; die App sendet keinen frei eingefügten

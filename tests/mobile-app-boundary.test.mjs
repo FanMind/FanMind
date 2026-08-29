@@ -87,7 +87,7 @@ test("mobile keeps the wordmark on the splashscreen and uses dedicated high-reso
   );
 
   assert.ok(splashPlugin);
-  assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.6");
+  assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.8");
   assert.equal(splashPlugin[1].image, "./assets/branding/fanmind-wordmark.png");
   assert.equal(splashPlugin[1].dark, undefined);
   assert.equal(splashPlugin[1].resizeMode, "contain");

@@ -21,10 +21,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-003
 - Related: FM-MOB-001
 - Status: OPEN
-- Updated: 2026-08-26
-- Gap: native app repository/CI exists; signed Android/iOS, real-device Recovery/Login/Purge, TestFlight, push and store evidence remain external.
+- Updated: 2026-08-29
+- Gap: native app repository/CI exists and one prior signed Android internal build is installed with authenticated contact-detail evidence, but the old build omitted stored conversation history; the FM-MOB-002 replacement build/device confirmation plus the broader Recovery/Purge, iOS/TestFlight, push and store evidence remain open.
 - Close when: required Android/iOS signed-build and device/store acceptance is evidence-bound to exact builds/commit.
-- Next check: `FM-MOB-OWNER-001` must populate the exact protected `mobile-preview` EAS/Supabase/API bindings and separately prove the Supabase redirect. Run `33000433320` is fail-closed evidence, not reusable acceptance; after configuration use a new lock and one fresh read-only check before any build/signing.
+- Next check: finish #1019 under `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829`, merge only on terminal-green exact-head checks, create one replacement Android preview build and obtain owner confirmation that the stored messages appear. Do not treat the prior APK or repository tests as proof of the new UI.
 
 ## FM-LOOP-004
 - Related: FM-AI-001

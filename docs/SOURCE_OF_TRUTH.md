@@ -42,7 +42,9 @@ Aktiv beziehungsweise produktnah:
 - serverseitige KI-Antwortvorschläge;
 - Kontaktwissen- und Follow-up-Vorschläge aus der KI-Ausgabe;
 - Kopieren von Antwortvorschlägen ohne automatische Sendung;
-- eigenständiger React-Native-/Expo-App-Kern mit Login, Passwort-Recovery, Dashboard, Kontaktanlage/-bearbeitung, Kontaktwissen, KI und Follow-ups;
+- eigenständiger React-Native-/Expo-App-Kern mit Login, Passwort-Recovery,
+  Dashboard, Kontaktanlage/-bearbeitung, sichtbarem read-only
+  Gesprächsverlauf, Kontaktwissen, KI und Follow-ups;
 - Admin-, Billing-, Operations- und Backup-Grundlagen;
 - getrennte kompakte Konto-Seiten:
   - `/settings/profile` für Profil und Workspace-Basisdaten;
@@ -101,6 +103,9 @@ Aktiv im App-Kern:
 - geschützte Expo-Router-Navigation;
 - Dashboard, Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
+- bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
+  Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
+  vollständig vom Offline-Cache ausgeschlossen;
 - Kontaktwissen;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die

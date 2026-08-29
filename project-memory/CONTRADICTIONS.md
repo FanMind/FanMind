@@ -176,4 +176,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: FM-EV-023; `EV-META-STAGING-FOUNDATION-20260826`; #1014 final head `12a479f00cce95d0031970c98c2d3933477ab804`, merge `ec1f196e82ab64a3b39b69a22a7b81b0757aa7a4`; runs `33007311870` and `33007481167`.
 - Falsification question: What observation would prove our conclusion wrong? A fresh shared rollout-state result showing absent, partial or drifted continuation/queue objects invalidates the current-state claim and blocks every later database action until separately reconciled.
 
+## CTR-FM-013
+- Date: 2026-08-29
+- Updated: 2026-08-29
+- Related task/change: FM-MOB-002 / FM-CR-002
+- Risk: R3
+- Source A: authenticated Android contact-detail screenshots from the installed preview.
+- Claim A: demo contacts are present, but no stored conversation history is visible.
+- Source B: bounded authenticated Staging observation and Mobile source inspection.
+- Claim B: 37 demo conversation messages already exist for the 13 demo contacts; the previous Mobile contact detail never queried or rendered `conversation_messages`.
+- Stronger/current evidence: data observation plus exact source control flow identify a presentation omission rather than missing storage or permissions.
+- Status: RESOLVED
+- Resolution/action: #1019 adds an RLS-protected workspace/contact query and visible read-only history. Do not duplicate rows or alter RLS. Final acceptance remains pending a replacement exact-commit Android build and owner device confirmation.
+- Evidence: FM-EV-024; PR #1019; owner screenshots; local Mobile tests and exports.
+- Falsification question: What observation would prove our conclusion wrong? If the replacement exact-commit build still shows an empty history while an authenticated query for that same workspace/contact returns rows, the query/model mapping or runtime project binding must be reopened before any database mutation.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.

@@ -46,6 +46,19 @@ export type ContactMemory = {
   created_at: string | null;
 };
 
+export type ConversationMessage = {
+  id: string;
+  workspace_id: string;
+  conversation_id: string;
+  contact_id: string;
+  direction: "inbound" | "outbound" | "note";
+  message_type: string;
+  source_platform: string | null;
+  author_label: string | null;
+  content: string;
+  created_at: string | null;
+};
+
 export type Followup = {
   id: string;
   workspace_id: string;

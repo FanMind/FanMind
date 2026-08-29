@@ -13,6 +13,7 @@ import type {
   Contact,
   ContactListItem,
   ContactMemory,
+  ConversationMessage,
   Followup,
   Workspace,
 } from "@/types";
@@ -23,6 +24,8 @@ const CONTACT_LIST_COLUMNS =
   "id,workspace_id,display_name,handle,source_platform,status,summary,updated_at";
 const MEMORY_COLUMNS =
   "id,workspace_id,contact_id,type,content,importance,created_at";
+const CONVERSATION_MESSAGE_COLUMNS =
+  "id,workspace_id,conversation_id,contact_id,direction,message_type,source_platform,author_label,content,created_at";
 const FOLLOWUP_COLUMNS =
   "id,workspace_id,contact_id,due_date,priority,reason,status,created_at";
 const MEMBER_SAFE_WORKSPACE_RPC =
@@ -398,6 +401,24 @@ export async function listContactMemories(
     return { memories: [], error: "Kontaktwissen konnte nicht geladen werden." };
   }
   return { memories: (result.data ?? []) as ContactMemory[], error: null };
+}
+
+export async function listContactMessages(
+  workspaceId: string,
+  contactId: string,
+): Promise<{ messages: ConversationMessage[]; error: string | null }> {
+  const result = await supabase
+    .from("conversation_messages")
+    .select(CONVERSATION_MESSAGE_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(100);
+  if (result.error) {
+    return { messages: [], error: "Nachrichtenverlauf konnte nicht geladen werden." };
+  }
+  return { messages: (result.data ?? []) as ConversationMessage[], error: null };
 }
 
 export async function createContactMemory(input: {

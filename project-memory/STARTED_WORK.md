@@ -11,6 +11,24 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-MOB-002
+- Started: 2026-08-29
+- Updated: 2026-08-29
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Scope: Expose the existing RLS-protected `conversation_messages` for each demo contact as a visible read-only newest-first conversation history in Mobile, then produce a replacement signed Android internal build for owner verification.
+- Change request: FM-CR-002.
+- Branch/PR: `fix/mobile-contact-message-history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`.
+- Work lock: `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829` ACTIVE.
+- Dependencies: FM-DEP-002; existing Staging demo workspace/contact/message rows; exact Supabase/RLS binding; current Expo SDK 57 patch contract; exact-head CI; Android preview signing/build path.
+- Assumptions: ASM-FM-005 remains binding. The authenticated owner screenshots prove that the previous Android build can log in and render contact details, but they do not prove this new message-history change or complete the remaining iOS/store acceptance.
+- Completed so far: root cause isolated to the Mobile contact screen, which never queried `conversation_messages`; added a workspace-and-contact-bound, 100-row query; newest-first read-only message bubbles; explicit refresh and history-specific error/empty states; no-auto-send text; docs and regression coverage. Local TypeScript, Expo Doctor, native prebuild, Android/iOS export, truth/lint and the complete operations suite passed. Exact-head Mobile CI then exposed newly published Expo SDK 57 patch requirements; a temporary read-only GitHub job generated the official dependency contract, which is being committed without the temporary workflow.
+- Still open: exact-head PR gates, merge to `main`, a replacement signed Android internal build from the merged change and owner confirmation that the stored demo messages are visible on the device.
+- Evidence so far: FM-EV-024; PR #1019; local 2026-08-29 checks; authenticated Android screenshots supplied by the owner; existing database observation of 13 demo contacts and 37 stored conversation messages.
+- Exact next step: obtain terminal-green exact-head checks with the refreshed Expo SDK 57 patch lock, merge, queue one new Android preview build and ask the owner only for the final visible-message device confirmation.
+- Rollback/recovery: revert the bounded Mobile UI/data-query commit; no database schema or row mutation is part of the implementation. The previous signed APK remains available to the owner until the replacement is accepted.
+- Owner action needed: only final installation/device confirmation after the new build is produced.
+
 ## FM-RST-001
 - Started: 2026-08-17
 - Updated: 2026-08-26
