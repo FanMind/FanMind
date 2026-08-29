@@ -2,6 +2,8 @@ import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -27,8 +29,15 @@ import {
   getContact,
   listContactMemories,
   listContactMessages,
+  markContactInboundMessagesSeen,
 } from "@/lib/data";
+import {
+  ALL_MESSAGE_CHANNELS,
+  buildMessageChannelOptions,
+  filterMessagesByChannel,
+} from "@/lib/contactMessageChannelPolicy.mjs";
 import { addLocalDaysDate } from "@/lib/localDate";
+import { normalizeManualFollowupDraft } from "@/lib/manualFollowupPolicy.mjs";
 import { createReplyShareContent } from "@/lib/replySharePolicy.mjs";
 import { useAuth } from "@/providers/AuthProvider";
 import { useWorkspace } from "@/providers/WorkspaceProvider";
@@ -70,6 +79,19 @@ function messageContext(message: ConversationMessage): string {
     .join(" · ");
 }
 
+function manualFollowupError(errors: string[]): string {
+  if (errors.includes("reason")) {
+    return "Bitte gib einen kurzen Grund mit höchstens 500 Zeichen ein.";
+  }
+  if (errors.includes("due_date_past")) {
+    return "Das Follow-up-Datum darf nicht in der Vergangenheit liegen.";
+  }
+  if (errors.includes("due_date")) {
+    return "Bitte verwende ein gültiges Datum im Format JJJJ-MM-TT.";
+  }
+  return "Bitte prüfe die Follow-up-Angaben.";
+}
+
 export default function ContactDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const contactId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -83,7 +105,11 @@ export default function ContactDetailScreen() {
   const [memories, setMemories] = useState<ContactMemory[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [messageSeenError, setMessageSeenError] = useState<string | null>(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
+  const [selectedMessageChannel, setSelectedMessageChannel] = useState<string>(
+    ALL_MESSAGE_CHANNELS,
+  );
   const [incomingMessage, setIncomingMessage] = useState("");
   const [instruction, setInstruction] = useState("");
   const [suggestions, setSuggestions] = useState<ReplySuggestions | null>(null);
@@ -91,6 +117,20 @@ export default function ContactDetailScreen() {
   const [aiBusy, setAiBusy] = useState(false);
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [followupBusy, setFollowupBusy] = useState(false);
+  const [manualFollowupBusy, setManualFollowupBusy] = useState(false);
+  const [manualFollowupReason, setManualFollowupReason] = useState("");
+  const [manualFollowupDueDate, setManualFollowupDueDate] = useState(
+    addLocalDaysDate(3),
+  );
+  const [manualFollowupPriority, setManualFollowupPriority] = useState<
+    "low" | "normal" | "high"
+  >("normal");
+  const [manualFollowupFormError, setManualFollowupFormError] = useState<
+    string | null
+  >(null);
+  const [manualFollowupNotice, setManualFollowupNotice] = useState<string | null>(
+    null,
+  );
   const [sharingReplyIndex, setSharingReplyIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -101,6 +141,7 @@ export default function ContactDetailScreen() {
       setMemories([]);
       setMessages([]);
       setMessageError(null);
+      setMessageSeenError(null);
       setError("Kontakt-ID fehlt.");
       setLoading(false);
       return;
@@ -111,6 +152,7 @@ export default function ContactDetailScreen() {
       setMemories([]);
       setMessages([]);
       setMessageError(null);
+      setMessageSeenError(null);
       setError(null);
       setLoading(false);
       return;
@@ -122,13 +164,22 @@ export default function ContactDetailScreen() {
       listContactMemories(workspace.id, contactId),
       listContactMessages(workspace.id, contactId),
     ]);
+    const seenError =
+      !messagesResult.error && contactResult.contact
+        ? await markContactInboundMessagesSeen({
+            workspaceId: workspace.id,
+            workspaceRole: workspace.role,
+            contactId,
+          })
+        : null;
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
     setMessages(messagesResult.messages);
     setMessageError(messagesResult.error);
+    setMessageSeenError(seenError);
     setError(contactResult.error ?? memoriesResult.error);
     setLoading(false);
-  }, [contactId, workspace?.id]);
+  }, [contactId, workspace?.id, workspace?.role]);
 
   useEffect(() => {
     void load();
@@ -140,10 +191,38 @@ export default function ContactDetailScreen() {
     const result = await listContactMessages(workspace.id, contactId);
     if (!result.error) setMessages(result.messages);
     setMessageError(result.error);
+    setMessageSeenError(
+      result.error
+        ? null
+        : await markContactInboundMessagesSeen({
+            workspaceId: workspace.id,
+            workspaceRole: workspace.role,
+            contactId,
+          }),
+    );
     setMessagesBusy(false);
-  }, [contactId, workspace?.id]);
+  }, [contactId, workspace?.id, workspace?.role]);
 
   const tags = useMemo(() => contact?.tags ?? [], [contact?.tags]);
+  const messageChannelOptions = useMemo(
+    () => buildMessageChannelOptions(messages),
+    [messages],
+  );
+  const activeMessageChannel = messageChannelOptions.some(
+    (option) => option.key === selectedMessageChannel,
+  )
+    ? selectedMessageChannel
+    : ALL_MESSAGE_CHANNELS;
+  const visibleMessages = useMemo(
+    () => filterMessagesByChannel(messages, activeMessageChannel),
+    [activeMessageChannel, messages],
+  );
+
+  useEffect(() => {
+    setSelectedMessageChannel(ALL_MESSAGE_CHANNELS);
+    setManualFollowupFormError(null);
+    setManualFollowupNotice(null);
+  }, [contactId]);
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;
@@ -208,6 +287,39 @@ export default function ContactDetailScreen() {
       await load();
     }
     setMemoryBusy(false);
+  }
+
+  async function saveManualFollowup() {
+    if (!workspace?.id || workspace.role !== "owner" || !contact) return;
+    const normalized = normalizeManualFollowupDraft({
+      reason: manualFollowupReason,
+      dueDate: manualFollowupDueDate,
+      priority: manualFollowupPriority,
+    });
+    if (!normalized.ok) {
+      setManualFollowupFormError(manualFollowupError(normalized.errors));
+      return;
+    }
+
+    setManualFollowupBusy(true);
+    setManualFollowupFormError(null);
+    setManualFollowupNotice(null);
+    const result = await createFollowup({
+      workspaceId: workspace.id,
+      workspaceRole: workspace.role,
+      contactId: contact.id,
+      dueDate: normalized.value.due_date,
+      reason: normalized.value.reason,
+      priority: normalized.value.priority,
+    });
+    setManualFollowupFormError(result);
+    if (!result) {
+      setManualFollowupReason("");
+      setManualFollowupNotice(
+        `Follow-up für ${manualFollowupDueDate} wurde gespeichert.`,
+      );
+    }
+    setManualFollowupBusy(false);
   }
 
   async function saveFollowup() {
@@ -324,47 +436,82 @@ export default function ContactDetailScreen() {
         {messageError ? (
           <Text style={mobileStyles.error}>{messageError}</Text>
         ) : messages.length ? (
-          <View style={styles.messageList}>
-            {messages.map((message) => {
-              const outbound = message.direction === "outbound";
-              const note = message.direction === "note";
-              return (
-                <View
-                  key={message.id}
-                  style={[
-                    styles.messageRow,
-                    outbound && styles.messageRowOutbound,
-                    note && styles.messageRowNote,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      outbound && styles.messageBubbleOutbound,
-                      note && styles.messageBubbleNote,
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.messageChannelList}
+              accessibilityRole="tablist"
+            >
+              {messageChannelOptions.map((option) => {
+                const selected = option.key === activeMessageChannel;
+                return (
+                  <Pressable
+                    key={option.key}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${option.label}, ${option.count} Nachrichten`}
+                    onPress={() => setSelectedMessageChannel(option.key)}
+                    style={({ pressed }) => [
+                      styles.messageChannel,
+                      selected && styles.messageChannelSelected,
+                      pressed && styles.messageChannelPressed,
                     ]}
                   >
-                    <View style={styles.messageMeta}>
-                      <Text style={styles.messageAuthor}>
-                        {messageAuthor(message, contact.display_name)}
-                      </Text>
-                      <Text style={styles.messageTime}>
-                        {formatMessageDate(message.created_at)}
-                      </Text>
-                    </View>
-                    <Text selectable style={styles.messageContent}>
-                      {message.content}
+                    <Text
+                      style={[
+                        styles.messageChannelText,
+                        selected && styles.messageChannelTextSelected,
+                      ]}
+                    >
+                      {option.label} · {option.count}
                     </Text>
-                    {messageContext(message) ? (
-                      <Text style={styles.messageContext}>
-                        {messageContext(message)}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.messageList}>
+              {visibleMessages.map((message) => {
+                const outbound = message.direction === "outbound";
+                const note = message.direction === "note";
+                return (
+                  <View
+                    key={message.id}
+                    style={[
+                      styles.messageRow,
+                      outbound && styles.messageRowOutbound,
+                      note && styles.messageRowNote,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        outbound && styles.messageBubbleOutbound,
+                        note && styles.messageBubbleNote,
+                      ]}
+                    >
+                      <View style={styles.messageMeta}>
+                        <Text style={styles.messageAuthor}>
+                          {messageAuthor(message, contact.display_name)}
+                        </Text>
+                        <Text style={styles.messageTime}>
+                          {formatMessageDate(message.created_at)}
+                        </Text>
+                      </View>
+                      <Text selectable style={styles.messageContent}>
+                        {message.content}
                       </Text>
-                    ) : null}
+                      {messageContext(message) ? (
+                        <Text style={styles.messageContext}>
+                          {messageContext(message)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          </>
         ) : (
           <Text style={mobileStyles.muted}>
             Noch kein gespeicherter Nachrichtenverlauf.
@@ -373,6 +520,109 @@ export default function ContactDetailScreen() {
         <Text style={mobileStyles.muted}>
           Der Verlauf ist nur lesbar. FanMind sendet keine Nachricht automatisch.
         </Text>
+        {messageSeenError ? (
+          <Text style={mobileStyles.error}>{messageSeenError}</Text>
+        ) : null}
+      </Card>
+
+      <Card>
+        <SectionTitle eyebrow="Follow-up">Direkt beim Fan anlegen</SectionTitle>
+        {workspace.role === "owner" ? (
+          <>
+            <TextInput
+              value={manualFollowupReason}
+              onChangeText={setManualFollowupReason}
+              placeholder="Grund, z. B. Event-Details senden"
+              placeholderTextColor={colors.textMuted}
+              maxLength={500}
+              style={mobileStyles.input}
+              accessibilityLabel="Grund für das Follow-up"
+            />
+            <Text style={mobileStyles.muted}>Wann möchtest du erinnert werden?</Text>
+            <View style={styles.followupChoiceRow}>
+              {[
+                { label: "Morgen", days: 1 },
+                { label: "In 3 Tagen", days: 3 },
+                { label: "In 7 Tagen", days: 7 },
+              ].map((choice) => {
+                const value = addLocalDaysDate(choice.days);
+                const selected = manualFollowupDueDate === value;
+                return (
+                  <Pressable
+                    key={choice.days}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setManualFollowupDueDate(value)}
+                    style={({ pressed }) => [
+                      styles.followupChoice,
+                      selected && styles.followupChoiceSelected,
+                      pressed && styles.messageChannelPressed,
+                    ]}
+                  >
+                    <Text style={selected ? styles.followupChoiceTextSelected : styles.followupChoiceText}>
+                      {choice.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              value={manualFollowupDueDate}
+              onChangeText={setManualFollowupDueDate}
+              placeholder="JJJJ-MM-TT"
+              placeholderTextColor={colors.textMuted}
+              maxLength={10}
+              style={mobileStyles.input}
+              accessibilityLabel="Datum des Follow-ups"
+            />
+            <Text style={mobileStyles.muted}>Priorität</Text>
+            <View style={styles.followupChoiceRow}>
+              {[
+                { key: "low" as const, label: "Niedrig" },
+                { key: "normal" as const, label: "Normal" },
+                { key: "high" as const, label: "Hoch" },
+              ].map((priority) => {
+                const selected = manualFollowupPriority === priority.key;
+                return (
+                  <Pressable
+                    key={priority.key}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setManualFollowupPriority(priority.key)}
+                    style={({ pressed }) => [
+                      styles.followupChoice,
+                      selected && styles.followupChoiceSelected,
+                      pressed && styles.messageChannelPressed,
+                    ]}
+                  >
+                    <Text style={selected ? styles.followupChoiceTextSelected : styles.followupChoiceText}>
+                      {priority.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {manualFollowupFormError ? (
+              <Text style={mobileStyles.error}>{manualFollowupFormError}</Text>
+            ) : null}
+            {manualFollowupNotice ? (
+              <Text style={mobileStyles.success}>{manualFollowupNotice}</Text>
+            ) : null}
+            <PrimaryButton
+              busy={manualFollowupBusy}
+              onPress={() => void saveManualFollowup()}
+            >
+              Follow-up speichern
+            </PrimaryButton>
+            <SecondaryButton onPress={() => router.push("/(app)/followups")}>
+              Offene Follow-ups anzeigen
+            </SecondaryButton>
+          </>
+        ) : (
+          <Text style={mobileStyles.muted}>
+            Teamzugänge können Follow-ups in Mobile derzeit nur lesen.
+          </Text>
+        )}
       </Card>
 
       <Card>
@@ -514,6 +764,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: spacing.md,
   },
+  messageChannelList: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  messageChannel: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  messageChannelSelected: {
+    borderColor: colors.cyan,
+    backgroundColor: colors.cyan,
+  },
+  messageChannelPressed: { opacity: 0.72 },
+  messageChannelText: {
+    color: colors.textMuted,
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  messageChannelTextSelected: { color: colors.background },
   messageList: { gap: spacing.md },
   messageRow: { alignItems: "flex-start" },
   messageRowOutbound: { alignItems: "flex-end" },
@@ -560,6 +833,33 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.micro,
     textTransform: "capitalize",
+  },
+  followupChoiceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  followupChoice: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  followupChoiceSelected: {
+    borderColor: colors.cyan,
+    backgroundColor: colors.cyan,
+  },
+  followupChoiceText: {
+    color: colors.textMuted,
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  followupChoiceTextSelected: {
+    color: colors.background,
+    fontSize: typography.small,
+    fontWeight: "900",
   },
   safety: {
     color: colors.amber,

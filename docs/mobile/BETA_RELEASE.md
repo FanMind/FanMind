@@ -19,7 +19,12 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
 - sichtbarer read-only Gesprächsverlauf mit höchstens 100 aktuellen,
   ausdrücklich nach Workspace und Kontakt gefilterten Nachrichten; keine
   Nachrichtenpersistenz im Offline-Cache; neueste Nachrichten zuerst und mit
-  sichtbarer manueller Aktualisierung/Fehleranzeige;
+  sichtbarer manueller Aktualisierung/Fehleranzeige; `Alle` und jede je Fan
+  tatsächlich vorhandene Plattform sind direkt umschaltbar;
+- Start-Dashboard mit ausschließlich Fans, deren eingehende Nachrichten noch
+  kein `seen_at` besitzen; ausgehende Nachrichten erzeugen dort keinen Eintrag;
+- direktes manuelles Owner-Follow-up im Fan-Detail mit Grund, Datum und
+  Priorität; Member bleiben read-only;
 - Antwortvorschläge kopieren oder über die native Android-/iOS-Teilen-Auswahl
   weitergeben; der Share-Payload enthält ausschließlich den ausgewählten
   Antworttext, niemals Kontakt-, Workspace-, Kontext-, Notiz- oder

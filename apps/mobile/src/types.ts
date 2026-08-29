@@ -57,6 +57,13 @@ export type ConversationMessage = {
   author_label: string | null;
   content: string;
   created_at: string | null;
+  seen_at: string | null;
+};
+
+export type DashboardUnreadFan = ContactListItem & {
+  unread_count: number;
+  latest_message_at: string | null;
+  latest_source_platform: string | null;
 };
 
 export type Followup = {

@@ -1,49 +1,95 @@
-import { useCallback, useEffect, useState } from "react";
-import { RefreshControl, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
-  BrandMark,
   Card,
   EmptyState,
   LoadingState,
-  PrimaryButton,
   Screen,
+  SecondaryButton,
   SectionTitle,
   StatusPill,
   mobileStyles,
 } from "@/components/ui";
-import { loadDashboardCounts } from "@/lib/data";
+import { messagePlatformLabel } from "@/lib/contactMessageChannelPolicy.mjs";
+import { listUnseenInboundFans, loadDashboardCounts } from "@/lib/data";
 import { useWorkspace } from "@/providers/WorkspaceProvider";
-import { colors, spacing, typography } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
+import type { DashboardUnreadFan } from "@/types";
+
+function formatMessageTime(value: string | null): string {
+  if (!value) return "Zeit unbekannt";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Zeit unbekannt";
+  return new Intl.DateTimeFormat("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function UnreadFanRow({ fan }: { fan: DashboardUnreadFan }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${fan.display_name}, ${fan.unread_count} neue Nachrichten`}
+      onPress={() => router.push(`/(app)/contacts/${fan.id}`)}
+      style={({ pressed }) => [styles.fanRow, pressed && styles.pressed]}
+    >
+      <View style={styles.unreadDot} />
+      <View style={styles.fanText}>
+        <View style={styles.fanTitleRow}>
+          <Text style={styles.fanName}>{fan.display_name}</Text>
+          <StatusPill tone="accent">{fan.unread_count} neu</StatusPill>
+        </View>
+        <Text style={styles.fanHandle}>{fan.handle || "ohne Handle"}</Text>
+        <Text style={styles.fanMeta}>
+          {messagePlatformLabel(fan.latest_source_platform)} · {formatMessageTime(fan.latest_message_at)}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
 
 export default function DashboardScreen() {
   const { workspace, loading: workspaceLoading, error, refresh: refreshWorkspace } =
     useWorkspace();
-  const [counts, setCounts] = useState({ contacts: 0, followups: 0 });
+  const [fans, setFans] = useState<DashboardUnreadFan[]>([]);
+  const [openFollowups, setOpenFollowups] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!workspace?.id) {
+      setFans([]);
+      setOpenFollowups(0);
+      setDashboardError(null);
+      return;
+    }
+
+    setLoading(true);
+    const [fansResult, countsResult] = await Promise.all([
+      listUnseenInboundFans(workspace.id),
+      loadDashboardCounts(workspace.id),
+    ]);
+    setFans(fansResult.fans);
+    setOpenFollowups(countsResult.followups);
+    setDashboardError(fansResult.error ?? countsResult.error);
+    setLoading(false);
+  }, [workspace?.id]);
 
   const refresh = useCallback(async () => {
     await refreshWorkspace();
-    if (!workspace?.id) return;
-    setLoading(true);
-    const result = await loadDashboardCounts(workspace.id);
-    if (!result.error) {
-      setCounts({ contacts: result.contacts, followups: result.followups });
-    }
-    setLoading(false);
-  }, [refreshWorkspace, workspace?.id]);
+    await load();
+  }, [load, refreshWorkspace]);
 
-  useEffect(() => {
-    if (!workspace?.id) return;
-    setLoading(true);
-    loadDashboardCounts(workspace.id).then((result) => {
-      if (!result.error) {
-        setCounts({ contacts: result.contacts, followups: result.followups });
-      }
-      setLoading(false);
-    });
-  }, [workspace?.id]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   if (workspaceLoading) {
     return (
@@ -56,7 +102,6 @@ export default function DashboardScreen() {
   if (!workspace) {
     return (
       <Screen title="FanMind App" subtitle="Eigener mobiler Arbeitsbereich">
-        <BrandMark />
         <EmptyState
           title="Noch kein Workspace"
           description={error ?? "Schließe das FanMind-Onboarding zuerst im Web ab."}
@@ -67,38 +112,50 @@ export default function DashboardScreen() {
 
   return (
     <Screen
-      title={`Hallo in ${workspace.name}`}
-      subtitle="Dein mobiler FanMind-Arbeitsbereich"
-      right={<StatusPill tone="good">Sicher verbunden</StatusPill>}
+      title="Neue Nachrichten"
+      subtitle={`Hallo in ${workspace.name}`}
+      right={
+        <SecondaryButton disabled={loading} onPress={() => void refresh()}>
+          {loading ? "Lädt…" : "Aktualisieren"}
+        </SecondaryButton>
+      }
     >
-      <BrandMark />
       <View style={styles.kpiGrid}>
         <Card style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>{loading ? "…" : counts.contacts}</Text>
-          <Text style={styles.kpiLabel}>Kontakte</Text>
+          <Text style={styles.kpiValue}>{loading ? "…" : fans.length}</Text>
+          <Text style={styles.kpiLabel}>Fans mit Neuigkeiten</Text>
         </Card>
-        <Card style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>{loading ? "…" : counts.followups}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/(app)/followups")}
+          style={({ pressed }) => [styles.followupKpi, pressed && styles.pressed]}
+        >
+          <Text style={styles.kpiValue}>{loading ? "…" : openFollowups}</Text>
           <Text style={styles.kpiLabel}>Offene Follow-ups</Text>
-        </Card>
+        </Pressable>
       </View>
 
-      <Card>
-        <SectionTitle eyebrow="Mobile Fokus">Was jetzt wichtig ist</SectionTitle>
-        <Text style={mobileStyles.body}>
-          Öffne einen Kontakt, füge die aktuelle Nachricht ein und lasse FanMind drei passende
-          Antworten vorbereiten. Du prüfst und sendest final selbst.
-        </Text>
-        <PrimaryButton onPress={() => router.push("/(app)/contacts")}>Kontakte öffnen</PrimaryButton>
-      </Card>
+      <View style={styles.sectionHeader}>
+        <SectionTitle eyebrow="Inbox">Fans mit ungelesenen Nachrichten</SectionTitle>
+        <StatusPill tone="good">Nur eingehend</StatusPill>
+      </View>
+      {dashboardError ? <Text style={mobileStyles.error}>{dashboardError}</Text> : null}
+      {loading && !fans.length ? (
+        <LoadingState label="Neue Nachrichten werden geladen…" />
+      ) : fans.length ? (
+        <View style={styles.fanList}>
+          {fans.map((fan) => <UnreadFanRow key={fan.id} fan={fan} />)}
+        </View>
+      ) : (
+        <EmptyState
+          title="Keine neuen Nachrichten"
+          description="Hier erscheinen ausschließlich Fans mit noch nicht gesehenen eingehenden Nachrichten."
+        />
+      )}
 
-      <Card>
-        <SectionTitle eyebrow="Unabhängig">Eigene App, gemeinsamer Kern</SectionTitle>
-        <Text style={mobileStyles.muted}>
-          Diese App besitzt eigene Navigation, eigenes Design und eigene Releases. Sie teilt nur
-          das sichere FanMind-Backend und das RLS-geschützte Datenmodell mit der Web-Anwendung.
-        </Text>
-      </Card>
+      <Text style={mobileStyles.muted}>
+        Sobald du einen Fan öffnest, gelten dessen eingehende Nachrichten für den Workspace-Owner als gesehen.
+      </Text>
     </Screen>
   );
 }
@@ -106,6 +163,17 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   kpiGrid: { flexDirection: "row", gap: spacing.md },
   kpiCard: { flex: 1, minHeight: 125, justifyContent: "center" },
+  followupKpi: {
+    flex: 1,
+    minHeight: 125,
+    justifyContent: "center",
+    gap: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+  },
   kpiValue: {
     color: colors.cyan,
     fontSize: 36,
@@ -113,4 +181,39 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   kpiLabel: { color: colors.textMuted, fontSize: typography.small, fontWeight: "700" },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  fanList: { gap: spacing.md },
+  fanRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+  },
+  pressed: { opacity: 0.72 },
+  unreadDot: {
+    width: 11,
+    height: 11,
+    marginTop: 7,
+    borderRadius: 6,
+    backgroundColor: colors.cyan,
+  },
+  fanText: { flex: 1, gap: spacing.xs },
+  fanTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  fanName: { flex: 1, color: colors.text, fontSize: typography.body, fontWeight: "900" },
+  fanHandle: { color: colors.textMuted, fontSize: typography.small },
+  fanMeta: { color: colors.cyan, fontSize: typography.micro, fontWeight: "700" },
 });

@@ -89,15 +89,27 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MOB-002
 - Date: 2026-08-29
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: ACCEPTED
 - Risk: R3
 - Goal: Make the stored sample conversation visible for the demo account's contacts and deliver an updated signed Android internal build.
 - Starting state: the Staging demo workspace had 13 contacts and 37 RLS-protected `conversation_messages`; the installed Android preview could log in and show contact/profile/knowledge data, but the contact screen never queried or rendered message history.
 - Action: added `listContactMessages(workspaceId, contactId)` with explicit workspace/contact filters and a 100-row bound, newest-first read-only message bubbles, explicit refresh, message-specific empty/error handling, no-auto-send disclosure, documentation and regression coverage.
-- Result: local implementation and full relevant repository checks pass; PR #1019 is open and its initial exact head exposed only Project Memory bookkeeping/baseline failures, now reconciled in the same branch. A new signed build/device result is still required.
-- Evidence: FM-EV-024; PR #1019; local TypeScript/Expo/native export/truth/lint/1052-operation-test results; owner device screenshots; bounded Staging data observation.
-- Next step: exact-head green PR, merge, replacement Android internal build and owner device confirmation.
+- Result: PR #1019 passed final exact-head gates and merged as `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; protected run `33254230496` produced the exact-commit Android preview, and the owner then observed the visible history while identifying channel switching as a separate next change.
+- Evidence: FM-EV-024; PR #1019; merge `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; protected build run `33254230496`; owner Mobile observation; bounded Staging data observation.
+- Next step: FM-MOB-003; do not reopen or repeat FM-MOB-002.
 - Do not repeat: do not create duplicate demo messages, weaken RLS, expose service-role credentials, add messages to the offline cache or claim the old APK contains this UI fix.
+
+## FM-MOB-003
+- Date: 2026-08-29
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Complete the core phone demo loop with an unseen-message dashboard, per-fan channel switching and direct manual Follow-up creation.
+- Starting state: the merged Android preview shows the stored messages, but mixes all channels, the start screen is a generic KPI page rather than an unseen-fan inbox, and Follow-ups can be created only after an AI suggestion.
+- Action: derived per-fan channel tabs from stored messages, added an authenticated workspace-bound unseen-inbound fan query and Owner-only seen update, replaced the generic Start page with the unseen inbox, removed the rejected placeholder symbol from the shared wordmark, and added a validated Owner-only manual Follow-up form without schema, permission or demo-row changes.
+- Result: local functional, native, source-truth, lint, security and complete operations regressions pass; FM-EV-025 records the bounded implementation and read-only Staging countercheck. Exact PR/merge/build/device acceptance is still open.
+- Evidence: FM-EV-025; Mobile `npm run check`; Android/iOS Expo export; 48 focused tests; 1054/1054 operations tests; root truth/lint; read-only aggregate Staging observation.
+- Next step: exact remote scope reconciliation, terminal-green PR/CI, merge, one protected exact-merge Android preview and owner confirmation.
+- Do not repeat: no new unread schema, no duplicate demo data, no offline message cache, no automatic message send and no member Follow-up mutation.
 
 ## FM-AI-001
 - Date: through 2026-08-19

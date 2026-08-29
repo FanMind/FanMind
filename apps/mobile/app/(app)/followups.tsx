@@ -186,7 +186,7 @@ export default function FollowupsScreen() {
         ListEmptyComponent={
           <EmptyState
             title="Keine offenen Follow-ups"
-            description="Neue Follow-ups kannst du direkt aus einem KI-Vorschlag im Kontakt speichern."
+            description="Neue Follow-ups kannst du direkt im Fan-Detail oder aus einem KI-Vorschlag speichern."
           />
         }
       />

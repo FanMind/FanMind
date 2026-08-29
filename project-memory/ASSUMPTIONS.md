@@ -136,4 +136,16 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 - Recheck trigger: any future empty-history report after the replacement build is installed.
 - Action if false: keep the database unchanged; query by both workspace and contact through the authenticated RLS path and diagnose exact account/workspace/build binding before considering data creation or policy changes.
 
+## ASM-FM-012
+- Date: 2026-08-29
+- Updated: 2026-08-29
+- Related task: FM-MOB-003
+- Risk: R3
+- Assumption: The unseen-fan dashboard, per-fan channel switch and direct manual Follow-up require a new Supabase schema or broader browser permission.
+- Why it matters: unnecessary database or RLS changes would increase risk and could weaken the already accepted Workspace boundary.
+- Verification source/evidence: existing `conversation_messages.seen_at`, authenticated Workspace/contact message policies, Owner-only Mobile mutation rule and existing `followups` insert contract were inspected; bounded read-only Staging aggregation confirmed unseen inbound rows and Lena messages across three platforms. FM-EV-025 and the negative source tests bind every new read/update to the current Workspace and preserve Member read-only behavior.
+- Status: INVALIDATED
+- Recheck trigger: a same-build runtime RLS failure on the exact Owner Workspace, or a future schema/policy change affecting `conversation_messages`/`followups`.
+- Action if false: diagnose the exact query/policy mismatch before any migration; do not add service-role access, broaden grants or duplicate demo rows.
+
 Do not delete invalid assumptions; preserve them so the same mistaken premise is not reused later.

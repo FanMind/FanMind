@@ -9,11 +9,13 @@ import {
   type NormalizedContactDraft,
 } from "@/lib/contactDraftPolicy.mjs";
 import { isOfflineEligibleStatus } from "@/lib/offlineReadCachePolicy.mjs";
+import { normalizeManualFollowupDraft } from "@/lib/manualFollowupPolicy.mjs";
 import type {
   Contact,
   ContactListItem,
   ContactMemory,
   ConversationMessage,
+  DashboardUnreadFan,
   Followup,
   Workspace,
 } from "@/types";
@@ -25,7 +27,8 @@ const CONTACT_LIST_COLUMNS =
 const MEMORY_COLUMNS =
   "id,workspace_id,contact_id,type,content,importance,created_at";
 const CONVERSATION_MESSAGE_COLUMNS =
-  "id,workspace_id,conversation_id,contact_id,direction,message_type,source_platform,author_label,content,created_at";
+  "id,workspace_id,conversation_id,contact_id,direction,message_type,source_platform,author_label,content,created_at,seen_at";
+const UNSEEN_MESSAGE_COLUMNS = "contact_id,source_platform,created_at";
 const FOLLOWUP_COLUMNS =
   "id,workspace_id,contact_id,due_date,priority,reason,status,created_at";
 const MEMBER_SAFE_WORKSPACE_RPC =
@@ -421,6 +424,91 @@ export async function listContactMessages(
   return { messages: (result.data ?? []) as ConversationMessage[], error: null };
 }
 
+export async function listUnseenInboundFans(
+  workspaceId: string,
+): Promise<{ fans: DashboardUnreadFan[]; error: string | null }> {
+  const messagesResult = await supabase
+    .from("conversation_messages")
+    .select(UNSEEN_MESSAGE_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .eq("direction", "inbound")
+    .is("seen_at", null)
+    .order("created_at", { ascending: false, nullsFirst: false })
+    .limit(500);
+
+  if (messagesResult.error) {
+    return { fans: [], error: "Neue Nachrichten konnten nicht geladen werden." };
+  }
+
+  const latestByContact = new Map<
+    string,
+    { unreadCount: number; createdAt: string | null; sourcePlatform: string | null }
+  >();
+  for (const messageRow of messagesResult.data ?? []) {
+    const contactId = String(messageRow.contact_id ?? "").trim();
+    if (!contactId) continue;
+    const existing = latestByContact.get(contactId);
+    if (existing) {
+      existing.unreadCount += 1;
+      continue;
+    }
+    latestByContact.set(contactId, {
+      unreadCount: 1,
+      createdAt: messageRow.created_at ?? null,
+      sourcePlatform: messageRow.source_platform ?? null,
+    });
+  }
+
+  const contactIds = Array.from(latestByContact.keys());
+  if (!contactIds.length) return { fans: [], error: null };
+
+  const contactsResult = await supabase
+    .from("contacts")
+    .select(CONTACT_LIST_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .in("id", contactIds)
+    .limit(250);
+  if (contactsResult.error) {
+    return { fans: [], error: "Fans mit neuen Nachrichten konnten nicht geladen werden." };
+  }
+
+  const fans = (contactsResult.data ?? [])
+    .filter((contact) => String(contact.status ?? "").toLowerCase() !== "archived")
+    .flatMap((contact) => {
+      const unseen = latestByContact.get(contact.id);
+      if (!unseen) return [];
+      return [{
+        ...(contact as ContactListItem),
+        unread_count: unseen.unreadCount,
+        latest_message_at: unseen.createdAt,
+        latest_source_platform: unseen.sourcePlatform,
+      }];
+    })
+    .sort((left, right) =>
+      String(right.latest_message_at ?? "").localeCompare(
+        String(left.latest_message_at ?? ""),
+      ),
+    );
+
+  return { fans, error: null };
+}
+
+export async function markContactInboundMessagesSeen(input: {
+  workspaceId: string;
+  workspaceRole: Workspace["role"];
+  contactId: string;
+}): Promise<string | null> {
+  if (!isOwnerRole(input.workspaceRole)) return null;
+  const result = await supabase
+    .from("conversation_messages")
+    .update({ seen_at: new Date().toISOString() })
+    .eq("workspace_id", input.workspaceId)
+    .eq("contact_id", input.contactId)
+    .eq("direction", "inbound")
+    .is("seen_at", null);
+  return result.error ? "Neue Nachrichten konnten nicht als gelesen markiert werden." : null;
+}
+
 export async function createContactMemory(input: {
   workspaceId: string;
   workspaceRole: Workspace["role"];
@@ -466,14 +554,18 @@ export async function createFollowup(input: {
   priority?: "low" | "normal" | "high";
 }): Promise<string | null> {
   if (!isOwnerRole(input.workspaceRole)) return MEMBER_MUTATIONS_DISABLED_ERROR;
-  const reason = input.reason.trim().slice(0, 500);
-  if (!reason) return "Ein Grund für das Follow-up ist erforderlich.";
+  const normalized = normalizeManualFollowupDraft({
+    reason: input.reason,
+    dueDate: input.dueDate,
+    priority: input.priority,
+  });
+  if (!normalized.ok) return "Bitte prüfe Grund, Datum und Priorität des Follow-ups.";
   const result = await supabase.from("followups").insert({
     workspace_id: input.workspaceId,
     contact_id: input.contactId,
-    due_date: input.dueDate,
-    reason,
-    priority: input.priority ?? "normal",
+    due_date: normalized.value.due_date,
+    reason: normalized.value.reason,
+    priority: normalized.value.priority,
     status: "open",
   });
   return result.error ? "Follow-up konnte nicht gespeichert werden." : null;

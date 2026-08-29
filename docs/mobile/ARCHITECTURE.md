@@ -83,9 +83,13 @@ Mobile uses direct Supabase queries only for tables already protected by RLS:
 
 - the parameterless member-safe Workspace RPC / `workspace_members`; only an Owner lookup reads the base `workspaces` table;
 - `contacts`;
-- `conversation_messages` (read-only, höchstens 100 aktuelle Nachrichten je
-  Kontakt; zusätzlich nach `workspace_id` und `contact_id` gefiltert; neueste
-  zuerst und mit expliziter Aktualisierung);
+- `conversation_messages` (Inhalt read-only, höchstens 100 aktuelle Nachrichten
+  je Kontakt; zusätzlich nach `workspace_id` und `contact_id` gefiltert;
+  neueste zuerst, dynamischer Plattformfilter und explizite Aktualisierung).
+  Das Start-Dashboard liest ausschließlich `direction = inbound` und
+  `seen_at is null`; beim Öffnen eines Kontakts darf nur der Owner diese
+  Workspace-/Kontakt-gebundenen Zeilen über das vorhandene `seen_at`-Feld als
+  gesehen markieren;
 - `memories`;
 - `followups`.
 
@@ -99,6 +103,10 @@ Owner contact create and update additionally:
 - reject missing authorized update rows;
 - perform a minimal handle-plus-source duplicate check in the current workspace;
 - never use a service-role credential in Mobile.
+
+Owner Follow-up create uses the existing RLS-protected `followups` contract,
+validates reason, non-past calendar date and `low|normal|high` priority in the
+client policy, and always includes both current Workspace and contact IDs.
 
 Server-only functions remain server-only:
 

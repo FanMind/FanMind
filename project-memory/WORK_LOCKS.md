@@ -11,18 +11,30 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-MOB-003-FAN-INBOX-20260829
+- Task: FM-MOB-003
+- Status: ACTIVE
+- Holder: ChatGPT Mobile fan-inbox/channel/follow-up completion session 2026-08-29
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`
+- Acquired: 2026-08-29 Europe/Vienna
+- Risk: R3 Mobile read/seen state plus signed Android preview build
+- Scope: dynamic message-channel switch for every contact, unseen-inbound-only start dashboard, manual owner Follow-up creation in the contact detail, exact-head checks, merge and one replacement Android preview; no schema/provider/Production mutation.
+- Resume from: existing message-history UI on merged `main` `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; use existing `seen_at`, authenticated RLS and owner-only Follow-up contracts.
+- Safety: no automatic sending, service-role key, offline message cache, new demo rows, schema migration, Production deploy, provider activation, iOS submission or Store publication is authorized.
+
+## Released locks
+
 ## LOCK-FM-MOB-002-CONTACT-HISTORY-20260829
 - Task: FM-MOB-002
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Mobile demo conversation-history completion session 2026-08-29
 - Branch/PR: `fix/mobile-contact-message-history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile data display plus signed Android preview build
 - Scope: display existing RLS-protected contact messages read-only, pass exact-head checks, merge and produce one replacement signed Android internal build; no database/provider/Production mutation.
-- Resume from: complete Project Memory/drift reconciliation, update #1019, require terminal-green checks, merge, then bind the replacement Android build and device confirmation to the merged commit.
+- Released: 2026-08-29 after #1019 merged as `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`, protected build run `33254230496` finished and the owner confirmed the history-visible state by identifying the remaining per-channel navigation gap.
+- Resume from: do not revive this lock; channel/dashboard/manual-Follow-up scope belongs to FM-MOB-003.
 - Safety: no automatic message sending, service-role key, offline message cache, database schema/row write, Production deploy, iOS submission, Store publication or unrelated provider mutation is authorized.
-
-## Released locks
 
 ## LOCK-FM-META-001-TECHNICAL-RECONCILIATION-20260826
 - Task: FM-META-001
