@@ -1,6 +1,6 @@
 # FanMind Landing Roadmap Layout Fix — 2026-08-29
 
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: ACCEPTED
 - Risk: R1
 - Source: owner screenshot/request on 2026-08-29
 - Scope: presentation-only correction for the landing-page roadmap cards Phase 5–8.
@@ -23,12 +23,17 @@ At the owner-observed desktop width, Phase 5–8 contained longer titles, phase-
 
 No database, Supabase, provider, billing, signing, Mobile build, runtime activation, Production data or roadmap-scope mutation is part of this change. Phase 8 remains not started.
 
-## Success evidence
+## Verification and countercheck
 
-1. Final PR diff contains only this bounded layout implementation plus this project-memory record.
-2. Exact-head FanMind CI, Landing Language CI, Project Memory Guard/Quality/Status, CodeQL and Browser E2E are green.
-3. Countercheck confirms only Phase `05`–`08` receive the new content-fit classes and no roadmap copy/state changes are present.
+- Implementation head `8b883d507a029b55448dc0e988bd0f7ebc86aa31` passed all seven PR gates: Project Memory Guard, Project Memory Quality, Project Memory Status, FanMind Landing Language CI, FanMind CI, FanMind Browser E2E and FanMind CodeQL.
+- Final diff countercheck confirms the content-fit condition is exactly `["05", "06", "07", "08"]` and no roadmap copy, item state, phase state or phase order changed.
+- The new CSS constrains title/status/item intrinsic width and changes overflow behavior only for those four cards; it does not change the fixed marquee/card structure used by the already-correct phases.
+- The final memory-only closeout commit must pass the same exact-head gates before merge; a red final-head gate invalidates this acceptance.
 
 ## Falsification check
 
-This fix is not accepted if the final diff changes roadmap wording/state, applies the new fit behavior to phases outside 5–8, or any exact-head required CI/security/browser gate is red.
+This fix is not accepted if the final diff changes roadmap wording/state, applies the new fit behavior to phases outside 5–8, or any final exact-head required CI/security/browser gate is red.
+
+## Recovery
+
+Repository-only rollback is a revert of PR #1024. No external or data rollback is required because the change has no provider/database/runtime-state mutation.
