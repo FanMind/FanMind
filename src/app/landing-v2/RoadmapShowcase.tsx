@@ -2,6 +2,7 @@
 
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import styles from "./landing-v2.module.css";
+import fitStyles from "./roadmap-card-fit.module.css";
 
 type RoadmapPhase = {
   number: string;
@@ -110,33 +111,43 @@ export default function RoadmapShowcase({ phases, ariaLabel }: { phases: Roadmap
 
       <div className={styles.roadmapMarquee} aria-label={ariaLabel}>
         <div className={styles.roadmapGrid}>
-          {phases.map((phase) => (
-            <article
-              className={`${styles.roadmapCard} ${phase.availability === "done" ? "" : styles.cardWithComingSoon}`}
-              data-tone={phase.tone}
-              key={phase.phase}
-              id={`roadmap-phase-${phase.number}`}
-              tabIndex={-1}
-            >
-              <div className={styles.roadmapPhasePill}>{phase.phase}</div>
-              <div className={styles.roadmapIcon}>
-                <RoadmapLineIcon icon={phase.icon} />
-              </div>
-              <h3>{phase.title}</h3>
-              <div className={styles.roadmapStatus}>
-                <span>{phase.statusIcon}</span> {phase.status}
-              </div>
-              <ul>
-                {phase.items.map((item) => (
-                  <li data-state={item.state} key={item.label}>
-                    <span>{item.label}</span>
-                    {item.status ? <em>{item.status}</em> : null}
-                  </li>
-                ))}
-              </ul>
-              {phase.availability === "done" ? null : <ComingSoonMark size="medium" className={styles.comingSoonImage} />}
-            </article>
-          ))}
+          {phases.map((phase) => {
+            const contentFitPhase = ["05", "06", "07", "08"].includes(phase.number);
+
+            return (
+              <article
+                className={`${styles.roadmapCard} ${phase.availability === "done" ? "" : styles.cardWithComingSoon} ${contentFitPhase ? fitStyles.contentFitCard : ""}`}
+                data-tone={phase.tone}
+                key={phase.phase}
+                id={`roadmap-phase-${phase.number}`}
+                tabIndex={-1}
+              >
+                <div className={styles.roadmapPhasePill}>{phase.phase}</div>
+                <div className={styles.roadmapIcon}>
+                  <RoadmapLineIcon icon={phase.icon} />
+                </div>
+                <h3 className={contentFitPhase ? fitStyles.contentFitTitle : undefined}>{phase.title}</h3>
+                <div className={`${styles.roadmapStatus} ${contentFitPhase ? fitStyles.contentFitStatus : ""}`}>
+                  <span>{phase.statusIcon}</span> {phase.status}
+                </div>
+                <ul>
+                  {phase.items.map((item) => (
+                    <li
+                      className={contentFitPhase ? fitStyles.contentFitItem : undefined}
+                      data-state={item.state}
+                      key={item.label}
+                    >
+                      <span className={contentFitPhase ? fitStyles.contentFitItemLabel : undefined}>{item.label}</span>
+                      {item.status ? (
+                        <em className={contentFitPhase ? fitStyles.contentFitItemStatus : undefined}>{item.status}</em>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {phase.availability === "done" ? null : <ComingSoonMark size="medium" className={styles.comingSoonImage} />}
+              </article>
+            );
+          })}
         </div>
       </div>
     </>

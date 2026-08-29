@@ -1,0 +1,77 @@
+.contentFitCard {
+  min-width: 0;
+}
+
+.contentFitCard .contentFitTitle {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-inline: 4px;
+  font-size: 23px;
+  line-height: 1.06;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+  text-wrap: balance;
+}
+
+.contentFitCard .contentFitStatus {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 7px 12px;
+  flex-wrap: wrap;
+  font-size: 15px;
+  line-height: 1.14;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.contentFitCard .contentFitItem {
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 5px;
+}
+
+.contentFitCard .contentFitItemLabel {
+  min-width: 0;
+  flex: 1 1 150px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.contentFitCard .contentFitItemStatus {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  align-self: flex-start;
+  line-height: 1.12;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .contentFitCard .contentFitTitle {
+    font-size: 22px;
+  }
+
+  .contentFitCard .contentFitStatus {
+    font-size: 14px;
+  }
+
+  .contentFitCard .contentFitItemLabel {
+    flex-basis: 100%;
+  }
+
+  .contentFitCard .contentFitItemStatus {
+    margin-left: 25px;
+  }
+}
