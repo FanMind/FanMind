@@ -151,3 +151,14 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: the work-lock scope permitted both evidence types but did not explicitly bind the direct query behind the shared rollout-state decision, so the safe read-only evidence was collected in the wrong sequence.
 - Decision: preserve the result only as bounded read-only evidence with this process finding; do not rerun it. No further direct Meta Staging catalog access is allowed under the current lock. Any future Meta Staging database action must first consume a fresh shared rollout-state decision for the same exact commit and target and stop on partial, drifted, stale, mismatched or `block` state.
 - Do not repeat: never treat transaction-level read-only mode as a substitute for the required shared rollout-state gate, and never erase an ordering failure merely because a later workflow returns `PASS`.
+
+## FM-FAIL-016
+- Date: 2026-08-29
+- Status: RECONCILED_REPOSITORY_TRANSFER_FAILURE
+- Area: GitHub Git-data branch update for PR #1019
+- Attempt: collect every changed local file as one base64-encoded command output and build the follow-up Git tree from that oversized tool response.
+- Result: the response was truncated; intermediate commit `b5177d8abe4ec9c7eb33833a880ca884f023cf86` contained two bogus truncation-marker paths, a corrupted `apps/mobile/README.md` blob and only a subset of the intended files. It was not merged.
+- Cause: the command output exceeded the bounded tool-response budget, and its truncation warning was incorrectly parsed as file data.
+- Decision: create clean blobs in bounded file-size batches, make a fast-forward repair commit, explicitly delete both bogus paths and compare all 20 remote blob SHAs with local `git hash-object` values before trusting the branch.
+- Recovery evidence: repair commit `a135c952f157d60de3962f7e012a85e40deae588` restored every intended file, removed both bogus paths and produced `checked=20`, `mismatches=[]`, `junk=[]` against tree `ba48929a2d011cb20c404b4513c15027f0d99d9e`. PR #1019 remained open and unmerged throughout.
+- Do not repeat: never parse a truncated multi-file base64 response; bound batches below the response limit and require an exact remote-tree/local-blob countercheck before merge.

@@ -16,7 +16,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Updated: 2026-08-29
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
-- Scope: Expose the existing RLS-protected `conversation_messages` for each demo contact as a visible read-only chronological conversation history in Mobile, then produce a replacement signed Android internal build for owner verification.
+- Scope: Expose the existing RLS-protected `conversation_messages` for each demo contact as a visible read-only newest-first conversation history in Mobile, then produce a replacement signed Android internal build for owner verification.
 - Change request: FM-CR-002.
 - Branch/PR: `fix/mobile-contact-message-history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`.
 - Work lock: `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829` ACTIVE.

@@ -281,8 +281,6 @@ Implementation status and acceptance status are deliberately separate.
 - State-machine result: highest accepted progression remains `TARGET_COMPATIBLE`; side state `RECONCILIATION_REQUIRED`. Controller `45054c41...` and authorization `5385992305` are non-reusable; automatic retry forbidden.
 - Acceptance: COUNTERCHECKED_PRE_DISPATCH_FAIL_CLOSED
 
-Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
-
 ## FM-EV-024
 - Related: FM-MOB-002 / FM-MOB-001 / FM-CR-002
 - Date: 2026-08-29
@@ -296,3 +294,5 @@ Never store secrets, private credentials, plaintext sensitive payloads, or unsaf
 - Rollback/recovery: revert the bounded data-query/UI change; no provider/database rollback is required. The previous APK remains usable until replacement acceptance.
 - Falsification: a same-account, same-workspace, same-contact authenticated query returning messages while the exact replacement build renders none would invalidate the current presentation-only classification and require runtime binding/model-mapping reconciliation.
 - Acceptance: IMPLEMENTED_NOT_VERIFIED
+
+Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
