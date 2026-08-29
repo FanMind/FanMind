@@ -101,17 +101,22 @@ Aktiv im App-Kern:
 - PKCE-basierte Passwort-Recovery über `fanmind://reset-password` mit strikter Callback-Validierung;
 - verschlüsselte Sitzung über `expo-secure-store` und zentralen lokalen Purge beim Abmelden;
 - geschützte Expo-Router-Navigation;
-- Dashboard, Kontaktliste, Suche und Kontaktdetail;
+- Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
+  Nachrichten, Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
-  vollständig vom Offline-Cache ausgeschlossen;
+  vollständig vom Offline-Cache ausgeschlossen; der Verlauf lässt sich für
+  jeden Fan über `Alle` und seine tatsächlich vorhandenen Plattformen filtern;
 - Kontaktwissen;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand
   bleiben beim Menschen;
-- offene Follow-ups anzeigen und als Owner mit dem kanonischen Status `completed` abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten bleiben lesekompatibel;
+- Follow-ups als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag
+  anlegen, offene Follow-ups anzeigen und mit dem kanonischen Status `completed`
+  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten
+  bleiben lesekompatibel;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,
