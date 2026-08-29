@@ -14,21 +14,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
-export function BrandMark({ compact = false }: { compact?: boolean }) {
+export function BrandMark() {
   return (
     <View style={styles.brandRow} accessibilityLabel="FanMind">
-      <View style={styles.brandIcon}>
-        <View style={[styles.brandNode, styles.brandNodeTop]} />
-        <View style={[styles.brandNode, styles.brandNodeLeft]} />
-        <View style={[styles.brandNode, styles.brandNodeRight]} />
-        <View style={styles.brandLineVertical} />
-        <View style={styles.brandLineHorizontal} />
-      </View>
-      {!compact ? (
-        <Text style={styles.brandText}>
-          Fan<Text style={styles.brandMind}>Mind</Text>
-        </Text>
-      ) : null}
+      <Text style={styles.brandText}>
+        Fan<Text style={styles.brandMind}>Mind</Text>
+      </Text>
     </View>
   );
 }
@@ -272,35 +263,7 @@ const styles = StyleSheet.create({
     fontSize: typography.small,
     lineHeight: 19,
   },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  brandIcon: { width: 32, height: 32, position: "relative" },
-  brandNode: {
-    position: "absolute",
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.cyan,
-    zIndex: 2,
-  },
-  brandNodeTop: { top: 1, left: 12 },
-  brandNodeLeft: { bottom: 1, left: 2 },
-  brandNodeRight: { bottom: 1, right: 2 },
-  brandLineVertical: {
-    position: "absolute",
-    top: 8,
-    left: 15,
-    width: 2,
-    height: 16,
-    backgroundColor: colors.cyan,
-  },
-  brandLineHorizontal: {
-    position: "absolute",
-    bottom: 8,
-    left: 6,
-    width: 20,
-    height: 2,
-    backgroundColor: colors.cyan,
-  },
+  brandRow: { flexDirection: "row", alignItems: "center" },
   brandText: {
     color: colors.text,
     fontSize: 23,
