@@ -15,6 +15,13 @@ import {
   normalizeContactDraft,
 } from "../apps/mobile/src/lib/contactDraftPolicy.mjs";
 import {
+  ALL_MESSAGE_CHANNELS,
+  buildMessageChannelOptions,
+  filterMessagesByChannel,
+  messagePlatformLabel,
+} from "../apps/mobile/src/lib/contactMessageChannelPolicy.mjs";
+import { normalizeManualFollowupDraft } from "../apps/mobile/src/lib/manualFollowupPolicy.mjs";
+import {
   addSecureStorageRegistryKey,
   normalizeSecureStorageRegistry,
   removeSecureStorageRegistryKey,
@@ -176,6 +183,66 @@ test("Mobile contact drafts normalize fields and reject unsafe values", () => {
   );
 });
 
+test("Mobile message channels are derived per fan and preserve message order", () => {
+  const messages = [
+    { id: "1", source_platform: "Facebook" },
+    { id: "2", source_platform: "instagram" },
+    { id: "3", source_platform: "facebook" },
+    { id: "4", source_platform: "community_forum" },
+    { id: "5", source_platform: null },
+  ];
+
+  assert.deepEqual(buildMessageChannelOptions(messages), [
+    { key: ALL_MESSAGE_CHANNELS, label: "Alle", count: 5 },
+    { key: "facebook", label: "Facebook", count: 2 },
+    { key: "instagram", label: "Instagram", count: 1 },
+    { key: "community_forum", label: "Community forum", count: 1 },
+    { key: "other", label: "Sonstige", count: 1 },
+  ]);
+  assert.deepEqual(
+    filterMessagesByChannel(messages, "facebook").map((message) => message.id),
+    ["1", "3"],
+  );
+  assert.deepEqual(
+    filterMessagesByChannel(messages, ALL_MESSAGE_CHANNELS).map((message) => message.id),
+    ["1", "2", "3", "4", "5"],
+  );
+  assert.equal(messagePlatformLabel("whatsapp"), "WhatsApp");
+  assert.equal(messagePlatformLabel("future-channel"), "Future channel");
+});
+
+test("Manual Mobile Follow-ups require a current date, reason and valid priority", () => {
+  assert.deepEqual(
+    normalizeManualFollowupDraft(
+      { reason: " Event-Details senden ", dueDate: "2026-09-01", priority: "HIGH" },
+      "2026-08-29",
+    ),
+    {
+      ok: true,
+      value: {
+        reason: "Event-Details senden",
+        due_date: "2026-09-01",
+        priority: "high",
+      },
+      errors: [],
+    },
+  );
+  assert.equal(
+    normalizeManualFollowupDraft(
+      { reason: "", dueDate: "2026-08-28", priority: "urgent" },
+      "2026-08-29",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    normalizeManualFollowupDraft(
+      { reason: "Anrufen", dueDate: "2026-02-30", priority: "normal" },
+      "2026-08-29",
+    ).ok,
+    false,
+  );
+});
+
 test("SecureStore registry is bounded, deduplicated and corruption-safe", () => {
   assert.deepEqual(normalizeSecureStorageRegistry("not-json"), []);
   assert.deepEqual(
@@ -245,9 +312,10 @@ test("Mobile contact mutations stay workspace-bound and fail on duplicates", asy
 });
 
 test("Mobile contact detail loads a bounded RLS-protected message history", async () => {
-  const [data, detail] = await Promise.all([
+  const [data, detail, dashboard] = await Promise.all([
     read("apps/mobile/src/lib/data.ts"),
     read("apps/mobile/app/(app)/contacts/[id].tsx"),
+    read("apps/mobile/app/(app)/index.tsx"),
   ]);
 
   assert.match(data, /export async function listContactMessages/u);
@@ -262,12 +330,33 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(detail, /refreshMessages/u);
   assert.match(detail, /Aktualisieren/u);
   assert.match(detail, /Gesprächsverlauf/u);
-  assert.match(detail, /messages\.map/u);
+  assert.match(detail, /buildMessageChannelOptions\(messages\)/u);
+  assert.match(detail, /filterMessagesByChannel\(messages, activeMessageChannel\)/u);
+  assert.match(detail, /visibleMessages\.map/u);
+  assert.match(detail, /option\.label\} · \{option\.count/u);
   assert.match(detail, /FanMind sendet keine Nachricht automatisch/u);
+  assert.match(data, /export async function listUnseenInboundFans/u);
+  assert.match(
+    data,
+    /\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("direction", "inbound"\)[\s\S]*\.is\("seen_at", null\)[\s\S]*\.limit\(500\)/u,
+  );
+  assert.match(data, /export async function markContactInboundMessagesSeen/u);
+  assert.match(
+    data,
+    /workspaceRole[\s\S]*\.update\(\{ seen_at: new Date\(\)\.toISOString\(\) \}\)[\s\S]*\.eq\("workspace_id", input\.workspaceId\)[\s\S]*\.eq\("contact_id", input\.contactId\)[\s\S]*\.eq\("direction", "inbound"\)[\s\S]*\.is\("seen_at", null\)/u,
+  );
+  assert.match(dashboard, /listUnseenInboundFans\(workspace\.id\)/u);
+  assert.match(dashboard, /Fans mit ungelesenen Nachrichten/u);
+  assert.match(dashboard, /fans\.map/u);
+  assert.doesNotMatch(dashboard, /<BrandMark/u);
+  assert.doesNotMatch(dashboard, /Kontakte öffnen/u);
+  assert.match(detail, /Direkt beim Fan anlegen/u);
+  assert.match(detail, /normalizeManualFollowupDraft/u);
+  assert.match(detail, /Follow-up speichern/u);
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {
-  const [login, forgot, reset, list, detail, create, edit, settings] = await Promise.all([
+  const [login, forgot, reset, list, detail, create, edit, settings, ui] = await Promise.all([
     read("apps/mobile/app/(auth)/login.tsx"),
     read("apps/mobile/app/(auth)/forgot-password.tsx"),
     read("apps/mobile/app/(auth)/reset-password.tsx"),
@@ -276,6 +365,7 @@ test("Mobile routes expose reset, create and edit flows with no automatic sendin
     read("apps/mobile/app/(app)/contacts/new.tsx"),
     read("apps/mobile/app/(app)/contacts/[id]/edit.tsx"),
     read("apps/mobile/app/(app)/settings.tsx"),
+    read("apps/mobile/src/components/ui.tsx"),
   ]);
 
   assert.match(login, /Passwort vergessen/u);
@@ -288,4 +378,5 @@ test("Mobile routes expose reset, create and edit flows with no automatic sendin
   assert.match(edit, /updateContact/u);
   assert.match(settings, /entfernt alle registrierten[\s\S]*FanMind-Schlüssel aus SecureStore/u);
   assert.match(detail, /Keine automatische Sendefunktion/u);
+  assert.doesNotMatch(ui, /brandIcon|brandNode|brandLine/u);
 });
