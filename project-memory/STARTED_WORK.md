@@ -18,7 +18,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Risk: R3
 - Scope: Turn the Mobile start screen into a real unseen-inbound dashboard without the owner's rejected placeholder icon, add a dynamic per-contact message-channel switch for every fan, and allow owners to create a manual Follow-up directly in the contact detail; then deliver one exact-commit Android preview for owner verification.
 - Change request: FM-CR-003.
-- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / pending.
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`.
 - Work lock: `LOCK-FM-MOB-003-FAN-INBOX-20260829` ACTIVE.
 - Dependencies: existing RLS-protected `conversation_messages.seen_at` and `followups` contracts; FM-DEP-002 for the replacement signed Android preview; exact-head CI and owner device confirmation.
 - Assumptions: unseen means an inbound message with `seen_at is null`; opening a contact may mark its unseen inbound messages as seen only through the existing Workspace-bound authenticated mutation. Channel options must be derived from that fan's stored messages and support unknown future platform names.
