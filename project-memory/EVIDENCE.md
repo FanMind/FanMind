@@ -295,4 +295,19 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a same-account, same-workspace, same-contact authenticated query returning messages while the exact replacement build renders none would invalidate the current presentation-only classification and require runtime binding/model-mapping reconciliation.
 - Acceptance: IMPLEMENTED_NOT_VERIFIED
 
+## FM-EV-025
+- Related: FM-MOB-003 / FM-MOB-001 / FM-CR-003
+- Date: 2026-08-29
+- Target: local implementation intended for branch `feat/mobile-fan-inbox-channel-followup-20260829`; isolated Mobile/Staging demo Workspace; no Production target
+- Type: implementation diff + pure policy tests + authenticated data-boundary source checks + read-only Staging aggregate observation + native Mobile builds + complete repository regression
+- Reference: `apps/mobile/app/(app)/index.tsx`; `apps/mobile/app/(app)/contacts/[id].tsx`; `apps/mobile/src/components/ui.tsx`; `apps/mobile/src/lib/data.ts`; `apps/mobile/src/lib/contactMessageChannelPolicy.mjs`; `apps/mobile/src/lib/manualFollowupPolicy.mjs`; `tests/mobile-recovery-contact-crud.test.mjs`.
+- Result: Start now contains only fans backed by inbound `seen_at is null` rows and refreshes on focus; opening a fan marks only that Workspace/contact's unseen inbound rows seen for an Owner; every fan gets `Alle` plus tabs derived from its own stored platforms while message order remains newest-first; an Owner can create a validated reason/date/priority Follow-up directly on the fan; the rejected decorative node symbol is absent from both Start and the shared wordmark.
+- Database countercheck: a bounded read-only aggregate in isolated Staging returned unseen inbound counts for Lena and Sandra and three stored platforms for Lena. No message bodies, credentials or unrelated Workspace data were selected. Existing `seen_at`, RLS and `followups` contracts are sufficient; no migration or permission change is present.
+- Checks: Mobile `npm run check` passed with TypeScript, Expo Doctor 20/20, Store/boundary checks and Android/iOS native prebuild; Android and iOS Expo exports passed; focused Mobile/security tests passed 48/48; root truth/lint passed; full operations suite passed 1054/1054; Project Memory quality and evidence-freshness controls passed; diff whitespace check passed.
+- Negative evidence: no service-role key, message send, message-content offline cache, Member mutation, schema/RLS/provider/Production change, demo-row creation, iOS submission or Store publication. The fake icon style/component names are absent and the dashboard does not render `BrandMark`.
+- Rollback/recovery: revert the bounded Mobile application/docs/tests commit. Follow-ups remain normal user-created records. Already marked-seen rows use the existing product behavior and are not automatically reversible; no message content or schema is deleted.
+- Current limitation: local and read-only Staging evidence does not prove the changed UI in a signed exact-commit binary. Exact remote-main diff, PR/CI, merge, one protected Android preview and owner real-device confirmation remain required.
+- Falsification: an exact replacement build showing the decorative symbol, displaying a fan without an unseen inbound row, mixing messages after a channel tab selection, allowing a Member write, or failing to persist a valid Owner Follow-up invalidates acceptance and reopens FM-MOB-003.
+- Acceptance: IMPLEMENTED_NOT_VERIFIED
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
