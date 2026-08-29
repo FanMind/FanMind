@@ -157,7 +157,8 @@ export const roadmapPhases: RoadmapPhase[] = [
     availability: "later",
     items: [
       { label: "LinkedIn", state: "later", status: "Roadmap" },
-      { label: "iOS-TestFlight", state: "later", status: "Aus Phase 6 verschoben · Phase 8" },
+      // Aus Phase 6 verschoben · Phase 8
+      { label: "iOS-TestFlight", state: "later", status: "Phase 8" },
       { label: "YouTube, Threads & Reddit", state: "later", status: "Roadmap" },
       {
         label: "Telegram",
