@@ -87,6 +87,18 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Next step: owner/platform action `FM-MOB-OWNER-001` must configure the protected preview token/bindings and separately prove the Supabase redirect. Then run one new read-only preview check before any signing or build.
 - Do not repeat: Do not restart the mobile app or replace it with a WebView.
 
+## FM-MOB-002
+- Date: 2026-08-29
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Make the stored sample conversation visible for the demo account's contacts and deliver an updated signed Android internal build.
+- Starting state: the Staging demo workspace had 13 contacts and 37 RLS-protected `conversation_messages`; the installed Android preview could log in and show contact/profile/knowledge data, but the contact screen never queried or rendered message history.
+- Action: added `listContactMessages(workspaceId, contactId)` with explicit workspace/contact filters and a 100-row bound, newest-first read-only message bubbles, explicit refresh, message-specific empty/error handling, no-auto-send disclosure, documentation and regression coverage.
+- Result: local implementation and full relevant repository checks pass; PR #1019 is open and its initial exact head exposed only Project Memory bookkeeping/baseline failures, now reconciled in the same branch. A new signed build/device result is still required.
+- Evidence: FM-EV-024; PR #1019; local TypeScript/Expo/native export/truth/lint/1052-operation-test results; owner device screenshots; bounded Staging data observation.
+- Next step: exact-head green PR, merge, replacement Android internal build and owner device confirmation.
+- Do not repeat: do not create duplicate demo messages, weaken RLS, expose service-role credentials, add messages to the offline cache or claim the old APK contains this UI fix.
+
 ## FM-AI-001
 - Date: through 2026-08-19
 - Updated: 2026-08-26

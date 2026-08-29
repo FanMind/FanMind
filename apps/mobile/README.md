@@ -31,7 +31,8 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten; Teammitglieder sehen CRM-Daten nur lesend;
 - Kontaktdetail mit Profil, Kontaktwissen und einem sichtbaren, read-only
   Gesprächsverlauf aus bis zu 100 aktuellen, per Workspace und Kontakt
-  gefilterten Nachrichten;
+  gefilterten Nachrichten; neueste Nachrichten erscheinen zuerst und der
+  Verlauf lässt sich sichtbar aktualisieren;
 - KI-Antwortvorschläge über Bearer-authentifizierte FanMind-API;
 - gespeicherter Gesprächsverlauf ausschließlich serverseitig aus dem
   autorisierten Workspace; die App sendet keinen frei eingefügten
@@ -288,34 +289,112 @@ Der Recovery-Redirect muss zusätzlich einmalig in der Supabase-Auth-Allowlist d
 - Website-Deployments veröffentlichen keine Mobile-App.
 - Mobile-App-Builds deployen keine Website.
 - Mobile-Änderungen werden unter `apps/mobile/**` geprüft.
-- Backend-Vertragsänderungen müssen Web und Mobile separat abnehmen.
-- Neue Website-Komponenten werden nicht automatisch in Mobile übernommen.
+- Backend-Vertragsänderungen müssen Web und Mobile separat=�λ����k�w��nt-gated parameterless PageView-only Pixel Production path; advanced Facebook/Instagram OAuth/token/content/conversation foundation; 95/95 focused local tests; direct transaction-level read-only Staging catalog countercheck; exact-main protected read-only runs `33007156552`, `33007311870` and `33007481167` all passed with Apply not requested, runtime activation disabled where applicable and postflight rollback markers. Canonical readers now record that continuation and queue schemas are present in isolated Staging, and `EV-META-STAGING-FOUNDATION-20260826` expires the mutable observation. FM-FAIL-015 preserves the read-before-rollout sequencing deviation.
+- Still open: external Events Manager positive/negative browser reception and provider-side no-PII/no-unexpected-conversion proof; App Review/permissions and real account/webhook/conversation E2E; final relevant security/legal acceptance.
+- Evidence so far: FM-EV-007, FM-EV-023, `META_TECHNICAL_READONLY_RECONCILIATION_2026-08-26.md`, #714, Source of Truth and the three exact-main runs/jobs.
+- Exact next step: external Events Manager/App Review/provider/legal work remains owner-controlled under `FM-META-OWNER-001`; keep conversion events, Advanced Matching and CAPI disabled. Do not repeat the evidence runs merely for closeout. After Staging freshness expiry/invalidation or before another Meta database action, acquire a new lock and revalidate shared rollout state first.
+- Owner action needed: external Meta account/access and legal approval where required.
 
-## Nächste Mobile-Schritte
+## FM-SOC3-001
+- Started: foundation work before 2026-08-19
+- Updated: 2026-08-19
+- Status: PARTIAL
+- Risk: R3
+- Scope: Phase 3 real Facebook, Instagram and WhatsApp connectors.
+- Branch/PR: existing Meta/WhatsApp foundations on main.
+- Work lock: acquire per connector before external mutation.
+- Dependencies: non-Social finishline sufficiently closed; provider credentials/permissions; legal boundaries.
+- Assumptions: existing foundation is not a live accepted connector.
+- Completed so far: Facebook/Instagram foundation advanced; dormant WhatsApp inbound foundation merged.
+- Still open: final real E2E for all three, including auth, tenant isolation, idempotency, token/revocation/reconnect and no-auto-send evidence.
+- Evidence so far: Source of Truth, #874 Gate 6, Meta/WhatsApp commits.
+- Exact next step: run Social only after Gates 2-5 are sufficiently closed; reuse existing Meta foundation.
+- Owner action needed: provider credentials/App Review where externally required.
 
-1. Supabase-Redirect `fanmind://reset-password` extern freigeben und Recovery auf einem realen Gerät testen.
-2. EAS-Projekt, Expo-Token und geschützte Development-/Preview-/Production-
-   Umgebungen einrichten und den Read-only-Ressourcencheck je Umgebung
-   ausführen.
-3. Signing Credentials und interne Preview-Builds einrichten.
-4. App-Icon und Splashscreen in signierten Android-/iOS-Builds auf realen
-   Geräten visuell abnehmen.
-5. den getrennten read-only Push-Ressourcencheck, Staging-Apply und die
-   rollback-only Acceptance durchführen; erst danach Migration/Secret-
-   Konfiguration in einem signierten Development-/Preview-Build real testen;
-   den separat zu genehmigenden Delivery-Ledger entwerfen, migrieren und
-   rollback-only abnehmen; danach genau einen synthetischen Send-/Receipt-Test
-   ausführen.
-6. Android Internal Testing und iOS TestFlight durchführen.
-7. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
-   Screenshot-Matrix nach realen Gerätetests sowie externer
-   Datenschutz-/Rechtsprüfung final abnehmen.
+## FM-SOC7-001
+- Started: feasibility assessment before 2026-08-19
+- Updated: 2026-08-19
+- Status: PARTIAL
+- Risk: R3
+- Scope: Phase 7 TikTok, X/Twitter, Discord and conditional OnlyFans.
+- Branch/PR: no accepted real connector set yet.
+- Work lock: acquire per platform before implementation.
+- Dependencies: Phase 3/non-Social finishline; official platform scope; X cost approval; OnlyFans official/contractual feasibility.
+- Assumptions: Login/content-posting capability is not equivalent to inbox/DM/comment capability.
+- Completed so far: platform feasibility notes in #874.
+- Still open: official scope revalidation and real connector/E2E work.
+- Evidence so far: #874 platform-feasibility comment.
+- Exact next step: after prior gates, verify current official API capability before coding each connector.
+- Owner action needed: yes for paid X/API spend or external platform onboarding where required.
 
-Der lokale Befehl `npm run store:check` prüft davor ohne Portalzugriff die
-Zeichenlimits, App-IDs, Wortmarke, Icons, Screenshot-Matrix sowie die exakt
-gepinnte EAS- und sichere Internal-/Draft-Submit-Konfiguration.
+## FM-SALES-001
+- Started: sales materials prepared before 2026-08-19
+- Updated: 2026-08-19
+- Status: BLOCKED
+- Risk: R2
+- Scope: final technical sales handoff to Gerhard.
+- Branch/PR: sales docs already exist; no new sales claim until finishline accepted.
+- Work lock: none required until closeout.
+- Dependencies: FM-SOC3-001, FM-SOC7-001 and final exact-release demo/production truth.
+- Assumptions: Phase 4 completion or existing sales docs do not equal sales handoff.
+- Completed so far: sales one-pager/demo script/objection material prepared and canonical truth aligned to Phase-7 finishline.
+- Still open: required social acceptance, final 5-minute Production demo, final reader/material sync, formal technical handoff.
+- Evidence so far: Source of Truth, #874, commit `74c3a6aa357215c52d3a4d9b01ba8513bba1b57f`.
+- Exact next step: remain blocked until social finishline; do not prematurely mark sellable technical handoff.
+- Owner action needed: final operator/sales acceptance at handoff.
 
-Die Produkt- und Release-Checkliste für diese Schritte steht in
-`docs/mobile/BETA_RELEASE.md`; die vorbereiteten Store-Metadaten stehen in
-`docs/mobile/STORE_LISTING.md`, die portalnahe Datenschutzvorlage in
-`docs/mobile/STORE_PRIVACY_DECLARATIONS.md`.
+## FM-LEGAL-001
+- Started: before 2026-08-19
+- Updated: 2026-08-19
+- Status: BLOCKED
+- Risk: R3
+- Scope: final external law/tax/AVV/provider evidence.
+- Branch/PR: technical legal evidence framework on main.
+- Work lock: none for collecting evidence; protected review for public/legal mutations.
+- Dependencies: actual advisor/register/provider documents.
+- Assumptions: technical truth cannot substitute legal/tax approval.
+- Completed so far: confirmed operator/business facts and technical reader/evidence framework.
+- Still open: tax/register/UID, legal review, final AVV/subprocessor/region/transfer/retention evidence and acceptance.
+- Evidence so far: issue #564.
+- Exact next step: incorporate only confirmed external evidence when received.
+- Owner action needed: yes/external advisors.
+
+## FM-SEC-001
+- Started: 2026-08-20
+- Updated: 2026-08-26
+- Status: RECONCILIATION_REQUIRED
+- Risk: R3
+- Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
+- Branch/PR: read-only verify evidence PR #1008 final exact head `ed64255f3786eea257011778a40492d6c7c9447e`, squash merge `4efb4eeef07d850fd0fd9117244187cf94bfed41`; refresh PR #1006 merge `78333aae9d075a67a2d550a266d24cb8b9f443a4`; prior lock closeout #1007 merge `5cb9c193e262f8939b5fc0c700fce154dde616e6`; issue #982 comments `5428919200`/`5428996454`/`5429302086`.
+- Work lock: `LOCK-FM-SEC-001-PRODUCTION-VERIFY-20260826` RELEASED after exact-head acceptance and merge. Acquire a separate exact authorization and new lock before any Production DB/Auth change.
+- Dependencies: FM-DEP-010; exact deployed Production commit; controlled trigger-hardening checksum/runner; current Production/Staging Supabase projects; provider/Auth access for leaked-password decision.
+- Assumptions: Production trigger warnings indicate pre-apply/not-accepted state; Staging authenticated workspace RPC may be intentional but its exception status must be explicitly reviewed.
+- Completed so far: provider advisors and direct Production/Staging catalogs reconfirmed no drift; deploy run `32996396550` job `98266724400` proved Production at exact `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`. Exactly one protected `verify` then ran as `32997946812` job `98271985321`: preflight audit passed, the installed read-only database verifier returned fixed `hardening_not_ready`, and the always-run postflight audit passed on the same release. Fresh Production advisors remained unchanged. Focused Staging provisioning tests passed 24/24 and classify the RPC as constrained intentional exposure pending explicit exception acceptance.
+- Still open: separately authorized protected Production Apply and post-advisor proof; explicit Staging RPC exception acceptance; separately authorized leaked-password protection changes on both targets.
+- Evidence so far: FM-EV-014, FM-EV-019 and FM-EV-020; run `32997946812`/job `98271985321`; live Supabase advisors/catalog ACLs; controlled SQL/runbook; 24/24 focused Staging tests.
+- Exact next step: keep `FM-SEC-OWNER-001`/`002` deferred until explicit owner resume and continue the generated parallel-safe Mobile read-only action. Do not rerun the verify.
+- Owner action needed: yes for `FM-SEC-OWNER-001` protected Apply and `FM-SEC-OWNER-002` Auth-setting/exception decisions; neither is standing-authorized.
+
+## Closed work
+
+## FM-MEM-005
+- Started: 2026-08-19 08:40 Europe/Vienna
+- Closed: 2026-08-19
+- Status: ACCEPTED
+- Risk: R3
+- Scope: Project Memory V2-V6, exhaustive FanMind finishline audit and machine-enforced finishline controls.
+- Branch/PR: `project-memory-v4-started-work` / PR #975
+- Result: exact head `2a62dc8337673be0b33acfd4338d0f452224e779` passed Project Memory Guard/Quality V6/Status, FanMind CI, Supply Chain, Landing, CodeQL and Browser E2E; merged as `b4bef882a55e8c0dd1dd33d0ad1c1664c3078d0d`.
+- Evidence: PR #975, merge commit and exact-head workflow runs.
+- Follow-up: maintain V6; continue `FM-RST-001`.
+
+## FM-MEM-008
+- Started: 2026-08-19
+- Closed: 2026-08-20
+- Status: ACCEPTED
+- Risk: R3
+- Scope: Project Memory V8 cross-chat reconciliation, impact matrix, owner-action inbox, automatic handoff and V8 quality enforcement.
+- Branch/PR: `project-memory-v8-crosschat-impact` / #980.
+- Result: after correcting missing V5 bookkeeping and stale generated status, final exact head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard, Quality, Status, FanMind CI, Supply Chain, Landing, CodeQL and Browser E2E, then squash-merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
+- Evidence: exact-head GitHub workflow runs and merge commit; independent Browser E2E run #915.
+- Follow-up: maintain V8; any stale/contradictory handoff must downgrade to revalidation rather than being trusted.

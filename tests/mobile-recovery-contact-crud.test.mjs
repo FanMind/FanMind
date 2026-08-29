@@ -255,8 +255,12 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
     data,
     /\.from\("conversation_messages"\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(100\)/u,
   );
-  assert.match(data, /recentMessages\.reverse\(\)/u);
+  assert.doesNotMatch(data, /recentMessages\.reverse\(\)/u);
   assert.match(detail, /listContactMessages\(workspace\.id, contactId\)/u);
+  assert.match(detail, /setMessageError\(messagesResult\.error\)/u);
+  assert.match(detail, /messageError[\s\S]*mobileStyles\.error/u);
+  assert.match(detail, /refreshMessages/u);
+  assert.match(detail, /Aktualisieren/u);
   assert.match(detail, /Gesprächsverlauf/u);
   assert.match(detail, /messages\.map/u);
   assert.match(detail, /FanMind sendet keine Nachricht automatisch/u);
