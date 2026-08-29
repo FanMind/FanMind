@@ -25,7 +25,9 @@ jobs:
 
       - name: Refresh Expo SDK 57 package contract
         working-directory: apps/mobile
-        run: npx expo install --fix
+        run: |
+          npm ci --no-audit --no-fund
+          npx expo install --fix
 
       - name: Upload refreshed dependency contract
         uses: actions/upload-artifact@v4
