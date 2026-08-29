@@ -206,4 +206,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: FM-EV-025; FM-CR-003; owner screenshot dated 2026-08-29; source/test proof of absence.
 - Falsification question: What observation would prove our conclusion wrong? A current owner-approved brand asset specifying that exact symbol, or an exact replacement build still rendering it, would reopen the visual correction.
 
+## CTR-FM-015
+- Date: 2026-08-29
+- Updated: 2026-08-29
+- Related task/change: FM-MOB-001 / FM-MOB-003
+- Risk: R3
+- Source A: the older Mobile external/dependency/deferred registers.
+- Claim A: the protected `mobile-preview` Expo token and EAS/Supabase/API bindings are blank, so no retry or signed Preview build is authorized.
+- Source B: current protected GitHub/EAS evidence.
+- Claim B: the exact EAS project and Preview environment are now verified; protected run `33260695232`, job `99122008690`, successfully completed one exact-merge signed Android internal artifact with cleanup.
+- Stronger/current evidence: the later exact-commit protected workflow and verified EAS artifact supersede the historical fail-closed blocker without erasing it.
+- Status: RESOLVED
+- Resolution/action: mark the Preview resource configuration accepted and the old owner-configuration action resolved. Keep Android device, Recovery redirect, iOS/TestFlight, push and Store acceptance open; do not infer them from one successful Android build.
+- Evidence: FM-EV-025; run `33260695232`; job `99122008690`; merge `93496a4afac9b3b315c9985afbbce02b8524fc44`.
+- Falsification question: What observation would prove our conclusion wrong? A current protected read-only resource check showing project/environment/target drift, or an artifact not bound to the recorded commit/profile/platform, would invalidate the accepted Preview-resource state.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.
