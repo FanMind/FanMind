@@ -191,4 +191,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: FM-EV-024; PR #1019; owner screenshots; local Mobile tests and exports.
 - Falsification question: What observation would prove our conclusion wrong? If the replacement exact-commit build still shows an empty history while an authenticated query for that same workspace/contact returns rows, the query/model mapping or runtime project binding must be reopened before any database mutation.
 
+## CTR-FM-014
+- Date: 2026-08-29
+- Updated: 2026-08-29
+- Related task/change: FM-MOB-003 / FM-CR-003
+- Risk: R3
+- Source A: the installed Mobile Start page and shared `BrandMark` component.
+- Claim A: a decorative node symbol represents FanMind and the Start page should primarily explain the app and show generic contact KPIs.
+- Source B: the owner's explicit screenshot correction and workflow request.
+- Claim B: that symbol is not the FanMind logo and must be absent; Start is the operational inbox and must list only fans with unseen inbound messages.
+- Stronger/current evidence: the owner's direct product decision plus the established Web `seen_at` semantics.
+- Status: RESOLVED
+- Resolution/action: remove the decorative symbol globally without inventing a replacement asset, keep the FanMind text wordmark where a brand label is still needed, and make the authenticated Start page an unseen-inbound fan queue. Do not restore the symbol from old screenshots or generic mockup copy.
+- Evidence: FM-EV-025; FM-CR-003; owner screenshot dated 2026-08-29; source/test proof of absence.
+- Falsification question: What observation would prove our conclusion wrong? A current owner-approved brand asset specifying that exact symbol, or an exact replacement build still rendering it, would reopen the visual correction.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.
