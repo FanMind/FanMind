@@ -101,14 +101,14 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MOB-003
 - Date: 2026-08-29
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: VERIFIED_NOT_ACCEPTED
 - Risk: R3
 - Goal: Complete the core phone demo loop with an unseen-message dashboard, per-fan channel switching and direct manual Follow-up creation.
 - Starting state: the merged Android preview shows the stored messages, but mixes all channels, the start screen is a generic KPI page rather than an unseen-fan inbox, and Follow-ups can be created only after an AI suggestion.
 - Action: derived per-fan channel tabs from stored messages, added an authenticated workspace-bound unseen-inbound fan query and Owner-only seen update, replaced the generic Start page with the unseen inbox, removed the rejected placeholder symbol from the shared wordmark, and added a validated Owner-only manual Follow-up form without schema, permission or demo-row changes.
-- Result: local functional, native, source-truth, lint, security and complete operations regressions pass; FM-EV-025 records the bounded implementation and read-only Staging countercheck. Exact PR/merge/build/device acceptance is still open.
-- Evidence: FM-EV-025; Mobile `npm run check`; Android/iOS Expo export; 48 focused tests; 1054/1054 operations tests; root truth/lint; read-only aggregate Staging observation.
-- Next step: exact remote scope reconciliation, terminal-green PR/CI, merge, one protected exact-merge Android preview and owner confirmation.
+- Result: PR #1021 passed all eight exact-head gates and merged as `93496a4afac9b3b315c9985afbbce02b8524fc44`; protected run `33260695232`, job `99122008690`, completed one verified `preview` Android internal build with Submit/Update disabled and cleanup successful. Repository and signed-artifact verification are complete; real-device owner acceptance is not yet complete.
+- Evidence: FM-EV-025; PR #1021 final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`; merge `93496a4afac9b3b315c9985afbbce02b8524fc44`; run `33260695232`; job `99122008690`; local/native/read-only Staging evidence.
+- Next step: install the existing exact-merge Android preview and verify the four requested Mobile behaviors; do not rebuild merely for device confirmation.
 - Do not repeat: no new unread schema, no duplicate demo data, no offline message cache, no automatic message send and no member Follow-up mutation.
 
 ## FM-AI-001
