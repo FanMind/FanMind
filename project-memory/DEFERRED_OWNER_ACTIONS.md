@@ -63,11 +63,11 @@ Updated: 2026-08-26 Europe/Vienna
 
 ## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
 - Related task: `FM-MOB-001`.
-- Status: DEFERRED_BY_OWNER.
-- Proven blocker: exact read-only run `33000433320`, job `98280538304`, on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the `mobile-preview` `EXPO_TOKEN` and all expected EAS-owner/project/Supabase/API binding variables blank, then failed closed with `eas_project_lookup_failed` before public-environment verification.
-- Deferred action: establish or confirm the exact existing Expo/EAS FanMind project/account; populate only the protected `mobile-preview` GitHub Environment secret/variables defined by the runbook; separately prove the Supabase Auth redirect `fanmind://reset-password`. Never paste credential values into issues, Project Memory or chat.
-- Resume rule: after owner/platform configuration, acquire a new lock and run exactly one fresh read-only `preview` resource check. Do not reuse or rerun `33000433320`.
-- Safety: no EAS project initialization, build, signing, submit, update, Store action, Supabase/Auth/DB mutation or Production-target crossover is authorized by this deferred item.
+- Status: RESOLVED.
+- Prior blocker: exact read-only run `33000433320`, job `98280538304`, failed closed when the protected Preview binding was still blank.
+- Resolution evidence: protected exact-merge run `33260695232`, job `99122008690`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build with artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
+- Remaining owner action: real-device Android acceptance and the separate Supabase Auth redirect/recovery proof remain open under their existing external controls; iOS/Store/push are separate. Never expose credential or artifact values in Project Memory.
+- Safety: successful Preview configuration does not authorize EAS project reinitialization, another automatic build, Submit, Update, Store action, Supabase/Auth/DB mutation or Production-target crossover.
 
 ## FM-AI-OWNER-001 — AI product, quality and financial decision pack
 - Related task: `FM-AI-001`.
