@@ -162,3 +162,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Decision: create clean blobs in bounded file-size batches, make a fast-forward repair commit, explicitly delete both bogus paths and compare all 20 remote blob SHAs with local `git hash-object` values before trusting the branch.
 - Recovery evidence: repair commit `a135c952f157d60de3962f7e012a85e40deae588` restored every intended file, removed both bogus paths and produced `checked=20`, `mismatches=[]`, `junk=[]` against tree `ba48929a2d011cb20c404b4513c15027f0d99d9e`. PR #1019 remained open and unmerged throughout.
 - Do not repeat: never parse a truncated multi-file base64 response; bound batches below the response limit and require an exact remote-tree/local-blob countercheck before merge.
+
+## FM-FAIL-017
+- Date: 2026-08-29
+- Status: RECONCILED_TRANSIENT_DEPENDENCY_DRIFT
+- Area: PR #1019 Mobile CI / Expo SDK 57 package contract
+- Attempt: trust the previously green local Expo Doctor result and the older committed SDK 57 patch lock as sufficient for the later exact-head GitHub run.
+- Result: Mobile CI run `33252615878`, job `99100802515`, passed TypeScript, Store, Android/iOS export, native prebuild and boundary checks but failed Expo Doctor because Expo had published a newer compatible SDK 57 patch matrix after the local check. No application, provider or database mutation occurred.
+- Cause: the Expo package compatibility matrix is mutable within SDK 57; the older lock installed `expo@57.0.13` and related earlier patches while the current authoritative Doctor expected `expo@57.0.18` and the corresponding patch set.
+- Decision: use one temporary PR-only, contents-read GitHub workflow to install the existing lock, run `npx expo install --fix`, and export only `apps/mobile/package.json` plus `apps/mobile/package-lock.json`. The first temporary run failed before mutation because dependencies were not installed; the corrected run `33252966832` succeeded. Consume its artifact, remove the temporary workflow from the final tree, then require a fresh complete exact-head Mobile CI pass.
+- Do not repeat: do not suppress Expo Doctor, hand-edit integrity hashes, or retry the unchanged lock. Do not merge the temporary generation workflow.
