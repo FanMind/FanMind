@@ -14,11 +14,11 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 
 ## EXT-MOBILE-EAS
 - Related: FM-MOB-001
-- Status: BLOCKED
+- Status: ACCEPTED
 - Risk: R3
 - External system: Expo/EAS
 - Acceptance: exact owner/project/environments validated, token access works, no Production target drift.
-- Current evidence: exact `preview` run `33000433320`, job `98280538304`, on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the protected token and expected bindings blank and failed closed before public-environment verification. Owner/platform action `FM-MOB-OWNER-001` is required; no retry is authorized until configured.
+- Current evidence: protected `preview` run `33260695232`, job `99122008690`, on exact merge `93496a4afac9b3b315c9985afbbce02b8524fc44` verified the existing EAS project binding and public Preview environment, authorized exactly one Android internal build, verified the HTTPS artifact, stored the redacted receipt and cleaned temporary state. Submit/Update/Production remained disabled. No secret or private artifact URL is retained here.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-ANDROID
@@ -27,6 +27,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Android signed internal distribution / real device
 - Acceptance: signed exact-commit build and private device acceptance per mobile runbook.
+- Current evidence: exact signed `preview` Android artifact for merge `93496a4afac9b3b315c9985afbbce02b8524fc44` is verified by run `33260695232` / job `99122008690`; owner device installation and the four FM-MOB-003 visual/runtime checks remain open.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-IOS

@@ -298,7 +298,7 @@ Implementation status and acceptance status are deliberately separate.
 ## FM-EV-025
 - Related: FM-MOB-003 / FM-MOB-001 / FM-CR-003
 - Date: 2026-08-29
-- Target: PR #1021 on branch `feat/mobile-fan-inbox-channel-followup-20260829`, pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`; isolated Mobile/Staging demo Workspace; no Production target
+- Target: PR #1021 final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`, merge `93496a4afac9b3b315c9985afbbce02b8524fc44`, protected Android run `33260695232` / job `99122008690`; isolated Mobile/Staging demo Workspace; no Production target
 - Type: implementation diff + pure policy tests + authenticated data-boundary source checks + read-only Staging aggregate observation + native Mobile builds + complete repository regression
 - Reference: `apps/mobile/app/(app)/index.tsx`; `apps/mobile/app/(app)/contacts/[id].tsx`; `apps/mobile/src/components/ui.tsx`; `apps/mobile/src/lib/data.ts`; `apps/mobile/src/lib/contactMessageChannelPolicy.mjs`; `apps/mobile/src/lib/manualFollowupPolicy.mjs`; `tests/mobile-recovery-contact-crud.test.mjs`.
 - Result: Start now contains only fans backed by inbound `seen_at is null` rows and refreshes on focus; opening a fan marks only that Workspace/contact's unseen inbound rows seen for an Owner; every fan gets `Alle` plus tabs derived from its own stored platforms while message order remains newest-first; an Owner can create a validated reason/date/priority Follow-up directly on the fan; the rejected decorative node symbol is absent from both Start and the shared wordmark.
@@ -306,8 +306,9 @@ Implementation status and acceptance status are deliberately separate.
 - Checks: Mobile `npm run check` passed with TypeScript, Expo Doctor 20/20, Store/boundary checks and Android/iOS native prebuild; Android and iOS Expo exports passed; focused Mobile/security tests passed 48/48; root truth/lint passed; full operations suite passed 1054/1054; Project Memory quality, evidence-freshness and reconciled drift controls passed; diff whitespace check passed. GitHub comparison from current `main` reported exactly 27 intended files, and an independent fetch/hash countercheck matched all 27 remote blobs to the locally tested bytes.
 - Negative evidence: no service-role key, message send, message-content offline cache, Member mutation, schema/RLS/provider/Production change, demo-row creation, iOS submission or Store publication. The fake icon style/component names are absent and the dashboard does not render `BrandMark`.
 - Rollback/recovery: revert the bounded Mobile application/docs/tests commit. Follow-ups remain normal user-created records. Already marked-seen rows use the existing product behavior and are not automatically reversible; no message content or schema is deleted.
-- Current limitation: local and read-only Staging evidence does not prove the changed UI in a signed exact-commit binary. Exact remote-main diff, PR/CI, merge, one protected Android preview and owner real-device confirmation remain required.
+- Signed-build countercheck: all eight exact-head PR workflows passed before merge. The protected workflow completed one `preview` Android internal build on the exact merge, verified the artifact contract, stored only the redacted receipt and purged temporary state. Submit, Update, iOS, Store and Production actions remained disabled/not attempted.
+- Current limitation: a signed exact-commit binary now exists, but the owner has not yet completed the real-device visual/runtime confirmation. Repository/build evidence alone cannot self-accept the device experience.
 - Falsification: an exact replacement build showing the decorative symbol, displaying a fan without an unseen inbound row, mixing messages after a channel tab selection, allowing a Member write, or failing to persist a valid Owner Follow-up invalidates acceptance and reopens FM-MOB-003.
-- Acceptance: IMPLEMENTED_NOT_VERIFIED
+- Acceptance: VERIFIED_NOT_ACCEPTED
 
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

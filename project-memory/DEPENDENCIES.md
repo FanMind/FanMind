@@ -16,9 +16,9 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Requires: exact Supabase redirect, EAS project/environments/token, existing or approved signing credentials, signed Android/iOS builds, Apple Developer/App Store Connect for iOS, real devices and separate Push/Store evidence.
 - Type: external platform + technical acceptance
 - Status: ACTIVE
-- Updated: 2026-08-26
-- Current evidence: exact read-only `preview` run `33000433320` failed closed because `mobile-preview` still has no Expo token or expected EAS/Supabase/API bindings; public-environment verification never ran.
-- Rule: repository CI/simulator/debug builds do not satisfy signed real-device acceptance. Complete `FM-MOB-OWNER-001` before any new read-only check; do not build/sign/submit or invent external identifiers.
+- Updated: 2026-08-29
+- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33260695232` / job `99122008690` produced one verified exact-merge signed Android internal artifact. Owner real-device acceptance, Supabase recovery redirect, iOS/TestFlight, push and Store evidence remain open.
+- Rule: repository CI and signed-artifact success still do not satisfy real-device or Store acceptance. Use the existing Android preview for device checks; do not automatically rebuild, submit, update or invent external identifiers.
 
 ## FM-DEP-003
 - From: FM-AI-001
