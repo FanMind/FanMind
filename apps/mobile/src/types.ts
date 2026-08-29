@@ -85,6 +85,10 @@ export type FanAnalysisReport = {
   report_json: Record<string, unknown> | null;
   summary: string | null;
   source_message_count: number | null;
+  source_from_at: string | null;
+  source_to_at: string | null;
+  confidence_score: number | null;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
   generated_at: string | null;
   updated_at: string | null;
 };
@@ -94,7 +98,15 @@ export type FanAnalysisResponse = {
   message: string;
   report?: Pick<
     FanAnalysisReport,
-    "report_json" | "summary" | "source_message_count" | "generated_at" | "updated_at"
+    | "report_json"
+    | "summary"
+    | "source_message_count"
+    | "source_from_at"
+    | "source_to_at"
+    | "confidence_score"
+    | "review_status"
+    | "generated_at"
+    | "updated_at"
   > | null;
 };
 

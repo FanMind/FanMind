@@ -117,10 +117,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Risk: R3
 - Goal: Finish the owner-observed Mobile fan-detail and navigation corrections and deliver a new exact-merge Android preview.
 - Starting state: FM-MOB-003 is merged and built, but the fan detail still shows tags/profile before task navigation, identifier text can wrap, Follow-ups do not navigate back to their fan, today's Follow-ups are absent from Start and the wide splash wordmark is visibly cropped on Android.
-- Action: add universal `Nachrichten|Follow-ups|Kontaktwissen` tabs, move profile/tags into knowledge, add bounded fan-analysis read/server action, add per-fan/today Follow-up queries and navigation, and replace the splash asset with a square `FM`-over-`FanMind` composition.
-- Result: implementation and local verification are complete on the isolated release branch; exact-head PR/merge/build evidence remains pending.
-- Evidence: FM-CR-005; active lock and receipt; exact PR/build evidence pending.
-- Next step: finish checks, publish the owner-authorized exact commit, require green exact-head CI, merge and queue exactly one preview Android build.
+- Action: add universal `Nachrichten|Follow-ups|Kontaktwissen` tabs, move profile/tags into knowledge, add provenance-bound fan-analysis read/prepared server action, add per-fan/today Follow-up queries and navigation, and replace the splash asset with a square `FM`-over-`FanMind` composition. After PR review, hide generation until the Production capability is truly active, expose analysis provenance/review state, separate Follow-up errors, use exact paginated today counts with semantic priority, and map API failures to typed statuses.
+- Result: initial exact head passed nine CI gates but was intentionally not merged because review found six valid boundary/usability issues; grouped correction and focused post-review checks are complete locally, replacement exact-head evidence remains pending.
+- Evidence: FM-CR-005; active lock/receipt; PR #1025; initial head `2feba6f63d611a8461e2a9bb3402147f7fff8dd5` all CI green but superseded before merge by unresolved review findings.
+- Next step: publish the corrected head, resolve all six threads, require green replacement exact-head CI, merge and queue exactly one preview Android build.
 - Do not repeat: no schema or demo-data creation, no client service-role/OpenAI key, no automatic send, no member mutation and no second build while queue/completion state is uncertain.
 
 ## FM-AI-001

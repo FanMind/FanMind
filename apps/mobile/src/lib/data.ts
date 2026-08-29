@@ -33,7 +33,7 @@ const UNSEEN_MESSAGE_COLUMNS = "contact_id,source_platform,created_at";
 const FOLLOWUP_COLUMNS =
   "id,workspace_id,contact_id,due_date,priority,reason,status,created_at";
 const FAN_ANALYSIS_REPORT_COLUMNS =
-  "id,workspace_id,contact_id,report_json,summary,source_message_count,generated_at,updated_at";
+  "id,workspace_id,contact_id,report_json,summary,source_message_count,source_from_at,source_to_at,confidence_score,review_status,generated_at,updated_at";
 const MEMBER_SAFE_WORKSPACE_RPC =
   "get_current_workspace_member_safe_dashboard";
 const MEMBER_MUTATIONS_DISABLED_ERROR =
@@ -439,7 +439,11 @@ export async function getContactFanAnalysisReport(
     .limit(1)
     .maybeSingle();
   if (result.error) {
-    return { report: null, error: "Fan-Analyse konnte nicht geladen werden." };
+    return {
+      report: null,
+      error:
+        "Fan-Analyse kann ohne Herkunftszeitraum, Konfidenz und Prüfstatus nicht sicher angezeigt werden.",
+    };
   }
   return {
     report: (result.data as FanAnalysisReport | null) ?? null,
@@ -589,20 +593,82 @@ export async function listContactFollowups(
 export async function listTodaysFollowups(
   workspaceId: string,
   dueDate: string,
-): Promise<{ followups: Followup[]; error: string | null }> {
-  const result = await supabase
+): Promise<{
+  followups: Followup[];
+  totalCount: number;
+  truncated: boolean;
+  error: string | null;
+}> {
+  const pageSize = 200;
+  const maximumLoadedRows = 1_000;
+  const selectColumns = `${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`;
+
+  const firstResult = await supabase
     .from("followups")
-    .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
+    .select(selectColumns, { count: "exact" })
     .eq("workspace_id", workspaceId)
     .eq("due_date", dueDate)
     .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
-    .order("priority", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: true, nullsFirst: false })
-    .limit(100);
-  if (result.error) {
-    return { followups: [], error: "Heutige Follow-ups konnten nicht geladen werden." };
+    .range(0, pageSize - 1);
+  if (firstResult.error) {
+    return {
+      followups: [],
+      totalCount: 0,
+      truncated: false,
+      error: "Heutige Follow-ups konnten nicht geladen werden.",
+    };
   }
-  return { followups: (result.data ?? []) as unknown as Followup[], error: null };
+
+  const rows = [...(firstResult.data ?? [])] as unknown as Followup[];
+  const totalCount = firstResult.count ?? rows.length;
+  const loadTarget = Math.min(totalCount, maximumLoadedRows);
+  while (rows.length < loadTarget) {
+    const pageStart = rows.length;
+    const pageResult = await supabase
+      .from("followups")
+      .select(selectColumns)
+      .eq("workspace_id", workspaceId)
+      .eq("due_date", dueDate)
+      .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+      .order("created_at", { ascending: true, nullsFirst: false })
+      .range(pageStart, Math.min(pageStart + pageSize - 1, loadTarget - 1));
+    if (pageResult.error) {
+      return {
+        followups: [],
+        totalCount,
+        truncated: totalCount > 0,
+        error: "Heutige Follow-ups konnten nicht vollständig geladen werden.",
+      };
+    }
+    const pageRows = (pageResult.data ?? []) as unknown as Followup[];
+    rows.push(...pageRows);
+    if (pageRows.length === 0) break;
+  }
+
+  const priorityRank: Record<string, number> = {
+    urgent: 4,
+    high: 3,
+    normal: 2,
+    medium: 2,
+    low: 1,
+  };
+  rows.sort((left, right) => {
+    const leftRank = priorityRank[String(left.priority ?? "").toLowerCase()] ?? 0;
+    const rightRank = priorityRank[String(right.priority ?? "").toLowerCase()] ?? 0;
+    return (
+      rightRank - leftRank ||
+      String(left.created_at ?? "").localeCompare(String(right.created_at ?? "")) ||
+      left.id.localeCompare(right.id)
+    );
+  });
+
+  return {
+    followups: rows,
+    totalCount,
+    truncated: rows.length < totalCount,
+    error: null,
+  };
 }
 
 export async function createFollowup(input: {

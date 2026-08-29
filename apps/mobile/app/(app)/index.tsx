@@ -83,6 +83,8 @@ export default function DashboardScreen() {
   const [fans, setFans] = useState<DashboardUnreadFan[]>([]);
   const [openFollowups, setOpenFollowups] = useState(0);
   const [todayFollowups, setTodayFollowups] = useState<Followup[]>([]);
+  const [todayFollowupCount, setTodayFollowupCount] = useState(0);
+  const [todayFollowupsTruncated, setTodayFollowupsTruncated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
@@ -91,6 +93,8 @@ export default function DashboardScreen() {
       setFans([]);
       setOpenFollowups(0);
       setTodayFollowups([]);
+      setTodayFollowupCount(0);
+      setTodayFollowupsTruncated(false);
       setDashboardError(null);
       return;
     }
@@ -104,6 +108,8 @@ export default function DashboardScreen() {
     setFans(fansResult.fans);
     setOpenFollowups(countsResult.followups);
     setTodayFollowups(todayResult.followups);
+    setTodayFollowupCount(todayResult.totalCount);
+    setTodayFollowupsTruncated(todayResult.truncated);
     setDashboardError(fansResult.error ?? countsResult.error ?? todayResult.error);
     setLoading(false);
   }, [workspace?.id]);
@@ -183,13 +189,26 @@ export default function DashboardScreen() {
 
       <View style={styles.sectionHeader}>
         <SectionTitle eyebrow="Heute">Fällige Follow-ups</SectionTitle>
-        <StatusPill tone={todayFollowups.length ? "warning" : "good"}>
-          {todayFollowups.length}
+        <StatusPill tone={todayFollowupCount ? "warning" : "good"}>
+          {todayFollowupCount}
         </StatusPill>
       </View>
       {todayFollowups.length ? (
         <View style={styles.fanList}>
-          {todayFollowups.map((item) => <TodayFollowupRow key={item.id} item={item} />)}
+          {todayFollowups.slice(0, 20).map((item) => (
+            <TodayFollowupRow key={item.id} item={item} />
+          ))}
+          {todayFollowupCount > 20 || todayFollowupsTruncated ? (
+            <Text style={mobileStyles.muted}>
+              Die wichtigsten 20 von {todayFollowupCount} heutigen Follow-ups werden hier angezeigt.
+              Öffne die zentrale Follow-up-Liste für die weitere Bearbeitung.
+            </Text>
+          ) : null}
+          {todayFollowupCount > 20 ? (
+            <SecondaryButton onPress={() => router.push("/(app)/followups")}>
+              Alle Follow-ups öffnen
+            </SecondaryButton>
+          ) : null}
         </View>
       ) : (
         <EmptyState

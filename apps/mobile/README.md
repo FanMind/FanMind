@@ -29,7 +29,10 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
 - Start-Dashboard mit ausschließlich den Fans, die noch ungesehene eingehende
   Nachrichten besitzen, plus offenem Follow-up-Zähler und den am aktuellen
   Tag fälligen, direkt zum Fan führenden Follow-ups; beim erneuten Fokus wird
-  der Zustand frisch geladen;
+  der Zustand frisch geladen. Die Tageszahl ist exakt, bis zu 1.000 Einträge
+  werden seitenweise geladen, semantisch nach Priorität sortiert und eine
+  mögliche Begrenzung wird sichtbar ausgewiesen; das Dashboard zeigt davon
+  höchstens die wichtigsten 20;
 - Kontaktliste und Suche;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten; Teammitglieder sehen CRM-Daten nur lesend;
 - Kontaktdetail mit den für jeden Fan verfügbaren Bereichen `Nachrichten`,
@@ -49,9 +52,13 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   bewusst weitergeben; ausschließlich der ausgewählte Antworttext wird
   übergeben, Zielwahl und finaler Versand bleiben beim Menschen;
 - Kontaktwissen aus KI-Vorschlag speichern;
-- gespeicherte Fan-Analyse im Kontaktwissen lesen und als Owner über die
-  Bearer-authentifizierte Serveraktion vorsichtig neu erzeugen; keine Diagnose
-  und keine sensiblen Ableitungen;
+- gespeicherte Fan-Analyse im Kontaktwissen nur zusammen mit Herkunftszeitraum,
+  Stichprobengröße, Konfidenz und Prüfstatus lesen; fehlen diese Nachweise,
+  bleibt die Darstellung fail-closed. Die Bearer-authentifizierte
+  Owner-Neuerzeugung ist serverseitig vorbereitet, wird in Mobile aber bis zur
+  technisch aktivierten und geprüften Workspace-Datenschutz-/Aufbewahrungs-
+  Freigabe ehrlich als `In Vorbereitung` ohne Aktionsbutton gezeigt; keine
+  Diagnose und keine sensiblen Ableitungen;
 - Follow-up als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag speichern;
 - offene Follow-ups global oder je Fan anzeigen; globale und heutige Einträge
   führen in den Follow-up-Bereich des jeweiligen Fans. Owner können

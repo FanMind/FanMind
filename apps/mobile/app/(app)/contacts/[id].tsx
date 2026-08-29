@@ -22,7 +22,7 @@ import {
   StatusPill,
   mobileStyles,
 } from "@/components/ui";
-import { requestFanAnalysis, requestReplySuggestions } from "@/lib/api";
+import { requestReplySuggestions } from "@/lib/api";
 import {
   createContactMemory,
   createFollowup,
@@ -56,7 +56,15 @@ import type {
 type ContactSection = "messages" | "followups" | "knowledge";
 type DisplayAnalysisReport = Pick<
   FanAnalysisReport,
-  "report_json" | "summary" | "source_message_count" | "generated_at" | "updated_at"
+  | "report_json"
+  | "summary"
+  | "source_message_count"
+  | "source_from_at"
+  | "source_to_at"
+  | "confidence_score"
+  | "review_status"
+  | "generated_at"
+  | "updated_at"
 >;
 
 const CONTACT_SECTIONS: Array<{ key: ContactSection; label: string }> = [
@@ -92,6 +100,26 @@ function formatMessageDate(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatAnalysisDate(value: string | null): string {
+  if (!value) return "nicht verfügbar";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "nicht verfügbar";
+  return new Intl.DateTimeFormat("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function analysisReviewLabel(
+  value: FanAnalysisReport["review_status"],
+): string {
+  if (value === "confirmed") return "menschlich bestätigt";
+  if (value === "corrected") return "menschlich korrigiert";
+  if (value === "rejected") return "verworfen";
+  return "ungeprüfter KI-Hinweis";
 }
 
 function messageAuthor(
@@ -144,12 +172,9 @@ export default function ContactDetailScreen() {
   const [memories, setMemories] = useState<ContactMemory[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [contactFollowups, setContactFollowups] = useState<Followup[]>([]);
+  const [contactFollowupError, setContactFollowupError] = useState<string | null>(null);
   const [analysisReport, setAnalysisReport] = useState<DisplayAnalysisReport | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
-  const [analysisBusy, setAnalysisBusy] = useState(false);
-  const [analysisMode, setAnalysisMode] = useState<"short" | "standard" | "detailed">("short");
-  const [analysisInstruction, setAnalysisInstruction] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
   const [messageSeenError, setMessageSeenError] = useState<string | null>(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
@@ -187,6 +212,7 @@ export default function ContactDetailScreen() {
       setMemories([]);
       setMessages([]);
       setContactFollowups([]);
+      setContactFollowupError(null);
       setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
@@ -200,6 +226,7 @@ export default function ContactDetailScreen() {
       setMemories([]);
       setMessages([]);
       setContactFollowups([]);
+      setContactFollowupError(null);
       setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
@@ -234,11 +261,12 @@ export default function ContactDetailScreen() {
     setMemories(memoriesResult.memories);
     setMessages(messagesResult.messages);
     setContactFollowups(followupsResult.followups);
+    setContactFollowupError(followupsResult.error);
     setAnalysisReport(analysisResult.report);
     setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
     setMessageSeenError(seenError);
-    setError(contactResult.error ?? memoriesResult.error ?? followupsResult.error);
+    setError(contactResult.error ?? memoriesResult.error);
     setLoading(false);
   }, [contactId, workspace?.id, workspace?.role]);
 
@@ -285,23 +313,6 @@ export default function ContactDetailScreen() {
     setManualFollowupFormError(null);
     setManualFollowupNotice(null);
   }, [contactId, params.section]);
-
-  async function generateFanAnalysis() {
-    if (!session?.access_token || !contact || workspace?.role !== "owner") return;
-    setAnalysisBusy(true);
-    setAnalysisError(null);
-    setAnalysisNotice(null);
-    const result = await requestFanAnalysis({
-      accessToken: session.access_token,
-      contactId: contact.id,
-      analysisMode,
-      analysisInstruction,
-    });
-    setAnalysisError(result.error);
-    setAnalysisNotice(result.data?.message ?? null);
-    if (result.data?.report) setAnalysisReport(result.data.report);
-    setAnalysisBusy(false);
-  }
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;
@@ -654,7 +665,9 @@ export default function ContactDetailScreen() {
         <>
           <Card>
             <SectionTitle eyebrow="Offen">Follow-ups dieses Fans</SectionTitle>
-            {contactFollowups.length ? (
+            {contactFollowupError ? (
+              <Text style={mobileStyles.error}>{contactFollowupError}</Text>
+            ) : contactFollowups.length ? (
               <View style={styles.contactFollowupList}>
                 {contactFollowups.map((item) => (
                   <View key={item.id} style={styles.contactFollowupRow}>
@@ -804,6 +817,7 @@ export default function ContactDetailScreen() {
           <Text style={mobileStyles.muted}>
             Vorsichtige Hinweise aus freigegebenem Verlauf und Kontaktwissen. Keine Diagnose und keine sensiblen Ableitungen.
           </Text>
+          {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
           {analysisReport ? (
             <View style={styles.analysisFields}>
               {ANALYSIS_FIELDS.map(([key, label]) => {
@@ -816,58 +830,24 @@ export default function ContactDetailScreen() {
                 ) : null;
               })}
               <Text style={mobileStyles.muted}>
-                Grundlage: {analysisReport.source_message_count ?? 0} Nachrichten
+                Zeitraum: {formatAnalysisDate(analysisReport.source_from_at)} bis {formatAnalysisDate(analysisReport.source_to_at)}
+              </Text>
+              <Text style={mobileStyles.muted}>
+                Stichprobe: {analysisReport.source_message_count ?? 0} Nachrichten · Konfidenz: {analysisReport.confidence_score ?? 0}/100
+              </Text>
+              <Text style={analysisReport.review_status === "confirmed" ? mobileStyles.success : styles.analysisReviewWarning}>
+                Prüfstatus: {analysisReviewLabel(analysisReport.review_status)}
               </Text>
             </View>
           ) : (
             <Text style={mobileStyles.muted}>Noch keine Fan-Analyse gespeichert.</Text>
           )}
-          {workspace.role === "owner" ? (
-            <>
-              <View style={styles.followupChoiceRow}>
-                {[
-                  { key: "short" as const, label: "Kurz" },
-                  { key: "standard" as const, label: "Standard" },
-                  { key: "detailed" as const, label: "Detailliert" },
-                ].map((mode) => {
-                  const selected = mode.key === analysisMode;
-                  return (
-                    <Pressable
-                      key={mode.key}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => setAnalysisMode(mode.key)}
-                      style={({ pressed }) => [
-                        styles.followupChoice,
-                        selected && styles.followupChoiceSelected,
-                        pressed && styles.messageChannelPressed,
-                      ]}
-                    >
-                      <Text style={selected ? styles.followupChoiceTextSelected : styles.followupChoiceText}>
-                        {mode.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <TextInput
-                value={analysisInstruction}
-                onChangeText={setAnalysisInstruction}
-                placeholder="Optional: Worauf soll FanMind besonders achten?"
-                placeholderTextColor={colors.textMuted}
-                maxLength={500}
-                style={mobileStyles.input}
-                accessibilityLabel="Optionale Anweisung für die Fan-Analyse"
-              />
-              {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
-              {analysisNotice ? <Text style={mobileStyles.success}>{analysisNotice}</Text> : null}
-              <PrimaryButton busy={analysisBusy} onPress={() => void generateFanAnalysis()}>
-                Fan analysieren
-              </PrimaryButton>
-            </>
-          ) : (
-            <Text style={mobileStyles.muted}>Teamzugänge können die gespeicherte Analyse nur lesen.</Text>
-          )}
+          <View style={styles.analysisPreparation}>
+            <StatusPill tone="neutral">In Vorbereitung</StatusPill>
+            <Text style={mobileStyles.muted}>
+              Neue Fan-Analysen werden erst freigeschaltet, wenn die Workspace-Datenschutz- und Aufbewahrungskontrollen technisch aktiviert und geprüft sind. Bis dahin bleibt diese Aktion verborgen.
+            </Text>
+          </View>
         </Card>
       ) : null}
 
@@ -1028,6 +1008,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   analysisFields: { gap: spacing.md },
+  analysisPreparation: { gap: spacing.sm, alignItems: "flex-start" },
+  analysisReviewWarning: {
+    color: colors.amber,
+    fontSize: typography.small,
+    lineHeight: 19,
+  },
   analysisField: {
     gap: spacing.xs,
     borderBottomWidth: 1,

@@ -18,14 +18,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Risk: R3
 - Scope: Deliver the owner-requested three-section fan detail, one-line identifier, safe Mobile fan analysis, fan-bound Follow-up navigation, today's Dashboard Follow-ups and corrected square native splash; then produce one exact-merge Android preview.
 - Change request: FM-CR-005.
-- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / pending.
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025 exact reviewed head pending.
 - Work lock: `LOCK-FM-MOB-004-FAN-SECTIONS-20260829` ACTIVE.
 - Dependencies: existing RLS and Mobile Bearer authorization, server-side analysis action/capability gates, exact-head CI and one protected Android preview build.
-- Assumptions: stored Fan-analysis reports remain read-only in the app; only Owners may request regeneration, while Members remain read-only. Follow-up navigation carries only the contact ID and selected section.
+- Assumptions: stored Fan-analysis reports remain read-only and are displayed only with source period, sample size, confidence and review state. Production generation remains hidden/in preparation until the Workspace analysis/privacy contract is technically active and verified. Follow-up navigation carries only the contact ID and selected section.
 - Planned evidence: Mobile typecheck/Expo/native checks, focused authorization/UI tests, full repository regression, exact-head PR gates, SHA-bound merge and exactly one merged-commit Android preview.
-- Completed so far: implementation/docs are complete; Mobile check including Expo Doctor 20/20 and native prebuild passed, 32 focused tests and the complete 1055-test Operations suite passed, and root lint/build plus Project Memory truth/drift/quality checks passed. No schema, row, provider or Production mutation was made.
-- Still open: exact-head PR, merge, Android preview and owner device confirmation.
-- Exact next step: publish the explicitly authorized checked commit and require terminal-green exact-head gates before merge/build.
+- Completed so far: initial implementation/docs and local checks passed; PR #1025 exact head `2feba6f63d611a8461e2a9bb3402147f7fff8dd5` then passed all nine CI gates. Automated review correctly blocked merge on six provenance/error/truncation/truth findings. The branch now carries one grouped correction: provenance-bound report display, hidden Production-disabled generation, typed API failures, section-specific Follow-up errors, exact paginated day count and semantic priority ordering. Focused post-review Mobile tests are 32/32 and Mobile TypeScript passes. No schema, row, provider or Production mutation was made.
+- Still open: complete post-review local regression, publish the corrected exact head, resolve review threads, require all replacement exact-head gates, merge, one Android preview and owner device confirmation.
+- Exact next step: finish the grouped countercheck, update PR #1025 and merge only after the replacement head is terminal green with no unresolved review thread.
 - Rollback/recovery: revert the Mobile/API commit; no database migration or destructive action is part of this change.
 
 ## FM-MOB-003

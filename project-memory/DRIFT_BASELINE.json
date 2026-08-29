@@ -3,7 +3,7 @@
   "baseline_commit": "7937ff0ce04f7d9bb93eadba0b9dcb7e970d78b2",
   "captured": "2026-08-29",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "7b0a77547ab3cfe07809a280cea141f3cef9616d",
+    "docs/SOURCE_OF_TRUTH.md": "6a19b766f1e0a64d4159f9fc26a08ac58e45c382",
     "src/config/roadmap.ts": "abbe8621d101e191a5c794853f9f422c7cc544a4",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

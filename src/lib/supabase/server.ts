@@ -337,6 +337,12 @@ export type FanAnalysisReportRow = {
   summary: string | null;
   model: string | null;
   source_message_count: number;
+  source_from_at: string | null;
+  source_to_at: string | null;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
   generated_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -821,7 +827,7 @@ const CONVERSATION_SUMMARY_COLUMNS =
 const CONTACT_AI_PROFILE_COLUMNS =
   "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,updated_at,created_at";
 const FAN_ANALYSIS_REPORT_COLUMNS =
-  "id,workspace_id,contact_id,report_json,summary,model,source_message_count,generated_at,created_at,updated_at";
+  "id,workspace_id,contact_id,report_json,summary,model,source_message_count,source_from_at,source_to_at,confidence_score,review_status,reviewed_by,reviewed_at,generated_at,created_at,updated_at";
 const WORKSPACE_VOICE_PROFILE_COLUMNS =
   "id,workspace_id,user_id,owner_label,language,tone,sentence_length,emoji_style,greeting_style,closing_style,common_phrases,avoided_phrases,sales_style,examples_count,confidence_score,updated_at,created_at";
 const SOCIAL_CONNECTION_PUBLIC_COLUMNS =
@@ -3944,6 +3950,9 @@ export async function upsertFanAnalysisReport(input: {
   summary: string;
   model: string;
   sourceMessageCount: number;
+  sourceFromAt: string | null;
+  sourceToAt: string | null;
+  confidenceScore: number;
 }): Promise<FanAnalysisReportResult> {
   const accessToken = getServiceAccessToken();
   if (!accessToken)
@@ -3963,6 +3972,12 @@ export async function upsertFanAnalysisReport(input: {
       summary: input.summary,
       model: input.model,
       source_message_count: input.sourceMessageCount,
+      source_from_at: input.sourceFromAt,
+      source_to_at: input.sourceToAt,
+      confidence_score: input.confidenceScore,
+      review_status: "unreviewed",
+      reviewed_by: null,
+      reviewed_at: null,
       generated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },

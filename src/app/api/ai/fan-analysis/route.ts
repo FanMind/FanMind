@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   analyzeFanCommunication,
   type FanAnalysisActionState,
+  type FanAnalysisFailureReason,
 } from "@/app/fans/[id]/analysisActions";
 import { readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import {
@@ -32,6 +33,14 @@ function normalizeMode(value: unknown): "short" | "standard" | "detailed" {
 
 function jsonError(error: string, status: number) {
   return NextResponse.json({ error }, { status });
+}
+
+function failureStatus(reason: FanAnalysisFailureReason | undefined): number {
+  if (reason === "forbidden" || reason === "capability_disabled") return 403;
+  if (reason === "rate_limited") return 429;
+  if (reason === "service_unavailable") return 503;
+  if (reason === "unprocessable_context") return 422;
+  return 400;
 }
 
 export async function POST(request: NextRequest) {
@@ -99,6 +108,6 @@ export async function POST(request: NextRequest) {
     return jsonError("Kontakt konnte nicht autorisiert geladen werden.", 404);
   }
 
-  if (!state.ok) return jsonError(state.message, 400);
+  if (!state.ok) return jsonError(state.message, failureStatus(state.failure_reason));
   return NextResponse.json(state);
 }

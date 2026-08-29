@@ -114,7 +114,17 @@ client policy, and always includes both current Workspace and contact IDs.
 The Mobile contact detail exposes the same three sections for every fan:
 `Nachrichten`, `Follow-ups` and `Kontaktwissen`. The fan-analysis endpoint
 accepts a Mobile Bearer token, reuses the existing authorized Web action and
-never moves provider credentials or service-role access into the app.
+never moves provider credentials or service-role access into the app. Mobile
+renders a stored report only with source period, sample size, confidence and
+review state. Production activation is still fail-closed: while the required
+Workspace analysis/privacy contract is not applied and validated, Mobile shows
+the feature as `In Vorbereitung` and exposes no generation control. The route
+returns typed 400/403/422/429/503 failures for future authorized clients.
+
+Today's dashboard Follow-ups use an exact count, bounded page loading up to
+1,000 rows, explicit truncation state and client-side semantic priority ranks
+(`urgent`, `high`, `normal|medium`, `low`). The compact dashboard renders at
+most the first 20 and links to the central Follow-up screen.
 
 Server-only functions remain server-only:
 

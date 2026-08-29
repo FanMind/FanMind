@@ -103,7 +103,9 @@ Aktiv im App-Kern:
 - geschützte Expo-Router-Navigation;
 - Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
   Nachrichten und den heute fälligen Follow-ups; beide führen direkt zum
-  betroffenen Fan. Dazu Kontaktliste, Suche und Kontaktdetail;
+  betroffenen Fan. Der Tageszähler ist exakt; Einträge werden begrenzt
+  seitenweise geladen, semantisch priorisiert und jede Begrenzung sichtbar
+  ausgewiesen. Dazu Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
@@ -113,9 +115,14 @@ Aktiv im App-Kern:
 - pro Fan die drei Mobile-Bereiche `Nachrichten`, `Follow-ups` und
   `Kontaktwissen`; die Kontaktkennung bleibt einzeilig, Profil/Tags liegen im
   Kontaktwissen;
-- gespeicherte Fan-Analyse im Kontaktwissen und Owner-only Neuerzeugung über
-  eine Bearer-authentifizierte Serverroute, unter den bestehenden
-  Datenschutz-, Berechtigungs-, Raten-, Kontext- und Speichergrenzen;
+- gespeicherte Fan-Analyse im Kontaktwissen ausschließlich mit sichtbarem
+  Herkunftszeitraum, Stichprobenumfang, Konfidenz und Prüfstatus; fehlen diese
+  Nachweise, bleibt die Darstellung fail-closed. Die Owner-only Neuerzeugung
+  über eine Bearer-authentifizierte Serverroute ist vorbereitet, bleibt in
+  Mobile aber ohne Aktionsbutton als `In Vorbereitung` markiert, bis die
+  Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
+  ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
+  Dienstfehler semantisch;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand

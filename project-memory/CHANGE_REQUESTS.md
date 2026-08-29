@@ -57,7 +57,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Affected areas: Mobile contact detail/dashboard/follow-up navigation, authenticated AI route, RLS data reads, native splash branding, documentation and tests.
 - Existing task/decision checked: FM-MOB-001/002/003, FM-CR-004, existing Web fan-analysis action, RLS-protected `fan_analysis_reports`/`followups`, no-auto-send and owner-only mutation boundaries.
 - Dependencies: exact-head CI, existing Mobile Bearer session, server-side analysis capability/retention gates, one merged-commit Android preview and owner device confirmation.
-- Decision: implement as FM-MOB-004 without schema, demo-row, provider, Production or automatic-send changes.
+- Decision: implement as FM-MOB-004 without schema, demo-row, provider,
+  Production or automatic-send changes. PR review tightened the decision:
+  stored analysis is provenance-bound and generation remains visibly in
+  preparation without an active Mobile control until the separate Production
+  capability/privacy contract is truly activated and verified.
 - Related task: FM-MOB-004
 
 ## Intake template

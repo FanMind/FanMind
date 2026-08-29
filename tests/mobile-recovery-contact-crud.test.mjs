@@ -363,10 +363,17 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(data, /export async function listTodaysFollowups/u);
   assert.match(
     data,
-    /listTodaysFollowups[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.limit\(100\)/u,
+    /listTodaysFollowups[\s\S]*\.select\(selectColumns, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.range\(0, pageSize - 1\)/u,
   );
+  assert.match(data, /maximumLoadedRows = 1_000/u);
+  assert.match(data, /priorityRank[\s\S]*urgent: 4[\s\S]*high: 3[\s\S]*normal: 2[\s\S]*medium: 2[\s\S]*low: 1/u);
+  assert.match(data, /totalCount[\s\S]*truncated: rows\.length < totalCount/u);
+  assert.match(detail, /setContactFollowupError\(followupsResult\.error\)/u);
+  assert.match(detail, /contactFollowupError[\s\S]*mobileStyles\.error/u);
   assert.match(dashboard, /Fällige Follow-ups/u);
   assert.match(dashboard, /section=followups/u);
+  assert.match(dashboard, /todayResult\.totalCount/u);
+  assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
 });
 
 test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
@@ -383,16 +390,26 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
     data,
     /fan_analysis_reports[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(1\)/u,
   );
-  assert.match(detail, /Fan analysieren/u);
+  assert.match(data, /source_from_at,source_to_at,confidence_score,review_status/u);
+  assert.doesNotMatch(detail, /Fan analysieren/u);
+  assert.match(detail, /In Vorbereitung/u);
+  assert.match(detail, /Bis dahin bleibt diese Aktion verborgen/u);
   assert.match(detail, /Keine Diagnose und keine sensiblen Ableitungen/u);
+  assert.match(detail, /Zeitraum:[\s\S]*Konfidenz:[\s\S]*Prüfstatus:/u);
   assert.match(api, /Authorization: `Bearer \$\{input\.accessToken\}`[\s\S]*\/api\/ai\/fan-analysis/u);
   assert.match(route, /readBoundedJsonRequest/u);
   assert.match(route, /analyzeFanCommunication[\s\S]*accessToken/u);
+  assert.match(route, /rate_limited[\s\S]*return 429/u);
+  assert.match(route, /service_unavailable[\s\S]*return 503/u);
+  assert.match(route, /capability_disabled[\s\S]*return 403/u);
   assert.match(
     action,
     /explicitAccessToken[\s\S]*requireContactInActiveAuthorizedWorkspaceMember/u,
   );
+  assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
+  assert.match(action, /review_status: result\.report\.review_status/u);
   assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
+  assert.match(server, /source_from_at,source_to_at,confidence_score,review_status/u);
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {

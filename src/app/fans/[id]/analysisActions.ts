@@ -45,14 +45,27 @@ type AnalysisReport = {
   analysis_mode: AnalysisMode;
 };
 
+export type FanAnalysisFailureReason =
+  | "invalid_request"
+  | "forbidden"
+  | "capability_disabled"
+  | "rate_limited"
+  | "service_unavailable"
+  | "unprocessable_context";
+
 export type FanAnalysisActionState = {
   ok: boolean;
   message: string;
+  failure_reason?: FanAnalysisFailureReason;
   generatedAt?: string;
   report?: {
     report_json: Record<string, unknown> | null;
     summary: string | null;
     source_message_count: number | null;
+    source_from_at: string | null;
+    source_to_at: string | null;
+    confidence_score: number | null;
+    review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
     generated_at: string | null;
     updated_at?: string | null;
   } | null;
@@ -304,7 +317,11 @@ export async function analyzeFanCommunication(
   );
 
   if (!contactId) {
-    return { ok: false, message: "Kontakt fehlt." };
+    return {
+      ok: false,
+      failure_reason: "invalid_request",
+      message: "Kontakt fehlt.",
+    };
   }
 
   const { workspace, user, contact } = explicitAccessToken
@@ -318,6 +335,7 @@ export async function analyzeFanCommunication(
   if (isWorkspaceArchivedAfterSubscriptionEnd(workspace)) {
     return {
       ok: false,
+      failure_reason: "forbidden",
       message:
         locale === "en"
           ? "This workspace is read-only after the subscription ended."
@@ -332,6 +350,7 @@ export async function analyzeFanCommunication(
   if (!analysisCapability.enabled) {
     return {
       ok: false,
+      failure_reason: "capability_disabled",
       message:
         locale === "en"
           ? "Fan analysis is disabled until this workspace's privacy and retention controls are confirmed."
@@ -350,6 +369,7 @@ export async function analyzeFanCommunication(
   } catch {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "The communication overview cannot be started safely right now."
@@ -360,6 +380,7 @@ export async function analyzeFanCommunication(
   if (!rateLimit.allowed) {
     return {
       ok: false,
+      failure_reason: "rate_limited",
       message:
         locale === "en"
           ? "Too many AI analyses. Please try again later."
@@ -390,6 +411,7 @@ export async function analyzeFanCommunication(
   if (messagesResult.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "Messages could not be loaded for the analysis."
@@ -399,6 +421,7 @@ export async function analyzeFanCommunication(
   if (memoriesResult.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "Contact knowledge could not be loaded for the analysis."
@@ -442,6 +465,7 @@ export async function analyzeFanCommunication(
   } catch {
     return {
       ok: false,
+      failure_reason: "unprocessable_context",
       message:
         locale === "en"
           ? "The communication context could not be prepared safely."
@@ -451,6 +475,19 @@ export async function analyzeFanCommunication(
 
   const { payload, inputChars } = boundedInput;
   const sourceMessages = payload.messages;
+  const sourceMessageTimes = sourceMessages
+    .map((message) => Date.parse(String(message.createdAt ?? "")))
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+  const sourceFromAt = sourceMessageTimes.length
+    ? new Date(sourceMessageTimes[0]!).toISOString()
+    : null;
+  const sourceToAt = sourceMessageTimes.length
+    ? new Date(sourceMessageTimes[sourceMessageTimes.length - 1]!).toISOString()
+    : null;
+  // Message count is only a conservative provenance signal, never a quality
+  // guarantee. Unreviewed generated reports are intentionally capped below 100.
+  const confidenceScore = Math.min(80, sourceMessages.length * 10);
   const lowDataHint =
     sourceMessages.length < 3
       ? locale === "en"
@@ -521,6 +558,7 @@ export async function analyzeFanCommunication(
         });
         return {
           ok: false,
+          failure_reason: "service_unavailable",
           message:
             locale === "en"
               ? "The communication overview could not be created."
@@ -567,6 +605,7 @@ export async function analyzeFanCommunication(
       });
       return {
         ok: false,
+        failure_reason: "service_unavailable",
         message:
           locale === "en"
             ? "The communication overview could not be created. Please try again."
@@ -592,11 +631,15 @@ export async function analyzeFanCommunication(
           ? "fallback-no-messages"
           : "fallback-no-api-key",
     sourceMessageCount: sourceMessages.length,
+    sourceFromAt,
+    sourceToAt,
+    confidenceScore,
   });
 
   if (result.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "The communication overview could not be saved."
@@ -614,6 +657,10 @@ export async function analyzeFanCommunication(
           report_json: result.report.report_json as Record<string, unknown> | null,
           summary: result.report.summary,
           source_message_count: result.report.source_message_count,
+          source_from_at: result.report.source_from_at,
+          source_to_at: result.report.source_to_at,
+          confidence_score: result.report.confidence_score,
+          review_status: result.report.review_status,
           generated_at: result.report.generated_at,
           updated_at: result.report.updated_at,
         }
