@@ -3935,7 +3935,15 @@ export async function getFanAnalysisReport(
     1,
     true,
   );
-  if (result.error && isMissingFanAnalysisProvenanceColumn(result.error)) {
+  if (
+    result.error &&
+    isMissingFanAnalysisProvenanceColumn(result.error) &&
+    (await areAllFanAnalysisProvenanceColumnsMissing(
+      accessToken,
+      workspaceId,
+      contactId,
+    ))
+  ) {
     const legacyResult = await postgrestSelect<
       Omit<
         FanAnalysisReportRow,
@@ -4000,6 +4008,39 @@ function isMissingFanAnalysisProvenanceColumn(error: Error): boolean {
       message.includes("schema cache") ||
       message.includes("could not find"))
   );
+}
+
+const FAN_ANALYSIS_PROVENANCE_COLUMNS = [
+  "source_from_at",
+  "source_to_at",
+  "confidence_score",
+  "review_status",
+  "reviewed_by",
+  "reviewed_at",
+] as const;
+
+async function areAllFanAnalysisProvenanceColumnsMissing(
+  accessToken: string,
+  workspaceId: string,
+  contactId: string,
+): Promise<boolean> {
+  for (const column of FAN_ANALYSIS_PROVENANCE_COLUMNS) {
+    const probe = await postgrestSelect<Record<string, unknown>>(
+      "fan_analysis_reports",
+      accessToken,
+      `id,${column}`,
+      [
+        ["workspace_id", workspaceId],
+        ["contact_id", contactId],
+      ],
+      1,
+      true,
+    );
+    if (!probe.error || !isMissingFanAnalysisProvenanceColumn(probe.error)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export async function upsertFanAnalysisReport(input: {

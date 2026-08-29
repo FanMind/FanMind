@@ -123,16 +123,22 @@ returns typed 400/403/422/429/503 failures for future authorized clients.
 An inactive/read-only Workspace is a permission denial, never a missing-contact
 response. Until the controlled provenance migration is verified in Production,
 the shared Web/server reader may fall back to the old report column set only
-when PostgREST explicitly reports a missing provenance column; it returns null
-provenance so Mobile remains fail-closed and does not render the conclusions.
+when PostgREST explicitly reports missing provenance and individual probes prove
+that the complete new column set is absent. A partial schema is an error. The
+legacy reader returns null provenance, and both Web and Mobile remain fail-closed
+and do not render its conclusions. Current reports expose source period,
+confidence and review state on both surfaces.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
-1,000 rows, explicit truncation state and client-side semantic priority ranks
-(`urgent`, `high`, `normal|medium`, `low`). The compact dashboard renders at
-most the first 20 and links to the central Follow-up screen.
+1,000 rows and explicit truncation state. Priority groups are loaded in semantic
+order (`urgent`, `high`, `normal|medium`, `low`) before that cap, and every page
+uses `created_at` plus `id` as a stable boundary. The compact dashboard renders
+at most the first 20 and links to the central Follow-up screen. Its read error is
+section-specific and gates the empty state.
 Per-contact Follow-up load errors remain section-specific on initial load and
 after either manual or suggestion-based creation, so a failed refresh can never
 be rendered as a valid empty list next to a save-success notice.
+Contact-knowledge reads have the same section-specific error/empty-state split.
 
 Server-only functions remain server-only:
 

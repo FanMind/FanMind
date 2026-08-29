@@ -85,6 +85,7 @@ export default function DashboardScreen() {
   const [todayFollowups, setTodayFollowups] = useState<Followup[]>([]);
   const [todayFollowupCount, setTodayFollowupCount] = useState(0);
   const [todayFollowupsTruncated, setTodayFollowupsTruncated] = useState(false);
+  const [todayFollowupError, setTodayFollowupError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
@@ -95,6 +96,7 @@ export default function DashboardScreen() {
       setTodayFollowups([]);
       setTodayFollowupCount(0);
       setTodayFollowupsTruncated(false);
+      setTodayFollowupError(null);
       setDashboardError(null);
       return;
     }
@@ -110,7 +112,8 @@ export default function DashboardScreen() {
     setTodayFollowups(todayResult.followups);
     setTodayFollowupCount(todayResult.totalCount);
     setTodayFollowupsTruncated(todayResult.truncated);
-    setDashboardError(fansResult.error ?? countsResult.error ?? todayResult.error);
+    setTodayFollowupError(todayResult.error);
+    setDashboardError(fansResult.error ?? countsResult.error);
     setLoading(false);
   }, [workspace?.id]);
 
@@ -193,7 +196,9 @@ export default function DashboardScreen() {
           {todayFollowupCount}
         </StatusPill>
       </View>
-      {todayFollowups.length ? (
+      {todayFollowupError ? (
+        <Text style={mobileStyles.error}>{todayFollowupError}</Text>
+      ) : todayFollowups.length ? (
         <View style={styles.fanList}>
           {todayFollowups.slice(0, 20).map((item) => (
             <TodayFollowupRow key={item.id} item={item} />

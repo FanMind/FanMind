@@ -104,14 +104,18 @@ Aktiv im App-Kern:
 - Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
   Nachrichten und den heute fälligen Follow-ups; beide führen direkt zum
   betroffenen Fan. Der Tageszähler ist exakt; Einträge werden begrenzt
-  seitenweise geladen, semantisch priorisiert und jede Begrenzung sichtbar
-  ausgewiesen. Dazu Kontaktliste, Suche und Kontaktdetail;
+  seitenweise und mit stabiler `created_at`-/`id`-Reihenfolge je semantischer
+  Prioritätsgruppe geladen, sodass die wichtigsten Einträge bereits vor der
+  1.000er-Grenze ausgewählt werden; jede Begrenzung und jeder Ladefehler wird
+  im Follow-up-Bereich sichtbar ausgewiesen. Dazu Kontaktliste, Suche und
+  Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
   vollständig vom Offline-Cache ausgeschlossen; der Verlauf lässt sich für
   jeden Fan über `Alle` und seine tatsächlich vorhandenen Plattformen filtern;
-- Kontaktwissen;
+- Kontaktwissen mit eigenem Ladefehlerzustand, damit ein fehlgeschlagener Read
+  nie als gültig leer erscheint;
 - pro Fan die drei Mobile-Bereiche `Nachrichten`, `Follow-ups` und
   `Kontaktwissen`; die Kontaktkennung bleibt einzeilig, Profil/Tags liegen im
   Kontaktwissen;
@@ -123,9 +127,11 @@ Aktiv im App-Kern:
   Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
   ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
   Dienstfehler semantisch. Solange die kontrollierte Provenienz-Migration in
-  Production noch fehlt, hält ein eng begrenzter Server-Read-Fallback bestehende
-  Web-Kontexte lesbar, kennzeichnet deren Provenienzfelder aber als fehlend;
-  Mobile zeigt solche Legacy-Analysen ausdrücklich nicht an;
+  Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
+  bestehende Web-Kontexte lesbar. Er wird nur nach Einzelprüfung aller neuen
+  Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen
+  erhalten fehlende Provenienzfelder, und weder Mobile noch Web zeigen daraus
+  Analyse-Schlussfolgerungen an;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand

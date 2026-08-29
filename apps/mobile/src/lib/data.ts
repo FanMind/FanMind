@@ -602,16 +602,20 @@ export async function listTodaysFollowups(
   const pageSize = 200;
   const maximumLoadedRows = 1_000;
   const selectColumns = `${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`;
+  const rankedPriorityGroups = [
+    ["urgent"],
+    ["high"],
+    ["normal", "medium"],
+    ["low"],
+  ] as const;
 
-  const firstResult = await supabase
+  const countResult = await supabase
     .from("followups")
-    .select(selectColumns, { count: "exact" })
+    .select("id", { count: "exact", head: true })
     .eq("workspace_id", workspaceId)
     .eq("due_date", dueDate)
-    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
-    .order("created_at", { ascending: true, nullsFirst: false })
-    .range(0, pageSize - 1);
-  if (firstResult.error) {
+    .not("status", "in", COMPLETED_FOLLOWUP_FILTER);
+  if (countResult.error) {
     return {
       followups: [],
       totalCount: 0,
@@ -620,30 +624,43 @@ export async function listTodaysFollowups(
     };
   }
 
-  const rows = [...(firstResult.data ?? [])] as unknown as Followup[];
-  const totalCount = firstResult.count ?? rows.length;
+  const rows: Followup[] = [];
+  const totalCount = countResult.count ?? 0;
   const loadTarget = Math.min(totalCount, maximumLoadedRows);
-  while (rows.length < loadTarget) {
-    const pageStart = rows.length;
-    const pageResult = await supabase
-      .from("followups")
-      .select(selectColumns)
-      .eq("workspace_id", workspaceId)
-      .eq("due_date", dueDate)
-      .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
-      .order("created_at", { ascending: true, nullsFirst: false })
-      .range(pageStart, Math.min(pageStart + pageSize - 1, loadTarget - 1));
-    if (pageResult.error) {
-      return {
-        followups: [],
-        totalCount,
-        truncated: totalCount > 0,
-        error: "Heutige Follow-ups konnten nicht vollständig geladen werden.",
-      };
+  for (const priorities of rankedPriorityGroups) {
+    let groupOffset = 0;
+    while (rows.length < loadTarget) {
+      const pageLimit = Math.min(pageSize, loadTarget - rows.length);
+      let pageQuery = supabase
+        .from("followups")
+        .select(selectColumns)
+        .eq("workspace_id", workspaceId)
+        .eq("due_date", dueDate)
+        .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+        .order("created_at", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
+      pageQuery =
+        priorities.length === 1
+          ? pageQuery.eq("priority", priorities[0])
+          : pageQuery.in("priority", [...priorities]);
+      const pageResult = await pageQuery.range(
+        groupOffset,
+        groupOffset + pageLimit - 1,
+      );
+      if (pageResult.error) {
+        return {
+          followups: [],
+          totalCount,
+          truncated: totalCount > 0,
+          error: "Heutige Follow-ups konnten nicht vollständig geladen werden.",
+        };
+      }
+      const pageRows = (pageResult.data ?? []) as unknown as Followup[];
+      rows.push(...pageRows);
+      groupOffset += pageRows.length;
+      if (pageRows.length < pageLimit) break;
     }
-    const pageRows = (pageResult.data ?? []) as unknown as Followup[];
-    rows.push(...pageRows);
-    if (pageRows.length === 0) break;
+    if (rows.length >= loadTarget) break;
   }
 
   const priorityRank: Record<string, number> = {

@@ -363,9 +363,17 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(data, /export async function listTodaysFollowups/u);
   assert.match(
     data,
-    /listTodaysFollowups[\s\S]*\.select\(selectColumns, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.range\(0, pageSize - 1\)/u,
+    /listTodaysFollowups[\s\S]*\.select\("id", \{ count: "exact", head: true \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)/u,
   );
   assert.match(data, /maximumLoadedRows = 1_000/u);
+  assert.match(
+    data,
+    /rankedPriorityGroups[\s\S]*\["urgent"\][\s\S]*\["high"\][\s\S]*\["normal", "medium"\][\s\S]*\["low"\]/u,
+  );
+  assert.match(
+    data,
+    /for \(const priorities of rankedPriorityGroups\)[\s\S]*\.order\("created_at", \{ ascending: true, nullsFirst: false \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*\.range\(/u,
+  );
   assert.match(data, /priorityRank[\s\S]*urgent: 4[\s\S]*high: 3[\s\S]*normal: 2[\s\S]*medium: 2[\s\S]*low: 1/u);
   assert.match(data, /totalCount[\s\S]*truncated: rows\.length < totalCount/u);
   assert.match(detail, /setContactFollowupError\(followupsResult\.error\)/u);
@@ -377,16 +385,22 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(dashboard, /Fällige Follow-ups/u);
   assert.match(dashboard, /section=followups/u);
   assert.match(dashboard, /todayResult\.totalCount/u);
+  assert.match(dashboard, /setTodayFollowupError\(todayResult\.error\)/u);
+  assert.match(
+    dashboard,
+    /todayFollowupError[\s\S]*mobileStyles\.error[\s\S]*todayFollowups\.length[\s\S]*Heute nichts fällig/u,
+  );
   assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
 });
 
 test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
-  const [data, detail, api, route, action, server] = await Promise.all([
+  const [data, detail, api, route, action, report, server] = await Promise.all([
     read("apps/mobile/src/lib/data.ts"),
     read("apps/mobile/app/(app)/contacts/[id].tsx"),
     read("apps/mobile/src/lib/api.ts"),
     read("src/app/api/ai/fan-analysis/route.ts"),
     read("src/app/fans/[id]/analysisActions.ts"),
+    read("src/app/fans/[id]/FanAnalysisReport.tsx"),
     read("src/lib/supabase/server.ts"),
   ]);
 
@@ -415,11 +429,19 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   );
   assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
   assert.match(action, /review_status: result\.report\.review_status/u);
+  assert.match(report, /hasCompleteReportProvenance/u);
+  assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);
+  assert.match(report, /Zeitraum[\s\S]*Konfidenz[\s\S]*Prüfstatus/u);
   assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
   assert.match(server, /source_from_at,source_to_at,confidence_score,review_status/u);
   assert.match(server, /FAN_ANALYSIS_REPORT_LEGACY_COLUMNS/u);
   assert.match(server, /isMissingFanAnalysisProvenanceColumn/u);
+  assert.match(
+    server,
+    /areAllFanAnalysisProvenanceColumnsMissing[\s\S]*for \(const column of FAN_ANALYSIS_PROVENANCE_COLUMNS\)[\s\S]*if \(!probe\.error \|\| !isMissingFanAnalysisProvenanceColumn\(probe\.error\)\)[\s\S]*return false/u,
+  );
   assert.match(server, /source_from_at: null[\s\S]*review_status: null/u);
+  assert.match(detail, /memoryError[\s\S]*mobileStyles\.error[\s\S]*memories\.length/u);
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {

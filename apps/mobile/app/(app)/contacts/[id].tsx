@@ -195,6 +195,7 @@ export default function ContactDetailScreen() {
   } = useWorkspace();
   const [contact, setContact] = useState<Contact | null>(null);
   const [memories, setMemories] = useState<ContactMemory[]>([]);
+  const [memoryError, setMemoryError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [contactFollowups, setContactFollowups] = useState<Followup[]>([]);
   const [contactFollowupError, setContactFollowupError] = useState<string | null>(null);
@@ -235,6 +236,7 @@ export default function ContactDetailScreen() {
     if (!contactId) {
       setContact(null);
       setMemories([]);
+      setMemoryError(null);
       setMessages([]);
       setContactFollowups([]);
       setContactFollowupError(null);
@@ -249,6 +251,7 @@ export default function ContactDetailScreen() {
     if (!workspace?.id) {
       setContact(null);
       setMemories([]);
+      setMemoryError(null);
       setMessages([]);
       setContactFollowups([]);
       setContactFollowupError(null);
@@ -284,6 +287,7 @@ export default function ContactDetailScreen() {
         : null;
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
+    setMemoryError(memoriesResult.error);
     setMessages(messagesResult.messages);
     setContactFollowups(followupsResult.followups);
     setContactFollowupError(followupsResult.error);
@@ -291,7 +295,7 @@ export default function ContactDetailScreen() {
     setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
     setMessageSeenError(seenError);
-    setError(contactResult.error ?? memoriesResult.error);
+    setError(contactResult.error);
     setLoading(false);
   }, [contactId, workspace?.id, workspace?.role]);
 
@@ -820,7 +824,9 @@ export default function ContactDetailScreen() {
       {activeSection === "knowledge" ? (
       <Card>
         <SectionTitle eyebrow="Kontaktwissen">Was FanMind berücksichtigen darf</SectionTitle>
-        {memories.length ? (
+        {memoryError ? (
+          <Text style={mobileStyles.error}>{memoryError}</Text>
+        ) : memories.length ? (
           memories.slice(0, 8).map((memory) => (
             <View key={memory.id} style={styles.memoryRow}>
               <View style={styles.memoryDot} />
