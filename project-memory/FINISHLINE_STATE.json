@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-23",
+  "updated": "2026-08-29",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": false,
@@ -21,8 +21,9 @@
   "sales_required_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
   "notes": {
     "phase4": "Production/Billing base only; never sales handoff.",
+    "phase6": "Current Mobile finishline excludes iOS/TestFlight; native iOS implementation foundations remain, while TestFlight external acceptance is deferred to Phase 8.",
     "phase3": "Facebook, Instagram, WhatsApp.",
     "phase7": "TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible.",
-    "phase8": "LinkedIn and later platforms; not started and outside current finishline."
+    "phase8": "iOS/TestFlight, LinkedIn and later platforms; not started and outside current finishline."
   }
 }
