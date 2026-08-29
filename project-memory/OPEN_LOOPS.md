@@ -22,9 +22,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-MOB-001 / FM-MOB-003
 - Status: OPEN
 - Updated: 2026-08-29
-- Gap: FM-MOB-003 is merged and bound to one successful signed Android preview, but owner real-device confirmation plus the broader Recovery/Purge, iOS/TestFlight, push and Store acceptance remain open.
-- Close when: required Android/iOS signed-build and device/store acceptance is evidence-bound to exact builds/commit.
-- Next check: install the already completed preview for merge `93496a4afac9b3b315c9985afbbce02b8524fc44` and confirm unseen-only Start, per-fan platform tabs, direct manual Follow-up and absent rejected symbol. Do not queue another build for this check. Keep iOS/TestFlight/push/Store separate.
+- Gap: FM-MOB-003 is merged and bound to one successful signed Android preview, but owner real-device confirmation plus the broader Recovery/Purge and applicable Push/Store acceptance remain open for the current finishline. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
+- Close when: the required current-finishline Android signed-build/device, Recovery/Purge and applicable Push/Store acceptance is evidence-bound to the exact build/commit.
+- Next check: install the already completed preview for merge `93496a4afac9b3b315c9985afbbce02b8524fc44` and confirm unseen-only Start, per-fan platform tabs, direct manual Follow-up and absent rejected symbol. Do not queue another build for this check. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
 
 ## FM-LOOP-004
 - Related: FM-AI-001
