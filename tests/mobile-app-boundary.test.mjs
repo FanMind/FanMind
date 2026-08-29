@@ -216,7 +216,7 @@ test("mobile uses completed as canonical follow-up status and still hides legacy
   assert.doesNotMatch(data, /update\(\{ status: "done" \}\)/u);
 });
 
-test("Mobile is an explicit active product stream in all central readers and the roadmap", async () => {
+test("Mobile is an explicit active product stream and TestFlight is Phase 8", async () => {
   const [readme, sourceOfTruth, agents, roadmap] = await Promise.all([
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../docs/SOURCE_OF_TRUTH.md", import.meta.url), "utf8"),
@@ -232,7 +232,16 @@ test("Mobile is an explicit active product stream in all central readers and the
   assert.match(agents, /canonical completed follow-up status is `completed`/u);
   assert.match(roadmap, /title: "Mobile-App für Android & iOS"/u);
   assert.match(roadmap, /Signierter interner Android-Build/u);
-  assert.match(roadmap, /iOS-TestFlight/u);
+
+  const phase6Start = roadmap.indexOf('phase: "Phase 6"');
+  const phase7Start = roadmap.indexOf('phase: "Phase 7"');
+  const phase8Start = roadmap.indexOf('phase: "Phase 8"');
+  const phase9Start = roadmap.indexOf('phase: "Phase 9"');
+  assert.ok(phase6Start >= 0 && phase7Start > phase6Start);
+  assert.ok(phase8Start > phase7Start && phase9Start > phase8Start);
+  assert.doesNotMatch(roadmap.slice(phase6Start, phase7Start), /iOS-TestFlight/u);
+  assert.match(roadmap.slice(phase8Start, phase9Start), /iOS-TestFlight/u);
+  assert.match(roadmap.slice(phase8Start, phase9Start), /Aus Phase 6 verschoben · Phase 8/u);
 });
 
 test("Web and Mobile have separate compiler and CI boundaries", () => {
