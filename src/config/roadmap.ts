@@ -124,7 +124,6 @@ export const roadmapPhases: RoadmapPhase[] = [
       { label: "Antwort kopieren und nativ teilen", state: "done", status: "Nur gewählter Text · Versand manuell" },
       { label: "Verschlüsselte Offline-Kontaktübersicht", state: "done", status: "24 h · maximal 50 · nur lesen" },
       { label: "Signierter interner Android-Build", state: "partial", status: "EAS-/Signing-Einrichtung offen" },
-      { label: "iOS-TestFlight", state: "planned", status: "Apple-Konto und Signing offen" },
       { label: "Push für Follow-up-Erinnerungen", state: "partial", status: "Konfiguration und Routing fertig · Zustellung offen" },
     ],
   },
@@ -158,6 +157,8 @@ export const roadmapPhases: RoadmapPhase[] = [
     availability: "later",
     items: [
       { label: "LinkedIn", state: "later", status: "Roadmap" },
+      // Aus Phase 6 verschoben · Phase 8
+      { label: "iOS-TestFlight", state: "later", status: "Phase 8" },
       { label: "YouTube, Threads & Reddit", state: "later", status: "Roadmap" },
       {
         label: "Telegram",

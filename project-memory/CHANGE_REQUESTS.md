@@ -36,6 +36,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: implement together as FM-MOB-003 because the three changes form one phone demo loop: unseen fan -> channel-specific history -> manual Follow-up.
 - Related task: FM-MOB-003
 
+## FM-CR-004
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: Move `iOS-TestFlight` out of Phase 6 and into Phase 8.
+- Classification: Roadmap and current-finishline scope reclassification; no runtime or provider mutation.
+- Affected areas: canonical roadmap, Mobile finishline/dependencies, external acceptance wording and central reader/tests.
+- Existing task/decision checked: FM-MOB-001, FM-DEP-002, FM-LOOP-003, EXT-MOBILE-IOS, `FINISHLINE_STATE.json`, `FANMIND_FINISHLINE.md` and the current Phase-8 boundary.
+- Dependencies: Phase 8 must remain not started during the current finishline; existing iOS code/build foundations remain untouched.
+- Decision: Phase 6 no longer requires iOS/TestFlight acceptance. `iOS-TestFlight` becomes a Phase-8 roadmap item and is not a blocker for the current through-Phase-7 finishline. This reclassification does not start Phase 8 and does not remove native iOS support or CI/build foundations.
+- Related task: FM-MOB-001
+
 ## Intake template
 
 ```text

@@ -13,12 +13,13 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-002
 - From: FM-MOB-001
-- Requires: exact Supabase redirect, EAS project/environments/token, existing or approved signing credentials, signed Android/iOS builds, Apple Developer/App Store Connect for iOS, real devices and separate Push/Store evidence.
+- Requires: exact Supabase redirect/recovery evidence, current EAS project/environments/token, existing Android signing credentials, signed Android build, real Android device acceptance and separate applicable Push/Store evidence for the current through-Phase-7 finishline.
 - Type: external platform + technical acceptance
 - Status: ACTIVE
 - Updated: 2026-08-29
-- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33260695232` / job `99122008690` produced one verified exact-merge signed Android internal artifact. Owner real-device acceptance, Supabase recovery redirect, iOS/TestFlight, push and Store evidence remain open.
-- Rule: repository CI and signed-artifact success still do not satisfy real-device or Store acceptance. Use the existing Android preview for device checks; do not automatically rebuild, submit, update or invent external identifiers.
+- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33260695232` / job `99122008690` produced one verified exact-merge signed Android internal artifact. Owner real-device acceptance, Supabase recovery redirect and applicable Push/Store evidence remain open.
+- Deferred boundary: Apple Developer/App Store Connect, signed iOS build, TestFlight and real iOS device acceptance were moved by owner decision FM-DEC-009 to Phase 8. They remain future external work and do not block FM-MOB-001/current sales finishline.
+- Rule: repository CI and signed-artifact success still do not satisfy real-device or Store acceptance. Use the existing Android preview for device checks; do not automatically rebuild, submit, update or invent external identifiers. Do not start iOS/TestFlight work before Phase 8 is explicitly started.
 
 ## FM-DEP-003
 - From: FM-AI-001
