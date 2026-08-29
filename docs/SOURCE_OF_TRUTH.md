@@ -122,7 +122,10 @@ Aktiv im App-Kern:
   Mobile aber ohne Aktionsbutton als `In Vorbereitung` markiert, bis die
   Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
   ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
-  Dienstfehler semantisch;
+  Dienstfehler semantisch. Solange die kontrollierte Provenienz-Migration in
+  Production noch fehlt, hält ein eng begrenzter Server-Read-Fallback bestehende
+  Web-Kontexte lesbar, kennzeichnet deren Provenienzfelder aber als fehlend;
+  Mobile zeigt solche Legacy-Analysen ausdrücklich nicht an;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand

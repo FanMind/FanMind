@@ -339,8 +339,8 @@ export type FanAnalysisReportRow = {
   source_message_count: number;
   source_from_at: string | null;
   source_to_at: string | null;
-  confidence_score: number;
-  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected";
+  confidence_score: number | null;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
   generated_at: string | null;
@@ -828,6 +828,8 @@ const CONTACT_AI_PROFILE_COLUMNS =
   "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,updated_at,created_at";
 const FAN_ANALYSIS_REPORT_COLUMNS =
   "id,workspace_id,contact_id,report_json,summary,model,source_message_count,source_from_at,source_to_at,confidence_score,review_status,reviewed_by,reviewed_at,generated_at,created_at,updated_at";
+const FAN_ANALYSIS_REPORT_LEGACY_COLUMNS =
+  "id,workspace_id,contact_id,report_json,summary,model,source_message_count,generated_at,created_at,updated_at";
 const WORKSPACE_VOICE_PROFILE_COLUMNS =
   "id,workspace_id,user_id,owner_label,language,tone,sentence_length,emoji_style,greeting_style,closing_style,common_phrases,avoided_phrases,sales_style,examples_count,confidence_score,updated_at,created_at";
 const SOCIAL_CONNECTION_PUBLIC_COLUMNS =
@@ -3933,6 +3935,45 @@ export async function getFanAnalysisReport(
     1,
     true,
   );
+  if (result.error && isMissingFanAnalysisProvenanceColumn(result.error)) {
+    const legacyResult = await postgrestSelect<
+      Omit<
+        FanAnalysisReportRow,
+        | "source_from_at"
+        | "source_to_at"
+        | "confidence_score"
+        | "review_status"
+        | "reviewed_by"
+        | "reviewed_at"
+      >
+    >(
+      "fan_analysis_reports",
+      accessToken,
+      FAN_ANALYSIS_REPORT_LEGACY_COLUMNS,
+      [
+        ["workspace_id", workspaceId],
+        ["contact_id", contactId],
+      ],
+      1,
+      true,
+    );
+    if (!legacyResult.error) {
+      return {
+        report: legacyResult.data
+          ? {
+              ...legacyResult.data,
+              source_from_at: null,
+              source_to_at: null,
+              confidence_score: null,
+              review_status: null,
+              reviewed_by: null,
+              reviewed_at: null,
+            }
+          : null,
+        error: null,
+      };
+    }
+  }
   if (result.error)
     return {
       report: null,
@@ -3941,6 +3982,24 @@ export async function getFanAnalysisReport(
       ),
     };
   return { report: result.data, error: null };
+}
+
+function isMissingFanAnalysisProvenanceColumn(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  const namesProvenanceColumn = [
+    "source_from_at",
+    "source_to_at",
+    "confidence_score",
+    "review_status",
+    "reviewed_by",
+    "reviewed_at",
+  ].some((column) => message.includes(column));
+  return (
+    namesProvenanceColumn &&
+    (message.includes("does not exist") ||
+      message.includes("schema cache") ||
+      message.includes("could not find"))
+  );
 }
 
 export async function upsertFanAnalysisReport(input: {

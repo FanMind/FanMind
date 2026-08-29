@@ -120,11 +120,19 @@ review state. Production activation is still fail-closed: while the required
 Workspace analysis/privacy contract is not applied and validated, Mobile shows
 the feature as `In Vorbereitung` and exposes no generation control. The route
 returns typed 400/403/422/429/503 failures for future authorized clients.
+An inactive/read-only Workspace is a permission denial, never a missing-contact
+response. Until the controlled provenance migration is verified in Production,
+the shared Web/server reader may fall back to the old report column set only
+when PostgREST explicitly reports a missing provenance column; it returns null
+provenance so Mobile remains fail-closed and does not render the conclusions.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows, explicit truncation state and client-side semantic priority ranks
 (`urgent`, `high`, `normal|medium`, `low`). The compact dashboard renders at
 most the first 20 and links to the central Follow-up screen.
+Per-contact Follow-up load errors remain section-specific on initial load and
+after either manual or suggestion-based creation, so a failed refresh can never
+be rendered as a valid empty list next to a save-success notice.
 
 Server-only functions remain server-only:
 

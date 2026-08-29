@@ -67,6 +67,31 @@ type DisplayAnalysisReport = Pick<
   | "updated_at"
 >;
 
+function hasCompleteAnalysisProvenance(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: NonNullable<DisplayAnalysisReport["review_status"]>;
+} {
+  if (!report?.source_from_at || !report.source_to_at) return false;
+  const sourceFrom = Date.parse(report.source_from_at);
+  const sourceTo = Date.parse(report.source_to_at);
+  return (
+    Number.isFinite(sourceFrom) &&
+    Number.isFinite(sourceTo) &&
+    sourceFrom <= sourceTo &&
+    typeof report.confidence_score === "number" &&
+    Number.isFinite(report.confidence_score) &&
+    report.confidence_score >= 0 &&
+    report.confidence_score <= 100 &&
+    ["unreviewed", "confirmed", "corrected", "rejected"].includes(
+      String(report.review_status),
+    )
+  );
+}
+
 const CONTACT_SECTIONS: Array<{ key: ContactSection; label: string }> = [
   { key: "messages", label: "Nachrichten" },
   { key: "followups", label: "Follow-ups" },
@@ -410,6 +435,7 @@ export default function ContactDetailScreen() {
       );
       const followupsResult = await listContactFollowups(workspace.id, contact.id);
       setContactFollowups(followupsResult.followups);
+      setContactFollowupError(followupsResult.error);
     }
     setManualFollowupBusy(false);
   }
@@ -436,6 +462,7 @@ export default function ContactDetailScreen() {
       setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
       const followupsResult = await listContactFollowups(workspace.id, contact.id);
       setContactFollowups(followupsResult.followups);
+      setContactFollowupError(followupsResult.error);
     }
     setFollowupBusy(false);
   }
@@ -818,7 +845,12 @@ export default function ContactDetailScreen() {
             Vorsichtige Hinweise aus freigegebenem Verlauf und Kontaktwissen. Keine Diagnose und keine sensiblen Ableitungen.
           </Text>
           {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
-          {analysisReport ? (
+          {analysisReport && !hasCompleteAnalysisProvenance(analysisReport) ? (
+            <Text style={mobileStyles.error}>
+              Diese gespeicherte Fan-Analyse wird ohne vollständigen Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt.
+            </Text>
+          ) : null}
+          {hasCompleteAnalysisProvenance(analysisReport) ? (
             <View style={styles.analysisFields}>
               {ANALYSIS_FIELDS.map(([key, label]) => {
                 const value = analysisReport.report_json?.[key];
@@ -833,15 +865,15 @@ export default function ContactDetailScreen() {
                 Zeitraum: {formatAnalysisDate(analysisReport.source_from_at)} bis {formatAnalysisDate(analysisReport.source_to_at)}
               </Text>
               <Text style={mobileStyles.muted}>
-                Stichprobe: {analysisReport.source_message_count ?? 0} Nachrichten · Konfidenz: {analysisReport.confidence_score ?? 0}/100
+                Stichprobe: {analysisReport.source_message_count ?? 0} Nachrichten · Konfidenz: {analysisReport.confidence_score}/100
               </Text>
               <Text style={analysisReport.review_status === "confirmed" ? mobileStyles.success : styles.analysisReviewWarning}>
                 Prüfstatus: {analysisReviewLabel(analysisReport.review_status)}
               </Text>
             </View>
-          ) : (
+          ) : !analysisReport ? (
             <Text style={mobileStyles.muted}>Noch keine Fan-Analyse gespeichert.</Text>
-          )}
+          ) : null}
           <View style={styles.analysisPreparation}>
             <StatusPill tone="neutral">In Vorbereitung</StatusPill>
             <Text style={mobileStyles.muted}>

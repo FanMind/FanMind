@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
       }
       if (
         error.code === "resource_forbidden" ||
-        error.code === "workspace_member_mutations_disabled"
+        error.code === "workspace_member_mutations_disabled" ||
+        error.code === "workspace_inactive"
       ) {
         return jsonError(
           "Fan-Analyse ist für diesen Workspace-Zugang nicht freigegeben.",
