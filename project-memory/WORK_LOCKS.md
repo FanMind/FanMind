@@ -15,7 +15,7 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-MOB-003
 - Status: ACTIVE
 - Holder: ChatGPT Mobile fan-inbox/channel/follow-up completion session 2026-08-29
-- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / pending
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; pre-PR exact scope head `d845056773ba9bb40adcf9a0086b84db7c6aad3e`
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile read/seen state plus signed Android preview build
 - Scope: dynamic message-channel switch for every contact, unseen-inbound-only start dashboard, manual owner Follow-up creation in the contact detail, exact-head checks, merge and one replacement Android preview; no schema/provider/Production mutation.
