@@ -402,6 +402,29 @@ npx eas-cli@21.2.0 build --platform android --profile preview
 
 Das Preview-Profil erzeugt ein direkt installierbares APK für den internen Test. Der Build-Link ist wie ein vertrauliches internes Artefakt zu behandeln.
 
+### Kontrollierter Android-Store-Build
+
+Der manuelle Workflow
+`.github/workflows/mobile-android-store-build.yml` erzeugt genau ein signiertes
+Android-App-Bundle aus dem geprüften `main`-Commit. Er ist ausschließlich an
+das geschützte Environment `mobile-production`, das EAS-Profil `production`,
+die Plattform `android` und die Bestätigung
+`queue-one-android-store-build` gebunden.
+
+Vor dem Build werden die vorhandene EAS-Projektbindung sowie die öffentlichen
+Production-Ziele erneut geprüft. Production muss exakt auf das bestätigte
+FanMind-Supabase-Projekt und `https://fanmind.ch` zeigen. Der Workflow verwendet
+vorhandene Signing-Credentials unverändert (`--freeze-credentials`), wartet auf
+den terminalen EAS-Status und akzeptiert nur ein Store-Artefakt für denselben
+Commit. Er speichert ausschließlich einen redaktierten, kurzlebigen Receipt;
+Build-ID und private Artefakt-URL werden nicht in GitHub ausgegeben.
+
+Submit und Update bleiben in diesem Workflow technisch deaktiviert. Das AAB
+wird erst in einem separaten Schritt in Google Play übertragen, nachdem der
+Play-App-Datensatz, die Store-Fragebögen, die Datenschutzfreigabe und die
+unmittelbare Veröffentlichungsbestätigung vorliegen. Ein erfolgreicher
+Store-Build ist deshalb noch keine Veröffentlichung.
+
 ### Interner iOS-Build
 
 Nach Apple-Account und Geräte-Registrierung:
