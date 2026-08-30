@@ -62,6 +62,10 @@ jobs:
         working-directory: apps/mobile
         run: npm ci --no-audit --no-fund
 
+      - name: Validate exact Store metadata, branding and release profile
+        working-directory: apps/mobile
+        run: npm run store:check
+
       - name: Verify exact existing EAS project binding
         working-directory: apps/mobile
         run: |
