@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import {
   chmod,
   mkdtemp,
+  open,
   readFile,
   rm,
   stat,
@@ -457,8 +458,15 @@ test("the preparer writes one mode-0600 pending file and the verifier rejects it
       prepareArguments,
     );
     const outputText = `${stdout}\n${stderr}`;
-    const metadata = await stat(output);
-    const template = JSON.parse(await readFile(output, "utf8"));
+    const outputHandle = await open(output, "r");
+    let metadata;
+    let template;
+    try {
+      metadata = await outputHandle.stat();
+      template = JSON.parse(await outputHandle.readFile("utf8"));
+    } finally {
+      await outputHandle.close();
+    }
 
     assert.equal(metadata.mode & 0o777, 0o600);
     assert.equal(
