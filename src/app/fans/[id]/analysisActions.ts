@@ -22,7 +22,6 @@ import {
 } from "@/lib/supabase/server";
 import {
   requireContactInActiveAuthorizedWorkspace,
-  requireContactInActiveAuthorizedWorkspaceMember,
   requireContactInAuthorizedWorkspace,
 } from "@/lib/workspaceAuthorization";
 import { getResolvedWorkspaceAiTier } from "@/lib/workspaceAiTierEntitlements";
@@ -324,12 +323,11 @@ export async function analyzeFanCommunication(
     };
   }
 
-  const { workspace, user, contact } = explicitAccessToken
-    ? await requireContactInActiveAuthorizedWorkspaceMember(
-        contactId,
-        explicitAccessToken,
-      )
-    : await requireContactInActiveAuthorizedWorkspace(contactId);
+  const { workspace, user, contact } =
+    await requireContactInActiveAuthorizedWorkspace(
+      contactId,
+      explicitAccessToken,
+    );
   // Lifecycle guard only. Billing authorization requires server-owned
   // entitlement state before Standard/Plus/Ultra can be activated.
   if (isWorkspaceArchivedAfterSubscriptionEnd(workspace)) {

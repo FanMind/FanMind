@@ -311,7 +311,7 @@ test("member mutations and external processing stay owner-only and entitlement-s
   );
   assert.match(
     analysis.slice(analyzeStart),
-    /requireContactInActiveAuthorizedWorkspace\(contactId\)[\s\S]*OPENAI_RESPONSES_URL/u,
+    /requireContactInActiveAuthorizedWorkspace\([\s\S]*contactId,[\s\S]*explicitAccessToken[\s\S]*OPENAI_RESPONSES_URL/u,
   );
   assert.match(
     fans,

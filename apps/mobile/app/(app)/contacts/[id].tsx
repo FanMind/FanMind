@@ -928,7 +928,7 @@ export default function ContactDetailScreen() {
                 Prüfstatus: {analysisReviewLabel(analysisReport.review_status)}
               </Text>
             </View>
-          ) : !analysisReport ? (
+          ) : !analysisReport && !analysisError ? (
             <Text style={mobileStyles.muted}>Noch keine Fan-Analyse gespeichert.</Text>
           ) : null}
           <View style={styles.analysisPreparation}>

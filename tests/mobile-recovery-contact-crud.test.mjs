@@ -439,8 +439,9 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(route, /workspace_inactive/u);
   assert.match(
     action,
-    /explicitAccessToken[\s\S]*requireContactInActiveAuthorizedWorkspaceMember/u,
+    /requireContactInActiveAuthorizedWorkspace\([\s\S]*contactId,[\s\S]*explicitAccessToken/u,
   );
+  assert.doesNotMatch(action, /requireContactInActiveAuthorizedWorkspaceMember/u);
   assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
   assert.match(
     action,
@@ -481,6 +482,10 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   );
   assert.match(server, /source_from_at: null[\s\S]*review_status: null/u);
   assert.match(detail, /memoryError[\s\S]*mobileStyles\.error[\s\S]*memories\.length/u);
+  assert.match(
+    detail,
+    /!analysisReport && !analysisError[\s\S]*Noch keine Fan-Analyse gespeichert/u,
+  );
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {

@@ -131,7 +131,11 @@ Aktiv im App-Kern:
   ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
   Stichprobenzähler und Konfidenzberechnung ausgeschlossen. Menschlich
   verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
-  ihre Schlussfolgerungen. Solange die kontrollierte Provenienz-Migration in
+  ihre Schlussfolgerungen. Auch die Bearer-Route verlangt die aktive
+  Workspace-Owner-Autorisierung; Mitglieder dürfen weder Analysezustand noch
+  KI-Verbrauch verändern. Ein Analyse-Ladefehler unterdrückt den Leerzustand,
+  weil er die Abwesenheit eines Berichts nicht beweist. Solange die
+  kontrollierte Provenienz-Migration in
   Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
   bestehende Web-Kontexte lesbar. Er wird nur nach Einzelprüfung aller neuen
   Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen

@@ -113,8 +113,10 @@ client policy, and always includes both current Workspace and contact IDs.
 
 The Mobile contact detail exposes the same three sections for every fan:
 `Nachrichten`, `Follow-ups` and `Kontaktwissen`. The fan-analysis endpoint
-accepts a Mobile Bearer token, reuses the existing authorized Web action and
-never moves provider credentials or service-role access into the app. Mobile
+accepts a Mobile Bearer token only through the active owner authorization path,
+reuses the existing authorized Web action and never moves provider credentials
+or service-role access into the app. Workspace members cannot create or update
+analysis state or consume provider quota. Mobile
 renders a stored report only with source period, sample size, confidence and
 review state. Production activation is still fail-closed: while the required
 Workspace analysis/privacy contract is not applied and validated, Mobile shows
@@ -130,7 +132,8 @@ and do not render its conclusions. Current reports expose source period,
 confidence and review state on both surfaces. A rejected review state is also
 fail-closed: Web and Mobile show only rejection metadata, never the rejected
 conclusions. Capability lookup failures map to the typed service-unavailable
-state before the disabled-capability branch.
+state before the disabled-capability branch. An analysis-read error gates the
+empty state because a failed read cannot prove that no saved report exists.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows and explicit truncation state. Priority groups are loaded in semantic

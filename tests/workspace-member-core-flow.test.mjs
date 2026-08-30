@@ -90,7 +90,7 @@ test("member CRM mutations stay disabled while owner processing remains contact-
   );
   assert.match(
     analysisActions,
-    /analyzeFanCommunication[\s\S]*requireContactInActiveAuthorizedWorkspace\(contactId\)/u,
+    /analyzeFanCommunication[\s\S]*requireContactInActiveAuthorizedWorkspace\([\s\S]*contactId,[\s\S]*explicitAccessToken/u,
   );
   assert.match(
     analysisActions,
