@@ -40,6 +40,7 @@ test("English landing uses the complete translation wrapper", async () => {
     '"Fan-CRM für Nachrichten, Erinnerungen": "Fan CRM for messages and reminders"',
     '"ein nächster Schritt.": "a next step."',
     '"Kostenlos testen": "Try for free"',
+    '"Hilfe & Support": "Help & support"',
     '"Persönliche Anfrage statt automatischem Newsletter.": "A personal inquiry instead of an automated newsletter."',
   ];
 

@@ -12,6 +12,7 @@ export const landingEnglishCopy: Record<string, string> = {
   "Kampagnen, Reichweiten-Analytics und Rollen/Rechte sind klar als spätere Ausbaustufen markiert.": "Campaigns, reach analytics and roles and permissions are clearly marked as later expansion stages.",
   "Keine automatische Sendefunktion, keine Bankdaten in FanMind und sichere Zahlung über den Zahlungsanbieter.": "No automatic sending, no bank details in FanMind and secure payment through the payment provider.",
   "Kostenlos testen": "Try for free",
+  "Hilfe & Support": "Help & support",
   "Klare nächste Schritte": "Clear next steps",
   "VIP · premium_interessiert · Letzter Kontakt: Heute, 09:42": "VIP · premium interest · Last contact: Today, 09:42",
   "Vorschlag: Early-Bird Zugang und 10 % Rabatt sind noch verfügbar.": "Suggestion: Early-bird access and a 10% discount are still available.",
