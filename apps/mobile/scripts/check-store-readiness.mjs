@@ -102,7 +102,7 @@ function appStorePortalRows(markdown) {
     }));
 }
 
-function verifyAppStorePortalWorksheet(markdown) {
+function verifyAppStorePortalWorksheet(markdown, expectedSubtitles) {
   const rows = appStorePortalRows(markdown);
   if (rows.length !== APPLE_PORTAL_FIELD_CONTRACT.length) {
     fail("store_app_store_portal_matrix_invalid");
@@ -140,7 +140,6 @@ function verifyAppStorePortalWorksheet(markdown) {
   const rowsByField = new Map(rows.map((row) => [row.field, row]));
   const expectedReadyValues = new Map([
     ["Name", "`FanMind`"],
-    ["Subtitle", "KI-CRM: Kontakte & Follow-ups"],
     ["Description", "STORE_LISTING.md"],
     ["Keywords", "DE-/EN-Suchbegriffe"],
     ["Promotional Text", "deutscher und englischer"],
@@ -158,10 +157,10 @@ function verifyAppStorePortalWorksheet(markdown) {
       fail("store_app_store_portal_identity_invalid");
     }
   }
+  const subtitleAction = rowsByField.get("Subtitle")?.action;
   if (
-    !rowsByField
-      .get("Subtitle")
-      ?.action.includes("AI CRM: contacts & follow-ups")
+    !subtitleAction?.includes(expectedSubtitles.de)
+    || !subtitleAction.includes(expectedSubtitles.en)
   ) {
     fail("store_app_store_portal_identity_invalid");
   }
@@ -264,7 +263,10 @@ export function evaluateStoreReadiness(input) {
     "Apple - Promotional Text EN",
   );
   const normalizedFeatureSource = featureSource.replace(/\r\n?/gu, "\n");
-  const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet);
+  const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet, {
+    de: subtitleDe,
+    en: subtitleEn,
+  });
 
   assertLength(appName, 2, 30, "store_app_name_length_invalid");
   assertLength(subtitleDe, 2, 30, "store_subtitle_de_length_invalid");

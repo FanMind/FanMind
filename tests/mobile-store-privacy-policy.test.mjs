@@ -318,6 +318,18 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     () =>
       evaluateStoreReadiness({
         ...validInput,
+        listing: listing.replace(
+          "AI CRM: contacts & follow-ups",
+          "Random subtitle under 30 chars",
+        ),
+      }),
+    /store_app_store_portal_identity_invalid/u,
+  );
+
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
         appStoreWorksheet: appStoreWorksheet.replaceAll(
           "https://developer.apple.com",
           "https://example.invalid",
