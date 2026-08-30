@@ -240,9 +240,12 @@ A Web merge can modify shared API contracts but cannot publish a mobile binary. 
     before one Android AAB; Submit, Update and Play publication remain separate.
 
 Ein SHA-gebundener Geräte-Abnahmevalidator in
-`docs/mobile/DEVICE_ACCEPTANCE.md` verbindet Android und iOS jeweils getrennt
-mit dem redigierten Receipt des exakten signierten Preview-Builds. Er ersetzt
-keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
+`docs/mobile/DEVICE_ACCEPTANCE.md` verbindet den aktuellen Android-Nachweis
+mit dem redigierten Receipt des exakten signierten Preview-Builds. Sein
+Vorbereitungsbefehl übernimmt ausschließlich die Receipt-Bindung und lässt
+alle 19 Geräteprüfungen auf `pending`; er ersetzt keinen echten Gerätetest.
+Ein separater iOS-Nachweis bleibt für Phase 8 möglich und läuft ebenfalls nur
+mit privaten Nachweisen.
 
 ## Implementation phases
 

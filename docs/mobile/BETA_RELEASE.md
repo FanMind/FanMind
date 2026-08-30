@@ -491,8 +491,9 @@ native PNG-Verträge erzeugt:
 Die bearbeitbaren SVG-Quellen liegen im selben Branding-Ordner. Das vorhandene
 96 × 96 Pixel große Social-Avatar-Asset wurde nicht hochskaliert. Der isolierte
 Native-Prebuild muss sowohl das iOS-AppIcon-Set als auch Androids Adaptive
-Foreground tatsächlich erzeugen. Die visuelle Abnahme unter realen
-Android-/iOS-Masken bleibt an den ersten signierten Build gebunden.
+Foreground tatsächlich erzeugen. Die aktuelle visuelle Abnahme ist an den
+signierten Android-Build gebunden; iOS-Masken werden erst mit dem separaten
+signierten Phase-8-Build abgenommen.
 
 Vorbereitete deutsche und englische Store-Texte, URLs, Screenshot-Slots und die
 noch manuell in den Store-Portalen zu bestätigenden Datenschutzangaben stehen in
@@ -500,6 +501,8 @@ noch manuell in den Store-Portalen zu bestätigenden Datenschutzangaben stehen i
 Privacy und Google Play Data Safety steht in
 `docs/mobile/STORE_PRIVACY_DECLARATIONS.md`; sie bleibt bis zur Prüfung des
 signierten Builds und zur externen Datenschutz-/Rechtsfreigabe ein Entwurf.
+Der exakte Android-Portal-Handoff nach der Google-Kontofreigabe steht in
+`docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
 
 `npm run store:check` prüft die Store-Texte vor jedem Release zusätzlich gegen
 die aktuellen Zeichenlimits, die sechs synthetischen Screenshot-Slots, die

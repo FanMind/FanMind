@@ -114,6 +114,21 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Open follow-up: execute the private Recovery/device checks against the accepted signed Android build; do not repeat the provider write unless a fresh read proves drift.
 - Work lock released: no; `LOCK-FM-MOB-001-ANDROID-STORE-20260830` remains ACTIVE for Android Recovery/Play continuation.
 
+## RECEIPT-FM-MOB-001-ANDROID-HANDOFF-20260830
+- Task: FM-MOB-001 / FM-CR-006
+- Started: 2026-08-30 after the owner explicitly resumed the Android completion work
+- Finished: 2026-08-30 repository preparation complete; external device/Google acceptance remains open
+- Branch/PR: `mobile/android-play-handoff-20260830` / pending
+- Preflight checked: current Git/branch, AGENTS and mandatory Project Memory readers, drift/freshness preflight, exact Android Preview/AAB evidence, Mobile device/store/privacy readers, current public privacy and account-deletion pages and the unchanged Google identity-review blocker.
+- Prior attempts found: the Preview, bounded UI observation, Production redirect and exact Android `1.0.0` AAB already exist. Another build, iOS/TestFlight work or invented device evidence would repeat or overstate completed work.
+- Dependency result: repository-only handoff preparation is safe under the active Mobile lock. The 19 real-device checks and Google portal acceptance remain external and cannot be self-approved by code.
+- Planned evidence: fail-closed private Android evidence-template preparation with negative tests; Android/iOS scope reconciliation; exact Google Play handoff; Store/Mobile focused regression; full Project Memory/truth/drift checks; final diff countercheck.
+- Changes made: added the mode-0600, pending-only, receipt-bound Android evidence preparer; added negative and privacy tests; published the exact existing-AAB Google Play handoff; reconciled Android-current/iOS-Phase-8 Store, device, privacy, architecture, beta and README guidance; strengthened Product Truth assertions; refreshed the canonical Mobile continuation.
+- Regression/security countercheck: focused Mobile tests passed 29/29; Store readiness passed; full operations passed 1062/1062; focused ESLint, Product Truth, Project Memory Status/Quality, drift/freshness/preflight/milestone/v8 controls passed. The preparer rejects Store/Production receipts, pre-passed checks or safety assertions, invalid/ordered timestamp drift and overwrite and never logs private identifiers. PR #1030 review additionally caused same-handle test reading plus explicit pending safety confirmations and strict calendar validation before final merge.
+- Evidence produced: FM-EV-030; public read of `https://fanmind.ch/datenschutz` and `https://fanmind.ch/account-deletion`; repository tests only.
+- Result status: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED pending real-device and Google Play external acceptance.
+- Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
+
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
 - Started: 2026-08-19 12:14 Europe/Vienna

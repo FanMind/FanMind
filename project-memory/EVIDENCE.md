@@ -359,4 +359,15 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a fresh exact Production URL Configuration read without `fanmind://reset-password`, a changed Site URL/existing redirect set, or a signed-device Recovery callback rejected despite the exact current link would reopen provider configuration diagnosis before any repeated write.
 - Acceptance: VERIFIED for the exact Production redirect setting only; real Recovery acceptance remains open
 
+## FM-EV-030
+- Related: FM-MOB-001 / FM-CR-006 / EXT-MOBILE-ANDROID / EXT-MOBILE-PUSH-STORE
+- Date: 2026-08-30
+- Target: repository-only Android device/Google Play handoff on `mobile/android-play-handoff-20260830`; existing Preview merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` and existing Production AAB commit `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; no provider or Store write target
+- Type: fail-closed private evidence-template preparation, public Store-policy availability read and local repository regression/countercheck
+- Result: `mobile:device:acceptance:prepare` now validates a private mode-0600 redacted Preview receipt, rejects duplicate or drifted receipt fields and creates exactly one mode-0600 pending-only evidence template bound to the receipt hash, exact commit and build timestamp. It refuses overwrite, Production/store receipts, unsafe directories, invalid normalized calendar timestamps and any pre-passed check or safety observation. `GOOGLE_PLAY_HANDOFF.md` binds the remaining portal sequence to the already verified Android `1.0.0` AAB and prohibits a new build. Device/store/privacy readers now consistently limit the current finishline to Android and keep iOS/TestFlight in Phase 8. The focused Mobile set passed 29/29, Store readiness passed, the full operations suite passed 1062/1062, focused ESLint passed and Product Truth/Project Memory/drift controls passed. Public reads on 2026-08-30 confirmed the FanMind privacy and account-deletion pages were available.
+- Negative evidence: no build was queued, no private receipt or device evidence was generated inside the repository, no check was marked passed, and no EAS, Supabase, Google Play, push, database, Submit/Update, review, publication or iOS/TestFlight action occurred.
+- Limitations: the 19 real-device checks, real Recovery flow, actual Store screenshots/legal confirmation, Google phone verification/app record/test-track/AAB upload and Play review remain external. Google developer identity/document review is still pending.
+- Falsification: any generated template that exposes receipt values, pre-passes a check, accepts a Production/store receipt, overwrites evidence, is not bound to the exact Preview receipt or survives a failed validator invalidates this preparation. A changed Google status requires fresh portal reconciliation before continuing.
+- Acceptance: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 and the external Android/Play controls remain OPEN/IMPLEMENTED_NOT_VERIFIED
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

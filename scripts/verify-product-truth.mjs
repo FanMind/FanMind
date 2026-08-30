@@ -127,7 +127,11 @@ const checkedFiles = [
   "src/lib/metaContentStagingMigrationPolicy.mjs",
   "scripts/operations/mobile-release-resource-readiness.mjs",
   "scripts/operations/mobile-signed-build-completion.mjs",
+  "scripts/operations/prepare-mobile-device-acceptance.mjs",
   "apps/mobile/scripts/check-store-readiness.mjs",
+  "docs/mobile/DEVICE_ACCEPTANCE.md",
+  "docs/mobile/GOOGLE_PLAY_HANDOFF.md",
+  "tests/mobile-device-acceptance-evidence.test.mjs",
   "tests/mobile-native-release-policy.test.mjs",
   "tests/mobile-store-privacy-policy.test.mjs",
   "scripts/final-go-live-preflight.mjs",
@@ -1476,6 +1480,26 @@ requireText(
   "scripts/operations/mobile-signed-build-completion.mjs",
   "MOBILE_SIGNED_BUILD_COMPLETION_VERIFICATION=PASS",
   "Die Mobile-Build-Abschlussprüfung muss einen redigierten PASS-Vertrag besitzen.",
+);
+requireText(
+  "package.json",
+  '"mobile:device:acceptance:prepare": "node scripts/operations/prepare-mobile-device-acceptance.mjs"',
+  "Die private Mobile-Geräteabnahme muss einen festen fail-closed Vorbereitungsbefehl besitzen.",
+);
+requireText(
+  "scripts/operations/prepare-mobile-device-acceptance.mjs",
+  'template[field] = "pending"',
+  "Die Geräteabnahme-Vorbereitung darf keinen realen Prüfpunkt vorab freigeben.",
+);
+requireText(
+  "docs/mobile/GOOGLE_PLAY_HANDOFF.md",
+  "Genau das bereits verifizierte Android-`1.0.0`-AAB",
+  "Der Google-Play-Handoff muss das bestehende Android-AAB als einzige Fortsetzungsbasis festschreiben.",
+);
+requireText(
+  "docs/mobile/GOOGLE_PLAY_HANDOFF.md",
+  "Keinen neuen Build starten",
+  "Der Google-Play-Handoff muss einen unnötigen zweiten Android-Build ausdrücklich sperren.",
 );
 requireText(
   "tests/mobile-native-release-policy.test.mjs",

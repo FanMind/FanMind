@@ -89,6 +89,7 @@
     "mobile:signed-build:preflight": "node scripts/operations/mobile-signed-build-preflight.mjs",
     "mobile:signed-build:completion": "node scripts/operations/mobile-signed-build-completion.mjs",
     "mobile:signed-build:receipt": "node scripts/operations/write-mobile-signed-build-receipt.mjs",
+    "mobile:device:acceptance:prepare": "node scripts/operations/prepare-mobile-device-acceptance.mjs",
     "mobile:device:acceptance:verify": "node scripts/operations/verify-mobile-device-acceptance.mjs",
     "db:mobile-push-registrations:check": "node scripts/operations/mobile-push-registration-migration-runner.mjs --check",
     "db:mobile-push-registrations:verify": "node scripts/operations/mobile-push-registration-migration-runner.mjs --verify",
