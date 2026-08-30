@@ -150,10 +150,23 @@ function parseFlatRecord(bytes, label) {
 }
 
 function isIsoUtc(value) {
+  if (typeof value !== "string") return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/u.exec(
+    value,
+  );
+  if (!match) return false;
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return false;
+  const date = new Date(parsed);
+  const milliseconds = Number((match[7] ?? "0").padEnd(3, "0"));
   return (
-    typeof value === "string" &&
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/u.test(value) &&
-    Number.isFinite(Date.parse(value))
+    date.getUTCFullYear() === Number(match[1])
+    && date.getUTCMonth() + 1 === Number(match[2])
+    && date.getUTCDate() === Number(match[3])
+    && date.getUTCHours() === Number(match[4])
+    && date.getUTCMinutes() === Number(match[5])
+    && date.getUTCSeconds() === Number(match[6])
+    && date.getUTCMilliseconds() === milliseconds
   );
 }
 

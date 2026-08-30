@@ -300,6 +300,15 @@ test("evidence fails closed on main commit, platform, build identity, timestamp 
       error: /evidence_timestamp_order_invalid/u,
     },
     {
+      fixture: {
+        evidence: {
+          startedAt: "2026-09-31T09:00:00Z",
+          completedAt: "2026-10-02T10:00:00Z",
+        },
+      },
+      error: /evidence_timestamp_order_invalid/u,
+    },
+    {
       fixture: { evidence: { signedBuildReceiptSha256: "0".repeat(64) } },
       error: /signed_build_receipt_sha_mismatch/u,
     },
@@ -431,10 +440,13 @@ test("the private preparer binds the exact Preview receipt but never pre-approve
     assert.equal(template.completedAt, "replace-with-completion-utc");
     assert.equal(
       Object.values(template).filter((value) => value === "pending").length,
-      19,
+      23,
     );
     assert.equal(template.pushTested, false);
-    assert.equal(template.automaticSendingObserved, false);
+    assert.equal(template.automaticSendingObserved, "pending");
+    assert.equal(template.customerDataUsed, "pending");
+    assert.equal(template.secretsRecorded, "pending");
+    assert.equal(template.pushDeliveryObserved, "pending");
     assert.deepEqual(template.issues, []);
   });
 });
@@ -471,9 +483,13 @@ test("the preparer writes one mode-0600 pending file and the verifier rejects it
     assert.equal(metadata.mode & 0o777, 0o600);
     assert.equal(
       Object.values(template).filter((value) => value === "pending").length,
-      19,
+      23,
     );
     assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_CHECKS=19/u);
+    assert.match(
+      outputText,
+      /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_SAFETY_CONFIRMATIONS=4/u,
+    );
     assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_STATE=pending/u);
     assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE=PASS/u);
     assert.doesNotMatch(
@@ -522,6 +538,15 @@ test("the preparer rejects Store receipts and timestamps before the signed Previ
         }),
       /started_at_before_build/u,
     );
+    assert.throws(
+      () =>
+        createMobileDeviceAcceptanceTemplate({
+          signedBuildReceiptBytes: Buffer.from(receiptBytes, "utf8"),
+          acceptanceId: "2026-08-30-mobile-android-001",
+          startedAt: "2026-09-31T09:00:00Z",
+        }),
+      /started_at_invalid/u,
+    );
   });
 });
 
@@ -557,7 +582,10 @@ test("the acceptance handoff is local-only, private and part of the Operations s
   assert.match(runbook, /--expected-main-commit/u);
   assert.match(runbook, /push-staging-gate/u);
   assert.match(runbook, /mobile:device:acceptance:prepare/u);
-  assert.match(runbook, /Every real-device field remains\s+`"pending"`/u);
+  assert.match(
+    runbook,
+    /All 19 real-device checks and the four\s+safety observations remain `"pending"`/u,
+  );
   assert.match(runbook, /iOS\/TestFlight and an iPhone record are Phase 8/u);
   assert.match(runbook, /Keinen neuen Build starten/u);
   assert.match(beta, /DEVICE_ACCEPTANCE\.md/u);

@@ -44,6 +44,12 @@ const PUSH_CHECK_FIELDS = [
   "pushRegistration",
   "pushOptOut",
 ];
+const SAFETY_CONFIRMATION_FIELDS = [
+  "automaticSendingObserved",
+  "customerDataUsed",
+  "secretsRecorded",
+  "pushDeliveryObserved",
+];
 const SIGNED_BUILD_RECEIPT_KEYS = [
   "schemaVersion",
   "completedAt",
@@ -65,10 +71,23 @@ function fail(code) {
 }
 
 function isIsoUtc(value) {
+  if (typeof value !== "string") return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/u.exec(
+    value,
+  );
+  if (!match) return false;
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return false;
+  const date = new Date(parsed);
+  const milliseconds = Number((match[7] ?? "0").padEnd(3, "0"));
   return (
-    typeof value === "string"
-    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/u.test(value)
-    && Number.isFinite(Date.parse(value))
+    date.getUTCFullYear() === Number(match[1])
+    && date.getUTCMonth() + 1 === Number(match[2])
+    && date.getUTCDate() === Number(match[3])
+    && date.getUTCHours() === Number(match[4])
+    && date.getUTCMinutes() === Number(match[5])
+    && date.getUTCSeconds() === Number(match[6])
+    && date.getUTCMilliseconds() === milliseconds
   );
 }
 
@@ -159,10 +178,7 @@ export function createMobileDeviceAcceptanceTemplate({
   template.pushTested = false;
   template.pushStagingGateSha256 = null;
   for (const field of PUSH_CHECK_FIELDS) template[field] = "not_tested";
-  template.automaticSendingObserved = false;
-  template.customerDataUsed = false;
-  template.secretsRecorded = false;
-  template.pushDeliveryObserved = false;
+  for (const field of SAFETY_CONFIRMATION_FIELDS) template[field] = "pending";
   template.issues = [];
   return Object.freeze(template);
 }
@@ -277,6 +293,9 @@ async function main() {
     );
     console.log(
       `MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_CHECKS=${REQUIRED_CHECK_FIELDS.length}`,
+    );
+    console.log(
+      `MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_SAFETY_CONFIRMATIONS=${SAFETY_CONFIRMATION_FIELDS.length}`,
     );
     console.log("MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_STATE=pending");
     console.log("MOBILE_DEVICE_ACCEPTANCE_PRIVATE_VALUES_OUTPUT=false");

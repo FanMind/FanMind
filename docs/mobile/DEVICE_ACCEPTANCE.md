@@ -92,12 +92,15 @@ npm run mobile:device:acceptance:prepare -- \
 
 The preparer validates the exact signed Preview boundary, copies only the
 receipt-bound commit and timestamps, calculates the receipt SHA-256 and writes
-the worksheet once with mode `0600`. Every real-device field remains
-`"pending"` and `completedAt` remains a replacement marker. It never reports a
-device PASS. Start it immediately before the test, replace a check with
-`"passed"` only after observing it and set the real UTC completion timestamp
-after the last check. If the date or sequence changes, use a new acceptance ID
-and a new output file; the preparer refuses to overwrite prior evidence.
+the worksheet once with mode `0600`. All 19 real-device checks and the four
+safety observations remain `"pending"`; `completedAt` remains a replacement
+marker. It never reports a device PASS. Start it immediately before the test,
+replace a check with `"passed"` only after observing it, explicitly set the four
+safety fields to `false` only after confirming that no automatic sending,
+customer-data use, secret recording or push delivery occurred, and set the real
+UTC completion timestamp after the last check. If the date or sequence changes,
+use a new acceptance ID and a new output file; the preparer refuses to overwrite
+prior evidence.
 
 ## Evidence schema
 
