@@ -110,6 +110,9 @@ export function evaluateStoreReadiness(input) {
   if (appName !== expo.name || expo.name !== "FanMind") {
     fail("store_app_name_identity_mismatch");
   }
+  if (expo.version !== "1.0.0") {
+    fail("store_app_version_invalid");
+  }
   if (
     expo.ios?.bundleIdentifier !== "ch.fanmind.app"
     || expo.android?.package !== "ch.fanmind.app"
@@ -172,6 +175,7 @@ export function evaluateStoreReadiness(input) {
     || production?.environment !== "production"
     || production?.distribution !== "store"
     || production?.credentialsSource !== "remote"
+    || production?.android?.buildType !== "app-bundle"
     || production?.autoIncrement !== true
   ) {
     fail("store_eas_profile_contract_invalid");
