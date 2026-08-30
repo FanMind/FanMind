@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 
 const ALLOWED_ENVIRONMENTS = new Set(["development", "preview"]);
 const ALLOWED_PLATFORMS = new Set(["android", "ios"]);
+const ALLOWED_BUILD_CLASSES = new Set(["internal", "store"]);
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -53,20 +54,25 @@ export function evaluateMobileSignedBuildGate(environment = process.env) {
     environment,
     "FANMIND_MOBILE_BUILD_PROFILE",
   );
-  if (
-    !ALLOWED_ENVIRONMENTS.has(releaseEnvironment)
-    || buildProfile !== releaseEnvironment
-  ) {
-    fail("build_profile_invalid");
-  }
-
   const platform = required(environment, "FANMIND_MOBILE_BUILD_PLATFORM");
-  if (!ALLOWED_PLATFORMS.has(platform)) fail("build_platform_invalid");
+  const buildClass = required(environment, "FANMIND_MOBILE_BUILD_CLASS");
+  if (!ALLOWED_BUILD_CLASSES.has(buildClass)) fail("build_class_invalid");
 
-  if (
-    required(environment, "FANMIND_MOBILE_SIGNED_BUILD_CONFIRM")
-    !== "queue-one-signed-mobile-build"
-  ) {
+  const internalTarget =
+    buildClass === "internal"
+    && ALLOWED_ENVIRONMENTS.has(releaseEnvironment)
+    && buildProfile === releaseEnvironment
+    && ALLOWED_PLATFORMS.has(platform)
+    && required(environment, "FANMIND_MOBILE_SIGNED_BUILD_CONFIRM")
+      === "queue-one-signed-mobile-build";
+  const storeTarget =
+    buildClass === "store"
+    && releaseEnvironment === "production"
+    && buildProfile === "production"
+    && platform === "android"
+    && required(environment, "FANMIND_MOBILE_SIGNED_BUILD_CONFIRM")
+      === "queue-one-android-store-build";
+  if (!internalTarget && !storeTarget) {
     fail("confirmation_invalid");
   }
 
@@ -78,6 +84,8 @@ export function evaluateMobileSignedBuildGate(environment = process.env) {
     releaseEnvironment,
     buildProfile,
     platform,
+    buildClass,
+    distribution: buildClass === "store" ? "store" : "internal",
     releaseCommit: "verified",
     submit: "disabled",
     update: "disabled",
@@ -116,6 +124,8 @@ export function evaluateQueuedMobileBuild({
     releaseEnvironment: gate.releaseEnvironment,
     buildProfile: gate.buildProfile,
     platform: gate.platform,
+    buildClass: gate.buildClass,
+    distribution: gate.distribution,
     releaseCommit: "verified",
     queue: "accepted",
     submit: "disabled",
@@ -147,6 +157,7 @@ async function main() {
   );
   console.log(`MOBILE_SIGNED_BUILD_PROFILE=${result.buildProfile}`);
   console.log(`MOBILE_SIGNED_BUILD_PLATFORM=${result.platform}`);
+  console.log(`MOBILE_SIGNED_BUILD_CLASS=${result.buildClass}`);
   console.log("MOBILE_SIGNED_BUILD_RELEASE_COMMIT=verified");
   console.log(`MOBILE_SIGNED_BUILD_QUEUE=${result.queue ?? "authorized"}`);
   console.log("MOBILE_SIGNED_BUILD_SUBMIT=disabled");
