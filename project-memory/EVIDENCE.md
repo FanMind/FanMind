@@ -370,4 +370,15 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: any generated template that exposes receipt values, pre-passes a check, accepts a Production/store receipt, overwrites evidence, is not bound to the exact Preview receipt or survives a failed validator invalidates this preparation. A changed Google status requires fresh portal reconciliation before continuing.
 - Acceptance: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 and the external Android/Play controls remain OPEN/IMPLEMENTED_NOT_VERIFIED
 
+## FM-EV-031
+- Related: FM-MOB-001 / FM-CR-007 / FM-DEC-010 / EXT-MOBILE-ANDROID / EXT-MOBILE-IOS / EXT-MOBILE-PUSH-STORE
+- Date: 2026-08-30
+- Target: repository-only dual-store preparation on `mobile/dual-store-prep-20260830`; existing Android AAB commit `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; no EAS, Google Play or Apple portal write target
+- Type: deterministic Store-asset generation, public Support implementation, Apple/Google metadata/review/tester handoff and fail-closed local regression
+- Result: the repository now contains a reproducible opaque 512×512 Google Play icon and language-neutral 1024×500 feature graphic from existing FanMind vector branding, a public `/support` route, complete iPhone-only App Store metadata/screenshot/review handoff, reusable-review-account safety guidance and a conditional Play tester plan. Store readiness verifies both graphics, the HTTPS Support URL, Apple metadata lengths, 6.9-inch `1320 × 2868` screenshot plan, iPhone-only identity and explicit no-iOS-build/TestFlight boundary. Android documentation now starts the complete 19-check/Recovery/screenshot acceptance only after download from the Play test track.
+- Negative evidence: no Android or iOS build was queued; no EAS Submit/Update, Play/App-Store record, upload, review, publication, device PASS, real screenshot, signing credential, tester identity, review password, provider or database write occurred. The existing Android AAB remains unchanged.
+- Limitations: `/support` requires the normal post-merge Production deployment before it is claimed live. Google identity review still blocks phone verification/app creation. Play-track install/device acceptance, Apple Developer/App Store Connect, signed iOS build, TestFlight, actual screenshots, accessibility/age/privacy portal answers and real-device evidence remain external.
+- Falsification: wrong PNG dimensions/color contract, non-reproducible or externally embedded feature art, unreachable Support URL after deployment, Store metadata outside portal limits, any premature device/portal acceptance claim or any new Android build invalidates reliance on this preparation.
+- Acceptance: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD for repository preparation only; external Android/Apple Store controls remain OPEN
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

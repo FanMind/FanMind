@@ -129,6 +129,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Result status: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED pending real-device and Google Play external acceptance.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
 
+## RECEIPT-FM-MOB-001-DUAL-STORE-PREP-20260830
+- Task: FM-MOB-001 / FM-CR-007
+- Started: 2026-08-30 after the owner authorized iPhone App Store preparation and moved complete Android acceptance behind a Google Play download
+- Finished: local implementation/countercheck complete; exact-head review, merge and Production Support-route deployment pending
+- Branch/PR: `mobile/dual-store-prep-20260830` / pending
+- Preflight checked: AGENTS, Next.js local page/metadata guidance, mandatory Project Memory drift preflight, current Mobile app config/store/privacy/device handoffs, exact Android AAB evidence, current Apple/Google official Store requirements and existing FanMind vector branding.
+- Prior attempts found: Android `1.0.0` AAB, private acceptance preparer, privacy/account-deletion pages and core Apple metadata already exist. Another Android build, generated replacement branding, fabricated screenshots, iOS signing or TestFlight would overstep the new preparation scope.
+- Dependency result: repository-only graphics, public Support, metadata and review/tester handoffs are safe now. Google identity review, Play-track install, real Android acceptance and every signed iOS/Apple portal action remain external.
+- Planned evidence: deterministic exact-size Store assets; HTTPS Support route; updated Apple/Google handoffs; fail-closed metadata/asset tests; canonical truth and Project Memory reconciliation; exact-head PR gates and post-deploy Support availability.
+- Changes made: added the Store renderer/source/PNGs, public Support page and smoke target, Apple handoff, Store review-access and tester-program documents; updated listing/privacy/Google sequence and canonical readers; extended Store readiness and regression tests; recorded FM-CR-007/FM-DEC-010.
+- Checks/tests: deterministic Store re-render kept all three SHA-256 values exact; Mobile check passed TypeScript, Expo Doctor 20/20, Store, boundary and isolated Android/iOS prebuild across 33 generated files; focused Store tests passed 5/5; full operations passed 1062/1062; ESLint and Next Production build passed with `/support` among 73 generated pages; direct local `/support` returned HTTP 200 with the required safety/contact copy; Product Truth, Project Memory Quality/Status, drift/truth/V8/freshness/milestone and `git diff --check` passed. Full local Production smoke was intentionally not accepted because local runtime lacks the real release-commit/health environment; all public content routes including `/support` returned 200 before the expected version/health failures.
+- Final diff counterchecked: yes locally; pending exact-head PR and remote gates.
+- Regression/security countercheck: no build, signing, EAS/Store/provider/database write, real user/tester data, credentials or automatic send. Android AAB reuse and Phase-8 signed-iOS boundary remain explicit.
+- Evidence produced: FM-EV-031 repository preparation; no external acceptance evidence.
+- Result status: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD.
+- Open follow-up: complete local/full checks, exact-head merge and verify `/support` after the normal deployment. Then wait for Google approval; do not queue another Android or any iOS build.
+- Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
+
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
 - Started: 2026-08-19 12:14 Europe/Vienna

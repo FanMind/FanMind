@@ -154,7 +154,7 @@ GitHub `main` is currently **not branch-protected**. This is known and remains a
 - no Referral Production activation through merge alone;
 - no remote offsite deletion without new explicit deletion approval;
 - no real 1-EUR/day paid test without separate financial approval;
-- no Phase-8 work;
+- no Phase-8 signed iOS build, TestFlight, device or App-Store submission work; repository-only iPhone Store preparation is allowed by FM-DEC-010;
 - no scraping/self-bot/platform bypass;
 - no bypass of red/pending security/governance gates;
 - no parallel project-memory/finishline system.
@@ -169,7 +169,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 1. **FM-RST-001:** keep Restore at `TARGET_COMPATIBLE`. First obtain owner-PC public IP/TCP-22 evidence under `FM-RST-OWNER-005`; reconcile any exact Exoscale `/32` allowlist drift separately; then require `FM-RST-OWNER-006`, a new exact R4 authorization. Do not rerun controller `45054c41...`.
 2. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions.
-3. **FM-MOB-001:** preserve the accepted bounded FM-MOB-004 Android UI/runtime result and the exact Production AAB for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Do not queue another Store build. FM-EV-030 provides the fail-closed private pending-template preparer and exact Play handoff; use it to complete the receipt-bound 19-check Android/Recovery proof. After Google completes developer-account review, confirm the phone number, create the Play app record and perform Data Safety/test-track/existing-AAB upload acceptance. iOS/TestFlight is Phase 8 and must not be started during the current finishline.
+3. **FM-MOB-001:** preserve the accepted bounded FM-MOB-004 Android UI/runtime result and the exact Production AAB for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Do not queue another Store build. FM-EV-031 prepares Google/Apple Store assets, Support, metadata, review and tester handoffs. After Google review, confirm phone/account, create the Play app record and perform Data Safety/test-track/existing-AAB upload; only then complete the receipt-bound 19-check Android/Recovery proof and real screenshots from the Play install. iOS signing/build/TestFlight/device work remains Phase 8.
 4. **FM-AI-001:** resume only through `FM-AI-OWNER-001`/`002`; do not rerun the three FM-EV-022 checks or activate Plus/Ultra.
 5. **FM-META-001:** external Events Manager/App Review/provider/legal acceptance is deferred to `FM-META-OWNER-001`; do not rerun the three FM-EV-023 checks or repeat Production activation/deploy.
 6. After all non-Social gates: real Phase-3, Phase-7/OnlyFans feasibility, then final Production demo and sales handoff.

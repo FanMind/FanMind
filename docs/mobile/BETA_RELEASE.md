@@ -495,6 +495,11 @@ Foreground tatsächlich erzeugen. Die aktuelle visuelle Abnahme ist an den
 signierten Android-Build gebunden; iOS-Masken werden erst mit dem separaten
 signierten Phase-8-Build abgenommen.
 
+Für Google Play werden aus denselben Vektorquellen reproduzierbar ein deckendes
+512×512-Store-Icon und eine sprachneutrale 1024×500-Feature-Grafik erzeugt.
+Die vollständige Android-Abnahme und reale Screenshots folgen erst nach der
+Installation des bestehenden AAB aus dem Play-Test-Track.
+
 Vorbereitete deutsche und englische Store-Texte, URLs, Screenshot-Slots und die
 noch manuell in den Store-Portalen zu bestätigenden Datenschutzangaben stehen in
 `docs/mobile/STORE_LISTING.md`. Die getrennte technische Vorlage für Apple App
@@ -502,8 +507,11 @@ Privacy und Google Play Data Safety steht in
 `docs/mobile/STORE_PRIVACY_DECLARATIONS.md`; sie bleibt bis zur Prüfung des
 signierten Builds und zur externen Datenschutz-/Rechtsfreigabe ein Entwurf.
 Der exakte Android-Portal-Handoff nach der Google-Kontofreigabe steht in
-`docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
+`docs/mobile/GOOGLE_PLAY_HANDOFF.md`. Das vorbereitete iPhone-Metadaten-,
+Review- und Screenshot-Handoff ohne iOS-Build steht in
+`docs/mobile/APP_STORE_HANDOFF.md`.
 
+`npm run store:render` erzeugt die Google-Play-Grafiken deterministisch.
 `npm run store:check` prüft die Store-Texte vor jedem Release zusätzlich gegen
 die aktuellen Zeichenlimits, die sechs synthetischen Screenshot-Slots, die
 bestätigte Wortmarke, beide Iconverträge, native App-IDs, exakt EAS CLI
@@ -520,14 +528,17 @@ commitgenau registriert.
 
 ## Noch offen nach diesem Block
 
-- visuelle Abnahme der vorbereiteten App-Icons im signierten Android-Build;
+- visuelle Abnahme der vorbereiteten App-Icons nach Play-Test-Track-Install;
 - realer Recovery-E-Mail-/Gerätetest über den gespeicherten Supabase-Redirect;
-- vollständiger privater 19-Punkte-Android-Gerätenachweis;
+- vollständiger privater 19-Punkte-Android-Gerätenachweis nach Installation
+  aus dem Play-Test-Track;
 - Development-Environment-Akzeptanz, soweit sie für spätere Development-Push-
   Tests benötigt wird;
 - Google-Play-Kontofreigabe, App-Datensatz, Data Safety, Screenshots,
   portalgefordertes Testprogramm und Upload des bestehenden AAB;
-- iOS-Signierung, Icon-/Gerätenachweis und TestFlight erst in Phase 8;
+- iPhone-App-Store-Metadaten, Support-/Review-Handoff und Screenshotplan sind
+  vorbereitet; iOS-Signierung, Icon-/Gerätenachweis und TestFlight erst in
+  Phase 8;
 - Push-Migration und dedizierten Serverkey kontrolliert aktivieren, danach
   nach grünem Ressourcencheck, Apply und rollback-only Acceptance die
   Berechtigung und Token-Registrierung im signierten Build real abnehmen;

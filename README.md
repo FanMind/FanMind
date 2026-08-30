@@ -375,8 +375,9 @@ Bereits vorhanden:
 - getrennte technische Entwürfe für Apple App Privacy und Google Play Data
   Safety; externe Datenschutz-/Rechts- und Portalabnahme bleibt offen;
 - fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
-  Wortmarke, 1024×1024-Icons, App-IDs, Screenshot-Matrix, exakt gepinnte EAS
-  CLI `21.2.0` und ausschließlich interne Android-Draft-Submission;
+  Wortmarke, 1024×1024-Native-Icons, reproduzierbare Google-Play-Grafiken,
+  App-IDs, Screenshot-Matrix, Apple-Metadaten-Handoff, exakt gepinnte EAS CLI
+  `21.2.0` und ausschließlich interne Android-Draft-Submission;
 - eigener SDK-57-Development-Client sowie explizite EAS-Umgebungen;
 - separate Mobile-CI, Expo Doctor, TypeScript-Check, Android-/iOS-JavaScript-Bundles, isolierter Native-Prebuild sowie echtes Android-Debug-APK und codesign-freie iOS-Simulator-App als reine Build-Nachweise.
 - kontrollierter signierter EAS-Workflow mit redigierter Abschlussprüfung für
@@ -388,7 +389,8 @@ Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
 
 - realer E-Mail-/Gerätetest für `fanmind://reset-password`; der exakte Redirect
   ist in der bestätigten Production-Auth-Allowlist gespeichert;
-- vollständiger privater receipt-gebundener 19-Punkte-Android-Gerätenachweis;
+- vollständiger privater receipt-gebundener 19-Punkte-Android-Gerätenachweis
+  erst nach Download und Installation aus dem Play-Test-Track;
 - Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
   Data Safety, Screenshots, portalgefordertes Testprogramm und Upload des
   bereits verifizierten Android-`1.0.0`-AAB;
@@ -397,8 +399,9 @@ Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
   rollback-only Staging-Abnahme und genau ein synthetischer serverseitiger
   Send-/Receipt-Nachweis;
 - finale Datenschutz-/Rechts- und Play-Portalabnahme;
-- Apple Developer / App Store Connect, iOS-Gerätenachweis und TestFlight erst
-  in Phase 8.
+- iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan und öffentliche
+  Supportseite sind vorbereitet; Apple Developer / App Store Connect,
+  iOS-Build, Gerätenachweis und TestFlight bleiben Phase 8.
 
 Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 `docs/mobile/PUSH_DELIVERY.md` und `docs/mobile/BETA_RELEASE.md`.
@@ -410,6 +413,7 @@ Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 | `/` | öffentliche Landingpage | aktiv |
 | `/login` | Login und Demo-Einstieg | aktiv |
 | `/register` | Starter-Registrierung | aktiv |
+| `/support` | öffentliche Hilfe- und App-Store-Supportseite | aktiv |
 | `/dashboard` | geschützter Arbeitsbereich | aktiv |
 | `/fans` | Kontaktliste | aktiv |
 | `/fans/import` | CSV-Import | aktiv |

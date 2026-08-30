@@ -12,6 +12,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "doctor": "node scripts/check-expo-doctor.mjs",
+    "store:render": "node scripts/render-store-assets.mjs",
     "store:check": "node scripts/check-store-readiness.mjs",
     "boundary": "node scripts/check-boundary.mjs",
     "export:android": "expo export --platform android --output-dir dist-android",

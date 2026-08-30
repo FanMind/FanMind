@@ -56,3 +56,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: `iOS-TestFlight` is removed from the current Phase-6 completion scope and moved to Phase 8. Phase 8 remains `not started`; the move is a roadmap/future-scope assignment only. Existing native iOS code, simulator/prebuild CI and other cross-platform foundations remain intact.
 - Supersedes: only the prior current-finishline requirement that FM-MOB-001 must complete iOS/TestFlight before the through-Phase-7 finishline can close; it does not supersede native iOS implementation evidence.
 - Reason: Owner explicitly deferred TestFlight to Phase 8 while keeping the current Mobile work focused on the Android/current-finishline path.
+
+## FM-DEC-010
+- Date: 2026-08-30
+- Status: DONE
+- Decision: Repository-only iPhone App Store preparation may proceed before Phase 8. This includes metadata, public HTTPS support, privacy/review/tester handoffs and a future screenshot plan. It does not start Phase 8 and authorizes no iOS build, signing, TestFlight, App Store Connect submission or iPhone acceptance. Complete Android acceptance and final Android screenshots are moved behind a real download/install from the Google Play test track; the verified Android `1.0.0` AAB must not be rebuilt.
+- Supersedes: only the FM-DEC-009 wording that could be read as deferring every iOS Store document until Phase 8, and the earlier device-handoff sequence that placed the complete 19-check Android run before Play-track availability. It does not supersede the Phase-8 boundary for signed iOS/TestFlight/device work.
+- Reason: Owner wants useful Store preparation to continue during Google account review, currently has no iPhone for real testing, and explicitly wants Android acceptance to cover the Store-delivered artifact.

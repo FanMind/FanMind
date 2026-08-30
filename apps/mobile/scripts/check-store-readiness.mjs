@@ -9,6 +9,12 @@ const MOBILE_ROOT = new URL("../", import.meta.url);
 const REPOSITORY_ROOT = new URL("../../../", import.meta.url);
 const CONFIRMED_WORDMARK_SHA256 =
   "f432007c36e4523211e8678757c2340592c50f1a945776cfc283922601ac8aad";
+const CONFIRMED_PLAY_FEATURE_SOURCE_SHA256 =
+  "a39efa39d9b17f7738a6b33860c1ffb7c8c3ba108aa2abe3f42d54b5b3b1f1be";
+const CONFIRMED_PLAY_ICON_SHA256 =
+  "7f74226076d6fda50c72e8673bd845ece48fb754c218ab6e79f1659286a85e5a";
+const CONFIRMED_PLAY_FEATURE_SHA256 =
+  "95ccc38c8e255f3f50938b86630afb2c0cd5a3703d3c46ca1c91384c9409cb13";
 
 function fail(code) {
   const error = new Error(code);
@@ -68,8 +74,20 @@ function pngHeader(bytes, expected) {
 }
 
 export function evaluateStoreReadiness(input) {
-  const { appConfig, easConfig, listing, wordmark, appIcon, adaptiveIcon } =
-    input;
+  const {
+    appConfig,
+    easConfig,
+    listing,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    featureSource,
+    wordmark,
+    appIcon,
+    adaptiveIcon,
+    playIcon,
+    playFeatureGraphic,
+  } = input;
   const expo = appConfig?.expo ?? {};
   const appName = tableValue(listing, "App-Name");
   const subtitleDe = tableValue(
@@ -84,6 +102,10 @@ export function evaluateStoreReadiness(input) {
     listing,
     "Google Play - Kurzbeschreibung",
   );
+  const shortDescriptionEn = fencedText(
+    listing,
+    "Google Play - Short description EN",
+  );
   const descriptionDe = fencedText(
     listing,
     "Google Play und Apple - Beschreibung DE",
@@ -93,6 +115,11 @@ export function evaluateStoreReadiness(input) {
     "Google Play und Apple - Description EN",
   );
   const appleKeywords = fencedText(listing, "Suchbegriffe für Apple");
+  const promotionalTextDe = fencedText(listing, "Apple - Werbetext DE");
+  const promotionalTextEn = fencedText(
+    listing,
+    "Apple - Promotional Text EN",
+  );
 
   assertLength(appName, 2, 30, "store_app_name_length_invalid");
   assertLength(subtitleDe, 2, 30, "store_subtitle_de_length_invalid");
@@ -103,9 +130,27 @@ export function evaluateStoreReadiness(input) {
     80,
     "store_google_short_description_length_invalid",
   );
+  assertLength(
+    shortDescriptionEn,
+    20,
+    80,
+    "store_google_short_description_en_length_invalid",
+  );
   assertLength(descriptionDe, 200, 4000, "store_description_de_length_invalid");
   assertLength(descriptionEn, 200, 4000, "store_description_en_length_invalid");
   assertLength(appleKeywords, 2, 100, "store_apple_keywords_length_invalid");
+  assertLength(
+    promotionalTextDe,
+    20,
+    170,
+    "store_apple_promotional_text_de_length_invalid",
+  );
+  assertLength(
+    promotionalTextEn,
+    20,
+    170,
+    "store_apple_promotional_text_en_length_invalid",
+  );
 
   if (appName !== expo.name || expo.name !== "FanMind") {
     fail("store_app_name_identity_mismatch");
@@ -125,6 +170,7 @@ export function evaluateStoreReadiness(input) {
     tableValue(listing, "Android Package") !== "ch.fanmind.app"
     || tableValue(listing, "iOS Bundle Identifier") !== "ch.fanmind.app"
     || tableValue(listing, "Website") !== "https://fanmind.ch"
+    || tableValue(listing, "Support") !== "https://fanmind.ch/support"
     || tableValue(listing, "Datenschutz") !== "https://fanmind.ch/datenschutz"
     || tableValue(listing, "Account-Löschung")
       !== "https://fanmind.ch/account-deletion"
@@ -153,8 +199,34 @@ export function evaluateStoreReadiness(input) {
   if (
     !/signierten Builds/u.test(listing)
     || !/synthetischen Test-Workspace/u.test(listing)
+    || !/1320\s*[×x]\s*2868/u.test(listing)
   ) {
     fail("store_screenshot_safety_boundary_missing");
+  }
+  if (
+    !/keinen iOS-Build/u.test(appStoreHandoff)
+    || !/kein TestFlight/u.test(appStoreHandoff)
+    || !/1320\s*[×x]\s*2868/u.test(appStoreHandoff)
+    || !/niemals im Repository/u.test(reviewAccess)
+    || !/24\/7/u.test(reviewAccess)
+    || !/Play-Test-Track/u.test(testerProgram)
+    || !/12[^\n]*14/u.test(testerProgram)
+  ) {
+    fail("store_handoff_boundary_invalid");
+  }
+  if (
+    !/width="1024" height="500" viewBox="0 0 1024 500"/u.test(
+      featureSource,
+    )
+    || /<(?:text|image|foreignObject)\b/iu.test(featureSource)
+  ) {
+    fail("store_feature_source_invalid");
+  }
+  if (
+    createHash("sha256").update(featureSource).digest("hex")
+    !== CONFIRMED_PLAY_FEATURE_SOURCE_SHA256
+  ) {
+    fail("store_feature_source_not_confirmed");
   }
 
   if (
@@ -209,6 +281,32 @@ export function evaluateStoreReadiness(input) {
     bitDepth: 8,
     colorType: 6,
   });
+  pngHeader(playIcon, {
+    width: 512,
+    height: 512,
+    bitDepth: 8,
+    colorType: 2,
+  });
+  pngHeader(playFeatureGraphic, {
+    width: 1024,
+    height: 500,
+    bitDepth: 8,
+    colorType: 2,
+  });
+  if (playIcon.byteLength > 1024 * 1024) {
+    fail("store_play_icon_too_large");
+  }
+  if (playFeatureGraphic.byteLength > 15 * 1024 * 1024) {
+    fail("store_play_feature_graphic_too_large");
+  }
+  if (
+    createHash("sha256").update(playIcon).digest("hex")
+      !== CONFIRMED_PLAY_ICON_SHA256
+    || createHash("sha256").update(playFeatureGraphic).digest("hex")
+      !== CONFIRMED_PLAY_FEATURE_SHA256
+  ) {
+    fail("store_play_assets_not_confirmed");
+  }
   if (
     createHash("sha256").update(wordmark).digest("hex")
     !== CONFIRMED_WORDMARK_SHA256
@@ -221,32 +319,75 @@ export function evaluateStoreReadiness(input) {
     screenshotSlots: screenshotRows.length,
     easCli: easConfig.cli.version,
     submissionMode: "internal-draft",
+    storeAssets: 2,
+    iosReleaseScope: "metadata-only",
   });
 }
 
 export async function verifyStoreReadiness() {
-  const [appConfig, easConfig, listing, wordmark, appIcon, adaptiveIcon] =
-    await Promise.all([
-      readFile(new URL("app.json", MOBILE_ROOT), "utf8").then(JSON.parse),
-      readFile(new URL("eas.json", MOBILE_ROOT), "utf8").then(JSON.parse),
-      readFile(
-        new URL("docs/mobile/STORE_LISTING.md", REPOSITORY_ROOT),
-        "utf8",
+  const [
+    appConfig,
+    easConfig,
+    listing,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    featureSource,
+    wordmark,
+    appIcon,
+    adaptiveIcon,
+    playIcon,
+    playFeatureGraphic,
+  ] = await Promise.all([
+    readFile(new URL("app.json", MOBILE_ROOT), "utf8").then(JSON.parse),
+    readFile(new URL("eas.json", MOBILE_ROOT), "utf8").then(JSON.parse),
+    readFile(
+      new URL("docs/mobile/STORE_LISTING.md", REPOSITORY_ROOT),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/mobile/APP_STORE_HANDOFF.md", REPOSITORY_ROOT),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/mobile/STORE_REVIEW_ACCESS.md", REPOSITORY_ROOT),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/mobile/STORE_TESTER_PROGRAM.md", REPOSITORY_ROOT),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "assets/store/google-play-feature-graphic-source.svg",
+        MOBILE_ROOT,
       ),
-      readFile(new URL("assets/branding/fanmind-wordmark.png", MOBILE_ROOT)),
-      readFile(new URL("assets/branding/fanmind-app-icon.png", MOBILE_ROOT)),
-      readFile(
-        new URL("assets/branding/fanmind-adaptive-icon.png", MOBILE_ROOT),
-      ),
-    ]);
+      "utf8",
+    ),
+    readFile(new URL("assets/branding/fanmind-wordmark.png", MOBILE_ROOT)),
+    readFile(new URL("assets/branding/fanmind-app-icon.png", MOBILE_ROOT)),
+    readFile(
+      new URL("assets/branding/fanmind-adaptive-icon.png", MOBILE_ROOT),
+    ),
+    readFile(new URL("assets/store/google-play-icon.png", MOBILE_ROOT)),
+    readFile(
+      new URL("assets/store/google-play-feature-graphic.png", MOBILE_ROOT),
+    ),
+  ]);
 
   return evaluateStoreReadiness({
     appConfig,
     easConfig,
     listing,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    featureSource,
     wordmark,
     appIcon,
     adaptiveIcon,
+    playIcon,
+    playFeatureGraphic,
   });
 }
 
@@ -256,6 +397,8 @@ async function main() {
   console.log(`MOBILE_STORE_SCREENSHOT_SLOTS=${result.screenshotSlots}`);
   console.log(`MOBILE_STORE_EAS_CLI=${result.easCli}`);
   console.log(`MOBILE_STORE_SUBMISSION_MODE=${result.submissionMode}`);
+  console.log(`MOBILE_STORE_ASSETS=${result.storeAssets}`);
+  console.log(`MOBILE_IOS_RELEASE_SCOPE=${result.iosReleaseScope}`);
   console.log("MOBILE_STORE_SECRETS=absent");
   console.log("MOBILE_STORE_READINESS=PASS");
 }

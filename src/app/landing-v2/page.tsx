@@ -686,6 +686,7 @@ const landingFooterColumns = [
       { label: "Registrieren", href: "/register" },
       { label: "Kostenlos testen", href: "/login" },
       { label: "Beratung anfragen", href: "#kontakt" },
+      { label: "Support", href: "/support" },
     ],
   },
 ];

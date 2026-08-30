@@ -14,14 +14,14 @@ Prevents two agents/sessions from independently working the same task.
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006
 - Status: ACTIVE
-- Holder: ChatGPT Android Production/Google Play continuation session 2026-08-30
-- Branch/PR: current handoff `mobile/android-play-handoff-20260830`; Store implementation `mobile-android-store-release-20260830` / #1028 is merged.
+- Holder: ChatGPT Android/Apple Store preparation continuation session 2026-08-30
+- Branch/PR: `mobile/dual-store-prep-20260830`; prior handoff PR #1030 and Store implementation PR #1028 are merged.
 - Acquired: 2026-08-30 UTC
 - Risk: R3 Mobile Production build and external Store acceptance
-- Scope: first-release version, protected one-AAB Production build control, exact FanMind Production binding, Android recovery/device acceptance handoff and Google Play readiness/submission. The current closeout may add only repository documentation, fail-closed private-evidence preparation and tests. No automatic Submit/Update, no second build, no fabricated device evidence, no database/schema/RLS mutation, no push-delivery activation and no iOS/TestFlight Phase-8 start.
+- Scope: preserve the first-release version, protected one-AAB Production evidence and exact FanMind Production binding; complete repository-only Google/Apple Store graphics, metadata, support, review/tester and screenshot-plan preparation. Android recovery/full device acceptance begins only after Play-test-track installation. No automatic Submit/Update, no second Android build, no iOS build/signing/TestFlight, no fabricated device evidence, no database/schema/RLS mutation and no push-delivery activation.
 - Current blocker: Google is still reviewing the developer identity/documents; phone verification and Play app creation are disabled until that review completes.
 - Completed under this lock: PR #1028 passed its exact-head gates and merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; Production readiness run `33316105624` / job `99269748215` passed, and Store-build run `33316172583` / job `99269924756` completed exactly one verified Android `1.0.0` AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 added and counterchecked the fail-closed private evidence preparer and exact Google Play handoff without external writes.
-- Resume from: never repeat the AAB build. Use the preparer with the existing private Preview receipt, complete the 19 real-device checks and Recovery proof for the already saved Production redirect; after Google approval, verify phone/account state, create the Play app record and continue with Data Safety, screenshots, required test track and existing-AAB upload. Require immediate confirmation before any Play submission for review or publication.
+- Resume from: never repeat the AAB build. After Google approval, verify phone/account state, create the Play app record, transfer the prepared package and upload the existing AAB to the required test track. Only after the Play download is available, use the private preparer and complete all 19 real-device/Recovery checks plus real screenshots. Apple signing/build/TestFlight/device work waits for Phase 8. Require immediate confirmation before any review submission or publication.
 
 ## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
 - Task: FM-MOB-004

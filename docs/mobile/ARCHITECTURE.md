@@ -244,8 +244,10 @@ Ein SHA-gebundener Geräte-Abnahmevalidator in
 mit dem redigierten Receipt des exakten signierten Preview-Builds. Sein
 Vorbereitungsbefehl übernimmt ausschließlich die Receipt-Bindung und lässt
 alle 19 Geräteprüfungen auf `pending`; er ersetzt keinen echten Gerätetest.
-Ein separater iOS-Nachweis bleibt für Phase 8 möglich und läuft ebenfalls nur
-mit privaten Nachweisen.
+Die Android-Abnahme beginnt auf Owner-Entscheidung erst nach Installation aus
+dem Play-Test-Track. Ein separater iOS-Nachweis bleibt für Phase 8 möglich und
+läuft ebenfalls nur mit privaten Nachweisen; Metadaten-, Support- und Review-
+Vorbereitung allein ist kein iOS-Build und kein TestFlight.
 
 ## Implementation phases
 
@@ -271,6 +273,8 @@ mit privaten Nachweisen.
 - [x] bounded offline read cache with the central purge contract;
 - [x] native notification configuration and fail-closed follow-up response routing;
 - [x] native wordmark splashscreen and prepared store metadata;
+- [x] reproducible 512×512 Google Play icon, 1024×500 feature graphic,
+      public HTTPS support page and separate Apple/Google review handoffs;
 - [x] dedicated opaque 1024×1024 iOS/legacy icon plus safe-zone Android
       adaptive foreground from editable vector sources;
 - [x] app-owned iOS required-reason privacy manifest, no tracking domains and
@@ -301,8 +305,8 @@ mit privaten Nachweisen.
       recorded commits;
 - [x] signed Android preview build plus bounded owner UI/runtime acceptance;
 - [ ] signed iOS preview/TestFlight build and iOS signing acceptance in Phase 8;
-- [ ] complete private 19-check Android device record; the iOS device record
-      belongs to Phase 8;
+- [ ] complete private 19-check Android device record after Play-test-track
+      installation; the iOS device record belongs to Phase 8;
 - [ ] successful external Mobile Push Staging resource, migration and
       rollback-only acceptance runs before server-key activation;
 - [x] one exact-commit Android Production AAB;
