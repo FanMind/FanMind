@@ -88,7 +88,8 @@ else:
                 "state_reason": live.get("state_reason"),
                 "body_sha256": hashlib.sha256((live.get("body") or "").encode("utf-8")).hexdigest(),
             }
-            if actual != expected:
+            relevant_revision_fields = {"state", "state_reason", "body_sha256"}
+            if any(actual.get(field) != expected.get(field) for field in relevant_revision_fields):
                 errors.append(f"legacy-issue-live-revision-mismatch:{issue_number}")
 
 if errors:
