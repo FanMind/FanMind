@@ -151,6 +151,13 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Plattform, Profil, interne Distribution, erfolgreichen EAS-Endstatus und
   das vorhandene HTTPS-Artefakt. Build-ID und URL bleiben privat; Submit,
   Update, Gerätetest und Store-Verteilung werden dadurch nicht ausgeführt.
+- Mobile-Android-Store-Build: Der eigenständige, manuell bestätigte
+  Production-Ablauf läuft nur auf `main` und Android. Er prüft auf demselben
+  Commit zuerst Store-Metadaten, Branding, Version, native Identität und das
+  AAB-Profil, danach die exakte EAS-/FanMind-Production-Bindung. Vorhandene
+  Credentials werden eingefroren; akzeptiert wird genau ein erfolgreiches
+  Store-Artefakt mit redaktiertem Receipt. Submit, Update, Play-App-Anlage und
+  Veröffentlichung bleiben getrennt und deaktiviert.
 - Mobile-Push-Staging-Kontrolle: Die Registrierungstabelle ist auf dem
   getrennten Supabase-Staging mit RLS angewendet und besitzt
   jetzt getrennte manuelle Pfade für read-only Ressourcenprüfung,
