@@ -64,7 +64,10 @@ test("all Checkout sessions delegate eligible payment methods to Stripe", () => 
     /integration_identifier: createStripeIntegrationIdentifier\(\)/u,
   );
   assert.match(identifierPolicySource, /fanmind_checkout_/u);
-  assert.match(billingSource, /planId === "starter"[\s\S]*return "card"/u);
+  assert.match(
+    billingSource,
+    /commercialOption === "internal_daily_test" \|\|[\s\S]*planId === "starter"[\s\S]*compatibility value for Checkout-managed collection[\s\S]*return "card"/u,
+  );
   assert.doesNotMatch(stripeBillingSource, /small_business|Kleinunternehmer/iu);
 });
 

@@ -108,4 +108,5 @@ test("verified inbound Staging webhook pin remains an explicit external migratio
   assert.match(runbook, /2026-06-24\.dahlia/u);
   assert.match(runbook, /provider-side migration/iu);
   assert.match(runbook, /no provider mutation/iu);
+  assert.match(runbook, /internal_daily_test[\s\S]*no[\s\S]*card-only exception/iu);
 });

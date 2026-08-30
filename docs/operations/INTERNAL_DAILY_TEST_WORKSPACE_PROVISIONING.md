@@ -18,7 +18,9 @@ wirksam sind:
 - `public.ensure_internal_daily_test_workspace(uuid,text,boolean)` ist
   installiert und ausschließlich für `service_role` ausführbar;
 - die validierten Workspace-CHECKs bilden exakt den kanonischen Wertvertrag
-  einschließlich `internal_daily_test` und `card` ab;
+  einschließlich `internal_daily_test` und des Schema-Kompatibilitätswerts
+  `card` ab; dieser Wert schränkt die von Stripe im Checkout dynamisch
+  angebotenen Zahlungsmethoden nicht ein;
 - direkte Tabellen- und Spalten-`INSERT`-Rechte auf `public.workspaces` sind
   für `PUBLIC`, `anon` und `authenticated` entzogen;
 - der Readiness-RPC bestätigt diesen kombinierten Zustand;

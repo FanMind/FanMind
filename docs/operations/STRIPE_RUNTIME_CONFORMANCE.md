@@ -9,6 +9,12 @@ pinned to API version `2026-07-29.dahlia`, use bounded network retries and a
 Stripe Dashboard and sends a `fanmind_checkout_` integration identifier with
 a fresh eight-letter suffix for every Session creation.
 
+This dynamic-method rule also applies to `internal_daily_test`; it has no
+code-side card-only exception. The existing workspace value
+`payment_collection_method=card` remains a schema-compatibility marker for
+Stripe-hosted collection and must not be interpreted as the method offered or
+selected in Checkout.
+
 Automatic Tax remains fail-closed. Checkout is unavailable unless
 `FANMIND_TAX_MODE=stripe_tax` and
 `FANMIND_STRIPE_TAX_REGISTRATION_CONFIRMED=true` are both explicitly present.
