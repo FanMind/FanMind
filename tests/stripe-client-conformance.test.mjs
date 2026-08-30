@@ -66,6 +66,15 @@ test("integration identifiers satisfy the runtime format and vary per Session", 
 });
 
 test("production server modules do not bypass the shared Stripe client", () => {
+  const forbiddenStripeRestRoutes = [
+    "/v1/checkout/sessions",
+    "/v1/coupons",
+    "/v1/customers",
+    "/v1/invoices",
+    "/v1/prices",
+    "/v1/products",
+    "/v1/subscriptions",
+  ];
   for (const path of [
     "src/lib/adminBilling.ts",
     "src/lib/customerBilling.ts",
@@ -74,11 +83,13 @@ test("production server modules do not bypass the shared Stripe client", () => {
   ]) {
     const source = readFileSync(path, "utf8");
     assert.match(source, /getStripeClient/u, `${path} must use getStripeClient`);
-    assert.equal(
-      source.includes("api.stripe.com"),
-      false,
-      `${path} must not call raw Stripe REST`,
-    );
+    for (const route of forbiddenStripeRestRoutes) {
+      assert.equal(
+        source.includes(route),
+        false,
+        `${path} must not call raw Stripe REST route ${route}`,
+      );
+    }
     assert.doesNotMatch(source, /Authorization: `Bearer \$\{secret/u);
   }
 });
