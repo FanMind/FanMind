@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-26",
+  "updated": "2026-08-30",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -34,13 +34,12 @@
       "priority": 20,
       "task": "FM-MOB-001",
       "gate": "mobile",
-      "title": "Mobile Preview-Ressourcen geschützt konfigurieren",
+      "title": "Aktuelles Android Preview am realen Gerät abnehmen",
       "requires_owner": true,
       "parallel_safe": true,
-      "deferred_owner_id": "FM-MOB-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Read-only run 33000433320 proved that mobile-preview still lacks its protected Expo token and exact EAS/Supabase/API bindings. Require FM-MOB-OWNER-001 before a new one-shot preview verification. Never expose credentials, invent IDs, initialize a project, build, sign, submit, update or mutate Supabase/Production from this step."
+      "instruction": "Protected run 33298699290 / job 99222705186 completed the latest exact-merge FM-MOB-004 preview Android artifact for merge 6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522. Require owner real-device confirmation of the current visible/runtime checks, then keep Supabase recovery redirect and applicable Push/Store acceptance separate. Do not queue another build merely for confirmation, expose private artifact values, submit, update, start iOS/TestFlight or mutate Supabase/Production."
     },
     {
       "id": "NBA-AI-LIFECYCLE-RECONCILE",

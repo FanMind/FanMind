@@ -311,4 +311,18 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: an exact replacement build showing the decorative symbol, displaying a fan without an unseen inbound row, mixing messages after a channel tab selection, allowing a Member write, or failing to persist a valid Owner Follow-up invalidates acceptance and reopens FM-MOB-003.
 - Acceptance: VERIFIED_NOT_ACCEPTED
 
+## FM-EV-026
+- Related: FM-MOB-004 / FM-MOB-001 / FM-CR-005
+- Date: 2026-08-30
+- Target: PR #1025 final head `64329ac628188cf532281ddb742058612b9e9eb8`, merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`, protected Android run `33298699290` / job `99222705186`; no Production, database, provider or Store target
+- Type: implementation diff + repeated exact-head review/countercheck + complete repository/native verification + protected signed Android internal build
+- Reference: `apps/mobile/app/(app)/contacts/[id].tsx`; `apps/mobile/app/(app)/followups.tsx`; `apps/mobile/app/(app)/index.tsx`; `apps/mobile/assets/branding/fanmind-splash-source.svg`; `apps/mobile/src/lib/data.ts`; `src/app/api/ai/fan-analysis/route.ts`; `tests/mobile-recovery-contact-crud.test.mjs`.
+- Result: every fan has `Nachrichten`, `Follow-ups` and `Kontaktwissen`; the identifier is one-line; contact profile/tags and provenance-valid saved analysis live under contact knowledge while new analysis generation stays honestly `In Vorbereitung`; global Follow-ups navigate to their fan; today's open Follow-ups are selected completely, counted exactly and sorted by semantic priority; the native splash is a square `FM`-over-`FanMind` composition.
+- Review/countercheck: eleven superseded exact-head review rounds found thirty-five valid authorization, provenance, error-state, compatibility, pagination, counting and entitlement cases. All were corrected rather than bypassed. Final head `64329ac628188cf532281ddb742058612b9e9eb8` passed all nine GitHub gates with no unresolved review thread before merge.
+- Checks: 42 focused security/Mobile checks, 1055/1055 operations tests, root TypeScript/lint/Production build, Mobile TypeScript/Expo Doctor 20/20/Store/boundary/native prebuild, Android/iOS exports and Project Memory/truth/drift controls passed. Protected run `33298699290` verified exact EAS project/public Preview binding, authorized exactly one `preview` Android internal build, verified exact commit/platform/profile/internal distribution/HTTPS artifact, stored the redacted receipt and cleaned temporary state.
+- Negative evidence: no schema/demo-row/provider/Production mutation, automatic send, service-role/OpenAI secret in Mobile, message/analysis offline cache, iOS submission, Store publication, EAS Submit or EAS Update. No private build ID or artifact URL is retained here.
+- Current limitation: repository, CI and signed-artifact evidence do not prove the real-device presentation or interaction. Owner installation must confirm the current FM-MOB-004 behaviors; recovery redirect and applicable Push/Store acceptance remain separately open.
+- Falsification: the exact merge build showing a cropped/wrong splash, wrapping the identifier, missing or misrouting fan sections/Follow-ups, falsely enabling analysis generation, or omitting today's valid Follow-ups invalidates device acceptance and reopens only the bounded runtime/UI observation.
+- Acceptance: VERIFIED_NOT_ACCEPTED
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
