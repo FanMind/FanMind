@@ -15,7 +15,7 @@ await Promise.all([
   sharp(resolve(brandingRoot, "fanmind-app-icon.png"))
     .resize(512, 512, { fit: "fill" })
     .toColourspace("srgb")
-    .removeAlpha()
+    .ensureAlpha(1)
     .png({ compressionLevel: 9, palette: false })
     .toFile(resolve(storeRoot, "google-play-icon.png")),
   sharp(resolve(storeRoot, "google-play-feature-graphic-source.svg"), {

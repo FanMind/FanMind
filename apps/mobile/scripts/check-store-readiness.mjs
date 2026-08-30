@@ -12,7 +12,7 @@ const CONFIRMED_WORDMARK_SHA256 =
 const CONFIRMED_PLAY_FEATURE_SOURCE_SHA256 =
   "a39efa39d9b17f7738a6b33860c1ffb7c8c3ba108aa2abe3f42d54b5b3b1f1be";
 const CONFIRMED_PLAY_ICON_SHA256 =
-  "7f74226076d6fda50c72e8673bd845ece48fb754c218ab6e79f1659286a85e5a";
+  "7c5f0fe9c8ba16ac934d20c67365343e91b59130109795b26461666e94652112";
 const CONFIRMED_PLAY_FEATURE_SHA256 =
   "95ccc38c8e255f3f50938b86630afb2c0cd5a3703d3c46ca1c91384c9409cb13";
 
@@ -303,7 +303,7 @@ export function evaluateStoreReadiness(input) {
     width: 512,
     height: 512,
     bitDepth: 8,
-    colorType: 2,
+    colorType: 6,
   });
   pngHeader(playFeatureGraphic, {
     width: 1024,

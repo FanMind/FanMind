@@ -147,6 +147,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
   assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
   assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
+  assert.match(storeListing, /32-Bit-PNG mit Alpha-Kanal/u);
   assert.match(storeListing, /## Apple - Suchbegriffe DE/u);
   assert.match(storeListing, /## Apple - Keywords EN/u);
   assert.match(storeListing, /1320 × 2868/u);
@@ -273,6 +274,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
 
   assert.equal(mobilePackage.devDependencies.sharp, "0.35.3");
   assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.3");
+  assert.equal(playIcon[25], 6);
+  assert.equal(playFeatureGraphic[25], 2);
 
   assert.throws(
     () =>

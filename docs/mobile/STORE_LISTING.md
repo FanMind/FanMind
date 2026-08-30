@@ -41,8 +41,9 @@ Social-Media-Integrationen.
 Das finale FanMind-App-Icon ist vorbereitet: eine vollständig deckende
 1024×1024-PNG für iOS/Legacy-Android, ein transparentes maskensicheres
 Android-Adaptive-Foreground und ein daraus deterministisch erzeugtes
-512×512-Google-Play-Icon. Zusätzlich liegt eine sprachneutrale
-1024×500-Feature-Grafik aus den vorhandenen FanMind-Vektorformen vor. Das
+512×512-Google-Play-Icon als 32-Bit-PNG mit Alpha-Kanal. Zusätzlich liegt eine
+sprachneutrale 1024×500-Feature-Grafik aus den vorhandenen FanMind-Vektorformen
+vor. Das
 Querlogo bleibt ausschließlich Wortmarke und Splashscreen. Reale Android-
 Masken und iOS-Icons werden erst im jeweiligen signierten Store-Build visuell
 abgenommen.
