@@ -410,4 +410,16 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a productive raw `api.stripe.com` call, explicit Checkout `payment_method_types`, SDK/lock/API pin drift, an identifier outside `fanmind_checkout_[A-Za-z]{8}`, an unverified coupon race, disabled tax fail-closed behavior or a provider-side version claim without fresh evidence invalidates this result.
 - Acceptance: ACCEPTED
 
+## FM-EV-034
+- Related: FM-MOB-001 / FM-CR-010 / FM-DEC-010 / EXT-MOBILE-IOS
+- Date: 2026-08-30
+- Target: repository-only App Store Connect preparation on `mobile/app-store-connect-worksheet-20260830`; no Apple portal, EAS, signing, TestFlight, device, Google Play, database, provider or Production target
+- Type: current official-field reconciliation + deterministic Markdown contract + fail-closed Store-readiness regression
+- Result: `APP_STORE_CONNECT_WORKSHEET.md` consolidates 33 first-release portal controls into exactly thirteen `READY`, twelve `OWNER_REQUIRED` and eight `PHASE8_REQUIRED` fields. The prepared identity, localized subtitle/description/keywords/promotional text, categories, URLs and version are checked against the existing Store/App config. SKU, Content Rights, DSA, regulated-medical-device status, copyright, release settings, availability, price, tax, Privacy Choices URL, Accessibility URL and Mac/Vision Pro availability remain explicit owner/legal/account decisions. Age rating, review information, privacy data types, Accessibility Support, screenshots, icon rendering, export compliance and signed build remain bound to Phase 8.
+- Checks: local Store readiness passes with `33/13/12/8`; focused Mobile Store/native/boundary tests pass 36/36 after adding positive identity/boundary assertions and a negative status-drift case. Mobile TypeScript, Expo Doctor 20/20, boundary and Android/iOS native prebuild pass; full Operations pass 1074/1074; root ESLint and clean Next Production build pass; Product/Referral/Legal/Actions truth plus Project Memory Quality/NBA/V8/freshness/drift/milestone/status pass. Exact-head PR checks remain pending at this evidence checkpoint.
+- Negative evidence: no iOS or Android build, EAS command, TestFlight action, App Store Connect record/write, device claim, screenshot claim, signing credential, password, tax/legal decision, database/provider mutation or public release occurred. The verified Android `1.0.0` AAB remains unchanged and must be reused.
+- Limitations: the worksheet is an operational repository handoff, not an Apple, legal, tax, accessibility, privacy, binary or device acceptance. Apple requirements must be re-read immediately before later portal transfer.
+- Falsification: a missing/reordered field, changed status or count, drifted FanMind identity/URL/version, inferred owner/legal value, stored credential, premature Phase-8 acceptance or untracked Apple-field change invalidates readiness.
+- Acceptance: IMPLEMENTED_NOT_VERIFIED pending exact-head PR review/countercheck
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

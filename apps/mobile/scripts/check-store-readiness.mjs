@@ -15,6 +15,43 @@ const CONFIRMED_PLAY_ICON_SHA256 =
   "7c5f0fe9c8ba16ac934d20c67365343e91b59130109795b26461666e94652112";
 const CONFIRMED_PLAY_FEATURE_SHA256 =
   "95ccc38c8e255f3f50938b86630afb2c0cd5a3703d3c46ca1c91384c9409cb13";
+const CONFIRMED_APPLE_PORTAL_ROWS_SHA256 =
+  "74a2b6800c3e967325b4c830ba17602bdc458f2ca85cbd394be78418f90d8934";
+const APPLE_PORTAL_FIELD_CONTRACT = Object.freeze([
+  ["Name", "READY"],
+  ["Subtitle", "READY"],
+  ["Description", "READY"],
+  ["Keywords", "READY"],
+  ["Promotional Text", "READY"],
+  ["Age Rating", "PHASE8_REQUIRED"],
+  ["Bundle ID", "READY"],
+  ["SKU", "OWNER_REQUIRED"],
+  ["Content Rights", "OWNER_REQUIRED"],
+  ["Primary Language", "READY"],
+  ["Primary Category", "READY"],
+  ["Secondary Category", "READY"],
+  ["Digital Services Act (DSA) Status", "OWNER_REQUIRED"],
+  ["Regulated Medical Devices", "OWNER_REQUIRED"],
+  ["Support URL", "READY"],
+  ["Marketing URL", "READY"],
+  ["Version Number", "READY"],
+  ["Copyright", "OWNER_REQUIRED"],
+  ["App Review Information", "PHASE8_REQUIRED"],
+  ["Version Release Settings", "OWNER_REQUIRED"],
+  ["App Availability", "OWNER_REQUIRED"],
+  ["Price", "OWNER_REQUIRED"],
+  ["Tax Category", "OWNER_REQUIRED"],
+  ["Privacy Policy URL", "READY"],
+  ["Privacy Choices URL", "OWNER_REQUIRED"],
+  ["Data Types", "PHASE8_REQUIRED"],
+  ["Accessibility URL", "OWNER_REQUIRED"],
+  ["Accessibility Support", "PHASE8_REQUIRED"],
+  ["Screenshots", "PHASE8_REQUIRED"],
+  ["App Icon", "PHASE8_REQUIRED"],
+  ["Export Compliance", "PHASE8_REQUIRED"],
+  ["Signed Build", "PHASE8_REQUIRED"],
+  ["Mac and Apple Vision Pro Availability", "OWNER_REQUIRED"],
+]);
 
 function fail(code) {
   const error = new Error(code);
@@ -49,6 +86,132 @@ function tableValue(markdown, label) {
   return match[1].replace(/^`|`$/gu, "").trim();
 }
 
+function portalHandoffValue(markdown, label) {
+  const row = markdown
+    .split(/\r?\n/gu)
+    .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()))
+    .find((cells) => cells.length === 3 && cells[0] === label);
+  if (!row) fail("store_portal_handoff_field_missing");
+  return row[1].replace(/^`|`$/gu, "").trim();
+}
+
+function appStorePortalRows(markdown) {
+  return markdown
+    .split(/\r?\n/gu)
+    .map((line) =>
+      line.match(
+        /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*(READY|OWNER_REQUIRED|PHASE8_REQUIRED)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/u,
+      ),
+    )
+    .filter(Boolean)
+    .map((match) => ({
+      number: Number(match[1]),
+      field: match[2].trim(),
+      status: match[3],
+      action: match[4].trim(),
+      gate: match[5].trim(),
+    }));
+}
+
+function verifyAppStorePortalWorksheet(markdown, expectedListing) {
+  const rows = appStorePortalRows(markdown);
+  if (rows.length !== APPLE_PORTAL_FIELD_CONTRACT.length) {
+    fail("store_app_store_portal_matrix_invalid");
+  }
+
+  rows.forEach((row, index) => {
+    const [expectedField, expectedStatus] =
+      APPLE_PORTAL_FIELD_CONTRACT[index];
+    if (
+      row.number !== index + 1
+      || row.field !== expectedField
+      || row.status !== expectedStatus
+      || row.action.length === 0
+      || row.gate.length === 0
+    ) {
+      fail("store_app_store_portal_matrix_invalid");
+    }
+  });
+
+  const counts = rows.reduce(
+    (result, row) => ({
+      ...result,
+      [row.status]: result[row.status] + 1,
+    }),
+    { READY: 0, OWNER_REQUIRED: 0, PHASE8_REQUIRED: 0 },
+  );
+  if (
+    counts.READY !== 13
+    || counts.OWNER_REQUIRED !== 12
+    || counts.PHASE8_REQUIRED !== 8
+  ) {
+    fail("store_app_store_portal_matrix_invalid");
+  }
+
+  const rowsByField = new Map(rows.map((row) => [row.field, row]));
+  const expectedReadyValues = new Map([
+    ["Name", "`FanMind`"],
+    ["Description", "STORE_LISTING.md"],
+    ["Keywords", "DE-/EN-Suchbegriffe"],
+    ["Promotional Text", "deutscher und englischer"],
+    ["Bundle ID", "`ch.fanmind.app`"],
+    ["Primary Language", "Deutsch (`de-DE`)"],
+    ["Support URL", "`https://fanmind.ch/support`"],
+    ["Marketing URL", "`https://fanmind.ch`"],
+    ["Version Number", "`1.0.0`"],
+    ["Privacy Policy URL", "`https://fanmind.ch/datenschutz`"],
+  ]);
+  for (const [field, expectedValue] of expectedReadyValues) {
+    if (!rowsByField.get(field)?.action.includes(expectedValue)) {
+      fail("store_app_store_portal_identity_invalid");
+    }
+  }
+  const subtitleAction = rowsByField.get("Subtitle")?.action ?? "";
+  const subtitleMatch = /^DE `([^`]+)`; EN `([^`]+)`$/u.exec(
+    subtitleAction,
+  );
+  if (
+    !subtitleMatch
+    || subtitleMatch[1] !== expectedListing.subtitleDe
+    || subtitleMatch[2] !== expectedListing.subtitleEn
+    || rowsByField.get("Primary Category")?.action
+      !== expectedListing.primaryCategory
+    || rowsByField.get("Secondary Category")?.action
+      !== expectedListing.secondaryCategory
+  ) {
+    fail("store_app_store_portal_identity_invalid");
+  }
+  if (
+    createHash("sha256").update(JSON.stringify(rows)).digest("hex")
+    !== CONFIRMED_APPLE_PORTAL_ROWS_SHA256
+  ) {
+    fail("store_app_store_portal_matrix_invalid");
+  }
+
+  if (
+    !/dreizehn\s+`READY`/u.test(markdown)
+    || !/zwölf\s+`OWNER_REQUIRED`/u.test(markdown)
+    || !/acht\s+`PHASE8_REQUIRED`/u.test(markdown)
+    || !/kein iOS-Build/iu.test(markdown)
+    || !/kein TestFlight/iu.test(markdown)
+    || !/Keine Portalübertragung/u.test(markdown)
+    || !/niemals im Repository/u.test(markdown)
+    || !/account-deletion` nicht ungeprüft gleichsetzen/u.test(markdown)
+    || ![
+      "https://developer.apple.com/help/app-store-connect/reference/app-information/required-localizable-and-editable-properties/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information/",
+      "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-accessibility/overview-of-accessibility-nutrition-labels/",
+      "https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/overview-of-submitting-for-review/",
+    ].every((source) => markdown.includes(`](${source})`))
+  ) {
+    fail("store_app_store_portal_boundary_missing");
+  }
+
+  return Object.freeze({ rows: rows.length, counts });
+}
+
 function assertLength(value, minimum, maximum, code) {
   const length = characterCount(value);
   if (length < minimum || length > maximum) fail(code);
@@ -79,6 +242,7 @@ export function evaluateStoreReadiness(input) {
     easConfig,
     listing,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     featureSource,
@@ -97,6 +261,14 @@ export function evaluateStoreReadiness(input) {
   const subtitleEn = tableValue(
     listing,
     "Subtitle / Short description EN",
+  );
+  const applePrimaryCategory = portalHandoffValue(
+    listing,
+    "Apple Hauptkategorie",
+  );
+  const appleSecondaryCategory = portalHandoffValue(
+    listing,
+    "Apple Nebenkategorie",
   );
   const shortDescription = fencedText(
     listing,
@@ -122,7 +294,6 @@ export function evaluateStoreReadiness(input) {
     "Apple - Promotional Text EN",
   );
   const normalizedFeatureSource = featureSource.replace(/\r\n?/gu, "\n");
-
   assertLength(appName, 2, 30, "store_app_name_length_invalid");
   assertLength(subtitleDe, 2, 30, "store_subtitle_de_length_invalid");
   assertLength(subtitleEn, 2, 30, "store_subtitle_en_length_invalid");
@@ -167,6 +338,13 @@ export function evaluateStoreReadiness(input) {
     170,
     "store_apple_promotional_text_en_length_invalid",
   );
+
+  const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet, {
+    subtitleDe,
+    subtitleEn,
+    primaryCategory: applePrimaryCategory,
+    secondaryCategory: appleSecondaryCategory,
+  });
 
   if (appName !== expo.name || expo.name !== "FanMind") {
     fail("store_app_name_identity_mismatch");
@@ -339,6 +517,10 @@ export function evaluateStoreReadiness(input) {
     submissionMode: "internal-draft",
     storeAssets: 2,
     iosReleaseScope: "metadata-only",
+    applePortalFields: portalWorksheet.rows,
+    applePortalReady: portalWorksheet.counts.READY,
+    applePortalOwnerRequired: portalWorksheet.counts.OWNER_REQUIRED,
+    applePortalPhase8Required: portalWorksheet.counts.PHASE8_REQUIRED,
   });
 }
 
@@ -348,6 +530,7 @@ export async function verifyStoreReadiness() {
     easConfig,
     listing,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     featureSource,
@@ -365,6 +548,10 @@ export async function verifyStoreReadiness() {
     ),
     readFile(
       new URL("docs/mobile/APP_STORE_HANDOFF.md", REPOSITORY_ROOT),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/mobile/APP_STORE_CONNECT_WORKSHEET.md", REPOSITORY_ROOT),
       "utf8",
     ),
     readFile(
@@ -398,6 +585,7 @@ export async function verifyStoreReadiness() {
     easConfig,
     listing,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     featureSource,
@@ -417,6 +605,14 @@ async function main() {
   console.log(`MOBILE_STORE_SUBMISSION_MODE=${result.submissionMode}`);
   console.log(`MOBILE_STORE_ASSETS=${result.storeAssets}`);
   console.log(`MOBILE_IOS_RELEASE_SCOPE=${result.iosReleaseScope}`);
+  console.log(`MOBILE_APPLE_PORTAL_FIELDS=${result.applePortalFields}`);
+  console.log(`MOBILE_APPLE_PORTAL_READY=${result.applePortalReady}`);
+  console.log(
+    `MOBILE_APPLE_PORTAL_OWNER_REQUIRED=${result.applePortalOwnerRequired}`,
+  );
+  console.log(
+    `MOBILE_APPLE_PORTAL_PHASE8_REQUIRED=${result.applePortalPhase8Required}`,
+  );
   console.log("MOBILE_STORE_SECRETS=absent");
   console.log("MOBILE_STORE_READINESS=PASS");
 }
