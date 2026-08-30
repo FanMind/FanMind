@@ -263,11 +263,6 @@ export function evaluateStoreReadiness(input) {
     "Apple - Promotional Text EN",
   );
   const normalizedFeatureSource = featureSource.replace(/\r\n?/gu, "\n");
-  const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet, {
-    de: subtitleDe,
-    en: subtitleEn,
-  });
-
   assertLength(appName, 2, 30, "store_app_name_length_invalid");
   assertLength(subtitleDe, 2, 30, "store_subtitle_de_length_invalid");
   assertLength(subtitleEn, 2, 30, "store_subtitle_en_length_invalid");
@@ -312,6 +307,11 @@ export function evaluateStoreReadiness(input) {
     170,
     "store_apple_promotional_text_en_length_invalid",
   );
+
+  const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet, {
+    de: subtitleDe,
+    en: subtitleEn,
+  });
 
   if (appName !== expo.name || expo.name !== "FanMind") {
     fail("store_app_name_identity_mismatch");
