@@ -19,12 +19,12 @@ This register contains started, partially completed or follow-up work that could
 - Follow-up: maintain V6; no parallel memory system.
 
 ## FM-LOOP-003
-- Related: FM-MOB-001 / FM-MOB-003
+- Related: FM-MOB-001 / FM-MOB-003 / FM-MOB-004
 - Status: OPEN
-- Updated: 2026-08-29
-- Gap: FM-MOB-003 is merged and bound to one successful signed Android preview, but owner real-device confirmation plus the broader Recovery/Purge and applicable Push/Store acceptance remain open for the current finishline. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
-- Close when: the required current-finishline Android signed-build/device, Recovery/Purge and applicable Push/Store acceptance is evidence-bound to the exact build/commit.
-- Next check: install the already completed preview for merge `93496a4afac9b3b315c9985afbbce02b8524fc44` and confirm unseen-only Start, per-fan platform tabs, direct manual Follow-up and absent rejected symbol. Do not queue another build for this check. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
+- Updated: 2026-08-30
+- Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result on the exact latest Android Preview, but the broader receipt-bound 19-check Android runbook, Supabase Recovery/Purge and applicable Push/Store acceptance remain open for FM-MOB-001. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
+- Close when: the private validator passes a complete 19-check Android record bound to the exact signed build/commit, and Recovery/Purge plus applicable Push/Store acceptance are separately evidence-bound.
+- Next check: preserve the accepted UI observation and continue with the private Android runbook for exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`, including recovery, cache-failure and logout-purge evidence. Do not reinstall the superseded `93496a4...` build or queue another build merely to repeat the accepted UI checks. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
 
 ## FM-LOOP-004
 - Related: FM-AI-001

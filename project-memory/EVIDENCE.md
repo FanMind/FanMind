@@ -307,7 +307,7 @@ Implementation status and acceptance status are deliberately separate.
 - Negative evidence: no service-role key, message send, message-content offline cache, Member mutation, schema/RLS/provider/Production change, demo-row creation, iOS submission or Store publication. The fake icon style/component names are absent and the dashboard does not render `BrandMark`.
 - Rollback/recovery: revert the bounded Mobile application/docs/tests commit. Follow-ups remain normal user-created records. Already marked-seen rows use the existing product behavior and are not automatically reversible; no message content or schema is deleted.
 - Signed-build countercheck: all eight exact-head PR workflows passed before merge. The protected workflow completed one `preview` Android internal build on the exact merge, verified the artifact contract, stored only the redacted receipt and purged temporary state. Submit, Update, iOS, Store and Production actions remained disabled/not attempted.
-- Current limitation: a signed exact-commit binary now exists, but the owner has not yet completed the real-device visual/runtime confirmation. Repository/build evidence alone cannot self-accept the device experience.
+- Current limitation: this historical record proves the FM-MOB-003 implementation and its own signed build, but not later owner acceptance. The superseding exact FM-MOB-004 build and bounded owner observation are recorded separately in FM-EV-026/FM-EV-027.
 - Falsification: an exact replacement build showing the decorative symbol, displaying a fan without an unseen inbound row, mixing messages after a channel tab selection, allowing a Member write, or failing to persist a valid Owner Follow-up invalidates acceptance and reopens FM-MOB-003.
 - Acceptance: VERIFIED_NOT_ACCEPTED
 
@@ -315,14 +315,25 @@ Implementation status and acceptance status are deliberately separate.
 - Related: FM-MOB-004 / FM-MOB-001 / FM-CR-005
 - Date: 2026-08-30
 - Target: PR #1025 final head `64329ac628188cf532281ddb742058612b9e9eb8`, merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`, protected Android run `33298699290` / job `99222705186`; no Production, database, provider or Store target
-- Type: implementation diff + repeated exact-head review/countercheck + complete repository/native verification + protected signed Android internal build
+- Type: implementation diff + repeated exact-head review/countercheck + complete repository/native verification + protected signed Android internal build + bounded owner real-device UI/runtime acceptance
 - Reference: `apps/mobile/app/(app)/contacts/[id].tsx`; `apps/mobile/app/(app)/followups.tsx`; `apps/mobile/app/(app)/index.tsx`; `apps/mobile/assets/branding/fanmind-splash-source.svg`; `apps/mobile/src/lib/data.ts`; `src/app/api/ai/fan-analysis/route.ts`; `tests/mobile-recovery-contact-crud.test.mjs`.
 - Result: every fan has `Nachrichten`, `Follow-ups` and `Kontaktwissen`; the identifier is one-line; contact profile/tags and provenance-valid saved analysis live under contact knowledge while new analysis generation stays honestly `In Vorbereitung`; global Follow-ups navigate to their fan; today's open Follow-ups are selected completely, counted exactly and sorted by semantic priority; the native splash is a square `FM`-over-`FanMind` composition.
 - Review/countercheck: eleven superseded exact-head review rounds found thirty-five valid authorization, provenance, error-state, compatibility, pagination, counting and entitlement cases. All were corrected rather than bypassed. Final head `64329ac628188cf532281ddb742058612b9e9eb8` passed all nine GitHub gates with no unresolved review thread before merge.
 - Checks: 42 focused security/Mobile checks, 1055/1055 operations tests, root TypeScript/lint/Production build, Mobile TypeScript/Expo Doctor 20/20/Store/boundary/native prebuild, Android/iOS exports and Project Memory/truth/drift controls passed. Protected run `33298699290` verified exact EAS project/public Preview binding, authorized exactly one `preview` Android internal build, verified exact commit/platform/profile/internal distribution/HTTPS artifact, stored the redacted receipt and cleaned temporary state.
 - Negative evidence: no schema/demo-row/provider/Production mutation, automatic send, service-role/OpenAI secret in Mobile, message/analysis offline cache, iOS submission, Store publication, EAS Submit or EAS Update. No private build ID or artifact URL is retained here.
-- Current limitation: repository, CI and signed-artifact evidence do not prove the real-device presentation or interaction. Owner installation must confirm the current FM-MOB-004 behaviors; recovery redirect and applicable Push/Store acceptance remain separately open.
+- Bounded device acceptance: on 2026-08-30 the owner installed and inspected the exact-merge Android Preview on a real device and confirmed the requested FM-MOB-004 presentation/workflow as finished. The complete private 19-check Android runbook/validator, Recovery redirect and applicable Push/Store acceptance remain separately open under FM-MOB-001 and do not reopen FM-MOB-004.
 - Falsification: the exact merge build showing a cropped/wrong splash, wrapping the identifier, missing or misrouting fan sections/Follow-ups, falsely enabling analysis generation, or omitting today's valid Follow-ups invalidates device acceptance and reopens only the bounded runtime/UI observation.
-- Acceptance: VERIFIED_NOT_ACCEPTED
+- Acceptance: ACCEPTED
+
+## FM-EV-027
+- Related: FM-MOB-003 / FM-MOB-004 / FM-MOB-001
+- Date: 2026-08-30
+- Target: superseding FM-MOB-004 exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`, protected Android run `33298699290` / job `99222705186`, and append-only `RECEIPT-FM-MOB-004-DEVICE-ACCEPTANCE-20260830`; no Production, database, provider or Store target
+- Type: bounded owner real-device UI/runtime observation on the exact latest signed Android Preview
+- Result: the owner installed and inspected the exact latest Android build and confirmed the requested current Mobile presentation/workflow as finished. The accepted observation covers the FM-MOB-003 unseen inbox, per-fan channel selection, direct manual Follow-up and rejected-symbol removal plus the FM-MOB-004 square splash, one-line identifier, fan sections, Follow-up navigation/today list and honest analysis-preparation state.
+- Boundary: this does not claim the complete private receipt-bound 19-check FM-MOB-001 runbook/validator, recovery positive/negative flows, cache-failure boundaries, logout purge, Push/Store, iOS/TestFlight, Production or legal acceptance. `EXT-MOBILE-ANDROID` remains OPEN for that broader control.
+- Negative evidence: no rebuild, app/code/schema/data/provider/Production mutation, Submit, Update, Store action, private build identifier, artifact URL, screenshot or device data was produced or retained.
+- Falsification: a newly observed defect in one of the bounded accepted behaviors requires a new scoped task; failure of a separate 19-check runbook item does not rewrite the historical UI observation but keeps FM-MOB-001/EXT-MOBILE-ANDROID open.
+- Acceptance: ACCEPTED for the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope only
 
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

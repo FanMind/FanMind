@@ -17,9 +17,9 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Type: external platform + technical acceptance
 - Status: ACTIVE
 - Updated: 2026-08-30
-- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33298699290` / job `99222705186` produced the latest verified exact-merge FM-MOB-004 signed Android internal artifact for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. Owner real-device acceptance, Supabase recovery redirect and applicable Push/Store evidence remain open.
+- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33298699290` / job `99222705186` produced the latest verified exact-merge FM-MOB-004 signed Android internal artifact for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. The bounded FM-MOB-003/FM-MOB-004 UI/runtime observation is owner-accepted; the complete receipt-bound 19-check Android runbook/private validator, Supabase recovery redirect and applicable Push/Store evidence remain open.
 - Deferred boundary: Apple Developer/App Store Connect, signed iOS build, TestFlight and real iOS device acceptance were moved by owner decision FM-DEC-009 to Phase 8. They remain future external work and do not block FM-MOB-001/current sales finishline.
-- Rule: repository CI and signed-artifact success still do not satisfy real-device or Store acceptance. Use the latest FM-MOB-004 Android Preview for device checks; do not automatically rebuild, submit, update or invent external identifiers. Do not start iOS/TestFlight work before Phase 8 is explicitly started.
+- Rule: repository CI, signed-artifact success and the bounded UI observation do not satisfy the complete Android runbook or Store acceptance. Use the latest FM-MOB-004 Android Preview for the remaining private runbook while available; do not automatically rebuild, submit, update or invent external identifiers. Do not start iOS/TestFlight work before Phase 8 is explicitly started.
 
 ## FM-DEP-003
 - From: FM-AI-001

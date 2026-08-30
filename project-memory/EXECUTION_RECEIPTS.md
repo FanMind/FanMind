@@ -60,6 +60,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Open follow-up: owner installs the exact-merge Preview and confirms the requested visible/runtime behaviors; broader redirect, Push/Store and Phase-8 iOS/TestFlight remain separate.
 - Work lock released: yes.
 
+## RECEIPT-FM-MOB-004-DEVICE-ACCEPTANCE-20260830
+- Task: FM-MOB-004 / bounded FM-MOB-003 UI observation
+- Started: 2026-08-30 Europe/Vienna
+- Finished: 2026-08-30 after owner real-device observation
+- Branch/PR: acceptance-only Project Memory closeout; implementation remains PR #1025 / merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` / protected Android run `33298699290` / job `99222705186`.
+- Preflight checked: accepted implementation/build evidence, FM-MOB-003/FM-MOB-004 requested visible behaviors, owner statement and the broader `docs/mobile/DEVICE_ACCEPTANCE.md` boundary.
+- Prior attempts found: the build and repository proof were already complete; only the bounded owner observation was new. The full FM-MOB-001 Android security/recovery runbook is a broader control and cannot be inferred from a general UI inspection.
+- Dependency result: no rebuild, code, database, provider, Production, Submit, Update or Store action is required to record the bounded observation.
+- Planned evidence: owner confirmation against the exact latest Android Preview plus canonical-register consistency.
+- Changes made: appended this event and updated current-state registers; the original FM-MOB-003/FM-MOB-004 execution receipts remain unchanged.
+- Checks/tests: Project Memory quality, sales derivation, truth drift, next-action, evidence freshness, accepted-state drift, milestone, V8 and status generation passed; no product code changed.
+- Final diff counterchecked: yes.
+- Regression/security countercheck: FM-MOB-003/FM-MOB-004 UI/runtime acceptance is bounded to the requested splash, identifier, sections, channel/dashboard/manual Follow-up and navigation/today-list observations. It does not claim the private receipt-bound 19-check validator, recovery, cache-failure, logout-purge, Push/Store, iOS/TestFlight or Production acceptance.
+- Evidence produced: FM-EV-027 plus owner real-device confirmation in the completing 2026-08-30 chat; no private build identifier, URL, screenshot or device data stored.
+- Result status: ACCEPTED for FM-MOB-003/FM-MOB-004 bounded UI/runtime scope; EXT-MOBILE-ANDROID remains OPEN for the complete FM-MOB-001 runbook.
+- Open follow-up: complete the private 19-check Android acceptance record/validator, Supabase recovery redirect and applicable Push/Store controls separately; iOS/TestFlight remains Phase 8.
+- Work lock released: yes; no new implementation lock was acquired.
+
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
 - Started: 2026-08-19 12:14 Europe/Vienna

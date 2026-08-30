@@ -22,7 +22,7 @@ Prevents two agents/sessions from independently working the same task.
 - Resume from: merged FM-MOB-003 foundation on current `main`; extend existing RLS, owner-only mutation and server AI controls without recreating them.
 - Safety: no automatic sending, service-role key in Mobile, offline message/analysis cache, schema/demo-row/provider/Production mutation, iOS submission or Store publication is authorized.
 - Released: 2026-08-30 after all nine exact-head gates passed, #1025 merged and protected run `33298699290` / job `99222705186` completed one verified exact-merge `preview` Android artifact with receipt and cleanup.
-- Resume from: owner device acceptance only. A visual/runtime failure reopens only the exact Android observation; it does not authorize an automatic rebuild, schema change, provider activation or duplicate demo data.
+- Accepted: owner real-device acceptance completed on 2026-08-30 for the exact FM-MOB-004 Android Preview. Do not resume this lock; a newly observed defect requires a new bounded task and does not authorize an automatic rebuild, schema change, provider activation or duplicate demo data.
 
 ## LOCK-FM-MOB-003-FAN-INBOX-20260829
 - Task: FM-MOB-003
@@ -35,7 +35,7 @@ Prevents two agents/sessions from independently working the same task.
 - Resume from: existing message-history UI on merged `main` `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; use existing `seen_at`, authenticated RLS and owner-only Follow-up contracts.
 - Safety: no automatic sending, service-role key, offline message cache, new demo rows, schema migration, Production deploy, provider activation, iOS submission or Store publication is authorized.
 - Released: 2026-08-29 after terminal-green merge and protected Android run `33260695232` / job `99122008690` completed one verified exact-merge preview artifact with cleanup.
-- Resume from: owner device acceptance only. A visual/runtime failure reopens FM-MOB-003 with the exact build evidence; it does not authorize an automatic rebuild, schema change or duplicate demo data.
+- Accepted: the owner's 2026-08-30 real-device acceptance of the superseding exact FM-MOB-004 Android Preview confirms FM-MOB-003. Do not resume this lock; a newly observed defect requires a new bounded task and does not authorize an automatic rebuild, schema change or duplicate demo data.
 
 ## Released locks
 

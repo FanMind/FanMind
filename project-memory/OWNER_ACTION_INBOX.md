@@ -74,7 +74,7 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Where: exact Expo/EAS FanMind account/project and GitHub Environment `mobile-preview`; Supabase Auth redirect is a separate external acceptance check.
 - Prior blocker: read-only run `33000433320`, job `98280538304`, found the protected Preview binding blank and failed closed before any build.
 - Result: protected run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` reverified the existing EAS project binding and public Preview environment, then completed exactly one Android internal build with HTTPS artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
-- Remaining external work: owner real-device acceptance and the separate Supabase Auth redirect/recovery proof; Push/Store remain separate and iOS/TestFlight remains Phase 8.
+- Remaining external work: the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation is owner-accepted on the latest exact build. The complete private receipt-bound 19-check Android runbook/validator and separate Supabase Auth redirect/recovery proof remain open; Push/Store remain separate and iOS/TestFlight remains Phase 8.
 - Risk: R3
 - Forbidden: exposing project IDs/secrets/private artifact values, EAS reinitialization, automatic repeat build, Submit/Update/Store action, Production crossover or Supabase/Auth/DB mutation.
 
