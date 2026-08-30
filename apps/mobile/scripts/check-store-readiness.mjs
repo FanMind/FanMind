@@ -15,6 +15,8 @@ const CONFIRMED_PLAY_ICON_SHA256 =
   "7c5f0fe9c8ba16ac934d20c67365343e91b59130109795b26461666e94652112";
 const CONFIRMED_PLAY_FEATURE_SHA256 =
   "95ccc38c8e255f3f50938b86630afb2c0cd5a3703d3c46ca1c91384c9409cb13";
+const CONFIRMED_APPLE_PORTAL_ROWS_SHA256 =
+  "74a2b6800c3e967325b4c830ba17602bdc458f2ca85cbd394be78418f90d8934";
 const APPLE_PORTAL_FIELD_CONTRACT = Object.freeze([
   ["Name", "READY"],
   ["Subtitle", "READY"],
@@ -178,6 +180,12 @@ function verifyAppStorePortalWorksheet(markdown, expectedListing) {
       !== expectedListing.secondaryCategory
   ) {
     fail("store_app_store_portal_identity_invalid");
+  }
+  if (
+    createHash("sha256").update(JSON.stringify(rows)).digest("hex")
+    !== CONFIRMED_APPLE_PORTAL_ROWS_SHA256
+  ) {
+    fail("store_app_store_portal_matrix_invalid");
   }
 
   if (

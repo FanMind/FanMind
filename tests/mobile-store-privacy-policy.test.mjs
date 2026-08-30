@@ -364,6 +364,29 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     () =>
       evaluateStoreReadiness({
         ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replace(
+          "| 17 | Version Number | READY | `1.0.0` |",
+          "| 17 | Version Number | READY | `1.0.0` oder `2.0.0` |",
+        ),
+      }),
+    /store_app_store_portal_matrix_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replace(
+          "| 32 | Signed Build | PHASE8_REQUIRED | Genau einen später ausdrücklich autorisierten iOS-Build auswählen |",
+          "| 32 | Signed Build | PHASE8_REQUIRED | Jetzt einen iOS-Produktionsbuild starten und an TestFlight senden |",
+        ),
+      }),
+    /store_app_store_portal_matrix_invalid/u,
+  );
+
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
         appStoreWorksheet: appStoreWorksheet.replaceAll(
           "https://developer.apple.com",
           "https://example.invalid",
