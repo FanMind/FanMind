@@ -235,7 +235,9 @@ A Web merge can modify shared API contracts but cannot publish a mobile binary. 
    Berechtigungs- und Secret-Grenzen;
 7. Android-Debug-APK mit lokalem Debug-Key ohne Release-/Store-Credentials und codesign-freie iOS-Simulator-App in der Native-CI;
 8. main-only read-only EAS resource verification before any signed build;
-9. explicit internal-device test before EAS distribution.
+9. explicit internal-device test before EAS distribution;
+10. exact-commit `npm run store:check` plus Production target revalidation
+    before one Android AAB; Submit, Update and Play publication remain separate.
 
 Ein SHA-gebundener Geräte-Abnahmevalidator in
 `docs/mobile/DEVICE_ACCEPTANCE.md` verbindet Android und iOS jeweils getrennt
@@ -259,6 +261,9 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 - [x] Android debug with a local debug key and code-signing-free iOS Simulator native compilation in CI, both without release/store credentials;
 - [x] main-only read-only EAS project/public-environment resource check
       prepared without build, submit, update or signing access;
+- [x] main-only Android Production AAB control prepared with an action-time
+      Store-readiness gate, frozen existing credentials, terminal artifact
+      verification and disabled Submit/Update;
 - [x] bounded offline read cache with the central purge contract;
 - [x] native notification configuration and fail-closed follow-up response routing;
 - [x] native wordmark splashscreen and prepared store metadata;
@@ -293,6 +298,8 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 - [ ] real Android and iOS device test records.
 - [ ] successful external Mobile Push Staging resource, migration and
       rollback-only acceptance runs before server-key activation;
+- [ ] one exact-commit Android Production AAB plus separate Play internal-test
+      upload after account/app-record readiness;
 
 ### Phase C
 
