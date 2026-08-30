@@ -99,6 +99,38 @@ test("every historically unchecked checkbox must be mapped", async () => {
   );
 });
 
+test("declared counts cannot be reduced together with the pinned source list", async () => {
+  await withModifiedState(
+    (state) => {
+      const issue = state.issues[1];
+      issue.legacy_unchecked_items.pop();
+      issue.source_checkbox_counts.total -= 1;
+      issue.source_checkbox_counts.unchecked -= 1;
+    },
+    async (candidate) => {
+      const result = run(["--state", candidate]);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout, /source_counts_mismatch:643/u);
+    },
+  );
+});
+
+test("workflow evidence URL, commit and conclusion are exact pinned contracts", async () => {
+  await withModifiedState(
+    (state) => {
+      state.evidence.ADMIN_STAGING_RUN.reference =
+        "https://github.com/FanMind/FanMind/actions/runs/1";
+      state.evidence.ADMIN_STAGING_RUN.commit = "f".repeat(40);
+      state.evidence.ADMIN_STAGING_RUN.conclusion = "success";
+    },
+    async (candidate) => {
+      const result = run(["--state", candidate]);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout, /evidence_contract_mismatch/u);
+    },
+  );
+});
+
 test("generated human reconciliation cannot drift from machine state", async () => {
   await withModifiedState(
     () => {},

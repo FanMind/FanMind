@@ -48,6 +48,7 @@
         "checked": 0,
         "unchecked": 23
       },
+      "source_unchecked_sha256": "c2c4d7b8448c3c62efedf109e6bc953f9b541eb4d59f41e6631d735b82ba9560",
       "disposition": "KEEP_OPEN_RECONCILED",
       "target_state": "open",
       "successor": 874,
@@ -196,6 +197,7 @@
         "checked": 27,
         "unchecked": 9
       },
+      "source_unchecked_sha256": "fcc38b559d913e58875923e5ebd05a0906416dc78ab07171d7bf06a7541eb1e5",
       "disposition": "KEEP_OPEN_RECONCILED",
       "target_state": "open",
       "successor": 874,
@@ -268,6 +270,7 @@
         "checked": 54,
         "unchecked": 14
       },
+      "source_unchecked_sha256": "e350a60a7cbfb76ba6f970fcab31342a69c980ce3a91146e58d9821fd6e22b07",
       "disposition": "CLOSE_SUPERSEDED",
       "target_state": "closed",
       "successor": 874,

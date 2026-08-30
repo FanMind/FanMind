@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -15,6 +16,63 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATE = ROOT / "project-memory" / "LEGACY_ISSUE_RECONCILIATION.json"
 DEFAULT_RENDERED = ROOT / "project-memory" / "LEGACY_ISSUE_RECONCILIATION.md"
 EXPECTED_ISSUES = {642, 643, 644}
+EXPECTED_SOURCE_SNAPSHOTS = {
+    642: {
+        "updated_at": "2026-08-19T10:30:23Z",
+        "total": 23,
+        "checked": 0,
+        "unchecked": 23,
+        "unchecked_sha256": "c2c4d7b8448c3c62efedf109e6bc953f9b541eb4d59f41e6631d735b82ba9560",
+    },
+    643: {
+        "updated_at": "2026-08-19T10:30:33Z",
+        "total": 36,
+        "checked": 27,
+        "unchecked": 9,
+        "unchecked_sha256": "fcc38b559d913e58875923e5ebd05a0906416dc78ab07171d7bf06a7541eb1e5",
+    },
+    644: {
+        "updated_at": "2026-08-19T10:30:42Z",
+        "total": 68,
+        "checked": 54,
+        "unchecked": 14,
+        "unchecked_sha256": "e350a60a7cbfb76ba6f970fcab31342a69c980ce3a91146e58d9821fd6e22b07",
+    },
+}
+EXPECTED_EVIDENCE = {
+    "STAGING_MILESTONE": {
+        "kind": "immutable_repository_snapshot",
+        "reference": "project-memory/milestones/STAGING_ACCEPTED_2026-08-19.json",
+        "commit": "cdf4a59517b5ea1c34e672b207878b95145d2d01",
+    },
+    "ADMIN_STAGING_RUN": {
+        "kind": "immutable_workflow_run",
+        "reference": "https://github.com/FanMind/FanMind/actions/runs/31837057323",
+        "commit": "30213663382d9ef21214027b39667b8721beb598",
+        "conclusion": "success",
+    },
+    "REFERRAL_STAGING_RUN": {
+        "kind": "immutable_workflow_run",
+        "reference": "https://github.com/FanMind/FanMind/actions/runs/31895476403",
+        "commit": "b13ac3bceacdfefeb8a22bc060422f1b4e3dcff9",
+        "conclusion": "success",
+    },
+    "MOBILE_AAB_EVIDENCE": {
+        "kind": "project_memory_evidence",
+        "reference": "FM-EV-028",
+        "commit": "e96415035ffbe12f16dd3b81e13a5e62b2c4ac00",
+    },
+    "MOBILE_REDIRECT_EVIDENCE": {
+        "kind": "project_memory_evidence",
+        "reference": "FM-EV-029",
+        "commit": "3082490451dd45b5127bdf9d9ae55b4712255b72",
+    },
+    "MOBILE_DEVICE_EVIDENCE": {
+        "kind": "project_memory_evidence",
+        "reference": "FM-EV-027",
+        "commit": "6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522",
+    },
+}
 ALLOWED_STATUSES = {
     "ACCEPTED",
     "PARTIAL",
@@ -58,6 +116,7 @@ def validate_state(data: dict[str, Any]) -> None:
 
     evidence = data.get("evidence")
     require(isinstance(evidence, dict) and evidence, "evidence_invalid")
+    require(evidence == EXPECTED_EVIDENCE, "evidence_contract_mismatch")
     for evidence_id, record in evidence.items():
         require(re.fullmatch(r"[A-Z0-9_]+", evidence_id) is not None, "evidence_id_invalid")
         require(isinstance(record, dict), f"evidence_record_invalid:{evidence_id}")
@@ -79,9 +138,9 @@ def validate_state(data: dict[str, Any]) -> None:
     for issue in issues:
         require(isinstance(issue, dict), "issue_record_invalid")
         number = issue["number"]
+        expected_source = EXPECTED_SOURCE_SNAPSHOTS[number]
         require(
-            isinstance(issue.get("source_updated_at"), str)
-            and issue["source_updated_at"].endswith("Z"),
+            issue.get("source_updated_at") == expected_source["updated_at"],
             f"source_updated_at_invalid:{number}",
         )
         require(issue.get("successor") == 874, f"successor_invalid:{number}")
@@ -98,12 +157,30 @@ def validate_state(data: dict[str, Any]) -> None:
             counts["checked"] + counts["unchecked"] == counts["total"],
             f"count_sum_invalid:{number}",
         )
+        require(
+            counts
+            == {
+                "total": expected_source["total"],
+                "checked": expected_source["checked"],
+                "unchecked": expected_source["unchecked"],
+            },
+            f"source_counts_mismatch:{number}",
+        )
 
         items = issue.get("legacy_unchecked_items")
         require(isinstance(items, list), f"items_invalid:{number}")
         require(len(items) == counts["unchecked"], f"unchecked_count_mismatch:{number}")
         texts = [item.get("text") for item in items if isinstance(item, dict)]
         require(len(set(texts)) == len(items) and all(texts), f"item_text_invalid:{number}")
+        unchecked_digest = hashlib.sha256("\n".join(texts).encode("utf-8")).hexdigest()
+        require(
+            issue.get("source_unchecked_sha256") == expected_source["unchecked_sha256"],
+            f"source_unchecked_pin_mismatch:{number}",
+        )
+        require(
+            unchecked_digest == expected_source["unchecked_sha256"],
+            f"source_unchecked_digest_mismatch:{number}",
+        )
 
         used_gates: set[str] = set()
         for item in items:
