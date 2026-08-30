@@ -121,7 +121,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Affected areas: Apple portal handoff, Mobile Store readiness validator, regression tests, canonical Mobile readers and Project Memory.
 - Existing task/decision checked: FM-MOB-001, FM-CR-006/007, FM-DEC-010, EXT-MOBILE-ANDROID, EXT-MOBILE-IOS, EXT-MOBILE-PUSH-STORE and the existing verified Android `1.0.0` AAB.
 - Dependencies: unchanged Mobile identity and prepared metadata, current Apple App Store Connect field requirements, later owner/legal/account decisions and Phase-8 signed-build/device evidence.
-- Decision: Add one machine-checked 30-field App Store Connect worksheet that separates ten repository-ready values, twelve owner/legal/account decisions and eight Phase-8 binary/device controls. Keep all unresolved values explicit; do not start iOS signing/build/TestFlight, create a portal record or rebuild Android.
+- Decision: Add one machine-checked 33-field App Store Connect worksheet that separates thirteen repository-ready values, twelve owner/legal/account decisions and eight Phase-8 binary/device controls. Keep all unresolved values explicit; do not start iOS signing/build/TestFlight, create a portal record or rebuild Android.
 - Related task: FM-MOB-001
 
 ## Intake template

@@ -377,7 +377,7 @@ Bereits vorhanden:
 - fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
   Wortmarke, 1024×1024-Native-Icons, reproduzierbare Google-Play-Grafiken,
   App-IDs, Screenshot-Matrix, Apple-Metadaten-Handoff und eine maschinengeprüfte
-  30-Felder-App-Store-Connect-Matrix mit 10/12/8-Trennung in technisch bereit,
+  33-Felder-App-Store-Connect-Matrix mit 13/12/8-Trennung in technisch bereit,
   Owner-/Rechtsentscheidung und Phase-8-Nachweis, exakt gepinnte EAS CLI
   `21.2.0` und ausschließlich interne Android-Draft-Submission;
 - eigener SDK-57-Development-Client sowie explizite EAS-Umgebungen;
@@ -402,7 +402,7 @@ Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
   Send-/Receipt-Nachweis;
 - finale Datenschutz-/Rechts- und Play-Portalabnahme;
 - iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
-  Supportseite und die 30-Felder-App-Store-Connect-Arbeitsmatrix sind
+  Supportseite und die 33-Felder-App-Store-Connect-Arbeitsmatrix sind
   vorbereitet; Konto-/Rechts-/Steuerwerte bleiben offen. Apple Developer /
   App Store Connect, iOS-Build, Gerätenachweis und TestFlight bleiben Phase 8.
 

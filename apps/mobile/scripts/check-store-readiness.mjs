@@ -18,6 +18,9 @@ const CONFIRMED_PLAY_FEATURE_SHA256 =
 const APPLE_PORTAL_FIELD_CONTRACT = Object.freeze([
   ["Name", "READY"],
   ["Subtitle", "READY"],
+  ["Description", "READY"],
+  ["Keywords", "READY"],
+  ["Promotional Text", "READY"],
   ["Age Rating", "PHASE8_REQUIRED"],
   ["Bundle ID", "READY"],
   ["SKU", "OWNER_REQUIRED"],
@@ -25,7 +28,7 @@ const APPLE_PORTAL_FIELD_CONTRACT = Object.freeze([
   ["Primary Language", "READY"],
   ["Primary Category", "READY"],
   ["Secondary Category", "READY"],
-  ["Digital Services Act Status", "OWNER_REQUIRED"],
+  ["Digital Services Act (DSA) Status", "OWNER_REQUIRED"],
   ["Regulated Medical Devices", "OWNER_REQUIRED"],
   ["Support URL", "READY"],
   ["Marketing URL", "READY"],
@@ -127,7 +130,7 @@ function verifyAppStorePortalWorksheet(markdown) {
     { READY: 0, OWNER_REQUIRED: 0, PHASE8_REQUIRED: 0 },
   );
   if (
-    counts.READY !== 10
+    counts.READY !== 13
     || counts.OWNER_REQUIRED !== 12
     || counts.PHASE8_REQUIRED !== 8
   ) {
@@ -138,6 +141,9 @@ function verifyAppStorePortalWorksheet(markdown) {
   const expectedReadyValues = new Map([
     ["Name", "`FanMind`"],
     ["Subtitle", "KI-CRM: Kontakte & Follow-ups"],
+    ["Description", "STORE_LISTING.md"],
+    ["Keywords", "DE-/EN-Suchbegriffe"],
+    ["Promotional Text", "deutscher und englischer"],
     ["Bundle ID", "`ch.fanmind.app`"],
     ["Primary Language", "Deutsch (`de-DE`)"],
     ["Primary Category", "Business"],
@@ -152,9 +158,16 @@ function verifyAppStorePortalWorksheet(markdown) {
       fail("store_app_store_portal_identity_invalid");
     }
   }
+  if (
+    !rowsByField
+      .get("Subtitle")
+      ?.action.includes("AI CRM: contacts & follow-ups")
+  ) {
+    fail("store_app_store_portal_identity_invalid");
+  }
 
   if (
-    !/zehn\s+`READY`/u.test(markdown)
+    !/dreizehn\s+`READY`/u.test(markdown)
     || !/zwölf\s+`OWNER_REQUIRED`/u.test(markdown)
     || !/acht\s+`PHASE8_REQUIRED`/u.test(markdown)
     || !/kein iOS-Build/iu.test(markdown)
@@ -162,10 +175,14 @@ function verifyAppStorePortalWorksheet(markdown) {
     || !/Keine Portalübertragung/u.test(markdown)
     || !/niemals im Repository/u.test(markdown)
     || !/account-deletion` nicht ungeprüft gleichsetzen/u.test(markdown)
-    || !/required-localizable-and-editable-properties/u.test(markdown)
-    || !/screenshot-specifications/u.test(markdown)
-    || !/overview-of-submitting-for-review/u.test(markdown)
-    || !/overview-of-accessibility-nutrition-labels/u.test(markdown)
+    || ![
+      "https://developer.apple.com/help/app-store-connect/reference/app-information/required-localizable-and-editable-properties/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information/",
+      "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/",
+      "https://developer.apple.com/help/app-store-connect/manage-app-accessibility/overview-of-accessibility-nutrition-labels/",
+      "https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/overview-of-submitting-for-review/",
+    ].every((source) => markdown.includes(`](${source})`))
   ) {
     fail("store_app_store_portal_boundary_missing");
   }

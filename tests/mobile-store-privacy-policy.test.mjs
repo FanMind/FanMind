@@ -169,10 +169,13 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(appStoreHandoff, /kein TestFlight/u);
   assert.match(appStoreHandoff, /1320 × 2868/u);
   assert.match(appStoreHandoff, /APP_STORE_CONNECT_WORKSHEET\.md/u);
-  assert.match(appStoreWorksheet, /Digital Services Act Status/u);
+  assert.match(appStoreWorksheet, /Digital Services Act \(DSA\) Status/u);
+  assert.match(appStoreWorksheet, /\| 3 \| Description \| READY \|/u);
+  assert.match(appStoreWorksheet, /\| 4 \| Keywords \| READY \|/u);
+  assert.match(appStoreWorksheet, /\| 5 \| Promotional Text \| READY \|/u);
   assert.match(appStoreWorksheet, /Privacy Choices URL/u);
   assert.match(appStoreWorksheet, /Accessibility Support/u);
-  assert.match(appStoreWorksheet, /zehn\s+`READY`/u);
+  assert.match(appStoreWorksheet, /dreizehn\s+`READY`/u);
   assert.match(appStoreWorksheet, /zwölf\s+`OWNER_REQUIRED`/u);
   assert.match(appStoreWorksheet, /acht\s+`PHASE8_REQUIRED`/u);
   assert.match(appStoreWorksheet, /kein iOS-Build/iu);
@@ -213,8 +216,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     submissionMode: "internal-draft",
     storeAssets: 2,
     iosReleaseScope: "metadata-only",
-    applePortalFields: 30,
-    applePortalReady: 10,
+    applePortalFields: 33,
+    applePortalReady: 13,
     applePortalOwnerRequired: 12,
     applePortalPhase8Required: 8,
   });
@@ -305,8 +308,31 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
       evaluateStoreReadiness({
         ...validInput,
         appStoreWorksheet: appStoreWorksheet.replace(
-          "| 5 | SKU | OWNER_REQUIRED |",
-          "| 5 | SKU | READY |",
+          "AI CRM: contacts & follow-ups",
+          "Unverified English subtitle",
+        ),
+      }),
+    /store_app_store_portal_identity_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replaceAll(
+          "https://developer.apple.com",
+          "https://example.invalid",
+        ),
+      }),
+    /store_app_store_portal_boundary_missing/u,
+  );
+
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replace(
+          "| 8 | SKU | OWNER_REQUIRED |",
+          "| 8 | SKU | READY |",
         ),
       }),
     /store_app_store_portal_matrix_invalid/u,

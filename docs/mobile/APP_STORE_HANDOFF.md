@@ -9,7 +9,7 @@ iPhone-/Simulatorabnahme wird weder die Lauffähigkeit noch eine Apple-Freigabe
 behauptet. Diese externen Schritte bleiben in Phase 8.
 
 Die vollständige portalnahe Feldübergabe steht in
-`docs/mobile/APP_STORE_CONNECT_WORKSHEET.md`. Sie trennt 30 Felder
+`docs/mobile/APP_STORE_CONNECT_WORKSHEET.md`. Sie trennt 33 Felder
 maschinengeprüft in technisch vorbereitet, Eigentümer-/Rechtsentscheidung und
 Phase-8-Nachweis. Offene Konto-, Rechts-, Steuer- oder Gerätewerte werden
 nicht erfunden.

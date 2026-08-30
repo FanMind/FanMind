@@ -193,8 +193,8 @@ Aktiv im App-Kern:
 - fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
   Wortmarke, native 1024×1024-Iconverträge, reproduzierbares
   512×512-Play-Icon und 1024×500-Feature-Grafik, App-IDs, sechs synthetische
-  Screenshot-Slots, Apple-Metadaten-Handoff und eine 30-Felder-
-  App-Store-Connect-Matrix mit exakter 10/12/8-Trennung in technisch bereit,
+  Screenshot-Slots, Apple-Metadaten-Handoff und eine 33-Felder-
+  App-Store-Connect-Matrix mit exakter 13/12/8-Trennung in technisch bereit,
   Owner-/Rechtsentscheidung und Phase-8-Nachweis, exakt EAS CLI `21.2.0` und
   eine ausschließlich interne Android-Draft-Submission ohne Portalzugriff;
 - erster iOS-Store-Scope bewusst iPhone-only; iPad bleibt bis zu einer
@@ -231,7 +231,7 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   Upload des bereits verifizierten AAB und die getrennt bestätigte
   Portal-/Review-/Veröffentlichungsabnahme;
 - iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
-  HTTPS-Supportseite und die 30-Felder-App-Store-Connect-Arbeitsmatrix sind
+  HTTPS-Supportseite und die 33-Felder-App-Store-Connect-Arbeitsmatrix sind
   vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
   Apple Developer / App Store Connect, iOS-Build, Gerätenachweis und TestFlight
   folgen erst in der bewusst nach Phase 7 verschobenen Phase 8.
