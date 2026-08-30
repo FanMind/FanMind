@@ -100,6 +100,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: keep genuine #642/#643 gates open, supersede only the historical #644 umbrella, and make the mapping machine-checkable so later work cannot mistake stale checkboxes for missing implementation.
 - Related task: FM-MEM-009
 
+## FM-CR-009
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with the next safe FanMind completion work while Google Play approval remains pending.
+- Classification: Bounded repository-only Stripe runtime conformance correction; no provider, price, webhook-endpoint, database, payment, refund, tax-registration or tier-activation mutation.
+- Affected areas: server-side Stripe client construction, outbound API-version pin, Checkout dynamic payment-method contract, request integration identifier, billing/referral Stripe calls, focused regression tests and AI/Billing Project Memory.
+- Existing task/decision checked: FM-AI-001, FM-LOOP-004, FM-AI-OWNER-001/002, FM-EV-022 and the accepted 2026-08-26 AI/Billing read-only reconciliation.
+- Dependencies: exact reviewed main, Stripe SDK/API contract, fail-closed tax readiness, existing disabled Plus/Ultra/runtime gates, and later owner/protected action for any provider-side webhook-version migration or transactional acceptance.
+- Decision: complete only the explicitly listed code conformance review. Keep eligible Checkout payment methods Dashboard-managed, pin outbound SDK requests independently from the verified older inbound Staging webhook endpoint, and leave all provider/runtime activation work blocked.
+- Related task: FM-AI-001
+
 ## Intake template
 
 ```text

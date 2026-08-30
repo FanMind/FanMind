@@ -126,12 +126,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-AI-001
 - Date: through 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-08-30
 - Status: PARTIAL
 - Goal: Close KI Standard/Plus/Ultra product, quality, cost, Stripe-lifecycle and activation evidence.
-- Result: Standard is part of the active core. Current exact-main protected read-only evidence confirms the dedicated synthetic AI resource, both Plus/Ultra Test prices, the complete five-price Test catalog, exact enabled 22-event Staging webhook and installed empty AI event ledger with forced-RLS/function-only write boundary. The 50/100/150 context policy is already accepted. Plus/Ultra remain intentionally not productively active.
-- Evidence: FM-EV-022; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; runs `33003378162`/`33003452287`/`33003526741`; `src/config/aiTiers.mjs`; Source of Truth; issue #560; issue #874 Gate 4.
-- Next step: owner decisions/private evidence under `FM-AI-OWNER-001`; separately authorize the general Billing ledger/cutover and one current post-ledger transactional lifecycle acceptance under `FM-AI-OWNER-002`; then legal/tax, runtime integration and explicit Production activation if approved. First resolve the bounded Stripe client/payment-method/API-version conformance review in code without provider mutation.
+- Result: Standard is part of the active core. Current exact-main protected read-only evidence confirms the dedicated synthetic AI resource, both Plus/Ultra Test prices, the complete five-price Test catalog, exact enabled 22-event Staging webhook and installed empty AI event ledger with forced-RLS/function-only write boundary. The 50/100/150 context policy is already accepted. FM-CR-009 now completes the bounded Stripe code-conformance implementation locally: production server calls share Stripe SDK `22.4.0` at outbound API `2026-07-29.dahlia`, Checkout payment methods are Dashboard-managed and each Session carries a random eight-letter integration-identifier suffix. The observed Staging webhook remains separately pinned at inbound `2026-06-24.dahlia` pending an authorized provider migration. Plus/Ultra remain intentionally not productively active.
+- Evidence: FM-EV-022; FM-EV-033; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; `STRIPE_RUNTIME_CONFORMANCE.md`; runs `33003378162`/`33003452287`/`33003526741`; `src/config/aiTiers.mjs`; Source of Truth; issue #560; issue #874 Gate 4.
+- Next step: pass exact-head review/CI and merge FM-CR-009 without provider action, then owner decisions/private evidence under `FM-AI-OWNER-001`; separately authorize the general Billing ledger/cutover, provider-side webhook migration and one current post-ledger transactional lifecycle acceptance under `FM-AI-OWNER-002`; then legal/tax, runtime integration and explicit Production activation if approved.
 - Do not repeat: Do not invent models/quotas or activate Plus/Ultra through a merge alone.
 
 ## FM-META-001

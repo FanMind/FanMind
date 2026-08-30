@@ -47,23 +47,27 @@ test("Stripe Tax readiness is fail-closed until mode and registration are confir
   assert.equal(AUSTRIAN_STANDARD_VAT_PERCENT, 20);
 });
 
-test("Starter delegates methods while the internal daily test stays card-only", () => {
+test("all Checkout sessions delegate eligible payment methods to Stripe", () => {
   const stripeBillingSource = fs.readFileSync("src/lib/stripeBilling.ts", "utf8");
+  const identifierPolicySource = fs.readFileSync(
+    "src/lib/stripeIntegrationIdentifierPolicy.mjs",
+    "utf8",
+  );
   const billingSource = fs.readFileSync("src/lib/billing.ts", "utf8");
 
+  assert.doesNotMatch(stripeBillingSource, /payment_method_types/u);
+  assert.match(stripeBillingSource, /billing_address_collection: "required"/u);
+  assert.match(stripeBillingSource, /tax_id_collection: \{ enabled: true \}/u);
+  assert.match(stripeBillingSource, /automatic_tax: \{ enabled: true \}/u);
   assert.match(
     stripeBillingSource,
-    /commercialOption === "internal_daily_test"\)[\s\S]*params\.append\("payment_method_types\[\]", "card"\)/u,
+    /integration_identifier: createStripeIntegrationIdentifier\(\)/u,
   );
-  assert.equal(
-    [...stripeBillingSource.matchAll(/payment_method_types\[\]/gu)].length,
-    1,
+  assert.match(identifierPolicySource, /fanmind_checkout_/u);
+  assert.match(
+    billingSource,
+    /commercialOption === "internal_daily_test" \|\|[\s\S]*planId === "starter"[\s\S]*compatibility value for Checkout-managed collection[\s\S]*return "card"/u,
   );
-  assert.match(stripeBillingSource, /billing_address_collection", "required"/u);
-  assert.match(stripeBillingSource, /tax_id_collection\[enabled\]", "true"/u);
-  assert.match(stripeBillingSource, /automatic_tax\[enabled\]", "true"/u);
-  assert.doesNotMatch(stripeBillingSource, /integration_identifier/u);
-  assert.match(billingSource, /planId === "starter"[\s\S]*return "card"/u);
   assert.doesNotMatch(stripeBillingSource, /small_business|Kleinunternehmer/iu);
 });
 
@@ -449,7 +453,7 @@ test("real Stripe customer with invoices only shows Stripe invoice data", () => 
         amount_due: 31200,
         amount_paid: 31200,
         subtotal: 31200,
-        total_tax_amounts: [{ amount: 0 }],
+        total_taxes: [{ amount: 0 }],
         total: 31200,
         hosted_invoice_url: "https://pay.stripe.com/invoice/test",
         invoice_pdf: "https://pay.stripe.com/invoice/test/pdf",
@@ -467,12 +471,48 @@ test("real Stripe customer with invoices only shows Stripe invoice data", () => 
     amount_due: 31200,
     amount_paid: 31200,
     subtotal: 31200,
-    total_tax_amounts: [{ amount: 0 }],
+    total_taxes: [{ amount: 0 }],
     total: 31200,
     hosted_invoice_url: "https://pay.stripe.com/invoice/test",
     invoice_pdf: "https://pay.stripe.com/invoice/test/pdf",
   }));
   assert.equal(invoices[0].isDemo, undefined);
+});
+
+test("invoice tax mapping prefers current total_taxes and retains transition compatibility", () => {
+  const customerBillingSource = fs.readFileSync(
+    "src/lib/customerBilling.ts",
+    "utf8",
+  );
+  const adminBillingSource = fs.readFileSync("src/lib/adminBilling.ts", "utf8");
+  assert.match(
+    customerBillingSource,
+    /Array\.isArray\(source\.total_taxes\)[\s\S]*source\.total_tax_amounts/u,
+  );
+  assert.match(
+    adminBillingSource,
+    /Array\.isArray\(invoice\.total_taxes\)[\s\S]*stripeInvoiceTaxAmount\(invoice\)/u,
+  );
+  const base = {
+    id: "in_tax_contract",
+    created: 1,
+    currency: "eur",
+  };
+  assert.equal(
+    mapStripeInvoiceToCustomerInvoice({
+      ...base,
+      total_taxes: [{ amount: 2100 }, { amount: 25 }],
+      total_tax_amounts: [{ amount: 9999 }],
+    }).tax,
+    2125,
+  );
+  assert.equal(
+    mapStripeInvoiceToCustomerInvoice({
+      ...base,
+      total_tax_amounts: [{ amount: 100 }],
+    }).tax,
+    100,
+  );
 });
 
 test("internal 1 EUR daily Stripe subscription plan remains available", () => {
@@ -609,7 +649,7 @@ test("daily beta admin checkout targets the workspace owner and cancels at paid-
   const adminBillingSource = fs.readFileSync("src/lib/adminBilling.ts", "utf8");
   assert.match(adminBillingSource, /userId: workspace\.owner_user_id/);
   assert.match(adminBillingSource, /userEmail: workspace\.owner_email/);
-  assert.match(adminBillingSource, /cancel_at_period_end: "true"/);
+  assert.match(adminBillingSource, /cancel_at_period_end: true/);
   assert.match(adminBillingSource, /const persisted = await updateAdminBillingWorkspace/u);
   assert.match(adminBillingSource, /if \(!persisted\.ok\)[\s\S]*expireStripeCheckoutSession\(session\.id\)[\s\S]*ok: false/u);
   assert.match(adminBillingSource, /!workspace\.stripe_subscription_id[\s\S]*!workspace\.stripe_checkout_session_id[\s\S]*ok: false[\s\S]*await expireStripeCheckoutSession\(workspace\.stripe_checkout_session_id\)[\s\S]*if \(!checkoutExpired\)[\s\S]*ok: false[\s\S]*updateAdminBillingWorkspace/u);
@@ -619,8 +659,6 @@ test("daily beta admin checkout targets the workspace owner and cancels at paid-
   );
   assert.match(adminBillingSource, /!workspace\.stripe_subscription_id[\s\S]*billing_status: "demo_free"[\s\S]*stripe_checkout_session_id: null[\s\S]*stripe_live_daily_test: false/u);
   const stripeBillingSource = fs.readFileSync("src/lib/stripeBilling.ts", "utf8");
-  assert.match(stripeBillingSource, /const sessionUrl = `https:\/\/api\.stripe\.com\/v1\/checkout\/sessions\/\$\{encodeURIComponent\(normalizedId\)\}`[\s\S]*`\$\{sessionUrl\}\/expire`[\s\S]*signal: AbortSignal\.timeout\(12_000\)/u);
-  assert.match(stripeBillingSource, /if \(response\?\.ok === true\) return true;[\s\S]*fetch\(sessionUrl, \{[\s\S]*method: "GET"[\s\S]*statusPayload\?\.status === "expired"/u);
-  assert.match(stripeBillingSource, /fetch\(sessionUrl, \{[\s\S]*signal: AbortSignal\.timeout\(12_000\)/u);
+  assert.match(stripeBillingSource, /stripe\.checkout\.sessions\.expire\(normalizedId\)[\s\S]*stripe\.checkout\.sessions\.retrieve\(normalizedId\)[\s\S]*session\.status === "expired"/u);
   assert.doesNotMatch(adminBillingSource, /subscriptions\/\$\{encodeURIComponent\(workspace\.stripe_subscription_id\)\}`, \{ method: "DELETE"/);
 });

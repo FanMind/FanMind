@@ -54,8 +54,14 @@
 - `payment_intent.succeeded`, `checkout.session.async_payment_succeeded` und `invoice.paid` dürfen auf `active` setzen, aber keine `manual_suspended`-Sperre überschreiben.
 - Fehlgeschlagene asynchrone SEPA-Zahlungen setzen `payment_failed` und dokumentieren Retry-/Grace-Signale.
 - FanMind speichert keine IBANs oder Bankdaten; diese bleiben ausschließlich bei Stripe.
-- Starter übergibt keine feste Zahlungsmethodenliste. Stripe zeigt nur die im Dashboard aktivierten und für Land, Gerät, Währung sowie Abo kompatiblen Methoden (Karten, Wallets und geeignete Bankzahlarten).
-- Das interne 1-Euro-Daily-Testabo bleibt ausdrücklich nur Karte.
+- Kein Checkout, einschließlich des internen 1-Euro-Daily-Testabos, übergibt
+  eine feste Zahlungsmethodenliste. Stripe zeigt nur die im Dashboard
+  aktivierten und für Land, Gerät, Währung sowie Abo kompatiblen Methoden
+  (Karten, Wallets und geeignete Bankzahlarten).
+- Der gespeicherte Workspace-Wert `payment_collection_method=card` ist für
+  Starter und Daily-Test nur der bestehende Schema-Kompatibilitätswert für
+  Stripe-gehostete Auswahl. Er begrenzt das Checkout nicht auf Karten und ist
+  kein Nachweis der tatsächlich gewählten Zahlungsmethode.
 - Der bevorzugte Testschlüssel beginnt mit `rk_test_` und besitzt nur Checkout-Sessions/Subscriptions/Coupons Schreiben sowie Prices/Invoices Lesen. `sk_test_` bleibt nur als kompatibler Übergang erlaubt; `sk_live_` und `rk_live_` sind in Staging gesperrt.
 - Alle Preise sind in Stripe exklusive Steuer. Automatic Tax und UID-Erfassung sind aktiv; ohne bestätigte Testregistrierung startet kein Checkout.
 - Eine ausstehende Rückerstattung deaktiviert Referral nicht. Erst `succeeded`, `charge.refunded` oder ein Dispute gilt als endgültige Deaktivierung.

@@ -60,18 +60,15 @@ export function getPaymentCollectionMethod(
   planId: PlanId,
   commercialOption?: CommercialOption | ProductiveCommercialOption | string,
 ): PaymentCollectionMethod {
-  if (commercialOption === "internal_daily_test") {
-    return "card";
-  }
-
   if (
+    commercialOption === "internal_daily_test" ||
     planId === "starter" ||
     commercialOption === "starter_paid_setup" ||
     commercialOption === "starter_no_setup_commitment"
   ) {
-    // The current schema has no dedicated Stripe-hosted/dynamic marker. Card
-    // is the neutral Stripe collection value until the finalized Stripe
-    // invoice records the actually selected compatible method.
+    // The current schema has no dedicated Stripe-hosted/dynamic marker.
+    // `card` is a compatibility value for Checkout-managed collection, not a
+    // promise that Stripe will offer or the customer will select only cards.
     return "card";
   }
 

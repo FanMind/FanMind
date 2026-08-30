@@ -52,7 +52,8 @@
     "staging:operator-workspace:run": "node scripts/operations/staging-operator-workspace.mjs --run",
     "stripe:staging-catalog:check": "node scripts/operations/staging-stripe-catalog-readiness.mjs --check",
     "stripe:staging-catalog:verify": "node scripts/operations/staging-stripe-catalog-readiness.mjs --verify",
-    "test:staging-stripe-catalog": "node --test tests/staging-stripe-catalog-readiness.test.mjs",
+    "test:stripe-conformance": "node --test tests/stripe-client-conformance.test.mjs",
+    "test:staging-stripe-catalog": "npm run test:stripe-conformance && node --test tests/staging-stripe-catalog-readiness.test.mjs",
     "stripe:staging-webhook:check": "node scripts/operations/staging-stripe-webhook-readiness.mjs --check",
     "stripe:staging-webhook:verify": "node scripts/operations/staging-stripe-webhook-readiness.mjs --verify",
     "test:staging-stripe-webhook": "node --test tests/staging-stripe-webhook-readiness.test.mjs tests/staging-stripe-webhook-smoke.test.mjs tests/ai-tier-stripe-entitlement-sync.test.mjs tests/ai-tier-stripe-event-ledger.test.mjs tests/ai-tier-stripe-event-ledger-control.test.mjs tests/stripe-billing-event-ledger.test.mjs tests/stripe-billing-event-sync.test.mjs tests/stripe-billing-event-ledger-control.test.mjs",
@@ -144,7 +145,8 @@
     "next": "16.3.1",
     "pdfnative": "1.6.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "stripe": "22.4.0"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

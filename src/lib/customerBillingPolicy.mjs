@@ -28,8 +28,13 @@ function stringField(source, key) {
 }
 
 function taxAmount(source) {
-  if (!Array.isArray(source.total_tax_amounts)) return null;
-  return source.total_tax_amounts.reduce((sum, tax) => {
+  const taxes = Array.isArray(source.total_taxes)
+    ? source.total_taxes
+    : Array.isArray(source.total_tax_amounts)
+      ? source.total_tax_amounts
+      : null;
+  if (!taxes) return null;
+  return taxes.reduce((sum, tax) => {
     const amount = typeof tax?.amount === "number" ? tax.amount : 0;
     return sum + amount;
   }, 0);

@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+# LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830
+- Task: FM-AI-001 / FM-CR-009
+- Status: ACTIVE
+- Holder: ChatGPT Stripe code-conformance continuation session 2026-08-30
+- Branch/PR: `feat/stripe-client-conformance-20260830` / pending
+- Acquired: 2026-08-30 UTC
+- Risk: R3 billing runtime code with all external/provider actions excluded
+- Scope: replace production server-side raw Stripe REST calls with one current SDK client contract, remove explicit Checkout payment-method narrowing, add a per-session eight-letter integration identifier, preserve fail-closed tax readiness and regression-test cancellation/referral safety. The verified Staging webhook endpoint remains pinned at its observed inbound version until a separately authorized provider migration.
+- Safety: no Stripe/provider read or write, payment/refund, price/coupon/subscription mutation, webhook endpoint update, SQL/database mutation, protected workflow, Plus/Ultra activation, Production configuration or Mobile build/store action is authorized.
+- Resume from: exact main tree `f1fcd598d7b905f8d9d67d908fb7e4f4ec8dc726` after merge `3ca696321a0013b3e58bb3f8491cc590ff7ec60c`; do not rerun the three FM-EV-022 protected jobs.
+
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006
 - Status: ACTIVE

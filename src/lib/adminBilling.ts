@@ -5,6 +5,7 @@ import {
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { getStripeClient } from "@/lib/stripeClient";
 import { getSupabaseAuthUrl, getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import type { SupabaseServerUser } from "@/lib/supabase/server";
 
@@ -84,14 +85,36 @@ export async function getAdminBillingWorkspace(workspaceId: string): Promise<{ w
 
 export type StripeInvoiceSummary = { id: string; status?: string | null; created?: string | null; subtotal?: number | null; total_tax_amounts?: number | null; total?: number | null; amount_due?: number | null; hosted_invoice_url?: string | null; invoice_pdf?: string | null };
 
+function stripeInvoiceTaxAmount(invoice: Record<string, unknown>): number | null {
+  const taxes = Array.isArray(invoice.total_taxes)
+    ? invoice.total_taxes
+    : Array.isArray(invoice.total_tax_amounts)
+      ? invoice.total_tax_amounts
+      : null;
+  if (!taxes) return null;
+  return taxes.reduce(
+    (sum, tax) =>
+      sum +
+      (typeof (tax as { amount?: unknown }).amount === "number"
+        ? (tax as { amount: number }).amount
+        : 0),
+    0,
+  );
+}
+
 export async function listStripeInvoicesForWorkspace(workspace: Pick<AdminBillingWorkspace, "stripe_customer_id">): Promise<{ invoices: StripeInvoiceSummary[]; error: string | null }> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey || !workspace.stripe_customer_id) return { invoices: [], error: null };
-  const params = new URLSearchParams({ customer: workspace.stripe_customer_id, limit: "10" });
-  const response = await fetch(`https://api.stripe.com/v1/invoices?${params.toString()}`, { headers: { Authorization: `Bearer ${secretKey}` }, cache: "no-store" });
-  const json = await response.json().catch(() => ({})) as { data?: Array<Record<string, unknown>> };
-  if (!response.ok) return { invoices: [], error: "Stripe-Rechnungen konnten nicht geladen werden." };
-  return { invoices: (json.data ?? []).map((invoice) => ({ id: String(invoice.id), status: typeof invoice.status === "string" ? invoice.status : null, created: typeof invoice.created === "number" ? new Date(invoice.created * 1000).toISOString() : null, subtotal: typeof invoice.subtotal === "number" ? invoice.subtotal : null, total_tax_amounts: Array.isArray(invoice.total_tax_amounts) ? invoice.total_tax_amounts.reduce((sum, tax) => sum + (typeof (tax as { amount?: unknown }).amount === "number" ? (tax as { amount: number }).amount : 0), 0) : null, total: typeof invoice.total === "number" ? invoice.total : null, amount_due: typeof invoice.amount_due === "number" ? invoice.amount_due : null, hosted_invoice_url: typeof invoice.hosted_invoice_url === "string" ? invoice.hosted_invoice_url : null, invoice_pdf: typeof invoice.invoice_pdf === "string" ? invoice.invoice_pdf : null })), error: null };
+  const stripe = getStripeClient();
+  if (!stripe || !workspace.stripe_customer_id) return { invoices: [], error: null };
+  try {
+    const result = await stripe.invoices.list({
+      customer: workspace.stripe_customer_id,
+      limit: 10,
+    });
+    const invoices = result.data as unknown as Array<Record<string, unknown>>;
+    return { invoices: invoices.map((invoice) => ({ id: String(invoice.id), status: typeof invoice.status === "string" ? invoice.status : null, created: typeof invoice.created === "number" ? new Date(invoice.created * 1000).toISOString() : null, subtotal: typeof invoice.subtotal === "number" ? invoice.subtotal : null, total_tax_amounts: stripeInvoiceTaxAmount(invoice), total: typeof invoice.total === "number" ? invoice.total : null, amount_due: typeof invoice.amount_due === "number" ? invoice.amount_due : null, hosted_invoice_url: typeof invoice.hosted_invoice_url === "string" ? invoice.hosted_invoice_url : null, invoice_pdf: typeof invoice.invoice_pdf === "string" ? invoice.invoice_pdf : null })), error: null };
+  } catch {
+    return { invoices: [], error: "Stripe-Rechnungen konnten nicht geladen werden." };
+  }
 }
 
 export async function startInternalDailyTestCheckout(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null; url?: string; sessionId?: string }> {
@@ -133,15 +156,18 @@ export async function startInternalDailyTestCheckout(workspaceId: string, admin:
 }
 
 export async function cancelInternalDailyTestSubscription(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null }> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const stripe = getStripeClient();
   const { workspace, error } = await getAdminBillingWorkspace(workspaceId);
   if (!workspace) return { ok: false, status: 404, error: error ?? "Workspace wurde nicht gefunden." };
   if (workspace.commercial_option !== INTERNAL_DAILY_TEST_OPTION) return { ok: false, status: 403, error: "Nur interne Live-Testabos können über diese Aktion deaktiviert werden." };
-  if (workspace.stripe_subscription_id && !secretKey) return { ok: false, status: 503, error: "Stripe ist für die Kündigung nicht konfiguriert." };
-  if (secretKey && workspace.stripe_subscription_id) {
-    const response = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(workspace.stripe_subscription_id)}`, { method: "POST", headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ cancel_at_period_end: "true" }), cache: "no-store" });
-    if (!response.ok) {
-      return { ok: false, status: response.status, error: "Stripe-Subscription konnte nicht deaktiviert werden." };
+  if (workspace.stripe_subscription_id && !stripe) return { ok: false, status: 503, error: "Stripe ist für die Kündigung nicht konfiguriert." };
+  if (stripe && workspace.stripe_subscription_id) {
+    try {
+      await stripe.subscriptions.update(workspace.stripe_subscription_id, {
+        cancel_at_period_end: true,
+      });
+    } catch {
+      return { ok: false, status: 502, error: "Stripe-Subscription konnte nicht deaktiviert werden." };
     }
   }
   if (!workspace.stripe_subscription_id) {
