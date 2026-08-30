@@ -1,53 +1,39 @@
-name: FanMind Mobile Signed Internal Build
+name: FanMind Mobile Android Store Build
 
 on:
   workflow_dispatch:
     inputs:
-      build_environment:
-        description: 'Internal EAS environment and matching build profile'
-        required: true
-        type: choice
-        options:
-          - development
-          - preview
-      platform:
-        description: 'Create exactly one signed internal build'
-        required: true
-        type: choice
-        options:
-          - android
-          - ios
       confirmation:
-        description: 'Type queue-one-signed-mobile-build to authorize one EAS build'
+        description: 'Type queue-one-android-store-build to authorize one Production AAB build'
         required: true
         type: string
 
 concurrency:
-  group: fanmind-mobile-signed-${{ inputs.build_environment }}-${{ inputs.platform }}
+  group: fanmind-mobile-production-android-store-build
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  queue-signed-internal-build:
-    name: Queue one signed internal EAS build without submission
+  queue-android-store-build:
+    name: Queue one signed Android Production AAB without submission
     if: >-
       ${{
         github.ref == 'refs/heads/main' &&
-        inputs.confirmation == 'queue-one-signed-mobile-build'
+        inputs.confirmation == 'queue-one-android-store-build'
       }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     environment:
-      name: mobile-${{ inputs.build_environment }}
+      name: mobile-production
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      FANMIND_MOBILE_RELEASE_ENVIRONMENT: ${{ inputs.build_environment }}
-      FANMIND_MOBILE_BUILD_PROFILE: ${{ inputs.build_environment }}
-      FANMIND_MOBILE_BUILD_PLATFORM: ${{ inputs.platform }}
-      FANMIND_MOBILE_BUILD_CLASS: internal
-      FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: queue-one-signed-mobile-build
+      FANMIND_MOBILE_RELEASE_ENVIRONMENT: production
+      FANMIND_MOBILE_BUILD_PROFILE: production
+      FANMIND_MOBILE_BUILD_PLATFORM: android
+      FANMIND_MOBILE_BUILD_CLASS: store
+      FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: queue-one-android-store-build
       FANMIND_MOBILE_EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
       FANMIND_MOBILE_RELEASE_RESOURCE_CONFIRM: verify-mobile-release-resources
       FANMIND_MOBILE_EXPECTED_EAS_OWNER: ${{ vars.FANMIND_MOBILE_EAS_OWNER }}
@@ -76,95 +62,88 @@ jobs:
         working-directory: apps/mobile
         run: npm ci --no-audit --no-fund
 
+      - name: Validate exact Store metadata, branding and release profile
+        working-directory: apps/mobile
+        run: npm run store:check
+
       - name: Verify exact existing EAS project binding
         working-directory: apps/mobile
         run: |
           set -euo pipefail
           umask 077
-          REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-signed-project-info.txt"
+          REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-store-project-info.txt"
           trap 'rm -f "$REPORT_PATH"' EXIT
           if ! npx --yes eas-cli@21.2.0 project:info >"$REPORT_PATH" 2>&1; then
-            echo "MOBILE_SIGNED_BUILD_ERROR=eas_project_lookup_failed" >&2
+            echo "MOBILE_STORE_BUILD_ERROR=eas_project_lookup_failed" >&2
             exit 1
           fi
           if ! node ../../scripts/operations/mobile-eas-project-info-verify.mjs \
             "$REPORT_PATH"; then
-            echo "MOBILE_SIGNED_BUILD_ERROR=eas_project_binding_mismatch" >&2
+            echo "MOBILE_STORE_BUILD_ERROR=eas_project_binding_mismatch" >&2
             exit 1
           fi
-          echo "MOBILE_SIGNED_BUILD_EAS_PROJECT=exact-binding-verified"
+          echo "MOBILE_STORE_BUILD_EAS_PROJECT=exact-binding-verified"
 
-      - name: Verify selected public environment before build
+      - name: Verify Production public environment before build
         working-directory: apps/mobile
         run: |
           set -euo pipefail
           umask 077
-          REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-signed-environment.txt"
+          REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-store-environment.txt"
           trap 'rm -f "$REPORT_PATH"' EXIT
-          if ! npx --yes eas-cli@21.2.0 env:exec \
-            "${{ inputs.build_environment }}" \
+          if ! npx --yes eas-cli@21.2.0 env:exec production \
             "node ../../scripts/operations/mobile-release-resource-readiness.mjs" \
             --non-interactive >"$REPORT_PATH" 2>&1; then
-            echo "MOBILE_SIGNED_BUILD_ERROR=public_environment_check_failed" >&2
+            echo "MOBILE_STORE_BUILD_ERROR=production_environment_check_failed" >&2
             exit 1
           fi
           if ! grep -qx 'MOBILE_RELEASE_RESOURCE_READINESS=PASS' "$REPORT_PATH"; then
-            echo "MOBILE_SIGNED_BUILD_ERROR=public_environment_check_incomplete" >&2
+            echo "MOBILE_STORE_BUILD_ERROR=production_environment_check_incomplete" >&2
             exit 1
           fi
-          echo "MOBILE_SIGNED_BUILD_PUBLIC_ENVIRONMENT=verified"
+          echo "MOBILE_STORE_BUILD_PUBLIC_ENVIRONMENT=verified"
 
-      - name: Authorize exactly one signed internal build
+      - name: Authorize exactly one Android Store build
         env:
           FANMIND_ENABLE_MOBILE_EAS_BUILD: 'true'
         run: node scripts/operations/mobile-signed-build-preflight.mjs
 
-      - name: Prepare private signed-build receipt path
-        id: signed-build-receipt
+      - name: Prepare private Store-build receipt path
+        id: store-build-receipt
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          RECEIPT_DIRECTORY="$(mktemp -d "$RUNNER_TEMP/fanmind-mobile-signed-receipt.XXXXXX")"
+          RECEIPT_DIRECTORY="$(mktemp -d "$RUNNER_TEMP/fanmind-mobile-store-receipt.XXXXXX")"
           chmod 700 "$RECEIPT_DIRECTORY"
           echo "path=$RECEIPT_DIRECTORY/receipt.json" >> "$GITHUB_OUTPUT"
 
-      - name: Queue signed internal build without submit or update
+      - name: Queue signed Android AAB without submit or update
         working-directory: apps/mobile
         env:
           FANMIND_ENABLE_MOBILE_EAS_BUILD: 'true'
-          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.signed-build-receipt.outputs.path }}
+          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.store-build-receipt.outputs.path }}
         run: |
           set -euo pipefail
           umask 077
-          JSON_PATH="$RUNNER_TEMP/fanmind-mobile-signed-build.json"
-          LOG_PATH="$RUNNER_TEMP/fanmind-mobile-signed-build.log"
-          COMPLETION_PATH="$RUNNER_TEMP/fanmind-mobile-signed-build-completion.json"
-          COMPLETION_LOG_PATH="$RUNNER_TEMP/fanmind-mobile-signed-build-completion.log"
-          VERIFICATION_PATH="$RUNNER_TEMP/fanmind-mobile-signed-build-verification.txt"
+          JSON_PATH="$RUNNER_TEMP/fanmind-mobile-store-build.json"
+          LOG_PATH="$RUNNER_TEMP/fanmind-mobile-store-build.log"
+          COMPLETION_PATH="$RUNNER_TEMP/fanmind-mobile-store-build-completion.json"
+          COMPLETION_LOG_PATH="$RUNNER_TEMP/fanmind-mobile-store-build-completion.log"
+          VERIFICATION_PATH="$RUNNER_TEMP/fanmind-mobile-store-build-verification.txt"
           trap 'rm -f "$JSON_PATH" "$LOG_PATH" "$COMPLETION_PATH" "$COMPLETION_LOG_PATH" "$VERIFICATION_PATH"' EXIT
           mark_indeterminate() {
-            echo "::warning title=EAS queue state indeterminate::Do not rerun this workflow until the EAS dashboard confirms whether the build was queued."
-            echo "MOBILE_SIGNED_BUILD_QUEUE=indeterminate-do-not-retry"
-            {
-              echo "### Signed Mobile build"
-              echo
-              echo "Queue status is indeterminate. Do not rerun this workflow until the protected EAS project has been checked manually."
-            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=EAS Store queue state indeterminate::Do not rerun until the protected EAS project confirms whether the build was queued."
+            echo "MOBILE_STORE_BUILD_QUEUE=indeterminate-do-not-retry"
           }
           mark_completion_indeterminate() {
-            echo "::warning title=EAS completion state indeterminate::Do not queue another build until the EAS dashboard confirms the existing build state."
-            echo "MOBILE_SIGNED_BUILD_COMPLETION=indeterminate-do-not-requeue"
-            {
-              echo "### Signed Mobile build"
-              echo
-              echo "The queue response was valid, but the completion state could not be proven. Do not queue another build until the protected EAS project has been checked manually."
-            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=EAS Store completion state indeterminate::Do not queue another build until the protected EAS project confirms the existing build state."
+            echo "MOBILE_STORE_BUILD_COMPLETION=indeterminate-do-not-requeue"
           }
           set +e
           timeout 10m npx --yes eas-cli@21.2.0 build \
-            --platform "${{ inputs.platform }}" \
-            --profile "${{ inputs.build_environment }}" \
+            --platform android \
+            --profile production \
             --freeze-credentials \
             --non-interactive \
             --no-wait \
@@ -183,7 +162,6 @@ jobs:
 
           if ! BUILD_ID="$(node --input-type=module - "$JSON_PATH" <<'NODE'
           import { readFile } from "node:fs/promises";
-
           const parsed = JSON.parse(await readFile(process.argv[2], "utf8"));
           const records = Array.isArray(parsed) ? parsed : [parsed];
           const id = records.length === 1 ? String(records[0]?.id ?? "") : "";
@@ -216,22 +194,16 @@ jobs:
                   --queue "$JSON_PATH" \
                   --completion "$COMPLETION_PATH" \
                   --output "$MOBILE_SIGNED_BUILD_RECEIPT_PATH"
-                echo "MOBILE_SIGNED_BUILD_COMPLETION=verified"
-                echo "MOBILE_SIGNED_BUILD_ARTIFACT=available"
-                echo "MOBILE_SIGNED_BUILD_SUBMIT=disabled"
-                echo "MOBILE_SIGNED_BUILD_UPDATE=disabled"
+                echo "MOBILE_STORE_BUILD_COMPLETION=verified"
+                echo "MOBILE_STORE_BUILD_ARTIFACT=aab-available"
+                echo "MOBILE_STORE_BUILD_SUBMIT=disabled"
+                echo "MOBILE_STORE_BUILD_UPDATE=disabled"
                 echo "SECRETS_WURDEN_NICHT_AUSGEGEBEN=true"
-                {
-                  echo "### Signed Mobile build"
-                  echo
-                  echo "The exact reviewed commit finished one signed internal build and exposes an EAS artifact. Submit and Update remained disabled."
-                } >> "$GITHUB_STEP_SUMMARY"
                 exit 0
               fi
               if grep -qx 'MOBILE_SIGNED_BUILD_COMPLETION_VERIFICATION=TERMINAL_FAILURE' \
                 "$VERIFICATION_PATH"; then
-                echo "MOBILE_SIGNED_BUILD_COMPLETION=failed" >&2
-                echo "SECRETS_WURDEN_NICHT_AUSGEGEBEN=true" >&2
+                echo "MOBILE_STORE_BUILD_COMPLETION=failed" >&2
                 exit 1
               fi
               if [[ "$VERIFY_EXIT" -ne 0 ]] || ! grep -qx \
@@ -249,20 +221,20 @@ jobs:
           mark_completion_indeterminate
           exit 1
 
-      - name: Store redacted signed-build receipt
+      - name: Store redacted Android Store-build receipt
         if: success()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: fanmind-mobile-signed-build-receipt-${{ inputs.build_environment }}-${{ inputs.platform }}
-          path: ${{ steps.signed-build-receipt.outputs.path }}
+          name: fanmind-mobile-store-build-receipt-android
+          path: ${{ steps.store-build-receipt.outputs.path }}
           if-no-files-found: error
           retention-days: 5
 
-      - name: Purge signed-build receipt from runner
+      - name: Purge Store-build receipt from runner
         if: always()
         shell: bash
         env:
-          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.signed-build-receipt.outputs.path }}
+          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.store-build-receipt.outputs.path }}
         run: |
           set -euo pipefail
           if [[ -n "$MOBILE_SIGNED_BUILD_RECEIPT_PATH" ]]; then

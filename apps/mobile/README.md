@@ -260,6 +260,23 @@ Die Abnahme verwendet anschließend den privaten Geräte-Abnahmevalidator aus
 Android-/iOS-Nachweise; er führt selbst keinen Build, Store-Upload oder
 Production-Schreibzugriff aus.
 
+## Kontrollierter Android-Store-Build
+
+Der separate Workflow `FanMind Mobile Android Store Build` bereitet die
+Android-Erstveröffentlichung als Version `1.0.0` vor. Er ist nur auf `main`,
+das geschützte Environment `mobile-production`, das Profil `production` und
+Android begrenzt. Nach `npm ci` muss auf genau diesem Commit zunächst
+`npm run store:check` bestehen; erst danach werden EAS-Projektbindung und die
+öffentlichen FanMind-Production-Ziele erneut geprüft.
+
+Der Build erzeugt explizit ein Android App Bundle, verwendet ausschließlich
+vorhandene Credentials mit `--freeze-credentials` und akzeptiert nur ein
+terminal erfolgreiches Store-Artefakt für denselben Commit. GitHub erhält nur
+einen kurzlebigen redaktierten Receipt ohne Build-ID oder private URL. EAS
+Submit und Update bleiben deaktiviert. Play-App-Datensatz, Data Safety,
+Testtrack und Veröffentlichung sind nachgelagerte Portalabnahmen und werden
+nicht aus einem erfolgreichen AAB abgeleitet.
+
 ## EAS-Profile
 
 Die Profile binden ihre öffentlichen Werte ausdrücklich an getrennte
@@ -270,7 +287,7 @@ EAS-Umgebungen:
 | `development` | `development` | signierbarer interner Development-Client |
 | `native-validation` | `development` | Android-Debug-/iOS-Simulator-Prüfung ohne Release-/Store-Credentials |
 | `preview` | `preview` | signierter interner Beta-Build |
-| `production` | `production` | späterer Store-Build |
+| `production` | `production` | Android App Bundle für getrennte Store-Abnahme |
 
 `withoutCredentials=true` bedeutet ausschließlich, dass das Validierungsprofil
 keine verwalteten Release-/Store-Credentials anfordert. Das Android-Debug-APK
@@ -330,6 +347,9 @@ Der Recovery-Redirect muss zusätzlich einmalig in der Supabase-Auth-Allowlist d
 7. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
    Screenshot-Matrix nach realen Gerätetests sowie externer
    Datenschutz-/Rechtsprüfung final abnehmen.
+8. Den main-only Android-Store-Workflow erst nach grüner Production-
+   Ressourcenprüfung genau einmal ausführen; das AAB anschließend separat im
+   bestätigten Play-Testtrack als Entwurf übernehmen.
 
 Der lokale Befehl `npm run store:check` prüft davor ohne Portalzugriff die
 Zeichenlimits, App-IDs, Wortmarke, Icons, Screenshot-Matrix sowie die exakt

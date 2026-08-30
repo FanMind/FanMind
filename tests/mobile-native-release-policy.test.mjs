@@ -70,6 +70,13 @@ const signedBuildWorkflow = await readFile(
   ),
   "utf8",
 );
+const storeBuildWorkflow = await readFile(
+  new URL(
+    "../.github/workflows/mobile-android-store-build.yml",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const signedBuildScript = await readFile(
   new URL(
     "../scripts/operations/mobile-signed-build-preflight.mjs",
@@ -93,6 +100,9 @@ const {
 } = await import("../scripts/operations/mobile-signed-build-preflight.mjs");
 const { evaluateMobileSignedBuildCompletion } = await import(
   "../scripts/operations/mobile-signed-build-completion.mjs"
+);
+const { createMobileSignedBuildReceipt } = await import(
+  "../scripts/operations/write-mobile-signed-build-receipt.mjs"
 );
 
 const easProjectId = "123e4567-e89b-42d3-a456-426614174000";
@@ -151,12 +161,24 @@ function signedBuildEnvironment(overrides = {}) {
     FANMIND_MOBILE_RELEASE_ENVIRONMENT: "preview",
     FANMIND_MOBILE_BUILD_PROFILE: "preview",
     FANMIND_MOBILE_BUILD_PLATFORM: "android",
+    FANMIND_MOBILE_BUILD_CLASS: "internal",
     FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: "queue-one-signed-mobile-build",
     FANMIND_ENABLE_MOBILE_EAS_BUILD: "true",
     FANMIND_ENABLE_MOBILE_EAS_SUBMIT: "false",
     FANMIND_ENABLE_MOBILE_EAS_UPDATE: "false",
     ...overrides,
   };
+}
+
+function storeBuildEnvironment(overrides = {}) {
+  return signedBuildEnvironment({
+    FANMIND_MOBILE_RELEASE_ENVIRONMENT: "production",
+    FANMIND_MOBILE_BUILD_PROFILE: "production",
+    FANMIND_MOBILE_BUILD_PLATFORM: "android",
+    FANMIND_MOBILE_BUILD_CLASS: "store",
+    FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: "queue-one-android-store-build",
+    ...overrides,
+  });
 }
 
 function queuedBuild(overrides = {}) {
@@ -241,6 +263,8 @@ test("EAS profiles bind every release class to an explicit environment", () => {
   assert.equal(easConfig.cli.version, "21.2.0");
   assert.equal(easConfig.cli.requireCommit, true);
   assert.equal(easConfig.cli.appVersionSource, "remote");
+  assert.equal(appConfig.expo.version, "1.0.0");
+  assert.equal(packageJson.version, "1.0.0");
   assert.equal(development.developmentClient, true);
   assert.equal(development.distribution, "internal");
   assert.equal(development.credentialsSource, "remote");
@@ -258,6 +282,7 @@ test("EAS profiles bind every release class to an explicit environment", () => {
   assert.equal(production.credentialsSource, "remote");
   assert.equal(production.environment, "production");
   assert.equal(production.node, "22.13.1");
+  assert.equal(production.android.buildType, "app-bundle");
   assert.equal(production.autoIncrement, true);
 
   assert.deepEqual(easConfig.submit.production, {
@@ -533,6 +558,8 @@ test("signed Mobile build gate accepts only one exact internal main build", () =
       releaseEnvironment: "preview",
       buildProfile: "preview",
       platform: "android",
+      buildClass: "internal",
+      distribution: "internal",
       releaseCommit: "verified",
       submit: "disabled",
       update: "disabled",
@@ -599,6 +626,88 @@ test("signed Mobile completion binds the exact queued internal artifact without 
     signedBuildCompletionScript,
     /console\.(?:log|error)\([^)]*(?:\.id|ArchiveUrl|buildUrl|completionOutput|queueOutput)/u,
   );
+});
+
+test("Android Store build gate binds one Production AAB and keeps submission disabled", () => {
+  assert.deepEqual(evaluateMobileSignedBuildGate(storeBuildEnvironment()), {
+    releaseEnvironment: "production",
+    buildProfile: "production",
+    platform: "android",
+    buildClass: "store",
+    distribution: "store",
+    releaseCommit: "verified",
+    submit: "disabled",
+    update: "disabled",
+  });
+
+  const queue = {
+    ...queuedBuild(),
+    buildProfile: "production",
+  };
+  const result = evaluateMobileSignedBuildCompletion({
+    queueOutput: [queue],
+    completionOutput: completedBuild({
+      buildProfile: "production",
+      distribution: "STORE",
+      artifacts: {
+        applicationArchiveUrl:
+          "https://expo.dev/artifacts/eas/synthetic-store-build.aab",
+      },
+    }),
+    environment: storeBuildEnvironment(),
+  });
+  assert.deepEqual(result, {
+    state: "verified",
+    platform: "android",
+    buildProfile: "production",
+    releaseCommit: "verified",
+    distribution: "store",
+    artifact: "available",
+  });
+});
+
+test("Android Store receipt is redacted and commit-bound", async () => {
+  const queue = [{ ...queuedBuild(), buildProfile: "production" }];
+  const completion = completedBuild({
+    buildProfile: "production",
+    distribution: "STORE",
+    artifacts: {
+      applicationArchiveUrl:
+        "https://expo.dev/artifacts/eas/synthetic-store-build.aab",
+    },
+  });
+  const receipt = await createMobileSignedBuildReceipt({
+    queueBytes: Buffer.from(JSON.stringify(queue)),
+    completionBytes: Buffer.from(JSON.stringify(completion)),
+    environment: storeBuildEnvironment(),
+  });
+
+  assert.equal(receipt.releaseCommit, "a".repeat(40));
+  assert.equal(receipt.platform, "android");
+  assert.equal(receipt.buildProfile, "production");
+  assert.equal(receipt.distribution, "store");
+  assert.equal(receipt.artifact, "available");
+  assert.equal(receipt.submit, "disabled");
+  assert.equal(receipt.update, "disabled");
+  assert.match(receipt.queueSha256, /^[0-9a-f]{64}$/u);
+  assert.match(receipt.completionSha256, /^[0-9a-f]{64}$/u);
+  assert.equal("id" in receipt, false);
+  assert.equal("url" in receipt, false);
+});
+
+test("Android Store gate rejects iOS, non-production targets and any automatic submission", () => {
+  for (const environment of [
+    storeBuildEnvironment({ FANMIND_MOBILE_BUILD_PLATFORM: "ios" }),
+    storeBuildEnvironment({ FANMIND_MOBILE_BUILD_PROFILE: "preview" }),
+    storeBuildEnvironment({ FANMIND_MOBILE_RELEASE_ENVIRONMENT: "preview" }),
+    storeBuildEnvironment({ FANMIND_ENABLE_MOBILE_EAS_SUBMIT: "true" }),
+    storeBuildEnvironment({ FANMIND_ENABLE_MOBILE_EAS_UPDATE: "true" }),
+    storeBuildEnvironment({
+      FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: "queue-one-signed-mobile-build",
+    }),
+  ]) {
+    assert.throws(() => evaluateMobileSignedBuildGate(environment));
+  }
 });
 
 test("signed Mobile completion fails closed on identity drift, non-internal distribution, unknown state and unsafe artifact", () => {
@@ -774,4 +883,35 @@ test("manual signed Mobile workflow is internal-only, credential-frozen and neve
     signedBuildWorkflow,
     /\bcat\s+"\$(?:JSON|LOG|COMPLETION|VERIFICATION)_PATH"|\becho\s+"\$(?:cat|<)/u,
   );
+});
+
+test("manual Android Store workflow is Production-only, credential-frozen and never submits", () => {
+  assert.match(storeBuildWorkflow, /^\s*workflow_dispatch:/mu);
+  assert.doesNotMatch(storeBuildWorkflow, /^\s*(?:push|pull_request):/mu);
+  assert.match(storeBuildWorkflow, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(
+    storeBuildWorkflow,
+    /inputs\.confirmation == 'queue-one-android-store-build'/u,
+  );
+  assert.match(storeBuildWorkflow, /name: mobile-production/u);
+  assert.match(storeBuildWorkflow, /FANMIND_MOBILE_BUILD_CLASS: store/u);
+  assert.match(storeBuildWorkflow, /run: npm run store:check/u);
+  assert.ok(
+    storeBuildWorkflow.indexOf("run: npm run store:check")
+      < storeBuildWorkflow.indexOf("eas-cli@21.2.0 project:info"),
+  );
+  assert.match(storeBuildWorkflow, /FANMIND_ENABLE_MOBILE_EAS_SUBMIT: 'false'/u);
+  assert.match(storeBuildWorkflow, /FANMIND_ENABLE_MOBILE_EAS_UPDATE: 'false'/u);
+  assert.match(storeBuildWorkflow, /--platform android/u);
+  assert.match(storeBuildWorkflow, /--profile production/u);
+  assert.match(storeBuildWorkflow, /--freeze-credentials/u);
+  assert.match(storeBuildWorkflow, /--no-wait/u);
+  assert.match(storeBuildWorkflow, /build:view/u);
+  assert.match(storeBuildWorkflow, /aab-available/u);
+  assert.match(storeBuildWorkflow, /fanmind-mobile-store-build-receipt-android/u);
+  assert.doesNotMatch(
+    storeBuildWorkflow,
+    /eas(?:-cli@[\d.]+)?\s+(?:submit|update|credentials|build:submit)\b/u,
+  );
+  assert.doesNotMatch(storeBuildWorkflow, /--auto-submit/u);
 });

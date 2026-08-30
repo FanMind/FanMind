@@ -64,6 +64,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
   capability/privacy contract is truly activated and verified.
 - Related task: FM-MOB-004
 
+## FM-CR-006
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Finish the accepted Android app, bind its release build to FanMind Production and bring it through Google Play.
+- Classification: Android Production/Store continuation of the existing Mobile release task; no iOS Phase-8 start and no automatic public release.
+- Affected areas: Mobile version, Production EAS/AAB control, Supabase Auth redirect acceptance, Android private device runbook, Google Play listing/data-safety/testing/submission evidence and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-MOB-003/004 acceptance, FM-DEC-009, EXT-MOBILE-REDIRECT, EXT-MOBILE-ANDROID and EXT-MOBILE-PUSH-STORE.
+- Dependencies: exact reviewed `main`, verified `mobile-production`/EAS/FanMind targets, existing frozen Android signing credentials, complete private Android acceptance, live Supabase recovery redirect, Google developer identity/phone verification, Play app record and applicable test-program eligibility.
+- Decision: Resume FM-MOB-001 at Risk R3. Prepare a separate main-only Production Android AAB workflow with Submit/Update disabled, then perform external Supabase/device/Play controls separately. Publishing remains an action-time-confirmed external step and cannot be claimed while Google account review blocks app creation.
+- Related task: FM-MOB-001
+
 ## Intake template
 
 ```text

@@ -133,7 +133,7 @@ export async function createMobileSignedBuildReceipt({
   });
   if (
     result.state !== "verified" ||
-    result.distribution !== "internal" ||
+    !["internal", "store"].includes(result.distribution) ||
     result.artifact !== "available"
   ) {
     fail("signed_build_not_verified");
@@ -144,7 +144,7 @@ export async function createMobileSignedBuildReceipt({
     releaseCommit: String(environment.GITHUB_SHA ?? ""),
     platform: result.platform,
     buildProfile: result.buildProfile,
-    distribution: "internal",
+    distribution: result.distribution,
     artifact: "available",
     queueSha256: sha256Bytes(queueBytes),
     completionSha256: sha256Bytes(completionBytes),
