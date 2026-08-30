@@ -4,10 +4,14 @@
 
 Dieses Dokument bereitet die Metadaten für Google Play und Apple App Store vor.
 Es veröffentlicht keine App und bestätigt keine Angaben in den Store-Portalen.
-Für Android liegt der signierte `1.0.0`-Release-Build vor. Texte, reale
-Screenshots und Datenschutzdeklarationen werden erst nach der vollständigen
-Android-Geräte- und Portalabnahme final freigegeben. iOS/TestFlight und der
-iPhone-Screenshot-Satz folgen separat in Phase 8.
+Für Android liegt der signierte `1.0.0`-Release-Build vor. Dieser Build wird
+nicht wiederholt. Die vollständige Android-Geräteabnahme und die realen
+Screenshots folgen nach der Installation aus dem Google-Play-Test-Track.
+
+Für Apple sind Metadaten, öffentliche Support-URL, Review-Handoff und der
+iPhone-Screenshotplan jetzt vorbereitet. Das startet keinen iOS-Build, kein
+TestFlight und keine iPhone-Geräteabnahme. Diese signierten und externen
+Phase-8-Schritte bleiben offen.
 
 Die portalnahe technische Datenschutzvorlage mit getrennten Apple- und
 Google-Taxonomien steht in
@@ -29,22 +33,27 @@ Social-Media-Integrationen.
 | Android Package | `ch.fanmind.app` |
 | iOS Bundle Identifier | `ch.fanmind.app` |
 | Website | `https://fanmind.ch` |
-| Support | `mailto:kontakt@fanmind.ch` |
+| Support | `https://fanmind.ch/support` |
+| Google-Play-Support-E-Mail | `kontakt@fanmind.ch` |
 | Datenschutz | `https://fanmind.ch/datenschutz` |
 | Account-Löschung | `https://fanmind.ch/account-deletion` |
 
 Das finale FanMind-App-Icon ist vorbereitet: eine vollständig deckende
-1024×1024-PNG für iOS/Legacy-Android und ein transparentes, maskensicher
-skaliertes Android-Adaptive-Foreground. Das Querlogo bleibt ausschließlich
-Wortmarke und Splashscreen. Für Google Play wird die Darstellung aus dem
-vorhandenen signierten Android-Build auf einem realen Android-Gerät visuell
-bestätigt. Die iOS-Abnahme folgt erst in Phase 8.
+1024×1024-PNG für iOS/Legacy-Android, ein transparentes maskensicheres
+Android-Adaptive-Foreground und ein daraus deterministisch erzeugtes
+512×512-Google-Play-Icon als 32-Bit-PNG mit Alpha-Kanal. Zusätzlich liegt eine
+sprachneutrale 1024×500-Feature-Grafik aus den vorhandenen FanMind-Vektorformen
+vor. Das
+Querlogo bleibt ausschließlich Wortmarke und Splashscreen. Reale Android-
+Masken und iOS-Icons werden erst im jeweiligen signierten Store-Build visuell
+abgenommen.
 
-`cd apps/mobile && npm run store:check` prüft diese Unterlagen vor jedem
-Mobile-Release fail-closed gegen die aktuellen Apple-/Google-Zeichenlimits,
-die App-IDs, sechs synthetische Screenshot-Slots, die bestätigte Wortmarke,
-beide 1024×1024-Iconverträge und die sicheren EAS-Profile. Der Check lädt
-nichts in ein Store-Portal hoch und benötigt keine Zugangsdaten.
+`cd apps/mobile && npm run store:render` erzeugt die beiden Google-Play-
+Grafiken reproduzierbar. `npm run store:check` prüft die Unterlagen vor jedem
+Mobile-Release fail-closed gegen die Apple-/Google-Zeichenlimits, App-IDs,
+sechs synthetische Screenshot-Slots, die bestätigte Wortmarke, nativen Icons,
+beiden Google-Play-Grafiken, iPhone-only-Grenze und sicheren EAS-Profile. Der
+Check lädt nichts in ein Store-Portal hoch und benötigt keine Zugangsdaten.
 
 ## Portal-Handoff
 
@@ -58,7 +67,7 @@ nichts in ein Store-Portal hoch und benötigt keine Zugangsdaten.
 | Mobile In-App-Käufe | Nein | Store-Verträge gegen finalen Build bestätigen |
 | Login erforderlich | Ja | synthetischen Review-Zugang erst im Portal hinterlegen |
 | Android Erstverteilung | Internal Testing, Entwurf | signiertes AAB und Konto erforderlich |
-| iOS Erstverteilung | TestFlight, iPhone-only | Apple Developer/App Store Connect erforderlich |
+| iOS Erstverteilung | vorbereitet: TestFlight, iPhone-only | Build, Apple Developer/App Store Connect und Abnahme bleiben Phase 8 |
 
 Die EAS-Submit-Vorbereitung bleibt absichtlich nicht automatisch: Android ist
 auf `internal` und `draft` begrenzt; iOS besitzt nur Sprache und App-Name.
@@ -66,10 +75,21 @@ Service-Account, Apple-Team-ID, App-Store-ID, Submit-Schlüssel und
 Review-Zugangsdaten werden erst in den geschützten externen Konten ergänzt und
 niemals in Git committed.
 
+Die getrennten Operator-Unterlagen stehen in
+`docs/mobile/GOOGLE_PLAY_HANDOFF.md`, `docs/mobile/APP_STORE_HANDOFF.md`,
+`docs/mobile/STORE_REVIEW_ACCESS.md` und
+`docs/mobile/STORE_TESTER_PROGRAM.md`.
+
 ## Google Play - Kurzbeschreibung
 
 ```text
 Kontakte, Kontaktwissen, KI-Antwortvorschläge und Follow-ups an einem Ort.
+```
+
+## Google Play - Short description EN
+
+```text
+Contacts, contact memory, AI-assisted replies and follow-ups in one place.
 ```
 
 ## Google Play und Apple - Beschreibung DE
@@ -117,14 +137,44 @@ media channels are not automatically synchronized at this time.
 A FanMind account is required.
 ```
 
-## Suchbegriffe für Apple
+## Apple - Suchbegriffe DE
 
 ```text
 CRM,Kontakte,Follow-up,Antworten,KI,Creator,Fans,Kontaktwissen
 ```
 
-Diese Begriffe sind vor Einreichung gegen die dann gültigen Store-Limits und
-Richtlinien zu prüfen.
+## Apple - Keywords EN
+
+```text
+CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory
+```
+
+Beide sprachspezifischen Keyword-Sätze sind vor Einreichung gegen die dann
+gültigen Store-Limits und Richtlinien zu prüfen.
+
+## Apple - Werbetext DE
+
+```text
+Kontakte, Kontaktwissen, KI-Antwortvorschläge und Follow-ups – mobil gebündelt und immer unter deiner Kontrolle.
+```
+
+## Apple - Promotional Text EN
+
+```text
+Contacts, contact memory, AI-assisted reply suggestions and follow-ups—together in one mobile workspace you control.
+```
+
+## Hinweise zur Version 1.0.0 DE
+
+```text
+Erste FanMind-Version für Kontakte, Kontaktwissen, KI-gestützte Antwortvorschläge und Follow-ups. Jeder Vorschlag bleibt unter menschlicher Kontrolle; FanMind sendet keine Nachrichten automatisch.
+```
+
+## Version 1.0.0 release notes EN
+
+```text
+The first FanMind release for contacts, contact memory, AI-assisted reply suggestions and follow-ups. Every suggestion remains under human control; FanMind sends no messages automatically.
+```
 
 ## Screenshot-Matrix
 
@@ -141,10 +191,17 @@ Nachrichten dürfen sichtbar sein.
 | 5 | Follow-ups | Offene Aufgaben im Blick behalten |
 | 6 | Offline-Kontaktübersicht | Begrenzter, verschlüsselter Nur-Lesen-Zugriff |
 
-Für die aktuelle Google-Play-Einreichung wird ein aktueller Android-
-Screenshot-Satz aus dem signierten Build und ausschließlich mit synthetischen
-Staging-Daten benötigt. Der iPhone-Screenshot-Satz gehört zur späteren
-iOS-/TestFlight-Phase 8.
+Für Google Play wird der aktuelle Android-Screenshot-Satz erst erstellt,
+nachdem das bestehende AAB im Test-Track zum Download steht und von dort auf
+einem realen Android-Gerät installiert wurde. Mindestens zwei und höchstens
+acht Smartphone-Screenshots sind im Portal möglich; FanMind plant sechs.
+
+Für Apple ist derselbe sechs Motive umfassende iPhone-Satz vorbereitet. Als
+einheitliches Portrait-Masterformat ist `1320 × 2868` Pixel für die
+6,9-Zoll-Klasse vorgesehen. Apple verlangt mindestens einen und erlaubt bis zu
+zehn Screenshots. Die Bilder entstehen erst aus einem späteren signierten
+iOS-Build beziehungsweise der dazugehörigen Simulator-/Geräteabnahme; aktuell
+wird kein Screenshot als real abgenommen behauptet.
 FanMind unterstützt im ersten iOS-Release ausschließlich iPhone. iPad wird
 erst nach eigener Layout-, Geräte- und Screenshot-Abnahme freigegeben.
 
@@ -179,20 +236,23 @@ bleibt trotzdem erforderlich.
 
 ## Vor Einreichung zwingend offen
 
-- visuelle App-Icon-Abnahme unter realen Android-Masken;
+- visuelle App-Icon-Abnahme nach Installation aus dem Play-Test-Track;
 - vollständiger privater Android-Gerätenachweis für Login, Recovery, Deep
-  Links, Offline und Account-Löschung;
+  Links, Offline und Account-Löschung erst nach dieser Store-Installation;
 - Push-Entscheidung und gegebenenfalls erneute Datenschutzbewertung;
 - finale Screenshots aus synthetischem Test-Workspace;
 - externe Datenschutz-/Rechtsprüfung der Store-Angaben;
 - Google-Play-Kontofreigabe, App-Datensatz, reale IDs, Data Safety,
   portalgefordertes Testprogramm und Upload des bestehenden AAB;
-- iOS-Build, App-Store-Konto und Apple-TestFlight-/Store-Scan des signierten
-  Binaries erst in Phase 8.
+- Apple-Developer-/App-Store-Connect-Einrichtung, Altersfragebogen,
+  Accessibility-Angaben und finaler Review-Zugang;
+- iOS-Build, TestFlight-/Store-Scan, reale Screenshots und iPhone-
+  Geräteabnahme erst in Phase 8.
 
 Der genaue operatorische Google-Play-Ablauf mit fertigen Artefakten,
 Blockern und unveränderlichen Grenzen steht in
-`docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
+`docs/mobile/GOOGLE_PLAY_HANDOFF.md`. Der Apple-Ablauf steht in
+`docs/mobile/APP_STORE_HANDOFF.md`.
 
 ## Google-Play-Kontostand am 30. August 2026
 

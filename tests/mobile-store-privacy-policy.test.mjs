@@ -97,11 +97,25 @@ test("native prebuild enforces store API, privacy and least-permission boundarie
 });
 
 test("store privacy draft stays synchronized with the current mobile boundary", async () => {
-  const [privacyDraft, storeListing, playHandoff, pushSource, registrationSource, aiRoute] =
-    await Promise.all([
+  const [
+    privacyDraft,
+    storeListing,
+    playHandoff,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    supportPage,
+    pushSource,
+    registrationSource,
+    aiRoute,
+  ] = await Promise.all([
     read("docs/mobile/STORE_PRIVACY_DECLARATIONS.md"),
     read("docs/mobile/STORE_LISTING.md"),
     read("docs/mobile/GOOGLE_PLAY_HANDOFF.md"),
+    read("docs/mobile/APP_STORE_HANDOFF.md"),
+    read("docs/mobile/STORE_REVIEW_ACCESS.md"),
+    read("docs/mobile/STORE_TESTER_PROGRAM.md"),
+    read("src/app/support/page.tsx"),
     read("apps/mobile/src/lib/pushNotifications.ts"),
     read("apps/mobile/src/lib/mobilePushRegistration.ts"),
     read("src/app/api/ai/reply-suggestions/route.ts"),
@@ -131,15 +145,33 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(privacyDraft, /Push-Aktivierungsgrenze/u);
   assert.match(storeListing, /STORE_PRIVACY_DECLARATIONS\.md/u);
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
-  assert.match(storeListing, /iPhone-Screenshot-Satz gehört zur späteren/u);
+  assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
+  assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
+  assert.match(storeListing, /32-Bit-PNG mit Alpha-Kanal/u);
+  assert.match(storeListing, /## Apple - Suchbegriffe DE/u);
+  assert.match(storeListing, /## Apple - Keywords EN/u);
+  assert.match(storeListing, /1320 × 2868/u);
   assert.match(
     playHandoff,
     /e96415035ffbe12f16dd3b81e13a5e62b2c4ac00/u,
   );
   assert.match(playHandoff, /Keinen neuen Build starten/u);
   assert.match(playHandoff, /bereits verifizierte `1\.0\.0`-AAB/u);
-  assert.match(playHandoff, /kein iOS\/TestFlight/u);
-  assert.match(playHandoff, /private, vollständig\s+`pending`/u);
+  assert.match(
+    playHandoff,
+    /iPhone-App-Store-Metadaten dürfen separat vorbereitet/u,
+  );
+  assert.match(playHandoff, /private,\s+vollständig `pending`/u);
+  assert.match(playHandoff, /Installation aus dem Play-Test-Track/u);
+  assert.match(appStoreHandoff, /keinen iOS-Build/u);
+  assert.match(appStoreHandoff, /kein TestFlight/u);
+  assert.match(appStoreHandoff, /1320 × 2868/u);
+  assert.match(reviewAccess, /niemals im Repository/u);
+  assert.match(reviewAccess, /24\/7/u);
+  assert.match(testerProgram, /12 Tester \/ 14 Tage/u);
+  assert.match(testerProgram, /keinen neuen Build starten/iu);
+  assert.match(supportPage, /kontakt@fanmind\.ch/u);
+  assert.match(supportPage, /Sende niemals dein Passwort/u);
 
   assert.doesNotMatch(pushSource, /requestPermissionsAsync/u);
   assert.doesNotMatch(pushSource, /getExpoPushTokenAsync/u);
@@ -151,6 +183,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   await Promise.all([
     access(new URL("../src/app/datenschutz/page.tsx", import.meta.url)),
     access(new URL("../src/app/account-deletion/page.tsx", import.meta.url)),
+    access(new URL("../src/app/support/page.tsx", import.meta.url)),
   ]);
 });
 
@@ -162,13 +195,36 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     screenshotSlots: 6,
     easCli: "21.2.0",
     submissionMode: "internal-draft",
+    storeAssets: 2,
+    iosReleaseScope: "metadata-only",
   });
 
-  const [appConfig, easConfig, listing, wordmark, appIcon, adaptiveIcon] =
+  const [
+    appConfig,
+    easConfig,
+    mobilePackage,
+    mobileLock,
+    listing,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    featureSource,
+    wordmark,
+    appIcon,
+    adaptiveIcon,
+    playIcon,
+    playFeatureGraphic,
+  ] =
     await Promise.all([
       read("apps/mobile/app.json").then(JSON.parse),
       read("apps/mobile/eas.json").then(JSON.parse),
+      read("apps/mobile/package.json").then(JSON.parse),
+      read("apps/mobile/package-lock.json").then(JSON.parse),
       read("docs/mobile/STORE_LISTING.md"),
+      read("docs/mobile/APP_STORE_HANDOFF.md"),
+      read("docs/mobile/STORE_REVIEW_ACCESS.md"),
+      read("docs/mobile/STORE_TESTER_PROGRAM.md"),
+      read("apps/mobile/assets/store/google-play-feature-graphic-source.svg"),
       readFile(
         new URL(
           "../apps/mobile/assets/branding/fanmind-wordmark.png",
@@ -187,36 +243,108 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
           import.meta.url,
         ),
       ),
+      readFile(
+        new URL(
+          "../apps/mobile/assets/store/google-play-icon.png",
+          import.meta.url,
+        ),
+      ),
+      readFile(
+        new URL(
+          "../apps/mobile/assets/store/google-play-feature-graphic.png",
+          import.meta.url,
+        ),
+      ),
     ]);
+
+  const validInput = {
+    appConfig,
+    easConfig,
+    listing,
+    appStoreHandoff,
+    reviewAccess,
+    testerProgram,
+    featureSource,
+    wordmark,
+    appIcon,
+    adaptiveIcon,
+    playIcon,
+    playFeatureGraphic,
+  };
+
+  assert.equal(mobilePackage.devDependencies.sharp, "0.35.3");
+  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.3");
+  assert.equal(playIcon[25], 6);
+  assert.equal(playFeatureGraphic[25], 2);
 
   assert.throws(
     () =>
       evaluateStoreReadiness({
-        appConfig,
-        easConfig,
+        ...validInput,
         listing: listing.replace(
           "KI-CRM: Kontakte & Follow-ups",
           "KI-CRM für Kontakte und Follow-ups",
         ),
-        wordmark,
-        appIcon,
-        adaptiveIcon,
       }),
     /store_subtitle_de_length_invalid/u,
   );
   assert.throws(
     () =>
       evaluateStoreReadiness({
-        appConfig,
+        ...validInput,
         easConfig: {
           ...easConfig,
           submit: { production: {} },
         },
-        listing,
-        wordmark,
-        appIcon,
-        adaptiveIcon,
       }),
     /store_submission_safety_contract_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace("kontakt@fanmind.ch", "help@example.com"),
+      }),
+    /store_identity_document_mismatch/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory",
+          "x".repeat(101),
+        ),
+      }),
+    /store_apple_keywords_en_length_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory",
+          "CRM,Kontakte,Follow-up,Antworten,KI,Creator,Fans,Kontaktwissen",
+        ),
+      }),
+    /store_apple_keyword_localizations_not_distinct/u,
+  );
+
+  assert.doesNotThrow(() =>
+    evaluateStoreReadiness({
+      ...validInput,
+      featureSource: featureSource.replace(/\n/gu, "\r\n"),
+    }),
+  );
+
+  const changedFeatureGraphic = Buffer.from(playFeatureGraphic);
+  changedFeatureGraphic[changedFeatureGraphic.length - 1] ^= 1;
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        playFeatureGraphic: changedFeatureGraphic,
+      }),
+    /store_play_assets_not_confirmed/u,
   );
 });

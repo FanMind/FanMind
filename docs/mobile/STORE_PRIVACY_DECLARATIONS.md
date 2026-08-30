@@ -20,6 +20,11 @@ deaktiviert. Dieser Nachweis ersetzt weder die Portalantworten noch die externe
 Datenschutz-/Rechtsfreigabe und darf nicht durch einen unnötigen Neubau ersetzt
 werden.
 
+Für iPhone sind App-Store-Metadaten, Support-URL, Privacy-Entwurf und Review-
+Handoff vorbereitet. Ein signierter iOS-Build, TestFlight-/Store-Scan und die
+iPhone-Geräteabnahme sind noch nicht erfolgt; daraus wird keine Apple-
+Portalantwort als final abgeleitet.
+
 Verbindliche aktuelle Hilfeseiten:
 
 - Apple:
@@ -175,8 +180,9 @@ echten Zustellung.
 Vor Bestätigung in App Store Connect oder Play Console:
 
 1. für Google das vorhandene Android-AAB an Merge
-   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` binden; iOS erst in Phase 8
-   getrennt behandeln;
+   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` binden; für iOS die vorbereitete
+   Metadatenbasis verwenden, aber signiertes Binary und Portal-Scan erst in
+   Phase 8 getrennt behandeln;
 2. native Android-Berechtigungen aus dem finalen Binary beziehungsweise dem
    Play-Scan prüfen;
 3. Dependency-/SDK-Inventar mit dem Build abgleichen;
@@ -184,6 +190,7 @@ Vor Bestätigung in App Store Connect oder Play Console:
 5. Löschanfrage, Widerruf und Abschluss mit synthetischem Testkonto belegen;
 6. Supabase-/OpenAI-Verträge, Regionen und Aufbewahrung extern bestätigen;
 7. Apple- und Google-Antworten getrennt prüfen – die Taxonomien sind nicht
-   gleich und Apple ist im aktuellen Android-Handoff nicht freizugeben;
+   gleich und keine Apple-Antwort ist ohne späteren signierten iOS-Build
+   freizugeben;
 8. externe Datenschutz-/Rechtsfreigabe dokumentieren;
 9. erst dann die Portalantworten veröffentlichen.

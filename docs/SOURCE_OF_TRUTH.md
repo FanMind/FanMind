@@ -191,9 +191,10 @@ Aktiv im App-Kern:
   getrennte technische Entwürfe für Apple App Privacy sowie Google Play Data
   Safety;
 - fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
-  Wortmarke, beide 1024×1024-Iconverträge, App-IDs, sechs synthetische
-  Screenshot-Slots, exakt EAS CLI `21.2.0` und eine ausschließlich interne
-  Android-Draft-Submission ohne Portalzugriff;
+  Wortmarke, native 1024×1024-Iconverträge, reproduzierbares
+  512×512-Play-Icon und 1024×500-Feature-Grafik, App-IDs, sechs synthetische
+  Screenshot-Slots, Apple-Metadaten-Handoff, exakt EAS CLI `21.2.0` und eine
+  ausschließlich interne Android-Draft-Submission ohne Portalzugriff;
 - erster iOS-Store-Scope bewusst iPhone-only; iPad bleibt bis zu einer
   separaten Layout-, Geräte- und Screenshot-Abnahme nicht freigegeben;
 - eigener SDK-57-Development-Client sowie explizite EAS-Umgebungen;
@@ -218,7 +219,8 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   gespeichert, ersetzt aber noch keinen positiven/negativen Recovery-Beleg;
 - vollständiger privater, receipt-gebundener 19-Punkte-Gerätenachweis auf
   Android einschließlich Recovery, Offline-Grenzen, Branding und
-  Account-Löschanfrage;
+  Account-Löschanfrage; auf Owner-Entscheidung erst nach Installation des
+  bestehenden AAB aus dem Play-Test-Track;
 - visuelle App-Icon-Abnahme sowie reale Push-Berechtigungs- und
   Registrierungsabnahme im signierten Build; echte Zustellung erst nach
   separater Server-/Staging-Freigabe;
@@ -226,8 +228,10 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   Data Safety, finale Screenshots, das im Portal verlangte Testprogramm,
   Upload des bereits verifizierten AAB und die getrennt bestätigte
   Portal-/Review-/Veröffentlichungsabnahme;
-- Apple Developer / App Store Connect, iOS-Gerätenachweis und TestFlight erst
-  in der bewusst nach Phase 7 verschobenen Phase 8.
+- iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan und öffentliche
+  HTTPS-Supportseite sind vorab vorbereitet; Apple Developer / App Store
+  Connect, iOS-Build, Gerätenachweis und TestFlight folgen erst in der bewusst
+  nach Phase 7 verschobenen Phase 8.
 
 Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
 

@@ -76,6 +76,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: Resume FM-MOB-001 at Risk R3. Prepare a separate main-only Production Android AAB workflow with Submit/Update disabled, then perform external Supabase/device/Play controls separately. Publishing remains an action-time-confirmed external step and cannot be claimed while Google account review blocks app creation.
 - Related task: FM-MOB-001
 
+## FM-CR-007
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue the blocked Store work now, prepare the iPhone App Store in parallel without an available iPhone, and defer the complete Android device acceptance until FanMind can be downloaded from Google Play.
+- Classification: Repository-only dual-store preparation and Android acceptance-sequence correction; no new Mobile binary or portal submission.
+- Affected areas: public Support route, Google Play graphics, Apple/Google metadata and review/tester handoffs, Mobile Store checks, canonical readers and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-CR-006, FM-DEC-009, EXT-MOBILE-ANDROID, EXT-MOBILE-IOS and EXT-MOBILE-PUSH-STORE.
+- Dependencies: unchanged verified Android `1.0.0` AAB, pending Google account review, later Play test-track download, Apple Developer/App Store Connect and later signed iOS/TestFlight/device evidence.
+- Decision: Prepare both Store packages now. Android full 19-check acceptance and final screenshots begin only after installation from the Play test track. Apple metadata/support/review/screenshot planning is allowed now, but iOS signing, build, TestFlight and device acceptance remain Phase 8 and unverified.
+- Related task: FM-MOB-001
+
 ## Intake template
 
 ```text

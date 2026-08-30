@@ -28,7 +28,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Android signed internal distribution / real device
 - Acceptance: signed exact-commit build and private device acceptance per mobile runbook.
-- Current evidence: exact signed `preview` Android artifact for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` is verified by run `33298699290` / job `99222705186`. On 2026-08-30 the owner installed and inspected that build on a real Android device and accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result. FM-EV-030 counterchecks the fail-closed private pending-template preparer, but it does not create acceptance evidence. The complete receipt-bound 19-check Android runbook, including recovery, cache-failure and logout-purge checks plus private validator PASS/evidence hash, remains open; no private build URL or ID is retained here.
+- Current evidence: exact signed `preview` Android artifact for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` is verified by run `33298699290` / job `99222705186`. On 2026-08-30 the owner installed and inspected that build and accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result. FM-EV-030 counterchecks the fail-closed private pending-template preparer; FM-DEC-010 now requires the complete receipt-bound 19-check run, recovery, cache-failure, logout-purge and screenshot proof to use the later Play-test-track installation. No such final Store-device evidence or private build ID is retained here.
 - Store-build evidence: run `33316172583` / job `99269924756` completed exactly one signed Android Production AAB for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, verified terminal artifact/commit/platform/profile/store class, stored a redacted receipt and cleaned temporary state. This is build evidence, not a replacement for the private device runbook or Play acceptance.
 - Repository evidence alone sufficient: no
 
@@ -40,6 +40,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - External system: Apple Developer / App Store Connect / TestFlight
 - Acceptance: signed exact-commit iOS build, TestFlight and real-device acceptance once Phase 8 is explicitly started.
 - Current-finishline effect: none. This open future control does not block FM-MOB-001/current sales finishline after the owner moved `iOS-TestFlight` from Phase 6 to Phase 8.
+- Repository preparation: FM-DEC-010 permits metadata, public Support, privacy/review/tester handoffs and screenshot planning now. These artifacts are not signed iOS/TestFlight/device evidence and do not change the OPEN Phase-8 state.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-PUSH-STORE
@@ -48,7 +49,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Expo push + Apple/Google store portals
 - Acceptance: separated push gates plus final screenshots/privacy/data-safety/store evidence from signed builds, limited to the platform scope currently being accepted; iOS/TestFlight-specific portal acceptance is Phase 8 per FM-DEC-009.
-- Current evidence: the Android `1.0.0` Production AAB exists and is verified by `33316172583` / `99269924756`; Submit and Update were disabled. FM-EV-030 adds the exact existing-AAB portal handoff and confirms the public privacy/account-deletion pages are available. Live Google Play Console inspection on 2026-08-30 showed identity/document review still in progress, phone verification locked and `App erstellen` disabled. No Play app record, upload, form submission, review request or publication occurred.
+- Current evidence: the Android `1.0.0` Production AAB exists and is verified by `33316172583` / `99269924756`; Submit and Update were disabled. FM-EV-030 adds the exact existing-AAB portal handoff. FM-EV-031 adds the public Support route, reproducible Play graphics and Apple/Google review/tester preparation without external writes. Live Google Play Console inspection on 2026-08-30 showed identity/document review still in progress, phone verification locked and `App erstellen` disabled. No Play app record, upload, form submission, review request or publication occurred.
 - Repository evidence alone sufficient: no
 
 ## EXT-AI-PRODUCT-DECISION

@@ -257,13 +257,16 @@ Installationsartefakt direkt aus dem geschützten, bereits verifizierten EAS-
 Build, hält es privat und löscht die lokale Kopie nach der Geräteabnahme. Es
 ist ein interner Testbuild und keine Play-/App-Store-Freigabe.
 
-Die aktuelle Android-Abnahme verwendet anschließend den privaten
-Geräte-Abnahmevalidator aus `docs/mobile/DEVICE_ACCEPTANCE.md`. Der neue
+Die aktuelle Android-Abnahme verwendet nach Download aus dem Google-Play-
+Test-Track den privaten Geräte-Abnahmevalidator aus
+`docs/mobile/DEVICE_ACCEPTANCE.md`. Der neue
 Vorbereitungsbefehl `npm run mobile:device:acceptance:prepare` bindet die
 private Arbeitsdatei an den redigierten Receipt, lässt aber alle 19 realen
 Prüfpunkte fail-closed auf `pending`. Er führt selbst keinen Build,
 Store-Upload oder Production-Schreibzugriff aus. Ein separater iOS-Nachweis
-folgt nur, wenn Phase 8 ausdrücklich startet.
+folgt nur, wenn Phase 8 ausdrücklich startet. App-Store-Metadaten,
+Supportseite und Screenshot-/Review-Plan sind bereits vorbereitet und gelten
+nicht als iOS-Build oder TestFlight.
 
 ## Kontrollierter Android-Store-Build
 
@@ -350,26 +353,27 @@ E-Mail-/Gerätetest bleibt separat offen; Details stehen in
 
 ## Nächste Mobile-Schritte
 
-1. Den gespeicherten Supabase-Redirect `fanmind://reset-password` mit dem
-   positiven und negativen Recovery-E-Mail-Fluss auf einem realen Android-
-   Gerät testen.
-2. Den vollständigen privaten receipt-gebundenen 19-Punkte-Android-
-   Gerätenachweis abschließen und App-Icon/Splashscreen real abnehmen.
+1. Nach Google-Kontofreigabe den Play-App-Datensatz anlegen und das bestehende
+   Android-`1.0.0`-AAB ohne Neubau in den verlangten Test-Track laden.
+2. Erst nach Download aus diesem Track den gespeicherten Supabase-Redirect
+   `fanmind://reset-password`, den vollständigen privaten receipt-gebundenen
+   19-Punkte-Android-Gerätenachweis sowie App-Icon/Splashscreen real abnehmen.
 3. Den getrennten read-only Push-Ressourcencheck, Staging-Apply und die
    rollback-only Acceptance durchführen; erst danach Migration/Secret-
    Konfiguration in einem signierten Development-/Preview-Build real testen;
    den separat zu genehmigenden Delivery-Ledger entwerfen, migrieren und
    rollback-only abnehmen; danach genau einen synthetischen Send-/Receipt-Test
    ausführen.
-4. Nach Google-Kontofreigabe den Play-App-Datensatz anlegen, Data Safety,
-   Screenshots und das portalgeforderte Testprogramm vervollständigen und das
-   bestehende Android-`1.0.0`-AAB hochladen; keinen neuen Build anstoßen.
-   Die exakte Reihenfolge und Release-Bindung stehen in
-   `docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
+4. Data Safety und das portalgeforderte Testprogramm vervollständigen, nach
+   der Track-Installation sechs reale Screenshots erstellen und anschließend
+   die Review-/Rollout-Entscheidung getrennt bestätigen. Die exakte Reihenfolge
+   steht in `docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
 5. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
    Screenshot-Matrix nach realen Gerätetests sowie externer
    Datenschutz-/Rechtsprüfung final abnehmen.
-6. iOS-Signierung, Gerätetest und TestFlight erst in Phase 8 beginnen.
+6. Die vorbereiteten iPhone-App-Store-Unterlagen aus
+   `docs/mobile/APP_STORE_HANDOFF.md` verwenden; iOS-Signierung, Gerätetest und
+   TestFlight erst in Phase 8 beginnen.
 
 Der lokale Befehl `npm run store:check` prüft davor ohne Portalzugriff die
 Zeichenlimits, App-IDs, Wortmarke, Icons, Screenshot-Matrix sowie die exakt
@@ -378,4 +382,5 @@ gepinnte EAS- und sichere Internal-/Draft-Submit-Konfiguration.
 Die Produkt- und Release-Checkliste für diese Schritte steht in
 `docs/mobile/BETA_RELEASE.md`; die vorbereiteten Store-Metadaten stehen in
 `docs/mobile/STORE_LISTING.md`, die portalnahe Datenschutzvorlage in
-`docs/mobile/STORE_PRIVACY_DECLARATIONS.md`.
+`docs/mobile/STORE_PRIVACY_DECLARATIONS.md`; das Apple-Handoff steht in
+`docs/mobile/APP_STORE_HANDOFF.md`.

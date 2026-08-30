@@ -29,6 +29,7 @@ const routes = [
   "/avv",
   "/zahlungsbedingungen",
   "/referral-bedingungen",
+  "/support",
   "/api/version",
   "/api/health",
 ];
