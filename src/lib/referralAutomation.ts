@@ -3,6 +3,7 @@ import {
   getSupabaseRestUrl,
 } from "@/lib/supabase/config";
 import { referralCouponMatchesContract } from "@/lib/referralStripeCouponPolicy.mjs";
+import { getStripeClient, getStripeErrorDetails } from "@/lib/stripeClient";
 
 export type ReferralAutomationResult = {
   handled: boolean;
@@ -39,15 +40,6 @@ type WorkspaceBillingRow = {
   billing_status: string | null;
 };
 
-type StripeErrorResponse = {
-  error?: {
-    code?: string;
-    message?: string;
-    type?: string;
-  };
-};
-
-const STRIPE_API = "https://api.stripe.com/v1";
 const REFERRAL_BILLING_FLAG = "FANMIND_ENABLE_REFERRAL_BILLING";
 
 function serviceRoleKey(): string | null {
@@ -144,109 +136,97 @@ function stripeResourceId(value: unknown, prefix: string): string | null {
   return null;
 }
 
-async function stripeRequest(
-  path: string,
-  init: { method?: "GET" | "POST"; body?: URLSearchParams } = {},
-): Promise<{ ok: boolean; status: number; data: Record<string, unknown>; error?: string }> {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) {
-    return {
-      ok: false,
-      status: 0,
-      data: {},
-      error: "STRIPE_SECRET_KEY ist nicht konfiguriert.",
-    };
-  }
-
-  try {
-    const response = await fetch(`${STRIPE_API}${path}`, {
-      method: init.method ?? "GET",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        ...(init.body
-          ? { "Content-Type": "application/x-www-form-urlencoded" }
-          : {}),
-      },
-      body: init.body,
-      cache: "no-store",
-    });
-    const data = (await response.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >;
-    const error = (data as StripeErrorResponse).error;
-    return {
-      ok: response.ok,
-      status: response.status,
-      data,
-      error: error?.message,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      status: 0,
-      data: {},
-      error: error instanceof Error ? error.message : "Stripe-Anfrage fehlgeschlagen.",
-    };
-  }
-}
-
 async function ensureStripeCoupon(percent: number): Promise<{
   couponId?: string;
   error?: string;
 }> {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return { error: "STRIPE_SECRET_KEY ist nicht konfiguriert." };
+  }
   const starterMonthlyPrice = process.env.STRIPE_PRICE_STARTER_MONTHLY;
   if (!starterMonthlyPrice) {
     return { error: "STRIPE_PRICE_STARTER_MONTHLY ist nicht konfiguriert." };
   }
-  const price = await stripeRequest(
-    `/prices/${encodeURIComponent(starterMonthlyPrice)}`,
-  );
-  if (!price.ok) {
+  let price: Record<string, unknown>;
+  try {
+    price = (await stripe.prices.retrieve(
+      starterMonthlyPrice,
+    )) as unknown as Record<string, unknown>;
+  } catch (error) {
+    const details = getStripeErrorDetails(error);
     return {
       error:
-        price.error ??
-        `Stripe Core-Preis konnte nicht geprüft werden (${price.status}).`,
+        details.message ??
+        `Stripe Core-Preis konnte nicht geprüft werden (${details.status}).`,
     };
   }
-  const coreProductId = stripeResourceId(price.data.product, "prod_");
+  const coreProductId = stripeResourceId(price.product, "prod_");
   if (!coreProductId) {
     return { error: "Stripe Core-Produkt konnte nicht eindeutig bestimmt werden." };
   }
 
   const id = couponId(percent);
-  const existing = await stripeRequest(`/coupons/${encodeURIComponent(id)}`);
-  if (existing.ok) {
-    return referralCouponMatchesContract(existing.data, percent, coreProductId)
+  try {
+    const existing = (await stripe.coupons.retrieve(
+      id,
+    )) as unknown as Record<string, unknown>;
+    return referralCouponMatchesContract(existing, percent, coreProductId)
       ? { couponId: id }
       : {
           error:
             "Vorhandener Referral-Coupon ist nicht ausschließlich auf das Starter-Core-Produkt begrenzt.",
         };
-  }
-  if (existing.status !== 404) {
-    return { error: existing.error ?? `Stripe Coupon-Prüfung fehlgeschlagen (${existing.status}).` };
+  } catch (error) {
+    const details = getStripeErrorDetails(error);
+    if (details.status !== 404) {
+      return {
+        error:
+          details.message ??
+          `Stripe Coupon-Prüfung fehlgeschlagen (${details.status}).`,
+      };
+    }
   }
 
-  const params = new URLSearchParams();
-  params.set("id", id);
-  params.set("duration", "forever");
-  params.set("percent_off", String(percent));
-  params.set("name", `FanMind Empfehlung ${percent} %`);
-  params.append("applies_to[products][]", coreProductId);
-  params.set("metadata[fanmind_feature]", "referral_growth_window");
-  params.set("metadata[discount_percent]", String(percent));
-  const created = await stripeRequest("/coupons", {
-    method: "POST",
-    body: params,
-  });
-  if (created.ok) return { couponId: id };
-
-  const code = (created.data as StripeErrorResponse).error?.code;
-  if (code === "resource_already_exists") return { couponId: id };
-  return {
-    error: created.error ?? `Stripe Coupon konnte nicht erstellt werden (${created.status}).`,
-  };
+  try {
+    await stripe.coupons.create({
+      id,
+      duration: "forever",
+      percent_off: percent,
+      name: `FanMind Empfehlung ${percent} %`,
+      applies_to: { products: [coreProductId] },
+      metadata: {
+        fanmind_feature: "referral_growth_window",
+        discount_percent: String(percent),
+      },
+    });
+    return { couponId: id };
+  } catch (error) {
+    const details = getStripeErrorDetails(error);
+    if (details.code === "resource_already_exists") {
+      try {
+        const raced = (await stripe.coupons.retrieve(
+          id,
+        )) as unknown as Record<string, unknown>;
+        return referralCouponMatchesContract(raced, percent, coreProductId)
+          ? { couponId: id }
+          : {
+              error:
+                "Zeitgleich erstellter Referral-Coupon verletzt den Starter-Core-Vertrag.",
+            };
+      } catch {
+        return {
+          error:
+            "Zeitgleich erstellter Referral-Coupon konnte nicht verifiziert werden.",
+        };
+      }
+    }
+    return {
+      error:
+        details.message ??
+        `Stripe Coupon konnte nicht erstellt werden (${details.status}).`,
+    };
+  }
 }
 
 async function applyStripeDiscount(input: {
@@ -255,11 +235,14 @@ async function applyStripeDiscount(input: {
   referrerWorkspaceId: string;
   snapshotId: string;
 }): Promise<{ status: "applied" | "cleared"; couponId: string | null; error?: string }> {
-  const params = new URLSearchParams();
-  params.set("proration_behavior", "none");
-  params.set("metadata[fanmind_referral_discount_percent]", String(input.discountPercent));
-  params.set("metadata[fanmind_referrer_workspace_id]", input.referrerWorkspaceId);
-  params.set("metadata[fanmind_referral_snapshot_id]", input.snapshotId);
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return {
+      status: input.discountPercent > 0 ? "applied" : "cleared",
+      couponId: null,
+      error: "STRIPE_SECRET_KEY ist nicht konfiguriert.",
+    };
+  }
 
   let coupon: string | null = null;
   if (input.discountPercent > 0) {
@@ -272,23 +255,26 @@ async function applyStripeDiscount(input: {
       };
     }
     coupon = ensured.couponId;
-    params.set("discounts[0][coupon]", coupon);
-  } else {
-    // Stripe accepts an empty discounts value to clear the subscription discount.
-    params.set("discounts", "");
   }
 
-  const updated = await stripeRequest(
-    `/subscriptions/${encodeURIComponent(input.subscriptionId)}`,
-    { method: "POST", body: params },
-  );
-  if (!updated.ok) {
+  try {
+    await stripe.subscriptions.update(input.subscriptionId, {
+      proration_behavior: "none",
+      metadata: {
+        fanmind_referral_discount_percent: String(input.discountPercent),
+        fanmind_referrer_workspace_id: input.referrerWorkspaceId,
+        fanmind_referral_snapshot_id: input.snapshotId,
+      },
+      discounts: coupon ? [{ coupon }] : "",
+    });
+  } catch (error) {
+    const details = getStripeErrorDetails(error);
     return {
       status: input.discountPercent > 0 ? "applied" : "cleared",
       couponId: coupon,
       error:
-        updated.error ??
-        `Stripe-Subscription konnte nicht aktualisiert werden (${updated.status}).`,
+        details.message ??
+        `Stripe-Subscription konnte nicht aktualisiert werden (${details.status}).`,
     };
   }
 

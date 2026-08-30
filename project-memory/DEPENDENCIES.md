@@ -23,7 +23,7 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-003
 - From: FM-AI-001
-- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; Stripe conformance review; general Billing ledger Staging cutover; full current post-ledger Stripe/Webhook/Entitlement lifecycle; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact webhook configuration and AI ledger installation are already current evidence.
+- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; exact-head closeout of the locally counterchecked Stripe code-conformance correction; separately authorized provider-side inbound webhook migration; general Billing ledger Staging cutover; full current post-ledger Stripe/Webhook/Entitlement lifecycle; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact observed webhook configuration and AI ledger installation are already current evidence.
 - Type: product + financial + technical + external
 - Status: ACTIVE
 - Updated: 2026-08-26

@@ -4,6 +4,11 @@ import {
   getSupabaseRestUrl,
 } from "@/lib/supabase/config";
 import type { PlanId } from "@/config/plans";
+import type Stripe from "stripe";
+import {
+  createStripeIntegrationIdentifier,
+  getStripeClient,
+} from "@/lib/stripeClient";
 import {
   isMissingWorkspaceExpandColumn,
   withoutWorkspaceExpandColumns,
@@ -212,11 +217,11 @@ export async function createStripeCheckoutSession(input: {
   workspaceId: string;
   userEmail?: string;
 }): Promise<{ url?: string; id?: string; error?: string }> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const stripe = getStripeClient();
   const appUrl = getAppUrl();
   const stripeConfig = getStripeConfigStatus();
   if (
-    !secretKey ||
+    !stripe ||
     !appUrl ||
     !stripeConfig.readyForWebhook ||
     !stripeConfig.readyForTax
@@ -227,30 +232,6 @@ export async function createStripeCheckoutSession(input: {
     };
   }
 
-  const params = new URLSearchParams();
-  params.set("mode", input.plan.mode);
-  params.set(
-    "success_url",
-    `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-  );
-  params.set("cancel_url", `${appUrl}/billing/cancel`);
-  // Stripe's Dashboard configuration dynamically selects eligible methods
-  // for normal Starter sessions. The isolated 1-EUR/day acceptance contract
-  // is intentionally narrower and must remain card-only.
-  if (input.plan.commercialOption === "internal_daily_test") {
-    params.append("payment_method_types[]", "card");
-  }
-  if (input.workspaceId) {
-    params.set("client_reference_id", input.workspaceId);
-  }
-  if (input.userEmail) params.set("customer_email", input.userEmail);
-  params.set("billing_address_collection", "required");
-  params.set("tax_id_collection[enabled]", "true");
-  params.set("automatic_tax[enabled]", "true");
-  input.plan.priceIds.forEach((price, index) => {
-    params.set(`line_items[${index}][price]`, price);
-    params.set(`line_items[${index}][quantity]`, "1");
-  });
   const metadata = {
     user_id: input.userId,
     workspace_id: input.workspaceId,
@@ -262,73 +243,54 @@ export async function createStripeCheckoutSession(input: {
     internal_live_test:
       input.plan.commercialOption === "internal_daily_test" ? "true" : "false",
   };
-  Object.entries(metadata).forEach(([key, value]) =>
-    params.set(`metadata[${key}]`, value),
-  );
-  if (input.plan.mode === "payment") {
-    Object.entries(metadata).forEach(([key, value]) =>
-      params.set(`payment_intent_data[metadata][${key}]`, value),
-    );
-  }
-  if (input.plan.mode === "subscription") {
-    Object.entries(metadata).forEach(([key, value]) =>
-      params.set(`subscription_data[metadata][${key}]`, value),
-    );
-  }
+  const params: Stripe.Checkout.SessionCreateParams = {
+    mode: input.plan.mode,
+    success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/billing/cancel`,
+    client_reference_id: input.workspaceId,
+    ...(input.userEmail ? { customer_email: input.userEmail } : {}),
+    billing_address_collection: "required",
+    tax_id_collection: { enabled: true },
+    automatic_tax: { enabled: true },
+    line_items: input.plan.priceIds.map((price) => ({ price, quantity: 1 })),
+    metadata,
+    integration_identifier: createStripeIntegrationIdentifier(),
+    ...(input.plan.mode === "payment"
+      ? { payment_intent_data: { metadata } }
+      : { subscription_data: { metadata } }),
+  };
 
   try {
-    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params,
-      signal: AbortSignal.timeout(12000),
-    });
-    const json = (await response.json().catch(() => ({}))) as {
-      id?: string;
-      url?: string;
-    };
-    if (!response.ok || !json.id || !json.url) {
+    const session = await stripe.checkout.sessions.create(params);
+    if (!session.id || !session.url) {
       return { error: "Stripe Checkout konnte nicht gestartet werden." };
     }
-    return { id: json.id, url: json.url };
+    return { id: session.id, url: session.url };
   } catch {
     return { error: "Stripe Checkout konnte nicht gestartet werden." };
   }
 }
 
 export async function expireStripeCheckoutSession(sessionId: unknown): Promise<boolean> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const stripe = getStripeClient();
   const normalizedId = typeof sessionId === "string" ? sessionId.trim() : "";
-  if (!secretKey || !/^cs_(?:test|live)_[A-Za-z0-9]+$/.test(normalizedId)) return false;
-  const sessionUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(normalizedId)}`;
-  const response = await fetch(
-    `${sessionUrl}/expire`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${secretKey}` },
-      cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
-    },
-  ).catch(() => null);
-  if (response?.ok === true) return true;
+  if (!stripe || !/^cs_(?:test|live)_[A-Za-z0-9]+$/.test(normalizedId)) return false;
+  try {
+    await stripe.checkout.sessions.expire(normalizedId);
+    return true;
+  } catch {
+    // Reconcile below: expiration may have succeeded before the response was lost.
+  }
 
   // Stripe expiration is irreversible. If it succeeded but our following
   // local workspace update failed, a retry must reconcile the already-expired
   // session instead of remaining permanently stuck on the POST error.
-  const statusResponse = await fetch(sessionUrl, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${secretKey}` },
-    cache: "no-store",
-    signal: AbortSignal.timeout(12_000),
-  }).catch(() => null);
-  if (!statusResponse?.ok) return false;
-  const statusPayload = (await statusResponse.json().catch(() => null)) as {
-    status?: unknown;
-  } | null;
-  return statusPayload?.status === "expired";
+  try {
+    const session = await stripe.checkout.sessions.retrieve(normalizedId);
+    return session.status === "expired";
+  } catch {
+    return false;
+  }
 }
 
 export function verifyStripeSignature(
@@ -740,42 +702,29 @@ export async function updateStripeSubscriptionCancellation(input: {
   workspaceId: string;
   action: "request" | "revoke";
 }): Promise<{ error?: string; subscription?: Record<string, unknown> }> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) return { error: "Stripe ist serverseitig noch nicht konfiguriert." };
+  const stripe = getStripeClient();
+  if (!stripe) return { error: "Stripe ist serverseitig noch nicht konfiguriert." };
 
-  const params = new URLSearchParams();
-  params.set("cancel_at_period_end", input.cancelAtPeriodEnd ? "true" : "false");
-  if (input.action === "request" && input.cancelAt) {
-    params.set("cancel_at", String(Math.floor(Date.parse(input.cancelAt) / 1000)));
-  }
-  if (input.action === "revoke") {
-    params.set("cancel_at", "");
-  }
-  params.set("metadata[workspace_id]", input.workspaceId);
-  params.set("metadata[fanmind_cancellation_action]", input.action);
+  const params: Stripe.SubscriptionUpdateParams = {
+    cancel_at_period_end: input.cancelAtPeriodEnd,
+    ...(input.action === "request" && input.cancelAt
+      ? { cancel_at: Math.floor(Date.parse(input.cancelAt) / 1000) }
+      : {}),
+    ...(input.action === "revoke" ? { cancel_at: "" } : {}),
+    metadata: {
+      workspace_id: input.workspaceId,
+      fanmind_cancellation_action: input.action,
+    },
+  };
 
   try {
-    const response = await fetch(
-      `https://api.stripe.com/v1/subscriptions/${encodeURIComponent(input.subscriptionId)}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${secretKey}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: params,
-        cache: "no-store",
-        signal: AbortSignal.timeout(12000),
-      },
+    const subscription = await stripe.subscriptions.update(
+      input.subscriptionId,
+      params,
     );
-    const json = (await response.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >;
-    if (!response.ok) {
-      return { error: "Stripe-Subscription konnte nicht aktualisiert werden." };
-    }
-    return { subscription: json };
+    return {
+      subscription: subscription as unknown as Record<string, unknown>,
+    };
   } catch {
     return { error: "Stripe-Subscription konnte nicht aktualisiert werden." };
   }

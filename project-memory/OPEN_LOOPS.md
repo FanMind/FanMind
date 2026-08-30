@@ -29,10 +29,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-004
 - Related: FM-AI-001
 - Status: OPEN
-- Updated: 2026-08-26
-- Gap: Current synthetic resource, Test catalog/webhook and installed AI ledger are read-only verified, but final product decisions, private quality/cost proof, Stripe conformance review, unapplied general Billing ledger/cutover, full current post-ledger Staging lifecycle, Legal/Tax, runtime integration and activation evidence remain incomplete.
+- Updated: 2026-08-30
+- Gap: Current synthetic resource, Test catalog/webhook and installed AI ledger are read-only verified. The bounded Stripe SDK/payment-method/outbound-version code correction is locally counterchecked under FM-CR-009 but awaits exact-head merge. Final product decisions, private quality/cost proof, provider-side inbound webhook migration, unapplied general Billing ledger/cutover, full current post-ledger Staging lifecycle, Legal/Tax, runtime integration and activation evidence remain incomplete.
 - Close when: tier-specific risk quorum is satisfied and any Production activation is explicit and current.
-- Next check: do not rerun read-only runs `33003378162`, `33003452287` or `33003526741`. Resume only from `FM-AI-OWNER-001`/`002` and the bounded Stripe conformance code review; keep Plus/Ultra fail-closed.
+- Next check: finish exact-head review/merge/closeout of FM-CR-009 without provider access. Then resume only from `FM-AI-OWNER-001`/`002`; do not rerun read-only runs `33003378162`, `33003452287` or `33003526741`, and keep Plus/Ultra fail-closed.
 
 ## FM-LOOP-005
 - Related: FM-META-001

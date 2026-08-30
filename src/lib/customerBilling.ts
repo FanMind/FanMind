@@ -1,5 +1,6 @@
 import { isExplicitDemoWorkspace } from "@/lib/demoMode";
 import { getStripeConfigStatus, STRIPE_TAX_INVOICE_NOTE } from "@/lib/stripeBilling";
+import { getStripeClient } from "@/lib/stripeClient";
 import type { WorkspaceDashboardRow } from "@/lib/supabase/server";
 
 export type CustomerInvoiceSummary = {
@@ -141,44 +142,33 @@ export async function listCustomerInvoicesForWorkspace(
     "billing_status" | "name" | "commercial_option" | "stripe_customer_id"
   >,
 ): Promise<{ invoices: CustomerInvoiceSummary[]; error: string | null }> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!workspace.stripe_customer_id)
     return {
       invoices: getDemoInvoicesForExplicitDemoWorkspace(workspace),
       error: null,
     };
-  if (!secretKey)
+  const stripe = getStripeClient();
+  if (!stripe)
     return {
       invoices: [],
       error: "Stripe ist serverseitig noch nicht konfiguriert.",
     };
 
-  const params = new URLSearchParams({
-    customer: workspace.stripe_customer_id,
-    limit: "24",
-  });
-
-  const response = await fetch(
-    `https://api.stripe.com/v1/invoices?${params.toString()}`,
-    {
-      headers: { Authorization: `Bearer ${secretKey}` },
-      cache: "no-store",
-    },
-  );
-  const json = (await response.json().catch(() => ({}))) as {
-    data?: Array<Record<string, unknown>>;
-    error?: { message?: string };
-  };
-
-  if (!response.ok)
+  let invoiceRecords: Array<Record<string, unknown>>;
+  try {
+    const result = await stripe.invoices.list({
+      customer: workspace.stripe_customer_id,
+      limit: 24,
+    });
+    invoiceRecords = result.data as unknown as Array<Record<string, unknown>>;
+  } catch {
     return {
       invoices: [],
-      error:
-        json.error?.message ??
-        "Stripe-Rechnungen konnten nicht geladen werden.",
+      error: "Stripe-Rechnungen konnten nicht geladen werden.",
     };
+  }
 
-  const invoices = (json.data ?? []).map((invoice) => ({
+  const invoices = invoiceRecords.map((invoice) => ({
     id: String(invoice.id),
     number: stringField(invoice, "number"),
     created:

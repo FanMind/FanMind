@@ -473,3 +473,21 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Result status: IMPLEMENTED_NOT_VERIFIED.
 - Open follow-up: terminal-green exact-head PR, merge, replacement signed Android build and owner confirmation that demo messages are visible.
 - Work lock released: no; keep `LOCK-FM-MOB-002-CONTACT-HISTORY-20260829` active through build/device handoff.
+
+## RECEIPT-FM-AI-001-STRIPE-CONFORMANCE-20260830
+- Task: FM-AI-001 / FM-CR-009
+- Started: 2026-08-30 Europe/Vienna
+- Finished: local implementation/countercheck complete; exact-head PR merge and repository closeout pending
+- Branch/PR: `feat/stripe-client-conformance-20260830` / pending
+- Preflight checked: current exact-main tree and successful post-merge #1034 runs; Project Memory task/started work/locks/open loop/evidence and AI/Billing read-only reconciliation; all productive and acceptance-only raw Stripe call sites; package/test contracts; current Stripe SDK/Billing/Payments/Security guidance.
+- Prior attempts found: the productive runtime used hand-encoded raw REST across Checkout, invoices, cancellation and Referral automation; the daily internal Checkout explicitly forced card; no integration identifier was sent; and the separately verified Staging webhook endpoint remains at inbound `2026-06-24.dahlia`. The existing fail-closed Tax registration, webhook signature, cancellation reconciliation and Referral product restriction were valid and retained.
+- Dependency result: the code correction is separately authorized by FM-AI-001 without provider mutation. Provider-side webhook migration, transactional Staging acceptance, Billing-ledger apply, AI product decisions, Legal/Tax and activation remain owner/protected.
+- Planned evidence: exact SDK/lock/API contract; typed productive Stripe calls; dynamic-method and random-identifier tests; preserved tax/cancellation/referral negative controls; full local suite; exact-head PR review/checks; merge and closeout.
+- Changes made: added one cached Stripe SDK `22.4.0` client pinned to outbound `2026-07-29.dahlia`; migrated the four productive server modules from raw REST; removed Checkout `payment_method_types`; added a cryptographically selected eight-letter identifier suffix; retained expire/retrieve reconciliation and strengthened coupon-race handling with exact contract re-read; documented the independent older inbound webhook boundary. No provider or runtime configuration changed.
+- Checks/tests: Stripe conformance 5/5; focused Billing/Referral/cancellation 46/46; full Operations 1073/1073; TypeScript, focused ESLint, Next Production build, root dependency audit, Product/Referral/Legal/Actions truth and all current Project Memory checks passed.
+- Final diff counterchecked: locally yes; exact-head remote diff remains pending.
+- Regression/security countercheck: fail-closed Tax readiness and webhook verification are unchanged; productive raw Stripe endpoints and explicit Checkout methods are forbidden; concurrent coupon creation must be re-read and exactly Starter-Core-bound; older inbound webhook version is not misrepresented as migrated.
+- Evidence produced: FM-EV-033 and `docs/operations/STRIPE_RUNTIME_CONFORMANCE.md`; exact-head/merge evidence pending.
+- Result status: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD; FM-AI-001 remains PARTIAL.
+- Open follow-up: open the PR, require exact-head gates/review, merge, then close repository-only FM-CR-009 bookkeeping and release this lock. Provider/product work remains under FM-AI-OWNER-001/002.
+- Work lock released: no; `LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830` remains active through repository closeout.
