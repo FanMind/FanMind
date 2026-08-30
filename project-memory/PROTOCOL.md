@@ -3,7 +3,7 @@
 This directory is the operational memory for FanMind. It complements code, tests, Git history and canonical product documentation; it does not replace them.
 
 ## Mandatory execution policy
-`EXECUTION_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
+`EXECUTION_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `LEGACY_ISSUE_RECONCILIATION.json`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
 
 ## Mandatory preflight
 Before substantive code, infrastructure, configuration, workflow or product-state work:
@@ -15,8 +15,9 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 6. For provider, Mobile, billing, legal or other external work read `EXTERNAL_ACCEPTANCE.md` and do not infer acceptance from repository evidence alone.
 7. Search `FAILED_ATTEMPTS.md`, `DO_NOT_ASSUME.md`, `ASSUMPTIONS.md`, `CONTRADICTIONS.md` and `CHANGE_REQUESTS.md` for the intended area, error, assumption and prior approach.
 8. Check actual branch/head, recent commits/PRs, current CI/security/supply-chain/runtime/provider state and central finishline #874.
-9. Search existing task/change IDs before creating new work.
-10. Assign Risk `R1`–`R4`, record critical assumptions, define expected scope and define the evidence/quorum that will prove success before implementation.
+9. For #642/#643/#644 or work derived from their historical checkboxes, read and validate `LEGACY_ISSUE_RECONCILIATION.json`; never treat them as a zero-state independently of #874 and the retained-gate map.
+10. Search existing task/change IDs before creating new work.
+11. Assign Risk `R1`–`R4`, record critical assumptions, define expected scope and define the evidence/quorum that will prove success before implementation.
 
 ## V7 hardening contract
 

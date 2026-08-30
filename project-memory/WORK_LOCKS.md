@@ -193,6 +193,16 @@ Prevents two agents/sessions from independently working the same task.
 - Scope: harden the existing read-only Mobile release and signed-build resource checks so successful `eas project:info` lookup is bound to the exact expected EAS owner, `fanmind-mobile` slug and project ID before any later build gate; no credential creation, build, submit, update, signing or provider mutation.
 - Resume from: no repository implementation resume required. The next Mobile step is the existing protected read-only EAS resource-readiness run; external EAS, Supabase Auth, signing, stores and real-device acceptance remain open.
 
+## LOCK-FM-MEM-009-LEGACY-ISSUES-20260830
+- Task: FM-MEM-009
+- Status: ACTIVE
+- Holder: ChatGPT legacy issue reconciliation session 2026-08-30
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / #1033
+- Acquired: 2026-08-30
+- Risk: R2 governance and GitHub issue metadata only
+- Scope: map #642/#643/#644 to exact current evidence/remaining gates, install drift checks, and reconcile their GitHub state after exact-head merge; no code reimplementation, provider, database, billing, Production or Mobile build action.
+- Resume from: the canonical map/checks are implemented and counterchecked; complete the final exact-head bookkeeping review, merge #1033, then change only the reconciled issue bodies/states.
+
 ## LOCK-FM-MEM-005
 - Task: FM-MEM-005
 - Status: RELEASED

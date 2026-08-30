@@ -33,6 +33,8 @@ required = [
     "DRIFT_BASELINE.json",
     "MILESTONE_POLICY.json",
     "FANMIND_DEEP_AUDIT_2026-08-19.md",
+    "LEGACY_ISSUE_RECONCILIATION.json",
+    "LEGACY_ISSUE_RECONCILIATION.md",
 ]
 errors = []
 for name in required:
@@ -145,6 +147,7 @@ for script_name in [
     "fanmind_evidence_freshness.py",
     "fanmind_drift_preflight.py",
     "fanmind_milestone_snapshot_check.py",
+    "fanmind_legacy_issue_reconciliation.py",
 ]:
     if not (ROOT / "scripts" / script_name).exists():
         errors.append(f"memory-script-missing:{script_name}")

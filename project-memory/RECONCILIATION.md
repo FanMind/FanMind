@@ -63,5 +63,25 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Actual state: local accepted-readiness/main-drift checks passed; SSH to `138.124.213.66:22` timed out before remote preflight, JIT, environment approval, workflow dispatch or PostgreSQL access. Current GitHub evidence contains no later Restore run.
 - Memory state: highest accepted Restore state `TARGET_COMPATIBLE` remained correct, but the owner-action and exact-next-step records were stale.
 - Required correction: mark `FM-RST-OWNER-004` consumed pre-dispatch fail-closed, add `FM-RST-OWNER-005` for owner-PC public-IP/TCP-22 evidence and possible separately authorized exact `/32` allowlist reconciliation, add `FM-RST-OWNER-006` for a later new exact Restore authorization/controller, record proof of forbidden non-actions and prohibit retry/reuse.
+- Status: RESOLVED
+- Resolved: PR #1005 exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8` passed the required checks, squash-merged as `dd9d986c387040b213355e0ba1bf60ce31fa7b32`, and issue #944 received the fail-closed evidence comment. The owner-PC connectivity/new-authorization steps remain separately open under FM-RST-001; no runtime/provider mutation was performed by the reconciliation.
+
+## RECON-2026-014
+- Detected: 2026-08-30 while continuing safe work during Google Play developer-account review.
+- Task: `FM-MEM-009` / `FM-LOOP-011`.
+- Mismatch: historical #642/#643/#644 bodies retain 46 unchecked items even though later #874, STAGING_ACCEPTED and exact workflow evidence prove part of that work, while other items remain genuinely unproved.
+- Actual state: Staging infrastructure and bounded admin/Referral acceptance are proven by immutable current references; token/provider/full tenant-negative/Legal/Production gates remain open; #644 no longer owns execution.
+- Memory state: the deep audit and FM-LOOP-011 describe the mismatch, but no machine-readable item-by-item map or enforced GitHub issue disposition existed.
+- Required correction: install a fail-closed canonical map/rendering/test, keep #642/#643 open with named gates, close #644 only as superseded by #874, and re-read all changed issue records after merge.
 - Status: OPEN
-- Resolved: pending exact-head repository checks, PR merge and issue #944 evidence comment; no runtime/provider mutation is part of this reconciliation.
+- Resolved: pending exact-head PR merge and post-merge issue metadata reconciliation; no runtime/provider/database/billing/Mobile build mutation is part of this work.
+
+## RECON-2026-015
+- Detected: 2026-08-30 during FM-MEM-009 preflight against current GitHub main.
+- Task: `FM-MOB-001` / FM-EV-031.
+- Mismatch: the dual-store receipt and evidence still reported local/exact-head/deployment work as pending although PR #1031 was already merged and the public Support deployment/readiness/audit chain had succeeded.
+- Actual state: PR #1031 final head `a963ab598eeb0a7ab84110e55cb4043d4230e550` passed all 14 check runs, merged as `3082490451dd45b5127bdf9d9ae55b4712255b72`, and post-merge deploy, Browser E2E, Supply Chain, CodeQL, Final Go-Live Readiness, read-only Production Audit and live `/support` verification passed.
+- Memory state: Android/Google/iOS external blockers were correct, but the repository preparation receipt/evidence had not advanced from `COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD`.
+- Required correction: bind FM-EV-031/receipt/task readers to the exact merged/deployed evidence while preserving the existing AAB, Google review blocker and Phase-8 iOS boundary.
+- Status: RESOLVED
+- Resolved: FM-MEM-009 includes the repository-only correction. No Android/iOS build, portal/provider, database, payment or publication action was performed.

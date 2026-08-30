@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "repository": "FanMind/FanMind",
+  "reconciled_at": "2026-08-30",
+  "task": "FM-MEM-009",
+  "change_request": "FM-CR-008",
+  "master_issue": 874,
+  "evidence": {
+    "STAGING_MILESTONE": {
+      "kind": "immutable_repository_snapshot",
+      "reference": "project-memory/milestones/STAGING_ACCEPTED_2026-08-19.json",
+      "commit": "cdf4a59517b5ea1c34e672b207878b95145d2d01"
+    },
+    "ADMIN_STAGING_RUN": {
+      "kind": "immutable_workflow_run",
+      "reference": "https://github.com/FanMind/FanMind/actions/runs/31837057323",
+      "commit": "30213663382d9ef21214027b39667b8721beb598",
+      "conclusion": "success"
+    },
+    "REFERRAL_STAGING_RUN": {
+      "kind": "immutable_workflow_run",
+      "reference": "https://github.com/FanMind/FanMind/actions/runs/31895476403",
+      "commit": "b13ac3bceacdfefeb8a22bc060422f1b4e3dcff9",
+      "conclusion": "success"
+    },
+    "MOBILE_AAB_EVIDENCE": {
+      "kind": "project_memory_evidence",
+      "reference": "FM-EV-028",
+      "commit": "e96415035ffbe12f16dd3b81e13a5e62b2c4ac00"
+    },
+    "MOBILE_REDIRECT_EVIDENCE": {
+      "kind": "project_memory_evidence",
+      "reference": "FM-EV-029",
+      "commit": "3082490451dd45b5127bdf9d9ae55b4712255b72"
+    },
+    "MOBILE_DEVICE_EVIDENCE": {
+      "kind": "project_memory_evidence",
+      "reference": "FM-EV-027",
+      "commit": "6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522"
+    }
+  },
+  "issues": [
+    {
+      "number": 642,
+      "source_snapshot_updated_at": "2026-08-19T10:30:23Z",
+      "source_checkbox_counts": {
+        "total": 23,
+        "checked": 0,
+        "unchecked": 23
+      },
+      "source_unchecked_sha256": "c2c4d7b8448c3c62efedf109e6bc953f9b541eb4d59f41e6631d735b82ba9560",
+      "reconciliation_sha256": "1740c7ca8d511a2f4f27db62e5b376825e7031ff018fa3986b12d6fb0741b50b",
+      "disposition": "KEEP_OPEN_RECONCILED",
+      "target_state": "open",
+      "successor": 874,
+      "summary": "Staging infrastructure and the rollback-only Referral lifecycle are proven, but provider-real payment semantics, several combined negative cases, Legal/Tax and explicit Production activation remain genuine gates.",
+      "legacy_unchecked_items": [
+        {
+          "text": "separates Supabase-Staging-Projekt bereitstellen",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "Stripe Test Mode mit eigenen Testprodukten/-preisen bereitstellen",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "eigene Staging-Webhooks und Signing Secrets konfigurieren",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "eindeutige Staging-/Test-Environment-Marker setzen",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE", "REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "ausschließlich synthetische Test-Workspaces und Testkontakte verwenden",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE", "REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Referral-Teilnahmebedingungen steuerlich und rechtlich freigeben",
+          "status": "RETAINED_GATE",
+          "gate": "REFERRAL_LEGAL_TAX"
+        },
+        {
+          "text": "eindeutige Attribution prüfen",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Self-Referral sicher ablehnen",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "gültige Zuordnung nach Aktivierung nicht unkontrolliert wechseln lassen",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "erfolgreiche Testzahlung aktiviert das Referral nach der freigegebenen Regel",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_PROVIDER_REAL_PAYMENT"
+        },
+        {
+          "text": "Kündigung und dauerhafter Zahlungsausfall deaktivieren das Referral",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Refund und Chargeback deaktivieren das Referral",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_CHARGEBACK"
+        },
+        {
+          "text": "Reaktivierung kann ein zulässiges Referral wieder aktivieren",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "vor dem Rechnungslauf Rabatt neu berechnen und als unveränderlichen Snapshot speichern",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_SNAPSHOT_IMMUTABILITY"
+        },
+        {
+          "text": "Setup-Gebühr und KI-Add-ons bleiben unberührt",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_AI_ADDON_ISOLATION"
+        },
+        {
+          "text": "20-Referral-/100-%-Grenze und kein negativer Rechnungsbetrag bestätigen",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Growth Window schließt beim 2.000. aktiven zahlenden Workspace transaktional",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_EXACT_2000_BOUNDARY"
+        },
+        {
+          "text": "Webhook-, Reconciliation- und Admin-Korrekturpfade vollständig dokumentieren",
+          "status": "RETAINED_GATE",
+          "gate": "REFERRAL_OPERATOR_PATHS"
+        },
+        {
+          "text": "vollständiges Testprotokoll anhängen",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Security-/RLS-Prüfung ohne Production-Schreibzugriff abschließen",
+          "status": "RETAINED_GATE",
+          "gate": "REFERRAL_SECURITY_RLS"
+        },
+        {
+          "text": "Rechts-/Steuerfreigabe referenzieren",
+          "status": "RETAINED_GATE",
+          "gate": "REFERRAL_LEGAL_TAX"
+        },
+        {
+          "text": "Rollback-/Deaktivierungsplan dokumentieren",
+          "status": "PARTIAL",
+          "evidence": ["REFERRAL_STAGING_RUN"],
+          "gate": "REFERRAL_PRODUCTION_ROLLBACK_PLAN"
+        },
+        {
+          "text": "erst danach separate Production-Aktivierung ausdrücklich entscheiden",
+          "status": "RETAINED_GATE",
+          "gate": "REFERRAL_PRODUCTION_ACTIVATION"
+        }
+      ],
+      "retained_gates": [
+        "REFERRAL_LEGAL_TAX",
+        "REFERRAL_PROVIDER_REAL_PAYMENT",
+        "REFERRAL_CHARGEBACK",
+        "REFERRAL_SNAPSHOT_IMMUTABILITY",
+        "REFERRAL_AI_ADDON_ISOLATION",
+        "REFERRAL_EXACT_2000_BOUNDARY",
+        "REFERRAL_OPERATOR_PATHS",
+        "REFERRAL_SECURITY_RLS",
+        "REFERRAL_PRODUCTION_ROLLBACK_PLAN",
+        "REFERRAL_PRODUCTION_ACTIVATION"
+      ]
+    },
+    {
+      "number": 643,
+      "source_snapshot_updated_at": "2026-08-19T10:30:33Z",
+      "source_checkbox_counts": {
+        "total": 36,
+        "checked": 27,
+        "unchecked": 9
+      },
+      "source_unchecked_sha256": "fcc38b559d913e58875923e5ebd05a0906416dc78ab07171d7bf06a7541eb1e5",
+      "reconciliation_sha256": "8d2e86019d52f20d81bed280d8a5750129ec81fd429cd43731ef2b199d9e4fa6",
+      "disposition": "KEEP_OPEN_RECONCILED",
+      "target_state": "open",
+      "successor": 874,
+      "summary": "The isolated Staging base and bounded read-only login/contact/admin paths are proven. Token tampering and the complete read/write/export/AI/PDF tenant-negative matrix remain explicit acceptance work.",
+      "legacy_unchecked_items": [
+        {
+          "text": "`npm run staging:preflight` und Workflow `FanMind Staging Readiness` gegen die echten Staging-Ressourcen grün ausführen",
+          "status": "PARTIAL",
+          "evidence": ["STAGING_MILESTONE"],
+          "gate": "STAGING_PREFLIGHT_RUN_REFERENCE"
+        },
+        {
+          "text": "abgelaufene oder manipulierte Tokens werden fail-closed abgelehnt",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_TOKEN_NEGATIVE"
+        },
+        {
+          "text": "Nutzer A kann Kontakte, Kontaktwissen, Follow-ups, Nachrichten und Rechnungen des eigenen Workspaces lesen",
+          "status": "PARTIAL",
+          "evidence": ["ADMIN_STAGING_RUN"],
+          "gate": "STAGING_OWN_RESOURCE_MATRIX"
+        },
+        {
+          "text": "Mutationen auf Ressourcen aus Workspace B werden serverseitig abgelehnt",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_CROSS_TENANT_MUTATION_NEGATIVE"
+        },
+        {
+          "text": "Listen, Zähler, Suche, Exporte und KI-Endpunkte bleiben workspace-gebunden",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_DERIVED_RESOURCE_MATRIX"
+        },
+        {
+          "text": "PDF-Datenauskunft enthält ausschließlich den autorisierten Workspace",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_PDF_TENANT_BOUNDARY"
+        },
+        {
+          "text": "RLS- und serverseitige Autorisierungsfehler erzeugen keine Secret- oder Datenlecks",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_ERROR_LEAK_NEGATIVE"
+        },
+        {
+          "text": "keine frei eingebbare Shell-, Restore- oder Secret-Ausgabe im Browser",
+          "status": "RETAINED_GATE",
+          "gate": "STAGING_ADMIN_DANGEROUS_INPUT_NEGATIVE"
+        },
+        {
+          "text": "nur tatsächlich gefundene Fehler in kleinen Folge-PRs beheben",
+          "status": "SUPERSEDED_PROCEDURE",
+          "evidence": ["STAGING_MILESTONE"]
+        }
+      ],
+      "retained_gates": [
+        "STAGING_PREFLIGHT_RUN_REFERENCE",
+        "STAGING_TOKEN_NEGATIVE",
+        "STAGING_OWN_RESOURCE_MATRIX",
+        "STAGING_CROSS_TENANT_MUTATION_NEGATIVE",
+        "STAGING_DERIVED_RESOURCE_MATRIX",
+        "STAGING_PDF_TENANT_BOUNDARY",
+        "STAGING_ERROR_LEAK_NEGATIVE",
+        "STAGING_ADMIN_DANGEROUS_INPUT_NEGATIVE"
+      ]
+    },
+    {
+      "number": 644,
+      "source_snapshot_updated_at": "2026-08-19T10:30:42Z",
+      "source_checkbox_counts": {
+        "total": 68,
+        "checked": 54,
+        "unchecked": 14
+      },
+      "source_unchecked_sha256": "e350a60a7cbfb76ba6f970fcab31342a69c980ce3a91146e58d9821fd6e22b07",
+      "reconciliation_sha256": "0672a652d88c6a963e39890ac6b1eedc0993c6120572685b9e05fc13f8e9aa8d",
+      "disposition": "CLOSE_SUPERSEDED",
+      "target_state": "closed",
+      "successor": 874,
+      "summary": "This historical P1 umbrella no longer owns execution. Every formerly unchecked item is accepted, partially accepted with a named current gate, or transferred to #874/its canonical task.",
+      "legacy_unchecked_items": [
+        {
+          "text": "isolierten Restore-Drill ausschließlich in einer getrennten Testumgebung vorbereiten und durchführen",
+          "status": "TRANSFERRED",
+          "gate": "874_GATE_2_RESTORE"
+        },
+        {
+          "text": "separates HTTPS-Staging bereitstellen",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "separates Supabase-Staging-Projekt",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "Stripe Test Mode mit separaten Produkten, Preisen und Webhooks",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE"]
+        },
+        {
+          "text": "zwei synthetische Nutzer in zwei getrennten Workspaces",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE", "ADMIN_STAGING_RUN"]
+        },
+        {
+          "text": "Session-, Workspace-/RLS- und Admin-Negativtests",
+          "status": "PARTIAL",
+          "evidence": ["ADMIN_STAGING_RUN"],
+          "gate": "ISSUE_643_RETAINED_NEGATIVES"
+        },
+        {
+          "text": "Referral-Lifecycle ausschließlich im Staging",
+          "status": "ACCEPTED",
+          "evidence": ["REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "keine Production-Secrets oder echten Kundendaten in den externen Staging-Ressourcen",
+          "status": "ACCEPTED",
+          "evidence": ["STAGING_MILESTONE", "ADMIN_STAGING_RUN", "REFERRAL_STAGING_RUN"]
+        },
+        {
+          "text": "Supabase-Redirect `fanmind://reset-password` im eindeutig geprüften Projekt extern freigeben",
+          "status": "ACCEPTED",
+          "evidence": ["MOBILE_REDIRECT_EVIDENCE"]
+        },
+        {
+          "text": "echten Recovery-E-Mail-/Gerätetest durchführen",
+          "status": "TRANSFERRED",
+          "gate": "874_GATE_3_ANDROID_ACCEPTANCE"
+        },
+        {
+          "text": "EAS-Projekt und Signing Credentials extern einrichten",
+          "status": "ACCEPTED",
+          "evidence": ["MOBILE_AAB_EVIDENCE"]
+        },
+        {
+          "text": "signierten internen Android-Build durchführen",
+          "status": "ACCEPTED",
+          "evidence": ["MOBILE_AAB_EVIDENCE"]
+        },
+        {
+          "text": "iOS-TestFlight erst mit Apple-Developer-/App-Store-Connect-Konto durchführen",
+          "status": "TRANSFERRED",
+          "gate": "PHASE_8_IOS"
+        },
+        {
+          "text": "reale Android-/iOS-Gerätetests dokumentieren",
+          "status": "PARTIAL",
+          "evidence": ["MOBILE_DEVICE_EVIDENCE"],
+          "gate": "874_GATE_3_ANDROID_ACCEPTANCE_AND_PHASE_8_IOS"
+        }
+      ],
+      "retained_gates": [
+        "874_GATE_2_RESTORE",
+        "ISSUE_643_RETAINED_NEGATIVES",
+        "874_GATE_3_ANDROID_ACCEPTANCE",
+        "PHASE_8_IOS",
+        "874_GATE_3_ANDROID_ACCEPTANCE_AND_PHASE_8_IOS"
+      ]
+    }
+  ]
+}

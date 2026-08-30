@@ -82,7 +82,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Updated: 2026-08-30
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Goal: Deliver the native FanMind Mobile app through a signed Android build and current-finishline real-device/store acceptance; prepare iPhone Store metadata now while signed iOS/TestFlight/device work remains Phase 8.
-- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`; the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope. PR #1028 then merged the Android `1.0.0` Store control as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Protected Production readiness `33316105624` / `99269748215` passed and protected Store build `33316172583` / `99269924756` completed exactly one verified AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 provides the private evidence preparer; FM-EV-031 adds dual-store assets, public Support and Apple/Google review/tester handoffs. The complete Android 19-check/Recovery/screenshot acceptance now waits for Play-test-track installation; Google account review blocks app creation.
+- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`; the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope. PR #1028 then merged the Android `1.0.0` Store control as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Protected Production readiness `33316105624` / `99269748215` passed and protected Store build `33316172583` / `99269924756` completed exactly one verified AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 provides the private evidence preparer; FM-EV-031 dual-store assets, public Support and Apple/Google review/tester handoffs passed all exact-head gates in PR #1031, merged as `3082490451dd45b5127bdf9d9ae55b4712255b72`, deployed and were verified live. The complete Android 19-check/Recovery/screenshot acceptance now waits for Play-test-track installation; Google account review blocks app creation.
 - Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth; PRs #988/#1019/#1021/#1025/#1028/#1030; protected preview run `33298699290` / job `99222705186`; Production readiness `33316105624` / `99269748215`; Store build `33316172583` / `99269924756`; FM-EV-028/FM-EV-029/FM-EV-030/FM-EV-031.
 - Next step: preserve the exact Production AAB and never rebuild it merely to continue portal work. After Google approval, create the Play app record and upload the existing AAB to the required test track; only after Store installation complete the private 19-check/Recovery record and real screenshots. Do not start an iOS build before Phase 8.
 - Do not repeat: Do not restart the mobile app or replace it with a WebView.
@@ -209,6 +209,18 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Rollback/recovery: governance-only changes can be reverted to the last accepted V6/V7 baseline without altering product/runtime/provider state.
 - Falsification question: What observation would prove our conclusion wrong? A current V8 quality/status failure, evidence that automatic handoff contradicts stronger repository/runtime truth, or evidence that V8 weakens an existing finishline/security invariant would reopen the task as `RECONCILIATION_REQUIRED`.
 - Next step: maintain V8; do not reopen PR #980 or create a parallel memory system.
+
+## FM-MEM-009
+- Date: 2026-08-30
+- Status: IN_PROGRESS
+- Risk: R2
+- Goal: Close FM-LOOP-011 by mapping every stale #642/#643/#644 category to exact current evidence or a genuine retained gate and synchronize the public issue state with #874.
+- Starting state: #642/#643/#644 still expose partially obsolete unchecked Staging prerequisites even though #874 Gate 1, STAGING_ACCEPTED and exact successful Staging runs prove later progress.
+- Action: created one machine-readable reconciliation contract with deterministic rendering, independently pinned source/evidence/classification contracts and fail-closed tests; after exact-head merge, update issue bodies and deliberately supersede #644.
+- Result: repository contract implemented and locally counterchecked; PR #1033 head `c35e86e1e7cc5a143a4ffe7656b17bdf2debff68` passed all 11 remote checks. Merge and post-merge issue metadata remain pending.
+- Evidence: FM-EV-032, exact runs `31837057323` and `31895476403`, accepted Staging milestone, 10/10 focused tests, 1073/1073 Operations tests and PR #1033 exact-head checks/review.
+- Next step: complete the final bookkeeping correction's exact-head review, merge PR #1033, then reconcile GitHub issues #642/#643/#644/#874 only after merge.
+- Do not repeat: do not rebuild Staging/Referral foundations or close #642/#643 while their explicit remaining gates lack evidence.
 
 ## FM-SEC-001
 - Date: 2026-08-20
