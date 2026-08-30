@@ -101,13 +101,27 @@ else:
     issue_snapshot = issue_snapshots[0]
     if (
         issue_snapshot.get("class") != "github_issue_state"
-        or issue_snapshot.get("gate") != "memory_v6"
+        or issue_snapshot.get("gate") != "legacy_issue_reconciliation"
         or issue_snapshot.get("status") != "COUNTERCHECKED"
         or not issue_snapshot.get("observed_at")
         or set(issue_snapshot.get("revalidate_on", [])) != required_issue_triggers
         or not all(token in issue_snapshot.get("source", "") for token in ("#642 open", "#643 open", "#644 closed not_planned", "#874 open"))
     ):
         errors.append("legacy-issue-freshness-snapshot-invalid")
+    issue_revisions = issue_snapshot.get("issues")
+    if not isinstance(issue_revisions, dict) or set(issue_revisions) != {"642", "643", "644", "874"}:
+        errors.append("legacy-issue-freshness-revisions-invalid")
+    else:
+        for issue_number, revision in issue_revisions.items():
+            if (
+                not isinstance(revision, dict)
+                or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", str(revision.get("updated_at", "")))
+                or revision.get("state") not in {"open", "closed"}
+                or not re.fullmatch(r"[0-9a-f]{64}", str(revision.get("body_sha256", "")))
+                or (issue_number == "644" and revision.get("state_reason") != "not_planned")
+                or (issue_number != "644" and revision.get("state_reason") is not None)
+            ):
+                errors.append(f"legacy-issue-freshness-revision-invalid:{issue_number}")
 
 quality = (PM / "QUALITY_CONTROL.md").read_text(encoding="utf-8") if (PM / "QUALITY_CONTROL.md").exists() else ""
 for token in ["R1", "R2", "R3", "R4", "COUNTERCHECKED", "PRODUCTION_CONFIRMED", "What observation would prove our conclusion wrong?"]:
