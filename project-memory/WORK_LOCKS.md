@@ -15,7 +15,7 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-MOB-001 / FM-CR-006
 - Status: ACTIVE
 - Holder: ChatGPT Android Production/Google Play continuation session 2026-08-30
-- Branch/PR: pending
+- Branch/PR: `mobile-android-store-release-20260830` / #1028
 - Acquired: 2026-08-30 UTC
 - Risk: R3 Mobile Production build and external Store acceptance
 - Scope: first-release version, protected one-AAB Production build control, exact FanMind Production binding, Android recovery/device acceptance handoff and Google Play readiness/submission. No automatic Submit/Update, no database/schema/RLS mutation, no push-delivery activation and no iOS/TestFlight Phase-8 start.
