@@ -46,6 +46,7 @@ jobs:
       FANMIND_MOBILE_RELEASE_ENVIRONMENT: ${{ inputs.build_environment }}
       FANMIND_MOBILE_BUILD_PROFILE: ${{ inputs.build_environment }}
       FANMIND_MOBILE_BUILD_PLATFORM: ${{ inputs.platform }}
+      FANMIND_MOBILE_BUILD_CLASS: internal
       FANMIND_MOBILE_SIGNED_BUILD_CONFIRM: queue-one-signed-mobile-build
       FANMIND_MOBILE_EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
       FANMIND_MOBILE_RELEASE_RESOURCE_CONFIRM: verify-mobile-release-resources
