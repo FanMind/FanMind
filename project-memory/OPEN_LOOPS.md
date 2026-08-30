@@ -84,11 +84,12 @@ This register contains started, partially completed or follow-up work that could
 
 ## FM-LOOP-011
 - Related: FM-AI-001 / Referral controls
-- Status: OPEN
-- Updated: 2026-08-19
+- Status: CLOSED
+- Updated: 2026-08-30
 - Gap: older issues #642/#643/#644 contain stale Staging prerequisites or unchecked items that newer #874 evidence partially/fully supersedes.
 - Close when: each old checkbox has been mapped to current evidence or retained as a genuine remaining gate; then close/supersede stale issues deliberately.
-- Next check: issue-level reconciliation, not code reimplementation.
+- Closed by: PR #1033 final head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58` passed all 11 exact-head checks and completed review with zero unresolved threads, squash-merged as `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`; the machine-validated map classifies all 46 historical unchecked items, #642/#643 remain open with genuine gates, #644 is closed as superseded by #874, and #874 Mobile wording is current.
+- Follow-up: retained gates continue under #642/#643/#874 and their canonical tasks; do not reimplement accepted Staging or reopen #644.
 
 ## FM-LOOP-012
 - Related: FM-MEM-008

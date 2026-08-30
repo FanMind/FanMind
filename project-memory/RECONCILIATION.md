@@ -73,8 +73,8 @@ Compare `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `
 - Actual state: Staging infrastructure and bounded admin/Referral acceptance are proven by immutable current references; token/provider/full tenant-negative/Legal/Production gates remain open; #644 no longer owns execution.
 - Memory state: the deep audit and FM-LOOP-011 describe the mismatch, but no machine-readable item-by-item map or enforced GitHub issue disposition existed.
 - Required correction: install a fail-closed canonical map/rendering/test, keep #642/#643 open with named gates, close #644 only as superseded by #874, and re-read all changed issue records after merge.
-- Status: OPEN
-- Resolved: pending exact-head PR merge and post-merge issue metadata reconciliation; no runtime/provider/database/billing/Mobile build mutation is part of this work.
+- Status: RESOLVED
+- Resolved: PR #1033 final exact head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58` passed all 11 checks and completed review with zero unresolved threads, squash-merged as `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`. #642/#643 were independently re-read open with their named genuine gates, #644 was re-read closed as superseded by #874, and #874 was re-read with current Mobile Store wording. No runtime/provider/database/billing/Mobile build mutation occurred.
 
 ## RECON-2026-015
 - Detected: 2026-08-30 during FM-MEM-009 preflight against current GitHub main.

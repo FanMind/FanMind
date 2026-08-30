@@ -26,20 +26,20 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 ## RECEIPT-FM-MEM-009-LEGACY-ISSUES-20260830
 - Task: FM-MEM-009 / FM-CR-008
 - Started: 2026-08-30
-- Finished: local implementation/countercheck complete; exact-head PR merge and issue metadata closeout pending
-- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / pending
+- Finished: 2026-08-30 after exact-head merge, issue metadata update and independent re-read
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / #1033; final head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58`, squash merge `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`
 - Preflight checked: AGENTS, Source of Truth, Protocol/Execution Policy/Current State/Deep Audit/Finishline/NBA/Deferred/Handoff/Started Work/Locks/Open Loops/Task Ledger/Dependencies/Decisions/Failed Attempts/Do Not Assume/Assumptions/Contradictions/Change Requests/Evidence/Freshness/Drift, current #642/#643/#644/#874 bodies, exact GitHub main and immutable Staging workflow runs/jobs.
 - Prior attempts found: FM-STG-001 and STAGING_ACCEPTED already prove the Staging foundation; #874 Gate 1 records later acceptance; older issue bodies still expose obsolete unchecked prerequisites. Reimplementation or blanket closure would both be incorrect.
 - Dependency result: exact successful admin Staging run `31837057323` and Referral Staging run `31895476403` plus the immutable Staging milestone are sufficient to classify known completion, but not the retained token/provider/tenant/Legal/Production gates.
 - Planned evidence: complete historical unchecked-item mapping; deterministic human view; fail-closed validator/tests; full repository governance regression; exact-head PR; post-merge issue updates and independent re-read.
-- Changes made: added canonical JSON/Markdown reconciliation, validator, 10 negative/rendering tests, Project Memory Quality integration and active bookkeeping. Exact-head review found three valid self-reference gaps; the corrections pin each historical ordered unchecked-item list to an independent fixed SHA-256 digest/count snapshot, require every evidence record to equal its exact expected immutable contract and bind every ordered legacy item to its full text/status/evidence/gate classification tuple. Also identified stale post-merge Mobile/Project Memory evidence for same-closeout correction; no product/runtime/provider state changed.
+- Changes made: added canonical JSON/Markdown reconciliation, validator, 10 negative/rendering tests, Project Memory Quality integration and active bookkeeping. Exact-head review found four valid drift gaps; the corrections pin each historical ordered unchecked-item list to an independent fixed SHA-256 digest/count snapshot, require every evidence record to equal its exact expected immutable contract, bind every ordered legacy item to its full text/status/evidence/gate classification tuple, and point all active trackers at the real post-implementation closeout. Also corrected stale post-merge Mobile evidence; no product/runtime/provider state changed.
 - Checks/tests: focused 10/10 and full Operations 1073/1073 passed after review correction; Product Truth across 253 files, Referral truth, legal evidence schema, immutable Action pins, focused ESLint and all Project Memory/NBA/V8/drift/freshness/milestone/status checks passed.
-- Final diff counterchecked: locally yes; exact-head remote diff remains pending.
+- Final diff counterchecked: yes; final remote tree matched the locally verified tree, all 11 exact-head checks passed, the final automated review completed without a new suggestion, and zero review threads remained unresolved. Post-merge exact-main deploy `33332571325`, Browser E2E `33332571190`, Supply Chain `33332571180`, CodeQL `33332571188`, public readiness `33332629364` and installed Production read-only verification `33332629383` also passed.
 - Regression/security countercheck: fail-closed; #642/#643 remain open, #644 cannot be superseded without a successor-gate map, and the change authorizes no Production/Stripe/database/provider/payment/signing/build/legal action.
-- Evidence produced: FM-EV-032 and RECON-2026-014; exact-head/merge/issue evidence pending.
-- Result status: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD.
-- Open follow-up: open the PR, require exact-head gates, merge, update/re-read #642/#643/#644/#874, then close FM-LOOP-011 and release the lock in a repository closeout.
-- Work lock released: no; `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` remains active through the issue closeout.
+- Evidence produced: FM-EV-032 and resolved RECON-2026-014; PR #1033 exact-head/merge evidence and independent post-write issue snapshots for #642/#643/#644/#874.
+- Result status: ACCEPTED.
+- Open follow-up: none under FM-MEM-009. Genuine gates remain under #642/#643/#874 and their canonical tasks.
+- Work lock released: yes; `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` released after the independent issue re-read.
 
 ## RECEIPT-FM-MOB-003-20260829
 - Task: FM-MOB-003
