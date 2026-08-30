@@ -23,6 +23,7 @@ EXPECTED_SOURCE_SNAPSHOTS = {
         "checked": 0,
         "unchecked": 23,
         "unchecked_sha256": "c2c4d7b8448c3c62efedf109e6bc953f9b541eb4d59f41e6631d735b82ba9560",
+        "reconciliation_sha256": "1740c7ca8d511a2f4f27db62e5b376825e7031ff018fa3986b12d6fb0741b50b",
     },
     643: {
         "updated_at": "2026-08-19T10:30:33Z",
@@ -30,6 +31,7 @@ EXPECTED_SOURCE_SNAPSHOTS = {
         "checked": 27,
         "unchecked": 9,
         "unchecked_sha256": "fcc38b559d913e58875923e5ebd05a0906416dc78ab07171d7bf06a7541eb1e5",
+        "reconciliation_sha256": "8d2e86019d52f20d81bed280d8a5750129ec81fd429cd43731ef2b199d9e4fa6",
     },
     644: {
         "updated_at": "2026-08-19T10:30:42Z",
@@ -37,6 +39,7 @@ EXPECTED_SOURCE_SNAPSHOTS = {
         "checked": 54,
         "unchecked": 14,
         "unchecked_sha256": "e350a60a7cbfb76ba6f970fcab31342a69c980ce3a91146e58d9821fd6e22b07",
+        "reconciliation_sha256": "0672a652d88c6a963e39890ac6b1eedc0993c6120572685b9e05fc13f8e9aa8d",
     },
 }
 EXPECTED_EVIDENCE = {
@@ -140,8 +143,8 @@ def validate_state(data: dict[str, Any]) -> None:
         number = issue["number"]
         expected_source = EXPECTED_SOURCE_SNAPSHOTS[number]
         require(
-            issue.get("source_updated_at") == expected_source["updated_at"],
-            f"source_updated_at_invalid:{number}",
+            issue.get("source_snapshot_updated_at") == expected_source["updated_at"],
+            f"source_snapshot_updated_at_invalid:{number}",
         )
         require(issue.get("successor") == 874, f"successor_invalid:{number}")
         require(bool(issue.get("summary")), f"summary_missing:{number}")
@@ -181,7 +184,6 @@ def validate_state(data: dict[str, Any]) -> None:
             unchecked_digest == expected_source["unchecked_sha256"],
             f"source_unchecked_digest_mismatch:{number}",
         )
-
         used_gates: set[str] = set()
         for item in items:
             require(isinstance(item, dict), f"item_invalid:{number}")
@@ -205,6 +207,32 @@ def validate_state(data: dict[str, Any]) -> None:
                 require(bool(item_evidence), f"proved_item_missing_evidence:{number}")
             if status == "ACCEPTED":
                 require(gate is None, f"accepted_item_has_gate:{number}")
+
+        reconciliation_projection = [
+            {
+                "text": item.get("text"),
+                "status": item.get("status"),
+                "evidence": item.get("evidence", []),
+                "gate": item.get("gate"),
+            }
+            for item in items
+        ]
+        reconciliation_digest = hashlib.sha256(
+            json.dumps(
+                reconciliation_projection,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        require(
+            issue.get("reconciliation_sha256") == expected_source["reconciliation_sha256"],
+            f"reconciliation_pin_mismatch:{number}",
+        )
+        require(
+            reconciliation_digest == expected_source["reconciliation_sha256"],
+            f"reconciliation_digest_mismatch:{number}",
+        )
 
         retained = issue.get("retained_gates")
         require(isinstance(retained, list), f"retained_gates_invalid:{number}")

@@ -42,13 +42,14 @@
   "issues": [
     {
       "number": 642,
-      "source_updated_at": "2026-08-19T10:30:23Z",
+      "source_snapshot_updated_at": "2026-08-19T10:30:23Z",
       "source_checkbox_counts": {
         "total": 23,
         "checked": 0,
         "unchecked": 23
       },
       "source_unchecked_sha256": "c2c4d7b8448c3c62efedf109e6bc953f9b541eb4d59f41e6631d735b82ba9560",
+      "reconciliation_sha256": "1740c7ca8d511a2f4f27db62e5b376825e7031ff018fa3986b12d6fb0741b50b",
       "disposition": "KEEP_OPEN_RECONCILED",
       "target_state": "open",
       "successor": 874,
@@ -191,13 +192,14 @@
     },
     {
       "number": 643,
-      "source_updated_at": "2026-08-19T10:30:33Z",
+      "source_snapshot_updated_at": "2026-08-19T10:30:33Z",
       "source_checkbox_counts": {
         "total": 36,
         "checked": 27,
         "unchecked": 9
       },
       "source_unchecked_sha256": "fcc38b559d913e58875923e5ebd05a0906416dc78ab07171d7bf06a7541eb1e5",
+      "reconciliation_sha256": "8d2e86019d52f20d81bed280d8a5750129ec81fd429cd43731ef2b199d9e4fa6",
       "disposition": "KEEP_OPEN_RECONCILED",
       "target_state": "open",
       "successor": 874,
@@ -264,13 +266,14 @@
     },
     {
       "number": 644,
-      "source_updated_at": "2026-08-19T10:30:42Z",
+      "source_snapshot_updated_at": "2026-08-19T10:30:42Z",
       "source_checkbox_counts": {
         "total": 68,
         "checked": 54,
         "unchecked": 14
       },
       "source_unchecked_sha256": "e350a60a7cbfb76ba6f970fcab31342a69c980ce3a91146e58d9821fd6e22b07",
+      "reconciliation_sha256": "0672a652d88c6a963e39890ac6b1eedc0993c6120572685b9e05fc13f8e9aa8d",
       "disposition": "CLOSE_SUPERSEDED",
       "target_state": "closed",
       "successor": 874,

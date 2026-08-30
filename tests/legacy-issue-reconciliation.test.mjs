@@ -131,6 +131,28 @@ test("workflow evidence URL, commit and conclusion are exact pinned contracts", 
   );
 });
 
+test("an external legal gate cannot be reclassified with technical evidence", async () => {
+  await withModifiedState(
+    (state) => {
+      const issue = state.issues[0];
+      const item = issue.legacy_unchecked_items.find((candidate) =>
+        candidate.text.startsWith("Referral-Teilnahmebedingungen"),
+      );
+      item.status = "ACCEPTED";
+      item.evidence = ["REFERRAL_STAGING_RUN"];
+      delete item.gate;
+      issue.retained_gates = issue.retained_gates.filter(
+        (gate) => gate !== "REFERRAL_LEGAL_TAX",
+      );
+    },
+    async (candidate) => {
+      const result = run(["--state", candidate]);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout, /reconciliation_digest_mismatch:642/u);
+    },
+  );
+});
+
 test("generated human reconciliation cannot drift from machine state", async () => {
   await withModifiedState(
     () => {},
