@@ -124,8 +124,9 @@ Aktiv im App-Kern:
   Nachweise, bleibt die Darstellung fail-closed. Die Owner-only Neuerzeugung
   über eine Bearer-authentifizierte Serverroute ist vorbereitet, bleibt in
   Mobile und Web aber ohne aktiven Aktionsbutton als `In Vorbereitung` markiert, bis die
-  Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
-  ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
+  Workspace-Datenschutz-/Aufbewahrungsfreigabe, der aktive
+  Verarbeitungsanspruch und das vollständige Analyse-Report-Schema technisch
+  aktiviert und geprüft sind; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
   Dienstfehler semantisch und behandelt einen fehlgeschlagenen
   Capability-Read als Dienstfehler, nicht als Workspace-Verbot. Nachrichten
   ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
@@ -158,6 +159,8 @@ Aktiv im App-Kern:
   Fokussieren nach der Rückkehr aus einem Fan-Detail automatisch neu. Die Fan-Detail-Liste
   liefert einen exakten Zähler und weist eine Begrenzung auf 100 sichtbare
   offene Einträge ausdrücklich aus;
+  ein fehlgeschlagener Tages-Read unterdrückt neben dem Leerzustand auch die
+  Anzahl, damit ein unbekannter Wert nie als grüne Null erscheint;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,

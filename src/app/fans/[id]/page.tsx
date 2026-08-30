@@ -29,6 +29,7 @@ import {
   requireAuthorizedWorkspaceMember,
   requireContactInActiveAuthorizedWorkspace,
 } from "@/lib/workspaceAuthorization";
+import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 import { isOpenFollowupStatus } from "@/lib/followupStatus";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
@@ -1787,6 +1788,8 @@ export default async function FanDetailPage({
     user,
   });
   const workspaceOwner = workspace.role.trim().toLowerCase() === "owner";
+  const workspaceProcessingAllowed =
+    workspaceOwner && evaluateWorkspaceProcessingEntitlement(workspace).allowed;
 
   const [contactsResult, contactResult, socialConnectionsResult] =
     await Promise.all([
@@ -1858,7 +1861,7 @@ export default async function FanDetailPage({
         contact
           ? getFanAnalysisReport(workspace.id, contact.id)
           : Promise.resolve(null),
-        contact && workspaceOwner
+        contact && workspaceProcessingAllowed
           ? getWorkspaceAnalysisCapabilityStatus(workspace.id, "fan_analysis")
           : Promise.resolve(null),
         contact && workspaceOwner
@@ -1959,7 +1962,8 @@ export default async function FanDetailPage({
         fanAnalysisReport={fanAnalysisReportResult?.report ?? null}
         fanAnalysisReportError={fanAnalysisReportResult?.error?.message}
         fanAnalysisGenerationEnabled={
-          fanAnalysisCapabilityResult?.enabled ?? false
+          workspaceProcessingAllowed &&
+          (fanAnalysisCapabilityResult?.enabled ?? false)
         }
         fanAnalysisGenerationError={fanAnalysisCapabilityResult?.error?.message}
         activeChannel={activeChannel}

@@ -1707,9 +1707,36 @@ export async function getWorkspaceAnalysisCapabilityStatus(
     user_voice_analysis: settings.user_voice_analysis_enabled,
     content_insights: settings.content_insights_enabled,
   } satisfies Record<WorkspaceAnalysisCapability, boolean>;
+  const enabled = legalGateConfirmed && enabledByCapability[capability];
+
+  if (!enabled) {
+    return { enabled: false, legacySchema: false, error: null };
+  }
+
+  if (capability === "fan_analysis") {
+    const reportSchemaProbe = await postgrestSelect<FanAnalysisReportRow>(
+      "fan_analysis_reports",
+      serviceAccessToken,
+      FAN_ANALYSIS_REPORT_COLUMNS,
+      [["workspace_id", workspaceId]],
+      1,
+      true,
+    );
+    if (reportSchemaProbe.error) {
+      return {
+        enabled: false,
+        legacySchema: isMissingFanAnalysisProvenanceColumn(
+          reportSchemaProbe.error,
+        ),
+        error: new Error(
+          "Das Schema für Analyseberichte ist nicht vollständig verfügbar.",
+        ),
+      };
+    }
+  }
 
   return {
-    enabled: legalGateConfirmed && enabledByCapability[capability],
+    enabled: true,
     legacySchema: false,
     error: null,
   };

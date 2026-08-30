@@ -402,6 +402,10 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(dashboard, /setTodayFollowupError\(todayResult\.error\)/u);
   assert.match(
     dashboard,
+    /todayFollowupError \? null : \([\s\S]*StatusPill[\s\S]*loading \? "…" : todayFollowupCount/u,
+  );
+  assert.match(
+    dashboard,
     /todayFollowupError[\s\S]*mobileStyles\.error[\s\S]*todayFollowups\.length[\s\S]*Heute nichts fällig/u,
   );
   assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
@@ -475,7 +479,7 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(report, /hasRejectedReportProvenance/u);
   assert.match(
     page,
-    /getWorkspaceAnalysisCapabilityStatus\(workspace\.id, "fan_analysis"\)[\s\S]*fanAnalysisGenerationEnabled/u,
+    /evaluateWorkspaceProcessingEntitlement\(workspace\)\.allowed[\s\S]*workspaceProcessingAllowed[\s\S]*getWorkspaceAnalysisCapabilityStatus\(workspace\.id, "fan_analysis"\)[\s\S]*fanAnalysisGenerationEnabled=\{[\s\S]*workspaceProcessingAllowed/u,
   );
   assert.match(
     panel,
@@ -496,6 +500,10 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(report, /Zeitraum[\s\S]*Konfidenz[\s\S]*Prüfstatus/u);
   assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
   assert.match(server, /source_from_at,source_to_at,confidence_score,review_status/u);
+  assert.match(
+    server,
+    /getWorkspaceAnalysisCapabilityStatus[\s\S]*capability === "fan_analysis"[\s\S]*FAN_ANALYSIS_REPORT_COLUMNS[\s\S]*reportSchemaProbe\.error[\s\S]*Schema für Analyseberichte/u,
+  );
   assert.match(server, /FAN_ANALYSIS_REPORT_LEGACY_COLUMNS/u);
   assert.match(server, /isMissingFanAnalysisProvenanceColumn/u);
   assert.match(

@@ -119,8 +119,9 @@ or service-role access into the app. Workspace members cannot create or update
 analysis state or consume provider quota. Mobile
 renders a stored report only with source period, sample size, confidence and
 review state. Production activation is still fail-closed: while the required
-Workspace analysis/privacy contract is not applied and validated, Mobile shows
-the feature as `In Vorbereitung` and exposes no generation control. The route
+Workspace analysis/privacy contract, active-processing entitlement and complete
+report-provenance schema are not all applied and validated, Mobile and Web show
+the feature as `In Vorbereitung` and expose no generation control. The route
 returns typed 400/403/422/429/503 failures for future authorized clients.
 An inactive/read-only Workspace is a permission denial, never a missing-contact
 response. Until the controlled provenance migration is verified in Production,
@@ -145,7 +146,8 @@ order (`urgent`, `high`, `normal|medium`, `low`) before that cap, and every page
 uses `created_at` plus `id` as a stable boundary. The compact dashboard renders
 at most the first 20 and links to the central Follow-up screen. Null or custom
 legacy priorities are loaded in a final fallback group. Its read error is
-section-specific and gates the empty state.
+section-specific and gates both the empty state and count badge, so an unknown
+count is never displayed as a successful zero.
 The open-status predicate keeps legacy `NULL` rows readable alongside normal
 open rows while excluding both `completed` and historical `done`. The central
 Follow-up screen loads the complete open result in stable 200-row pages ordered

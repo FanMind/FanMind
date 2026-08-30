@@ -192,9 +192,11 @@ export default function DashboardScreen() {
 
       <View style={styles.sectionHeader}>
         <SectionTitle eyebrow="Heute">Fällige Follow-ups</SectionTitle>
-        <StatusPill tone={todayFollowupCount ? "warning" : "good"}>
-          {todayFollowupCount}
-        </StatusPill>
+        {todayFollowupError ? null : (
+          <StatusPill tone={todayFollowupCount ? "warning" : "good"}>
+            {loading ? "…" : todayFollowupCount}
+          </StatusPill>
+        )}
       </View>
       {todayFollowupError ? (
         <Text style={mobileStyles.error}>{todayFollowupError}</Text>
