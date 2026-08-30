@@ -10,7 +10,7 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 const ALLOWED_PLATFORMS = new Set(["android", "ios"]);
-const ALLOWED_PROFILES = new Set(["development", "preview"]);
+const ALLOWED_PROFILES = new Set(["development", "preview", "production"]);
 const PENDING_STATUSES = new Set([
   "NEW",
   "IN_QUEUE",
@@ -84,7 +84,11 @@ function queueContract(queueOutput) {
   return { id, platform, buildProfile, gitCommitHash };
 }
 
-function matchingCompletionContract(completionOutput, queue) {
+function matchingCompletionContract(
+  completionOutput,
+  queue,
+  expectedDistribution,
+) {
   const completion = normalizeRecord(
     completionOutput,
     "build_completion_output_invalid",
@@ -101,7 +105,10 @@ function matchingCompletionContract(completionOutput, queue) {
   if (String(completion?.gitCommitHash ?? "").trim() !== queue.gitCommitHash) {
     fail("build_completion_commit_mismatch");
   }
-  if (normalizeStatus(completion?.distribution) !== "INTERNAL") {
+  if (
+    normalizeStatus(completion?.distribution)
+    !== expectedDistribution.toUpperCase()
+  ) {
     fail("build_completion_distribution_invalid");
   }
   return completion;
@@ -112,9 +119,16 @@ export function evaluateMobileSignedBuildCompletion({
   completionOutput,
   environment = process.env,
 }) {
-  evaluateQueuedMobileBuild({ buildOutput: queueOutput, environment });
+  const gate = evaluateQueuedMobileBuild({
+    buildOutput: queueOutput,
+    environment,
+  });
   const queue = queueContract(queueOutput);
-  const completion = matchingCompletionContract(completionOutput, queue);
+  const completion = matchingCompletionContract(
+    completionOutput,
+    queue,
+    gate.distribution,
+  );
   const status = normalizeStatus(completion.status);
 
   if (PENDING_STATUSES.has(status)) {
@@ -123,7 +137,7 @@ export function evaluateMobileSignedBuildCompletion({
       platform: queue.platform,
       buildProfile: queue.buildProfile,
       releaseCommit: "verified",
-      distribution: "internal",
+      distribution: gate.distribution,
       artifact: "not-ready",
     });
   }
@@ -133,7 +147,7 @@ export function evaluateMobileSignedBuildCompletion({
       platform: queue.platform,
       buildProfile: queue.buildProfile,
       releaseCommit: "verified",
-      distribution: "internal",
+      distribution: gate.distribution,
       artifact: "unavailable",
     });
   }
@@ -154,7 +168,7 @@ export function evaluateMobileSignedBuildCompletion({
     platform: queue.platform,
     buildProfile: queue.buildProfile,
     releaseCommit: "verified",
-    distribution: "internal",
+    distribution: gate.distribution,
     artifact: "available",
   });
 }
@@ -210,7 +224,7 @@ async function main() {
   console.log(`MOBILE_SIGNED_BUILD_PLATFORM=${result.platform}`);
   console.log(`MOBILE_SIGNED_BUILD_PROFILE=${result.buildProfile}`);
   console.log("MOBILE_SIGNED_BUILD_RELEASE_COMMIT=verified");
-  console.log("MOBILE_SIGNED_BUILD_DISTRIBUTION=internal");
+  console.log(`MOBILE_SIGNED_BUILD_DISTRIBUTION=${result.distribution}`);
   console.log(`MOBILE_SIGNED_BUILD_ARTIFACT=${result.artifact}`);
   console.log(`MOBILE_SIGNED_BUILD_COMPLETION=${result.state}`);
   console.log("MOBILE_SIGNED_BUILD_SUBMIT=disabled");
