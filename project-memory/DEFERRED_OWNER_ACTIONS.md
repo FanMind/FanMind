@@ -65,8 +65,8 @@ Updated: 2026-08-26 Europe/Vienna
 - Related task: `FM-MOB-001`.
 - Status: RESOLVED.
 - Prior blocker: exact read-only run `33000433320`, job `98280538304`, failed closed when the protected Preview binding was still blank.
-- Resolution evidence: protected exact-merge run `33260695232`, job `99122008690`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build with artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
-- Remaining owner action: real-device Android acceptance and the separate Supabase Auth redirect/recovery proof remain open under their existing external controls; iOS/Store/push are separate. Never expose credential or artifact values in Project Memory.
+- Resolution evidence: protected exact-merge run `33298699290`, job `99222705186`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, redacted receipt and cleanup. The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation on that build. Submit, Update and Production remained disabled.
+- Remaining owner action: the complete receipt-bound 19-check Android runbook/private validator and the separate Supabase Auth redirect/recovery proof remain open under their existing external controls; iOS is Phase 8 and Store/push are separate. Never expose credential or artifact values in Project Memory.
 - Safety: successful Preview configuration does not authorize EAS project reinitialization, another automatic build, Submit, Update, Store action, Supabase/Auth/DB mutation or Production-target crossover.
 
 ## FM-AI-OWNER-001 — AI product, quality and financial decision pack

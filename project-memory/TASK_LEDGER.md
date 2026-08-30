@@ -82,9 +82,9 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Updated: 2026-08-30
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Goal: Deliver the native FanMind Mobile app through a signed Android build and current-finishline real-device/store acceptance; iOS/TestFlight is Phase 8.
-- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, receipt and cleanup; the owner accepted that build on a real Android device on 2026-08-30. Recovery and applicable Push/Store acceptance remain open separately.
+- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, receipt and cleanup; the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope on that build on 2026-08-30. The complete private 19-check Android runbook/validator, Recovery and applicable Push/Store acceptance remain open separately.
 - Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth; PRs #988/#1019/#1021/#1025; protected build run `33298699290` / job `99222705186`.
-- Next step: preserve the accepted FM-MOB-003/FM-MOB-004 Android result and continue only through the separate Supabase recovery redirect and applicable Push/Store controls; do not rebuild merely to repeat acceptance.
+- Next step: preserve the accepted bounded FM-MOB-003/FM-MOB-004 Android result and continue through the private 19-check Android runbook/validator, Supabase recovery redirect and applicable Push/Store controls; do not rebuild merely to repeat the accepted UI checks.
 - Do not repeat: Do not restart the mobile app or replace it with a WebView.
 
 ## FM-MOB-002
