@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
 
 jobs:
   project-memory-quality:
@@ -25,6 +26,8 @@ jobs:
         run: python3 scripts/fanmind_next_best_action.py --check
       - name: Validate evidence freshness
         run: python3 scripts/fanmind_evidence_freshness.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Run accepted-state drift preflight
         run: python3 scripts/fanmind_drift_preflight.py
       - name: Validate milestone snapshots

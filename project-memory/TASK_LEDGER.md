@@ -212,14 +212,14 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MEM-009
 - Date: 2026-08-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R2
 - Goal: Close FM-LOOP-011 by mapping every stale #642/#643/#644 category to exact current evidence or a genuine retained gate and synchronize the public issue state with #874.
 - Starting state: #642/#643/#644 still expose partially obsolete unchecked Staging prerequisites even though #874 Gate 1, STAGING_ACCEPTED and exact successful Staging runs prove later progress.
 - Action: created one machine-readable reconciliation contract with deterministic rendering, independently pinned source/evidence/classification contracts and fail-closed tests; after exact-head merge, update issue bodies and deliberately supersede #644.
-- Result: repository contract implemented and locally counterchecked; PR #1033 head `c35e86e1e7cc5a143a4ffe7656b17bdf2debff68` passed all 11 remote checks. Merge and post-merge issue metadata remain pending.
-- Evidence: FM-EV-032, exact runs `31837057323` and `31895476403`, accepted Staging milestone, 10/10 focused tests, 1073/1073 Operations tests and PR #1033 exact-head checks/review.
-- Next step: complete the final bookkeeping correction's exact-head review, merge PR #1033, then reconcile GitHub issues #642/#643/#644/#874 only after merge.
+- Result: the repository contract is implemented and counterchecked; PR #1033 final head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58` passed all 11 exact-head checks and completed review with zero unresolved threads, then squash-merged as `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`. #642/#643 remain open with genuine gates, #644 is closed as superseded, and #874 Gate 3 reflects the current Android/Google/iOS truth; every record was independently re-read.
+- Evidence: FM-EV-032, exact runs `31837057323` and `31895476403`, accepted Staging milestone, 10/10 focused tests, 1073/1073 Operations tests, PR #1033 and post-merge issue snapshots observed on 2026-08-30.
+- Next step: keep FM-MEM-009 accepted. Work only from the retained canonical tasks; do not reopen the historical #644 umbrella.
 - Do not repeat: do not rebuild Staging/Referral foundations or close #642/#643 while their explicit remaining gates lack evidence.
 
 ## FM-SEC-001

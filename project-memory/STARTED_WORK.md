@@ -14,18 +14,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-MEM-009
 - Started: 2026-08-30
 - Updated: 2026-08-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R2
 - Scope: Reconcile legacy Staging/Referral issues #642/#643/#644 against immutable current Staging evidence and the active #874 finishline without reimplementing completed work or closing genuine external/negative-test gates.
 - Change request: FM-CR-008.
-- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / #1033.
-- Work lock: `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` ACTIVE.
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / #1033; final exact head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58`, squash merge `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`.
+- Work lock: `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` RELEASED.
 - Dependencies: accepted STAGING_ACCEPTED milestone, exact successful Staging runs `31837057323` and `31895476403`, current #874 body, and repository tests/runbooks that define the proved boundaries.
 - Assumptions: an unchecked historical issue item is not proof that implementation is absent; conversely, a later umbrella statement cannot close a specific negative/external control without matching evidence.
 - Planned evidence: machine-readable issue map, deterministic human rendering, positive and negative validator tests, Project Memory/truth/drift checks, exact-head PR gates, and post-merge issue-body/state reconciliation.
-- Completed so far: current issue bodies, immutable workflow run/job results and the accepted Staging milestone were read-only crosschecked. The canonical machine/human reconciliation, validator and regression coverage are implemented. Focused tests pass 10/10, Operations pass 1073/1073, all local governance/truth checks pass, and PR #1033 exact head `c35e86e1e7cc5a143a4ffe7656b17bdf2debff68` passed all 11 remote checks; review findings are being reconciled before merge. #642 and #643 retain genuine gates; #644 is superseded by #874 rather than a current implementation backlog.
-- Still open: complete the final exact-head bookkeeping review, merge PR #1033, then update #642/#643/#644 and current #874 Mobile wording without changing runtime/provider/billing/database state.
-- Exact next step: publish this tracker correction, require a fresh exact-head green/reviewed PR, merge, and perform the bounded issue-metadata closeout.
+- Completed result: current issue bodies, immutable workflow run/job results and the accepted Staging milestone were read-only crosschecked. The canonical machine/human reconciliation, validator and regression coverage are implemented. Focused tests pass 10/10, Operations pass 1073/1073, all local governance/truth checks pass, and PR #1033 final head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58` passed all 11 remote checks plus completed review with zero unresolved threads before merge `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`. #642/#643 were independently re-read open with only genuine gates, #644 was re-read closed as superseded by #874, and #874 Gate 3 now preserves the verified Android AAB/Google/iOS boundaries.
+- Still open: nothing under FM-MEM-009. The retained Referral/Staging/Mobile/Restore/AI/provider/legal gates remain owned by their canonical tasks and were not accepted here.
+- Exact next step: keep FM-MEM-009 closed; continue only from a canonical retained gate and never rebuild the Staging foundation or Android AAB merely because an old issue was reconciled.
 - Rollback/recovery: revert the governance-only commit and restore prior issue metadata if the post-merge write is inconsistent; no product/runtime/provider/database state is involved.
 - Owner action needed: none for repository/issue reconciliation; retained legal, Production activation, payment and protected external gates stay owner-controlled.
 

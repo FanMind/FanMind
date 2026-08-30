@@ -8,6 +8,7 @@
     "restore_host": {"ttl_hours": 4, "revalidate_on": ["host_maintenance", "runner_re_registration", "toolchain_change"]},
     "provider_console": {"ttl_hours": 24, "revalidate_on": ["provider_config_change", "schema_or_privilege_change", "target_binding_change", "credential_rotation", "app_review_change"]},
     "signed_mobile_build": {"ttl_hours": null, "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]},
+    "github_issue_state": {"ttl_hours": 168, "revalidate_on": ["issue_body_or_state_change", "before_relying_on_legacy_issue_reconciliation", "before_reopening_reconciled_work"]},
     "legal_tax": {"ttl_hours": null, "revalidate_on": ["business_fact_change", "contract_version_change", "law_or_provider_term_change"]}
   },
   "rule": "Expired mutable evidence cannot support a new ACCEPTED or PRODUCTION_CONFIRMED claim until revalidated. Immutable commit/build evidence stays valid unless an explicit invalidation trigger occurs."

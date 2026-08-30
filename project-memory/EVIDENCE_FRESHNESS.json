@@ -75,6 +75,21 @@
       "observed_at": "2026-08-30T15:34:15Z",
       "source": "FM-EV-029 / exact FanMind Production Supabase URL Configuration / saved and re-read fanmind://reset-password as URL 4 of 4",
       "revalidate_on": ["provider_config_change", "target_binding_change", "before_real_recovery_acceptance"]
+    },
+    {
+      "id": "EV-LEGACY-ISSUE-SNAPSHOT-20260830",
+      "gate": "legacy_issue_reconciliation",
+      "class": "github_issue_state",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-08-30T20:04:33Z",
+      "source": "FM-EV-032 / PR #1033 merge cc82dd7ad62e6aaf1d7b2637d49d43010789475f / independent post-write GitHub reads: #642 open, #643 open, #644 closed not_planned, #874 open",
+      "issues": {
+        "642": {"updated_at": "2026-08-30T20:04:32Z", "state": "open", "state_reason": null, "body_sha256": "fa44e70daa81b071b5da64c9e54bf9f639e76f52b9753931c582e9267f2cf6f8"},
+        "643": {"updated_at": "2026-08-30T20:04:31Z", "state": "open", "state_reason": null, "body_sha256": "d3d24bdf527df55eaf4fee0db8de8e30d95ff50ffa925ad4790023d228f16ba3"},
+        "644": {"updated_at": "2026-08-30T20:04:30Z", "state": "closed", "state_reason": "not_planned", "body_sha256": "97dfe167559fad4a62224b3d3e1d7c16edac0c902e49d7e07677d3db28e40ed2"},
+        "874": {"updated_at": "2026-08-30T20:04:33Z", "state": "open", "state_reason": null, "body_sha256": "f38bde8341341b4c8051128c108ae2b52b93881041b35e272a5d67dd6be25967"}
+      },
+      "revalidate_on": ["issue_body_or_state_change", "before_relying_on_legacy_issue_reconciliation", "before_reopening_reconciled_work"]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
