@@ -312,10 +312,11 @@ test("Mobile contact mutations stay workspace-bound and fail on duplicates", asy
 });
 
 test("Mobile contact detail loads a bounded RLS-protected message history", async () => {
-  const [data, detail, dashboard] = await Promise.all([
+  const [data, detail, dashboard, followups] = await Promise.all([
     read("apps/mobile/src/lib/data.ts"),
     read("apps/mobile/app/(app)/contacts/[id].tsx"),
     read("apps/mobile/app/(app)/index.tsx"),
+    read("apps/mobile/app/(app)/followups.tsx"),
   ]);
 
   assert.match(data, /export async function listContactMessages/u);
@@ -353,6 +354,168 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(detail, /Direkt beim Fan anlegen/u);
   assert.match(detail, /normalizeManualFollowupDraft/u);
   assert.match(detail, /Follow-up speichern/u);
+  assert.match(detail, /Nachrichten[\s\S]*Follow-ups[\s\S]*Kontaktwissen/u);
+  assert.match(detail, /numberOfLines=\{1\}[\s\S]*contactIdentifier/u);
+  assert.match(data, /export async function listContactFollowups/u);
+  assert.match(
+    data,
+    /listContactFollowups[\s\S]*\.select\(FOLLOWUP_COLUMNS, \{ count: "exact" \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)[\s\S]*\.limit\(100\)[\s\S]*truncated: followups\.length < totalCount/u,
+  );
+  assert.match(
+    data,
+    /listFollowups[\s\S]*pageSize = 200[\s\S]*while \(true\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)[\s\S]*\.order\("due_date"[\s\S]*\.order\("created_at"[\s\S]*\.order\("id"[\s\S]*\.range\(offset, offset \+ pageSize - 1\)[\s\S]*pageRows\.length < pageSize/u,
+  );
+  assert.match(
+    followups,
+    /useFocusEffect\([\s\S]*useCallback\(\(\) => \{[\s\S]*void load\(\)/u,
+  );
+  assert.match(data, /export async function listTodaysFollowups/u);
+  assert.match(
+    data,
+    /listTodaysFollowups[\s\S]*\.select\("id", \{ count: "exact", head: true \}\)[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("due_date", dueDate\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)/u,
+  );
+  assert.match(data, /maximumLoadedRows = 1_000/u);
+  assert.match(
+    data,
+    /rankedPriorityGroups[\s\S]*priorities: \["urgent"\][\s\S]*priorities: \["high"\][\s\S]*priorities: \["normal", "medium"\][\s\S]*priorities: \["low"\][\s\S]*fallback: true/u,
+  );
+  assert.match(
+    data,
+    /for \(const group of rankedPriorityGroups\)[\s\S]*\.order\("created_at", \{ ascending: true, nullsFirst: false \}\)[\s\S]*\.order\("id", \{ ascending: true \}\)[\s\S]*priority\.is\.null,priority\.not\.in\.[\s\S]*\.range\(/u,
+  );
+  assert.match(data, /priorityRank[\s\S]*urgent: 4[\s\S]*high: 3[\s\S]*normal: 2[\s\S]*medium: 2[\s\S]*low: 1/u);
+  assert.match(data, /totalCount[\s\S]*truncated: rows\.length < totalCount/u);
+  assert.match(detail, /setContactFollowupError\(followupsResult\.error\)/u);
+  assert.match(detail, /contactFollowupError[\s\S]*mobileStyles\.error/u);
+  assert.equal(
+    (detail.match(/setContactFollowupError\(followupsResult\.error\)/gu) ?? []).length,
+    3,
+  );
+  assert.equal(
+    (detail.match(/setContactFollowupCount\(followupsResult\.totalCount\)/gu) ?? []).length,
+    3,
+  );
+  assert.match(detail, /contactFollowupsTruncated[\s\S]*von \{contactFollowupCount\} offenen Follow-ups/u);
+  assert.match(dashboard, /Fällige Follow-ups/u);
+  assert.match(dashboard, /section=followups/u);
+  assert.match(dashboard, /todayResult\.totalCount/u);
+  assert.match(dashboard, /setTodayFollowupError\(todayResult\.error\)/u);
+  assert.match(
+    dashboard,
+    /todayFollowupError \? null : \([\s\S]*StatusPill[\s\S]*loading \? "…" : todayFollowupCount/u,
+  );
+  assert.match(
+    dashboard,
+    /todayFollowupError[\s\S]*mobileStyles\.error[\s\S]*todayFollowups\.length[\s\S]*Heute nichts fällig/u,
+  );
+  assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
+  assert.match(
+    followups,
+    /ListEmptyComponent=\{error \? null : \([\s\S]*Keine offenen Follow-ups/u,
+  );
+});
+
+test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
+  const [data, detail, api, route, action, report, server, page, panel] = await Promise.all([
+    read("apps/mobile/src/lib/data.ts"),
+    read("apps/mobile/app/(app)/contacts/[id].tsx"),
+    read("apps/mobile/src/lib/api.ts"),
+    read("src/app/api/ai/fan-analysis/route.ts"),
+    read("src/app/fans/[id]/analysisActions.ts"),
+    read("src/app/fans/[id]/FanAnalysisReport.tsx"),
+    read("src/lib/supabase/server.ts"),
+    read("src/app/fans/[id]/page.tsx"),
+    read("src/app/fans/[id]/FanContextPanel.tsx"),
+  ]);
+
+  assert.match(
+    data,
+    /fan_analysis_reports[\s\S]*\.eq\("workspace_id", workspaceId\)[\s\S]*\.eq\("contact_id", contactId\)[\s\S]*\.limit\(1\)/u,
+  );
+  assert.match(data, /source_from_at,source_to_at,confidence_score,review_status/u);
+  assert.doesNotMatch(detail, /Fan analysieren/u);
+  assert.match(detail, /In Vorbereitung/u);
+  assert.match(detail, /Bis dahin bleibt diese Aktion verborgen/u);
+  assert.match(detail, /Keine Diagnose und keine sensiblen Ableitungen/u);
+  assert.match(detail, /hasCompleteAnalysisProvenance/u);
+  assert.match(detail, /wird ohne vollständigen Herkunftszeitraum[\s\S]*nicht angezeigt/u);
+  assert.match(detail, /Zeitraum:[\s\S]*Konfidenz:[\s\S]*Prüfstatus:/u);
+  assert.match(api, /Authorization: `Bearer \$\{input\.accessToken\}`[\s\S]*\/api\/ai\/fan-analysis/u);
+  assert.match(route, /readBoundedJsonRequest/u);
+  assert.match(route, /analyzeFanCommunication[\s\S]*accessToken/u);
+  assert.match(route, /rate_limited[\s\S]*return 429/u);
+  assert.match(route, /service_unavailable[\s\S]*return 503/u);
+  assert.match(route, /capability_disabled[\s\S]*return 403/u);
+  assert.match(route, /workspace_inactive/u);
+  assert.match(
+    action,
+    /requireContactInActiveAuthorizedWorkspace\([\s\S]*contactId,[\s\S]*explicitAccessToken/u,
+  );
+  assert.doesNotMatch(action, /requireContactInActiveAuthorizedWorkspaceMember/u);
+  assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
+  assert.match(
+    action,
+    /if \(analysisCapability\.error\)[\s\S]*failure_reason: "service_unavailable"[\s\S]*if \(!analysisCapability\.enabled\)[\s\S]*failure_reason: "capability_disabled"/u,
+  );
+  assert.match(
+    action,
+    /if \(!sourceMessages\.length \|\| !sourceFromAt \|\| !sourceToAt\)[\s\S]*failure_reason: "unprocessable_context"[\s\S]*gültigen Herkunftszeitraum/u,
+  );
+  assert.match(
+    action,
+    /messagesResult\.messages[\s\S]*\.filter\(\(message\) =>[\s\S]*Date\.parse\(String\(message\.created_at[\s\S]*\.map\(\(message\) =>/u,
+  );
+  assert.match(
+    action,
+    /const sourceMessages = boundedPayload\.messages\.filter[\s\S]*const payload = \{ \.\.\.boundedPayload, messages: sourceMessages \}[\s\S]*const inputChars = JSON\.stringify\(payload\)\.length/u,
+  );
+  assert.match(
+    action,
+    /const confidenceScore =[\s\S]*apiKey[\s\S]*Math\.min\(80, sourceMessages\.length \* 10\)[\s\S]*Math\.min\(20, sourceMessages\.length \* 2\)/u,
+  );
+  assert.doesNotMatch(action, /fallback-no-messages/u);
+  assert.match(action, /review_status: result\.report\.review_status/u);
+  assert.match(report, /hasCompleteReportProvenance/u);
+  assert.match(report, /hasRejectedReportProvenance/u);
+  assert.match(
+    page,
+    /evaluateWorkspaceProcessingEntitlement\(workspace\)\.allowed[\s\S]*workspaceProcessingAllowed[\s\S]*getWorkspaceAnalysisCapabilityStatus\(workspace\.id, "fan_analysis"\)[\s\S]*fanAnalysisGenerationEnabled=\{[\s\S]*workspaceProcessingAllowed/u,
+  );
+  assert.match(
+    panel,
+    /analysisGenerationEnabled[\s\S]*generationEnabled=\{analysisGenerationEnabled\}/u,
+  );
+  assert.match(
+    report,
+    /generationEnabled \? \([\s\S]*analysisForm[\s\S]*In Vorbereitung/u,
+  );
+  assert.match(report, /menschlich abgelehnt[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
+  assert.match(detail, /hasRejectedAnalysisProvenance/u);
+  assert.match(detail, /menschlich verworfen[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
+  assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);
+  assert.match(
+    report,
+    /rejectedReport \|\| report \|\| loadError \? null[\s\S]*No communication overview yet/u,
+  );
+  assert.match(report, /Zeitraum[\s\S]*Konfidenz[\s\S]*Prüfstatus/u);
+  assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
+  assert.match(server, /source_from_at,source_to_at,confidence_score,review_status/u);
+  assert.match(
+    server,
+    /getWorkspaceAnalysisCapabilityStatus[\s\S]*capability === "fan_analysis"[\s\S]*FAN_ANALYSIS_REPORT_COLUMNS[\s\S]*reportSchemaProbe\.error[\s\S]*Schema für Analyseberichte/u,
+  );
+  assert.match(server, /FAN_ANALYSIS_REPORT_LEGACY_COLUMNS/u);
+  assert.match(server, /isMissingFanAnalysisProvenanceColumn/u);
+  assert.match(
+    server,
+    /areAllFanAnalysisProvenanceColumnsMissing[\s\S]*Promise\.all\([\s\S]*FAN_ANALYSIS_PROVENANCE_COLUMNS\.map[\s\S]*probes\.every[\s\S]*isMissingFanAnalysisProvenanceColumn/u,
+  );
+  assert.match(server, /source_from_at: null[\s\S]*review_status: null/u);
+  assert.match(detail, /memoryError[\s\S]*mobileStyles\.error[\s\S]*memories\.length/u);
+  assert.match(
+    detail,
+    /!analysisReport && !analysisError[\s\S]*Noch keine Fan-Analyse gespeichert/u,
+  );
 });
 
 test("Mobile routes expose reset, create and edit flows with no automatic sending", async () => {

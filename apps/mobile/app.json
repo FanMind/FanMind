@@ -30,8 +30,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#020712",
-          "image": "./assets/branding/fanmind-wordmark.png",
-          "imageWidth": 300,
+          "image": "./assets/branding/fanmind-splash.png",
+          "imageWidth": 280,
           "resizeMode": "contain"
         }
       ]

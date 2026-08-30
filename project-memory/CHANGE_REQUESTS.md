@@ -48,6 +48,22 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: Phase 6 no longer requires iOS/TestFlight acceptance. `iOS-TestFlight` becomes a Phase-8 roadmap item and is not a blocker for the current through-Phase-7 finishline. This reclassification does not start Phase 8 and does not remove native iOS support or CI/build foundations.
 - Related task: FM-MOB-001
 
+## FM-CR-005
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: Refine the Mobile fan detail into three consistent sections for every fan, keep the identifier on one line, expose safe fan analysis under contact knowledge, make Follow-ups navigate back to their fan, show today's Follow-ups on Start and replace the cropped startup asset with `FM` above `FanMind`.
+- Classification: Bounded Mobile usability correction and replacement Android preview build.
+- Affected areas: Mobile contact detail/dashboard/follow-up navigation, authenticated AI route, RLS data reads, native splash branding, documentation and tests.
+- Existing task/decision checked: FM-MOB-001/002/003, FM-CR-004, existing Web fan-analysis action, RLS-protected `fan_analysis_reports`/`followups`, no-auto-send and owner-only mutation boundaries.
+- Dependencies: exact-head CI, existing Mobile Bearer session, server-side analysis capability/retention gates, one merged-commit Android preview and owner device confirmation.
+- Decision: implement as FM-MOB-004 without schema, demo-row, provider,
+  Production or automatic-send changes. PR review tightened the decision:
+  stored analysis is provenance-bound and generation remains visibly in
+  preparation without an active Mobile control until the separate Production
+  capability/privacy contract is truly activated and verified.
+- Related task: FM-MOB-004
+
 ## Intake template
 
 ```text

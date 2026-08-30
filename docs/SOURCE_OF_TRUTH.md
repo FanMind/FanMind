@@ -102,21 +102,65 @@ Aktiv im App-Kern:
 - verschlüsselte Sitzung über `expo-secure-store` und zentralen lokalen Purge beim Abmelden;
 - geschützte Expo-Router-Navigation;
 - Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
-  Nachrichten, Kontaktliste, Suche und Kontaktdetail;
+  Nachrichten und den heute fälligen Follow-ups; beide führen direkt zum
+  betroffenen Fan. Der Tageszähler ist exakt; Einträge werden begrenzt
+  seitenweise und mit stabiler `created_at`-/`id`-Reihenfolge je semantischer
+  Prioritätsgruppe geladen, sodass die wichtigsten Einträge bereits vor der
+  1.000er-Grenze ausgewählt werden; unbekannte/null Altdaten bilden die letzte
+  Fallback-Gruppe. Jede Begrenzung und jeder Ladefehler wird im Follow-up-Bereich
+  sichtbar ausgewiesen. Dazu Kontaktliste, Suche und Kontaktdetail;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
 - bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
   Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
   vollständig vom Offline-Cache ausgeschlossen; der Verlauf lässt sich für
   jeden Fan über `Alle` und seine tatsächlich vorhandenen Plattformen filtern;
-- Kontaktwissen;
+- Kontaktwissen mit eigenem Ladefehlerzustand, damit ein fehlgeschlagener Read
+  nie als gültig leer erscheint;
+- pro Fan die drei Mobile-Bereiche `Nachrichten`, `Follow-ups` und
+  `Kontaktwissen`; die Kontaktkennung bleibt einzeilig, Profil/Tags liegen im
+  Kontaktwissen;
+- gespeicherte Fan-Analyse im Kontaktwissen ausschließlich mit sichtbarem
+  Herkunftszeitraum, Stichprobenumfang, Konfidenz und Prüfstatus; fehlen diese
+  Nachweise, bleibt die Darstellung fail-closed. Die Owner-only Neuerzeugung
+  über eine Bearer-authentifizierte Serverroute ist vorbereitet, bleibt in
+  Mobile und Web aber ohne aktiven Aktionsbutton als `In Vorbereitung` markiert, bis die
+  Workspace-Datenschutz-/Aufbewahrungsfreigabe, der aktive
+  Verarbeitungsanspruch und das vollständige Analyse-Report-Schema technisch
+  aktiviert und geprüft sind; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
+  Dienstfehler semantisch und behandelt einen fehlgeschlagenen
+  Capability-Read als Dienstfehler, nicht als Workspace-Verbot. Nachrichten
+  ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
+  Stichprobenzähler und Konfidenzberechnung ausgeschlossen. Menschlich
+  verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
+  ihre Schlussfolgerungen; verworfene oder unvollständig provenienzgebundene
+  Berichte werden auch aus dem produktiven Kontext für KI-Antwortvorschläge
+  ausgeschlossen. Auch die Bearer-Route verlangt die aktive
+  Workspace-Owner-Autorisierung; Mitglieder dürfen weder Analysezustand noch
+  KI-Verbrauch verändern. Ein Analyse-Ladefehler oder ein gespeicherter, wegen
+  unvollständiger Nachweise ausgeblendeter Altbericht unterdrückt den
+  Leerzustand, weil beides die Abwesenheit eines Berichts nicht beweist. Solange die
+  kontrollierte Provenienz-Migration in
+  Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
+  bestehende Web-Kontexte lesbar. Er wird nur nach paralleler Einzelprüfung aller neuen
+  Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen
+  erhalten fehlende Provenienzfelder, und weder Mobile noch Web zeigen daraus
+  Analyse-Schlussfolgerungen an;
 - Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
 - Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
   native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand
   bleiben beim Menschen;
 - Follow-ups als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag
-  anlegen, offene Follow-ups anzeigen und mit dem kanonischen Status `completed`
-  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten
-  bleiben lesekompatibel;
+  anlegen, global oder pro Fan anzeigen, aus globaler Liste und Dashboard zum
+  jeweiligen Fan öffnen und mit dem kanonischen Status `completed`
+  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten bleiben
+  lesekompatibel und ein historisch leerer Status gilt weiterhin als offen.
+  Die globale Liste lädt alle offenen Einträge stabil in 200er-Seiten, statt
+  ältere Aufgaben nach einer festen Grenze auszublenden, und lädt beim erneuten
+  Fokussieren nach der Rückkehr aus einem Fan-Detail automatisch neu. Die Fan-Detail-Liste
+  liefert einen exakten Zähler und weist eine Begrenzung auf 100 sichtbare
+  offene Einträge ausdrücklich aus;
+  ein fehlgeschlagener Tages-Read unterdrückt neben dem Leerzustand auch die
+  Anzahl, damit ein unbekannter Wert nie als grüne Null erscheint;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,

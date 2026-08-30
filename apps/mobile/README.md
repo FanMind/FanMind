@@ -27,11 +27,17 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
 - PKCE-basierte Passwort-Recovery über `fanmind://reset-password`;
 - geschützte App-Navigation;
 - Start-Dashboard mit ausschließlich den Fans, die noch ungesehene eingehende
-  Nachrichten besitzen, plus offenem Follow-up-Zähler; beim erneuten Fokus
-  wird der Zustand frisch geladen;
+  Nachrichten besitzen, plus offenem Follow-up-Zähler und den am aktuellen
+  Tag fälligen, direkt zum Fan führenden Follow-ups; beim erneuten Fokus wird
+  der Zustand frisch geladen. Die Tageszahl ist exakt, bis zu 1.000 Einträge
+  werden seitenweise geladen, semantisch nach Priorität sortiert und eine
+  mögliche Begrenzung wird sichtbar ausgewiesen; das Dashboard zeigt davon
+  höchstens die wichtigsten 20;
 - Kontaktliste und Suche;
 - Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten; Teammitglieder sehen CRM-Daten nur lesend;
-- Kontaktdetail mit Profil, Kontaktwissen und einem sichtbaren, read-only
+- Kontaktdetail mit den für jeden Fan verfügbaren Bereichen `Nachrichten`,
+  `Follow-ups` und `Kontaktwissen`; Profil und Tags liegen im Kontaktwissen,
+  die Kennung bleibt im Kopf einzeilig. Der sichtbare, read-only
   Gesprächsverlauf aus bis zu 100 aktuellen, per Workspace und Kontakt
   gefilterten Nachrichten; neueste Nachrichten erscheinen zuerst, der Verlauf
   lässt sich sichtbar aktualisieren und pro Fan dynamisch über `Alle` sowie
@@ -46,8 +52,17 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   bewusst weitergeben; ausschließlich der ausgewählte Antworttext wird
   übergeben, Zielwahl und finaler Versand bleiben beim Menschen;
 - Kontaktwissen aus KI-Vorschlag speichern;
+- gespeicherte Fan-Analyse im Kontaktwissen nur zusammen mit Herkunftszeitraum,
+  Stichprobengröße, Konfidenz und Prüfstatus lesen; fehlen diese Nachweise,
+  bleibt die Darstellung fail-closed. Die Bearer-authentifizierte
+  Owner-Neuerzeugung ist serverseitig vorbereitet, wird in Mobile aber bis zur
+  technisch aktivierten und geprüften Workspace-Datenschutz-/Aufbewahrungs-
+  Freigabe ehrlich als `In Vorbereitung` ohne Aktionsbutton gezeigt; keine
+  Diagnose und keine sensiblen Ableitungen;
 - Follow-up als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag speichern;
-- offene Follow-ups anzeigen und als Owner abschließen; Teammitglieder bleiben read-only;
+- offene Follow-ups global oder je Fan anzeigen; globale und heutige Einträge
+  führen in den Follow-up-Bereich des jeweiligen Fans. Owner können
+  abschließen, Teammitglieder bleiben read-only;
 - verschlüsselte, maximal 24 Stunden alte Offline-Kontaktübersicht mit höchstens 50 Einträgen im Nur-Lesen-Modus;
 - native Push-Grundlage mit streng validierter Navigation zu Follow-ups sowie
   ausdrücklichem Opt-in für eine verschlüsselte, kontogebundene
@@ -58,7 +73,8 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   Push-Tabelle: read-only Ressourcenprüfung, separat bestätigter Apply und
   rollback-only Acceptance ohne echte Tokens oder Zustellung; externe Läufe
   stehen noch aus;
-- nativer Splashscreen mit der bestätigten FanMind-Wortmarke für das dunkle App-Theme;
+- nativer quadratischer Splashscreen mit `FM` über der bestätigten
+  FanMind-Wortmarke für das dunkle App-Theme;
 - eigenständiges deckendes 1024×1024-App-Icon für iOS/Legacy-Android und
   transparentes, maskensicher skaliertes Android-Adaptive-Foreground;
 - iOS-Privacy-Manifest mit den Required-Reason-APIs der installierten nativen

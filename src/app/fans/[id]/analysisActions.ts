@@ -44,14 +44,27 @@ type AnalysisReport = {
   analysis_mode: AnalysisMode;
 };
 
+export type FanAnalysisFailureReason =
+  | "invalid_request"
+  | "forbidden"
+  | "capability_disabled"
+  | "rate_limited"
+  | "service_unavailable"
+  | "unprocessable_context";
+
 export type FanAnalysisActionState = {
   ok: boolean;
   message: string;
+  failure_reason?: FanAnalysisFailureReason;
   generatedAt?: string;
   report?: {
     report_json: Record<string, unknown> | null;
     summary: string | null;
     source_message_count: number | null;
+    source_from_at: string | null;
+    source_to_at: string | null;
+    confidence_score: number | null;
+    review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
     generated_at: string | null;
     updated_at?: string | null;
   } | null;
@@ -292,6 +305,7 @@ function normalizeReport(
 export async function analyzeFanCommunication(
   _previousState: FanAnalysisActionState,
   formData: FormData,
+  explicitAccessToken?: string,
 ): Promise<FanAnalysisActionState> {
   const contactId = formValue(formData, "contact_id");
   const locale = formValue(formData, "locale") === "en" ? "en" : "de";
@@ -302,16 +316,24 @@ export async function analyzeFanCommunication(
   );
 
   if (!contactId) {
-    return { ok: false, message: "Kontakt fehlt." };
+    return {
+      ok: false,
+      failure_reason: "invalid_request",
+      message: "Kontakt fehlt.",
+    };
   }
 
   const { workspace, user, contact } =
-    await requireContactInActiveAuthorizedWorkspace(contactId);
+    await requireContactInActiveAuthorizedWorkspace(
+      contactId,
+      explicitAccessToken,
+    );
   // Lifecycle guard only. Billing authorization requires server-owned
   // entitlement state before Standard/Plus/Ultra can be activated.
   if (isWorkspaceArchivedAfterSubscriptionEnd(workspace)) {
     return {
       ok: false,
+      failure_reason: "forbidden",
       message:
         locale === "en"
           ? "This workspace is read-only after the subscription ended."
@@ -323,9 +345,20 @@ export async function analyzeFanCommunication(
     workspace.id,
     "fan_analysis",
   );
+  if (analysisCapability.error) {
+    return {
+      ok: false,
+      failure_reason: "service_unavailable",
+      message:
+        locale === "en"
+          ? "The fan-analysis capability could not be checked safely right now."
+          : "Die Freigabe der Fan-Analyse kann gerade nicht sicher geprüft werden.",
+    };
+  }
   if (!analysisCapability.enabled) {
     return {
       ok: false,
+      failure_reason: "capability_disabled",
       message:
         locale === "en"
           ? "Fan analysis is disabled until this workspace's privacy and retention controls are confirmed."
@@ -344,6 +377,7 @@ export async function analyzeFanCommunication(
   } catch {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "The communication overview cannot be started safely right now."
@@ -354,6 +388,7 @@ export async function analyzeFanCommunication(
   if (!rateLimit.allowed) {
     return {
       ok: false,
+      failure_reason: "rate_limited",
       message:
         locale === "en"
           ? "Too many AI analyses. Please try again later."
@@ -371,17 +406,20 @@ export async function analyzeFanCommunication(
       workspace.id,
       contactId,
       contextMessageLimit,
+      explicitAccessToken,
     ),
     getRecentContactMemories(
       workspace.id,
       contactId,
       AI_ANALYSIS_MEMORY_ROW_LIMIT,
+      explicitAccessToken,
     ),
   ]);
 
   if (messagesResult.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "Messages could not be loaded for the analysis."
@@ -391,6 +429,7 @@ export async function analyzeFanCommunication(
   if (memoriesResult.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "Contact knowledge could not be loaded for the analysis."
@@ -420,20 +459,25 @@ export async function analyzeFanCommunication(
         importance: memory.importance,
         createdAt: memory.created_at,
       })),
-      messages: messagesResult.messages.map((message) => ({
-        direction: message.direction,
-        channel: message.source_platform ?? "manual",
-        origin: message.source_type ?? message.message_type ?? "unknown",
-        author: message.author_label ?? message.original_author_label ?? null,
-        text: message.content || message.original_text_excerpt || "",
-        mediaPresent: Boolean(message.attachments?.length),
-        createdAt: message.created_at,
-      })),
+      messages: messagesResult.messages
+        .filter((message) =>
+          Number.isFinite(Date.parse(String(message.created_at ?? ""))),
+        )
+        .map((message) => ({
+          direction: message.direction,
+          channel: message.source_platform ?? "manual",
+          origin: message.source_type ?? message.message_type ?? "unknown",
+          author: message.author_label ?? message.original_author_label ?? null,
+          text: message.content || message.original_text_excerpt || "",
+          mediaPresent: Boolean(message.attachments?.length),
+          createdAt: message.created_at,
+        })),
       messageLimit: contextMessageLimit,
     });
   } catch {
     return {
       ok: false,
+      failure_reason: "unprocessable_context",
       message:
         locale === "en"
           ? "The communication context could not be prepared safely."
@@ -441,8 +485,41 @@ export async function analyzeFanCommunication(
     };
   }
 
-  const { payload, inputChars } = boundedInput;
-  const sourceMessages = payload.messages;
+  const boundedPayload = boundedInput.payload;
+  const sourceMessages = boundedPayload.messages.filter((message) =>
+    Number.isFinite(Date.parse(String(message.createdAt ?? ""))),
+  );
+  const payload = { ...boundedPayload, messages: sourceMessages };
+  const inputChars = JSON.stringify(payload).length;
+  const sourceMessageTimes = sourceMessages
+    .map((message) => Date.parse(String(message.createdAt ?? "")))
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+  const sourceFromAt = sourceMessageTimes.length
+    ? new Date(sourceMessageTimes[0]!).toISOString()
+    : null;
+  const sourceToAt = sourceMessageTimes.length
+    ? new Date(sourceMessageTimes[sourceMessageTimes.length - 1]!).toISOString()
+    : null;
+  if (!sourceMessages.length || !sourceFromAt || !sourceToAt) {
+    return {
+      ok: false,
+      failure_reason: "unprocessable_context",
+      message:
+        locale === "en"
+          ? "A communication overview requires messages with a valid source period."
+          : "Eine Kommunikationsübersicht benötigt Nachrichten mit einem gültigen Herkunftszeitraum.",
+    };
+  }
+  const model = getFanMindAiModel();
+  const apiKey = process.env.OPENAI_API_KEY;
+  // Message count is only a conservative provenance signal, never a quality
+  // guarantee. Model-generated reports stay below 100; generic fallback-only
+  // guidance stays explicitly low-confidence even with many source messages.
+  const confidenceScore =
+    apiKey
+      ? Math.min(80, sourceMessages.length * 10)
+      : Math.min(20, sourceMessages.length * 2);
   const lowDataHint =
     sourceMessages.length < 3
       ? locale === "en"
@@ -450,8 +527,6 @@ export async function analyzeFanCommunication(
         : "Es ist erst wenig Nachrichtenkontext vorhanden."
       : "";
   const fallback = fallbackReport(locale, mode, lowDataHint);
-  const model = getFanMindAiModel();
-  const apiKey = process.env.OPENAI_API_KEY;
   const startedAt = Date.now();
   let report = fallback;
   let userMessage = lowDataHint;
@@ -461,7 +536,7 @@ export async function analyzeFanCommunication(
       locale === "en"
         ? "OpenAI is not configured. A careful interim overview was saved."
         : "OpenAI ist serverseitig nicht konfiguriert. Eine vorsichtige Zwischenübersicht wurde gespeichert.";
-  } else if (sourceMessages.length > 0) {
+  } else {
     try {
       const response = await fetch(OPENAI_RESPONSES_URL, {
         method: "POST",
@@ -513,6 +588,7 @@ export async function analyzeFanCommunication(
         });
         return {
           ok: false,
+          failure_reason: "service_unavailable",
           message:
             locale === "en"
               ? "The communication overview could not be created."
@@ -559,17 +635,13 @@ export async function analyzeFanCommunication(
       });
       return {
         ok: false,
+        failure_reason: "service_unavailable",
         message:
           locale === "en"
             ? "The communication overview could not be created. Please try again."
             : "Die Kommunikationsübersicht konnte nicht erstellt werden. Bitte erneut versuchen.",
       };
     }
-  } else {
-    userMessage =
-      locale === "en"
-        ? "No messages are stored yet. A careful interim overview was saved."
-        : "Noch keine Nachrichten gespeichert. Eine vorsichtige Zwischenübersicht wurde gespeichert.";
   }
 
   const result = await upsertFanAnalysisReport({
@@ -578,17 +650,19 @@ export async function analyzeFanCommunication(
     reportJson: report,
     summary: report.kurzprofil,
     model:
-      apiKey && sourceMessages.length > 0
+      apiKey
         ? model
-        : apiKey
-          ? "fallback-no-messages"
-          : "fallback-no-api-key",
+        : "fallback-no-api-key",
     sourceMessageCount: sourceMessages.length,
+    sourceFromAt,
+    sourceToAt,
+    confidenceScore,
   });
 
   if (result.error) {
     return {
       ok: false,
+      failure_reason: "service_unavailable",
       message:
         locale === "en"
           ? "The communication overview could not be saved."
@@ -606,6 +680,10 @@ export async function analyzeFanCommunication(
           report_json: result.report.report_json as Record<string, unknown> | null,
           summary: result.report.summary,
           source_message_count: result.report.source_message_count,
+          source_from_at: result.report.source_from_at,
+          source_to_at: result.report.source_to_at,
+          confidence_score: result.report.confidence_score,
+          review_status: result.report.review_status,
           generated_at: result.report.generated_at,
           updated_at: result.report.updated_at,
         }

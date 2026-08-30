@@ -11,6 +11,23 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-MOB-004
+- Started: 2026-08-29
+- Updated: 2026-08-29
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Scope: Deliver the owner-requested three-section fan detail, one-line identifier, safe Mobile fan analysis, fan-bound Follow-up navigation, today's Dashboard Follow-ups and corrected square native splash; then produce one exact-merge Android preview.
+- Change request: FM-CR-005.
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; reviewed heads `2feba6f63d611a8461e2a9bb3402147f7fff8dd5`, `c7226cab1a991a514f3fd9d19e58b00e250135a4`, `67e02276ede02bb919088f3aa61e0e1343be52e0`, `cca0b7e2cc650b886a0a10653d49a15536e27d0a` and `a33875409abebd933ab325f8f14aa35bdaaf6617` each passed all nine gates; reviewed heads `c58ec12d2c93e046d3d25b12e4ae6a4dba3ed0ef`, `12994fd952137520bc1452c0dee25ddff6255a54`, `e10b312a6d62682d09fc211de4cc25b97056c014`, `2f728692dda1005ec04c324f1882b6b90faf521e`, `86bac360d19edb626f496d0ce87e63cb492e76ed` and `b3fe6ab5491181e789ba9ee17e6218c981c2d3c2` each reached eight green gates while Mobile Native CI was still running. All eleven are superseded before merge by the final grouped review correction.
+- Work lock: `LOCK-FM-MOB-004-FAN-SECTIONS-20260829` ACTIVE.
+- Dependencies: existing RLS and Mobile Bearer authorization, server-side analysis action/capability gates, exact-head CI and one protected Android preview build.
+- Assumptions: stored Fan-analysis reports remain read-only and are displayed only with source period, sample size, confidence and review state. Production generation remains hidden/in preparation until the Workspace analysis/privacy contract is technically active and verified. Follow-up navigation carries only the contact ID and selected section.
+- Planned evidence: Mobile typecheck/Expo/native checks, focused authorization/UI tests, full repository regression, exact-head PR gates, SHA-bound merge and exactly one merged-commit Android preview.
+- Completed so far: initial implementation/docs and local checks passed. Eleven successive exact-head reviews found six, four, six, three, three, three, two, one, two, two and three valid cases, thirty-five in total. The first three corrections added provenance, semantic statuses/counting, fail-closed Mobile/Web/legacy behavior, priority-before-cap pagination and section-specific errors. Review four added the final unknown/null-priority group, an exact/truncated per-contact Follow-up result and low confidence for generic fallback-only analysis. Review five added legacy `NULL` status as open, complete stable 200-row pagination for the central Follow-up list and a hard no-write/no-provider boundary without a valid analysis source period. Review six added service-failure precedence for capability reads, conclusion hiding for rejected reports and timestamp-valid-only provider/provenance samples. Review seven made the explicit Bearer path owner-only and gated the Mobile analysis empty state after load failures. Review eight prevents Web from showing a false empty state beside a saved report hidden for incomplete provenance or a load error. Review nine excludes rejected/incomplete reports from productive reply prompts and refreshes die zentrale Follow-up-Liste on focus. Review ten binds the Web control to the server capability status and parallelizes the six fail-closed legacy column probes. Review eleven also binds that Web control to the active-processing entitlement, suppresses an unknown Dashboard count after read failure and verifies the complete report schema before provider use. The eleventh full local countercheck is green: 42 focused checks, 1055 operations tests, root TypeScript/lint/build, Mobile typecheck/Expo Doctor 20/20/Store/boundary/native prebuild, Android/iOS exports and all Project Memory/truth/drift gates passed. All fixes are grouped without schema, row, provider or Production mutation.
+- Still open: publish the replacement exact head, resolve the three review-eleven threads, require all replacement exact-head gates plus a clear exact-head review, merge, one Android preview and owner device confirmation.
+- Exact next step: update PR #1025 with the locally complete grouped countercheck and merge only after the replacement head is terminal green with no unresolved review thread.
+- Rollback/recovery: revert the Mobile/API commit; no database migration or destructive action is part of this change.
+
 ## FM-MOB-003
 - Started: 2026-08-29
 - Updated: 2026-08-29

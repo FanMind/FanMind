@@ -16,6 +16,10 @@ type Report = {
   report_json: Record<string, unknown> | null;
   summary: string | null;
   source_message_count: number | null;
+  source_from_at: string | null;
+  source_to_at: string | null;
+  confidence_score: number | null;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
   generated_at: string | null;
   updated_at?: string | null;
 } | null;
@@ -28,6 +32,8 @@ type Props = {
   hasNewMessages?: boolean;
   storedMessageCount?: number;
   readOnly?: boolean;
+  generationEnabled?: boolean;
+  generationError?: string;
 };
 
 type ReportSection = { title: string; content: string };
@@ -43,6 +49,8 @@ export function FanAnalysisReport({
   hasNewMessages = false,
   storedMessageCount = 0,
   readOnly = false,
+  generationEnabled = false,
+  generationError,
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
@@ -54,11 +62,16 @@ export function FanAnalysisReport({
     initialState,
   );
   const report = state.report ?? initialReport;
-  const effectiveMessageCount = report?.source_message_count ?? storedMessageCount;
-  const reportSections = buildStoredReportSections(report, locale);
-  const reportMode = getReportMode(report);
+  const reportHasCompleteProvenance = hasCompleteReportProvenance(report);
+  const rejectedReport = hasRejectedReportProvenance(report) ? report : null;
+  const rejectedReportUpdatedAt =
+    rejectedReport?.updated_at ?? rejectedReport?.generated_at ?? null;
+  const displayReport = reportHasCompleteProvenance ? report : null;
+  const effectiveMessageCount = displayReport?.source_message_count ?? storedMessageCount;
+  const reportSections = buildStoredReportSections(displayReport, locale);
+  const reportMode = getReportMode(displayReport);
   const [summarySection, ...detailSections] = reportSections;
-  const isLowData = effectiveMessageCount < 3;
+  const isLowData = Boolean(displayReport) && effectiveMessageCount < 3;
 
   useEffect(() => {
     if (state.ok) router.refresh();
@@ -85,7 +98,7 @@ export function FanAnalysisReport({
         </div>
       </div>
 
-      {readOnly ? null : (
+      {readOnly ? null : generationEnabled ? (
         <form action={formAction} className={polishStyles.analysisForm}>
         <input name="contact_id" type="hidden" value={contactId} />
         <input name="locale" type="hidden" value={locale} />
@@ -133,6 +146,18 @@ export function FanAnalysisReport({
                 : "Übersicht erstellen"}
         </button>
         </form>
+      ) : (
+        <p className={generationError ? dashboardStyles.error : styles.safeNotice}>
+          <strong>
+            {locale === "en" ? "In preparation." : "In Vorbereitung."}
+          </strong>
+          <span>
+            {generationError ??
+              (locale === "en"
+                ? "Creating or updating an overview is not available yet."
+                : "Das Erstellen oder Aktualisieren einer Übersicht ist noch nicht verfügbar.")}
+          </span>
+        </p>
       )}
 
       <div aria-live="polite">
@@ -200,6 +225,22 @@ export function FanAnalysisReport({
         </p>
       ) : null}
 
+      {rejectedReport ? (
+        <p className={dashboardStyles.error}>
+          {locale === "en"
+            ? `This overview was rejected by a human reviewer. Its conclusions are hidden. Review: rejected · Updated: ${rejectedReportUpdatedAt ? formatDate(rejectedReportUpdatedAt, locale) : "not yet"}`
+            : `Diese Übersicht wurde menschlich abgelehnt. Ihre Schlussfolgerungen werden nicht angezeigt. Prüfstatus: abgelehnt · Aktualisiert: ${rejectedReportUpdatedAt ? formatDate(rejectedReportUpdatedAt, locale) : "noch nicht"}`}
+        </p>
+      ) : null}
+
+      {report && !reportHasCompleteProvenance && !rejectedReport ? (
+        <p className={dashboardStyles.error}>
+          {locale === "en"
+            ? "This saved overview is not shown without a complete source period, confidence, and review status."
+            : "Diese gespeicherte Übersicht wird ohne vollständigen Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt."}
+        </p>
+      ) : null}
+
       <div className={styles.reportSectionList}>
         {isLowData ? (
           <p className={polishStyles.compactHint}>
@@ -209,7 +250,7 @@ export function FanAnalysisReport({
           </p>
         ) : null}
 
-        {summarySection ? (
+        {summarySection && displayReport ? (
           <>
             <section className={polishStyles.primarySummary}>
               <strong>{summarySection.title}</strong>
@@ -243,10 +284,14 @@ export function FanAnalysisReport({
             <p className={styles.muted}>
               {locale === "en" ? "Source" : "Quelle"}: {effectiveMessageCount}{" "}
               {locale === "en" ? "messages" : "Nachrichten"} ·{" "}
+              {locale === "en" ? "Period" : "Zeitraum"}: {" "}
+              {formatDate(displayReport.source_from_at, locale)} – {formatDate(displayReport.source_to_at, locale)} ·{" "}
+              {locale === "en" ? "Confidence" : "Konfidenz"}: {displayReport.confidence_score}/100 ·{" "}
+              {locale === "en" ? "Review" : "Prüfstatus"}: {formatReviewStatus(displayReport.review_status, locale)} ·{" "}
               {locale === "en" ? "Updated" : "Aktualisiert"}: {" "}
-              {(report?.updated_at ?? report?.generated_at)
+              {(displayReport.updated_at ?? displayReport.generated_at)
                 ? formatDate(
-                    (report?.updated_at ?? report?.generated_at) as string,
+                    (displayReport.updated_at ?? displayReport.generated_at) as string,
                     locale,
                   )
                 : locale === "en"
@@ -259,7 +304,7 @@ export function FanAnalysisReport({
                 : "Nur Kommunikationshilfe: keine Diagnose und keine sensiblen Ableitungen."}
             </p>
           </>
-        ) : (
+        ) : rejectedReport || report || loadError ? null : (
           <EmptyState
             title={
               locale === "en"
@@ -276,6 +321,64 @@ export function FanAnalysisReport({
       </div>
     </article>
   );
+}
+
+function hasCompleteReportProvenance(
+  report: Report,
+): report is NonNullable<Report> & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected";
+} {
+  return hasCompleteReportMetadata(report) && report.review_status !== "rejected";
+}
+
+function hasRejectedReportProvenance(
+  report: Report,
+): report is NonNullable<Report> & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "rejected";
+} {
+  return hasCompleteReportMetadata(report) && report.review_status === "rejected";
+}
+
+function hasCompleteReportMetadata(
+  report: Report,
+): report is NonNullable<Report> & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected";
+} {
+  if (!report?.source_from_at || !report.source_to_at) return false;
+  const sourceFrom = Date.parse(report.source_from_at);
+  const sourceTo = Date.parse(report.source_to_at);
+  return (
+    Number.isFinite(sourceFrom) &&
+    Number.isFinite(sourceTo) &&
+    sourceFrom <= sourceTo &&
+    typeof report.confidence_score === "number" &&
+    Number.isFinite(report.confidence_score) &&
+    report.confidence_score >= 0 &&
+    report.confidence_score <= 100 &&
+    ["unreviewed", "confirmed", "corrected", "rejected"].includes(
+      report.review_status ?? "",
+    )
+  );
+}
+
+function formatReviewStatus(
+  value: NonNullable<Report>["review_status"],
+  locale: FanMindLanguage,
+) {
+  const labels =
+    locale === "en"
+      ? { unreviewed: "unreviewed", confirmed: "confirmed", corrected: "corrected", rejected: "rejected" }
+      : { unreviewed: "ungeprüft", confirmed: "bestätigt", corrected: "korrigiert", rejected: "abgelehnt" };
+  return value ? labels[value] : locale === "en" ? "unavailable" : "nicht verfügbar";
 }
 
 function buildStoredReportSections(

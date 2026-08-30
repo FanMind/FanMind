@@ -26,7 +26,9 @@ import { requestReplySuggestions } from "@/lib/api";
 import {
   createContactMemory,
   createFollowup,
+  getContactFanAnalysisReport,
   getContact,
+  listContactFollowups,
   listContactMemories,
   listContactMessages,
   markContactInboundMessagesSeen,
@@ -46,8 +48,94 @@ import type {
   Contact,
   ContactMemory,
   ConversationMessage,
+  FanAnalysisReport,
+  Followup,
   ReplySuggestions,
 } from "@/types";
+
+type ContactSection = "messages" | "followups" | "knowledge";
+type DisplayAnalysisReport = Pick<
+  FanAnalysisReport,
+  | "report_json"
+  | "summary"
+  | "source_message_count"
+  | "source_from_at"
+  | "source_to_at"
+  | "confidence_score"
+  | "review_status"
+  | "generated_at"
+  | "updated_at"
+>;
+
+function hasCompleteAnalysisMetadata(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: NonNullable<DisplayAnalysisReport["review_status"]>;
+} {
+  if (!report?.source_from_at || !report.source_to_at) return false;
+  const sourceFrom = Date.parse(report.source_from_at);
+  const sourceTo = Date.parse(report.source_to_at);
+  return (
+    Number.isFinite(sourceFrom) &&
+    Number.isFinite(sourceTo) &&
+    sourceFrom <= sourceTo &&
+    typeof report.confidence_score === "number" &&
+    Number.isFinite(report.confidence_score) &&
+    report.confidence_score >= 0 &&
+    report.confidence_score <= 100 &&
+    ["unreviewed", "confirmed", "corrected", "rejected"].includes(
+      String(report.review_status),
+    )
+  );
+}
+
+function hasCompleteAnalysisProvenance(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected";
+} {
+  return hasCompleteAnalysisMetadata(report) && report.review_status !== "rejected";
+}
+
+function hasRejectedAnalysisProvenance(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "rejected";
+} {
+  return hasCompleteAnalysisMetadata(report) && report.review_status === "rejected";
+}
+
+const CONTACT_SECTIONS: Array<{ key: ContactSection; label: string }> = [
+  { key: "messages", label: "Nachrichten" },
+  { key: "followups", label: "Follow-ups" },
+  { key: "knowledge", label: "Kontaktwissen" },
+];
+
+const ANALYSIS_FIELDS = [
+  ["kurzprofil", "Kurzprofil"],
+  ["kommunikationsstil", "Kommunikationsstil"],
+  ["stimmung", "Stimmung"],
+  ["interessen_trigger", "Interessen & Auslöser"],
+  ["kauf_reaktion", "Kaufreaktion"],
+  ["antwortstil", "Empfohlener Antwortstil"],
+  ["no_gos", "Nicht verwenden"],
+] as const;
+
+function normalizeContactSection(value: string | string[] | undefined): ContactSection {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return normalized === "followups" || normalized === "knowledge"
+    ? normalized
+    : "messages";
+}
 
 function formatMessageDate(value: string | null): string {
   if (!value) return "Zeit unbekannt";
@@ -59,6 +147,26 @@ function formatMessageDate(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatAnalysisDate(value: string | null): string {
+  if (!value) return "nicht verfügbar";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "nicht verfügbar";
+  return new Intl.DateTimeFormat("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function analysisReviewLabel(
+  value: FanAnalysisReport["review_status"],
+): string {
+  if (value === "confirmed") return "menschlich bestätigt";
+  if (value === "corrected") return "menschlich korrigiert";
+  if (value === "rejected") return "verworfen";
+  return "ungeprüfter KI-Hinweis";
 }
 
 function messageAuthor(
@@ -93,8 +201,14 @@ function manualFollowupError(errors: string[]): string {
 }
 
 export default function ContactDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    id?: string | string[];
+    section?: string | string[];
+  }>();
   const contactId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [activeSection, setActiveSection] = useState<ContactSection>(() =>
+    normalizeContactSection(params.section),
+  );
   const { session } = useAuth();
   const {
     workspace,
@@ -103,7 +217,14 @@ export default function ContactDetailScreen() {
   } = useWorkspace();
   const [contact, setContact] = useState<Contact | null>(null);
   const [memories, setMemories] = useState<ContactMemory[]>([]);
+  const [memoryError, setMemoryError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [contactFollowups, setContactFollowups] = useState<Followup[]>([]);
+  const [contactFollowupCount, setContactFollowupCount] = useState(0);
+  const [contactFollowupsTruncated, setContactFollowupsTruncated] = useState(false);
+  const [contactFollowupError, setContactFollowupError] = useState<string | null>(null);
+  const [analysisReport, setAnalysisReport] = useState<DisplayAnalysisReport | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [messageError, setMessageError] = useState<string | null>(null);
   const [messageSeenError, setMessageSeenError] = useState<string | null>(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
@@ -139,7 +260,13 @@ export default function ContactDetailScreen() {
     if (!contactId) {
       setContact(null);
       setMemories([]);
+      setMemoryError(null);
       setMessages([]);
+      setContactFollowups([]);
+      setContactFollowupCount(0);
+      setContactFollowupsTruncated(false);
+      setContactFollowupError(null);
+      setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
       setError("Kontakt-ID fehlt.");
@@ -150,7 +277,13 @@ export default function ContactDetailScreen() {
     if (!workspace?.id) {
       setContact(null);
       setMemories([]);
+      setMemoryError(null);
       setMessages([]);
+      setContactFollowups([]);
+      setContactFollowupCount(0);
+      setContactFollowupsTruncated(false);
+      setContactFollowupError(null);
+      setAnalysisReport(null);
       setMessageError(null);
       setMessageSeenError(null);
       setError(null);
@@ -159,10 +292,18 @@ export default function ContactDetailScreen() {
     }
 
     setLoading(true);
-    const [contactResult, memoriesResult, messagesResult] = await Promise.all([
+    const [
+      contactResult,
+      memoriesResult,
+      messagesResult,
+      followupsResult,
+      analysisResult,
+    ] = await Promise.all([
       getContact(workspace.id, contactId),
       listContactMemories(workspace.id, contactId),
       listContactMessages(workspace.id, contactId),
+      listContactFollowups(workspace.id, contactId),
+      getContactFanAnalysisReport(workspace.id, contactId),
     ]);
     const seenError =
       !messagesResult.error && contactResult.contact
@@ -174,10 +315,17 @@ export default function ContactDetailScreen() {
         : null;
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
+    setMemoryError(memoriesResult.error);
     setMessages(messagesResult.messages);
+    setContactFollowups(followupsResult.followups);
+    setContactFollowupCount(followupsResult.totalCount);
+    setContactFollowupsTruncated(followupsResult.truncated);
+    setContactFollowupError(followupsResult.error);
+    setAnalysisReport(analysisResult.report);
+    setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
     setMessageSeenError(seenError);
-    setError(contactResult.error ?? memoriesResult.error);
+    setError(contactResult.error);
     setLoading(false);
   }, [contactId, workspace?.id, workspace?.role]);
 
@@ -220,9 +368,10 @@ export default function ContactDetailScreen() {
 
   useEffect(() => {
     setSelectedMessageChannel(ALL_MESSAGE_CHANNELS);
+    setActiveSection(normalizeContactSection(params.section));
     setManualFollowupFormError(null);
     setManualFollowupNotice(null);
-  }, [contactId]);
+  }, [contactId, params.section]);
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;
@@ -318,6 +467,11 @@ export default function ContactDetailScreen() {
       setManualFollowupNotice(
         `Follow-up für ${manualFollowupDueDate} wurde gespeichert.`,
       );
+      const followupsResult = await listContactFollowups(workspace.id, contact.id);
+      setContactFollowups(followupsResult.followups);
+      setContactFollowupCount(followupsResult.totalCount);
+      setContactFollowupsTruncated(followupsResult.truncated);
+      setContactFollowupError(followupsResult.error);
     }
     setManualFollowupBusy(false);
   }
@@ -340,7 +494,14 @@ export default function ContactDetailScreen() {
       priority: "normal",
     });
     setError(result);
-    if (!result) setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
+    if (!result) {
+      setNotice(`Follow-up in ${days} Tagen wurde gespeichert.`);
+      const followupsResult = await listContactFollowups(workspace.id, contact.id);
+      setContactFollowups(followupsResult.followups);
+      setContactFollowupCount(followupsResult.totalCount);
+      setContactFollowupsTruncated(followupsResult.truncated);
+      setContactFollowupError(followupsResult.error);
+    }
     setFollowupBusy(false);
   }
 
@@ -392,10 +553,19 @@ export default function ContactDetailScreen() {
   }
 
   return (
-    <Screen
-      title={contact.display_name}
-      subtitle={`${contact.handle || "ohne Handle"} · ${contact.source_platform || "manuell"}`}
-      right={
+    <Screen>
+      <View style={styles.contactHeader}>
+        <View style={styles.contactHeaderText}>
+          <Text style={styles.contactName}>{contact.display_name}</Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+            numberOfLines={1}
+            style={styles.contactIdentifier}
+          >
+            {contact.handle || "ohne Handle"} · {contact.source_platform || "manuell"}
+          </Text>
+        </View>
         <View style={styles.headerActions}>
           {workspace.role === "owner" ? (
             <SecondaryButton
@@ -406,23 +576,53 @@ export default function ContactDetailScreen() {
           ) : null}
           <SecondaryButton onPress={() => router.back()}>Zurück</SecondaryButton>
         </View>
-      }
-    >
-      <View style={styles.pills}>
-        <StatusPill tone="accent">{contact.status || "neu"}</StatusPill>
-        <StatusPill>{contact.language || "de"}</StatusPill>
-        {tags.slice(0, 3).map((tag) => (
-          <StatusPill key={tag}>{tag}</StatusPill>
-        ))}
       </View>
 
-      <Card>
-        <SectionTitle eyebrow="Profil">Kurzüberblick</SectionTitle>
-        <Text style={mobileStyles.body}>
-          {contact.summary || "Noch keine Zusammenfassung gespeichert."}
-        </Text>
-      </Card>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sectionTabs}
+        accessibilityRole="tablist"
+      >
+        {CONTACT_SECTIONS.map((section) => {
+          const selected = section.key === activeSection;
+          return (
+            <Pressable
+              key={section.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              onPress={() => setActiveSection(section.key)}
+              style={({ pressed }) => [
+                styles.sectionTab,
+                selected && styles.sectionTabSelected,
+                pressed && styles.messageChannelPressed,
+              ]}
+            >
+              <Text style={[styles.sectionTabText, selected && styles.sectionTabTextSelected]}>
+                {section.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
+      {activeSection === "knowledge" ? (
+        <>
+          <View style={styles.pills}>
+            <StatusPill tone="accent">{contact.status || "neu"}</StatusPill>
+            <StatusPill>{contact.language || "de"}</StatusPill>
+            {tags.map((tag) => <StatusPill key={tag}>{tag}</StatusPill>)}
+          </View>
+          <Card>
+            <SectionTitle eyebrow="Profil">Kurzüberblick</SectionTitle>
+            <Text style={mobileStyles.body}>
+              {contact.summary || "Noch keine Zusammenfassung gespeichert."}
+            </Text>
+          </Card>
+        </>
+      ) : null}
+
+      {activeSection === "messages" ? (
       <Card>
         <View style={styles.messageHeader}>
           <SectionTitle eyebrow="Nachrichten">Gesprächsverlauf</SectionTitle>
@@ -524,6 +724,39 @@ export default function ContactDetailScreen() {
           <Text style={mobileStyles.error}>{messageSeenError}</Text>
         ) : null}
       </Card>
+      ) : null}
+
+      {activeSection === "followups" ? (
+        <>
+          <Card>
+            <SectionTitle eyebrow="Offen">Follow-ups dieses Fans</SectionTitle>
+            {contactFollowupError ? (
+              <Text style={mobileStyles.error}>{contactFollowupError}</Text>
+            ) : contactFollowups.length ? (
+              <View style={styles.contactFollowupList}>
+                {contactFollowups.map((item) => (
+                  <View key={item.id} style={styles.contactFollowupRow}>
+                    <View style={{ flex: 1, gap: spacing.xs }}>
+                      <Text style={mobileStyles.body}>{item.reason}</Text>
+                      <Text style={mobileStyles.muted}>
+                        {item.due_date || "ohne Datum"} · {item.priority || "normal"}
+                      </Text>
+                    </View>
+                    <StatusPill tone={item.due_date === addLocalDaysDate(0) ? "warning" : "neutral"}>
+                      {item.due_date === addLocalDaysDate(0) ? "Heute" : "Offen"}
+                    </StatusPill>
+                  </View>
+                ))}
+                {contactFollowupsTruncated ? (
+                  <Text style={mobileStyles.muted}>
+                    Es werden {contactFollowups.length} von {contactFollowupCount} offenen Follow-ups angezeigt. Öffne die zentrale Follow-up-Liste für die weitere Bearbeitung.
+                  </Text>
+                ) : null}
+              </View>
+            ) : (
+              <Text style={mobileStyles.muted}>Für diesen Fan ist kein Follow-up offen.</Text>
+            )}
+          </Card>
 
       <Card>
         <SectionTitle eyebrow="Follow-up">Direkt beim Fan anlegen</SectionTitle>
@@ -624,10 +857,15 @@ export default function ContactDetailScreen() {
           </Text>
         )}
       </Card>
+        </>
+      ) : null}
 
+      {activeSection === "knowledge" ? (
       <Card>
         <SectionTitle eyebrow="Kontaktwissen">Was FanMind berücksichtigen darf</SectionTitle>
-        {memories.length ? (
+        {memoryError ? (
+          <Text style={mobileStyles.error}>{memoryError}</Text>
+        ) : memories.length ? (
           memories.slice(0, 8).map((memory) => (
             <View key={memory.id} style={styles.memoryRow}>
               <View style={styles.memoryDot} />
@@ -643,7 +881,66 @@ export default function ContactDetailScreen() {
           <Text style={mobileStyles.muted}>Noch kein Kontaktwissen gespeichert.</Text>
         )}
       </Card>
+      ) : null}
 
+      {activeSection === "knowledge" ? (
+        <Card>
+          <SectionTitle eyebrow="Fan-Analyse">Kommunikation einordnen</SectionTitle>
+          <Text style={mobileStyles.muted}>
+            Vorsichtige Hinweise aus freigegebenem Verlauf und Kontaktwissen. Keine Diagnose und keine sensiblen Ableitungen.
+          </Text>
+          {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
+          {hasRejectedAnalysisProvenance(analysisReport) ? (
+            <View style={styles.analysisFields}>
+              <Text style={mobileStyles.error}>
+                Diese Fan-Analyse wurde menschlich verworfen. Ihre Schlussfolgerungen werden nicht angezeigt.
+              </Text>
+              <Text style={mobileStyles.muted}>
+                Prüfstatus: {analysisReviewLabel(analysisReport.review_status)} · aktualisiert: {formatAnalysisDate(analysisReport.updated_at ?? analysisReport.generated_at)}
+              </Text>
+            </View>
+          ) : null}
+          {analysisReport &&
+          !hasCompleteAnalysisProvenance(analysisReport) &&
+          !hasRejectedAnalysisProvenance(analysisReport) ? (
+            <Text style={mobileStyles.error}>
+              Diese gespeicherte Fan-Analyse wird ohne vollständigen Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt.
+            </Text>
+          ) : null}
+          {hasCompleteAnalysisProvenance(analysisReport) ? (
+            <View style={styles.analysisFields}>
+              {ANALYSIS_FIELDS.map(([key, label]) => {
+                const value = analysisReport.report_json?.[key];
+                return typeof value === "string" && value.trim() ? (
+                  <View key={key} style={styles.analysisField}>
+                    <Text style={styles.analysisLabel}>{label}</Text>
+                    <Text style={mobileStyles.body}>{value}</Text>
+                  </View>
+                ) : null;
+              })}
+              <Text style={mobileStyles.muted}>
+                Zeitraum: {formatAnalysisDate(analysisReport.source_from_at)} bis {formatAnalysisDate(analysisReport.source_to_at)}
+              </Text>
+              <Text style={mobileStyles.muted}>
+                Stichprobe: {analysisReport.source_message_count ?? 0} Nachrichten · Konfidenz: {analysisReport.confidence_score}/100
+              </Text>
+              <Text style={analysisReport.review_status === "confirmed" ? mobileStyles.success : styles.analysisReviewWarning}>
+                Prüfstatus: {analysisReviewLabel(analysisReport.review_status)}
+              </Text>
+            </View>
+          ) : !analysisReport && !analysisError ? (
+            <Text style={mobileStyles.muted}>Noch keine Fan-Analyse gespeichert.</Text>
+          ) : null}
+          <View style={styles.analysisPreparation}>
+            <StatusPill tone="neutral">In Vorbereitung</StatusPill>
+            <Text style={mobileStyles.muted}>
+              Neue Fan-Analysen werden erst freigeschaltet, wenn die Workspace-Datenschutz- und Aufbewahrungskontrollen technisch aktiviert und geprüft sind. Bis dahin bleibt diese Aktion verborgen.
+            </Text>
+          </View>
+        </Card>
+      ) : null}
+
+      {activeSection === "messages" ? (
       <Card>
         <SectionTitle eyebrow="Neue Nachricht">Antworten vorbereiten</SectionTitle>
         {workspace.role === "owner" ? (
@@ -688,8 +985,9 @@ export default function ContactDetailScreen() {
           </Text>
         )}
       </Card>
+      ) : null}
 
-      {suggestions ? (
+      {activeSection === "messages" && suggestions ? (
         <>
           <Card>
             <SectionTitle eyebrow="KI Standard">Antwortvorschläge</SectionTitle>
@@ -743,6 +1041,24 @@ export default function ContactDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  contactHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  contactHeaderText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  contactName: {
+    color: colors.text,
+    fontSize: typography.title,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+  },
+  contactIdentifier: {
+    color: colors.textMuted,
+    fontSize: typography.body,
+    flexShrink: 1,
+  },
   headerActions: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -750,6 +1066,54 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  sectionTabs: { gap: spacing.sm, paddingRight: spacing.lg },
+  sectionTab: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  sectionTabSelected: {
+    borderColor: colors.cyan,
+    backgroundColor: colors.cyan,
+  },
+  sectionTabText: {
+    color: colors.textMuted,
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  sectionTabTextSelected: { color: colors.background, fontWeight: "900" },
+  contactFollowupList: { gap: spacing.sm },
+  contactFollowupRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundRaised,
+    padding: spacing.md,
+  },
+  analysisFields: { gap: spacing.md },
+  analysisPreparation: { gap: spacing.sm, alignItems: "flex-start" },
+  analysisReviewWarning: {
+    color: colors.amber,
+    fontSize: typography.small,
+    lineHeight: 19,
+  },
+  analysisField: {
+    gap: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: spacing.md,
+  },
+  analysisLabel: {
+    color: colors.cyan,
+    fontSize: typography.small,
+    fontWeight: "900",
+  },
   memoryRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   memoryDot: {
     width: 9,

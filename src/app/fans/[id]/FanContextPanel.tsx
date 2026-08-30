@@ -39,6 +39,8 @@ type Props = {
   storedMessageCount: number;
   locale: FanMindLanguage;
   readOnly: boolean;
+  analysisGenerationEnabled: boolean;
+  analysisGenerationError?: string;
 };
 
 const tabs: Array<{ id: ContextTab; de: string; en: string }> = [
@@ -59,6 +61,8 @@ export function FanContextPanel({
   storedMessageCount,
   locale,
   readOnly,
+  analysisGenerationEnabled,
+  analysisGenerationError,
 }: Props) {
   const [activeTab, setActiveTab] = useState<ContextTab>(() => {
     if (typeof window === "undefined") return "notes";
@@ -158,6 +162,8 @@ export function FanContextPanel({
                 hasNewMessages={hasNewMessages}
                 storedMessageCount={storedMessageCount}
                 readOnly={readOnly}
+                generationEnabled={analysisGenerationEnabled}
+                generationError={analysisGenerationError}
               />
             </div>
           ) : null}

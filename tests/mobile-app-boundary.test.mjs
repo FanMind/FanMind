@@ -81,17 +81,17 @@ test("Android, iOS and deep-link identities are independent and explicit", () =>
   assert.equal(appConfig.expo.userInterfaceStyle, "dark");
 });
 
-test("mobile keeps the wordmark on the splashscreen and uses dedicated high-resolution app icons", async () => {
+test("mobile uses the square FM-over-wordmark splash and dedicated high-resolution app icons", async () => {
   const splashPlugin = appConfig.expo.plugins.find(
     (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen",
   );
 
   assert.ok(splashPlugin);
   assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.8");
-  assert.equal(splashPlugin[1].image, "./assets/branding/fanmind-wordmark.png");
+  assert.equal(splashPlugin[1].image, "./assets/branding/fanmind-splash.png");
   assert.equal(splashPlugin[1].dark, undefined);
   assert.equal(splashPlugin[1].resizeMode, "contain");
-  assert.equal(splashPlugin[1].imageWidth, 300);
+  assert.equal(splashPlugin[1].imageWidth, 280);
   assert.equal(
     appConfig.expo.icon,
     "./assets/branding/fanmind-app-icon.png",
@@ -102,6 +102,17 @@ test("mobile keeps the wordmark on the splashscreen and uses dedicated high-reso
   );
   assert.equal(appConfig.expo.android.adaptiveIcon.backgroundColor, "#06142c");
 
+  assert.deepEqual(
+    await pngHeader("assets/branding/fanmind-splash.png"),
+    { width: 1024, height: 1024, bitDepth: 8, colorType: 6 },
+  );
+  const splashSource = await readFile(
+    new URL("assets/branding/fanmind-splash-source.svg", mobileRoot),
+    "utf8",
+  );
+  assert.match(splashSource, /aria-label="FM"/u);
+  assert.match(splashSource, />Fan</u);
+  assert.match(splashSource, />Mind</u);
   assert.deepEqual(
     await pngHeader("assets/branding/fanmind-app-icon.png"),
     { width: 1024, height: 1024, bitDepth: 8, colorType: 2 },
@@ -159,6 +170,7 @@ test("mobile session uses SecureStore and AI uses server Bearer authentication",
   assert.match(secureStorage, /CHUNK_SIZE/);
   assert.match(api, /Authorization: `Bearer \$\{input\.accessToken\}`/);
   assert.match(api, /\/api\/ai\/reply-suggestions/);
+  assert.match(api, /\/api\/ai\/fan-analysis/);
   assert.doesNotMatch(api, /OPENAI_API_KEY/);
 });
 
@@ -210,7 +222,11 @@ test("mobile uses completed as canonical follow-up status and still hides legacy
 
   assert.match(statusPolicy, /CANONICAL_COMPLETED_FOLLOWUP_STATUS = "completed"/u);
   assert.match(statusPolicy, /LEGACY_COMPLETED_FOLLOWUP_STATUS = "done"/u);
-  assert.match(data, /\.not\("status", "in", COMPLETED_FOLLOWUP_FILTER\)/u);
+  assert.match(
+    statusPolicy,
+    /OPEN_FOLLOWUP_FILTER[\s\S]*status\.is\.null,status\.not\.in\.\$\{COMPLETED_FOLLOWUP_FILTER\}/u,
+  );
+  assert.match(data, /\.or\(OPEN_FOLLOWUP_FILTER\)/u);
   assert.match(data, /update\(\{ status: CANONICAL_COMPLETED_FOLLOWUP_STATUS \}\)/u);
   assert.doesNotMatch(data, /\.neq\("status", "done"\)/u);
   assert.doesNotMatch(data, /update\(\{ status: "done" \}\)/u);

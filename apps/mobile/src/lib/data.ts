@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import {
   CANONICAL_COMPLETED_FOLLOWUP_STATUS,
-  COMPLETED_FOLLOWUP_FILTER,
+  OPEN_FOLLOWUP_FILTER,
 } from "@/lib/followupStatus";
 import {
   normalizeContactDraft,
@@ -16,6 +16,7 @@ import type {
   ContactMemory,
   ConversationMessage,
   DashboardUnreadFan,
+  FanAnalysisReport,
   Followup,
   Workspace,
 } from "@/types";
@@ -31,6 +32,8 @@ const CONVERSATION_MESSAGE_COLUMNS =
 const UNSEEN_MESSAGE_COLUMNS = "contact_id,source_platform,created_at";
 const FOLLOWUP_COLUMNS =
   "id,workspace_id,contact_id,due_date,priority,reason,status,created_at";
+const FAN_ANALYSIS_REPORT_COLUMNS =
+  "id,workspace_id,contact_id,report_json,summary,source_message_count,source_from_at,source_to_at,confidence_score,review_status,generated_at,updated_at";
 const MEMBER_SAFE_WORKSPACE_RPC =
   "get_current_workspace_member_safe_dashboard";
 const MEMBER_MUTATIONS_DISABLED_ERROR =
@@ -424,6 +427,30 @@ export async function listContactMessages(
   return { messages: (result.data ?? []) as ConversationMessage[], error: null };
 }
 
+export async function getContactFanAnalysisReport(
+  workspaceId: string,
+  contactId: string,
+): Promise<{ report: FanAnalysisReport | null; error: string | null }> {
+  const result = await supabase
+    .from("fan_analysis_reports")
+    .select(FAN_ANALYSIS_REPORT_COLUMNS)
+    .eq("workspace_id", workspaceId)
+    .eq("contact_id", contactId)
+    .limit(1)
+    .maybeSingle();
+  if (result.error) {
+    return {
+      report: null,
+      error:
+        "Fan-Analyse kann ohne Herkunftszeitraum, Konfidenz und Prüfstatus nicht sicher angezeigt werden.",
+    };
+  }
+  return {
+    report: (result.data as FanAnalysisReport | null) ?? null,
+    error: null,
+  };
+}
+
 export async function listUnseenInboundFans(
   workspaceId: string,
 ): Promise<{ fans: DashboardUnreadFan[]; error: string | null }> {
@@ -532,17 +559,170 @@ export async function createContactMemory(input: {
 export async function listFollowups(
   workspaceId: string,
 ): Promise<{ followups: Followup[]; error: string | null }> {
+  const pageSize = 200;
+  const rows: Followup[] = [];
+  let offset = 0;
+
+  while (true) {
+    const result = await supabase
+      .from("followups")
+      .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
+      .eq("workspace_id", workspaceId)
+      .or(OPEN_FOLLOWUP_FILTER)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) {
+      return { followups: [], error: "Follow-ups konnten nicht vollständig geladen werden." };
+    }
+    const pageRows = (result.data ?? []) as unknown as Followup[];
+    rows.push(...pageRows);
+    if (pageRows.length < pageSize) break;
+    offset += pageRows.length;
+  }
+  return { followups: rows, error: null };
+}
+
+export async function listContactFollowups(
+  workspaceId: string,
+  contactId: string,
+): Promise<{
+  followups: Followup[];
+  totalCount: number;
+  truncated: boolean;
+  error: string | null;
+}> {
   const result = await supabase
     .from("followups")
-    .select(`${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`)
+    .select(FOLLOWUP_COLUMNS, { count: "exact" })
     .eq("workspace_id", workspaceId)
-    .not("status", "in", COMPLETED_FOLLOWUP_FILTER)
+    .eq("contact_id", contactId)
+    .or(OPEN_FOLLOWUP_FILTER)
     .order("due_date", { ascending: true, nullsFirst: false })
-    .limit(200);
+    .limit(100);
   if (result.error) {
-    return { followups: [], error: "Follow-ups konnten nicht geladen werden." };
+    return {
+      followups: [],
+      totalCount: 0,
+      truncated: false,
+      error: "Follow-ups des Fans konnten nicht geladen werden.",
+    };
   }
-  return { followups: (result.data ?? []) as unknown as Followup[], error: null };
+  const followups = (result.data ?? []) as Followup[];
+  const totalCount = result.count ?? followups.length;
+  return {
+    followups,
+    totalCount,
+    truncated: followups.length < totalCount,
+    error: null,
+  };
+}
+
+export async function listTodaysFollowups(
+  workspaceId: string,
+  dueDate: string,
+): Promise<{
+  followups: Followup[];
+  totalCount: number;
+  truncated: boolean;
+  error: string | null;
+}> {
+  const pageSize = 200;
+  const maximumLoadedRows = 1_000;
+  const selectColumns = `${FOLLOWUP_COLUMNS},contact:contacts(id,display_name,handle)`;
+  const rankedPriorityGroups: Array<{
+    priorities: readonly string[];
+    fallback?: boolean;
+  }> = [
+    { priorities: ["urgent"] },
+    { priorities: ["high"] },
+    { priorities: ["normal", "medium"] },
+    { priorities: ["low"] },
+    { priorities: [], fallback: true },
+  ];
+
+  const countResult = await supabase
+    .from("followups")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId)
+    .eq("due_date", dueDate)
+    .or(OPEN_FOLLOWUP_FILTER);
+  if (countResult.error) {
+    return {
+      followups: [],
+      totalCount: 0,
+      truncated: false,
+      error: "Heutige Follow-ups konnten nicht geladen werden.",
+    };
+  }
+
+  const rows: Followup[] = [];
+  const totalCount = countResult.count ?? 0;
+  const loadTarget = Math.min(totalCount, maximumLoadedRows);
+  for (const group of rankedPriorityGroups) {
+    let groupOffset = 0;
+    while (rows.length < loadTarget) {
+      const pageLimit = Math.min(pageSize, loadTarget - rows.length);
+      let pageQuery = supabase
+        .from("followups")
+        .select(selectColumns)
+        .eq("workspace_id", workspaceId)
+        .eq("due_date", dueDate)
+        .or(OPEN_FOLLOWUP_FILTER)
+        .order("created_at", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
+      pageQuery =
+        group.fallback
+          ? pageQuery.or(
+              "priority.is.null,priority.not.in.(urgent,high,normal,medium,low)",
+            )
+          : group.priorities.length === 1
+            ? pageQuery.eq("priority", group.priorities[0]!)
+            : pageQuery.in("priority", [...group.priorities]);
+      const pageResult = await pageQuery.range(
+        groupOffset,
+        groupOffset + pageLimit - 1,
+      );
+      if (pageResult.error) {
+        return {
+          followups: [],
+          totalCount,
+          truncated: totalCount > 0,
+          error: "Heutige Follow-ups konnten nicht vollständig geladen werden.",
+        };
+      }
+      const pageRows = (pageResult.data ?? []) as unknown as Followup[];
+      rows.push(...pageRows);
+      groupOffset += pageRows.length;
+      if (pageRows.length < pageLimit) break;
+    }
+    if (rows.length >= loadTarget) break;
+  }
+
+  const priorityRank: Record<string, number> = {
+    urgent: 4,
+    high: 3,
+    normal: 2,
+    medium: 2,
+    low: 1,
+  };
+  rows.sort((left, right) => {
+    const leftRank = priorityRank[String(left.priority ?? "").toLowerCase()] ?? 0;
+    const rightRank = priorityRank[String(right.priority ?? "").toLowerCase()] ?? 0;
+    return (
+      rightRank - leftRank ||
+      String(left.created_at ?? "").localeCompare(String(right.created_at ?? "")) ||
+      left.id.localeCompare(right.id)
+    );
+  });
+
+  return {
+    followups: rows,
+    totalCount,
+    truncated: rows.length < totalCount,
+    error: null,
+  };
 }
 
 export async function createFollowup(input: {
@@ -599,7 +779,7 @@ export async function loadDashboardCounts(workspaceId: string): Promise<{
       .from("followups")
       .select("id", { count: "exact", head: true })
       .eq("workspace_id", workspaceId)
-      .not("status", "in", COMPLETED_FOLLOWUP_FILTER),
+      .or(OPEN_FOLLOWUP_FILTER),
   ]);
   if (contactsResult.error || followupsResult.error) {
     return { contacts: 0, followups: 0, error: "Kennzahlen konnten nicht geladen werden." };

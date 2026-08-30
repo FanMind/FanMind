@@ -21,6 +21,7 @@ import {
   getWorkspaceVoiceProfile,
   type ContactAiProfileRow,
   type ConversationMessageRow,
+  type FanAnalysisReportRow,
   type WorkspaceVoiceProfileRow,
 } from "@/lib/supabase/server";
 import {
@@ -168,6 +169,38 @@ const replySuggestionsSchema = {
   },
 } as const;
 
+function hasUsableAnalysisReportContext(
+  report: FanAnalysisReportRow | null,
+): report is FanAnalysisReportRow & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected";
+} {
+  if (
+    !report?.source_from_at ||
+    !report.source_to_at ||
+    report.review_status === "rejected" ||
+    !["unreviewed", "confirmed", "corrected"].includes(
+      report.review_status ?? "",
+    )
+  ) {
+    return false;
+  }
+
+  const sourceFrom = Date.parse(report.source_from_at);
+  const sourceTo = Date.parse(report.source_to_at);
+  return (
+    Number.isFinite(sourceFrom) &&
+    Number.isFinite(sourceTo) &&
+    sourceFrom <= sourceTo &&
+    typeof report.confidence_score === "number" &&
+    Number.isFinite(report.confidence_score) &&
+    report.confidence_score >= 0 &&
+    report.confidence_score <= 100
+  );
+}
+
 export async function POST(request: NextRequest) {
   let accessToken: string | undefined;
   try {
@@ -312,7 +345,7 @@ export async function POST(request: NextRequest) {
     fanProfile: fanProfileResult.profile,
     voiceProfile: voiceProfileResult.profile,
   });
-  const analysisReport = analysisResult.report
+  const analysisReport = hasUsableAnalysisReportContext(analysisResult.report)
     ? JSON.stringify(analysisResult.report.report_json)
     : null;
 

@@ -91,7 +91,10 @@ Mobile uses direct Supabase queries only for tables already protected by RLS:
   Workspace-/Kontakt-gebundenen Zeilen über das vorhandene `seen_at`-Feld als
   gesehen markieren;
 - `memories`;
-- `followups`.
+- `fan_analysis_reports` (read-only mit Workspace- und Kontaktfilter; die
+  Neuerzeugung läuft ausschließlich über die autorisierte Serveraktion);
+- `followups` (global, pro Kontakt und für das aktuelle Tagesdatum jeweils
+  explizit nach `workspace_id` begrenzt).
 
 All queries include the current `workspace_id` even though RLS remains the final authorization layer.
 
@@ -107,6 +110,64 @@ Owner contact create and update additionally:
 Owner Follow-up create uses the existing RLS-protected `followups` contract,
 validates reason, non-past calendar date and `low|normal|high` priority in the
 client policy, and always includes both current Workspace and contact IDs.
+
+The Mobile contact detail exposes the same three sections for every fan:
+`Nachrichten`, `Follow-ups` and `Kontaktwissen`. The fan-analysis endpoint
+accepts a Mobile Bearer token only through the active owner authorization path,
+reuses the existing authorized Web action and never moves provider credentials
+or service-role access into the app. Workspace members cannot create or update
+analysis state or consume provider quota. Mobile
+renders a stored report only with source period, sample size, confidence and
+review state. Production activation is still fail-closed: while the required
+Workspace analysis/privacy contract, active-processing entitlement and complete
+report-provenance schema are not all applied and validated, Mobile and Web show
+the feature as `In Vorbereitung` and expose no generation control. The route
+returns typed 400/403/422/429/503 failures for future authorized clients.
+An inactive/read-only Workspace is a permission denial, never a missing-contact
+response. Until the controlled provenance migration is verified in Production,
+the shared Web/server reader may fall back to the old report column set only
+when PostgREST explicitly reports missing provenance and parallel individual probes prove
+that the complete new column set is absent. A partial schema is an error. The
+legacy reader returns null provenance, and both Web and Mobile remain fail-closed
+and do not render its conclusions. Current reports expose source period,
+confidence and review state on both surfaces. A rejected review state is also
+fail-closed: Web and Mobile show only rejection metadata, never the rejected
+conclusions. Rejected or incomplete-provenance reports are also excluded from
+the productive reply-suggestion prompt context. Capability lookup failures map to the typed service-unavailable
+state before the disabled-capability branch. An analysis-read error and any
+saved report hidden for incomplete provenance gate the empty state because
+neither proves that no saved report exists.
+Until the capability gate is active, Web and Mobile both expose analysis
+generation as in preparation and do not render an enabled submission control.
+
+Today's dashboard Follow-ups use an exact count, bounded page loading up to
+1,000 rows and explicit truncation state. Priority groups are loaded in semantic
+order (`urgent`, `high`, `normal|medium`, `low`) before that cap, and every page
+uses `created_at` plus `id` as a stable boundary. The compact dashboard renders
+at most the first 20 and links to the central Follow-up screen. Null or custom
+legacy priorities are loaded in a final fallback group. Its read error is
+section-specific and gates both the empty state and count badge, so an unknown
+count is never displayed as a successful zero.
+The open-status predicate keeps legacy `NULL` rows readable alongside normal
+open rows while excluding both `completed` and historical `done`. The central
+Follow-up screen loads the complete open result in stable 200-row pages ordered
+by due date, creation time and ID; it is therefore a real destination for work
+outside the compact dashboard selection. It reloads on screen focus so a
+Follow-up added in a fan detail appears immediately when the user returns.
+Per-contact Follow-up load errors remain section-specific on initial load and
+after either manual or suggestion-based creation, so a failed refresh can never
+be rendered as a valid empty list next to a save-success notice. The bounded
+100-row fan list has an exact count and an explicit truncation notice.
+Contact-knowledge reads have the same section-specific error/empty-state split.
+
+Model-generated unreviewed analysis confidence remains capped below 100.
+Fallback-only guidance saved without an available OpenAI key is capped at a low
+20-point scale and is never presented with model-level confidence. A report is
+not generated or persisted unless at least one bounded source message provides
+a valid source period; that condition returns a typed unprocessable-context
+failure before any provider call or report write. Messages with a missing or
+invalid timestamp are excluded before context bounding and are excluded again
+from the final provider payload, provenance count and confidence calculation.
 
 Server-only functions remain server-only:
 

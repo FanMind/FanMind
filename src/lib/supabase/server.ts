@@ -337,6 +337,12 @@ export type FanAnalysisReportRow = {
   summary: string | null;
   model: string | null;
   source_message_count: number;
+  source_from_at: string | null;
+  source_to_at: string | null;
+  confidence_score: number | null;
+  review_status: "unreviewed" | "confirmed" | "corrected" | "rejected" | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
   generated_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -821,6 +827,8 @@ const CONVERSATION_SUMMARY_COLUMNS =
 const CONTACT_AI_PROFILE_COLUMNS =
   "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,updated_at,created_at";
 const FAN_ANALYSIS_REPORT_COLUMNS =
+  "id,workspace_id,contact_id,report_json,summary,model,source_message_count,source_from_at,source_to_at,confidence_score,review_status,reviewed_by,reviewed_at,generated_at,created_at,updated_at";
+const FAN_ANALYSIS_REPORT_LEGACY_COLUMNS =
   "id,workspace_id,contact_id,report_json,summary,model,source_message_count,generated_at,created_at,updated_at";
 const WORKSPACE_VOICE_PROFILE_COLUMNS =
   "id,workspace_id,user_id,owner_label,language,tone,sentence_length,emoji_style,greeting_style,closing_style,common_phrases,avoided_phrases,sales_style,examples_count,confidence_score,updated_at,created_at";
@@ -1699,9 +1707,36 @@ export async function getWorkspaceAnalysisCapabilityStatus(
     user_voice_analysis: settings.user_voice_analysis_enabled,
     content_insights: settings.content_insights_enabled,
   } satisfies Record<WorkspaceAnalysisCapability, boolean>;
+  const enabled = legalGateConfirmed && enabledByCapability[capability];
+
+  if (!enabled) {
+    return { enabled: false, legacySchema: false, error: null };
+  }
+
+  if (capability === "fan_analysis") {
+    const reportSchemaProbe = await postgrestSelect<FanAnalysisReportRow>(
+      "fan_analysis_reports",
+      serviceAccessToken,
+      FAN_ANALYSIS_REPORT_COLUMNS,
+      [["workspace_id", workspaceId]],
+      1,
+      true,
+    );
+    if (reportSchemaProbe.error) {
+      return {
+        enabled: false,
+        legacySchema: isMissingFanAnalysisProvenanceColumn(
+          reportSchemaProbe.error,
+        ),
+        error: new Error(
+          "Das Schema für Analyseberichte ist nicht vollständig verfügbar.",
+        ),
+      };
+    }
+  }
 
   return {
-    enabled: legalGateConfirmed && enabledByCapability[capability],
+    enabled: true,
     legacySchema: false,
     error: null,
   };
@@ -3927,6 +3962,53 @@ export async function getFanAnalysisReport(
     1,
     true,
   );
+  if (
+    result.error &&
+    isMissingFanAnalysisProvenanceColumn(result.error) &&
+    (await areAllFanAnalysisProvenanceColumnsMissing(
+      accessToken,
+      workspaceId,
+      contactId,
+    ))
+  ) {
+    const legacyResult = await postgrestSelect<
+      Omit<
+        FanAnalysisReportRow,
+        | "source_from_at"
+        | "source_to_at"
+        | "confidence_score"
+        | "review_status"
+        | "reviewed_by"
+        | "reviewed_at"
+      >
+    >(
+      "fan_analysis_reports",
+      accessToken,
+      FAN_ANALYSIS_REPORT_LEGACY_COLUMNS,
+      [
+        ["workspace_id", workspaceId],
+        ["contact_id", contactId],
+      ],
+      1,
+      true,
+    );
+    if (!legacyResult.error) {
+      return {
+        report: legacyResult.data
+          ? {
+              ...legacyResult.data,
+              source_from_at: null,
+              source_to_at: null,
+              confidence_score: null,
+              review_status: null,
+              reviewed_by: null,
+              reviewed_at: null,
+            }
+          : null,
+        error: null,
+      };
+    }
+  }
   if (result.error)
     return {
       report: null,
@@ -3937,6 +4019,60 @@ export async function getFanAnalysisReport(
   return { report: result.data, error: null };
 }
 
+function isMissingFanAnalysisProvenanceColumn(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  const namesProvenanceColumn = [
+    "source_from_at",
+    "source_to_at",
+    "confidence_score",
+    "review_status",
+    "reviewed_by",
+    "reviewed_at",
+  ].some((column) => message.includes(column));
+  return (
+    namesProvenanceColumn &&
+    (message.includes("does not exist") ||
+      message.includes("schema cache") ||
+      message.includes("could not find"))
+  );
+}
+
+const FAN_ANALYSIS_PROVENANCE_COLUMNS = [
+  "source_from_at",
+  "source_to_at",
+  "confidence_score",
+  "review_status",
+  "reviewed_by",
+  "reviewed_at",
+] as const;
+
+async function areAllFanAnalysisProvenanceColumnsMissing(
+  accessToken: string,
+  workspaceId: string,
+  contactId: string,
+): Promise<boolean> {
+  const probes = await Promise.all(
+    FAN_ANALYSIS_PROVENANCE_COLUMNS.map((column) =>
+      postgrestSelect<Record<string, unknown>>(
+        "fan_analysis_reports",
+        accessToken,
+        `id,${column}`,
+        [
+          ["workspace_id", workspaceId],
+          ["contact_id", contactId],
+        ],
+        1,
+        true,
+      ),
+    ),
+  );
+  return probes.every(
+    (probe) =>
+      probe.error !== null &&
+      isMissingFanAnalysisProvenanceColumn(probe.error),
+  );
+}
+
 export async function upsertFanAnalysisReport(input: {
   workspaceId: string;
   contactId: string;
@@ -3944,6 +4080,9 @@ export async function upsertFanAnalysisReport(input: {
   summary: string;
   model: string;
   sourceMessageCount: number;
+  sourceFromAt: string | null;
+  sourceToAt: string | null;
+  confidenceScore: number;
 }): Promise<FanAnalysisReportResult> {
   const accessToken = getServiceAccessToken();
   if (!accessToken)
@@ -3963,6 +4102,12 @@ export async function upsertFanAnalysisReport(input: {
       summary: input.summary,
       model: input.model,
       source_message_count: input.sourceMessageCount,
+      source_from_at: input.sourceFromAt,
+      source_to_at: input.sourceToAt,
+      confidence_score: input.confidenceScore,
+      review_status: "unreviewed",
+      reviewed_by: null,
+      reviewed_at: null,
       generated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
@@ -4069,8 +4214,9 @@ export async function getRecentContactMemories(
   workspaceId: string,
   contactId: string,
   limit: number,
+  explicitAccessToken?: string,
 ): Promise<MemoriesResult> {
-  const accessToken = await getAccessToken();
+  const accessToken = await getAccessToken(explicitAccessToken);
 
   if (!accessToken) {
     return memoriesError(
