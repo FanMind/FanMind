@@ -197,11 +197,11 @@ Prevents two agents/sessions from independently working the same task.
 - Task: FM-MEM-009
 - Status: ACTIVE
 - Holder: ChatGPT legacy issue reconciliation session 2026-08-30
-- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / pending
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / #1033
 - Acquired: 2026-08-30
 - Risk: R2 governance and GitHub issue metadata only
 - Scope: map #642/#643/#644 to exact current evidence/remaining gates, install drift checks, and reconcile their GitHub state after exact-head merge; no code reimplementation, provider, database, billing, Production or Mobile build action.
-- Resume from: implement the canonical map and checks, then merge before changing issue bodies/states.
+- Resume from: the canonical map/checks are implemented and counterchecked; complete the final exact-head bookkeeping review, merge #1033, then change only the reconciled issue bodies/states.
 
 ## LOCK-FM-MEM-005
 - Task: FM-MEM-005
