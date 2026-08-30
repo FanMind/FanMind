@@ -261,9 +261,10 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 - [x] Android debug with a local debug key and code-signing-free iOS Simulator native compilation in CI, both without release/store credentials;
 - [x] main-only read-only EAS project/public-environment resource check
       prepared without build, submit, update or signing access;
-- [x] main-only Android Production AAB control prepared with an action-time
+- [x] main-only Android Production AAB control with an action-time
       Store-readiness gate, frozen existing credentials, terminal artifact
-      verification and disabled Submit/Update;
+      verification and disabled Submit/Update; exact run `33316172583`
+      completed one verified Android `1.0.0` AAB for `e964150...`;
 - [x] bounded offline read cache with the central purge contract;
 - [x] native notification configuration and fail-closed follow-up response routing;
 - [x] native wordmark splashscreen and prepared store metadata;
@@ -287,19 +288,23 @@ keinen echten Gerätetest und läuft ausschließlich mit privaten Nachweisen.
 
 ### Phase B — external verification
 
-- [ ] allow `fanmind://reset-password` in the correct Supabase Auth project;
+- [x] allow `fanmind://reset-password` in the confirmed Production Supabase
+      Auth project;
 - [ ] real password-recovery e-mail/device test;
-- [ ] EAS project ID and credentials;
-- [ ] protected `mobile-development`, `mobile-preview` and
-      `mobile-production` environments plus successful read-only resource
-      checks;
-- [ ] signed Android preview build;
-- [ ] signed iOS preview/TestFlight build;
-- [ ] real Android and iOS device test records.
+- [x] exact EAS project binding and existing frozen Android signing credentials
+      proven by the accepted Preview and Production AAB runs;
+- [ ] protected `mobile-development` environment acceptance; Preview and
+      Production project/public-environment checks are accepted on their exact
+      recorded commits;
+- [x] signed Android preview build plus bounded owner UI/runtime acceptance;
+- [ ] signed iOS preview/TestFlight build and iOS signing acceptance in Phase 8;
+- [ ] complete private 19-check Android device record; the iOS device record
+      belongs to Phase 8;
 - [ ] successful external Mobile Push Staging resource, migration and
       rollback-only acceptance runs before server-key activation;
-- [ ] one exact-commit Android Production AAB plus separate Play internal-test
-      upload after account/app-record readiness;
+- [x] one exact-commit Android Production AAB;
+- [ ] separate Play app record/internal-test upload after Google account
+      readiness;
 
 ### Phase C
 

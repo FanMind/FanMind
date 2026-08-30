@@ -78,6 +78,42 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Open follow-up: complete the private 19-check Android acceptance record/validator, Supabase recovery redirect and applicable Push/Store controls separately; iOS/TestFlight remains Phase 8.
 - Work lock released: yes; no new implementation lock was acquired.
 
+## RECEIPT-FM-MOB-001-ANDROID-STORE-AAB-20260830
+- Task: FM-MOB-001 / FM-CR-006
+- Started: 2026-08-30 Europe/Vienna
+- Finished: 2026-08-30 after exact Production readiness, one verified AAB and external-blocker countercheck
+- Branch/PR: `mobile-android-store-release-20260830` / #1028; final head `58b851658679de2c625ce19b7710ecdf0ab5cc08`; squash merge `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`
+- Preflight checked: AGENTS, Source of Truth, Project Memory Protocol/Execution/Quality/Countercheck/Current State/Finishline/NBA/External Acceptance/Handoff/Started Work/Locks/Open Loops/Task Ledger/Dependencies/Decisions/Failed Attempts/Assumptions/Contradictions/Change Requests/Evidence/Freshness/Drift, Mobile release/store/device docs, exact current Git/PR/CI state, Production EAS workflow and current Google Play/Supabase portal state.
+- Prior attempts found: Preview binding/build and bounded device UI acceptance were already complete and must not be repeated. Historical Production readiness was stale/fail-closed. The Google developer account had previously been observed in identity review and app creation was disabled. The Recovery redirect remained externally open.
+- Dependency result: exact Store implementation merged; existing EAS project/token/signing credentials and Production public bindings were available. Google Play account review prevents app creation/upload but does not prevent a separately controlled AAB. Supabase redirect and full private device runbook remain separate external controls.
+- Planned evidence: ten exact-head PR gates; exact merged commit; one protected write-disabled Production resource check; one protected Production AAB with frozen credentials, terminal exact-commit artifact verification, redacted receipt and cleanup; live Google/Supabase negative-state countercheck.
+- Changes made: PR #1028 prepared version `1.0.0`, explicit `app-bundle` Production profile, Store preflight and exact one-AAB workflow. After merge, readiness run `33316105624` and Store-build run `33316172583` were completed. This reconciliation records their result and the remaining external boundaries; it creates no second build.
+- Checks/tests: PR final head passed all ten applicable GitHub gates. Readiness job `99269748215` passed exact project and Production public-environment verification with build/submit/update disabled. Store-build job `99269924756` passed `npm run store:check`, project/environment verification, exact one-build preflight, terminal completion validation, receipt upload and cleanup. Live portal inspection confirmed the Google and Supabase blockers without mutation.
+- Final diff counterchecked: yes for the merged Store implementation and runtime evidence; the evidence-closeout diff remains subject to its own exact-head PR gates.
+- Regression/security countercheck: no Submit/Update, credential creation, Play app/upload/form/review/publication, Auth setting save, DB/schema/RLS write, push activation, iOS/TestFlight or private build value exposure. The strongest falsifier—an absent/failed/mismatched terminal AAB—was rejected by job `99269924756`; the remaining external blocker is independently visible in Google Play.
+- Evidence produced: FM-EV-028; PR #1028; Production readiness `33316105624` / `99269748215`; Store build `33316172583` / `99269924756`; redacted receipt artifact only.
+- Result status: VERIFIED for the exact Android Production AAB; overall FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED.
+- Open follow-up: save and real-device-test `fanmind://reset-password`; complete the private 19-check Android validator; wait for Google account approval, then create the Play app record and complete Data Safety/test-track/upload/review acceptance. Do not queue another AAB.
+- Work lock released: no; `LOCK-FM-MOB-001-ANDROID-STORE-20260830` remains ACTIVE for the externally blocked Play continuation.
+
+## RECEIPT-FM-MOB-001-RECOVERY-REDIRECT-20260830
+- Task: FM-MOB-001 / EXT-MOBILE-REDIRECT
+- Started: 2026-08-30 after the AAB closeout countercheck
+- Finished: 2026-08-30 after the confirmed one-setting write and immediate re-read
+- Branch/PR: `docs/mobile-production-aab-closeout-20260830` / pending evidence-closeout PR at execution time
+- Preflight checked: exact FanMind Production Supabase project context, Site URL `https://fanmind.ch`, the three existing redirect URLs, absence of `fanmind://reset-password`, repository Recovery route contract, current Supabase mobile deep-link guidance and the explicit action-time owner confirmation.
+- Prior attempts found: the exact value had been entered into the Add-URL dialog during read-only reconciliation but deliberately not saved before confirmation. No previous Production Auth change was inferred.
+- Dependency result: exact Production target and exact redirect were independently identified; no credential, schema/RLS, user or other provider setting was required.
+- Planned evidence: save only `fanmind://reset-password`; re-read the exact redirect list; require the prior three entries to remain and the total to become four; leave real Recovery mail/device acceptance separate.
+- Changes made: saved one Production Auth redirect, `fanmind://reset-password`, after explicit owner confirmation.
+- Checks/tests: the post-write Production URL Configuration showed the prior three entries unchanged plus exact `fanmind://reset-password` and `Total URLs: 4`.
+- Final diff counterchecked: yes for the provider setting; the repository evidence-closeout diff remains subject to exact-head PR gates.
+- Regression/security countercheck: no Site URL/other redirect/Auth-provider/user/DB/schema/RLS/EAS/signing/Play/push/iOS change, no Recovery mail request and no secret/private URL exposure.
+- Evidence produced: FM-EV-029 and `EV-MOBILE-RECOVERY-REDIRECT-20260830`.
+- Result status: VERIFIED for the exact Production Auth redirect setting only; EXT-MOBILE-REDIRECT stays OPEN until the real signed-device positive/negative flow passes.
+- Open follow-up: execute the private Recovery/device checks against the accepted signed Android build; do not repeat the provider write unless a fresh read proves drift.
+- Work lock released: no; `LOCK-FM-MOB-001-ANDROID-STORE-20260830` remains ACTIVE for Android Recovery/Play continuation.
+
 ## RECEIPT-FM-MEM-005-20260819-1214
 - Task: FM-MEM-005
 - Started: 2026-08-19 12:14 Europe/Vienna

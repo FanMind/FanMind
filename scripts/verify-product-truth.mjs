@@ -1504,8 +1504,23 @@ requireText(
 );
 requireText(
   "docs/mobile/BETA_RELEASE.md",
-  "Dieser Vorabcheck ist vorbereitet, aber noch nicht extern ausgeführt.",
-  "Das Mobile-Runbook muss den weiterhin offenen externen EAS-Nachweis ehrlich dokumentieren.",
+  "geschützten Läufe `33298699290` und `33316105624`",
+  "Das Mobile-Runbook muss die getrennt verifizierten Preview-/Production-Ressourcenchecks exakt dokumentieren.",
+);
+requireText(
+  "docs/mobile/BETA_RELEASE.md",
+  "Store-Build `33316172583` bestanden",
+  "Das Mobile-Runbook muss den verifizierten Production-AAB-Lauf exakt dokumentieren.",
+);
+requireText(
+  "docs/mobile/BETA_RELEASE.md",
+  "Store-Build ist deshalb noch keine Veröffentlichung.",
+  "Das Mobile-Runbook muss Buildnachweis und Store-Veröffentlichung weiterhin strikt trennen.",
+);
+forbidIn(
+  "docs/mobile/BETA_RELEASE.md",
+  /Dieser Vorabcheck ist vorbereitet, aber noch nicht extern ausgeführt\./,
+  "Das Mobile-Runbook darf die bereits verifizierten EAS-Ressourcenchecks nicht wieder als unausgeführt darstellen.",
 );
 requireText(
   "docs/mobile/PUSH_DELIVERY.md",

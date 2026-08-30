@@ -145,7 +145,8 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Client-Konfiguration. Geschützte Owner-/Projektvariablen ergänzen die
   statische App-Konfiguration erst bei der Expo-Auswertung. Der Workflow
   verwendet weder Build, Submit noch Update und lädt keine Signing Credentials;
-  der externe Lauf und signierte Builds bleiben offen.
+  Preview und Production sind über die geschützten Läufe `33298699290` und
+  `33316105624` für ihre jeweiligen exakten Merge-Commits bestätigt.
 - Mobile-Build-Abschluss: Der getrennte signierte Build-Ablauf prüft nach
   exakt einer validierten Queue-Antwort mit `build:view` denselben Commit,
   Plattform, Profil, interne Distribution, erfolgreichen EAS-Endstatus und
@@ -156,8 +157,13 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Commit zuerst Store-Metadaten, Branding, Version, native Identität und das
   AAB-Profil, danach die exakte EAS-/FanMind-Production-Bindung. Vorhandene
   Credentials werden eingefroren; akzeptiert wird genau ein erfolgreiches
-  Store-Artefakt mit redaktiertem Receipt. Submit, Update, Play-App-Anlage und
-  Veröffentlichung bleiben getrennt und deaktiviert.
+  Store-Artefakt mit redaktiertem Receipt. Auf exaktem `main`
+  `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` bestand der geschützte
+  Production-Ressourcencheck; der getrennte Lauf `33316172583` erzeugte und
+  verifizierte genau ein Android-`1.0.0`-AAB. Submit, Update, Play-App-Anlage
+  und Veröffentlichung blieben getrennt und deaktiviert. Google prüft das
+  Entwicklerkonto weiterhin; Telefonbestätigung und App-Anlage sind bis dahin
+  gesperrt.
 - Mobile-Push-Staging-Kontrolle: Die Registrierungstabelle ist auf dem
   getrennten Supabase-Staging mit RLS angewendet und besitzt
   jetzt getrennte manuelle Pfade für read-only Ressourcenprüfung,
@@ -375,22 +381,24 @@ Bereits vorhanden:
 - separate Mobile-CI, Expo Doctor, TypeScript-Check, Android-/iOS-JavaScript-Bundles, isolierter Native-Prebuild sowie echtes Android-Debug-APK und codesign-freie iOS-Simulator-App als reine Build-Nachweise.
 - kontrollierter signierter EAS-Workflow mit redigierter Abschlussprüfung für
   exakten Commit, Plattform, Profil, interne Distribution, erfolgreichen
-  Endstatus und vorhandenes internes HTTPS-Artefakt; der reale externe Lauf
-  steht noch aus.
+  Endstatus und vorhandenes internes HTTPS-Artefakt; ein exakter Android-
+  Preview-Build und die begrenzte UI-/Runtime-Abnahme sind bestätigt.
 
 Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
 
-- Supabase-Redirect-Freigabe und realer E-Mail-/Gerätetest für `fanmind://reset-password`;
-- EAS-Projekt, Expo-Token, getrennte öffentliche EAS-Umgebungen und erstmaliger
-  Read-only-Ressourcencheck;
-- Signing Credentials und signierter interner Android-Build;
-- Apple Developer / App Store Connect und iOS-TestFlight;
+- realer E-Mail-/Gerätetest für `fanmind://reset-password`; der exakte Redirect
+  ist in der bestätigten Production-Auth-Allowlist gespeichert;
+- vollständiger privater receipt-gebundener 19-Punkte-Android-Gerätenachweis;
+- Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
+  Data Safety, Screenshots, portalgefordertes Testprogramm und Upload des
+  bereits verifizierten Android-`1.0.0`-AAB;
 - visuelle Icon-Abnahme sowie reale Push-Berechtigungs-/Registrierungsabnahme
   im signierten Build; anschließend eigener Delivery-Ledger-Entscheid,
   rollback-only Staging-Abnahme und genau ein synthetischer serverseitiger
   Send-/Receipt-Nachweis;
-- finale Store-Screenshots, Datenschutzangaben und Portalabnahme aus signierten Builds;
-- reale Android-/iOS-Gerätetests.
+- finale Datenschutz-/Rechts- und Play-Portalabnahme;
+- Apple Developer / App Store Connect, iOS-Gerätenachweis und TestFlight erst
+  in Phase 8.
 
 Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 `docs/mobile/PUSH_DELIVERY.md` und `docs/mobile/BETA_RELEASE.md`.

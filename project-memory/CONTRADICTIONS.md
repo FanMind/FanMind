@@ -221,4 +221,19 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Evidence: FM-EV-025; run `33260695232`; job `99122008690`; merge `93496a4afac9b3b315c9985afbbce02b8524fc44`.
 - Falsification question: What observation would prove our conclusion wrong? A current protected read-only resource check showing project/environment/target drift, or an artifact not bound to the recorded commit/profile/platform, would invalidate the accepted Preview-resource state.
 
+## CTR-FM-016
+- Date: 2026-08-30
+- Updated: 2026-08-30
+- Related task/change: FM-MOB-001 / FM-CR-006
+- Risk: R3
+- Source A: the pre-build Mobile documentation and Project Memory handoff state.
+- Claim A: Production EAS readiness, Signing Credentials and the first Android Store AAB remain externally open and the Store workflow is only prepared.
+- Source B: current protected GitHub/EAS completion evidence and the live Google Play account state.
+- Claim B: Production readiness run `33316105624` / job `99269748215` passed on exact merge `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; Store-build run `33316172583` / job `99269924756` then completed and terminally verified exactly one Android `1.0.0` AAB with Submit/Update disabled. Google account review, not an absent AAB, currently prevents app creation and upload.
+- Stronger/current evidence: the later exact-commit protected workflow logs and terminal artifact verification supersede the pre-build handoff without implying Play acceptance or publication.
+- Status: RESOLVED
+- Resolution/action: register FM-EV-028 and the redacted execution receipt, reconcile Mobile canonical docs and operational registers, preserve the existing AAB and continue only with the separate Recovery/device and Play-portal controls. Do not queue a second AAB merely to resume portal work.
+- Evidence: FM-EV-028; protected runs `33316105624` and `33316172583`; jobs `99269748215` and `99269924756`; live Google Play Console observation dated 2026-08-30.
+- Falsification question: What observation would prove our conclusion wrong? A protected EAS record showing that the terminal artifact belongs to another commit/platform/profile, is not an AAB, or is no longer retrievable would invalidate the accepted Store-build state and require a new exact authorization rather than an automatic retry.
+
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.

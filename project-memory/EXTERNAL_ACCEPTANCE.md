@@ -10,6 +10,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Supabase Auth
 - Acceptance: exact approved project allows `fanmind://reset-password`; real signed-device recovery positive/negative flow passes.
+- Current evidence: after separate action-time owner confirmation on 2026-08-30, `fanmind://reset-password` was saved in the exact Production URL Configuration and independently re-read as the fourth allowlisted URL. The real signed-device positive/negative Recovery flow remains unproven, so this combined external control stays OPEN.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-EAS
@@ -18,7 +19,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Expo/EAS
 - Acceptance: exact owner/project/environments validated, token access works, no Production target drift.
-- Current evidence: protected `preview` run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` reverified the existing EAS project binding and public Preview environment, authorized exactly one Android internal build, verified the HTTPS artifact, stored the redacted receipt and cleaned temporary state. Submit/Update/Production remained disabled. No secret or private artifact URL is retained here.
+- Current evidence: protected `preview` run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` accepted Preview. Protected Production readiness run `33316105624`, job `99269748215`, on exact `main` `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` reverified the existing EAS project binding and public FanMind Production environment without release writes. The later Store-build job repeated those checks before the one AAB. No secret or private artifact URL is retained here.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-ANDROID
@@ -28,6 +29,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - External system: Android signed internal distribution / real device
 - Acceptance: signed exact-commit build and private device acceptance per mobile runbook.
 - Current evidence: exact signed `preview` Android artifact for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` is verified by run `33298699290` / job `99222705186`. On 2026-08-30 the owner installed and inspected that build on a real Android device and accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result. The complete receipt-bound 19-check Android runbook, including recovery, cache-failure and logout-purge checks plus private validator PASS/evidence hash, remains open; no private build URL or ID is retained here.
+- Store-build evidence: run `33316172583` / job `99269924756` completed exactly one signed Android Production AAB for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, verified terminal artifact/commit/platform/profile/store class, stored a redacted receipt and cleaned temporary state. This is build evidence, not a replacement for the private device runbook or Play acceptance.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-IOS
@@ -46,6 +48,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Expo push + Apple/Google store portals
 - Acceptance: separated push gates plus final screenshots/privacy/data-safety/store evidence from signed builds, limited to the platform scope currently being accepted; iOS/TestFlight-specific portal acceptance is Phase 8 per FM-DEC-009.
+- Current evidence: the Android `1.0.0` Production AAB exists and is verified by `33316172583` / `99269924756`; Submit and Update were disabled. Live Google Play Console inspection on 2026-08-30 showed identity/document review still in progress, phone verification locked and `App erstellen` disabled. No Play app record, upload, form submission, review request or publication occurred.
 - Repository evidence alone sufficient: no
 
 ## EXT-AI-PRODUCT-DECISION

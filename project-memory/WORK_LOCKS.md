@@ -20,7 +20,8 @@ Prevents two agents/sessions from independently working the same task.
 - Risk: R3 Mobile Production build and external Store acceptance
 - Scope: first-release version, protected one-AAB Production build control, exact FanMind Production binding, Android recovery/device acceptance handoff and Google Play readiness/submission. No automatic Submit/Update, no database/schema/RLS mutation, no push-delivery activation and no iOS/TestFlight Phase-8 start.
 - Current blocker: Google is still reviewing the developer identity/documents; phone verification and Play app creation are disabled until that review completes.
-- Resume from: finish repository verification and PR first; run Production resource verification before one AAB; require immediate confirmation before any Play form submission or publication.
+- Completed under this lock: PR #1028 passed its exact-head gates and merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; Production readiness run `33316105624` / job `99269748215` passed, and Store-build run `33316172583` / job `99269924756` completed exactly one verified Android `1.0.0` AAB with Submit/Update disabled, redacted receipt and cleanup.
+- Resume from: never repeat the AAB build. Complete the real-device Recovery proof for the already saved Production redirect; after Google approval, verify phone/account state, create the Play app record and continue with Data Safety, screenshots, required test track and AAB upload. Require immediate confirmation before any Play submission for review or publication.
 
 ## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
 - Task: FM-MOB-004

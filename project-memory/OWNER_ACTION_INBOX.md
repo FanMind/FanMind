@@ -74,9 +74,18 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Where: exact Expo/EAS FanMind account/project and GitHub Environment `mobile-preview`; Supabase Auth redirect is a separate external acceptance check.
 - Prior blocker: read-only run `33000433320`, job `98280538304`, found the protected Preview binding blank and failed closed before any build.
 - Result: protected run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` reverified the existing EAS project binding and public Preview environment, then completed exactly one Android internal build with HTTPS artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
-- Remaining external work: the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation is owner-accepted on the latest exact build. The complete private receipt-bound 19-check Android runbook/validator and separate Supabase Auth redirect/recovery proof remain open; Push/Store remain separate and iOS/TestFlight remains Phase 8.
+- Remaining external work: the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation is owner-accepted on the latest exact build, and the exact Production Supabase Auth redirect is saved. The complete private receipt-bound 19-check Android runbook/validator and real Recovery flow remain open; Push/Store remain separate and iOS/TestFlight remains Phase 8.
 - Risk: R3
 - Forbidden: exposing project IDs/secrets/private artifact values, EAS reinitialization, automatic repeat build, Submit/Update/Store action, Production crossover or Supabase/Auth/DB mutation.
+
+## FM-MOB-OWNER-002 — Complete Google Play account verification and app creation
+- Status: BLOCKED_BY_PROVIDER
+- Where: exact existing Google Play developer account and only the future FanMind app record.
+- Current evidence: live Play Console inspection on 2026-08-30 shows Google is still reviewing the uploaded identity documents. Contact-phone verification and `App erstellen` are disabled until that review completes. The exact Android `1.0.0` Production AAB already exists through run `33316172583`; do not rebuild it.
+- Resume trigger: Google sends the account-owner approval email and the Console enables phone verification/app creation.
+- Required next sequence: confirm the contact phone/account state, create the FanMind app record, complete Data Safety/store listing/screenshots and the portal-required test program, then upload the already verified AAB. Request action-time confirmation before submitting for review or publishing.
+- Forbidden: another AAB build, invented Play identifiers/test requirements, bypassing account review, claiming publication from EAS success, or starting iOS/TestFlight Phase 8.
+- Risk: R3
 
 ## FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
 - Status: DEFERRED_BY_OWNER

@@ -213,17 +213,21 @@ Aktiv im App-Kern:
 
 Noch nicht als ausgelieferte Store-App freigegeben:
 
-- Supabase-Redirect-Freigabe und realer E-Mail-/Gerätetest für `fanmind://reset-password`;
-- EAS-Projekt, Expo-Token, geschützte Mobile-Environments und erstmaliger
-  externer Read-only-Ressourcencheck;
-- Signing Credentials;
-- signierter interner Android-Build;
-- Apple Developer / App Store Connect und TestFlight;
+- realer E-Mail-/Gerätetest für `fanmind://reset-password`; der exakte Redirect
+  ist seit 30. August 2026 in der bestätigten Production-Auth-Allowlist
+  gespeichert, ersetzt aber noch keinen positiven/negativen Recovery-Beleg;
+- vollständiger privater, receipt-gebundener 19-Punkte-Gerätenachweis auf
+  Android einschließlich Recovery, Offline-Grenzen, Branding und
+  Account-Löschanfrage;
 - visuelle App-Icon-Abnahme sowie reale Push-Berechtigungs- und
   Registrierungsabnahme im signierten Build; echte Zustellung erst nach
   separater Server-/Staging-Freigabe;
-- finale Store-Screenshots, Datenschutzangaben und Portalabnahme aus signierten Builds;
-- realer End-to-End-Gerätetest auf Android und iOS.
+- Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
+  Data Safety, finale Screenshots, das im Portal verlangte Testprogramm,
+  Upload des bereits verifizierten AAB und die getrennt bestätigte
+  Portal-/Review-/Veröffentlichungsabnahme;
+- Apple Developer / App Store Connect, iOS-Gerätenachweis und TestFlight erst
+  in der bewusst nach Phase 7 verschobenen Phase 8.
 
 Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
 
@@ -355,14 +359,16 @@ zwingende externe Freigabe noch fehlt.
 - Umgebungs-Governance: schreibende Remote-Tests sind außerhalb eindeutig identifizierter Staging- oder Testumgebungen blockiert.
 - Restore-Drill: Zielgrenzen, transaktionaler Runner und ein strikt redigierter Evidence-Validator sind implementiert. Vor jeder geschützten Phase prüft ein root-owned, SHA-gebundenes und secretfreies Host-Gate die erwartete Runner-Identität `fanmind-restore-01` und die feste lokale Toolchain. Das Repository ist als `FanMind/FanMind` organisationsgeführt; die Self-hosted-Jobs verlangen die ausgewählte Organisationsgruppe `fanmind-restore-drill` plus fünf exakte Labels und die auf genau drei `main`-Restore-Workflows begrenzte Allowlist. Die Labels allein sind keine Sicherheitsgrenze, und die veränderliche Gruppenrichtlinie muss vor jedem späteren R4-Schreibschritt erneut geprüft werden. Der geschützte Read-only-Lauf `32582640853` auf Commit `b75f68ecc7999a9b492051aecc2421b9b597dd18` bestätigte am 2026-08-22 die Host-/Gruppenbindung, einen mit dem root-owned Ubuntu-Truststore verifizierten TLS-Checkout, das verschlüsselte Full-Backup im checksum-only-Modus sowie den isolierten PostgreSQL-17-Zielkatalog mit TLS `verify-full`, allen drei Rollen und `pgcrypto`; keine Entschlüsselung und kein Write liefen. Ressourcen- und Datenbankworkflow benötigen jeweils zwei frische One-Job-JIT-Runner; ein persistenter Host oder das Label allein genügt nicht. Der getrennte commit-genaue Datenbank-Workflow wiederholt alle Gates, friert age-Identity, Passfile und CA symlink-sicher ein, erzwingt TLS `verify-full` und stellt nach dem Restore ausschließlich drei kurzlebige private Receipts bereit. Das vertrauliche Full-Backup-Receipt enthält die begrenzte Liste erforderlicher Datenbankrollennamen für die Prewrite-Prüfung; Runner- und Postcheck-Receipt bleiben namenfrei. Der Datenbankpfad verwendet einen isolierten, selbst kontrollierten PostgreSQL-17-Cluster statt eines gehosteten Supabase-Ziels, archiviert Owner und ACLs aus demselben exportierten Snapshot und bindet Objekt-/ACL-, Rollen- und Datenbank-Containerfingerprints durch Manifest und Receipts. Der Runner akzeptiert die receipt-gebundene vorinstallierte Extension-Baseline beim Leernachweis und erzeugt nur bei 5/5 vorhandenen Kerntabellen, 5/5 aktivierter RLS, 5/5 Policy-Abdeckung und exaktem Authorization-Postcheck einen separaten privaten, SHA-gebundenen Datenbank-Postcheck-Beleg; manuelle Schema-/RLS-Freigaben akzeptiert Evidence-Schema 6 nicht. Datenbank-Restore, Storage, Server-Konfiguration, Wegwerfziel-Cleanup und finale Evidenznachweise bleiben offen und benötigen ihre jeweils exakte geschützte Freigabe.
 - Mobile-Release: Ein eigener manueller `main`-gebundener
-  Read-only-Ressourcencheck ist vorbereitet. Er prüft pro geschützter
+  Read-only-Ressourcencheck prüft pro geschützter
   `mobile-development`-, `mobile-preview`- oder `mobile-production`-Umgebung
   nur die EAS-Projektbindung, die native App-Identität und die drei erlaubten
   öffentlichen Clientwerte. Build, Submit, Update und Signing bleiben
-  deaktiviert; der tatsächliche EAS-Lauf und signierte Builds bleiben extern
-  offen.
+  deaktiviert. Preview ist über den geschützten Lauf `33298699290` auf dem
+  exakten Merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` bestätigt; Production
+  wurde über Lauf `33316105624` auf dem exakten Merge
+  `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` erneut bestätigt.
 - Mobile-Signing: Ein getrennter manueller Workflow ist als kontrollierte
-  Brücke zum ersten signierten internen Build vorbereitet. Er akzeptiert nur
+  Brücke zu signierten internen Builds vorhanden. Er akzeptiert nur
   `development` oder `preview`, Android oder iOS, prüft zuerst Projektbindung
   und öffentliche Umgebung, friert bestehende Credentials ein und reiht genau
   einen Build ohne blockierenden Queue-Aufruf ein. Anschließend prüft er den
@@ -374,16 +380,23 @@ zwingende externe Freigabe noch fehlt.
   Queue- oder Abschlussantwort als nicht automatisch wiederholbarer, unklarer Zustand
   ausgewiesen und muss zuerst direkt im geschützten EAS-Projekt geprüft werden;
   auch ein bestätigtes internes Artefakt ist noch kein Geräte-, Push-, Recovery-
-  oder Store-Nachweis.
+  oder Store-Nachweis. Der geschützte Android-Preview-Lauf `33298699290`
+  lieferte ein verifiziertes internes Artefakt; die begrenzte UI-/Runtime-
+  Abnahme ist akzeptiert, der vollständige private 19-Punkte-Nachweis bleibt
+  getrennt offen.
 - Mobile-Android-Store-Build: Ein zweiter, ausschließlich Android/
-  `production` erlaubender manueller `main`-Workflow ist vorbereitet. Er führt
+  `production` erlaubender manueller `main`-Workflow führt
   nach der Lockfile-Installation auf dem exakten Commit zuerst
   `npm run store:check` aus, revalidiert anschließend EAS-Projekt und
   öffentliche FanMind-Production-Ziele und verwendet nur bereits vorhandene,
   eingefrorene Signing-Credentials. Er akzeptiert genau ein terminal
   erfolgreiches Store-Artefakt für denselben Commit und speichert nur einen
-  redaktierten Receipt. Submit und Update bleiben technisch deaktiviert; der
-  Workflow erzeugt weder einen Play-App-Datensatz noch eine Veröffentlichung.
+  redaktierten Receipt. Der geschützte Lauf `33316172583` schloss auf
+  `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` genau ein Android-`1.0.0`-AAB
+  erfolgreich ab. Submit und Update blieben technisch deaktiviert; der
+  Workflow erzeugte weder einen Play-App-Datensatz noch eine Veröffentlichung.
+  Das bestehende AAB ist für die Portalfortsetzung zu erhalten und darf dafür
+  nicht erneut gebaut werden.
 - Mobile-Geräteabnahme: Der erfolgreiche signierte Build erzeugt nur einen
   kurzlebigen redigierten Receipt ohne Build-ID oder Artefakt-URL. Der private
   Android-/iOS-Gerätenachweis wird an dessen SHA sowie den exakten geprüften

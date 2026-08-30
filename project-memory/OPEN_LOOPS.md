@@ -22,9 +22,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-MOB-001 / FM-MOB-003 / FM-MOB-004
 - Status: OPEN
 - Updated: 2026-08-30
-- Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result on the exact latest Android Preview, but the broader receipt-bound 19-check Android runbook, Supabase Recovery/Purge and applicable Push/Store acceptance remain open for FM-MOB-001. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
-- Close when: the private validator passes a complete 19-check Android record bound to the exact signed build/commit, and Recovery/Purge plus applicable Push/Store acceptance are separately evidence-bound.
-- Next check: preserve the accepted UI observation and continue with the private Android runbook for exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`, including recovery, cache-failure and logout-purge evidence. Do not reinstall the superseded `93496a4...` build or queue another build merely to repeat the accepted UI checks. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
+- Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result, one exact Production AAB is verified for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, and the exact Production Supabase Recovery redirect is saved. The broader receipt-bound 19-check Android runbook, real Recovery flow, Google Play app record/test-track/upload and applicable Push/Store acceptance remain open for FM-MOB-001. Google currently blocks app creation while developer identity/documents are reviewed. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
+- Close when: the private validator passes a complete 19-check Android record bound to the exact signed build/commit, Recovery/Purge is evidence-bound, and the applicable Google Play/internal-test/store controls are accepted.
+- Next check: do not queue another Store build. Real-device-test the saved `fanmind://reset-password` route under EXT-MOBILE-REDIRECT; after Google approval, confirm phone/account state, create the Play app record and upload the existing AAB into the portal-required test track. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
 
 ## FM-LOOP-004
 - Related: FM-AI-001
