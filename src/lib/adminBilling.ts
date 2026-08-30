@@ -85,6 +85,23 @@ export async function getAdminBillingWorkspace(workspaceId: string): Promise<{ w
 
 export type StripeInvoiceSummary = { id: string; status?: string | null; created?: string | null; subtotal?: number | null; total_tax_amounts?: number | null; total?: number | null; amount_due?: number | null; hosted_invoice_url?: string | null; invoice_pdf?: string | null };
 
+function stripeInvoiceTaxAmount(invoice: Record<string, unknown>): number | null {
+  const taxes = Array.isArray(invoice.total_taxes)
+    ? invoice.total_taxes
+    : Array.isArray(invoice.total_tax_amounts)
+      ? invoice.total_tax_amounts
+      : null;
+  if (!taxes) return null;
+  return taxes.reduce(
+    (sum, tax) =>
+      sum +
+      (typeof (tax as { amount?: unknown }).amount === "number"
+        ? (tax as { amount: number }).amount
+        : 0),
+    0,
+  );
+}
+
 export async function listStripeInvoicesForWorkspace(workspace: Pick<AdminBillingWorkspace, "stripe_customer_id">): Promise<{ invoices: StripeInvoiceSummary[]; error: string | null }> {
   const stripe = getStripeClient();
   if (!stripe || !workspace.stripe_customer_id) return { invoices: [], error: null };
@@ -94,7 +111,7 @@ export async function listStripeInvoicesForWorkspace(workspace: Pick<AdminBillin
       limit: 10,
     });
     const invoices = result.data as unknown as Array<Record<string, unknown>>;
-    return { invoices: invoices.map((invoice) => ({ id: String(invoice.id), status: typeof invoice.status === "string" ? invoice.status : null, created: typeof invoice.created === "number" ? new Date(invoice.created * 1000).toISOString() : null, subtotal: typeof invoice.subtotal === "number" ? invoice.subtotal : null, total_tax_amounts: Array.isArray(invoice.total_tax_amounts) ? invoice.total_tax_amounts.reduce((sum, tax) => sum + (typeof (tax as { amount?: unknown }).amount === "number" ? (tax as { amount: number }).amount : 0), 0) : null, total: typeof invoice.total === "number" ? invoice.total : null, amount_due: typeof invoice.amount_due === "number" ? invoice.amount_due : null, hosted_invoice_url: typeof invoice.hosted_invoice_url === "string" ? invoice.hosted_invoice_url : null, invoice_pdf: typeof invoice.invoice_pdf === "string" ? invoice.invoice_pdf : null })), error: null };
+    return { invoices: invoices.map((invoice) => ({ id: String(invoice.id), status: typeof invoice.status === "string" ? invoice.status : null, created: typeof invoice.created === "number" ? new Date(invoice.created * 1000).toISOString() : null, subtotal: typeof invoice.subtotal === "number" ? invoice.subtotal : null, total_tax_amounts: stripeInvoiceTaxAmount(invoice), total: typeof invoice.total === "number" ? invoice.total : null, amount_due: typeof invoice.amount_due === "number" ? invoice.amount_due : null, hosted_invoice_url: typeof invoice.hosted_invoice_url === "string" ? invoice.hosted_invoice_url : null, invoice_pdf: typeof invoice.invoice_pdf === "string" ? invoice.invoice_pdf : null })), error: null };
   } catch {
     return { invoices: [], error: "Stripe-Rechnungen konnten nicht geladen werden." };
   }

@@ -172,3 +172,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: the Expo package compatibility matrix is mutable within SDK 57; the older lock installed `expo@57.0.13` and related earlier patches while the current authoritative Doctor expected `expo@57.0.18` and the corresponding patch set.
 - Decision: use one temporary PR-only, contents-read GitHub workflow to install the existing lock, run `npx expo install --fix`, and export only `apps/mobile/package.json` plus `apps/mobile/package-lock.json`. The first temporary run failed before mutation because dependencies were not installed; the corrected run `33252966832` succeeded. Consume its artifact, remove the temporary workflow from the final tree, then require a fresh complete exact-head Mobile CI pass.
 - Do not repeat: do not suppress Expo Doctor, hand-edit integrity hashes, or retry the unchanged lock. Do not merge the temporary generation workflow.
+
+## FM-FAIL-018
+- Date: 2026-08-30
+- Status: RECONCILED_LOCAL_CACHE_COLLISION
+- Area: local Next.js production-build verification for FM-CR-009
+- Attempt: run the full Operations suite, TypeScript/lint, Project Memory checks and `next build` concurrently in one worktree after an earlier successful build.
+- Result: the build stopped before compilation with `Failed to open database` / `Loading persistence directory failed` / `invalid digit found in string`; all independent code/tests passed. Repeating against the same cache reproduced the local failure.
+- Cause: concurrent local verification left the ignored `.next` Turbopack persistence database inconsistent; this was a generated-cache failure, not a source/type/build error.
+- Decision: confirm `.next` is repository-ignored, remove only that exact generated cache, then rerun the Production build sequentially. The clean build compiled, typechecked and generated all 73 static pages successfully; no tracked file, runtime, provider or external resource was changed by the cleanup.
+- Do not repeat: do not run multiple Next builds or build-adjacent writers concurrently in one worktree, and never treat generated-cache corruption as a reason to change source or suppress the build gate.

@@ -450,7 +450,7 @@ test("real Stripe customer with invoices only shows Stripe invoice data", () => 
         amount_due: 31200,
         amount_paid: 31200,
         subtotal: 31200,
-        total_tax_amounts: [{ amount: 0 }],
+        total_taxes: [{ amount: 0 }],
         total: 31200,
         hosted_invoice_url: "https://pay.stripe.com/invoice/test",
         invoice_pdf: "https://pay.stripe.com/invoice/test/pdf",
@@ -468,12 +468,48 @@ test("real Stripe customer with invoices only shows Stripe invoice data", () => 
     amount_due: 31200,
     amount_paid: 31200,
     subtotal: 31200,
-    total_tax_amounts: [{ amount: 0 }],
+    total_taxes: [{ amount: 0 }],
     total: 31200,
     hosted_invoice_url: "https://pay.stripe.com/invoice/test",
     invoice_pdf: "https://pay.stripe.com/invoice/test/pdf",
   }));
   assert.equal(invoices[0].isDemo, undefined);
+});
+
+test("invoice tax mapping prefers current total_taxes and retains transition compatibility", () => {
+  const customerBillingSource = fs.readFileSync(
+    "src/lib/customerBilling.ts",
+    "utf8",
+  );
+  const adminBillingSource = fs.readFileSync("src/lib/adminBilling.ts", "utf8");
+  assert.match(
+    customerBillingSource,
+    /Array\.isArray\(source\.total_taxes\)[\s\S]*source\.total_tax_amounts/u,
+  );
+  assert.match(
+    adminBillingSource,
+    /Array\.isArray\(invoice\.total_taxes\)[\s\S]*stripeInvoiceTaxAmount\(invoice\)/u,
+  );
+  const base = {
+    id: "in_tax_contract",
+    created: 1,
+    currency: "eur",
+  };
+  assert.equal(
+    mapStripeInvoiceToCustomerInvoice({
+      ...base,
+      total_taxes: [{ amount: 2100 }, { amount: 25 }],
+      total_tax_amounts: [{ amount: 9999 }],
+    }).tax,
+    2125,
+  );
+  assert.equal(
+    mapStripeInvoiceToCustomerInvoice({
+      ...base,
+      total_tax_amounts: [{ amount: 100 }],
+    }).tax,
+    100,
+  );
 });
 
 test("internal 1 EUR daily Stripe subscription plan remains available", () => {
