@@ -21,6 +21,7 @@ Social-Media-Integrationen.
 | Feld | Wert |
 |---|---|
 | App-Name | FanMind |
+| Erstversion | `1.0.0` |
 | Untertitel / Kurzbeschreibung DE | KI-CRM: Kontakte & Follow-ups |
 | Subtitle / Short description EN | AI CRM: contacts & follow-ups |
 | Android Package | `ch.fanmind.app` |
@@ -181,3 +182,18 @@ und die Portalprüfung bleiben trotzdem erforderlich.
 - Google-Play- und App-Store-Konten samt realen IDs.
 - Apple-TestFlight-/Store-Scan des signierten Binaries auf zusätzliche
   Required-Reason-Hinweise.
+
+## Google-Play-Kontostand am 30. August 2026
+
+Das vorhandene Google-Play-Entwicklerkonto ist erreichbar, aber die
+Identitäts-/Dokumentenprüfung durch Google läuft noch. Bis zu deren Abschluss
+sind die Kontakttelefon-Verifizierung und das Anlegen des App-Datensatzes in
+der Play Console gesperrt. Dieser externe Kontostatus blockiert nicht die
+Repository-, Production-Environment- oder AAB-Vorbereitung, aber jede echte
+Übertragung und Veröffentlichung.
+
+Nach Freigabe sind Kontakttelefon, Kontotyp und das konkrete Testprogramm im
+Portal zu bestätigen. Falls Google für dieses Konto den Produktionszugang über
+einen geschlossenen Test verlangt, gilt die dann im Portal ausgewiesene
+Tester-/Daueranforderung; sie darf nicht aus Repository-Evidence abgeleitet
+oder übersprungen werden.
