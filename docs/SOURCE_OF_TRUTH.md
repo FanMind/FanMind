@@ -375,6 +375,15 @@ zwingende externe Freigabe noch fehlt.
   ausgewiesen und muss zuerst direkt im geschützten EAS-Projekt geprüft werden;
   auch ein bestätigtes internes Artefakt ist noch kein Geräte-, Push-, Recovery-
   oder Store-Nachweis.
+- Mobile-Android-Store-Build: Ein zweiter, ausschließlich Android/
+  `production` erlaubender manueller `main`-Workflow ist vorbereitet. Er führt
+  nach der Lockfile-Installation auf dem exakten Commit zuerst
+  `npm run store:check` aus, revalidiert anschließend EAS-Projekt und
+  öffentliche FanMind-Production-Ziele und verwendet nur bereits vorhandene,
+  eingefrorene Signing-Credentials. Er akzeptiert genau ein terminal
+  erfolgreiches Store-Artefakt für denselben Commit und speichert nur einen
+  redaktierten Receipt. Submit und Update bleiben technisch deaktiviert; der
+  Workflow erzeugt weder einen Play-App-Datensatz noch eine Veröffentlichung.
 - Mobile-Geräteabnahme: Der erfolgreiche signierte Build erzeugt nur einen
   kurzlebigen redigierten Receipt ohne Build-ID oder Artefakt-URL. Der private
   Android-/iOS-Gerätenachweis wird an dessen SHA sowie den exakten geprüften
