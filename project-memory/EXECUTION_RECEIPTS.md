@@ -37,14 +37,15 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Final diff counterchecked: yes; GitHub reported exactly 27 intended files, all 27 remote blob SHAs matched the locally tested files, no review threads existed, and the exact final PR head was terminal green before squash merge.
 - Regression/security countercheck: PASS locally for Workspace/contact filters, Owner-only mutation, Member read-only behavior, absence of message offline caching/service-role/automatic sending, and no schema/provider/Production mutation. Read-only Staging aggregate evidence found unseen inbound rows and three stored channels for Lena without selecting message contents.
 - Evidence produced: FM-EV-025.
-- Result status: VERIFIED_NOT_ACCEPTED.
-- Open follow-up: owner installs the existing exact-merge preview and confirms the four requested behaviors; iOS/TestFlight/push/Store remain separate.
+- Device acceptance: the owner's 2026-08-30 real-device acceptance of the superseding exact FM-MOB-004 Android Preview confirms the included FM-MOB-003 behaviors.
+- Result status: ACCEPTED.
+- Open follow-up: none under FM-MOB-003; recovery, Push/Store and Phase-8 iOS/TestFlight remain separate under FM-MOB-001.
 - Work lock released: yes.
 
 ## RECEIPT-FM-MOB-004-20260829
 - Task: FM-MOB-004
 - Started: 2026-08-29 Europe/Vienna
-- Finished: 2026-08-30 after exact-head green merge and one verified Android Preview; owner device acceptance remains external.
+- Finished: 2026-08-30 after exact-head green merge, one verified Android Preview and owner acceptance on a real Android device.
 - Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; final head `64329ac628188cf532281ddb742058612b9e9eb8`, squash merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`.
 - Preflight checked: current main, FM-MOB-001/002/003 evidence, FM-CR-004, Project Memory active registers, Mobile data/UI/API boundaries, existing Web fan-analysis action, RLS-protected report/follow-up contracts and signed-build workflow.
 - Prior attempts found: FM-MOB-003 already solved unseen fan inbox/channel/manual Follow-up and produced a valid preview; the owner device observation identified bounded UI/navigation/splash gaps. Recreating demo data, schema or AI controls would address the wrong layer.
@@ -56,8 +57,9 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Final diff counterchecked: yes; final remote tree matched the fully tested local tree before merge.
 - Regression/security countercheck: Initial local controls passed for explicit Workspace/contact/date filters and limits, RLS read boundary, Owner-only server action, Member read-only UI, bounded JSON input and absence of schema, demo-row, provider, Production, automatic-send or client-secret changes. Review then required a stricter fail-closed result: Mobile and Web analysis require valid non-null source period, confidence and review status at render time; rejected reports hide conclusions; Bearer analysis remains owner-only; no provider call or report write occurs without a valid source period; invalid/undated messages cannot enter provider payload, provenance count or confidence; capability lookup failures remain service failures; analysis load failures cannot render a contradictory empty state; the unavailable Production analysis action is not exposed as active; the server fallback requires explicit missing-column errors for every provenance/review column and returns null provenance; API failure classes retain meaningful HTTP status; Follow-up initial/refresh/dashboard/count/ordering states are explicit, all central pages are retrieved, legacy `NULL` status remains open, and knowledge errors cannot appear as a valid empty state.
 - Evidence produced: FM-EV-026; PR #1025; merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`; protected build run `33298699290`; job `99222705186`; short-lived redacted receipt.
-- Result status: VERIFIED_NOT_ACCEPTED.
-- Open follow-up: owner installs the exact-merge Preview and confirms the requested visible/runtime behaviors; broader redirect, Push/Store and Phase-8 iOS/TestFlight remain separate.
+- Device acceptance: on 2026-08-30 the owner installed and inspected the exact-merge Preview on a real Android device and confirmed the current Mobile result as finished.
+- Result status: ACCEPTED.
+- Open follow-up: none under FM-MOB-004; broader redirect, Push/Store and Phase-8 iOS/TestFlight remain separate under FM-MOB-001.
 - Work lock released: yes.
 
 ## RECEIPT-FM-MEM-005-20260819-1214

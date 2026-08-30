@@ -23,11 +23,11 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 
 ## EXT-MOBILE-ANDROID
 - Related: FM-MOB-001
-- Status: OPEN
+- Status: ACCEPTED
 - Risk: R3
 - External system: Android signed internal distribution / real device
 - Acceptance: signed exact-commit build and private device acceptance per mobile runbook.
-- Current evidence: exact signed `preview` Android artifact for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` is verified by run `33298699290` / job `99222705186`; owner device installation and the FM-MOB-004 visual/runtime checks remain open.
+- Current evidence: exact signed `preview` Android artifact for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` is verified by run `33298699290` / job `99222705186`. On 2026-08-30 the owner installed and inspected that build on a real Android device and confirmed the current Mobile result as finished; no private build URL or ID is retained here.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-IOS

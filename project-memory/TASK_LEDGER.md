@@ -82,9 +82,9 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Updated: 2026-08-30
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Goal: Deliver the native FanMind Mobile app through a signed Android build and current-finishline real-device/store acceptance; iOS/TestFlight is Phase 8.
-- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, receipt and cleanup; owner device, recovery and applicable Push/Store acceptance remain open.
+- Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, receipt and cleanup; the owner accepted that build on a real Android device on 2026-08-30. Recovery and applicable Push/Store acceptance remain open separately.
 - Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth; PRs #988/#1019/#1021/#1025; protected build run `33298699290` / job `99222705186`.
-- Next step: owner installs the completed exact-merge Android Preview and confirms FM-MOB-004; do not rebuild merely for confirmation. Supabase recovery redirect and applicable Push/Store controls remain separate.
+- Next step: preserve the accepted FM-MOB-003/FM-MOB-004 Android result and continue only through the separate Supabase recovery redirect and applicable Push/Store controls; do not rebuild merely to repeat acceptance.
 - Do not repeat: Do not restart the mobile app or replace it with a WebView.
 
 ## FM-MOB-002
@@ -101,27 +101,27 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MOB-003
 - Date: 2026-08-29
-- Status: VERIFIED_NOT_ACCEPTED
+- Status: ACCEPTED
 - Risk: R3
 - Goal: Complete the core phone demo loop with an unseen-message dashboard, per-fan channel switching and direct manual Follow-up creation.
 - Starting state: the merged Android preview shows the stored messages, but mixes all channels, the start screen is a generic KPI page rather than an unseen-fan inbox, and Follow-ups can be created only after an AI suggestion.
 - Action: derived per-fan channel tabs from stored messages, added an authenticated workspace-bound unseen-inbound fan query and Owner-only seen update, replaced the generic Start page with the unseen inbox, removed the rejected placeholder symbol from the shared wordmark, and added a validated Owner-only manual Follow-up form without schema, permission or demo-row changes.
-- Result: PR #1021 passed all eight exact-head gates and merged as `93496a4afac9b3b315c9985afbbce02b8524fc44`; protected run `33260695232`, job `99122008690`, completed one verified `preview` Android internal build with Submit/Update disabled and cleanup successful. Repository and signed-artifact verification are complete; real-device owner acceptance is not yet complete.
+- Result: PR #1021 passed all eight exact-head gates and merged as `93496a4afac9b3b315c9985afbbce02b8524fc44`; protected run `33260695232`, job `99122008690`, completed one verified `preview` Android internal build with Submit/Update disabled and cleanup successful. The owner's 2026-08-30 real-device acceptance of the superseding FM-MOB-004 exact-merge build confirms the included FM-MOB-003 behaviors.
 - Evidence: FM-EV-025; PR #1021 final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`; merge `93496a4afac9b3b315c9985afbbce02b8524fc44`; run `33260695232`; job `99122008690`; local/native/read-only Staging evidence.
-- Next step: install the existing exact-merge Android preview and verify the four requested Mobile behaviors; do not rebuild merely for device confirmation.
+- Next step: keep FM-MOB-003 closed; do not rebuild merely to repeat device acceptance.
 - Do not repeat: no new unread schema, no duplicate demo data, no offline message cache, no automatic message send and no member Follow-up mutation.
 
 ## FM-MOB-004
 - Date: 2026-08-29
 - Updated: 2026-08-30
-- Status: VERIFIED_NOT_ACCEPTED
+- Status: ACCEPTED
 - Risk: R3
 - Goal: Finish the owner-observed Mobile fan-detail and navigation corrections and deliver a new exact-merge Android preview.
 - Starting state: FM-MOB-003 is merged and built, but the fan detail still shows tags/profile before task navigation, identifier text can wrap, Follow-ups do not navigate back to their fan, today's Follow-ups are absent from Start and the wide splash wordmark is visibly cropped on Android.
 - Action: add universal `Nachrichten|Follow-ups|Kontaktwissen` tabs, move profile/tags into knowledge, add provenance-bound fan-analysis read/prepared server action, add per-fan/today Follow-up queries and navigation, and replace the splash asset with a square `FM`-over-`FanMind` composition. Eleven review passes then tightened the implementation: hide generation until Production capability, active-processing entitlement and complete report schema are valid on Mobile and Web; require complete provenance on Mobile and Web; permit legacy Web reads only after all new columns are individually and concurrently proven absent; separate initial/post-create/dashboard/knowledge/analysis errors and suppress unknown count badges; select semantic priority groups before the exact paginated day-list cap with stable `created_at`/`id` boundaries and a last legacy fallback group; expose exact/truncated per-contact results; cap fallback-only analysis confidence low; map typed API plus inactive-Workspace failures to semantic statuses; treat legacy `NULL` status as open; paginate and focus-refresh the central Follow-up list; refuse analysis provider/write work without a valid source period; preserve service-failure precedence for capability reads; hide rejected conclusions; exclude undated messages from provider/provenance samples; bind Bearer analysis to active owners only; suppress false Web empty state beside hidden saved reports; and exclude rejected/incomplete reports from productive reply prompts.
-- Result: thirty-five valid findings from eleven superseded review rounds were addressed rather than bypassed. Final head `64329ac628188cf532281ddb742058612b9e9eb8` passed all nine exact-head gates with no unresolved thread and merged as `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. Protected run `33298699290` / job `99222705186` then completed exactly one verified `preview` Android internal artifact for the merge; Submit/Update stayed disabled and cleanup passed.
+- Result: thirty-five valid findings from eleven superseded review rounds were addressed rather than bypassed. Final head `64329ac628188cf532281ddb742058612b9e9eb8` passed all nine exact-head gates with no unresolved thread and merged as `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. Protected run `33298699290` / job `99222705186` then completed exactly one verified `preview` Android internal artifact for the merge; Submit/Update stayed disabled and cleanup passed. On 2026-08-30 the owner installed and inspected that exact build on a real Android device and confirmed the current Mobile result as finished.
 - Evidence: FM-CR-005; FM-EV-026; released lock/receipt; PR #1025; merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`; run `33298699290`; job `99222705186`; redacted private build receipt.
-- Next step: owner installs the exact-merge Preview and confirms the requested Mobile UI/runtime checks; do not queue another build merely for confirmation.
+- Next step: keep FM-MOB-004 closed. Open a new bounded task only for a newly observed device defect; do not queue another build merely to repeat acceptance.
 - Do not repeat: no schema or demo-data creation, no client service-role/OpenAI key, no automatic send, no member mutation and no second build while queue/completion state is uncertain.
 
 ## FM-AI-001
