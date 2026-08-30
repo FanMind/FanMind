@@ -90,7 +90,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
-- Branch/PR: read-only evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
+- Branch/PR: active Store continuation `mobile-android-store-release-20260830` / #1028; earlier read-only evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
 - Work lock: `LOCK-FM-MOB-001-ANDROID-STORE-20260830` is ACTIVE for the explicitly resumed Android Production/Google Play continuation. Earlier Preview and bounded FM-MOB-004 locks remain RELEASED.
 - Dependencies: the bounded FM-MOB-003/FM-MOB-004 real-device UI/runtime observation is complete; the full receipt-bound 19-check Android runbook/private validator, Supabase recovery redirect and applicable Push/Store evidence remain open, while iOS/TestFlight is Phase 8.
 - Assumptions: repository CI/build evidence does not prove a signed device build; a successful EAS lookup alone does not prove that the returned owner, slug and project ID match the protected FanMind binding.
