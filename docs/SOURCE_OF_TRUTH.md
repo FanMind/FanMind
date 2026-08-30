@@ -193,8 +193,10 @@ Aktiv im App-Kern:
 - fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
   Wortmarke, native 1024×1024-Iconverträge, reproduzierbares
   512×512-Play-Icon und 1024×500-Feature-Grafik, App-IDs, sechs synthetische
-  Screenshot-Slots, Apple-Metadaten-Handoff, exakt EAS CLI `21.2.0` und eine
-  ausschließlich interne Android-Draft-Submission ohne Portalzugriff;
+  Screenshot-Slots, Apple-Metadaten-Handoff und eine 30-Felder-
+  App-Store-Connect-Matrix mit exakter 10/12/8-Trennung in technisch bereit,
+  Owner-/Rechtsentscheidung und Phase-8-Nachweis, exakt EAS CLI `21.2.0` und
+  eine ausschließlich interne Android-Draft-Submission ohne Portalzugriff;
 - erster iOS-Store-Scope bewusst iPhone-only; iPad bleibt bis zu einer
   separaten Layout-, Geräte- und Screenshot-Abnahme nicht freigegeben;
 - eigener SDK-57-Development-Client sowie explizite EAS-Umgebungen;
@@ -228,10 +230,11 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   Data Safety, finale Screenshots, das im Portal verlangte Testprogramm,
   Upload des bereits verifizierten AAB und die getrennt bestätigte
   Portal-/Review-/Veröffentlichungsabnahme;
-- iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan und öffentliche
-  HTTPS-Supportseite sind vorab vorbereitet; Apple Developer / App Store
-  Connect, iOS-Build, Gerätenachweis und TestFlight folgen erst in der bewusst
-  nach Phase 7 verschobenen Phase 8.
+- iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
+  HTTPS-Supportseite und die 30-Felder-App-Store-Connect-Arbeitsmatrix sind
+  vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
+  Apple Developer / App Store Connect, iOS-Build, Gerätenachweis und TestFlight
+  folgen erst in der bewusst nach Phase 7 verschobenen Phase 8.
 
 Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
 

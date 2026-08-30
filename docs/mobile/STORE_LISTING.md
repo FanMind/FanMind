@@ -77,6 +77,7 @@ niemals in Git committed.
 
 Die getrennten Operator-Unterlagen stehen in
 `docs/mobile/GOOGLE_PLAY_HANDOFF.md`, `docs/mobile/APP_STORE_HANDOFF.md`,
+`docs/mobile/APP_STORE_CONNECT_WORKSHEET.md`,
 `docs/mobile/STORE_REVIEW_ACCESS.md` und
 `docs/mobile/STORE_TESTER_PROGRAM.md`.
 

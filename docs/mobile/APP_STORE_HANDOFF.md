@@ -8,6 +8,12 @@ und überträgt nichts an App Store Connect. Ohne signierten iOS-Build und ohne
 iPhone-/Simulatorabnahme wird weder die Lauffähigkeit noch eine Apple-Freigabe
 behauptet. Diese externen Schritte bleiben in Phase 8.
 
+Die vollständige portalnahe Feldübergabe steht in
+`docs/mobile/APP_STORE_CONNECT_WORKSHEET.md`. Sie trennt 30 Felder
+maschinengeprüft in technisch vorbereitet, Eigentümer-/Rechtsentscheidung und
+Phase-8-Nachweis. Offene Konto-, Rechts-, Steuer- oder Gerätewerte werden
+nicht erfunden.
+
 ## Unveränderliche App-Identität
 
 | Feld | Vorbereiteter Wert |
@@ -59,6 +65,8 @@ Nach Verfügbarkeit des bestätigten Apple-Developer-Kontos:
    anlegen; keine abweichende Ersatz-ID erzeugen.
 2. Primärsprache, Business/Productivity, URLs und vorbereitete Texte
    übertragen; alle Portal-Zeichenlimits erneut prüfen.
+   Die genaue Übertragungs- und Freigabematrix steht in
+   `docs/mobile/APP_STORE_CONNECT_WORKSHEET.md`.
 3. Verträge, Steuer-/Bankangaben und Rechteinhaber im realen Konto bestätigen.
 4. Altersfragebogen anhand der tatsächlich signierten Funktionen beantworten;
    keine Bewertung aus dem Repository vorwegnehmen.

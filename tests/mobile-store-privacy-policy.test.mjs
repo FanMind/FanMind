@@ -102,6 +102,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
     storeListing,
     playHandoff,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     supportPage,
@@ -113,6 +114,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
     read("docs/mobile/STORE_LISTING.md"),
     read("docs/mobile/GOOGLE_PLAY_HANDOFF.md"),
     read("docs/mobile/APP_STORE_HANDOFF.md"),
+    read("docs/mobile/APP_STORE_CONNECT_WORKSHEET.md"),
     read("docs/mobile/STORE_REVIEW_ACCESS.md"),
     read("docs/mobile/STORE_TESTER_PROGRAM.md"),
     read("src/app/support/page.tsx"),
@@ -166,6 +168,20 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(appStoreHandoff, /keinen iOS-Build/u);
   assert.match(appStoreHandoff, /kein TestFlight/u);
   assert.match(appStoreHandoff, /1320 × 2868/u);
+  assert.match(appStoreHandoff, /APP_STORE_CONNECT_WORKSHEET\.md/u);
+  assert.match(appStoreWorksheet, /Digital Services Act Status/u);
+  assert.match(appStoreWorksheet, /Privacy Choices URL/u);
+  assert.match(appStoreWorksheet, /Accessibility Support/u);
+  assert.match(appStoreWorksheet, /zehn\s+`READY`/u);
+  assert.match(appStoreWorksheet, /zwölf\s+`OWNER_REQUIRED`/u);
+  assert.match(appStoreWorksheet, /acht\s+`PHASE8_REQUIRED`/u);
+  assert.match(appStoreWorksheet, /kein iOS-Build/iu);
+  assert.match(appStoreWorksheet, /kein TestFlight/iu);
+  assert.match(appStoreWorksheet, /niemals im Repository/u);
+  assert.match(
+    appStoreWorksheet,
+    /account-deletion` nicht ungeprüft gleichsetzen/u,
+  );
   assert.match(reviewAccess, /niemals im Repository/u);
   assert.match(reviewAccess, /24\/7/u);
   assert.match(testerProgram, /12 Tester \/ 14 Tage/u);
@@ -197,6 +213,10 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     submissionMode: "internal-draft",
     storeAssets: 2,
     iosReleaseScope: "metadata-only",
+    applePortalFields: 30,
+    applePortalReady: 10,
+    applePortalOwnerRequired: 12,
+    applePortalPhase8Required: 8,
   });
 
   const [
@@ -206,6 +226,7 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     mobileLock,
     listing,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     featureSource,
@@ -222,6 +243,7 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
       read("apps/mobile/package-lock.json").then(JSON.parse),
       read("docs/mobile/STORE_LISTING.md"),
       read("docs/mobile/APP_STORE_HANDOFF.md"),
+      read("docs/mobile/APP_STORE_CONNECT_WORKSHEET.md"),
       read("docs/mobile/STORE_REVIEW_ACCESS.md"),
       read("docs/mobile/STORE_TESTER_PROGRAM.md"),
       read("apps/mobile/assets/store/google-play-feature-graphic-source.svg"),
@@ -262,6 +284,7 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     easConfig,
     listing,
     appStoreHandoff,
+    appStoreWorksheet,
     reviewAccess,
     testerProgram,
     featureSource,
@@ -277,6 +300,17 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
   assert.equal(playIcon[25], 6);
   assert.equal(playFeatureGraphic[25], 2);
 
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replace(
+          "| 5 | SKU | OWNER_REQUIRED |",
+          "| 5 | SKU | READY |",
+        ),
+      }),
+    /store_app_store_portal_matrix_invalid/u,
+  );
   assert.throws(
     () =>
       evaluateStoreReadiness({

@@ -112,6 +112,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: complete only the explicitly listed code conformance review. Keep eligible Checkout payment methods Dashboard-managed, pin outbound SDK requests independently from the verified older inbound Staging webhook endpoint, and leave all provider/runtime activation work blocked.
 - Related task: FM-AI-001
 
+## FM-CR-010
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with all safe App-Store preparation that can be completed while Google Play account approval remains pending.
+- Classification: Repository-only App Store Connect field reconciliation and fail-closed release worksheet; no Mobile binary, signing, portal or provider mutation.
+- Affected areas: Apple portal handoff, Mobile Store readiness validator, regression tests, canonical Mobile readers and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-CR-006/007, FM-DEC-010, EXT-MOBILE-ANDROID, EXT-MOBILE-IOS, EXT-MOBILE-PUSH-STORE and the existing verified Android `1.0.0` AAB.
+- Dependencies: unchanged Mobile identity and prepared metadata, current Apple App Store Connect field requirements, later owner/legal/account decisions and Phase-8 signed-build/device evidence.
+- Decision: Add one machine-checked 30-field App Store Connect worksheet that separates ten repository-ready values, twelve owner/legal/account decisions and eight Phase-8 binary/device controls. Keep all unresolved values explicit; do not start iOS signing/build/TestFlight, create a portal record or rebuild Android.
+- Related task: FM-MOB-001
+
 ## Intake template
 
 ```text
