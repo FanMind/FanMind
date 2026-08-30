@@ -1,6 +1,6 @@
 # FanMind Mobile – technische Vorlage für Store-Datenschutzangaben
 
-Stand: 29. Juli 2026
+Stand: 30. August 2026
 
 ## Status
 
@@ -11,6 +11,14 @@ Freigabe und darf nicht ungeprüft in einem Store veröffentlicht werden.
 Vor der Portalbestätigung sind der signierte Release-Build, die realen
 Production-Verträge, die aktuelle Datenschutzerklärung und die dann
 angezeigten Store-Fragebögen gemeinsam mit Datenschutz/Recht abzugleichen.
+
+Für Android ist der signierte Release-Build technisch vorhanden: das einmalig
+erzeugte FanMind-`1.0.0`-AAB für Merge
+`e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, verifiziert durch den geschützten
+Store-Build-Lauf `33316172583` / Job `99269924756`. Submit und Update waren
+deaktiviert. Dieser Nachweis ersetzt weder die Portalantworten noch die externe
+Datenschutz-/Rechtsfreigabe und darf nicht durch einen unnötigen Neubau ersetzt
+werden.
 
 Verbindliche aktuelle Hilfeseiten:
 
@@ -52,6 +60,13 @@ Die aktuelle Mobile-App:
   `https://fanmind.ch/account-deletion` an;
 - verweist auf `https://fanmind.ch/datenschutz`;
 - überträgt Netzwerkdaten ausschließlich über HTTPS.
+
+Die öffentliche Datenschutzerklärung und die öffentliche Account-Löschseite
+unter `https://fanmind.ch/account-deletion` wurden am 30. August 2026 ohne
+Store-Login live geladen. Die Löschseite beschreibt sowohl den In-App- als
+auch den authentifizierten Web-Löschweg, die Widerrufsgrenze und die maximale
+Bearbeitungsfrist von 30 Tagen. Vor dem Portalabschluss sind beide URLs erneut
+zu öffnen, da Erreichbarkeit veränderliche externe Evidence ist.
 
 Diese Basis muss nach jeder Dependency-, Berechtigungs-, Tracking-, Push-,
 KI-, Auth-, Offline- oder Backend-Änderung neu geprüft werden.
@@ -159,13 +174,16 @@ echten Zustellung.
 
 Vor Bestätigung in App Store Connect oder Play Console:
 
-1. exakten Git-Commit und signierte Android-/iOS-Buildnummer notieren;
-2. native Berechtigungen aus den finalen Binaries prüfen;
+1. für Google das vorhandene Android-AAB an Merge
+   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` binden; iOS erst in Phase 8
+   getrennt behandeln;
+2. native Android-Berechtigungen aus dem finalen Binary beziehungsweise dem
+   Play-Scan prüfen;
 3. Dependency-/SDK-Inventar mit dem Build abgleichen;
 4. Datenschutz- und Account-Lösch-URLs öffentlich und ohne Login testen;
 5. Löschanfrage, Widerruf und Abschluss mit synthetischem Testkonto belegen;
 6. Supabase-/OpenAI-Verträge, Regionen und Aufbewahrung extern bestätigen;
 7. Apple- und Google-Antworten getrennt prüfen – die Taxonomien sind nicht
-   gleich;
+   gleich und Apple ist im aktuellen Android-Handoff nicht freizugeben;
 8. externe Datenschutz-/Rechtsfreigabe dokumentieren;
 9. erst dann die Portalantworten veröffentlichen.

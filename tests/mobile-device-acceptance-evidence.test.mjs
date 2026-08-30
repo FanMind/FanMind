@@ -15,11 +15,15 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
 
+import { createMobileDeviceAcceptanceTemplate } from "../scripts/operations/prepare-mobile-device-acceptance.mjs";
+
 const execFileAsync = promisify(execFile);
 const verifierPath =
   "scripts/operations/verify-mobile-device-acceptance.mjs";
 const receiptWriterPath =
   "scripts/operations/write-mobile-signed-build-receipt.mjs";
+const preparerPath =
+  "scripts/operations/prepare-mobile-device-acceptance.mjs";
 const MAIN_COMMIT = "a".repeat(40);
 const BUILD_ID = "123e4567-e89b-42d3-a456-426614174000";
 
@@ -409,6 +413,110 @@ test("private evidence inputs reject broad permissions and symlinks", async () =
   });
 });
 
+test("the private preparer binds the exact Preview receipt but never pre-approves a check", async () => {
+  await withFixture(async ({ receiptBytes }) => {
+    const template = createMobileDeviceAcceptanceTemplate({
+      signedBuildReceiptBytes: Buffer.from(receiptBytes, "utf8"),
+      acceptanceId: "2026-08-30-mobile-android-001",
+      startedAt: "2026-08-30T09:00:00Z",
+    });
+
+    assert.equal(template.environment, "staging");
+    assert.equal(template.platform, "android");
+    assert.equal(template.releaseCommit, MAIN_COMMIT);
+    assert.equal(template.buildProfile, "preview");
+    assert.equal(template.signedBuildCompletedAt, "2026-08-06T08:00:00.000Z");
+    assert.equal(template.signedBuildReceiptSha256, sha(receiptBytes));
+    assert.equal(template.completedAt, "replace-with-completion-utc");
+    assert.equal(
+      Object.values(template).filter((value) => value === "pending").length,
+      19,
+    );
+    assert.equal(template.pushTested, false);
+    assert.equal(template.automaticSendingObserved, false);
+    assert.deepEqual(template.issues, []);
+  });
+});
+
+test("the preparer writes one mode-0600 pending file and the verifier rejects it until completed", async () => {
+  await withFixture(async ({ paths }) => {
+    const output = join(paths.root, "android.json");
+    const prepareArguments = [
+      preparerPath,
+      "--signed-build-receipt",
+      paths.receipt,
+      "--output",
+      output,
+      "--acceptance-id",
+      "2026-08-30-mobile-android-001",
+      "--started-at",
+      "2026-08-30T09:00:00Z",
+    ];
+    const { stdout, stderr } = await execFileAsync(
+      process.execPath,
+      prepareArguments,
+    );
+    const outputText = `${stdout}\n${stderr}`;
+    const metadata = await stat(output);
+    const template = JSON.parse(await readFile(output, "utf8"));
+
+    assert.equal(metadata.mode & 0o777, 0o600);
+    assert.equal(
+      Object.values(template).filter((value) => value === "pending").length,
+      19,
+    );
+    assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_CHECKS=19/u);
+    assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE_STATE=pending/u);
+    assert.match(outputText, /MOBILE_DEVICE_ACCEPTANCE_TEMPLATE=PASS/u);
+    assert.doesNotMatch(
+      outputText,
+      /123e4567|a{20}|android|preview|mobile-android-001/u,
+    );
+
+    await assert.rejects(
+      execFileAsync(
+        process.execPath,
+        verifierArguments({ ...paths, evidence: output }),
+      ),
+      /evidence_timestamp_order_invalid/u,
+    );
+    await assert.rejects(
+      execFileAsync(process.execPath, prepareArguments),
+      /output_already_exists/u,
+    );
+  });
+});
+
+test("the preparer rejects Store receipts and timestamps before the signed Preview", async () => {
+  await withFixture(async ({ receiptBytes }) => {
+    assert.throws(
+      () =>
+        createMobileDeviceAcceptanceTemplate({
+          signedBuildReceiptBytes: Buffer.from(
+            JSON.stringify({
+              ...JSON.parse(receiptBytes),
+              buildProfile: "production",
+              distribution: "store",
+            }),
+            "utf8",
+          ),
+          acceptanceId: "2026-08-30-mobile-android-001",
+          startedAt: "2026-08-30T09:00:00Z",
+        }),
+      /signed_build_receipt_boundaries_invalid/u,
+    );
+    assert.throws(
+      () =>
+        createMobileDeviceAcceptanceTemplate({
+          signedBuildReceiptBytes: Buffer.from(receiptBytes, "utf8"),
+          acceptanceId: "2026-08-30-mobile-android-001",
+          startedAt: "2026-08-06T07:59:59Z",
+        }),
+      /started_at_before_build/u,
+    );
+  });
+});
+
 test("the acceptance handoff is local-only, private and part of the Operations suite", async () => {
   const [packageJson, gitignore, runbook, beta, architecture, readme] =
     await Promise.all([
@@ -425,6 +533,10 @@ test("the acceptance handoff is local-only, private and part of the Operations s
     "node scripts/operations/write-mobile-signed-build-receipt.mjs",
   );
   assert.equal(
+    packageJson.scripts["mobile:device:acceptance:prepare"],
+    "node scripts/operations/prepare-mobile-device-acceptance.mjs",
+  );
+  assert.equal(
     packageJson.scripts["mobile:device:acceptance:verify"],
     "node scripts/operations/verify-mobile-device-acceptance.mjs",
   );
@@ -436,8 +548,11 @@ test("the acceptance handoff is local-only, private and part of the Operations s
   assert.match(runbook, /keinen GitHub-Workflow/u);
   assert.match(runbook, /--expected-main-commit/u);
   assert.match(runbook, /push-staging-gate/u);
-  assert.match(runbook, /Android und iOS getrennt/u);
+  assert.match(runbook, /mobile:device:acceptance:prepare/u);
+  assert.match(runbook, /Every real-device field remains\s+`"pending"`/u);
+  assert.match(runbook, /iOS\/TestFlight and an iPhone record are Phase 8/u);
+  assert.match(runbook, /Keinen neuen Build starten/u);
   assert.match(beta, /DEVICE_ACCEPTANCE\.md/u);
   assert.match(architecture, /SHA-gebundener Geräte-Abnahmevalidator/u);
-  assert.match(readme, /privaten Geräte-Abnahmevalidator/u);
+  assert.match(readme, /privaten\s+Geräte-Abnahmevalidator/u);
 });

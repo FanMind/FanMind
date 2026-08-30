@@ -1,15 +1,17 @@
-# Private Android/iOS device acceptance
+# Private Android device acceptance
 
 ## Purpose and boundary
 
 This runbook records the external real-device acceptance that repository tests
-cannot prove. Run it separately for Android and iOS, against the reviewed
-`main` commit and a signed internal `preview` build. It does not queue a build,
+cannot prove. The current finishline uses the already accepted signed Android
+`preview` build. iOS/TestFlight and an iPhone record are Phase 8 and must not be
+started through this Android handoff. The runbook does not queue a build,
 submit to a store, change Supabase, enable push delivery, or run as a GitHub
 workflow.
 
-Der Validator startet keinen Build und keinen GitHub-Workflow. Android und iOS getrennt zu
-dokumentieren und zu prüfen ist verbindlich.
+Der Validator startet keinen Build und keinen GitHub-Workflow. Wenn Phase 8
+später ausdrücklich startet, ist iOS in einer eigenen Datei und gegen einen
+eigenen signierten iOS-Receipt zu dokumentieren.
 
 Device records are private operational evidence. Use synthetic Staging users
 and content only. Never record e-mail addresses, recovery URLs, tokens, build
@@ -34,6 +36,13 @@ The receipt must use `preview`, `internal`, `available`, and disabled Submit and
 Update boundaries. A development, simulator, debug or unsigned build is not an
 acceptable substitute.
 
+Für den aktuellen Android-Lauf ist der redacted Receipt des bereits gebauten
+Preview-Laufs `33298699290` / Jobs `99222705186` für Merge
+`6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` zu verwenden. Der Production-AAB-
+Receipt ist absichtlich kein Ersatz: Das AAB bleibt für Google Play erhalten,
+während die private 19-Punkte-Abnahme an den installierbaren Preview-Build
+gebunden ist. Keinen neuen Build starten.
+
 The workflow never copies the signed APK or IPA into GitHub artifact storage.
 Open the protected EAS project as an authorized operator, select the exact
 successful `preview` build for the receipt-bound `main` commit and platform,
@@ -44,9 +53,8 @@ App Store release.
 
 ## Mandatory real-device checks
 
-Use the signed Android build on one real Android device and the signed iOS build
-on one real iPhone. Create one evidence file per platform. All 19 checks are
-mandatory:
+Use the existing signed Android build on one real Android device and create one
+Android evidence file. All 19 checks are mandatory:
 
 1. install the signed build;
 2. login with a synthetic Staging account;
@@ -68,10 +76,33 @@ FanMind must never send a reply automatically. No customer or Production data
 may be used, and no secret may be recorded. Open issues make the acceptance
 fail closed.
 
+## Private preparation
+
+Download the unchanged redacted Android Preview receipt into the private
+directory. Then create a fail-closed worksheet directly from that receipt:
+
+```bash
+install -d -m 700 docs/mobile/private-device-evidence
+chmod 600 docs/mobile/private-device-evidence/signed-build-receipt-android.json
+npm run mobile:device:acceptance:prepare -- \
+  --signed-build-receipt docs/mobile/private-device-evidence/signed-build-receipt-android.json \
+  --output "$PWD/docs/mobile/private-device-evidence/android.json" \
+  --acceptance-id 2026-08-30-mobile-android-001
+```
+
+The preparer validates the exact signed Preview boundary, copies only the
+receipt-bound commit and timestamps, calculates the receipt SHA-256 and writes
+the worksheet once with mode `0600`. Every real-device field remains
+`"pending"` and `completedAt` remains a replacement marker. It never reports a
+device PASS. Start it immediately before the test, replace a check with
+`"passed"` only after observing it and set the real UTC completion timestamp
+after the last check. If the date or sequence changes, use a new acceptance ID
+and a new output file; the preparer refuses to overwrite prior evidence.
+
 ## Evidence schema
 
 Write a flat JSON object using schema version `1`. Timestamps are UTC ISO-8601;
-`releaseCommit` is the full 40-character reviewed `main` SHA;
+`releaseCommit` is the full 40-character receipt-bound reviewed merge SHA;
 `signedBuildReceiptSha256` is the SHA-256 of the unchanged redacted receipt.
 Every mandatory check uses `"passed"`.
 
@@ -141,7 +172,7 @@ Keep the evidence, receipt and optional gate private with mode `0600`, then run:
 npm run mobile:device:acceptance:verify -- \
   --input docs/mobile/private-device-evidence/android.json \
   --signed-build-receipt docs/mobile/private-device-evidence/signed-build-receipt-android.json \
-  --expected-main-commit <full-reviewed-main-sha>
+  --expected-main-commit 6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522
 ```
 
 For an already approved Push Staging gate, append:

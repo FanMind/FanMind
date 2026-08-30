@@ -257,10 +257,13 @@ Installationsartefakt direkt aus dem geschützten, bereits verifizierten EAS-
 Build, hält es privat und löscht die lokale Kopie nach der Geräteabnahme. Es
 ist ein interner Testbuild und keine Play-/App-Store-Freigabe.
 
-Die Abnahme verwendet anschließend den privaten Geräte-Abnahmevalidator aus
-`docs/mobile/DEVICE_ACCEPTANCE.md` und bindet daran die separaten realen
-Android-/iOS-Nachweise; er führt selbst keinen Build, Store-Upload oder
-Production-Schreibzugriff aus.
+Die aktuelle Android-Abnahme verwendet anschließend den privaten
+Geräte-Abnahmevalidator aus `docs/mobile/DEVICE_ACCEPTANCE.md`. Der neue
+Vorbereitungsbefehl `npm run mobile:device:acceptance:prepare` bindet die
+private Arbeitsdatei an den redigierten Receipt, lässt aber alle 19 realen
+Prüfpunkte fail-closed auf `pending`. Er führt selbst keinen Build,
+Store-Upload oder Production-Schreibzugriff aus. Ein separater iOS-Nachweis
+folgt nur, wenn Phase 8 ausdrücklich startet.
 
 ## Kontrollierter Android-Store-Build
 
@@ -361,6 +364,8 @@ E-Mail-/Gerätetest bleibt separat offen; Details stehen in
 4. Nach Google-Kontofreigabe den Play-App-Datensatz anlegen, Data Safety,
    Screenshots und das portalgeforderte Testprogramm vervollständigen und das
    bestehende Android-`1.0.0`-AAB hochladen; keinen neuen Build anstoßen.
+   Die exakte Reihenfolge und Release-Bindung stehen in
+   `docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
 5. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
    Screenshot-Matrix nach realen Gerätetests sowie externer
    Datenschutz-/Rechtsprüfung final abnehmen.

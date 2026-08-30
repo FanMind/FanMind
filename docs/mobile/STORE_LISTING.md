@@ -4,8 +4,10 @@
 
 Dieses Dokument bereitet die Metadaten für Google Play und Apple App Store vor.
 Es veröffentlicht keine App und bestätigt keine Angaben in den Store-Portalen.
-Texte, Screenshots und Datenschutzdeklarationen werden erst nach einem
-signierten Build und realen Android-/iOS-Gerätetests final freigegeben.
+Für Android liegt der signierte `1.0.0`-Release-Build vor. Texte, reale
+Screenshots und Datenschutzdeklarationen werden erst nach der vollständigen
+Android-Geräte- und Portalabnahme final freigegeben. iOS/TestFlight und der
+iPhone-Screenshot-Satz folgen separat in Phase 8.
 
 Die portalnahe technische Datenschutzvorlage mit getrennten Apple- und
 Google-Taxonomien steht in
@@ -34,8 +36,9 @@ Social-Media-Integrationen.
 Das finale FanMind-App-Icon ist vorbereitet: eine vollständig deckende
 1024×1024-PNG für iOS/Legacy-Android und ein transparentes, maskensicher
 skaliertes Android-Adaptive-Foreground. Das Querlogo bleibt ausschließlich
-Wortmarke und Splashscreen. Vor Einreichung wird die Darstellung aus signierten
-Builds auf realen Android- und iOS-Geräten visuell bestätigt.
+Wortmarke und Splashscreen. Für Google Play wird die Darstellung aus dem
+vorhandenen signierten Android-Build auf einem realen Android-Gerät visuell
+bestätigt. Die iOS-Abnahme folgt erst in Phase 8.
 
 `cd apps/mobile && npm run store:check` prüft diese Unterlagen vor jedem
 Mobile-Release fail-closed gegen die aktuellen Apple-/Google-Zeichenlimits,
@@ -138,10 +141,12 @@ Nachrichten dürfen sichtbar sein.
 | 5 | Follow-ups | Offene Aufgaben im Blick behalten |
 | 6 | Offline-Kontaktübersicht | Begrenzter, verschlüsselter Nur-Lesen-Zugriff |
 
-Benötigt werden mindestens ein aktueller Android- und ein aktueller
-iPhone-Screenshot-Satz aus signierten Builds. FanMind unterstützt im ersten
-iOS-Release ausschließlich iPhone. iPad wird erst in einer separaten Phase
-nach eigener Layout-, Geräte- und Screenshot-Abnahme freigegeben.
+Für die aktuelle Google-Play-Einreichung wird ein aktueller Android-
+Screenshot-Satz aus dem signierten Build und ausschließlich mit synthetischen
+Staging-Daten benötigt. Der iPhone-Screenshot-Satz gehört zur späteren
+iOS-/TestFlight-Phase 8.
+FanMind unterstützt im ersten iOS-Release ausschließlich iPhone. iPad wird
+erst nach eigener Layout-, Geräte- und Screenshot-Abnahme freigegeben.
 
 ## Datenschutzdeklaration - Prüfmatrix
 
@@ -184,6 +189,10 @@ bleibt trotzdem erforderlich.
   portalgefordertes Testprogramm und Upload des bestehenden AAB;
 - iOS-Build, App-Store-Konto und Apple-TestFlight-/Store-Scan des signierten
   Binaries erst in Phase 8.
+
+Der genaue operatorische Google-Play-Ablauf mit fertigen Artefakten,
+Blockern und unveränderlichen Grenzen steht in
+`docs/mobile/GOOGLE_PLAY_HANDOFF.md`.
 
 ## Google-Play-Kontostand am 30. August 2026
 

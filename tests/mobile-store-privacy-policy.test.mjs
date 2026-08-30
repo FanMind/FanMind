@@ -97,10 +97,11 @@ test("native prebuild enforces store API, privacy and least-permission boundarie
 });
 
 test("store privacy draft stays synchronized with the current mobile boundary", async () => {
-  const [privacyDraft, storeListing, pushSource, registrationSource, aiRoute] =
+  const [privacyDraft, storeListing, playHandoff, pushSource, registrationSource, aiRoute] =
     await Promise.all([
     read("docs/mobile/STORE_PRIVACY_DECLARATIONS.md"),
     read("docs/mobile/STORE_LISTING.md"),
+    read("docs/mobile/GOOGLE_PLAY_HANDOFF.md"),
     read("apps/mobile/src/lib/pushNotifications.ts"),
     read("apps/mobile/src/lib/mobilePushRegistration.ts"),
     read("src/app/api/ai/reply-suggestions/route.ts"),
@@ -129,6 +130,16 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(privacyDraft, /In-app search history \| Ja/u);
   assert.match(privacyDraft, /Push-Aktivierungsgrenze/u);
   assert.match(storeListing, /STORE_PRIVACY_DECLARATIONS\.md/u);
+  assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
+  assert.match(storeListing, /iPhone-Screenshot-Satz gehört zur späteren/u);
+  assert.match(
+    playHandoff,
+    /e96415035ffbe12f16dd3b81e13a5e62b2c4ac00/u,
+  );
+  assert.match(playHandoff, /Keinen neuen Build starten/u);
+  assert.match(playHandoff, /bereits verifizierte `1\.0\.0`-AAB/u);
+  assert.match(playHandoff, /kein iOS\/TestFlight/u);
+  assert.match(playHandoff, /private, vollständig\s+`pending`/u);
 
   assert.doesNotMatch(pushSource, /requestPermissionsAsync/u);
   assert.doesNotMatch(pushSource, /getExpoPushTokenAsync/u);
