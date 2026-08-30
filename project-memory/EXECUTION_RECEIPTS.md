@@ -73,7 +73,7 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Checks/tests: Project Memory quality, sales derivation, truth drift, next-action, evidence freshness, accepted-state drift, milestone, V8 and status generation passed; no product code changed.
 - Final diff counterchecked: yes.
 - Regression/security countercheck: FM-MOB-003/FM-MOB-004 UI/runtime acceptance is bounded to the requested splash, identifier, sections, channel/dashboard/manual Follow-up and navigation/today-list observations. It does not claim the private receipt-bound 19-check validator, recovery, cache-failure, logout-purge, Push/Store, iOS/TestFlight or Production acceptance.
-- Evidence produced: owner real-device confirmation in the completing 2026-08-30 chat; no private build identifier, URL, screenshot or device data stored.
+- Evidence produced: FM-EV-027 plus owner real-device confirmation in the completing 2026-08-30 chat; no private build identifier, URL, screenshot or device data stored.
 - Result status: ACCEPTED for FM-MOB-003/FM-MOB-004 bounded UI/runtime scope; EXT-MOBILE-ANDROID remains OPEN for the complete FM-MOB-001 runbook.
 - Open follow-up: complete the private 19-check Android acceptance record/validator, Supabase recovery redirect and applicable Push/Store controls separately; iOS/TestFlight remains Phase 8.
 - Work lock released: yes; no new implementation lock was acquired.
