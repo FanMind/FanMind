@@ -642,5 +642,8 @@ test("the acceptance handoff is local-only, private and part of the Operations s
   assert.match(runbook, /Keinen neuen Build starten/u);
   assert.match(beta, /DEVICE_ACCEPTANCE\.md/u);
   assert.match(architecture, /SHA-gebundener Geräte-Abnahmevalidator/u);
+  assert.match(architecture, /Android-Production-Builds/u);
+  assert.match(architecture, /distribution=store/u);
+  assert.match(architecture, /Preview\/Internal-Receipt/u);
   assert.match(readme, /privaten\s+Geräte-Abnahmevalidator/u);
 });

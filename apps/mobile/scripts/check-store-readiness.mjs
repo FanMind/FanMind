@@ -114,7 +114,8 @@ export function evaluateStoreReadiness(input) {
     listing,
     "Google Play und Apple - Description EN",
   );
-  const appleKeywords = fencedText(listing, "Suchbegriffe für Apple");
+  const appleKeywordsDe = fencedText(listing, "Apple - Suchbegriffe DE");
+  const appleKeywordsEn = fencedText(listing, "Apple - Keywords EN");
   const promotionalTextDe = fencedText(listing, "Apple - Werbetext DE");
   const promotionalTextEn = fencedText(
     listing,
@@ -139,7 +140,21 @@ export function evaluateStoreReadiness(input) {
   );
   assertLength(descriptionDe, 200, 4000, "store_description_de_length_invalid");
   assertLength(descriptionEn, 200, 4000, "store_description_en_length_invalid");
-  assertLength(appleKeywords, 2, 100, "store_apple_keywords_length_invalid");
+  assertLength(
+    appleKeywordsDe,
+    2,
+    100,
+    "store_apple_keywords_de_length_invalid",
+  );
+  assertLength(
+    appleKeywordsEn,
+    2,
+    100,
+    "store_apple_keywords_en_length_invalid",
+  );
+  if (appleKeywordsDe === appleKeywordsEn) {
+    fail("store_apple_keyword_localizations_not_distinct");
+  }
   assertLength(
     promotionalTextDe,
     20,

@@ -136,14 +136,20 @@ media channels are not automatically synchronized at this time.
 A FanMind account is required.
 ```
 
-## Suchbegriffe für Apple
+## Apple - Suchbegriffe DE
 
 ```text
 CRM,Kontakte,Follow-up,Antworten,KI,Creator,Fans,Kontaktwissen
 ```
 
-Diese Begriffe sind vor Einreichung gegen die dann gültigen Store-Limits und
-Richtlinien zu prüfen.
+## Apple - Keywords EN
+
+```text
+CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory
+```
+
+Beide sprachspezifischen Keyword-Sätze sind vor Einreichung gegen die dann
+gültigen Store-Limits und Richtlinien zu prüfen.
 
 ## Apple - Werbetext DE
 

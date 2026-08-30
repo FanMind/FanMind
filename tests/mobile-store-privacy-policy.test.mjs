@@ -147,6 +147,8 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
   assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
   assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
+  assert.match(storeListing, /## Apple - Suchbegriffe DE/u);
+  assert.match(storeListing, /## Apple - Keywords EN/u);
   assert.match(storeListing, /1320 × 2868/u);
   assert.match(
     playHandoff,
@@ -301,6 +303,28 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
         listing: listing.replace("kontakt@fanmind.ch", "help@example.com"),
       }),
     /store_identity_document_mismatch/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory",
+          "x".repeat(101),
+        ),
+      }),
+    /store_apple_keywords_en_length_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "CRM,contacts,follow-ups,replies,AI,creators,fans,contact memory",
+          "CRM,Kontakte,Follow-up,Antworten,KI,Creator,Fans,Kontaktwissen",
+        ),
+      }),
+    /store_apple_keyword_localizations_not_distinct/u,
   );
 
   assert.doesNotThrow(() =>

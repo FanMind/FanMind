@@ -241,13 +241,16 @@ A Web merge can modify shared API contracts but cannot publish a mobile binary. 
 
 Ein SHA-gebundener Geräte-Abnahmevalidator in
 `docs/mobile/DEVICE_ACCEPTANCE.md` verbindet den aktuellen Android-Nachweis
-mit dem redigierten Receipt des exakten signierten Preview-Builds. Sein
-Vorbereitungsbefehl übernimmt ausschließlich die Receipt-Bindung und lässt
-alle 19 Geräteprüfungen auf `pending`; er ersetzt keinen echten Gerätetest.
-Die Android-Abnahme beginnt auf Owner-Entscheidung erst nach Installation aus
-dem Play-Test-Track. Ein separater iOS-Nachweis bleibt für Phase 8 möglich und
-läuft ebenfalls nur mit privaten Nachweisen; Metadaten-, Support- und Review-
-Vorbereitung allein ist kein iOS-Build und kein TestFlight.
+mit dem redigierten Receipt des exakten signierten Android-Production-Builds
+mit `distribution=store`. Sein Vorbereitungsbefehl übernimmt ausschließlich
+die Receipt-Bindung und lässt alle 19 Geräteprüfungen auf `pending`; er ersetzt
+keinen echten Gerätetest. Die Android-Abnahme beginnt auf Owner-Entscheidung
+erst nach Installation des unveränderten `1.0.0`-AAB aus dem Play-Test-Track.
+Ein Preview/Internal-Receipt bleibt ausschließlich einer getrennten Staging-
+Abnahme vorbehalten und darf den Play-Nachweis nicht zertifizieren. Ein
+separater iOS-Nachweis bleibt für Phase 8 möglich und läuft ebenfalls nur mit
+privaten Nachweisen; Metadaten-, Support- und Review-Vorbereitung allein ist
+kein iOS-Build und kein TestFlight.
 
 ## Implementation phases
 
