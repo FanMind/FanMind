@@ -412,7 +412,7 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
 });
 
 test("Mobile fan analysis reuses the authorized server action and remains RLS-bound", async () => {
-  const [data, detail, api, route, action, report, server] = await Promise.all([
+  const [data, detail, api, route, action, report, server, page, panel] = await Promise.all([
     read("apps/mobile/src/lib/data.ts"),
     read("apps/mobile/app/(app)/contacts/[id].tsx"),
     read("apps/mobile/src/lib/api.ts"),
@@ -420,6 +420,8 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
     read("src/app/fans/[id]/analysisActions.ts"),
     read("src/app/fans/[id]/FanAnalysisReport.tsx"),
     read("src/lib/supabase/server.ts"),
+    read("src/app/fans/[id]/page.tsx"),
+    read("src/app/fans/[id]/FanContextPanel.tsx"),
   ]);
 
   assert.match(
@@ -471,6 +473,18 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(action, /review_status: result\.report\.review_status/u);
   assert.match(report, /hasCompleteReportProvenance/u);
   assert.match(report, /hasRejectedReportProvenance/u);
+  assert.match(
+    page,
+    /getWorkspaceAnalysisCapabilityStatus\(workspace\.id, "fan_analysis"\)[\s\S]*fanAnalysisGenerationEnabled/u,
+  );
+  assert.match(
+    panel,
+    /analysisGenerationEnabled[\s\S]*generationEnabled=\{analysisGenerationEnabled\}/u,
+  );
+  assert.match(
+    report,
+    /generationEnabled \? \([\s\S]*analysisForm[\s\S]*In Vorbereitung/u,
+  );
   assert.match(report, /menschlich abgelehnt[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
   assert.match(detail, /hasRejectedAnalysisProvenance/u);
   assert.match(detail, /menschlich verworfen[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
@@ -486,7 +500,7 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(server, /isMissingFanAnalysisProvenanceColumn/u);
   assert.match(
     server,
-    /areAllFanAnalysisProvenanceColumnsMissing[\s\S]*for \(const column of FAN_ANALYSIS_PROVENANCE_COLUMNS\)[\s\S]*if \(!probe\.error \|\| !isMissingFanAnalysisProvenanceColumn\(probe\.error\)\)[\s\S]*return false/u,
+    /areAllFanAnalysisProvenanceColumnsMissing[\s\S]*Promise\.all\([\s\S]*FAN_ANALYSIS_PROVENANCE_COLUMNS\.map[\s\S]*probes\.every[\s\S]*isMissingFanAnalysisProvenanceColumn/u,
   );
   assert.match(server, /source_from_at: null[\s\S]*review_status: null/u);
   assert.match(detail, /memoryError[\s\S]*mobileStyles\.error[\s\S]*memories\.length/u);

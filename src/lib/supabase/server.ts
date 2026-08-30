@@ -4024,23 +4024,26 @@ async function areAllFanAnalysisProvenanceColumnsMissing(
   workspaceId: string,
   contactId: string,
 ): Promise<boolean> {
-  for (const column of FAN_ANALYSIS_PROVENANCE_COLUMNS) {
-    const probe = await postgrestSelect<Record<string, unknown>>(
-      "fan_analysis_reports",
-      accessToken,
-      `id,${column}`,
-      [
-        ["workspace_id", workspaceId],
-        ["contact_id", contactId],
-      ],
-      1,
-      true,
-    );
-    if (!probe.error || !isMissingFanAnalysisProvenanceColumn(probe.error)) {
-      return false;
-    }
-  }
-  return true;
+  const probes = await Promise.all(
+    FAN_ANALYSIS_PROVENANCE_COLUMNS.map((column) =>
+      postgrestSelect<Record<string, unknown>>(
+        "fan_analysis_reports",
+        accessToken,
+        `id,${column}`,
+        [
+          ["workspace_id", workspaceId],
+          ["contact_id", contactId],
+        ],
+        1,
+        true,
+      ),
+    ),
+  );
+  return probes.every(
+    (probe) =>
+      probe.error !== null &&
+      isMissingFanAnalysisProvenanceColumn(probe.error),
+  );
 }
 
 export async function upsertFanAnalysisReport(input: {

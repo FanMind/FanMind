@@ -13,6 +13,7 @@ import {
   getWorkspaceSocialConnections,
   getWorkspaceConversations,
   getWorkspaceOpenFollowups,
+  getWorkspaceAnalysisCapabilityStatus,
   markContactInboundMessagesSeen,
   signOutSupabaseServerSession,
   type ContactReplyTargetRow,
@@ -91,6 +92,8 @@ type FanDetailWorkspaceProps = {
   notice?: string;
   fanAnalysisReport: FanAnalysisReportRow | null;
   fanAnalysisReportError?: string;
+  fanAnalysisGenerationEnabled: boolean;
+  fanAnalysisGenerationError?: string;
   activeChannel: ConversationChannelKey;
   activeSource: string;
   facebookMessengerLastSyncedAt?: string | null;
@@ -171,6 +174,8 @@ function FanDetailWorkspace({
   notice,
   fanAnalysisReport,
   fanAnalysisReportError,
+  fanAnalysisGenerationEnabled,
+  fanAnalysisGenerationError,
   activeChannel,
   activeSource,
   facebookMessengerLastSyncedAt,
@@ -256,6 +261,8 @@ function FanDetailWorkspace({
             conversationsError={conversationsError}
             fanAnalysisReport={fanAnalysisReport}
             fanAnalysisReportError={fanAnalysisReportError}
+            fanAnalysisGenerationEnabled={fanAnalysisGenerationEnabled}
+            fanAnalysisGenerationError={fanAnalysisGenerationError}
             activeChannel={activeChannel}
             activeSource={activeSource}
             facebookMessengerLastSyncedAt={facebookMessengerLastSyncedAt}
@@ -288,6 +295,8 @@ function FanDetailContent({
   conversationsError,
   fanAnalysisReport,
   fanAnalysisReportError,
+  fanAnalysisGenerationEnabled,
+  fanAnalysisGenerationError,
   activeChannel,
   activeSource,
   facebookMessengerLastSyncedAt,
@@ -311,6 +320,8 @@ function FanDetailContent({
   conversationsError?: string;
   fanAnalysisReport: FanAnalysisReportRow | null;
   fanAnalysisReportError?: string;
+  fanAnalysisGenerationEnabled: boolean;
+  fanAnalysisGenerationError?: string;
   activeChannel: ConversationChannelKey;
   activeSource: string;
   facebookMessengerLastSyncedAt?: string | null;
@@ -695,6 +706,8 @@ function FanDetailContent({
             storedMessageCount={messages.length}
             locale={locale}
             readOnly={readOnly}
+            analysisGenerationEnabled={fanAnalysisGenerationEnabled}
+            analysisGenerationError={fanAnalysisGenerationError}
           />
         </aside>
       </section>
@@ -1826,6 +1839,7 @@ export default async function FanDetailPage({
     openFollowupCountResult,
     workspaceOpenFollowupsResult,
     fanAnalysisReportResult,
+    fanAnalysisCapabilityResult,
     facebookReplyTargetResult,
   ] = workspace
     ? await Promise.all([
@@ -1845,10 +1859,13 @@ export default async function FanDetailPage({
           ? getFanAnalysisReport(workspace.id, contact.id)
           : Promise.resolve(null),
         contact && workspaceOwner
+          ? getWorkspaceAnalysisCapabilityStatus(workspace.id, "fan_analysis")
+          : Promise.resolve(null),
+        contact && workspaceOwner
           ? getContactReplyTarget(workspace.id, contact.id, "facebook_messages")
           : Promise.resolve(null),
       ])
-    : [null, null, null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null, null, null];
 
   let messagesResult = initialMessagesResult;
 
@@ -1941,6 +1958,10 @@ export default async function FanDetailPage({
         notice={normalizeParam(pageSearchParams?.notice)}
         fanAnalysisReport={fanAnalysisReportResult?.report ?? null}
         fanAnalysisReportError={fanAnalysisReportResult?.error?.message}
+        fanAnalysisGenerationEnabled={
+          fanAnalysisCapabilityResult?.enabled ?? false
+        }
+        fanAnalysisGenerationError={fanAnalysisCapabilityResult?.error?.message}
         activeChannel={activeChannel}
         activeSource={activeSource}
         facebookMessengerLastSyncedAt={

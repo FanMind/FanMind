@@ -123,7 +123,7 @@ Aktiv im App-Kern:
   Herkunftszeitraum, Stichprobenumfang, Konfidenz und Prüfstatus; fehlen diese
   Nachweise, bleibt die Darstellung fail-closed. Die Owner-only Neuerzeugung
   über eine Bearer-authentifizierte Serverroute ist vorbereitet, bleibt in
-  Mobile aber ohne Aktionsbutton als `In Vorbereitung` markiert, bis die
+  Mobile und Web aber ohne aktiven Aktionsbutton als `In Vorbereitung` markiert, bis die
   Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
   ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
   Dienstfehler semantisch und behandelt einen fehlgeschlagenen
@@ -140,7 +140,7 @@ Aktiv im App-Kern:
   Leerzustand, weil beides die Abwesenheit eines Berichts nicht beweist. Solange die
   kontrollierte Provenienz-Migration in
   Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
-  bestehende Web-Kontexte lesbar. Er wird nur nach Einzelprüfung aller neuen
+  bestehende Web-Kontexte lesbar. Er wird nur nach paralleler Einzelprüfung aller neuen
   Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen
   erhalten fehlende Provenienzfelder, und weder Mobile noch Web zeigen daraus
   Analyse-Schlussfolgerungen an;

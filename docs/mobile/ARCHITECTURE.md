@@ -125,7 +125,7 @@ returns typed 400/403/422/429/503 failures for future authorized clients.
 An inactive/read-only Workspace is a permission denial, never a missing-contact
 response. Until the controlled provenance migration is verified in Production,
 the shared Web/server reader may fall back to the old report column set only
-when PostgREST explicitly reports missing provenance and individual probes prove
+when PostgREST explicitly reports missing provenance and parallel individual probes prove
 that the complete new column set is absent. A partial schema is an error. The
 legacy reader returns null provenance, and both Web and Mobile remain fail-closed
 and do not render its conclusions. Current reports expose source period,
@@ -136,6 +136,8 @@ the productive reply-suggestion prompt context. Capability lookup failures map t
 state before the disabled-capability branch. An analysis-read error and any
 saved report hidden for incomplete provenance gate the empty state because
 neither proves that no saved report exists.
+Until the capability gate is active, Web and Mobile both expose analysis
+generation as in preparation and do not render an enabled submission control.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows and explicit truncation state. Priority groups are loaded in semantic

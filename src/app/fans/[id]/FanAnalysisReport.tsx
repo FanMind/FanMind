@@ -32,6 +32,8 @@ type Props = {
   hasNewMessages?: boolean;
   storedMessageCount?: number;
   readOnly?: boolean;
+  generationEnabled?: boolean;
+  generationError?: string;
 };
 
 type ReportSection = { title: string; content: string };
@@ -47,6 +49,8 @@ export function FanAnalysisReport({
   hasNewMessages = false,
   storedMessageCount = 0,
   readOnly = false,
+  generationEnabled = false,
+  generationError,
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
@@ -94,7 +98,7 @@ export function FanAnalysisReport({
         </div>
       </div>
 
-      {readOnly ? null : (
+      {readOnly ? null : generationEnabled ? (
         <form action={formAction} className={polishStyles.analysisForm}>
         <input name="contact_id" type="hidden" value={contactId} />
         <input name="locale" type="hidden" value={locale} />
@@ -142,6 +146,18 @@ export function FanAnalysisReport({
                 : "Übersicht erstellen"}
         </button>
         </form>
+      ) : (
+        <p className={generationError ? dashboardStyles.error : styles.safeNotice}>
+          <strong>
+            {locale === "en" ? "In preparation." : "In Vorbereitung."}
+          </strong>
+          <span>
+            {generationError ??
+              (locale === "en"
+                ? "Creating or updating an overview is not available yet."
+                : "Das Erstellen oder Aktualisieren einer Übersicht ist noch nicht verfügbar.")}
+          </span>
+        </p>
       )}
 
       <div aria-live="polite">
