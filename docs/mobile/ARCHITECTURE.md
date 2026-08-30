@@ -127,7 +127,10 @@ when PostgREST explicitly reports missing provenance and individual probes prove
 that the complete new column set is absent. A partial schema is an error. The
 legacy reader returns null provenance, and both Web and Mobile remain fail-closed
 and do not render its conclusions. Current reports expose source period,
-confidence and review state on both surfaces.
+confidence and review state on both surfaces. A rejected review state is also
+fail-closed: Web and Mobile show only rejection metadata, never the rejected
+conclusions. Capability lookup failures map to the typed service-unavailable
+state before the disabled-capability branch.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows and explicit truncation state. Priority groups are loaded in semantic
@@ -152,7 +155,9 @@ Fallback-only guidance saved without an available OpenAI key is capped at a low
 20-point scale and is never presented with model-level confidence. A report is
 not generated or persisted unless at least one bounded source message provides
 a valid source period; that condition returns a typed unprocessable-context
-failure before any provider call or report write.
+failure before any provider call or report write. Messages with a missing or
+invalid timestamp are excluded before context bounding and are excluded again
+from the final provider payload, provenance count and confidence calculation.
 
 Server-only functions remain server-only:
 

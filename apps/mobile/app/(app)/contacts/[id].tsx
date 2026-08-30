@@ -67,7 +67,7 @@ type DisplayAnalysisReport = Pick<
   | "updated_at"
 >;
 
-function hasCompleteAnalysisProvenance(
+function hasCompleteAnalysisMetadata(
   report: DisplayAnalysisReport | null,
 ): report is DisplayAnalysisReport & {
   source_from_at: string;
@@ -90,6 +90,28 @@ function hasCompleteAnalysisProvenance(
       String(report.review_status),
     )
   );
+}
+
+function hasCompleteAnalysisProvenance(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected";
+} {
+  return hasCompleteAnalysisMetadata(report) && report.review_status !== "rejected";
+}
+
+function hasRejectedAnalysisProvenance(
+  report: DisplayAnalysisReport | null,
+): report is DisplayAnalysisReport & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "rejected";
+} {
+  return hasCompleteAnalysisMetadata(report) && report.review_status === "rejected";
 }
 
 const CONTACT_SECTIONS: Array<{ key: ContactSection; label: string }> = [
@@ -868,7 +890,19 @@ export default function ContactDetailScreen() {
             Vorsichtige Hinweise aus freigegebenem Verlauf und Kontaktwissen. Keine Diagnose und keine sensiblen Ableitungen.
           </Text>
           {analysisError ? <Text style={mobileStyles.error}>{analysisError}</Text> : null}
-          {analysisReport && !hasCompleteAnalysisProvenance(analysisReport) ? (
+          {hasRejectedAnalysisProvenance(analysisReport) ? (
+            <View style={styles.analysisFields}>
+              <Text style={mobileStyles.error}>
+                Diese Fan-Analyse wurde menschlich verworfen. Ihre Schlussfolgerungen werden nicht angezeigt.
+              </Text>
+              <Text style={mobileStyles.muted}>
+                Prüfstatus: {analysisReviewLabel(analysisReport.review_status)} · aktualisiert: {formatAnalysisDate(analysisReport.updated_at ?? analysisReport.generated_at)}
+              </Text>
+            </View>
+          ) : null}
+          {analysisReport &&
+          !hasCompleteAnalysisProvenance(analysisReport) &&
+          !hasRejectedAnalysisProvenance(analysisReport) ? (
             <Text style={mobileStyles.error}>
               Diese gespeicherte Fan-Analyse wird ohne vollständigen Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt.
             </Text>

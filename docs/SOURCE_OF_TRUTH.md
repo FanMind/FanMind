@@ -126,7 +126,12 @@ Aktiv im App-Kern:
   Mobile aber ohne Aktionsbutton als `In Vorbereitung` markiert, bis die
   Workspace-Datenschutz-/Aufbewahrungsfreigabe technisch aktiviert und geprüft
   ist; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
-  Dienstfehler semantisch. Solange die kontrollierte Provenienz-Migration in
+  Dienstfehler semantisch und behandelt einen fehlgeschlagenen
+  Capability-Read als Dienstfehler, nicht als Workspace-Verbot. Nachrichten
+  ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
+  Stichprobenzähler und Konfidenzberechnung ausgeschlossen. Menschlich
+  verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
+  ihre Schlussfolgerungen. Solange die kontrollierte Provenienz-Migration in
   Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
   bestehende Web-Kontexte lesbar. Er wird nur nach Einzelprüfung aller neuen
   Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen

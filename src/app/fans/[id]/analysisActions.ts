@@ -347,6 +347,16 @@ export async function analyzeFanCommunication(
     workspace.id,
     "fan_analysis",
   );
+  if (analysisCapability.error) {
+    return {
+      ok: false,
+      failure_reason: "service_unavailable",
+      message:
+        locale === "en"
+          ? "The fan-analysis capability could not be checked safely right now."
+          : "Die Freigabe der Fan-Analyse kann gerade nicht sicher geprüft werden.",
+    };
+  }
   if (!analysisCapability.enabled) {
     return {
       ok: false,
@@ -451,15 +461,19 @@ export async function analyzeFanCommunication(
         importance: memory.importance,
         createdAt: memory.created_at,
       })),
-      messages: messagesResult.messages.map((message) => ({
-        direction: message.direction,
-        channel: message.source_platform ?? "manual",
-        origin: message.source_type ?? message.message_type ?? "unknown",
-        author: message.author_label ?? message.original_author_label ?? null,
-        text: message.content || message.original_text_excerpt || "",
-        mediaPresent: Boolean(message.attachments?.length),
-        createdAt: message.created_at,
-      })),
+      messages: messagesResult.messages
+        .filter((message) =>
+          Number.isFinite(Date.parse(String(message.created_at ?? ""))),
+        )
+        .map((message) => ({
+          direction: message.direction,
+          channel: message.source_platform ?? "manual",
+          origin: message.source_type ?? message.message_type ?? "unknown",
+          author: message.author_label ?? message.original_author_label ?? null,
+          text: message.content || message.original_text_excerpt || "",
+          mediaPresent: Boolean(message.attachments?.length),
+          createdAt: message.created_at,
+        })),
       messageLimit: contextMessageLimit,
     });
   } catch {
@@ -473,8 +487,12 @@ export async function analyzeFanCommunication(
     };
   }
 
-  const { payload, inputChars } = boundedInput;
-  const sourceMessages = payload.messages;
+  const boundedPayload = boundedInput.payload;
+  const sourceMessages = boundedPayload.messages.filter((message) =>
+    Number.isFinite(Date.parse(String(message.createdAt ?? ""))),
+  );
+  const payload = { ...boundedPayload, messages: sourceMessages };
+  const inputChars = JSON.stringify(payload).length;
   const sourceMessageTimes = sourceMessages
     .map((message) => Date.parse(String(message.createdAt ?? "")))
     .filter((value) => Number.isFinite(value))

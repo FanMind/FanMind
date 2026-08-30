@@ -444,7 +444,19 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(action, /sourceFromAt[\s\S]*sourceToAt[\s\S]*confidenceScore/u);
   assert.match(
     action,
+    /if \(analysisCapability\.error\)[\s\S]*failure_reason: "service_unavailable"[\s\S]*if \(!analysisCapability\.enabled\)[\s\S]*failure_reason: "capability_disabled"/u,
+  );
+  assert.match(
+    action,
     /if \(!sourceMessages\.length \|\| !sourceFromAt \|\| !sourceToAt\)[\s\S]*failure_reason: "unprocessable_context"[\s\S]*gültigen Herkunftszeitraum/u,
+  );
+  assert.match(
+    action,
+    /messagesResult\.messages[\s\S]*\.filter\(\(message\) =>[\s\S]*Date\.parse\(String\(message\.created_at[\s\S]*\.map\(\(message\) =>/u,
+  );
+  assert.match(
+    action,
+    /const sourceMessages = boundedPayload\.messages\.filter[\s\S]*const payload = \{ \.\.\.boundedPayload, messages: sourceMessages \}[\s\S]*const inputChars = JSON\.stringify\(payload\)\.length/u,
   );
   assert.match(
     action,
@@ -453,6 +465,10 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.doesNotMatch(action, /fallback-no-messages/u);
   assert.match(action, /review_status: result\.report\.review_status/u);
   assert.match(report, /hasCompleteReportProvenance/u);
+  assert.match(report, /hasRejectedReportProvenance/u);
+  assert.match(report, /menschlich abgelehnt[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
+  assert.match(detail, /hasRejectedAnalysisProvenance/u);
+  assert.match(detail, /menschlich verworfen[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
   assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);
   assert.match(report, /Zeitraum[\s\S]*Konfidenz[\s\S]*Prüfstatus/u);
   assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);

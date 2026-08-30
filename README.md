@@ -337,6 +337,9 @@ Bereits vorhanden:
   offene Follow-ups vollständig seitenweise anzeigen und mit `completed`
   abschließen; Teammitglieder lesen nur, Altdaten mit `done` bleiben
   abgeschlossen und Altdaten mit leerem Status bleiben als offen sichtbar;
+- gespeicherte Fan-Analysen nur mit vollständig datiertem Nachrichtenkontext
+  und gültiger Provenienz anzeigen; menschlich verworfene Berichte zeigen nur
+  den Ablehnungsstatus, niemals ihre Schlussfolgerungen;
 - verschlüsselte, höchstens 24 Stunden alte Offline-Übersicht mit maximal 50 Kontakten; nur Name, Handle, Plattform, Status und Änderungszeit, ausschließlich lesbar;
 - sicherer lokaler Logout mit Purge aller registrierten FanMind-SecureStore-Schlüssel und des Workspace-Zustands;
 - native Push-Grundlage mit validierter Follow-up-Navigation, sicherem

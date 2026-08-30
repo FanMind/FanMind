@@ -59,12 +59,15 @@ export function FanAnalysisReport({
   );
   const report = state.report ?? initialReport;
   const reportHasCompleteProvenance = hasCompleteReportProvenance(report);
+  const rejectedReport = hasRejectedReportProvenance(report) ? report : null;
+  const rejectedReportUpdatedAt =
+    rejectedReport?.updated_at ?? rejectedReport?.generated_at ?? null;
   const displayReport = reportHasCompleteProvenance ? report : null;
   const effectiveMessageCount = displayReport?.source_message_count ?? storedMessageCount;
   const reportSections = buildStoredReportSections(displayReport, locale);
   const reportMode = getReportMode(displayReport);
   const [summarySection, ...detailSections] = reportSections;
-  const isLowData = effectiveMessageCount < 3;
+  const isLowData = Boolean(displayReport) && effectiveMessageCount < 3;
 
   useEffect(() => {
     if (state.ok) router.refresh();
@@ -206,7 +209,15 @@ export function FanAnalysisReport({
         </p>
       ) : null}
 
-      {report && !reportHasCompleteProvenance ? (
+      {rejectedReport ? (
+        <p className={dashboardStyles.error}>
+          {locale === "en"
+            ? `This overview was rejected by a human reviewer. Its conclusions are hidden. Review: rejected · Updated: ${rejectedReportUpdatedAt ? formatDate(rejectedReportUpdatedAt, locale) : "not yet"}`
+            : `Diese Übersicht wurde menschlich abgelehnt. Ihre Schlussfolgerungen werden nicht angezeigt. Prüfstatus: abgelehnt · Aktualisiert: ${rejectedReportUpdatedAt ? formatDate(rejectedReportUpdatedAt, locale) : "noch nicht"}`}
+        </p>
+      ) : null}
+
+      {report && !reportHasCompleteProvenance && !rejectedReport ? (
         <p className={dashboardStyles.error}>
           {locale === "en"
             ? "This saved overview is not shown without a complete source period, confidence, and review status."
@@ -277,7 +288,7 @@ export function FanAnalysisReport({
                 : "Nur Kommunikationshilfe: keine Diagnose und keine sensiblen Ableitungen."}
             </p>
           </>
-        ) : (
+        ) : rejectedReport ? null : (
           <EmptyState
             title={
               locale === "en"
@@ -297,6 +308,28 @@ export function FanAnalysisReport({
 }
 
 function hasCompleteReportProvenance(
+  report: Report,
+): report is NonNullable<Report> & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "unreviewed" | "confirmed" | "corrected";
+} {
+  return hasCompleteReportMetadata(report) && report.review_status !== "rejected";
+}
+
+function hasRejectedReportProvenance(
+  report: Report,
+): report is NonNullable<Report> & {
+  source_from_at: string;
+  source_to_at: string;
+  confidence_score: number;
+  review_status: "rejected";
+} {
+  return hasCompleteReportMetadata(report) && report.review_status === "rejected";
+}
+
+function hasCompleteReportMetadata(
   report: Report,
 ): report is NonNullable<Report> & {
   source_from_at: string;
