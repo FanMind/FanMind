@@ -132,8 +132,9 @@ and do not render its conclusions. Current reports expose source period,
 confidence and review state on both surfaces. A rejected review state is also
 fail-closed: Web and Mobile show only rejection metadata, never the rejected
 conclusions. Capability lookup failures map to the typed service-unavailable
-state before the disabled-capability branch. An analysis-read error gates the
-empty state because a failed read cannot prove that no saved report exists.
+state before the disabled-capability branch. An analysis-read error and any
+saved report hidden for incomplete provenance gate the empty state because
+neither proves that no saved report exists.
 
 Today's dashboard Follow-ups use an exact count, bounded page loading up to
 1,000 rows and explicit truncation state. Priority groups are loaded in semantic

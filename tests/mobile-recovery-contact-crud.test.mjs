@@ -471,6 +471,10 @@ test("Mobile fan analysis reuses the authorized server action and remains RLS-bo
   assert.match(detail, /hasRejectedAnalysisProvenance/u);
   assert.match(detail, /menschlich verworfen[\s\S]*Schlussfolgerungen werden nicht angezeigt/u);
   assert.match(report, /Herkunftszeitraum, Konfidenz und Prüfstatus nicht angezeigt/u);
+  assert.match(
+    report,
+    /rejectedReport \|\| report \|\| loadError \? null[\s\S]*No communication overview yet/u,
+  );
   assert.match(report, /Zeitraum[\s\S]*Konfidenz[\s\S]*Prüfstatus/u);
   assert.match(server, /getRecentContactMemories[\s\S]*getAccessToken\(explicitAccessToken\)/u);
   assert.match(server, /source_from_at,source_to_at,confidence_score,review_status/u);

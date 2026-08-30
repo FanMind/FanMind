@@ -133,8 +133,9 @@ Aktiv im App-Kern:
   verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
   ihre Schlussfolgerungen. Auch die Bearer-Route verlangt die aktive
   Workspace-Owner-Autorisierung; Mitglieder dürfen weder Analysezustand noch
-  KI-Verbrauch verändern. Ein Analyse-Ladefehler unterdrückt den Leerzustand,
-  weil er die Abwesenheit eines Berichts nicht beweist. Solange die
+  KI-Verbrauch verändern. Ein Analyse-Ladefehler oder ein gespeicherter, wegen
+  unvollständiger Nachweise ausgeblendeter Altbericht unterdrückt den
+  Leerzustand, weil beides die Abwesenheit eines Berichts nicht beweist. Solange die
   kontrollierte Provenienz-Migration in
   Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
   bestehende Web-Kontexte lesbar. Er wird nur nach Einzelprüfung aller neuen

@@ -288,7 +288,7 @@ export function FanAnalysisReport({
                 : "Nur Kommunikationshilfe: keine Diagnose und keine sensiblen Ableitungen."}
             </p>
           </>
-        ) : rejectedReport ? null : (
+        ) : rejectedReport || report || loadError ? null : (
           <EmptyState
             title={
               locale === "en"
