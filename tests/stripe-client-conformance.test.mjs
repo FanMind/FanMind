@@ -74,9 +74,9 @@ test("production server modules do not bypass the shared Stripe client", () => {
   ]) {
     const source = readFileSync(path, "utf8");
     assert.match(source, /getStripeClient/u, `${path} must use getStripeClient`);
-    assert.doesNotMatch(
-      source,
-      /api\.stripe\.com/u,
+    assert.equal(
+      source.includes("api.stripe.com"),
+      false,
       `${path} must not call raw Stripe REST`,
     );
     assert.doesNotMatch(source, /Authorization: `Bearer \$\{secret/u);
