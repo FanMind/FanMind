@@ -131,7 +131,8 @@ legacy reader returns null provenance, and both Web and Mobile remain fail-close
 and do not render its conclusions. Current reports expose source period,
 confidence and review state on both surfaces. A rejected review state is also
 fail-closed: Web and Mobile show only rejection metadata, never the rejected
-conclusions. Capability lookup failures map to the typed service-unavailable
+conclusions. Rejected or incomplete-provenance reports are also excluded from
+the productive reply-suggestion prompt context. Capability lookup failures map to the typed service-unavailable
 state before the disabled-capability branch. An analysis-read error and any
 saved report hidden for incomplete provenance gate the empty state because
 neither proves that no saved report exists.
@@ -147,7 +148,8 @@ The open-status predicate keeps legacy `NULL` rows readable alongside normal
 open rows while excluding both `completed` and historical `done`. The central
 Follow-up screen loads the complete open result in stable 200-row pages ordered
 by due date, creation time and ID; it is therefore a real destination for work
-outside the compact dashboard selection.
+outside the compact dashboard selection. It reloads on screen focus so a
+Follow-up added in a fan detail appears immediately when the user returns.
 Per-contact Follow-up load errors remain section-specific on initial load and
 after either manual or suggestion-based creation, so a failed refresh can never
 be rendered as a valid empty list next to a save-success notice. The bounded

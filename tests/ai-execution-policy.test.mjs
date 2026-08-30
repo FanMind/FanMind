@@ -206,6 +206,10 @@ test("productive AI entry points enforce lifecycle guards, limits and output bud
     /payload\.(?:pastedChatContext|analysisReport)/u,
   );
   assert.match(replyRoute, /buildBoundedReplySuggestionContext/u);
+  assert.match(
+    replyRoute,
+    /hasUsableAnalysisReportContext[\s\S]*review_status === "rejected"[\s\S]*const analysisReport = hasUsableAnalysisReportContext\(analysisResult\.report\)/u,
+  );
   assert.match(replyRoute, /max_output_tokens: AI_REPLY_OUTPUT_TOKEN_LIMIT/u);
   assert.ok(
     replyRoute.indexOf("isWorkspaceArchivedAfterSubscriptionEnd(workspace)")

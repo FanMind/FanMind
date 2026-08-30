@@ -365,6 +365,10 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
     data,
     /listFollowups[\s\S]*pageSize = 200[\s\S]*while \(true\)[\s\S]*\.or\(OPEN_FOLLOWUP_FILTER\)[\s\S]*\.order\("due_date"[\s\S]*\.order\("created_at"[\s\S]*\.order\("id"[\s\S]*\.range\(offset, offset \+ pageSize - 1\)[\s\S]*pageRows\.length < pageSize/u,
   );
+  assert.match(
+    followups,
+    /useFocusEffect\([\s\S]*useCallback\(\(\) => \{[\s\S]*void load\(\)/u,
+  );
   assert.match(data, /export async function listTodaysFollowups/u);
   assert.match(
     data,

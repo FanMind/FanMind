@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -121,9 +121,11 @@ export default function FollowupsScreen() {
     [workspace?.id],
   );
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   async function complete(item: Followup) {
     if (!workspace?.id || workspace.role !== "owner") return;

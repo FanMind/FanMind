@@ -131,7 +131,9 @@ Aktiv im App-Kern:
   ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
   Stichprobenzähler und Konfidenzberechnung ausgeschlossen. Menschlich
   verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
-  ihre Schlussfolgerungen. Auch die Bearer-Route verlangt die aktive
+  ihre Schlussfolgerungen; verworfene oder unvollständig provenienzgebundene
+  Berichte werden auch aus dem produktiven Kontext für KI-Antwortvorschläge
+  ausgeschlossen. Auch die Bearer-Route verlangt die aktive
   Workspace-Owner-Autorisierung; Mitglieder dürfen weder Analysezustand noch
   KI-Verbrauch verändern. Ein Analyse-Ladefehler oder ein gespeicherter, wegen
   unvollständiger Nachweise ausgeblendeter Altbericht unterdrückt den
@@ -152,7 +154,8 @@ Aktiv im App-Kern:
   abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten bleiben
   lesekompatibel und ein historisch leerer Status gilt weiterhin als offen.
   Die globale Liste lädt alle offenen Einträge stabil in 200er-Seiten, statt
-  ältere Aufgaben nach einer festen Grenze auszublenden. Die Fan-Detail-Liste
+  ältere Aufgaben nach einer festen Grenze auszublenden, und lädt beim erneuten
+  Fokussieren nach der Rückkehr aus einem Fan-Detail automatisch neu. Die Fan-Detail-Liste
   liefert einen exakten Zähler und weist eine Begrenzung auf 100 sichtbare
   offene Einträge ausdrücklich aus;
 - verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, 24-Stunden-Ablauf und Nur-Lesen-Oberfläche;
