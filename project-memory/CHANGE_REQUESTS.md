@@ -88,6 +88,18 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: Prepare both Store packages now. Android full 19-check acceptance and final screenshots begin only after installation from the Play test track. Apple metadata/support/review/screenshot planning is allowed now, but iOS signing, build, TestFlight and device acceptance remain Phase 8 and unverified.
 - Related task: FM-MOB-001
 
+## FM-CR-008
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with safe work while Google Play approval is pending and ensure the known project state is fully incorporated rather than leaving stale trackers that trigger duplicate work.
+- Classification: Repository/issue governance reconciliation; no product runtime, provider, database, payment, signing or release mutation.
+- Affected areas: Project Memory issue reconciliation, quality controls, #642/#643/#644 and bounded current-status wording in #874.
+- Existing task/decision checked: FM-STG-001, FM-LOOP-011, FM-AI-001, #642/#643/#644/#874, STAGING_ACCEPTED and the current Mobile/Restore/AI owner-deferred boundaries.
+- Dependencies: exact immutable Staging evidence and successful exact-head repository review before external issue metadata is changed.
+- Decision: keep genuine #642/#643 gates open, supersede only the historical #644 umbrella, and make the mapping machine-checkable so later work cannot mistake stale checkboxes for missing implementation.
+- Related task: FM-MEM-009
+
 ## Intake template
 
 ```text

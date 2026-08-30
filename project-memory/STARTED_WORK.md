@@ -11,6 +11,24 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-MEM-009
+- Started: 2026-08-30
+- Updated: 2026-08-30
+- Status: IN_PROGRESS
+- Risk: R2
+- Scope: Reconcile legacy Staging/Referral issues #642/#643/#644 against immutable current Staging evidence and the active #874 finishline without reimplementing completed work or closing genuine external/negative-test gates.
+- Change request: FM-CR-008.
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / pending.
+- Work lock: `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` ACTIVE.
+- Dependencies: accepted STAGING_ACCEPTED milestone, exact successful Staging runs `31837057323` and `31895476403`, current #874 body, and repository tests/runbooks that define the proved boundaries.
+- Assumptions: an unchecked historical issue item is not proof that implementation is absent; conversely, a later umbrella statement cannot close a specific negative/external control without matching evidence.
+- Planned evidence: machine-readable issue map, deterministic human rendering, positive and negative validator tests, Project Memory/truth/drift checks, exact-head PR gates, and post-merge issue-body/state reconciliation.
+- Completed so far: current issue bodies, immutable workflow run/job results, accepted Staging milestone, current tests and deep-audit classification were read-only crosschecked. #642 and #643 retain genuine gates; #644 is superseded by #874 rather than a current implementation backlog.
+- Still open: implement and verify the repository contract, merge it, then update the three issue records and current #874 Mobile wording without changing runtime/provider/billing/database state.
+- Exact next step: add the canonical reconciliation data/renderer/validator and regression coverage, then complete exact-head review and issue closeout.
+- Rollback/recovery: revert the governance-only commit and restore prior issue metadata if the post-merge write is inconsistent; no product/runtime/provider/database state is involved.
+- Owner action needed: none for repository/issue reconciliation; retained legal, Production activation, payment and protected external gates stay owner-controlled.
+
 ## FM-MOB-004
 - Started: 2026-08-29
 - Updated: 2026-08-30
@@ -90,7 +108,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
-- Branch/PR: current dual-store preparation `mobile/dual-store-prep-20260830`; Android handoff PR #1030 and Store implementation PR #1028 are merged; earlier read-only evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
+- Branch/PR: dual-store PR #1031 final head `a963ab598eeb0a7ab84110e55cb4043d4230e550` merged as `3082490451dd45b5127bdf9d9ae55b4712255b72`; Android handoff PR #1030 and Store implementation PR #1028 are merged; earlier read-only evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
 - Work lock: `LOCK-FM-MOB-001-ANDROID-STORE-20260830` is ACTIVE for the explicitly resumed Android Production/Google Play continuation. Earlier Preview and bounded FM-MOB-004 locks remain RELEASED.
 - Dependencies: the bounded FM-MOB-003/FM-MOB-004 real-device UI/runtime observation and exact Production Supabase redirect are complete; the full receipt-bound 19-check Android runbook/private validator and real Recovery flow now wait for Play-test-track installation. iOS build/signing/TestFlight/device evidence remains Phase 8, while repository-only App Store preparation is authorized.
 - Assumptions: repository CI/build evidence does not prove a signed device build; a successful EAS lookup alone does not prove that the returned owner, slug and project ID match the protected FanMind binding.
@@ -99,7 +117,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Accepted Android result: on 2026-08-30 the owner installed and inspected the exact FM-MOB-004 Android Preview on a real device and confirmed the bounded FM-MOB-003/FM-MOB-004 UI/runtime result as finished.
 - Current continuation: owner explicitly requested the accepted Android app be finished, bound to FanMind Production and taken to Google Play. PR #1028 passed ten exact-head gates and merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Protected Production readiness run `33316105624` / job `99269748215` then passed without writes. Protected Store-build run `33316172583` / job `99269924756` completed exactly one Android `production` AAB for the same commit, verified the terminal artifact, retained only a redacted receipt, purged temporary state and kept Submit/Update disabled.
 - External observation: the FanMind Production and Staging Supabase projects are active/healthy. After separate owner confirmation, `fanmind://reset-password` was saved and re-read as the fourth exact Production Auth redirect on 2026-08-30. The Google Play developer account is accessible but identity/document review is pending, so phone verification and Play app creation remain disabled.
-- Current repository continuation: FM-EV-031 adds the public Support route, reproducible 512×512 Play icon and 1024×500 feature graphic, Apple metadata/review/tester/screenshot handoff and updated Store checks. It queues no build and performs no portal/provider write.
+- Completed repository continuation: FM-EV-031 adds the deployed public Support route, reproducible 512×512 Play icon and 1024×500 feature graphic, Apple metadata/review/tester/screenshot handoff and updated Store checks. PR #1031 passed all exact-head gates and merged as `3082490451dd45b5127bdf9d9ae55b4712255b72`; post-merge deploy/readiness/audit checks and live `/support` verification passed. It queued no build and performed no portal/provider write.
 - Still open: Google phone verification/app record after provider approval, Play Data Safety/test program/existing-AAB upload, then the complete private Android 19-check/Recovery proof and real screenshots from the Play-track installation. Apple Developer/App Store Connect, signed iOS build, TestFlight, real screenshots and device acceptance remain Phase 8.
 - Evidence so far: issues #584/#690, Source of Truth, mobile docs/tests, PRs #988/#1019/#1021/#1025/#1028/#1030, preview run `33298699290` / job `99222705186`, Production readiness run `33316105624` / job `99269748215`, Store-build run `33316172583` / job `99269924756`, FM-EV-021/FM-EV-024/FM-EV-025/FM-EV-026/FM-EV-027/FM-EV-028/FM-EV-029/FM-EV-030/FM-EV-031 and the Mobile receipts.
 - Exact next step: do not queue another AAB or any iOS build. Wait for Google approval, verify phone/account state, create the Play app record, transfer the prepared package and upload the existing AAB into the confirmed test track. Only after that Store download is available, run the private 19-check Android/Recovery acceptance and capture real screenshots.

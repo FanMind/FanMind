@@ -23,6 +23,24 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Work lock released: yes|no
 ```
 
+## RECEIPT-FM-MEM-009-LEGACY-ISSUES-20260830
+- Task: FM-MEM-009 / FM-CR-008
+- Started: 2026-08-30
+- Finished: local implementation/countercheck complete; exact-head PR merge and issue metadata closeout pending
+- Branch/PR: `ops/legacy-issue-reconciliation-20260830` / pending
+- Preflight checked: AGENTS, Source of Truth, Protocol/Execution Policy/Current State/Deep Audit/Finishline/NBA/Deferred/Handoff/Started Work/Locks/Open Loops/Task Ledger/Dependencies/Decisions/Failed Attempts/Do Not Assume/Assumptions/Contradictions/Change Requests/Evidence/Freshness/Drift, current #642/#643/#644/#874 bodies, exact GitHub main and immutable Staging workflow runs/jobs.
+- Prior attempts found: FM-STG-001 and STAGING_ACCEPTED already prove the Staging foundation; #874 Gate 1 records later acceptance; older issue bodies still expose obsolete unchecked prerequisites. Reimplementation or blanket closure would both be incorrect.
+- Dependency result: exact successful admin Staging run `31837057323` and Referral Staging run `31895476403` plus the immutable Staging milestone are sufficient to classify known completion, but not the retained token/provider/tenant/Legal/Production gates.
+- Planned evidence: complete historical unchecked-item mapping; deterministic human view; fail-closed validator/tests; full repository governance regression; exact-head PR; post-merge issue updates and independent re-read.
+- Changes made: added canonical JSON/Markdown reconciliation, validator, 7 negative/rendering tests, Project Memory Quality integration and active bookkeeping. Also identified stale post-merge Mobile/Project Memory evidence for same-closeout correction; no product/runtime/provider state changed.
+- Checks/tests: focused 7/7 and full Operations 1070/1070 passed; Product Truth across 253 files, Referral truth, legal evidence schema, immutable Action pins, focused ESLint and all Project Memory/NBA/V8/drift/freshness/milestone/status checks passed.
+- Final diff counterchecked: locally yes; exact-head remote diff remains pending.
+- Regression/security countercheck: fail-closed; #642/#643 remain open, #644 cannot be superseded without a successor-gate map, and the change authorizes no Production/Stripe/database/provider/payment/signing/build/legal action.
+- Evidence produced: FM-EV-032 and RECON-2026-014; exact-head/merge/issue evidence pending.
+- Result status: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD.
+- Open follow-up: open the PR, require exact-head gates, merge, update/re-read #642/#643/#644/#874, then close FM-LOOP-011 and release the lock in a repository closeout.
+- Work lock released: no; `LOCK-FM-MEM-009-LEGACY-ISSUES-20260830` remains active through the issue closeout.
+
 ## RECEIPT-FM-MOB-003-20260829
 - Task: FM-MOB-003
 - Started: 2026-08-29 Europe/Vienna
@@ -132,19 +150,19 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 ## RECEIPT-FM-MOB-001-DUAL-STORE-PREP-20260830
 - Task: FM-MOB-001 / FM-CR-007
 - Started: 2026-08-30 after the owner authorized iPhone App Store preparation and moved complete Android acceptance behind a Google Play download
-- Finished: local implementation/countercheck complete; exact-head review, merge and Production Support-route deployment pending
-- Branch/PR: `mobile/dual-store-prep-20260830` / #1031
+- Finished: 2026-08-30 after exact-head review, merge, deployment and live Support-route verification
+- Branch/PR: `mobile/dual-store-prep-20260830` / #1031; final head `a963ab598eeb0a7ab84110e55cb4043d4230e550`, squash merge `3082490451dd45b5127bdf9d9ae55b4712255b72`
 - Preflight checked: AGENTS, Next.js local page/metadata guidance, mandatory Project Memory drift preflight, current Mobile app config/store/privacy/device handoffs, exact Android AAB evidence, current Apple/Google official Store requirements and existing FanMind vector branding.
 - Prior attempts found: Android `1.0.0` AAB, private acceptance preparer, privacy/account-deletion pages and core Apple metadata already exist. Another Android build, generated replacement branding, fabricated screenshots, iOS signing or TestFlight would overstep the new preparation scope.
 - Dependency result: repository-only graphics, public Support, metadata and review/tester handoffs are safe now. Google identity review, Play-track install, real Android acceptance and every signed iOS/Apple portal action remain external.
 - Planned evidence: deterministic exact-size Store assets; HTTPS Support route; updated Apple/Google handoffs; fail-closed metadata/asset tests; canonical truth and Project Memory reconciliation; exact-head PR gates and post-deploy Support availability.
 - Changes made: added the Store renderer/source/PNGs, public Support page and smoke target, Apple handoff, Store review-access and tester-program documents; updated listing/privacy/Google sequence and canonical readers; extended Store readiness and regression tests; recorded FM-CR-007/FM-DEC-010. PR review identified seven valid gaps: isolated Sharp ownership, cross-platform SVG hashing, separate Google Play support e-mail, exact Production-AAB device binding, stale Preview wording in the canonical architecture, a missing English Apple keyword set and the Play icon's missing alpha channel. All seven were corrected; evidence schema version 2 now binds Android Production/Store receipt, environment and distribution without permitting a new build, while Store readiness validates distinct DE/EN Apple keywords and the Play-required 32-bit RGBA icon contract.
 - Checks/tests: deterministic Store re-render kept all three SHA-256 values exact; isolated Mobile Sharp `0.35.3` imported from the Mobile-owned lock; Mobile check passed TypeScript, Expo Doctor 20/20, Store, boundary and isolated Android/iOS prebuild across 33 generated files; focused Store/device evidence tests passed 17/17; full operations passed 1063/1063; ESLint and Next Production build passed with `/support` among 73 generated pages; direct local `/support` returned HTTP 200 with the required safety/contact copy; Product Truth, Project Memory Quality/Status, drift/truth/V8/freshness/milestone and `git diff --check` passed. Full local Production smoke was intentionally not accepted because local runtime lacks the real release-commit/health environment; all public content routes including `/support` returned 200 before the expected version/health failures.
-- Final diff counterchecked: yes locally; pending exact-head PR and remote gates.
+- Final diff counterchecked: yes; all 14 exact-head check runs succeeded before merge and the merge tree matched the reviewed result.
 - Regression/security countercheck: no build, signing, EAS/Store/provider/database write, real user/tester data, credentials or automatic send. Android AAB reuse and Phase-8 signed-iOS boundary remain explicit.
-- Evidence produced: FM-EV-031 repository preparation; no external acceptance evidence.
-- Result status: COUNTERCHECKED_LOCALLY_PENDING_EXACT_HEAD.
-- Open follow-up: complete local/full checks, exact-head merge and verify `/support` after the normal deployment. Then wait for Google approval; do not queue another Android or any iOS build.
+- Evidence produced: FM-EV-031; PR #1031; merge `3082490451dd45b5127bdf9d9ae55b4712255b72`; successful deploy `33329639563`, Browser E2E `33329639556`, Supply Chain `33329639565`, CodeQL `33329639539`, Final Go-Live Readiness `33329714553`, read-only Production Audit `33329714558`, and live `/support` verification.
+- Result status: ACCEPTED for repository preparation and deployed public Support only; external Store/device/provider controls remain open.
+- Open follow-up: wait for Google approval; reuse the existing Android AAB without another build. Signed iOS/TestFlight/device work remains Phase 8.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
 
 ## RECEIPT-FM-MEM-005-20260819-1214

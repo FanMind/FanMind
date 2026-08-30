@@ -31,3 +31,7 @@ jobs:
         run: python3 scripts/fanmind_milestone_snapshot_check.py
       - name: Validate cross-chat, impact and automatic handoff controls
         run: python3 scripts/fanmind_memory_v8.py --check
+      - name: Validate legacy issue reconciliation
+        run: python3 scripts/fanmind_legacy_issue_reconciliation.py --check
+      - name: Test legacy issue reconciliation fail-closed paths
+        run: node --test tests/legacy-issue-reconciliation.test.mjs
