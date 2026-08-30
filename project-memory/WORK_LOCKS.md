@@ -13,14 +13,16 @@ Prevents two agents/sessions from independently working the same task.
 
 ## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
 - Task: FM-MOB-004
-- Status: ACTIVE
+- Status: RELEASED
 - Holder: ChatGPT Mobile fan-sections/analysis/follow-up/splash session 2026-08-29
-- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; superseded reviewed heads `2feba6f63d611a8461e2a9bb3402147f7fff8dd5`, `c7226cab1a991a514f3fd9d19e58b00e250135a4`, `67e02276ede02bb919088f3aa61e0e1343be52e0`, `cca0b7e2cc650b886a0a10653d49a15536e27d0a`, `c58ec12d2c93e046d3d25b12e4ae6a4dba3ed0ef`, `a33875409abebd933ab325f8f14aa35bdaaf6617`, `12994fd952137520bc1452c0dee25ddff6255a54`, `e10b312a6d62682d09fc211de4cc25b97056c014`, `2f728692dda1005ec04c324f1882b6b90faf521e`, `86bac360d19edb626f496d0ce87e63cb492e76ed` and `b3fe6ab5491181e789ba9ee17e6218c981c2d3c2`, final corrective exact head pending
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; final head `64329ac628188cf532281ddb742058612b9e9eb8`, merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`.
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile authenticated reads/AI action plus signed Android preview
 - Scope: three fan sections, one-line identifier, provenance-bound stored fan analysis with Web/Mobile capability-, processing-entitlement- and full-schema-gated generation clearly marked as preparation, active-owner-only Bearer mutation, no write without a valid fully dated source period, rejected-conclusion hiding and prompt exclusion, typed capability failures, parallel fail-closed legacy probes and error-gated empty/count state, fan-bound/today Follow-up navigation with explicit error/count/truncation handling, legacy-null-open semantics plus complete focus-refreshed central pagination, corrected splash, exact-head checks, merge and one replacement Android preview.
 - Resume from: merged FM-MOB-003 foundation on current `main`; extend existing RLS, owner-only mutation and server AI controls without recreating them.
 - Safety: no automatic sending, service-role key in Mobile, offline message/analysis cache, schema/demo-row/provider/Production mutation, iOS submission or Store publication is authorized.
+- Released: 2026-08-30 after all nine exact-head gates passed, #1025 merged and protected run `33298699290` / job `99222705186` completed one verified exact-merge `preview` Android artifact with receipt and cleanup.
+- Resume from: owner device acceptance only. A visual/runtime failure reopens only the exact Android observation; it does not authorize an automatic rebuild, schema change, provider activation or duplicate demo data.
 
 ## LOCK-FM-MOB-003-FAN-INBOX-20260829
 - Task: FM-MOB-003
