@@ -256,6 +256,7 @@ test("the signed build handoff writes one redacted private receipt", async () =>
           FANMIND_MOBILE_RELEASE_ENVIRONMENT: "preview",
           FANMIND_MOBILE_BUILD_PROFILE: "preview",
           FANMIND_MOBILE_BUILD_PLATFORM: "android",
+          FANMIND_MOBILE_BUILD_CLASS: "internal",
           FANMIND_MOBILE_SIGNED_BUILD_CONFIRM:
             "queue-one-signed-mobile-build",
           FANMIND_ENABLE_MOBILE_EAS_BUILD: "true",
