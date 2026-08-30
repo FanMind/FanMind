@@ -34,17 +34,17 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
 ## CTR-FM-003
 - Date: 2026-08-19
-- Updated: 2026-08-19
-- Related task/change: FM-STG-001 / #642/#643/#644
+- Updated: 2026-08-30
+- Related task/change: FM-STG-001 / FM-MEM-009 / #642/#643/#644/#874
 - Risk: R2
 - Source A: older P1/referral/staging issue bodies
 - Claim A: separate Staging/Supabase/Stripe/synthetic identities and broad lifecycle prerequisites are still absent.
 - Source B: central finishline #874 Gate 1 and later Staging/Referral evidence
 - Claim B: isolated Staging foundations and primary Staging acceptance are now recorded complete, including rollback-protected Referral/Billing lifecycle.
 - Stronger/current evidence: #874 later run/commit evidence.
-- Status: RECONCILIATION_REQUIRED
-- Resolution/action: map each remaining old checkbox to current test/run evidence; close/supersede only stale checklist items, retain genuine regression gaps. No reimplementation from zero.
-- Evidence: #874 Gate 1; deep audit.
+- Status: RESOLVED
+- Resolution/action: every historical unchecked item is now mapped to exact current evidence or a named retained gate. #642/#643 remain open with genuine gaps, #644 is closed only as superseded by #874, and #874 Gate 3 preserves the Android/Google/iOS boundaries. No Staging or Referral foundation was reimplemented.
+- Evidence: #874 Gate 1; exact Staging runs `31837057323` and `31895476403`; PR #1033 final head `70ea1bc61c7adefb739ba8fa3e16ea0bb84b4e58`; squash merge `cc82dd7ad62e6aaf1d7b2637d49d43010789475f`; FM-EV-032; independent post-write reads of #642/#643/#644/#874 on 2026-08-30.
 
 ## CTR-FM-004
 - Date: 2026-08-19

@@ -58,6 +58,56 @@ for block in re.split(r"(?m)^## ", started)[1:]:
 contr = (PM / "CONTRADICTIONS.md").read_text(encoding="utf-8") if (PM / "CONTRADICTIONS.md").exists() else ""
 if "RECONCILIATION_REQUIRED" not in contr:
     errors.append("contradiction-register-missing-reconciliation-state")
+legacy_contradiction = re.search(
+    r"(?ms)^## CTR-FM-003\s*$\n(.*?)(?=^## |\Z)",
+    contr,
+)
+if not legacy_contradiction or not re.search(
+    r"(?m)^- Status:\s*RESOLVED\s*$",
+    legacy_contradiction.group(1),
+):
+    errors.append("legacy-issue-contradiction-not-resolved")
+
+ttl_path = PM / "EVIDENCE_TTL_POLICY.json"
+freshness_path = PM / "EVIDENCE_FRESHNESS.json"
+try:
+    ttl_policy = json.loads(ttl_path.read_text(encoding="utf-8")).get("policy", {})
+    freshness_entries = json.loads(freshness_path.read_text(encoding="utf-8")).get("entries", [])
+except (json.JSONDecodeError, OSError) as exc:
+    errors.append(f"evidence-freshness-contract-invalid:{type(exc).__name__}")
+    ttl_policy = {}
+    freshness_entries = []
+issue_policy = ttl_policy.get("github_issue_state")
+required_issue_triggers = {
+    "issue_body_or_state_change",
+    "before_relying_on_legacy_issue_reconciliation",
+    "before_reopening_reconciled_work",
+}
+if (
+    not isinstance(issue_policy, dict)
+    or not isinstance(issue_policy.get("ttl_hours"), int)
+    or issue_policy["ttl_hours"] <= 0
+    or set(issue_policy.get("revalidate_on", [])) != required_issue_triggers
+):
+    errors.append("legacy-issue-freshness-policy-invalid")
+issue_snapshots = [
+    entry
+    for entry in freshness_entries
+    if isinstance(entry, dict) and entry.get("id") == "EV-LEGACY-ISSUE-SNAPSHOT-20260830"
+]
+if len(issue_snapshots) != 1:
+    errors.append("legacy-issue-freshness-snapshot-missing-or-duplicate")
+else:
+    issue_snapshot = issue_snapshots[0]
+    if (
+        issue_snapshot.get("class") != "github_issue_state"
+        or issue_snapshot.get("gate") != "memory_v6"
+        or issue_snapshot.get("status") != "COUNTERCHECKED"
+        or not issue_snapshot.get("observed_at")
+        or set(issue_snapshot.get("revalidate_on", [])) != required_issue_triggers
+        or not all(token in issue_snapshot.get("source", "") for token in ("#642 open", "#643 open", "#644 closed not_planned", "#874 open"))
+    ):
+        errors.append("legacy-issue-freshness-snapshot-invalid")
 
 quality = (PM / "QUALITY_CONTROL.md").read_text(encoding="utf-8") if (PM / "QUALITY_CONTROL.md").exists() else ""
 for token in ["R1", "R2", "R3", "R4", "COUNTERCHECKED", "PRODUCTION_CONFIRMED", "What observation would prove our conclusion wrong?"]:
