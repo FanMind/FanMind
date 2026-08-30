@@ -13,19 +13,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-MOB-004
 - Started: 2026-08-29
-- Updated: 2026-08-29
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-08-30
+- Status: VERIFIED_NOT_ACCEPTED
 - Risk: R3
 - Scope: Deliver the owner-requested three-section fan detail, one-line identifier, safe Mobile fan analysis, fan-bound Follow-up navigation, today's Dashboard Follow-ups and corrected square native splash; then produce one exact-merge Android preview.
 - Change request: FM-CR-005.
-- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; reviewed heads `2feba6f63d611a8461e2a9bb3402147f7fff8dd5`, `c7226cab1a991a514f3fd9d19e58b00e250135a4`, `67e02276ede02bb919088f3aa61e0e1343be52e0`, `cca0b7e2cc650b886a0a10653d49a15536e27d0a` and `a33875409abebd933ab325f8f14aa35bdaaf6617` each passed all nine gates; reviewed heads `c58ec12d2c93e046d3d25b12e4ae6a4dba3ed0ef`, `12994fd952137520bc1452c0dee25ddff6255a54`, `e10b312a6d62682d09fc211de4cc25b97056c014`, `2f728692dda1005ec04c324f1882b6b90faf521e`, `86bac360d19edb626f496d0ce87e63cb492e76ed` and `b3fe6ab5491181e789ba9ee17e6218c981c2d3c2` each reached eight green gates while Mobile Native CI was still running. All eleven are superseded before merge by the final grouped review correction.
-- Work lock: `LOCK-FM-MOB-004-FAN-SECTIONS-20260829` ACTIVE.
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; final exact head `64329ac628188cf532281ddb742058612b9e9eb8`, squash merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`.
+- Work lock: `LOCK-FM-MOB-004-FAN-SECTIONS-20260829` RELEASED.
 - Dependencies: existing RLS and Mobile Bearer authorization, server-side analysis action/capability gates, exact-head CI and one protected Android preview build.
 - Assumptions: stored Fan-analysis reports remain read-only and are displayed only with source period, sample size, confidence and review state. Production generation remains hidden/in preparation until the Workspace analysis/privacy contract is technically active and verified. Follow-up navigation carries only the contact ID and selected section.
 - Planned evidence: Mobile typecheck/Expo/native checks, focused authorization/UI tests, full repository regression, exact-head PR gates, SHA-bound merge and exactly one merged-commit Android preview.
 - Completed so far: initial implementation/docs and local checks passed. Eleven successive exact-head reviews found six, four, six, three, three, three, two, one, two, two and three valid cases, thirty-five in total. The first three corrections added provenance, semantic statuses/counting, fail-closed Mobile/Web/legacy behavior, priority-before-cap pagination and section-specific errors. Review four added the final unknown/null-priority group, an exact/truncated per-contact Follow-up result and low confidence for generic fallback-only analysis. Review five added legacy `NULL` status as open, complete stable 200-row pagination for the central Follow-up list and a hard no-write/no-provider boundary without a valid analysis source period. Review six added service-failure precedence for capability reads, conclusion hiding for rejected reports and timestamp-valid-only provider/provenance samples. Review seven made the explicit Bearer path owner-only and gated the Mobile analysis empty state after load failures. Review eight prevents Web from showing a false empty state beside a saved report hidden for incomplete provenance or a load error. Review nine excludes rejected/incomplete reports from productive reply prompts and refreshes die zentrale Follow-up-Liste on focus. Review ten binds the Web control to the server capability status and parallelizes the six fail-closed legacy column probes. Review eleven also binds that Web control to the active-processing entitlement, suppresses an unknown Dashboard count after read failure and verifies the complete report schema before provider use. The eleventh full local countercheck is green: 42 focused checks, 1055 operations tests, root TypeScript/lint/build, Mobile typecheck/Expo Doctor 20/20/Store/boundary/native prebuild, Android/iOS exports and all Project Memory/truth/drift gates passed. All fixes are grouped without schema, row, provider or Production mutation.
-- Still open: publish the replacement exact head, resolve the three review-eleven threads, require all replacement exact-head gates plus a clear exact-head review, merge, one Android preview and owner device confirmation.
-- Exact next step: update PR #1025 with the locally complete grouped countercheck and merge only after the replacement head is terminal green with no unresolved review thread.
+- Verified result: final PR head `64329ac628188cf532281ddb742058612b9e9eb8` passed all nine exact-head gates with no unresolved review thread and merged as `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. Protected run `33298699290`, job `99222705186`, completed exactly one `preview` Android internal build for that merge, verified the HTTPS APK artifact, stored the redacted receipt and cleaned temporary state. Submit and Update remained disabled.
+- Still open: owner installation and real-device confirmation of the three fan sections, one-line identifier, Follow-up navigation/today list, safe analysis preparation state and corrected square splash. Supabase recovery redirect plus applicable Push/Store acceptance remain separate under FM-MOB-001; iOS/TestFlight remains Phase 8.
+- Exact next step: owner installs the already completed exact-merge Android preview and reports the visible checks. Do not queue another build solely for confirmation.
 - Rollback/recovery: revert the Mobile/API commit; no database migration or destructive action is part of this change.
 
 ## FM-MOB-003
@@ -83,20 +84,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: yes, first for `FM-RST-OWNER-005` connectivity evidence and, only after reconciliation, `FM-RST-OWNER-006` new exact protected database-Restore authorization.
 ## FM-MOB-001
 - Started: before 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-08-30
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
 - Branch/PR: read-only evidence PR #1010 final exact head `15fca01adae6f4934c7b729512a14b8ccc926383`, squash merge `e6b3d9715726ede77ce7230cefa824edba16b2d4`; repository binding PR #988 merged as `e20efd475e475101226f266118b9cfed7972243a`.
-- Work lock: `LOCK-FM-MOB-001-PREVIEW-READINESS-20260826` RELEASED after exact-head acceptance/merge. Acquire a new lock only after `FM-MOB-OWNER-001` is complete.
-- Dependencies: Supabase redirect, EAS project/environments/token, signing credentials, Apple Developer/App Store Connect for iOS.
+- Work lock: `LOCK-FM-MOB-001-PREVIEW-READINESS-20260826` and the bounded FM-MOB-004 lock are RELEASED. Acquire a new lock only for a concrete device/runtime correction or remaining external control.
+- Dependencies: Supabase recovery redirect, Android real-device acceptance and applicable Push/Store evidence; iOS/TestFlight is Phase 8.
 - Assumptions: repository CI/build evidence does not prove a signed device build; a successful EAS lookup alone does not prove that the returned owner, slug and project ID match the protected FanMind binding.
 - Completed so far: native app core, auth/recovery, SecureStore/Purge, contacts/knowledge/AI/followups, offline cache, push foundation, icon/splash/privacy/store metadata and CI/control workflows. PR #988 added a bounded verifier for the redacted `eas project:info` report, rejects owner/slug/ID drift and unsafe report files, wires it before both read-only readiness and any signed internal build queue, and exercises parser plus workflow wiring through positive and negative CI self-tests. Exact head `6f42a5897aabb3387a74149010dee2b5fb2c92cd` passed Project Memory Guard/Quality/Status, FanMind CI, Landing Language CI, Supply Chain Security, CodeQL and Browser E2E before merge `e20efd475e475101226f266118b9cfed7972243a`. On 2026-08-26 all five historical resource-readiness jobs were reconciled: development job `91521865376`, preview jobs `91521865677`/`93228923133`/`95410943740` and production job `91521871719` all had blank `EXPO_TOKEN` plus all four expected binding variables and failed closed with `eas_project_lookup_failed` before public-environment verification. The latest was 2026-08-17 and predates #988.
-- Latest result: exact `preview` run `33000433320`, job `98280538304`, on `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` passed setup, found the protected token and all expected bindings blank, emitted `eas_project_lookup_failed` and skipped public-environment verification. No retry, build, signing, submit, update or provider mutation occurred.
-- Still open: `FM-MOB-OWNER-001` protected preview configuration and Supabase redirect proof; then fresh read-only EAS verification, signing, signed Android + real device, iOS/TestFlight + real device and push/store portal evidence.
-- Evidence so far: issues #584/#690, Source of Truth, mobile docs/tests, Expo EAS CLI `project:info` source contract, PR #988 exact-head workflow set, historical runs `30757411663`/`30757411853`/`30757414324`/`31307035292`/`32037572256`, current run `33000433320`/job `98280538304` and FM-EV-021.
-- Exact next step: Mobile is deferred to `FM-MOB-OWNER-001`. After owner/platform configuration, acquire a new lock and run exactly one fresh protected `preview` read-only check. Do not rerun this job or start a build; continue generated parallel-safe AI/Billing reconciliation meanwhile.
-- Owner action needed: only where protected EAS environment/account access, Supabase Redirect, signing, stores and real-device acceptance require external action.
+- Latest result: protected `preview` run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` reverified the EAS project/public Preview environment and completed exactly one signed Android internal artifact with exact-commit HTTPS artifact verification, redacted receipt and cleanup. Submit/Update/Production remained disabled.
+- Still open: owner installs and accepts the exact FM-MOB-004 Android Preview on a real device; Supabase redirect/recovery and applicable Push/Store evidence remain open. iOS/TestFlight remains Phase 8 and does not block the current through-Phase-7 finishline.
+- Evidence so far: issues #584/#690, Source of Truth, mobile docs/tests, PRs #988/#1019/#1021/#1025, current run `33298699290` / job `99222705186`, FM-EV-021/FM-EV-024/FM-EV-025 and the FM-MOB-004 receipt.
+- Exact next step: owner installs the already completed exact-merge Preview and reports the requested visible/runtime checks. Do not queue another build merely for confirmation.
+- Owner action needed: real-device acceptance and the separate recovery/Push/Store external controls only.
 
 ## FM-AI-001
 - Started: before 2026-08-19

@@ -70,13 +70,13 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Do not ask before: explicit owner resume.
 
 ## FM-MOB-OWNER-001 — Configure protected Mobile preview resources
-- Status: DEFERRED_BY_OWNER
+- Status: COMPLETED
 - Where: exact Expo/EAS FanMind account/project and GitHub Environment `mobile-preview`; Supabase Auth redirect is a separate external acceptance check.
-- Proven blocker: read-only run `33000433320`, job `98280538304`, on exact `main` `32c08ba6877d6aaaf61110c02464ee95d6bc6301` found the Expo token and all four expected binding values blank and stopped with `eas_project_lookup_failed`; the public-environment step was skipped.
-- Required action: confirm the exact existing EAS owner/project, then set the protected `EXPO_TOKEN`, `FANMIND_MOBILE_EAS_OWNER`, `FANMIND_MOBILE_EAS_PROJECT_ID`, `FANMIND_MOBILE_SUPABASE_PROJECT_REF`, `FANMIND_PRODUCTION_SUPABASE_PROJECT_REF` and `FANMIND_MOBILE_API_ORIGIN` according to the runbook without exposing their values. Separately confirm `fanmind://reset-password` in the exact Supabase Auth allowlist.
+- Prior blocker: read-only run `33000433320`, job `98280538304`, found the protected Preview binding blank and failed closed before any build.
+- Result: protected run `33298699290`, job `99222705186`, on exact merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` reverified the existing EAS project binding and public Preview environment, then completed exactly one Android internal build with HTTPS artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
+- Remaining external work: owner real-device acceptance and the separate Supabase Auth redirect/recovery proof; Push/Store remain separate and iOS/TestFlight remains Phase 8.
 - Risk: R3
-- Forbidden: invented project IDs, secrets in chat/issues, EAS initialization/build/sign/submit/update, Production crossover or Supabase/Auth/DB mutation under this read-only evidence item.
-- Resume trigger: owner/platform configuration is complete; then use a new lock and exactly one fresh read-only preview check. Do not rerun `33000433320`.
+- Forbidden: exposing project IDs/secrets/private artifact values, EAS reinitialization, automatic repeat build, Submit/Update/Store action, Production crossover or Supabase/Auth/DB mutation.
 
 ## FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
 - Status: DEFERRED_BY_OWNER
