@@ -330,6 +330,40 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     () =>
       evaluateStoreReadiness({
         ...validInput,
+        appStoreWorksheet: appStoreWorksheet.replace(
+          "AI CRM: contacts & follow-ups",
+          "AI CRM: contacts & follow-ups!",
+        ),
+      }),
+    /store_app_store_portal_identity_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "| Apple Hauptkategorie | Business |",
+          "| Apple Hauptkategorie | Finance |",
+        ),
+      }),
+    /store_app_store_portal_identity_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace(
+          "| Apple Nebenkategorie | Productivity |",
+          "| Apple Nebenkategorie | Utilities |",
+        ),
+      }),
+    /store_app_store_portal_identity_invalid/u,
+  );
+
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
         appStoreWorksheet: appStoreWorksheet.replaceAll(
           "https://developer.apple.com",
           "https://example.invalid",

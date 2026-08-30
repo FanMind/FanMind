@@ -84,6 +84,104 @@ function tableValue(markdown, label) {
   return match[1].replace(/^`|`$/gu, "").trim();
 }
 
+function portalHandoffValue(markdown, label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/gu, "\\function appStorePortalRows(markdown) {");
+  const match = markdown.match(
+    new RegExp(
+      `^\\|\\s*${escaped}\\s*\\|\\s*([^|]+?)\\s*\\|\\s*[^|]+?\\s*\\|#!/usr/bin/env node
+
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const MOBILE_ROOT = new URL("../", import.meta.url);
+const REPOSITORY_ROOT = new URL("../../../", import.meta.url);
+const CONFIRMED_WORDMARK_SHA256 =
+  "f432007c36e4523211e8678757c2340592c50f1a945776cfc283922601ac8aad";
+const CONFIRMED_PLAY_FEATURE_SOURCE_SHA256 =
+  "a39efa39d9b17f7738a6b33860c1ffb7c8c3ba108aa2abe3f42d54b5b3b1f1be";
+const CONFIRMED_PLAY_ICON_SHA256 =
+  "7c5f0fe9c8ba16ac934d20c67365343e91b59130109795b26461666e94652112";
+const CONFIRMED_PLAY_FEATURE_SHA256 =
+  "95ccc38c8e255f3f50938b86630afb2c0cd5a3703d3c46ca1c91384c9409cb13";
+const APPLE_PORTAL_FIELD_CONTRACT = Object.freeze([
+  ["Name", "READY"],
+  ["Subtitle", "READY"],
+  ["Description", "READY"],
+  ["Keywords", "READY"],
+  ["Promotional Text", "READY"],
+  ["Age Rating", "PHASE8_REQUIRED"],
+  ["Bundle ID", "READY"],
+  ["SKU", "OWNER_REQUIRED"],
+  ["Content Rights", "OWNER_REQUIRED"],
+  ["Primary Language", "READY"],
+  ["Primary Category", "READY"],
+  ["Secondary Category", "READY"],
+  ["Digital Services Act (DSA) Status", "OWNER_REQUIRED"],
+  ["Regulated Medical Devices", "OWNER_REQUIRED"],
+  ["Support URL", "READY"],
+  ["Marketing URL", "READY"],
+  ["Version Number", "READY"],
+  ["Copyright", "OWNER_REQUIRED"],
+  ["App Review Information", "PHASE8_REQUIRED"],
+  ["Version Release Settings", "OWNER_REQUIRED"],
+  ["App Availability", "OWNER_REQUIRED"],
+  ["Price", "OWNER_REQUIRED"],
+  ["Tax Category", "OWNER_REQUIRED"],
+  ["Privacy Policy URL", "READY"],
+  ["Privacy Choices URL", "OWNER_REQUIRED"],
+  ["Data Types", "PHASE8_REQUIRED"],
+  ["Accessibility URL", "OWNER_REQUIRED"],
+  ["Accessibility Support", "PHASE8_REQUIRED"],
+  ["Screenshots", "PHASE8_REQUIRED"],
+  ["App Icon", "PHASE8_REQUIRED"],
+  ["Export Compliance", "PHASE8_REQUIRED"],
+  ["Signed Build", "PHASE8_REQUIRED"],
+  ["Mac and Apple Vision Pro Availability", "OWNER_REQUIRED"],
+]);
+
+function fail(code) {
+  const error = new Error(code);
+  error.code = code;
+  throw error;
+}
+
+function characterCount(value) {
+  return Array.from(value).length;
+}
+
+function section(markdown, heading) {
+  const marker = `## ${heading}`;
+  const start = markdown.indexOf(marker);
+  if (start < 0) fail("store_section_missing");
+  const next = markdown.indexOf("\n## ", start + marker.length);
+  return markdown.slice(start, next < 0 ? markdown.length : next);
+}
+
+function fencedText(markdown, heading) {
+  const match = section(markdown, heading).match(/```text\s*([\s\S]*?)\s*```/u);
+  if (!match) fail("store_text_block_missing");
+  return match[1].trim();
+}
+
+function tableValue(markdown, label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const match = markdown.match(
+    new RegExp(`^\\|\\s*${escaped}\\s*\\|\\s*(.*?)\\s*\\|$`, "mu"),
+  );
+  if (!match) fail("store_identity_field_missing");
+  return match[1].replace(/^`|`$/gu, "").trim();
+}
+
+,
+      "mu",
+    ),
+  );
+  if (!match) fail("store_portal_handoff_field_missing");
+  return match[1].replace(/^`|`$/gu, "").trim();
+}
+
 function appStorePortalRows(markdown) {
   return markdown
     .split(/\r?\n/gu)
@@ -102,7 +200,7 @@ function appStorePortalRows(markdown) {
     }));
 }
 
-function verifyAppStorePortalWorksheet(markdown, expectedSubtitles) {
+function verifyAppStorePortalWorksheet(markdown, expectedListing) {
   const rows = appStorePortalRows(markdown);
   if (rows.length !== APPLE_PORTAL_FIELD_CONTRACT.length) {
     fail("store_app_store_portal_matrix_invalid");
@@ -145,8 +243,6 @@ function verifyAppStorePortalWorksheet(markdown, expectedSubtitles) {
     ["Promotional Text", "deutscher und englischer"],
     ["Bundle ID", "`ch.fanmind.app`"],
     ["Primary Language", "Deutsch (`de-DE`)"],
-    ["Primary Category", "Business"],
-    ["Secondary Category", "Productivity"],
     ["Support URL", "`https://fanmind.ch/support`"],
     ["Marketing URL", "`https://fanmind.ch`"],
     ["Version Number", "`1.0.0`"],
@@ -157,10 +253,17 @@ function verifyAppStorePortalWorksheet(markdown, expectedSubtitles) {
       fail("store_app_store_portal_identity_invalid");
     }
   }
-  const subtitleAction = rowsByField.get("Subtitle")?.action;
+  const subtitleMatch = rowsByField
+    .get("Subtitle")
+    ?.action.match(/^DE \`([^\`]+)\`; EN \`([^\`]+)\`$/u);
   if (
-    !subtitleAction?.includes(expectedSubtitles.de)
-    || !subtitleAction.includes(expectedSubtitles.en)
+    !subtitleMatch
+    || subtitleMatch[1] !== expectedListing.subtitleDe
+    || subtitleMatch[2] !== expectedListing.subtitleEn
+    || rowsByField.get("Primary Category")?.action
+      !== expectedListing.primaryCategory
+    || rowsByField.get("Secondary Category")?.action
+      !== expectedListing.secondaryCategory
   ) {
     fail("store_app_store_portal_identity_invalid");
   }
@@ -239,6 +342,14 @@ export function evaluateStoreReadiness(input) {
     listing,
     "Subtitle / Short description EN",
   );
+  const applePrimaryCategory = portalHandoffValue(
+    listing,
+    "Apple Hauptkategorie",
+  );
+  const appleSecondaryCategory = portalHandoffValue(
+    listing,
+    "Apple Nebenkategorie",
+  );
   const shortDescription = fencedText(
     listing,
     "Google Play - Kurzbeschreibung",
@@ -309,8 +420,10 @@ export function evaluateStoreReadiness(input) {
   );
 
   const portalWorksheet = verifyAppStorePortalWorksheet(appStoreWorksheet, {
-    de: subtitleDe,
-    en: subtitleEn,
+    subtitleDe,
+    subtitleEn,
+    primaryCategory: applePrimaryCategory,
+    secondaryCategory: appleSecondaryCategory,
   });
 
   if (appName !== expo.name || expo.name !== "FanMind") {
