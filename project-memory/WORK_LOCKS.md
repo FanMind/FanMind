@@ -11,17 +11,6 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
-# LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830
-- Task: FM-AI-001 / FM-CR-009
-- Status: ACTIVE
-- Holder: ChatGPT Stripe code-conformance continuation session 2026-08-30
-- Branch/PR: `feat/stripe-client-conformance-20260830` / pending
-- Acquired: 2026-08-30 UTC
-- Risk: R3 billing runtime code with all external/provider actions excluded
-- Scope: replace production server-side raw Stripe REST calls with one current SDK client contract, remove explicit Checkout payment-method narrowing, add a per-session eight-letter integration identifier, preserve fail-closed tax readiness and regression-test cancellation/referral safety. The verified Staging webhook endpoint remains pinned at its observed inbound version until a separately authorized provider migration.
-- Safety: no Stripe/provider read or write, payment/refund, price/coupon/subscription mutation, webhook endpoint update, SQL/database mutation, protected workflow, Plus/Ultra activation, Production configuration or Mobile build/store action is authorized.
-- Resume from: exact main tree `f1fcd598d7b905f8d9d67d908fb7e4f4ec8dc726` after merge `3ca696321a0013b3e58bb3f8491cc590ff7ec60c`; do not rerun the three FM-EV-022 protected jobs.
-
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006
 - Status: ACTIVE
@@ -61,6 +50,18 @@ Prevents two agents/sessions from independently working the same task.
 - Accepted: the owner's 2026-08-30 real-device acceptance of the superseding exact FM-MOB-004 Android Preview confirms FM-MOB-003. Do not resume this lock; a newly observed defect requires a new bounded task and does not authorize an automatic rebuild, schema change or duplicate demo data.
 
 ## Released locks
+
+# LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830
+- Task: FM-AI-001 / FM-CR-009
+- Status: RELEASED
+- Holder: ChatGPT Stripe code-conformance continuation session 2026-08-30
+- Branch/PR: `feat/stripe-client-conformance-20260830` / #1035; final head `ffdc11ab4a1c199134dc009abc516cc8257f5e8b`, squash merge `9a7b37f2cee798dc64c1d32f70fda338db174b5e`
+- Acquired: 2026-08-30 UTC
+- Risk: R3 billing runtime code with all external/provider actions excluded
+- Scope: replace production server-side raw Stripe REST calls with one current SDK client contract, remove explicit Checkout payment-method narrowing, add a per-session eight-letter integration identifier, preserve fail-closed tax readiness and regression-test cancellation/referral safety. The verified Staging webhook endpoint remains pinned at its observed inbound version until a separately authorized provider migration.
+- Safety: no Stripe/provider read or write, payment/refund, price/coupon/subscription mutation, webhook endpoint update, SQL/database mutation, protected workflow, Plus/Ultra activation, Production configuration or Mobile build/store action was authorized or performed.
+- Released: 2026-08-30 after all eight exact-head workflows passed, final review completed with zero unresolved threads and #1035 merged as `9a7b37f2cee798dc64c1d32f70fda338db174b5e`.
+- Resume from: do not revive this lock or rerun the three FM-EV-022 protected jobs. Remaining product/private/provider/lifecycle work requires the existing `FM-AI-OWNER-001`/`002` gates and a new scoped lock.
 
 ## LOCK-FM-MOB-002-CONTACT-HISTORY-20260829
 - Task: FM-MOB-002
