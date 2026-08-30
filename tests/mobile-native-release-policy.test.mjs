@@ -895,6 +895,11 @@ test("manual Android Store workflow is Production-only, credential-frozen and ne
   );
   assert.match(storeBuildWorkflow, /name: mobile-production/u);
   assert.match(storeBuildWorkflow, /FANMIND_MOBILE_BUILD_CLASS: store/u);
+  assert.match(storeBuildWorkflow, /run: npm run store:check/u);
+  assert.ok(
+    storeBuildWorkflow.indexOf("run: npm run store:check")
+      < storeBuildWorkflow.indexOf("eas-cli@21.2.0 project:info"),
+  );
   assert.match(storeBuildWorkflow, /FANMIND_ENABLE_MOBILE_EAS_SUBMIT: 'false'/u);
   assert.match(storeBuildWorkflow, /FANMIND_ENABLE_MOBILE_EAS_UPDATE: 'false'/u);
   assert.match(storeBuildWorkflow, /--platform android/u);
