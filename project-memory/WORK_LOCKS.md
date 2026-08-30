@@ -11,6 +11,17 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+# LOCK-FM-MOB-001-ANDROID-STORE-20260830
+- Task: FM-MOB-001 / FM-CR-006
+- Status: ACTIVE
+- Holder: ChatGPT Android Production/Google Play continuation session 2026-08-30
+- Branch/PR: pending
+- Acquired: 2026-08-30 UTC
+- Risk: R3 Mobile Production build and external Store acceptance
+- Scope: first-release version, protected one-AAB Production build control, exact FanMind Production binding, Android recovery/device acceptance handoff and Google Play readiness/submission. No automatic Submit/Update, no database/schema/RLS mutation, no push-delivery activation and no iOS/TestFlight Phase-8 start.
+- Current blocker: Google is still reviewing the developer identity/documents; phone verification and Play app creation are disabled until that review completes.
+- Resume from: finish repository verification and PR first; run Production resource verification before one AAB; require immediate confirmation before any Play form submission or publication.
+
 ## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
 - Task: FM-MOB-004
 - Status: RELEASED
