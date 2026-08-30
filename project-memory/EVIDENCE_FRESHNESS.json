@@ -57,6 +57,24 @@
       "observed_at": "2026-08-26T19:49:00Z",
       "source": "FM-EV-023 / transaction-level read-only Staging catalog observation / exact-main runs 33007156552, 33007311870 and 33007481167",
       "revalidate_on": ["staging_schema_or_acl_change", "workflow_contract_change", "target_binding_change", "before_new_meta_staging_database_action"]
+    },
+    {
+      "id": "EV-MOBILE-ANDROID-PRODUCTION-AAB-20260830",
+      "gate": "mobile",
+      "class": "signed_mobile_build",
+      "status": "VERIFIED",
+      "observed_at": "2026-08-30T14:26:57Z",
+      "source": "FM-EV-028 / exact main e96415035ffbe12f16dd3b81e13a5e62b2c4ac00 / Production readiness 33316105624 and Store build 33316172583",
+      "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]
+    },
+    {
+      "id": "EV-MOBILE-RECOVERY-REDIRECT-20260830",
+      "gate": "mobile",
+      "class": "provider_console",
+      "status": "VERIFIED",
+      "observed_at": "2026-08-30T15:34:15Z",
+      "source": "FM-EV-029 / exact FanMind Production Supabase URL Configuration / saved and re-read fanmind://reset-password as URL 4 of 4",
+      "revalidate_on": ["provider_config_change", "target_binding_change", "before_real_recovery_acceptance"]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

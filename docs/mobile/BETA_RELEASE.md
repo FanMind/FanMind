@@ -2,7 +2,7 @@
 
 ## Ziel
 
-Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den einmaligen externen Konten und Einstellungen. Das Vorhandensein von `app.json`, `eas.json`, App-IDs oder Buildprofilen bedeutet nicht, dass bereits ein signierter Store-Build existiert.
+Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den einmaligen externen Konten und Einstellungen. Für FanMind existiert inzwischen genau ein verifiziertes Android-Production-AAB für `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; das Vorhandensein von `app.json`, `eas.json`, App-IDs oder Buildprofilen allein wäre weiterhin kein Buildnachweis und der AAB-Nachweis ist noch keine Play-Veröffentlichung.
 
 ## Im Repository umgesetzt
 
@@ -94,7 +94,11 @@ In den Auth-Redirect-Einstellungen des **richtigen FanMind-Projekts** muss exakt
 fanmind://reset-password
 ```
 
-Diese Einstellung darf nicht geraten und nicht im Repository als erledigt markiert werden. Vor der Änderung ist die Projekt-ID mit der aktuellen Production-/späteren Staging-Dokumentation abzugleichen.
+Die Einstellung wurde am 30. August 2026 nach Abgleich des bestätigten
+Production-Projekts gespeichert und in der Allowlist als vierte URL
+verifiziert. Das ist nur der Provider-Konfigurationsnachweis; ohne den
+folgenden positiven/negativen signierten Gerätetest bleibt die Recovery-
+Akzeptanz offen.
 
 ### Realer Gerätetest
 
@@ -247,10 +251,12 @@ auf `false`; Signing Credentials, Keystore, Apple-Team- oder Store-IDs werden
 nicht geladen. Die Ausgabe enthält nur redigierte Statuscodes, niemals
 EAS-Projekt-ID, Owner, URL oder Key-Werte.
 
-Dieser Vorabcheck ist vorbereitet, aber noch nicht extern ausgeführt. Ein
-grüner Lauf bestätigt nur Ressourcenbindung und öffentliche
-Client-Konfiguration. Er erzeugt kein Binary und belegt weder Signing, Android
-Internal Testing noch TestFlight.
+Der Vorabcheck ist für Preview und Production extern ausgeführt: die
+geschützten Läufe `33298699290` und `33316105624` bestätigten die jeweilige
+Ressourcenbindung und öffentliche Client-Konfiguration für ihre exakten
+Merge-Commits. Ein grüner Ressourcencheck erzeugt selbst kein Binary und
+belegt weder Signing, Android Internal Testing noch TestFlight; diese Nachweise
+bleiben weiterhin getrennt.
 
 ### Getrennter Staging-Kontrollpfad für Push-Registrierung
 
@@ -425,6 +431,12 @@ Play-App-Datensatz, die Store-Fragebögen, die Datenschutzfreigabe und die
 unmittelbare Veröffentlichungsbestätigung vorliegen. Ein erfolgreicher
 Store-Build ist deshalb noch keine Veröffentlichung.
 
+Der erste kontrollierte Production-Lauf ist abgeschlossen: Readiness
+`33316105624` und Store-Build `33316172583` bestanden auf dem exakten Merge
+`e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; genau ein
+Android-`1.0.0`-AAB wurde terminal verifiziert. Für die Portalfortsetzung ist
+dieses bestehende AAB zu verwenden und kein weiterer Build anzustoßen.
+
 ### Interner iOS-Build
 
 Nach Apple-Account und Geräte-Registrierung:
@@ -499,23 +511,25 @@ Der iOS-Prebuild erzeugt zusätzlich ein eigenes `PrivacyInfo.xcprivacy` mit den
 Required-Reason-APIs der installierten Expo-/React-Native-Bibliotheken, ohne
 Tracking-Domains. Der Android-Prebuild wird gegen `compileSdk=36` und
 `targetSdk=36` geprüft. Beides ist ein technischer Store-Readiness-Nachweis,
-aber weder eine App-Privacy-Portalantwort noch ein signierter Store-Build.
+aber weder eine App-Privacy-Portalantwort noch für sich allein ein signierter
+Store-Build. Der getrennte Production-AAB-Nachweis ist unter FM-EV-028
+commitgenau registriert.
 
 ## Noch offen nach diesem Block
 
-- visuelle Abnahme der vorbereiteten App-Icons in signierten Android-/iOS-Builds;
-- echter Recovery-E-Mail-/Gerätetest nach Supabase-Redirect-Freigabe;
-- EAS-Projekt-ID und Signing Credentials;
-- Expo-Token, geschützte Mobile-Environments und drei erfolgreiche
-  Read-only-Ressourcenchecks;
-- reale öffentliche EAS-Werte in getrennten Development-/Preview-/Production-Umgebungen;
-- Android Internal Testing und iOS TestFlight;
+- visuelle Abnahme der vorbereiteten App-Icons im signierten Android-Build;
+- realer Recovery-E-Mail-/Gerätetest über den gespeicherten Supabase-Redirect;
+- vollständiger privater 19-Punkte-Android-Gerätenachweis;
+- Development-Environment-Akzeptanz, soweit sie für spätere Development-Push-
+  Tests benötigt wird;
+- Google-Play-Kontofreigabe, App-Datensatz, Data Safety, Screenshots,
+  portalgefordertes Testprogramm und Upload des bestehenden AAB;
+- iOS-Signierung, Icon-/Gerätenachweis und TestFlight erst in Phase 8;
 - Push-Migration und dedizierten Serverkey kontrolliert aktivieren, danach
   nach grünem Ressourcencheck, Apply und rollback-only Acceptance die
   Berechtigung und Token-Registrierung im signierten Build real abnehmen;
 - echte Follow-up-Zustellung erst nach gesonderter Staging-/Datenschutzprüfung;
-- realer Account-Löschantrag/Widerruf auf signiertem Android-/iOS-Gerät;
-- reale Android-/iOS-Gerätetestprotokolle;
+- realer Account-Löschantrag/Widerruf als Teil des privaten Android-Nachweises;
 - Store-Datenschutzangaben und Screenshots final abnehmen; Metadaten sind vorbereitet.
 - iPad-Unterstützung erst in einer separaten späteren Phase mit eigener
   Layout-, Geräte- und Screenshot-Abnahme aktivieren.

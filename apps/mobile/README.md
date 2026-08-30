@@ -187,8 +187,10 @@ Projekt-ID werden ausschließlich bei der Expo-Konfigurationsauswertung durch
 `app.config.js` ergänzt; `app.json` bleibt frei von echten EAS-Bindungen.
 Build, Submit und Update sind technisch ausgeschaltet, Signing Credentials
 werden nicht geladen und konkrete Projekt-, URL- oder Key-Werte werden nicht
-ausgegeben. Der vorbereitete Workflow zählt erst nach echter EAS-Einrichtung
-und erfolgreichem externem Lauf als Nachweis.
+ausgegeben. Preview und Production wurden inzwischen über die geschützten
+Läufe `33298699290` beziehungsweise `33316105624` für ihre exakten
+Merge-Commits bestätigt; Development bleibt nur bei tatsächlichem Bedarf
+separat abzunehmen.
 
 ## Staging-Kontrolle für Push-Registrierung
 
@@ -277,6 +279,14 @@ Submit und Update bleiben deaktiviert. Play-App-Datensatz, Data Safety,
 Testtrack und Veröffentlichung sind nachgelagerte Portalabnahmen und werden
 nicht aus einem erfolgreichen AAB abgeleitet.
 
+Der erste kontrollierte Production-Lauf ist abgeschlossen: Readiness
+`33316105624` und Store-Build `33316172583` sind auf dem exakten Merge
+`e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` erfolgreich; genau ein
+Android-`1.0.0`-AAB wurde terminal verifiziert. Submit und Update blieben
+deaktiviert. Der Build darf für die Portalfortsetzung nicht wiederholt werden.
+Google-Identitätsprüfung, App-Datensatz, Testtrack, Upload und Veröffentlichung
+bleiben extern offen.
+
 ## EAS-Profile
 
 Die Profile binden ihre öffentlichen Werte ausdrücklich an getrennte
@@ -306,7 +316,11 @@ npx eas-cli@21.2.0 build --profile preview --platform android
 npx eas-cli@21.2.0 build --profile preview --platform ios
 ```
 
-Vor einem signierten EAS-Build müssen EAS-Projekt-ID, Signierung und Store-Konten bewusst eingerichtet werden. Diese Werte werden nicht erfunden oder aus der Web-Anwendung übernommen.
+Vor einem weiteren signierten EAS-Build müssen EAS-Projekt-ID, Signierung und
+Store-Konten weiterhin bewusst geprüft werden. Für Android existieren bereits
+ein akzeptierter Preview-Build und genau ein verifiziertes Production-AAB;
+dieses AAB darf für die Play-Portalfortsetzung nicht neu gebaut werden. Private
+Werte werden nicht erfunden oder aus der Web-Anwendung übernommen.
 
 ## App-Identität
 
@@ -318,7 +332,10 @@ iOS Bundle Identifier: ch.fanmind.app
 Android Package: ch.fanmind.app
 ```
 
-Der Recovery-Redirect muss zusätzlich einmalig in der Supabase-Auth-Allowlist des richtigen Projekts freigegeben werden. Details und Negativtests stehen in `docs/mobile/BETA_RELEASE.md`.
+Der Recovery-Redirect ist seit 30. August 2026 in der bestätigten
+Supabase-Production-Auth-Allowlist gespeichert. Der reale positive/negative
+E-Mail-/Gerätetest bleibt separat offen; Details stehen in
+`docs/mobile/BETA_RELEASE.md`.
 
 ## Release-Unabhängigkeit
 
@@ -330,26 +347,24 @@ Der Recovery-Redirect muss zusätzlich einmalig in der Supabase-Auth-Allowlist d
 
 ## Nächste Mobile-Schritte
 
-1. Supabase-Redirect `fanmind://reset-password` extern freigeben und Recovery auf einem realen Gerät testen.
-2. EAS-Projekt, Expo-Token und geschützte Development-/Preview-/Production-
-   Umgebungen einrichten und den Read-only-Ressourcencheck je Umgebung
-   ausführen.
-3. Signing Credentials und interne Preview-Builds einrichten.
-4. App-Icon und Splashscreen in signierten Android-/iOS-Builds auf realen
-   Geräten visuell abnehmen.
-5. den getrennten read-only Push-Ressourcencheck, Staging-Apply und die
+1. Den gespeicherten Supabase-Redirect `fanmind://reset-password` mit dem
+   positiven und negativen Recovery-E-Mail-Fluss auf einem realen Android-
+   Gerät testen.
+2. Den vollständigen privaten receipt-gebundenen 19-Punkte-Android-
+   Gerätenachweis abschließen und App-Icon/Splashscreen real abnehmen.
+3. Den getrennten read-only Push-Ressourcencheck, Staging-Apply und die
    rollback-only Acceptance durchführen; erst danach Migration/Secret-
    Konfiguration in einem signierten Development-/Preview-Build real testen;
    den separat zu genehmigenden Delivery-Ledger entwerfen, migrieren und
    rollback-only abnehmen; danach genau einen synthetischen Send-/Receipt-Test
    ausführen.
-6. Android Internal Testing und iOS TestFlight durchführen.
-7. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
+4. Nach Google-Kontofreigabe den Play-App-Datensatz anlegen, Data Safety,
+   Screenshots und das portalgeforderte Testprogramm vervollständigen und das
+   bestehende Android-`1.0.0`-AAB hochladen; keinen neuen Build anstoßen.
+5. Die vorbereiteten Store-Texte, technischen Datenschutzentwürfe und
    Screenshot-Matrix nach realen Gerätetests sowie externer
    Datenschutz-/Rechtsprüfung final abnehmen.
-8. Den main-only Android-Store-Workflow erst nach grüner Production-
-   Ressourcenprüfung genau einmal ausführen; das AAB anschließend separat im
-   bestätigten Play-Testtrack als Entwurf übernehmen.
+6. iOS-Signierung, Gerätetest und TestFlight erst in Phase 8 beginnen.
 
 Der lokale Befehl `npm run store:check` prüft davor ohne Portalzugriff die
 Zeichenlimits, App-IDs, Wortmarke, Icons, Screenshot-Matrix sowie die exakt

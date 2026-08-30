@@ -336,4 +336,27 @@ Implementation status and acceptance status are deliberately separate.
 - Falsification: a newly observed defect in one of the bounded accepted behaviors requires a new scoped task; failure of a separate 19-check runbook item does not rewrite the historical UI observation but keeps FM-MOB-001/EXT-MOBILE-ANDROID open.
 - Acceptance: ACCEPTED for the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope only
 
+## FM-EV-028
+- Related: FM-MOB-001 / FM-CR-006
+- Date: 2026-08-30
+- Target: exact `main` `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, protected `mobile-production` environment and existing FanMind EAS project; no Play app record or publication target
+- Type: exact-head repository gates + protected read-only Production binding + signed Android Production AAB completion + live external-blocker observation
+- Result: PR #1028 final head `58b851658679de2c625ce19b7710ecdf0ab5cc08` passed Project Memory Guard/Status/Quality, FanMind CI, Landing Language CI, Supply Chain Security, Browser E2E, CodeQL, Mobile CI and Mobile Native CI before merge `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Protected readiness run `33316105624` / job `99269748215` reverified exact EAS project and public FanMind Production binding without writes. Protected Store-build run `33316172583` / job `99269924756` passed Store metadata/branding/version/native identity, repeated the binding checks, authorized exactly one Android `production` store build, verified a terminal AAB for the exact commit and stored a five-day redacted receipt before purging the runner copy.
+- Negative evidence: EAS Submit and Update remained disabled. No credential creation/rotation, Play app creation, AAB upload, Store form submission, review request, publication, database/schema/RLS write, push activation or iOS/TestFlight Phase-8 action occurred. No private build ID or artifact URL is retained here.
+- External countercheck: live Google Play Console inspection after the build showed developer identity/document review still pending, contact-phone verification locked and `App erstellen` disabled. Live Supabase Production URL Configuration showed `fanmind://reset-password` absent; the value was prepared in the Add-URL dialog but not saved, so Auth configuration remained unchanged.
+- Limitations: the AAB is verified build evidence only. EXT-MOBILE-REDIRECT, the complete private 19-check Android runbook and EXT-MOBILE-PUSH-STORE/Play acceptance remain open. Google account review is provider-controlled.
+- Falsification: a Store artifact not bound to the exact commit/platform/production profile/store class, changed signing identity/app config, or a Play record/upload claimed without portal evidence invalidates reliance on this build/store state and requires reconciliation before continuation.
+- Acceptance: VERIFIED for the exact Android Production AAB only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED
+
+## FM-EV-029
+- Related: FM-MOB-001 / EXT-MOBILE-REDIRECT
+- Date: 2026-08-30
+- Target: exact confirmed FanMind Production Supabase Auth URL Configuration; only `fanmind://reset-password`
+- Type: action-time owner-confirmed provider configuration write + immediate post-write browser re-read
+- Result: after the separate owner confirmation, the prepared `fanmind://reset-password` entry was saved. The exact Production redirect list was re-read after completion and contained the three prior Web/local URLs plus `fanmind://reset-password`, with `Total URLs: 4`.
+- Negative evidence: Site URL and all three existing redirects were unchanged. No additional redirect, Auth provider, user, database/schema/RLS, EAS, signing, Play, push or iOS setting was changed.
+- Limitations: this proves only the exact Production allowlist entry. No Recovery mail was requested and no positive, expired/reused-link or wrong-route signed-device flow was executed; EXT-MOBILE-REDIRECT therefore remains OPEN.
+- Falsification: a fresh exact Production URL Configuration read without `fanmind://reset-password`, a changed Site URL/existing redirect set, or a signed-device Recovery callback rejected despite the exact current link would reopen provider configuration diagnosis before any repeated write.
+- Acceptance: VERIFIED for the exact Production redirect setting only; real Recovery acceptance remains open
+
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.

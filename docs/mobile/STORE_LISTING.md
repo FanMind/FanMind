@@ -167,21 +167,23 @@ App-Privacy-Antworten in App Store Connect nicht.
 
 Der Android-Native-Prebuild wird fail-closed gegen `compileSdk=36` und
 `targetSdk=36` geprüft. Damit ist die Codebasis auf die von Google Play ab
-31. August 2026 verlangte Android-16-Zielstufe vorbereitet; ein signiertes AAB
-und die Portalprüfung bleiben trotzdem erforderlich.
+31. August 2026 verlangte Android-16-Zielstufe vorbereitet. Das signierte
+Android-`1.0.0`-AAB ist inzwischen für den exakten Merge
+`e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` verifiziert; die Portalprüfung
+bleibt trotzdem erforderlich.
 
 ## Vor Einreichung zwingend offen
 
-- visuelle App-Icon-Abnahme unter realen Android-/iOS-Masken;
-- EAS-Projekt-ID und Signing Credentials;
-- signierter Android- und iOS-Build;
-- reale Gerätetests für Login, Recovery, Deep Links, Offline und Account-Löschung;
+- visuelle App-Icon-Abnahme unter realen Android-Masken;
+- vollständiger privater Android-Gerätenachweis für Login, Recovery, Deep
+  Links, Offline und Account-Löschung;
 - Push-Entscheidung und gegebenenfalls erneute Datenschutzbewertung;
 - finale Screenshots aus synthetischem Test-Workspace;
 - externe Datenschutz-/Rechtsprüfung der Store-Angaben;
-- Google-Play- und App-Store-Konten samt realen IDs.
-- Apple-TestFlight-/Store-Scan des signierten Binaries auf zusätzliche
-  Required-Reason-Hinweise.
+- Google-Play-Kontofreigabe, App-Datensatz, reale IDs, Data Safety,
+  portalgefordertes Testprogramm und Upload des bestehenden AAB;
+- iOS-Build, App-Store-Konto und Apple-TestFlight-/Store-Scan des signierten
+  Binaries erst in Phase 8.
 
 ## Google-Play-Kontostand am 30. August 2026
 
@@ -191,6 +193,13 @@ sind die Kontakttelefon-Verifizierung und das Anlegen des App-Datensatzes in
 der Play Console gesperrt. Dieser externe Kontostatus blockiert nicht die
 Repository-, Production-Environment- oder AAB-Vorbereitung, aber jede echte
 Übertragung und Veröffentlichung.
+
+Die AAB-Vorbereitung ist abgeschlossen: Production-Readiness-Lauf
+`33316105624` und Store-Build-Lauf `33316172583` bestanden für den exakten
+Merge `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Genau ein
+Android-`1.0.0`-AAB wurde verifiziert; Submit und Update blieben deaktiviert.
+Für die Fortsetzung im Play-Portal ist dieses bestehende AAB zu verwenden und
+kein neuer Build anzustoßen.
 
 Nach Freigabe sind Kontakttelefon, Kontotyp und das konkrete Testprogramm im
 Portal zu bestätigen. Falls Google für dieses Konto den Produktionszugang über
