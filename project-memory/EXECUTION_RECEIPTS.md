@@ -495,17 +495,17 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 ## RECEIPT-FM-MOB-001-APP-STORE-CONNECT-WORKSHEET-20260830
 - Task: FM-MOB-001 / FM-CR-010
 - Started: 2026-08-30 Europe/Vienna
-- Finished: pending exact-head review/checks and merge
-- Branch/PR: `mobile/app-store-connect-worksheet-20260830` / pending
+- Finished: 2026-08-30 after exact-head review/checks, SHA-bound merge and repository-only closeout
+- Branch/PR: `mobile/app-store-connect-worksheet-20260830` / #1037; final head `88b9299f9612e344a9c0c48d78f86f11d071db6c`, squash merge `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`
 - Preflight checked: AGENTS, Source of Truth, README, current Mobile App Store handoff/listing/privacy/review/tester documents, Store validator/tests, active FM-MOB-001 lock and current Apple App Store Connect field/screenshot/review references.
 - Prior attempts found: dual-store PR #1031 already completed metadata, graphics, public Support, privacy draft, review/tester guidance and screenshot planning. Portal-specific DSA, Content Rights, release, price/tax, Privacy Choices and Accessibility fields remained distributed or absent from one machine-checked handoff. No new binary is needed to close that repository gap.
 - Dependency result: repository-only preparation is authorized by FM-CR-010. Google approval, Android track/device acceptance and all Apple account/signing/TestFlight/device decisions remain external and unchanged.
 - Planned evidence: exact 33-field matrix, immutable status/count contract, identity and boundary tests, local Store/focused/full regression, Project Memory/truth checks, exact-head review/checks and merge.
 - Changes made: added the App Store Connect worksheet; linked it from the Apple handoff and Store listing; extended Store readiness to verify field order, status, prepared identity values, official-source links and the no-build/no-credential boundary; added a negative owner-status drift test. No provider, portal, database, Production or build action occurred.
-- Checks/tests: Store readiness passes with 33 fields split 13/12/8; focused Mobile Store/native/boundary tests pass 36/36; Mobile TypeScript, Expo Doctor 20/20, boundary and Android/iOS native prebuild pass; Operations pass 1074/1074; root ESLint and clean Next Production build pass; Product/Referral/Legal/Actions truth and all current Project Memory checks pass. Exact-head checks remain pending.
-- Final diff counterchecked: pending.
+- Checks/tests: Store readiness passes with 33 fields split 13/12/8; focused Mobile Store/native/boundary tests pass 36/36; Mobile TypeScript, Expo Doctor 20/20, boundary and Android/iOS native prebuild pass; Operations pass 1074/1074; root ESLint and clean Next Production build pass; Product/Referral/Legal/Actions truth and all current Project Memory checks pass. The final exact head passed Project Memory Status `33339507449`, Guard `33339507459`, Quality `33339507448`, Landing `33339507454`, Mobile `33339507457`, FanMind CI `33339507450`, Browser E2E `33339507465` and CodeQL `33339507444`.
+- Final diff counterchecked: yes; complete normalized worksheet rows are SHA-256 pinned, direct listing/category bindings remain active, final Codex review found no major issue and all review threads are resolved.
 - Regression/security countercheck: no credentials are recorded, no unresolved owner/legal value is inferred, all signed-binary/device fields remain Phase 8 and Android AAB reuse is preserved.
-- Evidence produced: FM-EV-034; exact PR/run/merge references pending.
-- Result status: IMPLEMENTED_NOT_VERIFIED.
-- Open follow-up: complete local and exact-head review/checks, merge, then keep the FM-MOB-001 Store lock active only for the still-blocked Google/Android and later Phase-8 Apple external controls.
+- Evidence produced: FM-EV-034; PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c`; squash merge `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`; exact-head workflow runs `33339507449`, `33339507459`, `33339507448`, `33339507454`, `33339507457`, `33339507450`, `33339507465` and `33339507444`; completed final review and zero unresolved threads.
+- Result status: ACCEPTED for bounded FM-CR-010 repository preparation; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED because external Store/device controls are open.
+- Open follow-up: keep the FM-MOB-001 Store lock active. Wait for Google approval, reuse the existing verified Android `1.0.0` AAB without a new build, then complete the Play-track/device sequence. Apple owner/legal/account decisions plus signing/TestFlight/device evidence remain Phase 8.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
