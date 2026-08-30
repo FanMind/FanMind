@@ -3,26 +3,27 @@
 ## Purpose and boundary
 
 This runbook records the external real-device acceptance that repository tests
-cannot prove. The current finishline uses the already accepted signed Android
-`preview` build. iOS/TestFlight and an iPhone record are Phase 8 and must not be
-started through this Android handoff. The runbook does not queue a build,
-submit to a store, change Supabase, enable push delivery, or run as a GitHub
-workflow.
+cannot prove. The current Store finishline uses exactly the existing signed
+Android `production` AAB after Google Play installs it from the test track.
+iOS/TestFlight and an iPhone record are Phase 8 and must not be started through
+this Android handoff. The runbook does not queue a build, submit to a store,
+change Supabase, enable push delivery, or run as a GitHub workflow.
 
 Der Validator startet keinen Build und keinen GitHub-Workflow. Wenn Phase 8
 später ausdrücklich startet, ist iOS in einer eigenen Datei und gegen einen
 eigenen signierten iOS-Receipt zu dokumentieren.
 
-Device records are private operational evidence. Use synthetic Staging users
-and content only. Never record e-mail addresses, recovery URLs, tokens, build
-IDs, artifact URLs, project IDs, device identifiers, screenshots containing
-customer data, or secrets.
+Device records are private operational evidence. Use only a dedicated synthetic
+account in the receipt-bound environment: Production for the Play-installed
+AAB, Staging for a separate Preview install. Never record e-mail addresses,
+recovery URLs, tokens, build IDs, artifact URLs, project IDs, device identifiers,
+screenshots containing customer data, or secrets.
 
 ## Signed-build handoff
 
 The controlled signed-build workflow emits one redacted, five-day artifact
 named `fanmind-mobile-signed-build-receipt-<profile>-<platform>`. Its JSON binds
-the successful internal artifact to the exact `main` commit, platform and
+the successful signed artifact to the exact `main` commit, platform and
 profile without retaining the EAS build ID or URL. Download it into a private
 directory and keep mode `0600`:
 
@@ -32,32 +33,36 @@ install -d -m 700 docs/mobile/private-device-evidence
 chmod 600 docs/mobile/private-device-evidence/signed-build-receipt.json
 ```
 
-The receipt must use `preview`, `internal`, `available`, and disabled Submit and
-Update boundaries. A development, simulator, debug or unsigned build is not an
-acceptable substitute.
+The preparer and validator support two explicit receipt classes: a
+`preview`/`internal` receipt for a private Staging install, or an Android-only
+`production`/`store` receipt for a Play-installed AAB. Both require
+`available` plus disabled Submit and Update. A development, simulator, debug,
+unsigned or iOS Store build is not an acceptable substitute.
 
-Für den aktuellen Android-Lauf ist der redacted Receipt des bereits gebauten
-Preview-Laufs `33298699290` / Jobs `99222705186` für Merge
-`6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` zu verwenden. Der Production-AAB-
-Receipt ist absichtlich kein Ersatz: Das AAB bleibt für Google Play erhalten,
-während die private 19-Punkte-Abnahme an den installierbaren Preview-Build
-gebunden ist. Keinen neuen Build starten.
+Für die abschließende Play-Abnahme ist ausschließlich der unveränderte,
+redacted Android-Production-Receipt aus Store-Build `33316172583` / Job
+`99269924756` für Merge
+`e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` zu verwenden. Er bindet die private
+19-Punkte-Abnahme über Receipt-SHA, Commit, Plattform, Profil, Distribution und
+Build-Zeit genau an das AAB, das Google Play installiert hat.
+Keinen neuen Build starten. Der frühere Preview-Receipt bleibt nur für getrennte
+historische Staging-Abnahmen gültig und darf diesen Store-Nachweis nicht
+zertifizieren.
 
-The workflow never copies the signed APK or IPA into GitHub artifact storage.
-Open the protected EAS project as an authorized operator, select the exact
-successful `preview` build for the receipt-bound `main` commit and platform,
-and transfer its internal install artifact directly to the test device. Keep
-the downloaded binary private, do not re-upload it, and delete the local copy
-after acceptance. This handoff is an internal installable build, not a Play or
-App Store release.
+The workflow never copies the signed AAB, APK or IPA into GitHub artifact
+storage. For the current Store acceptance, install only through the Google Play
+test track and retain only the redacted Production receipt privately. Do not
+download another binary directly from EAS, do not re-upload it outside Play and
+do not substitute the older Preview APK.
 
 ## Mandatory real-device checks
 
-Use the existing signed Android build on one real Android device and create one
-Android evidence file. All 19 checks are mandatory:
+Use the Play-installed existing Android AAB on one real Android device with a
+dedicated synthetic Production test account and create one Android evidence
+file. All 19 checks are mandatory:
 
 1. install the signed build;
-2. login with a synthetic Staging account;
+2. login with the dedicated synthetic account in the receipt-bound environment;
 3. open one valid `fanmind://reset-password` recovery link;
 4. reject invalid, expired and already-used recovery links without revealing
    account state;
@@ -78,8 +83,10 @@ fail closed.
 
 ## Private preparation
 
-Download the unchanged redacted Android Preview receipt into the private
-directory. Then create a fail-closed worksheet directly from that receipt:
+Download the unchanged redacted Android Production receipt from Store-build
+`33316172583` into the private directory. Then, only after the Play-test-track
+install is present on the device, create a fail-closed worksheet directly from
+that receipt:
 
 ```bash
 install -d -m 700 docs/mobile/private-device-evidence
@@ -90,9 +97,10 @@ npm run mobile:device:acceptance:prepare -- \
   --acceptance-id 2026-08-30-mobile-android-001
 ```
 
-The preparer validates the exact signed Preview boundary, copies only the
-receipt-bound commit and timestamps, calculates the receipt SHA-256 and writes
-the worksheet once with mode `0600`. All 19 real-device checks and the four
+The preparer validates the exact Android Production/Store boundary, copies only
+the receipt-bound commit, platform, profile, distribution and timestamps,
+calculates the receipt SHA-256 and writes the worksheet once with mode `0600`.
+All 19 real-device checks and the four
 safety observations remain `"pending"`; `completedAt` remains a replacement
 marker. It never reports a device PASS. Start it immediately before the test,
 replace a check with `"passed"` only after observing it, explicitly set the four
@@ -104,21 +112,22 @@ prior evidence.
 
 ## Evidence schema
 
-Write a flat JSON object using schema version `1`. Timestamps are UTC ISO-8601;
+Write a flat JSON object using schema version `2`. Timestamps are UTC ISO-8601;
 `releaseCommit` is the full 40-character receipt-bound reviewed merge SHA;
 `signedBuildReceiptSha256` is the SHA-256 of the unchanged redacted receipt.
 Every mandatory check uses `"passed"`.
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "acceptanceId": "2026-08-07-mobile-android-001",
   "startedAt": "2026-08-07T09:00:00Z",
   "completedAt": "2026-08-07T10:00:00Z",
-  "environment": "staging",
+  "environment": "production",
   "platform": "android",
   "releaseCommit": "0000000000000000000000000000000000000000",
-  "buildProfile": "preview",
+  "buildProfile": "production",
+  "distribution": "store",
   "signedBuildCompletedAt": "2026-08-07T08:00:00Z",
   "signedBuildReceiptSha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "signedBuildInstalled": "passed",
@@ -156,11 +165,10 @@ Every mandatory check uses `"passed"`.
 
 ## Optional push checks
 
-Push remains optional for this acceptance until the separate Staging gates have
-actually passed. Only then may `pushTested` be `true`. Bind the evidence to the
-unchanged private Staging-gate JSON with `pushStagingGateSha256` and mark the
-four permission opt-in, permission denial, registration and opt-out checks as
-`"passed"`.
+Push remains disabled and `pushTested` must stay `false` for the current
+Production/Store acceptance. A separate Preview/Staging acceptance may set it
+to `true` only after the Staging gates have actually passed, and must then bind
+the unchanged private Staging-gate JSON with `pushStagingGateSha256`.
 
 The Staging-gate record must bind the same commit and prove resource readiness,
 migration apply and rollback-only acceptance. Production targets, real push
@@ -175,10 +183,11 @@ Keep the evidence, receipt and optional gate private with mode `0600`, then run:
 npm run mobile:device:acceptance:verify -- \
   --input docs/mobile/private-device-evidence/android.json \
   --signed-build-receipt docs/mobile/private-device-evidence/signed-build-receipt-android.json \
-  --expected-main-commit 6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522
+  --expected-main-commit e96415035ffbe12f16dd3b81e13a5e62b2c4ac00
 ```
 
-For an already approved Push Staging gate, append:
+Only for a separate Preview/Staging acceptance with an already approved Push
+Staging gate, append:
 
 ```bash
 --push-staging-gate docs/mobile/private-device-evidence/push-staging-gate.json

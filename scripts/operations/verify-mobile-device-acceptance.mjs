@@ -59,6 +59,7 @@ const EVIDENCE_KEYS = [
   "platform",
   "releaseCommit",
   "buildProfile",
+  "distribution",
   "signedBuildCompletedAt",
   "signedBuildReceiptSha256",
   ...REQUIRED_CHECK_FIELDS,
@@ -172,7 +173,7 @@ function isIsoUtc(value) {
 
 function validateEvidence(evidence, expectedMainCommit) {
   exactKeys(evidence, EVIDENCE_KEYS, "evidence");
-  if (evidence.schemaVersion !== 1) {
+  if (evidence.schemaVersion !== 2) {
     throw fixedError("evidence_schema_invalid");
   }
   if (!ACCEPTANCE_ID.test(evidence.acceptanceId)) {
@@ -187,14 +188,23 @@ function validateEvidence(evidence, expectedMainCommit) {
   ) {
     throw fixedError("evidence_timestamp_order_invalid");
   }
-  if (evidence.environment !== "staging") {
-    throw fixedError("evidence_environment_invalid");
-  }
   if (!PLATFORMS.has(evidence.platform)) {
     throw fixedError("evidence_platform_invalid");
   }
-  if (evidence.buildProfile !== "preview") {
+  if (!["preview", "production"].includes(evidence.buildProfile)) {
     throw fixedError("evidence_build_profile_invalid");
+  }
+  const previewBoundary =
+    evidence.buildProfile === "preview"
+    && evidence.distribution === "internal"
+    && evidence.environment === "staging";
+  const androidStoreBoundary =
+    evidence.platform === "android"
+    && evidence.buildProfile === "production"
+    && evidence.distribution === "store"
+    && evidence.environment === "production";
+  if (!previewBoundary && !androidStoreBoundary) {
+    throw fixedError("evidence_build_boundary_invalid");
   }
   if (!COMMIT.test(evidence.releaseCommit)) {
     throw fixedError("evidence_release_commit_invalid");
@@ -229,6 +239,9 @@ function validateEvidence(evidence, expectedMainCommit) {
       }
     }
   } else if (evidence.pushTested === true) {
+    if (androidStoreBoundary) {
+      throw fixedError("evidence_store_push_must_not_be_tested");
+    }
     if (!SHA256.test(evidence.pushStagingGateSha256)) {
       throw fixedError("evidence_push_gate_sha_invalid");
     }
@@ -263,12 +276,24 @@ function validateSignedBuildReceipt(receipt, evidence, receiptBytes) {
     throw fixedError("signed_build_receipt_platform_mismatch");
   }
   if (
-    receipt.buildProfile !== "preview" ||
-    receipt.distribution !== "internal" ||
+    receipt.buildProfile !== evidence.buildProfile ||
+    receipt.distribution !== evidence.distribution ||
     receipt.artifact !== "available" ||
     receipt.submit !== "disabled" ||
     receipt.update !== "disabled"
   ) {
+    throw fixedError("signed_build_receipt_boundaries_invalid");
+  }
+  const previewBoundary =
+    receipt.buildProfile === "preview"
+    && receipt.distribution === "internal"
+    && evidence.environment === "staging";
+  const androidStoreBoundary =
+    receipt.platform === "android"
+    && receipt.buildProfile === "production"
+    && receipt.distribution === "store"
+    && evidence.environment === "production";
+  if (!previewBoundary && !androidStoreBoundary) {
     throw fixedError("signed_build_receipt_boundaries_invalid");
   }
   if (
@@ -356,7 +381,7 @@ export function evaluateMobileDeviceAcceptance({
   return Object.freeze({
     evidenceSha256: sha256Bytes(evidenceBytes),
     requiredChecks: REQUIRED_CHECK_FIELDS.length,
-    buildBindings: 5,
+    buildBindings: 6,
     pushChecks: evidence.pushTested ? PUSH_CHECK_FIELDS.length : 0,
   });
 }

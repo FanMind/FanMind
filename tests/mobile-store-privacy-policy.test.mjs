@@ -146,6 +146,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(storeListing, /STORE_PRIVACY_DECLARATIONS\.md/u);
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
   assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
+  assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
   assert.match(storeListing, /1320 × 2868/u);
   assert.match(
     playHandoff,
@@ -198,6 +199,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
   const [
     appConfig,
     easConfig,
+    mobilePackage,
+    mobileLock,
     listing,
     appStoreHandoff,
     reviewAccess,
@@ -212,6 +215,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     await Promise.all([
       read("apps/mobile/app.json").then(JSON.parse),
       read("apps/mobile/eas.json").then(JSON.parse),
+      read("apps/mobile/package.json").then(JSON.parse),
+      read("apps/mobile/package-lock.json").then(JSON.parse),
       read("docs/mobile/STORE_LISTING.md"),
       read("docs/mobile/APP_STORE_HANDOFF.md"),
       read("docs/mobile/STORE_REVIEW_ACCESS.md"),
@@ -264,6 +269,9 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     playFeatureGraphic,
   };
 
+  assert.equal(mobilePackage.devDependencies.sharp, "0.35.3");
+  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.3");
+
   assert.throws(
     () =>
       evaluateStoreReadiness({
@@ -285,6 +293,21 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
         },
       }),
     /store_submission_safety_contract_invalid/u,
+  );
+  assert.throws(
+    () =>
+      evaluateStoreReadiness({
+        ...validInput,
+        listing: listing.replace("kontakt@fanmind.ch", "help@example.com"),
+      }),
+    /store_identity_document_mismatch/u,
+  );
+
+  assert.doesNotThrow(() =>
+    evaluateStoreReadiness({
+      ...validInput,
+      featureSource: featureSource.replace(/\n/gu, "\r\n"),
+    }),
   );
 
   const changedFeatureGraphic = Buffer.from(playFeatureGraphic);

@@ -48,9 +48,9 @@ zu planen; kein automatischer Retry.
   `docs/mobile/STORE_PRIVACY_DECLARATIONS.md`;
 - öffentlich erreichbare Support-, Datenschutz- und Account-Löschseiten;
 - Production-Auth-Redirect `fanmind://reset-password`;
-- signierter Android Preview als vorhandene Build-Evidence; der private
-  19-Punkte-Gerätelauf folgt erst nach Installation aus dem Play-Test-Track;
-- verifiziertes Production-AAB für den späteren Play-Upload.
+- signierter Android Preview als historische UI/Runtime-Evidence;
+- verifiziertes Production-AAB samt redacted Production-Receipt für den
+  späteren Play-Upload und den daran gebundenen 19-Punkte-Gerätelauf.
 
 ## Vor Google-Freigabe noch ausführbar
 
@@ -62,7 +62,8 @@ zu planen; kein automatischer Retry.
    Tester-E-Mails in Git ablegen.
 3. Technische Data-Safety-Antworten gemeinsam mit Datenschutz/Recht sowie den
    aktuellen Supabase-/OpenAI-Verträgen final bestätigen.
-4. Den vorhandenen privaten Preview-Receipt sicher aufbewahren. Noch keinen
+4. Den vorhandenen privaten Android-Production-Receipt aus Store-Build
+   `33316172583` sicher aufbewahren. Noch keinen
    19-Punkte-PASS und keine finalen Screenshots erzeugen: Die Owner-Entscheidung
    bindet diese Abnahme an die spätere Installation aus dem Play-Test-Track.
 
@@ -86,8 +87,12 @@ rechtfertigt keinen neuen Build und keine erfundene Abnahme.
    dokumentieren und erfüllen; keine Anforderung aus älteren Konten oder
    Repository-Texten ableiten.
 6. Sobald der Download im Play-Test-Track verfügbar ist, genau diesen Store-
-   Install auf einem realen Android-Gerät verwenden. Erst dann die private,
-   vollständig `pending` gesetzte Datei mit
+   Install auf einem realen Android-Gerät verwenden. Den unveränderten,
+   redacted Android-Production-Receipt aus Store-Build `33316172583` / Job
+   `99269924756` für Commit
+   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` privat mit Modus `0600`
+   bereitstellen; niemals den älteren Preview-Receipt als Store-Nachweis
+   verwenden. Erst dann die private, vollständig `pending` gesetzte Datei mit
    `npm run mobile:device:acceptance:prepare` erzeugen und alle 19 Punkte aus
    `docs/mobile/DEVICE_ACCEPTANCE.md` durchführen.
 7. Den privaten Validator ausführen und nur dessen redacted PASS-Zähler plus

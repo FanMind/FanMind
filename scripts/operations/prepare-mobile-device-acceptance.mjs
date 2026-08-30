@@ -138,15 +138,26 @@ function parseSignedBuildReceipt(bytes) {
     fail("signed_build_receipt_identity_invalid");
   }
   if (
-    receipt.buildProfile !== "preview"
-    || receipt.distribution !== "internal"
-    || receipt.artifact !== "available"
+    receipt.artifact !== "available"
     || receipt.submit !== "disabled"
     || receipt.update !== "disabled"
   ) {
     fail("signed_build_receipt_boundaries_invalid");
   }
-  return receipt;
+  if (
+    receipt.buildProfile === "preview"
+    && receipt.distribution === "internal"
+  ) {
+    return { receipt, environment: "staging" };
+  }
+  if (
+    receipt.platform === "android"
+    && receipt.buildProfile === "production"
+    && receipt.distribution === "store"
+  ) {
+    return { receipt, environment: "production" };
+  }
+  fail("signed_build_receipt_boundaries_invalid");
 }
 
 export function createMobileDeviceAcceptanceTemplate({
@@ -157,20 +168,23 @@ export function createMobileDeviceAcceptanceTemplate({
   if (!ACCEPTANCE_ID.test(acceptanceId)) fail("acceptance_id_invalid");
   if (!isIsoUtc(startedAt)) fail("started_at_invalid");
 
-  const receipt = parseSignedBuildReceipt(signedBuildReceiptBytes);
+  const { receipt, environment } = parseSignedBuildReceipt(
+    signedBuildReceiptBytes,
+  );
   if (Date.parse(startedAt) < Date.parse(receipt.completedAt)) {
     fail("started_at_before_build");
   }
 
   const template = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     acceptanceId,
     startedAt,
     completedAt: "replace-with-completion-utc",
-    environment: "staging",
+    environment,
     platform: receipt.platform,
     releaseCommit: receipt.releaseCommit,
     buildProfile: receipt.buildProfile,
+    distribution: receipt.distribution,
     signedBuildCompletedAt: receipt.completedAt,
     signedBuildReceiptSha256: sha256Bytes(signedBuildReceiptBytes),
   };

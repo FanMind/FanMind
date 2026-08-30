@@ -39,7 +39,7 @@
       "parallel_safe": true,
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope on the exact-merge Android Preview on 2026-08-30. Keep that scope closed, use the fail-closed private preparer plus the existing Preview receipt for the 19-check Android runbook, complete the real Recovery flow for the already saved Production redirect and keep applicable Push/Store acceptance separate. Preserve the verified Android 1.0.0 AAB and wait for Google account approval before Play app creation/upload. Do not queue another build, expose private artifact values, submit, update, start iOS/TestFlight or mutate Supabase/Production."
+      "instruction": "The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope on the exact-merge Android Preview on 2026-08-30. Keep that historical scope closed. After Google approval and installation from the Play test track, use the fail-closed private preparer plus the exact existing Android Production/Store receipt for the 19-check Android runbook and real Recovery flow. Preserve the verified Android 1.0.0 AAB and never substitute the older Preview receipt for Store-device evidence. Keep Push separate and disabled for this Production/Store acceptance. Do not queue another build, expose private artifact values, submit, update, start iOS/TestFlight or mutate Supabase/Production."
     },
     {
       "id": "NBA-AI-LIFECYCLE-RECONCILE",

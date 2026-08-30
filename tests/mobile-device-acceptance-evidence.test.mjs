@@ -73,7 +73,7 @@ function signedBuildReceipt(queueBytes, completionBytes, overrides = {}) {
 
 function deviceEvidence(receiptBytes, overrides = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     acceptanceId: "2026-08-06-mobile-android-001",
     startedAt: "2026-08-06T09:00:00Z",
     completedAt: "2026-08-06T10:00:00Z",
@@ -81,6 +81,7 @@ function deviceEvidence(receiptBytes, overrides = {}) {
     platform: "android",
     releaseCommit: MAIN_COMMIT,
     buildProfile: "preview",
+    distribution: "internal",
     signedBuildCompletedAt: "2026-08-06T08:00:00.000Z",
     signedBuildReceiptSha256: sha(receiptBytes),
     signedBuildInstalled: "passed",
@@ -204,8 +205,8 @@ test("valid private device evidence binds one exact signed preview build without
       verifierArguments(paths),
     );
     const output = `${stdout}\n${stderr}`;
-    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_BUILD_BINDINGS=5/u);
-    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_BUILD_BINDINGS_PASSED=5/u);
+    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_BUILD_BINDINGS=6/u);
+    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_BUILD_BINDINGS_PASSED=6/u);
     assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_REQUIRED_CHECKS=19/u);
     assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_REQUIRED_PASSED=19/u);
     assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_PUSH_CHECKS=0/u);
@@ -219,6 +220,34 @@ test("valid private device evidence binds one exact signed preview build without
       output,
       /123e4567|a{20}|android|preview|expo\.dev|mobile-android-001/u,
     );
+  });
+});
+
+test("Play-installed device evidence binds the exact Android Production Store receipt", async () => {
+  await withFixture(async ({ paths, evidenceBytes }) => {
+    const { stdout, stderr } = await execFileAsync(
+      process.execPath,
+      verifierArguments(paths),
+    );
+    const output = `${stdout}\n${stderr}`;
+    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_BUILD_BINDINGS=6/u);
+    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE_REQUIRED_PASSED=19/u);
+    assert.match(output, /MOBILE_DEVICE_ACCEPTANCE=PASS/u);
+    assert.match(
+      output,
+      new RegExp(`MOBILE_DEVICE_ACCEPTANCE_SHA256=${sha(evidenceBytes)}`, "u"),
+    );
+    assert.doesNotMatch(output, /android|production|store|a{20}/u);
+  }, {
+    receipt: {
+      buildProfile: "production",
+      distribution: "store",
+    },
+    evidence: {
+      environment: "production",
+      buildProfile: "production",
+      distribution: "store",
+    },
   });
 });
 
@@ -288,6 +317,10 @@ test("evidence fails closed on main commit, platform, build identity, timestamp 
     {
       fixture: { evidence: { platform: "ios" } },
       error: /signed_build_receipt_platform_mismatch/u,
+    },
+    {
+      fixture: { evidence: { distribution: "store" } },
+      error: /evidence_build_boundary_invalid/u,
     },
     {
       fixture: {
@@ -423,7 +456,7 @@ test("private evidence inputs reject broad permissions and symlinks", async () =
   });
 });
 
-test("the private preparer binds the exact Preview receipt but never pre-approves a check", async () => {
+test("the private preparer binds the exact receipt but never pre-approves a check", async () => {
   await withFixture(async ({ receiptBytes }) => {
     const template = createMobileDeviceAcceptanceTemplate({
       signedBuildReceiptBytes: Buffer.from(receiptBytes, "utf8"),
@@ -435,6 +468,7 @@ test("the private preparer binds the exact Preview receipt but never pre-approve
     assert.equal(template.platform, "android");
     assert.equal(template.releaseCommit, MAIN_COMMIT);
     assert.equal(template.buildProfile, "preview");
+    assert.equal(template.distribution, "internal");
     assert.equal(template.signedBuildCompletedAt, "2026-08-06T08:00:00.000Z");
     assert.equal(template.signedBuildReceiptSha256, sha(receiptBytes));
     assert.equal(template.completedAt, "replace-with-completion-utc");
@@ -511,22 +545,40 @@ test("the preparer writes one mode-0600 pending file and the verifier rejects it
   });
 });
 
-test("the preparer rejects Store receipts and timestamps before the signed Preview", async () => {
+test("the preparer accepts the Android Store receipt and rejects unsupported boundaries", async () => {
   await withFixture(async ({ receiptBytes }) => {
-    assert.throws(
-      () =>
-        createMobileDeviceAcceptanceTemplate({
-          signedBuildReceiptBytes: Buffer.from(
-            JSON.stringify({
-              ...JSON.parse(receiptBytes),
-              buildProfile: "production",
-              distribution: "store",
-            }),
-            "utf8",
-          ),
-          acceptanceId: "2026-08-30-mobile-android-001",
-          startedAt: "2026-08-30T09:00:00Z",
+    const storeTemplate = createMobileDeviceAcceptanceTemplate({
+      signedBuildReceiptBytes: Buffer.from(
+        JSON.stringify({
+          ...JSON.parse(receiptBytes),
+          buildProfile: "production",
+          distribution: "store",
         }),
+        "utf8",
+      ),
+      acceptanceId: "2026-08-30-mobile-android-001",
+      startedAt: "2026-08-30T09:00:00Z",
+    });
+    assert.equal(storeTemplate.schemaVersion, 2);
+    assert.equal(storeTemplate.environment, "production");
+    assert.equal(storeTemplate.platform, "android");
+    assert.equal(storeTemplate.buildProfile, "production");
+    assert.equal(storeTemplate.distribution, "store");
+
+    assert.throws(
+      () => createMobileDeviceAcceptanceTemplate({
+        signedBuildReceiptBytes: Buffer.from(
+          JSON.stringify({
+            ...JSON.parse(receiptBytes),
+            platform: "ios",
+            buildProfile: "production",
+            distribution: "store",
+          }),
+          "utf8",
+        ),
+        acceptanceId: "2026-08-30-mobile-ios-001",
+        startedAt: "2026-08-30T09:00:00Z",
+      }),
       /signed_build_receipt_boundaries_invalid/u,
     );
     assert.throws(

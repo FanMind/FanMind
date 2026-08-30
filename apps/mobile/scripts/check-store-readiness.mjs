@@ -120,6 +120,7 @@ export function evaluateStoreReadiness(input) {
     listing,
     "Apple - Promotional Text EN",
   );
+  const normalizedFeatureSource = featureSource.replace(/\r\n?/gu, "\n");
 
   assertLength(appName, 2, 30, "store_app_name_length_invalid");
   assertLength(subtitleDe, 2, 30, "store_subtitle_de_length_invalid");
@@ -171,6 +172,8 @@ export function evaluateStoreReadiness(input) {
     || tableValue(listing, "iOS Bundle Identifier") !== "ch.fanmind.app"
     || tableValue(listing, "Website") !== "https://fanmind.ch"
     || tableValue(listing, "Support") !== "https://fanmind.ch/support"
+    || tableValue(listing, "Google-Play-Support-E-Mail")
+      !== "kontakt@fanmind.ch"
     || tableValue(listing, "Datenschutz") !== "https://fanmind.ch/datenschutz"
     || tableValue(listing, "Account-Löschung")
       !== "https://fanmind.ch/account-deletion"
@@ -216,14 +219,14 @@ export function evaluateStoreReadiness(input) {
   }
   if (
     !/width="1024" height="500" viewBox="0 0 1024 500"/u.test(
-      featureSource,
+      normalizedFeatureSource,
     )
-    || /<(?:text|image|foreignObject)\b/iu.test(featureSource)
+    || /<(?:text|image|foreignObject)\b/iu.test(normalizedFeatureSource)
   ) {
     fail("store_feature_source_invalid");
   }
   if (
-    createHash("sha256").update(featureSource).digest("hex")
+    createHash("sha256").update(normalizedFeatureSource).digest("hex")
     !== CONFIRMED_PLAY_FEATURE_SOURCE_SHA256
   ) {
     fail("store_feature_source_not_confirmed");

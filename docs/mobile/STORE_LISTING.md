@@ -34,6 +34,7 @@ Social-Media-Integrationen.
 | iOS Bundle Identifier | `ch.fanmind.app` |
 | Website | `https://fanmind.ch` |
 | Support | `https://fanmind.ch/support` |
+| Google-Play-Support-E-Mail | `kontakt@fanmind.ch` |
 | Datenschutz | `https://fanmind.ch/datenschutz` |
 | Account-Löschung | `https://fanmind.ch/account-deletion` |
 
