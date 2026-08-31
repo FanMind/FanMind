@@ -102,6 +102,7 @@ export function NotificationIntentProvider({
     if (decision === "navigate" && pendingIntent) {
       navigationIssuedIdentifier.current = pendingIntent.responseIdentifier;
       if (
+        "section" in pendingIntent &&
         pendingIntent.section === MESSAGE_NOTIFICATION_SECTION &&
         pathname === pendingIntent.consumePathname
       ) {
