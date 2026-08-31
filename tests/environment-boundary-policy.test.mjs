@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
+import "./data-environment-boundary.spec.mjs";
 import {
   NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT,
   evaluateEnvironmentBoundary,
