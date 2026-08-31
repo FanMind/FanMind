@@ -1,10 +1,18 @@
 import assert from "node:assert/strict";
 
+function normalizeProjectRef(value) {
+  assert.ok(typeof value === "string", "project ref must be a string");
+  const normalized = value.trim().toLowerCase();
+  assert.ok(normalized !== "", "project ref required");
+  assert.ok(!/\s/u.test(normalized), "project ref must not contain whitespace");
+  return normalized;
+}
+
 export function assertSyntheticWriteTarget({ runtimeEnvironment, targetRef, productionRef, syntheticMarker }) {
   assert.ok(["development", "test", "staging"].includes(runtimeEnvironment), "synthetic writes require development/test/staging");
-  assert.ok(typeof targetRef === "string" && targetRef.trim() !== "", "targetRef required");
-  assert.ok(typeof productionRef === "string" && productionRef.trim() !== "", "productionRef required");
-  assert.notEqual(targetRef, productionRef, "synthetic writes must never target Production");
+  const normalizedTargetRef = normalizeProjectRef(targetRef);
+  const normalizedProductionRef = normalizeProjectRef(productionRef);
+  assert.notEqual(normalizedTargetRef, normalizedProductionRef, "synthetic writes must never target Production");
   assert.ok(typeof syntheticMarker === "string" && /^fanmind-synthetic[-_:]/u.test(syntheticMarker), "synthetic marker required");
   return true;
 }
