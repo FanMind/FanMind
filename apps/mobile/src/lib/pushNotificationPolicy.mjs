@@ -6,6 +6,7 @@ export const MESSAGE_NOTIFICATION_TYPES = Object.freeze([
   "message_reminder",
 ]);
 export const MESSAGE_NOTIFICATION_SECTION = "messages";
+export const MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX = "message-view-";
 export const MAX_NOTIFICATION_RESPONSE_IDENTIFIER_LENGTH = 256;
 
 const UUID_PATTERN =
@@ -17,6 +18,14 @@ function isExactObject(value, expectedKeys) {
   return (
     keys.length === expectedKeys.length &&
     expectedKeys.every((key) => keys.includes(key))
+  );
+}
+
+function isMessageSection(value) {
+  return (
+    value === MESSAGE_NOTIFICATION_SECTION ||
+    (typeof value === "string" &&
+      value.startsWith(MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX))
   );
 }
 
@@ -59,9 +68,7 @@ export function parseMessageNotificationData(value) {
 }
 
 export function parseNotificationData(value) {
-  return (
-    parseFollowupNotificationData(value) ?? parseMessageNotificationData(value)
-  );
+  return parseFollowupNotificationData(value) ?? parseMessageNotificationData(value);
 }
 
 function hasValidResponseEnvelope(value, defaultActionIdentifier) {
@@ -73,8 +80,7 @@ function hasValidResponseEnvelope(value, defaultActionIdentifier) {
     value.actionIdentifier === defaultActionIdentifier &&
     typeof value.requestIdentifier === "string" &&
     value.requestIdentifier.length > 0 &&
-    value.requestIdentifier.length <=
-      MAX_NOTIFICATION_RESPONSE_IDENTIFIER_LENGTH &&
+    value.requestIdentifier.length <= MAX_NOTIFICATION_RESPONSE_IDENTIFIER_LENGTH &&
     !/[\u0000-\u001f\u007f]/u.test(value.requestIdentifier)
   );
 }
@@ -83,17 +89,10 @@ export function createNotificationIntent(value, defaultActionIdentifier) {
   if (!hasValidResponseEnvelope(value, defaultActionIdentifier)) return null;
   const data = parseNotificationData(value.data);
   if (!data) return null;
-
-  return {
-    ...data,
-    responseIdentifier: value.requestIdentifier,
-  };
+  return { ...data, responseIdentifier: value.requestIdentifier };
 }
 
-export function createFollowupNotificationIntent(
-  value,
-  defaultActionIdentifier,
-) {
+export function createFollowupNotificationIntent(value, defaultActionIdentifier) {
   const intent = createNotificationIntent(value, defaultActionIdentifier);
   return intent?.type === FOLLOWUP_NOTIFICATION_TYPE ? intent : null;
 }
@@ -103,18 +102,23 @@ export function decideNotificationIntent({
   hasSession,
   segments,
   pathname,
+  currentSection = null,
+  navigationIssued = false,
   pendingIntent,
 }) {
   if (!pendingIntent || authLoading || !hasSession) return "wait";
   if (!Array.isArray(segments)) return "wait";
   if (segments[0] === "(auth)") return "wait";
-  if (
-    typeof pathname === "string" &&
-    pathname === pendingIntent.consumePathname
-  ) {
-    return "consume";
+
+  const atDestination =
+    typeof pathname === "string" && pathname === pendingIntent.consumePathname;
+  if (!atDestination) return "navigate";
+
+  if (pendingIntent.section === MESSAGE_NOTIFICATION_SECTION) {
+    if (!navigationIssued || !isMessageSection(currentSection)) return "navigate";
   }
-  return "navigate";
+
+  return "consume";
 }
 
 export function decideFollowupNotificationIntent(input) {
