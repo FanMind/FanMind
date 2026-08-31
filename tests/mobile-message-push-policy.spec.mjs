@@ -8,56 +8,105 @@ import {
   getMessagePushPolicyConstants,
 } from "../src/lib/mobileMessagePushPolicy.mjs";
 
+const workspaceId = "11111111-1111-4111-8111-111111111111";
+const contactId = "22222222-2222-4222-8222-222222222222";
+const messageId = "33333333-3333-4333-8333-333333333333";
+const userId = "44444444-4444-4444-8444-444444444444";
+const registrationId = "55555555-5555-4555-8555-555555555555";
+const easProjectId = "66666666-6666-4666-8666-666666666666";
+const secondContactId = "77777777-7777-4777-8777-777777777777";
+const secondMessageId = "88888888-8888-4888-8888-888888888888";
+const seenMessageId = "99999999-9999-4999-8999-999999999999";
+
+const recipient = Object.freeze({ userId, registrationId, easProjectId });
 const baseMessage = Object.freeze({
-  id: "msg-1",
-  workspaceId: "ws-1",
-  contactId: "contact-1",
+  id: messageId,
+  workspaceId,
+  contactId,
   direction: "inbound",
   seenAt: null,
   createdAt: "2026-08-31T18:00:00Z",
 });
 
-test("message push policy is bounded to one 30-minute reminder", () => {
+function boundPriorDelivery(overrides = {}) {
+  return {
+    workspaceId,
+    contactId,
+    messageId,
+    userId,
+    registrationId,
+    easProjectId,
+    initialSentAt: "2026-08-31T18:02:00Z",
+    reminderCount: 0,
+    ...overrides,
+  };
+}
+
+test("message push policy is bounded to one fresh 30-minute reminder", () => {
   assert.deepEqual(getMessagePushPolicyConstants(), {
     eventTypes: ["message_received", "message_reminder"],
     reminderDelayMinutes: 30,
+    initialFreshnessMinutes: 60,
+    reminderFreshnessMinutes: 60,
     maxReminders: 1,
+    ttlSeconds: 3600,
   });
 });
 
-test("initial unseen inbound message produces privacy-minimal push", () => {
+test("initial unseen inbound message produces privacy-minimal recipient-bound push", () => {
   const decision = deriveMessagePushDecision({
     runtimeEnvironment: "staging",
     message: baseMessage,
+    recipient,
     now: new Date("2026-08-31T18:01:00Z"),
   });
 
   assert.equal(decision.status, "send");
   assert.equal(decision.eventType, "message_received");
-  assert.equal(decision.dedupeKey, "message:ws-1:contact-1:msg-1:received");
+  assert.deepEqual(decision.binding, {
+    workspaceId,
+    contactId,
+    messageId,
+    userId,
+    registrationId,
+    easProjectId,
+  });
+  assert.equal(
+    decision.dedupeKey,
+    `message:${workspaceId}:${userId}:${registrationId}:${easProjectId}:${contactId}:${messageId}:received`,
+  );
   assert.deepEqual(decision.payload, {
     title: "FanMind",
     body: "Du hast eine neue Nachricht.",
     ttl: 3600,
     data: {
       type: "message_received",
-      contactId: "contact-1",
+      contactId,
       section: "messages",
     },
   });
-  assert.equal(JSON.stringify(decision.payload).includes("msg-1"), false);
-  assert.equal(JSON.stringify(decision.payload).includes("ws-1"), false);
+  const serializedPayload = JSON.stringify(decision.payload);
+  assert.equal(serializedPayload.includes(messageId), false);
+  assert.equal(serializedPayload.includes(workspaceId), false);
+  assert.equal(serializedPayload.includes(userId), false);
+  assert.equal(serializedPayload.includes(registrationId), false);
+  assert.equal(serializedPayload.includes(easProjectId), false);
 });
 
-test("production, non-inbound, seen and future messages fail closed", () => {
+test("production, non-inbound, seen, future and stale messages fail closed", () => {
   assert.deepEqual(
-    deriveMessagePushDecision({ runtimeEnvironment: "production", message: baseMessage }),
+    deriveMessagePushDecision({
+      runtimeEnvironment: "production",
+      message: baseMessage,
+      recipient,
+    }),
     { status: "blocked", reason: "staging_only" },
   );
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: { ...baseMessage, direction: "outbound" },
+      recipient,
     }),
     { status: "blocked", reason: "not_inbound" },
   );
@@ -65,6 +114,7 @@ test("production, non-inbound, seen and future messages fail closed", () => {
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: { ...baseMessage, seenAt: "2026-08-31T18:05:00Z" },
+      recipient,
     }),
     { status: "blocked", reason: "already_seen" },
   );
@@ -72,25 +122,50 @@ test("production, non-inbound, seen and future messages fail closed", () => {
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: { ...baseMessage, createdAt: "2026-08-31T19:00:00Z" },
+      recipient,
       now: new Date("2026-08-31T18:30:00Z"),
     }),
     { status: "blocked", reason: "message_from_future" },
   );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      now: new Date("2026-08-31T19:00:01Z"),
+    }),
+    { status: "blocked", reason: "initial_notification_expired" },
+  );
 });
 
-test("one reminder is allowed only after the delay and while still unseen", () => {
-  const priorDelivery = {
-    workspaceId: "ws-1",
-    contactId: "contact-1",
-    messageId: "msg-1",
-    initialSentAt: "2026-08-31T18:02:00Z",
-    reminderCount: 0,
-  };
+test("missing or malformed recipient binding blocks before any send decision", () => {
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient: { ...recipient, registrationId: "not-a-uuid" },
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+});
+
+test("one reminder is allowed only after the delay and before its freshness window expires", () => {
+  const priorDelivery = boundPriorDelivery();
 
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
+      recipient,
       now: new Date("2026-08-31T18:31:59Z"),
       priorDelivery,
     }),
@@ -100,38 +175,47 @@ test("one reminder is allowed only after the delay and while still unseen", () =
   const due = deriveMessagePushDecision({
     runtimeEnvironment: "staging",
     message: baseMessage,
+    recipient,
     now: new Date("2026-08-31T18:32:00Z"),
     priorDelivery,
   });
   assert.equal(due.status, "send");
   assert.equal(due.eventType, "message_reminder");
-  assert.equal(due.dedupeKey, "message:ws-1:contact-1:msg-1:reminder:1");
+  assert.equal(
+    due.dedupeKey,
+    `message:${workspaceId}:${userId}:${registrationId}:${easProjectId}:${contactId}:${messageId}:reminder:1`,
+  );
   assert.equal(due.payload.body, "Eine Nachricht wartet noch auf dich.");
 
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
-      priorDelivery: { ...priorDelivery, reminderCount: 1 },
+      recipient,
+      now: new Date("2026-08-31T19:32:01Z"),
+      priorDelivery,
+    }),
+    { status: "blocked", reason: "reminder_expired" },
+  );
+
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      priorDelivery: boundPriorDelivery({ reminderCount: 1 }),
     }),
     { status: "blocked", reason: "reminder_limit_reached" },
   );
 });
 
 test("invalid or inconsistent prior delivery state fails closed", () => {
-  const common = {
-    workspaceId: "ws-1",
-    contactId: "contact-1",
-    messageId: "msg-1",
-    initialSentAt: "2026-08-31T18:02:00Z",
-    reminderCount: 0,
-  };
-
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
-      priorDelivery: { ...common, workspaceId: "other" },
+      recipient,
+      priorDelivery: boundPriorDelivery({ workspaceId: secondContactId }),
     }),
     { status: "blocked", reason: "delivery_binding_mismatch" },
   );
@@ -139,7 +223,35 @@ test("invalid or inconsistent prior delivery state fails closed", () => {
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
-      priorDelivery: { ...common, reminderCount: "0" },
+      recipient,
+      priorDelivery: boundPriorDelivery({ userId: secondContactId }),
+    }),
+    { status: "blocked", reason: "delivery_binding_mismatch" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      priorDelivery: boundPriorDelivery({ registrationId: secondContactId }),
+    }),
+    { status: "blocked", reason: "delivery_binding_mismatch" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      priorDelivery: boundPriorDelivery({ easProjectId: secondContactId }),
+    }),
+    { status: "blocked", reason: "delivery_binding_mismatch" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      priorDelivery: boundPriorDelivery({ reminderCount: "0" }),
     }),
     { status: "blocked", reason: "invalid_reminder_count" },
   );
@@ -147,37 +259,56 @@ test("invalid or inconsistent prior delivery state fails closed", () => {
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
+      recipient,
       now: new Date("2026-08-31T18:30:00Z"),
-      priorDelivery: { ...common, initialSentAt: "2026-08-31T17:59:59Z" },
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-08-31T17:59:59Z",
+      }),
     }),
     { status: "blocked", reason: "invalid_initial_delivery_time" },
   );
 });
 
-test("aggregation keeps one newest candidate per fan and counts unseen messages", () => {
+test("aggregation keeps one deterministic newest candidate per fan and counts unseen messages", () => {
+  const equalTimestampLowId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1";
+  const equalTimestampHighId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2";
   const result = aggregateUnseenMessagesForPush([
-    baseMessage,
-    { ...baseMessage, id: "msg-2", createdAt: "2026-08-31T18:10:00Z" },
-    { ...baseMessage, id: "msg-seen", seenAt: "2026-08-31T18:11:00Z" },
+    { ...baseMessage, id: equalTimestampLowId, createdAt: "2026-08-31T18:10:00Z" },
+    { ...baseMessage, id: equalTimestampHighId, createdAt: "2026-08-31T18:10:00Z" },
+    { ...baseMessage, id: seenMessageId, seenAt: "2026-08-31T18:11:00Z" },
     {
       ...baseMessage,
-      id: "msg-contact-2",
-      contactId: "contact-2",
+      id: secondMessageId,
+      contactId: secondContactId,
       createdAt: "2026-08-31T18:12:00Z",
     },
   ]);
 
   assert.equal(result.length, 2);
-  assert.deepEqual(result.find((item) => item.contactId === "contact-1"), {
-    workspaceId: "ws-1",
-    contactId: "contact-1",
-    messageId: "msg-2",
+  assert.deepEqual(result.find((item) => item.contactId === contactId), {
+    workspaceId,
+    contactId,
+    messageId: equalTimestampHighId,
     createdAt: "2026-08-31T18:10:00Z",
     unseenCount: 2,
   });
+
+  const reversed = aggregateUnseenMessagesForPush([
+    { ...baseMessage, id: equalTimestampHighId, createdAt: "2026-08-31T18:10:00Z" },
+    { ...baseMessage, id: equalTimestampLowId, createdAt: "2026-08-31T18:10:00Z" },
+  ]);
+  assert.equal(reversed[0].messageId, equalTimestampHighId);
+  assert.equal(reversed[0].unseenCount, 2);
 });
 
-test("payload rejects unsupported types and missing contact id", () => {
-  assert.throws(() => buildMessagePushPayload({ contactId: "", eventType: "message_received" }));
-  assert.throws(() => buildMessagePushPayload({ contactId: "contact-1", eventType: "x" }));
+test("payload rejects unsupported types and non-canonical contact ids", () => {
+  assert.throws(() =>
+    buildMessagePushPayload({ contactId: "", eventType: "message_received" }),
+  );
+  assert.throws(() =>
+    buildMessagePushPayload({ contactId: "contact-1", eventType: "message_received" }),
+  );
+  assert.throws(() =>
+    buildMessagePushPayload({ contactId, eventType: "x" }),
+  );
 });
