@@ -78,6 +78,9 @@ export function deriveMessagePushDecision({
   if (!workspaceId || !contactId || !messageId || createdAt == null || !Number.isFinite(nowTimestamp)) {
     return Object.freeze({ status: "blocked", reason: "invalid_identity_or_time" });
   }
+  if (createdAt > nowTimestamp) {
+    return Object.freeze({ status: "blocked", reason: "message_from_future" });
+  }
   if (!Number.isInteger(reminderDelayMinutes) || reminderDelayMinutes < 1 || reminderDelayMinutes > 1440) {
     return Object.freeze({ status: "blocked", reason: "invalid_reminder_delay" });
   }
@@ -94,12 +97,26 @@ export function deriveMessagePushDecision({
   if (priorDelivery.workspaceId !== workspaceId || priorDelivery.contactId !== contactId || priorDelivery.messageId !== messageId) {
     return Object.freeze({ status: "blocked", reason: "delivery_binding_mismatch" });
   }
-  if (priorDelivery.reminderCount >= MESSAGE_PUSH_MAX_REMINDERS) {
-    return Object.freeze({ status: "blocked", reason: "reminder_limit_reached" });
+  if (
+    !Number.isInteger(priorDelivery.reminderCount) ||
+    priorDelivery.reminderCount < 0 ||
+    priorDelivery.reminderCount >= MESSAGE_PUSH_MAX_REMINDERS
+  ) {
+    return Object.freeze({
+      status: "blocked",
+      reason:
+        priorDelivery.reminderCount >= MESSAGE_PUSH_MAX_REMINDERS
+          ? "reminder_limit_reached"
+          : "invalid_reminder_count",
+    });
   }
 
   const initialSentAt = asValidInstant(priorDelivery.initialSentAt);
-  if (initialSentAt == null) {
+  if (
+    initialSentAt == null ||
+    initialSentAt < createdAt ||
+    initialSentAt > nowTimestamp
+  ) {
     return Object.freeze({ status: "blocked", reason: "invalid_initial_delivery_time" });
   }
   const reminderDueAt = initialSentAt + reminderDelayMinutes * 60_000;
@@ -143,5 +160,13 @@ export function aggregateUnseenMessagesForPush(messages) {
     }
   }
 
-  return [...byContact.values()].map(({ createdAtTimestamp: _createdAtTimestamp, ...value }) => Object.freeze(value));
+  return [...byContact.values()].map((value) =>
+    Object.freeze({
+      workspaceId: value.workspaceId,
+      contactId: value.contactId,
+      messageId: value.messageId,
+      createdAt: value.createdAt,
+      unseenCount: value.unseenCount,
+    }),
+  );
 }
