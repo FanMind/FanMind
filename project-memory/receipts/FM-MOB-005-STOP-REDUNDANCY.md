@@ -1,0 +1,1 @@
+No more redundant bookkeeping. Continue only with integration code/docs/tests and exact-head verification.
