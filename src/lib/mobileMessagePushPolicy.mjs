@@ -4,10 +4,22 @@ const MESSAGE_PUSH_EVENT_TYPES = Object.freeze([
 ]);
 
 const MESSAGE_PUSH_DEFAULT_REMINDER_DELAY_MINUTES = 30;
+const MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES = 60;
+const MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES = 60;
 const MESSAGE_PUSH_MAX_REMINDERS = 1;
+const MESSAGE_PUSH_TTL_SECONDS = 3600;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function asNonEmptyString(value) {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+function asCanonicalUuid(value) {
+  const normalized = asNonEmptyString(value);
+  return normalized && UUID_PATTERN.test(normalized)
+    ? normalized.toLowerCase()
+    : null;
 }
 
 function asValidInstant(value) {
@@ -17,18 +29,67 @@ function asValidInstant(value) {
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 
+function normalizeRecipientBinding(recipient) {
+  if (!recipient || typeof recipient !== "object" || Array.isArray(recipient)) {
+    return null;
+  }
+  const userId = asCanonicalUuid(recipient.userId);
+  const registrationId = asCanonicalUuid(recipient.registrationId);
+  const easProjectId = asCanonicalUuid(recipient.easProjectId);
+  if (!userId || !registrationId || !easProjectId) return null;
+  return Object.freeze({ userId, registrationId, easProjectId });
+}
+
+function buildDeliveryBinding({ workspaceId, contactId, messageId, recipient }) {
+  return Object.freeze({
+    workspaceId,
+    contactId,
+    messageId,
+    userId: recipient.userId,
+    registrationId: recipient.registrationId,
+    easProjectId: recipient.easProjectId,
+  });
+}
+
+function deliveryBindingMatches(priorDelivery, binding) {
+  return (
+    asCanonicalUuid(priorDelivery?.workspaceId) === binding.workspaceId &&
+    asCanonicalUuid(priorDelivery?.contactId) === binding.contactId &&
+    asCanonicalUuid(priorDelivery?.messageId) === binding.messageId &&
+    asCanonicalUuid(priorDelivery?.userId) === binding.userId &&
+    asCanonicalUuid(priorDelivery?.registrationId) === binding.registrationId &&
+    asCanonicalUuid(priorDelivery?.easProjectId) === binding.easProjectId
+  );
+}
+
+function buildDedupeKey(binding, suffix) {
+  return [
+    "message",
+    binding.workspaceId,
+    binding.userId,
+    binding.registrationId,
+    binding.easProjectId,
+    binding.contactId,
+    binding.messageId,
+    suffix,
+  ].join(":");
+}
+
 export function getMessagePushPolicyConstants() {
   return Object.freeze({
     eventTypes: MESSAGE_PUSH_EVENT_TYPES,
     reminderDelayMinutes: MESSAGE_PUSH_DEFAULT_REMINDER_DELAY_MINUTES,
+    initialFreshnessMinutes: MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES,
+    reminderFreshnessMinutes: MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES,
     maxReminders: MESSAGE_PUSH_MAX_REMINDERS,
+    ttlSeconds: MESSAGE_PUSH_TTL_SECONDS,
   });
 }
 
 export function buildMessagePushPayload({ contactId, eventType }) {
-  const normalizedContactId = asNonEmptyString(contactId);
+  const normalizedContactId = asCanonicalUuid(contactId);
   if (!normalizedContactId) {
-    throw new TypeError("contactId is required");
+    throw new TypeError("canonical contactId is required");
   }
   if (!MESSAGE_PUSH_EVENT_TYPES.includes(eventType)) {
     throw new TypeError("unsupported message push eventType");
@@ -40,7 +101,7 @@ export function buildMessagePushPayload({ contactId, eventType }) {
       eventType === "message_received"
         ? "Du hast eine neue Nachricht."
         : "Eine Nachricht wartet noch auf dich.",
-    ttl: 3600,
+    ttl: MESSAGE_PUSH_TTL_SECONDS,
     data: Object.freeze({
       type: eventType,
       contactId: normalizedContactId,
@@ -52,14 +113,17 @@ export function buildMessagePushPayload({ contactId, eventType }) {
 export function deriveMessagePushDecision({
   runtimeEnvironment,
   message,
+  recipient,
   now = new Date(),
   priorDelivery = null,
   reminderDelayMinutes = MESSAGE_PUSH_DEFAULT_REMINDER_DELAY_MINUTES,
+  initialFreshnessMinutes = MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES,
+  reminderFreshnessMinutes = MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES,
 }) {
   if (runtimeEnvironment !== "staging") {
     return Object.freeze({ status: "blocked", reason: "staging_only" });
   }
-  if (!message || typeof message !== "object") {
+  if (!message || typeof message !== "object" || Array.isArray(message)) {
     return Object.freeze({ status: "blocked", reason: "invalid_message" });
   }
   if (message.direction !== "inbound") {
@@ -69,14 +133,18 @@ export function deriveMessagePushDecision({
     return Object.freeze({ status: "blocked", reason: "already_seen" });
   }
 
-  const workspaceId = asNonEmptyString(message.workspaceId);
-  const contactId = asNonEmptyString(message.contactId);
-  const messageId = asNonEmptyString(message.id);
+  const workspaceId = asCanonicalUuid(message.workspaceId);
+  const contactId = asCanonicalUuid(message.contactId);
+  const messageId = asCanonicalUuid(message.id);
   const createdAt = asValidInstant(message.createdAt);
+  const normalizedRecipient = normalizeRecipientBinding(recipient);
   const nowTimestamp = now instanceof Date ? now.getTime() : Date.parse(String(now));
 
   if (!workspaceId || !contactId || !messageId || createdAt == null || !Number.isFinite(nowTimestamp)) {
     return Object.freeze({ status: "blocked", reason: "invalid_identity_or_time" });
+  }
+  if (!normalizedRecipient) {
+    return Object.freeze({ status: "blocked", reason: "invalid_recipient_binding" });
   }
   if (createdAt > nowTimestamp) {
     return Object.freeze({ status: "blocked", reason: "message_from_future" });
@@ -84,17 +152,35 @@ export function deriveMessagePushDecision({
   if (!Number.isInteger(reminderDelayMinutes) || reminderDelayMinutes < 1 || reminderDelayMinutes > 1440) {
     return Object.freeze({ status: "blocked", reason: "invalid_reminder_delay" });
   }
+  if (!Number.isInteger(initialFreshnessMinutes) || initialFreshnessMinutes < 1 || initialFreshnessMinutes > 1440) {
+    return Object.freeze({ status: "blocked", reason: "invalid_initial_freshness" });
+  }
+  if (!Number.isInteger(reminderFreshnessMinutes) || reminderFreshnessMinutes < 1 || reminderFreshnessMinutes > 1440) {
+    return Object.freeze({ status: "blocked", reason: "invalid_reminder_freshness" });
+  }
+
+  const binding = buildDeliveryBinding({
+    workspaceId,
+    contactId,
+    messageId,
+    recipient: normalizedRecipient,
+  });
 
   if (!priorDelivery) {
+    const initialExpiresAt = createdAt + initialFreshnessMinutes * 60_000;
+    if (nowTimestamp > initialExpiresAt) {
+      return Object.freeze({ status: "blocked", reason: "initial_notification_expired" });
+    }
     return Object.freeze({
       status: "send",
       eventType: "message_received",
-      dedupeKey: `message:${workspaceId}:${contactId}:${messageId}:received`,
+      binding,
+      dedupeKey: buildDedupeKey(binding, "received"),
       payload: buildMessagePushPayload({ contactId, eventType: "message_received" }),
     });
   }
 
-  if (priorDelivery.workspaceId !== workspaceId || priorDelivery.contactId !== contactId || priorDelivery.messageId !== messageId) {
+  if (!deliveryBindingMatches(priorDelivery, binding)) {
     return Object.freeze({ status: "blocked", reason: "delivery_binding_mismatch" });
   }
   if (
@@ -123,11 +209,16 @@ export function deriveMessagePushDecision({
   if (nowTimestamp < reminderDueAt) {
     return Object.freeze({ status: "blocked", reason: "reminder_not_due" });
   }
+  const reminderExpiresAt = reminderDueAt + reminderFreshnessMinutes * 60_000;
+  if (nowTimestamp > reminderExpiresAt) {
+    return Object.freeze({ status: "blocked", reason: "reminder_expired" });
+  }
 
   return Object.freeze({
     status: "send",
     eventType: "message_reminder",
-    dedupeKey: `message:${workspaceId}:${contactId}:${messageId}:reminder:1`,
+    binding,
+    dedupeKey: buildDedupeKey(binding, "reminder:1"),
     payload: buildMessagePushPayload({ contactId, eventType: "message_reminder" }),
   });
 }
@@ -138,15 +229,21 @@ export function aggregateUnseenMessagesForPush(messages) {
 
   for (const message of messages) {
     if (!message || message.direction !== "inbound" || message.seenAt != null) continue;
-    const workspaceId = asNonEmptyString(message.workspaceId);
-    const contactId = asNonEmptyString(message.contactId);
-    const messageId = asNonEmptyString(message.id);
+    const workspaceId = asCanonicalUuid(message.workspaceId);
+    const contactId = asCanonicalUuid(message.contactId);
+    const messageId = asCanonicalUuid(message.id);
     const createdAt = asValidInstant(message.createdAt);
     if (!workspaceId || !contactId || !messageId || createdAt == null) continue;
 
     const key = `${workspaceId}:${contactId}`;
     const existing = byContact.get(key);
-    if (!existing || createdAt > existing.createdAtTimestamp) {
+    const shouldReplace =
+      !existing ||
+      createdAt > existing.createdAtTimestamp ||
+      (createdAt === existing.createdAtTimestamp &&
+        messageId.localeCompare(existing.messageId) > 0);
+
+    if (shouldReplace) {
       byContact.set(key, {
         workspaceId,
         contactId,
@@ -160,13 +257,19 @@ export function aggregateUnseenMessagesForPush(messages) {
     }
   }
 
-  return [...byContact.values()].map((value) =>
-    Object.freeze({
-      workspaceId: value.workspaceId,
-      contactId: value.contactId,
-      messageId: value.messageId,
-      createdAt: value.createdAt,
-      unseenCount: value.unseenCount,
-    }),
-  );
+  return [...byContact.values()]
+    .sort(
+      (left, right) =>
+        right.createdAtTimestamp - left.createdAtTimestamp ||
+        right.messageId.localeCompare(left.messageId),
+    )
+    .map((value) =>
+      Object.freeze({
+        workspaceId: value.workspaceId,
+        contactId: value.contactId,
+        messageId: value.messageId,
+        createdAt: value.createdAt,
+        unseenCount: value.unseenCount,
+      }),
+    );
 }
