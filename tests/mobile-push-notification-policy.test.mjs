@@ -12,6 +12,7 @@ import {
   FOLLOWUP_NOTIFICATION_ROUTE,
   FOLLOWUP_NOTIFICATION_TYPE,
   MAX_NOTIFICATION_RESPONSE_IDENTIFIER_LENGTH,
+  MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX,
   MESSAGE_NOTIFICATION_SECTION,
   MESSAGE_NOTIFICATION_TYPES,
   parseFollowupNotificationData,
@@ -190,7 +191,7 @@ test("message response routes to the exact fan messages section", () => {
   });
 });
 
-test("notification intent waits for auth and consumes only at its exact destination", () => {
+test("notification intent waits for auth and consumes follow-up only at its exact destination", () => {
   const followupIntent = {
     type: FOLLOWUP_NOTIFICATION_TYPE,
     followupId,
@@ -236,7 +237,7 @@ test("notification intent waits for auth and consumes only at its exact destinat
   );
 });
 
-test("message intent never consumes on the wrong fan", () => {
+test("message intent requires confirmed navigation to the exact fan messages section", () => {
   const intent = {
     type: "message_reminder",
     contactId,
@@ -252,6 +253,8 @@ test("message intent never consumes on the wrong fan", () => {
       hasSession: true,
       segments: ["(app)", "contacts", "[id]"],
       pathname: "/contacts/11111111-1111-4111-8111-111111111111",
+      currentSection: "messages",
+      navigationIssued: true,
       pendingIntent: intent,
     }),
     "navigate",
@@ -262,6 +265,44 @@ test("message intent never consumes on the wrong fan", () => {
       hasSession: true,
       segments: ["(app)", "contacts", "[id]"],
       pathname: `/contacts/${contactId}`,
+      currentSection: "knowledge",
+      navigationIssued: false,
+      pendingIntent: intent,
+    }),
+    "navigate",
+  );
+  assert.equal(
+    decideNotificationIntent({
+      authLoading: false,
+      hasSession: true,
+      segments: ["(app)", "contacts", "[id]"],
+      pathname: `/contacts/${contactId}`,
+      currentSection: "knowledge",
+      navigationIssued: true,
+      pendingIntent: intent,
+    }),
+    "navigate",
+  );
+  assert.equal(
+    decideNotificationIntent({
+      authLoading: false,
+      hasSession: true,
+      segments: ["(app)", "contacts", "[id]"],
+      pathname: `/contacts/${contactId}`,
+      currentSection: "messages",
+      navigationIssued: true,
+      pendingIntent: intent,
+    }),
+    "consume",
+  );
+  assert.equal(
+    decideNotificationIntent({
+      authLoading: false,
+      hasSession: true,
+      segments: ["(app)", "contacts", "[id]"],
+      pathname: `/contacts/${contactId}`,
+      currentSection: `${MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX}1`,
+      navigationIssued: true,
       pendingIntent: intent,
     }),
     "consume",
@@ -320,6 +361,9 @@ test("mobile push navigation remains payload-minimal and delivery-free", async (
   );
   assert.match(provider, /MAX_CONSUMED_RESPONSE_IDENTIFIERS = 32/);
   assert.match(provider, /usePathname\(\)/);
+  assert.match(provider, /useGlobalSearchParams/);
+  assert.match(provider, /navigationIssuedIdentifier/);
+  assert.match(provider, /router\.setParams/);
   assert.match(provider, /decideNotificationIntent/);
   assert.match(authLayout, /pendingIntent\?\.route \?\? "\/\(app\)"/);
   assert.match(indexRoute, /pendingIntent\?\.route \?\? "\/\(app\)"/);
@@ -331,15 +375,12 @@ test("mobile push navigation remains payload-minimal and delivery-free", async (
     "clearLastNotificationIntent()",
     consumeIdentifier,
   );
-  const consumeEffectEnd = provider.indexOf(
-    "}, [loading, pathname, pendingIntent, router, segments, session])",
-    clearNativeResponse,
-  );
+  const valueStart = provider.indexOf("const value = useMemo", clearNativeResponse);
   assert.ok(consumeIdentifier >= 0);
   assert.ok(clearNativeResponse > consumeIdentifier);
-  assert.ok(consumeEffectEnd > clearNativeResponse);
+  assert.ok(valueStart > clearNativeResponse);
   assert.doesNotMatch(
-    provider.slice(consumeIdentifier, consumeEffectEnd),
+    provider.slice(consumeIdentifier, valueStart),
     /catch\s*\{\s*return;/u,
   );
 });
