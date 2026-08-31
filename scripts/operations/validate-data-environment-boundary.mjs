@@ -8,19 +8,54 @@ function normalizeProjectRef(value) {
   return normalized;
 }
 
-export function assertSyntheticWriteTarget({ runtimeEnvironment, targetRef, productionRef, syntheticMarker }) {
-  assert.ok(["development", "test", "staging"].includes(runtimeEnvironment), "synthetic writes require development/test/staging");
+export function assertSyntheticWriteTarget({
+  runtimeEnvironment,
+  targetRef,
+  expectedTargetRef,
+  productionRef,
+  syntheticMarker,
+}) {
+  assert.ok(
+    ["development", "test", "staging"].includes(runtimeEnvironment),
+    "synthetic writes require development/test/staging",
+  );
   const normalizedTargetRef = normalizeProjectRef(targetRef);
+  const normalizedExpectedTargetRef = normalizeProjectRef(expectedTargetRef);
   const normalizedProductionRef = normalizeProjectRef(productionRef);
-  assert.notEqual(normalizedTargetRef, normalizedProductionRef, "synthetic writes must never target Production");
-  assert.ok(typeof syntheticMarker === "string" && /^fanmind-synthetic[-_:]/u.test(syntheticMarker), "synthetic marker required");
+  assert.equal(
+    normalizedTargetRef,
+    normalizedExpectedTargetRef,
+    "synthetic writes require the independently expected non-Production target",
+  );
+  assert.notEqual(
+    normalizedTargetRef,
+    normalizedProductionRef,
+    "synthetic writes must never target Production",
+  );
+  assert.ok(
+    typeof syntheticMarker === "string" &&
+      /^fanmind-synthetic[-_:]/u.test(syntheticMarker),
+    "synthetic marker required",
+  );
   return true;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [runtimeEnvironment, targetRef, productionRef, syntheticMarker] = process.argv.slice(2);
+  const [
+    runtimeEnvironment,
+    targetRef,
+    expectedTargetRef,
+    productionRef,
+    syntheticMarker,
+  ] = process.argv.slice(2);
   try {
-    assertSyntheticWriteTarget({ runtimeEnvironment, targetRef, productionRef, syntheticMarker });
+    assertSyntheticWriteTarget({
+      runtimeEnvironment,
+      targetRef,
+      expectedTargetRef,
+      productionRef,
+      syntheticMarker,
+    });
     process.stdout.write("DATA_ENVIRONMENT_BOUNDARY=PASS\n");
   } catch {
     process.stderr.write("DATA_ENVIRONMENT_BOUNDARY=BLOCK\n");
