@@ -1,0 +1,1 @@
+Scope guard: do not add automatic sending of external social messages, do not expose CRM content in push payloads, do not apply a delivery-ledger migration, and do not touch Production data/provider/store state in this PR.
