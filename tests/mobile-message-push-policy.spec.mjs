@@ -267,6 +267,18 @@ test("invalid or inconsistent prior delivery state fails closed", () => {
     }),
     { status: "blocked", reason: "invalid_initial_delivery_time" },
   );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      now: new Date("2026-08-31T19:30:00Z"),
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-08-31T19:00:01Z",
+      }),
+    }),
+    { status: "blocked", reason: "invalid_initial_delivery_time" },
+  );
 });
 
 test("aggregation keeps one deterministic newest candidate per fan and counts unseen messages", () => {
