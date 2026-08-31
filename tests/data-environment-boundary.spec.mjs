@@ -37,6 +37,28 @@ test("matching Production target is rejected even in staging runtime", () => {
   );
 });
 
+test("formatted variants of the Production ref are rejected", () => {
+  assert.throws(() =>
+    assertSyntheticWriteTarget({
+      runtimeEnvironment: "staging",
+      targetRef: "  PRODUCTION-REF  ",
+      productionRef: "production-ref",
+      syntheticMarker: "fanmind-synthetic:test",
+    }),
+  );
+});
+
+test("project refs with embedded whitespace are rejected", () => {
+  assert.throws(() =>
+    assertSyntheticWriteTarget({
+      runtimeEnvironment: "staging",
+      targetRef: "staging ref",
+      productionRef: "production-ref",
+      syntheticMarker: "fanmind-synthetic:test",
+    }),
+  );
+});
+
 test("unmarked synthetic writes are rejected", () => {
   assert.throws(() =>
     assertSyntheticWriteTarget({
