@@ -2,13 +2,24 @@
 
 ## Stand
 
-Der Servercode für genau eine Follow-up-Erinnerung ist vorbereitet, aber nicht
-an eine Route, einen Timer, einen Cronjob oder einen Worker angeschlossen. Er
-sendet im aktuellen Produktstand nichts. `deliveryEnabled` bleibt in der
-öffentlichen Registrierungsantwort deshalb `false`.
+Der bestehende **Delivery-Service** für genau eine Follow-up-Erinnerung ist
+vorbereitet, aber nicht an eine Route, einen Timer, einen Cronjob oder einen
+Worker angeschlossen. Er sendet im aktuellen Produktstand nichts.
+`deliveryEnabled` bleibt in der öffentlichen Registrierungsantwort deshalb
+`false`.
 
-Der Baustein ist ausschließlich eine fail-closed Grundlage für eine spätere,
-separat genehmigte Staging-Abnahme:
+Zusätzlich ist repositoryseitig eine datenschutzarme Policy für ungesehene
+eingehende Nachrichten vorbereitet. Sie kennt `message_received` und höchstens
+einen `message_reminder` nach 30 Minuten und bindet den Notification-Tap im
+nativen Client authentifiziert an den betroffenen Fan im Bereich
+`Nachrichten`. Diese Policy besitzt **keinen** Provider-Sendpfad, keinen
+Delivery-Ledger-Apply, keinen Timer/Worker und keine Production-Aktivierung.
+Sie erweitert den bestehenden Push-Vertrag also nicht heimlich um Zustellung,
+sondern bereitet nur Semantik, Minimalpayload und Navigation für eine spätere,
+separat geschützte Staging-Integration vor.
+
+Der vorhandene Follow-up-Baustein ist ausschließlich eine fail-closed Grundlage
+für eine spätere, separat genehmigte Staging-Abnahme:
 
 - `src/lib/mobilePushDeliveryPolicy.mjs` besitzt Gates, Autorisierung,
   Minimalpayload, feste kurze TTL und Retry-Zeitgrenzen;
@@ -25,9 +36,54 @@ Route, jeder Worker/Timer, jede Migration oder sonstige Verdrahtung des
 Delivery-Service bricht die Dormanz-Invariante, bis dafür ein eigener
 genehmigter Aktivierungsschritt den Test bewusst ersetzt.
 
+## Nachrichten-Push-Vorbereitung
+
+Die vorbereitete Nachrichten-Policy liegt getrennt vom aktiven
+Follow-up-Delivery-Service und verwendet den vorhandenen Unseen-Zustand
+`direction=inbound` plus `seen_at is null`; ein zweiter Read-/Unread-Zustand
+wird nicht eingeführt.
+
+Für eine neu ungesehene eingehende Nachricht ist ausschließlich folgende
+sichtbare Semantik vorbereitet:
+
+```json
+{
+  "title": "FanMind",
+  "body": "Du hast eine neue Nachricht.",
+  "ttl": 3600,
+  "data": {
+    "type": "message_received",
+    "contactId": "<uuid>",
+    "section": "messages"
+  }
+}
+```
+
+Bleibt dieselbe Nachricht ungesehen, darf die Policy frühestens nach 30 Minuten
+genau einen weiteren Kandidaten mit `type=message_reminder` und dem festen Text
+`Eine Nachricht wartet noch auf dich.` ableiten. Weitere Erinnerungsschleifen
+sind ausgeschlossen. Mehrere ungesehene Nachrichten desselben
+Workspace-/Kontakt-Paars werden repositoryseitig auf den neuesten Kandidaten
+aggregiert; Workspace- und Nachrichten-ID bleiben ausschließlich serverseitig
+für Bindung und Idempotenz.
+
+Der native Notification-Response-Handler akzeptiert für Nachrichten nur die
+exakten drei Datenfelder `type`, `contactId`, `section`, verlangt eine
+kanonische UUID, die feste Section `messages`, wartet auf eine gültige
+Authentifizierung und navigiert dann zu genau diesem Kontakt. Fanname, Handle,
+Nachrichtentext, Workspace-ID, Notizen, Tags oder KI-Inhalte werden als
+Payload-Erweiterung abgelehnt.
+
+Diese Vorbereitung ist absichtlich **Staging-only**. Vor jedem späteren realen
+Send muss dieselbe atomare Delivery-Ledger-/Target-Revalidierungsgrundlage wie
+beim Follow-up wiederverwendet und für den Nachrichtenfall separat geprüft
+werden. Ein Merge dieses Codes darf weder als Staging-Send noch als
+Production-Freigabe interpretiert werden.
+
 ## Harte Aktivierungsgrenzen
 
-Jeder einzelne Sendversuch muss alle Grenzen gleichzeitig erfüllen:
+Jeder einzelne Sendversuch des bestehenden Follow-up-Delivery-Service muss alle
+Grenzen gleichzeitig erfüllen:
 
 1. `FANMIND_RUNTIME_ENVIRONMENT=staging`;
 2. `FANMIND_MOBILE_PUSH_DELIVERY_ENABLED=true`;
@@ -56,10 +112,10 @@ Production ist im Code strukturell nicht unterstützt. Auch
 
 ## Autorisierter Einzelsendefall
 
-Der Trigger akzeptiert exakt fünf Felder: Workspace-ID, User-ID, Follow-up-ID,
-ein explizites Fälligkeitsdatum als Cutoff und die Staging-Bestätigung. Namen,
-Nachrichten, Notizen, Gründe, Handles oder frei formulierter Text werden
-abgelehnt.
+Der bestehende Follow-up-Trigger akzeptiert exakt fünf Felder: Workspace-ID,
+User-ID, Follow-up-ID, ein explizites Fälligkeitsdatum als Cutoff und die
+Staging-Bestätigung. Namen, Nachrichten, Notizen, Gründe, Handles oder frei
+formulierter Text werden abgelehnt.
 
 Vor einer Provideranfrage muss der Server exakt je eine passende Zeile
 bestätigen:
@@ -79,7 +135,7 @@ bestätigen:
   Registrierung, der höchstens 31 Tage in der Zukunft liegt;
 - Registrierung und unabhängig geprüfte EAS-Projekt-ID stimmen exakt überein.
 
-Die Erinnerungs-Payload ist fest und enthält nur:
+Die Follow-up-Erinnerungs-Payload ist fest und enthält nur:
 
 ```json
 {
@@ -156,18 +212,17 @@ Der Service ist allein nicht aktivierbar: Vor einem realen Staging-Send müssen
 die unabhängig geprüften App-, Staging-Supabase-, Production-Supabase- und
 EAS-Bindings serverseitig übergeben werden. Zusätzlich ist eine eigene
 Entscheidung und separat genehmigte, checksum-gebundene Migration erforderlich.
-Sie muss mindestens
-    eine service-role-only Tabelle mit eindeutigem Idempotenzschlüssel,
-Versuchsnummer, Send- und Receipt-Reservation/Lease, Receipt-Zähler,
-redigiertem Zustand, privater Receipt-ID, Retry-/Receipt-Zeitpunkten und
-definierter Aufbewahrung bereitstellen. Die Reserve-RPC muss mit dem vom
-Service strukturell validierten gemeinsamen Zielbinding arbeiten, die oben
-genannten Target-Grenzen und den aktuellen Token-Fingerprint in derselben
-Transaktion erneut prüfen und den festen Revalidierungsvertrag samt Target-
-Hash, Staging-Projekt-Ref, Token-Fingerprint und frischem kanonischem Zeitpunkt
-liefern. Der `DeviceNotRegistered`-Pfad muss Attempt-Terminalisierung und
-Registrierungsdeaktivierung ebenfalls atomar unter der jeweils reservierten
-Send- oder Receipt-Lease ausführen. RLS,
+Sie muss mindestens eine service-role-only Tabelle mit eindeutigem
+Idempotenzschlüssel, Versuchsnummer, Send- und Receipt-Reservation/Lease,
+Receipt-Zähler, redigiertem Zustand, privater Receipt-ID,
+Retry-/Receipt-Zeitpunkten und definierter Aufbewahrung bereitstellen. Die
+Reserve-RPC muss mit dem vom Service strukturell validierten gemeinsamen
+Zielbinding arbeiten, die oben genannten Target-Grenzen und den aktuellen
+Token-Fingerprint in derselben Transaktion erneut prüfen und den festen
+Revalidierungsvertrag samt Target-Hash, Staging-Projekt-Ref, Token-Fingerprint
+und frischem kanonischem Zeitpunkt liefern. Der `DeviceNotRegistered`-Pfad muss
+Attempt-Terminalisierung und Registrierungsdeaktivierung ebenfalls atomar unter
+der jeweils reservierten Send- oder Receipt-Lease ausführen. RLS,
 Browserentzug, Konfliktverhalten, Crash-Recovery und Cleanup müssen in einer
 rollback-only Staging-Acceptance bewiesen werden. Diese Arbeit wurde nicht
 erfunden oder automatisch angewendet.
