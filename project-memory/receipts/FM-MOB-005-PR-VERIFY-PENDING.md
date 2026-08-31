@@ -1,0 +1,1 @@
+PR #1050 verification is pending. Do not merge or claim acceptance until exact-head CI and diff countercheck are green.
