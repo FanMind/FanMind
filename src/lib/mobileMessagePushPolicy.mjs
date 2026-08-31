@@ -165,9 +165,9 @@ export function deriveMessagePushDecision({
     messageId,
     recipient: normalizedRecipient,
   });
+  const initialExpiresAt = createdAt + initialFreshnessMinutes * 60_000;
 
   if (!priorDelivery) {
-    const initialExpiresAt = createdAt + initialFreshnessMinutes * 60_000;
     if (nowTimestamp > initialExpiresAt) {
       return Object.freeze({ status: "blocked", reason: "initial_notification_expired" });
     }
@@ -201,6 +201,7 @@ export function deriveMessagePushDecision({
   if (
     initialSentAt == null ||
     initialSentAt < createdAt ||
+    initialSentAt > initialExpiresAt ||
     initialSentAt > nowTimestamp
   ) {
     return Object.freeze({ status: "blocked", reason: "invalid_initial_delivery_time" });
