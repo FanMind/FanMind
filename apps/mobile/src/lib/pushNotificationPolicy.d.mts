@@ -6,6 +6,7 @@ export const MESSAGE_NOTIFICATION_TYPES: readonly [
   "message_reminder",
 ];
 export const MESSAGE_NOTIFICATION_SECTION: "messages";
+export const MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX: "message-view-";
 export const MAX_NOTIFICATION_RESPONSE_IDENTIFIER_LENGTH: number;
 
 export type FollowupNotificationData = {
@@ -59,6 +60,8 @@ export function decideNotificationIntent(input: {
   hasSession: boolean;
   segments: readonly string[];
   pathname: string | null;
+  currentSection?: string | null;
+  navigationIssued?: boolean;
   pendingIntent: NotificationIntent | null;
 }): "wait" | "navigate" | "consume";
 export function decideFollowupNotificationIntent(input: {
@@ -66,5 +69,7 @@ export function decideFollowupNotificationIntent(input: {
   hasSession: boolean;
   segments: readonly string[];
   pathname?: string | null;
+  currentSection?: string | null;
+  navigationIssued?: boolean;
   pendingIntent: FollowupNotificationIntent | null;
 }): "wait" | "navigate" | "consume";
