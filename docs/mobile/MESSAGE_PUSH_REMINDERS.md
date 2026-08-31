@@ -55,4 +55,6 @@ A repository merge does not activate delivery. Real sending remains blocked unti
 5. one synthetic Staging device send and receipt check;
 6. explicit later Production decision.
 
-Google Play approval is not required to implement this repository policy, but final Android push/device acceptance must use the already verified `1.0.0` AAB installed from the Play test track. Do not create another Android build merely for this feature preparation.
+Google Play approval is not required to implement this repository policy. The already verified Android `1.0.0` AAB on `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` remains the artifact for the pending Play app-record/test-track baseline and the existing 19-check Android acceptance; it predates the `message_received` / `message_reminder` native tap handler and therefore **cannot** prove this new message-push behavior.
+
+Final real-device acceptance of message pushes requires a separately reviewed signed Android build whose source commit contains the merged message-notification handler, after the Push Staging resource/migration/rollback-only and Delivery-Ledger gates are satisfied. Producing that later build is a separate protected Mobile step and is not part of this repository-only PR; do not treat the existing `1.0.0` AAB as message-push evidence.
