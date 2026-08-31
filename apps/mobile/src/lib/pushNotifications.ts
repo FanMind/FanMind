@@ -2,8 +2,8 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 import {
-  createFollowupNotificationIntent,
-  type FollowupNotificationIntent,
+  createNotificationIntent,
+  type NotificationIntent,
 } from "@/lib/pushNotificationPolicy.mjs";
 
 export const FOLLOWUP_NOTIFICATION_CHANNEL_ID = "followup-reminders";
@@ -24,8 +24,8 @@ export async function configureNotificationChannel() {
 
 export function parseNotificationResponse(
   response: Notifications.NotificationResponse,
-) : FollowupNotificationIntent | null {
-  return createFollowupNotificationIntent(
+): NotificationIntent | null {
+  return createNotificationIntent(
     {
       actionIdentifier: response.actionIdentifier,
       requestIdentifier: response.notification.request.identifier,
@@ -36,17 +36,15 @@ export function parseNotificationResponse(
 }
 
 export function registerNotificationResponseListener(
-  onIntent: (intent: FollowupNotificationIntent) => void,
+  onIntent: (intent: NotificationIntent) => void,
 ) {
-  return Notifications.addNotificationResponseReceivedListener(
-    (response) => {
-      const intent = parseNotificationResponse(response);
-      if (intent) onIntent(intent);
-    },
-  );
+  return Notifications.addNotificationResponseReceivedListener((response) => {
+    const intent = parseNotificationResponse(response);
+    if (intent) onIntent(intent);
+  });
 }
 
-export function getLastNotificationIntent(): FollowupNotificationIntent | null {
+export function getLastNotificationIntent(): NotificationIntent | null {
   const response = Notifications.getLastNotificationResponse();
   return response ? parseNotificationResponse(response) : null;
 }
