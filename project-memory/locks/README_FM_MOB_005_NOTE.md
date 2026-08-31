@@ -1,1 +1,0 @@
-Temporary scoped lock mirror for FM-MOB-005 while canonical lock consolidation is pending exact-head countercheck. The authoritative task scope remains issue #1049 and the branch/PR; this file must not be treated as a second backlog.

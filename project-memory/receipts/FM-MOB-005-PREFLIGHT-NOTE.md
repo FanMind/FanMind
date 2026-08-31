@@ -1,1 +1,0 @@
-Preflight basis: current main 91f92acd715a2bcc0a29e4bb715f8e9dc6997aa2, Project Memory V8 accepted, Mobile gate IMPLEMENTED_NOT_VERIFIED, Google Play provider review pending, Push acceptance open, iOS/TestFlight Phase 8. No prior `message_reminder` code search result existed before FM-MOB-005.

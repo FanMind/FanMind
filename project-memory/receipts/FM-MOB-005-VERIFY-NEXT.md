@@ -1,1 +1,0 @@
-Verification next: exact PR-head CI and independent diff review. No more implementation scope expansion unless a concrete failing check or integration finding requires it.

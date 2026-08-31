@@ -1,1 +1,0 @@
-Integration TODO before merge: inspect existing Mobile notification response handling and push delivery policy/target code, integrate message event types without a second token store or unread state, then run exact-head CI.

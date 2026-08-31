@@ -1,1 +1,0 @@
-No acceptance claim yet. Integration inspection and CI remain pending.

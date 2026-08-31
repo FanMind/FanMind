@@ -1,1 +1,0 @@
-Last pre-integration guard: do not claim acceptance before exact-head CI and integration countercheck.

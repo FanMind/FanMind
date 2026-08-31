@@ -1,1 +1,0 @@
-Implementation boundary: repository preparation only. Exact integration with existing push/navigation code and exact-head CI remain required before merge/acceptance.
