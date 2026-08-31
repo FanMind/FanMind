@@ -1,0 +1,1 @@
+Checkpoint before integration reconciliation. Existing repository-only changes are intentionally non-activating and require exact-head CI plus review before acceptance.
