@@ -1,0 +1,1 @@
+STOP GUARD: do not add further bookkeeping files. Proceed to code integration inspection and CI only.
