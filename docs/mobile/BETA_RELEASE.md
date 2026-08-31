@@ -49,10 +49,20 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
 - manueller Dry-Run-first Account-Löschprocessor ohne Timer;
 - eigener SDK-57-Development-Client über `expo-dev-client`;
 - getrennte Mobile-CI mit TypeScript, Expo Doctor, Android-/iOS-JavaScript-Export, isoliertem nativen Android-/iOS-Prebuild, echtem Android-Debug-APK, codesign-freier iOS-Simulator-App und Architekturgrenze;
-- native Push-Grundlage mit minimal validierter Follow-up-Navigation,
-  Auth-Handoff, Einmalverarbeitung und ausdrücklichem Opt-in für eine
-  verschlüsselte, service-role-only Ein-Gerät-Registrierung; Migration,
-  Serverkey, reale Registrierung und Zustellung bleiben deaktiviert;
+- native Push-Grundlage mit streng validierter Follow-up-Navigation und
+  fail-closed Verarbeitung der vorbereiteten Ereignisse `message_received`
+  und `message_reminder`: Nach Auth-Handoff führt ein gültiger Nachrichten-
+  Push ausschließlich zum exakt gebundenen Fan in den Bereich `Nachrichten`.
+  Opt-in, verschlüsselte service-role-only Ein-Gerät-Registrierung und
+  Einmalverarbeitung bleiben bestehen; Migration, Serverkey, reale
+  Registrierung und Zustellung bleiben deaktiviert;
+- repositoryseitige, datenschutzarme Nachrichten-Policy für einen sofortigen
+  `message_received`-Hinweis und höchstens eine gebundene
+  `message_reminder`-Entscheidung; sichtbarer Text enthält weder Fanname noch
+  Nachrichtentext oder sonstigen CRM-Inhalt. Provider-Zustellung,
+  Delivery-Ledger-Apply, Route/Timer/Worker, Production-Aktivierung,
+  Store-Aktion und Android-Neubau sind ausdrücklich nicht Bestandteil dieses
+  Repository-Blocks;
 - checksum-gebundener, strikt Staging-only Push-Kontrollpfad mit getrenntem
   read-only Ressourcencheck, separat bestätigtem Migrations-Apply und
   rollback-only Acceptance für synthetische Nicht-Demo-Owner/-Member/-Geräte;
@@ -62,7 +72,8 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
   Follow-up-Payload samt einstündiger TTL, Tenant-/Ressourcenprüfung,
   gemeinsam gebundenem server-only Zielkontext, begrenztem Retry und Expo-
   Ticket-/Receipt-Auswertung; ohne separat genehmigten atomaren Ledger gibt es
-  keine Route, keinen Timer und keinen realen Provideraufruf;
+  keine Route, keinen Timer und keinen realen Provideraufruf. Die neue
+  Nachrichten-Policy ist noch nicht an diesen Provider-Service verdrahtet;
 - konfliktfreie native Splashscreen-Konfiguration mit der bestätigten FanMind-Wortmarke für das dunkle App-Theme;
 - getrennte 1024×1024-App-Icons für iOS/Legacy-Android und Android Adaptive
   Icon aus einer eigenständigen Vektorquelle; keine Hochskalierung des
@@ -283,22 +294,35 @@ FCM- oder APNs-Endpunkt aufgerufen. Das Runbook steht in
 
 ### Noch deaktivierter Push-Delivery-Vertrag
 
-`docs/mobile/PUSH_DELIVERY.md` beschreibt den bereits synthetisch getesteten
-Serverbaustein. Er kann nur in Staging, nach unabhängiger EAS-Projektprüfung
-und nach unabhängiger Prüfung des Staging-App-Hosts sowie der Staging- und
-Production-Supabase-Refs für genau ein fälliges offenes Follow-up arbeiten.
-Sichtbarer Text ist fest; CRM-Inhalt wird weder geladen noch übertragen. Expo-
-Tickets und Receipts werden nur über feste redigierte Zustände verarbeitet.
+`docs/mobile/PUSH_DELIVERY.md` beschreibt den bereits synthetisch getesteten,
+weiterhin dormant gehaltenen Follow-up-Serverbaustein. Er kann nur in Staging,
+nach unabhängiger EAS-Projektprüfung und nach unabhängiger Prüfung des
+Staging-App-Hosts sowie der Staging- und Production-Supabase-Refs für genau ein
+fälliges offenes Follow-up arbeiten. Sichtbarer Text ist fest; CRM-Inhalt wird
+weder geladen noch übertragen. Expo-Tickets und Receipts werden nur über feste
+redigierte Zustände verarbeitet.
 
-Der dafür notwendige persistente Idempotenz-/Receipt-Ledger existiert noch
-nicht. Seine Tabellen- und Aufbewahrungsentscheidung sowie eine
-checksum-gebundene Migration brauchen eine eigene Genehmigung und
-rollback-only Staging-Abnahme. Die Reserve-RPC muss alle Workspace-,
-Membership-, Kontakt-, Follow-up- und Registrierungsgrenzen in derselben
-Transaktion mit demselben validierten Supabase-Binding wie der Loader erneut
-prüfen und den aktuellen Token-Fingerprint atomar binden. Bis dahin bleibt der Baustein ohne Route,
-Timer/Worker und externen Request fail-closed; CI blockiert eine vorzeitige
-Verdrahtung. Production ist nicht freigeschaltet.
+Zusätzlich beschreibt `docs/mobile/MESSAGE_PUSH_REMINDERS.md` die
+repositoryseitig vorbereitete Nachrichten-Policy: `message_received` und
+höchstens eine zeitlich gebundene `message_reminder`-Entscheidung für eine
+weiter ungesehene eingehende Nachricht. Die Provider-Payload bleibt
+privacy-minimal; der native Response-Handler wartet auf Auth und öffnet nur den
+exakt gebundenen Fan im Bereich `Nachrichten`. Diese Nachrichten-Policy ist
+noch nicht an den Follow-up-Delivery-Service oder einen anderen Providerpfad
+angeschlossen.
+
+Der notwendige persistente Idempotenz-/Receipt-Ledger existiert noch nicht.
+Seine Tabellen- und Aufbewahrungsentscheidung sowie eine checksum-gebundene
+Migration brauchen eine eigene Genehmigung und rollback-only Staging-Abnahme.
+Die Reserve-RPC muss alle Workspace-, Membership-, Kontakt-, Follow-up- und
+Registrierungsgrenzen in derselben Transaktion mit demselben validierten
+Supabase-Binding wie der Loader erneut prüfen und den aktuellen Token-
+Fingerprint atomar binden. Vor einer späteren Nachrichten-Zustellung muss der
+Ledger zusätzlich die recipient-spezifische User-/Registrierungs-/EAS-Bindung
+und den aktuellen ungesehenen Nachrichtenstatus transaktional revalidieren.
+Bis dahin bleiben Provider-Zustellung, Delivery-Ledger-Apply,
+Route/Timer/Worker und Production-Aktivierung fail-closed; auch Store-Aktion
+und Android-Neubau gehören nicht zu diesem Repository-Block.
 
 ### Manuell freigegebener signierter interner Build
 
@@ -542,7 +566,14 @@ commitgenau registriert.
 - Push-Migration und dedizierten Serverkey kontrolliert aktivieren, danach
   nach grünem Ressourcencheck, Apply und rollback-only Acceptance die
   Berechtigung und Token-Registrierung im signierten Build real abnehmen;
-- echte Follow-up-Zustellung erst nach gesonderter Staging-/Datenschutzprüfung;
+- atomaren Delivery-Ledger separat genehmigen, migrieren und rollback-only in
+  Staging abnehmen; erst danach dürfen Follow-up- oder Nachrichten-Provider-
+  Zustellungen verdrahtet und mit einem synthetischen Send-/Receipt-Test
+  geprüft werden;
+- echte Follow-up- und Nachrichten-Zustellung sowie Production-Push erst nach
+  gesonderter Staging-/Datenschutzprüfung und separater Aktivierungsentscheidung;
+- Store-Aktionen und ein Android-Neubau bleiben von diesem Push-Repository-
+  Block ausgeschlossen; das bestehende verifizierte AAB wird weiterverwendet;
 - realer Account-Löschantrag/Widerruf als Teil des privaten Android-Nachweises;
 - Store-Datenschutzangaben und Screenshots final abnehmen; Metadaten sind vorbereitet.
 - iPad-Unterstützung erst in einer separaten späteren Phase mit eigener
