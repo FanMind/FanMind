@@ -1,0 +1,1 @@
+Integration inspection is the remaining substantive step before CI. No external mutation is authorized by this checkpoint.
