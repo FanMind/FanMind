@@ -1,4 +1,4 @@
-import { useRouter, useSegments } from "expo-router";
+import { usePathname, useRouter, useSegments } from "expo-router";
 import {
   createContext,
   useCallback,
@@ -11,8 +11,8 @@ import {
 } from "react";
 
 import {
-  decideFollowupNotificationIntent,
-  type FollowupNotificationIntent,
+  decideNotificationIntent,
+  type NotificationIntent,
 } from "@/lib/pushNotificationPolicy.mjs";
 import {
   clearLastNotificationIntent,
@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 
 type NotificationIntentContextValue = {
-  pendingIntent: FollowupNotificationIntent | null;
+  pendingIntent: NotificationIntent | null;
 };
 
 const NotificationIntentContext =
@@ -36,12 +36,14 @@ export function NotificationIntentProvider({
   const { session, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-  const [pendingIntent, setPendingIntent] =
-    useState<FollowupNotificationIntent | null>(null);
+  const pathname = usePathname();
+  const [pendingIntent, setPendingIntent] = useState<NotificationIntent | null>(
+    null,
+  );
   const pendingIdentifier = useRef<string | null>(null);
   const consumedIdentifiers = useRef<string[]>([]);
 
-  const acceptIntent = useCallback((intent: FollowupNotificationIntent) => {
+  const acceptIntent = useCallback((intent: NotificationIntent) => {
     if (
       pendingIdentifier.current === intent.responseIdentifier ||
       consumedIdentifiers.current.includes(intent.responseIdentifier)
@@ -69,10 +71,11 @@ export function NotificationIntentProvider({
   }, [acceptIntent]);
 
   useEffect(() => {
-    const decision = decideFollowupNotificationIntent({
+    const decision = decideNotificationIntent({
       authLoading: loading,
       hasSession: Boolean(session),
       segments,
+      pathname,
       pendingIntent,
     });
     if (decision === "navigate" && pendingIntent) {
@@ -96,9 +99,9 @@ export function NotificationIntentProvider({
       clearLastNotificationIntent();
     } catch {
       // Native cleanup is best effort. In-memory consumption must still stop
-      // a stale native response from trapping navigation on Follow-ups.
+      // a stale native response from trapping navigation on its destination.
     }
-  }, [loading, pendingIntent, router, segments, session]);
+  }, [loading, pathname, pendingIntent, router, segments, session]);
 
   const value = useMemo(() => ({ pendingIntent }), [pendingIntent]);
   return (
