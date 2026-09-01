@@ -200,7 +200,7 @@ export function deriveMessagePushDecision({
   message,
   recipient,
   now = new Date(),
-  priorDelivery,
+  priorDelivery = null,
   reminderDelayMinutes = MESSAGE_PUSH_DEFAULT_REMINDER_DELAY_MINUTES,
   initialFreshnessMinutes = MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES,
   reminderFreshnessMinutes = MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES,
