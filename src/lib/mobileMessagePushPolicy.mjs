@@ -1,3 +1,5 @@
+import { canonicalizeMobilePushDatabaseTimestamp } from "./mobilePushDeliveryPolicy.mjs";
+
 const MESSAGE_PUSH_EVENT_TYPES = Object.freeze([
   "message_received",
   "message_reminder",
@@ -8,6 +10,7 @@ const MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES = 60;
 const MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES = 60;
 const MESSAGE_PUSH_MAX_REMINDERS = 1;
 const MESSAGE_PUSH_TTL_SECONDS = 3600;
+export const MESSAGE_PUSH_ANDROID_CHANNEL_ID = "message-alerts";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,9 +26,9 @@ function asCanonicalUuid(value) {
 }
 
 function asValidInstant(value) {
-  const normalized = asNonEmptyString(value);
-  if (!normalized) return null;
-  const timestamp = Date.parse(normalized);
+  const canonical = canonicalizeMobilePushDatabaseTimestamp(value);
+  if (!canonical) return null;
+  const timestamp = Date.parse(canonical);
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 
@@ -37,8 +40,23 @@ function normalizeRecipientBinding(recipient) {
   const userId = asCanonicalUuid(recipient.userId);
   const registrationId = asCanonicalUuid(recipient.registrationId);
   const easProjectId = asCanonicalUuid(recipient.easProjectId);
-  if (!workspaceId || !userId || !registrationId || !easProjectId) return null;
-  return Object.freeze({ workspaceId, userId, registrationId, easProjectId });
+  const workspaceRole = asNonEmptyString(recipient.workspaceRole)?.toLowerCase() ?? null;
+  if (
+    !workspaceId ||
+    !userId ||
+    !registrationId ||
+    !easProjectId ||
+    !["owner", "member"].includes(workspaceRole)
+  ) {
+    return null;
+  }
+  return Object.freeze({
+    workspaceId,
+    userId,
+    registrationId,
+    easProjectId,
+    workspaceRole,
+  });
 }
 
 function buildDeliveryBinding({ workspaceId, contactId, messageId, recipient }) {
@@ -94,6 +112,7 @@ export function getMessagePushPolicyConstants() {
     reminderFreshnessMinutes: MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES,
     maxReminders: MESSAGE_PUSH_MAX_REMINDERS,
     ttlSeconds: MESSAGE_PUSH_TTL_SECONDS,
+    androidChannelId: MESSAGE_PUSH_ANDROID_CHANNEL_ID,
   });
 }
 
@@ -113,6 +132,7 @@ export function buildMessagePushPayload({ contactId, eventType }) {
         ? "Du hast eine neue Nachricht."
         : "Eine Nachricht wartet noch auf dich.",
     ttl: MESSAGE_PUSH_TTL_SECONDS,
+    channelId: MESSAGE_PUSH_ANDROID_CHANNEL_ID,
     data: Object.freeze({
       type: eventType,
       contactId: normalizedContactId,
@@ -154,7 +174,7 @@ export function deriveMessagePushDecision({
   const messageId = asCanonicalUuid(message.id);
   const createdAt = asValidInstant(message.createdAt);
   const normalizedRecipient = normalizeRecipientBinding(recipient);
-  const nowTimestamp = now instanceof Date ? now.getTime() : Date.parse(String(now));
+  const nowTimestamp = now instanceof Date ? now.getTime() : Number.NaN;
 
   if (!workspaceId || !contactId || !messageId || createdAt == null || !Number.isFinite(nowTimestamp)) {
     return Object.freeze({ status: "blocked", reason: "invalid_identity_or_time" });
@@ -164,6 +184,9 @@ export function deriveMessagePushDecision({
   }
   if (normalizedRecipient.workspaceId !== workspaceId) {
     return Object.freeze({ status: "blocked", reason: "recipient_workspace_mismatch" });
+  }
+  if (normalizedRecipient.workspaceRole !== "owner") {
+    return Object.freeze({ status: "blocked", reason: "recipient_role_not_supported" });
   }
   if (createdAt > nowTimestamp) {
     return Object.freeze({ status: "blocked", reason: "message_from_future" });
