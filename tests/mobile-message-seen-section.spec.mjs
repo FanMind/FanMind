@@ -7,16 +7,32 @@ const detailUrl = new URL(
   import.meta.url,
 );
 
-test("Mobile marks inbound messages seen only while the Messages section is displayed", async () => {
+test("Mobile marks inbound messages seen only for the settled exact contact Messages section", async () => {
   const detail = await readFile(detailUrl, "utf8");
 
   assert.match(
     detail,
-    /activeSection !== "messages"[\s\S]*markContactInboundMessagesSeen\(\{/u,
+    /const rawSectionParam = Array\.isArray\(params\.section\)[\s\S]*const sectionRouteKey = `\$\{contactId \?\? ""\}:\$\{rawSectionParam\}`/u,
   );
   assert.match(
     detail,
-    /\[activeSection, contact, contactId, messageError, messages, workspace\?\.id, workspace\?\.role\]/u,
+    /activeSection !== "messages"[\s\S]*contact\.id !== contactId[\s\S]*settledSectionRouteKey !== sectionRouteKey[\s\S]*markContactInboundMessagesSeen\(\{/u,
+  );
+  assert.match(
+    detail,
+    /setActiveSection\(requestedSection\);[\s\S]*setSettledSectionRouteKey\(sectionRouteKey\);/u,
+  );
+  assert.match(
+    detail,
+    /\[\s*activeSection,\s*contact,\s*contactId,\s*messageError,\s*messages,\s*sectionRouteKey,\s*settledSectionRouteKey,\s*workspace\?\.id,\s*workspace\?\.role,\s*\]/u,
+  );
+  assert.match(
+    detail,
+    /\}, \[requestedSection, sectionRouteKey\]\);/u,
+  );
+  assert.match(
+    detail,
+    /onPress=\{\(\) => setActiveSection\(section\.key\)\}/u,
   );
   assert.doesNotMatch(
     detail,
