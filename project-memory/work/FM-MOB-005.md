@@ -48,4 +48,4 @@ Final real-device message-push acceptance requires a separately reviewed signed 
 Keep FM-MOB-005 closed. Do not reopen it for provider delivery or signed-device acceptance; continue those through FM-MOB-001 and the later Push Staging / Delivery-Ledger gates. Do not rebuild the existing Play-baseline AAB merely because this repository task is accepted.
 
 ## Rollback
-Revert merge `953fcc56de0d02d5c2c5d41468226ba051624b53` if the bounded repository implementation must be withdrawn. No database rows, provider state, signed artifact or Production runtime was mutated by this task.
+If this post-merge Project Memory closeout has been merged, revert the closeout merge first so the canonical/leaf acceptance and released-lock records return to their pre-closeout state; then revert implementation merge `953fcc56de0d02d5c2c5d41468226ba051624b53`. Never leave FM-MOB-005 marked `ACCEPTED` or its lock `RELEASED` after withdrawing the implementation. No database rows, provider state, signed artifact or Production runtime was mutated by this task.
