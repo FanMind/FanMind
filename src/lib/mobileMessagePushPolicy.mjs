@@ -1,5 +1,3 @@
-import { canonicalizeMobilePushDatabaseTimestamp } from "./mobilePushDeliveryPolicy.mjs";
-
 const MESSAGE_PUSH_EVENT_TYPES = Object.freeze([
   "message_received",
   "message_reminder",
@@ -13,6 +11,8 @@ const MESSAGE_PUSH_TTL_SECONDS = 3600;
 export const MESSAGE_PUSH_ANDROID_CHANNEL_ID = "message-alerts";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DATABASE_TIMESTAMP_PATTERN =
+  /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})T(?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})(?:\.(?<fraction>\d{1,6}))?(?<zone>Z|(?<offsetSign>[+-])(?<offsetHour>\d{2}):(?<offsetMinute>\d{2}))$/u;
 
 function asNonEmptyString(value) {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
@@ -25,8 +25,54 @@ function asCanonicalUuid(value) {
     : null;
 }
 
+function canonicalizeDatabaseTimestamp(value) {
+  if (typeof value !== "string" || value.length > 40) return null;
+  const match = value.match(DATABASE_TIMESTAMP_PATTERN);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  const month = Number(match.groups.month);
+  const day = Number(match.groups.day);
+  const hour = Number(match.groups.hour);
+  const minute = Number(match.groups.minute);
+  const second = Number(match.groups.second);
+  const offsetHour = Number(match.groups.offsetHour ?? "0");
+  const offsetMinute = Number(match.groups.offsetMinute ?? "0");
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+  if (
+    year < 1 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > daysInMonth[month - 1] ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59 ||
+    offsetHour > 14 ||
+    offsetMinute > 59 ||
+    (offsetHour === 14 && offsetMinute !== 0)
+  ) {
+    return null;
+  }
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+}
+
 function asValidInstant(value) {
-  const canonical = canonicalizeMobilePushDatabaseTimestamp(value);
+  const canonical = canonicalizeDatabaseTimestamp(value);
   if (!canonical) return null;
   const timestamp = Date.parse(canonical);
   return Number.isFinite(timestamp) ? timestamp : null;
