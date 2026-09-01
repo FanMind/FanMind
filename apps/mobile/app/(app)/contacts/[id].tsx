@@ -206,8 +206,16 @@ export default function ContactDetailScreen() {
     section?: string | string[];
   }>();
   const contactId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const [activeSection, setActiveSection] = useState<ContactSection>(() =>
-    normalizeContactSection(params.section),
+  const rawSectionParam = Array.isArray(params.section)
+    ? params.section[0] ?? ""
+    : params.section ?? "";
+  const requestedSection = normalizeContactSection(params.section);
+  const sectionRouteKey = `${contactId ?? ""}:${rawSectionParam}`;
+  const [activeSection, setActiveSection] = useState<ContactSection>(
+    () => requestedSection,
+  );
+  const [settledSectionRouteKey, setSettledSectionRouteKey] = useState(
+    () => sectionRouteKey,
   );
   const { session } = useAuth();
   const {
@@ -331,6 +339,8 @@ export default function ContactDetailScreen() {
       !workspace?.id ||
       !contactId ||
       !contact ||
+      contact.id !== contactId ||
+      settledSectionRouteKey !== sectionRouteKey ||
       messageError
     ) {
       return;
@@ -348,7 +358,17 @@ export default function ContactDetailScreen() {
     return () => {
       current = false;
     };
-  }, [activeSection, contact, contactId, messageError, messages, workspace?.id, workspace?.role]);
+  }, [
+    activeSection,
+    contact,
+    contactId,
+    messageError,
+    messages,
+    sectionRouteKey,
+    settledSectionRouteKey,
+    workspace?.id,
+    workspace?.role,
+  ]);
 
   const refreshMessages = useCallback(async () => {
     if (!workspace?.id || !contactId) return;
@@ -377,10 +397,11 @@ export default function ContactDetailScreen() {
 
   useEffect(() => {
     setSelectedMessageChannel(ALL_MESSAGE_CHANNELS);
-    setActiveSection(normalizeContactSection(params.section));
+    setActiveSection(requestedSection);
+    setSettledSectionRouteKey(sectionRouteKey);
     setManualFollowupFormError(null);
     setManualFollowupNotice(null);
-  }, [contactId, params.section]);
+  }, [requestedSection, sectionRouteKey]);
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;
