@@ -278,6 +278,21 @@ test("missing, malformed, member or cross-workspace recipient binding blocks bef
   );
 });
 
+test("malformed falsy prior-delivery state never reopens an initial send", () => {
+  for (const priorDelivery of [false, 0, ""]) {
+    assert.deepEqual(
+      deriveMessagePushDecision({
+        runtimeEnvironment: "staging",
+        message: baseMessage,
+        recipient,
+        now: new Date("2026-08-31T18:01:00Z"),
+        priorDelivery,
+      }),
+      { status: "blocked", reason: "invalid_prior_delivery_state" },
+    );
+  }
+});
+
 test("one reminder is allowed only after an accepted initial delivery, the delay, and within freshness", () => {
   const priorDelivery = boundPriorDelivery();
 
