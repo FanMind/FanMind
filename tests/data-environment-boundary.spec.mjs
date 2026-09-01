@@ -84,6 +84,28 @@ test("project refs with embedded whitespace are rejected", () => {
   );
 });
 
+test("synthetic marker requires a nonempty bounded namespace", () => {
+  assert.throws(() =>
+    assertSyntheticWriteTarget(validInput({ syntheticMarker: "fanmind-synthetic:" })),
+  );
+  assert.throws(() =>
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: `fanmind-synthetic:${"a".repeat(65)}` }),
+    ),
+  );
+  assert.throws(() =>
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: " fanmind-synthetic:push-acceptance" }),
+    ),
+  );
+  assert.equal(
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: "fanmind-synthetic:push-acceptance.v1" }),
+    ),
+    true,
+  );
+});
+
 test("unmarked synthetic writes are rejected", () => {
   assert.throws(() =>
     assertSyntheticWriteTarget(validInput({ syntheticMarker: "qa-row" })),

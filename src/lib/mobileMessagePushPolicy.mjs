@@ -33,11 +33,12 @@ function normalizeRecipientBinding(recipient) {
   if (!recipient || typeof recipient !== "object" || Array.isArray(recipient)) {
     return null;
   }
+  const workspaceId = asCanonicalUuid(recipient.workspaceId);
   const userId = asCanonicalUuid(recipient.userId);
   const registrationId = asCanonicalUuid(recipient.registrationId);
   const easProjectId = asCanonicalUuid(recipient.easProjectId);
-  if (!userId || !registrationId || !easProjectId) return null;
-  return Object.freeze({ userId, registrationId, easProjectId });
+  if (!workspaceId || !userId || !registrationId || !easProjectId) return null;
+  return Object.freeze({ workspaceId, userId, registrationId, easProjectId });
 }
 
 function buildDeliveryBinding({ workspaceId, contactId, messageId, recipient }) {
@@ -73,6 +74,16 @@ function buildDedupeKey(binding, suffix) {
     binding.messageId,
     suffix,
   ].join(":");
+}
+
+function classifySeenState(message) {
+  if (!Object.prototype.hasOwnProperty.call(message, "seenAt")) {
+    return "invalid";
+  }
+  if (message.seenAt === null) {
+    return "unseen";
+  }
+  return asValidInstant(message.seenAt) == null ? "invalid" : "seen";
 }
 
 export function getMessagePushPolicyConstants() {
@@ -129,7 +140,12 @@ export function deriveMessagePushDecision({
   if (message.direction !== "inbound") {
     return Object.freeze({ status: "blocked", reason: "not_inbound" });
   }
-  if (message.seenAt != null) {
+
+  const seenState = classifySeenState(message);
+  if (seenState === "invalid") {
+    return Object.freeze({ status: "blocked", reason: "invalid_seen_state" });
+  }
+  if (seenState === "seen") {
     return Object.freeze({ status: "blocked", reason: "already_seen" });
   }
 
@@ -145,6 +161,9 @@ export function deriveMessagePushDecision({
   }
   if (!normalizedRecipient) {
     return Object.freeze({ status: "blocked", reason: "invalid_recipient_binding" });
+  }
+  if (normalizedRecipient.workspaceId !== workspaceId) {
+    return Object.freeze({ status: "blocked", reason: "recipient_workspace_mismatch" });
   }
   if (createdAt > nowTimestamp) {
     return Object.freeze({ status: "blocked", reason: "message_from_future" });
@@ -229,7 +248,8 @@ export function aggregateUnseenMessagesForPush(messages) {
   const byContact = new Map();
 
   for (const message of messages) {
-    if (!message || message.direction !== "inbound" || message.seenAt != null) continue;
+    if (!message || message.direction !== "inbound") continue;
+    if (classifySeenState(message) !== "unseen") continue;
     const workspaceId = asCanonicalUuid(message.workspaceId);
     const contactId = asCanonicalUuid(message.contactId);
     const messageId = asCanonicalUuid(message.id);

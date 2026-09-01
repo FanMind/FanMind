@@ -27,10 +27,12 @@ Staging data must never be copied from Production customer data. Tests should cr
 Any server-side test/acceptance helper that can create synthetic records must fail closed unless all of these hold:
 
 1. the runtime environment is explicitly `staging` or local/test;
-2. the configured API/Supabase target is the expected non-Production target;
+2. the configured API/Supabase target is the independently supplied expected non-Production target;
 3. the Production reference is independently supplied and is different from the selected target;
 4. the operation uses the dedicated synthetic marker/namespace required by its runbook;
 5. no Production write gate is implied by a successful repository build or CI run.
+
+The repository guard accepts only markers shaped as `fanmind-synthetic[:_-]<namespace>`, where `<namespace>` is 1–64 ASCII letters/digits plus `.`, `_`, `:`, or `-`, starts with a letter or digit, and contains no surrounding whitespace. A bare `fanmind-synthetic:` marker is invalid.
 
 ## Public demo exception
 The public FanMind demo is a Product feature, not a QA fixture. Its temporary Production data is allowed only through the existing controlled demo start/cleanup path. This exception must not be reused for development, Push, Social or billing test data.

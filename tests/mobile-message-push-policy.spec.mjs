@@ -18,7 +18,7 @@ const secondContactId = "77777777-7777-4777-8777-777777777777";
 const secondMessageId = "88888888-8888-4888-8888-888888888888";
 const seenMessageId = "99999999-9999-4999-8999-999999999999";
 
-const recipient = Object.freeze({ userId, registrationId, easProjectId });
+const recipient = Object.freeze({ workspaceId, userId, registrationId, easProjectId });
 const baseMessage = Object.freeze({
   id: messageId,
   workspaceId,
@@ -138,7 +138,39 @@ test("production, non-inbound, seen, future and stale messages fail closed", () 
   );
 });
 
-test("missing or malformed recipient binding blocks before any send decision", () => {
+test("missing or malformed seen state fails closed instead of being treated as unseen", () => {
+  const { seenAt: _seenAt, ...withoutSeenAt } = baseMessage;
+
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: withoutSeenAt,
+      recipient,
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_seen_state" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: { ...baseMessage, seenAt: undefined },
+      recipient,
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_seen_state" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: { ...baseMessage, seenAt: "not-a-timestamp" },
+      recipient,
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_seen_state" },
+  );
+});
+
+test("missing, malformed or cross-workspace recipient binding blocks before any send decision", () => {
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
@@ -151,10 +183,28 @@ test("missing or malformed recipient binding blocks before any send decision", (
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
       message: baseMessage,
+      recipient: { ...recipient, workspaceId: undefined },
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
       recipient: { ...recipient, registrationId: "not-a-uuid" },
       now: new Date("2026-08-31T18:01:00Z"),
     }),
     { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient: { ...recipient, workspaceId: secondContactId },
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "recipient_workspace_mismatch" },
   );
 });
 
@@ -281,13 +331,18 @@ test("invalid or inconsistent prior delivery state fails closed", () => {
   );
 });
 
-test("aggregation keeps one deterministic newest candidate per fan and counts unseen messages", () => {
+test("aggregation keeps one deterministic newest candidate per fan and counts only explicitly unseen messages", () => {
   const equalTimestampLowId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1";
   const equalTimestampHighId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2";
+  const malformedSeenId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3";
+  const missingSeenId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4";
+  const { seenAt: _seenAt, ...messageWithoutSeenAt } = baseMessage;
   const result = aggregateUnseenMessagesForPush([
     { ...baseMessage, id: equalTimestampLowId, createdAt: "2026-08-31T18:10:00Z" },
     { ...baseMessage, id: equalTimestampHighId, createdAt: "2026-08-31T18:10:00Z" },
     { ...baseMessage, id: seenMessageId, seenAt: "2026-08-31T18:11:00Z" },
+    { ...baseMessage, id: malformedSeenId, seenAt: undefined },
+    { ...messageWithoutSeenAt, id: missingSeenId },
     {
       ...baseMessage,
       id: secondMessageId,
