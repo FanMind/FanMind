@@ -8,6 +8,7 @@ const MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES = 60;
 const MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES = 60;
 const MESSAGE_PUSH_MAX_REMINDERS = 1;
 const MESSAGE_PUSH_TTL_SECONDS = 3600;
+const MICROSECONDS_PER_MINUTE = 60_000_000;
 export const MESSAGE_PUSH_ANDROID_CHANNEL_ID = "message-alerts";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -227,10 +228,22 @@ export function deriveMessagePushDecision({
   const contactId = asCanonicalUuid(message.contactId);
   const messageId = asCanonicalUuid(message.id);
   const createdAt = asValidInstant(message.createdAt);
+  const createdAtPrecise = asValidPreciseInstant(message.createdAt);
   const normalizedRecipient = normalizeRecipientBinding(recipient);
   const nowTimestamp = now instanceof Date ? now.getTime() : Number.NaN;
+  const nowPrecise = Number.isFinite(nowTimestamp)
+    ? nowTimestamp * 1000
+    : Number.NaN;
 
-  if (!workspaceId || !contactId || !messageId || createdAt == null || !Number.isFinite(nowTimestamp)) {
+  if (
+    !workspaceId ||
+    !contactId ||
+    !messageId ||
+    createdAt == null ||
+    createdAtPrecise == null ||
+    !Number.isFinite(nowTimestamp) ||
+    !Number.isFinite(nowPrecise)
+  ) {
     return Object.freeze({ status: "blocked", reason: "invalid_identity_or_time" });
   }
   if (!normalizedRecipient) {
@@ -242,7 +255,7 @@ export function deriveMessagePushDecision({
   if (normalizedRecipient.workspaceRole !== "owner") {
     return Object.freeze({ status: "blocked", reason: "recipient_role_not_supported" });
   }
-  if (createdAt > nowTimestamp) {
+  if (createdAtPrecise > nowPrecise) {
     return Object.freeze({ status: "blocked", reason: "message_from_future" });
   }
   if (!Number.isInteger(reminderDelayMinutes) || reminderDelayMinutes < 1 || reminderDelayMinutes > 1440) {
@@ -261,10 +274,11 @@ export function deriveMessagePushDecision({
     messageId,
     recipient: normalizedRecipient,
   });
-  const initialExpiresAt = createdAt + initialFreshnessMinutes * 60_000;
+  const initialExpiresAtPrecise =
+    createdAtPrecise + initialFreshnessMinutes * MICROSECONDS_PER_MINUTE;
 
   if (priorDelivery === null) {
-    if (nowTimestamp > initialExpiresAt) {
+    if (nowPrecise > initialExpiresAtPrecise) {
       return Object.freeze({ status: "blocked", reason: "initial_notification_expired" });
     }
     return Object.freeze({
@@ -300,20 +314,24 @@ export function deriveMessagePushDecision({
   }
 
   const initialSentAt = asValidInstant(priorDelivery.initialSentAt);
+  const initialSentAtPrecise = asValidPreciseInstant(priorDelivery.initialSentAt);
   if (
     initialSentAt == null ||
-    initialSentAt < createdAt ||
-    initialSentAt > initialExpiresAt ||
-    initialSentAt > nowTimestamp
+    initialSentAtPrecise == null ||
+    initialSentAtPrecise < createdAtPrecise ||
+    initialSentAtPrecise > initialExpiresAtPrecise ||
+    initialSentAtPrecise > nowPrecise
   ) {
     return Object.freeze({ status: "blocked", reason: "invalid_initial_delivery_time" });
   }
-  const reminderDueAt = initialSentAt + reminderDelayMinutes * 60_000;
-  if (nowTimestamp < reminderDueAt) {
+  const reminderDueAtPrecise =
+    initialSentAtPrecise + reminderDelayMinutes * MICROSECONDS_PER_MINUTE;
+  if (nowPrecise < reminderDueAtPrecise) {
     return Object.freeze({ status: "blocked", reason: "reminder_not_due" });
   }
-  const reminderExpiresAt = reminderDueAt + reminderFreshnessMinutes * 60_000;
-  if (nowTimestamp > reminderExpiresAt) {
+  const reminderExpiresAtPrecise =
+    reminderDueAtPrecise + reminderFreshnessMinutes * MICROSECONDS_PER_MINUTE;
+  if (nowPrecise > reminderExpiresAtPrecise) {
     return Object.freeze({ status: "blocked", reason: "reminder_expired" });
   }
 
