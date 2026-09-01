@@ -460,6 +460,28 @@ test("aggregation keeps one deterministic newest candidate per fan and counts on
   assert.equal(reversed[0].unseenCount, 2);
 });
 
+test("aggregation preserves PostgreSQL microsecond precision before UUID tie-breaking", () => {
+  const olderHighId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+  const newerLowId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const result = aggregateUnseenMessagesForPush([
+    {
+      ...baseMessage,
+      id: olderHighId,
+      createdAt: "2026-08-31T18:10:00.123100Z",
+    },
+    {
+      ...baseMessage,
+      id: newerLowId,
+      createdAt: "2026-08-31T18:10:00.123900Z",
+    },
+  ]);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].messageId, newerLowId);
+  assert.equal(result[0].createdAt, "2026-08-31T18:10:00.123900Z");
+  assert.equal(result[0].unseenCount, 2);
+});
+
 test("payload rejects unsupported types and non-canonical contact ids", () => {
   assert.throws(() =>
     buildMessagePushPayload({ contactId: "", eventType: "message_received" }),
