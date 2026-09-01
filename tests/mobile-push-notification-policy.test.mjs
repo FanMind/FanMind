@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import "./mobile-message-push-policy.spec.mjs";
+import "./mobile-message-seen-section.spec.mjs";
 import {
   createFollowupNotificationIntent,
   createNotificationIntent,
@@ -344,6 +345,10 @@ test("mobile push navigation remains payload-minimal and delivery-free", async (
   assert.match(appConfig, /"expo-notifications"/);
   assert.match(source, /addNotificationResponseReceivedListener/);
   assert.match(source, /setNotificationChannelAsync/);
+  assert.match(source, /FOLLOWUP_NOTIFICATION_CHANNEL_ID = "followup-reminders"/u);
+  assert.match(source, /MESSAGE_NOTIFICATION_CHANNEL_ID = "message-alerts"/u);
+  assert.match(source, /name: "Follow-up-Erinnerungen"/u);
+  assert.match(source, /name: "Nachrichten"/u);
   assert.match(source, /getLastNotificationResponse\(\)/);
   assert.match(source, /clearLastNotificationResponse\(\)/);
   assert.match(source, /createNotificationIntent/);
