@@ -84,7 +84,7 @@ test("project refs with embedded whitespace are rejected", () => {
   );
 });
 
-test("synthetic marker requires a nonempty bounded namespace", () => {
+test("synthetic marker requires a nonempty bounded ASCII namespace", () => {
   assert.throws(() =>
     assertSyntheticWriteTarget(validInput({ syntheticMarker: "fanmind-synthetic:" })),
   );
@@ -96,6 +96,21 @@ test("synthetic marker requires a nonempty bounded namespace", () => {
   assert.throws(() =>
     assertSyntheticWriteTarget(
       validInput({ syntheticMarker: " fanmind-synthetic:push-acceptance" }),
+    ),
+  );
+  assert.throws(() =>
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: "fanmind-synthetic:K" }),
+    ),
+  );
+  assert.throws(() =>
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: "fanmind-ſynthetic:test" }),
+    ),
+  );
+  assert.throws(() =>
+    assertSyntheticWriteTarget(
+      validInput({ syntheticMarker: "FANMIND-SYNTHETIC:push-acceptance" }),
     ),
   );
   assert.equal(
