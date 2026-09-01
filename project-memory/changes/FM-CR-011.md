@@ -38,4 +38,4 @@ Owner wants FanMind to use the waiting time for Google Play approval to finish t
 FM-CR-011 / FM-MOB-005 is `ACCEPTED` only for this repository implementation scope. It does not accept or activate real provider delivery, a Delivery-Ledger migration/apply, Push Staging mutation/acceptance, Production push, Store state or signed-device message-push behavior. Those remain separate FM-MOB-001 / external acceptance gates.
 
 ## Rollback
-Revert squash merge `953fcc56de0d02d5c2c5d41468226ba051624b53`. No provider, database, Production, Store or signed-artifact state was mutated by this change.
+If this post-merge Project Memory closeout has been merged, revert the closeout merge first so the acceptance/lock records return to their pre-closeout state; then revert implementation squash merge `953fcc56de0d02d5c2c5d41468226ba051624b53`. Do not retain `ACCEPTED`/`RELEASED` closeout records after withdrawing the implementation. No provider, database, Production, Store or signed-artifact state was mutated by this change.
