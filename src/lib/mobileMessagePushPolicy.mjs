@@ -200,7 +200,7 @@ export function deriveMessagePushDecision({
   message,
   recipient,
   now = new Date(),
-  priorDelivery = null,
+  priorDelivery,
   reminderDelayMinutes = MESSAGE_PUSH_DEFAULT_REMINDER_DELAY_MINUTES,
   initialFreshnessMinutes = MESSAGE_PUSH_INITIAL_FRESHNESS_MINUTES,
   reminderFreshnessMinutes = MESSAGE_PUSH_REMINDER_FRESHNESS_MINUTES,
@@ -263,7 +263,7 @@ export function deriveMessagePushDecision({
   });
   const initialExpiresAt = createdAt + initialFreshnessMinutes * 60_000;
 
-  if (!priorDelivery) {
+  if (priorDelivery === null) {
     if (nowTimestamp > initialExpiresAt) {
       return Object.freeze({ status: "blocked", reason: "initial_notification_expired" });
     }
@@ -276,6 +276,9 @@ export function deriveMessagePushDecision({
     });
   }
 
+  if (!priorDelivery || typeof priorDelivery !== "object" || Array.isArray(priorDelivery)) {
+    return Object.freeze({ status: "blocked", reason: "invalid_prior_delivery_state" });
+  }
   if (!deliveryBindingMatches(priorDelivery, binding)) {
     return Object.freeze({ status: "blocked", reason: "delivery_binding_mismatch" });
   }
