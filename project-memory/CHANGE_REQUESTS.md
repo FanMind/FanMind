@@ -124,6 +124,19 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: Add one machine-checked 33-field App Store Connect worksheet that separates thirteen repository-ready values, twelve owner/legal/account decisions and eight Phase-8 binary/device controls. Keep all unresolved values explicit; do not start iOS signing/build/TestFlight, create a portal record or rebuild Android.
 - Related task: FM-MOB-001
 
+## FM-CR-011
+- Date: 2026-08-31
+- Closed: 2026-09-01
+- Status: ACCEPTED
+- Source: owner
+- Idea: During the Google Play approval wait, make Production/Staging/test-data separation machine-checkable and prepare privacy-minimal incoming-message push plus at most one delayed reminder.
+- Classification: Bounded repository-only Mobile Push/data-boundary hardening; no provider, database, Production, Store or build mutation.
+- Affected areas: message-push policy, native notification routing/seen semantics, data-environment guard, Mobile/root product readers, tests and Project Memory.
+- Existing task/decision checked: FM-MOB-001/003/004, FM-DEC-009/010, FM-DEP-002, FM-LOOP-003, existing dormant Follow-up Push foundation and external Push/Store acceptance boundaries.
+- Dependencies: exact reviewed repository state, fail-closed CI/review, later separate Push Staging/Delivery-Ledger/provider/device gates for real delivery.
+- Decision: Accepted for repository scope through PR #1050 final head `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7`, squash merge `953fcc56de0d02d5c2c5d41468226ba051624b53`, eight green exact-head workflows, completed Codex review and zero unresolved threads. Real provider delivery, Delivery-Ledger apply, Production push, Google Play/build/device acceptance remain open under FM-MOB-001/external acceptance.
+- Related task: FM-MOB-005
+
 ## Intake template
 
 ```text
