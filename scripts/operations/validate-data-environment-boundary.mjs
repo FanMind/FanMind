@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 const SYNTHETIC_MARKER_PATTERN =
-  /^fanmind-synthetic[-_:][a-z0-9][a-z0-9._:-]{0,63}$/iu;
+  /^fanmind-synthetic[-_:][a-z0-9][a-z0-9._:-]{0,63}$/;
 
 function normalizeProjectRef(value) {
   assert.ok(typeof value === "string", "project ref must be a string");
@@ -39,7 +39,7 @@ export function assertSyntheticWriteTarget({
     typeof syntheticMarker === "string" &&
       syntheticMarker === syntheticMarker.trim() &&
       SYNTHETIC_MARKER_PATTERN.test(syntheticMarker),
-    "synthetic marker must contain a bounded dedicated namespace",
+    "synthetic marker must contain a bounded dedicated ASCII namespace",
   );
   return true;
 }
