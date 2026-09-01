@@ -15,13 +15,13 @@ For a newly unseen inbound message:
 - tap target: after authentication, the exact fan detail in section `Nachrichten`
 - initial-candidate freshness: at most 60 minutes from the message timestamp
 
-If the message remains unseen for 30 minutes after the initial delivery, at most one delayed reminder may be prepared:
+If the message remains unseen for 30 minutes after the initial delivery, at most one delayed reminder may be prepared, but only after the initial provider lifecycle has reached the explicit terminal success state `accepted` (`provider_receipt_ok`). A queued ticket, rejected request, missing receipt, exhausted lookup or any `indeterminate` result must never trigger the delayed reminder under a second dedupe key.
 
 - title: `FanMind`
 - body: `Eine Nachricht wartet noch auf dich.`
 - reminder freshness: no later than 60 minutes after its due time
 
-A future timestamp, an already stale initial candidate or a stale delayed reminder fails closed. No further reminder loop is allowed for the same message under this policy.
+A future timestamp, an already stale initial candidate, a non-accepted initial delivery or a stale delayed reminder fails closed. No further reminder loop is allowed for the same message under this policy.
 
 ## Privacy
 
@@ -42,7 +42,7 @@ When multiple unseen inbound messages exist for one fan, the server-side candida
 
 The later delivery reservation must be recipient-specific. Its repository policy binds Workspace, message/contact, authenticated user, concrete push registration and EAS project into the internal dedupe identity. A delivery record from another user, registration, project, Workspace, contact or message is rejected instead of being reused. These identifiers remain server-side and are not notification payload fields.
 
-A future ledger/trigger must still re-read the actual current unseen state, active recipient registration and exact target binding atomically before reserving any provider request.
+A future ledger/trigger must still re-read the actual current unseen state, active recipient registration and exact target binding atomically before reserving any provider request. For a delayed reminder it must additionally expose the initial delivery's terminal accepted state; merely persisting an initial send time or Expo ticket is insufficient.
 
 ## Safety boundary
 

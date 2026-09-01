@@ -36,6 +36,7 @@ function boundPriorDelivery(overrides = {}) {
     userId,
     registrationId,
     easProjectId,
+    initialDeliveryStatus: "accepted",
     initialSentAt: "2026-08-31T18:02:00Z",
     reminderCount: 0,
     ...overrides,
@@ -208,7 +209,7 @@ test("missing, malformed or cross-workspace recipient binding blocks before any 
   );
 });
 
-test("one reminder is allowed only after the delay and before its freshness window expires", () => {
+test("one reminder is allowed only after an accepted initial delivery, the delay, and within freshness", () => {
   const priorDelivery = boundPriorDelivery();
 
   assert.deepEqual(
@@ -257,6 +258,21 @@ test("one reminder is allowed only after the delay and before its freshness wind
     }),
     { status: "blocked", reason: "reminder_limit_reached" },
   );
+});
+
+test("queued, failed, indeterminate or missing initial outcome never schedules an automatic reminder", () => {
+  for (const initialDeliveryStatus of [undefined, "queued", "rejected", "indeterminate"]) {
+    assert.deepEqual(
+      deriveMessagePushDecision({
+        runtimeEnvironment: "staging",
+        message: baseMessage,
+        recipient,
+        now: new Date("2026-08-31T18:40:00Z"),
+        priorDelivery: boundPriorDelivery({ initialDeliveryStatus }),
+      }),
+      { status: "blocked", reason: "initial_delivery_not_accepted" },
+    );
+  }
 });
 
 test("invalid or inconsistent prior delivery state fails closed", () => {

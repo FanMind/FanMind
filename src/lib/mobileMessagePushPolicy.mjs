@@ -202,6 +202,9 @@ export function deriveMessagePushDecision({
   if (!deliveryBindingMatches(priorDelivery, binding)) {
     return Object.freeze({ status: "blocked", reason: "delivery_binding_mismatch" });
   }
+  if (priorDelivery.initialDeliveryStatus !== "accepted") {
+    return Object.freeze({ status: "blocked", reason: "initial_delivery_not_accepted" });
+  }
   if (
     !Number.isInteger(priorDelivery.reminderCount) ||
     priorDelivery.reminderCount < 0 ||
