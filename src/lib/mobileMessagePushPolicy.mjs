@@ -25,7 +25,7 @@ function asCanonicalUuid(value) {
     : null;
 }
 
-function canonicalizeDatabaseTimestamp(value) {
+function parseDatabaseTimestamp(value) {
   if (typeof value !== "string" || value.length > 40) return null;
   const match = value.match(DATABASE_TIMESTAMP_PATTERN);
   if (!match?.groups) return null;
@@ -68,14 +68,22 @@ function canonicalizeDatabaseTimestamp(value) {
     return null;
   }
   const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+  if (!Number.isFinite(parsed.getTime())) return null;
+  const fractionMicros = Number((match.groups.fraction ?? "").padEnd(6, "0"));
+  const subMillisecondMicros = fractionMicros % 1000;
+  return Object.freeze({
+    canonical: parsed.toISOString(),
+    epochMilliseconds: parsed.getTime(),
+    epochMicroseconds: parsed.getTime() * 1000 + subMillisecondMicros,
+  });
 }
 
 function asValidInstant(value) {
-  const canonical = canonicalizeDatabaseTimestamp(value);
-  if (!canonical) return null;
-  const timestamp = Date.parse(canonical);
-  return Number.isFinite(timestamp) ? timestamp : null;
+  return parseDatabaseTimestamp(value)?.epochMilliseconds ?? null;
+}
+
+function asValidPreciseInstant(value) {
+  return parseDatabaseTimestamp(value)?.epochMicroseconds ?? null;
 }
 
 function normalizeRecipientBinding(recipient) {
@@ -326,14 +334,23 @@ export function aggregateUnseenMessagesForPush(messages) {
     const contactId = asCanonicalUuid(message.contactId);
     const messageId = asCanonicalUuid(message.id);
     const createdAt = asValidInstant(message.createdAt);
-    if (!workspaceId || !contactId || !messageId || createdAt == null) continue;
+    const createdAtPrecise = asValidPreciseInstant(message.createdAt);
+    if (
+      !workspaceId ||
+      !contactId ||
+      !messageId ||
+      createdAt == null ||
+      createdAtPrecise == null
+    ) {
+      continue;
+    }
 
     const key = `${workspaceId}:${contactId}`;
     const existing = byContact.get(key);
     const shouldReplace =
       !existing ||
-      createdAt > existing.createdAtTimestamp ||
-      (createdAt === existing.createdAtTimestamp &&
+      createdAtPrecise > existing.createdAtPrecise ||
+      (createdAtPrecise === existing.createdAtPrecise &&
         messageId.localeCompare(existing.messageId) > 0);
 
     if (shouldReplace) {
@@ -343,6 +360,7 @@ export function aggregateUnseenMessagesForPush(messages) {
         messageId,
         createdAt: message.createdAt,
         createdAtTimestamp: createdAt,
+        createdAtPrecise,
         unseenCount: (existing?.unseenCount ?? 0) + 1,
       });
     } else {
@@ -353,7 +371,7 @@ export function aggregateUnseenMessagesForPush(messages) {
   return [...byContact.values()]
     .sort(
       (left, right) =>
-        right.createdAtTimestamp - left.createdAtTimestamp ||
+        right.createdAtPrecise - left.createdAtPrecise ||
         right.messageId.localeCompare(left.messageId),
     )
     .map((value) =>
