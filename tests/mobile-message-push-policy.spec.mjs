@@ -345,6 +345,64 @@ test("one reminder is allowed only after an accepted initial delivery, the delay
   );
 });
 
+test("reminder causality and due-time checks preserve PostgreSQL microsecond precision", () => {
+  const preciseMessage = {
+    ...baseMessage,
+    createdAt: "2026-08-31T18:00:00.123900Z",
+  };
+
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: preciseMessage,
+      recipient,
+      now: new Date("2026-08-31T18:40:00Z"),
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-08-31T18:00:00.123100Z",
+      }),
+    }),
+    { status: "blocked", reason: "invalid_initial_delivery_time" },
+  );
+
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: preciseMessage,
+      recipient,
+      now: new Date("2026-08-31T19:01:00Z"),
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-08-31T19:00:00.123901Z",
+      }),
+    }),
+    { status: "blocked", reason: "invalid_initial_delivery_time" },
+  );
+
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: preciseMessage,
+      recipient,
+      now: new Date("2026-08-31T18:30:00.123Z"),
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-08-31T18:00:00.123900Z",
+      }),
+    }),
+    { status: "blocked", reason: "reminder_not_due" },
+  );
+
+  const afterDue = deriveMessagePushDecision({
+    runtimeEnvironment: "staging",
+    message: preciseMessage,
+    recipient,
+    now: new Date("2026-08-31T18:30:00.124Z"),
+    priorDelivery: boundPriorDelivery({
+      initialSentAt: "2026-08-31T18:00:00.123900Z",
+    }),
+  });
+  assert.equal(afterDue.status, "send");
+  assert.equal(afterDue.eventType, "message_reminder");
+});
+
 test("queued, failed, indeterminate or missing initial outcome never schedules an automatic reminder", () => {
   for (const initialDeliveryStatus of [undefined, "queued", "rejected", "indeterminate"]) {
     assert.deepEqual(
