@@ -165,15 +165,22 @@ Aktiv im App-Kern:
 - native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
   Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,
   kontogebundene Ein-Gerät-Registrierung für Owner oder autorisierte
-  Workspace-Mitglieder. Öffentliche Demo-Workspaces, ungebundene Requests und
-  nicht serverseitig freigegebene EAS-Projekte werden abgelehnt; die Migration,
-  Serverkey-Aktivierung und echte Geräteabnahme bleiben getrennt. Ein
-  Staging-only Serververtrag für genau eine inhaltsfreie Follow-up-Erinnerung
-  mit einstündiger TTL ist synthetisch getestet, besitzt aber ohne genehmigten
-  atomaren Delivery-Ledger samt transaktionaler Target-Revalidierung und
-  unabhängig geprüfte EAS-, Staging-App-, Staging-Supabase- und
-  Production-Supabase-Bindings weder Route noch Timer/Worker und bleibt
-  deaktiviert;
+  Workspace-Mitglieder. Zusätzlich verarbeitet der native Response-Handler die
+  vorbereiteten Ereignisse `message_received` und `message_reminder`
+  fail-closed: Ein gültiger Nachrichten-Push wartet auf Auth und öffnet nur den
+  exakt gebundenen Fan im Bereich `Nachrichten`. Öffentliche Demo-Workspaces,
+  ungebundene Requests und nicht serverseitig freigegebene EAS-Projekte werden
+  abgelehnt; die Migration, Serverkey-Aktivierung und echte Geräteabnahme
+  bleiben getrennt. Die repositoryseitige Nachrichten-Policy bereitet einen
+  datenschutzarmen Soforthinweis und höchstens eine gebundene Erinnerung vor;
+  sichtbarer Text enthält weder Fanname noch Nachrichtentext oder anderen CRM-
+  Inhalt. Ein Staging-only Serververtrag für genau eine inhaltsfreie Follow-up-
+  Erinnerung mit einstündiger TTL ist synthetisch getestet. Nachrichten-
+  Providerzustellung, Delivery-Ledger-Apply, Route, Timer/Worker und Production-
+  Aktivierung bleiben ebenso deaktiviert; ohne genehmigten atomaren Delivery-
+  Ledger samt transaktionaler Target-Revalidierung und unabhängig geprüften
+  EAS-, Staging-App-, Staging-Supabase- und Production-Supabase-Bindings gibt
+  es keine reale Zustellung;
 - checksum-festgeschriebener, strikt Staging-only Kontrollpfad für diese
   Push-Tabelle: ein read-only Ressourcencheck, ein separat bestätigter
   Migrations-Apply und eine rollback-only Acceptance sind vorbereitet. Jeder
@@ -228,8 +235,14 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   separater Server-/Staging-Freigabe;
 - Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
   Data Safety, finale Screenshots, das im Portal verlangte Testprogramm,
-  Upload des bereits verifizierten AAB und die getrennt bestätigte
-  Portal-/Review-/Veröffentlichungsabnahme;
+  Upload des bereits verifizierten Android-`1.0.0`-AAB und die getrennt
+  bestätigte Portal-/Review-/Veröffentlichungsabnahme. Dieses AAB bleibt das
+  Artefakt für Play-App-Datensatz, Test-Track und bestehenden Android-Baseline-
+  Nachweis, wurde aber vor dem nativen `message_received`-/`message_reminder`-
+  Tap-Handler gebaut und kann deshalb die neue Nachrichten-Push-Funktion nicht
+  abnehmen. Deren späterer realer Gerätenachweis erfordert nach den Push-
+  Staging-/Delivery-Ledger-Gates einen separat geprüften signierten Android-
+  Build mit dem gemergten Handler;
 - iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
   HTTPS-Supportseite und die 33-Felder-App-Store-Connect-Arbeitsmatrix sind
   vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
@@ -402,8 +415,12 @@ zwingende externe Freigabe noch fehlt.
   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` genau ein Android-`1.0.0`-AAB
   erfolgreich ab. Submit und Update blieben technisch deaktiviert; der
   Workflow erzeugte weder einen Play-App-Datensatz noch eine Veröffentlichung.
-  Das bestehende AAB ist für die Portalfortsetzung zu erhalten und darf dafür
-  nicht erneut gebaut werden.
+  Das bestehende AAB bleibt das Artefakt für den späteren Play-App-Datensatz,
+  Test-Track und den bestehenden Android-Baseline-Nachweis; es wurde vor dem
+  nativen `message_received`-/`message_reminder`-Tap-Handler gebaut und kann
+  deshalb die neue Nachrichten-Push-Funktion nicht abnehmen. Deren späterer
+  realer Gerätenachweis erfordert nach den Push-Staging-/Delivery-Ledger-Gates
+  einen separat geprüften signierten Android-Build mit dem gemergten Handler.
 - Mobile-Geräteabnahme: Der erfolgreiche signierte Build erzeugt nur einen
   kurzlebigen redigierten Receipt ohne Build-ID oder Artefakt-URL. Der private
   Android-/iOS-Gerätenachweis wird an dessen SHA sowie den exakten geprüften
@@ -425,13 +442,18 @@ zwingende externe Freigabe noch fehlt.
 - Mobile-Push-Delivery: feste Expo-HTTPS-Endpunkte, unabhängige EAS-
   Projektbindung, Workspace-/Member-/Kontakt-/Follow-up-/Registrierungsprüfung,
   Minimalpayload mit einstündiger TTL sowie Retry-, Ticket- und Receipt-
-  Entscheidung sind lokal mit einem synthetischen Provider geprüft. Der
+  Entscheidung sind lokal mit einem synthetischen Provider geprüft. Zusätzlich
+  ist repositoryseitig eine datenschutzarme Policy für `message_received` und
+  höchstens eine gebundene `message_reminder`-Entscheidung vorbereitet; ein
+  gültiger Tap wartet auf Auth und öffnet ausschließlich den exakt gebundenen
+  Fan in `Nachrichten`. Nachrichten-Providerzustellung, Delivery-Ledger-Apply,
+  Route/Timer/Worker und Production-Aktivierung bleiben deaktiviert. Der
   server-only Loader und die spätere Ledger-Reservation erhalten exakt
   dasselbe bereits geprüfte Supabase-URL-/Ref-/Service-Role-Binding; die
   Reservation muss außerdem den aktuellen Registrierungs-/Token-Fingerprint
   atomar binden. Ohne eine separat genehmigte service-role-only Ledger-
-  Migration mit atomarer Revalidierungs-RPC wird kein Sender verdrahtet; eine CI-
-  Invariante schützt diese Dormanz. Production bleibt strukturell gesperrt.
+  Migration mit atomarer Revalidierungs-RPC wird kein Sender verdrahtet; eine
+  CI-Invariante schützt diese Dormanz. Production bleibt strukturell gesperrt.
 - Website-Chat bleibt bis zur getrennten Staging- und Rechtsabnahme
   deaktiviert. Seine Sicherheitsgrundlage darf nur workspace-gebundene,
   standardmäßig deaktivierte Installationen, exakt verifizierte HTTPS-Origins,

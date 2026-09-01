@@ -64,11 +64,15 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   führen in den Follow-up-Bereich des jeweiligen Fans. Owner können
   abschließen, Teammitglieder bleiben read-only;
 - verschlüsselte, maximal 24 Stunden alte Offline-Kontaktübersicht mit höchstens 50 Einträgen im Nur-Lesen-Modus;
-- native Push-Grundlage mit streng validierter Navigation zu Follow-ups sowie
-  ausdrücklichem Opt-in für eine verschlüsselte, kontogebundene
-  Ein-Gerät-Registrierung; ein getrenntes serverseitiges Staging-Modul für
-  genau eine inhaltsfreie Follow-up-Erinnerung ist synthetisch getestet, aber
-  ohne Route, Timer und persistenten Ledger deaktiviert;
+- native Push-Grundlage mit streng validierter Follow-up-Navigation sowie
+  fail-closed Verarbeitung der vorbereiteten Ereignisse `message_received` und
+  `message_reminder`: Ein gültiger Nachrichten-Push wird erst nach Auth-Handoff
+  zum exakt gebundenen Fan und dort in den Bereich `Nachrichten` navigiert;
+  ausdrückliches Opt-in bleibt Voraussetzung für die verschlüsselte,
+  kontogebundene Ein-Gerät-Registrierung. Die Nachrichten-Push-Policy ist
+  repositoryseitig vorbereitet, aber ebenso wie der getrennte Staging-Vertrag
+  für Follow-up-Erinnerungen ohne Provider-Zustellung, Delivery-Ledger-Apply,
+  Route, Timer oder Worker deaktiviert;
 - checksum-gebundener, strikt Staging-only Kontrollpfad für die vorbereitete
   Push-Tabelle: read-only Ressourcenprüfung, separat bestätigter Apply und
   rollback-only Acceptance ohne echte Tokens oder Zustellung; externe Läufe
@@ -211,16 +215,17 @@ Push-Nachricht, aktiviert Delivery oder verändert EAS-/Signing-Ressourcen. Der
 normale Web-Deploy kann die Migration nicht anwenden. Details und geschützte
 Konfiguration: `docs/operations/MOBILE_PUSH_STAGING_CONTROL.md`.
 
-Der nachgelagerte, weiterhin inaktive Serververtrag ist in
-`docs/mobile/PUSH_DELIVERY.md` beschrieben. Er verlangt vor jedem Providerbyte
-einen atomaren Idempotenz-Ledger, unabhängig geprüfte EAS-, Staging-App-,
-Staging-Supabase- und Production-Supabase-Bindings, ein fälliges offenes
-Follow-up und dieselbe User-/Workspace-/Kontaktgrenze. Der spätere Reserve-RPC
-muss dasselbe validierte Supabase-Binding wie der Loader verwenden und alle
-persistenten Grenzen einschließlich des aktuellen Token-Fingerprints in einer
-Transaktion erneut prüfen; die feste Payload verfällt nach einer Stunde. Da das bestehende Schema keinen solchen
-Ledger besitzt, gibt es keine Sendroute, keinen Timer und keinen realen
-Expo-Aufruf. Eine CI-Invariante sperrt jede vorzeitige Verdrahtung.
+Der nachgelagerte, weiterhin inaktive Push-Vertrag ist in
+`docs/mobile/PUSH_DELIVERY.md` und `docs/mobile/MESSAGE_PUSH_REMINDERS.md`
+beschrieben. Der vorhandene Follow-up-Delivery-Service bleibt ohne atomaren
+Idempotenz-Ledger, unabhängig geprüfte EAS-/Staging-/Production-Bindings und
+separate Staging-Abnahme vollständig dormant. Die neue Nachrichten-Policy
+bereitet ausschließlich `message_received` und höchstens eine gebundene
+`message_reminder`-Entscheidung samt datensparsamer Tap-Navigation vor; sie ist
+nicht an den Provider-Service verdrahtet. Ein Merge dieses Codes aktiviert
+weder Provider-Zustellung noch Delivery-Ledger, Route, Timer, Worker,
+Production-Push, Store-Aktion oder einen Android-Neubau. Eine CI-Invariante
+sperrt weiterhin jede vorzeitige Delivery-Verdrahtung.
 
 ## Kontrollierter signierter interner Build
 

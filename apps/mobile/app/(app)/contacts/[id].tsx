@@ -206,8 +206,16 @@ export default function ContactDetailScreen() {
     section?: string | string[];
   }>();
   const contactId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const [activeSection, setActiveSection] = useState<ContactSection>(() =>
-    normalizeContactSection(params.section),
+  const rawSectionParam = Array.isArray(params.section)
+    ? params.section[0] ?? ""
+    : params.section ?? "";
+  const requestedSection = normalizeContactSection(params.section);
+  const sectionRouteKey = `${contactId ?? ""}:${rawSectionParam}`;
+  const [activeSection, setActiveSection] = useState<ContactSection>(
+    () => requestedSection,
+  );
+  const [settledSectionRouteKey, setSettledSectionRouteKey] = useState(
+    () => sectionRouteKey,
   );
   const { session } = useAuth();
   const {
@@ -305,14 +313,6 @@ export default function ContactDetailScreen() {
       listContactFollowups(workspace.id, contactId),
       getContactFanAnalysisReport(workspace.id, contactId),
     ]);
-    const seenError =
-      !messagesResult.error && contactResult.contact
-        ? await markContactInboundMessagesSeen({
-            workspaceId: workspace.id,
-            workspaceRole: workspace.role,
-            contactId,
-          })
-        : null;
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
     setMemoryError(memoriesResult.error);
@@ -324,14 +324,51 @@ export default function ContactDetailScreen() {
     setAnalysisReport(analysisResult.report);
     setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
-    setMessageSeenError(seenError);
+    setMessageSeenError(null);
     setError(contactResult.error);
     setLoading(false);
-  }, [contactId, workspace?.id, workspace?.role]);
+  }, [contactId, workspace?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (
+      activeSection !== "messages" ||
+      !workspace?.id ||
+      !contactId ||
+      !contact ||
+      contact.id !== contactId ||
+      settledSectionRouteKey !== sectionRouteKey ||
+      messageError
+    ) {
+      return;
+    }
+
+    let current = true;
+    void markContactInboundMessagesSeen({
+      workspaceId: workspace.id,
+      workspaceRole: workspace.role,
+      contactId,
+    }).then((seenError) => {
+      if (current) setMessageSeenError(seenError);
+    });
+
+    return () => {
+      current = false;
+    };
+  }, [
+    activeSection,
+    contact,
+    contactId,
+    messageError,
+    messages,
+    sectionRouteKey,
+    settledSectionRouteKey,
+    workspace?.id,
+    workspace?.role,
+  ]);
 
   const refreshMessages = useCallback(async () => {
     if (!workspace?.id || !contactId) return;
@@ -339,17 +376,9 @@ export default function ContactDetailScreen() {
     const result = await listContactMessages(workspace.id, contactId);
     if (!result.error) setMessages(result.messages);
     setMessageError(result.error);
-    setMessageSeenError(
-      result.error
-        ? null
-        : await markContactInboundMessagesSeen({
-            workspaceId: workspace.id,
-            workspaceRole: workspace.role,
-            contactId,
-          }),
-    );
+    setMessageSeenError(null);
     setMessagesBusy(false);
-  }, [contactId, workspace?.id, workspace?.role]);
+  }, [contactId, workspace?.id]);
 
   const tags = useMemo(() => contact?.tags ?? [], [contact?.tags]);
   const messageChannelOptions = useMemo(
@@ -368,10 +397,11 @@ export default function ContactDetailScreen() {
 
   useEffect(() => {
     setSelectedMessageChannel(ALL_MESSAGE_CHANNELS);
-    setActiveSection(normalizeContactSection(params.section));
+    setActiveSection(requestedSection);
+    setSettledSectionRouteKey(sectionRouteKey);
     setManualFollowupFormError(null);
     setManualFollowupNotice(null);
-  }, [contactId, params.section]);
+  }, [requestedSection, sectionRouteKey]);
 
   async function generateSuggestions() {
     if (!session?.access_token || !contact) return;

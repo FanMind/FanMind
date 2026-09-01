@@ -241,7 +241,7 @@ test("Mobile is an explicit active product stream and TestFlight is Phase 8", as
   ]);
 
   assert.match(readme, /## Mobile-App/u);
-  assert.match(readme, /signierte interne Builds und Store-Verteilung bleiben separat abzunehmen/u);
+  assert.match(readme, /Signierte Builds und Store-Verteilung bleiben separat abzunehmen/u);
   assert.match(sourceOfTruth, /## 3\. Eigenständige Mobile-App/u);
   assert.match(sourceOfTruth, /kanonischen Status `completed`/u);
   assert.match(agents, /## Mobile product boundary/u);

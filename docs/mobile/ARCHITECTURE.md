@@ -178,6 +178,22 @@ Server-only functions remain server-only:
 - webhook ingestion;
 - external channel credentials.
 
+## Notification intent boundary
+
+The native notification-response handler accepts only the exact prepared
+notification contracts. Existing `followup_reminder` intents keep their
+Follow-up destination. The repository additionally accepts only
+`message_received` or `message_reminder` with a canonical contact UUID and the
+fixed `messages` section; after authentication the intent navigates to exactly
+`/(app)/contacts/<contactId>?section=messages` and is consumed only on that
+contact pathname. Extra CRM fields, names, message text, handles or arbitrary
+routes are rejected.
+
+This navigation contract is not delivery activation. Message provider sending,
+a Delivery-Ledger Apply, route/timer/worker activation, Production push,
+Store action and any Android rebuild remain explicitly outside this repository
+change and require their separate controlled gates.
+
 ## Secure local state
 
 The SecureStore adapter maintains a bounded registry of FanMind-owned storage keys. A safe local logout:
@@ -274,7 +290,13 @@ kein iOS-Build und kein TestFlight.
       verification and disabled Submit/Update; exact run `33316172583`
       completed one verified Android `1.0.0` AAB for `e964150...`;
 - [x] bounded offline read cache with the central purge contract;
-- [x] native notification configuration and fail-closed follow-up response routing;
+- [x] native notification configuration plus fail-closed Follow-up and
+      message-notification response routing; prepared message taps authenticate
+      and open only the exact fan's `Nachrichten` section;
+- [x] repository-only privacy-minimal `message_received` plus one bounded
+      `message_reminder` decision policy; provider delivery, Delivery-Ledger
+      Apply, route/timer/worker activation, Production activation, Store action
+      and Android rebuild remain inactive/out of scope;
 - [x] native wordmark splashscreen and prepared store metadata;
 - [x] reproducible 512×512 Google Play icon, 1024×500 feature graphic,
       public HTTPS support page and separate Apple/Google review handoffs;

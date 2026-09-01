@@ -1,4 +1,9 @@
-import { useRouter, useSegments } from "expo-router";
+import {
+  useGlobalSearchParams,
+  usePathname,
+  useRouter,
+  useSegments,
+} from "expo-router";
 import {
   createContext,
   useCallback,
@@ -11,8 +16,10 @@ import {
 } from "react";
 
 import {
-  decideFollowupNotificationIntent,
-  type FollowupNotificationIntent,
+  decideNotificationIntent,
+  MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX,
+  MESSAGE_NOTIFICATION_SECTION,
+  type NotificationIntent,
 } from "@/lib/pushNotificationPolicy.mjs";
 import {
   clearLastNotificationIntent,
@@ -23,7 +30,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 
 type NotificationIntentContextValue = {
-  pendingIntent: FollowupNotificationIntent | null;
+  pendingIntent: NotificationIntent | null;
 };
 
 const NotificationIntentContext =
@@ -36,12 +43,22 @@ export function NotificationIntentProvider({
   const { session, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-  const [pendingIntent, setPendingIntent] =
-    useState<FollowupNotificationIntent | null>(null);
+  const pathname = usePathname();
+  const globalParams = useGlobalSearchParams<{
+    section?: string | string[];
+  }>();
+  const currentSection = Array.isArray(globalParams.section)
+    ? globalParams.section[0] ?? null
+    : globalParams.section ?? null;
+  const [pendingIntent, setPendingIntent] = useState<NotificationIntent | null>(
+    null,
+  );
   const pendingIdentifier = useRef<string | null>(null);
+  const navigationIssuedIdentifier = useRef<string | null>(null);
+  const messageNavigationNonce = useRef(0);
   const consumedIdentifiers = useRef<string[]>([]);
 
-  const acceptIntent = useCallback((intent: FollowupNotificationIntent) => {
+  const acceptIntent = useCallback((intent: NotificationIntent) => {
     if (
       pendingIdentifier.current === intent.responseIdentifier ||
       consumedIdentifiers.current.includes(intent.responseIdentifier)
@@ -49,6 +66,7 @@ export function NotificationIntentProvider({
       return;
     }
     pendingIdentifier.current = intent.responseIdentifier;
+    navigationIssuedIdentifier.current = null;
     setPendingIntent(intent);
   }, []);
 
@@ -69,14 +87,32 @@ export function NotificationIntentProvider({
   }, [acceptIntent]);
 
   useEffect(() => {
-    const decision = decideFollowupNotificationIntent({
+    const navigationIssued =
+      pendingIntent != null &&
+      navigationIssuedIdentifier.current === pendingIntent.responseIdentifier;
+    const decision = decideNotificationIntent({
       authLoading: loading,
       hasSession: Boolean(session),
       segments,
+      pathname,
+      currentSection,
+      navigationIssued,
       pendingIntent,
     });
     if (decision === "navigate" && pendingIntent) {
-      router.replace(pendingIntent.route);
+      navigationIssuedIdentifier.current = pendingIntent.responseIdentifier;
+      if (
+        "section" in pendingIntent &&
+        pendingIntent.section === MESSAGE_NOTIFICATION_SECTION &&
+        pathname === pendingIntent.consumePathname
+      ) {
+        messageNavigationNonce.current += 1;
+        router.setParams({
+          section: `${MESSAGE_NOTIFICATION_NAVIGATION_SECTION_PREFIX}${messageNavigationNonce.current}`,
+        });
+      } else {
+        router.replace(pendingIntent.route);
+      }
       return;
     }
     if (decision !== "consume" || !pendingIntent) return;
@@ -89,6 +125,9 @@ export function NotificationIntentProvider({
       responseIdentifier,
     ].slice(-MAX_CONSUMED_RESPONSE_IDENTIFIERS);
     pendingIdentifier.current = null;
+    if (navigationIssuedIdentifier.current === responseIdentifier) {
+      navigationIssuedIdentifier.current = null;
+    }
     setPendingIntent((current) =>
       current?.responseIdentifier === responseIdentifier ? null : current,
     );
@@ -96,9 +135,17 @@ export function NotificationIntentProvider({
       clearLastNotificationIntent();
     } catch {
       // Native cleanup is best effort. In-memory consumption must still stop
-      // a stale native response from trapping navigation on Follow-ups.
+      // a stale native response from trapping navigation on its destination.
     }
-  }, [loading, pendingIntent, router, segments, session]);
+  }, [
+    currentSection,
+    loading,
+    pathname,
+    pendingIntent,
+    router,
+    segments,
+    session,
+  ]);
 
   const value = useMemo(() => ({ pendingIntent }), [pendingIntent]);
   return (

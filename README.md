@@ -22,7 +22,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Postflight sind getrennt vom Web-Deploy; Meta-Verbindungen und Analysen
   bleiben deaktiviert. Ablauf:
   `docs/operations/META_CONTENT_STAGING_MIGRATION.md`.
-- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, sichtbarem read-only Gesprächsverlauf, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge; signierte interne Builds und Store-Verteilung bleiben separat abzunehmen.
+- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, sichtbarem read-only Gesprächsverlauf, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge. Repositoryseitig sind außerdem datenschutzarme `message_received`- und höchstens eine gebundene `message_reminder`-Entscheidung samt authentifiziertem Tap zum exakten Fan in `Nachrichten` vorbereitet; Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker und Production-Aktivierung bleiben deaktiviert. Signierte Builds und Store-Verteilung bleiben separat abzunehmen.
 - Mobile-Signing-Gate: ein manueller `main`-gebundener Ablauf kann nach
   erfolgreichem Ressourcencheck genau einen credential-frozen internen
   Development-/Preview-Build einreihen und dessen EAS-Endstatus read-only bis
@@ -163,7 +163,12 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   verifizierte genau ein Android-`1.0.0`-AAB. Submit, Update, Play-App-Anlage
   und Veröffentlichung blieben getrennt und deaktiviert. Google prüft das
   Entwicklerkonto weiterhin; Telefonbestätigung und App-Anlage sind bis dahin
-  gesperrt.
+  gesperrt. Dieses AAB bleibt das Artefakt für den späteren Play-App-Datensatz,
+  Test-Track und den bestehenden Android-Baseline-Nachweis; es wurde vor dem
+  nativen `message_received`-/`message_reminder`-Tap-Handler gebaut und kann
+  deshalb die neue Nachrichten-Push-Funktion nicht abnehmen. Deren späterer
+  realer Gerätenachweis erfordert nach den Push-Staging-/Delivery-Ledger-Gates
+  einen separat geprüften signierten Android-Build mit dem gemergten Handler.
 - Mobile-Push-Staging-Kontrolle: Die Registrierungstabelle ist auf dem
   getrennten Supabase-Staging mit RLS angewendet und besitzt
   jetzt getrennte manuelle Pfade für read-only Ressourcenprüfung,
@@ -176,13 +181,18 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   offene Follow-ups, feste inhaltsfreie Payloads mit einstündiger TTL, exakte Tenant-Bindung und
   unabhängig geprüfte EAS-, Staging-App-, Staging-Supabase- und Production-
   Supabase-Ziele, Retry-Entscheidung und Expo-Ticket-/Receipt-Auswertung ist
-  synthetisch testbar vorbereitet. Er besitzt bewusst weder Route noch
-  Timer/Worker und bleibt ohne diese geprüften Bindings und einen separat
-  genehmigten atomaren Delivery-Ledger vollständig deaktiviert. Dessen Reserve-
-  RPC muss dasselbe validierte Supabase-Binding wie der Loader sowie den
-  aktuellen Registrierungs-/Token-Fingerprint atomar revalidieren; Production
-  ist strukturell gesperrt. CI verhindert
-  eine unbemerkte Verdrahtung als Route, Worker, Timer oder Migration.
+  synthetisch testbar vorbereitet. Zusätzlich ist repositoryseitig eine
+  datenschutzarme Policy für `message_received` und höchstens eine gebundene
+  `message_reminder`-Entscheidung vorbereitet; ein gültiger Tap wartet auf Auth
+  und öffnet ausschließlich den exakt gebundenen Fan in `Nachrichten`.
+  Nachrichten-Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker
+  und Production-Aktivierung bleiben ebenso deaktiviert. Der Follow-up-Sender
+  besitzt bewusst weder Route noch Timer/Worker und bleibt ohne geprüfte
+  Bindings und einen separat genehmigten atomaren Delivery-Ledger vollständig
+  deaktiviert. Dessen Reserve-RPC muss dasselbe validierte Supabase-Binding wie
+  der Loader sowie den aktuellen Registrierungs-/Token-Fingerprint atomar
+  revalidieren; Production ist strukturell gesperrt. CI verhindert eine
+  unbemerkte Verdrahtung als Route, Worker, Timer oder Migration.
 - Website-Chat-Sicherheitsgrundlage: deaktivierte, workspace-gebundene
   Installationen, exakt verifizierte HTTPS-Origins und kurzlebige,
   consent-gebundene Besuchersitzungen sind als service-role-only Grundlage
@@ -358,9 +368,13 @@ Bereits vorhanden:
 - native Push-Grundlage mit validierter Follow-up-Navigation, sicherem
   Login-Handoff, ausdrücklichem Nutzer-Opt-in und vorbereiteter verschlüsselter
   Ein-Gerät-Registrierung für Owner oder autorisierte Workspace-Mitglieder;
-  öffentliche Demo-Workspaces und nicht freigegebene EAS-Projekte werden
-  abgelehnt. Der getrennte Staging-only Zustellungsbaustein ist ohne Route,
-  Timer und persistenten Ledger nicht aktiv;
+  zusätzlich verarbeitet der native Response-Handler die vorbereiteten
+  `message_received`- und `message_reminder`-Ereignisse fail-closed und öffnet
+  nach Auth-Handoff ausschließlich den exakt gebundenen Fan im Bereich
+  `Nachrichten`. Öffentliche Demo-Workspaces und nicht freigegebene EAS-
+  Projekte werden abgelehnt. Der getrennte Staging-only Zustellungsbaustein
+  besitzt keine Nachrichten-Providerverdrahtung und bleibt ohne Route, Timer,
+  Worker und persistenten Delivery-Ledger vollständig inaktiv;
 - strikt Staging-only Push-Kontrollpfad mit read-only Ressourcencheck,
   separat bestätigtem checksum-Apply sowie rollback-only Browser-/service-role-
   Abnahme für synthetische Nicht-Demo-Owner/-Member/-Geräte; kein echter Token
@@ -395,11 +409,16 @@ Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
   erst nach Download und Installation aus dem Play-Test-Track;
 - Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
   Data Safety, Screenshots, portalgefordertes Testprogramm und Upload des
-  bereits verifizierten Android-`1.0.0`-AAB;
+  bereits verifizierten Android-`1.0.0`-AAB. Dieses AAB bleibt der Play-
+  Baseline-Artefakt, wurde jedoch vor dem nativen Nachrichten-Push-Handler
+  gebaut und ist deshalb kein Nachweis für `message_received` oder
+  `message_reminder`; deren realer Gerätenachweis benötigt später einen
+  separat geprüften signierten Android-Build mit dem gemergten Handler;
 - visuelle Icon-Abnahme sowie reale Push-Berechtigungs-/Registrierungsabnahme
   im signierten Build; anschließend eigener Delivery-Ledger-Entscheid,
   rollback-only Staging-Abnahme und genau ein synthetischer serverseitiger
-  Send-/Receipt-Nachweis;
+  Send-/Receipt-Nachweis. Nachrichten-Providerzustellung und Production-Push
+  bleiben bis dahin deaktiviert;
 - finale Datenschutz-/Rechts- und Play-Portalabnahme;
 - iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
   Supportseite und die 33-Felder-App-Store-Connect-Arbeitsmatrix sind
