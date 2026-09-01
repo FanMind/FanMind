@@ -18,7 +18,13 @@ const secondContactId = "77777777-7777-4777-8777-777777777777";
 const secondMessageId = "88888888-8888-4888-8888-888888888888";
 const seenMessageId = "99999999-9999-4999-8999-999999999999";
 
-const recipient = Object.freeze({ workspaceId, userId, registrationId, easProjectId });
+const recipient = Object.freeze({
+  workspaceId,
+  userId,
+  registrationId,
+  easProjectId,
+  workspaceRole: "owner",
+});
 const baseMessage = Object.freeze({
   id: messageId,
   workspaceId,
@@ -51,10 +57,11 @@ test("message push policy is bounded to one fresh 30-minute reminder", () => {
     reminderFreshnessMinutes: 60,
     maxReminders: 1,
     ttlSeconds: 3600,
+    androidChannelId: "message-alerts",
   });
 });
 
-test("initial unseen inbound message produces privacy-minimal recipient-bound push", () => {
+test("initial unseen inbound message produces privacy-minimal recipient-bound owner push", () => {
   const decision = deriveMessagePushDecision({
     runtimeEnvironment: "staging",
     message: baseMessage,
@@ -80,6 +87,7 @@ test("initial unseen inbound message produces privacy-minimal recipient-bound pu
     title: "FanMind",
     body: "Du hast eine neue Nachricht.",
     ttl: 3600,
+    channelId: "message-alerts",
     data: {
       type: "message_received",
       contactId,
@@ -139,8 +147,51 @@ test("production, non-inbound, seen, future and stale messages fail closed", () 
   );
 });
 
+test("noncanonical or impossible persisted timestamps fail closed", () => {
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: { ...baseMessage, createdAt: "2026-02-30T18:00:00Z" },
+      recipient,
+      now: new Date("2026-03-02T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_identity_or_time" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: { ...baseMessage, seenAt: "2026-02-30T18:00:00Z" },
+      recipient,
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_seen_state" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      now: new Date("2026-08-31T18:40:00Z"),
+      priorDelivery: boundPriorDelivery({
+        initialSentAt: "2026-02-30T18:02:00Z",
+      }),
+    }),
+    { status: "blocked", reason: "invalid_initial_delivery_time" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient,
+      now: "2026-08-31T18:01:00Z",
+    }),
+    { status: "blocked", reason: "invalid_identity_or_time" },
+  );
+});
+
 test("missing or malformed seen state fails closed instead of being treated as unseen", () => {
-  const { seenAt: _seenAt, ...withoutSeenAt } = baseMessage;
+  const withoutSeenAt = { ...baseMessage };
+  delete withoutSeenAt.seenAt;
 
   assert.deepEqual(
     deriveMessagePushDecision({
@@ -171,7 +222,7 @@ test("missing or malformed seen state fails closed instead of being treated as u
   );
 });
 
-test("missing, malformed or cross-workspace recipient binding blocks before any send decision", () => {
+test("missing, malformed, member or cross-workspace recipient binding blocks before send", () => {
   assert.deepEqual(
     deriveMessagePushDecision({
       runtimeEnvironment: "staging",
@@ -197,6 +248,24 @@ test("missing, malformed or cross-workspace recipient binding blocks before any 
       now: new Date("2026-08-31T18:01:00Z"),
     }),
     { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient: { ...recipient, workspaceRole: undefined },
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "invalid_recipient_binding" },
+  );
+  assert.deepEqual(
+    deriveMessagePushDecision({
+      runtimeEnvironment: "staging",
+      message: baseMessage,
+      recipient: { ...recipient, workspaceRole: "member" },
+      now: new Date("2026-08-31T18:01:00Z"),
+    }),
+    { status: "blocked", reason: "recipient_role_not_supported" },
   );
   assert.deepEqual(
     deriveMessagePushDecision({
@@ -237,6 +306,7 @@ test("one reminder is allowed only after an accepted initial delivery, the delay
     `message:${workspaceId}:${userId}:${registrationId}:${easProjectId}:${contactId}:${messageId}:reminder:1`,
   );
   assert.equal(due.payload.body, "Eine Nachricht wartet noch auf dich.");
+  assert.equal(due.payload.channelId, "message-alerts");
 
   assert.deepEqual(
     deriveMessagePushDecision({
@@ -352,7 +422,8 @@ test("aggregation keeps one deterministic newest candidate per fan and counts on
   const equalTimestampHighId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2";
   const malformedSeenId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3";
   const missingSeenId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4";
-  const { seenAt: _seenAt, ...messageWithoutSeenAt } = baseMessage;
+  const messageWithoutSeenAt = { ...baseMessage };
+  delete messageWithoutSeenAt.seenAt;
   const result = aggregateUnseenMessagesForPush([
     { ...baseMessage, id: equalTimestampLowId, createdAt: "2026-08-31T18:10:00Z" },
     { ...baseMessage, id: equalTimestampHighId, createdAt: "2026-08-31T18:10:00Z" },
@@ -364,6 +435,11 @@ test("aggregation keeps one deterministic newest candidate per fan and counts on
       id: secondMessageId,
       contactId: secondContactId,
       createdAt: "2026-08-31T18:12:00Z",
+    },
+    {
+      ...baseMessage,
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5",
+      createdAt: "2026-02-30T18:12:00Z",
     },
   ]);
 
