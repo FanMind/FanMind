@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 const SYNTHETIC_MARKER_PATTERN =
-  /^fanmind-synthetic[-_:][a-z0-9][a-z0-9._:-]{0,63}$/;
+  /^fanmind-synthetic[-_:][A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
 
 function normalizeProjectRef(value) {
   assert.ok(typeof value === "string", "project ref must be a string");
