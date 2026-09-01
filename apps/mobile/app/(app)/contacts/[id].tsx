@@ -305,14 +305,6 @@ export default function ContactDetailScreen() {
       listContactFollowups(workspace.id, contactId),
       getContactFanAnalysisReport(workspace.id, contactId),
     ]);
-    const seenError =
-      !messagesResult.error && contactResult.contact
-        ? await markContactInboundMessagesSeen({
-            workspaceId: workspace.id,
-            workspaceRole: workspace.role,
-            contactId,
-          })
-        : null;
     setContact(contactResult.contact);
     setMemories(memoriesResult.memories);
     setMemoryError(memoriesResult.error);
@@ -324,14 +316,39 @@ export default function ContactDetailScreen() {
     setAnalysisReport(analysisResult.report);
     setAnalysisError(analysisResult.error);
     setMessageError(messagesResult.error);
-    setMessageSeenError(seenError);
+    setMessageSeenError(null);
     setError(contactResult.error);
     setLoading(false);
-  }, [contactId, workspace?.id, workspace?.role]);
+  }, [contactId, workspace?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (
+      activeSection !== "messages" ||
+      !workspace?.id ||
+      !contactId ||
+      !contact ||
+      messageError
+    ) {
+      return;
+    }
+
+    let current = true;
+    void markContactInboundMessagesSeen({
+      workspaceId: workspace.id,
+      workspaceRole: workspace.role,
+      contactId,
+    }).then((seenError) => {
+      if (current) setMessageSeenError(seenError);
+    });
+
+    return () => {
+      current = false;
+    };
+  }, [activeSection, contact, contactId, messageError, messages, workspace?.id, workspace?.role]);
 
   const refreshMessages = useCallback(async () => {
     if (!workspace?.id || !contactId) return;
@@ -339,17 +356,9 @@ export default function ContactDetailScreen() {
     const result = await listContactMessages(workspace.id, contactId);
     if (!result.error) setMessages(result.messages);
     setMessageError(result.error);
-    setMessageSeenError(
-      result.error
-        ? null
-        : await markContactInboundMessagesSeen({
-            workspaceId: workspace.id,
-            workspaceRole: workspace.role,
-            contactId,
-          }),
-    );
+    setMessageSeenError(null);
     setMessagesBusy(false);
-  }, [contactId, workspace?.id, workspace?.role]);
+  }, [contactId, workspace?.id]);
 
   const tags = useMemo(() => contact?.tags ?? [], [contact?.tags]);
   const messageChannelOptions = useMemo(
