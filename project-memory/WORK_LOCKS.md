@@ -23,6 +23,19 @@ Prevents two agents/sessions from independently working the same task.
 - Completed under this lock: PR #1028 passed its exact-head gates and merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; Production readiness run `33316105624` / job `99269748215` passed, and Store-build run `33316172583` / job `99269924756` completed exactly one verified Android `1.0.0` AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 added the private evidence preparer; FM-EV-031 prepared dual-store assets/metadata/support and bound later Play-installed evidence to the exact Android receipt. FM-EV-034 adds the fail-closed 33-field Apple portal worksheet; PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c` passed all eight workflows and final review with zero unresolved threads, then merged as `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`.
 - Resume from: never repeat the AAB build. After Google approval, verify phone/account state, create the Play app record, transfer the prepared package and upload the existing AAB to the required test track. Only after the Play download is available, use the private preparer and complete all 19 real-device/Recovery checks plus real screenshots. Apple signing/build/TestFlight/device work waits for Phase 8. Require immediate confirmation before any review submission or publication.
 
+# LOCK-FM-MOB-005-MESSAGE-PUSH-DATA-BOUNDARY-20260831
+- Task: FM-MOB-005 / FM-CR-011
+- Status: RELEASED
+- Holder: ChatGPT Mobile message-push/data-boundary continuation 2026-08-31 / 2026-09-01
+- Implementation branch/PR: `feat/mobile-message-push-data-boundary-20260831` / #1050
+- Final head: `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7`
+- Squash merge: `953fcc56de0d02d5c2c5d41468226ba051624b53`
+- Risk: R3 repository-only message notification/data-boundary preparation
+- Scope: fail-closed Production/Staging/test-data boundary plus dormant `message_received`/single-`message_reminder` policy and native exact-fan `Nachrichten` handling; no provider send, Delivery-Ledger apply, database/Production mutation, Store action or Android build.
+- Released: repository implementation exact-head CI/review passed, #1050 merged SHA-bound, merged `main` was re-read and #1049 closed `completed` only for this bounded repository scope.
+- Remaining boundary: broader FM-MOB-001 stays `IMPLEMENTED_NOT_VERIFIED`; real Push Staging/Delivery-Ledger/provider/device/Store acceptance remains open and requires a separate task/lock.
+- Rollback: if the post-merge closeout is later merged and FM-MOB-005 must be withdrawn, revert the closeout merge first, then implementation squash `953fcc56de0d02d5c2c5d41468226ba051624b53`; never leave this lock `RELEASED` while the implementation is removed.
+
 ## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
 - Task: FM-MOB-004
 - Status: RELEASED
@@ -141,9 +154,9 @@ Prevents two agents/sessions from independently working the same task.
 ## LOCK-FM-RST-001-SSH-TIMEOUT-RECONCILIATION-20260826
 - Task: FM-RST-001
 - Status: RELEASED
-- Holder: ChatGPT Restore SSH-timeout reconciliation session 2026-08-26
+- Holder: ChatGPT Restore SSH-timeout reconciliation session 2026-08-26 after exact controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` stopped at its first SSH call with a TCP timeout.
 - Branch/PR: `restore-ssh-timeout-reconciliation-20260826` / #1005; exact head `9ce6c0746fa61072eb507bce6d511f952a42b8e8`, squash merge `dd9d986c387040b213355e0ba1bf60ce31fa7b32`.
-- Acquired: 2026-08-26 Europe/Vienna after exact controller SHA-256 `45054c41143e33fce4406aea30478e43ed5280a36e1b339d0cc9c38df71ae946` stopped at its first SSH call with a TCP timeout.
+- Acquired: 2026-08-26 Europe/Vienna
 - Released: 2026-08-26 after #1005 passed every exact-head gate, merged, and issue #944 comment `5428771745` recorded the fail-closed result.
 - Risk: R4 evidence reconciliation; repository documentation and read-only provider checks only.
 - Scope: record the owner authorization, controller attempt, pre-SSH/pre-JIT/pre-dispatch failure, preserve `TARGET_COMPATIBLE`, and define the owner-only connectivity and later reauthorization boundary.
