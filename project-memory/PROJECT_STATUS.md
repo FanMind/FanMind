@@ -96,5 +96,3 @@ Update this file at the end of a substantial work session or whenever work is pa
 - Exact first unproven step
 - Open loops/blockers
 - Failed approaches/do-not-repeat references
-- Relevant PR/commit/workflow/evidence references
-- User input still required, if any
