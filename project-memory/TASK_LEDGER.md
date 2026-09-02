@@ -2,6 +2,20 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-MOB-005
+- Date: 2026-08-31 to 2026-09-01
+- Status: ACCEPTED
+- Risk: R3
+- Goal: Prepare privacy-minimal incoming-message notifications and an explicit fail-closed Production/Staging/test-data boundary without activating delivery or mutating external state.
+- Starting state: the dormant Follow-up push foundation and the existing Android `1.0.0` Play-baseline AAB already existed; message notifications had no accepted repository policy/native tap handler, and the existing AAB predates that handler.
+- Action: added Staging-only Owner `message_received` plus at most one `message_reminder`, exact workspace/user/registration/EAS/contact/message binding, strict timestamp/freshness and PostgreSQL-microsecond checks, exact-fan `Nachrichten` navigation/seen semantics, dedicated Android message channel, independent expected non-Production target verification and bounded ASCII synthetic markers; synchronized canonical readers and negative/fail-closed tests.
+- Result: PR #1050 final head `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7` passed all eight exact-head workflows, exact-head Codex review completed with all threads resolved, and the PR was SHA-bound squash-merged as `953fcc56de0d02d5c2c5d41468226ba051624b53`. Merged `main` was re-read and issue #1049 was closed `completed` only for this bounded repository scope.
+- Limitations: no provider request, Delivery-Ledger apply, Push Staging migration/rollback-only acceptance, Production/Supabase mutation, Google Play action, Android build or signed-device message-push acceptance occurred. FM-MOB-001 remains `IMPLEMENTED_NOT_VERIFIED` and external Push/Store/device gates remain open.
+- Evidence: PR #1050; exact workflow runs `33493784038`, `33493784036`, `33493784050`, `33493784093`, `33493783962`, `33493784004`, `33493783996`, `33493783974`; merge `953fcc56de0d02d5c2c5d41468226ba051624b53`; issue #1049; `project-memory/receipts/FM-MOB-005-20260831.md`.
+- Next step: keep FM-MOB-005 closed. Continue real Push Staging/Delivery-Ledger/provider/device/Store work only under FM-MOB-001 with a new exact task/change/lock; final message-push device acceptance requires a later reviewed signed Android build containing the merged handler.
+- Do not repeat: do not rebuild the existing Android `1.0.0` Play-baseline AAB merely because FM-MOB-005 is accepted, and do not reopen FM-MOB-005 to claim external delivery/device acceptance.
+- Rollback: if the post-merge closeout PR is merged and this implementation must be withdrawn, revert the closeout merge first, then implementation squash `953fcc56de0d02d5c2c5d41468226ba051624b53`; never retain ACCEPTED/RELEASED closeout records after removing the implementation.
+
 ## FM-MEM-001
 - Date: 2026-08-19
 - Status: DONE
