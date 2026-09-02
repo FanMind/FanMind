@@ -239,6 +239,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Closed work
 
+## FM-MOB-005
+- Started: 2026-08-31 Europe/Vienna
+- Closed: 2026-09-01 Europe/Vienna
+- Status: ACCEPTED
+- Risk: R3
+- Change request: FM-CR-011.
+- Issue: #1049 — CLOSED `completed`.
+- Branch/PR: `feat/mobile-message-push-data-boundary-20260831` / #1050; final head `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7`, squash merge `953fcc56de0d02d5c2c5d41468226ba051624b53`.
+- Work lock: `LOCK-FM-MOB-005-MESSAGE-PUSH-DATA-BOUNDARY-20260831` RELEASED through the post-merge closeout.
+- Scope/result: accepted only the repository-side Production/Staging/test-data boundary and dormant privacy-minimal Owner-only `message_received` plus at most one `message_reminder` policy, exact-fan authenticated `Nachrichten` navigation and section-correct `seen_at` semantics. All eight exact implementation-head workflows passed, exact-head Codex review completed and zero review threads remained before merge.
+- External boundary: real provider delivery, Delivery-Ledger apply, Push Staging mutation/acceptance, Production push, Google Play, a new signed message-push build and real-device message-push acceptance remain open under FM-MOB-001 / external acceptance. The existing Android `1.0.0` AAB remains the Play baseline but predates the new handler.
+- Evidence: `project-memory/receipts/FM-MOB-005-20260831.md`; #1050; merge `953fcc56de0d02d5c2c5d41468226ba051624b53`; issue #1049 closeout.
+- Exact next step: keep FM-MOB-005 closed; any later ledger/provider/device work requires its own bounded task/lock and must not repeat this implementation.
+- Rollback/recovery: if the post-merge closeout has been merged, revert that closeout first, then revert implementation merge `953fcc56de0d02d5c2c5d41468226ba051624b53`; do not leave ACCEPTED/RELEASED records after withdrawing the implementation.
+
 ## FM-MEM-005
 - Started: 2026-08-19 08:40 Europe/Vienna
 - Closed: 2026-08-19

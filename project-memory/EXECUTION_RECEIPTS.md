@@ -23,6 +23,25 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Work lock released: yes|no
 ```
 
+## RECEIPT-FM-MOB-005-20260901
+- Task: FM-MOB-005 / FM-CR-011
+- Started: 2026-08-31 Europe/Vienna
+- Finished: 2026-09-01 after exact-head merge, merged-main re-read and issue #1049 closeout
+- Branch/PR: implementation `feat/mobile-message-push-data-boundary-20260831` / #1050; post-merge Project Memory closeout / #1051
+- Preflight checked: AGENTS, Source of Truth, Protocol, Execution Policy, Current State, Finishline, NBA, Owner Inbox, Session Handoff, Started Work, Work Locks, Open Loops, Task Ledger, Dependencies, Decisions, Failed Attempts, Change Requests, External Acceptance, exact GitHub main/PR/CI/review state and Mobile Push/data-boundary readers.
+- Prior attempts found: the dormant Follow-up push foundation and one verified Android `1.0.0` Play-baseline AAB already existed and must not be rebuilt. That AAB predates the new native message-notification handler and cannot validate message-push behavior.
+- Dependency result: the bounded repository scope is complete and accepted. Push Staging migration/rollback-only acceptance, atomic Delivery-Ledger apply, provider delivery, Production activation, Google Play and signed-device message-push acceptance remain separate/open under FM-MOB-001.
+- Planned evidence: exact-final-head CI; completed exact-head Codex review; zero unresolved review threads; negative/fail-closed policy/navigation/data-boundary tests; final diff inspection; merged-main re-read; explicit external/non-mutation boundary.
+- Changes made: added fail-closed Production/Staging/test-data target and marker guards; Staging-only Owner `message_received` plus at most one `message_reminder`; exact recipient/workspace/device/EAS idempotency; strict timestamp/freshness/microsecond causality; dedicated Android message channel; authenticated exact-fan `Nachrichten` routing and section-bound seen acknowledgement; synchronized canonical readers. No provider/database/Production/Store/build mutation occurred.
+- Checks/tests: exact final head `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7` passed Project Memory Guard `33493784038`, Project Memory Quality `33493784036`, Project Memory Status `33493784050`, Landing Language CI `33493784093`, FanMind CI `33493783962`, Browser E2E `33493784004`, CodeQL `33493783996`, Mobile CI `33493783974`; exact-head Codex review completed at 2026-09-01T09:50:09Z and all #1050 review threads were resolved.
+- Final diff counterchecked: yes; #1050 contained the bounded code/tests/docs/Project-Memory scope only, was SHA-bound squash-merged as `953fcc56de0d02d5c2c5d41468226ba051624b53`, and merged `main` was re-read with the final fail-closed microsecond-precise policy present.
+- Regression/security countercheck: fail-closed. No provider request, Delivery-Ledger apply, Push Staging write/acceptance, Production/Supabase mutation, Google Play action, Android build or signed-device acceptance occurred. The existing baseline AAB remains distinct from the later message-push-capable build requirement.
+- Evidence produced: PR #1050 final head/merge, issue #1049 closed `completed` for repository scope only, leaf receipt `project-memory/receipts/FM-MOB-005-20260831.md`, canonical Mobile/Push readers.
+- Result status: ACCEPTED for FM-MOB-005 repository scope only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED.
+- Open follow-up: later Push Staging/Delivery-Ledger/provider/device/Store work requires a separate exact task/change/lock and, for real message-push device acceptance, a separately reviewed signed Android build containing the merged handler.
+- Work lock released: yes; `LOCK-FM-MOB-005-MESSAGE-PUSH-DATA-BOUNDARY-20260831` is released through the post-merge closeout.
+- Rollback: after #1051 is merged, revert the #1051 closeout merge first, then implementation squash `953fcc56de0d02d5c2c5d41468226ba051624b53`; never leave FM-MOB-005 ACCEPTED or its lock RELEASED after withdrawing the implementation.
+
 ## RECEIPT-FM-MEM-009-LEGACY-ISSUES-20260830
 - Task: FM-MEM-009 / FM-CR-008
 - Started: 2026-08-30
