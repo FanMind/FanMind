@@ -21,10 +21,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-003
 - Related: FM-MOB-001 / FM-MOB-003 / FM-MOB-004
 - Status: OPEN
-- Updated: 2026-08-30
-- Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result, one exact Production AAB is verified for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, and the exact Production Supabase Recovery redirect is saved. The broader receipt-bound 19-check Android runbook, real Recovery flow, Google Play app record/test-track/upload and applicable Push/Store acceptance remain open for FM-MOB-001. Google currently blocks app creation while developer identity/documents are reviewed. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
+- Updated: 2026-09-03
+- Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result, one exact Production AAB is verified for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, and the exact Production Supabase Recovery redirect is saved. That AAB is now published in the closed Google Play Alpha track for Germany, Austria and Switzerland. The broader receipt-bound 19-check Android runbook, real Recovery flow, the deliberately deferred cohort of at least 12 opted-in testers for at least 14 days, the later Production-access request and applicable Push/Store acceptance remain open for FM-MOB-001. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
 - Close when: the private validator passes a complete 19-check Android record bound to the exact signed build/commit, Recovery/Purge is evidence-bound, and the applicable Google Play/internal-test/store controls are accepted.
-- Next check: do not queue another Store build or begin the Android device acceptance early. After Google approval, confirm phone/account state, create the Play app record and upload the existing verified Android `1.0.0` AAB into the portal-required test track. Only after FanMind is installed from that Play track, generate the private pending-only record with `mobile:device:acceptance:prepare`, real-device-test all 19 checks including the saved `fanmind://reset-password` route and pass the validator. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
+- Next check: do not queue another Store build. When FanMind is ready for the Gerhard handoff, have at least 12 approved testers opt in, keep the closed test running for at least 14 days and use the Play-installed Alpha build to generate and complete the private 19-check record, including the saved `fanmind://reset-password` route. Apply for Production access only after those gates are evidenced. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
 
 ## FM-LOOP-004
 - Related: FM-AI-001

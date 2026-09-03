@@ -78,13 +78,13 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Risk: R3
 - Forbidden: exposing project IDs/secrets/private artifact values, EAS reinitialization, automatic repeat build, Submit/Update/Store action, Production crossover or Supabase/Auth/DB mutation.
 
-## FM-MOB-OWNER-002 — Complete Google Play account verification and app creation
-- Status: BLOCKED_BY_PROVIDER
-- Where: exact existing Google Play developer account and only the future FanMind app record.
-- Current evidence: live Play Console inspection on 2026-08-30 shows Google is still reviewing the uploaded identity documents. Contact-phone verification and `App erstellen` are disabled until that review completes. The exact Android `1.0.0` Production AAB already exists through run `33316172583`; do not rebuild it.
-- Resume trigger: Google sends the account-owner approval email and the Console enables phone verification/app creation.
-- Required next sequence: confirm the contact phone/account state, create the FanMind app record, complete Data Safety/store listing/screenshots and the portal-required test program, then upload the already verified AAB. Request action-time confirmation before submitting for review or publishing.
-- Forbidden: another AAB build, invented Play identifiers/test requirements, bypassing account review, claiming publication from EAS success, or starting iOS/TestFlight Phase 8.
+## FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
+- Status: DEFERRED_BY_OWNER
+- Where: exact existing FanMind closed Google Play Alpha track.
+- Current evidence: on 2026-09-03 the verified Android `1.0.0` Production AAB from run `33316172583` was published in the closed Alpha track for Germany, Austria and Switzerland. This is test distribution, not public Production access. The portal requires at least 12 opted-in testers for at least 14 days; the owner will start that period when FanMind is ready for the Gerhard handoff.
+- Resume trigger: the owner declares FanMind ready for the handoff cohort and has at least 12 approved tester addresses available.
+- Required next sequence: enroll the approved testers, verify their opt-in state, keep the test active for at least 14 days, complete the private Play-installed 19-check/Recovery evidence and only then request Production access with separate action-time confirmation.
+- Forbidden: another baseline AAB build, fabricated tester enrollment/duration/device evidence, public Production submission without the completed gates, or starting iOS/TestFlight before Phase 8.
 - Risk: R3
 
 ## FM-AI-OWNER-001 — Approve AI product, quality and financial evidence

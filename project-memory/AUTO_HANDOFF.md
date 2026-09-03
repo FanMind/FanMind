@@ -28,6 +28,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
 - FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
 - FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
 - FM-META-OWNER-001 — Complete external Meta acceptance

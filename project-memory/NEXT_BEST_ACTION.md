@@ -3,7 +3,7 @@
 Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_OWNER_ACTIONS.md`.
 
 - Sales ready: `false`
-- Phase 8 started: `false`
+- Phase 8 started: `true`
 - Selected action: `NBA-RESTORE-DATABASE`
 - Task: `FM-RST-001`
 - Gate: `restore` (`PARTIAL`)

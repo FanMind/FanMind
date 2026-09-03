@@ -335,8 +335,10 @@ kein iOS-Build und kein TestFlight.
 - [ ] successful external Mobile Push Staging resource, migration and
       rollback-only acceptance runs before server-key activation;
 - [x] one exact-commit Android Production AAB;
-- [ ] separate Play app record/internal-test upload after Google account
-      readiness;
+- [x] separate Play app record/closed-Alpha upload using the existing verified
+      Android `1.0.0` AAB;
+- [ ] at least twelve opted-in Alpha testers for at least 14 days, complete
+      Play-installed device evidence and the later Production-access request;
 
 ### Phase C
 

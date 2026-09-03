@@ -412,9 +412,11 @@ Noch extern beziehungsweise als nächste Mobile-Phase abzunehmen:
   ist in der bestätigten Production-Auth-Allowlist gespeichert;
 - vollständiger privater receipt-gebundener 19-Punkte-Android-Gerätenachweis
   erst nach Download und Installation aus dem Play-Test-Track;
-- Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
-  Data Safety, Screenshots, portalgefordertes Testprogramm und Upload des
-  bereits verifizierten Android-`1.0.0`-AAB. Dieses AAB bleibt der Play-
+- der geschlossene Google-Play-Alpha-Track ist mit dem bereits verifizierten
+  Android-`1.0.0`-AAB für Deutschland, Österreich und die Schweiz
+  veröffentlicht; offen sind der bewusst später startende Test mit mindestens
+  zwölf beigetretenen Testern über mindestens 14 Tage, der vollständige
+  Gerätenachweis und anschließend der Antrag auf Produktionszugang. Dieses AAB bleibt der Play-
   Baseline-Artefakt, wurde jedoch vor dem nativen Nachrichten-Push-Handler
   gebaut und ist deshalb kein Nachweis für `message_received` oder
   `message_reminder`; deren realer Gerätenachweis benötigt später einen
