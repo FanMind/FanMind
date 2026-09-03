@@ -150,12 +150,32 @@ export const roadmapPhases: RoadmapPhase[] = [
     number: "08",
     phase: "Phase 8",
     icon: "integrations",
-    title: "LinkedIn & weitere Kanäle",
-    status: "Später · Anbindungen noch nicht begonnen",
+    title: "Website-KI, iOS & weitere Kanäle",
+    status: "Website-KI begonnen · übrige Anbindungen später",
     statusIcon: "◇",
     tone: "gold",
     availability: "later",
     items: [
+      {
+        label: "Einbettbarer Website-KI-Assistent",
+        state: "partial",
+        status: "Sicherheits-, Widget- und Nachrichtenbasis vorbereitet",
+      },
+      {
+        label: "Gesprächsverlauf in FanMind",
+        state: "partial",
+        status: "Eingehende Nachrichten und Inbox-Zuordnung vorbereitet",
+      },
+      {
+        label: "KI-Antworten und Übergabe an den Nutzer",
+        state: "later",
+        status: "KI-Dialog und Eskalation noch umzusetzen",
+      },
+      {
+        label: "E-Mail-Rückkanal für Besucher",
+        state: "later",
+        status: "E-Mail-Erfassung, Einwilligung und Antwortzustellung noch umzusetzen",
+      },
       { label: "LinkedIn", state: "later", status: "Roadmap" },
       // Aus Phase 6 verschoben · Phase 8
       { label: "iOS-TestFlight", state: "later", status: "Phase 8" },
@@ -168,7 +188,11 @@ export const roadmapPhases: RoadmapPhase[] = [
       { label: "Weitere Creator- & Membership-Kanäle", state: "later", status: "Roadmap" },
       { label: "Business-, Review- & Shop-Kanäle", state: "later", status: "Roadmap" },
       { label: "Internationale Plattformen", state: "later", status: "Roadmap" },
-      { label: "Start nach Abschluss von Phase 7", state: "later", status: "Noch nicht begonnen" },
+      {
+        label: "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7",
+        state: "later",
+        status: "Website-KI-Grundlage bereits begonnen",
+      },
     ],
   },
 

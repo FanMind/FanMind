@@ -63,3 +63,8 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: Repository-only iPhone App Store preparation may proceed before Phase 8. This includes metadata, public HTTPS support, privacy/review/tester handoffs and a future screenshot plan. It does not start Phase 8 and authorizes no iOS build, signing, TestFlight, App Store Connect submission or iPhone acceptance. Complete Android acceptance and final Android screenshots are moved behind a real download/install from the Google Play test track; the verified Android `1.0.0` AAB must not be rebuilt.
 - Supersedes: only the FM-DEC-009 wording that could be read as deferring every iOS Store document until Phase 8, and the earlier device-handoff sequence that placed the complete 19-check Android run before Play-track availability. It does not supersede the Phase-8 boundary for signed iOS/TestFlight/device work.
 - Reason: Owner wants useful Store preparation to continue during Google account review, currently has no iPhone for real testing, and explicitly wants Android acceptance to cover the Store-delivered artifact.
+## FM-DEC-011
+- Date: 2026-09-03
+- Status: DONE
+- Decision: The embeddable Website AI assistant belongs to Phase 8. Its existing disabled security, session, one-way widget and ingestion foundation means only this Phase-8 workstream is already started; iOS/TestFlight and later channel integrations remain deferred. The target includes AI dialogue, a fail-safe handoff to the FanMind user with the complete conversation, optional consented visitor email capture and manually controlled reply delivery.
+- Reason: The owner confirmed the product scope and roadmap placement after the Android closed-test release.

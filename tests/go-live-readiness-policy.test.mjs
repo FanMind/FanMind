@@ -172,7 +172,7 @@ test("phase 4 stays technically complete while sales handoff waits for phase 7",
   );
   assert.match(
     roadmap,
-    /number: "08"[\s\S]*status: "Später · Anbindungen noch nicht begonnen"[\s\S]*label: "Start nach Abschluss von Phase 7", state: "later", status: "Noch nicht begonnen"/u,
+    /number: "08"[\s\S]*status: "Website-KI begonnen · übrige Anbindungen später"[\s\S]*label: "Einbettbarer Website-KI-Assistent"[\s\S]*state: "partial"[\s\S]*label: "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7"/u,
   );
   assert.doesNotMatch(roadmap, /Steuerberater-Bestätigung/u);
 

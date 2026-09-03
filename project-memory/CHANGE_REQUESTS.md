@@ -152,3 +152,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision:
 - Related task:
 ```
+## FM-CR-012
+- Date: 2026-09-03
+- Status: ACCEPTED
+- Source: owner
+- Idea: Assign the already-started embeddable Website AI assistant to Phase 8. Users receive an embed code; visitor conversations are visible in FanMind; when AI cannot continue reliably it hands the conversation to the FanMind user; a visitor who explicitly provides an email address can receive the user's later reply.
+- Classification: Roadmap correction and product-scope clarification. Existing disabled Website Chat security, session, widget and ingestion work counts as started foundation; this decision does not authorize Production activation, provider sending or personal-data collection without consent/legal acceptance.
+- Affected areas: canonical roadmap, Website Chat foundation, public project summary and roadmap invariants.
+- Decision: Phase 8 now explicitly includes the Website AI assistant. Foundation is `partial`; AI dialogue, escalation, full conversation UX, email capture/verification and reply delivery remain open.

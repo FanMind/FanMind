@@ -226,7 +226,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   KI-Routen und Plus-/Ultra-Aktivierung bleiben gesperrt.
 - Referral-Rabatte gelten nur auf die Starter-Grundgebühr von 312 €/Monat. Einrichtung, KI-Add-ons, Connection-Pakete und Agency-Erweiterungen sind nicht rabattfähig; Referral und Agency-Mengenrabatt sind nicht kombinierbar.
 - Growth, Agency und Enterprise bleiben Roadmap / Coming Soon / Auf Anfrage, bis sie ausdrücklich freigegeben sind.
-- Verbindliche Kanal-Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = LinkedIn und alle übrigen späteren Plattformanbindungen. Phase 8 ist noch nicht begonnen, wird aktuell nicht gebaut und zählt nicht als Fortschritt.
+- Verbindliche Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = Website-KI-Assistent, iOS/TestFlight, LinkedIn und weitere spätere Plattformanbindungen. Die deaktivierte Sicherheits-, Widget- und Nachrichteningestion-Basis des Website-Assistenten ist begonnen; KI-Dialog, menschliche Eskalation, E-Mail-Rückkanal und produktive Aktivierung fehlen noch. Die übrigen Phase-8-Anbindungen zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 - FanMind ist kein Bot: KI bereitet Antworten vor; der Mensch prüft, kopiert und sendet final selbst.
 - FanMind garantiert keine fehlerfreien KI-Antworten.
 - Externe Integrationen dürfen nicht als allgemein aktive Vollfunktion dargestellt werden, solange sie nicht technisch und rechtlich validiert sind.

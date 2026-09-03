@@ -3,6 +3,22 @@
 Status: Session, Nachrichteningestion und cookie-freies Einweg-Widget
 vorbereitet, nicht produktiv aktiviert.
 
+Roadmap-Zuordnung: Phase 8 – Website-KI-Assistent.
+
+Das Zielbild ist ein Code-Snippet, das FanMind-Nutzer in ihre Website
+einfügen. Der Assistent beantwortet Besucherfragen mit KI. Wenn die KI nicht
+verlässlich weiterkommt, übergibt sie die Anfrage samt vollständigem
+Gesprächsverlauf an den zuständigen FanMind-Nutzer. Hinterlässt der Besucher
+nach ausdrücklicher Einwilligung seine E-Mail-Adresse, kann der Nutzer aus
+FanMind antworten und die Antwort wird an diese Adresse zugestellt.
+
+Die aktuelle Grundlage deckt nur Installation, Consent, Sitzung, eingehende
+Nachrichten und deren Zuordnung zu Kontakt, Conversation und Inbox ab. Noch
+offen sind KI-Antworten, Unsicherheits-/Übergabelogik, E-Mail-Erfassung und
+-verifizierung, die vollständige Gesprächsansicht sowie der manuell
+freigegebene Antwortversand. Automatisches Senden im Namen des FanMind-Nutzers
+bleibt ausgeschlossen.
+
 Dieser Block schafft die sichere Grundlage für Website-Chat und Website-KI,
 ohne KI-Antworten, Rückkanal oder automatisches Senden zu aktivieren.
 

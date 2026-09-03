@@ -255,10 +255,16 @@ Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-
 
 Die Kanalzuordnung ist verbindlich und darf nicht zwischen Phasen verschoben
 oder doppelt geführt werden: Phase 3 umfasst Facebook, Instagram und WhatsApp.
-Phase 7 umfasst TikTok, X/Twitter, Discord und OnlyFans. Phase 8 bündelt
-LinkedIn sowie alle weiteren noch zu verbindenden Medien-, Creator-, Review-,
-Shop- und internationalen Plattformen. Phase 8 ist noch nicht begonnen, wird
-im aktuellen Arbeitsumfang nicht gebaut und nicht als Fortschritt eingerechnet.
+Phase 7 umfasst TikTok, X/Twitter, Discord und OnlyFans. Phase 8 bündelt den
+einbettbaren Website-KI-Assistenten, iOS/TestFlight, LinkedIn sowie alle
+weiteren noch zu verbindenden Medien-, Creator-, Review-, Shop- und
+internationalen Plattformen. Für den Website-KI-Assistenten ist bereits eine
+deaktivierte Sicherheits-, Sitzungs-, Widget- und Nachrichteningestion-Basis
+vorbereitet; dieser Teil von Phase 8 ist deshalb begonnen. KI-Dialog,
+Eskalation an den FanMind-Nutzer, vollständige Gesprächsansicht,
+E-Mail-Erfassung mit Einwilligung und der Antwortweg zum Besucher sind noch
+nicht umgesetzt. Die übrigen Phase-8-Anbindungen beginnen weiterhin erst nach
+Abschluss von Phase 7 und zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 OnlyFans bleibt auch in Phase 7 eine unverbindliche, vor Umsetzung technisch
 und rechtlich zu prüfende Plattform.
 
