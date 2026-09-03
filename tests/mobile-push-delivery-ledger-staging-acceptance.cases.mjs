@@ -11,6 +11,7 @@ import {
   buildMobilePushLedgerAcceptanceSql,
   buildMobilePushLedgerRoleDenialSql,
   deriveMobilePushLedgerAcceptanceUuid,
+  latestMobilePushLedgerAcceptanceStage,
 } from "../scripts/operations/mobile-push-delivery-ledger-staging-acceptance.mjs";
 import {
   MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_CONFIRMATION,
@@ -105,6 +106,16 @@ test("rollback-only SQL proves reservations, leases, receipts and atomic revocat
   ]) assert.match(sql, boundary);
   assert.equal(sql.match(/\brollback\s*;/giu)?.length, 2);
   assert.doesNotMatch(sql, /\bcommit\s*;|ExpoPushToken|push\/send|fetch\(/iu);
+});
+
+test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
+  assert.equal(
+    latestMobilePushLedgerAcceptanceStage(
+      "MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=fixtures\nNOTICE: MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=receipt\n",
+    ),
+    "receipt",
+  );
+  assert.equal(latestMobilePushLedgerAcceptanceStage("password=do-not-echo"), "unknown");
 });
 
 test("browser probes exercise table and RPC denial", () => {

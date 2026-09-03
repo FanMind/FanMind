@@ -28,6 +28,8 @@ const ROLE_PROBES = Object.freeze([
   ["authenticated", "table"],
   ["authenticated", "reserve"],
 ]);
+const ACCEPTANCE_STAGE_PATTERN =
+  /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation|ticket|receipt|device_revocation|rollback_check)/gu;
 
 function fail(code) {
   throw new Error(`MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_ERROR=${code}`);
@@ -134,6 +136,7 @@ export function buildMobilePushLedgerAcceptanceSql(identifiers) {
 \set ON_ERROR_STOP on
 begin;
 set local role service_role;
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=preflight
 
 do $preflight$
 begin
@@ -160,6 +163,7 @@ begin
 end
 $preflight$;
 
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=fixtures
 insert into public.contacts (
   id, workspace_id, display_name, handle, source_platform, language, status,
   tags, summary, internal_notes, is_top_fan
@@ -191,6 +195,7 @@ insert into public.mobile_push_registrations (
    'android', 'active', statement_timestamp(), statement_timestamp(),
    statement_timestamp() + interval '30 days');
 
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=reservation
 do $lifecycle$
 declare
   reserved jsonb;
@@ -246,6 +251,7 @@ begin
     raise exception 'lease_exclusivity_invalid';
   end if;
 
+  raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket';
   perform public.mobile_push_delivery_transition('markTicket', jsonb_build_object(
     'attemptId', attempt_id::text,
     'checkAfter', to_char((statement_timestamp() + interval '15 minutes') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
@@ -257,6 +263,7 @@ begin
   update public.mobile_push_delivery_attempts
      set receipt_check_after = statement_timestamp()
    where id = attempt_id;
+  raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=receipt';
   receipt_reserved := public.mobile_push_delivery_reserve_receipt(jsonb_build_object(
     'attemptId', attempt_id::text,
     'requestedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
@@ -281,6 +288,7 @@ begin
 end
 $lifecycle$;
 
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=device_revocation
 do $device_revocation$
 declare
   reserved jsonb;
@@ -331,6 +339,7 @@ select 'MOBILE_PUSH_DELIVERY_LEDGER_RECEIPT_LIFECYCLE=PASS';
 select 'MOBILE_PUSH_DELIVERY_LEDGER_ATOMIC_DEVICE_REVOCATION=PASS';
 rollback;
 
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=rollback_check
 begin;
 set transaction read only;
 set local role service_role;
@@ -415,6 +424,11 @@ function runPsql(sql, environment, passfilePath) {
   });
 }
 
+export function latestMobilePushLedgerAcceptanceStage(stdout) {
+  const matches = [...String(stdout ?? "").matchAll(ACCEPTANCE_STAGE_PATTERN)];
+  return matches.at(-1)?.[1] ?? "unknown";
+}
+
 function ensurePsqlAvailable() {
   const result = spawnSync("psql", ["--version"], { stdio: "ignore" });
   if (result.error || result.status !== 0) fail("psql_unavailable");
@@ -445,6 +459,9 @@ async function runAcceptance(environment) {
       "MOBILE_PUSH_DELIVERY_LEDGER_ROLLBACK=PASS",
     ];
     if (acceptance.error || acceptance.status !== 0 || markers.some((marker) => !acceptance.stdout.includes(marker))) {
+      console.error(
+        `MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_FAILURE_STAGE=${latestMobilePushLedgerAcceptanceStage(`${acceptance.stdout}\n${acceptance.stderr}`)}`,
+      );
       fail("database_acceptance_failed");
     }
   } finally {
