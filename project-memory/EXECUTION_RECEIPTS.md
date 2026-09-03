@@ -6,7 +6,7 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Task: FM-MOB-006 / FM-CR-013 continuation
 - Started: 2026-09-03 UTC
 - Finished: 2026-09-03 repository checkpoint
-- Branch/PR: owner-requested direct `main` continuation; exact remote commit assigned after upload
+- Branch/PR: owner-requested direct `main` continuation; implementation uploaded to `main` as `6cccd081a78f961facf4d17639e879d9175e3bc7`
 - Preflight checked: AGENTS, Source of Truth, Supabase current security guidance/changelog, Push ledger/policy/tests, Staging registration workflows, Project Memory task/change/receipt state and Git state
 - Prior attempts found: checksum-pinned ledger existed only with offline verification; no protected database verification/apply workflow existed
 - Dependency result: existing protected Staging variables/secrets and exact-main binding can be reused without adding provider credentials
