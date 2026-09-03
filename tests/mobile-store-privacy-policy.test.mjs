@@ -158,7 +158,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
     /e96415035ffbe12f16dd3b81e13a5e62b2c4ac00/u,
   );
   assert.match(playHandoff, /Keinen neuen Build starten/u);
-  assert.match(playHandoff, /bereits verifizierte `1\.0\.0`-AAB/u);
+  assert.match(playHandoff, /bereits verifizierte Android-`1\.0\.0`-AAB/u);
   assert.match(
     playHandoff,
     /iPhone-App-Store-Metadaten dürfen separat vorbereitet/u,

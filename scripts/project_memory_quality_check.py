@@ -137,8 +137,8 @@ if state_path.exists():
         errors.append(f"finishline-json-invalid:{exc.msg}")
     if state.get("repository") != "FanMind/FanMind":
         errors.append("finishline-repository-mismatch")
-    if state.get("phase8_started") is not False:
-        errors.append("finishline-phase8-must-be-false")
+    if state.get("phase8_started") is not True:
+        errors.append("finishline-website-ai-foundation-must-be-recorded")
     for gate in ["restore", "mobile", "ai_billing", "meta_security", "phase3_social", "phase7_social", "sales_handoff"]:
         if gate not in state.get("gates", {}):
             errors.append(f"finishline-gate-missing:{gate}")

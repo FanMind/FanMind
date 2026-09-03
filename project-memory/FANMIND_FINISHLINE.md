@@ -23,7 +23,7 @@ Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the c
 - Phase 4 is the completed Production/Billing base, not sales handoff.
 - Phase 3 is Facebook + Instagram + WhatsApp.
 - Phase 7 is TikTok + X/Twitter + Discord + conditional OnlyFans.
-- Phase 8 is not started and must not be counted or implemented in this finishline. It now contains `iOS-TestFlight` in addition to LinkedIn and later platforms; assigning the item there does not start Phase 8.
+- Only the disabled Website-AI security/widget/message-ingestion foundation in Phase 8 has started, and it is not counted in this finishline. Dialog, escalation, email return path, `iOS-TestFlight`, LinkedIn and later platforms remain deferred.
 - A gate with code/CI only is not automatically `ACCEPTED`.
 - External acceptance cannot be inferred from a repository artifact.
 - Restore remains R4 and never targets Production or Supabase Staging.

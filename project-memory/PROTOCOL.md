@@ -51,7 +51,7 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 - `scripts/fanmind_sales_readiness.py` derives `SALES_READY`.
 - `scripts/fanmind_truth_drift_check.py` validates canonical roadmap/source-truth invariants.
 - `.github/workflows/project-memory-quality.yml` runs these controls plus evidence freshness, accepted-state drift and milestone validation on PR/manual/daily execution.
-- Phase 8 must stay `not started` during the current finishline.
+- Only the disabled Website-AI foundation in Phase 8 may be `started`; all other Phase-8 work remains deferred and the bounded foundation is outside the current finishline.
 
 ## Next-best-action rule
 1. Preserve finishline priority; never mark a deferred owner step complete just because work proceeds elsewhere.
@@ -102,7 +102,7 @@ The real Restore follows `RESTORE_STATE_MACHINE.md`; states cannot be skipped. `
 Any control in `EXTERNAL_ACCEPTANCE.md` can be marked `ACCEPTED` only from current external/operator evidence bound to the relevant account/project/build/commit/target. Code, tests and CI alone cannot self-approve it.
 
 ## Sales readiness rule
-`SALES_READY=true` is allowed only when every `required_for_sales` gate is in an allowed accepted state and Phase 8 remains not started. Phase 4 alone never satisfies sales handoff.
+`SALES_READY=true` is allowed only when every `required_for_sales` gate is in an allowed accepted state. The bounded disabled Website-AI foundation in Phase 8 neither satisfies nor blocks that finishline; Phase 4 alone never satisfies sales handoff.
 
 ## Milestone closeout
 Before closing a phase, release, restore drill or other milestone, review project-wide tasks, finishline, next-best-action, external/deferred actions, evidence freshness, accepted-state drift, locks/receipts, loops/dependencies, contradictions and CI/runtime/device/provider evidence. When the milestone reaches `ACCEPTED` or `PRODUCTION_CONFIRMED`, create the required immutable snapshot.

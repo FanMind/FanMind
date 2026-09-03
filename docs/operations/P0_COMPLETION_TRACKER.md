@@ -80,9 +80,12 @@ Das Zielsystem wird deshalb zusätzlich eigenständig geführt:
 FanMind bleibt dabei ein spezialisiertes Arbeits- und Umsatzsystem, in dem der
 Mensch jede externe Nachricht selbst prüft und sendet. Phase 3 enthält
 Facebook, Instagram und WhatsApp; Phase 7 enthält TikTok, X/Twitter, Discord
-und die unverbindliche OnlyFans-Prüfung. Phase 8 mit LinkedIn und allen
-übrigen späteren Plattformanbindungen ist noch nicht begonnen und zählt nicht
-in die acht Abschlussblöcke.
+und die unverbindliche OnlyFans-Prüfung. Phase 8 umfasst Website-KI,
+iOS/TestFlight und LinkedIn. Ausschließlich die deaktivierte Sicherheits-,
+Widget- und Nachrichtenbasis der Website-KI ist begonnen; Dialog, Eskalation,
+E-Mail-Rückkanal und alle übrigen
+späteren Plattformanbindungen bleiben offen. Dieser begrenzte Website-
+Assistent-Baustein zählt nicht in die acht Abschlussblöcke.
 
 Das verbindliche Umsatzmodell besteht aus 312 € Core pro Monat mit einem
 Creator/Workspace, KI Standard und zehn Connections inklusive. Je weitere fünf

@@ -2,6 +2,20 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-MOB-006
+- Date: 2026-09-03
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Add a dormant, service-role-only atomic Mobile Push Delivery-Ledger foundation with transactional target revalidation, send/receipt leases, bounded retry state and atomic device-registration revocation.
+- Scope: controlled SQL, server-only RPC adapter, checksum/offline verification, rollback-only Staging acceptance preparation, tests and documentation. No apply, route, worker, timer, provider request, Production activation or signed build.
+- Dependencies: FM-MOB-001; accepted FM-MOB-005 repository boundary; existing `mobile_push_registrations`; exact Staging/Production/EAS target binding.
+- Evidence required: offline checksum/contract validation, focused service/SQL/adapter tests, proof of route/timer/worker/provider dormancy, project-memory countercheck and exact remote commit/CI before acceptance.
+- Negative path: Production or browser access, non-atomic revalidation/revocation, lease bypass, plaintext token/provider content, unbounded retries or runtime wiring must fail closed.
+- Recovery: repository changes are revertible; no external state is changed by this task. Any later Staging apply uses its own checksum-bound transaction and rollback-only acceptance.
+- Result: checksum-pinned controlled SQL, a server-only same-target RPC adapter, atomic reservation/revalidation, send/receipt leases, bounded retries and atomic invalid-device revocation are implemented without runtime wiring.
+- Evidence: offline ledger check PASS; focused Push/ledger/Staging controls 34/34 PASS after integration; the broader Operations suite executed but its local result is non-authoritative because root dependencies are absent and it also exposed pre-existing truth-test drift that was reconciled in this change.
+- Next step: exact-head remote CI, then a separately approved protected-Staging apply and rollback-only PostgreSQL acceptance. Real provider/device delivery remains later and separately gated.
+
 ## FM-MOB-005
 - Date: 2026-08-31 to 2026-09-01
 - Status: ACCEPTED

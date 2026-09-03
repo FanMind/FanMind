@@ -4,7 +4,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
-- Phase 8 started: `false`
+- Phase 8 started: `true`
 - Next action: `NBA-RESTORE-DATABASE`
 - Next action title: SSH-Zugang reconciliieren und Restore neu autorisieren
 

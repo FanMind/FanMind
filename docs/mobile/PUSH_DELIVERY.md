@@ -201,18 +201,27 @@ Ein Expo-Receipt mit `status=ok` bestätigt nur die Übergabe an APNs oder FCM,
 nicht die Anzeige auf dem Gerät. Grundlage sind die offiziellen
 [Expo-Hinweise zu Tickets, Receipts und Retry](https://docs.expo.dev/push-notifications/sending-notifications/).
 
-## Offener Ledger-Blocker
+## Kontrollierter Ledger – vorbereitet, nicht angewendet
 
-Das bestehende Schema besitzt keine robuste, atomare Zustellhistorie. Eine
-In-Memory-Map, ein Prozess-Lock oder das Follow-up selbst wären kein
-instanzübergreifender Idempotenznachweis. Deshalb gibt es bewusst keinen
-Default-Ledger und keine aktive Serverroute.
+`supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql` stellt
+eine checksum-gebundene, service-role-only Zustellhistorie mit atomarer
+Target-Revalidierung, Idempotenz, Send-/Receipt-Leases, begrenzten Versuchen
+und transaktionaler `DeviceNotRegistered`-Deaktivierung bereit. Der
+server-only Adapter `src/lib/mobilePushDeliveryLedger.ts` bindet jeden RPC an
+dasselbe validierte Staging-Ziel. Eine In-Memory-Map, ein Prozess-Lock oder das
+Follow-up selbst bleiben ausdrücklich unzulässig.
+
+Der kontrollierte SQL-Baustein wurde nicht angewendet und wird von keiner
+Route, keinem Timer und keinem Worker importiert. Deshalb gibt es weiterhin
+keinen Provideraufruf und keine reale Zustellung. Offline prüft
+`npm run db:mobile-push-delivery-ledger:check` den exakten Hash und die
+Sicherheitsgrenzen.
 
 Der Service ist allein nicht aktivierbar: Vor einem realen Staging-Send müssen
 die unabhängig geprüften App-, Staging-Supabase-, Production-Supabase- und
 EAS-Bindings serverseitig übergeben werden. Zusätzlich ist eine eigene
-Entscheidung und separat genehmigte, checksum-gebundene Migration erforderlich.
-Sie muss mindestens eine service-role-only Tabelle mit eindeutigem
+Entscheidung und separat genehmigtes, checksum-gebundenes Staging-Apply
+erforderlich. Der vorbereitete Baustein enthält eine service-role-only Tabelle mit eindeutigem
 Idempotenzschlüssel, Versuchsnummer, Send- und Receipt-Reservation/Lease,
 Receipt-Zähler, redigiertem Zustand, privater Receipt-ID,
 Retry-/Receipt-Zeitpunkten und definierter Aufbewahrung bereitstellen. Die

@@ -25,6 +25,10 @@ import {
   decryptMobilePushToken,
   encryptMobilePushToken,
 } from "../src/lib/mobilePushTokenCrypto.mjs";
+import {
+  EXPECTED_LEDGER_SHA256,
+  evaluateMobilePushDeliveryLedgerSql,
+} from "../scripts/operations/mobile-push-delivery-ledger-runner.mjs";
 
 const IDS = Object.freeze({
   workspace: "11111111-1111-4111-8111-111111111111",
@@ -44,6 +48,45 @@ const REVIEWED_TARGETS = Object.freeze({
   appHostname: "staging.fanmind.ch",
   targetSupabaseProjectRef: "stagingref0123456789",
   productionSupabaseProjectRef: "prodref0123456789012",
+});
+const DELIVERY_LEDGER_SQL_URL = new URL(
+  "../supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql",
+  import.meta.url,
+);
+
+test("delivery ledger SQL is pinned, atomic, browser-denied and dormant", async () => {
+  const sql = await readFile(DELIVERY_LEDGER_SQL_URL, "utf8");
+  const result = evaluateMobilePushDeliveryLedgerSql(sql);
+  assert.equal(result.digest, EXPECTED_LEDGER_SHA256);
+  for (const boundary of [
+    /for update of w, m, f, c, r/iu,
+    /pg_advisory_xact_lock\(hashtextextended\(v_idempotency_key, 0\)\)/iu,
+    /r\.expo_token_hash = v_token_fingerprint/iu,
+    /receipt_lease_hash is distinct from v_lease_hash/iu,
+    /send_lease_hash is distinct from v_lease_hash/iu,
+    /update public\.mobile_push_registrations set\s+status = 'disabled'[\s\S]*update public\.mobile_push_delivery_attempts set\s+state = 'rejected'/iu,
+  ]) {
+    assert.match(sql, boundary);
+  }
+  assert.match(sql, /revoke all on table public\.mobile_push_delivery_attempts\s+from public, anon, authenticated, service_role/iu);
+  assert.doesNotMatch(sql, /create\s+policy|\bpg_cron\b|\bcron\.schedule\b|expo\.dev/iu);
+  assert.throws(
+    () => evaluateMobilePushDeliveryLedgerSql(`${sql}\n-- drift`),
+    /ledger_checksum_mismatch/u,
+  );
+});
+
+test("delivery ledger server adapter keeps one validated RPC target", async () => {
+  const source = await readFile(
+    new URL("../src/lib/mobilePushDeliveryLedger.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /^import "server-only";/u);
+  assert.match(source, /validateMobilePushDeliveryTargetBinding/u);
+  assert.match(source, /ledger_target_binding_mismatch/u);
+  assert.match(source, /\/rest\/v1\/rpc\//u);
+  assert.match(source, /Authorization: `Bearer \$\{binding\.serviceRoleKey\}`/u);
+  assert.doesNotMatch(source, /console\.(?:log|warn|error)|mobilePushDelivery\.mjs/u);
 });
 
 function environment(overrides = {}) {
@@ -1157,6 +1200,9 @@ test("dormancy invariant rejects routes workers timers migrations and production
     "src/lib/mobilePushDeliveryPolicy.d.mts",
     "src/lib/mobilePushDeliveryPolicy.mjs",
     "src/lib/mobilePushDeliveryTarget.ts",
+    "src/lib/mobilePushDeliveryLedger.ts",
+    "scripts/operations/mobile-push-delivery-ledger-runner.mjs",
+    "supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql",
   ]);
   const roots = [
     "src",

@@ -130,7 +130,7 @@ These live facts can drift. Revalidate runner group/workflow allowlist/JIT state
 
 - Phase 3: Facebook, Instagram, WhatsApp.
 - Phase 7: TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible.
-- Phase 8: `iOS-TestFlight`, LinkedIn and later platforms; not started and outside current scope. The assignment of TestFlight to Phase 8 does not start that phase and does not remove the native iOS implementation foundation.
+- Phase 8: the disabled Website-AI security/widget/message-ingestion foundation has started; dialog, escalation, email return path, `iOS-TestFlight`, LinkedIn and later platforms remain deferred. This bounded foundation is outside the current through-Phase-7 finishline and does not remove the native iOS implementation foundation.
 - Phase 4 = completed production/billing base, **not** sales handoff.
 - Technical sales handoff occurs only after required Phase-3 and Phase-7 channel acceptance.
 

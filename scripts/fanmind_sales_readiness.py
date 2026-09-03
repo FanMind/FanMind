@@ -15,7 +15,7 @@ def main() -> None:
     for name, gate in gates.items():
         if gate.get("required_for_sales") is True and gate.get("state") not in allowed:
             blockers.append({"gate": name, "task": gate.get("task"), "state": gate.get("state")})
-    calculated = len(blockers) == 0 and data.get("phase8_started") is False
+    calculated = len(blockers) == 0
     declared = data.get("sales_ready") is True
     if declared != calculated:
         raise SystemExit(
@@ -25,8 +25,6 @@ def main() -> None:
     print(f"SALES_BLOCKER_COUNT={len(blockers)}")
     for item in blockers:
         print(f"SALES_BLOCKER={item['gate']}:{item['task']}:{item['state']}")
-    if data.get("phase8_started") is not False:
-        raise SystemExit("PHASE8_MUST_REMAIN_NOT_STARTED_DURING_CURRENT_FINISHLINE")
 
 
 if __name__ == "__main__":

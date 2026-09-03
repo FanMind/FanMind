@@ -167,7 +167,7 @@ test("completion tracker keeps every weighted block and supporting work line", a
   );
 });
 
-test("channel phases stay unique and phase 8 remains unstarted", async () => {
+test("channel phases stay unique and phase 8 records only the Website AI foundation", async () => {
   const [roadmap, publicRoadmap, adminRoadmap, sourceOfTruth, readme, tracker, databaseSchema] = await Promise.all([
     source("src/config/roadmap.ts"),
     source("src/app/roadmap/page.tsx"),
@@ -188,14 +188,15 @@ test("channel phases stay unique and phase 8 remains unstarted", async () => {
   assert.match(phase7, /TikTok[\s\S]*X \/ Twitter[\s\S]*Discord[\s\S]*OnlyFans/u);
   assert.match(phase7, /label: "OnlyFans", state: "later", status: "Roadmap"/u);
   assert.doesNotMatch(phase7, /Facebook|Instagram|WhatsApp|LinkedIn/u);
-  assert.match(phase8, /LinkedIn & weitere Kanäle[\s\S]*LinkedIn[\s\S]*Internationale Plattformen/u);
+  assert.match(phase8, /Website-KI, iOS & weitere Kanäle[\s\S]*LinkedIn[\s\S]*Internationale Plattformen/u);
   assert.match(phase8, /label: "Telegram"[\s\S]*state: "later"[\s\S]*status: "Bot-\/Webhook-Grundlage vorbereitet · inaktiv; Anbindung nicht begonnen"/u);
   assert.doesNotMatch(phase8, /YouTube, Threads, Reddit & Telegram/u);
   assert.match(roadmap, /"YouTube, Threads & Reddit"/u);
   assert.match(roadmap, /"Bot-\/Webhook-Grundlage vorbereitet · inaktiv; Anbindung nicht begonnen"/u);
-  assert.match(phase8, /status: "Später · Anbindungen noch nicht begonnen"/u);
+  assert.match(phase8, /status: "Website-KI begonnen · übrige Anbindungen später"/u);
   assert.match(phase8, /availability: "later"/u);
-  assert.doesNotMatch(phase8, /state: "done"|state: "progress"|state: "partial"|state: "planned"/u);
+  assert.equal((phase8.match(/state: "partial"/gu) ?? []).length, 2);
+  assert.doesNotMatch(phase8, /state: "done"|state: "progress"|state: "planned"/u);
   assert.doesNotMatch(phase8, /Facebook|Instagram|WhatsApp|TikTok|X \/ Twitter|Discord|OnlyFans/u);
   assert.match(phase15, /Segmente & Listen[\s\S]*Segment-Ansichten[\s\S]*Listenlogik[\s\S]*Filter & Tags[\s\S]*CSV-Import für Segmente nutzen/u);
   assert.match(publicRoadmap, /import \{ roadmapPhases, type RoadmapPhase \} from "@\/config\/roadmap"/u);
@@ -206,7 +207,7 @@ test("channel phases stay unique and phase 8 remains unstarted", async () => {
     assert.match(document, /Phase 3[\s\S]{0,120}(?:Facebook|Meta)/u);
     assert.match(document, /Phase 7[\s\S]{0,120}TikTok/u);
     assert.match(document, /Phase 8[\s\S]{0,120}LinkedIn/u);
-    assert.match(document, /noch nicht begonnen/u);
+    assert.match(document, /Website-KI|Website-Assistent/u);
   }
   for (const document of [sourceOfTruth, readme]) {
     assert.match(document, /vorbereitet(?:es|,)[\s\S]{0,100}Inbox-Handoff/iu);

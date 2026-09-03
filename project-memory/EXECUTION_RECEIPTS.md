@@ -2,6 +2,29 @@
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
+## RECEIPT-FM-MOB-006-20260903
+- Task: FM-MOB-006 / FM-CR-013
+- Started: 2026-09-03 Europe/Vienna
+- Risk: R3
+- Scope: dormant atomic Mobile Push Delivery-Ledger foundation in the repository.
+- Starting commit: `cd84aca904b99fdca81c10ae1cb4989735d87829`
+- External writes: none.
+- Provider calls: none.
+- Finished: 2026-09-03 repository implementation checkpoint; external acceptance remains open.
+- Branch/PR: direct reviewed `main` continuation requested by owner; exact commit assigned after commit.
+- Preflight checked: AGENTS, Source of Truth, Project Memory protocol/current state/task/change/locks/receipts/drift, existing Push policy/service/registration/Staging controls, roadmap, Store truth and current Git/remote state.
+- Prior attempts found: delivery policy and one-shot service existed but intentionally failed closed without a persistent ledger; Phase-8 Website-AI foundation had already changed canonical truth while older governance tests still expected Phase 8 wholly unstarted.
+- Dependency result: registration schema exists repository-side; ledger can be implemented dormant without database/provider mutation. PostgreSQL runtime acceptance requires later protected Staging.
+- Changes made: added checksum-pinned controlled ledger SQL, atomic tenant/device revalidation, idempotent attempts, send/receipt leases, bounded retry/receipt state, atomic DeviceNotRegistered revocation, server-only same-target RPC adapter, offline runner, integrated tests and synchronized docs/governance.
+- Checks/tests: ledger check PASS; truth drift PASS; focused Push/ledger/Staging checks 34/34 PASS after test integration; diff check PASS. Broad Operations execution reached the suite but is not a green acceptance because root `typescript`, `pdfnative` and other dependencies are not installed locally; it also identified stale pre-existing Phase-8/Play-copy assertions, which were corrected.
+- Final diff counterchecked: yes, repository-only and dormant; exact-head remote CI pending.
+- Regression/security countercheck: browser grants denied, no RLS policy, service-role only, no provider URL, no route/timer/worker/migration discovery, maximum three sends/four receipts, fixed error codes, current token fingerprint and tenant binding revalidated under row/advisory locks.
+- Evidence produced: controlled SQL SHA-256 `667218600bc9f31693cb8f5cce00c7020da646c278cd7f260afa3fa966214862` and focused local PASS output.
+- Result status: IMPLEMENTED_NOT_VERIFIED.
+- Open follow-up: remote CI plus separately approved protected-Staging apply/rollback-only PostgreSQL acceptance; then separately approved provider/device proof.
+- Work lock released: yes.
+- Recovery: revert the repository change; protected Staging apply and real delivery remain separate actions.
+
 ## Required receipt fields
 ```text
 ## RECEIPT-<TASK-ID>-<YYYYMMDD-HHMM>

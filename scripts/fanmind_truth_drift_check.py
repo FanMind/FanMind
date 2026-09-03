@@ -37,8 +37,8 @@ for token in [
     'title: "Weitere Social-Kanäle"',
     'status: "Finaler Technikblock vor Verkaufsübergabe"',
     'label: "Verkaufsübergabe", state: "later", status: "Nach technischer Abnahme Phase 3 + Phase 7"',
-    'title: "LinkedIn & weitere Kanäle"',
-    'status: "Später · Anbindungen noch nicht begonnen"',
+    'title: "Website-KI, iOS & weitere Kanäle"',
+    'status: "Website-KI begonnen · übrige Anbindungen später"',
 ]:
     if token not in roadmap:
         errors.append(f"roadmap-invariant-missing:{token}")
@@ -55,7 +55,7 @@ for token in [
     "Phase 3 umfasst Facebook, Instagram und WhatsApp",
     "Phase 7 umfasst TikTok, X/Twitter, Discord und OnlyFans",
     "Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme",
-    "Phase 8 ist noch nicht begonnen",
+    "dieser Teil von Phase 8 ist deshalb begonnen",
 ]:
     if token not in truth:
         errors.append(f"source-truth-invariant-missing:{token}")
@@ -72,8 +72,8 @@ if stale_ownership:
         errors.append("stale-restore-ownership-not-recorded-as-contradiction")
 
 # V6 state must not claim external controls accepted implicitly.
-if state.get("phase8_started") is not False:
-    errors.append("phase8-started-during-current-finishline")
+if state.get("phase8_started") is not True:
+    errors.append("website-ai-phase8-foundation-not-recorded")
 if state.get("sales_ready") is not False:
     errors.append("sales-ready-must-remain-false-until-derived-gates-pass")
 for required in ["EXT-MOBILE-ANDROID", "EXT-MOBILE-IOS", "EXT-META-EVENTS", "EXT-LEGAL-TAX-AVV"]:

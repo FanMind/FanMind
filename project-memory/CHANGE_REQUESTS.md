@@ -160,3 +160,15 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Classification: Roadmap correction and product-scope clarification. Existing disabled Website Chat security, session, widget and ingestion work counts as started foundation; this decision does not authorize Production activation, provider sending or personal-data collection without consent/legal acceptance.
 - Affected areas: canonical roadmap, Website Chat foundation, public project summary and roadmap invariants.
 - Decision: Phase 8 now explicitly includes the Website AI assistant. Foundation is `partial`; AI dialogue, escalation, full conversation UX, email capture/verification and reply delivery remain open.
+
+## FM-CR-013
+- Date: 2026-09-03
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with the next safe Mobile completion block after the closed Play Alpha publication.
+- Classification: Repository-only atomic Mobile Push Delivery-Ledger foundation. No database apply, provider send, route, timer, worker, Production activation or Android build.
+- Affected areas: controlled Supabase SQL, server-only ledger adapter, checksum control, rollback-only Staging acceptance preparation, Mobile Push documentation/tests and Project Memory.
+- Existing task/decision checked: FM-MOB-001, closed FM-MOB-005, FM-CR-011, EXT-MOBILE-PUSH-STORE and the published Android `1.0.0` Alpha baseline.
+- Dependencies: exact reviewed `main`, existing service-role-only registration schema, transactionally revalidated target binding, fail-closed tests and later separate protected Staging apply/acceptance.
+- Decision: Implement as FM-MOB-006 at R3 while keeping all external mutation and provider/device acceptance open.
+- Related task: FM-MOB-006

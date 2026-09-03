@@ -2,6 +2,18 @@
 
 Canonical register for FanMind work that has started but is not yet fully completed.
 
+## FM-MOB-006
+- Started: 2026-09-03 Europe/Vienna
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Change request: FM-CR-013
+- Scope: dormant atomic Mobile Push Delivery-Ledger foundation only; no external mutation, delivery activation or build.
+- Work lock: `LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903` RELEASED after repository implementation/countercheck.
+- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation and Phase-8 governance reconciliation.
+- Still open: exact-head remote CI, protected Staging apply, real PostgreSQL rollback-only acceptance and all provider/device delivery evidence.
+- Exact next step: let remote CI validate the committed tree; do not apply the controlled SQL without a separate protected-Staging decision.
+- Owner action needed: no for repository implementation; yes later for protected Staging apply/acceptance and any real provider/device action.
+
 ## Rules
 - Add an entry as soon as substantive work begins.
 - Every active `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `IMPLEMENTED_NOT_VERIFIED` or `RECONCILIATION_REQUIRED` task must appear here until closed or superseded.

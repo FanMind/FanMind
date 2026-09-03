@@ -2,6 +2,17 @@
 
 Prevents two agents/sessions from independently working the same task.
 
+## LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903
+- Task: FM-MOB-006 / FM-CR-013
+- Status: RELEASED
+- Holder: ChatGPT Mobile delivery-ledger repository session 2026-09-03
+- Acquired: 2026-09-03 Europe/Vienna
+- Scope: controlled service-role-only ledger SQL, server-only RPC adapter, checksum/rollback-only Staging controls, tests and documentation.
+- Safety: no database apply, provider request, route, timer, worker, Production activation, Store action or signed build.
+- Released: 2026-09-03 after repository implementation and focused countercheck.
+- Resume from: exact-head CI and separately approved protected-Staging apply/rollback-only PostgreSQL acceptance; keep provider/device delivery separately gated.
+- Rollback: revert the repository commit; because this task performs no external mutation, no runtime/database rollback is required.
+
 ## Rules
 - Acquire a lock before substantive implementation.
 - One active lock per Task ID.

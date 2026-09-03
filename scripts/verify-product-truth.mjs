@@ -1548,7 +1548,7 @@ forbidIn(
 );
 requireText(
   "docs/mobile/PUSH_DELIVERY.md",
-  "Das bestehende Schema besitzt keine robuste, atomare Zustellhistorie.",
+  "Kontrollierter Ledger – vorbereitet, nicht angewendet",
   "Die Push-Delivery-Dokumentation muss den ungeklärten persistenten Ledger als Aktivierungsblocker benennen.",
 );
 requireText(
