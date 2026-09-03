@@ -9,10 +9,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Change request: FM-CR-013
 - Scope: dormant atomic Mobile Push Delivery-Ledger foundation only; no external mutation, delivery activation or build.
 - Work lock: `LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903` RELEASED after repository implementation/countercheck.
-- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation, Phase-8 governance reconciliation and a separate manual exact-main rollback-only Staging acceptance workflow.
-- Still open: exact-head remote CI, protected Staging verify/apply, execution of the prepared real PostgreSQL rollback-only acceptance and all provider/device delivery evidence.
-- Exact next step: let remote CI validate the committed tree; then run only the read-only Staging schema verification. Do not apply the controlled SQL or execute the rollback-only acceptance without their separate protected-Staging decisions.
-- Owner action needed: no for repository implementation; yes later for protected Staging apply/acceptance and any real provider/device action.
+- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation, Phase-8 governance reconciliation, a separate manual exact-main rollback-only Staging acceptance workflow, and protected read-only Staging verification run `33796695523`. That run proved exact target/commit/checksum binding and confirmed with redacted `postflight_failed` output that the ledger schema is not yet installed; its apply job was skipped and no database state changed.
+- Still open: protected Staging apply, a successful post-apply read-only verify, execution of the prepared real PostgreSQL rollback-only acceptance and all provider/device delivery evidence.
+- Exact next step: separately approve the checksum-bound protected-Staging apply. Do not execute the rollback-only acceptance until apply and the repeated read-only postflight are green.
+- Owner action needed: yes for protected Staging apply/acceptance and any real provider/device action.
 
 ## Rules
 - Add an entry as soon as substantive work begins.
