@@ -233,12 +233,15 @@ Noch nicht als ausgelieferte Store-App freigegeben:
 - visuelle App-Icon-Abnahme sowie reale Push-Berechtigungs- und
   Registrierungsabnahme im signierten Build; echte Zustellung erst nach
   separater Server-/Staging-Freigabe;
-- Google-Freigabe des Entwicklerkontos, Kontakttelefon, Play-App-Datensatz,
-  Data Safety, finale Screenshots, das im Portal verlangte Testprogramm,
-  Upload des bereits verifizierten Android-`1.0.0`-AAB und die getrennt
-  bestätigte Portal-/Review-/Veröffentlichungsabnahme. Dieses AAB bleibt das
-  Artefakt für Play-App-Datensatz, Test-Track und bestehenden Android-Baseline-
-  Nachweis, wurde aber vor dem nativen `message_received`-/`message_reminder`-
+- Der Play-App-Datensatz, die Store-Angaben und das bereits verifizierte
+  Android-`1.0.0`-AAB wurden am 3. September 2026 im geschlossenen Alpha-Track
+  für Deutschland, Österreich und die Schweiz veröffentlicht. Offen bleiben
+  der Start und Nachweis des vom Portal verlangten Tests mit mindestens zwölf
+  angemeldeten Testern über mindestens 14 Tage, der vollständige private
+  Gerätenachweis und der spätere Antrag auf Produktionszugang. Die Alpha-
+  Veröffentlichung ist keine öffentliche Production-Freigabe. Dieses AAB
+  bleibt der bestehende Android-Baseline-Nachweis, wurde aber vor dem nativen
+  `message_received`-/`message_reminder`-
   Tap-Handler gebaut und kann deshalb die neue Nachrichten-Push-Funktion nicht
   abnehmen. Deren späterer realer Gerätenachweis erfordert nach den Push-
   Staging-/Delivery-Ledger-Gates einen separat geprüften signierten Android-

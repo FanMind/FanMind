@@ -49,7 +49,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Expo push + Apple/Google store portals
 - Acceptance: separated push gates plus final screenshots/privacy/data-safety/store evidence from signed builds, limited to the platform scope currently being accepted; iOS/TestFlight-specific portal acceptance is Phase 8 per FM-DEC-009.
-- Current evidence: the Android `1.0.0` Production AAB exists and is verified by `33316172583` / `99269924756`; Submit and Update were disabled. FM-EV-030 adds the exact existing-AAB portal handoff. FM-EV-031 adds the public Support route, reproducible Play graphics and Apple/Google review/tester preparation without external writes. Live Google Play Console inspection on 2026-08-30 showed identity/document review still in progress, phone verification locked and `App erstellen` disabled. No Play app record, upload, form submission, review request or publication occurred.
+- Current evidence: the Android `1.0.0` Production AAB exists and is verified by `33316172583` / `99269924756`. Owner-provided Play Console evidence on 2026-09-03 shows that exact baseline version published to `Geschlossener Test - Alpha` for Germany, Austria and Switzerland, with testers managed through `FanMind Alpha Tester`. This is closed-test distribution, not public Production access. At least twelve testers still need to opt in and complete at least 14 days before the later Production-access request. The AAB predates the native message-push handler, so real message-push acceptance remains open and requires a later separately reviewed signed build after the Push Staging and atomic Delivery-Ledger gates.
 - Repository evidence alone sufficient: no
 
 ## EXT-AI-PRODUCT-DECISION

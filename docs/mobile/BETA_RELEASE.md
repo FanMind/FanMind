@@ -2,7 +2,7 @@
 
 ## Ziel
 
-Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den einmaligen externen Konten und Einstellungen. Für FanMind existiert inzwischen genau ein verifiziertes Android-Production-AAB für `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; das Vorhandensein von `app.json`, `eas.json`, App-IDs oder Buildprofilen allein wäre weiterhin kein Buildnachweis und der AAB-Nachweis ist noch keine Play-Veröffentlichung.
+Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den einmaligen externen Konten und Einstellungen. Für FanMind existiert genau ein verifiziertes Android-Production-AAB für `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Dieses AAB wurde am 3. September 2026 im geschlossenen Google-Play-Alpha-Track für Deutschland, Österreich und die Schweiz veröffentlicht. Das ist noch keine öffentliche Production-Veröffentlichung: Der geforderte Test mit mindestens zwölf angemeldeten Testern über mindestens 14 Tage sowie der anschließende Antrag auf Produktionszugang sind weiterhin offen.
 
 ## Im Repository umgesetzt
 

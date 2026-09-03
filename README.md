@@ -160,11 +160,13 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Store-Artefakt mit redaktiertem Receipt. Auf exaktem `main`
   `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` bestand der geschützte
   Production-Ressourcencheck; der getrennte Lauf `33316172583` erzeugte und
-  verifizierte genau ein Android-`1.0.0`-AAB. Submit, Update, Play-App-Anlage
-  und Veröffentlichung blieben getrennt und deaktiviert. Google prüft das
-  Entwicklerkonto weiterhin; Telefonbestätigung und App-Anlage sind bis dahin
-  gesperrt. Dieses AAB bleibt das Artefakt für den späteren Play-App-Datensatz,
-  Test-Track und den bestehenden Android-Baseline-Nachweis; es wurde vor dem
+  verifizierte genau ein Android-`1.0.0`-AAB. Dieses AAB wurde am 3. September
+  2026 im geschlossenen Google-Play-Alpha-Track für Deutschland, Österreich
+  und die Schweiz veröffentlicht. Das ist eine Test-Track-Veröffentlichung,
+  kein öffentlicher Produktionszugang; der erforderliche Test mit mindestens
+  zwölf angemeldeten Testern über mindestens 14 Tage hat noch nicht begonnen.
+  Dieses AAB bleibt das Artefakt für den bestehenden Android-Baseline-Nachweis;
+  es wurde vor dem
   nativen `message_received`-/`message_reminder`-Tap-Handler gebaut und kann
   deshalb die neue Nachrichten-Push-Funktion nicht abnehmen. Deren späterer
   realer Gerätenachweis erfordert nach den Push-Staging-/Delivery-Ledger-Gates
