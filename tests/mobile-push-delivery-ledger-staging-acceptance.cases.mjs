@@ -105,6 +105,7 @@ test("rollback-only SQL proves reservations, leases, receipts and atomic revocat
     /MOBILE_PUSH_DELIVERY_LEDGER_ROLLBACK=PASS/u,
   ]) assert.match(sql, boundary);
   assert.equal(sql.match(/\brollback\s*;/giu)?.length, 2);
+  assert.equal((sql.match(/'v1:[0-9a-f]{16}:[0-9a-f]{32}:[0-9a-f]{16}'/gu) ?? []).length, 2);
   assert.doesNotMatch(sql, /\bcommit\s*;|ExpoPushToken|push\/send|fetch\(/iu);
 });
 

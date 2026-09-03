@@ -88,10 +88,16 @@ function syntheticMaterial(identifiers) {
     createHash("sha256")
       .update(`fanmind-mobile-push-ledger:${identifiers.deviceId}:${label}`)
       .digest("hex");
+  const ciphertext = (label) => {
+    const material = fingerprint(`ciphertext-${label}`);
+    return `v1:${material.slice(0, 16)}:${material.slice(16, 48)}:${material.slice(48)}`;
+  };
   return Object.freeze({
     ...derived,
     primaryFingerprint: fingerprint("primary-token"),
     deviceFingerprint: fingerprint("device-token"),
+    primaryCiphertext: ciphertext("primary"),
+    deviceCiphertext: ciphertext("device"),
     primaryKey: fingerprint("primary-idempotency"),
     deviceKey: fingerprint("device-idempotency"),
   });
@@ -126,6 +132,14 @@ export function buildMobilePushLedgerAcceptanceSql(identifiers) {
   const registrationDevice = sqlUuid(material.registrationDevice);
   const primaryFingerprint = sqlText(material.primaryFingerprint, /^[0-9a-f]{64}$/u);
   const deviceFingerprint = sqlText(material.deviceFingerprint, /^[0-9a-f]{64}$/u);
+  const primaryCiphertext = sqlText(
+    material.primaryCiphertext,
+    /^v1:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$/u,
+  );
+  const deviceCiphertext = sqlText(
+    material.deviceCiphertext,
+    /^v1:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$/u,
+  );
   const primaryKey = sqlText(material.primaryKey, /^[0-9a-f]{64}$/u);
   const deviceKey = sqlText(material.deviceKey, /^[0-9a-f]{64}$/u);
   const projectRef = sqlText(
@@ -187,11 +201,11 @@ insert into public.mobile_push_registrations (
   expo_project_id, platform, status, registered_at, last_seen_at, expires_at
 ) values
   (${registrationPrimary}, ${member}, ${workspace},
-   'v1:synthetic:ledger:primary', ${primaryFingerprint}, ${project},
+   ${primaryCiphertext}, ${primaryFingerprint}, ${project},
    'android', 'active', statement_timestamp(), statement_timestamp(),
    statement_timestamp() + interval '30 days'),
   (${registrationDevice}, ${member}, ${workspace},
-   'v1:synthetic:ledger:device', ${deviceFingerprint}, ${project},
+   ${deviceCiphertext}, ${deviceFingerprint}, ${project},
    'android', 'active', statement_timestamp(), statement_timestamp(),
    statement_timestamp() + interval '30 days');
 
