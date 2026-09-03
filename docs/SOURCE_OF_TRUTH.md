@@ -178,9 +178,10 @@ Aktiv im App-Kern:
   Erinnerung mit einstündiger TTL ist synthetisch getestet. Nachrichten-
   Providerzustellung, Delivery-Ledger-Apply, Route, Timer/Worker und Production-
   Aktivierung bleiben ebenso deaktiviert. Der checksum-gebundene
-  service-role-only Delivery-Ledger und sein server-only RPC-Adapter sind
-  repositoryseitig kontrolliert vorbereitet, aber nicht angewendet oder
-  verdrahtet; ohne genehmigtes Staging-Apply samt transaktionaler Target-Revalidierung und unabhängig geprüften
+  service-role-only Delivery-Ledger, sein server-only RPC-Adapter und die
+  getrennte rollback-only Staging-Abnahme sind repositoryseitig kontrolliert
+  vorbereitet, aber nicht angewendet, ausgeführt oder verdrahtet; ohne
+  genehmigtes Staging-Apply samt transaktionaler Target-Revalidierung und unabhängig geprüften
   EAS-, Staging-App-, Staging-Supabase- und Production-Supabase-Bindings gibt
   es keine reale Zustellung;
 - checksum-festgeschriebener, strikt Staging-only Kontrollpfad für diese

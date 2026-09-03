@@ -188,8 +188,9 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   `message_reminder`-Entscheidung vorbereitet; ein gültiger Tap wartet auf Auth
   und öffnet ausschließlich den exakt gebundenen Fan in `Nachrichten`.
   Der checksum-gebundene service-role-only Delivery-Ledger samt server-only
-  RPC-Adapter ist repositoryseitig vorbereitet, bleibt aber unangewendet und
-  unverdrahtet. Nachrichten-Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker
+  RPC-Adapter und eigener rollback-only Staging-Abnahme ist repositoryseitig
+  vorbereitet, bleibt aber unangewendet, unausgeführt und unverdrahtet.
+  Nachrichten-Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker
   und Production-Aktivierung bleiben ebenso deaktiviert. Der Follow-up-Sender
   besitzt bewusst weder Route noch Timer/Worker und bleibt ohne geprüfte
   Bindings und einen separat genehmigten atomaren Delivery-Ledger vollständig

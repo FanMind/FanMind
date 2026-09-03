@@ -246,9 +246,16 @@ Revalidierungsvertrag samt Target-Hash, Staging-Projekt-Ref, Token-Fingerprint
 und frischem kanonischem Zeitpunkt liefern. Der `DeviceNotRegistered`-Pfad muss
 Attempt-Terminalisierung und Registrierungsdeaktivierung ebenfalls atomar unter
 der jeweils reservierten Send- oder Receipt-Lease ausführen. RLS,
-Browserentzug, Konfliktverhalten, Crash-Recovery und Cleanup müssen in einer
-rollback-only Staging-Acceptance bewiesen werden. Diese Arbeit wurde nicht
-erfunden oder automatisch angewendet.
+Browserentzug, Konfliktverhalten und Cleanup müssen in einer rollback-only
+Staging-Acceptance bewiesen werden. Der dafür vorbereitete manuelle Workflow
+`.github/workflows/mobile-push-delivery-ledger-staging-acceptance.yml`
+verlangt die getrennte Bestätigung
+`run-mobile-push-delivery-ledger-acceptance`. Er prüft Browser-Denial,
+Reservation/Lease-Exklusivität, Ticket-/Receipt-Übergang und die atomare
+`DeviceNotRegistered`-Deaktivierung ausschließlich mit synthetischen
+Staging-Zeilen in einer vollständig zurückgerollten Transaktion. Er enthält
+weder Providerzugang noch Sendepfad. Der Workflow wurde nicht gestartet; das
+Ledger bleibt unangewendet und die reale PostgreSQL-Abnahme offen.
 
 Erst danach folgen: expliziter serverseitiger Trigger ohne Timer, ein einziger
 synthetischer Staging-Send an ein eigenes Testgerät, Receipt-Nachweis,

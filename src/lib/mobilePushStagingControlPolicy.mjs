@@ -15,6 +15,8 @@ export const MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION =
   "verify-mobile-push-delivery-ledger-schema";
 export const MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION =
   "apply-mobile-push-delivery-ledger";
+export const MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_CONFIRMATION =
+  "run-mobile-push-delivery-ledger-acceptance";
 
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 const UUID_PATTERN =
@@ -29,6 +31,7 @@ const CONTROL_MODES = new Set([
   "acceptance",
   "ledger_schema",
   "ledger_migration",
+  "ledger_acceptance",
 ]);
 
 function clean(value) {
@@ -162,7 +165,8 @@ export function evaluateMobilePushStagingControlEnvironment(
   const allowWrite =
     mode === "migration" ||
     mode === "acceptance" ||
-    mode === "ledger_migration";
+    mode === "ledger_migration" ||
+    mode === "ledger_acceptance";
   const boundary = evaluateEnvironmentBoundary(environment, { allowWrite });
   if (!boundary.ok) errors.push("environment_boundary");
   if (boundary.runtimeEnvironment !== "staging") {
@@ -206,6 +210,10 @@ export function evaluateMobilePushStagingControlEnvironment(
       "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRM",
       MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION,
     ],
+    ledger_acceptance: [
+      "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_CONFIRM",
+      MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_CONFIRMATION,
+    ],
   };
   const [confirmationKey, expectedConfirmation] = confirmationByMode[mode];
   if (clean(environment[confirmationKey]) !== expectedConfirmation) {
@@ -224,7 +232,9 @@ export function evaluateMobilePushStagingControlEnvironment(
     environment,
   );
   if (
-    (mode === "resource" || mode === "acceptance") &&
+    (mode === "resource" ||
+      mode === "acceptance" ||
+      mode === "ledger_acceptance") &&
     !syntheticIdentifiers.ok
   ) {
     errors.push("synthetic_identifiers");

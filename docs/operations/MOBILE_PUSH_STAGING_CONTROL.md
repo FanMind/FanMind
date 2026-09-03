@@ -149,6 +149,19 @@ unvollständiger CRUD-Schritt oder ein fehlender Cleanup-Beleg lässt den Lauf
 fehlschlagen. Bei einem vorzeitigen psql-Abbruch wird die offene Transaktion
 durch das Schließen der Verbindung ebenfalls verworfen.
 
+### 4. Delivery-Ledger rollback-only Acceptance
+
+Erst nach einem separat genehmigten Delivery-Ledger-Apply darf der manuelle
+Workflow `FanMind Mobile Push Delivery Ledger Staging Acceptance` mit dem
+exakten aktuellen `main` und der Bestätigung
+`run-mobile-push-delivery-ledger-acceptance` ausgeführt werden. Er prüft das
+angewendete Ledger zunächst read-only und beweist danach mit ausschließlich
+synthetischen Staging-Zeilen Reservation, Lease-Exklusivität,
+Ticket-/Receipt-Lifecycle und atomare Registrierungsdeaktivierung. Sämtliche
+Zeilen werden zurückgerollt und anschließend read-only als abwesend geprüft.
+Expo-Zugang, echter Push-Token und Provideraufruf sind nicht Teil dieses
+Workflows.
+
 ## Geschützte Staging-Konfiguration
 
 Das GitHub-Environment `staging` benötigt zusätzlich zu den bestehenden

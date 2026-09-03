@@ -197,6 +197,13 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   receipt-SHA-bound; its validator may output only fixed counters and the
   evidence SHA. Push device checks remain optional until the separate Staging
   resource, migration and rollback-only acceptance gates have passed.
+- Mobile Push Delivery-Ledger acceptance is a distinct rollback-only Staging
+  gate after its separately approved apply. Keep it exact-main-commit-bound,
+  on the protected `staging` environment and the shared Push write lock. It
+  may use only deterministic synthetic contact/follow-up/registration rows,
+  must prove browser denial, reservation/lease exclusivity, receipt lifecycle,
+  atomic invalid-device revocation and post-rollback absence, and must never
+  contain Expo credentials, a provider call or Production target.
 - Mobile push registration has a separate checksum-pinned Staging control
   path. Keep resource readiness read-only and separate from the explicitly
   confirmed migration apply. Every workflow must remain `main`-, reviewed

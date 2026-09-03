@@ -9,9 +9,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Change request: FM-CR-013
 - Scope: dormant atomic Mobile Push Delivery-Ledger foundation only; no external mutation, delivery activation or build.
 - Work lock: `LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903` RELEASED after repository implementation/countercheck.
-- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation and Phase-8 governance reconciliation.
-- Still open: exact-head remote CI, protected Staging apply, real PostgreSQL rollback-only acceptance and all provider/device delivery evidence.
-- Exact next step: let remote CI validate the committed tree; do not apply the controlled SQL without a separate protected-Staging decision.
+- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation, Phase-8 governance reconciliation and a separate manual exact-main rollback-only Staging acceptance workflow.
+- Still open: exact-head remote CI, protected Staging verify/apply, execution of the prepared real PostgreSQL rollback-only acceptance and all provider/device delivery evidence.
+- Exact next step: let remote CI validate the committed tree; then run only the read-only Staging schema verification. Do not apply the controlled SQL or execute the rollback-only acceptance without their separate protected-Staging decisions.
 - Owner action needed: no for repository implementation; yes later for protected Staging apply/acceptance and any real provider/device action.
 
 ## Rules

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import "./mobile-push-delivery-ledger-staging-acceptance.cases.mjs";
+
 import {
   MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION,
   MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION,

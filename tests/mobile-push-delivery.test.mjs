@@ -1208,7 +1208,9 @@ test("dormancy invariant rejects routes workers timers migrations and production
     "src/lib/mobilePushDeliveryLedger.ts",
     "src/lib/mobilePushStagingControlPolicy.mjs",
     "scripts/operations/mobile-push-delivery-ledger-runner.mjs",
+    "scripts/operations/mobile-push-delivery-ledger-staging-acceptance.mjs",
     ".github/workflows/mobile-push-delivery-ledger-staging.yml",
+    ".github/workflows/mobile-push-delivery-ledger-staging-acceptance.yml",
     "supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql",
   ]);
   const roots = [

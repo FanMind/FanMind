@@ -2,6 +2,19 @@
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
+## RECEIPT-FM-MOB-006-LEDGER-ACCEPTANCE-CONTROL-20260903
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Started: 2026-09-03 UTC after reconciling remote `main` `d9c85f7e750c3d4f9a21f4f574c41be9c72846d1`
+- Finished: 2026-09-03 repository checkpoint
+- Scope: prepare the missing manual rollback-only Delivery-Ledger Staging acceptance; no workflow dispatch, SQL apply, provider request, Production mutation, Store action or signed build.
+- Preflight checked: current remote/local history, mandatory Project Memory readers, released FM-MOB-006 lock, existing Push registration acceptance, controlled Delivery-Ledger SQL/runner/service contract and current Supabase function/RLS/privilege guidance.
+- Changes made: added a distinct `ledger_acceptance` policy confirmation, a manual exact-main protected-`staging` workflow sharing the Push write concurrency lock, a private-passfile runner, deterministic synthetic contact/follow-up/registration data, runtime browser-denial probes, atomic reservation/lease/receipt/device-revocation checks and a post-rollback absence proof. Canonical readers, supply-chain counts and Project Memory were synchronized.
+- Checks/tests: offline acceptance PASS; focused Push/Delivery/Staging tests 42/42 PASS; focused workflow/coverage regression 32/32 PASS; complete Operations suite 1112/1112 PASS after intentionally updating the immutable hosted-workflow topology count; Workflow pinning, Product/Referral/Legal truth and dependency audit PASS; Project Memory quality/truth/V8/milestone/legacy/status and drift checks PASS after deliberate Source-of-Truth fingerprint advancement. NBA remains the pre-existing owner-deferred Restore action and sales readiness remains false.
+- Security countercheck: workflow has no schedule, Expo credential, Push token or provider client; exact Staging/Production/API/DB/Supabase/main bindings and a separate confirmation fail closed; the schema is read-only verified before synthetic writes; every synthetic write is transactionally rolled back and then checked absent.
+- External result: none. No GitHub workflow was dispatched and no database or provider state changed.
+- Result status: repository acceptance control IMPLEMENTED_NOT_VERIFIED until exact remote CI; real Staging verify/apply/acceptance and provider/device delivery remain separate gates.
+- Open follow-up: publish the exact repository tree, require exact-head CI, then perform only read-only Staging ledger verification. Do not infer authorization for apply or rollback-only execution from this receipt.
+
 ## RECEIPT-FM-MOB-006-STAGING-CONTROL-20260903
 - Task: FM-MOB-006 / FM-CR-013 continuation
 - Started: 2026-09-03 UTC

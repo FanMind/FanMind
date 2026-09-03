@@ -14,8 +14,9 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Recovery: repository changes are revertible; no external state is changed by this task. Any later Staging apply uses its own checksum-bound transaction and rollback-only acceptance.
 - Result: checksum-pinned controlled SQL, a server-only same-target RPC adapter, atomic reservation/revalidation, send/receipt leases, bounded retries and atomic invalid-device revocation are implemented without runtime wiring.
 - Evidence: offline ledger check PASS; focused Push/ledger/Staging controls 34/34 PASS after integration; the broader Operations suite executed but its local result is non-authoritative because root dependencies are absent and it also exposed pre-existing truth-test drift that was reconciled in this change.
-- Result: checksum-pinned controlled SQL, a server-only same-target RPC adapter and a manual exact-main protected-Staging workflow now provide separate read-only verification and separately confirmable apply paths. No workflow was dispatched and no database changed.
-- Next step: exact-head remote CI, then an explicit authorization for the protected-Staging apply and rollback-only PostgreSQL acceptance. Real provider/device delivery remains later and separately gated.
+- Result: checksum-pinned controlled SQL, a server-only same-target RPC adapter and manual exact-main protected-Staging workflows now provide separate read-only verification, separately confirmable apply and a distinct rollback-only lifecycle acceptance path. The acceptance uses deterministic synthetic rows and proves browser denial, lease exclusivity, receipt lifecycle, atomic invalid-device revocation and complete rollback without a provider client.
+- Evidence: offline acceptance contract and focused policy/workflow/fake-psql tests pass locally; no workflow was dispatched and no database changed.
+- Next step: exact-head remote CI, then read-only Staging verification. Protected-Staging apply and execution of the rollback-only PostgreSQL acceptance each remain separately authorized; real provider/device delivery remains later and separately gated.
 
 ## FM-MOB-005
 - Date: 2026-08-31 to 2026-09-01

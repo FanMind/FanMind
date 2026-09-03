@@ -2,6 +2,17 @@
 
 Prevents two agents/sessions from independently working the same task.
 
+## LOCK-FM-MOB-006-DELIVERY-LEDGER-ACCEPTANCE-20260903
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Status: RELEASED
+- Holder: ChatGPT Mobile delivery-ledger rollback-only acceptance session 2026-09-03
+- Acquired: 2026-09-03 Europe/Vienna after reconciling remote `main` and the released implementation lock
+- Scope: repository-only manual rollback-only Delivery-Ledger Staging acceptance control, tests and synchronized readers.
+- Safety: no workflow dispatch, database apply, provider request, Production mutation, Store action or signed build.
+- Released: 2026-09-03 after complete local countercheck; publication remains a repository transfer only.
+- Resume from: exact-head remote CI and then read-only Staging verification. Any real Staging apply/acceptance remains separately approved.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
 ## LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903
 - Task: FM-MOB-006 / FM-CR-013
 - Status: RELEASED

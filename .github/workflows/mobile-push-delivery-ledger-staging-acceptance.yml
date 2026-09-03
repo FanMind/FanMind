@@ -1,0 +1,94 @@
+name: FanMind Mobile Push Delivery Ledger Staging Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit containing the applied ledger'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type run-mobile-push-delivery-ledger-acceptance to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-mobile-push-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  delivery-ledger-staging-acceptance:
+    name: Prove atomic delivery lifecycle with complete rollback
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'run-mobile-push-delivery-ledger-acceptance'
+      }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_MOBILE_PUSH_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_CONFIRM: run-mobile-push-delivery-ledger-acceptance
+      FANMIND_MOBILE_PUSH_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_WORKSPACE_ID }}
+      FANMIND_MOBILE_PUSH_STAGING_OWNER_USER_ID: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_OWNER_USER_ID }}
+      FANMIND_MOBILE_PUSH_STAGING_MEMBER_USER_ID: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_MEMBER_USER_ID }}
+      FANMIND_MOBILE_PUSH_STAGING_EAS_PROJECT_ID: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_EAS_PROJECT_ID }}
+      FANMIND_MOBILE_PUSH_STAGING_DEVICE_ID: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_DEVICE_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: ${{ vars.FANMIND_STAGING_DB_PORT }}
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ secrets.FANMIND_STAGING_DB_USER }}
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Verify rollback-only acceptance contract offline
+        run: npm run mobile:push:delivery-ledger:staging:check
+      - name: Prepare dedicated private database password file
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-mobile-push-ledger-acceptance.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            *$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED_DB_PASSWORD="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED_DB_PASSWORD="${ESCAPED_DB_PASSWORD//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED_DB_PASSWORD" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+      - name: Verify applied service-role-only ledger schema
+        env:
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRM: verify-mobile-push-delivery-ledger-schema
+          PGPASSFILE: ${{ runner.temp }}/fanmind-mobile-push-ledger-acceptance.pgpass
+        run: npm run db:mobile-push-delivery-ledger:verify
+      - name: Run synthetic rollback-only delivery-ledger acceptance
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-mobile-push-ledger-acceptance.pgpass
+        run: npm run mobile:push:delivery-ledger:staging:run
+      - name: Remove dedicated private database password file
+        if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-mobile-push-ledger-acceptance.pgpass
+        run: rm -f "$PGPASSFILE"
