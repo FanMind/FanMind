@@ -2,6 +2,20 @@
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
+## RECEIPT-FM-MOB-006-PUSH-STAGING-SCHEMAS-20260903
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Started: 2026-09-03 Europe/Vienna against exact remote `main` `084e19c8c8cc5c117ab52158f4864ad71c8d2070`
+- Finished: 2026-09-03 after the schema applies, independent Delivery-Ledger verify and registration rollback-only acceptance
+- Authorized scope: apply the checksum-bound Push registration and Delivery-Ledger schemas only to isolated Staging, independently verify them, and execute the prepared rollback-only acceptances. Production, provider delivery, real Fan data, Store actions and signed builds remained forbidden.
+- Registration apply evidence: GitHub Actions run `33800376282`, job `100798166495`; pinned migration/checksum/contract PASS, apply completed, postflight PASS, delivery disabled and private password-file cleanup completed.
+- Delivery-Ledger apply evidence: GitHub Actions run `33800490769`, job `100798544513`; pinned ledger offline check PASS, apply completed, postflight PASS and private password-file cleanup completed.
+- Independent Delivery-Ledger verify evidence: GitHub Actions run `33800628826`, job `100798998381`; apply not requested, read-only postflight PASS and `MOBILE_PUSH_DELIVERY_LEDGER_READY=YES`.
+- Registration acceptance evidence: GitHub Actions run `33800742158`, job `100799358333`; browser boundary PASS, isolated synthetic resources PASS, service-role CRUD PASS, transaction rolled back, cleanup PASS, delivery disabled and `MOBILE_PUSH_STAGING_ACCEPTANCE=PASS`.
+- Security countercheck: every run was exact-main and isolated-Staging bound; no Production target, provider client or real device path was invoked; no secret was printed; registration acceptance left no synthetic residue.
+- Repository countercheck: complete Operations suite 1112/1112 PASS; Product/Referral/Legal/Actions truth PASS; dependency audit PASS with the existing time-bounded Mobile-only review exception.
+- Result status: PARTIAL_EXTERNAL_ACCEPTANCE_PASS. Both schemas and registration rollback acceptance are green. The distinct Delivery-Ledger rollback-only acceptance remains pending because the authenticated browser transport became unavailable after the preceding successful runs; no blind retry or alternative mutation path was used.
+- Open follow-up: dispatch exactly one `mobile-push-delivery-ledger-staging-acceptance.yml` run on exact current `main` with confirmation `run-mobile-push-delivery-ledger-acceptance`, inspect its rollback/cleanup proof, then record the final Staging acceptance. Real provider/device delivery remains later and separately gated.
+
 ## RECEIPT-FM-MOB-006-PUSH-RESOURCE-READINESS-PASS-20260903
 - Task: FM-MOB-006 / FM-CR-013 continuation
 - Started: 2026-09-03 Europe/Vienna against exact remote `main` `0924ad3b08f40330dbc887a86e7006b008a2f316`
