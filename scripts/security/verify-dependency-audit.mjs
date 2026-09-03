@@ -10,10 +10,10 @@ const ROOT_REVIEWED_FRAMEWORK_VERSION = "16.3.1";
 const ROOT_REVIEW_HIGH_MAXIMUM = 0;
 const ROOT_REVIEW_MODERATE_MAXIMUM = 0;
 const REVIEWED_ROOT_PACKAGES = Object.freeze([]);
-const MOBILE_REVIEWED_AT = "2026-08-08T08:20:00.000Z";
-const MOBILE_REVIEW_EXPIRES_AT = "2026-09-02T00:00:00.000Z";
-const MOBILE_REVIEW_HIGH_MAXIMUM = 52;
-const MOBILE_REVIEW_MODERATE_MAXIMUM = 38;
+const MOBILE_REVIEWED_AT = "2026-09-03T18:40:00.000Z";
+const MOBILE_REVIEW_EXPIRES_AT = "2026-09-17T18:40:00.000Z";
+const MOBILE_REVIEW_HIGH_MAXIMUM = 4;
+const MOBILE_REVIEW_MODERATE_MAXIMUM = 15;
 const MOBILE_REVIEW_LOW_MAXIMUM = 0;
 const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@expo/cli",
@@ -34,7 +34,9 @@ const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@react-native/community-cli-plugin",
   "@react-native/metro-config",
   "@react-native/virtualized-lists",
+  "@xmldom/xmldom",
   "babel-preset-expo",
+  "decode-uri-component",
   "expo",
   "expo-application",
   "expo-asset",
@@ -73,6 +75,7 @@ const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "react-native-screens",
   "react-native-url-polyfill",
   "react-native-worklets",
+  "query-string",
   "uuid",
   "xcode",
 ]);

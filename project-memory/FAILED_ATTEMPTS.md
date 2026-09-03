@@ -182,3 +182,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: concurrent local verification left the ignored `.next` Turbopack persistence database inconsistent; this was a generated-cache failure, not a source/type/build error.
 - Decision: confirm `.next` is repository-ignored, remove only that exact generated cache, then rerun the Production build sequentially. The clean build compiled, typechecked and generated all 73 static pages successfully; no tracked file, runtime, provider or external resource was changed by the cleanup.
 - Do not repeat: do not run multiple Next builds or build-adjacent writers concurrently in one worktree, and never treat generated-cache corruption as a reason to change source or suppress the build gate.
+
+## FM-FAIL-019
+- Date: 2026-09-03
+- Status: RECONCILED_TIME_BOUND_REVIEW
+- Area: Mobile dependency audit / Supply Chain Security
+- Attempt: rely on the Mobile-only vulnerability review that was last renewed on 8 August and expired on 2 September 2026.
+- Result: exact-main Supply Chain run `33789359734` failed closed while every other triggered workflow, including deploy, CodeQL, Browser E2E, go-live readiness and the read-only Production audit, passed. The root Production audit remained clean; Mobile reported 4 high and 15 moderate findings, no critical/low/info finding, and three newly named transitive packages.
+- Cause: the intended review deadline elapsed and npm's current advisory set newly exposed `@xmldom/xmldom`, `decode-uri-component` and `query-string` in the Expo SDK 57 dependency graph. npm offered only incompatible Expo/Router downgrades, not a safe SDK-57 patch.
+- Decision: review and document the exact current advisory paths, narrow the former maxima from 52/38 to the reproduced 4/15, add only the three observed names, and renew the exception for fourteen days through 17 September 2026 18:40 UTC. Keep zero tolerance for critical/low/info, unknown packages or larger counts.
+- Do not repeat: do not merely extend an expired date, run `npm audit fix --force`, downgrade Expo/Router, or suppress the Supply Chain gate. Recheck compatible upstream patches before the new deadline.

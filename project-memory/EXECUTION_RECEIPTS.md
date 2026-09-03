@@ -189,6 +189,14 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Result status: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED pending real-device and Google Play external acceptance.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
 
+## RECEIPT-FM-SUPPLY-CHAIN-MOBILE-REVIEW-20260903
+- Task: reconcile exact-main Supply Chain failure `33789359734` after the Mobile-only review deadline.
+- Scope: repository policy, regression test and security documentation only; no application runtime, dependency version, provider, database, Store, build or Production mutation.
+- Evidence: root Production audit `0`; Mobile audit `19` total (`4` high, `15` moderate, `0` critical/low/info); exact newly observed names `@xmldom/xmldom`, `decode-uri-component`, `query-string`; npm supplied no compatible Expo SDK 57 automatic fix.
+- Change: reviewed-at `2026-09-03T18:40:00.000Z`, hard expiry `2026-09-17T18:40:00.000Z`, maxima narrowed to `4` high and `15` moderate, three exact names added, expiry regression made relative to the policy constant.
+- Local checks: dependency policy and GitHub Supply Chain tests `20/20`; live root/Mobile dependency gate success; immutable Actions policy success; diff whitespace success.
+- Remaining boundary: a new name, larger count, critical/low/info finding or expiry still fails closed. Compatible upstream fixes must be preferred before renewal.
+
 ## RECEIPT-FM-MOB-001-DUAL-STORE-PREP-20260830
 - Task: FM-MOB-001 / FM-CR-007
 - Started: 2026-08-30 after the owner authorized iPhone App Store preparation and moved complete Android acceptance behind a Google Play download

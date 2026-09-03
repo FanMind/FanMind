@@ -222,7 +222,7 @@ test("new, excessive or expired Mobile findings fail closed", () => {
       packages: [REVIEWED_MOBILE_PACKAGES[0]],
     }),
     rootManifest: patchedManifest,
-    now: "2026-09-02T00:00:00.001Z",
+    now: new Date(Date.parse(MOBILE_REVIEW_EXPIRES_AT) + 1),
   });
   assert.equal(expired.ok, false);
   assert.match(

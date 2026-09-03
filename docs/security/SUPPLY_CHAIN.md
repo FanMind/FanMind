@@ -107,7 +107,7 @@ Jeder Workflow benötigt außerdem einen ausdrücklichen top-level `permissions:
 - exakte Next.js-/ESLint-Config-Patchstände;
 - einen vollständig sauberen Root-Production-Baum ohne Review-Ausnahme.
 
-### Aktueller geprüfter Zustand vom 17. August 2026
+### Aktueller geprüfter Zustand vom 3. September 2026
 
 Am 17. August wurde Next.js `16.3.1` zusammen mit dem passenden
 `eslint-config-next` erneut gegen den vollständigen Release- und
@@ -151,19 +151,25 @@ vollständig sauberen Audit und exakt Next.js sowie `eslint-config-next`
 `16.3.1`. Jeder neue Production-Paketname oder Befund lässt die Prüfung
 fail-closed fehlschlagen.
 
-Der Mobile-Baum enthält seit 8. August 2026 zusätzlich den noch ungepatchten
-`image-size`-DoS-Hinweis GHSA-w3rx-r6r6-pgpr/GHSA-5p2g-fcmc-qvqq. npm zählt
-diesen einen transitiven Befund je nach Clientversion über bis zu 52 abhängige
-Expo-/Metro-/React-Native-Pakete als hohe Befunde. Das Mobile-Produkt verarbeitet
-keine nicht vertrauenswürdigen ICNS-, JXL- oder HEIF-Dateien; ein gefahrloses
-Upstream-Fixrelease existiert derzeit nicht. Deshalb bleibt der Befund nur
-zeitlich und namentlich begrenzt geprüft. Das Gate enthält eine exakte Allowlist
-der betroffenen Paketnamen, Maxima von 52 hohen und 38 moderaten Befunden,
-`0` niedrige/kritische Befunde und einen Ablaufzeitpunkt am
-2. September 2026. Ein neuer Paketname, ein zusätzlicher Befund oder ein
-abgelaufener Review lässt die Supply-Chain-Prüfung fail-closed scheitern. Ein
-vollständig sauberer Mobile-Audit benötigt keine Ausnahme und bleibt auch nach
-dem Review-Ablauf zulässig.
+Der Mobile-Baum enthält weiterhin den ungepatchten `image-size`-DoS-Hinweis
+GHSA-w3rx-r6r6-pgpr/GHSA-5p2g-fcmc-qvqq im Expo-/Metro-Buildpfad. FanMind
+verarbeitet dort keine nicht vertrauenswürdigen ICNS-, JXL- oder HEIF-Dateien.
+Am 3. September wurden außerdem die neu gemeldeten transitiven Hinweise für
+`@xmldom/xmldom` (XML-Serialisierung), `decode-uri-component`/`query-string`
+(aufwendig zu dekodierende fehlerhafte URL) und die bereits bekannten
+`uuid`-/Xcode-Pfade erneut geprüft. npm bietet für den aktuellen Expo-SDK-57-
+Baum keinen kompatiblen automatischen Fix an; die vorgeschlagenen Downgrades
+auf Expo 46 beziehungsweise Router 5 sind keine sichere Patch-Aktualisierung.
+
+Deshalb bleibt die Ausnahme ausschließlich zeitlich, namentlich und mengenmäßig
+begrenzt. Das Gate erlaubt exakt den am 3. September reproduzierten Stand von
+höchstens `4` hohen und `15` moderaten Befunden, weiterhin `0` niedrige,
+kritische oder informative Befunde, und läuft am 17. September 2026 um 18:40
+UTC ab. Ein neuer Paketname, ein zusätzlicher Befund oder ein abgelaufener
+Review lässt die Supply-Chain-Prüfung fail-closed scheitern. Ein vollständig
+sauberer Mobile-Audit benötigt keine Ausnahme und bleibt auch nach dem Ablauf
+zulässig. Spätestens vor dem Ablauf werden Expo-SDK-57-kompatible Upstream-
+Patches erneut geprüft; die Ausnahme ersetzt kein Upgrade.
 
 ## CodeQL / SAST
 
