@@ -11,6 +11,10 @@ export const MOBILE_PUSH_STAGING_SCHEMA_CONFIRMATION =
   "verify-mobile-push-registration-schema";
 export const MOBILE_PUSH_STAGING_ACCEPTANCE_CONFIRMATION =
   "run-mobile-push-staging-acceptance";
+export const MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION =
+  "verify-mobile-push-delivery-ledger-schema";
+export const MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION =
+  "apply-mobile-push-delivery-ledger";
 
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 const UUID_PATTERN =
@@ -23,6 +27,8 @@ const CONTROL_MODES = new Set([
   "schema",
   "migration",
   "acceptance",
+  "ledger_schema",
+  "ledger_migration",
 ]);
 
 function clean(value) {
@@ -153,7 +159,10 @@ export function evaluateMobilePushStagingControlEnvironment(
     return Object.freeze({ ok: false, mode, errors: ["mode"] });
   }
 
-  const allowWrite = mode === "migration" || mode === "acceptance";
+  const allowWrite =
+    mode === "migration" ||
+    mode === "acceptance" ||
+    mode === "ledger_migration";
   const boundary = evaluateEnvironmentBoundary(environment, { allowWrite });
   if (!boundary.ok) errors.push("environment_boundary");
   if (boundary.runtimeEnvironment !== "staging") {
@@ -188,6 +197,14 @@ export function evaluateMobilePushStagingControlEnvironment(
     acceptance: [
       "FANMIND_MOBILE_PUSH_STAGING_ACCEPTANCE_CONFIRM",
       MOBILE_PUSH_STAGING_ACCEPTANCE_CONFIRMATION,
+    ],
+    ledger_schema: [
+      "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRM",
+      MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION,
+    ],
+    ledger_migration: [
+      "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRM",
+      MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION,
     ],
   };
   const [confirmationKey, expectedConfirmation] = confirmationByMode[mode];

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
+  MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION,
+  MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION,
   MOBILE_PUSH_STAGING_ACCEPTANCE_CONFIRMATION,
   MOBILE_PUSH_STAGING_MIGRATION_CONFIRMATION,
   MOBILE_PUSH_STAGING_RESOURCE_CONFIRMATION,
@@ -118,6 +120,39 @@ test("migration and acceptance require separate explicit write confirmations", (
       MOBILE_PUSH_STAGING_MIGRATION_CONFIRMATION,
     ),
     { mode: "acceptance" },
+  );
+  assert.equal(crossed.ok, false);
+  assert.ok(crossed.errors.includes("confirmation"));
+});
+
+test("delivery ledger verification and migration have separate confirmations", () => {
+  const schema = evaluateMobilePushStagingControlEnvironment(
+    {
+      ...baseEnvironment(),
+      FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRM:
+        MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION,
+    },
+    { mode: "ledger_schema" },
+  );
+  assert.equal(schema.ok, true);
+  assert.equal(schema.writeEnabled, false);
+
+  const migration = evaluateMobilePushStagingControlEnvironment(
+    writeEnvironment(
+      "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRM",
+      MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRMATION,
+    ),
+    { mode: "ledger_migration" },
+  );
+  assert.equal(migration.ok, true);
+  assert.equal(migration.writeEnabled, true);
+
+  const crossed = evaluateMobilePushStagingControlEnvironment(
+    writeEnvironment(
+      "FANMIND_MOBILE_PUSH_DELIVERY_LEDGER_MIGRATION_CONFIRM",
+      MOBILE_PUSH_DELIVERY_LEDGER_SCHEMA_CONFIRMATION,
+    ),
+    { mode: "ledger_migration" },
   );
   assert.equal(crossed.ok, false);
   assert.ok(crossed.errors.includes("confirmation"));
@@ -259,6 +294,7 @@ test("manual workflows are main, reviewed-commit and protected-Staging bound", a
     "mobile-push-staging-resource-readiness.yml",
     "mobile-push-staging-migration.yml",
     "mobile-push-staging-acceptance.yml",
+    "mobile-push-delivery-ledger-staging.yml",
   ];
   const workflows = await Promise.all(
     paths.map((path) =>
@@ -282,6 +318,8 @@ test("manual workflows are main, reviewed-commit and protected-Staging bound", a
   assert.match(workflows[1], /db:mobile-push-registrations:apply/u);
   assert.match(workflows[2], /db:mobile-push-registrations:verify/u);
   assert.match(workflows[2], /mobile:push:staging:run/u);
+  assert.match(workflows[3], /db:mobile-push-delivery-ledger:verify/u);
+  assert.match(workflows[3], /db:mobile-push-delivery-ledger:apply/u);
   assert.doesNotMatch(
     workflows.join("\n"),
     /eas (?:build|submit|update)|ExpoPushToken|push\/send/iu,

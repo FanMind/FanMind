@@ -27,6 +27,7 @@ import {
 } from "../src/lib/mobilePushTokenCrypto.mjs";
 import {
   EXPECTED_LEDGER_SHA256,
+  LEDGER_POSTFLIGHT_SQL,
   evaluateMobilePushDeliveryLedgerSql,
 } from "../scripts/operations/mobile-push-delivery-ledger-runner.mjs";
 
@@ -74,6 +75,10 @@ test("delivery ledger SQL is pinned, atomic, browser-denied and dormant", async 
     () => evaluateMobilePushDeliveryLedgerSql(`${sql}\n-- drift`),
     /ledger_checksum_mismatch/u,
   );
+  assert.match(LEDGER_POSTFLIGHT_SQL, /set transaction read only/iu);
+  assert.match(LEDGER_POSTFLIGHT_SQL, /acl\.grantee = 0/iu);
+  assert.match(LEDGER_POSTFLIGHT_SQL, /has_function_privilege\('service_role'/iu);
+  assert.match(LEDGER_POSTFLIGHT_SQL, /MOBILE_PUSH_DELIVERY_LEDGER_POSTFLIGHT=PASS/u);
 });
 
 test("delivery ledger server adapter keeps one validated RPC target", async () => {
@@ -1201,7 +1206,9 @@ test("dormancy invariant rejects routes workers timers migrations and production
     "src/lib/mobilePushDeliveryPolicy.mjs",
     "src/lib/mobilePushDeliveryTarget.ts",
     "src/lib/mobilePushDeliveryLedger.ts",
+    "src/lib/mobilePushStagingControlPolicy.mjs",
     "scripts/operations/mobile-push-delivery-ledger-runner.mjs",
+    ".github/workflows/mobile-push-delivery-ledger-staging.yml",
     "supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql",
   ]);
   const roots = [

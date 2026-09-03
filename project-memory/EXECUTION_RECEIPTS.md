@@ -2,6 +2,23 @@
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
+## RECEIPT-FM-MOB-006-STAGING-CONTROL-20260903
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Started: 2026-09-03 UTC
+- Finished: 2026-09-03 repository checkpoint
+- Branch/PR: owner-requested direct `main` continuation; exact remote commit assigned after upload
+- Preflight checked: AGENTS, Source of Truth, Supabase current security guidance/changelog, Push ledger/policy/tests, Staging registration workflows, Project Memory task/change/receipt state and Git state
+- Prior attempts found: checksum-pinned ledger existed only with offline verification; no protected database verification/apply workflow existed
+- Dependency result: existing protected Staging variables/secrets and exact-main binding can be reused without adding provider credentials
+- Changes made: added separate ledger schema/migration confirmations, secure private-passfile runner, read-only ACL/RLS/function postflight and one manual protected-Staging verify/apply workflow; synchronized docs and regression tests
+- Checks/tests: offline ledger check PASS; Push/ledger/Staging controls 35/35 PASS; dependency/workflow controls 20/20 PASS; Product/Referral/Legal/Actions truth PASS; Project Memory quality, sales-readiness, truth-drift, drift-preflight, milestone, V8, legacy reconciliation and legacy fail-closed tests PASS; unbound verify fails closed before psql
+- Final diff counterchecked: yes
+- Regression/security countercheck: Production target rejection, exact-main binding, checksum pin, PUBLIC/anon/auth denial, service-role-only access, security-invoker/search-path checks, no schedule/provider/send and normal-deploy dormancy
+- Evidence produced: repository workflow and local fixed-output postflight contract
+- Result status: IMPLEMENTED_NOT_VERIFIED
+- Open follow-up: upload and exact-head CI; actual protected-Staging apply still requires separate explicit authorization and was not dispatched
+- Work lock released: no external lock acquired; repository continuation only
+
 ## RECEIPT-FM-MOB-006-20260903
 - Task: FM-MOB-006 / FM-CR-013
 - Started: 2026-09-03 Europe/Vienna

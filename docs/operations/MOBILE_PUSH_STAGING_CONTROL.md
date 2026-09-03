@@ -202,3 +202,28 @@ geschützten Snapshot und entfernt die Datei mit `always()`.
 Eine echte Follow-up-Zustellung bleibt auch nach einem grünen Acceptance-Lauf
 deaktiviert. Sie benötigt einen gesonderten, datenschutzgeprüften
 Delivery-Baustein und eine neue Freigabe.
+
+### 4. Delivery-Ledger Verify und separat freizugebender Apply
+
+Der vorbereitete Ledger besitzt einen eigenen manuellen Workflow:
+
+```text
+FanMind Mobile Push Delivery Ledger Staging
+.github/workflows/mobile-push-delivery-ledger-staging.yml
+```
+
+Für die read-only Prüfung sind `action=verify` und die Bestätigung
+`verify-mobile-push-delivery-ledger-schema` erforderlich. Eine spätere
+Installation verlangt stattdessen `action=apply` und die getrennte
+Bestätigung `apply-mobile-push-delivery-ledger`. Beide Jobs sind an den
+exakten aktuellen `main`-Commit, das geschützte Environment `staging`, die
+bestätigte Staging-Datenbank und die Abweichung von allen Production-Zielen
+gebunden. Der Apply verwendet ausschließlich den checksum-gepinnten SQL-Block
+und muss unmittelbar danach den read-only Postflight bestehen: RLS aktiv,
+keine Browser-Policies oder PUBLIC-/Browser-Rechte, genau drei RPCs,
+Security Invoker, gepinnter `search_path` und ausschließlich die vorgesehenen
+`service_role`-Rechte.
+
+Der Workflow enthält keine Provider-Credentials und keinen Sendepfad. Seine
+Existenz ist keine Apply-Freigabe; bis zu einem ausdrücklich autorisierten
+geschützten Lauf bleibt der Ledger in Staging unangewendet.

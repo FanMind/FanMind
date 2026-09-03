@@ -203,6 +203,8 @@ nicht die Anzeige auf dem Gerät. Grundlage sind die offiziellen
 
 ## Kontrollierter Ledger – vorbereitet, nicht angewendet
 
+Der geschützte Staging-Pfad ist repository-seitig vorbereitet.
+
 `supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql` stellt
 eine checksum-gebundene, service-role-only Zustellhistorie mit atomarer
 Target-Revalidierung, Idempotenz, Send-/Receipt-Leases, begrenzten Versuchen
@@ -216,6 +218,18 @@ Route, keinem Timer und keinem Worker importiert. Deshalb gibt es weiterhin
 keinen Provideraufruf und keine reale Zustellung. Offline prüft
 `npm run db:mobile-push-delivery-ledger:check` den exakten Hash und die
 Sicherheitsgrenzen.
+
+Der manuelle Workflow
+`.github/workflows/mobile-push-delivery-ledger-staging.yml` ist an `main`, den
+exakt geprüften Commit und das geschützte Environment `staging` gebunden. Die
+Aktion `verify` mit `verify-mobile-push-delivery-ledger-schema` führt nur den
+read-only Postflight aus. Die getrennte Aktion `apply` verlangt
+`apply-mobile-push-delivery-ledger`, aktiviert ausschließlich für diesen Lauf
+den Non-Production-Write-Guard und führt danach denselben Postflight aus.
+Beide Wege prüfen Production-Zielabweichung, verwenden eine private
+`PGPASSFILE` und enthalten weder Expo-Zugang noch Provideraufruf. Der Workflow
+wurde mit dieser Repository-Änderung nicht gestartet; Staging bleibt daher
+unverändert.
 
 Der Service ist allein nicht aktivierbar: Vor einem realen Staging-Send müssen
 die unabhängig geprüften App-, Staging-Supabase-, Production-Supabase- und

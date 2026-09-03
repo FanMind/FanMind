@@ -97,6 +97,8 @@
     "db:mobile-push-registrations:verify": "node scripts/operations/mobile-push-registration-migration-runner.mjs --verify",
     "db:mobile-push-registrations:apply": "node scripts/operations/mobile-push-registration-migration-runner.mjs --apply",
     "db:mobile-push-delivery-ledger:check": "node scripts/operations/mobile-push-delivery-ledger-runner.mjs --check",
+    "db:mobile-push-delivery-ledger:verify": "node scripts/operations/mobile-push-delivery-ledger-runner.mjs --verify",
+    "db:mobile-push-delivery-ledger:apply": "node scripts/operations/mobile-push-delivery-ledger-runner.mjs --apply",
     "db:meta-content:check": "node scripts/operations/meta-content-migration-runner.mjs --check",
     "db:meta-content:readiness": "node scripts/operations/meta-content-migration-runner.mjs --readiness",
     "db:meta-content:verify": "node scripts/operations/meta-content-migration-runner.mjs --verify",
