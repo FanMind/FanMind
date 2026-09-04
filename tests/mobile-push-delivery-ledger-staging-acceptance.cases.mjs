@@ -115,6 +115,8 @@ test("rollback-only SQL proves reservations, leases, receipts and atomic revocat
   for (const stage of ["reservation_membership", "reservation_workspace", "reservation_target"]) {
     assert.match(sql, new RegExp(`MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=${stage}`, "u"));
   }
+  assert.match(sql, /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_transition/u);
+  assert.match(sql, /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_due/u);
   assert.doesNotMatch(sql, /\bcommit\s*;|ExpoPushToken|push\/send|fetch\(/iu);
 });
 
@@ -138,6 +140,14 @@ test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
   assert.equal(
     classifyMobilePushLedgerAcceptanceFailure("ERROR: mobile_push_transition_time_invalid"),
     "mobile_push_transition_time_invalid",
+  );
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: mobile_push_transition_invalid"),
+    "mobile_push_transition_invalid",
+  );
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: receipt_reservation_invalid"),
+    "receipt_reservation_invalid",
   );
 });
 

@@ -29,15 +29,21 @@ const ROLE_PROBES = Object.freeze([
   ["authenticated", "reserve"],
 ]);
 const ACCEPTANCE_STAGE_PATTERN =
-  /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation_membership|reservation_workspace|reservation_target|reservation|ticket|receipt|device_revocation|rollback_check)/gu;
+  /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation_membership|reservation_workspace|reservation_target|reservation|ticket_transition|ticket_due|receipt|device_revocation|rollback_check)/gu;
 const ACCEPTANCE_FAILURE_REASONS = Object.freeze([
   "mobile_push_reservation_input_invalid",
+  "mobile_push_receipt_input_invalid",
   "mobile_push_target_revalidation_failed",
   "initial_reservation_invalid",
   "lease_exclusivity_invalid",
+  "receipt_reservation_invalid",
+  "receipt_acceptance_invalid",
+  "mobile_push_transition_invalid",
   "mobile_push_transition_input_invalid",
   "mobile_push_transition_time_invalid",
+  "mobile_push_error_code_invalid",
   "mobile_push_lease_invalid",
+  "mobile_push_registration_binding_invalid",
 ]);
 
 function fail(code) {
@@ -338,7 +344,7 @@ begin
     raise exception 'lease_exclusivity_invalid';
   end if;
 
-  raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket';
+  raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_transition';
   perform public.mobile_push_delivery_transition('markTicket', jsonb_build_object(
     'attemptId', attempt_id::text,
     'checkAfter', to_char((statement_timestamp() + interval '15 minutes') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
@@ -347,6 +353,7 @@ begin
     'receiptId', 'synthetic-ledger-receipt',
     'ticketCreatedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
   ));
+  raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_due';
   update public.mobile_push_delivery_attempts
      set receipt_check_after = statement_timestamp()
    where id = attempt_id;
