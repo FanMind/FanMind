@@ -59,7 +59,10 @@ create table if not exists public.mobile_push_delivery_attempts (
   constraint mobile_push_delivery_receipt_count_check
     check (receipt_check_count between 0 and 4),
   constraint mobile_push_delivery_receipt_id_check
-    check (receipt_id is null or receipt_id ~ '^[A-Za-z0-9_-]{1,256}$'),
+    check (receipt_id is null or (
+      char_length(receipt_id) between 1 and 256
+      and receipt_id ~ '^[A-Za-z0-9_-]+$'
+    )),
   constraint mobile_push_delivery_lease_shape_check check (
     (send_lease_hash is null) = (send_lease_expires_at is null)
     and (receipt_lease_hash is null) = (receipt_lease_expires_at is null)
@@ -72,6 +75,17 @@ create table if not exists public.mobile_push_delivery_attempts (
   constraint mobile_push_delivery_attempt_unique
     unique (idempotency_key, attempt_number)
 );
+
+-- Reconcile the receipt constraint when this controlled migration is safely
+-- re-applied to an existing Staging ledger.
+alter table public.mobile_push_delivery_attempts
+  drop constraint if exists mobile_push_delivery_receipt_id_check;
+alter table public.mobile_push_delivery_attempts
+  add constraint mobile_push_delivery_receipt_id_check
+  check (receipt_id is null or (
+    char_length(receipt_id) between 1 and 256
+    and receipt_id ~ '^[A-Za-z0-9_-]+$'
+  ));
 
 create index if not exists mobile_push_delivery_receipt_due_idx
   on public.mobile_push_delivery_attempts (receipt_check_after, id)

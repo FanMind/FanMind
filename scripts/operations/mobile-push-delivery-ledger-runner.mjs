@@ -25,7 +25,7 @@ export const LEDGER_PATH = resolve(
   `supabase/controlled/${LEDGER_ID}.sql`,
 );
 export const EXPECTED_LEDGER_SHA256 =
-  "84f3622605aac45562bc4b6257e1fead95c5839e4fdf2cecf27961242748f2dd";
+  "8f8665b36a1c69ec423d903a8fa6d850122aee5c752516f6b70f216b5b5e269c";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 
 export const LEDGER_POSTFLIGHT_SQL = String.raw`
