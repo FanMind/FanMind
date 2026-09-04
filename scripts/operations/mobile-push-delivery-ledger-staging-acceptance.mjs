@@ -345,14 +345,18 @@ begin
   end if;
 
   raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_transition';
-  perform public.mobile_push_delivery_transition('markTicket', jsonb_build_object(
-    'attemptId', attempt_id::text,
-    'checkAfter', to_char((statement_timestamp() + interval '15 minutes') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-    'expiresAt', to_char((statement_timestamp() + interval '24 hours') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-    'leaseToken', send_lease,
-    'receiptId', 'synthetic-ledger-receipt',
-    'ticketCreatedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
-  ));
+  begin
+    perform public.mobile_push_delivery_transition('markTicket', jsonb_build_object(
+      'attemptId', attempt_id::text,
+      'checkAfter', to_char((statement_timestamp() + interval '15 minutes') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+      'expiresAt', to_char((statement_timestamp() + interval '24 hours') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+      'leaseToken', send_lease,
+      'receiptId', 'synthetic-ledger-receipt',
+      'ticketCreatedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+    ));
+  exception when others then
+    raise exception using errcode = 'P0001', message = 'ticket_transition_sqlstate_' || sqlstate;
+  end;
   raise notice 'MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=ticket_due';
   update public.mobile_push_delivery_attempts
      set receipt_check_after = statement_timestamp()
@@ -528,6 +532,8 @@ export function classifyMobilePushLedgerAcceptanceFailure(output) {
   const value = String(output ?? "");
   const fixed = ACCEPTANCE_FAILURE_REASONS.find((reason) => value.includes(reason));
   if (fixed) return fixed;
+  const ticketSqlstate = value.match(/ticket_transition_sqlstate_([0-9A-Z]{5})/u);
+  if (ticketSqlstate) return `ticket_transition_sqlstate_${ticketSqlstate[1]}`;
   for (const [pattern, reason] of [
     [/for update/iu, "row_lock_invalid"],
     [/permission denied/iu, "permission_denied"],

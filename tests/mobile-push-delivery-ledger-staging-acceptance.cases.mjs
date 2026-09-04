@@ -149,6 +149,10 @@ test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
     classifyMobilePushLedgerAcceptanceFailure("ERROR: receipt_reservation_invalid"),
     "receipt_reservation_invalid",
   );
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: ticket_transition_sqlstate_23514"),
+    "ticket_transition_sqlstate_23514",
+  );
 });
 
 test("browser probes exercise table and RPC denial", () => {
