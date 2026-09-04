@@ -1,6 +1,19 @@
+Warning: truncated output (original token count: 30288)
+Total output lines: 663
+
 # Execution Receipts
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
+
+## RECEIPT-FM-MOB-001-ANDROID-PREVIEW-QUEUED-20260904
+- Task: FM-MOB-001 continuation after accepted FM-MOB-006 Delivery-Ledger gate
+- Exact commit: `700885307c265f8907cefe5f5b10499a5ea7b996`
+- External evidence: signed internal build run `33868661986` / job `101009217307`; EAS build `a44d0826-3894-4168-b8ee-07908f2466f1`.
+- Requested scope: exactly one signed Android `preview` internal-distribution APK containing the merged native message handler; no submit, OTA update, Store publication or provider send.
+- Proven result: exact-main checkout, EAS project binding, Preview public environment, one-build preflight and private receipt-path preparation all passed. EAS accepted exactly one build request.
+- Fail-closed result: after `53m 28s` GitHub could not prove the EAS terminal state, marked completion indeterminate and failed without storing a success receipt. Runner cleanup executed. The authenticated EAS dashboard was then checked read-only and showed the exact `7008853` Android internal-distribution build in `Waiting` state.
+- Result status: INDETERMINATE_DO_NOT_REQUEUE. Do not rerun the workflow or queue another build until EAS build `a44d0826-3894-4168-b8ee-07908f2466f1` reaches a terminal state and its exact commit/profile/artifact are independently verified.
+- Security boundary: no Production/Supabase mutation, Google Play submission, OTA update or Push provider delivery occurred.
 
 ## RECEIPT-FM-MOB-006-DELIVERY-LEDGER-20260904
 - Task: FM-MOB-006 / FM-CR-013 continuation
@@ -351,16 +364,7 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Branch/PR: `automation/postmerge-reconcile-20260820`; issue #982
 - Preflight checked: current FanMind main, finishline/tasks/open loops/dependencies/evidence/assumptions/contradictions, live Supabase project health/security advisors, controlled Production trigger-hardening SQL/runbook and Staging workspace-provisioning RPC migration.
 - Prior attempts found: Production trigger hardening already has a dedicated checksum-pinned transactional control and runbook; it must not be rebuilt or auto-applied. Staging workspace RPC is intentionally granted to authenticated users in code and must not be blindly revoked.
-- Dependency result: read-only evidence is sufficient to classify the gap, not to mutate Production/Auth.
-- Planned evidence: provider advisor scan independent of repository implementation evidence; later exact catalog/ACL verify and post-action advisor scan if a protected action is approved.
-- Changes made: opened issue #982 and reconciled the new R3 security gap into Project Memory registers.
-- Checks/tests: live Production and Staging projects are `ACTIVE_HEALTHY`; fresh security advisor scans captured current warnings.
-- Final diff counterchecked: yes for reconciliation scope; no runtime/database diff.
-- Regression/security countercheck: fail-closed. No DB/Auth/provider mutation, no broad grants/revokes, and no artificial browser RLS policies were introduced.
-- Evidence produced: fresh provider target/advisor evidence plus repository hardening crosscheck.
-- Result status: RECONCILIATION_REQUIRED.
-- Open follow-up: exact read-only Production hardening verify, Staging RPC exception review and leaked-password setting decision; separately authorize any later state-changing action.
-- Work lock released: no mutating lock was acquired; acquire one before any Production DB/Auth change.
+- Dependency result: …288 tokens truncated… Production DB/Auth change.
 
 ## RECEIPT-FM-SEC-001-NBA-SYNC-20260820
 - Task: FM-SEC-001 / Project Memory NBA orchestration reconciliation
