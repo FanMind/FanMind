@@ -281,7 +281,7 @@ begin
        and handoff.client_handoff_id = ${clientHandoff}
        and handoff.consent_purpose = 'human_reply_by_email'
        and handoff.visitor_email_fingerprint = encode(
-         digest(convert_to('${EMAIL}', 'UTF8'), 'sha256'), 'hex'
+         extensions.digest(convert_to('${EMAIL}', 'UTF8'), 'sha256'), 'hex'
        )
        and contact.workspace_id = ${workspace}
        and contact.handle = '${EMAIL}'

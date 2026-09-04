@@ -38,7 +38,8 @@ test("handoff storage is service-role-only and consent-bound", async () => {
   assert.match(sql, /visitor_email_fingerprint ~ '\^\[0-9a-f\]\{64\}\$'/u);
   assert.match(sql, /expires_at <= consent_granted_at \+ interval '90 days'/u);
   assert.doesNotMatch(sql, /visitor_email\s+text|raw_ip|ip_address|session_token\s+text/iu);
-  assert.match(sql, /visitor_email_fingerprint,[\s\S]*encode\(digest\(convert_to\(v_email/u);
+  assert.match(sql, /visitor_email_fingerprint,[\s\S]*encode\(extensions\.digest\(convert_to\(v_email/u);
+  assert.match(sql, /v_session record;[\s\S]*select session\.\*, installation\.message_retention_days[\s\S]*into v_session/u);
 });
 
 test("message and handoff writes revalidate processing, session and origin atomically", async () => {

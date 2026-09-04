@@ -11,7 +11,7 @@ export const WEBSITE_CHAT_HANDOFF_PATH = resolve(
   `supabase/controlled/${WEBSITE_CHAT_HANDOFF_ID}.sql`,
 );
 export const EXPECTED_WEBSITE_CHAT_HANDOFF_SHA256 =
-  "44c77eae690b1ac53e8a30ae0fb890232f61f493d3f808ee4044a70a5d3f7744";
+  "dfa820cc325b8132d7d81682adc808456920aed2cf330c17fd5085c8c3ba0045";
 
 function fail(code) {
   throw new Error(`WEBSITE_CHAT_HANDOFF_ERROR=${code}`);
@@ -39,6 +39,8 @@ export function evaluateWebsiteChatHandoffSql(sql) {
     /revoke execute on function public\.ingest_website_chat_message[\s\S]*from service_role/iu,
     /create or replace function public\.ingest_website_chat_message_v2/iu,
     /create or replace function public\.request_website_chat_handoff/iu,
+    /extensions\.digest\(convert_to\(v_email, 'UTF8'\), 'sha256'\)/iu,
+    /v_session record;[\s\S]*select session\.\*, installation\.message_retention_days[\s\S]*into v_session/iu,
     /session\.expires_at > v_now/iu,
     /allowed_origin\.verified_at is not null/iu,
     /website_chat_processing_allowed\(session\.workspace_id\)/iu,

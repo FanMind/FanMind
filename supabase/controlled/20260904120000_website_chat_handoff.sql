@@ -292,7 +292,7 @@ set search_path = public, pg_temp
 as $function$
 declare
   v_now timestamptz := statement_timestamp();
-  v_session public.website_chat_visitor_sessions%rowtype;
+  v_session record;
   v_existing public.website_chat_handoffs%rowtype;
   v_contact_id uuid;
   v_conversation_id uuid;
@@ -407,7 +407,7 @@ begin
   ) values (
     v_session.id, v_session.installation_id, v_session.workspace_id,
     p_client_handoff_id, v_contact_id, v_conversation_id, v_note_message_id,
-    encode(digest(convert_to(v_email, 'UTF8'), 'sha256'), 'hex'),
+    encode(extensions.digest(convert_to(v_email, 'UTF8'), 'sha256'), 'hex'),
     p_consent_version, 'human_reply_by_email', v_now, 'requested',
     v_now + make_interval(
       days => least(v_session.message_retention_days, 90)
