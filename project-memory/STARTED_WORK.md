@@ -24,6 +24,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-WEB-004
+- Started: 2026-09-04 Europe/Vienna
+- Updated: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Change request: FM-CR-017; continues FM-WEB-003.
+- Scope: repository-only protected Website Chat retention Staging controls and Workspace-scoped rollback acceptance; no dispatch, database apply, schedule, Production, provider, email or real visitor data.
+- Work lock: `LOCK-FM-WEB-004-RETENTION-STAGING-20260904` RELEASED after complete local countercheck; publication remains repository-only.
+- Dependencies: exact reviewed `main`, isolated Staging target, marked synthetic Workspace and separately authorized protected actions.
+- Completed result: Workspace-scoped retention signature, exact-main/TLS/target guards, checksum-bound verify/apply runner, service-role postflight, browser-denied deterministic rollback acceptance, manual workflows, tests and runbook are prepared.
+- Still open: exact-main remote CI. Every Staging verify/apply/acceptance dispatch remains separately authorized.
+- Exact next step: publish and inspect exact-main checks; do not dispatch a workflow.
+- Owner action needed: later, separately, for each protected Staging action.
+
 ## FM-WEB-003
 - Started: 2026-09-04 Europe/Vienna
 - Updated: 2026-09-04

@@ -207,3 +207,15 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact reviewed `main`, applied Website Chat handoff schema, later separately protected Staging verify/apply/rollback-only acceptance and legal/privacy acceptance before any operational schedule.
 - Decision: Implement as FM-WEB-003 at R3. Deletion may target only expired/revoked technical sessions after any Handoff evidence also expires; contacts, Conversations and messages remain outside the deletion boundary.
 - Related task: FM-WEB-003
+
+## FM-CR-017
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue autonomously with the next safe Website Chat prerequisite toward handoff readiness after the bounded retention contract passed exact-main checks.
+- Classification: Repository-only protected Staging controls for the checksum-pinned Website Chat retention SQL. No workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Affected areas: retention SQL workspace scope, exact-main Staging policy, schema/apply runner, rollback-only synthetic acceptance, manual workflows, tests, runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014/FM-CR-015/FM-CR-016 and FM-WEB-001/FM-WEB-002/FM-WEB-003.
+- Dependencies: exact reviewed `main`, isolated Staging bindings, marked synthetic Workspace, applied handoff schema, protected Staging environment and independent confirmations for verify, apply and acceptance.
+- Decision: Implement as FM-WEB-004 at R3. Repository publication is authorized; every workflow dispatch and database action remains separately authorized. Acceptance must be Workspace-scoped, rollback-only, browser-denied and preserve CRM history.
+- Related task: FM-WEB-004

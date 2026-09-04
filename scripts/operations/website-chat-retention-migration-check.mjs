@@ -11,7 +11,7 @@ export const WEBSITE_CHAT_RETENTION_PATH = resolve(
   `supabase/controlled/${WEBSITE_CHAT_RETENTION_ID}.sql`,
 );
 export const EXPECTED_WEBSITE_CHAT_RETENTION_SHA256 =
-  "fca022284b48ff7be67c16b0f35ba0ba1d55ff19383f4d4db28ebb1716b1f34a";
+  "485bc7133764ce7c2f9d002a4a46a5a1895441ad405c9a7a0fa0970b0900ab0f";
 
 function fail(code) {
   throw new Error(`WEBSITE_CHAT_RETENTION_ERROR=${code}`);
@@ -30,8 +30,11 @@ export function evaluateWebsiteChatRetentionSql(sql) {
     /create or replace function public\.manage_website_chat_retention/iu,
     /p_limit integer default 500/iu,
     /p_execute boolean default false/iu,
+    /p_workspace_id uuid default null/iu,
+    /drop function if exists public\.manage_website_chat_retention\(integer, boolean\)/iu,
     /p_limit > 1000/iu,
     /session\.revoked_at is not null or session\.expires_at <= v_now/iu,
+    /p_workspace_id is null or session\.workspace_id = p_workspace_id/iu,
     /handoff\.expires_at > v_now/iu,
     /for update of session skip locked/iu,
     /delete from public\.website_chat_visitor_sessions/iu,
@@ -40,6 +43,7 @@ export function evaluateWebsiteChatRetentionSql(sql) {
     /from public, anon, authenticated, service_role/iu,
     /to service_role/iu,
     /aclexplode/iu,
+    /function\.proname = 'manage_website_chat_retention'[\s\S]*<> 1/iu,
     /CRM contacts, conversations and messages are never deleted/iu,
     /commit;\s*$/iu,
   ];

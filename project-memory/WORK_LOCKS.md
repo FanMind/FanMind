@@ -2,6 +2,18 @@
 
 Prevents two agents/sessions from independently working the same task.
 
+## LOCK-FM-WEB-004-RETENTION-STAGING-20260904
+- Task: FM-WEB-004 / FM-CR-017
+- Status: RELEASED
+- Holder: ChatGPT Website Chat retention Staging-control session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after FM-WEB-003 exact-main remote checks passed
+- Risk: R3
+- Scope: repository-only Workspace-scoped retention contract plus exact-main verify/apply and rollback-only Staging acceptance controls, tests and documentation.
+- Safety: no workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after complete local countercheck; publication remains a repository transfer only.
+- Resume from: exact-main remote CI; every protected Staging action remains separate.
+- Rollback: revert the repository commit; the controlled SQL is unapplied and no external state changes under this lock.
+
 ## LOCK-FM-MOB-006-DELIVERY-LEDGER-ACCEPTANCE-20260903
 - Task: FM-MOB-006 / FM-CR-013 continuation
 - Status: RELEASED

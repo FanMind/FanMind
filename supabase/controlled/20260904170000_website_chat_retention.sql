@@ -19,9 +19,12 @@ begin
 end
 $preflight$;
 
+drop function if exists public.manage_website_chat_retention(integer, boolean);
+
 create or replace function public.manage_website_chat_retention(
   p_limit integer default 500,
-  p_execute boolean default false
+  p_execute boolean default false,
+  p_workspace_id uuid default null
 )
 returns table (
   candidate_session_count integer,
@@ -61,6 +64,7 @@ begin
         select session.id, session.expires_at
           from public.website_chat_visitor_sessions as session
          where (session.revoked_at is not null or session.expires_at <= v_now)
+           and (p_workspace_id is null or session.workspace_id = p_workspace_id)
            and not exists (
              select 1
                from public.website_chat_handoffs as handoff
@@ -78,6 +82,7 @@ begin
         select session.id, session.expires_at
           from public.website_chat_visitor_sessions as session
          where (session.revoked_at is not null or session.expires_at <= v_now)
+           and (p_workspace_id is null or session.workspace_id = p_workspace_id)
            and not exists (
              select 1
                from public.website_chat_handoffs as handoff
@@ -117,6 +122,7 @@ begin
     select 1
       from public.website_chat_visitor_sessions as session
      where (session.revoked_at is not null or session.expires_at <= v_now)
+       and (p_workspace_id is null or session.workspace_id = p_workspace_id)
        and not exists (
          select 1
            from public.website_chat_handoffs as handoff
@@ -135,21 +141,31 @@ begin
 end;
 $function$;
 
-revoke all on function public.manage_website_chat_retention(integer, boolean)
+revoke all on function public.manage_website_chat_retention(integer, boolean, uuid)
   from public, anon, authenticated, service_role;
-grant execute on function public.manage_website_chat_retention(integer, boolean)
+grant execute on function public.manage_website_chat_retention(integer, boolean, uuid)
   to service_role;
 
-comment on function public.manage_website_chat_retention(integer, boolean) is
+comment on function public.manage_website_chat_retention(integer, boolean, uuid) is
   'Plans or executes a bounded deletion of expired/revoked Website Chat sessions and their technical receipts/handoff evidence after its expiry. CRM contacts, conversations and messages are never deleted.';
 
 do $postflight$
 declare
   retention_function oid := to_regprocedure(
-    'public.manage_website_chat_retention(integer,boolean)'
+    'public.manage_website_chat_retention(integer,boolean,uuid)'
   );
 begin
   if retention_function is null
+     or to_regprocedure(
+       'public.manage_website_chat_retention(integer,boolean)'
+     ) is not null
+     or (
+       select count(*)
+         from pg_proc as function
+         join pg_namespace as namespace on namespace.oid = function.pronamespace
+        where namespace.nspname = 'public'
+          and function.proname = 'manage_website_chat_retention'
+     ) <> 1
      or not exists (
        select 1
          from pg_proc

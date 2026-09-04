@@ -35,12 +35,21 @@ test("retention is bounded, explicit and dry-run by default", async () => {
   const sql = await readFile(migrationPath, "utf8");
   assert.match(sql, /p_limit integer default 500/u);
   assert.match(sql, /p_execute boolean default false/u);
+  assert.match(sql, /p_workspace_id uuid default null/u);
+  assert.match(
+    sql,
+    /drop function if exists public\.manage_website_chat_retention\(integer, boolean\)/u,
+  );
   assert.match(sql, /p_limit < 1 or p_limit > 1000/u);
   assert.match(sql, /p_execute is null/u);
   assert.match(sql, /for update of session skip locked/u);
   assert.match(sql, /get diagnostics v_deleted_sessions = row_count/u);
   assert.match(sql, /website_chat_retention_delete_count_mismatch/u);
   assert.match(sql, /has_more boolean/u);
+  assert.equal(
+    sql.match(/p_workspace_id is null or session\.workspace_id = p_workspace_id/gu)?.length,
+    3,
+  );
 });
 
 test("active handoff evidence blocks session deletion until its own expiry", async () => {
@@ -84,15 +93,16 @@ test("retention RPC is service-role-only and security-invoker", async () => {
   assert.match(sql, /security invoker[\s\S]*set search_path = public, pg_temp/u);
   assert.match(
     sql,
-    /revoke all on function public\.manage_website_chat_retention\(integer, boolean\)[\s\S]*from public, anon, authenticated, service_role/u,
+    /revoke all on function public\.manage_website_chat_retention\(integer, boolean, uuid\)[\s\S]*from public, anon, authenticated, service_role/u,
   );
   assert.match(
     sql,
-    /grant execute on function public\.manage_website_chat_retention\(integer, boolean\)[\s\S]*to service_role/u,
+    /grant execute on function public\.manage_website_chat_retention\(integer, boolean, uuid\)[\s\S]*to service_role/u,
   );
   assert.match(sql, /acl\.grantee = 0/u);
   assert.match(sql, /proowner = to_regrole\('postgres'\)/u);
   assert.match(sql, /to_regrole\('service_role'\)::oid/u);
+  assert.match(sql, /function\.proname = 'manage_website_chat_retention'[\s\S]*<> 1/u);
   assert.doesNotMatch(sql, /create\s+policy/iu);
 });
 

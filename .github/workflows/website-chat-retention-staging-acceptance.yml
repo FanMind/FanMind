@@ -1,0 +1,91 @@
+name: FanMind Website Chat Retention Staging Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit containing the applied Website Chat retention contract'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type run-website-chat-retention-acceptance to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-website-chat-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  website-chat-retention-acceptance:
+    name: Prove bounded Website Chat retention with complete rollback
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'run-website-chat-retention-acceptance'
+      }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_WEBSITE_CHAT_RETENTION_ACCEPTANCE_CONFIRM: run-website-chat-retention-acceptance
+      FANMIND_WEBSITE_CHAT_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_WEBSITE_CHAT_STAGING_WORKSPACE_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: ${{ vars.FANMIND_STAGING_DB_PORT }}
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ secrets.FANMIND_STAGING_DB_USER }}
+      PGSSLMODE: verify-full
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Verify rollback-only retention acceptance offline
+        run: npm run website-chat:retention:staging:check
+      - name: Prepare dedicated private database password file
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-website-chat-retention-acceptance.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            *$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED_DB_PASSWORD="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED_DB_PASSWORD="${ESCAPED_DB_PASSWORD//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED_DB_PASSWORD" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+      - name: Verify applied service-role-only retention schema
+        env:
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_WEBSITE_CHAT_RETENTION_SCHEMA_CONFIRM: verify-website-chat-retention-schema
+          PGPASSFILE: ${{ runner.temp }}/fanmind-website-chat-retention-acceptance.pgpass
+        run: npm run db:website-chat-retention:verify
+      - name: Run synthetic rollback-only Website Chat retention acceptance
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-website-chat-retention-acceptance.pgpass
+        run: npm run website-chat:retention:staging:run
+      - name: Remove dedicated private database password file
+        if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-website-chat-retention-acceptance.pgpass
+        run: rm -f "$PGPASSFILE"

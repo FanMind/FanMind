@@ -2,6 +2,21 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-WEB-004
+- Date: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Prepare protected exact-main Staging verification, apply and rollback-only acceptance for the dormant Website Chat retention contract.
+- Scope: optional Workspace filter in the controlled RPC, target/commit/TLS policy, private-passfile runner, manual workflows, deterministic synthetic acceptance, tests and runbook. No workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Dependencies: FM-WEB-001/FM-WEB-002/FM-WEB-003, FM-CR-017, exact reviewed `main`, applied handoff schema and a marked synthetic Staging Workspace.
+- Evidence required: exact checksum, Production/redirect/weak-TLS rejection, separate confirmations, service-role owner/ACL/table/Cascade postflight, browser denial, invalid-input rejection, Workspace-scoped dry-run/bounded delete/active-Handoff protection, CRM preservation and complete rollback.
+- Negative path: wrong ref/SHA/target/confirmation, alternate libpq target, browser execution, global synthetic acceptance, invalid batch/mode, CRM deletion, incomplete rollback, provider call or automatic trigger must fail closed.
+- Recovery: repository changes are revertible; all synthetic acceptance writes roll back and the controlled SQL remains unapplied until a separate protected action.
+- Result: the retention RPC can now be constrained by `p_workspace_id`; two manual exact-main workflows and fail-closed runners prepare read-only verification, separately confirmed Staging apply and separately confirmed rollback-only acceptance. No workflow has been dispatched.
+- Evidence: pinned SHA-256 `485bc7133764ce7c2f9d002a4a46a5a1895441ad405c9a7a0fa0970b0900ab0f`; focused retention/Staging 15/15, Website Chat 45/45, release integrations 93/93 and Operations 1113/1113 PASS; TypeScript, lint, Production build, truth/action pinning and Project Memory quality/status checks PASS. Lint retains one pre-existing unrelated Mobile warning. Exact-main remote checks remain publication closeout.
+- Next step: publish the exact repository commit and require exact-main CI, then pause for separate authorization before any Staging workflow or database action.
+- Do not repeat: do not dispatch either workflow, apply through generic migrations, run acceptance globally, target Production, add a schedule or combine retention with AI/email/installation activation.
+
 ## FM-WEB-003
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
