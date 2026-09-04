@@ -180,6 +180,14 @@ end
 $preflight$;
 
 \echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=fixtures
+update public.workspaces
+   set test_access_flags = coalesce(test_access_flags, '{}'::jsonb) || jsonb_build_object(
+         'temporary_processing_access', 'true',
+         'temporary_processing_access_expires_at',
+         to_char((statement_timestamp() + interval '1 hour') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+       )
+ where id = ${workspace};
+
 insert into public.contacts (
   id, workspace_id, display_name, handle, source_platform, language, status,
   tags, summary, internal_notes, is_top_fan
