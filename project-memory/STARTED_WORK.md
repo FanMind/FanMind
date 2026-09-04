@@ -36,8 +36,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Planned evidence: focused policy/API/widget/controlled-SQL tests, checksum check, TypeScript/lint/build and Project Memory/truth checks.
 - Completed result: consent-bound one-per-session handoff API/widget flow, existing CRM timeline linkage, atomic processing/origin/session revalidation and service-role-only fingerprinted evidence are implemented repository-side without AI, email or external mutation.
 - Local evidence: checksum PASS; Website Chat 20/20, Inbox 13/13, Production controls 5/5 and WhatsApp inbound 30/30 PASS; product truth, Project Memory quality, TypeScript, lint and production build PASS. The sole lint warning is pre-existing and outside this task.
-- Still open: exact-head remote checks, protected Staging verify/apply/rollback-only acceptance, installation activation, retention cleanup, AI dialogue, uncertainty-driven escalation, email verification and manually approved email delivery.
-- Exact next step: publish the repository commit to `main` and observe its checks; afterwards prepare a separate protected Staging verify/apply/rollback-only acceptance path before any installation can be enabled.
+- Remote evidence: exact-main commit `6452cb2452b3e5a664d86f5073a410f3744b1bae` passed Browser E2E, CodeQL, Supply Chain Security, normal Web deploy, read-only Production audit and Final Go-Live Readiness. The deploy did not apply controlled SQL or enable an installation, so the feature remains dormant.
+- Still open: protected Staging verify/apply/rollback-only acceptance, installation activation, retention cleanup, AI dialogue, uncertainty-driven escalation, email verification and manually approved email delivery.
+- Exact next step: prepare a separate protected Staging verify/apply/rollback-only acceptance path before any installation can be enabled.
 - Owner action needed: none for repository publication; separate authorization is required before any Staging database apply, external provider call or Production activation.
 
 
