@@ -135,6 +135,10 @@ test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
     classifyMobilePushLedgerAcceptanceFailure("ERROR: FOR UPDATE cannot be applied here"),
     "row_lock_invalid",
   );
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: mobile_push_transition_time_invalid"),
+    "mobile_push_transition_time_invalid",
+  );
 });
 
 test("browser probes exercise table and RPC denial", () => {

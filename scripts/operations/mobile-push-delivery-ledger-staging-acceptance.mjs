@@ -35,6 +35,9 @@ const ACCEPTANCE_FAILURE_REASONS = Object.freeze([
   "mobile_push_target_revalidation_failed",
   "initial_reservation_invalid",
   "lease_exclusivity_invalid",
+  "mobile_push_transition_input_invalid",
+  "mobile_push_transition_time_invalid",
+  "mobile_push_lease_invalid",
 ]);
 
 function fail(code) {
