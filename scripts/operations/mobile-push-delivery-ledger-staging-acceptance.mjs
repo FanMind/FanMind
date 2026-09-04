@@ -30,6 +30,12 @@ const ROLE_PROBES = Object.freeze([
 ]);
 const ACCEPTANCE_STAGE_PATTERN =
   /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation_membership|reservation_workspace|reservation_target|reservation|ticket|receipt|device_revocation|rollback_check)/gu;
+const ACCEPTANCE_FAILURE_REASONS = Object.freeze([
+  "mobile_push_reservation_input_invalid",
+  "mobile_push_target_revalidation_failed",
+  "initial_reservation_invalid",
+  "lease_exclusivity_invalid",
+]);
 
 function fail(code) {
   throw new Error(`MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_ERROR=${code}`);
@@ -508,6 +514,11 @@ export function latestMobilePushLedgerAcceptanceStage(stdout) {
   return matches.at(-1)?.[1] ?? "unknown";
 }
 
+export function classifyMobilePushLedgerAcceptanceFailure(output) {
+  const value = String(output ?? "");
+  return ACCEPTANCE_FAILURE_REASONS.find((reason) => value.includes(reason)) ?? "unknown";
+}
+
 function ensurePsqlAvailable() {
   const result = spawnSync("psql", ["--version"], { stdio: "ignore" });
   if (result.error || result.status !== 0) fail("psql_unavailable");
@@ -538,6 +549,9 @@ async function runAcceptance(environment) {
       "MOBILE_PUSH_DELIVERY_LEDGER_ROLLBACK=PASS",
     ];
     if (acceptance.error || acceptance.status !== 0 || markers.some((marker) => !acceptance.stdout.includes(marker))) {
+      console.error(
+        `MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_FAILURE_REASON=${classifyMobilePushLedgerAcceptanceFailure(`${acceptance.stdout}\n${acceptance.stderr}`)}`,
+      );
       console.error(
         `MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_FAILURE_STAGE=${latestMobilePushLedgerAcceptanceStage(`${acceptance.stdout}\n${acceptance.stderr}`)}`,
       );

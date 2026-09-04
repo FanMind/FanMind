@@ -10,6 +10,7 @@ import { promisify } from "node:util";
 import {
   buildMobilePushLedgerAcceptanceSql,
   buildMobilePushLedgerRoleDenialSql,
+  classifyMobilePushLedgerAcceptanceFailure,
   deriveMobilePushLedgerAcceptanceUuid,
   latestMobilePushLedgerAcceptanceStage,
 } from "../scripts/operations/mobile-push-delivery-ledger-staging-acceptance.mjs";
@@ -125,6 +126,11 @@ test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
     "receipt",
   );
   assert.equal(latestMobilePushLedgerAcceptanceStage("password=do-not-echo"), "unknown");
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: mobile_push_target_revalidation_failed"),
+    "mobile_push_target_revalidation_failed",
+  );
+  assert.equal(classifyMobilePushLedgerAcceptanceFailure("password=do-not-echo"), "unknown");
 });
 
 test("browser probes exercise table and RPC denial", () => {
