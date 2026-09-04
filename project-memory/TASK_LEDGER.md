@@ -3,11 +3,11 @@
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
 ## FM-MOB-006
-- Date: 2026-09-03
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Date: 2026-09-03 to 2026-09-04
+- Status: ACCEPTED
 - Risk: R3
 - Goal: Add a dormant, service-role-only atomic Mobile Push Delivery-Ledger foundation with transactional target revalidation, send/receipt leases, bounded retry state and atomic device-registration revocation.
-- Scope: controlled SQL, server-only RPC adapter, checksum/offline verification, protected exact-commit Staging verify/apply control, rollback-only Staging acceptance preparation, tests and documentation. No workflow dispatch, apply, route, worker, timer, provider request, Production activation or signed build.
+- Scope: controlled SQL, server-only RPC adapter, checksum/offline verification, protected exact-commit isolated-Staging verify/apply control, rollback-only Staging acceptance, tests and documentation. No route, worker, timer, provider request, Production activation or signed build.
 - Dependencies: FM-MOB-001; accepted FM-MOB-005 repository boundary; existing `mobile_push_registrations`; exact Staging/Production/EAS target binding.
 - Evidence required: offline checksum/contract validation, focused service/SQL/adapter tests, proof of route/timer/worker/provider dormancy, project-memory countercheck and exact remote commit/CI before acceptance.
 - Negative path: Production or browser access, non-atomic revalidation/revocation, lease bypass, plaintext token/provider content, unbounded retries or runtime wiring must fail closed.
@@ -18,7 +18,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Evidence: offline acceptance contract and focused policy/workflow/fake-psql tests pass locally. Exact remote `main` `283797c1fe6c14d5e9e814d8f8ec83cf9e249483` was then used for protected read-only Staging run `33796695523` / job `100786027891`: target binding and offline checksum passed, the apply job was skipped, and the database postflight returned the fixed redacted `postflight_failed` result because the Delivery-Ledger schema is not yet installed.
 - Additional resource evidence: initial protected read-only Push resource run `33797049971` / job `100787171346` failed closed before database inspection because the five dedicated Mobile Push Staging variables were unset. After action-time authorization, those non-secret isolated bindings were configured and exact-main rerun `33798738433` / job `100792675316` passed: exact commit/target separation, pinned registration checksum/contract, isolated synthetic resources and private password-file cleanup all passed while delivery and non-Production writes remained disabled.
 - Schema and acceptance evidence: exact-main registration apply `33800376282` / job `100798166495`, Delivery-Ledger apply `33800490769` / job `100798544513`, independent read-only Delivery-Ledger verify `33800628826` / job `100798998381`, and registration rollback-only acceptance `33800742158` / job `100799358333` all passed. The acceptance proved browser denial, isolated synthetic service-role CRUD, transaction rollback and cleanup with delivery disabled and no Production/provider path.
-- Next step: dispatch exactly one distinct Delivery-Ledger rollback-only acceptance on current exact `main`; it remains pending only because the authenticated browser transport became unavailable after the preceding successful runs. After that, real provider/device delivery remains later and separately gated.
+- Final acceptance: the first exact acceptance exposed only safe failure classification `ticket_transition_sqlstate_2201B`; review traced this to PostgreSQL's bounded-repeat limit in the receipt-ID regular expression. Commit `18a6ad79cb72331b4daa41ee87dd2430a8ffd473` replaced that expression with an explicit `char_length` bound plus an unbounded safe-character expression and idempotently replaced the existing constraint. The pinned controlled-migration checksum is `8f8665b36a1c69ec423d903a8fa6d850122aee5c752516f6b70f216b5b5e269c`.
+- External evidence: corrected isolated-Staging Delivery-Ledger apply run `33867831888` / job `101006621418` passed; final exact-commit rollback-only acceptance run `33867922978` / job `101006906941` passed. It proved reservation, lease exclusivity, ticket/receipt lifecycle, invalid-device atomic revocation, browser denial, complete rollback and cleanup using synthetic rows.
+- Accepted boundary: the atomic Delivery-Ledger Staging gate is accepted. Provider sending stayed disabled; no real notification, Production mutation or real fan data was involved.
+- Next step: create one separately reviewed signed Android build containing the merged native `message_received` / `message_reminder` handler, then perform separately authorized real-device/provider acceptance. Do not claim real Push acceptance yet and do not begin the 12-tester/14-day Play cohort until FanMind is ready for the Gerhard handoff.
 
 ## FM-MOB-005
 - Date: 2026-08-31 to 2026-09-01

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-03",
+  "updated": "2026-09-04",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -39,7 +39,7 @@
       "parallel_safe": true,
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope on the exact-merge Android Preview on 2026-08-30, and the verified Android 1.0.0 AAB was published to the closed Alpha track on 2026-09-03. Keep that historical scope closed. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and use the fail-closed private preparer plus the exact Android Production/Store receipt for the Play-installed 19-check runbook and real Recovery flow before requesting Production access. Never substitute the older Preview receipt for Store-device evidence. Keep Push separate and disabled for this baseline acceptance. Do not queue another baseline build, expose private artifact values, start iOS/TestFlight or mutate Supabase/Production."
+      "instruction": "The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. Because the published AAB predates the native message handler, next prepare exactly one separately reviewed signed Android build containing that handler, then require separate authorization for real provider/device Push acceptance. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and use the exact receipt-bound 19-check runbook plus real Recovery flow before requesting Production access. Do not expose private artifact values, start iOS/TestFlight or mutate Production."
     },
     {
       "id": "NBA-AI-LIFECYCLE-RECONCILE",

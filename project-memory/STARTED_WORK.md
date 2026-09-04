@@ -4,15 +4,16 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-MOB-006
 - Started: 2026-09-03 Europe/Vienna
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-09-04
+- Status: ACCEPTED
 - Risk: R3
 - Change request: FM-CR-013
-- Scope: dormant atomic Mobile Push Delivery-Ledger foundation only; no external mutation, delivery activation or build.
+- Scope: dormant atomic Mobile Push Delivery-Ledger foundation and isolated-Staging rollback-only acceptance; no Production mutation, delivery activation or build.
 - Work lock: `LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903` RELEASED after repository implementation/countercheck.
-- Completed so far: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, focused tests, documentation, Phase-8 governance reconciliation, protected resource readiness, both checksum-bound isolated-Staging schema applies, independent Delivery-Ledger postflight, and the registration rollback-only acceptance. Runs `33800376282`, `33800490769`, `33800628826` and `33800742158` are green; the registration acceptance proved browser denial, synthetic service-role CRUD, full rollback and residue-free cleanup while delivery remained disabled.
-- Still open: the distinct Delivery-Ledger rollback-only Staging acceptance and all provider/device delivery evidence. The final ledger acceptance dispatch was not attempted through an alternate path after the authenticated browser transport became unavailable.
-- Exact next step: run exactly one Delivery-Ledger rollback-only acceptance on exact current `main`, inspect its rollback/cleanup proof, then continue only to separately authorized real provider/device acceptance.
-- Owner action needed: yes for protected Staging apply/acceptance and any real provider/device action.
+- Completed result: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, protected resource readiness, checksum-bound isolated-Staging applies, independent postflight and both rollback-only acceptance paths are complete. After safe SQLSTATE `2201B` identified an invalid bounded receipt-ID expression, exact commit `18a6ad79cb72331b4daa41ee87dd2430a8ffd473` corrected the constraint. Apply run `33867831888` / job `101006621418` and final Delivery-Ledger acceptance run `33867922978` / job `101006906941` passed with provider delivery disabled, synthetic rows, complete rollback and cleanup.
+- Still open: nothing under FM-MOB-006. A handler-containing signed Android build and real provider/device delivery evidence remain separate under FM-MOB-001.
+- Exact next step: prepare one separately reviewed signed Android build containing the merged message handler, then require separate authorization for real-device/provider acceptance. Keep the 12-tester/14-day Play cohort deferred until Gerhard handoff readiness.
+- Owner action needed: yes for the new signed build and any real provider/device action.
 
 ## Rules
 - Add an entry as soon as substantive work begins.

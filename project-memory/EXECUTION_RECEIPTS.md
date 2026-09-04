@@ -2,6 +2,18 @@
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
+## RECEIPT-FM-MOB-006-DELIVERY-LEDGER-20260904
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Finished: 2026-09-04 Europe/Vienna
+- Exact accepted commit: `18a6ad79cb72331b4daa41ee87dd2430a8ffd473`
+- Scope: correct the receipt-ID constraint identified by safe SQLSTATE `2201B`, apply the pinned controlled migration to isolated Staging and execute exactly one rollback-only Delivery-Ledger lifecycle acceptance. No provider request, real notification, Production mutation, real fan data, Store action or signed build.
+- Pinned checksum: `8f8665b36a1c69ec423d903a8fa6d850122aee5c752516f6b70f216b5b5e269c`.
+- External evidence: apply run `33867831888` / job `101006621418` PASS; rollback-only acceptance run `33867922978` / job `101006906941` PASS.
+- Positive evidence: reservation, lease exclusivity, ticket and receipt lifecycle, invalid-device atomic revocation, browser denial, complete transaction rollback and residue-free cleanup all passed using deterministic synthetic rows.
+- Negative/security evidence: provider sending remained disabled; no Production target, real fan row, real device token or user notification was touched; the initial invalid-regex failure was exposed only as safe SQLSTATE and corrected without logging database error text.
+- Result status: ACCEPTED for the atomic Delivery-Ledger isolated-Staging gate only.
+- Open follow-up: one separately reviewed signed Android build containing the merged native message handler, followed by separately authorized real provider/device acceptance. The 12-tester/14-day Play cohort remains deferred until Gerhard handoff readiness.
+
 ## RECEIPT-FM-MOB-006-PUSH-STAGING-SCHEMAS-20260903
 - Task: FM-MOB-006 / FM-CR-013 continuation
 - Started: 2026-09-03 Europe/Vienna against exact remote `main` `084e19c8c8cc5c117ab52158f4864ad71c8d2070`
