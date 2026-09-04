@@ -1,7 +1,8 @@
 # Website Chat Security Foundation
 
 Status: Session, processing-gebundene Nachrichteningestion, cookie-freies
-Widget und menschliche Übergabe mit freiwilliger E-Mail-Adresse im Repository
+Widget, menschliche Übergabe mit freiwilliger E-Mail-Adresse und ein
+checksum-gebundener technischer Retention-Vertrag sind im Repository
 vorbereitet, nicht in der Datenbank angewandt und nicht produktiv aktiviert.
 Production hat damit weiterhin noch keinen atomaren
   Processing-Entitlement-Check; bis zum kontrollierten Staging-Apply und der
@@ -77,10 +78,13 @@ ohne KI-Antworten, Rückkanal oder automatisches Senden zu aktivieren.
   Zweck/Version/Zeit der Einwilligung sowie CRM-Referenzen. Weder
   Sitzungstoken noch IP-Adresse werden persistiert.
 - Die am Website-Kontakt geführte E-Mail-Adresse folgt dem bestehenden
-  Kontakt-/Workspace-Lebenszyklus. `expires_at` im getrennten
-  Übergabenachweis ist bis zur Implementierung eines kontrollierten
-  Löschlaufs nur ein Löschziel und kein Beleg einer bereits ausgeführten
-  Löschung.
+  Kontakt-/Workspace-Lebenszyklus. Der kontrollierte, weiterhin unangewandte
+  Retention-Vertrag kann abgelaufene oder widerrufene technische Sitzungen
+  samt Receipts und bereits abgelaufenem Übergabenachweis begrenzt löschen.
+  Ein noch gültiger Übergabenachweis blockiert die Sitzungsbereinigung bis zu
+  seinem eigenen `expires_at`. Kontakte, Conversations und sichtbare
+  Nachrichten werden dabei nicht gelöscht. Ein Zeitwert allein ist kein
+  Beleg einer bereits ausgeführten Löschung.
 - Eine Übergabe ist erst nach einer bereits gespeicherten Nachricht derselben
   gültigen Sitzung möglich. Sie erzeugt nur eine interne Timeline-Notiz,
   markiert die vorhandene Conversation als `high` und setzt den nächsten
@@ -123,5 +127,9 @@ ohne KI-Antworten, Rückkanal oder automatisches Senden zu aktivieren.
    E-Mail-Provider aufgerufen werden;
 11. erst nach Rechts- und Datenschutzabnahme die konkrete Installation
    aktivieren.
+
+Der nächste technische Schritt für Retention ist getrennt beschrieben in
+`docs/operations/WEBSITE_CHAT_RETENTION.md`. Der vorliegende SQL-Vertrag ist
+kein ausführbarer Staging-Nachweis und installiert keinerlei Zeitplan.
 
 Production bleibt bis zur Staging-, Rechts- und Datenschutzabnahme deaktiviert.

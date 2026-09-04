@@ -57,6 +57,19 @@ Prevents two agents/sessions from independently working the same task.
 - Resume from: exact-main remote CI, then only a separately authorized protected Staging dispatch. Apply and acceptance remain independently gated.
 - Rollback: revert the repository commit; no external state changes under this lock.
 
+# LOCK-FM-WEB-003-RETENTION-20260904
+- Task: FM-WEB-003 / FM-CR-016
+- Status: RELEASED
+- Holder: ChatGPT Website Chat retention repository session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after exact-main FM-WEB-002 remote checks passed
+- Risk: R3
+- Scope: repository-only checksum-pinned bounded technical-session retention SQL, offline checker, tests and documentation.
+- Safety: no database apply, workflow dispatch, timer/worker, CRM deletion, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after repository implementation and local countercheck.
+- Result: dry-run-first service-role-only retention contract is repository-ready and preserves active Handoff evidence plus CRM history; no external state changed.
+- Resume from: exact-main remote CI, then a future separately authorized protected Staging verify/apply/rollback-only acceptance task.
+- Rollback: revert the repository commit; the controlled SQL remains unapplied.
+
 ## Active locks
 
 

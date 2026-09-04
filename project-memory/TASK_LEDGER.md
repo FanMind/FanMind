@@ -2,6 +2,21 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-WEB-003
+- Date: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Prepare a bounded, dormant retention contract for Website Chat technical sessions, receipts and expired handoff evidence without deleting the CRM history.
+- Scope: checksum-pinned controlled SQL, offline verifier, policy tests and runbook. No database apply, Staging workflow dispatch, timer/worker, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Dependencies: FM-WEB-001/FM-WEB-002, FM-CR-016, the controlled Website Chat handoff schema and existing cascade foreign keys from technical evidence to the visitor session.
+- Evidence required: dry-run default, strict batch bound, deterministic lock-safe selection, active-Handoff retention, service-role-only ACL, exact deletion allowlist, no automatic execution and proof that contacts/Conversations/messages are excluded.
+- Negative path: null/oversized limit, browser/PUBLIC execution, deletion while Handoff evidence is active, CRM deletion, generic migration discovery, timer/provider/AI/email wiring or delete-count drift must fail closed.
+- Recovery: repository changes are revertible; the controlled SQL is unapplied and installs no schedule.
+- Result: a checksum-bound `manage_website_chat_retention(...)` contract defaults to dry-run, caps work at 1,000 sessions, locks execution candidates with `SKIP LOCKED`, retains any session with unexpired handoff evidence and deletes only eligible technical sessions. Existing cascades remove their receipts/expired handoff evidence while CRM contacts, Conversations and messages remain untouched.
+- Evidence: checksum/offline check PASS; focused retention 6/6; Website Chat 36/36; release integrations 84/84; Operations 1113/1113; TypeScript, lint, Production build, truth/action pinning and Project Memory quality/status/drift checks PASS. Lint reports only the pre-existing Mobile warning; exact-main remote evidence remains publication closeout.
+- Next step: publish the exact repository commit and require exact-main CI. A separate future task must add protected Staging verify/apply and rollback-only retention acceptance before the SQL can be applied or any schedule considered.
+- Do not repeat: do not move this SQL into generic migrations, delete CRM history, infer execution from `expires_at`, add a timer or combine retention authorization with AI/email/installation activation.
+
 ## FM-WEB-002
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
@@ -13,8 +28,8 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Negative path: wrong ref/SHA/origin/Supabase ref/DB host/TLS/confirmation, libpq redirect, browser table/RPC access, duplicate leakage, outbound message or incomplete rollback must fail closed.
 - Recovery: repository changes are revertible; the prepared acceptance performs all synthetic writes inside a transaction that must roll back.
 - Result: the repository now provides separate exact-main manual controls for read-only schema verification, separately confirmed Staging apply and rollback-only lifecycle acceptance. The runners require direct isolated-Staging API/Supabase/DB binding, TLS `verify-full`, a private snapshotted password file and fixed redacted outcomes. Acceptance requires the dedicated synthetic-processing Workspace markers and proves browser table/RPC denial, processing eligibility, message and handoff idempotency, rejection of a handoff without a prior message, wrong-origin rejection for both RPCs, CRM linkage, fingerprint storage, absence of outbound messages and complete rollback.
-- Evidence: pinned SQL checksum and offline acceptance PASS; Website Chat 30/30 and release integrations 78/78 PASS; complete Operations 1113/1113 PASS after synchronizing the intentional hosted-workflow topology count; Action pinning, product truth, Project Memory quality/status, TypeScript, lint and production build PASS. Lint retains one pre-existing unrelated Mobile Delivery-Ledger warning.
-- Next step: publish the exact repository commit and require exact-main CI. A later read-only Staging verify is safe only with an explicit dispatch; Staging apply and rollback-only acceptance each remain separately authorized actions.
+- Evidence: pinned SQL checksum and offline acceptance PASS; Website Chat 30/30 and release integrations 78/78 PASS; complete Operations 1113/1113 PASS after synchronizing the intentional hosted-workflow topology count; Action pinning, product truth, Project Memory quality/status, TypeScript, lint and production build PASS. Exact-main commit `79e0e0c761f4c6f6895d76c4253b3b93b5f1e3a2` then passed Browser E2E, CodeQL, Supply Chain Security, normal Web deploy, read-only Production audit and Final Go-Live Readiness. Lint retains one pre-existing unrelated Mobile Delivery-Ledger warning.
+- Next step: a later read-only Staging verify is safe only with an explicit dispatch; Staging apply and rollback-only acceptance each remain separately authorized actions.
 - Do not repeat: do not apply the schema through generic migrations, run against Production, enable an installation, send email, invoke AI or treat repository preparation as external acceptance.
 
 ## FM-WEB-001

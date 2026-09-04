@@ -195,3 +195,15 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact reviewed `main`, dedicated isolated-Staging Supabase/DB bindings, protected Staging environment, separate confirmations for read-only verify, apply and rollback-only acceptance.
 - Decision: Implement as FM-WEB-002 at R3. Repository publication is authorized; no workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data is authorized.
 - Related task: FM-WEB-002
+
+## FM-CR-016
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue autonomously with the next safe Phase-8 Website Chat prerequisite after publishing the protected handoff controls.
+- Classification: Repository-only, dormant and bounded retention contract for technical Website Chat session/evidence rows. No database apply, timer, Production mutation, CRM deletion, AI/provider request or outbound email.
+- Affected areas: controlled Supabase SQL, checksum/offline verification, Website Chat tests, retention runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014/FM-CR-015, FM-WEB-001/FM-WEB-002, existing session/message/handoff foreign-key lifecycle and the requirement to preserve the CRM conversation history.
+- Dependencies: exact reviewed `main`, applied Website Chat handoff schema, later separately protected Staging verify/apply/rollback-only acceptance and legal/privacy acceptance before any operational schedule.
+- Decision: Implement as FM-WEB-003 at R3. Deletion may target only expired/revoked technical sessions after any Handoff evidence also expires; contacts, Conversations and messages remain outside the deletion boundary.
+- Related task: FM-WEB-003

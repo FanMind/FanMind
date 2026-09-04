@@ -24,6 +24,22 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-WEB-003
+- Started: 2026-09-04 Europe/Vienna
+- Updated: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Change request: FM-CR-016; continues FM-WEB-001/FM-WEB-002.
+- Scope: repository-only bounded Website Chat technical-retention contract; no database apply, timer/worker, CRM deletion, Production mutation, AI/provider request or outbound email.
+- Work lock: `LOCK-FM-WEB-003-RETENTION-20260904` RELEASED after repository implementation and local countercheck.
+- Dependencies: controlled Website Chat handoff schema, technical evidence cascades, later protected Staging controls and exact reviewed `main`.
+- Completed result: checksum-pinned dry-run-first cleanup RPC, 1,000-session batch bound, lock-safe execution selection, active-Handoff hold, service-role-only ACL and explicit CRM-history exclusion are repository-ready.
+- Local evidence: checksum/offline check PASS; focused retention 6/6; Website Chat 36/36; release integrations 84/84; Operations 1113/1113; TypeScript, lint, Production build, truth/action pinning and Project Memory quality/status/drift checks PASS. Lint reports only the pre-existing Mobile warning.
+- Safety: controlled SQL remains outside generic migrations and adds no schedule, provider, AI, email, installation activation or external state change.
+- Still open: exact-main remote CI and a separate protected Staging verify/apply/rollback-only acceptance path before any apply or operational schedule.
+- Exact next step: publish the exact repository commit and inspect remote checks; do not apply the SQL from this task.
+- Owner action needed: none for repository publication; separate authorization remains required for future Staging database actions.
+
 ## FM-WEB-002
 - Started: 2026-09-04 Europe/Vienna
 - Updated: 2026-09-04
@@ -35,9 +51,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Dependencies: checksum-pinned Website Chat handoff SQL, isolated Staging variables/secrets and exact reviewed `main`.
 - Completed result: separate exact-main manual verify/apply and rollback-only acceptance workflows, direct target/TLS/passfile controls, independent RLS/ACL/function postflight and deterministic synthetic lifecycle proof are repository-ready.
 - Local evidence: pinned SQL/offline acceptance PASS; Website Chat 30/30, release integrations 78/78 and Operations 1113/1113 PASS; Action pinning, product truth, Project Memory quality/status, TypeScript, lint and production build PASS. The sole lint warning is pre-existing and outside this task.
+- Remote evidence: exact-main commit `79e0e0c761f4c6f6895d76c4253b3b93b5f1e3a2` passed Browser E2E, CodeQL, Supply Chain Security, normal Web deploy, read-only Production audit and Final Go-Live Readiness.
 - Safety: no workflow dispatch, database apply, Production mutation, installation activation, AI/provider call, outbound email or real visitor data.
-- Still open: exact-main remote CI, any protected Staging dispatch, controlled schema apply, rollback-only database acceptance, installation activation, AI/provider work and outbound email.
-- Exact next step: publish the exact repository commit and inspect remote checks; perform no Staging dispatch without its separate authorization.
+- Still open: any protected Staging dispatch, controlled schema apply, rollback-only database acceptance, installation activation, AI/provider work and outbound email.
+- Exact next step: perform no Staging dispatch without its separate authorization.
 - Owner action needed: none for repository publication; separate authorization remains required before protected Staging verify, apply or acceptance.
 
 ## FM-WEB-001
