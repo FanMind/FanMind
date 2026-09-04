@@ -25,7 +25,7 @@ export const LEDGER_PATH = resolve(
   `supabase/controlled/${LEDGER_ID}.sql`,
 );
 export const EXPECTED_LEDGER_SHA256 =
-  "667218600bc9f31693cb8f5cce00c7020da646c278cd7f260afa3fa966214862";
+  "b76a5f99e57e7c8c4514f10055fcedc8087f540ca7e0a42c4b373bd948326d91";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 
 export const LEDGER_POSTFLIGHT_SQL = String.raw`
@@ -104,7 +104,8 @@ export function evaluateMobilePushDeliveryLedgerSql(sql) {
   if (digest !== EXPECTED_LEDGER_SHA256) fail("ledger_checksum_mismatch");
   const required = [
     /^begin;/iu,
-    /create table public\.mobile_push_delivery_attempts/iu,
+    /create table if not exists public\.mobile_push_delivery_attempts/iu,
+    /jsonb_object_keys\(p_input\) as keys\(key\)/iu,
     /unique \(idempotency_key, attempt_number\)/iu,
     /alter table public\.mobile_push_delivery_attempts enable row level security/iu,
     /from public, anon, authenticated, service_role/iu,

@@ -12,7 +12,7 @@ alter table public.mobile_push_registrations
   add constraint mobile_push_registrations_status_check
   check (status in ('active', 'disabled'));
 
-create table public.mobile_push_delivery_attempts (
+create table if not exists public.mobile_push_delivery_attempts (
   id uuid primary key default gen_random_uuid(),
   idempotency_key text not null,
   attempt_number smallint not null,
@@ -73,11 +73,11 @@ create table public.mobile_push_delivery_attempts (
     unique (idempotency_key, attempt_number)
 );
 
-create index mobile_push_delivery_receipt_due_idx
+create index if not exists mobile_push_delivery_receipt_due_idx
   on public.mobile_push_delivery_attempts (receipt_check_after, id)
   where state in ('ticket_recorded', 'receipt_pending');
 
-create index mobile_push_delivery_retention_idx
+create index if not exists mobile_push_delivery_retention_idx
   on public.mobile_push_delivery_attempts (expires_at, id);
 
 alter table public.mobile_push_delivery_attempts enable row level security;
@@ -112,7 +112,7 @@ declare
   v_lease_token text := encode(gen_random_bytes(32), 'hex');
 begin
   if jsonb_typeof(p_input) <> 'object'
-     or (select array_agg(key order by key) from jsonb_object_keys(p_input) key)
+     or (select array_agg(key order by key) from jsonb_object_keys(p_input) as keys(key))
         <> array[
           'contactId','dueDate','dueDateCutoff','expectedRegistrationTokenFingerprint',
           'expectedSupabaseProjectRef','expectedTargetHash','followupId','idempotencyKey',
@@ -255,7 +255,7 @@ declare
   v_lease_token text := encode(gen_random_bytes(32), 'hex');
 begin
   if jsonb_typeof(p_input) <> 'object'
-     or (select array_agg(key order by key) from jsonb_object_keys(p_input) key)
+     or (select array_agg(key order by key) from jsonb_object_keys(p_input) as keys(key))
         <> array['attemptId','requestedAt'] then
     raise exception using errcode = '22023', message = 'mobile_push_receipt_input_invalid';
   end if;
@@ -340,7 +340,7 @@ begin
     raise exception using errcode = '22023', message = 'mobile_push_transition_invalid';
   end if;
   select array_agg(key order by key) into v_keys
-    from jsonb_object_keys(p_input) key;
+    from jsonb_object_keys(p_input) as keys(key);
   if (p_action = 'markTicket' and v_keys <> array[
         'attemptId','checkAfter','expiresAt','leaseToken','receiptId','ticketCreatedAt'
       ])
