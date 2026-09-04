@@ -24,6 +24,22 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-WEB-002
+- Started: 2026-09-04 Europe/Vienna
+- Updated: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Change request: FM-CR-015; continues FM-WEB-001/FM-CR-014.
+- Scope: repository-only exact-main protected Staging verification, separately confirmed schema apply and rollback-only synthetic Website Chat handoff acceptance.
+- Work lock: `LOCK-FM-WEB-002-STAGING-CONTROL-20260904` RELEASED after repository implementation and local countercheck.
+- Dependencies: checksum-pinned Website Chat handoff SQL, isolated Staging variables/secrets and exact reviewed `main`.
+- Completed result: separate exact-main manual verify/apply and rollback-only acceptance workflows, direct target/TLS/passfile controls, independent RLS/ACL/function postflight and deterministic synthetic lifecycle proof are repository-ready.
+- Local evidence: pinned SQL/offline acceptance PASS; Website Chat 30/30, release integrations 78/78 and Operations 1113/1113 PASS; Action pinning, product truth, Project Memory quality/status, TypeScript, lint and production build PASS. The sole lint warning is pre-existing and outside this task.
+- Safety: no workflow dispatch, database apply, Production mutation, installation activation, AI/provider call, outbound email or real visitor data.
+- Still open: exact-main remote CI, any protected Staging dispatch, controlled schema apply, rollback-only database acceptance, installation activation, AI/provider work and outbound email.
+- Exact next step: publish the exact repository commit and inspect remote checks; perform no Staging dispatch without its separate authorization.
+- Owner action needed: none for repository publication; separate authorization remains required before protected Staging verify, apply or acceptance.
+
 ## FM-WEB-001
 - Started: 2026-09-04 Europe/Vienna
 - Updated: 2026-09-04

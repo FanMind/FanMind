@@ -110,11 +110,15 @@ ohne KI-Antworten, Rückkanal oder automatisches Senden zu aktivieren.
 7. das sichtbare Einweg-Widget mit gültiger Installation, Consent, Retry und
    verbotener Origin im Browser prüfen;
 8. `npm run db:website-chat-handoff:check` ausführen und die kontrollierte,
-   checksum-gebundene Handoff-Stufe erst über einen separat geschützten
-   Staging-Apply anwenden;
+   checksum-gebundene Handoff-Stufe über den manuellen, exakt an `main` und
+   isoliertes Staging gebundenen Workflow
+   `website-chat-handoff-staging.yml` zunächst read-only prüfen und erst nach
+   eigener Freigabe anwenden;
 9. Message-v2 und Handoff mit aktiver/inaktiver Verarbeitung, abgelaufener
    Sitzung, Wiederholung, fehlender Nachricht und ungültiger E-Mail
-   transaktional in isoliertem Staging abnehmen;
+   über `website-chat-handoff-staging-acceptance.yml` rollback-only in
+   isoliertem Staging abnehmen; der genaue Ablauf steht in
+   `docs/operations/WEBSITE_CHAT_HANDOFF_STAGING.md`;
 10. Widget-Übergabe im Browser prüfen und bestätigen, dass weder KI- noch
    E-Mail-Provider aufgerufen werden;
 11. erst nach Rechts- und Datenschutzabnahme die konkrete Installation

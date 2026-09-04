@@ -44,6 +44,19 @@ Prevents two agents/sessions from independently working the same task.
 - Resume from: exact-main remote checks, then a separately protected Staging verify/apply/rollback-only acceptance path. Preserve disabled installations and the no-AI/no-email boundary.
 - Rollback: revert the repository commit; no external state changes under this lock.
 
+# LOCK-FM-WEB-002-STAGING-CONTROL-20260904
+- Task: FM-WEB-002 / FM-CR-015
+- Status: RELEASED
+- Holder: ChatGPT Website Chat protected-Staging control session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after reconciling exact remote `main` and the released FM-WEB-001 implementation lock
+- Risk: R3
+- Scope: repository-only exact-main Staging verify/apply policy, rollback-only synthetic acceptance, manual workflows, tests and documentation.
+- Safety: no workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after repository implementation and complete local countercheck.
+- Result: exact-main manual verify/apply and rollback-only acceptance controls are repository-ready; no external state changed.
+- Resume from: exact-main remote CI, then only a separately authorized protected Staging dispatch. Apply and acceptance remain independently gated.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
 ## Active locks
 
 

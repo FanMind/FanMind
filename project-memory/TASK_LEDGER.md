@@ -2,6 +2,21 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-WEB-002
+- Date: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Prepare an exact-main, isolated-Staging verify/apply and rollback-only acceptance control for the dormant Website Chat human-handoff schema.
+- Scope: repository policy, private-passfile runners, manual protected workflows, deterministic synthetic rollback acceptance, tests and runbook. No workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Dependencies: FM-WEB-001/FM-CR-014, FM-CR-015, checksum-pinned controlled SQL and dedicated Staging/Production target bindings.
+- Evidence required: fail-closed target/commit/confirmation tests, read-only ACL/RLS postflight, browser role denial, message/handoff/idempotency/wrong-origin/CRM assertions, complete rollback and proof of no AI/email transport.
+- Negative path: wrong ref/SHA/origin/Supabase ref/DB host/TLS/confirmation, libpq redirect, browser table/RPC access, duplicate leakage, outbound message or incomplete rollback must fail closed.
+- Recovery: repository changes are revertible; the prepared acceptance performs all synthetic writes inside a transaction that must roll back.
+- Result: the repository now provides separate exact-main manual controls for read-only schema verification, separately confirmed Staging apply and rollback-only lifecycle acceptance. The runners require direct isolated-Staging API/Supabase/DB binding, TLS `verify-full`, a private snapshotted password file and fixed redacted outcomes. Acceptance requires the dedicated synthetic-processing Workspace markers and proves browser table/RPC denial, processing eligibility, message and handoff idempotency, rejection of a handoff without a prior message, wrong-origin rejection for both RPCs, CRM linkage, fingerprint storage, absence of outbound messages and complete rollback.
+- Evidence: pinned SQL checksum and offline acceptance PASS; Website Chat 30/30 and release integrations 78/78 PASS; complete Operations 1113/1113 PASS after synchronizing the intentional hosted-workflow topology count; Action pinning, product truth, Project Memory quality/status, TypeScript, lint and production build PASS. Lint retains one pre-existing unrelated Mobile Delivery-Ledger warning.
+- Next step: publish the exact repository commit and require exact-main CI. A later read-only Staging verify is safe only with an explicit dispatch; Staging apply and rollback-only acceptance each remain separately authorized actions.
+- Do not repeat: do not apply the schema through generic migrations, run against Production, enable an installation, send email, invoke AI or treat repository preparation as external acceptance.
+
 ## FM-WEB-001
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED

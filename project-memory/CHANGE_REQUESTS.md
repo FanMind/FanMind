@@ -183,3 +183,15 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact reviewed `main`, active Workspace processing entitlement, separately approved controlled Staging apply/acceptance, legal/privacy acceptance and a later separately gated email transport.
 - Decision: Implement as FM-WEB-001 at R3. The repository may prepare one explicit consent-bound handoff per visitor session and mark the linked CRM conversation urgent, but must remain fail-closed and must not send email or invoke AI.
 - Related task: FM-WEB-001
+
+## FM-CR-015
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue the Website Chat Phase-8 handoff work autonomously toward the Gerhard handoff without activating the feature or changing external state.
+- Classification: Repository-only protected Staging control preparation for the existing checksum-pinned Website Chat handoff SQL.
+- Affected areas: exact-main Staging policy, schema/apply runner, rollback-only synthetic acceptance, manual GitHub workflows, tests, runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014, FM-WEB-001 and the unapplied controlled Website Chat handoff SQL.
+- Dependencies: exact reviewed `main`, dedicated isolated-Staging Supabase/DB bindings, protected Staging environment, separate confirmations for read-only verify, apply and rollback-only acceptance.
+- Decision: Implement as FM-WEB-002 at R3. Repository publication is authorized; no workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data is authorized.
+- Related task: FM-WEB-002
