@@ -109,7 +109,8 @@ declare
   v_attempt public.mobile_push_delivery_attempts%rowtype;
   v_attempt_number smallint;
   v_attempt_id uuid := gen_random_uuid();
-  v_lease_token text := encode(gen_random_bytes(32), 'hex');
+  v_lease_token text := replace(gen_random_uuid()::text, '-', '')
+    || replace(gen_random_uuid()::text, '-', '');
 begin
   if jsonb_typeof(p_input) <> 'object'
      or (select array_agg(key order by key) from jsonb_object_keys(p_input) as keys(key))
@@ -252,7 +253,8 @@ declare
   v_requested_at timestamptz;
   v_attempt_id uuid;
   v_attempt public.mobile_push_delivery_attempts%rowtype;
-  v_lease_token text := encode(gen_random_bytes(32), 'hex');
+  v_lease_token text := replace(gen_random_uuid()::text, '-', '')
+    || replace(gen_random_uuid()::text, '-', '');
 begin
   if jsonb_typeof(p_input) <> 'object'
      or (select array_agg(key order by key) from jsonb_object_keys(p_input) as keys(key))
