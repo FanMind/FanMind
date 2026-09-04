@@ -9,12 +9,12 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Task: FM-WEB-004 / FM-CR-017
 - Started: 2026-09-04 Europe/Vienna after FM-WEB-003 exact-main remote checks passed
 - Finished: 2026-09-04 repository checkpoint
-- Scope: prepare exact-main isolated-Staging retention verification/apply and rollback-only Workspace-scoped acceptance. No workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Scope: prepare exact-main isolated-Staging retention verification/apply and rollback-only Workspace-scoped acceptance. Read-only verification and a separately authorized transactional Staging apply were later dispatched; no successful database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
 - Preflight checked: published checksum-pinned retention SQL, handoff/session/technical-cascade/CRM table contracts, shared Website Chat Staging target guard, Project Memory and clean isolated continuation worktree.
 - Changes made: added an optional Workspace scope to all retention candidate queries; added separate retention confirmations, checksum-first private-passfile runner, read-only owner/ACL/table/Cascade/dry-run postflight, browser-denied invalid-input and lifecycle acceptance, two manual exact-main workflows, tests and runbook.
 - Safety result: acceptance targets only its marked synthetic Workspace and rolls back all writes; active Handoff evidence and CRM records are retained; no automatic trigger, provider, AI or email path exists.
 - Checks/tests: pinned checksum/offline check PASS; focused retention/Staging 15/15, Website Chat 45/45, release integrations 93/93 and Operations 1113/1113 PASS; TypeScript, lint, Production build, truth/action pinning and Project Memory quality/status checks PASS. Lint retains one pre-existing unrelated Mobile warning. Exact-main remote checks remain publication closeout.
-- External result: none. Repository publication is the only authorized external write; no workflow was dispatched and the SQL remains unapplied.
+- External result: exact-main CI passed. Read-only run `33891229801` failed closed at the missing-contract postflight. Separately authorized apply run `33892365719` reached PostgreSQL but failed before transactional commit (`apply_failed`) and rolled back; the SQL remains unapplied. Safe non-secret error classification and SQL-line reporting are prepared for the next apply attempt.
 - Result status: IMPLEMENTED_NOT_VERIFIED.
 - Work lock released: yes, after complete local countercheck.
 

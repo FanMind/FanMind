@@ -12,7 +12,10 @@ import {
   WEBSITE_CHAT_RETENTION_SCHEMA_CONFIRMATION,
   evaluateWebsiteChatRetentionStagingEnvironment,
 } from "../src/lib/websiteChatRetentionStagingPolicy.mjs";
-import { WEBSITE_CHAT_RETENTION_POSTFLIGHT_SQL } from "../scripts/operations/website-chat-retention-staging-runner.mjs";
+import {
+  WEBSITE_CHAT_RETENTION_POSTFLIGHT_SQL,
+  classifyWebsiteChatRetentionDatabaseError,
+} from "../scripts/operations/website-chat-retention-staging-runner.mjs";
 import {
   buildWebsiteChatRetentionAcceptanceSql,
   buildWebsiteChatRetentionRoleDenialSql,
@@ -128,6 +131,21 @@ test("retention postflight is read-only and proves the complete service-role bou
   assert.match(WEBSITE_CHAT_RETENTION_POSTFLIGHT_SQL, /confdeltype = 'c'/u);
   assert.match(WEBSITE_CHAT_RETENTION_POSTFLIGHT_SQL, /deleted_session_count <> 0/u);
   assert.doesNotMatch(WEBSITE_CHAT_RETENTION_POSTFLIGHT_SQL, /\bcommit\s*;/iu);
+});
+
+test("retention database diagnostics expose only stable non-secret error classes", () => {
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql:<stdin>:42: ERROR: permission denied for table private_table",
+  ), "database_permission_denied");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql:<stdin>:9: ERROR: relation missing_table does not exist",
+  ), "database_relation_missing");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql: error: connection to server failed: password authentication failed",
+  ), "database_connection_failed");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql:<stdin>:12: ERROR: unexpected internal detail",
+  ), "database_apply_rejected");
 });
 
 test("retention acceptance material is deterministic and unique", () => {

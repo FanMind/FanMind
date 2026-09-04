@@ -214,6 +214,30 @@ function runPsql(sql, environment, passfilePath) {
   );
 }
 
+export function classifyWebsiteChatRetentionDatabaseError(stderr = "") {
+  const message = String(stderr).toLowerCase();
+  const rules = [
+    [/(?:password authentication failed|no pg_hba|could not translate host name|connection refused|connection timed out|timeout expired|certificate verify failed)/u, "database_connection_failed"],
+    [/permission denied/u, "database_permission_denied"],
+    [/must be owner/u, "database_owner_mismatch"],
+    [/cannot drop function[\s\S]*depend/u, "database_dependency_conflict"],
+    [/role [\s\S]* does not exist/u, "database_role_missing"],
+    [/relation [\s\S]* does not exist/u, "database_relation_missing"],
+    [/column [\s\S]* does not exist/u, "database_column_missing"],
+    [/function [\s\S]* does not exist/u, "database_function_missing"],
+    [/syntax error/u, "database_syntax_error"],
+    [/already exists/u, "database_object_conflict"],
+  ];
+  return rules.find(([pattern]) => pattern.test(message))?.[1] ?? "database_apply_rejected";
+}
+
+function reportSafeDatabaseError(result) {
+  const stderr = typeof result?.stderr === "string" ? result.stderr : "";
+  console.error(`WEBSITE_CHAT_RETENTION_DB_ERROR_CLASS=${classifyWebsiteChatRetentionDatabaseError(stderr)}`);
+  const line = stderr.match(/psql:<stdin>:(\d+):/iu)?.[1];
+  if (line) console.error(`WEBSITE_CHAT_RETENTION_DB_ERROR_LINE=${line}`);
+}
+
 export function runWebsiteChatRetentionStaging(mode, environment = process.env) {
   checkWebsiteChatRetentionMigration();
   const policyMode = mode === "--apply" ? "migration" : "schema";
@@ -226,7 +250,10 @@ export function runWebsiteChatRetentionStaging(mode, environment = process.env) 
   try {
     if (mode === "--apply") {
       const result = runPsql(readFileSync(WEBSITE_CHAT_RETENTION_PATH, "utf8"), environment, snapshotPath);
-      if (result.error || result.status !== 0) fail("apply_failed");
+      if (result.error || result.status !== 0) {
+        reportSafeDatabaseError(result);
+        fail("apply_failed");
+      }
       console.log("WEBSITE_CHAT_RETENTION_APPLY=completed");
     } else {
       console.log("WEBSITE_CHAT_RETENTION_APPLY=not_requested");
