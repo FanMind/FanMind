@@ -131,6 +131,10 @@ test("ledger acceptance diagnostics expose only the latest fixed stage", () => {
     "mobile_push_target_revalidation_failed",
   );
   assert.equal(classifyMobilePushLedgerAcceptanceFailure("password=do-not-echo"), "unknown");
+  assert.equal(
+    classifyMobilePushLedgerAcceptanceFailure("ERROR: FOR UPDATE cannot be applied here"),
+    "row_lock_invalid",
+  );
 });
 
 test("browser probes exercise table and RPC denial", () => {

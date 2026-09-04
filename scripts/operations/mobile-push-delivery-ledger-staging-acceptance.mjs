@@ -516,7 +516,18 @@ export function latestMobilePushLedgerAcceptanceStage(stdout) {
 
 export function classifyMobilePushLedgerAcceptanceFailure(output) {
   const value = String(output ?? "");
-  return ACCEPTANCE_FAILURE_REASONS.find((reason) => value.includes(reason)) ?? "unknown";
+  const fixed = ACCEPTANCE_FAILURE_REASONS.find((reason) => value.includes(reason));
+  if (fixed) return fixed;
+  for (const [pattern, reason] of [
+    [/for update/iu, "row_lock_invalid"],
+    [/permission denied/iu, "permission_denied"],
+    [/violates .*constraint|duplicate key/iu, "constraint_violation"],
+    [/invalid input syntax/iu, "input_syntax_invalid"],
+    [/operator does not exist|does not exist/iu, "schema_contract_mismatch"],
+  ]) {
+    if (pattern.test(value)) return reason;
+  }
+  return "unknown";
 }
 
 function ensurePsqlAvailable() {
