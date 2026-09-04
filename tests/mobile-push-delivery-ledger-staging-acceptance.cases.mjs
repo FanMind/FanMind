@@ -111,6 +111,9 @@ test("rollback-only SQL proves reservations, leases, receipts and atomic revocat
   assert.match(sql, new RegExp(`'${IDS.memberUserId}'::uuid, '${IDS.workspaceId}'::uuid`, "u"));
   assert.match(sql, /temporary_processing_access_expires_at/u);
   assert.match(sql, /statement_timestamp\(\) \+ interval '1 hour'/u);
+  for (const stage of ["reservation_membership", "reservation_workspace", "reservation_target"]) {
+    assert.match(sql, new RegExp(`MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=${stage}`, "u"));
+  }
   assert.doesNotMatch(sql, /\bcommit\s*;|ExpoPushToken|push\/send|fetch\(/iu);
 });
 

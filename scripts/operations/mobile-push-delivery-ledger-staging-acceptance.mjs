@@ -29,7 +29,7 @@ const ROLE_PROBES = Object.freeze([
   ["authenticated", "reserve"],
 ]);
 const ACCEPTANCE_STAGE_PATTERN =
-  /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation|ticket|receipt|device_revocation|rollback_check)/gu;
+  /MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=(preflight|fixtures|reservation_membership|reservation_workspace|reservation_target|reservation|ticket|receipt|device_revocation|rollback_check)/gu;
 
 function fail(code) {
   throw new Error(`MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_ERROR=${code}`);
@@ -218,6 +218,60 @@ insert into public.mobile_push_registrations (
    ${deviceCiphertext}, ${deviceFingerprint}, ${project},
    'android', 'active', statement_timestamp(), statement_timestamp(),
    statement_timestamp() + interval '30 days');
+
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=reservation_membership
+do $membership$
+begin
+  if not exists (
+    select 1 from public.workspace_members
+     where workspace_id = ${workspace} and user_id = ${owner}
+       and role in ('owner', 'member')
+  ) or not exists (
+    select 1 from public.workspace_members
+     where workspace_id = ${workspace} and user_id = ${member}
+       and role in ('owner', 'member')
+  ) then
+    raise exception 'synthetic_membership_invalid';
+  end if;
+end
+$membership$;
+
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=reservation_workspace
+do $workspace_access$
+begin
+  if not exists (
+    select 1 from public.workspaces
+     where id = ${workspace}
+       and workspace_access_mode = 'active'
+       and billing_status <> 'demo_free'
+       and test_access_flags->>'temporary_processing_access' = 'true'
+       and (test_access_flags->>'temporary_processing_access_expires_at')::timestamptz > statement_timestamp()
+       and (subscription_effective_end_at is null or subscription_effective_end_at > statement_timestamp())
+  ) then
+    raise exception 'synthetic_workspace_access_invalid';
+  end if;
+end
+$workspace_access$;
+
+\echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=reservation_target
+do $target_binding$
+begin
+  if not exists (
+    select 1
+      from public.followups f
+      join public.contacts c on c.id = f.contact_id and c.workspace_id = f.workspace_id
+      join public.mobile_push_registrations r
+        on r.workspace_id = f.workspace_id and r.user_id = ${owner}
+     where f.id = ${followupPrimary} and f.workspace_id = ${workspace}
+       and c.id = ${contact} and f.status = 'open' and f.due_date = current_date
+       and r.id = ${registrationPrimary} and r.expo_project_id = ${project}
+       and r.status = 'active' and r.expires_at > statement_timestamp()
+       and r.expo_token_hash = ${primaryFingerprint}
+  ) then
+    raise exception 'synthetic_target_binding_invalid';
+  end if;
+end
+$target_binding$;
 
 \echo MOBILE_PUSH_DELIVERY_LEDGER_ACCEPTANCE_STAGE=reservation
 do $lifecycle$
