@@ -223,7 +223,7 @@ begin
     v_attempt_id, v_idempotency_key, v_attempt_number, v_workspace_id,
     v_user_id, v_contact_id, v_followup_id, v_registration_id, v_project_id,
     v_project_ref, v_idempotency_key, v_token_fingerprint, v_due_date,
-    'sending', encode(digest(v_lease_token, 'sha256'), 'hex'),
+    'sending', encode(sha256(convert_to(v_lease_token, 'UTF8')), 'hex'),
     v_now + interval '5 minutes', v_now + interval '30 days'
   );
 
@@ -294,7 +294,7 @@ begin
   update public.mobile_push_delivery_attempts
      set state = 'receipt_checking',
          receipt_check_count = receipt_check_count + 1,
-         receipt_lease_hash = encode(digest(v_lease_token, 'sha256'), 'hex'),
+         receipt_lease_hash = encode(sha256(convert_to(v_lease_token, 'UTF8')), 'hex'),
          receipt_lease_expires_at = v_now + interval '5 minutes',
          updated_at = v_now
    where id = v_attempt_id
@@ -372,7 +372,7 @@ begin
   if v_lease is null or char_length(v_lease) not between 16 and 256 then
     raise exception using errcode = '42501', message = 'mobile_push_lease_invalid';
   end if;
-  v_lease_hash := encode(digest(v_lease, 'sha256'), 'hex');
+  v_lease_hash := encode(sha256(convert_to(v_lease, 'UTF8')), 'hex');
 
   select * into v_attempt
     from public.mobile_push_delivery_attempts

@@ -25,7 +25,7 @@ export const LEDGER_PATH = resolve(
   `supabase/controlled/${LEDGER_ID}.sql`,
 );
 export const EXPECTED_LEDGER_SHA256 =
-  "b76a5f99e57e7c8c4514f10055fcedc8087f540ca7e0a42c4b373bd948326d91";
+  "268fa0b1e17f8ad35a3706b806bbe2b3320c0b8801e780551defe991cf8da422";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 
 export const LEDGER_POSTFLIGHT_SQL = String.raw`
@@ -106,6 +106,7 @@ export function evaluateMobilePushDeliveryLedgerSql(sql) {
     /^begin;/iu,
     /create table if not exists public\.mobile_push_delivery_attempts/iu,
     /jsonb_object_keys\(p_input\) as keys\(key\)/iu,
+    /sha256\(convert_to\(v_lease_token, 'UTF8'\)\)/iu,
     /unique \(idempotency_key, attempt_number\)/iu,
     /alter table public\.mobile_push_delivery_attempts enable row level security/iu,
     /from public, anon, authenticated, service_role/iu,
