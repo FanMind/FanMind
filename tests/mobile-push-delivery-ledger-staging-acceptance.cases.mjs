@@ -106,6 +106,9 @@ test("rollback-only SQL proves reservations, leases, receipts and atomic revocat
   ]) assert.match(sql, boundary);
   assert.equal(sql.match(/\brollback\s*;/giu)?.length, 2);
   assert.equal((sql.match(/'v1:[0-9a-f]{16}:[0-9a-f]{32}:[0-9a-f]{16}'/gu) ?? []).length, 2);
+  assert.match(sql, new RegExp(`user_id in \\(\\s*'${IDS.ownerUserId}'::uuid, '${IDS.memberUserId}'::uuid\\s*\\)`, "u"));
+  assert.match(sql, new RegExp(`'${IDS.ownerUserId}'::uuid, '${IDS.workspaceId}'::uuid`, "u"));
+  assert.match(sql, new RegExp(`'${IDS.memberUserId}'::uuid, '${IDS.workspaceId}'::uuid`, "u"));
   assert.doesNotMatch(sql, /\bcommit\s*;|ExpoPushToken|push\/send|fetch\(/iu);
 });
 

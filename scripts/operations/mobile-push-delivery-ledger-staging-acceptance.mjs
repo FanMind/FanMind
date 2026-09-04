@@ -123,6 +123,7 @@ rollback;
 export function buildMobilePushLedgerAcceptanceSql(identifiers) {
   const material = syntheticMaterial(identifiers);
   const workspace = sqlUuid(identifiers.workspaceId);
+  const owner = sqlUuid(identifiers.ownerUserId);
   const member = sqlUuid(identifiers.memberUserId);
   const project = sqlUuid(identifiers.easProjectId);
   const contact = sqlUuid(material.contact);
@@ -166,6 +167,7 @@ begin
   ) or exists (
     select 1 from public.mobile_push_registrations
      where id in (${registrationPrimary}, ${registrationDevice})
+        or user_id in (${owner}, ${member})
         or expo_token_hash in (${primaryFingerprint}, ${deviceFingerprint})
   ) or exists (
     select 1 from public.followups where id in (${followupPrimary}, ${followupDevice})
@@ -200,7 +202,7 @@ insert into public.mobile_push_registrations (
   id, user_id, workspace_id, expo_token_ciphertext, expo_token_hash,
   expo_project_id, platform, status, registered_at, last_seen_at, expires_at
 ) values
-  (${registrationPrimary}, ${member}, ${workspace},
+  (${registrationPrimary}, ${owner}, ${workspace},
    ${primaryCiphertext}, ${primaryFingerprint}, ${project},
    'android', 'active', statement_timestamp(), statement_timestamp(),
    statement_timestamp() + interval '30 days'),
@@ -232,7 +234,7 @@ begin
     'registrationId', ${registrationPrimary}::text,
     'reservedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'revalidationContract', 'mobile-push-target-revalidation-v1',
-    'userId', ${member}::text,
+    'userId', ${owner}::text,
     'workspaceId', ${workspace}::text
   ));
   if reserved->>'status' <> 'reserved'
@@ -258,7 +260,7 @@ begin
     'registrationId', ${registrationPrimary}::text,
     'reservedAt', to_char(statement_timestamp() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'revalidationContract', 'mobile-push-target-revalidation-v1',
-    'userId', ${member}::text,
+    'userId', ${owner}::text,
     'workspaceId', ${workspace}::text
   ));
   if duplicate_result->>'status' <> 'inflight' then
@@ -365,6 +367,7 @@ begin
   ) or exists (
     select 1 from public.mobile_push_registrations
      where id in (${registrationPrimary}, ${registrationDevice})
+        or user_id in (${owner}, ${member})
         or expo_token_hash in (${primaryFingerprint}, ${deviceFingerprint})
   ) or exists (
     select 1 from public.followups where id in (${followupPrimary}, ${followupDevice})
