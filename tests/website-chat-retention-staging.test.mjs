@@ -146,6 +146,15 @@ test("retention database diagnostics expose only stable non-secret error classes
   assert.equal(classifyWebsiteChatRetentionDatabaseError(
     "psql:<stdin>:12: ERROR: unexpected internal detail",
   ), "database_apply_rejected");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql:<stdin>:12: ERROR:  42501",
+  ), "database_permission_denied");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql:<stdin>:12: ERROR:  2BP01",
+  ), "database_dependency_conflict");
+  assert.equal(classifyWebsiteChatRetentionDatabaseError(
+    "psql: error: connection failed: 08006",
+  ), "database_connection_failed");
 });
 
 test("retention acceptance material is deterministic and unique", () => {

@@ -209,7 +209,10 @@ function runPsql(sql, environment, passfilePath) {
   ]) delete safe[key];
   return spawnSync(
     "psql",
-    ["--no-password", "--no-psqlrc", "--quiet", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1"],
+    [
+      "--no-password", "--no-psqlrc", "--quiet", "--tuples-only", "--no-align",
+      "--set=ON_ERROR_STOP=1", "--set=VERBOSITY=sqlstate",
+    ],
     { env: safe, input: sql, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] },
   );
 }
@@ -217,6 +220,15 @@ function runPsql(sql, environment, passfilePath) {
 export function classifyWebsiteChatRetentionDatabaseError(stderr = "") {
   const message = String(stderr).toLowerCase();
   const rules = [
+    [/(?:^|\s)08[0-9a-z]{3}(?:\s|$)/u, "database_connection_failed"],
+    [/(?:^|\s)28p01(?:\s|$)/u, "database_authentication_failed"],
+    [/(?:^|\s)42501(?:\s|$)/u, "database_permission_denied"],
+    [/(?:^|\s)2bp01(?:\s|$)/u, "database_dependency_conflict"],
+    [/(?:^|\s)42p01(?:\s|$)/u, "database_relation_missing"],
+    [/(?:^|\s)42703(?:\s|$)/u, "database_column_missing"],
+    [/(?:^|\s)42883(?:\s|$)/u, "database_function_missing"],
+    [/(?:^|\s)42601(?:\s|$)/u, "database_syntax_error"],
+    [/(?:^|\s)42710(?:\s|$)/u, "database_object_conflict"],
     [/(?:password authentication failed|no pg_hba|could not translate host name|connection refused|connection timed out|timeout expired|certificate verify failed)/u, "database_connection_failed"],
     [/permission denied/u, "database_permission_denied"],
     [/must be owner/u, "database_owner_mismatch"],
@@ -234,6 +246,8 @@ export function classifyWebsiteChatRetentionDatabaseError(stderr = "") {
 function reportSafeDatabaseError(result) {
   const stderr = typeof result?.stderr === "string" ? result.stderr : "";
   console.error(`WEBSITE_CHAT_RETENTION_DB_ERROR_CLASS=${classifyWebsiteChatRetentionDatabaseError(stderr)}`);
+  const sqlState = stderr.match(/(?:error|fatal):\s+([0-9a-z]{5})(?:\s|$)/iu)?.[1];
+  if (sqlState) console.error(`WEBSITE_CHAT_RETENTION_DB_SQLSTATE=${sqlState.toUpperCase()}`);
   const line = stderr.match(/psql:<stdin>:(\d+):/iu)?.[1];
   if (line) console.error(`WEBSITE_CHAT_RETENTION_DB_ERROR_LINE=${line}`);
 }
