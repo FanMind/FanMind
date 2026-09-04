@@ -79,7 +79,7 @@ test("member workspace access is a minimal no-argument database projection", asy
   );
   assert.match(
     sql,
-    /revoke all on function public\.get_current_workspace_member_safe_dashboard\(\)[\s\S]*from public, anon, authenticated[\s\S]*grant execute[\s\S]*to authenticated/u,
+    /revoke all on function public\.get_current_workspace_member_safe_dashboard\(\)[\s\S]*from public, anon, authenticated, service_role[\s\S]*grant execute[\s\S]*to authenticated/u,
   );
 
   const memberLoaderStart = server.indexOf(

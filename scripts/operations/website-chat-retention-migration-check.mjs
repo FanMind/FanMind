@@ -11,7 +11,7 @@ export const WEBSITE_CHAT_RETENTION_PATH = resolve(
   `supabase/controlled/${WEBSITE_CHAT_RETENTION_ID}.sql`,
 );
 export const EXPECTED_WEBSITE_CHAT_RETENTION_SHA256 =
-  "485bc7133764ce7c2f9d002a4a46a5a1895441ad405c9a7a0fa0970b0900ab0f";
+  "c3c3c73cf0ebec720c27b142eb48062a93673cd29c1c0a1f515ce8e7aae62fe6";
 
 function fail(code) {
   throw new Error(`WEBSITE_CHAT_RETENTION_ERROR=${code}`);
@@ -32,6 +32,7 @@ export function evaluateWebsiteChatRetentionSql(sql) {
     /p_execute boolean default false/iu,
     /p_workspace_id uuid default null/iu,
     /drop function if exists public\.manage_website_chat_retention\(integer, boolean\)/iu,
+    /revoke truncate on table public\.website_chat_visitor_sessions[\s\S]*from service_role/iu,
     /p_limit > 1000/iu,
     /session\.revoked_at is not null or session\.expires_at <= v_now/iu,
     /p_workspace_id is null or session\.workspace_id = p_workspace_id/iu,

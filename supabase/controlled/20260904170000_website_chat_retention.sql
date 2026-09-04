@@ -19,6 +19,11 @@ begin
 end
 $preflight$;
 
+-- Retention needs bounded DELETE only. Supabase projects can inherit a
+-- default TRUNCATE grant for service_role, which would bypass that boundary.
+revoke truncate on table public.website_chat_visitor_sessions
+  from service_role;
+
 drop function if exists public.manage_website_chat_retention(integer, boolean);
 
 create or replace function public.manage_website_chat_retention(

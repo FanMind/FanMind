@@ -25,7 +25,7 @@ export const CONTROL_PATH = resolve(
   `supabase/controlled/${CONTROL_ID}.sql`,
 );
 export const EXPECTED_CONTROL_SHA256 =
-  "aae2930ad9a0f1561c039a62546c86f2ce81363c136d5dba02806e9b0c44ed00";
+  "ca9adfea6db85a48d75998e060f6b345a882a8b1889d20c7d04c438316985c93";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 export const PROTECTED_MEMBER_WRITABLE_TABLES = Object.freeze([
   "contacts",
@@ -1019,7 +1019,7 @@ export function evaluateWorkspaceMemberDataBoundarySql(sql) {
     /current_user_id uuid := auth\.uid\(\)/iu,
     /if membership_count <> 1 then[\s\S]*return;/iu,
     /when lower\(trim\(coalesce\(member\.role, ''\)\)\) = 'owner' then null[\s\S]*else 'member'/iu,
-    /revoke all on function public\.get_current_workspace_member_safe_dashboard\(\)[\s\S]*from public, anon, authenticated/iu,
+    /revoke all on function public\.get_current_workspace_member_safe_dashboard\(\)[\s\S]*from public, anon, authenticated, service_role/iu,
     /grant execute on function public\.get_current_workspace_member_safe_dashboard\(\)[\s\S]*to authenticated/iu,
     /as restrictive for insert to authenticated with check/iu,
     /as restrictive for update to authenticated using[\s\S]*with check/iu,
@@ -1047,7 +1047,7 @@ export function evaluateWorkspaceMemberDataBoundarySql(sql) {
     /\balter\s+table\b/iu,
     /\btruncate\b/iu,
     /\b(?:insert\s+into|update\s+public\.|delete\s+from)\b/iu,
-    /\brevoke\b[\s\S]{0,200}\bfrom\s+service_role\b/iu,
+    /\brevoke\b[\s\S]{0,200}\bon\s+table\b[\s\S]{0,200}\bfrom\s+service_role\b/iu,
     /\bgrant\s+all\b/iu,
     /\bfor\s+all\b/iu,
     /when\s+others/iu,

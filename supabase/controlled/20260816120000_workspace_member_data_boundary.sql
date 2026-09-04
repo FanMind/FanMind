@@ -482,7 +482,7 @@ revoke all on function public.workspace_processing_allowed_contract(
   text,
   jsonb,
   timestamptz
-) from public, anon, authenticated;
+) from public, anon, authenticated, service_role;
 grant execute on function public.workspace_processing_allowed_contract(
   text,
   text,
@@ -611,7 +611,7 @@ as $function$
 $function$;
 
 revoke all on function public.workspace_owner_active_mutation_allowed(uuid)
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 grant execute on function public.workspace_owner_active_mutation_allowed(uuid)
   to authenticated;
 
@@ -698,7 +698,7 @@ end
 $function$;
 
 revoke all on function public.get_current_workspace_member_safe_dashboard()
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 grant execute on function public.get_current_workspace_member_safe_dashboard()
   to authenticated;
 
