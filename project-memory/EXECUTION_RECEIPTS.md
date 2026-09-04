@@ -8,11 +8,12 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 ## RECEIPT-FM-MOB-001-ANDROID-PREVIEW-QUEUED-20260904
 - Task: FM-MOB-001 continuation after accepted FM-MOB-006 Delivery-Ledger gate
 - Exact commit: `700885307c265f8907cefe5f5b10499a5ea7b996`
-- External evidence: signed internal build run `33868661986` / job `101009217307`; EAS build `a44d0826-3894-4168-b8ee-07908f2466f1`.
+- External evidence: signed internal build run `33868661986` / job `101009217307`; exact EAS build identity retained only in the protected provider account.
 - Requested scope: exactly one signed Android `preview` internal-distribution APK containing the merged native message handler; no submit, OTA update, Store publication or provider send.
 - Proven result: exact-main checkout, EAS project binding, Preview public environment, one-build preflight and private receipt-path preparation all passed. EAS accepted exactly one build request.
-- Fail-closed result: after `53m 28s` GitHub could not prove the EAS terminal state, marked completion indeterminate and failed without storing a success receipt. Runner cleanup executed. The authenticated EAS dashboard was then checked read-only and showed the exact `7008853` Android internal-distribution build in `Waiting` state.
-- Result status: INDETERMINATE_DO_NOT_REQUEUE. Do not rerun the workflow or queue another build until EAS build `a44d0826-3894-4168-b8ee-07908f2466f1` reaches a terminal state and its exact commit/profile/artifact are independently verified.
+- Fail-closed workflow result: after `53m 28s` GitHub could not prove the EAS terminal state, marked completion indeterminate and failed without storing a success receipt. Runner cleanup executed; no retry was queued.
+- Reconciled provider result: authenticated read-only EAS inspection on 2026-09-04 later proved that the same single build finished successfully for commit `700885307c265f8907cefe5f5b10499a5ea7b996`, Android, profile/environment `preview`, internal distribution, version `1.0.0 (2)`, with an APK artifact. Queue time was `1h 1m 3s` and build time `13m 3s`. No Submit or OTA Update occurred.
+- Result status: VERIFIED_NOT_ACCEPTED. The signed handler-containing APK exists, but the GitHub timeout produced no redacted receipt. Do not queue another build. Next use the exact existing EAS artifact for bounded installation/device observation; real provider delivery remains separately authorized.
 - Security boundary: no Production/Supabase mutation, Google Play submission, OTA update or Push provider delivery occurred.
 
 ## RECEIPT-FM-MOB-006-DELIVERY-LEDGER-20260904
