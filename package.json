@@ -149,7 +149,7 @@
   },
   "dependencies": {
     "next": "16.3.1",
-    "pdfnative": "1.6.0",
+    "pdfnative": "1.7.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stripe": "22.4.0"
