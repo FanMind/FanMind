@@ -266,10 +266,15 @@ einbettbaren Website-KI-Assistenten, iOS/TestFlight, LinkedIn sowie alle
 weiteren noch zu verbindenden Medien-, Creator-, Review-, Shop- und
 internationalen Plattformen. Für den Website-KI-Assistenten ist bereits eine
 deaktivierte Sicherheits-, Sitzungs-, Widget- und Nachrichteningestion-Basis
-vorbereitet; dieser Teil von Phase 8 ist deshalb begonnen. KI-Dialog,
-Eskalation an den FanMind-Nutzer, vollständige Gesprächsansicht,
-E-Mail-Erfassung mit Einwilligung und der Antwortweg zum Besucher sind noch
-nicht umgesetzt. Die übrigen Phase-8-Anbindungen beginnen weiterhin erst nach
+vorbereitet; dieser Teil von Phase 8 ist deshalb begonnen. Zusätzlich ist im
+Repository eine weiterhin inaktive, kontrollierte Übergabestufe vorbereitet:
+Sie bindet Website-Nachrichten atomar an den Workspace-Processing-Vertrag,
+erfasst nach einer vorhandenen Nachricht genau eine ausdrücklich eingewilligte
+Besucher-E-Mail und markiert dieselbe in der bestehenden Fan-Detail-Timeline
+sichtbare Conversation als dringende menschliche Übergabe. Datenbank-Apply,
+Installation und Versand sind nicht aktiviert. KI-Dialog,
+Unsicherheits-gesteuerte Übergabe, E-Mail-Verifizierung und der manuell
+freigegebene Antwortweg zum Besucher bleiben offen. Die übrigen Phase-8-Anbindungen beginnen weiterhin erst nach
 Abschluss von Phase 7 und zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 OnlyFans bleibt auch in Phase 7 eine unverbindliche, vor Umsetzung technisch
 und rechtlich zu prüfende Plattform.

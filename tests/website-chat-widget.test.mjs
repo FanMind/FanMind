@@ -50,3 +50,16 @@ test("widget validates bounded embed attributes and never exposes internal CRM i
   assert.match(source, /attachShadow/u);
   assert.doesNotMatch(source, /contactId|conversationId|workspaceId/iu);
 });
+
+test("widget offers a purpose-bound human handoff only after a message was accepted", () => {
+  const source = buildWebsiteChatWidgetScript();
+  assert.match(source, /Persönliche Antwort erhalten/u);
+  assert.match(source, /type="email" maxlength="254"/u);
+  assert.match(source, /gesamten Gesprächsverlauf/u);
+  assert.match(source, /handoff\.classList\.add\("open"\)/u);
+  assert.match(source, /\/api\/website-chat\/handoff/u);
+  assert.match(source, /clientHandoffId:pendingHandoffId/u);
+  assert.match(source, /purpose:"human_reply_by_email"/u);
+  assert.match(source, /credentials:"omit"/u);
+  assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie/iu);
+});

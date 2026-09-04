@@ -172,3 +172,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact reviewed `main`, existing service-role-only registration schema, transactionally revalidated target binding, fail-closed tests and later separate protected Staging apply/acceptance.
 - Decision: Implement as FM-MOB-006 at R3 while keeping all external mutation and provider/device acceptance open.
 - Related task: FM-MOB-006
+## FM-CR-014
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue Phase 8 autonomously toward the Website AI assistant handoff: keep complete visitor conversations visible in FanMind, let a visitor explicitly leave an email address, and raise a manual human handoff when automation cannot continue.
+- Classification: Repository-only, dormant Website Chat handoff and processing-boundary preparation. No database apply, installation activation, AI/provider request or outbound email.
+- Affected areas: Website Chat policy, public API/widget contract, controlled Supabase SQL, CRM inbox linkage, retention/runbook documentation and tests.
+- Existing task/decision checked: FM-CR-012, the disabled Website Chat session/message foundation, canonical Workspace processing policy and the existing RLS-protected contact/conversation timeline.
+- Dependencies: exact reviewed `main`, active Workspace processing entitlement, separately approved controlled Staging apply/acceptance, legal/privacy acceptance and a later separately gated email transport.
+- Decision: Implement as FM-WEB-001 at R3. The repository may prepare one explicit consent-bound handoff per visitor session and mark the linked CRM conversation urgent, but must remain fail-closed and must not send email or invoke AI.
+- Related task: FM-WEB-001

@@ -31,7 +31,21 @@ Prevents two agents/sessions from independently working the same task.
 - Locks older than 24h are STALE, not free: reconcile `STARTED_WORK.md`, PRs, commits and receipts before replacing.
 - Release only after updating `STARTED_WORK.md` and the execution receipt.
 
+# LOCK-FM-WEB-001-HANDOFF-20260904
+- Task: FM-WEB-001 / FM-CR-014
+- Status: RELEASED
+- Holder: ChatGPT Website Chat handoff repository session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna
+- Risk: R3
+- Scope: repository-only Website Chat processing gate, visitor-email consent and manual CRM handoff foundation with tests/documentation.
+- Safety: no database apply, installation activation, AI/provider request, outbound email, timer, Production mutation or real visitor data.
+- Released: 2026-09-04 after repository implementation and complete local countercheck.
+- Result: the repository now contains the consent-bound manual handoff, atomic processing-gated v2 ingestion and checksum-pinned controlled SQL; no external state changed.
+- Resume from: exact-main remote checks, then a separately protected Staging verify/apply/rollback-only acceptance path. Preserve disabled installations and the no-AI/no-email boundary.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
 ## Active locks
+
 
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006 / FM-CR-007 / FM-CR-010

@@ -24,6 +24,23 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-WEB-001
+- Started: 2026-09-04 Europe/Vienna
+- Updated: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Change request: FM-CR-014; extends accepted roadmap decision FM-CR-012.
+- Scope: dormant Website Chat processing-entitlement and consent-bound human-handoff preparation; no database apply, installation activation, AI/provider call or outbound email.
+- Work lock: `LOCK-FM-WEB-001-HANDOFF-20260904` RELEASED after repository implementation and local countercheck.
+- Dependencies: existing Website Chat session/message foundation, canonical Workspace processing predicate and current CRM contact/conversation timeline.
+- Planned evidence: focused policy/API/widget/controlled-SQL tests, checksum check, TypeScript/lint/build and Project Memory/truth checks.
+- Completed result: consent-bound one-per-session handoff API/widget flow, existing CRM timeline linkage, atomic processing/origin/session revalidation and service-role-only fingerprinted evidence are implemented repository-side without AI, email or external mutation.
+- Local evidence: checksum PASS; Website Chat 20/20, Inbox 13/13, Production controls 5/5 and WhatsApp inbound 30/30 PASS; product truth, Project Memory quality, TypeScript, lint and production build PASS. The sole lint warning is pre-existing and outside this task.
+- Still open: exact-head remote checks, protected Staging verify/apply/rollback-only acceptance, installation activation, retention cleanup, AI dialogue, uncertainty-driven escalation, email verification and manually approved email delivery.
+- Exact next step: publish the repository commit to `main` and observe its checks; afterwards prepare a separate protected Staging verify/apply/rollback-only acceptance path before any installation can be enabled.
+- Owner action needed: none for repository publication; separate authorization is required before any Staging database apply, external provider call or Production activation.
+
+
 ## FM-MEM-009
 - Started: 2026-08-30
 - Updated: 2026-08-30

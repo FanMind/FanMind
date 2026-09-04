@@ -6,6 +6,10 @@ const migrationPath = new URL(
   "../supabase/migrations/20260808234500_website_chat_message_ingestion.sql",
   import.meta.url,
 );
+const controlledMigrationPath = new URL(
+  "../supabase/controlled/20260904120000_website_chat_handoff.sql",
+  import.meta.url,
+);
 const routePath = new URL("../src/app/api/website-chat/message/route.ts", import.meta.url);
 const servicePath = new URL("../src/lib/websiteChat.ts", import.meta.url);
 
@@ -25,8 +29,9 @@ test("website chat ingestion is transactional, idempotent and service-role-only"
 });
 
 test("website messages enter the CRM inbox without AI or outbound delivery", async () => {
-  const [sql, route, service] = await Promise.all([
+  const [sql, controlledSql, route, service] = await Promise.all([
     readFile(migrationPath, "utf8"),
+    readFile(controlledMigrationPath, "utf8"),
     readFile(routePath, "utf8"),
     readFile(servicePath, "utf8"),
   ]);
@@ -46,9 +51,10 @@ test("website messages enter the CRM inbox without AI or outbound delivery", asy
   const installationLookup = route.indexOf("resolveWebsiteChatInstallation", postStart);
   const bearerLookup = route.indexOf("bearerToken(request)", postStart);
   assert.ok(postStart >= 0 && coarseCheck > postStart && coarseCheck < installationLookup && coarseCheck < bearerLookup);
-  assert.match(service, /rpc\/ingest_website_chat_message/u);
+  assert.match(service, /rpc\/ingest_website_chat_message_v2/u);
   assert.doesNotMatch(service, /result\?\.status === 404[\s\S]*session_unavailable/u);
   assert.match(service, /if \(!result\?\.ok\)[\s\S]*persistence_unavailable/u);
-  assert.doesNotMatch(`${sql}\n${route}\n${service}`, /OPENAI_API_KEY|copilot\/reply|automatic.?send/iu);
+  assert.doesNotMatch(`${sql}\n${controlledSql}\n${route}\n${service}`, /OPENAI_API_KEY|copilot\/reply|automatic.?send/iu);
   assert.doesNotMatch(sql, /direction[\s\S]{0,80}'outbound'/iu);
+  assert.doesNotMatch(controlledSql, /direction[\s\S]{0,80}'outbound'/iu);
 });

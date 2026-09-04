@@ -4,13 +4,16 @@ import {
   createWebsiteChatSessionToken,
   hashWebsiteChatSessionToken,
   normalizeWebsiteChatMessage,
+  normalizeWebsiteChatEmail,
   normalizeSessionTtlMinutes,
   requireAllowedWebsiteChatOrigin,
   requireConsent,
   requirePublicInstallationId,
   requireWebsiteChatClientMessageId,
+  requireWebsiteChatHandoffConsent,
 } from "@/lib/websiteChatPolicy.mjs";
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
+import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 
 type InstallationRow = {
   id: string;
@@ -22,6 +25,17 @@ type InstallationRow = {
 
 type OriginRow = { origin: string; verified_at: string | null };
 
+type WorkspaceProcessingRow = {
+  id: string;
+  billing_status: string | null;
+  billing_suspended_at: string | null;
+  billing_manual_override: boolean | null;
+  billing_grace_until: string | null;
+  subscription_effective_end_at: string | null;
+  workspace_access_mode: string | null;
+  test_access_flags: Record<string, unknown> | null;
+};
+
 export class WebsiteChatServiceError extends Error {
   readonly code:
     | "configuration"
@@ -30,6 +44,7 @@ export class WebsiteChatServiceError extends Error {
     | "consent_required"
     | "session_unavailable"
     | "message_invalid"
+    | "handoff_invalid"
     | "persistence_unavailable";
 
   constructor(code: WebsiteChatServiceError["code"]) {
@@ -46,6 +61,13 @@ type IngestedMessageRow = {
   message_id: string | null;
 };
 
+type WebsiteChatHandoffRow = {
+  accepted: boolean;
+  duplicate: boolean;
+  conversation_id: string | null;
+  handoff_id: string | null;
+};
+
 export async function ingestWebsiteChatMessage(input: {
   publicInstallationId: unknown;
   origin: unknown;
@@ -54,7 +76,7 @@ export async function ingestWebsiteChatMessage(input: {
   message: unknown;
 }) {
   const { serviceKey, sessionSecret } = serviceConfiguration();
-  const { origin } = await resolveWebsiteChatInstallation(input);
+  const { origin, publicInstallationId } = await resolveWebsiteChatInstallation(input);
 
   let visitorSubjectHash: string;
   let clientMessageId: string;
@@ -70,11 +92,11 @@ export async function ingestWebsiteChatMessage(input: {
     throw new WebsiteChatServiceError("message_invalid");
   }
 
-  const result = await fetch(getSupabaseRestUrl("rpc/ingest_website_chat_message"), {
+  const result = await fetch(getSupabaseRestUrl("rpc/ingest_website_chat_message_v2"), {
     method: "POST",
     headers: { ...getSupabaseHeaders(serviceKey), Prefer: "return=representation" },
     body: JSON.stringify({
-      p_public_installation_id: input.publicInstallationId,
+      p_public_installation_id: publicInstallationId,
       p_origin: origin,
       p_visitor_subject_hash: visitorSubjectHash,
       p_client_message_id: clientMessageId,
@@ -99,6 +121,67 @@ export async function ingestWebsiteChatMessage(input: {
     duplicate: row.duplicate === true,
     conversationId: row.conversation_id,
     messageId: row.message_id,
+  };
+}
+
+export async function requestWebsiteChatHandoff(input: {
+  publicInstallationId: unknown;
+  origin: unknown;
+  sessionToken: unknown;
+  clientHandoffId: unknown;
+  email: unknown;
+  consent: unknown;
+}) {
+  const { serviceKey, sessionSecret } = serviceConfiguration();
+  const { installation, origin, publicInstallationId } = await resolveWebsiteChatInstallation(input);
+
+  let visitorSubjectHash: string;
+  let clientHandoffId: string;
+  let email: string;
+  let consentVersion: string;
+  try {
+    visitorSubjectHash = hashWebsiteChatSessionToken({
+      token: input.sessionToken,
+      secret: sessionSecret,
+    });
+    clientHandoffId = requireWebsiteChatClientMessageId(input.clientHandoffId);
+    email = normalizeWebsiteChatEmail(input.email);
+    consentVersion = requireWebsiteChatHandoffConsent(
+      input.consent,
+      installation.consent_version,
+    );
+  } catch {
+    throw new WebsiteChatServiceError("handoff_invalid");
+  }
+
+  const result = await fetch(getSupabaseRestUrl("rpc/request_website_chat_handoff"), {
+    method: "POST",
+    headers: { ...getSupabaseHeaders(serviceKey), Prefer: "return=representation" },
+    body: JSON.stringify({
+      p_public_installation_id: publicInstallationId,
+      p_origin: origin,
+      p_visitor_subject_hash: visitorSubjectHash,
+      p_client_handoff_id: clientHandoffId,
+      p_email: email,
+      p_consent_version: consentVersion,
+    }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => null);
+  if (!result?.ok) {
+    throw new WebsiteChatServiceError("persistence_unavailable");
+  }
+  const rows = await result.json() as WebsiteChatHandoffRow[];
+  const row = rows[0];
+  if (row && !row.accepted) {
+    throw new WebsiteChatServiceError("session_unavailable");
+  }
+  if (!row?.accepted || !row.conversation_id || !row.handoff_id) {
+    throw new WebsiteChatServiceError("persistence_unavailable");
+  }
+  return {
+    accepted: true as const,
+    duplicate: row.duplicate === true,
   };
 }
 
@@ -136,6 +219,15 @@ export async function resolveWebsiteChatInstallation(input: {
     throw new WebsiteChatServiceError("installation_unavailable");
   }
 
+  const workspaces = await fetchRows<WorkspaceProcessingRow>(
+    `workspaces?select=id,billing_status,billing_suspended_at,billing_manual_override,billing_grace_until,subscription_effective_end_at,workspace_access_mode,test_access_flags&id=eq.${encodeURIComponent(installation.workspace_id)}&limit=1`,
+    serviceKey,
+  );
+  const processing = evaluateWorkspaceProcessingEntitlement(workspaces[0]);
+  if (!processing.allowed) {
+    throw new WebsiteChatServiceError("installation_unavailable");
+  }
+
   const origins = await fetchRows<OriginRow>(
     `website_chat_allowed_origins?select=origin,verified_at&installation_id=eq.${encodeURIComponent(installation.id)}`,
     serviceKey,
@@ -147,7 +239,7 @@ export async function resolveWebsiteChatInstallation(input: {
   } catch {
     throw new WebsiteChatServiceError("origin_forbidden");
   }
-  return { installation, origin };
+  return { installation, origin, publicInstallationId: publicId };
 }
 
 export async function createWebsiteChatVisitorSession(input: {

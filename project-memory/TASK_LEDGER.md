@@ -2,6 +2,22 @@
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
+## FM-WEB-001
+- Date: 2026-09-04
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: Prepare the dormant Website Chat human-handoff path with explicit visitor email consent, complete CRM conversation linkage and an atomic Workspace processing-entitlement boundary.
+- Scope: policy, API/widget contract, controlled service-role-only SQL, checksum/offline verification, tests and documentation. No database apply, installation activation, AI/provider request, outbound email, timer or Production mutation.
+- Dependencies: FM-CR-012/FM-CR-014, existing Website Chat visitor session/message receipts, canonical Workspace processing contract and existing RLS-protected contact/conversation UI.
+- Evidence required: bounded email/consent/idempotency tests, exact-origin/session/rate-limit enforcement, atomic SQL entitlement and session revalidation, service-role-only RLS/ACL checks, proof of no AI/outbound transport and repository checks.
+- Negative path: missing consent/message/session/entitlement, malformed email, replay, unverified origin, browser DB access, automatic sending or missing controlled schema must fail closed.
+- Recovery: repository changes are revertible. The controlled SQL remains unapplied until a separate protected Staging authorization and acceptance.
+- Result: The cookie-free widget can request one explicit, purpose-bound human email handoff after a stored visitor message. A new guarded public route and service adapter preserve exact origin/session/rate-limit boundaries; the checksum-pinned controlled SQL atomically revalidates Workspace processing, links the handoff to the existing contact/conversation timeline, stores only an email fingerprint in the handoff evidence table and performs no AI or outbound delivery.
+- Evidence: `npm run db:website-chat-handoff:check` PASS; Website Chat 20/20, Inbox 13/13, Production controls 5/5 and WhatsApp inbound 30/30 PASS; product truth and Project Memory quality PASS; Next type generation, TypeScript, lint and production build PASS. Lint retains one pre-existing unrelated unused-variable warning in the Mobile Push Delivery-Ledger runner.
+- Next step: require exact-main remote checks, then create a separate protected Staging verify/apply/rollback-only acceptance path. Keep every installation disabled until schema, browser-denial, processing-gate and retention behavior pass isolated Staging acceptance; AI dialogue, uncertainty escalation, email verification and manually approved delivery remain separate.
+- Do not repeat: do not rebuild the session/widget/message foundation, apply this SQL through generic migrations, enable an installation, invoke an AI/email provider or infer delivery from a stored handoff.
+
+
 ## FM-MOB-006
 - Date: 2026-09-03 to 2026-09-04
 - Status: ACCEPTED

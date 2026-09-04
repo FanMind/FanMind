@@ -55,6 +55,7 @@ Project Memory V8 is **ACCEPTED on `main`**.
 7. **Sales handoff — FM-SALES-001, R2:** blocked until required Phase-3/Phase-7 acceptance and final Production demo truth.
 8. **Legal/Tax/AVV — FM-LEGAL-001, R3:** external approvals remain separate; do not guess.
 9. **Live Supabase security reconciliation — FM-SEC-001, R3:** issue #982; protected read-only run `32997946812` confirmed the exact pre-hardening Production state, but remediation and the separate Auth-setting changes are not authorized or accepted.
+10. **Phase 8 Website AI — FM-WEB-001, R3:** repository-side Website Chat now includes a dormant consent-bound human email handoff, complete existing CRM timeline linkage and a checksum-pinned atomic processing gate. It is `IMPLEMENTED_NOT_VERIFIED`: the controlled SQL is unapplied, all installations remain disabled and isolated Staging acceptance, cleanup, AI dialogue, uncertainty escalation, email verification and approved delivery remain open.
 
 ## Live Supabase target/security evidence — 2026-08-26
 

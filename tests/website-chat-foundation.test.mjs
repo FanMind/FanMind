@@ -54,14 +54,20 @@ test("public session route is origin-, consent-, body- and rate-limit guarded", 
   assert.doesNotMatch(`${route}\n${service}`, /automatic|auto.?send|outbound/iu);
 });
 
-test("website chat stays disabled until processing is checked atomically", async () => {
-  const runbook = await readFile(runbookPath, "utf8");
+test("website chat stays disabled while the atomic processing gate awaits controlled Staging acceptance", async () => {
+  const [runbook, controlledSql, service] = await Promise.all([
+    readFile(runbookPath, "utf8"),
+    readFile(
+      new URL("../supabase/controlled/20260904120000_website_chat_handoff.sql", import.meta.url),
+      "utf8",
+    ),
+    readFile(servicePath, "utf8"),
+  ]);
   assert.match(
     runbook,
-    /noch keinen atomaren[\s\S]*Processing-Entitlement-Check[\s\S]*bleibt jede[\s\S]*Installation[\s\S]*deaktiviert/u,
+    /nicht in der Datenbank angewandt und nicht produktiv aktiviert/u,
   );
-  assert.match(
-    runbook,
-    /Ingestion-RPC[\s\S]*atomaren, DB-verifizierten aktiven[\s\S]*Workspace-Processing-Check/u,
-  );
+  assert.match(controlledSql, /website_chat_processing_allowed\(session\.workspace_id\)/u);
+  assert.match(controlledSql, /workspace_processing_allowed_contract/u);
+  assert.match(service, /evaluateWorkspaceProcessingEntitlement/u);
 });

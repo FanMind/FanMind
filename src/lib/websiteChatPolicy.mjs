@@ -6,7 +6,10 @@ const SESSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const SUBJECT_HASH_PATTERN = /^[0-9a-f]{64}$/;
 const CLIENT_MESSAGE_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const WEBSITE_CHAT_EMAIL_PATTERN =
+  /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 const MAX_MESSAGE_LENGTH = 4000;
+const MAX_EMAIL_LENGTH = 254;
 const MAX_BODY_BYTES = 12_000;
 const MIN_SESSION_TTL_MINUTES = 5;
 const MAX_SESSION_TTL_MINUTES = 1440;
@@ -113,6 +116,32 @@ export function requireWebsiteChatClientMessageId(value) {
   return normalized.toLowerCase();
 }
 
+export function normalizeWebsiteChatEmail(value) {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (
+    !normalized
+    || normalized.length > MAX_EMAIL_LENGTH
+    || /\s/u.test(normalized)
+    || !WEBSITE_CHAT_EMAIL_PATTERN.test(normalized)
+  ) {
+    throw new WebsiteChatPolicyError("email_invalid");
+  }
+  return normalized;
+}
+
+export function requireWebsiteChatHandoffConsent(input, expectedVersion) {
+  let version;
+  try {
+    version = requireConsent(input, expectedVersion);
+  } catch {
+    throw new WebsiteChatPolicyError("handoff_consent_required");
+  }
+  if (input?.purpose !== "human_reply_by_email") {
+    throw new WebsiteChatPolicyError("handoff_consent_required");
+  }
+  return version;
+}
+
 export function requireConsent(input, expectedVersion) {
   const version = typeof input?.version === "string" ? input.version.trim() : "";
   if (input?.granted !== true || !version || version !== expectedVersion) {
@@ -154,6 +183,7 @@ export function requireWebsiteChatPreflight(input, allowedHeaders) {
 
 export {
   CLIENT_MESSAGE_ID_PATTERN,
+  MAX_EMAIL_LENGTH,
   MAX_BODY_BYTES,
   MAX_MESSAGE_LENGTH,
   MAX_SESSION_TTL_MINUTES,
@@ -161,6 +191,7 @@ export {
   PUBLIC_INSTALLATION_ID_PATTERN,
   SESSION_TOKEN_PATTERN,
   SUBJECT_HASH_PATTERN,
+  WEBSITE_CHAT_EMAIL_PATTERN,
   WEBSITE_CHAT_INSTALLATION_HEADER,
   WEBSITE_CHAT_INSTALLATION_QUERY,
 };

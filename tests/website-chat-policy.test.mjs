@@ -5,12 +5,14 @@ import {
   createWebsiteChatSessionToken,
   hashWebsiteChatSessionToken,
   normalizeSessionTtlMinutes,
+  normalizeWebsiteChatEmail,
   normalizeWebsiteChatMessage,
   normalizeWebsiteChatOrigin,
   requireAllowedWebsiteChatOrigin,
   requireConsent,
   requirePublicInstallationId,
   requireWebsiteChatClientMessageId,
+  requireWebsiteChatHandoffConsent,
   requireWebsiteChatPreflight,
   SESSION_TOKEN_PATTERN,
   WebsiteChatPolicyError,
@@ -77,6 +79,30 @@ test("client message IDs are canonical UUIDs", () => {
     "123e4567-e89b-42d3-a456-426614174000",
   );
   expectCode(() => requireWebsiteChatClientMessageId("retry-1"), "client_message_id_invalid");
+});
+
+test("handoff email and purpose-specific consent fail closed", () => {
+  assert.equal(normalizeWebsiteChatEmail(" Visitor@Example.COM "), "visitor@example.com");
+  for (const invalid of [null, "visitor", "a@b", "a@@example.com", "a b@example.com", `${"a".repeat(245)}@example.com`]) {
+    expectCode(() => normalizeWebsiteChatEmail(invalid), "email_invalid");
+  }
+  assert.equal(
+    requireWebsiteChatHandoffConsent(
+      { granted: true, version: "privacy-v1", purpose: "human_reply_by_email" },
+      "privacy-v1",
+    ),
+    "privacy-v1",
+  );
+  for (const invalid of [
+    { granted: false, version: "privacy-v1", purpose: "human_reply_by_email" },
+    { granted: true, version: "old", purpose: "human_reply_by_email" },
+    { granted: true, version: "privacy-v1", purpose: "marketing" },
+  ]) {
+    expectCode(
+      () => requireWebsiteChatHandoffConsent(invalid, "privacy-v1"),
+      "handoff_consent_required",
+    );
+  }
 });
 
 test("consent, message and session TTL fail closed", () => {

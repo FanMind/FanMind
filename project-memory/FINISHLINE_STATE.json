@@ -24,6 +24,6 @@
     "phase6": "Current Mobile finishline excludes iOS/TestFlight; native iOS implementation foundations remain, while TestFlight external acceptance is deferred to Phase 8.",
     "phase3": "Facebook, Instagram, WhatsApp.",
     "phase7": "TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible.",
-    "phase8": "The disabled Website-AI security/widget/message-ingestion foundation has started outside the current finishline; dialog, escalation, email return path, iOS/TestFlight, LinkedIn and later platforms remain deferred."
+    "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus a dormant consent-bound manual email handoff have started outside the current finishline; database/Staging acceptance, dialog, automatic uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and later platforms remain deferred."
   }
 }
