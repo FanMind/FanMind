@@ -152,6 +152,7 @@ export async function enableMobilePushRegistration(accessToken: string) {
       devicePushToken,
     });
   } catch {
+    await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
     return {
       status: null,
       error:
@@ -159,22 +160,31 @@ export async function enableMobilePushRegistration(accessToken: string) {
     };
   }
 
-  return callPushApi(accessToken, {
+  const result = await callPushApi(accessToken, {
     action: "register",
     token: token.data,
     projectId: currentProjectId,
     platform: Platform.OS,
   });
+  if (!result.status) {
+    await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
+  }
+  return result;
 }
 
-export function disableMobilePushRegistration(accessToken: string) {
-  return callPushApi(accessToken, { action: "unregister" });
+export async function disableMobilePushRegistration(accessToken: string) {
+  const [serverResult] = await Promise.all([
+    callPushApi(accessToken, { action: "unregister" }),
+    Notifications.unregisterForNotificationsAsync().catch(() => undefined),
+  ]);
+  return serverResult;
 }
 
 export async function bestEffortDisableMobilePushRegistration(
   accessToken: string,
 ) {
-  await callPushApi(accessToken, { action: "unregister" }, 1_500).catch(
-    () => undefined,
-  );
+  await Promise.allSettled([
+    callPushApi(accessToken, { action: "unregister" }, 1_500),
+    Notifications.unregisterForNotificationsAsync(),
+  ]);
 }
