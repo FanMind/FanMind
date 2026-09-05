@@ -114,6 +114,27 @@ jobs:
           fi
           echo "MOBILE_SIGNED_BUILD_PUBLIC_ENVIRONMENT=verified"
 
+      - name: Verify Android Preview FCM prerequisite before build
+        if: ${{ inputs.platform == 'android' && inputs.build_environment == 'preview' }}
+        working-directory: apps/mobile
+        run: |
+          set -euo pipefail
+          umask 077
+          REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-android-fcm-prerequisite.txt"
+          trap 'rm -f "$REPORT_PATH"' EXIT
+          if ! npx --yes eas-cli@21.2.0 env:exec preview \
+            "node scripts/check-android-fcm-build-prerequisite.mjs" \
+            --non-interactive >"$REPORT_PATH" 2>&1; then
+            echo "MOBILE_SIGNED_BUILD_ERROR=android_fcm_prerequisite_failed" >&2
+            echo "MOBILE_SIGNED_BUILD_HINT=see-docs-mobile-ANDROID_FCM_SETUP" >&2
+            exit 1
+          fi
+          if ! grep -qx 'ANDROID_FCM_SIGNED_BUILD_PREREQUISITE=PASS' "$REPORT_PATH"; then
+            echo "MOBILE_SIGNED_BUILD_ERROR=android_fcm_prerequisite_incomplete" >&2
+            exit 1
+          fi
+          echo "MOBILE_SIGNED_BUILD_ANDROID_FCM=verified"
+
       - name: Authorize exactly one signed internal build
         env:
           FANMIND_ENABLE_MOBILE_EAS_BUILD: 'true'
@@ -257,15 +278,3 @@ jobs:
           path: ${{ steps.signed-build-receipt.outputs.path }}
           if-no-files-found: error
           retention-days: 5
-
-      - name: Purge signed-build receipt from runner
-        if: always()
-        shell: bash
-        env:
-          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.signed-build-receipt.outputs.path }}
-        run: |
-          set -euo pipefail
-          if [[ -n "$MOBILE_SIGNED_BUILD_RECEIPT_PATH" ]]; then
-            rm -f "$MOBILE_SIGNED_BUILD_RECEIPT_PATH"
-            rmdir "$(dirname "$MOBILE_SIGNED_BUILD_RECEIPT_PATH")" 2>/dev/null || true
-          fi
