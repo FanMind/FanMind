@@ -6,6 +6,8 @@ import { getMobileEnvironment } from "@/lib/env";
 import { configureNotificationChannel } from "@/lib/pushNotifications";
 
 const environment = getMobileEnvironment();
+const AUTO_REGISTRATION_DISABLE_TIMEOUT_MS = 750;
+const NATIVE_TOKEN_DELETE_TIMEOUT_MS = 1_000;
 
 export type MobilePushRegistrationStatus = {
   enabled: boolean;
@@ -84,11 +86,33 @@ async function callPushApi(
   }
 }
 
+async function settleWithin(
+  operation: Promise<unknown>,
+  timeoutMs: number,
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const timeout = setTimeout(resolve, timeoutMs);
+    void operation
+      .catch(() => undefined)
+      .finally(() => {
+        clearTimeout(timeout);
+        resolve();
+      });
+  });
+}
+
 async function revokeNativePushRegistration() {
-  await Notifications.setAutoServerRegistrationEnabledAsync(false).catch(
-    () => undefined,
+  // Local logout must never be held hostage by a stalled Firebase/provider
+  // operation. Disable Expo auto-registration first, then attempt token
+  // deletion, with both native operations independently time-bounded.
+  await settleWithin(
+    Notifications.setAutoServerRegistrationEnabledAsync(false),
+    AUTO_REGISTRATION_DISABLE_TIMEOUT_MS,
   );
-  await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
+  await settleWithin(
+    Notifications.unregisterForNotificationsAsync(),
+    NATIVE_TOKEN_DELETE_TIMEOUT_MS,
+  );
 }
 
 export function getMobilePushRegistrationStatus(accessToken: string) {
