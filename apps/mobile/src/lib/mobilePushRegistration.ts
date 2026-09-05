@@ -106,33 +106,65 @@ export async function enableMobilePushRegistration(accessToken: string) {
 
   try {
     await configureNotificationChannel();
-    let permissions = await Notifications.getPermissionsAsync();
-    if (permissions.status !== "granted") {
-      permissions = await Notifications.requestPermissionsAsync();
-    }
-    if (permissions.status !== "granted") {
-      return {
-        status: null,
-        error:
-          "Push-Erinnerungen wurden nicht erlaubt. Du kannst die Freigabe später erneut in den Geräteeinstellungen erteilen.",
-      };
-    }
-    const token = await Notifications.getExpoPushTokenAsync({
+  } catch {
+    return {
+      status: null,
+      error:
+        "Die lokalen Benachrichtigungskanäle konnten auf diesem Gerät nicht vorbereitet werden.",
+    };
+  }
+
+  let permissions = await Notifications.getPermissionsAsync().catch(() => null);
+  if (!permissions) {
+    return {
+      status: null,
+      error: "Der Benachrichtigungsstatus des Geräts konnte nicht gelesen werden.",
+    };
+  }
+  if (permissions.status !== "granted") {
+    permissions = await Notifications.requestPermissionsAsync().catch(() => null);
+  }
+  if (!permissions || permissions.status !== "granted") {
+    return {
+      status: null,
+      error:
+        "Push-Erinnerungen wurden nicht erlaubt. Du kannst die Freigabe später erneut in den Geräteeinstellungen erteilen.",
+    };
+  }
+
+  let devicePushToken: Notifications.DevicePushToken;
+  try {
+    devicePushToken = await Notifications.getDevicePushTokenAsync();
+  } catch {
+    return {
+      status: null,
+      error:
+        Platform.OS === "android"
+          ? "Android-Push ist in diesem Build noch nicht vollständig mit Firebase/FCM verbunden."
+          : "Für dieses Gerät konnte noch kein nativer Push-Token bezogen werden.",
+    };
+  }
+
+  let token: Notifications.ExpoPushToken;
+  try {
+    token = await Notifications.getExpoPushTokenAsync({
       projectId: currentProjectId,
-    });
-    return callPushApi(accessToken, {
-      action: "register",
-      token: token.data,
-      projectId: currentProjectId,
-      platform: Platform.OS,
+      devicePushToken,
     });
   } catch {
     return {
       status: null,
       error:
-        "Dieses Gerät konnte noch nicht sicher für Push-Erinnerungen registriert werden.",
+        "Der native Push-Token konnte noch nicht sicher beim FanMind-EAS-Projekt registriert werden.",
     };
   }
+
+  return callPushApi(accessToken, {
+    action: "register",
+    token: token.data,
+    projectId: currentProjectId,
+    platform: Platform.OS,
+  });
 }
 
 export function disableMobilePushRegistration(accessToken: string) {
