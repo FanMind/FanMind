@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - "apps/mobile/app.json"
+      - "apps/mobile/app.config.js"
       - "apps/mobile/eas.json"
       - "apps/mobile/package.json"
       - "apps/mobile/package-lock.json"
+      - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - ".github/workflows/ci-mobile-native.yml"
@@ -18,9 +20,11 @@ on:
       - "p0/**"
     paths:
       - "apps/mobile/app.json"
+      - "apps/mobile/app.config.js"
       - "apps/mobile/eas.json"
       - "apps/mobile/package.json"
       - "apps/mobile/package-lock.json"
+      - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - ".github/workflows/ci-mobile-native.yml"
@@ -145,7 +149,6 @@ jobs:
         shell: bash
         working-directory: apps/mobile/ios
         run: |
-          set -o pipefail
           xcodebuild \
             -workspace FanMind.xcworkspace \
             -scheme FanMind \
