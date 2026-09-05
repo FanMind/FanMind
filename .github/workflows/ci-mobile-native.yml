@@ -12,6 +12,7 @@ on:
       - "apps/mobile/package-lock.json"
       - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-config.mjs"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - ".github/workflows/ci-mobile-native.yml"
   push:
@@ -26,6 +27,7 @@ on:
       - "apps/mobile/package-lock.json"
       - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-config.mjs"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - ".github/workflows/ci-mobile-native.yml"
 
@@ -70,6 +72,9 @@ jobs:
 
       - name: Install mobile dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Verify Android FCM consent and config contract
+        run: npm run fcm:check
 
       - name: Verify isolated Android and iOS native configuration
         run: npm run native:prebuild:check
