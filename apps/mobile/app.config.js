@@ -4,6 +4,7 @@ const OWNER_PATTERN =
   /^[a-z0-9](?:[a-z0-9_-]{0,37}[a-z0-9])?$/iu;
 
 const RUNTIME_EAS_PROJECT_ID = "df30aeb2-79d3-42bc-9fc1-e2d3f7e5666f";
+const FCM_CONSENT_PLUGIN = "./plugins/with-fcm-consent-boundary.cjs";
 
 function optionalEasBinding(environment = process.env) {
   const owner = String(
@@ -35,6 +36,16 @@ function optionalAndroidGoogleServicesFile(environment = process.env) {
   return value;
 }
 
+function withFcmConsentPlugin(plugins = []) {
+  if (plugins.some((plugin) => {
+    const name = Array.isArray(plugin) ? plugin[0] : plugin;
+    return name === FCM_CONSENT_PLUGIN;
+  })) {
+    return plugins;
+  }
+  return [...plugins, FCM_CONSENT_PLUGIN];
+}
+
 module.exports = ({ config, environment = process.env }) => {
   const binding = optionalEasBinding(environment);
   const projectId = binding?.projectId ?? RUNTIME_EAS_PROJECT_ID;
@@ -43,6 +54,7 @@ module.exports = ({ config, environment = process.env }) => {
   return {
     ...config,
     ...(binding ? { owner: binding.owner } : {}),
+    plugins: withFcmConsentPlugin(config.plugins ?? []),
     android: {
       ...(config.android ?? {}),
       ...(googleServicesFile ? { googleServicesFile } : {}),
@@ -58,4 +70,6 @@ module.exports = ({ config, environment = process.env }) => {
 
 module.exports.optionalEasBinding = optionalEasBinding;
 module.exports.optionalAndroidGoogleServicesFile = optionalAndroidGoogleServicesFile;
+module.exports.withFcmConsentPlugin = withFcmConsentPlugin;
 module.exports.RUNTIME_EAS_PROJECT_ID = RUNTIME_EAS_PROJECT_ID;
+module.exports.FCM_CONSENT_PLUGIN = FCM_CONSENT_PLUGIN;
