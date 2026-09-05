@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createRequire } from "node:module";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,8 +14,10 @@ const root = new URL("../", import.meta.url);
 const mobileRoot = new URL("../apps/mobile/", import.meta.url);
 const rootPath = fileURLToPath(root);
 const mobileRootPath = fileURLToPath(mobileRoot);
+const require = createRequire(import.meta.url);
 const packageJson = JSON.parse(await readFile(new URL("package.json", mobileRoot), "utf8"));
 const appConfig = JSON.parse(await readFile(new URL("app.json", mobileRoot), "utf8"));
+const dynamicAppConfig = require(fileURLToPath(new URL("app.config.js", mobileRoot)));
 const mobileCi = await readFile(new URL("../.github/workflows/ci-mobile.yml", import.meta.url), "utf8");
 const mobileReadme = await readFile(new URL("README.md", mobileRoot), "utf8");
 const mobileBetaRelease = await readFile(
@@ -27,6 +30,7 @@ const mobileStoreListing = await readFile(
 );
 const webTsconfig = await readFile(new URL("../tsconfig.json", import.meta.url), "utf8");
 const webEslint = await readFile(new URL("../eslint.config.mjs", import.meta.url), "utf8");
+const approvedProjectId = "df30aeb2-79d3-42bc-9fc1-e2d3f7e5666f";
 
 async function pngHeader(relativePath) {
   const image = await readFile(new URL(relativePath, mobileRoot));
@@ -79,6 +83,29 @@ test("Android, iOS and deep-link identities are independent and explicit", () =>
   assert.equal(appConfig.expo.ios.supportsTablet, false);
   assert.equal(appConfig.expo.android.package, "ch.fanmind.app");
   assert.equal(appConfig.expo.userInterfaceStyle, "dark");
+});
+
+test("runtime Expo config always exposes the approved EAS project id", () => {
+  const config = dynamicAppConfig({
+    config: { extra: { product: "FanMind Mobile" } },
+    environment: {},
+  });
+
+  assert.equal(config.extra.eas.projectId, approvedProjectId);
+  assert.equal(config.owner, undefined);
+});
+
+test("protected release binding can still provide the reviewed owner and project id", () => {
+  const config = dynamicAppConfig({
+    config: { extra: { product: "FanMind Mobile" } },
+    environment: {
+      FANMIND_MOBILE_EXPECTED_EAS_OWNER: "bernds-tech",
+      FANMIND_MOBILE_EXPECTED_EAS_PROJECT_ID: approvedProjectId,
+    },
+  });
+
+  assert.equal(config.owner, "bernds-tech");
+  assert.equal(config.extra.eas.projectId, approvedProjectId);
 });
 
 test("mobile uses the square FM-over-wordmark splash and dedicated high-resolution app icons", async () => {
