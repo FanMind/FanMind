@@ -119,7 +119,6 @@ jobs:
         working-directory: apps/mobile
         run: |
           set -euo pipefail
-          umask 077
           REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-android-fcm-metadata.txt"
           install -m 600 /dev/null "$REPORT_PATH"
           trap 'rm -f "$REPORT_PATH"' EXIT
