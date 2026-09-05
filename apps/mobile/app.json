@@ -97,7 +97,10 @@
     },
     "extra": {
       "product": "FanMind Mobile",
-      "website": "https://fanmind.ch"
+      "website": "https://fanmind.ch",
+      "eas": {
+        "projectId": "df30aeb2-79d3-42bc-9fc1-e2d3f7e5666f"
+      }
     }
   }
 }
