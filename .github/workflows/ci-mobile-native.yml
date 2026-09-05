@@ -149,6 +149,7 @@ jobs:
         shell: bash
         working-directory: apps/mobile/ios
         run: |
+          set -o pipefail
           xcodebuild \
             -workspace FanMind.xcworkspace \
             -scheme FanMind \
