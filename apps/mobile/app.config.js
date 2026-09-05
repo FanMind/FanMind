@@ -3,6 +3,8 @@ const UUID_PATTERN =
 const OWNER_PATTERN =
   /^[a-z0-9](?:[a-z0-9_-]{0,37}[a-z0-9])?$/iu;
 
+const RUNTIME_EAS_PROJECT_ID = "df30aeb2-79d3-42bc-9fc1-e2d3f7e5666f";
+
 function optionalEasBinding(environment = process.env) {
   const owner = String(
     environment.FANMIND_MOBILE_EXPECTED_EAS_OWNER ?? "",
@@ -26,18 +28,19 @@ function optionalEasBinding(environment = process.env) {
 
 module.exports = ({ config, environment = process.env }) => {
   const binding = optionalEasBinding(environment);
-  if (!binding) return config;
+  const projectId = binding?.projectId ?? RUNTIME_EAS_PROJECT_ID;
 
   return {
     ...config,
-    owner: binding.owner,
+    ...(binding ? { owner: binding.owner } : {}),
     extra: {
       ...(config.extra ?? {}),
       eas: {
-        projectId: binding.projectId,
+        projectId,
       },
     },
   };
 };
 
 module.exports.optionalEasBinding = optionalEasBinding;
+module.exports.RUNTIME_EAS_PROJECT_ID = RUNTIME_EAS_PROJECT_ID;
