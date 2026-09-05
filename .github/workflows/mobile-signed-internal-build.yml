@@ -119,8 +119,8 @@ jobs:
         working-directory: apps/mobile
         run: |
           set -euo pipefail
-          umask 077
           REPORT_PATH="$RUNNER_TEMP/fanmind-mobile-android-fcm-prerequisite.txt"
+          install -m 600 /dev/null "$REPORT_PATH"
           trap 'rm -f "$REPORT_PATH"' EXIT
           if ! npx --yes eas-cli@21.2.0 env:exec preview \
             "node scripts/check-android-fcm-build-prerequisite.mjs" \
