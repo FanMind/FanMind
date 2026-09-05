@@ -12,6 +12,7 @@ on:
       - "apps/mobile/package-lock.json"
       - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-build-prerequisite.mjs"
       - "apps/mobile/scripts/check-android-fcm-config.mjs"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - "apps/mobile/src/lib/mobilePushRegistration.ts"
@@ -28,6 +29,7 @@ on:
       - "apps/mobile/package-lock.json"
       - "apps/mobile/plugins/**"
       - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-build-prerequisite.mjs"
       - "apps/mobile/scripts/check-android-fcm-config.mjs"
       - "apps/mobile/scripts/check-native-prebuild.mjs"
       - "apps/mobile/src/lib/mobilePushRegistration.ts"
@@ -77,6 +79,33 @@ jobs:
 
       - name: Verify Android FCM consent and config contract
         run: npm run fcm:check
+
+      - name: Verify Android FCM secret-metadata preflight contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOOD_REPORT="$RUNNER_TEMP/fanmind-fcm-metadata-good.txt"
+          BAD_REPORT="$RUNNER_TEMP/fanmind-fcm-metadata-bad.txt"
+          trap 'rm -f "$GOOD_REPORT" "$BAD_REPORT"' EXIT
+          cat >"$GOOD_REPORT" <<'EOF'
+          Environment: preview
+          Variables for this project:
+          ID            test-id
+          Name          GOOGLE_SERVICES_JSON
+          Value         *****
+          Scope         PROJECT
+          Visibility    SECRET
+          Environments  preview
+          type          file
+          Created at    Sep 05 22:00:00
+          Updated at    Sep 05 22:00:00
+          EOF
+          node scripts/check-android-fcm-build-prerequisite.mjs "$GOOD_REPORT"
+          sed 's/Visibility    SECRET/Visibility    PLAINTEXT/' "$GOOD_REPORT" >"$BAD_REPORT"
+          if node scripts/check-android-fcm-build-prerequisite.mjs "$BAD_REPORT" >/dev/null 2>&1; then
+            echo "FCM metadata checker accepted a non-secret file variable" >&2
+            exit 1
+          fi
 
       - name: Verify isolated Android and iOS native configuration
         run: npm run native:prebuild:check
