@@ -12,9 +12,16 @@ type CheckoutMessage = {
   text: string;
 };
 
-function getCheckoutMessage(status: number, error?: string): CheckoutMessage {
+function getCheckoutMessage(status: number, error?: string, code?: string): CheckoutMessage {
   if (status === 401) {
     return { kind: "session", text: "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an, um die Zahlung fortzusetzen." };
+  }
+
+  if (status === 503 && code === "stripe_billing_write_frozen") {
+    return {
+      kind: "payment",
+      text: error ?? "Zahlungen sind während eines kurzen Wartungsfensters vorübergehend pausiert. Bitte versuche es gleich erneut.",
+    };
   }
 
   if (status === 503) {
@@ -45,12 +52,12 @@ export function BillingCheckoutButton({ planId, commercialOption, label = "Weite
         credentials: "same-origin",
         body: JSON.stringify({ planId, commercialOption }),
       });
-      const payload = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      const payload = await response.json().catch(() => ({})) as { url?: string; error?: string; code?: string };
       if (payload.url) {
         window.location.href = payload.url;
         return;
       }
-      setMessage(getCheckoutMessage(response.status, payload.error));
+      setMessage(getCheckoutMessage(response.status, payload.error, payload.code));
     } catch {
       setMessage({ kind: "generic", text: "Die Zahlung konnte nicht gestartet werden. Bitte kontaktiere FanMind." });
     } finally {

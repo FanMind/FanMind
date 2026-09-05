@@ -7,6 +7,14 @@ on:
         description: 'Type deploy-staging-only to confirm the isolated staging deployment'
         required: true
         type: string
+      billing_write_freeze:
+        description: 'Freeze new Checkout and legacy Billing projection during controlled ledger cutover'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 concurrency:
   group: fanmind-staging-deploy
@@ -34,6 +42,7 @@ jobs:
       - name: Deploy on isolated staging host
         env:
           EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
         run: |
           set -euo pipefail
 
@@ -61,6 +70,10 @@ jobs:
           fi
           if [[ ! "$EXPECTED_RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid staging release commit." >&2
+            exit 1
+          fi
+          if [[ "$BILLING_WRITE_FREEZE" != "true" && "$BILLING_WRITE_FREEZE" != "false" ]]; then
+            echo "Invalid Staging Billing write-freeze state." >&2
             exit 1
           fi
 
@@ -125,8 +138,8 @@ jobs:
           RELEASE_ENV_TMP="$(mktemp "$SOURCE_DIR/.release.env.XXXXXX")"
           trap 'rm -f "$RELEASE_ENV_TMP"' EXIT
           chmod 0600 "$RELEASE_ENV_TMP"
-          printf 'FANMIND_RELEASE_COMMIT=%s\nFANMIND_RUNTIME_ENVIRONMENT=staging\nNODE_ENV=production\n' \
-            "$EXPECTED_RELEASE_COMMIT" > "$RELEASE_ENV_TMP"
+          printf 'FANMIND_RELEASE_COMMIT=%s\nFANMIND_RUNTIME_ENVIRONMENT=staging\nNODE_ENV=production\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=%s\n' \
+            "$EXPECTED_RELEASE_COMMIT" "$BILLING_WRITE_FREEZE" > "$RELEASE_ENV_TMP"
           mv "$RELEASE_ENV_TMP" "$SOURCE_DIR/.release.env"
           trap - EXIT
 
@@ -187,3 +200,4 @@ jobs:
             npm run smoke:public
 
           echo "STAGING_RELEASE_COMMIT=$EXPECTED_RELEASE_COMMIT"
+          echo "STAGING_BILLING_WRITE_FREEZE=$BILLING_WRITE_FREEZE"
