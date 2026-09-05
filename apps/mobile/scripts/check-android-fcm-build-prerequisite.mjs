@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { open } from "node:fs/promises";
 
 const expectedPackage = "ch.fanmind.app";
 const configPath = String(process.env.GOOGLE_SERVICES_JSON ?? "").trim();
@@ -7,10 +7,16 @@ const configPath = String(process.env.GOOGLE_SERVICES_JSON ?? "").trim();
 assert.ok(configPath, "ANDROID_FCM_PREVIEW_CONFIG_MISSING");
 assert.doesNotMatch(configPath, /[\r\n\0]/u, "ANDROID_FCM_PREVIEW_CONFIG_INVALID_PATH");
 
-const fileStat = await stat(configPath);
-assert.ok(fileStat.isFile(), "ANDROID_FCM_PREVIEW_CONFIG_NOT_FILE");
+const configFile = await open(configPath, "r");
+let parsed;
+try {
+  const fileStat = await configFile.stat();
+  assert.ok(fileStat.isFile(), "ANDROID_FCM_PREVIEW_CONFIG_NOT_FILE");
+  parsed = JSON.parse(await configFile.readFile("utf8"));
+} finally {
+  await configFile.close();
+}
 
-const parsed = JSON.parse(await readFile(configPath, "utf8"));
 const clients = Array.isArray(parsed?.client) ? parsed.client : [];
 const packageMatches = clients.some(
   (client) => client?.client_info?.android_client_info?.package_name === expectedPackage,
