@@ -54,3 +54,24 @@ test("controlled freeze blocks Checkout and makes legacy webhook projection retr
     /billingUpdateDecision === STRIPE_BILLING_RETRYABLE_ERROR[\s\S]*throw new StripeWebhookRetryableError\(\)/u,
   );
 });
+
+test("isolated Staging deploy carries only an explicit true or false billing freeze state", () => {
+  const workflow = fs.readFileSync(
+    ".github/workflows/deploy-staging.yml",
+    "utf8",
+  );
+
+  assert.match(workflow, /billing_write_freeze:/u);
+  assert.match(workflow, /default: 'false'/u);
+  assert.match(workflow, /BILLING_WRITE_FREEZE: \$\{\{ inputs\.billing_write_freeze \}\}/u);
+  assert.match(
+    workflow,
+    /BILLING_WRITE_FREEZE" != "true"[\s\S]*BILLING_WRITE_FREEZE" != "false"/u,
+  );
+  assert.match(
+    workflow,
+    /FANMIND_STRIPE_BILLING_WRITE_FREEZE=%s[\s\S]*"\$EXPECTED_RELEASE_COMMIT" "\$BILLING_WRITE_FREEZE"/u,
+  );
+  assert.match(workflow, /STAGING_BILLING_WRITE_FREEZE=\$BILLING_WRITE_FREEZE/u);
+  assert.doesNotMatch(workflow, /FANMIND_STRIPE_BILLING_EVENT_LEDGER_ENABLED:\s*true/u);
+});
