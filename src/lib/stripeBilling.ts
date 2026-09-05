@@ -13,6 +13,7 @@ import {
   isMissingWorkspaceExpandColumn,
   withoutWorkspaceExpandColumns,
 } from "@/lib/workspaceProvisioning";
+import { isStripeBillingWriteFrozen } from "@/lib/stripeBillingWriteFreeze.mjs";
 import {
   STRIPE_BILLING_ALLOWED,
   STRIPE_BILLING_BLOCKED,
@@ -589,6 +590,10 @@ export async function updateWorkspaceBillingDefensively(
   workspaceId: string | undefined,
   fields: Record<string, string | number | boolean | null | undefined>,
 ): Promise<StripeBillingUpdateDecision> {
+  if (isStripeBillingWriteFrozen()) {
+    console.warn("Stripe billing update deferred by controlled write freeze");
+    return STRIPE_BILLING_RETRYABLE_ERROR;
+  }
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!workspaceId || !serviceKey) return STRIPE_BILLING_RETRYABLE_ERROR;
   const targetDecision = await isStripeBillingTargetAllowed(
