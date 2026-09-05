@@ -84,6 +84,13 @@ async function callPushApi(
   }
 }
 
+async function revokeNativePushRegistration() {
+  await Notifications.setAutoServerRegistrationEnabledAsync(false).catch(
+    () => undefined,
+  );
+  await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
+}
+
 export function getMobilePushRegistrationStatus(accessToken: string) {
   return callPushApi(accessToken, { action: "status" });
 }
@@ -152,7 +159,7 @@ export async function enableMobilePushRegistration(accessToken: string) {
       devicePushToken,
     });
   } catch {
-    await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
+    await revokeNativePushRegistration();
     return {
       status: null,
       error:
@@ -166,16 +173,17 @@ export async function enableMobilePushRegistration(accessToken: string) {
     projectId: currentProjectId,
     platform: Platform.OS,
   });
-  if (!result.status) {
-    await Notifications.unregisterForNotificationsAsync().catch(() => undefined);
-  }
+
+  // A missing or malformed response is indeterminate: the backend may already
+  // have persisted the registration. Keep the consented native token intact
+  // and revoke it only through an explicit disable/logout path.
   return result;
 }
 
 export async function disableMobilePushRegistration(accessToken: string) {
   const [serverResult] = await Promise.all([
     callPushApi(accessToken, { action: "unregister" }),
-    Notifications.unregisterForNotificationsAsync().catch(() => undefined),
+    revokeNativePushRegistration(),
   ]);
   return serverResult;
 }
@@ -185,6 +193,6 @@ export async function bestEffortDisableMobilePushRegistration(
 ) {
   await Promise.allSettled([
     callPushApi(accessToken, { action: "unregister" }, 1_500),
-    Notifications.unregisterForNotificationsAsync(),
+    revokeNativePushRegistration(),
   ]);
 }
