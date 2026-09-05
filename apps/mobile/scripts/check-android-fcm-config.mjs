@@ -89,22 +89,40 @@ const registrationSource = await readFile(
 const revokeHelperStart = registrationSource.indexOf(
   "async function revokeNativePushRegistration()",
 );
-const autoRegistrationDisable = registrationSource.indexOf(
-  "setAutoServerRegistrationEnabledAsync(false)",
+const revokeHelperEnd = registrationSource.indexOf(
+  "\nexport function getMobilePushRegistrationStatus",
   revokeHelperStart,
 );
-const nativeUnregister = registrationSource.indexOf(
+const revokeHelperSource = registrationSource.slice(
+  revokeHelperStart,
+  revokeHelperEnd,
+);
+const autoRegistrationDisable = revokeHelperSource.indexOf(
+  "setAutoServerRegistrationEnabledAsync(false)",
+);
+const nativeUnregister = revokeHelperSource.indexOf(
   "unregisterForNotificationsAsync()",
   autoRegistrationDisable,
 );
 assert.ok(revokeHelperStart >= 0, "FCM revoke helper must exist.");
+assert.ok(revokeHelperEnd > revokeHelperStart, "FCM revoke helper must be bounded.");
 assert.ok(
-  autoRegistrationDisable > revokeHelperStart,
+  autoRegistrationDisable >= 0,
   "Expo automatic native-token registration must be disabled on revoke.",
 );
 assert.ok(
   nativeUnregister > autoRegistrationDisable,
   "Automatic registration must be disabled before deleting the native token.",
+);
+assert.match(
+  revokeHelperSource,
+  /settleWithin\([\s\S]*AUTO_REGISTRATION_DISABLE_TIMEOUT_MS/u,
+  "Auto-registration disable must be time-bounded so logout cannot hang.",
+);
+assert.match(
+  revokeHelperSource,
+  /settleWithin\([\s\S]*NATIVE_TOKEN_DELETE_TIMEOUT_MS/u,
+  "Native token deletion must be time-bounded so logout cannot hang.",
 );
 
 const backendRegisterStart = registrationSource.indexOf(
