@@ -1,22 +1,23 @@
 name: Temporary Mobile SDK57 Lock Refresh
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches:
+      - fix/mobile-staging-login-diagnostics-20260905
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   resolve-mobile-sdk57-lock:
-    if: github.head_ref == 'fix/mobile-staging-login-diagnostics-20260905'
+    if: github.ref == 'refs/heads/fix/mobile-staging-login-diagnostics-20260905'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Checkout PR head
+      - name: Checkout exact branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: fix/mobile-staging-login-diagnostics-20260905
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -37,12 +38,15 @@ jobs:
           expo-router@~57.0.19
           expo-secure-store@~57.0.3
 
-      - name: Upload resolved package manifests
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: mobile-sdk57-resolved-lock
-          path: |
-            apps/mobile/package.json
-            apps/mobile/package-lock.json
-          retention-days: 1
-          if-no-files-found: error
+      - name: Commit resolved manifests if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- apps/mobile/package.json apps/mobile/package-lock.json; then
+            echo 'Mobile manifests already resolved.'
+            exit 0
+          fi
+          git config user.name 'fanmind-github-mobile'
+          git config user.email 'actions@users.noreply.github.com'
+          git add apps/mobile/package.json apps/mobile/package-lock.json
+          git commit -m 'chore(mobile): align Expo SDK 57 patches'
+          git push origin HEAD:fix/mobile-staging-login-diagnostics-20260905
