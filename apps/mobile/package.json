@@ -11,7 +11,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "doctor": "node scripts/check-expo-doctor.mjs && node scripts/check-android-fcm-config.mjs",
+    "doctor": "node scripts/check-expo-doctor.mjs",
     "fcm:check": "node scripts/check-android-fcm-config.mjs",
     "store:render": "node scripts/render-store-assets.mjs",
     "store:check": "node scripts/check-store-readiness.mjs",
@@ -19,7 +19,7 @@
     "export:android": "expo export --platform android --output-dir dist-android",
     "export:ios": "expo export --platform ios --output-dir dist-ios",
     "native:prebuild:check": "node scripts/check-native-prebuild.mjs",
-    "check": "npm run typecheck && npm run doctor && npm run store:check && npm run boundary && npm run native:prebuild:check"
+    "check": "npm run typecheck && npm run doctor && npm run fcm:check && npm run store:check && npm run boundary && npm run native:prebuild:check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.0",
