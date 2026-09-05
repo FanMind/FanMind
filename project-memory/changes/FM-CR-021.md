@@ -18,8 +18,12 @@ This change:
 - consumes an EAS secret-file environment variable named `GOOGLE_SERVICES_JSON` through dynamic Expo config and maps it only to `android.googleServicesFile`;
 - keeps `google-services.json` out of Git and never embeds a service-account credential in application source;
 - explicitly obtains the native device push token before requesting the Expo push token;
+- keeps Firebase Messaging auto-init and Firebase Analytics collection disabled in the generated Android manifest until explicit user opt-in;
+- disables Expo automatic native-token re-registration before every explicit opt-out/logout token deletion;
+- preserves a consented native token when the backend registration response is indeterminate, because the server may already have committed the registration;
 - reports fixed, non-secret failure classes for local notification-channel, permission, native FCM-token and Expo-token stages instead of one ambiguous catch-all message;
-- retains the already accepted public runtime EAS project ID binding and the existing Staging-only server registration contract.
+- retains the already accepted public runtime EAS project ID binding and the existing Staging-only server registration contract;
+- executes the Android FCM consent/config contract directly in pull-request native CI and keeps dynamic Expo config/plugin changes in that workflow's path filters.
 
 ## External prerequisites before a replacement build
 1. The Firebase project must contain an Android app whose package is exactly `ch.fanmind.app`.
@@ -27,10 +31,15 @@ This change:
 3. The FCM V1 service-account credential for the same Firebase project/package must be uploaded to the FanMind EAS Android credentials.
 4. Only after those bindings are present may one replacement signed Android `preview` build be queued from the merged reviewed commit.
 
+## Current external provider evidence
+On 2026-09-05 the owner supplied current Expo/EAS credential-screen evidence showing that an FCM V1 service-account key is present for the FanMind Android credentials. No key material, key ID or credential payload is retained in Project Memory. The replacement-build workflow still independently verifies the Preview `GOOGLE_SERVICES_JSON` file and exact Android package before it is allowed to queue a build.
+
 ## Acceptance
 - exact-head Mobile/native/general CI and Project Memory gates green;
 - replacement signed Android Preview installs and logs in;
 - `Push auf diesem Gerät vorbereiten` creates exactly one active Staging registration;
+- explicit disable/logout prevents automatic native-token re-registration;
+- an indeterminate registration transport result never invalidates a token that may already be bound server-side;
 - no token, Firebase credential or provider payload is logged or committed;
 - real provider delivery remains a separate Staging-only acceptance with ticket/receipt evidence and no Production activation.
 
