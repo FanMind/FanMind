@@ -278,3 +278,15 @@ jobs:
           path: ${{ steps.signed-build-receipt.outputs.path }}
           if-no-files-found: error
           retention-days: 5
+
+      - name: Purge signed-build receipt from runner
+        if: always()
+        shell: bash
+        env:
+          MOBILE_SIGNED_BUILD_RECEIPT_PATH: ${{ steps.signed-build-receipt.outputs.path }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$MOBILE_SIGNED_BUILD_RECEIPT_PATH" ]]; then
+            rm -f "$MOBILE_SIGNED_BUILD_RECEIPT_PATH"
+            rmdir "$(dirname "$MOBILE_SIGNED_BUILD_RECEIPT_PATH")" 2>/dev/null || true
+          fi
