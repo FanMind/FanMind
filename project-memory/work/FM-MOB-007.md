@@ -19,6 +19,9 @@ Diagnose the real-device Staging password-login failure on the already installed
 - Reproduced failure after manual entry/copy with password-manager uncertainty still not observable in the old UI.
 - Prepared Staging-only safe diagnostic UI on branch `fix/mobile-staging-login-diagnostics-20260905` and PR #1054.
 - TypeScript, Android/iOS JS export, native prebuild, Store readiness and Mobile boundary checks passed for the implementation.
+- Rebased the Mobile branch on the main commit that contains the separately accepted Phase-8 English landing repair from PR #1055.
+- Resolved the seven Expo SDK 57 patch drifts with `npm install --package-lock-only` on an isolated hosted GitHub runner and committed the generated `package.json` plus `package-lock.json` rather than suppressing Expo Doctor or inventing lock metadata.
+- Removed the temporary lock-resolution workflow immediately after the generated manifests were committed; no temporary write-capable CI helper remains in the final PR diff.
 
 ## Failed attempt / rejected assumption
 - Rejected: different bcrypt hash strings imply different passwords. Bcrypt salts make hash strings differ; direct read-only verification proved the same supplied password matches both environments.
@@ -26,12 +29,12 @@ Diagnose the real-device Staging password-login failure on the already installed
 - A temporary Staging HTTP-extension diagnostic was removed after the protected tool boundary prevented a credential-bearing outbound test; no such extension remains enabled from that attempt.
 
 ## Current CI reconciliation
-- Project Memory Guard failed only because the first code commit did not yet include a Project Memory update; FM-CR-018/FM-MOB-007 now records it.
-- Mobile Expo Doctor reports seven SDK-57 patch releases behind the currently expected Expo versions; this is dependency drift independent of the login UI change and must be reconciled before a clean merge/build claim.
-- The separate Phase-8 English landing defect was repaired and merged through PR #1055 before rebasing this Mobile branch.
+- Project Memory is now present and the previous memory-only guard failure is resolved.
+- Phase-8 English landing drift was repaired and merged separately through PR #1055.
+- Expo SDK 57 patch drift is now reconciled to the versions required by Expo Doctor: `expo ~57.0.20`, `expo-constants ~57.0.17`, `expo-dev-client ~57.0.18`, `expo-linking ~57.0.9`, `expo-notifications ~57.0.17`, `expo-router ~57.0.19`, `expo-secure-store ~57.0.3`.
 
 ## Exact next step
-Reconcile Mobile dependency drift without suppressing Expo Doctor, rerun exact-head CI, then merge the reviewed Mobile PR and queue exactly one protected Android `preview` build.
+Run exact-head CI on the final PR diff. If all repository and Mobile gates pass, merge PR #1054 through the PR flow and queue exactly one protected Android `preview` build from the resulting main commit.
 
 ## Owner action needed
 Only after the replacement Preview exists: install the single new internal APK and perform one visible-diagnostic login attempt. No owner action is needed before that point.
