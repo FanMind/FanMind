@@ -26,13 +26,27 @@ function optionalEasBinding(environment = process.env) {
   return { owner, projectId };
 }
 
+function optionalAndroidGoogleServicesFile(environment = process.env) {
+  const value = String(environment.GOOGLE_SERVICES_JSON ?? "").trim();
+  if (!value) return null;
+  if (/\r|\n|\0/u.test(value)) {
+    throw new Error("FANMIND_MOBILE_GOOGLE_SERVICES_FILE_INVALID");
+  }
+  return value;
+}
+
 module.exports = ({ config, environment = process.env }) => {
   const binding = optionalEasBinding(environment);
   const projectId = binding?.projectId ?? RUNTIME_EAS_PROJECT_ID;
+  const googleServicesFile = optionalAndroidGoogleServicesFile(environment);
 
   return {
     ...config,
     ...(binding ? { owner: binding.owner } : {}),
+    android: {
+      ...(config.android ?? {}),
+      ...(googleServicesFile ? { googleServicesFile } : {}),
+    },
     extra: {
       ...(config.extra ?? {}),
       eas: {
@@ -43,4 +57,5 @@ module.exports = ({ config, environment = process.env }) => {
 };
 
 module.exports.optionalEasBinding = optionalEasBinding;
+module.exports.optionalAndroidGoogleServicesFile = optionalAndroidGoogleServicesFile;
 module.exports.RUNTIME_EAS_PROJECT_ID = RUNTIME_EAS_PROJECT_ID;
