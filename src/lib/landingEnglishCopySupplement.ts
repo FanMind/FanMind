@@ -127,6 +127,24 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   Verkaufsübergabe: "Sales handoff",
   "Nach technischer Abnahme Phase 3 + Phase 7":
     "After technical acceptance of Phase 3 + Phase 7",
+  "Website-KI, iOS & weitere Kanäle": "Website AI, iOS & additional channels",
+  "Website-KI begonnen · übrige Anbindungen später":
+    "Website AI started · remaining integrations later",
+  "Einbettbarer Website-KI-Assistent": "Embeddable website AI assistant",
+  "Sicherheits-, Widget- und Nachrichtenbasis vorbereitet":
+    "Security, widget and messaging foundation prepared",
+  "Gesprächsverlauf in FanMind": "Conversation history in FanMind",
+  "Eingehende Nachrichten und Inbox-Zuordnung vorbereitet":
+    "Incoming messages and inbox routing prepared",
+  "KI-Antworten und Übergabe an den Nutzer": "AI replies and handoff to the user",
+  "KI-Dialog und Eskalation noch umzusetzen":
+    "AI dialogue and escalation still to be implemented",
+  "E-Mail-Rückkanal für Besucher": "Email return channel for visitors",
+  "E-Mail-Erfassung, Einwilligung und Antwortzustellung noch umzusetzen":
+    "Email capture, consent and reply delivery still to be implemented",
+  "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7":
+    "Complete Phase 8 implementation after Phase 7",
+  "Website-KI-Grundlage bereits begonnen": "Website AI foundation already started",
   "Segmente & Listen": "Segments & lists",
   "Segment-Ansichten": "Segment views",
   Vorbereitet: "Prepared",
