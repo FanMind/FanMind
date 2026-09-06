@@ -21,15 +21,18 @@ export function canonicalStripeBillingProjection(snapshot, now) {
     const terminal=["suspended","cancelled","expired"].includes(status);
     const cancellation=snapshot.cancelAtPeriodEnd || snapshot.cancelAt!==null;
     const end=snapshot.status==="canceled"?snapshot.endedAt:cancellation?(snapshot.cancelAt ?? baseItems[0].end):null;
+    const invoiceProjection=invoice?{
+      last_invoice_id:invoice.id,last_invoice_status:invoice.status,
+      last_invoice_amount_due_cents:invoice.amountDue,last_invoice_amount_paid_cents:invoice.amountPaid,
+      last_invoice_hosted_url:invoice.hostedUrl,last_invoice_pdf_url:invoice.pdfUrl
+    }:{};
   return {billing_status:status,workspace_access_mode:terminal?"archived_readonly":"active",
         billing_suspended_at:terminal?snapshot.observedAt:null,billing_suspended_reason:terminal?`stripe_canonical_${snapshot.status}`:null,
         stripe_customer_id:snapshot.customerId,stripe_subscription_id:snapshot.subscriptionId,
         billing_contract_started_at:iso(snapshot.createdAt),billing_current_period_end_at:iso(baseItems[0].end),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd,
         subscription_effective_end_at:iso(end),
         ...(snapshot.status!=="canceled" && (!cancellation || snapshot.canceledAt!==null)?{subscription_cancel_requested_at:cancellation?iso(snapshot.canceledAt):null}:{}),
-        last_invoice_id:invoice?.id ?? null,last_invoice_status:invoice?.status ?? null,
-        last_invoice_amount_due_cents:invoice?.amountDue ?? null,last_invoice_amount_paid_cents:invoice?.amountPaid ?? null,
-        last_invoice_hosted_url:invoice?.hostedUrl ?? null,last_invoice_pdf_url:invoice?.pdfUrl ?? null,
+        ...invoiceProjection,
         billing_grace_until:grace,billing_retry_count:delinquent?Math.max(1,invoice.attemptCount):0,
         billing_next_retry_at:delinquent?iso(invoice.nextPaymentAttempt):null,
         ...(invoice?.status==="paid"?{billing_last_payment_at:iso(invoice.paidAt),billing_last_payment_failed_at:null}:delinquent?{billing_last_payment_failed_at:snapshot.observedAt}:{})};
