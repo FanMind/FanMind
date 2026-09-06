@@ -120,3 +120,8 @@ Der Deploy verweigert `billing_write_freeze=false` bei aktivem Capture ohne
 diesen Beleg; beim Übergang aus der Sperre muss er zum deployten Commit passen.
 Fehlgeschlagene oder unbestimmte Capture-Läufe können Checkout daher nicht
 über bloß erhaltene Konfigurationsflags entsperren.
+
+Der Persistenzbeleg ist an die vor dem Send als abwesend geprüfte, eindeutige
+GitHub-Run-Event-ID gebunden und verfällt nicht allein durch Runner-Wartezeit.
+Ein neuer Runtime-Konfigurationsversuch entfernt einen alten Erfolgsbeleg;
+er muss seinen eigenen Persistenz-Job abschließen, bevor erneut entsperrt wird.

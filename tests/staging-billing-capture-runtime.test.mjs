@@ -37,6 +37,7 @@ test("an unfreeze requires a durable receipt for the frozen deployed commit",()=
   assert.throws(()=>preserveStagingBillingCapture(active,{freeze:"false",commit}),/capture_proof_required/);
   const proven = `${active}FANMIND_STAGING_BILLING_CAPTURE_RECEIPT=${commit}:123456\n`;
   assert.ok(preserveStagingBillingCapture(proven,{freeze:"false",commit}).includes(`${commit}:123456`));
+  assert.ok(!renderStagingBillingCapture(proven).includes("FANMIND_STAGING_BILLING_CAPTURE_RECEIPT="));
   assert.throws(()=>preserveStagingBillingCapture(proven,{freeze:"false",commit:"b".repeat(40)}),/capture_proof_required/);
   assert.throws(()=>preserveStagingBillingCapture(proven + `FANMIND_STAGING_BILLING_CAPTURE_RECEIPT=${commit}:654321\n`));
 });

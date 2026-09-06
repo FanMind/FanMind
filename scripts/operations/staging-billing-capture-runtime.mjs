@@ -29,7 +29,7 @@ export function preserveStagingBillingCapture(previous, { freeze, commit } = {})
   return [...fields.map(key => `${key}=${FLAGS[key]}`), ...(receipt ? [`${RECEIPT}=${receipt}`] : [])].join("\n");
 }
 export function renderStagingBillingCapture(previous) {
-  const retained = previous.split(/\r?\n/u).filter(line => !Object.keys(FLAGS).some(key => line.startsWith(`${key}=`)));
+  const retained = previous.split(/\r?\n/u).filter(line => ![...Object.keys(FLAGS), RECEIPT].some(key => line.startsWith(`${key}=`)));
   return `${retained.join("\n").replace(/\n*$/u, "")}\n${Object.entries(FLAGS).map(([key,value])=>`${key}=${value}`).join("\n")}\n`;
 }
 function privateRelease() {

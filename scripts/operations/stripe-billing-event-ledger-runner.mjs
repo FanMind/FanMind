@@ -663,7 +663,7 @@ export function verifyStagingBillingCaptureRecord(runId, present, environment = 
   const { snapshotDirectory, snapshotPath } = privatePassfileSnapshot(environment);
   try {
     const predicate = present
-      ? `count(*) = 1 and count(*) filter (where workspace_id is null and stripe_customer_id is null and stripe_subscription_id is null and event_type = 'checkout.session.completed' and processing_state = 'unresolved' and processing_reason = 'tenant_binding_missing' and projection_revision = 0 and signature_verified_at > now() - interval '15 minutes') = 1`
+      ? `count(*) = 1 and count(*) filter (where workspace_id is null and stripe_customer_id is null and stripe_subscription_id is null and event_type = 'checkout.session.completed' and processing_state = 'unresolved' and processing_reason = 'tenant_binding_missing' and projection_revision = 0) = 1`
       : "count(*) = 0";
     const sql = String.raw`\set ON_ERROR_STOP on
 begin;
