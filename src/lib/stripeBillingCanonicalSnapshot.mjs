@@ -43,6 +43,7 @@ function normalize(subscription, target, allowedPrices) {
       paidAt:invoice.status_transitions?.paid_at,nextPaymentAttempt:invoice.next_payment_attempt,hostedUrl:invoiceUrl(invoice.hosted_invoice_url),pdfUrl:invoiceUrl(invoice.invoice_pdf)};
   }
   if (subscription.status === "active" && (!latestInvoice || latestInvoice.status !== "paid" || latestInvoice.amountRemaining !== 0)) fail("invoice_unresolved");
+  if (["past_due","unpaid"].includes(subscription.status) && (!latestInvoice || !["open","uncollectible"].includes(latestInvoice.status) || latestInvoice.amountRemaining<=0)) fail("invoice_unresolved");
   if (typeof subscription.cancel_at_period_end !== "boolean" ||
       [subscription.cancel_at,subscription.canceled_at,subscription.ended_at].some(value=>value!==null && (!Number.isSafeInteger(value) || value<0))) fail("subscription_unresolved");
   return {customerId:target.customerId,subscriptionId:target.subscriptionId,basePriceId:target.basePriceId,createdAt:subscription.created,status:subscription.status,

@@ -108,7 +108,7 @@ test('persisted JSON key order cannot prevent exact delayed recovery',async()=>{
  h.adapters.commitBilling=async()=>[{result_status:'duplicate_reconciliation',result_revision:8}];assert.deepEqual(await recover(h),{status:'duplicate_reconciliation',revision:8});
 });
 test('current delinquency records the bounded observation time',()=>{
- const h=harness();h.observation.snapshot.status='past_due';h.observation.snapshot.latestInvoice.status='open';h.observation.snapshot.latestInvoice.paidAt=null;
+ const h=harness();h.observation.snapshot.status='past_due';h.observation.snapshot.latestInvoice.status='open';h.observation.snapshot.latestInvoice.amountRemaining=31200;h.observation.snapshot.latestInvoice.amountPaid=0;h.observation.snapshot.latestInvoice.paidAt=null;
  assert.equal(canonicalStripeBillingProjection(h.observation.snapshot,now).billing_last_payment_failed_at,h.observation.snapshot.observedAt);
 });
 
@@ -116,4 +116,9 @@ test('changed inventory and invalid reservations prevent all downstream writes',
  const h=harness();h.adapters.withBillingReservation=async()=>{throw Error('billing_state_changed');};assert.equal((await execute(h)).reason,'billing_state_changed');assert.deepEqual(h.calls,[]);
  const wrong=harness();wrong.adapters.withBillingReservation=async(body,run)=>run({contract:'stripe-billing-reservation-v1',held:true,command:{...body,p_expected_revision:99}});assert.equal((await execute(wrong)).reason,'billing_reservation_invalid');assert.deepEqual(wrong.calls,[]);
  const absent=harness();delete absent.adapters.withBillingReservation;assert.equal((await execute(absent)).reason,'adapter_missing');assert.deepEqual(absent.calls,[]);
+});
+
+test('completed scheduled cancellation preserves the original request audit marker',()=>{
+ const h=harness();Object.assign(h.observation.snapshot,{status:'canceled',cancelAtPeriodEnd:true,canceledAt:Math.floor(now/1000),endedAt:Math.floor(now/1000)});
+ assert.equal(Object.hasOwn(canonicalStripeBillingProjection(h.observation.snapshot,now),'subscription_cancel_requested_at'),false);
 });

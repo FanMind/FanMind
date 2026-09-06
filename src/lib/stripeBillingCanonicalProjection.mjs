@@ -11,7 +11,7 @@ export function canonicalStripeBillingProjection(snapshot, now) {
     let status = billingStatusFromStripeSubscriptionStatus(snapshot.status);
     const invoice=snapshot.latestInvoice;
     const delinquent=["past_due","unpaid"].includes(snapshot.status);
-    if(delinquent && !invoice) fail("invoice_unresolved");
+    if(delinquent && (!invoice || !["open","uncollectible"].includes(invoice.status) || invoice.amountRemaining<=0)) fail("invoice_unresolved");
     const iso=seconds=>seconds===null?null:new Date(seconds*1000).toISOString();
     const grace=delinquent?iso(invoice.created+10*24*60*60):null;
     if(delinquent) {
@@ -26,7 +26,7 @@ export function canonicalStripeBillingProjection(snapshot, now) {
         stripe_customer_id:snapshot.customerId,stripe_subscription_id:snapshot.subscriptionId,
         billing_contract_started_at:iso(snapshot.createdAt),billing_current_period_end_at:iso(baseItems[0].end),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd,
         subscription_effective_end_at:iso(end),
-        ...(!cancellation || snapshot.canceledAt!==null?{subscription_cancel_requested_at:cancellation?iso(snapshot.canceledAt):null}:{}),
+        ...(snapshot.status!=="canceled" && (!cancellation || snapshot.canceledAt!==null)?{subscription_cancel_requested_at:cancellation?iso(snapshot.canceledAt):null}:{}),
         last_invoice_id:invoice?.id ?? null,last_invoice_status:invoice?.status ?? null,
         last_invoice_amount_due_cents:invoice?.amountDue ?? null,last_invoice_amount_paid_cents:invoice?.amountPaid ?? null,
         last_invoice_hosted_url:invoice?.hostedUrl ?? null,last_invoice_pdf_url:invoice?.pdfUrl ?? null,

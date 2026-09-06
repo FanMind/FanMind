@@ -110,8 +110,10 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   dormant webhook/storage bridge must keep Workspace target, exact stored
   customer/base-subscription binding, distinct Price allowlist, complete
   single-item list, event-order and idempotency checks fail-closed; never log
-  its internal Stripe mutation. The controlled AI event-ledger SQL remains
-  unapplied until its own Staging gate. Never sort equal-second events by
+  its internal Stripe mutation. The controlled AI event-ledger SQL is installed
+  on isolated Staging (Apply 32038152382; latest rollback acceptance
+  34039968946). Production remains unapplied and runtime gates remain required.
+  Never sort equal-second events by
   Event ID: atomically persist `reconciliation_needed`, make the paid tier
   fail closed and require a request-ID/fingerprint/revision-bound canonical
   Stripe reconciliation. A legitimate base-subscription rotation must bind

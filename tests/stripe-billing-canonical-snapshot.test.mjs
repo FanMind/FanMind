@@ -58,3 +58,7 @@ test('provider subscription creation remains the contract start after delayed re
  const h=harness();const observation=await read(h);const result=prepare({observation,ledger:ledger(),basePriceId:target.basePriceId,now:h.clock()});
  assert.equal(result.input.projection.billing_contract_started_at,new Date(subscription().created*1000).toISOString());
 });
+
+test('paid latest invoices cannot justify a delinquent canonical snapshot',async()=>{
+ for(const status of ['past_due','unpaid']){const h=harness();h.stripe.subscriptions.retrieve=async()=>({...subscription(),status});assert.equal((await read(h)).reason,'invoice_unresolved');}
+});
