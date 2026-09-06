@@ -43,7 +43,17 @@ begin
      or exists(select 1 from public.referrals where referred_workspace_id=${workspace} or referrer_workspace_id=${workspace})
      or exists(select 1 from public.demo_start_sessions where workspace_id=${workspace})
   then raise exception 'canonical_fixture_not_empty'; end if;
-  update public.workspaces set stripe_customer_id=${literal(customer)},stripe_subscription_id=${literal(subscription)} where id=${workspace};
+  -- Start from a deliberately different lifecycle projection. A protected
+  -- Workspace for which canonical Billing intentionally skips projection can
+  -- therefore never pass the later active/active postflight accidentally.
+  update public.workspaces
+     set stripe_customer_id=${literal(customer)},
+         stripe_subscription_id=${literal(subscription)},
+         billing_status='suspended',
+         workspace_access_mode='archived_readonly',
+         billing_suspended_at=statement_timestamp(),
+         billing_suspended_reason='stripe_reconciliation_required'
+   where id=${workspace};
 end $fixture$;
 ${["anon","authenticated"].map(role=>`set local role ${role};
 do $browser$
@@ -89,7 +99,7 @@ end $reconcile$;
 reset role;
 do $postflight$
 begin
-  if not exists(select 1 from public.workspaces where id=${workspace} and billing_status='active' and workspace_access_mode='active')
+  if not exists(select 1 from public.workspaces where id=${workspace} and billing_status='active' and workspace_access_mode='active' and billing_suspended_at is null and billing_suspended_reason is null)
      or not exists(select 1 from public.workspace_stripe_billing_streams where workspace_id=${workspace} and sync_state='in_sync' and projection_revision=1)
      or not exists(select 1 from public.workspace_stripe_billing_events where event_id=${literal(eventId)} and processing_state='reconciled' and projection_revision=1)
   then raise exception 'canonical_postflight_failed'; end if;
