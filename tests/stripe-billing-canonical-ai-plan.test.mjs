@@ -12,6 +12,16 @@ function current(f,state='in_sync'){return {workspace_id:f.inventory.workspaceId
 const conflict={createdAt:1788623999,verifiedAt:'2026-09-06T15:00:00Z'};
 test('no paid item and no entitlement stays blocked until the snapshot cutoff can be persisted atomically',()=>{const r=plan(fixture());assert.equal(r.status,'blocked');assert.equal(r.reason,'ai_cutoff_persistence_unavailable');assert.equal(r.rpcBody,undefined);assert.equal(r.stateFingerprint,undefined);});
 test('matching in-sync paid state cannot emit success evidence without a durable cutoff',()=>{const f=fixture(true);f.inventory.current=current(f);let r=plan(f);assert.equal(r.status,'blocked');assert.equal(r.reason,'ai_cutoff_persistence_unavailable');assert.equal(r.rpcBody,undefined);assert.equal(r.stateFingerprint,undefined);f.inventory.current.status='paused';r=plan(f);assert.equal(r.reason,'ai_state_requires_reconciliation');});
+test('AI prices must be distinct from each other and from the base plan before projection',()=>{
+ for(const environment of [
+   {STRIPE_PRICE_AI_PLUS:'price_base',STRIPE_PRICE_AI_ULTRA:'price_ultra'},
+   {STRIPE_PRICE_AI_PLUS:'price_plus',STRIPE_PRICE_AI_ULTRA:'price_base'},
+   {STRIPE_PRICE_AI_PLUS:'price_plus',STRIPE_PRICE_AI_ULTRA:'price_plus'},
+ ]){
+   const f=fixture(true);f.environment=environment;f.inventory.current=current(f,'reconciliation_needed');f.inventory.unresolvedEvents=[conflict];
+   const r=plan(f);assert.equal(r.status,'blocked');assert.equal(r.reason,'ai_price_configuration_invalid');assert.equal(r.rpcBody,undefined);
+ }
+});
 test('existing conflict produces the existing canonical AI RPC contract',()=>{const f=fixture(true);f.inventory.current=current(f,'reconciliation_needed');f.inventory.unresolvedEvents=[conflict];const r=plan(f);assert.equal(r.status,'reconcile');assert.equal(r.rpcBody.p_expected_revision,4);assert.equal(r.rpcBody.p_tier_id,'plus');assert.equal(r.rpcBody.p_snapshot_fingerprint,f.billingCommand.p_snapshot_fingerprint);assert.ok(!JSON.stringify(r).includes('evt_canonical_policy_only'));});
 test('removed paid item uses the canonical no-paid-item path',()=>{const f=fixture();f.inventory.current=current(f,'reconciliation_needed');f.inventory.unresolvedEvents=[conflict];const r=plan(f);assert.equal(r.status,'reconcile');assert.equal(r.rpcBody.p_has_paid_item,false);assert.equal(r.rpcBody.p_tier_id,null);assert.equal(r.rpcBody.p_price_id,null);});
 test('initial paid acquisition cannot be synthesized by reconciliation',()=>{const f=fixture(true);f.inventory.unresolvedEvents=[conflict];assert.equal(plan(f).reason,'ai_state_requires_reconciliation');});
