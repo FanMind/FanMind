@@ -99,6 +99,30 @@
       "observed_at": "2026-09-06T12:08:00Z",
       "source": "PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 success; independent exact-version and HTTP503 stripe_billing_write_frozen Retry-After60; bounded freeze only, not Billing acceptance",
       "target": "https://staging.fanmind.ch"
+    },
+    {
+      "id": "EV-PLAY-RESUME-20260906",
+      "gate": "mobile",
+      "class": "provider_console",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-06T13:18:12.895027+00:00",
+      "source": "Authenticated Play: closed Alpha active, four allowlisted users, zero opted-in testers; Production request disabled; revalidate before portal action."
+    },
+    {
+      "id": "EV-EAS-RESUME-20260906",
+      "gate": "mobile",
+      "class": "provider_console",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-06T13:18:12.895027+00:00",
+      "source": "Authenticated EAS: Sep 5 preview Android APK finished, commit 6d7f76cd6bf2e70df7110a01b236d21a3fc02a0f version 1.0.0 (2); revalidate artifact availability before installation."
+    },
+    {
+      "id": "EV-RESTORE-START-20260906",
+      "gate": "restore",
+      "class": "restore_host",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-06T13:18:12.895027+00:00",
+      "source": "Authenticated Exoscale: exact existing fanmind-restore-01 at-vie-2 started once and observed running. Power-state evidence only, not host/database readiness; SSH identity unavailable."
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

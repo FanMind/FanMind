@@ -1,5 +1,22 @@
 Warning: truncated output (original token count: 30288)
 
+## RECEIPT-FINISHLINE-RESUME-20260906
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: owner explicitly resumed Android/Push, Google Play, Restore and Staging Billing on 2026-09-06.
+- Preflight: main 5cf7006b, drift PASS; prior Restore/provider/device observations expired and must be revalidated.
+- Findings: Play authenticated dashboard confirms closed Alpha active, 4 allowlisted users but 0 opted-in testers; Production-access button disabled. Minimum 12 opted in for 14 days remains an external wait, not a software task.
+- Android: authenticated EAS shows a newer successful 2026-09-05 preview APK at commit 6d7f76cd6bf2e70df7110a01b236d21a3fc02a0f, version 1.0.0 (2), including #1057 runtime EAS binding fix. Supersedes older 70088530 artifact as next device candidate; no duplicate build queued. Private build URLs/IDs omitted.
+- Restore: authenticated Exoscale shows exact existing fanmind-restore-01 / at-vie-2 / 138.124.213.66 stopped. Owner-authorized Start executed once and independently observed running. No local SSH identity is available; no password reset, firewall expansion, database command or Restore dispatch.
+- Billing preflight: exact-main read-only run 34033887497 / job 101488326849 failed with meta_content_postflight:sqlstate_p0001, Billing action=apply but global state=BLOCKED. No Apply dispatched.
+- Root cause: direct Staging read-only postflight reports browser_write_policy_invalid. Catalog shows 15 later restrictive owner mutation policies on five Meta tables; no permissive write policy. PostgreSQL restrictive policies cannot grant access. Existing table/column write-ACL checks still pass.
+- Correction and independent negative evidence: permit only restrictive policies in this policy-presence check while retaining all ACL/other postflights and global rollout gate. Corrected full postflight passes on Staging in read-only transaction. Replacing the policy catalog view with a simulated PERMISSIVE classification makes the same full postflight reject browser_write_policy_invalid. No schema/policy/grant/data mutation performed.
+- Final review tightening: exemption requires the expected table-derived owner policy name, authenticated role, RESTRICTIVE mode and INSERT/UPDATE/DELETE only; ALL remains rejected. Full final SQL passes read-only; simulated ALL catalog fails. Canonical Meta runbook updated, old overlapping Mobile lock transferred and replacement mutable provider observations registered.
+- Stripe connector: current connected FanMind account exposes live mode only; no test/sandbox context available from the connector. No live operation attempted. Existing protected GitHub Staging secrets remain distinct.
+- Scope: complete executable bounded steps, preserve exact targets and record external blockers honestly. Google waiting periods and real-device actions cannot be self-certified.
+- Recovery: before Billing SQL, explicit freeze=false; after SQL use controlled capture/reconciliation runbook. Restore writes require fresh artifact/empty-target/readiness proof and transactional rollback.
+
+
 ## RECEIPT-FM-AI-001-FREEZE-ACTIVATE-20260906
 - Task: FM-AI-001 / FM-CR-020
 - Started: 2026-09-06

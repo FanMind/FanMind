@@ -1,5 +1,16 @@
 # Started Work Register
 
+## FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resumed finishline 2026-09-06
+- Status: IN_PROGRESS
+- Risk: R4
+- Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
+- Work lock: LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
+- Completed so far: current main 5cf7006b, active Staging freeze receipt, authenticated Play/Expo read-only access; Exoscale shows login.
+- Still open: current Play/build details, protected Billing cutover, actual device/provider evidence and Restore connectivity/readiness.
+- Exact next step: verify provider/host access and prerequisite contracts before bounded writes.
+- Owner action needed: actual handset observation and Exoscale authentication if no existing authorized session.
+
+
 ## FM-AI-001 / FM-CR-020 — Staging activation
 - Status: COUNTERCHECKED (bounded merge and Staging freeze activation complete)
 - Risk: R4

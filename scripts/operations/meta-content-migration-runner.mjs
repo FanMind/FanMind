@@ -182,6 +182,16 @@ begin
        where schemaname = 'public'
          and tablename = managed_table
          and cmd <> 'SELECT'
+         -- Restrictive policies only reduce access; the later member-boundary
+         -- control installs owner guards without granting browser writes.
+         -- Permissive INSERT/UPDATE/DELETE/ALL policies remain forbidden.
+         and not (
+           permissive = 'RESTRICTIVE'
+           and cmd in ('INSERT', 'UPDATE', 'DELETE')
+           and roles = array['authenticated']::name[]
+           and policyname = managed_table || '_' || lower(cmd)
+             || '_requires_workspace_owner'
+         )
     ) then
       raise exception 'browser_write_policy_invalid';
     end if;
