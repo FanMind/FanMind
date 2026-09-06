@@ -22,6 +22,8 @@ import {
   evaluateEnvironmentBoundary,
 } from "../../src/lib/environmentBoundaryPolicy.mjs";
 
+import { buildStagingBillingCanonicalAcceptanceSql } from "./staging-billing-canonical-acceptance-sql.mjs";
+
 const CONTROL_ID = "20260816210000_workspace_stripe_billing_event_ledger";
 const CONTROL_PATH = resolve(
   process.cwd(),
@@ -457,8 +459,10 @@ function readAndVerifyControl() {
 
 function evaluateTarget(environment, mode) {
   const apply = mode === "--apply";
+  const canonical = mode === "--canonical-acceptance";
+  if (canonical && environment.FANMIND_STAGING_BILLING_CANONICAL_CONFIRM !== "run-staging-billing-canonical-acceptance") fail("canonical_confirmation_invalid");
   const boundary = evaluateEnvironmentBoundary(environment, {
-    allowWrite: apply,
+    allowWrite: apply || canonical,
   });
   if (
     !boundary.ok ||
@@ -675,6 +679,40 @@ rollback;
     const result = runPsql(sql, environment, snapshotPath);
     if (result.error || result.status !== 0 || String(result.stdout).trim() !== "CAPTURE_RECORD_PASS") fail("capture_record_invalid");
     console.log(present ? "STAGING_BILLING_SIGNED_DURABLE_CAPTURE=PASS" : "STAGING_BILLING_CAPTURE_ABSENCE=PASS");
+  } finally { rmSync(snapshotDirectory, { recursive: true, force: true }); }
+}
+
+export async function runStagingBillingCanonicalAcceptance(environment = process.env, fetchImpl = fetch) {
+  evaluateTarget(environment, "--canonical-acceptance");
+  const sql = buildStagingBillingCanonicalAcceptanceSql({
+    workspaceId: environment.FANMIND_AI_TIER_STAGING_WORKSPACE_ID,
+    runId: environment.GITHUB_RUN_ID,
+  });
+  async function verifyRelease() {
+    const response = await fetchImpl(`${strictOrigin(environment.FANMIND_TARGET_API_ORIGIN)}/api/version`, {
+      redirect: "error", cache: "no-store", signal: AbortSignal.timeout(15000), headers: { "Cache-Control": "no-cache" },
+    });
+    const raw = await response.text();
+    if (raw.length > 8192) fail("canonical_release_invalid");
+    const body = JSON.parse(raw);
+    if (response.status !== 200 || body.application !== "fanmind" || body.runtimeEnvironment !== "staging" ||
+        body.releaseCommit !== environment.GITHUB_SHA || !response.headers.get("cache-control")?.includes("no-store")) fail("canonical_release_invalid");
+  }
+  await verifyRelease();
+  runDatabaseMode("--verify", readAndVerifyControl(), { ...environment, FANMIND_ENABLE_NON_PRODUCTION_WRITES: "false", FANMIND_NON_PRODUCTION_WRITE_ACK: "" });
+  const { snapshotDirectory, snapshotPath } = privatePassfileSnapshot(environment);
+  try {
+    const result = runPsql(sql, environment, snapshotPath);
+    const expected = ["STAGING_CANONICAL_BILLING_ACCEPTANCE=PASS", "STAGING_CANONICAL_BILLING_TRANSACTION=ROLLED_BACK", "STAGING_CANONICAL_BILLING_CLEANUP=PASS"];
+    const lines = String(result.stdout ?? "").split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
+    if (result.error || result.status !== 0 || JSON.stringify(lines) !== JSON.stringify(expected)) {
+      const diagnostic = billingDatabaseFailureDiagnostic(result.stderr, sql);
+      console.error(`STAGING_CANONICAL_BILLING_SQLSTATE=${diagnostic.code}`);
+      console.error(`STAGING_CANONICAL_BILLING_FAILURE_CLASS=${diagnostic.reason}`);
+      fail("canonical_acceptance_failed");
+    }
+    await verifyRelease();
+    process.stdout.write(`${expected.join("\n")}\n`);
   } finally { rmSync(snapshotDirectory, { recursive: true, force: true }); }
 }
 

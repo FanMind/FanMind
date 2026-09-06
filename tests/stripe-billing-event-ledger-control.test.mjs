@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 
 import {
   EXPECTED_CONTROL_SHA256,
+  runStagingBillingCanonicalAcceptance,
   billingDatabaseFailureDiagnostic,
   evaluateStripeBillingEventLedgerSql,
   materializeStripeBillingEventLedgerPostflight,
@@ -734,4 +735,20 @@ test("database failure diagnostics emit only SQLSTATE and pinned fixed messages"
   assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  42501: secret-password\nCONTEXT: private SQL", sql), {code:"42501", reason:"database_rejected"});
   assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  P0001: stripe_billing_ledger_owner_invalid", "raise exception 'stripe_billing_ledger_owner_invalid';"), {code:"P0001", reason:"stripe_billing_ledger_owner_invalid"});
   assert.deepEqual(billingDatabaseFailureDiagnostic("private connection string", sql), {code:"unknown", reason:"database_rejected"});
+});
+
+
+test("canonical acceptance rejects absent consent, Production and wrong release before database access", async () => {
+  await withFakeDatabase(async ({environment,callLog})=>{
+    let requests=0;
+    const request=async()=>{requests++;throw Error("unexpected_network");};
+    await assert.rejects(runStagingBillingCanonicalAcceptance(environment,request), /canonical_confirmation_invalid/u);
+    const approved={...environment,FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true",FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",
+      FANMIND_STAGING_BILLING_CANONICAL_CONFIRM:"run-staging-billing-canonical-acceptance",
+      FANMIND_AI_TIER_STAGING_WORKSPACE_ID:"58a18c7e-4af0-459d-b44d-7d924ee7ffe9",GITHUB_RUN_ID:"123"};
+    await assert.rejects(runStagingBillingCanonicalAcceptance({...approved,FANMIND_RUNTIME_ENVIRONMENT:"production"},request),/environment_invalid/u);
+    assert.equal(requests,0);
+    await assert.rejects(runStagingBillingCanonicalAcceptance(approved,async()=>new Response(JSON.stringify({application:"fanmind",runtimeEnvironment:"staging",releaseCommit:"b".repeat(40)}),{headers:{"cache-control":"no-store"}})),/canonical_release_invalid/u);
+    await assert.rejects(readFile(callLog),{code:"ENOENT"});
+  });
 });
