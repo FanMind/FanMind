@@ -123,7 +123,8 @@ Prevents two agents/sessions from independently working the same task.
 
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006 / FM-CR-007 / FM-CR-010
-- Status: ACTIVE
+- Status: RELEASED
+- Transferred: 2026-09-06 to LOCK-FINISHLINE-RESUME-20260906 after owner resumed the same Android/Play scope; prior merged Store/build evidence is preserved. No competing active holder remains.
 - Holder: ChatGPT Android/Apple Store preparation continuation session 2026-08-30
 - Branch/PR: App Store Connect worksheet PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c` merged as `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`; dual-store PR #1031, prior handoff PR #1030 and Store implementation PR #1028 are merged.
 - Acquired: 2026-08-30 UTC

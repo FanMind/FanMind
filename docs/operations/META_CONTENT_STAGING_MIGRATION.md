@@ -117,11 +117,18 @@ Ubuntu-CA-Speicher allein reicht für die private Supabase-Root-CA nicht aus.
    - `SECRETS_WURDEN_NICHT_AUSGEGEBEN=true`.
 
 Der Postflight liest nur Metadaten. Er prüft unter anderem Tabellen, RLS,
-Select-only-Browser-Policies, Tabellen- und Spaltenrechte, den Ausschluss des
+SELECT als einzige erlaubende Browser-Policy, Tabellen- und Spaltenrechte, den Ausschluss des
 verschlüsselten Page-Tokens, Service-Role-Zugriff, eindeutige Kontoindizes,
 workspace- und plattformgebundene eindeutige Meta-Message-/Comment-IDs,
 50/100/150-Kontextbedingungen und die Entfernung des alten 50-Nachrichten-
 Löschtriggers.
+
+Die spätere Workspace-Member-Datengrenze darf zusätzlich ausschließlich die
+erwarteten restriktiven Owner-Policies für INSERT, UPDATE und DELETE an
+`authenticated` ergänzen. Restriktive Policies gewähren selbst keinen Zugriff.
+Erlaubende Schreibpolicies, unbekannte Schreibpolicies, FOR ALL und
+Browser-Schreibrechte bleiben verboten. Die gemeinsame Rollout-Prüfung
+verifiziert den Member-Vertrag weiterhin unabhängig.
 
 ## Danach weiterhin offen
 
