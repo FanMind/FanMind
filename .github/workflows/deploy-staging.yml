@@ -10,9 +10,10 @@ on:
       billing_write_freeze:
         description: 'Freeze new Checkout and legacy Billing projection during controlled ledger cutover'
         required: true
-        default: 'false'
+        default: 'preserve'
         type: choice
         options:
+          - 'preserve'
           - 'false'
           - 'true'
 
@@ -72,6 +73,12 @@ jobs:
             echo "Invalid staging release commit." >&2
             exit 1
           fi
+          if [ -L "$SOURCE_DIR/.release.env" ]; then
+            echo "Unsafe Staging release state." >&2
+            exit 1
+          fi
+          BILLING_WRITE_FREEZE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-freeze-control.mjs" \
+            --resolve "$BILLING_WRITE_FREEZE" "$SOURCE_DIR/.release.env")"
           if [[ "$BILLING_WRITE_FREEZE" != "true" && "$BILLING_WRITE_FREEZE" != "false" ]]; then
             echo "Invalid Staging Billing write-freeze state." >&2
             exit 1
@@ -200,4 +207,8 @@ jobs:
             npm run smoke:public
 
           echo "STAGING_RELEASE_COMMIT=$EXPECTED_RELEASE_COMMIT"
+          if [ "$BILLING_WRITE_FREEZE" = "true" ]; then
+            node scripts/operations/staging-billing-freeze-control.mjs \
+              --verify "$STAGING_BASE_URL" "$EXPECTED_RELEASE_COMMIT"
+          fi
           echo "STAGING_BILLING_WRITE_FREEZE=$BILLING_WRITE_FREEZE"

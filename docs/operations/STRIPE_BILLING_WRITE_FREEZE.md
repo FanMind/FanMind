@@ -27,6 +27,12 @@ Die Signaturprüfung des Webhooks bleibt unverändert vorgelagert. Ungültige Si
 
 Bereits bei Stripe angelegte Sessions werden durch diesen Schalter nicht beendet. Der Sperrnachweis gilt für neue Session-Erzeugung in der neu geladenen Runtime und die lokale Legacy-Projektion; der bestehende Ledger-/Cutover-Abgleich bleibt für bereits laufende Zahlungsereignisse erforderlich.
 
+## Technische Apply-Voraussetzung
+
+Staging-Deploy und Billing-Ledger-Apply verwenden dieselbe GitHub-Concurrency-Gruppe mit `cancel-in-progress: false`. Ein Deploy kann die Runtime daher nicht während des kontrollierten Apply austauschen. Normale Deploys verwenden `billing_write_freeze=preserve` und übernehmen den bisherigen `.release.env`-Wert vor dem Release-Kopieren. Nur eine explizite Auswahl `false` hebt die Sperre auf.
+
+Unmittelbar vor dem SQL-Apply prüft `staging-billing-freeze-control.mjs` über HTTPS die tatsächliche Runtime: `/api/version` muss exakt den geprüften Commit und `runtimeEnvironment=staging` liefern; ein anonymer Checkout-POST mit leerem Objekt muss `503`, `stripe_billing_write_frozen` und `Retry-After: 60` zurückgeben; danach wird der Versionsbeleg wiederholt. Der Test sendet keine Nutzer-/Zahlungsdaten, Cookies oder Bearer-Zugangsdaten und kann ohne Anmeldung keine Session anlegen. Ohne diesen Beleg wird der SQL-Befehl nicht gestartet. Ein Deploy mit aktivierter Sperre verlangt denselben Runtime-Nachweis als Postflight.
+
 ## Verbindliche Staging-Sequenz
 
 1. Exakten geprüften `main`-Commit auf Staging deployen.

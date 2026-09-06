@@ -1,5 +1,16 @@
 # Started Work Register
 
+## FM-AI-001 / FM-CR-020 — Staging activation
+- Status: IN_PROGRESS
+- Risk: R4
+- Updated: 2026-09-06
+- Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 ACTIVE.
+- Scope: owner-authorized PR #1058 merge and Staging freeze activation; first repair new review PRRT_kwDOSxGqmc6frbTm requiring live freeze proof before ledger apply.
+- Exact next step: shared deploy/apply exclusion, preserved default state and exact-release runtime verification, then green CI, merge and one Staging deploy with freeze=true.
+- Still open: merge, Staging deployment and HTTP negative proof.
+- Owner action needed: none for this bounded activation; no ledger apply or payment included.
+
+
 ## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
 - Updated: 2026-09-06
 - Status: IMPLEMENTED_NOT_VERIFIED

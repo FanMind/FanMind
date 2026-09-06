@@ -1,5 +1,16 @@
 # Work Locks
 
+## LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Status: ACTIVE
+- Risk: R4
+- Acquired: 2026-09-06
+- Holder: Codex owner-authorized merge/Staging activation
+- Scope: repair fresh P1 runtime-attestation review, merge checked PR #1058 and enable only the Staging freeze.
+- Evidence: exact-head CI/review, exact merge/deploy SHA, healthy Staging and fixed-code HTTP 503; no Stripe session can be created by the unauthenticated probe.
+- Recovery: before any ledger apply, deploy with explicit freeze=false; no SQL/schema action is included.
+
+
 ## LOCK-FM-AI-001-FREEZE-REVIEW-20260906
 - Task: FM-AI-001 / FM-CR-020
 - Status: RELEASED

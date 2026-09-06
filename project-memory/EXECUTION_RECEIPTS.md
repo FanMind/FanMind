@@ -1,5 +1,18 @@
 Warning: truncated output (original token count: 30288)
 
+## RECEIPT-FM-AI-001-FREEZE-ACTIVATE-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Started: 2026-09-06
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: owner explicitly requested merge and Staging activation after PR #1058 review correction.
+- New premerge evidence: review PRRT_kwDOSxGqmc6frbTm requires live freeze attestation before controlled ledger Apply. Merge held until repaired.
+- Implementation: shared deploy/Apply concurrency, preserve-by-default freeze state, exact-release HTTPS no-credential negative proof before SQL and after frozen deployment.
+- Local countercheck: Billing/Webhook 103/103 PASS including old-release, changing-release, Production, unfrozen, generic maintenance and preservation failures; SQL checksum unchanged; no actual provider/database request in tests.
+- Recovery: explicit freeze=false redeploy is available before any ledger Apply; no SQL Apply is requested here.
+- Still open: fresh exact-head CI/review, SHA-bound merge, one protected Staging freeze=true dispatch, deploy/postflight result and handoff.
+
+
 ## RECEIPT-FM-AI-001-FREEZE-REVIEW-20260906
 - Task: FM-AI-001 / FM-CR-020
 - Started: 2026-09-06

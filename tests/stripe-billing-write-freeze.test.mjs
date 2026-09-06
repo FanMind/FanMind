@@ -62,7 +62,7 @@ test("isolated Staging deploy carries only an explicit true or false billing fre
   );
 
   assert.match(workflow, /billing_write_freeze:/u);
-  assert.match(workflow, /default: 'false'/u);
+  assert.match(workflow, /default: 'preserve'/u);
   assert.match(workflow, /BILLING_WRITE_FREEZE: \$\{\{ inputs\.billing_write_freeze \}\}/u);
   assert.match(
     workflow,
@@ -173,4 +173,71 @@ test("legacy billing projection remains retryable without database access while 
     workspacePolicy.STRIPE_BILLING_RETRYABLE_ERROR,
   );
   assert.equal(harness.calls.length, 0);
+});
+
+const { resolveStagingBillingFreeze, verifyStagingBillingFreeze } = await import(
+  "../scripts/operations/staging-billing-freeze-control.mjs"
+);
+
+test("normal Staging deployment preserves an existing freeze and rejects ambiguous state", () => {
+  assert.equal(resolveStagingBillingFreeze("preserve", ""), "false");
+  assert.equal(resolveStagingBillingFreeze("preserve", "FANMIND_STRIPE_BILLING_WRITE_FREEZE=true\n"), "true");
+  assert.equal(resolveStagingBillingFreeze("false", "FANMIND_STRIPE_BILLING_WRITE_FREEZE=true\n"), "false");
+  for (const value of ["TRUE", "true=ignored", "", "true\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=false"]) {
+    assert.throws(() => resolveStagingBillingFreeze("preserve", `FANMIND_STRIPE_BILLING_WRITE_FREEZE=${value}`));
+  }
+  assert.throws(() => resolveStagingBillingFreeze("invalid", ""));
+});
+
+function freezeRuntimeHarness({ environment = "staging", release = "a".repeat(40), status = 503, code = "stripe_billing_write_frozen", changedRelease = false } = {}) {
+  const calls = [];
+  return { calls, fetchImpl: async (url, options) => {
+    calls.push({ url, options });
+    if (url.endsWith("/api/version")) return new Response(JSON.stringify({
+      application: "fanmind", runtimeEnvironment: environment,
+      releaseCommit: changedRelease && calls.length === 3 ? "b".repeat(40) : release,
+    }), { status: 200, headers: { "Cache-Control": "no-store" } });
+    return new Response(JSON.stringify({ code }), { status, headers: { "Retry-After": "60" } });
+  } };
+}
+
+test("Apply freeze proof binds actual HTTP behavior to one exact Staging release", async () => {
+  const harness = freezeRuntimeHarness();
+  await verifyStagingBillingFreeze({ origin: "https://staging.fanmind.invalid", commit: "a".repeat(40), fetchImpl: harness.fetchImpl });
+  assert.equal(harness.calls.length, 3);
+  assert.equal(harness.calls[1].options.body, "{}");
+  assert.equal(harness.calls[1].options.headers.Origin, "https://staging.fanmind.invalid");
+  assert.equal(harness.calls[1].options.headers.Authorization, undefined);
+  assert.equal(harness.calls[1].options.headers.Cookie, undefined);
+  assert.equal(harness.calls[1].options.redirect, "error");
+});
+
+for (const [name, settings] of [
+  ["unfrozen", { status: 401 }],
+  ["generic maintenance", { code: "checkout_unavailable" }],
+  ["Production runtime", { environment: "production" }],
+  ["old release", { release: "b".repeat(40) }],
+  ["release changed during probe", { changedRelease: true }],
+]) {
+  test(`Apply rejects ${name} instead of trusting an operator flag`, async () => {
+    const harness = freezeRuntimeHarness(settings);
+    await assert.rejects(verifyStagingBillingFreeze({ origin: "https://staging.fanmind.invalid", commit: "a".repeat(40), fetchImpl: harness.fetchImpl }));
+  });
+}
+
+test("Production URLs are rejected before any request", async () => {
+  for (const origin of ["https://fanmind.ch", "https://www.fanmind.ch", "https://fanmind.ch.", "http://staging.fanmind.invalid"]) {
+    const harness = freezeRuntimeHarness();
+    await assert.rejects(verifyStagingBillingFreeze({ origin, commit: "a".repeat(40), fetchImpl: harness.fetchImpl }));
+    assert.equal(harness.calls.length, 0);
+  }
+});
+
+test("deploy and Apply share exclusion and Apply requires live proof before SQL", () => {
+  const deploy = fs.readFileSync(".github/workflows/deploy-staging.yml", "utf8");
+  const apply = fs.readFileSync(".github/workflows/stripe-billing-event-ledger-staging.yml", "utf8");
+  assert.match(deploy, /group: fanmind-staging-deploy\s+cancel-in-progress: false/u);
+  assert.match(apply, /group: fanmind-staging-deploy\s+cancel-in-progress: false/u);
+  assert.match(apply, /set -euo pipefail\s+node scripts\/operations\/staging-billing-freeze-control.mjs[\s\S]*--verify[^\n]+\n\s+npm run db:stripe-billing-ledger:apply/u);
+  assert.ok(deploy.indexOf('--resolve') < deploy.indexOf('rsync --archive'));
 });
