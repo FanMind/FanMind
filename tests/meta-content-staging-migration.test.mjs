@@ -290,6 +290,8 @@ test("verify runs only the read-only metadata, RLS and column postflight", async
     assert.match(POSTFLIGHT_SQL, /set transaction read only/iu);
     assert.match(POSTFLIGHT_SQL, /token_column_privilege_invalid/iu);
     assert.match(POSTFLIGHT_SQL, /browser_write_policy_invalid/iu);
+    assert.match(POSTFLIGHT_SQL, /cmd <> 'SELECT'[\s\S]*?permissive <> 'RESTRICTIVE'[\s\S]*?browser_write_policy_invalid/iu);
+    assert.match(POSTFLIGHT_SQL, /browser_write_privilege_invalid/iu);
     assert.match(POSTFLIGHT_SQL, /service_role_privilege_invalid/iu);
     assert.match(POSTFLIGHT_SQL, /obsolete_retention_trigger_present/iu);
     assert.match(

@@ -182,6 +182,10 @@ begin
        where schemaname = 'public'
          and tablename = managed_table
          and cmd <> 'SELECT'
+         -- Restrictive policies only reduce access; the later member-boundary
+         -- control installs owner guards without granting browser writes.
+         -- Permissive INSERT/UPDATE/DELETE/ALL policies remain forbidden.
+         and permissive <> 'RESTRICTIVE'
     ) then
       raise exception 'browser_write_policy_invalid';
     end if;

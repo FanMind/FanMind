@@ -64,3 +64,7 @@ FANMIND_STRIPE_BILLING_CANONICAL_RECONCILIATION_CONFIRMED=false
 ## Rollback
 
 Vor einem Ledger-Apply genügt das Zurücksetzen auf `false` beziehungsweise das Entfernen der Variable. Nach einem erfolgreichen kontrollierten SQL-Apply bleibt das Schema bestehen; ein Rollback des Runtime-Schalters darf nicht als Datenbank-Rollback dargestellt werden. Danach gelten ausschließlich die bestehenden Ledger-/Reconciliation-Runbooks.
+
+## Rollout-Vorprüfung: restriktive Owner-Policies
+
+Die am 6. September 2026 geprüfte Workspace-Member-Datengrenze ergänzt restriktive Owner-Schreibpolicies. Diese gewähren selbst keinen Zugriff. Der Meta-Postflight unterscheidet daher restriktive Einschränkungen von erlaubenden Schreibpolicies; letztere bleiben ebenso verboten wie Browser-Schreibrechte auf Tabellen oder Spalten. Die globale Rollout-Prüfung bleibt verpflichtend. Quelle: https://www.postgresql.org/docs/17/sql-createpolicy.html

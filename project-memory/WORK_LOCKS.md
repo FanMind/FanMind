@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FINISHLINE-RESUME-20260906
+- Status: ACTIVE
+- Task: FM-AI-001 / FM-MOB-001 / FM-RST-001
+- Holder: Codex
+- Risk: R4
+- Acquired: 2026-09-06
+- Scope: owner-resumed isolated Staging Billing, Android/Play and isolated Restore. No Production database write or real payment.
+- Evidence plan: exact-commit CI/run/runtime and independent provider/device/target evidence; no stale acceptance or duplicate build.
+
+
 ## LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906
 - Task: FM-AI-001 / FM-CR-020
 - Status: RELEASED
