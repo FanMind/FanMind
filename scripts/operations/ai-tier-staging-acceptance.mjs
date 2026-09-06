@@ -13,6 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { billingDatabaseFailureDiagnostic } from "./stripe-billing-event-ledger-runner.mjs";
 
 import {
   buildAiTierSyntheticLifecycleProof,
@@ -216,6 +217,7 @@ function runPsql(sql, environment, passfilePath) {
       "--tuples-only",
       "--no-align",
       "--set=ON_ERROR_STOP=1",
+      "--set=VERBOSITY=verbose",
     ],
     {
       env: psqlEnvironment(environment, passfilePath),
@@ -698,14 +700,15 @@ async function runAcceptance(environment) {
       fail("ledger_state");
     }
     const ledgerMode = parseLedgerAvailability(ledgerState.stdout);
-    const serviceRole = runPsql(
-      ledgerMode === "ledger"
+    const serviceSql = ledgerMode === "ledger"
         ? serviceRoleLedgerSql(
             workspaceId,
             lifecycle.mutation,
             environment.STRIPE_PRICE_AI_ULTRA,
           )
-        : serviceRoleCrudSql(workspaceId, lifecycle.mutation),
+        : serviceRoleCrudSql(workspaceId, lifecycle.mutation);
+    const serviceRole = runPsql(
+      serviceSql,
       environment,
       snapshotPath,
     );
@@ -719,6 +722,9 @@ async function runAcceptance(environment) {
       ) ||
       !serviceRole.stdout.includes("AI_TIER_STAGING_ROLLBACK=PASS")
     ) {
+      const diagnostic = billingDatabaseFailureDiagnostic(serviceRole.stderr, serviceSql);
+      console.error(`AI_TIER_STAGING_SQLSTATE=${diagnostic.code}`);
+      console.error(`AI_TIER_STAGING_FAILURE_CLASS=${diagnostic.reason}`);
       fail("service_role_crud");
     }
     console.log(

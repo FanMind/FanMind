@@ -192,3 +192,14 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: the intended review deadline elapsed and npm's current advisory set newly exposed `@xmldom/xmldom`, `decode-uri-component` and `query-string` in the Expo SDK 57 dependency graph. npm offered only incompatible Expo/Router downgrades, not a safe SDK-57 patch.
 - Decision: review and document the exact current advisory paths, narrow the former maxima from 52/38 to the reproduced 4/15, add only the three observed names, and renew the exception for fourteen days through 17 September 2026 18:40 UTC. Keep zero tolerance for critical/low/info, unknown packages or larger counts.
 - Do not repeat: do not merely extend an expired date, run `npm audit fix --force`, downgrade Expo/Router, or suppress the Supply Chain gate. Recheck compatible upstream patches before the new deadline.
+
+
+## FM-FAIL-020
+- Date: 2026-09-06
+- Status: CORRECTION_IN_REVIEW
+- Area: Staging Billing controlled ledger verifier
+- Attempt: exact-main guarded Apply runs 34036848838 and diagnostic 34037889146, after independent signed freeze proof and global rollout PASS.
+- Result: both failed inside the transaction; independent read-only checks confirm ledger tables absent. Diagnostic class P0001 / stripe_billing_ledger_indexes_invalid.
+- Cause: three index checks expected a DESC suffix from pg_get_indexdef(index,column,true). Live PostgreSQL metadata shows only the column name there; indoption separately reports order/null flags.
+- Correction: compare column name and exact 0 0 3 flags, retaining the pinned index source-hash oracle and all structural/ACL gates. Re-pin SQL; require exact review/CI and guarded Staging Apply.
+- Do not repeat: do not weaken the sort-direction check or invoke direct/generic SQL Apply. Old APK 6d7f76cd also predates FCM binding; use the completed 6801d687 replacement for device acceptance.

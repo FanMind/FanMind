@@ -123,6 +123,14 @@
       "status": "VERIFIED",
       "observed_at": "2026-09-06T13:18:12.895027+00:00",
       "source": "Authenticated Exoscale: exact existing fanmind-restore-01 at-vie-2 started once and observed running. Power-state evidence only, not host/database readiness; SSH identity unavailable."
+    },
+    {
+      "id": "EV-ANDROID-FCM-BUILD-20260906",
+      "gate": "mobile",
+      "class": "provider_console",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-06T14:07:29.700939+00:00",
+      "source": "Protected build workflow 34037085683 job 101497020224 SUCCESS; authenticated EAS finished Android preview APK at 6801d687cfe6048d6e32e63bcfe2862d2886fce0 version 1.0.0 (2), Google Services processed. Replaces 6d7f76cd candidate; device registration and delivery remain unaccepted. Private build identifiers omitted."
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
