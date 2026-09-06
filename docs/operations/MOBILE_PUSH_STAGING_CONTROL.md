@@ -240,3 +240,49 @@ Security Invoker, gepinnter `search_path` und ausschließlich die vorgesehenen
 Der Workflow enthält keine Provider-Credentials und keinen Sendepfad. Seine
 Existenz ist keine Apply-Freigabe; bis zu einem ausdrücklich autorisierten
 geschützten Lauf bleibt der Ledger in Staging unangewendet.
+
+## Staging-Runtime für Geräte-Registrierung
+
+Nach Schema- und Rollback-Acceptance konfiguriert der separate manuelle
+Workflow `staging-push-runtime.yml` ausschließlich die Registrierung. Er
+verlangt den geprüften und bereits deployten `main`-Commit sowie
+`prepare-staging-push-registration` im geschützten Environment `staging`.
+Er teilt die Deployment-Sperre und prüft die öffentliche Release-Bindung,
+die feste Staging-URL, die geschützte Supabase-Projektreferenz und die
+Abweichung von Production. Die geschützte EAS-Projektreferenz muss außerdem
+der öffentlichen Projektbindung des nativen Builds entsprechen.
+
+Der Runner liest nur, ob Registrierungen vorhanden sind. Ein gültiger
+Verschlüsselungsschlüssel bleibt immer erhalten. Ein fehlender Schlüssel
+darf nur bei leerer Registrierungstabelle lokal als 32 Zufallsbytes
+erzeugt werden. Vorhandene Registrierungen ohne gültigen Schlüssel oder
+eine widersprüchliche EAS-Bindung stoppen den Ablauf. Schlüssel und
+Registrierungsdaten erscheinen nie in Logs oder Artefakten.
+
+Nur die beiden Registrierungswerte werden atomar in der privaten
+`.env.production` auf dem Staging-Host ergänzt; geschützte Overrides dürfen
+nicht widersprechen. Billing-Freeze und Delivery-Gates bleiben erhalten.
+Danach wird nur der bestehende Staging-Dienst neu gestartet und die
+Release-Bindung erneut geprüft. Ein Fehler nach der Konfiguration darf
+keinen Schlüssel-Rollback auslösen: Geräte könnten ihn bereits verwenden.
+Dann den bestehenden Schlüssel erhalten und Dienstzustand/Release prüfen;
+bei vorhandenen Registrierungen niemals ersatzweise einen neuen erzeugen.
+
+`STAGING_PUSH_RUNTIME_PREPARED=PASS` und
+`STAGING_PUSH_RUNTIME_RESTART=PASS` belegen nur diesen Konfigurationsschritt.
+Anschließend muss der Owner im signierten Preview-Build ausdrücklich die
+Registrierung auslösen. Push-Zustellung und deren Geräte-/Receipt-Nachweis
+bleiben eigenständige offene Abnahmen.
+
+Die Runtime-Aktivierung verlangt zusätzlich die ID eines erfolgreichen
+`mobile-push-staging-acceptance.yml`-Laufs auf demselben `main`-Commit, nicht
+älter als zwei Stunden. Ein separater GitHub-Job prüft dessen Pfad, Ziel-Repo,
+Event, Commit und Abschlussstatus vor dem Zugriff auf den Staging-Host.
+Die Production-Referenz kommt unabhängig aus dem geschützten Environment
+und muss zusätzlich mit der Host-Konfiguration übereinstimmen.
+
+Die Host-Provisionierung teilt dieselbe Deployment-Sperre. Vor dem Austausch
+der privaten Environment-Datei übernimmt sie vorhandene gültige Push-Felder
+über geprüfte Dateideskriptoren in die neue private Datei. Ungültige oder
+doppelte Werte stoppen vor dem Austausch; vorhandene Schlüssel werden nie
+rotiert. Eine fehlgeschlagene Vorbereitung lässt die bisherige Datei bestehen.
