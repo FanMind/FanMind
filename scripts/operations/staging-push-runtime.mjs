@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { lstatSync, readFileSync, writeFileSync, renameSync, unlinkSync } from "node:fs";
+import { constants, openSync, fstatSync, closeSync, readFileSync, writeFileSync, renameSync, unlinkSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import mobileConfig from "../../apps/mobile/app.config.js";
@@ -29,10 +29,13 @@ export function renderPushRuntime(original, plan) {
   return `${retained.join("\n").replace(/\n*$/u, "")}\n${KEY}='${plan.key}'\n${PROJECT}='${plan.project}'\n`;
 }
 
-function privateFile(path) {
-  const stat = lstatSync(path);
-  if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o777) !== 0o600 || stat.uid !== process.getuid() || stat.size > 1024 * 1024) fail("private_file_invalid");
-  return readFileSync(path, "utf8");
+export function privateFile(path) {
+  const descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const stat = fstatSync(descriptor);
+    if (!stat.isFile() || (stat.mode & 0o777) !== 0o600 || stat.uid !== process.getuid() || stat.size > 1024 * 1024) fail("private_file_invalid");
+    return readFileSync(descriptor, "utf8");
+  } finally { closeSync(descriptor); }
 }
 function replacePrivate(path, contents) {
   const temporary = `${path}.push-${randomBytes(8).toString("hex")}`;

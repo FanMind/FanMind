@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { planPushRuntime, renderPushRuntime } from "../scripts/operations/staging-push-runtime.mjs";
+import { planPushRuntime, renderPushRuntime, privateFile } from "../scripts/operations/staging-push-runtime.mjs";
 
 import mobileConfig from "../apps/mobile/app.config.js";
 const project = mobileConfig.RUNTIME_EAS_PROJECT_ID;
@@ -30,4 +30,21 @@ test("configuration changes only registration fields, preserving billing and del
   assert.ok(result.includes("OTHER='keep $literal'"));
   assert.equal(result.match(/FANMIND_PUSH_TOKEN_ENCRYPTION_KEY=/g).length, 1);
   assert.equal(renderPushRuntime(result, { key, project }), result);
+});
+
+
+test("private configuration reads the checked descriptor and rejects symlinks or broad permissions", async () => {
+  const { mkdtemp, writeFile, symlink, chmod, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const root = await mkdtemp(join(tmpdir(), "fanmind-push-file-"));
+  try {
+    const path = join(root, "config");
+    await writeFile(path, "private fixture", { mode: 0o600 });
+    assert.equal(privateFile(path), "private fixture");
+    await symlink(path, join(root, "link"));
+    assert.throws(() => privateFile(join(root, "link")));
+    await chmod(path, 0o644);
+    assert.throws(() => privateFile(path), /private_file_invalid/);
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
