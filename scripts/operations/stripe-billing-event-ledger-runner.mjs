@@ -652,7 +652,7 @@ export function billingDatabaseFailureDiagnostic(stderr, sql) {
   const message = String(stderr ?? "");
   const match = /(?:^|\n)(?:psql:[^\r\n]*?:[0-9]+: )?ERROR:\s+([0-9A-Z]{5}):\s+([^\r\n]*)/u.exec(message);
   const code = match?.[1] ?? "unknown";
-  const allowed = new Set([...sql.matchAll(/message\s*=\s*'([a-z0-9_]+)'/gu)].map(m => m[1]));
+  const allowed = new Set([...sql.matchAll(/(?:message\s*=\s*|raise\s+exception\s+)'([a-z0-9_]+)'/giu)].map(m => m[1]));
   const reason = allowed.has(match?.[2]) ? match[2] : "database_rejected";
   return { code, reason };
 }
@@ -700,7 +700,12 @@ function runDatabaseMode(mode, sql, environment) {
       !/^STRIPE_BILLING_EVENT_LEDGER_CUTOVER_UNINVENTORIED=\d+$/u.test(
         postflightLines[2],
       )
-    ) fail("postflight_failed");
+    ) {
+      const diagnostic = billingDatabaseFailureDiagnostic(postflight.stderr, sql + postflightSql);
+      console.error(`STRIPE_BILLING_EVENT_LEDGER_SQLSTATE=${diagnostic.code}`);
+      console.error(`STRIPE_BILLING_EVENT_LEDGER_FAILURE_CLASS=${diagnostic.reason}`);
+      fail("postflight_failed");
+    }
     process.stdout.write(`${postflightLines.join("\n")}\n`);
     console.log("STRIPE_BILLING_EVENT_LEDGER_POSTFLIGHT_TRANSACTION=ROLLED_BACK");
     console.log("SECRETS_WURDEN_NICHT_AUSGEGEBEN=true");

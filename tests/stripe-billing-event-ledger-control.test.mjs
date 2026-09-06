@@ -731,5 +731,6 @@ test("database failure diagnostics emit only SQLSTATE and pinned fixed messages"
   const sql = await readFile(SQL_PATH, "utf8");
   assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  55000: workspace_stripe_billing_required_columns_missing\nDETAIL: private data", sql), {code:"55000", reason:"workspace_stripe_billing_required_columns_missing"});
   assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  42501: secret-password\nCONTEXT: private SQL", sql), {code:"42501", reason:"database_rejected"});
+  assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  P0001: stripe_billing_ledger_owner_invalid", "raise exception 'stripe_billing_ledger_owner_invalid';"), {code:"P0001", reason:"stripe_billing_ledger_owner_invalid"});
   assert.deepEqual(billingDatabaseFailureDiagnostic("private connection string", sql), {code:"unknown", reason:"database_rejected"});
 });
