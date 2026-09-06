@@ -3,6 +3,7 @@ import { decideAiTierStripeLifecycleEvent } from "./aiTierStripeLifecycle.mjs";
 
 const hash = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const blocked = reason => ({ status:"blocked", reason });
+const stripePrice = value => typeof value === "string" && /^price_[A-Za-z0-9_]+$/u.test(value);
 
 // Pure planner for an authoritative, transactionally read AI inventory. It
 // does not create entitlement rows or invent a signed provider event.
@@ -18,6 +19,10 @@ function plan({ observation, billingCommand, inventory, environment = process.en
   const cutoff = Math.floor(Date.parse(snapshot.observedAt)/1000);
   if (!Number.isSafeInteger(cutoff) || inventory.unresolvedEvents.some(event=>
       !Number.isSafeInteger(event.createdAt) || event.createdAt >= cutoff || !Number.isFinite(Date.parse(event.verifiedAt)) || Date.parse(event.verifiedAt)>Date.parse(snapshot.observedAt))) return blocked("ai_snapshot_too_old");
+  const aiPrices=[environment.STRIPE_PRICE_AI_PLUS,environment.STRIPE_PRICE_AI_ULTRA];
+  if (!stripePrice(snapshot.basePriceId) || aiPrices.some(value=>!stripePrice(value)) || new Set(aiPrices).size!==2 || aiPrices.includes(snapshot.basePriceId)) {
+    return blocked("ai_price_configuration_invalid");
+  }
   // This envelope only reuses the established pure subscription/price/status
   // policy. Its synthetic ID is never persisted or sent to an event ledger.
   const policy = decideAiTierStripeLifecycleEvent({workspaceTargetVerified:true,environment,event:{
