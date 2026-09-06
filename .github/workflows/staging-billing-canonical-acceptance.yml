@@ -103,7 +103,9 @@ jobs:
           set -euo pipefail
           ROLLOUT_STATE="$(npm run --silent db:staging-rollout-state:run)"
           printf '%s\n' "$ROLLOUT_STATE"
-          grep -Fqx 'STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=skip' \
+          # The general Billing ledger is already installed. Acceptance must bind
+          # to its exact read-only verified state, never to the pre-install skip state.
+          grep -Fqx 'STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=verify' \
             <<< "$ROLLOUT_STATE"
           grep -Fqx 'STAGING_DATABASE_ROLLOUT_STATE=PASS' <<< "$ROLLOUT_STATE"
 

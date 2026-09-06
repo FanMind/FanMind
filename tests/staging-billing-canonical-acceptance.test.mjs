@@ -1,10 +1,22 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {resolve} from "node:path";
 import test from "node:test";
 import {buildStagingBillingCanonicalAcceptanceSql as build} from "../scripts/operations/staging-billing-canonical-acceptance-sql.mjs";
+
 const input={workspaceId:"58a18c7e-4af0-459d-b44d-7d924ee7ffe9",runId:"123",now:1788710400000};
+const workflow=readFileSync(resolve(import.meta.dirname,"../.github/workflows/staging-billing-canonical-acceptance.yml"),"utf8");
+
 test("fixture input cannot inject identifiers or replace the fixed rollback script",()=>{
   for(const bad of [{workspaceId:"x';commit;--"},{runId:"123';--"},{runId:""},{now:NaN}]) assert.throws(()=>build({...input,...bad}));
 });
+
+test("workflow binds rollback acceptance to the already installed Billing ledger",()=>{
+  assert.match(workflow,/STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=verify/u);
+  assert.doesNotMatch(workflow,/STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=skip/u);
+  assert.match(workflow,/STAGING_DATABASE_ROLLOUT_STATE=PASS/u);
+});
+
 test("synthetic CAS proof denies browser roles, proves projection, tests replay and compares the rolled-back workspace",()=>{
   const sql=build(input);
   assert.doesNotMatch(sql,/^commit;/mu);
