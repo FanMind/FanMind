@@ -477,6 +477,14 @@ function serviceRoleLedgerSql(workspaceId, mutation, ultraPriceId) {
   return String.raw`
 \set ON_ERROR_STOP on
 begin;
+-- Bind an unbound synthetic fixture only inside this rolled-back transaction.
+-- Existing provider bindings are never replaced.
+update public.workspaces
+   set stripe_customer_id = 'cus_fanmind_staging_' || replace(${workspace}::text, '-', ''),
+       stripe_subscription_id = 'sub_fanmind_staging_' || replace(${workspace}::text, '-', '')
+ where id = ${workspace}
+   and stripe_customer_id is null
+   and stripe_subscription_id is null;
 set local role service_role;
 
 do $ledger_acceptance$
@@ -538,6 +546,12 @@ $ledger_acceptance$;
 rollback;
 do $verify_rollback$
 begin
+  if exists (
+    select 1 from public.workspaces where id = ${workspace}
+      and stripe_customer_id = 'cus_fanmind_staging_' || replace(${workspace}::text, '-', '')
+  ) then
+    raise exception 'service_role_fixture_rollback_failed';
+  end if;
   if exists (
     select 1 from public.workspace_ai_tier_entitlements
      where workspace_id = ${workspace}

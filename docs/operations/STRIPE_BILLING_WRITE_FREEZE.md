@@ -74,3 +74,5 @@ Die am 6. September 2026 geprüfte Workspace-Member-Datengrenze ergänzt restrik
 ## Abbruchdiagnose
 
 Ein fehlgeschlagener Apply gibt ausschließlich SQLSTATE und eine im gepinnten SQL enthaltene feste Fehlerklasse aus. Freitext, Details und SQL-Kontext werden nicht protokolliert. Vor einem erneuten Versuch den tatsächlichen Schema-/Migrationszustand read-only prüfen; fehlende Abschlussmarker allein beweisen keinen Rollback.
+
+Die separate KI-Tarif-Lifecycle-Abnahme benötigt eine Customer-/Subscription-Bindung. Für einen vollständig ungebundenen konfigurierten Test-Workspace legt sie synthetische Referenzen ausschließlich innerhalb der anschließenden Rollback-Transaktion an. Bestehende Referenzen bleiben erhalten; nach dem Rollback muss die synthetische Bindung verschwunden sein. Dies erzeugt keine Stripe-Ressourcen und ist kein echter Checkout-Nachweis.
