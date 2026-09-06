@@ -35,10 +35,19 @@ function plan({ observation, billingCommand, inventory, environment = process.en
       !Number.isSafeInteger(current.stripe_sync_revision) || current.stripe_sync_revision < 0 || current.stripe_sync_revision >= Number.MAX_SAFE_INTEGER ||
       !["in_sync","reconciliation_needed"].includes(current.stripe_sync_state) ||
       !Number.isSafeInteger(current.last_stripe_event_created_at) || current.last_stripe_event_created_at >= cutoff)) return blocked("ai_inventory_invalid");
-  if(current && current.stripe_subscription_id!==snapshot.subscriptionId &&
-     (current.stripe_sync_state!=="reconciliation_needed" || !inventory.unresolvedEvents.some(event=>
-       event.reason==="subscription_mismatch" && event.subscriptionId===snapshot.subscriptionId &&
-       event.workspaceId===snapshot.workspaceId && event.customerId===snapshot.customerId))) return blocked("ai_rotation_evidence_missing");
+  if(current && current.stripe_subscription_id!==snapshot.subscriptionId) {
+    const exactRotationEvidence = current.stripe_sync_state==="reconciliation_needed" && inventory.unresolvedEvents.some(event=>
+      event.reason==="subscription_mismatch" && event.subscriptionId===snapshot.subscriptionId &&
+      event.workspaceId===snapshot.workspaceId && event.customerId===snapshot.customerId);
+    if (!exactRotationEvidence) return blocked("ai_rotation_evidence_missing");
+    // The installed AI reconciliation RPC still requires the Workspace base
+    // subscription to equal the new subscription before it runs. Canonical
+    // Billing invokes AI before committing that base projection, so returning
+    // an RPC here would advertise an execution path that deterministically
+    // fails. Keep rotations fail-closed until one atomic reservation/RPC can
+    // bind the exact prior Workspace subscription and the new snapshot.
+    return blocked("ai_rotation_binding_unavailable");
+  }
   if (!inventory.unresolvedEvents.length) {
     const sameInstant = (a,b) => a === null && b === null || typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a)===Date.parse(b);
     const equal = paid && current?.stripe_sync_state === "in_sync" && current.tier_id === paid.tierId && current.status === paid.status &&
