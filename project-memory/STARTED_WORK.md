@@ -1,5 +1,29 @@
 # Started Work Register
 
+## FM-AI-001 / FM-CR-020 — Staging activation
+- Status: IN_PROGRESS
+- Risk: R4
+- Updated: 2026-09-06
+- Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 ACTIVE.
+- Scope: owner-authorized PR #1058 merge and Staging freeze activation; first repair new review PRRT_kwDOSxGqmc6frbTm requiring live freeze proof before ledger apply.
+- Exact next step: shared deploy/apply exclusion, preserved default state and exact-release runtime verification, then green CI, merge and one Staging deploy with freeze=true.
+- Still open: merge, Staging deployment and HTTP negative proof.
+- Owner action needed: none for this bounded activation; no ledger apply or payment included.
+
+
+## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
+- Updated: 2026-09-06
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R4
+- Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
+- Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED after local countercheck; remote CI/review remains open.
+- Completed so far: preflight, current main/PR/CI and review reconciliation. PR head `8fbd7e89678259276fddf62fc45ccc37b06ea727` has eight green workflows but its shared Checkout boundary lacks the advertised freeze.
+- Completed implementation: shared provider-boundary guard and fixed-code handling for API/page/redirect/admin callers; executable tests prove zero client/provider access during freeze and normal recovery after unfreeze.
+- Still open: exact updated-head CI/review and separately protected Staging cutover.
+- Exact next step: inspect updated PR #1058 checks/review; merge only after applicable gates, then use the existing separately protected Staging sequence.
+- Owner action needed: none for this repository review fix; external cutover remains separate.
+
+
 Canonical register for FanMind work that has started but is not yet fully completed.
 
 ## FM-MOB-006

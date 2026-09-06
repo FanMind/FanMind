@@ -7,6 +7,7 @@ import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServe
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import { createStripeCheckoutSession, getAppUrl, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +72,9 @@ async function startCheckout() {
   if (!checkoutReady) return redirectTo("/billing/start?error=payment-start");
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspace.id, userEmail: data.user.email });
+  if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
+    return redirectTo(`/billing/start?error=${STRIPE_BILLING_WRITE_FREEZE_CODE}`);
+  }
   if (!session.url) return redirectTo("/billing/start?error=payment-start");
 
   return NextResponse.redirect(session.url, { status: 303 });

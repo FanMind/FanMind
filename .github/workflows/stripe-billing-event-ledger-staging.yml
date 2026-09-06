@@ -13,7 +13,8 @@ on:
         type: string
 
 concurrency:
-  group: fanmind-stripe-billing-event-ledger-staging
+  # Exclude deployments (including explicit unfreeze) for the whole Apply.
+  group: fanmind-staging-deploy
   cancel-in-progress: false
 
 permissions:
@@ -107,7 +108,11 @@ jobs:
       - name: Apply controlled SQL and verify metadata
         env:
           PGPASSFILE: ${{ runner.temp }}/fanmind-stripe-billing-ledger.pgpass
-        run: npm run db:stripe-billing-ledger:apply
+        run: |
+          set -euo pipefail
+          node scripts/operations/staging-billing-freeze-control.mjs \
+            --verify "$NEXT_PUBLIC_APP_URL" "$FANMIND_STRIPE_BILLING_EVENT_LEDGER_REVIEWED_COMMIT"
+          npm run db:stripe-billing-ledger:apply
 
       - name: Remove private database password file
         if: ${{ always() }}

@@ -11,6 +11,11 @@ import { getPreActivationRedirect } from "@/lib/preActivation";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import {
+  isStripeBillingWriteFrozen,
+  STRIPE_BILLING_WRITE_FREEZE_CODE,
+  STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
+} from "@/lib/stripeBillingWriteFreeze.mjs";
 import styles from "./billingStart.module.css";
 
 export const dynamic = "force-dynamic";
@@ -100,11 +105,13 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
     "Stripe zeigt die für diese Zahlung verfügbaren Zahlarten";
 
   const hasUnclearPaymentOption = Boolean(workspace && !resolvedCheckoutPlan && !isDemo);
+  let checkoutFrozen = isStripeBillingWriteFrozen();
   const checkoutReady = workspace?.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(stripe)
     : stripe.readyForCheckout;
   const canStartCheckout = Boolean(
     workspace &&
+      !checkoutFrozen &&
       paymentTermsReady &&
       shouldShowBillingCheckoutAction(workspace) &&
       checkoutReady &&
@@ -122,6 +129,7 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
         workspaceId: workspace.id,
         userEmail: data.user.email,
       });
+      checkoutFrozen = session.code === STRIPE_BILLING_WRITE_FREEZE_CODE;
       checkoutUrl = session.url;
       checkoutPreparationFailed = !checkoutUrl;
     } catch (error) {
@@ -195,7 +203,9 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
             <li>Rechnungs- und Zahlungsdaten werden von FanMind nicht gespeichert</li>
           </ul>
           <div className={styles.actions}>
-            {paymentTermsBlocked ? (
+            {checkoutFrozen ? (
+              <div className={styles.infoBox}>{STRIPE_BILLING_WRITE_FREEZE_MESSAGE}</div>
+            ) : paymentTermsBlocked ? (
               <div className={styles.infoBox}>Die verbindliche Version der Zahlungsbedingungen ist noch nicht serverseitig bestätigt. Bis dahin wird keine Stripe-Zahlungssitzung erzeugt.</div>
             ) : !checkoutReady && !isDemo ? (
               <div className={styles.infoBox}>Die Zahlung ist aktuell noch nicht vollständig konfiguriert. Bitte kontaktiere FanMind.</div>

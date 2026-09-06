@@ -7,6 +7,11 @@ import {
 import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
 import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
+import {
+  isStripeBillingWriteFrozen,
+  STRIPE_BILLING_WRITE_FREEZE_CODE,
+  STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
+} from "@/lib/stripeBillingWriteFreeze.mjs";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
@@ -22,6 +27,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Die Zahlungsanfrage konnte nicht verifiziert werden.", code: "origin_forbidden" },
       { status: 403 },
+    );
+  }
+
+  if (isStripeBillingWriteFrozen()) {
+    return NextResponse.json(
+      {
+        error: "Zahlungen sind während eines kurzen Wartungsfensters vorübergehend pausiert. Bitte versuche es gleich erneut.",
+        code: STRIPE_BILLING_WRITE_FREEZE_CODE,
+      },
+      { status: 503, headers: { "Retry-After": "60" } },
     );
   }
 
@@ -76,6 +91,12 @@ export async function POST(request: NextRequest) {
   }
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspaceResult.workspace.id, userEmail: data.user.email });
+  if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
+    return NextResponse.json(
+      { error: STRIPE_BILLING_WRITE_FREEZE_MESSAGE, code: STRIPE_BILLING_WRITE_FREEZE_CODE },
+      { status: 503, headers: { "Retry-After": "60" } },
+    );
+  }
   if (!session.url) return NextResponse.json({ error: "Die Zahlung konnte nicht gestartet werden. Bitte kontaktiere FanMind.", code: "checkout_unavailable" }, { status: 502 });
   return NextResponse.json({ url: session.url, sessionId: session.id });
 }

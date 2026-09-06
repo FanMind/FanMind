@@ -237,3 +237,13 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Falsification question: What observation would prove our conclusion wrong? A protected EAS record showing that the terminal artifact belongs to another commit/platform/profile, is not an AAB, or is no longer retrievable would invalidate the accepted Store-build state and require a new exact authorization rather than an automatic retry.
 
 Never resolve a contradiction by deleting the older record. Document which source was stale or wrong and why.
+
+## CTR-FM-CR-020-CHECKOUT-FREEZE-20260906
+- Date: 2026-09-06
+- Related task/change: FM-AI-001 / FM-CR-020 / PR #1058
+- Risk: R4
+- Source A: PR description claims central Checkout freeze enforcement; prior exact-head CI is green.
+- Source B: head `8fbd7e89678259276fddf62fc45ccc37b06ea727` and unresolved review `PRRT_kwDOSxGqmc6fjNA9` show only API enforcement and three bypassing callers.
+- Resolution: follow-up adds the shared provider-boundary guard and caller handling; executing the actual shared module proves no Stripe client/Session access while frozen. Removing the guard causes three test failures.
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Remaining: exact updated-head remote CI/review; no runtime/Stage acceptance is inferred from code.

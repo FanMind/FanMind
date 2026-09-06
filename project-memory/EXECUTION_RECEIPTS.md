@@ -1,4 +1,34 @@
 Warning: truncated output (original token count: 30288)
+
+## RECEIPT-FM-AI-001-FREEZE-ACTIVATE-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Started: 2026-09-06
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: owner explicitly requested merge and Staging activation after PR #1058 review correction.
+- New premerge evidence: review PRRT_kwDOSxGqmc6frbTm requires live freeze attestation before controlled ledger Apply. Merge held until repaired.
+- Implementation: shared deploy/Apply concurrency, preserve-by-default freeze state, exact-release HTTPS no-credential negative proof before SQL and after frozen deployment.
+- Local countercheck: Billing/Webhook 103/103 PASS including old-release, changing-release, Production, unfrozen, generic maintenance and preservation failures; SQL checksum unchanged; no actual provider/database request in tests.
+- Recovery: explicit freeze=false redeploy is available before any ledger Apply; no SQL Apply is requested here.
+- Still open: fresh exact-head CI/review, SHA-bound merge, one protected Staging freeze=true dispatch, deploy/postflight result and handoff.
+
+
+## RECEIPT-FM-AI-001-FREEZE-REVIEW-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Started: 2026-09-06
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R4 Billing code only
+- Scope: continue PR #1058 from `8fbd7e89678259276fddf62fc45ccc37b06ea727`; current main observed as `547843cad7a1f6ecb3ba6131e155d9d068799c2b`.
+- Preflight: accepted-state drift PASS; evidence freshness PASS with seven expired mutable observations on unaccepted gates; next-action remains owner-deferred Restore. This bounded review repair continues the already owner-resumed FM-CR-020, not external AI lifecycle activation.
+- Contradiction: PR description claims shared Checkout guard, but code and unresolved review `PRRT_kwDOSxGqmc6fjNA9` prove API-only enforcement. Green old-head CI is insufficient.
+- Falsifier: any Stripe Session creation while freeze is true invalidates the fix.
+- Implementation evidence: one shared guard before `getStripeClient()`, fixed code/message returned across all four callers; known freeze errors never leak raw provider errors.
+- Countercheck: focused 12/12 PASS; Billing/Webhook 94/94 PASS; intentionally removing the central guard makes the three plan regression cases fail. TypeScript passes after `next typegen`; the initial missing RouteContext was generated-type setup. Lint has zero errors and one pre-existing Mobile warning.
+- Broader initial test: Operations 1114/1115 exposed the fixed-error API policy; corrected to return the fixed freeze message instead of `session.error`, and the affected policy now passes. Final Operations rerun 1115/1115 PASS; full Next production build PASS; product/referral/legal-register/action truth checks PASS. Legal external evidence readiness remains false as expected.
+- Recovery: repository-only revert; frozen -> unfrozen behavior is executable-test verified. No external rollback is needed because no external state changed.
+- Remote updated-head CI/review and real Staging acceptance remain open; no ACCEPTED/PRODUCTION_CONFIRMED claim.
+- External boundary: no payment, Stripe call, schema apply, runtime deploy, Mobile build or protected workflow dispatch.
+
 Total output lines: 663
 
 # Execution Receipts

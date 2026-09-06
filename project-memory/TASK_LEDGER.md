@@ -221,6 +221,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: no schema or demo-data creation, no client service-role/OpenAI key, no automatic send, no member mutation and no second build while queue/completion state is uncertain.
 
 ## FM-AI-001
+- 2026-09-06 bounded continuation: FM-CR-020 / PR #1058 repairs the shared Checkout freeze bypass; local verification and negative proof are recorded in `RECEIPT-FM-AI-001-FREEZE-REVIEW-20260906`. Exact updated-head CI/review and protected Staging cutover remain open; overall status stays PARTIAL.
 - Date: through 2026-08-19
 - Updated: 2026-08-30
 - Status: PARTIAL

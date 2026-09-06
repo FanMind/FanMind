@@ -56,7 +56,7 @@
     "test:staging-stripe-catalog": "npm run test:stripe-conformance && node --test tests/staging-stripe-catalog-readiness.test.mjs",
     "stripe:staging-webhook:check": "node scripts/operations/staging-stripe-webhook-readiness.mjs --check",
     "stripe:staging-webhook:verify": "node scripts/operations/staging-stripe-webhook-readiness.mjs --verify",
-    "test:staging-stripe-webhook": "node --test tests/staging-stripe-webhook-readiness.test.mjs tests/staging-stripe-webhook-smoke.test.mjs tests/ai-tier-stripe-entitlement-sync.test.mjs tests/ai-tier-stripe-event-ledger.test.mjs tests/ai-tier-stripe-event-ledger-control.test.mjs tests/stripe-billing-event-ledger.test.mjs tests/stripe-billing-event-sync.test.mjs tests/stripe-billing-event-ledger-control.test.mjs",
+    "test:staging-stripe-webhook": "node --test tests/staging-stripe-webhook-readiness.test.mjs tests/staging-stripe-webhook-smoke.test.mjs tests/ai-tier-stripe-entitlement-sync.test.mjs tests/ai-tier-stripe-event-ledger.test.mjs tests/ai-tier-stripe-event-ledger-control.test.mjs tests/stripe-billing-event-ledger.test.mjs tests/stripe-billing-event-sync.test.mjs tests/stripe-billing-event-ledger-control.test.mjs tests/stripe-billing-write-freeze.test.mjs",
     "stripe:staging-webhook-smoke:check": "node scripts/operations/staging-stripe-webhook-smoke.mjs --check",
     "stripe:staging-webhook-smoke:run": "node scripts/operations/staging-stripe-webhook-smoke.mjs --run",
     "check:release": "npm run verify:truth && npm run lint && npm run build",
