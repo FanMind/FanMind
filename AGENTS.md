@@ -110,8 +110,10 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   dormant webhook/storage bridge must keep Workspace target, exact stored
   customer/base-subscription binding, distinct Price allowlist, complete
   single-item list, event-order and idempotency checks fail-closed; never log
-  its internal Stripe mutation. The controlled AI event-ledger SQL remains
-  unapplied until its own Staging gate. Never sort equal-second events by
+  its internal Stripe mutation. The controlled AI event-ledger SQL is installed
+  on isolated Staging (Apply 32038152382; latest rollback acceptance
+  34039968946). Production remains unapplied and runtime gates remain required.
+  Never sort equal-second events by
   Event ID: atomically persist `reconciliation_needed`, make the paid tier
   fail closed and require a request-ID/fingerprint/revision-bound canonical
   Stripe reconciliation. A legitimate base-subscription rotation must bind
@@ -119,8 +121,10 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   second as an ordering cutoff; direct service-role table writes remain
   forbidden after ledger hardening. Keep the bridge disabled outside the isolated
   staged rollout. The general Workspace billing fields now have a separate,
-  controlled and still unapplied all-event ledger with a capture-only cutover
-  stage; do not activate billing or Plus/Ultra before both ledgers, their
+  controlled all-event ledger with a capture-only cutover stage. Its isolated
+  Staging Apply (34040107219), durable capture proof (34043010578) and explicit
+  unfreeze deployment (34043148548) passed on 6 September 2026. Production
+  remains unapplied and canonical runtime projection remains disabled; do not activate billing or Plus/Ultra before both ledgers, their
   shared canonical downstream operator and all remaining gates are closed.
 - The manual AI-tier staging acceptance in
   `scripts/operations/ai-tier-staging-acceptance.mjs` is a rollback-only

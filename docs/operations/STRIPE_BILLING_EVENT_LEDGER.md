@@ -1,6 +1,6 @@
 # Stripe Basis-Billing Event-Ledger
 
-Status: **implementiert, kontrolliert, nicht angewandt und nicht aktiviert**.
+Status am 6. September 2026: **auf Staging installiert; Capture-only aktiv und durabel geprüft; kanonische Projektion weiterhin deaktiviert**.
 
 Dieser Baustein schließt die technische Lücke, in der ein verspätetes
 `invoice.paid` nach `customer.subscription.deleted` einen Workspace erneut
@@ -16,8 +16,7 @@ aktivieren konnte. Er deckt alle Billing-mutierenden Webhook-Familien ab:
 Das kontrollierte SQL liegt bewusst unter
 `supabase/controlled/20260816210000_workspace_stripe_billing_event_ledger.sql`
 und **nicht** unter `supabase/migrations`. Weder Deploy noch `supabase db push`
-wendet es an. In diesem Arbeitsstand wurde kein Stripe-, Supabase- oder anderer
-externer API-/Datenbankaufruf ausgeführt.
+wendet es an. Der kontrollierte Staging-Apply wurde mit Run `34040107219` erfolgreich abgeschlossen; Capture `34043010578` und Unfreeze-Deploy `34043148548` sind belegt. Es wurde keine echte Zahlung ausgeführt.
 
 ## Sicherheitsmodell
 
@@ -290,3 +289,75 @@ bleiben dort reine Beobachtungen, PaymentIntent bindet auf Customer und
 Reversals benötigen eine historische Objektbindung. Ebenso muss die bereits
 verifizierte Stripe-Signatur weiter explizit an beide Ledger-Brücken übergeben
 werden. Ein blindes automatisches Merge ist für diese Route nicht zulässig.
+
+
+## Kanonische Operator-Bausteine
+
+`stripeBillingCanonicalSnapshot.mjs` liest über den bereits versionsgepinnten
+Stripe-SDK ausschließlich ein exakt gebundenes Test-Abo. Zwei konsistente
+Detailabrufe um eine vollständig paginierte Customer-Aboinventur erkennen
+beobachtbare Änderungen und jedes weitere Abo desselben Customers, einschließlich historischer Abos. Testmodus, Customer,
+Workspace-Metadaten, erlaubte Preise, vollständige Items und bezahlte aktuelle
+Rechnung werden geprüft. Rohantworten und Providerfehlertexte werden verworfen.
+Der Snapshot ist eine begrenzte konsistente Beobachtung, keine atomare Sperre
+gegen nachfolgende Änderungen bei Stripe. Separate aktive Abos, unvollständige
+Inventuren, Trialing und ungeklärte Rechnungen bleiben ausdrücklich blockiert.
+
+`stripeBillingReconciliation.mjs` erstellt den normalisierten RPC-Befehl samt
+Fingerprint über den normalisierten Provider-Snapshot einschließlich KI-Items,
+Identität, Beobachtungszeit, Revision, Projektion und gesamte
+Konflikt-/Bindungslisten. Der bestehende Datenbankvertrag bleibt für die
+Vollständigkeit der offenen Konflikte, Schutzstatus und CAS maßgeblich.
+Lifecycle-Abgleiche verlangen erst einen passenden dauerhaften KI-Beleg und
+danach einen passenden Referral-Beleg, bevor der Billing-RPC ausgeführt wird.
+Die Snapshot-Frische wird auch nach diesen Schritten erneut geprüft.
+Transportunklarheit wird als `indeterminate` zurückgegeben und nicht automatisch
+wiederholt; ein Recovery muss denselben gespeicherten Befehl und seine Belege
+verwenden. Abgelaufene, bereits commitete Belege benötigen dafür einen späteren
+separaten Read-only-Recovery-Pfad; der normale Executor lehnt alte Snapshots ab.
+
+Der RPC-Transport ist auf unabhängig bestätigtes Staging, die bestehende
+Non-Production-Schreibbestätigung und den neuen standardmäßig nicht gesetzten
+Schalter `FANMIND_STAGING_BILLING_RECONCILIATION_ENABLED=true` begrenzt.
+Es gibt weiterhin keine Route, keinen Timer und keine automatische Aktivierung.
+Die produktiven KI-/Referral-Adapter, autorisierte Ledger-Inventur, vollständige
+Provider-Abdeckung für Refund/Dispute/Rotation und die geschützte reale
+Staging-Abnahme sind noch zu verbinden. Diese Bausteine allein schließen den
+kanonischen Cutover nicht ab und ändern keine Zahlungsbedingungen-Freigabe.
+
+Provider-Verträge: [Subscription abrufen](https://docs.stripe.com/api/subscriptions/retrieve),
+[alle Abos auflisten](https://docs.stripe.com/api/subscriptions/list),
+[Request-ID](https://docs.stripe.com/api/request_ids).
+
+Der vorbereitete Planer verbindet diese Beobachtung mit einer getrennten autorisierten Ledger-Inventur. Er lehnt gleichsekündige/neue Konflikte, Refund/Dispute-Fälle und geschützte Workspaces ab; ein aktuelles gekündigtes Abo kann durch ein älteres Invoice-Paid-Ereignis nicht wieder aktiv werden.
+
+
+After an ambiguous Billing response, `recoverStripeBillingReconciliation` loads
+an authoritative persisted `billing_attempted` command and matching durable
+AI/referral receipts before resubmitting that exact command. It does not rerun
+downstream work. The existing SQL checks duplicate request IDs before snapshot
+expiry, allowing delayed recovery; first execution retains its freshness gate.
+The required durable attempt loader is still an operator integration gate.
+
+Tax execution requires a normalized `tax` object in the fingerprinted observation
+with exact `id`, `customerId`, `deleted` and `verificationStatus` fields plus the
+same single tax-ID binding. Fixed notes follow the existing webhook mapping;
+raw tax values are not required. Current delinquency records the bounded
+observation time, rather than claiming an unavailable precise provider failure
+time. Recovery canonicalizes persisted commands before comparing all fields and
+their fingerprint, so JSONB key order does not change command identity.
+
+
+Execution now requires an operator-provided `withBillingReservation(command,
+callback)` driver. Before entering the callback it must atomically verify the
+exact stream revision and complete pending event set, acquire exclusive fencing
+against event capture and competing canonical operators, and hold that exclusion
+through all AI/referral/Billing work until callback completion and release. The
+callback receives `contract: stripe-billing-reservation-v1`, `held: true` and the
+same canonical command. A changed state raises the fixed `billing_state_changed`
+code before any downstream mutation. There is no unfenced fallback. A naive PG
+row/advisory lock around independent REST RPC connections is not a valid driver;
+use a reviewed cooperative reservation or the same database transaction for all
+scoped database work. The real driver remains an explicit activation gate.
+Provider `subscription.created` is retained as the Workspace contract start so
+Starter-12 cancellation cannot restart its minimum term at reconciliation time.

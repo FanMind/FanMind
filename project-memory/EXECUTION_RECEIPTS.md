@@ -1,5 +1,15 @@
 Warning: truncated output (original token count: 30288)
 
+## RECEIPT-CANONICAL-BILLING-20260906
+- Task: FM-AI-001; Risk: R4; lock LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
+- Scope: missing normalized canonical Billing RPC command and ordered downstream orchestration. No Production target, new SQL, provider payment or legal activation.
+- Baseline: 8ef7970866f04d0d575522d361ebef868db23ae3; prior capture/unfreeze 34043010578 / 34043148548 PASS.
+- Evidence plan: semantic command/fingerprint tests, stale/conflicting/partial downstream failure tests, exact-head CI and independent review; later runtime action requires separately completed provider/downstream bindings.
+- Falsification: a stale or unrelated downstream receipt or an indeterminate retry must never activate access; unknown projection fields or incomplete identity must never reach the RPC.
+- Recovery: bridge remains uncalled by routes/workers; revert repository changes without changing schema/runtime.
+- Implementation: normalized command/fingerprint and target-bound RPC adapter; ordered AI/referral receipt gate; Test-only paginated provider snapshot reader with consistency/binding checks. Initial focused 23 tests, existing Webhook 108 tests and Operations 1150 tests pass; review corrections pass 38 focused tests and lint, preserve dunning grace, clear revoked cancellation dates, bind required provider workspace/base price, project current invoice fields and pass the immutable verified snapshot to both downstream adapters; execution independently re-derives the full projection before downstream work and commit, and paid invoice timestamps clear stale failure history; tax remains note-only and executable, while every non-target historical subscription now blocks deferred rotations; custom scheduled cancellations preserve an existing request marker and explicit recovery requires the persisted attempted command plus both durable downstream receipts; tax notes derive from the exact bound normalized tax object/status, delinquency records its bounded observation timestamp and recovered commands are canonicalized before comparison; provider subscription creation becomes contract start and execution requires an exact revision/pending-set-bound exclusive reservation before any downstream call; completed cancellations preserve request audit dates, paid/delinquent contradictions block and AGENTS records the verified Staging AI-ledger installation without changing its activation gates; source-of-truth baseline reconciles actual Staging Apply/capture/unfreeze without asserting canonical acceptance; lint and production build also pass; full remote CI/review and runtime wiring remain open.
+- Status: IN_PROGRESS.
+
 ## RECEIPT-FINISHLINE-RESUME-20260906
 - Status: IN_PROGRESS
 - Risk: R4

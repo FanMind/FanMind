@@ -36,3 +36,4 @@ export function normalizeStripeBillingLedgerRpcResult(payload: unknown):
   | null;
 export const STRIPE_BILLING_LEDGER_EVENT_TYPES: readonly string[];
 export const STRIPE_BILLING_LEDGER_PROJECTION_FIELDS: readonly string[];
+export function normalizeStripeBillingProjection(fields: unknown): Readonly<Record<string, unknown>> | null;
