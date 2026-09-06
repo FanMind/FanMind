@@ -1,0 +1,11 @@
+# FM-CR-022 — Canonical Billing Staging acceptance closeout
+
+- Date: 2026-09-06
+- Source: owner-resumed `FM-AI-001` finishline work.
+- Related task: `FM-AI-001`.
+- Risk: R4 evidence/reconciliation closeout; no new state-changing runtime action.
+- Goal: reconcile Project Memory after exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` succeeded on `62e6a11858e85996af03f6740819b0fc6194b4a4`.
+- Scope: evidence receipt and canonical Project Memory reader updates only. No SQL Apply, provider call, payment/refund, Production DB mutation, canonical runtime projection activation, paid-tier activation, Mobile provider send or Restore mutation.
+- Required reconciliation: remove stale claims that the general Billing ledger is absent or that the exact Staging deploy/canonical rollback acceptance are still pending; preserve `FM-AI-001=PARTIAL`, `ai_billing=PARTIAL`, `sales_ready=false` and every genuinely open external/product/legal/provider gate.
+- Evidence: run `34058028839` success; run `34058118450` / job `101553652111` success; rollback markers and zero cutover counters; independent read-only Staging counts after rollback.
+- Recovery: documentation-only; revert this closeout if any cited evidence is later proven mismatched.
