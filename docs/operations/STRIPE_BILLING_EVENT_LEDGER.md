@@ -212,6 +212,11 @@ Billing-Funktionen müssen außerdem dem unveränderlichen `session_user` des
 projektgebundenen Postgres-Logins gehören; `service_role` ist als Owner
 ausgeschlossen und kann die Delegationssperre nicht durch Ownership umgehen.
 
+Die strukturelle Ist-Indexprüfung ist ausdrücklich auf `public` begrenzt.
+Gleichnamige temporäre Oracle-Indizes dürfen nicht als Ist-Objekte geprüft
+werden; der anschließende Hashvergleich verbindet jedes öffentliche Objekt
+weiterhin explizit mit seinem `pg_temp`-Gegenstück.
+
 Constraint- und Index-Sollwerte stammen dabei nicht aus veränderbaren
 Datenbankkommentaren und werden auch nicht aus dem gerade vorgefundenen Katalog
 zurückkopiert. Das checksum-gepinnte Control enthält stattdessen ein festes

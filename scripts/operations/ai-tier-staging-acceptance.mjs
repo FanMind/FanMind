@@ -536,11 +536,18 @@ begin
     raise exception 'ledger_acceptance_starter_failed';
   end if;
 
-  if exists (
+  -- The ledger retains a canceled tombstone for ordering and replay defense.
+  -- Only transaction rollback must remove the synthetic projection entirely.
+  if not exists (
     select 1 from public.workspace_ai_tier_entitlements
      where workspace_id = ${workspace}
+       and status = 'canceled'
+       and stripe_sync_state = 'in_sync'
+       and stripe_sync_revision = 3
+       and last_stripe_event_id = 'evt_fanmind_staging_starter'
+       and last_stripe_event_created_at = ${createdAt + 2}
   ) then
-    raise exception 'ledger_acceptance_projection_cleanup_failed';
+    raise exception 'ledger_acceptance_canceled_projection_failed';
   end if;
 end
 $ledger_acceptance$;
