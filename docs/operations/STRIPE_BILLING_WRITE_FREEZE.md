@@ -76,3 +76,7 @@ Die am 6. September 2026 geprüfte Workspace-Member-Datengrenze ergänzt restrik
 Ein fehlgeschlagener Apply gibt ausschließlich SQLSTATE und eine im gepinnten SQL enthaltene feste Fehlerklasse aus. Freitext, Details und SQL-Kontext werden nicht protokolliert. Vor einem erneuten Versuch den tatsächlichen Schema-/Migrationszustand read-only prüfen; fehlende Abschlussmarker allein beweisen keinen Rollback.
 
 Die separate KI-Tarif-Lifecycle-Abnahme benötigt eine Customer-/Subscription-Bindung. Für einen vollständig ungebundenen konfigurierten Test-Workspace legt sie synthetische Referenzen ausschließlich innerhalb der anschließenden Rollback-Transaktion an. Bestehende Referenzen bleiben erhalten; nach dem Rollback muss die synthetische Bindung verschwunden sein. Dies erzeugt keine Stripe-Ressourcen und ist kein echter Checkout-Nachweis.
+
+## PostgreSQL-Indexprüfung
+
+Die spaltenbezogene Form von `pg_get_indexdef` liefert den Spaltenausdruck ohne Sortierzusatz. Die drei DESC-Indizes werden deshalb über Spaltenname plus exakt `indoption = 0 0 3` geprüft (erste zwei Schlüssel aufsteigend, dritter absteigend mit NULLS FIRST). Der vollständige Vergleich mit dem gepinnten Schema-Oracle bleibt zusätzlich aktiv. Die Änderung repariert eine falsche Ablehnung; die Indizes selbst bleiben unverändert.

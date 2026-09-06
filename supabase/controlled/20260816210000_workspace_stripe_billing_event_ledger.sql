@@ -2573,21 +2573,24 @@ begin
           or definition.indnkeyatts <> 3
           or pg_get_indexdef(definition.indexrelid, 1, true) <> 'workspace_id'
           or pg_get_indexdef(definition.indexrelid, 2, true) <> 'stripe_object_type'
-          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'last_seen_at DESC'
+          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'last_seen_at'
+          or definition.indoption::text <> '0 0 3'
           or definition.indpred is not null
         when 'workspace_stripe_billing_reconciliation_workspace_idx' then
           table_relation.relname <> 'workspace_stripe_billing_reconciliations'
           or definition.indnkeyatts <> 3
           or pg_get_indexdef(definition.indexrelid, 1, true) <> 'workspace_id'
           or pg_get_indexdef(definition.indexrelid, 2, true) <> 'event_stream'
-          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'created_at DESC'
+          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'created_at'
+          or definition.indoption::text <> '0 0 3'
           or definition.indpred is not null
         when 'workspace_stripe_billing_event_workspace_order_idx' then
           table_relation.relname <> 'workspace_stripe_billing_events'
           or definition.indnkeyatts <> 3
           or pg_get_indexdef(definition.indexrelid, 1, true) <> 'workspace_id'
           or pg_get_indexdef(definition.indexrelid, 2, true) <> 'event_stream'
-          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'event_created_at DESC'
+          or pg_get_indexdef(definition.indexrelid, 3, true) <> 'event_created_at'
+          or definition.indoption::text <> '0 0 3'
           or regexp_replace(
             lower(pg_get_expr(definition.indpred, definition.indrelid, true)),
             '\s+', ' ', 'g'
