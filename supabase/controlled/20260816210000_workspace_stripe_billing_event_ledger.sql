@@ -2558,7 +2558,8 @@ begin
     join pg_class as index_relation on index_relation.oid = definition.indexrelid
     join pg_class as table_relation on table_relation.oid = definition.indrelid
     join pg_am as access_method on access_method.oid = index_relation.relam
-    where index_relation.relname in (
+    where table_relation.relnamespace = 'public'::regnamespace
+      and index_relation.relname in (
       'workspace_stripe_billing_object_workspace_idx',
       'workspace_stripe_billing_reconciliation_workspace_idx',
       'workspace_stripe_billing_event_workspace_order_idx',

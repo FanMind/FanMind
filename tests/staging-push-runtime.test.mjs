@@ -48,3 +48,27 @@ test("private configuration reads the checked descriptor and rejects symlinks or
     assert.throws(() => privateFile(path), /private_file_invalid/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+
+test("host reprovisioning preserves the existing encryption key and project", async () => {
+  const { preservePushRuntimeFields } = await import("../scripts/operations/staging-push-key-preservation.mjs");
+  const previous = `FANMIND_PUSH_TOKEN_ENCRYPTION_KEY='${key}'\nFANMIND_MOBILE_PUSH_EAS_PROJECT_ID='${project}'\nOLD=value\n`;
+  const result = preservePushRuntimeFields(previous, "NEW=value\n");
+  assert.ok(result.includes(key));
+  assert.ok(result.includes(project));
+  assert.ok(result.includes("NEW=value"));
+  assert.ok(!result.includes("OLD=value"));
+  assert.equal(preservePushRuntimeFields("OLD=value\n", "NEW=value\n"), "NEW=value\n");
+  assert.throws(() => preservePushRuntimeFields("FANMIND_PUSH_TOKEN_ENCRYPTION_KEY=corrupt", ""), /push_preservation_invalid/);
+  assert.throws(() => preservePushRuntimeFields(previous + previous, ""), /push_preservation_invalid/);
+});
+
+test("runtime activation consumes exact successful acceptance and independent production binding", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const workflow = await readFile(".github/workflows/staging-push-runtime.yml", "utf8");
+  assert.match(workflow, /needs: verify-acceptance/);
+  assert.match(workflow, /run.head_sha !== process.env.GITHUB_SHA/);
+  assert.match(workflow, /run.conclusion !== 'success'/);
+  assert.match(workflow, /run.path !== '.github\/workflows\/mobile-push-staging-acceptance.yml'/);
+  assert.match(workflow, /FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT:.*vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF/);
+});

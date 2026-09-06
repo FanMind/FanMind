@@ -54,12 +54,14 @@ async function main() {
   if (env.GITHUB_REF !== "refs/heads/main" || !/^[0-9a-f]{40}$/u.test(env.GITHUB_SHA ?? "") ||
       env.FANMIND_PUSH_RUNTIME_CONFIRM !== "prepare-staging-push-registration" ||
       !backup || resolve(backup) !== join(resolve(env.RUNNER_TEMP), "fanmind-push-runtime.backup")) fail("execution_boundary");
+  if (env.FANMIND_PUSH_RUNTIME_ACCEPTANCE_VERIFIED !== "true") fail("acceptance_missing");
   if (mode !== "prepare" || env.FANMIND_RUNTIME_ENVIRONMENT !== "staging" ||
       env.NEXT_PUBLIC_APP_URL !== "https://staging.fanmind.ch" ||
       !/^[a-z0-9]{20}$/u.test(env.FANMIND_PUSH_RUNTIME_EXPECTED_DB_PROJECT ?? "") ||
       env.NEXT_PUBLIC_SUPABASE_URL !== `https://${env.FANMIND_PUSH_RUNTIME_EXPECTED_DB_PROJECT}.supabase.co` ||
-      !env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF ||
-      env.FANMIND_PUSH_RUNTIME_EXPECTED_DB_PROJECT === env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) fail("target_binding");
+      !/^[a-z0-9]{20}$/u.test(env.FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT ?? "") ||
+      env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF !== env.FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT ||
+      env.FANMIND_PUSH_RUNTIME_EXPECTED_DB_PROJECT === env.FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT) fail("target_binding");
   const version = await json("https://staging.fanmind.ch/api/version");
   if (version.application !== "fanmind" || version.runtimeEnvironment !== "staging" || version.releaseCommit !== env.GITHUB_SHA) fail("release_mismatch");
   const original = privateFile(ENV_FILE);
@@ -84,7 +86,7 @@ async function main() {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main().catch(error => {
-    const allowed = new Set(["project_configuration", "project_mismatch", "key_recovery_required", "key_configuration", "private_file_invalid", "runtime_or_storage_unavailable", "execution_boundary", "target_binding", "release_mismatch", "storage_configuration", "protected_override", "configuration_changed"]);
+    const allowed = new Set(["acceptance_missing", "project_configuration", "project_mismatch", "key_recovery_required", "key_configuration", "private_file_invalid", "runtime_or_storage_unavailable", "execution_boundary", "target_binding", "release_mismatch", "storage_configuration", "protected_override", "configuration_changed"]);
     console.error(`STAGING_PUSH_RUNTIME_ERROR=${allowed.has(error.message) ? error.message : "operation_failed"}`);
     process.exitCode = 1;
   });

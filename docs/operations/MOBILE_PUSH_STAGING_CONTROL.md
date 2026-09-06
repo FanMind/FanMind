@@ -273,3 +273,16 @@ bei vorhandenen Registrierungen niemals ersatzweise einen neuen erzeugen.
 Anschließend muss der Owner im signierten Preview-Build ausdrücklich die
 Registrierung auslösen. Push-Zustellung und deren Geräte-/Receipt-Nachweis
 bleiben eigenständige offene Abnahmen.
+
+Die Runtime-Aktivierung verlangt zusätzlich die ID eines erfolgreichen
+`mobile-push-staging-acceptance.yml`-Laufs auf demselben `main`-Commit, nicht
+älter als zwei Stunden. Ein separater GitHub-Job prüft dessen Pfad, Ziel-Repo,
+Event, Commit und Abschlussstatus vor dem Zugriff auf den Staging-Host.
+Die Production-Referenz kommt unabhängig aus dem geschützten Environment
+und muss zusätzlich mit der Host-Konfiguration übereinstimmen.
+
+Die Host-Provisionierung teilt dieselbe Deployment-Sperre. Vor dem Austausch
+der privaten Environment-Datei übernimmt sie vorhandene gültige Push-Felder
+über geprüfte Dateideskriptoren in die neue private Datei. Ungültige oder
+doppelte Werte stoppen vor dem Austausch; vorhandene Schlüssel werden nie
+rotiert. Eine fehlgeschlagene Vorbereitung lässt die bisherige Datei bestehen.
