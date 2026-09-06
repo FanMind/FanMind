@@ -32,5 +32,16 @@ export function canonicalStripeBillingProjection(snapshot, now) {
         last_invoice_hosted_url:invoice?.hostedUrl ?? null,last_invoice_pdf_url:invoice?.pdfUrl ?? null,
         billing_grace_until:grace,billing_retry_count:delinquent?Math.max(1,invoice.attemptCount):0,
         billing_next_retry_at:delinquent?iso(invoice.nextPaymentAttempt):null,
-        ...(invoice?.status==="paid"?{billing_last_payment_at:iso(invoice.paidAt),billing_last_payment_failed_at:null}:{})};
+        ...(invoice?.status==="paid"?{billing_last_payment_at:iso(invoice.paidAt),billing_last_payment_failed_at:null}:delinquent?{billing_last_payment_failed_at:snapshot.observedAt}:{})};
+}
+
+
+export function canonicalStripeTaxProjection(snapshot, bindings) {
+  const tax=snapshot?.tax;
+  if(snapshot?.subscriptionId!==null || !tax || Object.keys(tax).sort().join(",")!=="customerId,deleted,id,verificationStatus" ||
+     !/^txi_[A-Za-z0-9_]+$/u.test(tax.id??"") || tax.customerId!==snapshot.customerId || typeof tax.deleted!=="boolean" ||
+     (tax.deleted?tax.verificationStatus!==null:!["verified","pending","unverified","unavailable"].includes(tax.verificationStatus)) ||
+     !Array.isArray(bindings) || bindings.filter(binding=>binding.type==="tax_id").length!==1 ||
+     !bindings.some(binding=>binding.type==="tax_id" && binding.id===tax.id)) fail("tax_snapshot_invalid");
+  return {billing_note:tax.deleted?"Stripe-Steuer-ID wurde entfernt.":tax.verificationStatus==="verified"?"Stripe-Steuer-ID wurde verifiziert.":tax.verificationStatus==="pending"?"Stripe-Steuer-ID-Prüfung ist ausstehend.":"Stripe-Steuer-ID ist noch nicht verifiziert."};
 }

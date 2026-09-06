@@ -81,7 +81,7 @@ test('paid canonical invoice records provider payment time and clears old failur
 });
 
 test('tax reconciliation reaches only the fixed billing commit without lifecycle adapters',async()=>{
- const h=harness();h.input.stream='tax';h.input.subscriptionId=null;h.input.projection={billing_note:'verified'};h.input.objectBindings=[{type:'customer',id:h.input.customerId}];h.observation.snapshot.subscriptionId=null;
+ const h=harness();h.input.stream='tax';h.input.subscriptionId=null;h.input.projection={billing_note:'Stripe-Steuer-ID wurde entfernt.'};h.input.objectBindings=[{type:'customer',id:h.input.customerId},{type:'tax_id',id:'txi_removed'}];h.observation.snapshot.subscriptionId=null;h.observation.snapshot.tax={id:'txi_removed',customerId:h.input.customerId,deleted:true,verificationStatus:null};
  h.observation.fingerprint=createHash('sha256').update(JSON.stringify(h.observation.snapshot)).digest('hex');h.input.providerSnapshotFingerprint=h.observation.fingerprint;
  assert.deepEqual(await execute(h),{status:'reconciled',revision:8});assert.deepEqual(h.calls,['billing']);
 });
@@ -100,4 +100,14 @@ test('custom scheduled cancellation preserves the existing local request marker'
  const h=harness();h.observation.snapshot.cancelAt=Math.floor(now/1000)+86400;
  const p=canonicalStripeBillingProjection(h.observation.snapshot,now);
  assert.equal(Object.hasOwn(p,'subscription_cancel_requested_at'),false);assert.equal(p.subscription_effective_end_at,new Date(now+86400000).toISOString());
+});
+
+test('persisted JSON key order cannot prevent exact delayed recovery',async()=>{
+ const h=harness();const body=build(h.input);const reorder=value=>value && typeof value==='object'?(Array.isArray(value)?value.map(reorder):Object.fromEntries(Object.entries(value).reverse().map(([k,v])=>[k,reorder(v)]))):value;
+ h.adapters.loadPersistedBillingAttempt=async()=>({phase:'billing_attempted',command:reorder(body),aiReceipt:receipt(body,'ai'),referralReceipt:receipt(body,'referral')});
+ h.adapters.commitBilling=async()=>[{result_status:'duplicate_reconciliation',result_revision:8}];assert.deepEqual(await recover(h),{status:'duplicate_reconciliation',revision:8});
+});
+test('current delinquency records the bounded observation time',()=>{
+ const h=harness();h.observation.snapshot.status='past_due';h.observation.snapshot.latestInvoice.status='open';h.observation.snapshot.latestInvoice.paidAt=null;
+ assert.equal(canonicalStripeBillingProjection(h.observation.snapshot,now).billing_last_payment_failed_at,h.observation.snapshot.observedAt);
 });

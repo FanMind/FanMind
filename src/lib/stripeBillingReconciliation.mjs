@@ -1,4 +1,4 @@
-import { canonicalStripeBillingProjection } from "./stripeBillingCanonicalProjection.mjs";
+import { canonicalStripeBillingProjection, canonicalStripeTaxProjection } from "./stripeBillingCanonicalProjection.mjs";
 import { createHash } from "node:crypto";
 import { normalizeStripeBillingProjection } from "./stripeBillingEventLedger.mjs";
 import { buildSupabaseApiKeyHeaders } from "./supabase/apiKeyPolicy.mjs";
@@ -86,16 +86,22 @@ function targetConfirmed(environment, reviewedTarget) {
   return true;
 }
 
+export function canonicalizeStripeBillingReconciliationCommand(body) {
+  const canonical = buildStripeBillingReconciliation({workspaceId:body?.p_workspace_id,stream:body?.p_event_stream,requestId:body?.p_stripe_request_id,
+      observedAt:body?.p_snapshot_observed_at,expectedRevision:body?.p_expected_revision,customerId:body?.p_customer_id,subscriptionId:body?.p_subscription_id,
+      projection:body?.p_projection,resolvedEventIds:body?.p_resolved_event_ids,objectBindings:body?.p_object_bindings,
+      providerSnapshotFingerprint:body?.providerSnapshotFingerprint});
+  if (canonical.p_snapshot_fingerprint !== body.p_snapshot_fingerprint) fail();
+  if(Object.keys(body).sort().join(",")!==Object.keys(canonical).sort().join(",")) fail();
+  return canonical;
+}
+
 export function createStagingBillingReconciliationCommitter({environment, reviewedTarget, fetchImplementation = fetch}) {
   if (!targetConfirmed(environment, reviewedTarget) || typeof environment.SUPABASE_SERVICE_ROLE_KEY !== "string" || !environment.SUPABASE_SERVICE_ROLE_KEY.trim()) fail();
   const url = `${environment.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/reconcile_workspace_stripe_billing_projection`;
   const headers = {...buildSupabaseApiKeyHeaders(environment.SUPABASE_SERVICE_ROLE_KEY), "Content-Type":"application/json"};
   return async body => {
-    const canonical = buildStripeBillingReconciliation({workspaceId:body?.p_workspace_id,stream:body?.p_event_stream,requestId:body?.p_stripe_request_id,
-      observedAt:body?.p_snapshot_observed_at,expectedRevision:body?.p_expected_revision,customerId:body?.p_customer_id,subscriptionId:body?.p_subscription_id,
-      projection:body?.p_projection,resolvedEventIds:body?.p_resolved_event_ids,objectBindings:body?.p_object_bindings,
-      providerSnapshotFingerprint:body?.providerSnapshotFingerprint});
-    if (canonical.p_snapshot_fingerprint !== body.p_snapshot_fingerprint) fail();
+    const canonical = canonicalizeStripeBillingReconciliationCommand(body);
     const rpcBody = Object.fromEntries(Object.entries(canonical).filter(([key])=>key.startsWith("p_")));
     const response = await fetchImplementation(url,{method:"POST",headers,body:JSON.stringify(rpcBody),redirect:"error",cache:"no-store",signal:AbortSignal.timeout(12000)});
     if (!response.ok) throw Error("billing_commit_unconfirmed");
@@ -128,10 +134,10 @@ export async function executeStripeBillingReconciliation({ input, observation, a
   if (!adapters || typeof adapters.commitBilling !== "function") return { status: "blocked", reason: "adapter_missing" };
   if (body.p_event_stream === "lifecycle" && (typeof adapters.reconcileAi !== "function" || typeof adapters.reconcileReferral !== "function")) return { status: "blocked", reason: "adapter_missing" };
   const projectionMatches=()=>{
-    // Tax commands are already restricted to billing_note and null subscription.
-    // They cannot change lifecycle fields and have no lifecycle downstream work.
-    if(body.p_event_stream==="tax") return true;
-    try { return JSON.stringify(normalizeStripeBillingProjection(canonicalStripeBillingProjection(snapshot,evaluationTime)))===JSON.stringify(body.p_projection); }
+    try {
+      const projection=body.p_event_stream==="tax"?canonicalStripeTaxProjection(snapshot,body.p_object_bindings):canonicalStripeBillingProjection(snapshot,evaluationTime);
+      return JSON.stringify(normalizeStripeBillingProjection(projection))===JSON.stringify(body.p_projection);
+    }
     catch { return false; }
   };
   if (!projectionMatches()) return {status:"blocked",reason:"projection_snapshot_mismatch"};
@@ -162,7 +168,9 @@ export async function recoverStripeBillingReconciliation({input,adapters,environ
   if(typeof adapters?.loadPersistedBillingAttempt!=="function" || typeof adapters?.commitBilling!=="function") return {status:"blocked",reason:"adapter_missing"};
   try {
     const attempt=await adapters.loadPersistedBillingAttempt(body);
-    if(attempt?.phase!=="billing_attempted" || JSON.stringify(attempt.command)!==JSON.stringify(body) ||
+    let recorded;
+    try {recorded=canonicalizeStripeBillingReconciliationCommand(attempt?.command);} catch {return {status:"blocked",reason:"recovery_evidence_invalid"};}
+    if(attempt?.phase!=="billing_attempted" || JSON.stringify(recorded)!==JSON.stringify(body) ||
        (body.p_event_stream==="lifecycle" && (!exactReceipt(attempt.aiReceipt,body,"ai") || !exactReceipt(attempt.referralReceipt,body,"referral")))) return {status:"blocked",reason:"recovery_evidence_invalid"};
     return normalizeStripeBillingReconciliationResult(await adapters.commitBilling(body),body.p_expected_revision) ?? {status:"indeterminate",reason:"billing_receipt_invalid"};
   } catch {return {status:"indeterminate",reason:"recovery_transport"};}

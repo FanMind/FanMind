@@ -338,3 +338,11 @@ AI/referral receipts before resubmitting that exact command. It does not rerun
 downstream work. The existing SQL checks duplicate request IDs before snapshot
 expiry, allowing delayed recovery; first execution retains its freshness gate.
 The required durable attempt loader is still an operator integration gate.
+
+Tax execution requires a normalized `tax` object in the fingerprinted observation
+with exact `id`, `customerId`, `deleted` and `verificationStatus` fields plus the
+same single tax-ID binding. Fixed notes follow the existing webhook mapping;
+raw tax values are not required. Current delinquency records the bounded
+observation time, rather than claiming an unavailable precise provider failure
+time. Recovery canonicalizes persisted commands before comparing all fields and
+their fingerprint, so JSONB key order does not change command identity.
