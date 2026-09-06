@@ -65,7 +65,7 @@ FANMIND_STRIPE_BILLING_CANONICAL_RECONCILIATION_CONFIRMED=false
 
 ## Rollback
 
-Vor einem Ledger-Apply genügt das Zurücksetzen auf `false` beziehungsweise das Entfernen der Variable. Nach einem erfolgreichen kontrollierten SQL-Apply bleibt das Schema bestehen; ein Rollback des Runtime-Schalters darf nicht als Datenbank-Rollback dargestellt werden. Danach gelten ausschließlich die bestehenden Ledger-/Reconciliation-Runbooks.
+Der normale Deploy erlaubt auch vor der Capture-Aktivierung kein Unfreeze ohne Persistenzbeleg: Eine private Runtime-Datei kann die Abwesenheit eines Datenbank-Apply nicht beweisen. Ein früherer Pre-Apply-Rollback durch einfaches Zurücksetzen ist deshalb nicht mehr verfügbar; ein nötiger Recovery-Pfad muss zuerst die vollständige Schema-Abwesenheit unabhängig read-only nachweisen und separat implementiert und geprüft werden. Nach einem erfolgreichen kontrollierten SQL-Apply bleibt das Schema bestehen; ein Rollback des Runtime-Schalters darf nicht als Datenbank-Rollback dargestellt werden. Danach gelten ausschließlich die bestehenden Ledger-/Reconciliation-Runbooks.
 
 ## Rollout-Vorprüfung: restriktive Owner-Policies
 
@@ -116,7 +116,7 @@ projektgebundenen privaten PostgreSQL-Prüfzugang in Read-only-Transaktionen.
 `service_role` hat keine Leserechte auf die Ledger-Tabelle und wird dafür
 nicht verwendet. Erst ein nachgelagerter erfolgreicher Persistenz-Job erlaubt
 dem Host-Job, den festen Commit-/Run-Beleg privat in `.release.env` zu speichern.
-Der Deploy verweigert `billing_write_freeze=false` bei aktivem Capture ohne
+Der Deploy verweigert `billing_write_freeze=false` auch vor der Capture-Aktivierung ohne
 diesen Beleg; beim Übergang aus der Sperre muss er zum deployten Commit passen.
 Fehlgeschlagene oder unbestimmte Capture-Läufe können Checkout daher nicht
 über bloß erhaltene Konfigurationsflags entsperren.
@@ -125,3 +125,5 @@ Der Persistenzbeleg ist an die vor dem Send als abwesend geprüfte, eindeutige
 GitHub-Run-Event-ID gebunden und verfällt nicht allein durch Runner-Wartezeit.
 Ein neuer Runtime-Konfigurationsversuch entfernt einen alten Erfolgsbeleg;
 er muss seinen eigenen Persistenz-Job abschließen, bevor erneut entsperrt wird.
+
+Die Aktivierung speichert zusätzlich Commit, Run-ID und Run-Attempt privat. Send und Belegerstellung müssen exakt dazu passen; ein erneut ausgeführter alter Erfolgsjob kann eine neuere Aktivierung nicht bestätigen. Deploys erhalten diese Bindung.

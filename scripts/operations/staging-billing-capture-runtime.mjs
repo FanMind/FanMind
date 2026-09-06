@@ -7,6 +7,15 @@ import { verifyStagingBillingFreeze } from "./staging-billing-freeze-control.mjs
 const FILE = "/var/www/fanmind-staging/.release.env";
 const ORIGIN = "https://staging.fanmind.ch";
 const RECEIPT = "FANMIND_STAGING_BILLING_CAPTURE_RECEIPT";
+const ACTIVATION = "FANMIND_STAGING_BILLING_CAPTURE_ACTIVATION";
+function activationValue(commit, runId, attempt) {
+  if (!/^[a-f0-9]{40}$/u.test(commit ?? "") || !/^[0-9]{1,20}$/u.test(runId ?? "") || !/^[1-9][0-9]{0,9}$/u.test(attempt ?? "")) throw Error("capture_activation_invalid");
+  return `${commit}:${runId}:${attempt}`;
+}
+export function verifyCaptureActivation(previous, commit, runId, attempt) {
+  const entries = previous.split(/\r?\n/u).filter(line => line.startsWith(`${ACTIVATION}=`));
+  if (entries.length !== 1 || entries[0] !== `${ACTIVATION}=${activationValue(commit, runId, attempt)}`) throw Error("capture_activation_mismatch");
+}
 const FLAGS = Object.freeze({
   FANMIND_STRIPE_BILLING_EVENT_LEDGER_ENABLED: "true",
   FANMIND_STRIPE_BILLING_EVENT_LEDGER_CONTROL_CONFIRMED: "20260816210000",
@@ -19,18 +28,27 @@ export function preserveStagingBillingCapture(previous, { freeze, commit } = {})
     if (entries.length > 1) throw Error("capture_state_invalid");
     return [key, entries[0]?.slice(key.length + 1)];
   }));
-  if (Object.values(found).every(value => value === undefined)) return "";
+  if (Object.values(found).every(value => value === undefined)) {
+    // No host-only flag can establish that a database Apply has not happened.
+    // Keep all explicit unfreezes proof-bound, including before activation.
+    if (freeze === "false") throw Error("capture_proof_required");
+    return "";
+  }
   if (fields.some(key => found[key] !== FLAGS[key])) throw Error("capture_state_invalid");
   const receipts = previous.split(/\r?\n/u).filter(line => line.startsWith(`${RECEIPT}=`));
   if (receipts.length > 1) throw Error("capture_receipt_invalid");
   const receipt = receipts[0]?.slice(RECEIPT.length + 1);
   if (receipt !== undefined && !/^[a-f0-9]{40}:[0-9]{1,20}$/u.test(receipt)) throw Error("capture_receipt_invalid");
   if (freeze === "false" && (!receipt || (previous.split(/\r?\n/u).includes("FANMIND_STRIPE_BILLING_WRITE_FREEZE=true") && receipt.split(":")[0] !== commit))) throw Error("capture_proof_required");
-  return [...fields.map(key => `${key}=${FLAGS[key]}`), ...(receipt ? [`${RECEIPT}=${receipt}`] : [])].join("\n");
+  const activations = previous.split(/\r?\n/u).filter(line => line.startsWith(`${ACTIVATION}=`));
+  if (activations.length !== 1 || !/^[a-f0-9]{40}:[0-9]{1,20}:[1-9][0-9]{0,9}$/u.test(activations[0].slice(ACTIVATION.length + 1))) throw Error("capture_activation_invalid");
+  if (receipt && !activations[0].slice(ACTIVATION.length + 1).startsWith(`${receipt}:`)) throw Error("capture_receipt_invalid");
+  return [...fields.map(key => `${key}=${FLAGS[key]}`), activations[0], ...(receipt ? [`${RECEIPT}=${receipt}`] : [])].join("\n");
 }
-export function renderStagingBillingCapture(previous) {
-  const retained = previous.split(/\r?\n/u).filter(line => ![...Object.keys(FLAGS), RECEIPT].some(key => line.startsWith(`${key}=`)));
-  return `${retained.join("\n").replace(/\n*$/u, "")}\n${Object.entries(FLAGS).map(([key,value])=>`${key}=${value}`).join("\n")}\n`;
+export function renderStagingBillingCapture(previous, commit, runId, attempt) {
+  const activation = activationValue(commit, runId, attempt);
+  const retained = previous.split(/\r?\n/u).filter(line => ![...Object.keys(FLAGS), RECEIPT, ACTIVATION].some(key => line.startsWith(`${key}=`)));
+  return `${retained.join("\n").replace(/\n*$/u, "")}\n${Object.entries(FLAGS).map(([key,value])=>`${key}=${value}`).join("\n")}\n${ACTIVATION}=${activation}\n`;
 }
 function privateRelease() {
   const fd = openSync(FILE, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
@@ -82,13 +100,14 @@ async function main() {
     if (!previous.split(/\r?\n/u).includes(`FANMIND_RELEASE_COMMIT=${env.GITHUB_SHA}`)) throw Error();
     preserveStagingBillingCapture(previous);
     const temporary = `${FILE}.capture-${randomBytes(8).toString("hex")}`;
-    try { writeFileSync(temporary, renderStagingBillingCapture(previous), { mode:0o600, flag:"wx" }); renameSync(temporary, FILE); }
+    try { writeFileSync(temporary, renderStagingBillingCapture(previous, env.GITHUB_SHA, env.GITHUB_RUN_ID, env.GITHUB_RUN_ATTEMPT), { mode:0o600, flag:"wx" }); renameSync(temporary, FILE); }
     finally { try { unlinkSync(temporary); } catch {} }
     console.log("STAGING_BILLING_CAPTURE_CONFIGURED=PASS"); return;
   }
   if (mode === "--record-proof") {
     if (env.FANMIND_CAPTURE_PERSISTENCE_VERIFIED !== "true" || !/^[0-9]{1,20}$/u.test(env.GITHUB_RUN_ID ?? "")) throw Error();
     const previous = privateRelease();
+    verifyCaptureActivation(previous, env.GITHUB_SHA, env.GITHUB_RUN_ID, env.GITHUB_RUN_ATTEMPT);
     if (!previous.split(/\r?\n/u).includes(`FANMIND_RELEASE_COMMIT=${env.GITHUB_SHA}`) || !preserveStagingBillingCapture(previous)) throw Error();
     const content = previous.split(/\r?\n/u).filter(line => !line.startsWith(`${RECEIPT}=`)).join("\n").replace(/\n*$/u, "");
     const temporary = `${FILE}.receipt-${randomBytes(8).toString("hex")}`;
@@ -97,6 +116,7 @@ async function main() {
     console.log("STAGING_BILLING_CAPTURE_RECEIPT=PASS"); return;
   }
   if (mode !== "--send") throw Error();
+  verifyCaptureActivation(privateRelease(), env.GITHUB_SHA, env.GITHUB_RUN_ID, env.GITHUB_RUN_ATTEMPT);
   const now = Math.floor(Date.now()/1000);
   const event = buildStagingCaptureEvent(env.GITHUB_RUN_ID, now);
   const body = JSON.stringify(event);
