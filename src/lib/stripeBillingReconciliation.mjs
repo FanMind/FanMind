@@ -131,7 +131,7 @@ export async function executeStripeBillingReconciliation({ input, observation, a
     try { const now = clock(); evaluationTime=now; return Number.isFinite(now) && observed <= now + 300000 && observed >= now - 900000; } catch { return false; }
   };
   if (!fresh()) return { status: "blocked", reason: "snapshot_expired" };
-  if (!adapters || typeof adapters.commitBilling !== "function") return { status: "blocked", reason: "adapter_missing" };
+  if (!adapters || typeof adapters.withBillingReservation !== "function" || typeof adapters.commitBilling !== "function") return { status: "blocked", reason: "adapter_missing" };
   if (body.p_event_stream === "lifecycle" && (typeof adapters.reconcileAi !== "function" || typeof adapters.reconcileReferral !== "function")) return { status: "blocked", reason: "adapter_missing" };
   const projectionMatches=()=>{
     try {
@@ -141,6 +141,12 @@ export async function executeStripeBillingReconciliation({ input, observation, a
     catch { return false; }
   };
   if (!projectionMatches()) return {status:"blocked",reason:"projection_snapshot_mismatch"};
+  // The operator must hold an exclusive, revision/pending-set-validated
+  // reservation for this exact command until this callback and release finish.
+  // There is deliberately no unfenced fallback for the REST committer.
+  const runReserved=async()=>{
+    if(!fresh()) return {status:"blocked",reason:"snapshot_expired"};
+    if(!projectionMatches()) return {status:"blocked",reason:"projection_snapshot_mismatch"};
   let stage = "downstream";
   try {
     if (body.p_event_stream === "lifecycle") {
@@ -155,6 +161,21 @@ export async function executeStripeBillingReconciliation({ input, observation, a
     const result = normalizeStripeBillingReconciliationResult(await adapters.commitBilling(body), body.p_expected_revision);
     return result ?? { status: "indeterminate", reason: "billing_receipt_invalid" };
   } catch { return { status: "indeterminate", reason: stage === "billing" ? "billing_transport" : "downstream_transport" }; }
+  };
+  try {
+    let entered=0;let outcome;
+    const returned=await adapters.withBillingReservation(body,async reservation=>{
+      if(entered++ || reservation?.contract!=="stripe-billing-reservation-v1" || reservation.held!==true) return outcome={status:"blocked",reason:"billing_reservation_invalid"};
+      let reserved;
+      try {reserved=canonicalizeStripeBillingReconciliationCommand(reservation.command);} catch {return outcome={status:"blocked",reason:"billing_reservation_invalid"};}
+      if(JSON.stringify(reserved)!==JSON.stringify(body)) return outcome={status:"blocked",reason:"billing_reservation_invalid"};
+      outcome=await runReserved();return outcome;
+    });
+    if(entered!==1 || returned!==outcome) return {status:"indeterminate",reason:"billing_reservation_invalid"};
+    return returned;
+  } catch(error) {
+    return error?.message==="billing_state_changed"?{status:"blocked",reason:"billing_state_changed"}:{status:"indeterminate",reason:"billing_reservation_transport"};
+  }
 }
 
 

@@ -24,7 +24,7 @@ export function canonicalStripeBillingProjection(snapshot, now) {
   return {billing_status:status,workspace_access_mode:terminal?"archived_readonly":"active",
         billing_suspended_at:terminal?snapshot.observedAt:null,billing_suspended_reason:terminal?`stripe_canonical_${snapshot.status}`:null,
         stripe_customer_id:snapshot.customerId,stripe_subscription_id:snapshot.subscriptionId,
-        billing_current_period_end_at:iso(baseItems[0].end),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd,
+        billing_contract_started_at:iso(snapshot.createdAt),billing_current_period_end_at:iso(baseItems[0].end),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd,
         subscription_effective_end_at:iso(end),
         ...(!cancellation || snapshot.canceledAt!==null?{subscription_cancel_requested_at:cancellation?iso(snapshot.canceledAt):null}:{}),
         last_invoice_id:invoice?.id ?? null,last_invoice_status:invoice?.status ?? null,

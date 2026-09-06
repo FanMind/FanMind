@@ -9,7 +9,7 @@ const supported = new Set(["active", "canceled", "past_due", "unpaid", "incomple
 
 function normalize(subscription, target, allowedPrices) {
   if (subscription?.object !== "subscription" || subscription.id !== target.subscriptionId ||
-      subscription.customer !== target.customerId || subscription.livemode !== false || !supported.has(subscription.status) ||
+      subscription.customer !== target.customerId || !Number.isSafeInteger(subscription.created) || subscription.created<0 || subscription.livemode !== false || !supported.has(subscription.status) ||
       subscription.metadata?.workspace_id !== target.workspaceId ||
       subscription.pending_update || subscription.pause_collection ||
       subscription.items?.object !== "list" || subscription.items.has_more !== false ||
@@ -45,7 +45,7 @@ function normalize(subscription, target, allowedPrices) {
   if (subscription.status === "active" && (!latestInvoice || latestInvoice.status !== "paid" || latestInvoice.amountRemaining !== 0)) fail("invoice_unresolved");
   if (typeof subscription.cancel_at_period_end !== "boolean" ||
       [subscription.cancel_at,subscription.canceled_at,subscription.ended_at].some(value=>value!==null && (!Number.isSafeInteger(value) || value<0))) fail("subscription_unresolved");
-  return {customerId:target.customerId,subscriptionId:target.subscriptionId,basePriceId:target.basePriceId,status:subscription.status,
+  return {customerId:target.customerId,subscriptionId:target.subscriptionId,basePriceId:target.basePriceId,createdAt:subscription.created,status:subscription.status,
     cancelAtPeriodEnd:subscription.cancel_at_period_end,cancelAt:subscription.cancel_at,canceledAt:subscription.canceled_at,endedAt:subscription.ended_at,items,latestInvoice};
 }
 

@@ -346,3 +346,18 @@ raw tax values are not required. Current delinquency records the bounded
 observation time, rather than claiming an unavailable precise provider failure
 time. Recovery canonicalizes persisted commands before comparing all fields and
 their fingerprint, so JSONB key order does not change command identity.
+
+
+Execution now requires an operator-provided `withBillingReservation(command,
+callback)` driver. Before entering the callback it must atomically verify the
+exact stream revision and complete pending event set, acquire exclusive fencing
+against event capture and competing canonical operators, and hold that exclusion
+through all AI/referral/Billing work until callback completion and release. The
+callback receives `contract: stripe-billing-reservation-v1`, `held: true` and the
+same canonical command. A changed state raises the fixed `billing_state_changed`
+code before any downstream mutation. There is no unfenced fallback. A naive PG
+row/advisory lock around independent REST RPC connections is not a valid driver;
+use a reviewed cooperative reservation or the same database transaction for all
+scoped database work. The real driver remains an explicit activation gate.
+Provider `subscription.created` is retained as the Workspace contract start so
+Starter-12 cancellation cannot restart its minimum term at reconciliation time.
