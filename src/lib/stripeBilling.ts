@@ -13,7 +13,11 @@ import {
   isMissingWorkspaceExpandColumn,
   withoutWorkspaceExpandColumns,
 } from "@/lib/workspaceProvisioning";
-import { isStripeBillingWriteFrozen } from "@/lib/stripeBillingWriteFreeze.mjs";
+import {
+  isStripeBillingWriteFrozen,
+  STRIPE_BILLING_WRITE_FREEZE_CODE,
+  STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
+} from "@/lib/stripeBillingWriteFreeze.mjs";
 import {
   STRIPE_BILLING_ALLOWED,
   STRIPE_BILLING_BLOCKED,
@@ -217,7 +221,14 @@ export async function createStripeCheckoutSession(input: {
   userId: string;
   workspaceId: string;
   userEmail?: string;
-}): Promise<{ url?: string; id?: string; error?: string }> {
+}): Promise<{ url?: string; id?: string; error?: string; code?: string }> {
+  // All API, page and admin entry points share this provider boundary.
+  if (isStripeBillingWriteFrozen()) {
+    return {
+      error: STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
+      code: STRIPE_BILLING_WRITE_FREEZE_CODE,
+    };
+  }
   const stripe = getStripeClient();
   const appUrl = getAppUrl();
   const stripeConfig = getStripeConfigStatus();

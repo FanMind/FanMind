@@ -43,3 +43,6 @@ The switch exists only to make the documented Staging SQL-apply -> capture-only 
 
 ## Rollback
 Unset `FANMIND_STRIPE_BILLING_WRITE_FREEZE` (or leave it absent) and revert this PR if necessary. The default remains normal legacy behavior until the separately controlled ledger cutover is authorized and executed.
+
+## Review continuation — 2026-09-06
+The previous head's API-only freeze did not enforce the advertised shared boundary. The follow-up guards `createStripeCheckoutSession()` before loading the Stripe client and handles the fixed result in API, payment page, redirect route and internal admin checkout. The payment page displays the temporary maintenance message without a new payment link. Tests execute the actual shared module for both Starter plans and the internal test plan, prove zero provider access while frozen, and prove normal recovery after unfreeze. Deliberately removing the guard makes all three negative cases fail. Existing Stripe sessions are not expired by this switch. Exact-head remote gates and separately protected Staging acceptance remain open; no payment, migration or runtime activation occurred.

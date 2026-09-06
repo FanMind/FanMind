@@ -5,6 +5,7 @@ import {
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { getStripeClient } from "@/lib/stripeClient";
 import { getSupabaseAuthUrl, getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import type { SupabaseServerUser } from "@/lib/supabase/server";
@@ -130,6 +131,9 @@ export async function startInternalDailyTestCheckout(workspaceId: string, admin:
   if (!plan) return { ok: false, status: 503, error: "STRIPE_PRICE_INTERNAL_DAILY_TEST ist nicht konfiguriert." };
   if (!workspace.owner_user_id || !workspace.owner_email) return { ok: false, status: 409, error: "Der Workspace-Owner und seine E-Mail müssen vor dem Stripe-Test eindeutig aufgelöst werden." };
   const session = await createStripeCheckoutSession({ plan, userId: workspace.owner_user_id, workspaceId, userEmail: workspace.owner_email });
+  if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
+    return { ok: false, status: 503, error: session.error ?? "Zahlungen sind vorübergehend pausiert. Bitte versuche es gleich erneut." };
+  }
   if (!session.url) return { ok: false, status: 502, error: session.error ?? "Stripe Checkout konnte nicht gestartet werden." };
   const persisted = await updateAdminBillingWorkspace(workspaceId, admin, {
     plan_id: "pilot",

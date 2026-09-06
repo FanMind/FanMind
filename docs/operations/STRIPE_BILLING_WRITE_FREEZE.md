@@ -16,12 +16,16 @@ Fehlt der Wert, ist er leer oder ist er nicht exakt `true`, ist die Sperre aus.
 
 Während der Sperre:
 
+- die gemeinsame Funktion `createStripeCheckoutSession()` liefert den festen Sperrcode, bevor sie den Stripe-Client lädt; dies schützt API, `/billing/start`, `/billing/checkout` und den internen Admin-Test-Checkout gleichermaßen;
 - `/api/billing/checkout` antwortet vor einer Stripe-Session-Erzeugung mit HTTP `503`, dem festen Code `stripe_billing_write_frozen` und `Retry-After: 60`;
+- die Zahlungsstartseite zeigt den Wartungshinweis ohne neuen Checkout-Link, der alternative Checkout-Einstieg führt dorthin zurück und der Admin-Test-Checkout liefert `503` ohne anschließende Workspace-Aktualisierung;
 - legacy Workspace-Billing-Projektionen liefern `STRIPE_BILLING_RETRYABLE_ERROR`;
 - ein bereits signierter und behandelter Stripe-Webhook wird dadurch nicht als erfolgreich projiziert bestätigt, sondern bleibt retry-fähig;
 - die Sperre selbst führt keine Stripe-, Supabase- oder Production-Mutation aus.
 
 Die Signaturprüfung des Webhooks bleibt unverändert vorgelagert. Ungültige Signaturen werden weiterhin normal abgelehnt.
+
+Bereits bei Stripe angelegte Sessions werden durch diesen Schalter nicht beendet. Der Sperrnachweis gilt für neue Session-Erzeugung in der neu geladenen Runtime und die lokale Legacy-Projektion; der bestehende Ledger-/Cutover-Abgleich bleibt für bereits laufende Zahlungsereignisse erforderlich.
 
 ## Verbindliche Staging-Sequenz
 

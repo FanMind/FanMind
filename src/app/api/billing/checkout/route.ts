@@ -10,6 +10,7 @@ import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan
 import {
   isStripeBillingWriteFrozen,
   STRIPE_BILLING_WRITE_FREEZE_CODE,
+  STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
 } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
@@ -90,6 +91,12 @@ export async function POST(request: NextRequest) {
   }
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspaceResult.workspace.id, userEmail: data.user.email });
+  if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
+    return NextResponse.json(
+      { error: STRIPE_BILLING_WRITE_FREEZE_MESSAGE, code: STRIPE_BILLING_WRITE_FREEZE_CODE },
+      { status: 503, headers: { "Retry-After": "60" } },
+    );
+  }
   if (!session.url) return NextResponse.json({ error: "Die Zahlung konnte nicht gestartet werden. Bitte kontaktiere FanMind.", code: "checkout_unavailable" }, { status: 502 });
   return NextResponse.json({ url: session.url, sessionId: session.id });
 }

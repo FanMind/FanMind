@@ -1,5 +1,19 @@
 # Work Locks
 
+## LOCK-FM-AI-001-FREEZE-REVIEW-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Status: RELEASED
+- Holder: Codex continuation 2026-09-06
+- Acquired: 2026-09-06
+- Released: 2026-09-06 after bounded implementation and local negative/countercheck; PR publication and remote checks remain tracked in the receipt.
+- Risk: R4 Billing code only
+- Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
+- Scope: repair confirmed shared-Checkout freeze bypass, maintain caller feedback, executable negative/regression verification and handoff.
+- Reconciliation: previous AI locks are RELEASED; no freeze lock exists. Preserve all accepted tasks and owner-deferred external work.
+- Evidence plan: actual shared-function execution with a mocked Stripe client, zero provider calls during freeze, restored normal behavior when off, caller handling, relevant CI and diff countercheck.
+- Recovery: revert only this repository follow-up; no database/provider/runtime state changes.
+
+
 Prevents two agents/sessions from independently working the same task.
 
 ## LOCK-FM-WEB-004-RETENTION-STAGING-20260904
