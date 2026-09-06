@@ -767,9 +767,15 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
   Ledger-Gate inaktiv.
 - Dieses KI-Ledger umfasst nicht die allgemeinen Billing-Felder auf
   `workspaces`. Checkout-, Invoice-, Subscription-, PaymentIntent-, Refund-
-  und Tax-Mutationen besitzen nun ein kontrolliertes, noch nicht angewendetes
+  und Tax-Mutationen besitzen nun ein kontrolliertes, auf Staging angewendetes
   gemeinsames Basis-Billing-Event-Ledger mit kanonischer Reconciliation.
-  Nach einem späteren kontrollierten Apply ersetzt zunächst eine zweifach
+  Aktualisierung 6. September 2026: Der kontrollierte Staging-Apply und die
+  signierte dauerhafte Capture-only-Abnahme sind inzwischen erfolgreich; die
+  Checkout-Wartungssperre ist aufgehoben. Kanonische Projektion und echte
+  Zahlungs-/Abo-Abnahme bleiben offen. Der Test-Snapshot-Leser und die
+  belegsgebundene Operator-/RPC-Verbindung sind als unverdrahtete Bausteine
+  vorbereitet; KI-/Referral-Adapter und vollständige Provider-Abdeckung fehlen.
+  Nach dem kontrollierten Apply ersetzt zunächst eine zweifach
   bestätigte Capture-only-Stufe den Legacy-PATCH, ohne Projektionen zuzulassen;
   erst die dritte kanonische Bestätigung erlaubt Projektionen.
   Für Apply→Capture gilt ein dokumentierter Billing-Write-Freeze mit

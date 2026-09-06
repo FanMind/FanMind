@@ -74,8 +74,8 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 - Persistenter Entitlement-Speicher: server-only Tabelle und redigierender
   Loader sind auf dem getrennten Supabase-Staging migriert und nachgeprüft;
   der echte Stripe-Webhook enthält nun eine standardmäßig inaktive Lifecycle-
-  Brücke. Eine noch nicht angewendete kontrollierte Erweiterung bereitet ein
-  persistentes Event-Ledger und eine atomare CAS/RPC-Grenze vor. Sie arbeitet
+  Brücke. Die auf Staging angewendete kontrollierte Erweiterung stellt ein
+  persistentes Event-Ledger und eine atomare CAS/RPC-Grenze bereit. Sie arbeitet
   erst bei eigenem Persistence- und Ledger-Gate, bestätigtem Workspace-Vertrag
   und zwei unterschiedlichen serverseitigen KI-Price-IDs. Sekundenkollisionen
   werden dauerhaft `reconciliation_needed` und fallen auf Standard zurück;
@@ -88,8 +88,8 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Production-Migration und produktive KI-Nutzung sind nicht freigegeben,
   der kanonische Reconciliation-Worker und die echte Abnahme fehlen weiterhin,
   daher bleiben Plus/Ultra blockiert.
-- Basis-Billing-Event-Ledger: Eine zweite, ebenfalls nicht angewendete und
-  standardmäßig dormante kontrollierte Erweiterung umfasst Checkout, Invoice,
+- Basis-Billing-Event-Ledger: Eine zweite, auf Staging kontrolliert angewendete
+  Erweiterung umfasst Checkout, Invoice,
   Subscription, PaymentIntent, Refund/Dispute und Tax. Sie persistiert
   unaufgelöste signierte Events, bindet rotierende/historische Stripe-Objekte
   tenant-sicher, verhindert verspätete Reaktivierung und verlangt bei
@@ -101,6 +101,12 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Der Apply prüft das exakte Schema sowohl innerhalb seiner Transaktion als
   auch danach unabhängig read-only; beide Ledger-Workflows verlangen zuvor
   den gemeinsamen Rollout-State mit der exakten Aktion `apply` und `PASS`.
+  Stand 6. September 2026: Capture-only ist auf Staging nachweislich aktiv;
+  die Checkout-Wartungssperre ist aufgehoben. Test-Snapshot-Leser, kanonischer
+  Befehlsaufbau und belegsgebundene KI-/Referral-vor-Billing-Orchestrierung
+  sind vorbereitet. Die konkreten Downstream-Adapter, vollständige Provider-
+  Abdeckung und geschützte Lifecycle-Abnahme bleiben offen; kanonische
+  Projektion und Zahlungsbedingungen-Aktivierung bleiben gesperrt.
   Ablauf: `docs/operations/STRIPE_BILLING_EVENT_LEDGER.md`.
 - Kontrollierter Entitlement-Migrationspfad: `npm run db:ai-tier-entitlements:check` prüft die festgeschriebene Migration offline; `verify` und `apply` sind explizit zielgebunden und führen niemals automatisch durch einen Web-Deploy aus. Der manuelle, ausschließlich auf `main` und das GitHub-Environment `staging` begrenzte Workflow `FanMind AI Tier Staging Migration` bereitet den echten Staging-Apply samt Postflight vor.
 - KI-Stufen-Staging-Abnahme: manueller rollback-only Workflow für getrennte

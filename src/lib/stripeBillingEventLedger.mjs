@@ -244,7 +244,7 @@ function validIsoTimestamp(value) {
   );
 }
 
-function normalizeProjection(fields) {
+export function normalizeStripeBillingProjection(fields) {
   const value = record(fields);
   if (!value) return null;
   const projection = {};
@@ -357,7 +357,7 @@ export function buildStripeBillingLedgerCommand({
   const eventCreatedAt = eventRecord?.created;
   const contract = EVENT_CONTRACTS.get(eventType);
   const object = objectField(eventRecord?.data, "object") ?? {};
-  const projection = normalizeProjection(projectionInput);
+  const projection = normalizeStripeBillingProjection(projectionInput);
   if (
     !eventId ||
     !EVENT_PATTERN.test(eventId) ||

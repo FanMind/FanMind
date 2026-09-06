@@ -1,5 +1,15 @@
 Warning: truncated output (original token count: 30288)
 
+## RECEIPT-CANONICAL-BILLING-20260906
+- Task: FM-AI-001; Risk: R4; lock LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
+- Scope: missing normalized canonical Billing RPC command and ordered downstream orchestration. No Production target, new SQL, provider payment or legal activation.
+- Baseline: 8ef7970866f04d0d575522d361ebef868db23ae3; prior capture/unfreeze 34043010578 / 34043148548 PASS.
+- Evidence plan: semantic command/fingerprint tests, stale/conflicting/partial downstream failure tests, exact-head CI and independent review; later runtime action requires separately completed provider/downstream bindings.
+- Falsification: a stale or unrelated downstream receipt or an indeterminate retry must never activate access; unknown projection fields or incomplete identity must never reach the RPC.
+- Recovery: bridge remains uncalled by routes/workers; revert repository changes without changing schema/runtime.
+- Implementation: normalized command/fingerprint and target-bound RPC adapter; ordered AI/referral receipt gate; Test-only paginated provider snapshot reader with consistency/binding checks. Focused 23 tests, existing Webhook 108 tests and Operations 1150 tests pass; source-of-truth baseline reconciles actual Staging Apply/capture/unfreeze without asserting canonical acceptance; lint and production build also pass; full remote CI/review and runtime wiring remain open.
+- Status: IN_PROGRESS.
+
 ## RECEIPT-FINISHLINE-RESUME-20260906
 - Status: IN_PROGRESS
 - Risk: R4
