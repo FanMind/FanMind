@@ -232,6 +232,8 @@ jobs:
           # Preserve device encryption material before replacing the private env.
           NEXT_ENV=/var/www/fanmind-staging/.env.production.provisioning
           test ! -e "$NEXT_ENV" && test ! -L "$NEXT_ENV"
+          trap 'rm -f "$ENV_TMP"
+          sudo rm -f "$NEXT_ENV"' EXIT
           sudo install -o fanmind-staging -g fanmind-staging -m 0600 "$ENV_TMP" "$NEXT_ENV"
           sudo -u fanmind-staging /usr/bin/node scripts/operations/staging-push-key-preservation.mjs
           sudo mv -T "$NEXT_ENV" /var/www/fanmind-staging/.env.production

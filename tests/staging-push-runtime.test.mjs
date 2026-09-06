@@ -69,6 +69,9 @@ test("runtime activation consumes exact successful acceptance and independent pr
   assert.match(workflow, /needs: verify-acceptance/);
   assert.match(workflow, /run.head_sha !== process.env.GITHUB_SHA/);
   assert.match(workflow, /run.conclusion !== 'success'/);
+  assert.match(workflow, /job.conclusion !== 'success'/);
+  assert.match(workflow, /Run synthetic rollback-only Staging acceptance/);
+  assert.match(workflow, /step.conclusion === 'success'/);
   assert.match(workflow, /run.path !== '.github\/workflows\/mobile-push-staging-acceptance.yml'/);
   assert.match(workflow, /FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT:.*vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF/);
 });

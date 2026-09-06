@@ -57,6 +57,18 @@ jobs:
                 !Number.isFinite(Date.parse(run.updated_at)) ||
                 Date.now() - Date.parse(run.updated_at) > 7200000 ||
                 Date.parse(run.updated_at) > Date.now()) throw Error();
+            const jobsResponse = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/runs/${id}/jobs?filter=latest&per_page=100`, {
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' },
+              redirect: 'error', signal: AbortSignal.timeout(15000),
+            });
+            if (!jobsResponse.ok) throw Error();
+            const jobs = await jobsResponse.json();
+            const job = jobs.jobs?.[0];
+            if (jobs.total_count !== 1 || jobs.jobs?.length !== 1 ||
+                job.name !== 'Verify browser denial, service-role CRUD and complete rollback' ||
+                job.status !== 'completed' || job.conclusion !== 'success' ||
+                !['Verify applied schema without writes', 'Run synthetic rollback-only Staging acceptance']
+                  .every(name => job.steps?.some(step => step.name === name && step.status === 'completed' && step.conclusion === 'success'))) throw Error();
             console.log('STAGING_PUSH_RUNTIME_ACCEPTANCE=PASS');
           } catch { console.error('STAGING_PUSH_RUNTIME_ACCEPTANCE=FAIL'); process.exit(1); }
           NODE
