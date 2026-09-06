@@ -5,9 +5,9 @@
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
-- Completed so far: main 8ef7970866f04d0d575522d361ebef868db23ae3; Billing schema installed, capture proof 34043010578 and unfreeze deployment 34043148548 PASS. Push registration configured; device evidence pending.
-- Still open: current Play/build details, protected Billing cutover, actual device/provider evidence and Restore connectivity/readiness.
-- Exact next step: implement the missing canonical Billing command and downstream orchestration boundary, prove negative/retry ordering, then exact-head review. No canonical runtime activation or legal acceptance is implied.
+- Completed so far: Billing schema/capture-only foundation remains proven (Apply 34040107219, durable capture 34043010578, unfreeze 34043148548); #1069 merged as `294264e216ee0c6844caab5c6f51f11f2a76eeeb`; #1070 merged as `2be4f5a784eff80ba417037ed0460a77f9f8353e`; exact-main Production Web deploy 34054123685 plus CodeQL 34054123690, Browser E2E 34054123687 and Supply Chain 34054123750 passed. Push registration runtime is configured; real device evidence remains pending.
+- Still open: exact isolated-Staging deploy/runtime proof for `2be4f5a...`, rollback-only canonical Billing acceptance, actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and Restore connectivity/readiness. Canonical projection, real payment and paid-tier activation remain disabled.
+- Exact next step: deploy exact reviewed `main` `2be4f5a784eff80ba417037ed0460a77f9f8353e` to isolated Staging through `deploy-staging.yml` with `confirmation=deploy-staging-only` and `billing_write_freeze=preserve`; independently countercheck the exact Staging runtime and disabled canonical projection; only then run the separately protected rollback-only `staging-billing-canonical-acceptance.yml`. No Production DB mutation, actual payment/refund, provider activation, Plus/Ultra activation or legal acceptance is implied.
 - Owner action needed: actual handset observation and Exoscale authentication if no existing authorized session.
 
 
