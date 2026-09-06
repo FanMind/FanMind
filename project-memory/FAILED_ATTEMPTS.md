@@ -203,3 +203,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause: three index checks expected a DESC suffix from pg_get_indexdef(index,column,true). Live PostgreSQL metadata shows only the column name there; indoption separately reports order/null flags.
 - Correction: compare column name and exact 0 0 3 flags, retaining the pinned index source-hash oracle and all structural/ACL gates. Re-pin SQL; require exact review/CI and guarded Staging Apply.
 - Do not repeat: do not weaken the sort-direction check or invoke direct/generic SQL Apply. Old APK 6d7f76cd also predates FCM binding; use the completed 6801d687 replacement for device acceptance.
+
+## FM-FAIL-021
+- Date: 2026-09-06
+- Status: CORRECTION_IN_REVIEW
+- Area: Billing index oracle isolation and AI ledger acceptance
+- Attempt: Billing 34039136137 / 101502568706 on 32113f7; AI acceptance 34039054095 / 101502349244.
+- Result: Billing still rejects stripe_billing_ledger_indexes_invalid; AI rejects ledger_acceptance_projection_cleanup_failed. Independent read-only counts confirm Billing tables absent and AI entitlements/events zero.
+- Cause: the structural index EXISTS also scans the same-named pg_temp oracle indexes and rejects their intentionally different table names. AI ledger correctly retains a canceled projection to preserve ordering; the old acceptance expected deletion.
+- Correction: bind structural actual-index scan to public, retaining the exact public/temp hash oracle. Require canceled/in_sync/revision-3/exact-event tombstone before rollback and complete absence after rollback.
+- Do not repeat: never remove oracle/hash checks, delete retained ledger state or bypass the protected transactional apply/acceptance workflows.

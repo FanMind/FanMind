@@ -149,6 +149,7 @@ test("schema postflight is exact, transactional and source/body-bound", async ()
   assert.doesNotMatch(sql, /fanmind-exact-v1:/u);
   assert.doesNotMatch(sql, /comment on constraint|comment on index/iu);
   assert.match(sql, /stripe_billing_ledger_indexes_invalid/u);
+  assert.match(sql, /where table_relation\.relnamespace = 'public'::regnamespace\s+and index_relation\.relname in/u);
   assert.match(sql, /stripe_billing_ledger_table_acl_invalid/u);
   assert.match(sql, /stripe_billing_ledger_column_acl_invalid/u);
   assert.match(sql, /stripe_billing_ledger_function_set_invalid/u);
