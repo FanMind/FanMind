@@ -1,32 +1,46 @@
 import assert from "node:assert/strict";
-import { open } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 
-const expectedPackage = "ch.fanmind.app";
-const configPath = String(process.env.GOOGLE_SERVICES_JSON ?? "").trim();
-
-assert.ok(configPath, "ANDROID_FCM_PREVIEW_CONFIG_MISSING");
-assert.doesNotMatch(configPath, /[\r\n\0]/u, "ANDROID_FCM_PREVIEW_CONFIG_INVALID_PATH");
-
-const configFile = await open(configPath, "r");
-let parsed;
-try {
-  const fileStat = await configFile.stat();
-  assert.ok(fileStat.isFile(), "ANDROID_FCM_PREVIEW_CONFIG_NOT_FILE");
-  parsed = JSON.parse(await configFile.readFile("utf8"));
-} finally {
-  await configFile.close();
-}
-
-const clients = Array.isArray(parsed?.client) ? parsed.client : [];
-const packageMatches = clients.some(
-  (client) => client?.client_info?.android_client_info?.package_name === expectedPackage,
+const reportPath = String(process.argv[2] ?? "").trim();
+assert.ok(reportPath, "ANDROID_FCM_PREVIEW_METADATA_REPORT_MISSING");
+assert.doesNotMatch(
+  reportPath,
+  /[\r\n\0]/u,
+  "ANDROID_FCM_PREVIEW_METADATA_REPORT_INVALID_PATH",
 );
 
-assert.equal(packageMatches, true, "ANDROID_FCM_PREVIEW_PACKAGE_MISMATCH");
+const rawReport = await readFile(reportPath, "utf8");
+const report = rawReport.replace(/\u001b\[[0-9;]*m/gu, "");
+const lines = report.split(/\r?\n/u).map((line) => line.trim());
+
+const nameIndex = lines.findIndex((line) =>
+  /^Name\s+GOOGLE_SERVICES_JSON$/iu.test(line),
+);
+assert.ok(nameIndex >= 0, "ANDROID_FCM_PREVIEW_CONFIG_METADATA_MISSING");
+
+const nextVariableIndex = lines.findIndex(
+  (line, index) => index > nameIndex && /^Name\s+/u.test(line),
+);
+const block = lines.slice(
+  nameIndex,
+  nextVariableIndex === -1 ? undefined : nextVariableIndex,
+);
+
 assert.ok(
-  typeof parsed?.project_info?.project_id === "string" &&
-    parsed.project_info.project_id.trim().length > 0,
-  "ANDROID_FCM_PREVIEW_PROJECT_ID_MISSING",
+  block.some((line) => /^Scope\s+PROJECT$/iu.test(line)),
+  "ANDROID_FCM_PREVIEW_CONFIG_SCOPE_MISMATCH",
+);
+assert.ok(
+  block.some((line) => /^Visibility\s+SECRET$/iu.test(line)),
+  "ANDROID_FCM_PREVIEW_CONFIG_VISIBILITY_MISMATCH",
+);
+assert.ok(
+  block.some((line) => /^Environments\s+preview$/iu.test(line)),
+  "ANDROID_FCM_PREVIEW_CONFIG_ENVIRONMENT_MISMATCH",
+);
+assert.ok(
+  block.some((line) => /^type\s+file$/iu.test(line)),
+  "ANDROID_FCM_PREVIEW_CONFIG_TYPE_MISMATCH",
 );
 
 console.log("ANDROID_FCM_SIGNED_BUILD_PREREQUISITE=PASS");

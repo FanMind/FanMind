@@ -16,6 +16,8 @@ FanMind uses `expo-notifications` for Android remote Push. The signed Android ap
 
 `apps/mobile/app.config.js` reads only the file path exposed by EAS. It does not contain Firebase JSON contents, a server key or a service-account key. When `GOOGLE_SERVICES_JSON` is absent, normal local/CI prebuild remains possible but a build must not be accepted for real Android remote-Push testing.
 
+EAS variables with visibility `Secret` cannot be read back by `eas env:exec`; they are available only on the EAS builder. The GitHub signed-build gate therefore verifies only non-secret metadata before queueing: `GOOGLE_SERVICES_JSON` must exist at project scope, be linked to `preview`, have visibility `Secret` and type `file`. The file contents remain unreadable in GitHub. During the actual EAS Android build, the Google Services Gradle integration consumes that secret file and fails the build if it does not match the app package/configuration.
+
 `apps/mobile/src/lib/mobilePushRegistration.ts` obtains the native device push token first. If Android cannot obtain that token, FanMind reports the fixed non-secret diagnostic that Firebase/FCM is not fully connected instead of collapsing the failure into an ambiguous generic registration error.
 
 ## Acceptance after binding

@@ -32,7 +32,11 @@ This change:
 4. Only after those bindings are present may one replacement signed Android `preview` build be queued from the merged reviewed commit.
 
 ## Current external provider evidence
-On 2026-09-05 the owner supplied current Expo/EAS credential-screen evidence showing that an FCM V1 service-account key is present for the FanMind Android credentials. No key material, key ID or credential payload is retained in Project Memory. The replacement-build workflow still independently verifies the Preview `GOOGLE_SERVICES_JSON` file and exact Android package before it is allowed to queue a build.
+On 2026-09-05 the owner supplied current Expo/EAS credential-screen evidence showing that an FCM V1 service-account key is present for the FanMind Android credentials. No key material, key ID or credential payload is retained in Project Memory.
+
+After PR #1059 merged as `1d15d8e4698392174ad7d5be23a7f174ebb2303d`, replacement-build run `33997042162` failed closed before any EAS build was queued. EAS project binding and the public Preview environment both passed; only the new FCM prerequisite step failed. The cause is now reconciled: EAS `Secret` variables are intentionally unreadable through `eas env:exec` and become available only on the EAS builder, so a GitHub-side attempt to open `GOOGLE_SERVICES_JSON` can never prove the secret file contents. No signed build, Submit, Update, provider send or Production mutation occurred in that failed run.
+
+The corrected preflight therefore verifies only safe EAS metadata before queueing: `GOOGLE_SERVICES_JSON` must exist at project scope, be linked to `preview`, have visibility `Secret` and type `file`. The secret file contents remain unreadable in GitHub. The actual EAS Android build consumes the file through `android.googleServicesFile`; the Google Services build integration remains the fail-closed package/configuration check on the builder.
 
 ## Acceptance
 - exact-head Mobile/native/general CI and Project Memory gates green;
