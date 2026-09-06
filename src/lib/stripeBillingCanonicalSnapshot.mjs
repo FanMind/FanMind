@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { buildStripeBillingReconciliation } from "./stripeBillingReconciliation.mjs";
+import { billingStatusFromStripeSubscriptionStatus, billingStatusFromInvoiceFailure } from "./referralLifecyclePolicy.mjs";
 
 const id = (value, prefix) => typeof value === "string" && value.length <= 255 && new RegExp(`^${prefix}_[A-Za-z0-9_]+$`, "u").test(value);
 const fail = code => { throw Error(code); };
@@ -9,7 +10,7 @@ const supported = new Set(["active", "canceled", "past_due", "unpaid", "incomple
 function normalize(subscription, target, allowedPrices) {
   if (subscription?.object !== "subscription" || subscription.id !== target.subscriptionId ||
       subscription.customer !== target.customerId || subscription.livemode !== false || !supported.has(subscription.status) ||
-      (subscription.metadata?.workspace_id !== undefined && subscription.metadata.workspace_id !== target.workspaceId) ||
+      subscription.metadata?.workspace_id !== target.workspaceId ||
       subscription.pending_update || subscription.pause_collection ||
       subscription.items?.object !== "list" || subscription.items.has_more !== false ||
       !Array.isArray(subscription.items.data) || !subscription.items.data.length || subscription.items.data.length > 2) fail("subscription_unresolved");
@@ -28,14 +29,22 @@ function normalize(subscription, target, allowedPrices) {
     if (invoice?.object !== "invoice" || !id(invoice.id,"in") || invoice.livemode !== false || invoice.customer !== target.customerId ||
         invoice.parent?.subscription_details?.subscription !== target.subscriptionId ||
         !["draft","open","paid","uncollectible","void"].includes(invoice.status) ||
-        !Number.isSafeInteger(invoice.amount_remaining) || invoice.amount_remaining < 0) fail("invoice_unresolved");
-    latestInvoice = {id:invoice.id,status:invoice.status,amountRemaining:invoice.amount_remaining};
+        [invoice.amount_remaining,invoice.amount_due,invoice.amount_paid,invoice.created,invoice.attempt_count].some(value=>!Number.isSafeInteger(value) || value<0) ||
+        (invoice.next_payment_attempt !== null && (!Number.isSafeInteger(invoice.next_payment_attempt) || invoice.next_payment_attempt<0))) fail("invoice_unresolved");
+    const invoiceUrl = value => {
+      if (value === null) return null;
+      try { const url=new URL(value); if(typeof value!=="string" || value.length>4096 || url.protocol!=="https:" || url.username || url.password) fail("invoice_unresolved"); return value; }
+      catch { fail("invoice_unresolved"); }
+    };
+    latestInvoice = {id:invoice.id,status:invoice.status,amountRemaining:invoice.amount_remaining,
+      amountDue:invoice.amount_due,amountPaid:invoice.amount_paid,created:invoice.created,attemptCount:invoice.attempt_count,
+      nextPaymentAttempt:invoice.next_payment_attempt,hostedUrl:invoiceUrl(invoice.hosted_invoice_url),pdfUrl:invoiceUrl(invoice.invoice_pdf)};
   }
   if (subscription.status === "active" && (!latestInvoice || latestInvoice.status !== "paid" || latestInvoice.amountRemaining !== 0)) fail("invoice_unresolved");
   if (typeof subscription.cancel_at_period_end !== "boolean" ||
-      (subscription.cancel_at !== null && (!Number.isSafeInteger(subscription.cancel_at) || subscription.cancel_at < 0))) fail("subscription_unresolved");
-  return {customerId:target.customerId,subscriptionId:target.subscriptionId,status:subscription.status,
-    cancelAtPeriodEnd:subscription.cancel_at_period_end,cancelAt:subscription.cancel_at,items,latestInvoice};
+      [subscription.cancel_at,subscription.canceled_at,subscription.ended_at].some(value=>value!==null && (!Number.isSafeInteger(value) || value<0))) fail("subscription_unresolved");
+  return {customerId:target.customerId,subscriptionId:target.subscriptionId,basePriceId:target.basePriceId,status:subscription.status,
+    cancelAtPeriodEnd:subscription.cancel_at_period_end,cancelAt:subscription.cancel_at,canceledAt:subscription.canceled_at,endedAt:subscription.ended_at,items,latestInvoice};
 }
 
 // Uses only the existing pinned Stripe SDK's read methods. No checkout,
@@ -94,7 +103,7 @@ export function prepareCanonicalStripeBillingCommand({ observation, ledger, base
     if (observation?.status !== "read" || !snapshot || observation.fingerprint !== hash(snapshot) ||
         ledger?.workspaceId !== snapshot.workspaceId || ledger.customerId !== snapshot.customerId || ledger.subscriptionId !== snapshot.subscriptionId ||
         !Array.isArray(ledger.pendingEvents) || !Array.isArray(ledger.objectBindings) || ledger.protectedWorkspace !== false ||
-        !Number.isSafeInteger(now) || !id(basePriceId,"price")) fail("ledger_unresolved");
+        !Number.isSafeInteger(now) || !id(basePriceId,"price") || basePriceId!==snapshot.basePriceId) fail("ledger_unresolved");
     const observed = Date.parse(snapshot.observedAt);
     if (!Number.isFinite(observed) || observed > now || observed < now-900000 || !supported.has(snapshot.status)) fail("snapshot_expired");
     const covered = new Set(["checkout.session.completed","checkout.session.async_payment_succeeded","checkout.session.async_payment_failed",
@@ -105,17 +114,35 @@ export function prepareCanonicalStripeBillingCommand({ observation, ledger, base
     const baseItems = snapshot.items?.filter(item=>item.priceId===basePriceId);
     if (baseItems?.length !== 1 || !Number.isSafeInteger(baseItems[0].end) || baseItems[0].end <= 0) fail("items_unresolved");
     if (snapshot.status === "active" && (baseItems[0].end*1000 <= now || snapshot.latestInvoice?.status !== "paid" || snapshot.latestInvoice.amountRemaining !== 0)) fail("invoice_unresolved");
-    const status = snapshot.status === "active" ? "active" : snapshot.status === "canceled" ? "cancelled" : snapshot.status === "incomplete_expired" ? "expired" : "suspended";
+    let status = billingStatusFromStripeSubscriptionStatus(snapshot.status);
+    const invoice=snapshot.latestInvoice;
+    const delinquent=["past_due","unpaid"].includes(snapshot.status);
+    if(delinquent && !invoice) fail("invoice_unresolved");
+    const iso=seconds=>seconds===null?null:new Date(seconds*1000).toISOString();
+    const grace=delinquent?iso(invoice.created+10*24*60*60):null;
+    if(delinquent) {
+      const failed=billingStatusFromInvoiceFailure({attemptCount:invoice.attemptCount,graceExpired:now>Date.parse(grace)});
+      status=failed==="suspended"?failed:snapshot.status==="unpaid"?"payment_failed":failed;
+    }
+    const terminal=["suspended","cancelled","expired"].includes(status);
+    const cancellation=snapshot.cancelAtPeriodEnd || snapshot.cancelAt!==null;
+    const end=snapshot.status==="canceled"?snapshot.endedAt:cancellation?(snapshot.cancelAt ?? baseItems[0].end):null;
     const bindings = [...ledger.objectBindings];
     for (const binding of [{type:"customer",id:snapshot.customerId},{type:"subscription",id:snapshot.subscriptionId},...(snapshot.latestInvoice?[{type:"invoice",id:snapshot.latestInvoice.id}]:[])]) {
       if (!bindings.some(existing=>existing.type===binding.type && existing.id===binding.id)) bindings.push(binding);
     }
     const input = {workspaceId:snapshot.workspaceId,stream:"lifecycle",requestId:snapshot.requestId,observedAt:snapshot.observedAt,
       providerSnapshotFingerprint:observation.fingerprint,expectedRevision:ledger.revision,customerId:snapshot.customerId,subscriptionId:snapshot.subscriptionId,
-      projection:{billing_status:status,workspace_access_mode:status==="active"?"active":"archived_readonly",
-        billing_suspended_at:status==="active"?null:snapshot.observedAt,billing_suspended_reason:status==="active"?null:`stripe_canonical_${snapshot.status}`,
+      projection:{billing_status:status,workspace_access_mode:terminal?"archived_readonly":"active",
+        billing_suspended_at:terminal?snapshot.observedAt:null,billing_suspended_reason:terminal?`stripe_canonical_${snapshot.status}`:null,
         stripe_customer_id:snapshot.customerId,stripe_subscription_id:snapshot.subscriptionId,
-        billing_current_period_end_at:new Date(baseItems[0].end*1000).toISOString(),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd},
+        billing_current_period_end_at:iso(baseItems[0].end),subscription_cancel_at_period_end:snapshot.cancelAtPeriodEnd,
+        subscription_effective_end_at:iso(end),subscription_cancel_requested_at:cancellation?iso(snapshot.canceledAt):null,
+        last_invoice_id:invoice?.id ?? null,last_invoice_status:invoice?.status ?? null,
+        last_invoice_amount_due_cents:invoice?.amountDue ?? null,last_invoice_amount_paid_cents:invoice?.amountPaid ?? null,
+        last_invoice_hosted_url:invoice?.hostedUrl ?? null,last_invoice_pdf_url:invoice?.pdfUrl ?? null,
+        billing_grace_until:grace,billing_retry_count:delinquent?Math.max(1,invoice.attemptCount):0,
+        billing_next_retry_at:delinquent?iso(invoice.nextPaymentAttempt):null},
       resolvedEventIds:ledger.pendingEvents.map(event=>event.id),objectBindings:bindings};
     buildStripeBillingReconciliation(input);
     return {status:"prepared",input};

@@ -119,8 +119,10 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   second as an ordering cutoff; direct service-role table writes remain
   forbidden after ledger hardening. Keep the bridge disabled outside the isolated
   staged rollout. The general Workspace billing fields now have a separate,
-  controlled and still unapplied all-event ledger with a capture-only cutover
-  stage; do not activate billing or Plus/Ultra before both ledgers, their
+  controlled all-event ledger with a capture-only cutover stage. Its isolated
+  Staging Apply (34040107219), durable capture proof (34043010578) and explicit
+  unfreeze deployment (34043148548) passed on 6 September 2026. Production
+  remains unapplied and canonical runtime projection remains disabled; do not activate billing or Plus/Ultra before both ledgers, their
   shared canonical downstream operator and all remaining gates are closed.
 - The manual AI-tier staging acceptance in
   `scripts/operations/ai-tier-staging-acceptance.mjs` is a rollback-only

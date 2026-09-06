@@ -25,9 +25,10 @@ export function buildStripeBillingReconciliation(input) {
   if (lifecycle) {
     const required = ["billing_status", "workspace_access_mode", "billing_suspended_at", "billing_suspended_reason"];
     if (required.some(key => !Object.hasOwn(projection, key)) ||
-        !["active", "suspended", "cancelled", "expired"].includes(projection.billing_status) ||
+        !["active", "past_due", "payment_failed", "suspended", "cancelled", "expired"].includes(projection.billing_status) ||
         (projection.billing_status === "active" && (projection.workspace_access_mode !== "active" || projection.billing_suspended_at !== null || projection.billing_suspended_reason !== null)) ||
-        (projection.billing_status !== "active" && projection.workspace_access_mode !== "archived_readonly")) fail();
+        (["suspended","cancelled","expired"].includes(projection.billing_status) && projection.workspace_access_mode !== "archived_readonly") ||
+        (["past_due","payment_failed"].includes(projection.billing_status) && (projection.workspace_access_mode !== "active" || projection.billing_suspended_at!==null || projection.billing_suspended_reason!==null))) fail();
   } else if (input.subscriptionId !== null || Object.keys(projection).some(key => key !== "billing_note")) fail();
   if ((Object.hasOwn(projection, "stripe_customer_id") && projection.stripe_customer_id !== input.customerId) ||
       (Object.hasOwn(projection, "stripe_subscription_id") && projection.stripe_subscription_id !== input.subscriptionId)) fail();
@@ -65,6 +66,7 @@ export function normalizeStripeBillingReconciliationResult(payload, expectedRevi
 function exactReceipt(receipt, body, component) {
   return receipt?.component === component && receipt.status === "reconciled" &&
     receipt.workspaceId === body.p_workspace_id && receipt.requestId === body.p_stripe_request_id &&
+    receipt.providerSnapshotFingerprint === body.providerSnapshotFingerprint &&
     receipt.snapshotFingerprint === body.p_snapshot_fingerprint;
 }
 
@@ -102,10 +104,20 @@ export function createStagingBillingReconciliationCommitter({environment, review
   };
 }
 
-export async function executeStripeBillingReconciliation({ input, adapters, environment = process.env, reviewedTarget, clock = Date.now } = {}) {
+export async function executeStripeBillingReconciliation({ input, observation, adapters, environment = process.env, reviewedTarget, clock = Date.now } = {}) {
   if (!targetConfirmed(environment, reviewedTarget)) return { status: "blocked", reason: "target_not_confirmed" };
   let body;
   try { body = buildStripeBillingReconciliation(input); } catch { return { status: "blocked", reason: "command_invalid" }; }
+  let snapshot;
+  try {
+    snapshot=JSON.parse(JSON.stringify(observation?.snapshot));
+    const fingerprint=createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
+    if(observation.status!=="read" || fingerprint!==observation.fingerprint || fingerprint!==body.providerSnapshotFingerprint ||
+       snapshot.workspaceId!==body.p_workspace_id || snapshot.customerId!==body.p_customer_id || snapshot.subscriptionId!==body.p_subscription_id ||
+       snapshot.requestId!==body.p_stripe_request_id || snapshot.observedAt!==body.p_snapshot_observed_at) throw Error();
+    const freeze=value=>{if(value && typeof value==="object"){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+    freeze(snapshot);
+  } catch { return {status:"blocked",reason:"provider_snapshot_invalid"}; }
   const observed = Date.parse(body.p_snapshot_observed_at);
   const fresh = () => {
     try { const now = clock(); return Number.isFinite(now) && observed <= now + 300000 && observed >= now - 900000; } catch { return false; }
@@ -116,9 +128,9 @@ export async function executeStripeBillingReconciliation({ input, adapters, envi
   let stage = "downstream";
   try {
     if (body.p_event_stream === "lifecycle") {
-      const ai = await adapters.reconcileAi(body);
+      const ai = await adapters.reconcileAi(body,snapshot);
       if (!exactReceipt(ai, body, "ai")) return { status: "blocked", reason: "ai_receipt_invalid" };
-      const referral = await adapters.reconcileReferral(body);
+      const referral = await adapters.reconcileReferral(body,snapshot);
       if (!exactReceipt(referral, body, "referral")) return { status: "blocked", reason: "referral_receipt_invalid" };
     }
     if (!fresh()) return { status: "blocked", reason: "snapshot_expired" };
