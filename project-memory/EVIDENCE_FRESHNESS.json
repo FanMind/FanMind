@@ -93,7 +93,7 @@
     },
     {
       "id": "EV-STAGING-BILLING-FREEZE-20260906",
-      "gate": "ai_tiers",
+      "gate": "ai_billing",
       "class": "staging_smoke",
       "status": "COUNTERCHECKED",
       "observed_at": "2026-09-06T12:08:00Z",

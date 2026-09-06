@@ -21,6 +21,7 @@ Warning: truncated output (original token count: 30288)
 
 
 ## RECEIPT-FM-AI-001-FREEZE-REVIEW-20260906
+- Historical checkpoint: superseded by activation receipt above; final remote checks, merge and bounded Staging freeze verification are now complete. Wider Billing acceptance remains open.
 - Task: FM-AI-001 / FM-CR-020
 - Started: 2026-09-06
 - Status: IMPLEMENTED_NOT_VERIFIED
