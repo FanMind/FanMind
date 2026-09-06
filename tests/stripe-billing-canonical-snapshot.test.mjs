@@ -62,3 +62,23 @@ test('provider subscription creation remains the contract start after delayed re
 test('paid latest invoices cannot justify a delinquent canonical snapshot',async()=>{
  for(const status of ['past_due','unpaid']){const h=harness();h.stripe.subscriptions.retrieve=async()=>({...subscription(),status});assert.equal((await read(h)).reason,'invoice_unresolved');}
 });
+
+test('workspace UUID is canonicalized before snapshot and command comparison',async()=>{
+ const uppercaseWorkspace='AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE';
+ const h=harness();h.target={...target,workspaceId:uppercaseWorkspace};
+ const providerSubscription=()=>({...subscription(),metadata:{workspace_id:uppercaseWorkspace}});
+ h.stripe.subscriptions.retrieve=async()=>providerSubscription();
+ h.stripe.subscriptions.list=async()=>({object:'list',has_more:false,data:[providerSubscription()]});
+ const observation=await read(h);assert.equal(observation.status,'read');assert.equal(observation.snapshot.workspaceId,uppercaseWorkspace.toLowerCase());
+ const result=prepare({observation,ledger:{...ledger(),workspaceId:uppercaseWorkspace.toLowerCase()},basePriceId:target.basePriceId,now:h.clock()});
+ assert.equal(result.status,'prepared');assert.equal(result.input.workspaceId,uppercaseWorkspace.toLowerCase());
+});
+
+test('terminal subscription without latest invoice omits all last_invoice projection fields',async()=>{
+ const h=harness();const terminal=()=>({...subscription(),status:'canceled',latest_invoice:null});
+ h.stripe.subscriptions.retrieve=async()=>terminal();
+ h.stripe.subscriptions.list=async()=>({object:'list',has_more:false,data:[terminal()]});
+ const observation=await read(h);assert.equal(observation.status,'read');
+ const result=prepare({observation,ledger:ledger(),basePriceId:target.basePriceId,now:h.clock()});
+ assert.equal(result.status,'prepared');assert.deepEqual(Object.keys(result.input.projection).filter(key=>key.startsWith('last_invoice_')),[]);
+});
