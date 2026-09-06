@@ -296,7 +296,7 @@ werden. Ein blindes automatisches Merge ist für diese Route nicht zulässig.
 `stripeBillingCanonicalSnapshot.mjs` liest über den bereits versionsgepinnten
 Stripe-SDK ausschließlich ein exakt gebundenes Test-Abo. Zwei konsistente
 Detailabrufe um eine vollständig paginierte Customer-Aboinventur erkennen
-beobachtbare Änderungen und konkurrierende aktive Abos. Testmodus, Customer,
+beobachtbare Änderungen und jedes weitere Abo desselben Customers, einschließlich historischer Abos. Testmodus, Customer,
 Workspace-Metadaten, erlaubte Preise, vollständige Items und bezahlte aktuelle
 Rechnung werden geprüft. Rohantworten und Providerfehlertexte werden verworfen.
 Der Snapshot ist eine begrenzte konsistente Beobachtung, keine atomare Sperre
@@ -330,3 +330,11 @@ Provider-Verträge: [Subscription abrufen](https://docs.stripe.com/api/subscript
 [Request-ID](https://docs.stripe.com/api/request_ids).
 
 Der vorbereitete Planer verbindet diese Beobachtung mit einer getrennten autorisierten Ledger-Inventur. Er lehnt gleichsekündige/neue Konflikte, Refund/Dispute-Fälle und geschützte Workspaces ab; ein aktuelles gekündigtes Abo kann durch ein älteres Invoice-Paid-Ereignis nicht wieder aktiv werden.
+
+
+After an ambiguous Billing response, `recoverStripeBillingReconciliation` loads
+an authoritative persisted `billing_attempted` command and matching durable
+AI/referral receipts before resubmitting that exact command. It does not rerun
+downstream work. The existing SQL checks duplicate request IDs before snapshot
+expiry, allowing delayed recovery; first execution retains its freshness gate.
+The required durable attempt loader is still an operator integration gate.

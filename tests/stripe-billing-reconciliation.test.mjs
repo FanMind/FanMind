@@ -2,7 +2,7 @@ import { canonicalStripeBillingProjection } from "../src/lib/stripeBillingCanoni
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
-import { buildStripeBillingReconciliation as build, executeStripeBillingReconciliation as execute, normalizeStripeBillingReconciliationResult as result, createStagingBillingReconciliationCommitter as committer } from '../src/lib/stripeBillingReconciliation.mjs';
+import { recoverStripeBillingReconciliation as recover, buildStripeBillingReconciliation as build, executeStripeBillingReconciliation as execute, normalizeStripeBillingReconciliationResult as result, createStagingBillingReconciliationCommitter as committer } from '../src/lib/stripeBillingReconciliation.mjs';
 const now = Date.parse('2026-09-06T16:00:00Z');
 const fixture = () => ({workspaceId:'11111111-1111-4111-8111-111111111111', stream:'lifecycle', providerSnapshotFingerprint:'a'.repeat(64), requestId:'req_snapshot', observedAt:new Date(now).toISOString(), expectedRevision:7, customerId:'cus_owner', subscriptionId:'sub_base', projection:{billing_status:'active',workspace_access_mode:'active',billing_suspended_at:null,billing_suspended_reason:null},resolvedEventIds:['evt_b','evt_a'],objectBindings:[{type:'subscription',id:'sub_base'},{type:'customer',id:'cus_owner'}]});
 const target = {stagingRef:'s'.repeat(20), productionRef:'p'.repeat(20)};
@@ -78,4 +78,26 @@ test('a canceled provider snapshot cannot commit a separately supplied active pr
 });
 test('paid canonical invoice records provider payment time and clears old failure history',()=>{
  const h=harness();assert.equal(h.input.projection.billing_last_payment_at,new Date(now-50000).toISOString());assert.equal(h.input.projection.billing_last_payment_failed_at,null);
+});
+
+test('tax reconciliation reaches only the fixed billing commit without lifecycle adapters',async()=>{
+ const h=harness();h.input.stream='tax';h.input.subscriptionId=null;h.input.projection={billing_note:'verified'};h.input.objectBindings=[{type:'customer',id:h.input.customerId}];h.observation.snapshot.subscriptionId=null;
+ h.observation.fingerprint=createHash('sha256').update(JSON.stringify(h.observation.snapshot)).digest('hex');h.input.providerSnapshotFingerprint=h.observation.fingerprint;
+ assert.deepEqual(await execute(h),{status:'reconciled',revision:8});assert.deepEqual(h.calls,['billing']);
+});
+
+test('delayed recovery uses only the persisted attempted command and both durable receipts',async()=>{
+ const h=harness();h.clock=()=>now+3600000;
+ const body=build(h.input);h.adapters.loadPersistedBillingAttempt=async()=>({phase:'billing_attempted',command:body,aiReceipt:receipt(body,'ai'),referralReceipt:receipt(body,'referral')});
+ h.adapters.commitBilling=async b=>{h.calls.push('billing');assert.deepEqual(b,body);return [{result_status:'duplicate_reconciliation',result_revision:8}];};
+ assert.deepEqual(await recover(h),{status:'duplicate_reconciliation',revision:8});assert.deepEqual(h.calls,['billing']);
+ for(const patch of [{phase:'prepared'},{command:{...body,p_expected_revision:8}},{aiReceipt:null},{referralReceipt:receipt({...body,providerSnapshotFingerprint:'b'.repeat(64)},'referral')}]){
+   h.calls.length=0;h.adapters.loadPersistedBillingAttempt=async()=>({phase:'billing_attempted',command:body,aiReceipt:receipt(body,'ai'),referralReceipt:receipt(body,'referral'),...patch});
+   assert.equal((await recover(h)).reason,'recovery_evidence_invalid');assert.deepEqual(h.calls,[]);
+ }
+});
+test('custom scheduled cancellation preserves the existing local request marker',()=>{
+ const h=harness();h.observation.snapshot.cancelAt=Math.floor(now/1000)+86400;
+ const p=canonicalStripeBillingProjection(h.observation.snapshot,now);
+ assert.equal(Object.hasOwn(p,'subscription_cancel_requested_at'),false);assert.equal(p.subscription_effective_end_at,new Date(now+86400000).toISOString());
 });

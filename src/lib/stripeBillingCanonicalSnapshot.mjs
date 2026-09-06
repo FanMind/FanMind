@@ -65,14 +65,14 @@ export async function readCanonicalStripeBillingSnapshot({ stripe, target, testS
     const first=normalize(await stripe.subscriptions.retrieve(target.subscriptionId,{expand:["latest_invoice"]}),target,allowedPrices);
     // Listing all statuses includes the canceled subscription being reconciled.
     // Paginate explicitly; never interpret a first page as a complete inventory.
-    let cursor; const seen=new Set(); const active=[];
+    let cursor; const seen=new Set();
     for(let page=0;page<10;page++) {
       const list=await stripe.subscriptions.list({customer:target.customerId,status:"all",limit:100,...(cursor?{starting_after:cursor}:{})});
       if(list?.object!=="list" || typeof list.has_more!=="boolean" || !Array.isArray(list.data) || list.data.length>100) fail("inventory_unresolved");
       for(const item of list.data) {
         if(!id(item.id,"sub") || item.customer!==target.customerId || item.livemode!==false || seen.has(item.id)) fail("inventory_unresolved");
         seen.add(item.id);
-        if(!["canceled","incomplete_expired"].includes(item.status)) active.push(item.id);
+        if(item.id!==target.subscriptionId) fail("inventory_unresolved");
       }
       if(!list.has_more) break;
       if(!list.data.length || page===9) fail("inventory_unresolved");
@@ -80,7 +80,7 @@ export async function readCanonicalStripeBillingSnapshot({ stripe, target, testS
     }
     // Separate subscriptions and rotations need the later multi-subscription
     // operator. Never silently choose the first active record for a customer.
-    if(!seen.has(target.subscriptionId) || active.some(value=>value!==target.subscriptionId)) fail("inventory_unresolved");
+    if(!seen.has(target.subscriptionId)) fail("inventory_unresolved");
     const response=await stripe.subscriptions.retrieve(target.subscriptionId,{expand:["latest_invoice"]});
     const second=normalize(response,target,allowedPrices);
     if(hash(first)!==hash(second)) fail("snapshot_changed");

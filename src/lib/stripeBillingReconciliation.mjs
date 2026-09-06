@@ -128,7 +128,9 @@ export async function executeStripeBillingReconciliation({ input, observation, a
   if (!adapters || typeof adapters.commitBilling !== "function") return { status: "blocked", reason: "adapter_missing" };
   if (body.p_event_stream === "lifecycle" && (typeof adapters.reconcileAi !== "function" || typeof adapters.reconcileReferral !== "function")) return { status: "blocked", reason: "adapter_missing" };
   const projectionMatches=()=>{
-    if(body.p_event_stream!=="lifecycle") return false;
+    // Tax commands are already restricted to billing_note and null subscription.
+    // They cannot change lifecycle fields and have no lifecycle downstream work.
+    if(body.p_event_stream==="tax") return true;
     try { return JSON.stringify(normalizeStripeBillingProjection(canonicalStripeBillingProjection(snapshot,evaluationTime)))===JSON.stringify(body.p_projection); }
     catch { return false; }
   };
@@ -147,4 +149,21 @@ export async function executeStripeBillingReconciliation({ input, observation, a
     const result = normalizeStripeBillingReconciliationResult(await adapters.commitBilling(body), body.p_expected_revision);
     return result ?? { status: "indeterminate", reason: "billing_receipt_invalid" };
   } catch { return { status: "indeterminate", reason: stage === "billing" ? "billing_transport" : "downstream_transport" }; }
+}
+
+
+// Recovery loads the authoritative persisted attempt and downstream receipts.
+// Unlike a first execution it must let the existing database request-ID lookup
+// run even after snapshot expiry. No caller-supplied receipt is accepted here.
+export async function recoverStripeBillingReconciliation({input,adapters,environment=process.env,reviewedTarget}={}) {
+  if (!targetConfirmed(environment,reviewedTarget)) return {status:"blocked",reason:"target_not_confirmed"};
+  let body;
+  try {body=buildStripeBillingReconciliation(input);} catch {return {status:"blocked",reason:"command_invalid"};}
+  if(typeof adapters?.loadPersistedBillingAttempt!=="function" || typeof adapters?.commitBilling!=="function") return {status:"blocked",reason:"adapter_missing"};
+  try {
+    const attempt=await adapters.loadPersistedBillingAttempt(body);
+    if(attempt?.phase!=="billing_attempted" || JSON.stringify(attempt.command)!==JSON.stringify(body) ||
+       (body.p_event_stream==="lifecycle" && (!exactReceipt(attempt.aiReceipt,body,"ai") || !exactReceipt(attempt.referralReceipt,body,"referral")))) return {status:"blocked",reason:"recovery_evidence_invalid"};
+    return normalizeStripeBillingReconciliationResult(await adapters.commitBilling(body),body.p_expected_revision) ?? {status:"indeterminate",reason:"billing_receipt_invalid"};
+  } catch {return {status:"indeterminate",reason:"recovery_transport"};}
 }

@@ -49,3 +49,7 @@ test('past-due and unpaid respect retry/grace policy before suspension',async()=
  assert.equal(r.status,'prepared');assert.equal(r.input.projection.billing_status,expected);assert.equal(r.input.projection.workspace_access_mode,expected==='suspended'?'archived_readonly':'active');assert.ok(r.input.projection.billing_grace_until);
  }
 });
+
+test('historical canceled and expired subscriptions block until rotation bindings are implemented',async()=>{
+ for(const status of ['canceled','incomplete_expired']){const h=harness();h.stripe.subscriptions.list=async()=>({object:'list',has_more:false,data:[subscription(),{...subscription(),id:'sub_historical',status}]});assert.equal((await read(h)).reason,'inventory_unresolved');}
+});
