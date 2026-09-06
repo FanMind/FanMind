@@ -80,3 +80,33 @@ Die separate KI-Tarif-Lifecycle-Abnahme benötigt eine Customer-/Subscription-Bi
 ## PostgreSQL-Indexprüfung
 
 Die spaltenbezogene Form von `pg_get_indexdef` liefert den Spaltenausdruck ohne Sortierzusatz. Die drei DESC-Indizes werden deshalb über Spaltenname plus exakt `indoption = 0 0 3` geprüft (erste zwei Schlüssel aufsteigend, dritter absteigend mit NULLS FIRST). Der vollständige Vergleich mit dem gepinnten Schema-Oracle bleibt zusätzlich aktiv. Die Änderung repariert eine falsche Ablehnung; die Indizes selbst bleiben unverändert.
+
+## Geschützter Capture-only-Runtime-Schritt
+
+`staging-billing-capture.yml` verlangt den geprüften und bereits deployten
+`main`-Commit und `activate-staging-billing-capture`. Unter derselben
+Deployment-Sperre prüft ein geschützter Staging-Job den vollständigen
+installierten Ledger read-only mit dem gepinnten Postflight; kein Apply ist
+in diesem Workflow enthalten. Erst danach ergänzt der isolierte Host-Job die
+drei Capture-only-Werte atomar in der privaten `.release.env` und startet
+den bestehenden Staging-Dienst neu. Die Checkout-Sperre bleibt aktiv.
+Normale Deploys übernehmen den vollständigen Capture-only-Zustand; partielle,
+doppelte oder abweichende Zustände stoppen den Deploy statt die Runtime
+unbemerkt in den Legacy-Pfad zurückzusetzen.
+
+Der folgende Nachweis signiert genau einen reservierten synthetischen
+Checkout-Event mit Testmodus und Zahlungsstatus `unpaid`. Er enthält weder
+Customer-/Subscription- noch Workspace-Bindung und kann daher keine echte
+Workspace-Projektion oder AI-/Referral-Verarbeitung auslösen. Vorher muss
+die feste, an den GitHub-Lauf gebundene Event-ID fehlen; nach der erfolgreichen
+HTTP-Antwort muss genau dieser Ledger-Datensatz mit `unresolved`,
+`tenant_binding_missing`, ohne Workspace und mit Revision 0 vorhanden sein.
+Die öffentliche Release-/Freeze-Bindung wird davor und danach geprüft.
+Der minimale synthetische Datensatz bleibt als Auditnachweis erhalten;
+er ist kein Zahlungsereignis eines Kunden und keine echte Checkout-Abnahme.
+
+Nur `STAGING_BILLING_SIGNED_DURABLE_CAPTURE=PASS` bestätigt diesen Schritt.
+Ein Abbruch lässt Checkout gesperrt. Es gibt keinen automatischen zweiten
+Webhook-Versuch und keine kanonische Aktivierung. Anschließend ist das
+explizite Staging-Unfreeze aus Schritt 7 möglich; echte Testzahlungen und
+kanonische Lifecycle-Abnahme bleiben gesondert zu belegen.

@@ -19,6 +19,7 @@ const RESTORE_WORKFLOW = "restore-drill-resource-readiness.yml";
 const RESTORE_DATABASE_WORKFLOW = "restore-drill-database.yml";
 const RESTORE_HOST_WORKFLOW = "restore-drill-host-readiness.yml";
 const STAGING_PROVISION_WORKFLOW = "provision-staging-host.yml";
+const STAGING_BILLING_CAPTURE_WORKFLOW = "staging-billing-capture.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
 
 async function exists(path) {
@@ -208,6 +209,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     (workflow) => workflow.selfHosted,
   );
   const requiredSelfHostedWorkflows = [
+    STAGING_BILLING_CAPTURE_WORKFLOW,
     STAGING_PUSH_RUNTIME_WORKFLOW,
     STAGING_DEPLOY_WORKFLOW,
     STAGING_PROVISION_WORKFLOW,
@@ -231,6 +233,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       STAGING_PROVISION_WORKFLOW,
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,
+      STAGING_BILLING_CAPTURE_WORKFLOW,
       STAGING_PUSH_RUNTIME_WORKFLOW,
     ],
   );
@@ -245,6 +248,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   const stagingDeployWorkflow = selfHostedWorkflows.find(
     (workflow) => workflow.file === STAGING_DEPLOY_WORKFLOW,
   );
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_BILLING_CAPTURE_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.equal(restoreWorkflows.length, 3);
   for (const restoreWorkflow of restoreWorkflows) {
     assert.deepEqual(
