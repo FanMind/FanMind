@@ -29,3 +29,14 @@ test("signed proof records an unpaid unbound synthetic event without canonical m
   assert.equal(body.p_event_id,"evt_fanmind_capture_123456789");
   assert.throws(()=>buildStagingCaptureEvent("../invalid",1753056000));
 });
+
+
+test("an unfreeze requires a durable receipt for the frozen deployed commit",()=>{
+  const commit = "a".repeat(40);
+  const active = renderStagingBillingCapture(`FANMIND_RELEASE_COMMIT=${commit}\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=true\n`);
+  assert.throws(()=>preserveStagingBillingCapture(active,{freeze:"false",commit}),/capture_proof_required/);
+  const proven = `${active}FANMIND_STAGING_BILLING_CAPTURE_RECEIPT=${commit}:123456\n`;
+  assert.ok(preserveStagingBillingCapture(proven,{freeze:"false",commit}).includes(`${commit}:123456`));
+  assert.throws(()=>preserveStagingBillingCapture(proven,{freeze:"false",commit:"b".repeat(40)}),/capture_proof_required/);
+  assert.throws(()=>preserveStagingBillingCapture(proven + `FANMIND_STAGING_BILLING_CAPTURE_RECEIPT=${commit}:654321\n`));
+});

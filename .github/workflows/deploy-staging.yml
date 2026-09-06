@@ -84,7 +84,7 @@ jobs:
             exit 1
           fi
 
-          BILLING_CAPTURE_STATE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-capture-runtime.mjs" --preserve)"
+          BILLING_CAPTURE_STATE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-capture-runtime.mjs" --preserve "$BILLING_WRITE_FREEZE" "$EXPECTED_RELEASE_COMMIT")"
 
           if [ "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" != "$EXPECTED_RELEASE_COMMIT" ]; then
             echo "Authenticated staging checkout does not match the triggering commit." >&2

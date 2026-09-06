@@ -248,7 +248,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   const stagingDeployWorkflow = selfHostedWorkflows.find(
     (workflow) => workflow.file === STAGING_DEPLOY_WORKFLOW,
   );
-  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_BILLING_CAPTURE_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_BILLING_CAPTURE_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.equal(restoreWorkflows.length, 3);
   for (const restoreWorkflow of restoreWorkflows) {
     assert.deepEqual(

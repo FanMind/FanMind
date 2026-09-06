@@ -110,3 +110,13 @@ Ein Abbruch lässt Checkout gesperrt. Es gibt keinen automatischen zweiten
 Webhook-Versuch und keine kanonische Aktivierung. Anschließend ist das
 explizite Staging-Unfreeze aus Schritt 7 möglich; echte Testzahlungen und
 kanonische Lifecycle-Abnahme bleiben gesondert zu belegen.
+
+Die Abwesenheits- und Persistenzprüfung verwendet ausdrücklich den
+projektgebundenen privaten PostgreSQL-Prüfzugang in Read-only-Transaktionen.
+`service_role` hat keine Leserechte auf die Ledger-Tabelle und wird dafür
+nicht verwendet. Erst ein nachgelagerter erfolgreicher Persistenz-Job erlaubt
+dem Host-Job, den festen Commit-/Run-Beleg privat in `.release.env` zu speichern.
+Der Deploy verweigert `billing_write_freeze=false` bei aktivem Capture ohne
+diesen Beleg; beim Übergang aus der Sperre muss er zum deployten Commit passen.
+Fehlgeschlagene oder unbestimmte Capture-Läufe können Checkout daher nicht
+über bloß erhaltene Konfigurationsflags entsperren.

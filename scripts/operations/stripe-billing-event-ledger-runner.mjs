@@ -657,6 +657,27 @@ export function billingDatabaseFailureDiagnostic(stderr, sql) {
   return { code, reason };
 }
 
+export function verifyStagingBillingCaptureRecord(runId, present, environment = process.env) {
+  if (!/^[0-9]{1,20}$/u.test(runId ?? "") || typeof present !== "boolean") fail("capture_record_invalid");
+  evaluateTarget(environment, "--verify");
+  const { snapshotDirectory, snapshotPath } = privatePassfileSnapshot(environment);
+  try {
+    const predicate = present
+      ? `count(*) = 1 and count(*) filter (where workspace_id is null and stripe_customer_id is null and stripe_subscription_id is null and event_type = 'checkout.session.completed' and processing_state = 'unresolved' and processing_reason = 'tenant_binding_missing' and projection_revision = 0 and signature_verified_at > now() - interval '15 minutes') = 1`
+      : "count(*) = 0";
+    const sql = String.raw`\set ON_ERROR_STOP on
+begin;
+set transaction read only;
+select case when ${predicate} then 'CAPTURE_RECORD_PASS' else 'CAPTURE_RECORD_FAIL' end
+from public.workspace_stripe_billing_events where event_id = 'evt_fanmind_capture_${runId}';
+rollback;
+`;
+    const result = runPsql(sql, environment, snapshotPath);
+    if (result.error || result.status !== 0 || String(result.stdout).trim() !== "CAPTURE_RECORD_PASS") fail("capture_record_invalid");
+    console.log(present ? "STAGING_BILLING_SIGNED_DURABLE_CAPTURE=PASS" : "STAGING_BILLING_CAPTURE_ABSENCE=PASS");
+  } finally { rmSync(snapshotDirectory, { recursive: true, force: true }); }
+}
+
 function ensurePsqlAvailable() {
   const result = spawnSync("psql", ["--version"], {
     encoding: "utf8",

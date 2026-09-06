@@ -3,16 +3,16 @@ import { randomBytes, createHmac } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { verifyStagingBillingFreeze } from "./staging-billing-freeze-control.mjs";
-import { buildSupabaseApiKeyHeaders } from "../../src/lib/supabase/apiKeyPolicy.mjs";
 
 const FILE = "/var/www/fanmind-staging/.release.env";
 const ORIGIN = "https://staging.fanmind.ch";
+const RECEIPT = "FANMIND_STAGING_BILLING_CAPTURE_RECEIPT";
 const FLAGS = Object.freeze({
   FANMIND_STRIPE_BILLING_EVENT_LEDGER_ENABLED: "true",
   FANMIND_STRIPE_BILLING_EVENT_LEDGER_CONTROL_CONFIRMED: "20260816210000",
   FANMIND_STRIPE_BILLING_CANONICAL_RECONCILIATION_CONFIRMED: "false",
 });
-export function preserveStagingBillingCapture(previous) {
+export function preserveStagingBillingCapture(previous, { freeze, commit } = {}) {
   const fields = Object.keys(FLAGS);
   const found = Object.fromEntries(fields.map(key => {
     const entries = previous.split(/\r?\n/u).filter(line => line.startsWith(`${key}=`));
@@ -21,7 +21,12 @@ export function preserveStagingBillingCapture(previous) {
   }));
   if (Object.values(found).every(value => value === undefined)) return "";
   if (fields.some(key => found[key] !== FLAGS[key])) throw Error("capture_state_invalid");
-  return fields.map(key => `${key}=${FLAGS[key]}`).join("\n");
+  const receipts = previous.split(/\r?\n/u).filter(line => line.startsWith(`${RECEIPT}=`));
+  if (receipts.length > 1) throw Error("capture_receipt_invalid");
+  const receipt = receipts[0]?.slice(RECEIPT.length + 1);
+  if (receipt !== undefined && !/^[a-f0-9]{40}:[0-9]{1,20}$/u.test(receipt)) throw Error("capture_receipt_invalid");
+  if (freeze === "false" && (!receipt || (previous.split(/\r?\n/u).includes("FANMIND_STRIPE_BILLING_WRITE_FREEZE=true") && receipt.split(":")[0] !== commit))) throw Error("capture_proof_required");
+  return [...fields.map(key => `${key}=${FLAGS[key]}`), ...(receipt ? [`${RECEIPT}=${receipt}`] : [])].join("\n");
 }
 export function renderStagingBillingCapture(previous) {
   const retained = previous.split(/\r?\n/u).filter(line => !Object.keys(FLAGS).some(key => line.startsWith(`${key}=`)));
@@ -54,7 +59,7 @@ function boundary(env) {
       env.FANMIND_STRIPE_BILLING_WRITE_FREEZE !== "true" ||
       env.FANMIND_STRIPE_BILLING_CANONICAL_RECONCILIATION_CONFIRMED === "true" ||
       !/^(sk|rk)_test_/u.test(env.STRIPE_SECRET_KEY ?? "") ||
-      !/^whsec_/u.test(env.STRIPE_WEBHOOK_SECRET ?? "") || !env.SUPABASE_SERVICE_ROLE_KEY) throw Error();
+      !/^whsec_/u.test(env.STRIPE_WEBHOOK_SECRET ?? "")) throw Error();
 }
 export function buildStagingCaptureEvent(runId, now) {
   if (!/^[0-9]{1,20}$/u.test(runId ?? "") || !Number.isSafeInteger(now)) throw Error();
@@ -67,7 +72,7 @@ async function main() {
   if (mode === "--preserve") {
     let previous = "";
     try { previous = privateRelease(); } catch(error) { if(error.code !== "ENOENT") throw error; }
-    console.log(preserveStagingBillingCapture(previous)); return;
+    console.log(preserveStagingBillingCapture(previous, { freeze: process.argv[3], commit: process.argv[4] })); return;
   }
   const env = process.env;
   boundary(env);
@@ -81,26 +86,26 @@ async function main() {
     finally { try { unlinkSync(temporary); } catch {} }
     console.log("STAGING_BILLING_CAPTURE_CONFIGURED=PASS"); return;
   }
-  if (mode !== "--prove") throw Error();
+  if (mode === "--record-proof") {
+    if (env.FANMIND_CAPTURE_PERSISTENCE_VERIFIED !== "true" || !/^[0-9]{1,20}$/u.test(env.GITHUB_RUN_ID ?? "")) throw Error();
+    const previous = privateRelease();
+    if (!previous.split(/\r?\n/u).includes(`FANMIND_RELEASE_COMMIT=${env.GITHUB_SHA}`) || !preserveStagingBillingCapture(previous)) throw Error();
+    const content = previous.split(/\r?\n/u).filter(line => !line.startsWith(`${RECEIPT}=`)).join("\n").replace(/\n*$/u, "");
+    const temporary = `${FILE}.receipt-${randomBytes(8).toString("hex")}`;
+    try { writeFileSync(temporary, `${content}\n${RECEIPT}=${env.GITHUB_SHA}:${env.GITHUB_RUN_ID}\n`, { mode:0o600, flag:"wx" }); renameSync(temporary, FILE); }
+    finally { try { unlinkSync(temporary); } catch {} }
+    console.log("STAGING_BILLING_CAPTURE_RECEIPT=PASS"); return;
+  }
+  if (mode !== "--send") throw Error();
   const now = Math.floor(Date.now()/1000);
   const event = buildStagingCaptureEvent(env.GITHUB_RUN_ID, now);
-  const headers = buildSupabaseApiKeyHeaders(env.SUPABASE_SERVICE_ROLE_KEY);
-  const eventUrl = `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/workspace_stripe_billing_events?event_id=eq.${event.id}&select=event_id,event_type,workspace_id,processing_state,processing_reason,projection_revision`;
-  const before = await request(eventUrl,{headers});
-  if (!before.response.ok || !Array.isArray(before.body) || before.body.length !== 0) throw Error();
   const body = JSON.stringify(event);
   const signature = createHmac("sha256",env.STRIPE_WEBHOOK_SECRET).update(`${now}.${body}`).digest("hex");
   const received = await request(`${ORIGIN}/api/stripe/webhook`, { method:"POST", body,
     headers:{"Content-Type":"application/json","Stripe-Signature":`t=${now},v1=${signature}`} });
   if (!received.response.ok || received.body.received !== true) throw Error();
-  const after = await request(eventUrl,{headers});
-  const row = after.body?.[0];
-  if (!after.response.ok || !Array.isArray(after.body) || after.body.length !== 1 ||
-      row.event_id !== event.id || row.event_type !== event.type || row.workspace_id !== null ||
-      row.processing_state !== "unresolved" || row.processing_reason !== "tenant_binding_missing" ||
-      row.projection_revision !== 0) throw Error();
   await verifyStagingBillingFreeze({ origin: ORIGIN, commit: env.GITHUB_SHA });
-  console.log("STAGING_BILLING_SIGNED_DURABLE_CAPTURE=PASS");
+  console.log("STAGING_BILLING_SIGNED_EVENT_SENT=PASS");
   console.log("STAGING_BILLING_CAPTURE_SYNTHETIC_AUDIT=retained");
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
