@@ -10,7 +10,7 @@ const supported = new Set(["active", "canceled", "past_due", "unpaid", "incomple
 function normalize(subscription, target, allowedPrices) {
   if (subscription?.object !== "subscription" || subscription.id !== target.subscriptionId ||
       subscription.customer !== target.customerId || !Number.isSafeInteger(subscription.created) || subscription.created<0 || subscription.livemode !== false || !supported.has(subscription.status) ||
-      subscription.metadata?.workspace_id !== target.workspaceId ||
+      typeof subscription.metadata?.workspace_id !== "string" || subscription.metadata.workspace_id.toLowerCase() !== target.workspaceId ||
       subscription.pending_update || subscription.pause_collection ||
       subscription.items?.object !== "list" || subscription.items.has_more !== false ||
       !Array.isArray(subscription.items.data) || !subscription.items.data.length || subscription.items.data.length > 2) fail("subscription_unresolved");
@@ -58,7 +58,7 @@ export async function readCanonicalStripeBillingSnapshot({ stripe, target, testS
       !id(target?.customerId,"cus") || !id(target?.subscriptionId,"sub") || !id(target?.basePriceId,"price") ||
       !Array.isArray(target?.aiPriceIds) || target.aiPriceIds.length > 2 || target.aiPriceIds.some(value=>!id(value,"price"))) return {status:"blocked",reason:"target_invalid"};
   const allowedPrices=[target.basePriceId,...target.aiPriceIds];
-  target = Object.freeze({...target,aiPriceIds:Object.freeze([...target.aiPriceIds])});
+  target = Object.freeze({...target,workspaceId:target.workspaceId.toLowerCase(),aiPriceIds:Object.freeze([...target.aiPriceIds])});
   if (new Set(allowedPrices).size!==allowedPrices.length) return {status:"blocked",reason:"target_invalid"};
   try {
     const started=clock();
