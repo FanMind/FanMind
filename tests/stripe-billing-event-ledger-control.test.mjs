@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 
 import {
   EXPECTED_CONTROL_SHA256,
+  billingDatabaseFailureDiagnostic,
   evaluateStripeBillingEventLedgerSql,
   materializeStripeBillingEventLedgerPostflight,
 } from "../scripts/operations/stripe-billing-event-ledger-runner.mjs";
@@ -723,4 +724,13 @@ test("workflow is manual, main-only, Staging-only and never activates runtime", 
     workflow,
     /FANMIND_STRIPE_BILLING_EVENT_LEDGER_ENABLED:\s*['"]?true/iu,
   );
+});
+
+
+test("database failure diagnostics emit only SQLSTATE and pinned fixed messages", async () => {
+  const sql = await readFile(SQL_PATH, "utf8");
+  assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  55000: workspace_stripe_billing_required_columns_missing\nDETAIL: private data", sql), {code:"55000", reason:"workspace_stripe_billing_required_columns_missing"});
+  assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  42501: secret-password\nCONTEXT: private SQL", sql), {code:"42501", reason:"database_rejected"});
+  assert.deepEqual(billingDatabaseFailureDiagnostic("ERROR:  P0001: stripe_billing_ledger_owner_invalid", "raise exception 'stripe_billing_ledger_owner_invalid';"), {code:"P0001", reason:"stripe_billing_ledger_owner_invalid"});
+  assert.deepEqual(billingDatabaseFailureDiagnostic("private connection string", sql), {code:"unknown", reason:"database_rejected"});
 });
