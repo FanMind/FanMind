@@ -3,6 +3,7 @@
   "policy": {
     "immutable_commit": {"ttl_hours": null, "revalidate_on": ["referenced_commit_missing_or_superseded"]},
     "ci_exact_head": {"ttl_hours": null, "revalidate_on": ["head_changed", "workflow_contract_changed"]},
+    "staging_smoke": {"ttl_hours": 24, "revalidate_on": ["staging_deploy", "runtime_config_change"]},
     "production_smoke": {"ttl_hours": 24, "revalidate_on": ["production_deploy", "runtime_config_change"]},
     "runner_admin_policy": {"ttl_hours": 1, "revalidate_on": ["runner_group_change", "repository_visibility_change", "workflow_change"]},
     "restore_host": {"ttl_hours": 4, "revalidate_on": ["host_maintenance", "runner_re_registration", "toolchain_change"]},

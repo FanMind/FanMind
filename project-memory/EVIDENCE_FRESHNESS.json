@@ -90,6 +90,15 @@
         "874": {"updated_at": "2026-08-30T20:04:33Z", "state": "open", "state_reason": null, "body_sha256": "f38bde8341341b4c8051128c108ae2b52b93881041b35e272a5d67dd6be25967"}
       },
       "revalidate_on": ["issue_body_or_state_change", "before_relying_on_legacy_issue_reconciliation", "before_reopening_reconciled_work"]
+    },
+    {
+      "id": "EV-STAGING-BILLING-FREEZE-20260906",
+      "gate": "ai_tiers",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T12:08:00Z",
+      "source": "PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 success; independent exact-version and HTTP503 stripe_billing_write_frozen Retry-After60; bounded freeze only, not Billing acceptance",
+      "target": "https://staging.fanmind.ch"
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
