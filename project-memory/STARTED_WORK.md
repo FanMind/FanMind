@@ -1,26 +1,27 @@
 # Started Work Register
 
 ## FM-AI-001 / FM-CR-020 — Staging activation
-- Status: IN_PROGRESS
+- Status: COUNTERCHECKED (bounded merge and Staging freeze activation complete)
 - Risk: R4
 - Updated: 2026-09-06
-- Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 ACTIVE.
+- Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 RELEASED.
 - Scope: owner-authorized PR #1058 merge and Staging freeze activation; first repair new review PRRT_kwDOSxGqmc6frbTm requiring live freeze proof before ledger apply.
-- Exact next step: shared deploy/apply exclusion, preserved default state and exact-release runtime verification, then green CI, merge and one Staging deploy with freeze=true.
-- Still open: merge, Staging deployment and HTTP negative proof.
+- Completed: PR #1058 merged as `157983d62afce572bfdf79374a0a5c5fd096b7db`; Staging run `34032100988` / job `101483398784` succeeded with freeze=true. Independent public exact-version and HTTP 503/code/Retry-After proof passed.
+- Exact next step: retain freeze until separately authorized ledger/capture-only cutover; follow the controlled runbook.
+- Still open: wider Billing lifecycle and cutover acceptance; no ledger SQL, signed webhook replay or payment executed in this activation.
 - Owner action needed: none for this bounded activation; no ledger apply or payment included.
 
 
 ## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
 - Updated: 2026-09-06
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: COUNTERCHECKED (repository review superseded by activation receipt)
 - Risk: R4
 - Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
-- Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED after local countercheck; remote CI/review remains open.
+- Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED; final remote CI/review is closed by the activation receipt.
 - Completed so far: preflight, current main/PR/CI and review reconciliation. PR head `8fbd7e89678259276fddf62fc45ccc37b06ea727` has eight green workflows but its shared Checkout boundary lacks the advertised freeze.
 - Completed implementation: shared provider-boundary guard and fixed-code handling for API/page/redirect/admin callers; executable tests prove zero client/provider access during freeze and normal recovery after unfreeze.
-- Still open: exact updated-head CI/review and separately protected Staging cutover.
-- Exact next step: inspect updated PR #1058 checks/review; merge only after applicable gates, then use the existing separately protected Staging sequence.
+- Closeout: final head `43537ccf729b7787b4bd300b678771eeb216892a` passed all eight remote workflows, all review threads resolved, PR merged and Staging freeze verified; see activation receipt.
+- Still open: separately authorized ledger/capture-only cutover and broader Billing acceptance.
 - Owner action needed: none for this repository review fix; external cutover remains separate.
 
 

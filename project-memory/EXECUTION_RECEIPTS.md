@@ -3,17 +3,25 @@ Warning: truncated output (original token count: 30288)
 ## RECEIPT-FM-AI-001-FREEZE-ACTIVATE-20260906
 - Task: FM-AI-001 / FM-CR-020
 - Started: 2026-09-06
-- Status: IN_PROGRESS
+- Status: COUNTERCHECKED (bounded activation complete)
 - Risk: R4
 - Authorization: owner explicitly requested merge and Staging activation after PR #1058 review correction.
 - New premerge evidence: review PRRT_kwDOSxGqmc6frbTm requires live freeze attestation before controlled ledger Apply. Merge held until repaired.
 - Implementation: shared deploy/Apply concurrency, preserve-by-default freeze state, exact-release HTTPS no-credential negative proof before SQL and after frozen deployment.
 - Local countercheck: Billing/Webhook 103/103 PASS including old-release, changing-release, Production, unfrozen, generic maintenance and preservation failures; SQL checksum unchanged; no actual provider/database request in tests.
 - Recovery: explicit freeze=false redeploy is available before any ledger Apply; no SQL Apply is requested here.
-- Still open: fresh exact-head CI/review, SHA-bound merge, one protected Staging freeze=true dispatch, deploy/postflight result and handoff.
+- Remote gates: all eight workflows succeeded on final PR head `43537ccf729b7787b4bd300b678771eeb216892a`; no unresolved review threads remained before merge.
+- Merge: PR #1058 squash merged as `157983d62afce572bfdf79374a0a5c5fd096b7db`.
+- Deployment: https://github.com/FanMind/FanMind/actions/runs/34032100988 / job `101483398784`, exact merged main, `billing_write_freeze=true`, completed success. Logs prove `STAGING_BILLING_FREEZE_RUNTIME=PASS` and `STAGING_BILLING_WRITE_FREEZE=true`; all 14 public routes and product-truth smoke passed.
+- Independent runtime countercheck: 2026-09-06 12:07–12:08 UTC, public `/api/version` confirms exact merge SHA and runtimeEnvironment=staging; independent no-credential/no-plan POST `/api/billing/checkout` returns HTTP 503, code `stripe_billing_write_frozen`, Retry-After=60. The repository verifier independently passes from the local workspace.
+- Health: seven required components healthy; HTTP 207/degraded is the pre-existing optional email_config=unknown warning, not a clean email acceptance.
+- Proof limits: no signed webhook replay, SQL Apply, payment, capture-only gate or Plus/Ultra activation. Mocked webhook/recovery and fail-closed tests support the code boundary; live signed-webhook acceptance remains open.
+- Recovery remains explicit freeze=false deployment before any ledger Apply; no live unfreeze was performed because activation is the requested final state. Default preserve protects the active freeze on later deployments.
+- Still open: separately authorized ledger/capture-only cutover and wider Billing acceptance. This receipt closes only merge and Staging freeze activation.
 
 
 ## RECEIPT-FM-AI-001-FREEZE-REVIEW-20260906
+- Historical checkpoint: superseded by activation receipt above; final remote checks, merge and bounded Staging freeze verification are now complete. Wider Billing acceptance remains open.
 - Task: FM-AI-001 / FM-CR-020
 - Started: 2026-09-06
 - Status: IMPLEMENTED_NOT_VERIFIED

@@ -2,7 +2,8 @@
 
 ## LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906
 - Task: FM-AI-001 / FM-CR-020
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-06 after successful exact-release Staging deployment and independent HTTP countercheck.
 - Risk: R4
 - Acquired: 2026-09-06
 - Holder: Codex owner-authorized merge/Staging activation
