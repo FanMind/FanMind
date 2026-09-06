@@ -3,6 +3,11 @@ name: FanMind Staging Stripe Webhook Signed Smoke
 on:
   workflow_dispatch:
     inputs:
+      verify_billing_freeze:
+        description: 'Additionally prove the signed legacy Billing freeze without provider or database mutations'
+        required: true
+        type: boolean
+        default: false
       reviewed_commit:
         description: 'Exact deployed and reviewed main commit for the signed Staging webhook smoke'
         required: true
@@ -13,7 +18,7 @@ on:
         type: string
 
 concurrency:
-  group: fanmind-staging-stripe-webhook-signed-smoke
+  group: fanmind-staging-deploy
   cancel-in-progress: false
 
 permissions:
@@ -52,3 +57,9 @@ jobs:
 
       - name: Verify the deployed signing-secret binding without mutations
         run: npm run stripe:staging-webhook-smoke:run
+
+      - name: Verify signed legacy Billing freeze
+        if: ${{ inputs.verify_billing_freeze }}
+        env:
+          FANMIND_SIGNED_BILLING_FREEZE_CONFIRM: verify-signed-billing-freeze
+        run: node scripts/operations/staging-signed-billing-freeze-probe.mjs

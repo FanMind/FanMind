@@ -1,3 +1,4 @@
+import { isStripeBillingWriteFrozen, STRIPE_BILLING_WRITE_FREEZE_CODE, STRIPE_BILLING_WRITE_FREEZE_MESSAGE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { syncWorkspaceAiTierStripeEntitlement } from "@/lib/aiTierStripeEntitlementSync.mjs";
 import { AI_TIER_STRIPE_EVENT_TYPES } from "@/lib/aiTierStripeLifecycle.mjs";
@@ -422,6 +423,13 @@ export async function POST(request: NextRequest) {
   const event = JSON.parse(rawBody) as StripeEvent;
   if (!isHandledStripeWebhookEventType(event.type)) {
     return NextResponse.json({ received: true });
+  }
+  // Preserve durable capture during cutover; freeze only the legacy path.
+  if (isStripeBillingWriteFrozen() && !isStripeBillingEventLedgerCaptureEnabled()) {
+    return NextResponse.json(
+      { error: STRIPE_BILLING_WRITE_FREEZE_MESSAGE, code: STRIPE_BILLING_WRITE_FREEZE_CODE },
+      { status: 503, headers: { "Retry-After": "60", "Cache-Control": "no-store" } },
+    );
   }
   const object = event.data?.object ?? {};
   const eventLedgerCaptureEnabled = isStripeBillingEventLedgerCaptureEnabled();

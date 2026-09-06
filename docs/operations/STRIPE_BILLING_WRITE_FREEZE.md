@@ -1,6 +1,6 @@
 # Stripe Billing write freeze — Staging cutover
 
-Stand: 5. September 2026
+Stand: 6. September 2026
 
 ## Zweck
 
@@ -23,6 +23,8 @@ Während der Sperre:
 - ein bereits signierter und behandelter Stripe-Webhook wird dadurch nicht als erfolgreich projiziert bestätigt, sondern bleibt retry-fähig;
 - die Sperre selbst führt keine Stripe-, Supabase- oder Production-Mutation aus.
 
+Der signierte Legacy-Pfad antwortet vor Referenzauflösung mit `503`, `stripe_billing_write_frozen` und `Retry-After: 60`. Ein aktivierter Capture-only-Pfad bleibt davon ausgenommen, damit Events während der Checkout-Sperre dauerhaft erfasst werden können.
+
 Die Signaturprüfung des Webhooks bleibt unverändert vorgelagert. Ungültige Signaturen werden weiterhin normal abgelehnt.
 
 Bereits bei Stripe angelegte Sessions werden durch diesen Schalter nicht beendet. Der Sperrnachweis gilt für neue Session-Erzeugung in der neu geladenen Runtime und die lokale Legacy-Projektion; der bestehende Ledger-/Cutover-Abgleich bleibt für bereits laufende Zahlungsereignisse erforderlich.
@@ -37,7 +39,7 @@ Unmittelbar vor dem SQL-Apply prüft `staging-billing-freeze-control.mjs` über 
 
 1. Exakten geprüften `main`-Commit auf Staging deployen.
 2. `FANMIND_STRIPE_BILLING_WRITE_FREEZE=true` ausschließlich in Staging setzen und Runtime neu laden.
-3. Negativnachweis: neuer Checkout muss mit dem festen `503`-Code scheitern; ein kontrollierter signierter Staging-Webhook darf während der Sperre keine legacy Workspace-Projektion bestätigen.
+3. Negativnachweis: neuer Checkout muss mit dem festen `503`-Code scheitern; ein kontrollierter signierter Staging-Webhook darf während der Sperre keine legacy Workspace-Projektion bestätigen. Dazu den Signed-Smoke-Workflow auf demselben Commit mit `verify_billing_freeze=true` ausführen und `STAGING_SIGNED_BILLING_FREEZE=PASS` verlangen. Die Probe prüft zuerst Signaturbindung und Runtime, erwartet für einen behandelten Eventtyp den festen Sperrcode und wiederholt den Runtime-Nachweis. Ihre absichtlich ungültige Event-ID und fehlenden Workspace-/Providerreferenzen verhindern eine persistente Ledger-Erfassung. Sie ist kein Zahlungs- oder Capture-Nachweis.
 4. Den bestehenden manuellen Workflow `.github/workflows/stripe-billing-event-ledger-staging.yml` auf demselben `main`-Commit mit `apply-stripe-billing-event-ledger` ausführen. Kein direkter SQL-Bypass.
 5. Nach erfolgreichem Schema-Postflight die bereits dokumentierte Capture-only-Stufe setzen:
 

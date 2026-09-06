@@ -241,3 +241,77 @@ test("deploy and Apply share exclusion and Apply requires live proof before SQL"
   assert.match(apply, /set -euo pipefail\s+node scripts\/operations\/staging-billing-freeze-control.mjs[\s\S]*--verify[^\n]+\n\s+npm run db:stripe-billing-ledger:apply/u);
   assert.ok(deploy.indexOf('--resolve') < deploy.indexOf('rsync --archive'));
 });
+
+const compiledWebhook = ts.default.transpileModule(
+  fs.readFileSync("src/app/api/stripe/webhook/route.ts", "utf8"),
+  { compilerOptions: { module: ts.default.ModuleKind.CommonJS, target: ts.default.ScriptTarget.ES2022 } },
+).outputText;
+const eventPolicy = await import("../src/lib/stripeWebhookEventPolicy.mjs");
+const referralPolicy = await import("../src/lib/referralLifecyclePolicy.mjs");
+const ledgerPolicy = await import("../src/lib/stripeBillingEventLedger.mjs");
+const { buildSignedFreezeProbe, runSignedBillingFreezeProbe } = await import("../scripts/operations/staging-signed-billing-freeze-probe.mjs");
+
+function webhookHarness({ frozen = true, capture = false, signature = true } = {}) {
+  const exports = {};
+  let ledgerCalls = 0;
+  const unused = new Proxy({}, { get() { return () => { throw new Error("unexpected_side_effect"); }; } });
+  const imports = {
+    "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
+    "@/lib/stripeBillingWriteFreeze.mjs": { ...freezePolicy, isStripeBillingWriteFrozen: () => frozen },
+    "@/lib/stripeBillingEventLedger.mjs": { isStripeBillingEventLedgerCaptureEnabled: () => capture, isStripeBillingEventLedgerEnabled: () => false },
+    "@/lib/stripeWebhookEventPolicy.mjs": eventPolicy,
+    "@/lib/referralLifecyclePolicy.mjs": referralPolicy,
+    "@/lib/stripeWorkspacePolicy.mjs": workspacePolicy,
+    "@/lib/stripeBilling": { ...unused, verifyStripeSignature: () => signature, findWorkspaceIdByStripeReferences: () => { throw new Error("legacy_resumed"); } },
+    "@/lib/stripeBillingEventSync.mjs": { syncStripeBillingEvent: async () => { ledgerCalls++; return { status: "unresolved" }; } },
+  };
+  runInNewContext(compiledWebhook, { exports, console: { warn() {}, error() {} }, require: name => imports[name] ?? unused });
+  return { post: exports.POST, ledgerCalls: () => ledgerCalls };
+}
+function probeRequest(type = "checkout.session.completed") {
+  return new Request("https://staging.invalid/api/stripe/webhook", { method: "POST", body: JSON.stringify({type, data: {object: {}}}) });
+}
+test("actual signed webhook freezes before legacy lookups and preserves signature rejection", async () => {
+  const h = webhookHarness();
+  const r = await h.post(probeRequest());
+  assert.equal(r.status, 503);
+  assert.equal(r.headers.get("Retry-After"), "60");
+  assert.equal((await r.json()).code, freezePolicy.STRIPE_BILLING_WRITE_FREEZE_CODE);
+  assert.equal(h.ledgerCalls(), 0);
+  assert.equal((await webhookHarness({signature:false}).post(probeRequest())).status, 400);
+  assert.equal((await h.post(probeRequest("fanmind.staging.webhook.binding_probe"))).status, 200);
+});
+test("actual webhook preserves capture-only and resumes legacy flow after unfreeze", async () => {
+  const h = webhookHarness({capture:true});
+  assert.equal((await h.post(probeRequest())).status, 200);
+  assert.equal(h.ledgerCalls(), 1);
+  await assert.rejects(webhookHarness({frozen:false}).post(probeRequest()), /stripe_webhook_billing_update_retryable/);
+});
+test("freeze probe cannot become a durable billing ledger event", () => {
+  const event = JSON.parse(buildSignedFreezeProbe(100));
+  assert.equal(event.type, "checkout.session.completed");
+  assert.deepEqual(event.data.object, {object:"checkout.session"});
+  const command = ledgerPolicy.buildStripeBillingLedgerCommand({event, projection:{billing_status:"pending_sepa_mandate"}, signedEventVerified:true});
+  assert.equal(command.status, "retry");
+  assert.equal(command.reason, "event_payload");
+});
+test("signed freeze probe requires exact release, binding, fixed retry code and a stable freeze", async () => {
+  const env = { GITHUB_REF:"refs/heads/main", GITHUB_SHA:"a".repeat(40), FANMIND_EXPECTED_RELEASE_COMMIT:"a".repeat(40), FANMIND_WORKFLOW_COMMIT:"a".repeat(40), FANMIND_RUNTIME_ENVIRONMENT:"staging", FANMIND_ENABLE_NON_PRODUCTION_WRITES:"false", STRIPE_WEBHOOK_SECRET:"whsec_synthetic", FANMIND_STAGING_STRIPE_WEBHOOK_SMOKE_CONFIRM:"run-signed-staging-stripe-webhook-smoke", FANMIND_SIGNED_BILLING_FREEZE_CONFIRM:"verify-signed-billing-freeze" };
+  const requests = [];
+  function fakeFetch({ signedStatus = 503 } = {}) {
+    return async (url, options) => {
+      requests.push({url,options});
+      if (url.endsWith("/api/version")) return Response.json({application:"fanmind",environment:"production",runtimeEnvironment:"staging",releaseCommit:env.GITHUB_SHA},{headers:{"Cache-Control":"no-store"}});
+      if (url.endsWith("/api/billing/checkout")) return Response.json({code:"stripe_billing_write_frozen"},{status:503,headers:{"Retry-After":"60"}});
+      const payload = JSON.parse(options.body);
+      if (payload.type === "fanmind.staging.webhook.binding_probe") return Response.json({received:true});
+      assert.equal(payload.id,"fanmind-freeze-probe");
+      assert.match(options.headers["Stripe-Signature"], /^t=\d+,v1=[a-f0-9]{64}$/);
+      return Response.json({code:"stripe_billing_write_frozen"},{status:signedStatus,headers:{"Retry-After":"60"}});
+    };
+  }
+  assert.equal(await runSignedBillingFreezeProbe(env,fakeFetch()),true);
+  await assert.rejects(runSignedBillingFreezeProbe(env,fakeFetch({signedStatus:200})));
+  await assert.rejects(runSignedBillingFreezeProbe({...env,GITHUB_REF:"refs/heads/other"},fakeFetch()));
+  assert.ok(requests.every(r=>r.url.startsWith("https://staging.fanmind.ch/")));
+});
