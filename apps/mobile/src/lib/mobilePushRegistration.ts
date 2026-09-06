@@ -6,6 +6,8 @@ import { getMobileEnvironment } from "@/lib/env";
 import { configureNotificationChannel } from "@/lib/pushNotifications";
 
 const environment = getMobileEnvironment();
+const AUTO_REGISTRATION_DISABLE_TIMEOUT_MS = 750;
+const NATIVE_TOKEN_DELETE_TIMEOUT_MS = 1_000;
 
 export type MobilePushRegistrationStatus = {
   enabled: boolean;
@@ -84,6 +86,35 @@ async function callPushApi(
   }
 }
 
+async function settleWithin(
+  operation: Promise<unknown>,
+  timeoutMs: number,
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const timeout = setTimeout(resolve, timeoutMs);
+    void operation
+      .catch(() => undefined)
+      .finally(() => {
+        clearTimeout(timeout);
+        resolve();
+      });
+  });
+}
+
+async function revokeNativePushRegistration() {
+  // Local logout must never be held hostage by a stalled Firebase/provider
+  // operation. Disable Expo auto-registration first, then attempt token
+  // deletion, with both native operations independently time-bounded.
+  await settleWithin(
+    Notifications.setAutoServerRegistrationEnabledAsync(false),
+    AUTO_REGISTRATION_DISABLE_TIMEOUT_MS,
+  );
+  await settleWithin(
+    Notifications.unregisterForNotificationsAsync(),
+    NATIVE_TOKEN_DELETE_TIMEOUT_MS,
+  );
+}
+
 export function getMobilePushRegistrationStatus(accessToken: string) {
   return callPushApi(accessToken, { action: "status" });
 }
@@ -106,43 +137,86 @@ export async function enableMobilePushRegistration(accessToken: string) {
 
   try {
     await configureNotificationChannel();
-    let permissions = await Notifications.getPermissionsAsync();
-    if (permissions.status !== "granted") {
-      permissions = await Notifications.requestPermissionsAsync();
-    }
-    if (permissions.status !== "granted") {
-      return {
-        status: null,
-        error:
-          "Push-Erinnerungen wurden nicht erlaubt. Du kannst die Freigabe später erneut in den Geräteeinstellungen erteilen.",
-      };
-    }
-    const token = await Notifications.getExpoPushTokenAsync({
-      projectId: currentProjectId,
-    });
-    return callPushApi(accessToken, {
-      action: "register",
-      token: token.data,
-      projectId: currentProjectId,
-      platform: Platform.OS,
-    });
   } catch {
     return {
       status: null,
       error:
-        "Dieses Gerät konnte noch nicht sicher für Push-Erinnerungen registriert werden.",
+        "Die lokalen Benachrichtigungskanäle konnten auf diesem Gerät nicht vorbereitet werden.",
     };
   }
+
+  let permissions = await Notifications.getPermissionsAsync().catch(() => null);
+  if (!permissions) {
+    return {
+      status: null,
+      error: "Der Benachrichtigungsstatus des Geräts konnte nicht gelesen werden.",
+    };
+  }
+  if (permissions.status !== "granted") {
+    permissions = await Notifications.requestPermissionsAsync().catch(() => null);
+  }
+  if (!permissions || permissions.status !== "granted") {
+    return {
+      status: null,
+      error:
+        "Push-Erinnerungen wurden nicht erlaubt. Du kannst die Freigabe später erneut in den Geräteeinstellungen erteilen.",
+    };
+  }
+
+  let devicePushToken: Notifications.DevicePushToken;
+  try {
+    devicePushToken = await Notifications.getDevicePushTokenAsync();
+  } catch {
+    return {
+      status: null,
+      error:
+        Platform.OS === "android"
+          ? "Android-Push ist in diesem Build noch nicht vollständig mit Firebase/FCM verbunden."
+          : "Für dieses Gerät konnte noch kein nativer Push-Token bezogen werden.",
+    };
+  }
+
+  let token: Notifications.ExpoPushToken;
+  try {
+    token = await Notifications.getExpoPushTokenAsync({
+      projectId: currentProjectId,
+      devicePushToken,
+    });
+  } catch {
+    await revokeNativePushRegistration();
+    return {
+      status: null,
+      error:
+        "Der native Push-Token konnte noch nicht sicher beim FanMind-EAS-Projekt registriert werden.",
+    };
+  }
+
+  const result = await callPushApi(accessToken, {
+    action: "register",
+    token: token.data,
+    projectId: currentProjectId,
+    platform: Platform.OS,
+  });
+
+  // A missing or malformed response is indeterminate: the backend may already
+  // have persisted the registration. Keep the consented native token intact
+  // and revoke it only through an explicit disable/logout path.
+  return result;
 }
 
-export function disableMobilePushRegistration(accessToken: string) {
-  return callPushApi(accessToken, { action: "unregister" });
+export async function disableMobilePushRegistration(accessToken: string) {
+  const [serverResult] = await Promise.all([
+    callPushApi(accessToken, { action: "unregister" }),
+    revokeNativePushRegistration(),
+  ]);
+  return serverResult;
 }
 
 export async function bestEffortDisableMobilePushRegistration(
   accessToken: string,
 ) {
-  await callPushApi(accessToken, { action: "unregister" }, 1_500).catch(
-    () => undefined,
-  );
+  await Promise.allSettled([
+    callPushApi(accessToken, { action: "unregister" }, 1_500),
+    revokeNativePushRegistration(),
+  ]);
 }
