@@ -361,3 +361,58 @@ use a reviewed cooperative reservation or the same database transaction for all
 scoped database work. The real driver remains an explicit activation gate.
 Provider `subscription.created` is retained as the Workspace contract start so
 Starter-12 cancellation cannot restart its minimum term at reconciliation time.
+
+
+## Canonical rollback acceptance (prepared 2026-09-06)
+
+`staging-billing-canonical-acceptance.yml` accepts only the exact reviewed main
+commit already deployed on the independently bound Staging origin. It shares
+`fanmind-staging-deploy` concurrency, validates the current controlled rollout,
+and uses the existing private project-qualified PostgreSQL TLS connection.
+The explicit confirmation is `run-staging-billing-canonical-acceptance`.
+
+The protected `FANMIND_AI_TIER_STAGING_WORKSPACE_ID` must have no Stripe bindings,
+Billing ledger rows, AI entitlement/events, referral attribution or demo session.
+The fixed synthetic fixture holds its Workspace lock, captures one event,
+rejects anon/authenticated RPC calls and stale revisions, applies one canonical
+revision, verifies idempotent replay, then rolls everything back. A second
+read-only transaction compares the full original Workspace and proves absence
+of all fixture ledger rows. Only fixed PASS markers may leave the runner.
+
+This proves database command compatibility and rollback behavior. It does not
+claim a real Stripe payment, signed webhook acceptance, a durable downstream
+receipt, or enable canonical runtime projection. Provider request/event IDs in
+this rollback fixture are explicitly synthetic.
+
+`stripeBillingCanonicalAiPlan.mjs` separately maps the immutable provider
+snapshot plus authoritative AI inventory to the existing AI reconciliation RPC.
+Already matching or Standard-only state requires atomic revalidation; it is not
+represented as a fabricated RPC result. Initial paid acquisition remains blocked
+unless it originated from the real event path. Referral/coupon integration and
+full shared downstream acceptance remain open.
+
+
+## Persistent attempt journal
+
+`createDurableStagingBillingAdapters` wraps the real AI/referral adapters and
+fixed Staging Billing committer. Provision a persistent directory owned only by
+the Staging operator (0700); journal files are exclusive-created 0600 with no
+symlink/hardlink acceptance. Both the file and directory are fsynced before any
+Billing request, including recovery from an already existing record. Request ID,
+full canonical command, target and minimal durable downstream receipts are bound
+together. No service key or raw provider response is written.
+
+A lost HTTP response can be recovered with a fresh adapter instance loading the
+same exact persisted attempt. Altered commands, incomplete files and insecure
+permissions fail closed without overwriting prior evidence. Use persistent host
+storage, not an ephemeral Actions directory. This adapter is prepared but is not
+yet wired into the production or Staging webhook runtime.
+
+
+The journal adapter forwards an explicitly supplied `withBillingReservation`
+driver; it never invents a reservation. Without that driver it can support
+recovery but first execution remains blocked by the shared executor. AI-only
+rotation planning now carries the existing prior subscription binding only with
+exact unresolved `subscription_mismatch` evidence for the same customer,
+Workspace and new subscription. This does not enable the base reader's deferred
+rotation flow or weaken its rejection of historical subscriptions.
