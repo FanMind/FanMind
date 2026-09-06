@@ -84,6 +84,8 @@ jobs:
             exit 1
           fi
 
+          BILLING_CAPTURE_STATE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-capture-runtime.mjs" --preserve "$BILLING_WRITE_FREEZE" "$EXPECTED_RELEASE_COMMIT")"
+
           if [ "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" != "$EXPECTED_RELEASE_COMMIT" ]; then
             echo "Authenticated staging checkout does not match the triggering commit." >&2
             exit 1
@@ -147,6 +149,7 @@ jobs:
           chmod 0600 "$RELEASE_ENV_TMP"
           printf 'FANMIND_RELEASE_COMMIT=%s\nFANMIND_RUNTIME_ENVIRONMENT=staging\nNODE_ENV=production\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=%s\n' \
             "$EXPECTED_RELEASE_COMMIT" "$BILLING_WRITE_FREEZE" > "$RELEASE_ENV_TMP"
+          printf '%s\n' "$BILLING_CAPTURE_STATE" >> "$RELEASE_ENV_TMP"
           mv "$RELEASE_ENV_TMP" "$SOURCE_DIR/.release.env"
           trap - EXIT
 
