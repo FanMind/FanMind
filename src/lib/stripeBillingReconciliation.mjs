@@ -1,3 +1,4 @@
+import { canonicalStripeBillingProjection } from "./stripeBillingCanonicalProjection.mjs";
 import { createHash } from "node:crypto";
 import { normalizeStripeBillingProjection } from "./stripeBillingEventLedger.mjs";
 import { buildSupabaseApiKeyHeaders } from "./supabase/apiKeyPolicy.mjs";
@@ -119,12 +120,19 @@ export async function executeStripeBillingReconciliation({ input, observation, a
     freeze(snapshot);
   } catch { return {status:"blocked",reason:"provider_snapshot_invalid"}; }
   const observed = Date.parse(body.p_snapshot_observed_at);
+  let evaluationTime;
   const fresh = () => {
-    try { const now = clock(); return Number.isFinite(now) && observed <= now + 300000 && observed >= now - 900000; } catch { return false; }
+    try { const now = clock(); evaluationTime=now; return Number.isFinite(now) && observed <= now + 300000 && observed >= now - 900000; } catch { return false; }
   };
   if (!fresh()) return { status: "blocked", reason: "snapshot_expired" };
   if (!adapters || typeof adapters.commitBilling !== "function") return { status: "blocked", reason: "adapter_missing" };
   if (body.p_event_stream === "lifecycle" && (typeof adapters.reconcileAi !== "function" || typeof adapters.reconcileReferral !== "function")) return { status: "blocked", reason: "adapter_missing" };
+  const projectionMatches=()=>{
+    if(body.p_event_stream!=="lifecycle") return false;
+    try { return JSON.stringify(normalizeStripeBillingProjection(canonicalStripeBillingProjection(snapshot,evaluationTime)))===JSON.stringify(body.p_projection); }
+    catch { return false; }
+  };
+  if (!projectionMatches()) return {status:"blocked",reason:"projection_snapshot_mismatch"};
   let stage = "downstream";
   try {
     if (body.p_event_stream === "lifecycle") {
@@ -134,6 +142,7 @@ export async function executeStripeBillingReconciliation({ input, observation, a
       if (!exactReceipt(referral, body, "referral")) return { status: "blocked", reason: "referral_receipt_invalid" };
     }
     if (!fresh()) return { status: "blocked", reason: "snapshot_expired" };
+    if (!projectionMatches()) return {status:"blocked",reason:"projection_snapshot_mismatch"};
     stage = "billing";
     const result = normalizeStripeBillingReconciliationResult(await adapters.commitBilling(body), body.p_expected_revision);
     return result ?? { status: "indeterminate", reason: "billing_receipt_invalid" };

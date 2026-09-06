@@ -1,3 +1,4 @@
+import { canonicalStripeBillingProjection } from "../src/lib/stripeBillingCanonicalProjection.mjs";
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ const fixture = () => ({workspaceId:'11111111-1111-4111-8111-111111111111', stre
 const target = {stagingRef:'s'.repeat(20), productionRef:'p'.repeat(20)};
 const environment = {FANMIND_RUNTIME_ENVIRONMENT:'staging',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',FANMIND_ENABLE_NON_PRODUCTION_WRITES:'true',FANMIND_NON_PRODUCTION_WRITE_ACK:'I_UNDERSTAND_NON_PRODUCTION_ONLY',NEXT_PUBLIC_SUPABASE_URL:`https://${target.stagingRef}.supabase.co`,FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:target.productionRef,FANMIND_STAGING_BILLING_RECONCILIATION_ENABLED:'true'};
 const receipt = (body,component) => ({component,status:'reconciled',workspaceId:body.p_workspace_id,requestId:body.p_stripe_request_id,snapshotFingerprint:body.p_snapshot_fingerprint,providerSnapshotFingerprint:body.providerSnapshotFingerprint});
-function harness() { const calls=[]; const input=fixture(); const snapshot={workspaceId:input.workspaceId,customerId:input.customerId,subscriptionId:input.subscriptionId,requestId:input.requestId,observedAt:input.observedAt,items:[{id:'si_base',priceId:'price_base'}]}; const fingerprint=createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');input.providerSnapshotFingerprint=fingerprint; return {calls, input, observation:{status:'read',snapshot,fingerprint}, environment, reviewedTarget:target, clock:()=>now, adapters:{reconcileAi:async b=>{calls.push('ai');return receipt(b,'ai');},reconcileReferral:async b=>{calls.push('referral');return receipt(b,'referral');},commitBilling:async b=>{calls.push('billing');return [{result_status:'reconciled',result_revision:b.p_expected_revision+1}];}}}; }
+function harness() { const calls=[]; const input=fixture(); const snapshot={workspaceId:input.workspaceId,customerId:input.customerId,subscriptionId:input.subscriptionId,requestId:input.requestId,observedAt:input.observedAt,status:'active',basePriceId:'price_base',cancelAtPeriodEnd:false,cancelAt:null,canceledAt:null,endedAt:null,items:[{id:'si_base',priceId:'price_base',start:Math.floor(now/1000)-100,end:Math.floor(now/1000)+86400}],latestInvoice:{id:'in_paid',status:'paid',amountRemaining:0,amountDue:31200,amountPaid:31200,created:Math.floor(now/1000)-100,attemptCount:1,nextPaymentAttempt:null,hostedUrl:null,pdfUrl:null,paidAt:Math.floor(now/1000)-50}}; const fingerprint=createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');input.providerSnapshotFingerprint=fingerprint; input.projection=canonicalStripeBillingProjection(snapshot,now); return {calls, input, observation:{status:'read',snapshot,fingerprint}, environment, reviewedTarget:target, clock:()=>now, adapters:{reconcileAi:async b=>{calls.push('ai');return receipt(b,'ai');},reconcileReferral:async b=>{calls.push('referral');return receipt(b,'referral');},commitBilling:async b=>{calls.push('billing');return [{result_status:'reconciled',result_revision:b.p_expected_revision+1}];}}}; }
 test('canonical payload hashes identity, revision, projection and complete normalized lists',()=>{
  const a=fixture(); const b=fixture(); b.resolvedEventIds.reverse();b.objectBindings.reverse();b.projection={billing_suspended_reason:null,billing_suspended_at:null,workspace_access_mode:'active',billing_status:'active'};
  assert.deepEqual(build(a),build(b));
@@ -67,4 +68,14 @@ test('downstream adapters receive the identical immutable provider observation',
  for(const [method,component] of [['reconcileAi','ai'],['reconcileReferral','referral']])h.adapters[method]=async(body,snapshot)=>{seen.push(snapshot);assert.ok(Object.isFrozen(snapshot.items[0]));assert.throws(()=>{snapshot.items[0].priceId='price_wrong';});return receipt(body,component);};
  assert.equal((await execute(h)).status,'reconciled');assert.equal(seen[0],seen[1]);
  const bad=harness();bad.observation.snapshot.items[0].priceId='price_changed';assert.equal((await execute(bad)).reason,'provider_snapshot_invalid');assert.deepEqual(bad.calls,[]);
+});
+
+
+test('a canceled provider snapshot cannot commit a separately supplied active projection',async()=>{
+ const h=harness();h.observation.snapshot.status='canceled';h.observation.snapshot.endedAt=Math.floor(now/1000)-1;
+ h.observation.fingerprint=createHash('sha256').update(JSON.stringify(h.observation.snapshot)).digest('hex');h.input.providerSnapshotFingerprint=h.observation.fingerprint;
+ assert.equal((await execute(h)).reason,'projection_snapshot_mismatch');assert.deepEqual(h.calls,[]);
+});
+test('paid canonical invoice records provider payment time and clears old failure history',()=>{
+ const h=harness();assert.equal(h.input.projection.billing_last_payment_at,new Date(now-50000).toISOString());assert.equal(h.input.projection.billing_last_payment_failed_at,null);
 });
