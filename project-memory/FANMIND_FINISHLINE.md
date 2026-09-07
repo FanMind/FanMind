@@ -7,7 +7,7 @@ Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the c
 | Project Memory V6 | FM-MEM-005 | ACCEPTED | exact PR #975 head passed Memory Guard/Quality V6/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E; merged as `b4bef882a55e8c0dd1dd33d0ad1c1664c3078d0d` | maintain V6; no parallel memory system |
 | Production/Ops | FM-OPS-001 | VERIFIED | production deploy, health/version, audit, monitoring, encrypted backups and checksum verification | maintain; optional/destructive follow-ups remain separate |
 | Isolated Staging | FM-STG-001 | ACCEPTED | separate Supabase/Web Staging, DNS/TLS, synthetic workspaces, test resources and primary acceptance | reuse; feature-specific acceptance stays in its own gate |
-| Restore | FM-RST-001 | PARTIAL | ACL/Owner recovery contract, PG17 roundtrip, Schema-2 Full Backup/checksum, isolated host, accepted `TARGET_COMPATIBLE` baseline and exact five-extension/97-record receipt prerequisite with canonical ACL fingerprint | fresh host/policy/target evidence + new exact R4 authorization -> DB -> postcheck -> Storage -> config -> cleanup -> final evidence |
+| Restore | FM-RST-001 | PARTIAL | real isolated PostgreSQL-17 Restore committed in workflow `33178878764` / job `98874745740`; one-shot ACL completion applied exactly eight missing schema-USAGE grants, matched projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, passed core `5|5|5|5` and plaintext cleanup; PR #1075 permanently fixed the target-only principal projection and #944 is closed | close the remaining private receipt/identity-binding completeness gap for `DB_RESTORED -> DB_POSTCHECKED` without repeating Restore; then separately prove Storage -> config -> disposable-target cleanup -> independent countercheck -> final aggregate acceptance |
 | Mobile | FM-MOB-001 | IMPLEMENTED_NOT_VERIFIED | native Android/iOS app foundation, repository/CI foundation, one verified signed Android preview artifact and owner-accepted bounded FM-MOB-003/FM-MOB-004 UI/runtime observation | redirect/recovery + complete receipt-bound 19-check Android runbook/private validator + applicable Push/Store evidence; iOS/TestFlight is Phase 8 and does not close this through-Phase-7 gate |
 | AI/Billing | FM-AI-001 | PARTIAL | Standard active; Plus/Ultra fail-closed policy, test/storage/lifecycle foundations | written tier decisions, quality/cost, complete Staging lifecycle, legal/tax, explicit activation |
 | Meta/Security | FM-META-001 | PARTIAL | PageView-only Pixel production path; advanced Meta foundation | Events Manager/no-PII, App Review/real E2E, final security/legal evidence |
@@ -27,11 +27,12 @@ Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the c
 - A gate with code/CI only is not automatically `ACCEPTED`.
 - External acceptance cannot be inferred from a repository artifact.
 - Restore remains R4 and never targets Production or Supabase Staging.
+- The completed database Restore is non-repeatable. Missing postcheck receipt completeness must be reconciled from retained private evidence or bounded read-only proof; it must not be recreated by another Restore.
 - No real payment, destructive offsite retention, platform bypass or protected Production mutation is authorized by this board.
 
 ## Closeout order
 
-1. Restore accepted end-to-end.
+1. Restore accepted end-to-end, continuing from `DB_RESTORED -> DB_POSTCHECKED` receipt reconciliation rather than another database Restore.
 2. Mobile current-finishline acceptance: redirect/recovery, complete receipt-bound 19-check signed Android real-device runbook/private validator and applicable Push/Store evidence; the bounded FM-MOB-003/FM-MOB-004 UI observation is already accepted and there is no iOS/TestFlight requirement.
 3. AI/Billing tier decisions and lifecycle acceptance.
 4. Meta Events/Security external acceptance.
