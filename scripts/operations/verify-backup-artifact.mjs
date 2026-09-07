@@ -530,7 +530,7 @@ async function assertExtractedEntries(root, entries) {
   }
 }
 
-async function extractTar(file, destination, tarBin = "tar") {
+export async function extractTar(file, destination, tarBin = "tar") {
   const entries = await listTarEntries(file, tarBin);
   await run(tarBin, [
     "--extract",
@@ -547,7 +547,7 @@ async function extractTar(file, destination, tarBin = "tar") {
   return entries;
 }
 
-function safeManifestPath(root, manifestPath) {
+export function safeManifestPath(root, manifestPath) {
   const clean = String(manifestPath).replace(/^\.\//, "");
   assertSafeArchiveEntry(clean);
   const candidate = resolve(root, clean);

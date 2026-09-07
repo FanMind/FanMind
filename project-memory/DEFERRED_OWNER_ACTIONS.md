@@ -46,6 +46,14 @@ Updated: 2026-09-07 Europe/Vienna
 - Resume rule: continue only with receipt/read-only reconciliation for `DB_POSTCHECKED`; never create a JIT or dispatch a new database Restore from this retired action.
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
+## FM-RST-OWNER-007 — Real isolated Supabase Storage target
+
+- Related task: `FM-RST-001`.
+- Status: DEFERRED_BY_OWNER.
+- Decision: on 2026-09-07 the owner selected `Nur lokal testen` after comparing a permanent project at 10 EUR/month with an isolated Preview branch at 0.01344 EUR/hour.
+- Current result: only the repository controller and synthetic local API contract may proceed. No additional Supabase project/branch may be created and neither FanMind Production nor FanMind Staging may be used as the Restore target.
+- Resume rule: a real `DB_POSTCHECKED -> STORAGE_RESTORED` transition needs a new action-time decision for a distinct disposable Supabase target plus exact current commit/artifact/project/bucket/cleanup bindings.
+
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Related task: `FM-SEC-001`.
 - Status: DEFERRED_BY_OWNER.

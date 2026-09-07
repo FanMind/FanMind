@@ -8,7 +8,7 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Type: internal + external control
 - Status: ACTIVE
 - Updated: 2026-09-07
-- Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove the isolated database phase; PR #1079 merged the exact `DB_POSTCHECKED` reconciliation. The repository now prepares and independently revalidates a private Storage archive/receipt with exact Full-Backup, part, manifest, path-set, size and hash bindings; no real artifact or provider was used.
+- Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove the isolated database phase; PR #1079 merged the exact `DB_POSTCHECKED` reconciliation. PR #1081 merged the private Storage archive/receipt preparation. The follow-on local controller proves target-empty, exact postwrite and rollback behavior against a synthetic API double; the owner declined an additional Supabase project/Preview branch, so no real artifact or provider was used.
 - Rule: `DB_POSTCHECKED` is accepted. Repository preparation does not equal `STORAGE_RESTORED`. A later upload requires a new exact R4 authorization, current non-Production environment boundary, distinct isolated Storage target, fail-closed target-empty/prewrite and postwrite equality checks, rollback/cleanup evidence and explicit Production/Supabase-Staging denial. Never repeat the database Restore or reuse a consumed controller/JIT.
 
 ## FM-DEP-002

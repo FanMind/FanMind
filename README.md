@@ -147,7 +147,12 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   nächste Storage-Phase kann der Verifier nun aus dem exakt gebundenen
   Full-Backup ein privates, vollständiges Storage-Archiv samt Hash-/Manifest-
   Receipt vorbereiten und vor einer späteren Mutation erneut prüfen; er lädt
-  noch nichts hoch. Storage-Restore, Server-Konfigurationsprüfung,
+  noch nichts hoch. Ein zusätzlicher lokaler synthetischer Controller prüft
+  Ziel-Leere, exakte Postwrite-Pfade/Größen/Hashes, Production-/Staging-Sperren
+  und vollständigen Rollback nach einem simulierten Schreibfehler. Nach der
+  Owner-Entscheidung vom 2026-09-07 wird dafür kein drittes Supabase-Projekt
+  angelegt; der lokale Nachweis ist deshalb ausdrücklich kein reales
+  `STORAGE_RESTORED`. Storage-Restore, Server-Konfigurationsprüfung,
   Wegwerfziel-Cleanup und finaler Evidenznachweis bleiben für den echten
   externen Drill offen und benötigen jeweils eine eigene Freigabe.
 - Mobile-Release-Ressourcencheck: ein manueller, nur auf `main` ausführbarer

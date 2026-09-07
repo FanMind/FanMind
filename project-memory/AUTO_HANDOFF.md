@@ -24,6 +24,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 ## Deferred owner actions
 
+- FM-RST-OWNER-007 — Real isolated Supabase Storage target
 - FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
