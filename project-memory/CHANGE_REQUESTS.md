@@ -219,3 +219,16 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact reviewed `main`, isolated Staging bindings, marked synthetic Workspace, applied handoff schema, protected Staging environment and independent confirmations for verify, apply and acceptance.
 - Decision: Implement as FM-WEB-004 at R3. Repository publication is authorized; every workflow dispatch and database action remains separately authorized. Acceptance must be Workspace-scoped, rollback-only, browser-denied and preserve CRM history.
 - Related task: FM-WEB-004
+
+## FM-CR-022
+- Date: 2026-09-06
+- Closed: 2026-09-07
+- Status: ACCEPTED
+- Source: owner-resumed `FM-AI-001` finishline work
+- Idea: Reconcile Project Memory after the exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` succeeded on `62e6a11858e85996af03f6740819b0fc6194b4a4`.
+- Classification: R4 evidence/reconciliation closeout only; no new runtime, provider, database, payment or paid-tier activation.
+- Affected areas: canonical AI/Billing and Mobile restart readers, evidence/freshness register, next-action bookkeeping and do-not-repeat boundaries.
+- Existing task/decision checked: FM-AI-001, FM-CR-020, `LOCK-FINISHLINE-RESUME-20260906`, FM-EV-035, AI-tier acceptance `34039968946`, general Billing Apply/capture/unfreeze and canonical Billing acceptance.
+- Dependencies: exact immutable workflow/run evidence, independent read-only counterchecks, complete rollback/cleanup evidence and exact-head CI/review before merge.
+- Decision: Accept only the bounded documentation/evidence closeout. Preserve `FM-AI-001=PARTIAL`, `ai_billing=PARTIAL`, `sales_ready=false`, disabled canonical Production projection and disabled Plus/Ultra. Product/private/provider/Legal/Tax/Production gates, Mobile real-device/Play and Restore remain open under their existing controls.
+- Related task: FM-AI-001
