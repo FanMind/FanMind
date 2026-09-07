@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-RESTORE-DATABASE`
-- Next action title: SSH-Zugang reconciliieren und Restore neu autorisieren
+- Next action: `NBA-RESTORE-POSTCHECK-RECONCILE`
+- Next action title: DB_RESTORED zu DB_POSTCHECKED receiptgebunden reconciliieren
 
 ## Finishline gates
 
@@ -24,8 +24,6 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 ## Deferred owner actions
 
-- FM-RST-OWNER-005 — Restore-host SSH reachability evidence
-- FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
