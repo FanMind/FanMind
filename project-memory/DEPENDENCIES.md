@@ -8,8 +8,8 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Type: internal + external control
 - Status: ACTIVE
 - Updated: 2026-09-07
-- Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove workflow `33178878764` / job `98874745740` committed the isolated PostgreSQL 17 Restore; the separately authorized completion applied exactly eight schema-USAGE grants and matched the receipt-bound projected authorization fingerprint. PR #1075 permanently corrected the target-only login projection and issue #944 is closed.
-- Rule: `DB_POSTCHECKED` is accepted by receipt `FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`. Continue from `DB_POSTCHECKED -> STORAGE_RESTORED`: first implement/countercheck the bounded Storage restore/verification path without dispatch, then require separate exact authorization for isolated Storage mutation. Never repeat the database Restore, reuse a consumed controller/JIT, reset the database target, or access Production/Supabase Staging.
+- Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove the isolated database phase; PR #1079 merged the exact `DB_POSTCHECKED` reconciliation. The repository now prepares and independently revalidates a private Storage archive/receipt with exact Full-Backup, part, manifest, path-set, size and hash bindings; no real artifact or provider was used.
+- Rule: `DB_POSTCHECKED` is accepted. Repository preparation does not equal `STORAGE_RESTORED`. A later upload requires a new exact R4 authorization, current non-Production environment boundary, distinct isolated Storage target, fail-closed target-empty/prewrite and postwrite equality checks, rollback/cleanup evidence and explicit Production/Supabase-Staging denial. Never repeat the database Restore or reuse a consumed controller/JIT.
 
 ## FM-DEP-002
 - From: FM-MOB-001

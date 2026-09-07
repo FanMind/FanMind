@@ -9,6 +9,7 @@ import {
   lstat,
   mkdtemp,
   open,
+  readdir,
   realpath,
   rm,
   unlink,
@@ -474,7 +475,16 @@ async function listTarEntries(file, tarBin = "tar") {
     .split("\n")
     .map((entry) => entry.trim())
     .filter(Boolean);
-  for (const entry of entries) assertSafeArchiveEntry(entry);
+  const seen = new Set();
+  for (const entry of entries) {
+    assertSafeArchiveEntry(entry);
+    const canonical = entry.replace(/^\.\//u, "").replace(/\/$/u, "");
+    if (!canonical || canonical === ".") continue;
+    if (seen.has(canonical)) {
+      throw verifierError("duplicate_archive_entry", { entry: canonical });
+    }
+    seen.add(canonical);
+  }
 
   const { stdout: verbose } = await run(tarBin, [
     "--list",
@@ -618,6 +628,27 @@ async function publishPrivateCopy(sourcePath, outputPath) {
   }
 }
 
+async function publishPrivateVerifiedCopy(
+  sourcePath,
+  outputPath,
+  expectedSha256,
+) {
+  await assertPrivateOutputTarget(outputPath);
+  const temporaryPath = join(
+    dirname(outputPath),
+    `.${basename(outputPath)}.${randomUUID()}.tmp`,
+  );
+  try {
+    const snapshot = await snapshotStableRegularFile(sourcePath, temporaryPath);
+    if (snapshot.checksum !== expectedSha256) {
+      throw verifierError("restore_storage_archive_changed_before_publish");
+    }
+    await link(temporaryPath, outputPath);
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
+  }
+}
+
 async function publishPrivateBytes(bytes, outputPath) {
   await assertPrivateOutputTarget(outputPath);
   const temporaryPath = join(
@@ -670,6 +701,61 @@ async function publishRestoreOutputs({
   }
 }
 
+async function publishStorageRestoreOutputs({
+  clearStoragePath,
+  archiveOutputPath,
+  receiptOutputPath,
+  receipt,
+  storageArchiveSha256,
+}) {
+  await Promise.all([
+    assertPrivateOutputTarget(archiveOutputPath),
+    assertPrivateOutputTarget(receiptOutputPath),
+  ]);
+  if (archiveOutputPath === receiptOutputPath) {
+    throw verifierError("restore_output_paths_must_differ");
+  }
+
+  let archivePublished = false;
+  try {
+    await publishPrivateVerifiedCopy(
+      clearStoragePath,
+      archiveOutputPath,
+      storageArchiveSha256,
+    );
+    archivePublished = true;
+    await publishPrivateBytes(
+      Buffer.from(`${JSON.stringify(receipt)}\n`, "utf8"),
+      receiptOutputPath,
+    );
+  } catch (error) {
+    if (archivePublished) await unlink(archiveOutputPath).catch(() => undefined);
+    throw error;
+  }
+}
+
+async function listExtractedStorageFiles(root, directory = root, prefix = "") {
+  const names = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of names) {
+    const archivePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    assertSafeArchiveEntry(archivePath);
+    const filePath = safeManifestPath(root, archivePath);
+    const metadata = await lstat(filePath);
+    if (entry.isDirectory() && metadata.isDirectory()) {
+      files.push(...await listExtractedStorageFiles(root, filePath, archivePath));
+      continue;
+    }
+    if (!entry.isFile() || !metadata.isFile() || metadata.nlink !== 1) {
+      throw verifierError("unsafe_storage_archive_entry_type");
+    }
+    if (archivePath !== "manifest.json") files.push(archivePath);
+  }
+  return files.sort((left, right) =>
+    Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")),
+  );
+}
+
 export async function verifyStorageManifest(root, manifest) {
   if (!manifest || typeof manifest !== "object") {
     throw verifierError("storage_manifest_missing");
@@ -718,6 +804,16 @@ export async function verifyStorageManifest(root, manifest) {
   if (manifest.total_size_bytes !== totalSizeBytes) {
     throw verifierError("storage_total_size_mismatch");
   }
+  const actualPaths = await listExtractedStorageFiles(root);
+  const expectedPaths = [...seen].sort((left, right) =>
+    Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")),
+  );
+  if (
+    actualPaths.length !== expectedPaths.length
+    || actualPaths.some((path, index) => path !== expectedPaths[index])
+  ) {
+    throw verifierError("storage_archive_path_set_mismatch");
+  }
   return {
     objectCount: manifest.files.length,
     totalSizeBytes,
@@ -736,6 +832,7 @@ export async function verifyFullManifest(root, manifest) {
   }
   const foundTypes = new Set();
   let databasePart = null;
+  let storagePart = null;
   for (const part of manifest.parts) {
     if (
       !part ||
@@ -773,6 +870,12 @@ export async function verifyFullManifest(root, manifest) {
         encryptedSha256: part.sha256,
         manifest: part.manifest,
       };
+    } else if (part.manifest.backup_type === "storage") {
+      storagePart = {
+        file: part.file,
+        encryptedSha256: part.sha256,
+        manifest: part.manifest,
+      };
     }
   }
   for (const requiredType of ["server_config", "database", "storage"]) {
@@ -785,6 +888,7 @@ export async function verifyFullManifest(root, manifest) {
     partCount: manifest.parts.length,
     partTypes: [...foundTypes].sort(),
     databasePart,
+    storagePart,
   };
 }
 
@@ -814,6 +918,9 @@ async function validateDecryptedArtifact(clearFile, type, options) {
       manifestPath,
       4 * 1024 * 1024,
     );
+    const manifestSha256 = createHash("sha256")
+      .update(manifestBytes)
+      .digest("hex");
     let manifest;
     try {
       manifest = JSON.parse(
@@ -825,13 +932,70 @@ async function validateDecryptedArtifact(clearFile, type, options) {
       manifestBytes.fill(0);
     }
     if (type === "storage") {
-      return verifyStorageManifest(extractRoot, manifest);
+      return {
+        ...await verifyStorageManifest(extractRoot, manifest),
+        manifestSha256,
+      };
     }
     if (type === "full") {
       const validation = await verifyFullManifest(extractRoot, manifest);
-      if (!options.restoreOutputs) return validation;
+      if (!options.restoreOutputs && !options.storageRestoreOutputs) {
+        return validation;
+      }
       if (!/^[a-f0-9]{40}$/u.test(validation.productionCommit)) {
         throw verifierError("restore_receipt_production_commit_invalid");
+      }
+      if (options.storageRestoreOutputs) {
+        const storagePartPath = safeManifestPath(
+          extractRoot,
+          validation.storagePart.file,
+        );
+        await assertSafeExtractedRegularFile(extractRoot, storagePartPath);
+        const clearStoragePath = join(extractRoot, ".storage-restore.tar.gz");
+        await run(options.ageBin, [
+          "--decrypt",
+          "--identity",
+          options.identityPath,
+          "--output",
+          clearStoragePath,
+          storagePartPath,
+        ]);
+        await chmod(clearStoragePath, 0o600);
+        const storageMetadata = await lstat(clearStoragePath);
+        if (!storageMetadata.isFile() || storageMetadata.nlink !== 1) {
+          throw verifierError("decrypted_storage_not_regular");
+        }
+        const storageValidation = await validateDecryptedArtifact(
+          clearStoragePath,
+          "storage",
+          { ...options, restoreOutputs: null, storageRestoreOutputs: null },
+        );
+        const storageArchiveSha256 = await sha256File(clearStoragePath);
+        const receipt = {
+          schemaVersion: 1,
+          createdAt: new Date().toISOString(),
+          sourceArtifactBasename: options.sourceArtifactBasename,
+          outerSha256: options.outerSha256,
+          productionCommit: validation.productionCommit,
+          storagePartEncryptedSha256: validation.storagePart.encryptedSha256,
+          storageArchiveSha256,
+          storageManifestSha256: storageValidation.manifestSha256,
+          storageBucket: "fanmind-assets",
+          storageObjectCount: storageValidation.objectCount,
+          storageTotalSizeBytes: storageValidation.totalSizeBytes,
+          verifier: "passed",
+        };
+        await publishStorageRestoreOutputs({
+          clearStoragePath,
+          ...options.storageRestoreOutputs,
+          receipt,
+          storageArchiveSha256,
+        });
+        return {
+          ...validation,
+          storageRestoreArchive: "created",
+          storageRestoreReceipt: "created",
+        };
       }
       const databaseManifest = validation.databasePart.manifest;
       if (databaseManifest.format_version !== 2) {
@@ -958,15 +1122,31 @@ async function validateDecryptedArtifact(clearFile, type, options) {
 export async function verifyBackupArtifact(input) {
   const artifactPath = resolve(input.artifactPath);
   const type = input.type ?? detectBackupType(artifactPath);
-  const restoreOutputRequested = Boolean(
+  const databaseRestoreOutputRequested = Boolean(
     input.restoreDumpOutputPath || input.restoreReceiptOutputPath,
   );
+  const storageRestoreOutputRequested = Boolean(
+    input.restoreStorageArchiveOutputPath
+      || input.restoreStorageReceiptOutputPath,
+  );
   if (
-    restoreOutputRequested &&
+    databaseRestoreOutputRequested &&
     (!input.restoreDumpOutputPath || !input.restoreReceiptOutputPath)
   ) {
     throw verifierError("restore_outputs_must_be_paired");
   }
+  if (
+    storageRestoreOutputRequested
+    && (!input.restoreStorageArchiveOutputPath
+      || !input.restoreStorageReceiptOutputPath)
+  ) {
+    throw verifierError("restore_storage_outputs_must_be_paired");
+  }
+  if (databaseRestoreOutputRequested && storageRestoreOutputRequested) {
+    throw verifierError("restore_output_modes_must_not_mix");
+  }
+  const restoreOutputRequested =
+    databaseRestoreOutputRequested || storageRestoreOutputRequested;
   if (restoreOutputRequested && (!input.identityPath || type !== "full")) {
     throw verifierError("restore_outputs_require_decrypted_full_backup");
   }
@@ -977,9 +1157,16 @@ export async function verifyBackupArtifact(input) {
     throw verifierError("restore_receipt_artifact_name_invalid");
   }
   const restoreOutputs = restoreOutputRequested
+    && databaseRestoreOutputRequested
     ? {
         dumpOutputPath: resolve(input.restoreDumpOutputPath),
         receiptOutputPath: resolve(input.restoreReceiptOutputPath),
+      }
+    : null;
+  const storageRestoreOutputs = storageRestoreOutputRequested
+    ? {
+        archiveOutputPath: resolve(input.restoreStorageArchiveOutputPath),
+        receiptOutputPath: resolve(input.restoreStorageReceiptOutputPath),
       }
     : null;
   if (restoreOutputs) {
@@ -994,6 +1181,26 @@ export async function verifyBackupArtifact(input) {
       assertPrivateOutputTarget(restoreOutputs.receiptOutputPath),
     ]);
     if (restoreOutputs.dumpOutputPath === restoreOutputs.receiptOutputPath) {
+      throw verifierError("restore_output_paths_must_differ");
+    }
+  }
+  if (storageRestoreOutputs) {
+    if (
+      input.restoreStorageArchiveOutputPath
+        !== storageRestoreOutputs.archiveOutputPath
+      || input.restoreStorageReceiptOutputPath
+        !== storageRestoreOutputs.receiptOutputPath
+    ) {
+      throw verifierError("restore_output_path_not_absolute");
+    }
+    await Promise.all([
+      assertPrivateOutputTarget(storageRestoreOutputs.archiveOutputPath),
+      assertPrivateOutputTarget(storageRestoreOutputs.receiptOutputPath),
+    ]);
+    if (
+      storageRestoreOutputs.archiveOutputPath
+        === storageRestoreOutputs.receiptOutputPath
+    ) {
       throw verifierError("restore_output_paths_must_differ");
     }
   }
@@ -1050,6 +1257,7 @@ export async function verifyBackupArtifact(input) {
       pgRestoreBin: input.pgRestoreBin ?? "/usr/lib/postgresql/17/bin/pg_restore",
       tarBin: input.tarBin ?? "tar",
       restoreOutputs,
+      storageRestoreOutputs,
       sourceArtifactBasename: basename(artifactPath),
       outerSha256: checksumResult.checksum,
     });
@@ -1074,6 +1282,10 @@ function parseCli(argv) {
       options.restoreDumpOutputPath = argv[++index];
     } else if (value === "--restore-receipt-output") {
       options.restoreReceiptOutputPath = argv[++index];
+    } else if (value === "--restore-storage-archive-output") {
+      options.restoreStorageArchiveOutputPath = argv[++index];
+    } else if (value === "--restore-storage-receipt-output") {
+      options.restoreStorageReceiptOutputPath = argv[++index];
     }
     else if (value === "--json") options.json = true;
     else if (value === "--help") options.help = true;
@@ -1099,6 +1311,10 @@ Options:
                         Private new plaintext dump output (full + identity only)
   --restore-receipt-output PATH
                         Private new cryptographic receipt (paired with dump)
+  --restore-storage-archive-output PATH
+                        Private verified plaintext Storage archive (full + identity only)
+  --restore-storage-receipt-output PATH
+                        Private cryptographic receipt (paired with Storage archive)
   --json                JSON output
 
 Without --identity the verifier performs a non-destructive checksum-only check.

@@ -4,23 +4,23 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-RESTORE-STORAGE-PREP`
+- Selected action: `NBA-RESTORE-STORAGE-R4-AUTH`
 - Task: `FM-RST-001`
 - Gate: `restore` (`PARTIAL`)
-- Selection status: `EXECUTABLE`
-- Title: Isolierten Storage-Restore sicher vorbereiten
+- Selection status: `OWNER_ACTION_REQUIRED`
+- Title: Isolierten Storage-Restore exakt freigeben
 
 ## Instruction
 
-Implement and countercheck a bounded Storage restore/verification path for the exact receipt-bound Full Backup: distinct isolated target, manifest/path/size/hash equality, traversal/symlink/duplicate rejection, private plaintext handling, fail-closed rollback/cleanup and explicit Production/Supabase-Staging denial. Do not dispatch the workflow, decrypt the real artifact, connect to Storage, or perform any provider/runtime mutation. A later isolated Storage write requires separate exact R4 authorization.
+The repository-only Storage preparation is implemented and locally counterchecked: it creates and revalidates a private exact archive/receipt without provider access. After exact-head merge, require a new exact R4 authorization bound to the accepted Full Backup, exact main commit, distinct isolated non-Production Supabase project/bucket, current environment boundary, dedicated target-empty/prewrite and postwrite manifest/path/size/hash controller, rollback/cleanup plan and explicit Production/Supabase-Staging denial. Do not decrypt the real artifact, connect to Storage, upload, dispatch or claim STORAGE_RESTORED before that authorization.
 
 ## Why this action
 
-standing-authorized safe work
+owner/platform action required
 
 ## Candidate evaluation
 
-- `NBA-RESTORE-STORAGE-PREP` priority 10: **EXECUTABLE** — standing-authorized safe work
+- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
 - `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001
