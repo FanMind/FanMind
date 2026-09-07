@@ -79,6 +79,8 @@ Fresh advisors report authenticated execution of `ensure_current_user_workspace(
 Do not create artificial browser RLS policies merely to silence INFO advisories for service-only tables.
 
 ## Restore-drill exact known state
+- **Latest superseding database-phase evidence (2026-08-28, reconciled 2026-09-07):** issue #944 final comment `5453857592` proves workflow `33178878764` / database job `98874745740` completed and committed the isolated PostgreSQL 17 database Restore before the later ACL-helper boundary failure. Separately authorized completion `5453727223` added exactly eight missing schema-USAGE grants, produced exact projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, core-table postcheck `5|5|5|5` and plaintext cleanup `PASS`. No Production or Supabase Staging access/write and no repeated Restore occurred. Receipt: `receipts/FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md`.
+- This supersedes every older active instruction below that says `DB_RESTORED` was not reached or asks for SSH reconciliation/new database-Restore authorization. Do not repeat run `33178878764`, job `98874745740` or the database Restore. Overall `FM-RST-001` remains `PARTIAL`: PR #1075 must permanently fix the target-only login projection, and later Storage/server-config/disposable-target/final aggregate acceptance remains separate unless already independently proven.
 
 ### Repository/backup evidence
 
@@ -87,7 +89,7 @@ Do not create artificial browser RLS policies merely to silence INFO advisories 
 - New encrypted Schema-2 Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c` succeeded, validated and uploaded offsite.
 - Checksum-only Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1` succeeded/passed.
 - Historical privilege-less backups are not valid Gate-2 recovery evidence.
-- Highest accepted Restore progression remains `TARGET_COMPATIBLE`; the separately protected receipt-bound five-extension baseline is now proven. `DB_RESTORED` was not reached.
+- Historical pre-2026-08-28 state, superseded by the latest database-phase evidence above: the highest accepted progression was `TARGET_COMPATIBLE` and `DB_RESTORED` had not yet been reached.
 - PR #987 merged the bounded schema-ACL recovery as `b6bc368915d50dd2903b83b87c7ca25eb0ed6e18`; the disposable target was later independently reset to the empty baseline and the prior populated database retained as connection-disabled quarantine.
 - PR #990 merged the `GIT_SSL_NO_VERIFY` checkout repair as `1735a5f552c0c20c180fb96be6fa9000cbffc360`.
 - Protected read-only run `32568632008` passed dispatch and Host-1 but protected job `97020836458` failed in `actions/checkout` because path-valued CA variables were present with empty values. Resource Readiness and Target Compatibility were skipped, one-job runner ID `40` cleaned itself, and no DB/Production/Supabase-Staging mutation occurred.
@@ -168,7 +170,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-RST-001:** keep Restore at `TARGET_COMPATIBLE`. First obtain owner-PC public IP/TCP-22 evidence under `FM-RST-OWNER-005`; reconcile any exact Exoscale `/32` allowlist drift separately; then require `FM-RST-OWNER-006`, a new exact R4 authorization. Do not rerun controller `45054c41...`.
+1. **FM-RST-001:** do not repeat the completed isolated database Restore. Finish and merge PR #1075's permanent target-principal projection correction, then reconcile the canonical state-machine readers against receipt `FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md` and continue only with any still-unproven Storage/server-config/disposable-target/final evidence under a separately reviewed scope.
 2. **FM-SEC-001:** keep the proven Production pre-state open. Protected trigger-hardening Apply, Staging RPC exception acceptance and leaked-password provider changes are separate owner decisions/actions.
 3. **FM-MOB-001:** preserve the accepted bounded UI/runtime result and published Alpha AAB. The atomic Push Delivery-Ledger isolated-Staging gate is accepted on `18a6ad79cb72331b4daa41ee87dd2430a8ffd473`. For Push registration the current exact signed device candidate is the FCM-bound replacement Preview at `6801d687` from workflow `34037085683` / job `101497020224`; it supersedes the older `700885...` candidate. Do not rebuild. Next install/use that replacement artifact for opt-in/registration observation; keep any real provider delivery separately authorized. When the Play cohort is started, at least 12 approved testers must remain opted in for at least 14 days before later Production-access request. iOS signing/build/TestFlight/device work remains Phase 8.
 4. **FM-AI-001:** the isolated-Staging general Billing ledger/capture/canonical rollback acceptance sub-gate is complete through runs `34058028839` and `34058118450`; keep overall `PARTIAL`. Resume only through `FM-AI-OWNER-001`/`002` for remaining product/private/provider/Legal/Production evidence, and do not activate Plus/Ultra.
