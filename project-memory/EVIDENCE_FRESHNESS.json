@@ -7,7 +7,7 @@
       "class": "runner_admin_policy",
       "status": "COUNTERCHECKED",
       "observed_at": "2026-08-22T16:40:56Z",
-      "source": "Run 32582640853 / jobs 97054217701, 97054234003, 97054248185 / FM-RST-OWNER-001"
+      "source": "Run 32582640853 / jobs 97054217701, 97054234003, 97082992861 / FM-RST-OWNER-001"
     },
     {
       "id": "EV-RESTORE-HOST-20260822",
@@ -100,6 +100,16 @@
       "source": "Historical bounded freeze proof only: PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 and HTTP503 stripe_billing_write_frozen Retry-After60. Superseded as current runtime state by explicit unfreeze deploy 34043148548 and later successful Staging deployments; never use this entry to infer that the Billing write freeze is currently active.",
       "target": "https://staging.fanmind.ch",
       "superseded_by": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906"
+    },
+    {
+      "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260906",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T14:42:15Z",
+      "source": "AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5: AI_TIER_STAGING_LIFECYCLE=PASS, Stripe Test catalog PASS, browser boundary PASS, service-role ledger PASS, transaction ROLLED_BACK and acceptance PASS. The Plus -> Ultra/paused -> Starter/canceled path is covered; no Production target or live payment was used.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "ai_ledger_schema_or_acl_change", "before_new_ai_tier_staging_action"]
     },
     {
       "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
