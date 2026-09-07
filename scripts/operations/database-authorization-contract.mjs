@@ -3452,11 +3452,34 @@ select 'FANMIND_READY';
 `;
 }
 
-function oneShotAuthorizationSql() {
+function oneShotAuthorizationSql(
+  authorizationSql = DATABASE_AUTHORIZATION_CONTRACT_SQL,
+) {
   return `${transactionPrefix()}-- FANMIND_AUTHORIZATION_FRAME
-${DATABASE_AUTHORIZATION_CONTRACT_SQL}
+${authorizationSql}
 rollback;
 `;
+}
+
+export function authorizationContractSqlExcludingTargetLogin(targetLoginRole) {
+  const role = clean(targetLoginRole);
+  if (
+    !role ||
+    Buffer.byteLength(role, "utf8") > 63 ||
+    /[\u0000\r\n]/u.test(role)
+  ) {
+    throw fixedError("authorization_target_projection_role_invalid");
+  }
+  const loginSeed = `  select login_role.oid
+  from pg_catalog.pg_roles as login_role
+  where login_role.rolcanlogin`;
+  const projectedLoginSeed = `${loginSeed}
+    and login_role.rolname <> ${encodedRoleSql(role)}`;
+  const segments = DATABASE_AUTHORIZATION_CONTRACT_SQL.split(loginSeed);
+  if (segments.length !== 2) {
+    throw fixedError("authorization_target_projection_sql_invalid");
+  }
+  return segments.join(projectedLoginSeed);
 }
 
 function spawnPsql(options, applicationName) {
@@ -3543,6 +3566,24 @@ export async function captureDatabaseAuthorizationContract(options) {
   const frame = await collectProcess(
     child,
     oneShotAuthorizationSql(),
+    "FANMIND_AUTHORIZATION",
+  );
+  return contractFromDatabasePayload(
+    decodeHexJson(frame, "authorization_query_output_invalid"),
+  );
+}
+
+export async function captureProjectedTargetAuthorizationContract(options) {
+  const connection = validateConnectionOptions(options);
+  const child = spawnPsql(
+    connection,
+    "fanmind-authorization-target-projected-snapshot",
+  );
+  const frame = await collectProcess(
+    child,
+    oneShotAuthorizationSql(
+      authorizationContractSqlExcludingTargetLogin(connection.username),
+    ),
     "FANMIND_AUTHORIZATION",
   );
   return contractFromDatabasePayload(
