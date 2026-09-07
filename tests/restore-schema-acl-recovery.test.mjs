@@ -196,9 +196,10 @@ test("schema ACL mutation is narrowly bounded and has an exact inverse", () => {
 });
 
 test("schema ACL recovery remains inside the protected R4 database-restore write gates", async () => {
-  const [workflow, restoreRunner] = await Promise.all([
+  const [workflow, restoreRunner, recoveryHelper] = await Promise.all([
     readFile(path.join(repoRoot, ".github/workflows/restore-drill-database.yml"), "utf8"),
     readFile(path.join(repoRoot, "scripts/operations/run-database-restore-drill.sh"), "utf8"),
+    readFile(path.join(repoRoot, "scripts/operations/restore-schema-acl-recovery.mjs"), "utf8"),
   ]);
 
   assert.match(workflow, /\[\[ "\$REQUESTED_CONFIRMATION" == 'run-isolated-database-restore' \]\]/u);
@@ -214,4 +215,16 @@ test("schema ACL recovery remains inside the protected R4 database-restore write
   assert.equal(recoveryInvocations.length, 1);
   assert.match(restoreRunner, /database_schema_acl_recovery_failed/u);
   assert.match(restoreRunner, /SCHEMA_ACL_RECOVERY=\(APPLIED\|NOT_NEEDED\)/u);
+  assert.match(
+    recoveryHelper,
+    /captureProjectedTargetAuthorizationContract/u,
+  );
+  assert.doesNotMatch(
+    recoveryHelper,
+    /captureDatabaseAuthorizationContract/u,
+  );
+  assert.match(
+    recoveryHelper,
+    /one and only[\s\S]*target snapshot exclude that exact target-only login/u,
+  );
 });
