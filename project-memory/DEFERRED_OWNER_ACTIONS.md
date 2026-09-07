@@ -1,6 +1,6 @@
 # Deferred Owner Actions
 
-Updated: 2026-08-26 Europe/Vienna
+Updated: 2026-09-07 Europe/Vienna
 
 ## FM-RST-OWNER-001 — GitHub runner-group policy evidence
 - Related task: `FM-RST-001`.
@@ -76,12 +76,12 @@ Updated: 2026-08-26 Europe/Vienna
 - Deferred action: decide model classes/distinct fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin; provide four representative weeks of privacy-safe usage/cost evidence and the real blinded private quality result; obtain Legal/Tax acceptance separately.
 - Safety: no guessing, no private raw evaluation material or provider mapping in Git/issues, no environment flag or Plus/Ultra activation from the recommendation alone.
 
-## FM-AI-OWNER-002 — Protected Staging Billing-ledger and post-ledger lifecycle acceptance
+## FM-AI-OWNER-002 — Remaining protected Staging provider/lifecycle evidence
 - Related task: `FM-AI-001`.
 - Status: DEFERRED_BY_OWNER.
-- Proven pre-state: the AI-specific ledger is applied and empty; the general Billing ledger is absent; the last full transactional AI lifecycle run used pre-ledger legacy CRUD. Current read-only runs must not be repeated.
-- Deferred action: after the Stripe conformance code review, separately authorize exact-commit Staging write freeze -> controlled general Billing ledger Apply/postflight -> capture-only cutover -> canonical/downstream reconciliation -> zero conflicts -> exactly one rollback-only AI lifecycle acceptance through the applied ledger.
-- Safety: no live Stripe action, Production, automatic projection enablement, unpinned SQL, paid-tier activation or acceptance without full rollback and exact job/log countercheck.
+- Current bounded evidence: the general Billing ledger is installed on isolated Staging; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, Billing ledger `verify`, zero cutover counters, full rollback and cleanup `PASS`. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` passed on older exact `49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5`, but later isolated Staging deploy `34058028839` of `62e6a118...` invalidated its mutable current-state freshness.
+- Deferred action: after a new explicit exact-commit protected Staging authorization, first require the shared read-only rollout-state on that exact deployed revision and isolated Staging target to return overall `PASS` with AI entitlement, AI Stripe ledger and general Billing ledger each classified `verify`; any absent, partial, drifted, mismatched or blocked state must stop before the fixture. Only then obtain a fresh AI-tier rollback acceptance on that same revision. Then separately close only genuinely remaining provider-side inbound webhook/current provider lifecycle, failed-payment consequences, event ordering/idempotency/conflict handling and current canonical downstream Billing -> AI/referral reconciliation through the installed ledgers. Product/private quality-cost and Legal/Tax remain separate gates.
+- Safety: no automatic rerun of the invalidated AI-tier acceptance, no duplicate canonical Billing acceptance while its own evidence remains current, no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL or paid-tier activation.
 
 ## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
 - Related task: `FM-META-001` / `FM-SOC3-001`.

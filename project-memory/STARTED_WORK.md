@@ -5,51 +5,51 @@
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
-- Completed so far: Billing schema/capture-only foundation remains proven (Apply 34040107219, durable capture 34043010578, unfreeze 34043148548); #1069 merged as `294264e216ee0c6844caab5c6f51f11f2a76eeeb`; #1070 merged as `2be4f5a784eff80ba417037ed0460a77f9f8353e`; exact-main Production Web deploy 34054123685 plus CodeQL 34054123690, Browser E2E 34054123687 and Supply Chain 34054123750 passed. Push registration runtime is configured; real device evidence remains pending.
-- Still open: exact isolated-Staging deploy/runtime proof for `2be4f5a...`, rollback-only canonical Billing acceptance, actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and Restore connectivity/readiness. Canonical projection, real payment and paid-tier activation remain disabled.
-- Exact next step: deploy exact reviewed `main` `2be4f5a784eff80ba417037ed0460a77f9f8353e` to isolated Staging through `deploy-staging.yml` with `confirmation=deploy-staging-only` and `billing_write_freeze=preserve`; independently countercheck the exact Staging runtime and disabled canonical projection; only then run the separately protected rollback-only `staging-billing-canonical-acceptance.yml`. No Production DB mutation, actual payment/refund, provider activation, Plus/Ultra activation or legal acceptance is implied.
-- Owner action needed: actual handset observation and Exoscale authentication if no existing authorized session.
+- Completed so far: Billing schema/capture-only foundation remains proven (Apply `34040107219`, durable capture `34043010578`, unfreeze `34043148548`); #1069 merged as `294264e216ee0c6844caab5c6f51f11f2a76eeeb`; #1070 merged as `2be4f5a784eff80ba417037ed0460a77f9f8353e`; #1072 merged as `62e6a11858e85996af03f6740819b0fc6194b4a4`. Exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on that commit with rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, transaction rollback and cleanup `PASS`; the independent read-only Staging postcheck remained unchanged. Push registration runtime is configured; real device evidence remains pending. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` succeeded on its old exact revision, but the later Staging deploy `34058028839` invalidated that mutable current-state evidence.
+- Still open: actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and Restore connectivity/readiness. For AI/Billing, the bounded technical Staging canonical-Billing sub-gate is closed, while one fresh exact-deployed-revision rollback-only AI-tier revalidation is `RECONCILIATION_REQUIRED` before relying on current lifecycle acceptance; product/private quality-cost, provider-side current lifecycle/downstream reconciliation, Legal/Tax, Production runtime integration and explicit activation remain open. Canonical Production projection, real payment and paid-tier activation remain disabled.
+- Exact next step: do not redeploy `2be4f5a...` and do not repeat `staging-billing-canonical-acceptance.yml`; those actions are closed by runs `34058028839` and `34058118450`. Continue the owner-resumed Mobile path from the already built FCM replacement APK with real device registration evidence; keep provider delivery separate. In parallel, Restore remains at `TARGET_COMPATIBLE` until owner-PC TCP-22 evidence is reconciled and a new exact R4 authorization exists. Any fresh AI-tier lifecycle revalidation must target the exact currently deployed Staging revision and requires a new explicit protected-Staging authorization; do not rerun the historical `34039968946` revision as if it were current.
+- Owner action needed: actual handset observation and Exoscale authentication/connectivity evidence if no existing authorized session; any future AI-tier Staging revalidation remains separately protected/authorized.
 
 
 ## FM-AI-001 / FM-CR-020 — Staging activation
-- Status: COUNTERCHECKED (bounded merge and Staging freeze activation complete)
+- Status: SUPERSEDED (historical bounded freeze activation; later ledger/capture/unfreeze/canonical acceptance completed)
 - Risk: R4
-- Updated: 2026-09-06
+- Updated: 2026-09-07
 - Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 RELEASED.
-- Scope: owner-authorized PR #1058 merge and Staging freeze activation; first repair new review PRRT_kwDOSxGqmc6frbTm requiring live freeze proof before ledger apply.
-- Completed: PR #1058 merged as `157983d62afce572bfdf79374a0a5c5fd096b7db`; Staging run `34032100988` / job `101483398784` succeeded with freeze=true. Independent public exact-version and HTTP 503/code/Retry-After proof passed.
-- Exact next step: retain freeze until separately authorized ledger/capture-only cutover; follow the controlled runbook.
-- Still open: wider Billing lifecycle and cutover acceptance; no ledger SQL, signed webhook replay or payment executed in this activation.
-- Owner action needed: none for this bounded activation; no ledger apply or payment included.
+- Scope: historical owner-authorized PR #1058 merge and Staging freeze activation; retained only as evidence of the pre-ledger safety boundary.
+- Completed: PR #1058 merged as `157983d62afce572bfdf79374a0a5c5fd096b7db`; Staging run `34032100988` / job `101483398784` succeeded with freeze=true and independent public HTTP 503/Retry-After proof. This historical freeze was later superseded by general Billing Apply `34040107219`, durable capture `34043010578`, explicit unfreeze `34043148548`, exact Staging deploy `34058028839` and canonical rollback-only acceptance `34058118450` / job `101553652111`.
+- Exact next step: none under this freeze-activation entry. Do not retain, re-enable or infer a current Billing freeze from this historical record, and do not repeat the completed ledger/capture/canonical Billing acceptance. Remaining AI work is tracked under the current FM-AI-001 owner/external gates, including the fresh exact-deployed-revision AI-tier revalidation now required by evidence freshness.
+- Still open: nothing under this historical freeze activation itself; current AI product/private/provider/Legal/Production gates remain separate.
+- Owner action needed: none for this superseded activation record.
 
 
 ## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
-- Updated: 2026-09-06
-- Status: COUNTERCHECKED (repository review superseded by activation receipt)
+- Updated: 2026-09-07
+- Status: SUPERSEDED (historical repository review; later ledger/capture/unfreeze/canonical acceptance completed)
 - Risk: R4
 - Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
 - Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED; final remote CI/review is closed by the activation receipt.
-- Completed so far: preflight, current main/PR/CI and review reconciliation. PR head `8fbd7e89678259276fddf62fc45ccc37b06ea727` has eight green workflows but its shared Checkout boundary lacks the advertised freeze.
+- Completed so far: preflight, current main/PR/CI and review reconciliation. PR head `8fbd7e89678259276fddf62fc45ccc37b06ea727` exposed the shared Checkout boundary issue; the later reviewed fix restored the intended freeze behavior.
 - Completed implementation: shared provider-boundary guard and fixed-code handling for API/page/redirect/admin callers; executable tests prove zero client/provider access during freeze and normal recovery after unfreeze.
-- Closeout: final head `43537ccf729b7787b4bd300b678771eeb216892a` passed all eight remote workflows, all review threads resolved, PR merged and Staging freeze verified; see activation receipt.
-- Still open: separately authorized ledger/capture-only cutover and broader Billing acceptance.
-- Owner action needed: none for this repository review fix; external cutover remains separate.
+- Closeout: final head `43537ccf729b7787b4bd300b678771eeb216892a` passed all eight remote workflows, all review threads resolved, PR merged and Staging freeze verified. The subsequent Billing Apply/capture/unfreeze and canonical rollback acceptance are complete under runs `34040107219`, `34043010578`, `34043148548`, `34058028839` and `34058118450`; therefore this review entry must not drive another cutover.
+- Still open: nothing under this historical freeze-review continuation; remaining AI-tier current-revision revalidation, provider/product/private/Legal/Production gates are tracked separately.
+- Owner action needed: none for this superseded repository review.
 
 
 Canonical register for FanMind work that has started but is not yet fully completed.
 
 ## FM-MOB-006
 - Started: 2026-09-03 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-09-07
 - Status: ACCEPTED
 - Risk: R3
 - Change request: FM-CR-013
 - Scope: dormant atomic Mobile Push Delivery-Ledger foundation and isolated-Staging rollback-only acceptance; no Production mutation, delivery activation or build.
 - Work lock: `LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903` RELEASED after repository implementation/countercheck.
 - Completed result: controlled ledger SQL, server-only adapter, checksum runner, atomic reservation/lease/revocation contract, protected resource readiness, checksum-bound isolated-Staging applies, independent postflight and both rollback-only acceptance paths are complete. After safe SQLSTATE `2201B` identified an invalid bounded receipt-ID expression, exact commit `18a6ad79cb72331b4daa41ee87dd2430a8ffd473` corrected the constraint. Apply run `33867831888` / job `101006621418` and final Delivery-Ledger acceptance run `33867922978` / job `101006906941` passed with provider delivery disabled, synthetic rows, complete rollback and cleanup.
-- Still open: nothing under FM-MOB-006. A handler-containing signed Android build and real provider/device delivery evidence remain separate under FM-MOB-001.
-- Exact next step: prepare one separately reviewed signed Android build containing the merged message handler, then require separate authorization for real-device/provider acceptance. Keep the 12-tester/14-day Play cohort deferred until Gerhard handoff readiness.
-- Owner action needed: yes for the new signed build and any real provider/device action.
+- Still open: nothing under FM-MOB-006. The required handler-containing FCM replacement APK already exists at descendant/build commit `6801d687cfe6048d6e32e63bcfe2862d2886fce0`, produced by workflow `34037085683` / job `101497020224`; the actual FCM correction commits are `1d15d8e4698392174ad7d5be23a7f174ebb2303d` and `547843cad7a1f6ecb3ba6131e155d9d068799c2b`. Real device registration and provider delivery remain separate under FM-MOB-001.
+- Exact next step: do not queue another Android build. Install/use the existing `6801d687...` replacement APK for real Staging registration and Device-Acceptance; only after that may separately authorized provider-delivery evidence proceed. Keep the 12-tester/14-day Play cohort under its own external gate.
+- Owner action needed: yes for real-device registration/acceptance and any later real provider delivery; no new signed build is required merely to resume this path.
 
 ## Rules
 - Add an entry as soon as substantive work begins.
@@ -179,7 +179,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Accepted result: FM-EV-027 binds the owner's 2026-08-30 bounded real-device acceptance to the superseding FM-MOB-004 exact-merge Preview and confirms the unseen inbox, per-fan channel tabs, direct Follow-up and absence of the rejected symbol.
 - Still open: nothing under FM-MOB-003. Broader Recovery/Purge, push and Store acceptance remain separate under FM-MOB-001; iOS/TestFlight remains Phase 8.
 - Exact next step: keep FM-MOB-003 closed; do not rebuild merely to repeat acceptance.
-- Rollback/recovery: revert the Mobile UI/data-policy commit. Marking messages seen uses the already accepted product field and is not automatically reversible; no message content, Follow-up history, schema or provider state may be deleted.
+- Rollback/recovery: revert the bounded Mobile UI/data-query commit. Marking messages seen uses the already accepted product field and is not automatically reversible; no message content, Follow-up history, schema or provider state may be deleted.
 
 ## FM-MOB-002
 - Started: 2026-08-29
@@ -241,19 +241,19 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-AI-001
 - Started: before 2026-08-19
-- Updated: 2026-08-30
+- Updated: 2026-09-06
 - Status: PARTIAL
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
 - Branch/PR: read-only evidence PR #1012 passed all 10 checks at exact head `b53e000228bf99801b327c1d7b81646edce32d6f` and squash-merged as `d1b9d7e94b3bc78a1720e197a795a105bdcc1883`; implementation foundations remain on `main`.
 - Work lock: `LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830` is RELEASED after #1035 exact-head acceptance and merge; the older `LOCK-FM-AI-001-READONLY-RECONCILIATION-20260826` remains RELEASED and its three evidence jobs must not be rerun.
-- Dependencies: written product decisions, private quality/cost evidence, current Staging lifecycle, Legal/Tax, explicit Production activation.
+- Dependencies: written product decisions, private quality/cost evidence, current Staging provider lifecycle, Legal/Tax, explicit Production activation.
 - Assumptions: Staging Test prices existing does not mean Plus/Ultra is activated or fully accepted.
-- Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, five-price Stripe Test catalog, signed webhook smoke, lifecycle controls, applied AI-tier event ledger, monitoring/recommendation/eval tooling. Current exact-main runs `33003378162`, `33003452287` and `33003526741` pass the protected read-only AI-resource, five-price Test-catalog and exact 22-event webhook checks. Direct read-only catalog evidence confirms both AI ledger functions and all three tables with forced RLS, exact role boundaries, zero events and zero unresolved reconciliations. The 50/100/150 context limits are already approved and tested.
+- Completed so far: Standard active; Plus/Ultra prices/policy, entitlement resolver, Staging storage/foundations, five-price Stripe Test catalog, signed webhook smoke, lifecycle controls, applied AI-tier event ledger, monitoring/recommendation/eval tooling. Current exact-main runs `33003378162`, `33003452287` and `33003526741` pass the protected read-only AI-resource, five-price Test-catalog and exact 22-event webhook checks. Direct read-only catalog evidence confirms both AI ledger functions and all three tables with forced RLS, exact role boundaries, zero events and zero unresolved reconciliations. The 50/100/150 context limits are already approved and tested. The general Billing ledger is installed on isolated Staging; capture-only durability and unfreeze are proven, and exact isolated-Staging deploy `34058028839` plus rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed with zero cutover pending/uninventoried counters, full rollback and cleanup.
 - Completed code continuation: FM-CR-009 replaces productive raw Stripe REST with one SDK `22.4.0` client pinned to outbound `2026-07-29.dahlia`, removes explicit Checkout payment-method narrowing, adds a fresh eight-letter integration-identifier suffix per Session and preserves fail-closed tax/cancellation/referral behavior. PR #1035 final head `ffdc11ab4a1c199134dc009abc516cc8257f5e8b` passed all eight exact-head workflows and completed review with zero unresolved threads, then merged as `9a7b37f2cee798dc64c1d32f70fda338db174b5e`. The observed inbound Staging webhook stays `2026-06-24.dahlia`; no provider resource was touched.
-- Still open: final models/fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; provider-side webhook migration; a current full transactional Staging lifecycle through the applied AI ledger; the separately designed general Billing event ledger is not applied; legal/tax; runtime integration and explicit Production activation.
-- Evidence so far: issue #560, issue #874, Source of Truth, `src/config/aiTiers.mjs`, current runs/jobs recorded in FM-EV-022, FM-EV-033, historical signed-smoke run `31781263978`, pre-ledger lifecycle run `31735315959`, AI-ledger apply run `32038152382`, 175/175 focused local tests and the 2026-08-26 read-only Supabase catalog result.
-- Exact next step: resume only after the applicable owner authorization under `FM-AI-OWNER-001`/`002`; do not rerun the three read-only jobs, apply SQL or activate paid tiers without that gate.
+- Still open: final models/fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; provider-side current post-ledger lifecycle/downstream reconciliation; legal/tax; Production runtime integration and explicit activation. Canonical Production projection and Plus/Ultra remain disabled.
+- Evidence so far: issue #560, issue #874, Source of Truth, `src/config/aiTiers.mjs`, current runs/jobs recorded in FM-EV-022/FM-EV-033 plus Billing Staging runs `34058028839` and `34058118450`, historical signed-smoke run `31781263978`, pre-ledger lifecycle run `31735315959`, AI-ledger apply run `32038152382`, focused local tests and the read-only Supabase catalog results.
+- Exact next step: resume only after the applicable owner authorization under `FM-AI-OWNER-001`/`002`; do not rerun the completed Billing Staging acceptance or activate paid tiers without the remaining gates.
 - Owner action needed: yes for product/financial decisions and any protected external activation.
 
 ## FM-META-001

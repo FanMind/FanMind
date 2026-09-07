@@ -95,10 +95,42 @@
       "id": "EV-STAGING-BILLING-FREEZE-20260906",
       "gate": "ai_billing",
       "class": "staging_smoke",
-      "status": "COUNTERCHECKED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T12:08:00Z",
-      "source": "PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 success; independent exact-version and HTTP503 stripe_billing_write_frozen Retry-After60; bounded freeze only, not Billing acceptance",
-      "target": "https://staging.fanmind.ch"
+      "source": "Historical bounded freeze proof only: PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 and HTTP503 stripe_billing_write_frozen Retry-After60. Superseded as current runtime state by explicit unfreeze deploy 34043148548 and later successful Staging deployments; never use this entry to infer that the Billing write freeze is currently active.",
+      "target": "https://staging.fanmind.ch",
+      "superseded_by": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906"
+    },
+    {
+      "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260906",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "RECONCILIATION_REQUIRED",
+      "observed_at": "2026-09-06T14:42:15Z",
+      "source": "Historical AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5 passed lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback. Its current-state use was invalidated by the later isolated Staging deploy 34058028839 of 62e6a11858e85996af03f6740819b0fc6194b4a4, which introduced later canonical Billing/AI downstream code. Retain this run as historical rollback evidence only; require a fresh exact-deployed-revision revalidation before treating the AI-tier lifecycle paths as current.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "invalidated_by": "Staging deploy 34058028839 on 62e6a11858e85996af03f6740819b0fc6194b4a4",
+      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "ai_ledger_schema_or_acl_change", "before_new_ai_tier_staging_action"]
+    },
+    {
+      "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T20:29:44Z",
+      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only Billing/AI postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams and zero AI entitlement/event/reconciliation rows",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "before_new_ai_billing_staging_action"]
+    },
+    {
+      "id": "EV-MOBILE-PUSH-REGISTRATION-POSTCHECK-20260906",
+      "gate": "mobile",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T20:29:44Z",
+      "source": "Independent read-only Supabase Staging postcheck recorded after canonical acceptance 34058118450 observed mobile_push_registrations=0. The timestamp is conservatively bound to the acceptance completion time; the actual postcheck occurred after it. No provider send or registration mutation occurred.",
+      "target": "Supabase Staging vshyhvgcmrlagvfnvomc",
+      "revalidate_on": ["mobile_push_registration_change", "device_acceptance", "staging_deploy", "target_binding_change", "before_real_provider_send"]
     },
     {
       "id": "EV-PLAY-RESUME-20260906",
@@ -127,10 +159,11 @@
     {
       "id": "EV-ANDROID-FCM-BUILD-20260906",
       "gate": "mobile",
-      "class": "provider_console",
+      "class": "signed_mobile_build",
       "status": "VERIFIED",
       "observed_at": "2026-09-06T14:07:29.700939+00:00",
-      "source": "Protected build workflow 34037085683 job 101497020224 SUCCESS; authenticated EAS finished Android preview APK at 6801d687cfe6048d6e32e63bcfe2862d2886fce0 version 1.0.0 (2), Google Services processed. Replaces 6d7f76cd candidate; device registration and delivery remain unaccepted. Private build identifiers omitted."
+      "source": "Protected build workflow 34037085683 job 101497020224 SUCCESS; authenticated EAS finished Android preview APK at 6801d687cfe6048d6e32e63bcfe2862d2886fce0 version 1.0.0 (2), Google Services processed. Replaces 6d7f76cd candidate; device registration and delivery remain unaccepted. Private build identifiers omitted.",
+      "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

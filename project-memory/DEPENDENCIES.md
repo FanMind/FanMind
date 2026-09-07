@@ -23,11 +23,11 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-003
 - From: FM-AI-001
-- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; separately authorized provider-side inbound webhook migration; general Billing ledger Staging cutover; full current post-ledger Stripe/Webhook/Entitlement lifecycle; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact observed webhook configuration, AI ledger installation and merged FM-CR-009 Stripe code-conformance correction are already current evidence.
+- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; separately authorized provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed AI and general Billing ledgers; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact observed webhook configuration, AI ledger installation, general Billing ledger/capture-only foundation, exact isolated-Staging deploy `34058028839`, rollback-only canonical Billing acceptance `34058118450` / job `101553652111`, and merged FM-CR-009 Stripe code-conformance correction are current evidence.
 - Type: product + financial + technical + external
 - Status: ACTIVE
-- Updated: 2026-08-30
-- Rule: Plus/Ultra stay fail-closed until every applicable prerequisite is current; current read-only resource/catalog/webhook/ledger evidence alone is insufficient.
+- Updated: 2026-09-07
+- Rule: the bounded general Billing ledger/canonical Staging acceptance sub-gate is complete and must not be repeated merely to resume work. Plus/Ultra and canonical Production projection stay fail-closed until every remaining product/private/provider/Legal/Production prerequisite is current.
 
 ## FM-DEP-004
 - From: FM-META-001

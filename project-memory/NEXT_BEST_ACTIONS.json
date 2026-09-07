@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-04",
+  "updated": "2026-09-07",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -39,20 +39,20 @@
       "parallel_safe": true,
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. Exactly one later handler-containing signed Android Preview for commit 700885307c265f8907cefe5f5b10499a5ea7b996 is independently verified finished at EAS with an APK after the GitHub polling window timed out; no retry, Submit or OTA Update occurred. Do not queue another build. Next install the existing artifact for bounded device observation and require separate authorization for real provider/device Push delivery. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and complete the private Android/Recovery proof before requesting Production access. Do not expose private artifact values, start iOS/TestFlight or mutate Production."
+      "instruction": "The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. The later FCM replacement signed Android Preview at exact commit 6801d687 is the current real-device candidate; do not rebuild older artifacts. Next install/use that existing artifact for bounded registration observation and require separate authorization for real provider/device Push delivery. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and complete the private Android/Recovery proof before requesting Production access. Do not expose private artifact values, start iOS/TestFlight or mutate Production."
     },
     {
       "id": "NBA-AI-LIFECYCLE-RECONCILE",
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Entscheidungen und aktuellen Ledger-Lifecycle freigeben",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "FM-EV-022 supersedes the old missing-resource/catalog claims: exact-main read-only resource, five-price catalog, webhook and AI-ledger evidence are current. Require FM-AI-OWNER-001 for product/private/financial/Legal evidence and FM-AI-OWNER-002 for the separately authorized general Billing-ledger cutover plus one post-ledger rollback-only lifecycle acceptance. Do not rerun the read-only jobs or activate paid tiers."
+      "instruction": "The general Billing ledger is installed on isolated Staging and the bounded canonical Billing rollback-only sub-gate is closed by exact deploy 34058028839 and acceptance 34058118450/job 101553652111 on 62e6a11858e85996af03f6740819b0fc6194b4a4. Do not repeat that deploy/acceptance. Require FM-AI-OWNER-001 for remaining product/private/financial evidence and the narrowed FM-AI-OWNER-002 only for remaining provider-side inbound webhook/current lifecycle/downstream AI-referral evidence through the installed ledgers. Keep Plus/Ultra and canonical Production projection fail-closed; no live payment or Production activation."
     },
     {
       "id": "NBA-META-TECHNICAL-RECONCILE",

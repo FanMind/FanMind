@@ -30,7 +30,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
 - FM-AI-OWNER-001 — Approve AI product, quality and financial evidence
-- FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
+- FM-AI-OWNER-002 — Complete remaining provider-side Staging AI lifecycle evidence
 - FM-META-OWNER-001 — Complete external Meta acceptance
 - FM-GOV-OWNER-001 — Protect `main`
 

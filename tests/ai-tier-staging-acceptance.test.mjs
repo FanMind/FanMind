@@ -273,7 +273,7 @@ test("manual workflow is staging-only and never applies a migration", async () =
     workflow.match(
       /^          PGPASSFILE: \$\{\{ runner\.temp \}\}\/fanmind-ai-tier-staging\.pgpass$/gmu,
     )?.length,
-    4,
+    5,
   );
   assert.match(
     workflow,
@@ -310,6 +310,50 @@ test("manual workflow is staging-only and never applies a migration", async () =
     script,
     /console\.(?:log|error)\([^\n]*(?:STRIPE_SECRET_KEY|STRIPE_PRICE_AI_|WORKSPACE_ID|ownerId|memberId)/u,
   );
+});
+
+test("AI tier workflow requires exact shared rollout state before mutation", async () => {
+  const workflow = await readFile(workflowPath, "utf8");
+
+  assert.match(
+    workflow,
+    /reviewed_commit:[\s\S]*Exact reviewed and deployed main commit/u,
+  );
+  assert.match(workflow, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(workflow, /group: fanmind-staging-deploy/u);
+  assert.match(workflow, /persist-credentials: false/u);
+  assert.match(
+    workflow,
+    /FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u,
+  );
+  assert.match(
+    workflow,
+    /FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'[\s\S]*FANMIND_NON_PRODUCTION_WRITE_ACK: ''/u,
+  );
+  assert.match(
+    workflow,
+    /npm run --silent db:staging-rollout-state:run/u,
+  );
+  for (const requiredState of [
+    "STAGING_DATABASE_ROLLOUT_AI_TIER=verify",
+    "STAGING_DATABASE_ROLLOUT_AI_TIER_STRIPE_LEDGER=verify",
+    "STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=verify",
+    "STAGING_DATABASE_ROLLOUT_STATE=PASS",
+  ]) {
+    assert.match(
+      workflow,
+      new RegExp(`grep -Fqx '${requiredState}'`, "u"),
+    );
+  }
+
+  const rolloutGate = workflow.indexOf(
+    "npm run --silent db:staging-rollout-state:run",
+  );
+  const acceptanceFixture = workflow.indexOf(
+    "npm run ai:tiers:staging:run",
+  );
+  assert.ok(rolloutGate >= 0);
+  assert.ok(acceptanceFixture > rolloutGate);
 });
 
 test("resource workflow proves external readiness without enabling writes", async () => {

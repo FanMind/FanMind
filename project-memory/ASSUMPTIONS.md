@@ -42,15 +42,15 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 
 ## ASM-FM-004
 - Date: 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-09-07
 - Related task: FM-AI-001
 - Risk: R3
 - Assumption: Existence of Plus/Ultra Stripe Test prices means Plus/Ultra are productively ready.
 - Why it matters: would incorrectly activate or sell unfinished tiers.
-- Verification source/evidence: FM-EV-022 and Source of Truth/#560 confirm current Test prices, resources, webhook and AI ledger, while models, quotas, private quality/cost, current post-ledger lifecycle, general Billing ledger/cutover, legal/tax, runtime integration and explicit Production activation remain required.
+- Verification source/evidence: FM-EV-022 and Source of Truth/#560 confirm Test prices/resources/webhook/AI ledger. The general Billing ledger and bounded canonical Staging acceptance are now also proven by Apply `34040107219`, deploy `34058028839` and rollback-only acceptance `34058118450` / job `101553652111`. Productive readiness still requires models/fallbacks, quotas, private quality/cost, remaining provider-side current lifecycle/downstream reconciliation, Legal/Tax, runtime integration and explicit Production activation.
 - Status: INVALIDATED
 - Recheck trigger: any Plus/Ultra activation proposal.
-- Action if false: keep Plus/Ultra fail-closed until full tier quorum.
+- Action if false: keep Plus/Ultra and canonical Production projection fail-closed until full tier quorum; do not repeat the completed canonical Billing Staging sub-gate.
 
 ## ASM-FM-005
 - Date: 2026-08-19

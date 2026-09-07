@@ -96,14 +96,14 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Forbidden: provider model names, prompts/replies, reviewer identities or secrets in issues/Project Memory; treating the recommendation matrix as approval; Plus/Ultra activation before full tier quorum.
 - Resume trigger: complete written decisions and private validators, then re-run only offline/read-only readiness before any protected lifecycle or activation step.
 
-## FM-AI-OWNER-002 — Authorize current Staging Billing-ledger lifecycle acceptance
+## FM-AI-OWNER-002 — Complete remaining provider-side Staging AI lifecycle evidence
 - Status: DEFERRED_BY_OWNER
-- Where: exact protected GitHub `staging` workflows and isolated Stripe Test/Supabase Staging only.
-- Proven pre-state: FM-EV-022 confirms the AI ledger is installed/empty, resources and Test catalog/webhook are current, while the general Billing ledger is absent and the last transactional lifecycle acceptance predates the AI ledger.
-- Required sequence: first resolve the reviewed Stripe client/payment-method/API-version conformance findings; then separately authorize the documented Staging write freeze, controlled general Billing ledger Apply/postflight, capture-only cutover, canonical reconciliation/downstream AI/referral reconciliation, zero cutover/conflict counters, and exactly one rollback-only current AI lifecycle acceptance.
+- Where: exact protected GitHub `staging` workflows plus isolated Stripe Test/Supabase Staging only.
+- Current bounded evidence: the general Billing ledger is installed; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, ledger `verify`, zero cutover counters, full rollback and cleanup `PASS`. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` passed on older exact `49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5`, including lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback, but its mutable current-state evidence was invalidated by later isolated Staging deploy `34058028839` of `62e6a118...`.
+- Required next evidence: after a new explicit exact-commit protected Staging authorization, first obtain one fresh AI-tier rollback acceptance on the exact currently deployed revision. Then execute only genuinely unproven provider-side inbound webhook/current provider lifecycle, failed-payment consequences, event ordering/idempotency/conflict behavior and current canonical downstream Billing -> AI/referral reconciliation. Product/private quality-cost and Legal/Tax remain separate owner/external gates under `FM-AI-OWNER-001` and `EXT-AI-LEGAL-TAX`.
 - Risk: R3
-- Forbidden: live mode/payment/refund, Production, automatic projection enablement, SQL outside the checksum-pinned control, skipping cutover reconciliation, or bundling paid-tier activation.
-- Resume trigger: explicit exact-commit protected Staging authorization after the conformance review and fresh read-only rollout state.
+- Forbidden: automatic rerun of the invalidated AI-tier proof, duplicate canonical Billing acceptance while its own freshness remains valid, live mode/payment/refund, Production, automatic canonical projection enablement, SQL outside reviewed controls, or paid-tier activation.
+- Resume trigger: explicit exact-commit protected Staging authorization after fresh target/provider binding checks; the authorization must name the current deployed revision and current AI-tier revalidation scope.
 
 ## FM-META-OWNER-001 — Complete external Meta acceptance
 - Status: DEFERRED_BY_OWNER

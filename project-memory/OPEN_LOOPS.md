@@ -29,10 +29,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-004
 - Related: FM-AI-001
 - Status: OPEN
-- Updated: 2026-08-30
-- Gap: Current synthetic resource, Test catalog/webhook and installed AI ledger are read-only verified. The bounded Stripe SDK/payment-method/outbound-version code correction is accepted under FM-CR-009 through PR #1035 and merge `9a7b37f2cee798dc64c1d32f70fda338db174b5e`. Final product decisions, private quality/cost proof, provider-side inbound webhook migration, unapplied general Billing ledger/cutover, full current post-ledger Staging lifecycle, Legal/Tax, runtime integration and activation evidence remain incomplete.
+- Updated: 2026-09-07
+- Gap: The general Billing ledger is installed on isolated Staging and the bounded canonical Billing rollback-only sub-gate is now counterchecked: exact deploy `34058028839` and acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with ledger state `verify`, overall rollout `PASS`, cutover pending `0`, uninventoried `0`, full transaction rollback and cleanup `PASS`. The independent read-only postcheck stayed unchanged. Final product decisions, private quality/cost proof, provider-side inbound webhook/current lifecycle evidence, Legal/Tax, Production runtime integration and explicit activation remain incomplete.
 - Close when: tier-specific risk quorum is satisfied and any Production activation is explicit and current.
-- Next check: resume only from `FM-AI-OWNER-001`/`002`; do not rerun read-only runs `33003378162`, `33003452287` or `33003526741`, and keep Plus/Ultra fail-closed.
+- Next check: do not repeat the completed Staging deploy/canonical rollback acceptance. Resume only from `FM-AI-OWNER-001`/the narrowed `FM-AI-OWNER-002`; keep Plus/Ultra and canonical Production projection fail-closed until all remaining gates are current.
 
 ## FM-LOOP-005
 - Related: FM-META-001

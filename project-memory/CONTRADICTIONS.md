@@ -62,17 +62,17 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
 ## CTR-FM-005
 - Date: 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-09-07
 - Related task/change: FM-AI-001
 - Risk: R3
-- Source A: older #560/#874 checkboxes saying separate Plus/Ultra Test prices are absent.
-- Claim A: Test prices still need creation.
-- Source B: later Source of Truth/#874 Staging evidence
-- Claim B: isolated Stripe Test catalog including Plus/Ultra is now read-only/finishline verified, while complete lifecycle/product/quality activation remains open.
-- Stronger/current evidence: exact-main protected read-only AI-resource, five-price catalog and webhook runs plus direct Staging AI-ledger catalog evidence.
+- Source A: older #560/#874 and pre-closeout Project Memory statements saying Plus/Ultra Test resources or the general Billing ledger/canonical Staging lifecycle sub-gate are absent/pending.
+- Claim A: Test prices/general Billing ledger/canonical rollback acceptance still need creation or execution.
+- Source B: later exact-main Staging evidence.
+- Claim B: the five-price Test catalog and AI ledger are current; the general Billing ledger is installed, durable capture is proven, and exact isolated-Staging deploy `34058028839` plus rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed with rollout `PASS`, ledger `verify`, cutover pending `0`, uninventoried `0`, rollback and cleanup `PASS`.
+- Stronger/current evidence: exact-main protected resource/catalog/webhook runs, direct Staging ledger evidence, Billing Apply/capture evidence and the exact canonical acceptance run/countercheck.
 - Status: RESOLVED
-- Resolution/action: runs `33003378162`, `33003452287` and `33003526741` prove the synthetic resource, Plus/Ultra prices, all five Test prices and exact webhook are current; FM-EV-022 records the result. Do not recreate or rerun them. Focus only on the current post-ledger lifecycle, general Billing ledger/cutover, product/private/legal/runtime/activation gaps.
-- Evidence: FM-EV-022; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; Source of Truth; #560/#874.
+- Resolution/action: do not recreate Test resources or repeat the completed general Billing ledger/canonical Staging acceptance sub-gate. Overall `FM-AI-001` remains `PARTIAL`; focus only on remaining product/private quality-cost, provider-side inbound webhook/current lifecycle/downstream AI-referral reconciliation, Legal/Tax, Production runtime integration and explicit activation. Keep Plus/Ultra and canonical Production projection fail-closed.
+- Evidence: FM-EV-022; `AI_BILLING_READONLY_RECONCILIATION_2026-08-26.md`; Apply `34040107219`; durable capture `34043010578`; unfreeze `34043148548`; deploy `34058028839`; acceptance `34058118450` / job `101553652111`; Source of Truth; #560/#874.
 
 ## CTR-FM-006
 - Date: 2026-08-19
@@ -240,10 +240,11 @@ Never resolve a contradiction by deleting the older record. Document which sourc
 
 ## CTR-FM-CR-020-CHECKOUT-FREEZE-20260906
 - Date: 2026-09-06
+- Updated: 2026-09-07
 - Related task/change: FM-AI-001 / FM-CR-020 / PR #1058
 - Risk: R4
-- Source A: PR description claims central Checkout freeze enforcement; prior exact-head CI is green.
-- Source B: head `8fbd7e89678259276fddf62fc45ccc37b06ea727` and unresolved review `PRRT_kwDOSxGqmc6fjNA9` show only API enforcement and three bypassing callers.
-- Resolution: follow-up adds the shared provider-boundary guard and caller handling; executing the actual shared module proves no Stripe client/Session access while frozen. Removing the guard causes three test failures.
-- Status: IMPLEMENTED_NOT_VERIFIED
-- Remaining: exact updated-head remote CI/review; no runtime/Stage acceptance is inferred from code.
+- Source A: early PR #1058 description/green CI before its shared Checkout-boundary finding.
+- Source B: later merged guard correction, Staging freeze/capture evidence, #1069/#1070/#1072 and successful canonical Billing Staging acceptance.
+- Resolution: the shared provider-boundary guard and caller handling were accepted and deployed; later ledger/capture/canonical evidence supersedes the old `IMPLEMENTED_NOT_VERIFIED` state. The bounded canonical Billing Staging sub-gate is closed by deploy `34058028839` and rollback-only acceptance `34058118450` / job `101553652111`, while Production projection and Plus/Ultra remain disabled.
+- Status: RESOLVED
+- Remaining: overall FM-AI-001 stays `PARTIAL` for product/private/provider-side current lifecycle/Legal/Production evidence; do not repeat the completed freeze/ledger/canonical acceptance work.
