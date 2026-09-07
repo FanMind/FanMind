@@ -1,6 +1,6 @@
 # Deferred Owner Actions
 
-Updated: 2026-08-26 Europe/Vienna
+Updated: 2026-09-07 Europe/Vienna
 
 ## FM-RST-OWNER-001 — GitHub runner-group policy evidence
 - Related task: `FM-RST-001`.
@@ -76,12 +76,12 @@ Updated: 2026-08-26 Europe/Vienna
 - Deferred action: decide model classes/distinct fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin; provide four representative weeks of privacy-safe usage/cost evidence and the real blinded private quality result; obtain Legal/Tax acceptance separately.
 - Safety: no guessing, no private raw evaluation material or provider mapping in Git/issues, no environment flag or Plus/Ultra activation from the recommendation alone.
 
-## FM-AI-OWNER-002 — Protected Staging Billing-ledger and post-ledger lifecycle acceptance
+## FM-AI-OWNER-002 — Remaining protected Staging provider/lifecycle evidence
 - Related task: `FM-AI-001`.
 - Status: DEFERRED_BY_OWNER.
-- Proven pre-state: the AI-specific ledger is applied and empty; the general Billing ledger is absent; the last full transactional AI lifecycle run used pre-ledger legacy CRUD. Current read-only runs must not be repeated.
-- Deferred action: after the Stripe conformance code review, separately authorize exact-commit Staging write freeze -> controlled general Billing ledger Apply/postflight -> capture-only cutover -> canonical/downstream reconciliation -> zero conflicts -> exactly one rollback-only AI lifecycle acceptance through the applied ledger.
-- Safety: no live Stripe action, Production, automatic projection enablement, unpinned SQL, paid-tier activation or acceptance without full rollback and exact job/log countercheck.
+- Superseded/completed sub-gate: the general Billing ledger is installed on isolated Staging. Exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, full rollback and cleanup `PASS`. Do not repeat the ledger Apply/capture/canonical-acceptance sequence merely to resume this action.
+- Deferred action: separately authorize only the remaining provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed ledgers, including the required Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary evidence in Test Mode. Product/private quality-cost and Legal/Tax remain separate gates.
+- Safety: no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL, duplicate canonical Billing acceptance or paid-tier activation.
 
 ## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
 - Related task: `FM-META-001` / `FM-SOC3-001`.
