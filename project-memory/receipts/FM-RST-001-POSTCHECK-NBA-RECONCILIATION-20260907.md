@@ -1,0 +1,9 @@
+# FM-RST-001 — Restore postcheck Next-Best-Action reconciliation — 2026-09-07
+
+- Risk: R4 governance / repository-only reconciliation.
+- Base main: `a66b3051dc7feb533f7f2d261485e6db9db928ea`.
+- Detected contradiction: `CURRENT_STATE.md`, `SESSION_HANDOFF.md`, `OPEN_LOOPS.md`, `RESTORE_STATE_MACHINE.md` and issue #944 final evidence agree that the real isolated PostgreSQL 17 database Restore is completed/non-repeatable and the next transition is `DB_RESTORED -> DB_POSTCHECKED`; `NEXT_BEST_ACTIONS.json`, generated `NEXT_BEST_ACTION.md`, `AUTO_HANDOFF.md`, `OWNER_ACTION_INBOX.md`, `DEFERRED_OWNER_ACTIONS.md`, `DEPENDENCIES.md` and `FANMIND_FINISHLINE.md` still contained the superseded TCP-22/new-Restore path.
+- Stronger evidence: workflow `33178878764` / database job `98874745740`; ACL completion authorization `5453727223`; final issue #944 reconciliation `5453857592`; projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`; core postcheck `5|5|5|5`; plaintext cleanup `PASS`; PR #1075 merge `e3009134f87dc4b197c518cb097ceee867b0c7f8`; issue #944 closed; PR #1076/main closeout `a66b3051dc7feb533f7f2d261485e6db9db928ea`.
+- Reconciliation action: select standing-authorized receipt/read-only `DB_POSTCHECKED` reconciliation; mark obsolete owner actions FM-RST-OWNER-005/006 `SUPERSEDED`; update the Restore dependency/finishline readers. Do not promote `DB_POSTCHECKED` until every receipt predicate is explicit.
+- Safety: no Restore workflow dispatch, no JIT, no SSH/provider change, no target reset, no database connection/write, no Production/Supabase-Staging mutation, no Storage/config/cleanup action and no external provider action.
+- State change: none. Overall `FM-RST-001` remains `PARTIAL`; accepted Restore progression remains `DB_RESTORED`.
