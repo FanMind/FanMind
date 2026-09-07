@@ -10,3 +10,10 @@
 - Current Staging boundary: the successful automatic Production Web deploy is not the isolated Staging deployment. Exact reviewed `main` `2be4f5a784eff80ba417037ed0460a77f9f8353e` still requires the manual protected `deploy-staging.yml` contract with `confirmation=deploy-staging-only` and `billing_write_freeze=preserve`, followed by independent runtime countercheck and only then the protected rollback-only `staging-billing-canonical-acceptance.yml`.
 - Mobile/Restore boundary unchanged: real Android registration/provider evidence and Restore SSH/re-authorization remain pending.
 - Sales/external acceptance: unchanged; no finishline gate or external acceptance is promoted by this receipt.
+
+## Supersession — 2026-09-07
+
+- The former operative instruction to deploy `2be4f5a784eff80ba417037ed0460a77f9f8353e` to isolated Staging and then run the canonical Billing rollback acceptance is historical and explicitly superseded.
+- Completion evidence is isolated Staging deploy run `34058028839` followed by canonical rollback-only acceptance run `34058118450` / job `101553652111`, both successful on accepted baseline `62e6a11858e85996af03f6740819b0fc6194b4a4`.
+- The authoritative accepted receipt is `FM-AI-001-CANONICAL-BILLING-STAGING-ACCEPTED-20260906.md`; it records rollout `PASS`, general Billing ledger `verify`, zero pending/uninventoried cutover items, rollback, cleanup and the independent read-only postcheck.
+- This supersession does not promote `FM-AI-001`, `ai_billing`, `sales_ready`, Production projection, Plus/Ultra, provider, legal/tax, Mobile or Restore.
