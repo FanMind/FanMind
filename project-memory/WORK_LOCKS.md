@@ -1,14 +1,15 @@
 # Work Locks
 
 ## LOCK-FM-RST-001-STORAGE-LOCAL-CONTROLLER-20260907
-- Status: ACTIVE
+- Status: RELEASED
 - Task: FM-RST-001
 - Holder: Codex
 - Risk: R4 repository controller with synthetic local writes only
 - Acquired: 2026-09-07 after PR #1081 merge and the owner choice `Nur lokal testen`.
 - Scope: implement and locally countercheck target-empty, exact postwrite, Production/Staging denial and rollback behavior. No real backup decryption, Supabase project/branch creation, provider upload, Production/Staging mutation or `STORAGE_RESTORED` claim.
 - Evidence plan: focused controller/preparation tests, full Operations, lint/build/truth/Project Memory checks and exact-head PR CI/review.
-- Release condition: exact-head merge of the local-only controller and synchronized evidence.
+- Released: 2026-09-07 after PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9` passed all eight workflows with zero review threads and SHA-bound squash-merged as `205febde8ef62f632e488337a6e887d1abb532f9`.
+- Resume from: no local controller work remains. Real external Storage stays deferred under `FM-RST-OWNER-007` and requires a new owner decision.
 
 ## LOCK-FM-RST-001-DB-POSTCHECK-RECONCILIATION-20260907
 - Status: RELEASED
