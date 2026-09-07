@@ -29,23 +29,23 @@ Updated: 2026-09-07 Europe/Vienna
 - Related task: `FM-RST-001`.
 - Status: CONSUMED_PRE_DISPATCH_FAIL_CLOSED.
 - Decision: owner authorization comment `5385992305` and controller SHA-256 `45054c41...` were attempted on 2026-08-26, but the controller stopped at its first SSH connection before remote preflight/JIT/approval/dispatch/database access.
-- Result: no Restore workflow or database mutation occurred; highest accepted state remains `TARGET_COMPATIBLE` with side state `RECONCILIATION_REQUIRED`.
+- Result: no Restore workflow or database mutation occurred; the historical accepted state at that point remained `TARGET_COMPATIBLE` with side state `RECONCILIATION_REQUIRED`.
 - Resume rule: never reuse this controller or authorization and never automatically retry.
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
 ## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
 - Related task: `FM-RST-001`.
-- Status: DEFERRED_BY_OWNER.
-- Deferred action: on the owner's Windows PC, capture current public IPv4 and detailed TCP-22 reachability to `138.124.213.66`. Do not rerun the Restore controller.
-- Provider boundary: if the evidence proves a stale Exoscale SSH allowlist, any exact `/32` security-group change requires a separate narrow authorization and read-only target/scope confirmation.
-- Safety: no broad CIDR, unrelated security-group/VM/database change, Restore/JIT/workflow action or Production/Supabase-Staging access.
+- Status: SUPERSEDED.
+- Superseded by: successful isolated database Restore workflow `33178878764` / job `98874745740`, final issue #944 reconciliation `5453857592`, and merged PRs #1075/#1076.
+- Result: the old owner-PC TCP-22/Exoscale allowlist diagnostic is no longer a prerequisite for the completed database phase and must not be repeated as the next Restore action.
+- Current boundary: receipt/read-only reconciliation of `DB_RESTORED -> DB_POSTCHECKED`; any genuinely later R4 write needs its own fresh authorization and evidence.
 
 ## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - Related task: `FM-RST-001`.
-- Status: DEFERRED_BY_OWNER.
-- Deferred action: after SSH/allowlist reconciliation and merged evidence closeout, bind a new one-run authorization/controller to the then-current reviewed `main`, accepted Backup/Verification/Source/target/reset receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs.
-- Resume rule: do not create a JIT, request environment approval or dispatch a database workflow before the new exact authorization. Never reuse controller `45054c41...`, authorization `5385992305`, run `32594374666` or runner IDs `43`/`44`.
-- Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
+- Status: SUPERSEDED.
+- Superseded by: successful isolated database Restore workflow `33178878764` / job `98874745740`, consumed ACL completion authorization `5453727223`, final issue #944 reconciliation `5453857592`, and merged PRs #1075/#1076.
+- Result: no new database-Restore authorization/controller/JIT/reset/retry is required or authorized for the completed database phase.
+- Current boundary: reconcile `DB_RESTORED -> DB_POSTCHECKED`; later Storage, server config, disposable-target cleanup, countercheck and aggregate acceptance remain separate.
 
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Related task: `FM-SEC-001`.
@@ -86,7 +86,7 @@ Updated: 2026-09-07 Europe/Vienna
 ## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
 - Related task: `FM-META-001` / `FM-SOC3-001`.
 - Status: DEFERRED_BY_OWNER.
-- Proven foundation: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only technical path. FM-EV-023 counterchecks the 2026-08-26 exact-main repository no-PII/security boundary and observed isolated Staging content/continuation/catch-up objects/metadata without writes, activation or provider events; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. Mutable Staging freshness is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
+- Proven foundation: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only path. FM-EV-023 counterchecks the 2026-08-26 exact-main repository no-PII/security boundary and observed isolated Staging content/continuation/catch-up objects/metadata without writes, activation or provider events; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. Mutable Staging freshness is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
 - Deferred action: in an owner-controlled normal browser and the correct Meta Business/Dataset, capture positive and negative Events Manager/Test Events evidence: no event before consent, exact PageView-only reception after consent/safe navigation, no unexpected conversions and no PII/Advanced Matching. Obtain final privacy/legal acceptance separately. Meta Business permissions/App Review and real Facebook/Instagram provider E2E remain part of the later Social gate.
 - Resume rule: do not rerun FM-EV-023 merely to close the technical reconciliation or repeat Production ENV/build/deploy. After its Staging freshness expires/invalidation or before any later Meta Staging database action, use a new lock and fresh shared rollout-state-first verification. Any real event emission, provider/account/OAuth/App Review action, credential use, SQL Apply, worker/runtime activation or Production change requires its own exact scope and current evidence.
 - Safety: no CompleteRegistration/Lead/Purchase, Advanced Matching, CAPI, customer data, CRM identifiers or secret values may be introduced through this action.
