@@ -2,12 +2,13 @@
 
 ## LOCK-FINISHLINE-RESUME-20260906
 - Status: ACTIVE
-- Task: FM-AI-001 / FM-MOB-001 / FM-RST-001
+- Task: FM-AI-001 / FM-MOB-001
 - Holder: Codex
 - Risk: R4
 - Acquired: 2026-09-06
-- Scope: owner-resumed isolated Staging Billing, Android/Play and isolated Restore. No Production database write or real payment.
-- Evidence plan: exact-commit CI/run/runtime and independent provider/device/target evidence; no stale acceptance or duplicate build.
+- Narrowed: 2026-09-07 after the isolated database Restore, ACL completion and permanent helper correction closed.
+- Scope: remaining owner-resumed isolated Staging Billing and Android/Play work. FM-RST-001 is excluded; no runtime Restore lock is active. No Production database write or real payment.
+- Evidence plan: exact-commit CI/run/runtime and independent provider/device evidence; no stale acceptance or duplicate build.
 
 
 ## LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906
