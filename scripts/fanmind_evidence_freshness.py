@@ -31,6 +31,8 @@ for entry in register:
     ttl = policy[cls].get("ttl_hours")
     status = entry.get("status")
     observed = entry.get("observed_at")
+    if status == "SUPERSEDED":
+        continue
     if ttl is not None and status in mutable_success and not observed:
         errors.append(f"mutable-evidence-missing-observed-at:{entry.get('id')}")
         continue
