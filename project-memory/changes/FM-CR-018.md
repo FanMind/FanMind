@@ -1,58 +1,36 @@
 # FM-CR-018 — Android Staging login diagnosis and replacement Preview
 
 - Date: 2026-09-05
-- Status: IN_PROGRESS
+- Updated: 2026-09-07
+- Status: VERIFIED_NOT_ACCEPTED
 - Source: owner continuation authorization
 - Related task: FM-MOB-007 / FM-MOB-001 continuation
 - Risk: R3
-- PR: #1054, #1057
+- PRs: #1054 / #1057 / superseding #1063
 
 ## Request
-The owner resumed the real Android Staging acceptance because the already-signed Preview APK can be installed but `fanmind@fanmind.ch` cannot complete password sign-in on the device. The same credentials work on the web/Production path and the owner requires the app and website to become reliably usable rather than repeating manual login guesses.
+The owner resumed real Android Staging acceptance because the signed Preview APK could be installed but `fanmind@fanmind.ch` could not complete password sign-in on the device. The goal was to diagnose that failure safely and, if needed, produce one replacement Preview without weakening Auth, exposing credentials, activating Production push, submitting a Store build or using an OTA update.
 
-## Preflight and duplicate check
-- Reused the existing FM-MOB-001 Mobile release task, accepted FM-MOB-006 Delivery-Ledger gate, FM-DEP-002 and the existing signed Android Preview evidence instead of rebuilding the Mobile foundation.
-- Exact installed artifact is the existing Android `preview` APK for commit `700885307c265f8907cefe5f5b10499a5ea7b996`.
-- Production push remains structurally out of scope and disabled.
-- No Store submit, OTA update, Production database mutation or Production Auth credential change is authorized by this change.
+## Historical diagnosis
+- Native Android requests reached isolated Staging Supabase `vshyhvgcmrlagvfnvomc` and `/auth/v1/token?grant_type=password`, but initially returned `invalid_credentials`.
+- Read-only bcrypt verification proved the owner-supplied password matched the `fanmind@fanmind.ch` password hash in both Production and Staging; the hypothesis that the environments used different passwords was rejected.
+- Staging Auth user/identity was confirmed, not banned/deleted/SSO/anonymous, used the normal `email` provider, had the canonical zero `instance_id`, and its identity provider id/sub/email matched the user row.
+- The installed commit and Mobile code passed the password string unchanged to `supabase.auth.signInWithPassword`; only the email was trimmed/lower-cased.
 
-## Current evidence
-- Native Android requests reach isolated Staging Supabase `vshyhvgcmrlagvfnvomc` and `/auth/v1/token?grant_type=password`, but return `invalid_credentials`.
-- Read-only bcrypt verification proved the owner-supplied password matches the `fanmind@fanmind.ch` password hash in both Production and Staging; therefore the earlier hypothesis that the password differs between environments is rejected.
-- Staging Auth user/identity is confirmed, not banned/deleted/SSO/anonymous, uses the normal `email` provider, has the canonical zero `instance_id`, and its identity provider id/sub/email match the user row.
-- The installed commit and current `main` both pass the password string unchanged to `supabase.auth.signInWithPassword`; only the email is trimmed/lower-cased.
-- Repeated real-device attempts remain reproducibly rejected, so the failure is not accepted as a user-password problem.
+## Bounded implementation and accepted diagnosis
+PR #1054 added Staging-only, non-secret diagnostics to the login screen: visible `STAGING · TESTSYSTEM` binding, password show/hide, code-point length and hidden-character checks, and Staging password-manager/autofill suppression for the diagnostic run. It added no password logging, hashing, normalization, persistence or transmission change.
 
-## Bounded implementation
-PR #1054 adds Staging-only, non-secret diagnostics to the login screen:
-- visible `STAGING · TESTSYSTEM` badge;
-- password show/hide control;
-- code-point length plus detection of leading/trailing whitespace and zero-width/control characters;
-- Staging password-manager/autofill disabled for the diagnostic run;
-- no password logging, hashing, normalization, persistence or transmission change.
+PR #1054 then merged, a signed Android `preview` was produced, and the owner installed it and confirmed successful Staging login. The password/login blocker is therefore resolved for this path.
 
-## Acceptance plan
-1. Exact-head repository CI and Project Memory gates must pass or unrelated baseline failures must be explicitly reconciled.
-2. Merge only through PR; no direct `main` write.
-3. Queue exactly one new signed Android `preview` build through the existing protected main-only workflow; no submit or OTA update.
-4. Install that artifact on the owner's Android device and confirm the visible Staging binding plus non-secret password diagnostic.
-5. Re-run login. If login succeeds, register the device for Follow-up Push and continue the already-separated Staging provider/device acceptance. If it still fails with the expected length/no hidden characters, treat client input/autofill as disproved and continue with Supabase Auth configuration/provider diagnostics rather than resetting the password again.
+## Runtime EAS/FCM continuation
+After login succeeded, Push registration exposed a separate runtime EAS Project-ID binding error before permission/token registration. PR #1057 added the approved public EAS Project ID as a runtime fallback while keeping credential-bearing config out of raw `app.json`. Later owner evidence exposed that the installed candidate still lacked the required Firebase/Google-services binding for actual FCM registration.
 
-## 2026-09-05 continuation — login accepted, runtime EAS binding blocker found
-- PR #1054 merged and exact signed Android `preview` build for main commit `dd01dc022f9006304b45ceee7b1787a07ef4908b` completed successfully.
-- The owner installed that build and confirmed successful Staging login on the real Android device. The password/login blocker is therefore resolved for this acceptance path.
-- Follow-up Push registration then failed before permission/token registration with the explicit client error `Der signierte FanMind-Build ist noch nicht mit dem freigegebenen EAS-Projekt verbunden.`
-- Code inspection proves `enableMobilePushRegistration()` requires a runtime EAS Project ID from `Constants.easConfig.projectId` or `Constants.expoConfig.extra.eas.projectId`; both are absent in the installed build even though the protected build workflow independently verified the correct EAS project binding.
-- Root cause: the protected workflow verifies the EAS identity, but the remote/runtime Expo config can be evaluated without the protected local workflow variables, leaving the signed artifact without a Project ID available to `expo-notifications`.
-- PR #1057 adds the approved public EAS Project ID as a runtime fallback in `apps/mobile/app.config.js` while keeping raw `app.json` credential-free, plus a regression test that requires the runtime config to expose the Project ID without protected build variables.
-- Production push delivery remains disabled and no Provider send, Store submit or OTA update is authorized by this change.
+That build step is now **superseded and complete**: #1063 merged the FCM replacement path, and workflow `34037085683` / job `101497020224` completed the exact signed Android `preview` for commit `6801d687cfe6048d6e32e63bcfe2862d2886fce0`, version `1.0.0 (2)`, with Google Services processed. The private install link was delivered to the owner. Do not queue the #1054/#1057 replacement plan again and do not rebuild older `700885...`, `dd01dc...` or `6d7f76cd...` candidates for Push registration.
 
-## Updated acceptance plan
-1. PR #1057 exact-head CI and Project Memory gates must pass.
-2. Merge #1057 only after green gates.
-3. Queue exactly one replacement signed Android `preview` build from the reviewed merged main commit; no submit and no OTA update.
-4. Install/update the owner device and repeat `Push auf diesem Gerät vorbereiten`.
-5. Confirm one active Staging push registration exists before any real provider send is considered.
+## Remaining acceptance boundary
+The repository/login/replacement-build scope of FM-CR-018 is verified. External real-device Push acceptance remains open under `FM-MOB-001`: install/use the existing `6801d687...` replacement, allow notifications, trigger `Push auf diesem Gerät vorbereiten`, and prove one active Staging registration before any separately authorized real provider send. Latest read-only Staging evidence still shows zero real Push registrations.
+
+Google Play closed-Alpha cohort/19-check Recovery acceptance is separate. Production push, Store Submit/Update, OTA Update and iOS/TestFlight are not authorized by this change.
 
 ## Rollback
-Revert PR #1054 and/or #1057 as applicable. No Production state is changed by the repository implementation. Any signed Preview remains an internal artifact only and must not be submitted or promoted automatically.
+Revert the applicable Mobile diagnostic/runtime-binding PRs only if their behavior is later invalidated. No Production state was changed by this change request. Internal Preview artifacts must not be submitted or promoted automatically.
