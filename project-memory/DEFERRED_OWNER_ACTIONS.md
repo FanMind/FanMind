@@ -79,9 +79,9 @@ Updated: 2026-09-07 Europe/Vienna
 ## FM-AI-OWNER-002 — Remaining protected Staging provider/lifecycle evidence
 - Related task: `FM-AI-001`.
 - Status: DEFERRED_BY_OWNER.
-- Superseded/completed sub-gate: the general Billing ledger is installed on isolated Staging. Exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, full rollback and cleanup `PASS`. Do not repeat the ledger Apply/capture/canonical-acceptance sequence merely to resume this action.
-- Deferred action: separately authorize only the remaining provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed ledgers, including the required Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary evidence in Test Mode. Product/private quality-cost and Legal/Tax remain separate gates.
-- Safety: no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL, duplicate canonical Billing acceptance or paid-tier activation.
+- Completed sub-gates: the general Billing ledger is installed on isolated Staging; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, Billing ledger `verify`, zero cutover counters, full rollback and cleanup `PASS`. AI-tier rollback acceptance `34039968946` / job `101504820898` also passed on exact `49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5`, including lifecycle, Test catalog, browser denial, service-role ledger and full rollback; its Plus -> Ultra/paused -> Starter/canceled path is closed and must not be repeated merely to resume work.
+- Deferred action: separately authorize only the genuinely remaining provider-side inbound webhook/current provider lifecycle where unproven, failed-payment consequences, event ordering/idempotency/conflict handling and current canonical downstream Billing -> AI/referral reconciliation through the installed ledgers. Product/private quality-cost and Legal/Tax remain separate gates.
+- Safety: no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL, duplicate rollback acceptance or paid-tier activation.
 
 ## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
 - Related task: `FM-META-001` / `FM-SOC3-001`.
