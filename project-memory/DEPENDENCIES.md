@@ -4,12 +4,12 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-001
 - From: FM-RST-001
-- Requires: reviewed restore workflows, protected `restore-drill` environment, exact Organization runner-group/workflow-allowlist/JIT policy, isolated existing PostgreSQL-17.11 target, TLS `verify-full`, exact accepted Schema-2 Full Backup/Receipt, current host gate/toolchain and the complete receipt-bound database authorization contract.
+- Requires: reviewed Restore contracts and receipts, accepted Schema-2 Full Backup/Verification, the completed isolated PostgreSQL-17.11 database Restore/ACL-completion evidence, and the canonical `RESTORE_STATE_MACHINE.md` transition contract for every later state.
 - Type: internal + external control
 - Status: ACTIVE
-- Updated: 2026-08-23
-- Current evidence: read-only run `32582640853` proved the baseline chain through `TARGET_COMPATIBLE`; run `32594374666` failed closed before write; the later separately authorized extension-only transaction and full receipt-bound postcheck proved the exact five-extension/97-record fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` plus canonical ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
-- Rule: Continue from the first unproven gate, now `TARGET_COMPATIBLE -> DB_RESTORED`. Revalidate mutable policy/host/target/backup/TLS evidence and obtain a new exact database-Restore authorization. Do not recreate established infrastructure, repeat extension provisioning, automatically retry the consumed run, target Production/Supabase Staging or infer `DB_RESTORED` from the extension baseline.
+- Updated: 2026-09-07
+- Current evidence: workflow `33178878764` / database job `98874745740` committed the real isolated `pg_restore`; one-shot authorization `5453727223` completed exactly eight missing schema-USAGE grants without a second Restore, matched projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, passed core `5|5|5|5` and plaintext cleanup; PR #1075 permanently corrected the target-only principal projection and issue #944 is closed. Current accepted Restore state is `DB_RESTORED`, not `TARGET_COMPATIBLE`.
+- Rule: Continue from the first unproven gate `DB_RESTORED -> DB_POSTCHECKED`. Reconcile all receipt-bound owner/ACL/default-ACL/roles/database-container/extensions and schema/data/accounting/core-table/RLS/policy/authorization predicates using existing immutable/private evidence first; obtain only read-only proof for a genuine gap. Do not collect the obsolete TCP-22 evidence, obtain another database-Restore authorization, create new Restore JITs, reset the target, repeat the database Restore, recreate established infrastructure, repeat extension provisioning or target Production/Supabase Staging. After `DB_POSTCHECKED`, Storage, config, disposable-target cleanup, countercheck and final acceptance remain separate states.
 
 ## FM-DEP-002
 - From: FM-MOB-001
