@@ -342,7 +342,7 @@ test("AI tier workflow requires exact shared rollout state before mutation", asy
   ]) {
     assert.match(
       workflow,
-      new RegExp(`grep -Fqx '${requiredState.replaceAll("=", "\\=")}'`, "u"),
+      new RegExp(`grep -Fqx '${requiredState}'`, "u"),
     );
   }
 
