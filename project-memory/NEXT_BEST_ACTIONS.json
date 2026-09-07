@@ -4,17 +4,22 @@
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-RESTORE-DATABASE",
+      "id": "NBA-RESTORE-POSTCHECK",
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "SSH-Zugang reconciliieren und Restore neu autorisieren",
-      "requires_owner": true,
+      "title": "Vorhandene Restore-Belege gegen DB_POSTCHECKED abgleichen",
+      "requires_owner": false,
       "parallel_safe": false,
-      "deferred_owner_id": "FM-RST-OWNER-005",
-      "prerequisite_gates": ["memory_v6", "staging"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging."
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Reconcile the existing receipt-bound evidence for every DB_RESTORED -> DB_POSTCHECKED predicate: ownership, ACL/default ACL, roles, database container, extensions, five core tables, RLS, policies, application grants and restricted SECURITY DEFINER execution. If any predicate is not explicit, obtain read-only proof only. Do not dispatch or repeat the database Restore, reset the target, reuse a consumed controller/JIT, or access Production/Supabase Staging."
     },
     {
       "id": "NBA-SECURITY-PROTECTED",
@@ -25,8 +30,14 @@
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-SEC-OWNER-001",
-      "prerequisite_gates": ["memory_v6", "staging"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "Read-only run 32997946812 proved hardening_not_ready on exact deployed main. Require a separate exact authorization before the protected Production trigger-hardening Apply. Keep Staging RPC exception acceptance and leaked-password protection changes explicit and separate; no provider mutation is standing-authorized."
     },
     {
@@ -37,8 +48,14 @@
       "title": "Android Runbook, Recovery und Push/Store abnehmen",
       "requires_owner": true,
       "parallel_safe": true,
-      "prerequisite_gates": ["memory_v6", "staging"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. The later FCM replacement signed Android Preview at exact commit 6801d687 is the current real-device candidate; do not rebuild older artifacts. Next install/use that existing artifact for bounded registration observation and require separate authorization for real provider/device Push delivery. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and complete the private Android/Recovery proof before requesting Production access. Do not expose private artifact values, start iOS/TestFlight or mutate Production."
     },
     {
@@ -50,8 +67,14 @@
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
-      "prerequisite_gates": ["memory_v6", "staging"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "The general Billing ledger is installed on isolated Staging and the bounded canonical Billing rollback-only sub-gate is closed by exact deploy 34058028839 and acceptance 34058118450/job 101553652111 on 62e6a11858e85996af03f6740819b0fc6194b4a4. Do not repeat that deploy/acceptance. Require FM-AI-OWNER-001 for remaining product/private/financial evidence and the narrowed FM-AI-OWNER-002 only for remaining provider-side inbound webhook/current lifecycle/downstream AI-referral evidence through the installed ledgers. Keep Plus/Ultra and canonical Production projection fail-closed; no live payment or Production activation."
     },
     {
@@ -63,8 +86,14 @@
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-META-OWNER-001",
-      "prerequisite_gates": ["memory_v6", "staging"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "FM-EV-023 completes the bounded 2026-08-26 technical read-only reconciliation; mutable Staging freshness is tracked by EV-META-STAGING-FOUNDATION-20260826. Do not rerun its workflows merely for closeout or repeat Production activation/deploy. After expiry/invalidation or before a later Meta Staging database action, use a new lock and shared rollout-state-first verification. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
     },
     {
@@ -75,8 +104,16 @@
       "title": "Phase 3 Social real abnehmen",
       "requires_owner": false,
       "parallel_safe": false,
-      "prerequisite_gates": ["restore", "mobile", "ai_billing", "meta_security"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "restore",
+        "mobile",
+        "ai_billing",
+        "meta_security"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "Proceed only when non-Social prerequisite gates are accepted; then use existing Facebook/Instagram/WhatsApp foundations and current provider evidence."
     },
     {
@@ -87,8 +124,13 @@
       "title": "Phase 7 Social real abnehmen",
       "requires_owner": false,
       "parallel_safe": false,
-      "prerequisite_gates": ["phase3_social"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "phase3_social"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "Verify current official platform scope before each connector. No scraping, self-bot, reverse engineering or paid X usage without separate approval."
     },
     {
@@ -99,8 +141,18 @@
       "title": "Finalen Production-Demo- und Sales-Handoff schließen",
       "requires_owner": true,
       "parallel_safe": false,
-      "prerequisite_gates": ["restore", "mobile", "ai_billing", "meta_security", "phase3_social", "phase7_social"],
-      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "prerequisite_gates": [
+        "restore",
+        "mobile",
+        "ai_billing",
+        "meta_security",
+        "phase3_social",
+        "phase7_social"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
       "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted."
     }
   ]
