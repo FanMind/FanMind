@@ -1,5 +1,16 @@
 # Work Locks
 
+## LOCK-FM-RST-001-DB-POSTCHECK-RECONCILIATION-20260907
+- Status: ACTIVE
+- Task: FM-RST-001
+- Holder: Codex
+- Risk: R4 evidence reconciliation; no runtime mutation
+- Acquired: 2026-09-07
+- Scope: map already-recorded attestations to every `DB_RESTORED -> DB_POSTCHECKED` predicate and reconcile canonical readers. No workflow/JIT dispatch, database/Storage connection, target reset, Production or Supabase-Staging access.
+- Evidence plan: issue #944 exact authorization/execution/final comments, controller fail-closed invariants, #1075 helper CI, #1077 machine-reader correction, exact-head CI/review.
+- Release: after exact-head merge and postmerge closeout.
+
+
 ## LOCK-FINISHLINE-RESUME-20260906
 - Status: ACTIVE
 - Task: FM-AI-001 / FM-MOB-001

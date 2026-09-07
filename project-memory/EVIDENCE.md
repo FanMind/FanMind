@@ -437,3 +437,14 @@ Implementation status and acceptance status are deliberately separate.
 - Acceptance: ACCEPTED for the isolated-Staging canonical Billing rollback-only sub-gate only
 
 Never store secrets, private credentials, plaintext sensitive payloads, or unsafe diagnostic material here.
+## FM-EV-036
+- Related: FM-RST-001 / `DB_POSTCHECKED`.
+- Date: 2026-09-07.
+- Evidence classes: issue #944 immutable owner authorization/execution/final comments; workflow/job ordering and logs; fail-closed completion-controller contract; permanent helper correction #1075; machine-reader correction #1077.
+- Immutable binding: Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c`, Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1`, source commit `14a1e2d0e100f2ec8cfa14486c96f128fb431878`, isolated `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore`, workflow `33178878764`, job `98874745740`.
+- Restore proof: `pg_restore --single-transaction` committed before the helper boundary failure; no repeat occurred.
+- Authorization proof: projected expected/actual fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`; exactly eight schema-USAGE grants; 2463 expected grant tuples; source role contract 23 roles / 44 records; only the target-only bootstrap login is excluded; database-container and five-extension/97-record fingerprints match.
+- Functional/security proof: 66 tables / 71 relations / 117 functions; core `5|5|5|5` table/RLS/policy postcheck; 120 core application grants; 12 restricted SECURITY DEFINER functions; completion receipt SHA-256 `08e871ecc104d31b354851317d8075d1e7d3e250269f0aeae8be20e491a8b4c2`.
+- Cleanup/safety: plaintext cleanup PASS; no completion workflow or repeat Restore; no active Restore workflows afterwards; Production/Supabase Staging untouched.
+- Classification: every canonical `DB_RESTORED -> DB_POSTCHECKED` predicate is explicit; accepted progression advances to `DB_POSTCHECKED`. Overall `FM-RST-001` remains PARTIAL.
+- Falsification: any mismatch in binding, projected contract, core counts, application grants, privileged-function boundary, or proof of repeat/Production/Staging action invalidates this transition.

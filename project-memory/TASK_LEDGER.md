@@ -160,17 +160,17 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not recreate Staging host/Supabase/Stripe test baseline absent verified drift.
 
 ## FM-RST-001
-- Date: 2026-08-17 to 2026-08-26
-- Updated: 2026-08-26
+- Date: 2026-08-17 to 2026-09-07
+- Updated: 2026-09-07
 - Status: PARTIAL
+- Risk: R4
 - Goal: Complete isolated real restore drill.
 - Starting state: Dedicated restore host, PostgreSQL 17 target, runner group/workflows, accepted backup tuple and protected environment already exist.
-- Action: Protected read-only run `32582640853` first established baseline readiness through `TARGET_COMPATIBLE`. Exactly authorized database run `32594374666` then failed closed before its first target write and localized the missing five-extension prerequisite. After rollback-only predicate/ACL diagnostics, the owner separately authorized the final ACL-fingerprint-corrected extension-only controller on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`.
-- Result: the final controller's precommit receipt contract, mutation commit, full receipt contract, canonical ACL check and postcommit read-only postcheck all passed. The target now exposes all five required descriptors, extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` over 97 records and schema-ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`. No database Restore, target reset, JIT/workflow dispatch, Production write or Supabase-Staging write occurred.
-- Later fail-closed attempt: exact owner authorization `5385992305` and controller SHA-256 `45054c41...` on reviewed `main` `618bce9...` reached only its local accepted-readiness/main-drift markers, then timed out on the first SSH connection to `138.124.213.66:22`. No remote preflight, JIT, protected approval, workflow dispatch, database connection or write occurred.
-- Evidence: prior PRs #943/#987/#990/#991/#992/#997/#998; issue #944 comments `5381530143`, `5382274967`, `5382336892`, `5385843508`, `5385992305`, `5386014235`; readiness run `32582640853`; consumed database run `32594374666`; final extension controller PASS; owner-supplied 2026-08-26 controller output and source-order countercheck.
-- Next step: obtain owner-PC public-IP/TCP-22 evidence, reconcile any exact Exoscale `/32` allowlist drift, then require a new exact R4 database-Restore authorization bound to the then-current reviewed `main` and fresh mutable runner/host/target/backup/TLS preflight.
-- Do not repeat: no automatic retry/rerun of `32594374666` or controller `45054c41...`; no reuse of their JITs/authorizations; no repeat extension provisioning, target reset, quarantine deletion, host/PG/TLS rebuild or Production/Supabase-Staging target. Do not treat extension success as `DB_RESTORED`.
+- Accepted database progression: `DB_POSTCHECKED`. Issue #944 comments `5453497602`, `5453599115`, `5453727223`, `5453857592` prove the exact artifact/source/target binding, committed single-transaction Restore, projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, exact roles/container/extensions, 120 core application grants, 12 restricted SECURITY DEFINER functions and core `5|5|5|5` table/RLS/policy checks. PR #1075 permanently fixed the target-only login projection; #1077 retired stale rerun controls.
+- Evidence: `FM-EV-036`; `receipts/FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md`; `receipts/FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`; workflow `33178878764` / job `98874745740`; PRs #1075/#1077; issue #944 closure `5573957331`.
+- Still open: `STORAGE_RESTORED`, `CONFIG_RESTORED`, `DISPOSABLE_TARGET_CLEANED`, independent `COUNTERCHECKED` and final `ACCEPTED`.
+- Next step: implement/countercheck the bounded Storage restore/verification path without dispatching it, then obtain separate exact authorization for isolated Storage mutation.
+- Do not repeat: no database Restore, target reset, consumed controller/JIT/authorization reuse, Production/Supabase-Staging target, or inference of later transitions from database evidence.
 
 ## FM-MOB-001
 - Date: through 2026-08-19
@@ -349,3 +349,14 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Result status: COUNTERCHECKED; PR #1075 squash-merged as `e3009134f87dc4b197c518cb097ceee867b0c7f8` and issue #944 closed `completed`. Overall `FM-RST-001` remains PARTIAL; the correction did not authorize or repeat a Restore.
 - Open follow-up: reconcile every `DB_RESTORED -> DB_POSTCHECKED` predicate from existing receipts/read-only evidence, then continue only with genuinely unproven Storage/server-config/disposable-target/final acceptance.
 - Work lock released: yes; repository correction merged and the issue-specific helper loop is closed. No runtime Restore lock was opened.
+
+## RECEIPT-FM-RST-001-DATABASE-POSTCHECK-RECONCILIATION-20260907
+- Task: FM-RST-001.
+- Risk: R4 evidence reconciliation only; no runtime/database/provider action.
+- Lock: `LOCK-FM-RST-001-DB-POSTCHECK-RECONCILIATION-20260907`.
+- Evidence classes: immutable GitHub authorization/execution chain in issue #944; reviewed controller/runtime invariants; permanent helper implementation and exact-head CI from #1075; independent machine-reader correction #1077.
+- Result status: COUNTERCHECKED. Every `DB_RESTORED -> DB_POSTCHECKED` predicate is explicitly mapped in `receipts/FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`.
+- Accepted progression: `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
+- Negative proof: no workflow/JIT dispatch, database/Storage connection or mutation, target reset, Production/Supabase-Staging access, or reuse of a consumed authorization/controller.
+- Open follow-up: repository-only Storage restore/verification control preparation, then separately authorized isolated Storage mutation.
+- Work lock released: no; release after exact-head CI/review and merge.

@@ -6,9 +6,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-RST-001
 - Status: OPEN
 - Updated: 2026-09-07
-- Gap: the isolated database Restore and permanent target-principal projection correction are complete (#1075 merge `e3009134f87dc4b197c518cb097ceee867b0c7f8`; #944 closed). Exact `DB_POSTCHECKED` receipt completeness and later Storage/server-config/disposable-target/countercheck/final aggregate acceptance remain separate unless independently evidenced.
+- Gap: the database Restore, permanent target-principal correction and exact `DB_POSTCHECKED` reconciliation are complete. Storage/server-config/disposable-target/countercheck/final aggregate acceptance remain separate and unproven.
 - Close when: every still-applicable post-database state-machine transition has current R4 quorum and independent countercheck.
-- Next check: do not repeat workflow `33178878764`, job `98874745740` or any consumed controller/authorization. Reconcile all `DB_RESTORED -> DB_POSTCHECKED` predicates from receipt `FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md` and other private evidence; acquire only read-only proof for a gap.
+- Next check: do not repeat workflow `33178878764`, job `98874745740` or consumed controllers. Implement/countercheck a bounded isolated Storage restore/verification path from the accepted Full Backup without dispatching it; later Storage mutation requires separate exact authorization.
 
 ## FM-LOOP-002
 - Related: FM-MEM-005

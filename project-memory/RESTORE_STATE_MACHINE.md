@@ -21,14 +21,15 @@ No state may be skipped. A later state does not retroactively prove an earlier s
 
 ## Current state
 
-- Current accepted progression: `DB_RESTORED`. Issue #944 final comment `5453857592` proves the receipt-bound isolated PostgreSQL 17 Restore committed in workflow `33178878764` / job `98874745740`; it must not be repeated.
+- Current accepted progression: `DB_POSTCHECKED`. Issue #944 comments `5453497602`, `5453599115`, `5453727223` and `5453857592` bind the exact Full Backup/source/isolated target, prove the PostgreSQL 17 Restore committed, and prove every database postcheck predicate through the bounded completion receipt. The database Restore must not be repeated.
 - Immutable foundation remains PR #943 merge `14a1e2d0e100f2ec8cfa14486c96f128fb431878`, Full Backup `b74c1c60-1d61-4a39-9f0d-648ec003a12c` and checksum Verification `006e6ab8-8f5c-43c1-ac68-6570e992a7a1`.
 - The workflow's historical failed conclusion occurred after successful `pg_restore --single-transaction`, when schema-ACL recovery compared the source contract with a target snapshot that incorrectly included target-only login/superuser `fanmind_restore_bootstrap`.
 - Separate exact one-shot authorization `5453727223` completed the already restored target without a second Restore or workflow dispatch: exactly eight schema-USAGE grants, projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, core-table result `5|5|5|5` and plaintext cleanup `PASS`.
 - Production and Supabase Staging were not accessed or modified. All Restore authorizations/controllers in this evidence chain are consumed; active Restore workflows afterwards were none.
 - Permanent helper correction closed: PR #1075 keeps raw source capture unchanged, proves the connected Restore principal is the unique external login/superuser, then excludes exactly that principal from projected target comparisons; it squash-merged as `e3009134f87dc4b197c518cb097ceee867b0c7f8`, and issue #944 is closed `completed`.
-- Overall `FM-RST-001` remains `PARTIAL`. `DB_POSTCHECKED` must not be promoted until all receipt-bound schema/data/accounting/RLS/policy/authorization predicates required below are explicitly reconciled. Storage, server-config, disposable-target cleanup, independent countercheck and final aggregate acceptance remain separate.
-- Exact next step: continue from `DB_RESTORED -> DB_POSTCHECKED` by receipt reconciliation or read-only proof only; promote only when every required schema/data/accounting/RLS/policy/authorization predicate is explicit. No new database Restore, target reset, JIT reuse or automatic retry is authorized.
+- `DB_POSTCHECKED` is accepted by `receipts/FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`: owner/object ACL/default ACL/roles/database-container/extensions match the receipt-bound expected contract; five core tables exist with RLS and policy coverage; application grants equal 120; restricted SECURITY DEFINER functions equal 12. The projected target excludes only the proven target-only bootstrap login.
+- Overall `FM-RST-001` remains `PARTIAL`. Storage, server-config, disposable-target cleanup, independent countercheck and final aggregate acceptance remain separate.
+- Exact next step: inspect and implement the missing bounded Storage-restore/verification path, then obtain a separate exact authorization before any isolated Storage mutation. No database Restore, target reset, JIT reuse or automatic retry is authorized.
 
 ## Transition contract
 
