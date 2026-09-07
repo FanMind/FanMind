@@ -25,6 +25,14 @@ If an action is covered here and technically possible through connected tools, p
 
 FanMind has stricter governance gates than the WellFit repositories. A green Project Memory Guard alone is not enough to merge when other FanMind gates are red.
 
+## FM-AUTH-RST-STORAGE-LOCAL-ONLY-20260907
+
+- Granted by: Bernd in the current session after reviewing the additional-target cost and purpose.
+- Initial scope: continue the Storage Restore work after the repository preparation merge.
+- Final owner choice: `Nur lokal testen`; do not create a Supabase project or Preview branch and do not mutate FanMind Production or FanMind Staging.
+- Authorized result: repository implementation and synthetic local verification of the fail-closed Storage write/postcheck/rollback controller.
+- Not authorized/proven: real backup decryption, provider upload, remote bucket creation, external `STORAGE_RESTORED`, server-config activation or target deletion.
+
 ## FM-AUTH-MOB-REDIRECT-CLOSEOUT-20260830
 
 - Granted by: Bernd through explicit action-time confirmation in the current session.

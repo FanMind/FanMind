@@ -44,6 +44,14 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Superseded by: consumed authorization `5453497602`, workflow `33178878764` / job `98874745740`, and ACL completion authorization `5453727223`.
 - Do not ask before: never request another database-Restore authorization for this completed phase; continue with read-only `DB_POSTCHECKED` reconciliation.
 
+## FM-RST-OWNER-007 — Real isolated Supabase Storage target
+- Status: DEFERRED_BY_OWNER
+- Decision: Bernd selected `Nur lokal testen` on 2026-09-07 after the live target/cost comparison.
+- Current allowed scope: publish and verify only the synthetic local Storage controller; create no Supabase project or Preview branch.
+- Current boundary: Production and FanMind Staging are forbidden targets. Local green tests do not prove `STORAGE_RESTORED`.
+- Resume trigger: explicit new owner decision accepting a distinct disposable Supabase target and its current cost, followed by exact artifact/commit/project/bucket/cleanup authorization.
+- Do not ask before: owner explicitly reopens the real external Storage drill.
+
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Status: DEFERRED_BY_OWNER
 - Where: protected GitHub `production` environment through `trigger-function-hardening-production-control.yml` only.

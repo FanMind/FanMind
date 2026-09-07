@@ -197,6 +197,30 @@ phase. A distinct isolated non-Production Supabase project/bucket, a current
 environment-boundary check, a dedicated write controller with rollback and a
 new exact R4 authorization are still mandatory before any upload.
 
+### Local-only Storage controller proof
+
+The owner decision on 2026-09-07 explicitly selected a local-only proof and
+declined an additional Supabase project or Preview branch. Run the bounded
+synthetic contract with:
+
+```bash
+node --test tests/storage-restore-preparation.test.mjs \
+  tests/storage-restore-drill.test.mjs
+```
+
+The local controller revalidates the private archive/receipt pair, requires a
+private empty `fanmind-assets` target, uploads with overwrite disabled, lists
+the complete remote path set, downloads every object for size/SHA-256
+comparison and rolls back all objects written by the current attempt after a
+bounded failure. It also rejects both the Production and canonical FanMind
+Staging project references before provider access.
+
+This test uses a synthetic in-process Storage API double because Docker and the
+Supabase CLI are not available in the local execution environment. It neither
+contacts Supabase nor decrypts the real backup. A green result proves the
+controller contract only and must never advance the state beyond
+`DB_POSTCHECKED` or be described as a real `STORAGE_RESTORED` result.
+
 For a standalone database backup, content verification runs:
 
 ```text

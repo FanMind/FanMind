@@ -7,20 +7,20 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 - Selected action: `NBA-RESTORE-STORAGE-R4-AUTH`
 - Task: `FM-RST-001`
 - Gate: `restore` (`PARTIAL`)
-- Selection status: `OWNER_ACTION_REQUIRED`
+- Selection status: `DEFERRED_BY_OWNER`
 - Title: Isolierten Storage-Restore exakt freigeben
 
 ## Instruction
 
-The repository-only Storage preparation is implemented and locally counterchecked: it creates and revalidates a private exact archive/receipt without provider access. After exact-head merge, require a new exact R4 authorization bound to the accepted Full Backup, exact main commit, distinct isolated non-Production Supabase project/bucket, current environment boundary, dedicated target-empty/prewrite and postwrite manifest/path/size/hash controller, rollback/cleanup plan and explicit Production/Supabase-Staging denial. Do not decrypt the real artifact, connect to Storage, upload, dispatch or claim STORAGE_RESTORED before that authorization.
+PR #1081 merged the private exact archive/receipt preparation. The follow-on local controller proves target-empty, exact postwrite and rollback behavior against a synthetic API double. On 2026-09-07 the owner selected local-only testing and declined an additional Supabase project/Preview branch; real isolated Storage remains deferred under FM-RST-OWNER-007. Do not decrypt the real artifact, contact Production/FanMind Staging, create a provider target, upload or claim STORAGE_RESTORED without a new action-time decision.
 
 ## Why this action
 
-owner/platform action required
+FM-RST-OWNER-007
 
 ## Candidate evaluation
 
-- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-007
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
 - `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001

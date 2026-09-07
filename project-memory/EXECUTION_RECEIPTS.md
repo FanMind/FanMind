@@ -437,6 +437,17 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Open follow-up: exact-head merge, then a new exact R4 authorization for a distinct isolated Storage target and dedicated write/postcheck/rollback/cleanup controller.
 - Work lock released: yes; bounded local repository countercheck complete. Publication remains repository transfer only.
 
+## RECEIPT-FM-RST-001-STORAGE-LOCAL-CONTROLLER-20260907
+- Task: FM-RST-001.
+- Risk: R4 repository control with synthetic local Storage writes only.
+- Lock: `LOCK-FM-RST-001-STORAGE-LOCAL-CONTROLLER-20260907`.
+- Branch: `feat/restore-storage-controller-20260907` from PR #1081 squash merge `f07642a7ab7540164e40f28bebf2a9f399db787d`.
+- Owner decision: after comparing a permanent project at 10 EUR/month and an isolated Preview branch at 0.01344 EUR/hour, Bernd selected `Nur lokal testen`. No additional Supabase target may be created in this scope.
+- Changes made: added a fail-closed Storage write/postcheck/rollback controller; exact main/project/bucket/artifact/receipt bindings; private-bucket and empty-target prewrite; no-overwrite uploads; exact path/size/SHA-256 downloads; bounded rollback; private non-overwriting result receipt; focused synthetic API tests and synchronized documentation.
+- Checks: focused Storage preparation/controller tests pass 9/9; full Operations pass 1197/1197; root build, Product/Referral/Legal/Actions truth, Project Memory Quality/NBA/V8/drift/milestone checks and focused ESLint pass. Repository-wide ESLint has zero errors and the one pre-existing unrelated Mobile warning. Exact-head CI/review remains pending.
+- Negative proof: Docker and Supabase CLI are unavailable locally; the test uses an in-process synthetic Storage API double. No real backup/identity was read, no external Supabase API was contacted, no project/branch/bucket was created, and Production/FanMind Staging were not modified.
+- Result status: COUNTERCHECKED_LOCAL_CONTROLLER_ONLY; overall `FM-RST-001=PARTIAL`, accepted progression remains `DB_POSTCHECKED`, and `STORAGE_RESTORED` is not claimed.
+
 ## RECEIPT-FM-SUPPLY-CHAIN-MOBILE-REVIEW-20260903
 - Task: reconcile exact-main Supply Chain failure `33789359734` after the Mobile-only review deadline.
 - Scope: repository policy, regression test and security documentation only; no application runtime, dependency version, provider, database, Store, build or Production mutation.
