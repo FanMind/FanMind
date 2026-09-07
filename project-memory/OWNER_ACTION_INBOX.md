@@ -35,21 +35,14 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Evidence: issue #944 comments `5385992305`/`5386014235`; exact owner-supplied controller output; controller source order; absence of a later Restore run in current GitHub evidence.
 
 ## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
-- Status: DEFERRED_BY_OWNER
-- Where: the owner's Windows PC and, only if the result proves allowlist drift, Exoscale security group for `fanmind-restore-01`.
-- Required first evidence: current public IPv4 plus detailed `Test-NetConnection 138.124.213.66 -Port 22`; do not rerun the Restore controller.
-- Possible later action: replace only the stale SSH source `/32` with the observed owner IPv4 after a separate exact infrastructure authorization and read-only target/scope confirmation.
-- Forbidden: broad CIDR, `0.0.0.0/0`, unrelated firewall/security-group edits, VM/database changes, Restore/JIT/workflow actions or Production/Supabase-Staging access.
-- Risk: R4
-- Duration class: short owner-PC diagnostic; provider mutation remains separate.
+- Status: SUPERSEDED
+- Superseded by: the later successful isolated Restore/ACL evidence in issue #944. No owner TCP-22 capture is required for the completed database phase.
+- Do not ask before: never ask for this retired action merely to resume Restore work.
 
 ## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
-- Status: DEFERRED_BY_OWNER
-- Where: only the existing isolated `fanmind-restore-01` / PostgreSQL 17.11 / `fanmind_restore` target through the reviewed protected database-Restore workflow.
-- Resume trigger: SSH reachability and any allowlist drift are reconciled, repository evidence closeout is merged, exact new `main` is known, and all mutable runner/host/target/backup/TLS preflights are fresh.
-- Required scope: one new controller and one exact protected database-Restore authorization; never reuse controller `45054c41...` or authorization `5385992305`.
-- Risk: R4
-- Forbidden: Production/Supabase-Staging target or write, target reset, automatic retry or unrelated R4 mutation.
+- Status: SUPERSEDED
+- Superseded by: consumed authorization `5453497602`, workflow `33178878764` / job `98874745740`, and ACL completion authorization `5453727223`.
+- Do not ask before: never request another database-Restore authorization for this completed phase; continue with read-only `DB_POSTCHECKED` reconciliation.
 
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Status: DEFERRED_BY_OWNER
