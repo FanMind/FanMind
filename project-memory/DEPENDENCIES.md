@@ -9,7 +9,7 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Status: ACTIVE
 - Updated: 2026-09-07
 - Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove workflow `33178878764` / job `98874745740` committed the isolated PostgreSQL 17 Restore; the separately authorized completion applied exactly eight schema-USAGE grants and matched the receipt-bound projected authorization fingerprint. PR #1075 permanently corrected the target-only login projection and issue #944 is closed.
-- Rule: Continue from the first unproven gate, now `DB_RESTORED -> DB_POSTCHECKED`, by reconciling existing receipts or acquiring read-only proof for an explicit gap. Never repeat the database Restore, reuse a consumed controller/JIT, reset the target, or access Production/Supabase Staging. Later Storage/configuration/cleanup/countercheck transitions remain separate.
+- Rule: `DB_POSTCHECKED` is accepted by receipt `FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`. Continue from `DB_POSTCHECKED -> STORAGE_RESTORED`: first implement/countercheck the bounded Storage restore/verification path without dispatch, then require separate exact authorization for isolated Storage mutation. Never repeat the database Restore, reuse a consumed controller/JIT, reset the database target, or access Production/Supabase Staging.
 
 ## FM-DEP-002
 - From: FM-MOB-001
