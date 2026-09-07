@@ -154,13 +154,57 @@ artifacts created with
 but they cannot create a restore dump or restore receipt and cannot be used as
 Gate-2 recovery evidence.
 
+For the later Storage phase, use a different pair of outputs. Database and
+Storage output modes cannot be combined in one invocation:
+
+```bash
+node scripts/operations/verify-backup-artifact.mjs \
+  --artifact /secure/input/fanmind-full-<13-digit-timestamp>.tar.gz.age \
+  --identity /secure/keys/fanmind-backup.agekey \
+  --restore-storage-archive-output /secure/work/verified-storage.tar.gz \
+  --restore-storage-receipt-output /secure/evidence/storage-preparation-receipt.json \
+  --json
+```
+
+The verifier selects the Storage part only through the validated central Full
+Backup manifest, decrypts it in private temporary space, rejects unsafe or
+duplicate tar members, and requires the extracted regular-file path set to
+equal the Storage manifest exactly. Every listed object must match its path,
+size and SHA-256; an unlisted archive file is a hard failure. The new plaintext
+archive and its receipt are published as non-overwriting mode-`0600` files only
+after all checks pass. The receipt binds the outer artifact, Production commit,
+encrypted Storage part, plaintext Storage archive, exact manifest bytes,
+bucket, object count and aggregate byte count.
+
+Before a later Storage write, validate that private pair against the exact
+authorization bindings:
+
+```bash
+npm run restore:storage:preparation:verify -- \
+  --receipt /secure/evidence/storage-preparation-receipt.json \
+  --archive /secure/work/verified-storage.tar.gz \
+  --expected-source-artifact fanmind-full-<13-digit-timestamp>.tar.gz.age \
+  --expected-outer-sha256 <64-hex> \
+  --expected-production-commit <40-hex> \
+  --expected-storage-part-sha256 <64-hex>
+```
+
+Required final line: `RESTORE_STORAGE_PREPARATION=PASS`. This is preparation,
+not `STORAGE_RESTORED`: the command never contacts Supabase, creates a bucket,
+uploads an object or enables a write gate. The plaintext pair remains private
+and must be deleted with evidence after the separately authorized Storage
+phase. A distinct isolated non-Production Supabase project/bucket, a current
+environment-boundary check, a dedicated write controller with rollback and a
+new exact R4 authorization are still mandatory before any upload.
+
 For a standalone database backup, content verification runs:
 
 ```text
 pg_restore --list
 ```
 
-For a standalone Storage backup, it validates every file path, size and SHA-256 against the Storage manifest.
+For a standalone Storage backup, it validates the exact regular-file path set
+and every file size and SHA-256 against the Storage manifest.
 
 For a standalone server-config backup, it validates gzip/tar structure and safe archive paths. It does not print file contents.
 

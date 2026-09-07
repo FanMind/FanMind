@@ -359,4 +359,15 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Accepted progression: `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
 - Negative proof: no workflow/JIT dispatch, database/Storage connection or mutation, target reset, Production/Supabase-Staging access, or reuse of a consumed authorization/controller.
 - Open follow-up: repository-only Storage restore/verification control preparation, then separately authorized isolated Storage mutation.
-- Work lock released: no; release after exact-head CI/review and merge.
+- Work lock released: yes; PR #1079 passed exact-head checks/review and squash-merged as `021566f3d1c9abd828b29f048cb6a0b572404fa9`.
+
+## RECEIPT-FM-RST-001-STORAGE-PREPARATION-20260907
+- Task: FM-RST-001.
+- Date: 2026-09-07.
+- Lock: `LOCK-FM-RST-001-STORAGE-PREPARATION-20260907`.
+- Starting state: accepted `DB_POSTCHECKED`; no reusable database controller/authorization and no Storage upload path.
+- Result status: COUNTERCHECKED_REPOSITORY_PREPARATION. Exact Full-Backup Storage extraction now requires safe/unique archive entries, exact manifest path-set/size/hash/count equality, private non-overwriting archive/receipt publication and independent streaming receipt/artifact/commit/part validation.
+- Negative proof: synthetic tests only; no workflow, real decrypt, Storage/provider/database connection, upload/delete, Production/Supabase-Staging access or state advancement.
+- Evidence: FM-EV-037; focused 15/15 tests; full Operations/build/focused ESLint; Product Truth and immutable Actions checks.
+- Open follow-up: after exact-head merge, obtain separate exact R4 authorization for a distinct isolated non-Production Storage target and dedicated fail-closed write/postcheck/rollback/cleanup controller. Accepted progression remains `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
+- Work lock released: yes; repository-only local countercheck complete.

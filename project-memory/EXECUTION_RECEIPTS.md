@@ -424,6 +424,19 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Result status: COUNTERCHECKED for the repository handoff/preparation only; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED pending real-device and Google Play external acceptance.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
 
+## RECEIPT-FM-RST-001-STORAGE-PREPARATION-20260907
+- Task: FM-RST-001.
+- Risk: R4 repository-only Restore control preparation; no runtime/provider action.
+- Lock: `LOCK-FM-RST-001-STORAGE-PREPARATION-20260907`.
+- Branch: `feat/restore-storage-preparation-20260907` from exact main `021566f3d1c9abd828b29f048cb6a0b572404fa9`.
+- Preflight checked: AGENTS, Source of Truth, README, Restore runbook/state machine, accepted DB_POSTCHECKED evidence, current verifier/backup manifest implementation, tests, locks and generated next-action readers.
+- Changes made: added exact Storage archive path-set enforcement and duplicate tar rejection; added private non-overwriting Storage archive/receipt outputs to the Full-Backup verifier; added a streaming exact-binding receipt validator, Operations registration, focused synthetic tests and synchronized readers.
+- Checks: syntax and focused backup/Storage tests pass 15/15; full Operations pass 1193/1193; root build and focused ESLint pass; repository-wide ESLint reports only one pre-existing unrelated warning; Product/Referral/Legal/Actions truth passes. Full exact-head PR CI/review remains required before merge.
+- Negative proof: no real backup/identity was read, no artifact was decrypted outside synthetic tests, no workflow was dispatched, no Storage/Supabase/provider/database target was contacted or mutated, no Production/Supabase-Staging access occurred and no cleanup/`STORAGE_RESTORED` claim was made.
+- Result status: COUNTERCHECKED_REPOSITORY_PREPARATION; overall `FM-RST-001=PARTIAL`, accepted progression remains `DB_POSTCHECKED`.
+- Open follow-up: exact-head merge, then a new exact R4 authorization for a distinct isolated Storage target and dedicated write/postcheck/rollback/cleanup controller.
+- Work lock released: yes; bounded local repository countercheck complete. Publication remains repository transfer only.
+
 ## RECEIPT-FM-SUPPLY-CHAIN-MOBILE-REVIEW-20260903
 - Task: reconcile exact-main Supply Chain failure `33789359734` after the Mobile-only review deadline.
 - Scope: repository policy, regression test and security documentation only; no application runtime, dependency version, provider, database, Store, build or Production mutation.

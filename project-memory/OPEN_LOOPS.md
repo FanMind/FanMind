@@ -6,9 +6,9 @@ This register contains started, partially completed or follow-up work that could
 - Related: FM-RST-001
 - Status: OPEN
 - Updated: 2026-09-07
-- Gap: the database Restore, permanent target-principal correction and exact `DB_POSTCHECKED` reconciliation are complete. Storage/server-config/disposable-target/countercheck/final aggregate acceptance remain separate and unproven.
+- Gap: the database Restore and `DB_POSTCHECKED` reconciliation are complete, and the repository-only Storage artifact/receipt preparation is implemented and locally counterchecked. Actual isolated Storage upload/postcheck, server-config, disposable-target cleanup, countercheck and final aggregate acceptance remain separate and unproven.
 - Close when: every still-applicable post-database state-machine transition has current R4 quorum and independent countercheck.
-- Next check: do not repeat workflow `33178878764`, job `98874745740` or consumed controllers. Implement/countercheck a bounded isolated Storage restore/verification path from the accepted Full Backup without dispatching it; later Storage mutation requires separate exact authorization.
+- Next check: do not repeat workflow `33178878764`, job `98874745740` or consumed controllers. After exact-head merge, require separate exact R4 authorization and a dedicated fail-closed controller before uploading the prepared, receipt-bound archive to a distinct isolated non-Production Storage target.
 
 ## FM-LOOP-002
 - Related: FM-MEM-005

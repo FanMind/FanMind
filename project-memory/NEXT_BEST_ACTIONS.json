@@ -4,16 +4,16 @@
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-RESTORE-STORAGE-PREP",
+      "id": "NBA-RESTORE-STORAGE-R4-AUTH",
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "Isolierten Storage-Restore sicher vorbereiten",
-      "requires_owner": false,
+      "title": "Isolierten Storage-Restore exakt freigeben",
+      "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Implement and countercheck a bounded Storage restore/verification path for the exact receipt-bound Full Backup: distinct isolated target, manifest/path/size/hash equality, traversal/symlink/duplicate rejection, private plaintext handling, fail-closed rollback/cleanup and explicit Production/Supabase-Staging denial. Do not dispatch the workflow, decrypt the real artifact, connect to Storage, or perform any provider/runtime mutation. A later isolated Storage write requires separate exact R4 authorization."
+      "instruction": "The repository-only Storage preparation is implemented and locally counterchecked: it creates and revalidates a private exact archive/receipt without provider access. After exact-head merge, require a new exact R4 authorization bound to the accepted Full Backup, exact main commit, distinct isolated non-Production Supabase project/bucket, current environment boundary, dedicated target-empty/prewrite and postwrite manifest/path/size/hash controller, rollback/cleanup plan and explicit Production/Supabase-Staging denial. Do not decrypt the real artifact, connect to Storage, upload, dispatch or claim STORAGE_RESTORED before that authorization."
     },
     {
       "id": "NBA-SECURITY-PROTECTED",

@@ -122,10 +122,10 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   ein eigener secretfreier Workflow das root-owned Host-Gate auf der
   exakten Fünf-Label-Route und der erwarteten Runner-Identität
   `fanmind-restore-01`. Die Labels sind nur Scheduler-Selektoren. Im derzeit
-  öffentlichen, persönlich gehaltenen Repository bleiben alle drei Workflows
-  vor dem Self-hosted-Job gesperrt. Erst ein Organisations-Transfer, die auf
-  diese drei `main`-Workflows beschränkte Gruppe `fanmind-restore-drill` und die
-  danach gesetzte Scope-Bestätigung erlauben eine Runner-Registrierung.
+  öffentlichen Organisations-Repository ist die Gruppe
+  `fanmind-restore-drill` auf genau diese drei `main`-Workflows beschränkt;
+  diese veränderliche Administratorrichtlinie muss vor jedem späteren
+  R4-Schreibschritt erneut belegt werden.
   Ressourcen- und Datenbankworkflow
   benötigen anschließend jeweils einen zweiten frischen One-Job-JIT-Runner;
   kein persistenter oder nur gleich gelabelter Runner genügt. Der manuelle,
@@ -142,9 +142,14 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Receipts werden drei Tage geschützt bereitgestellt. Das Full-Backup-Receipt
   ist dabei ein vertraulicher privater Beleg mit einer begrenzten Liste
   erforderlicher Datenbankrollennamen; nur Runner- und Postcheck-Receipt sind
-  namenfrei. Wegwerfziel-Cleanup,
-  Storage-Sample, Server-Konfigurationsprüfung und finaler Evidenznachweis
-  bleiben für den echten externen Drill offen.
+  namenfrei. Der Datenbank-Restore samt vollständigem Postcheck ist inzwischen
+  als `DB_POSTCHECKED` akzeptiert und darf nicht wiederholt werden. Für die
+  nächste Storage-Phase kann der Verifier nun aus dem exakt gebundenen
+  Full-Backup ein privates, vollständiges Storage-Archiv samt Hash-/Manifest-
+  Receipt vorbereiten und vor einer späteren Mutation erneut prüfen; er lädt
+  noch nichts hoch. Storage-Restore, Server-Konfigurationsprüfung,
+  Wegwerfziel-Cleanup und finaler Evidenznachweis bleiben für den echten
+  externen Drill offen und benötigen jeweils eine eigene Freigabe.
 - Mobile-Release-Ressourcencheck: ein manueller, nur auf `main` ausführbarer
   Read-only-Workflow prüft je geschützter Development-/Preview-/Production-
   Umgebung die EAS-Projektbindung, App-Identität und ausschließlich öffentliche

@@ -448,3 +448,15 @@ Never store secrets, private credentials, plaintext sensitive payloads, or unsaf
 - Cleanup/safety: plaintext cleanup PASS; no completion workflow or repeat Restore; no active Restore workflows afterwards; Production/Supabase Staging untouched.
 - Classification: every canonical `DB_RESTORED -> DB_POSTCHECKED` predicate is explicit; accepted progression advances to `DB_POSTCHECKED`. Overall `FM-RST-001` remains PARTIAL.
 - Falsification: any mismatch in binding, projected contract, core counts, application grants, privileged-function boundary, or proof of repeat/Production/Staging action invalidates this transition.
+
+## FM-EV-037
+- Related: FM-RST-001 / `DB_POSTCHECKED -> STORAGE_RESTORED` preparation.
+- Date: 2026-09-07.
+- Target: repository-only branch `feat/restore-storage-preparation-20260907`; no workflow dispatch, real backup, age identity, Supabase project/bucket, database, provider or Production target.
+- Type: fail-closed Full-Backup Storage-part preparation + exact receipt validator + focused synthetic countercheck.
+- Result: the verifier selects the Storage part only through the validated central Full Backup manifest, rejects unsafe, linked, special or duplicate archive entries, requires the actual regular-file path set to equal the manifest exactly, and verifies every object size/SHA plus aggregate count/size. Only then may it publish a new non-overwriting mode-`0600` plaintext archive and receipt. The receipt binds the exact Full-Backup basename/outer SHA, Production commit, encrypted Storage-part SHA, plaintext archive SHA, manifest SHA, fixed bucket and aggregate counts; a separate streaming validator rechecks those exact expected bindings.
+- Checks: Node syntax checks passed; focused backup/Storage suite passed 15/15; full Operations passed 1193/1193; root build passed; focused ESLint passed; repository-wide ESLint has only one pre-existing unrelated unused-variable warning; Product/Referral/Legal/Actions truth passed; full exact-head CI/review remains required before merge.
+- Negative evidence: synthetic unlisted objects fail before output publication; partial output pairs and mixed database/Storage output modes fail; no real artifact was decrypted, no Storage endpoint was contacted, no upload/delete ran, no workflow/provider/database/Production/Supabase-Staging mutation occurred, and `STORAGE_RESTORED` is not claimed.
+- Limitations: a dedicated isolated Storage write controller, target-empty/prewrite proof, postwrite equality evidence, rollback/cleanup behavior, current target/environment validation and new exact R4 authorization remain open.
+- Falsification: any path-set mismatch, unsafe/duplicate archive member, hash/count/commit/artifact/part binding mismatch, permissive/overwritten output, provider call in preparation mode or premature state advancement invalidates this preparation.
+- Acceptance: COUNTERCHECKED for repository preparation only; overall `FM-RST-001` remains `PARTIAL` at `DB_POSTCHECKED`.

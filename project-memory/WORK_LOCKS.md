@@ -1,14 +1,25 @@
 # Work Locks
 
 ## LOCK-FM-RST-001-DB-POSTCHECK-RECONCILIATION-20260907
-- Status: ACTIVE
+- Status: RELEASED
 - Task: FM-RST-001
 - Holder: Codex
 - Risk: R4 evidence reconciliation; no runtime mutation
 - Acquired: 2026-09-07
 - Scope: map already-recorded attestations to every `DB_RESTORED -> DB_POSTCHECKED` predicate and reconcile canonical readers. No workflow/JIT dispatch, database/Storage connection, target reset, Production or Supabase-Staging access.
 - Evidence plan: issue #944 exact authorization/execution/final comments, controller fail-closed invariants, #1075 helper CI, #1077 machine-reader correction, exact-head CI/review.
-- Release: after exact-head merge and postmerge closeout.
+- Released: 2026-09-07 after PR #1079 exact-head acceptance and squash merge `021566f3d1c9abd828b29f048cb6a0b572404fa9`.
+
+## LOCK-FM-RST-001-STORAGE-PREPARATION-20260907
+- Status: RELEASED
+- Task: FM-RST-001
+- Holder: Codex
+- Risk: R4 repository-only Restore control preparation; no runtime mutation
+- Acquired: 2026-09-07 after reconciling the accepted `DB_POSTCHECKED` state and releasing the completed database-postcheck lock.
+- Scope: implement and countercheck exact Full-Backup Storage-part preparation, exact manifest/path/size/hash verification, private non-overwriting outputs and a separately verifiable cryptographic receipt. No workflow dispatch, real artifact decryption, Storage/provider connection, upload, database action, target cleanup claim, Production or Supabase-Staging access.
+- Released: 2026-09-07 after focused local implementation/security countercheck; publication and exact-head CI/review remain repository transfer only.
+- Resume from: exact-head PR acceptance/merge, then require a new exact R4 authorization and a distinct isolated non-Production Storage target before any upload.
+- Rollback: revert the repository commit; no external state changed.
 
 
 ## LOCK-FINISHLINE-RESUME-20260906
