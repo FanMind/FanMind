@@ -80,9 +80,9 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Related: FM-AI-001
 - Status: BLOCKED
 - Risk: R3
-- External/protected action: controlled general Billing ledger Staging Apply/capture/reconciliation plus one current rollback-only AI lifecycle acceptance through the already applied AI ledger.
-- Current evidence: FM-EV-022 verifies resources, five Test prices, the exact 22-event webhook and installed empty AI ledger read-only. Historical lifecycle acceptance predates the ledger; the general Billing ledger is absent.
-- Acceptance: exact reviewed-commit Staging write freeze and ledger postflight; zero unresolved cutover state; Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary paths pass; transaction fully rolls back; no Production or live payment.
+- External/protected action: remaining provider-side/current transactional AI lifecycle evidence after the bounded canonical Billing Staging sub-gate.
+- Current evidence: FM-EV-022 verifies resources, five Test prices, the exact 22-event webhook and installed empty AI ledger. The general Billing ledger is now installed on isolated Staging. Exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4`: rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, postflight and canonical fixture rolled back, cleanup `PASS`; independent read-only counters remained unchanged. This closes only the bounded technical canonical-Billing Staging sub-gate.
+- Acceptance: provider-side inbound webhook/current lifecycle evidence plus the remaining Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary paths through the applied AI ledger, with rollback and no Production/live payment; product/private quality-cost and Legal/Tax gates remain separate and must also be current before Production activation.
 - Repository evidence alone sufficient: no
 
 ## EXT-META-EVENTS
