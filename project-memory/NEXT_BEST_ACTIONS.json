@@ -4,16 +4,16 @@
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-RESTORE-POSTCHECK",
+      "id": "NBA-RESTORE-STORAGE-PREP",
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "Vorhandene Restore-Belege gegen DB_POSTCHECKED abgleichen",
+      "title": "Isolierten Storage-Restore sicher vorbereiten",
       "requires_owner": false,
       "parallel_safe": false,
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Reconcile the existing receipt-bound evidence for every DB_RESTORED -> DB_POSTCHECKED predicate: ownership, ACL/default ACL, roles, database container, extensions, five core tables, RLS, policies, application grants and restricted SECURITY DEFINER execution. If any predicate is not explicit, obtain read-only proof only. Do not dispatch or repeat the database Restore, reset the target, reuse a consumed controller/JIT, or access Production/Supabase Staging."
+      "instruction": "Implement and countercheck a bounded Storage restore/verification path for the exact receipt-bound Full Backup: distinct isolated target, manifest/path/size/hash equality, traversal/symlink/duplicate rejection, private plaintext handling, fail-closed rollback/cleanup and explicit Production/Supabase-Staging denial. Do not dispatch the workflow, decrypt the real artifact, connect to Storage, or perform any provider/runtime mutation. A later isolated Storage write requires separate exact R4 authorization."
     },
     {
       "id": "NBA-SECURITY-PROTECTED",
