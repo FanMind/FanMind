@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import {
   assertDatabaseAuthorizationRoles,
-  captureDatabaseAuthorizationContract,
+  captureProjectedTargetAuthorizationContract,
   validateAuthorizationContract,
 } from "./database-authorization-contract.mjs";
 
@@ -579,7 +579,7 @@ async function rollbackAndVerify(connection, beforeContract) {
     readOnly: false,
   });
   validateSchemaAclState(await captureState(connection), OWNER_ONLY_ACL);
-  const rolledBack = await captureDatabaseAuthorizationContract({
+  const rolledBack = await captureProjectedTargetAuthorizationContract({
     ...connection,
     env: connection.env,
   });
@@ -592,12 +592,15 @@ export async function recoverSupabaseSchemaAcls(options) {
   const connection = validateConnectionOptions(options);
   const expectedContract = await readStablePrivateReceipt(options.receiptPath);
 
+  // This preflight proves the connected restore principal is the one and only
+  // login/superuser outside the receipt-bound source role component. Only after
+  // that proof may the target snapshot exclude that exact target-only login.
   await assertDatabaseAuthorizationRoles({
     receiptPath: options.receiptPath,
     ...connection,
     env: connection.env,
   });
-  const beforeContract = await captureDatabaseAuthorizationContract({
+  const beforeContract = await captureProjectedTargetAuthorizationContract({
     ...connection,
     env: connection.env,
   });
@@ -614,7 +617,7 @@ export async function recoverSupabaseSchemaAcls(options) {
       readOnly: false,
     });
   } catch (error) {
-    const afterFailure = await captureDatabaseAuthorizationContract({
+    const afterFailure = await captureProjectedTargetAuthorizationContract({
       ...connection,
       env: connection.env,
     }).catch(() => null);
@@ -626,7 +629,7 @@ export async function recoverSupabaseSchemaAcls(options) {
 
   try {
     validateSchemaAclState(await captureState(connection), RECOVERED_ACL);
-    const afterContract = await captureDatabaseAuthorizationContract({
+    const afterContract = await captureProjectedTargetAuthorizationContract({
       ...connection,
       env: connection.env,
     });
