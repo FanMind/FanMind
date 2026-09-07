@@ -4,17 +4,16 @@
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-RESTORE-DATABASE",
+      "id": "NBA-RESTORE-POSTCHECK-RECONCILE",
       "priority": 10,
       "task": "FM-RST-001",
       "gate": "restore",
-      "title": "SSH-Zugang reconciliieren und Restore neu autorisieren",
-      "requires_owner": true,
+      "title": "DB_RESTORED zu DB_POSTCHECKED receiptgebunden reconciliieren",
+      "requires_owner": false,
       "parallel_safe": false,
-      "deferred_owner_id": "FM-RST-OWNER-005",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging."
+      "instruction": "The isolated PostgreSQL 17 database Restore is complete and non-repeatable: workflow 33178878764/job 98874745740 committed pg_restore; one-shot ACL completion 5453727223 applied exactly eight schema-USAGE grants, matched the projected expected/actual authorization fingerprint 0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052, passed core 5|5|5|5 and plaintext cleanup, and PR #1075 permanently fixed the target-only principal projection. Do not collect the old TCP-22 evidence, create a new Restore authorization/JIT, reset the target or repeat the database Restore. Reconcile the exact DB_RESTORED -> DB_POSTCHECKED receipt predicates for owner/ACL/default-ACL/roles/database-container/extensions plus schema/data/accounting/core-table/RLS/policy/authorization evidence. Use existing immutable/private receipts first and acquire only read-only proof for a genuine gap. Promote DB_POSTCHECKED only when every required predicate is explicit; Storage, server config, disposable-target cleanup, countercheck and aggregate acceptance remain later separate states."
     },
     {
       "id": "NBA-SECURITY-PROTECTED",
