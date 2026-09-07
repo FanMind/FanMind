@@ -35,16 +35,15 @@ Updated: 2026-09-07 Europe/Vienna
 
 ## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
 - Related task: `FM-RST-001`.
-- Status: DEFERRED_BY_OWNER.
-- Deferred action: on the owner's Windows PC, capture current public IPv4 and detailed TCP-22 reachability to `138.124.213.66`. Do not rerun the Restore controller.
-- Provider boundary: if the evidence proves a stale Exoscale SSH allowlist, any exact `/32` security-group change requires a separate narrow authorization and read-only target/scope confirmation.
-- Safety: no broad CIDR, unrelated security-group/VM/database change, Restore/JIT/workflow action or Production/Supabase-Staging access.
+- Status: SUPERSEDED.
+- Superseded by: later authorization/execution evidence in issue #944 comments `5453497602`, `5453599115`, `5453727223` and `5453857592` proved the isolated database Restore committed and its bounded ACL completion passed. SSH reachability is no longer a prerequisite for the completed database phase.
+- Safety: do not revive this action to repeat the Restore or change an Exoscale allowlist. Any genuinely later infrastructure mutation requires a new, separately reviewed scope.
 
 ## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
 - Related task: `FM-RST-001`.
-- Status: DEFERRED_BY_OWNER.
-- Deferred action: after SSH/allowlist reconciliation and merged evidence closeout, bind a new one-run authorization/controller to the then-current reviewed `main`, accepted Backup/Verification/Source/target/reset receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs.
-- Resume rule: do not create a JIT, request environment approval or dispatch a database workflow before the new exact authorization. Never reuse controller `45054c41...`, authorization `5385992305`, run `32594374666` or runner IDs `43`/`44`.
+- Status: SUPERSEDED.
+- Superseded by: consumed authorization `5453497602`, committed Restore workflow `33178878764` / job `98874745740`, and bounded ACL completion authorization `5453727223`. The database phase is complete and non-repeatable.
+- Resume rule: continue only with receipt/read-only reconciliation for `DB_POSTCHECKED`; never create a JIT or dispatch a new database Restore from this retired action.
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply

@@ -4,23 +4,23 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-RESTORE-DATABASE`
+- Selected action: `NBA-RESTORE-POSTCHECK`
 - Task: `FM-RST-001`
 - Gate: `restore` (`PARTIAL`)
-- Selection status: `DEFERRED_BY_OWNER`
-- Title: SSH-Zugang reconciliieren und Restore neu autorisieren
+- Selection status: `EXECUTABLE`
+- Title: Vorhandene Restore-Belege gegen DB_POSTCHECKED abgleichen
 
 ## Instruction
 
-Do not rerun controller 45054c41... . First capture the owner Windows public-IP/TCP-22 result and reconcile any exact Exoscale /32 allowlist drift under a separate narrow authorization. Then require FM-RST-OWNER-006: a new exact R4 authorization/controller bound to the then-current reviewed main, existing isolated PostgreSQL-17.11 target, accepted backup/verification/source/reset-receipt tuple, fresh mutable runner-policy/host/target/backup/TLS evidence and fresh sequential one-job JITs. Do not reset the target or write Production/Supabase Staging.
+Reconcile the existing receipt-bound evidence for every DB_RESTORED -> DB_POSTCHECKED predicate: ownership, ACL/default ACL, roles, database container, extensions, five core tables, RLS, policies, application grants and restricted SECURITY DEFINER execution. If any predicate is not explicit, obtain read-only proof only. Do not dispatch or repeat the database Restore, reset the target, reuse a consumed controller/JIT, or access Production/Supabase Staging.
 
 ## Why this action
 
-FM-RST-OWNER-005
+standing-authorized safe work
 
 ## Candidate evaluation
 
-- `NBA-RESTORE-DATABASE` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-005
+- `NBA-RESTORE-POSTCHECK` priority 10: **EXECUTABLE** — standing-authorized safe work
 - `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
 - `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001
