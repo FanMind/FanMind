@@ -105,10 +105,11 @@
       "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260906",
       "gate": "ai_billing",
       "class": "staging_smoke",
-      "status": "COUNTERCHECKED",
+      "status": "RECONCILIATION_REQUIRED",
       "observed_at": "2026-09-06T14:42:15Z",
-      "source": "AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5: AI_TIER_STAGING_LIFECYCLE=PASS, Stripe Test catalog PASS, browser boundary PASS, service-role ledger PASS, transaction ROLLED_BACK and acceptance PASS. The Plus -> Ultra/paused -> Starter/canceled path is covered; no Production target or live payment was used.",
+      "source": "Historical AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5 passed lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback. Its current-state use was invalidated by the later isolated Staging deploy 34058028839 of 62e6a11858e85996af03f6740819b0fc6194b4a4, which introduced later canonical Billing/AI downstream code. Retain this run as historical rollback evidence only; require a fresh exact-deployed-revision revalidation before treating the AI-tier lifecycle paths as current.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "invalidated_by": "Staging deploy 34058028839 on 62e6a11858e85996af03f6740819b0fc6194b4a4",
       "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "ai_ledger_schema_or_acl_change", "before_new_ai_tier_staging_action"]
     },
     {
