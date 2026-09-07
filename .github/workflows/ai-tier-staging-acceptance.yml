@@ -3,13 +3,18 @@ name: FanMind AI Tier Staging Acceptance
 on:
   workflow_dispatch:
     inputs:
+      reviewed_commit:
+        description: 'Exact reviewed and deployed main commit'
+        required: true
+        type: string
       confirmation:
         description: 'Type run-ai-tier-staging-acceptance to confirm the isolated write test'
         required: true
         type: string
 
 concurrency:
-  group: fanmind-ai-tier-staging-acceptance
+  # Keep the exact deployed release stable throughout the read-only gate and rollback test.
+  group: fanmind-staging-deploy
   cancel-in-progress: false
 
 permissions:
@@ -21,6 +26,7 @@ jobs:
     if: >-
       ${{
         github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
         inputs.confirmation == 'run-ai-tier-staging-acceptance'
       }}
     runs-on: ubuntu-24.04
@@ -40,13 +46,18 @@ jobs:
       STRIPE_PRICE_AI_ULTRA: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_AI_ULTRA }}
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
       PGPORT: ${{ vars.FANMIND_STAGING_DB_PORT }}
       PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
-      PGUSER: ${{ secrets.FANMIND_STAGING_DB_USER }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
 
     steps:
-      - name: Checkout
+      - name: Checkout reviewed main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -79,6 +90,22 @@ jobs:
             "$PGUSER" \
             "$ESCAPED_DB_PASSWORD" > "$PGPASSFILE"
           chmod 600 "$PGPASSFILE"
+
+      - name: Bind shared read-only rollout state
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-ai-tier-staging.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          FANMIND_STAGING_DATABASE_ROLLOUT_STATE_CONFIRM: verify-staging-database-rollout-state
+        run: |
+          set -euo pipefail
+          ROLLOUT_STATE="$(npm run --silent db:staging-rollout-state:run)"
+          printf '%s\n' "$ROLLOUT_STATE"
+          grep -Fqx 'STAGING_DATABASE_ROLLOUT_AI_TIER=verify' <<< "$ROLLOUT_STATE"
+          grep -Fqx 'STAGING_DATABASE_ROLLOUT_AI_TIER_STRIPE_LEDGER=verify' <<< "$ROLLOUT_STATE"
+          grep -Fqx 'STAGING_DATABASE_ROLLOUT_STRIPE_BILLING_LEDGER=verify' <<< "$ROLLOUT_STATE"
+          grep -Fqx 'STAGING_DATABASE_ROLLOUT_STATE=PASS' <<< "$ROLLOUT_STATE"
 
       - name: Verify applied migration metadata
         env:
