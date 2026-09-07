@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-RESTORE-POSTCHECK`
-- Next action title: Vorhandene Restore-Belege gegen DB_POSTCHECKED abgleichen
+- Next action: `NBA-RESTORE-STORAGE-PREP`
+- Next action title: Isolierten Storage-Restore sicher vorbereiten
 
 ## Finishline gates
 
