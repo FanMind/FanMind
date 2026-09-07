@@ -10,6 +10,7 @@ import {
   DATABASE_AUTHORIZATION_CONTRACT_SQL,
   analyzeAuthorizationToc,
   assertDatabaseAuthorizationRoles,
+  authorizationContractSqlExcludingTargetLogin,
   captureDatabaseAuthorizationContract,
   openDatabaseAuthorizationSnapshot,
   validateAuthorizationContract,
@@ -501,6 +502,38 @@ test("role preflight hex-encodes quote and backslash role names", async () => {
     encoding: "utf8",
     mode: 0o600,
   });
+});
+
+test("target projection excludes only the encoded restore login from the source role seed", () => {
+  const targetLogin = "fanmind_restore_bootstrap";
+  const encodedLogin = Buffer.from(targetLogin, "utf8").toString("hex");
+  const projected = authorizationContractSqlExcludingTargetLogin(targetLogin);
+
+  assert.match(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /where login_role\.rolcanlogin/u,
+  );
+  assert.doesNotMatch(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /login_role\.rolname <>/u,
+  );
+  assert.match(
+    projected,
+    new RegExp(
+      `where login_role\\.rolcanlogin\\s+and login_role\\.rolname <> ` +
+        `pg_catalog\\.convert_from\\(pg_catalog\\.decode\\('${encodedLogin}', 'hex'\\), 'UTF8'\\)`,
+      "u",
+    ),
+  );
+  assert.doesNotMatch(projected, /fanmind_restore_bootstrap/u);
+  assert.equal(
+    projected.match(/and login_role\.rolname <>/gu)?.length,
+    1,
+  );
+  assert.throws(
+    () => authorizationContractSqlExcludingTargetLogin("restore\noperator"),
+    /authorization_target_projection_role_invalid/u,
+  );
 });
 
 test("SQL scope mirrors pg_dump ACL selection and fixed recovery guards", () => {
