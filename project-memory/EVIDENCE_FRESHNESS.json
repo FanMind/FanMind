@@ -95,10 +95,11 @@
       "id": "EV-STAGING-BILLING-FREEZE-20260906",
       "gate": "ai_billing",
       "class": "staging_smoke",
-      "status": "COUNTERCHECKED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T12:08:00Z",
-      "source": "PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 success; independent exact-version and HTTP503 stripe_billing_write_frozen Retry-After60; bounded freeze only, not Billing acceptance",
-      "target": "https://staging.fanmind.ch"
+      "source": "Historical bounded freeze proof only: PR #1058 merge 157983d62afce572bfdf79374a0a5c5fd096b7db; Staging run 34032100988 job 101483398784 and HTTP503 stripe_billing_write_frozen Retry-After60. Superseded as current runtime state by explicit unfreeze deploy 34043148548 and later successful Staging deployments; never use this entry to infer that the Billing write freeze is currently active.",
+      "target": "https://staging.fanmind.ch",
+      "superseded_by": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906"
     },
     {
       "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
@@ -106,9 +107,19 @@
       "class": "staging_smoke",
       "status": "COUNTERCHECKED",
       "observed_at": "2026-09-06T20:29:44Z",
-      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams, zero AI entitlement/event/reconciliation rows and zero Push registrations",
+      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only Billing/AI postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams and zero AI entitlement/event/reconciliation rows",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
       "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "before_new_ai_billing_staging_action"]
+    },
+    {
+      "id": "EV-MOBILE-PUSH-REGISTRATION-POSTCHECK-20260906",
+      "gate": "mobile",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T20:29:44Z",
+      "source": "Independent read-only Supabase Staging postcheck recorded after canonical acceptance 34058118450 observed mobile_push_registrations=0. The timestamp is conservatively bound to the acceptance completion time; the actual postcheck occurred after it. No provider send or registration mutation occurred.",
+      "target": "Supabase Staging vshyhvgcmrlagvfnvomc",
+      "revalidate_on": ["mobile_push_registration_change", "device_acceptance", "staging_deploy", "target_binding_change", "before_real_provider_send"]
     },
     {
       "id": "EV-PLAY-RESUME-20260906",
