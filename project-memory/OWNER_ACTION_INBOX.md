@@ -99,11 +99,11 @@ This is the single compact queue for actions that genuinely require the owner, a
 ## FM-AI-OWNER-002 — Complete remaining provider-side Staging AI lifecycle evidence
 - Status: DEFERRED_BY_OWNER
 - Where: exact protected GitHub `staging` workflows plus isolated Stripe Test/Supabase Staging only.
-- Proven technical sub-gate: the general Billing ledger is installed on isolated Staging; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, ledger `verify`, cutover pending `0`, uninventoried `0`, full rollback and cleanup `PASS`. The independent read-only postcheck remained unchanged. Do not repeat this bounded sub-gate.
-- Remaining evidence: provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed ledgers, including Plus/Ultra/remove/cancel/paused/failed-payment/idempotency/order/browser-boundary cases, using Test Mode only and rollback where designed. Product/private quality-cost and Legal/Tax remain separate owner/external gates under `FM-AI-OWNER-001` and `EXT-AI-LEGAL-TAX`.
+- Proven technical sub-gates: the general Billing ledger is installed; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, ledger `verify`, zero cutover counters, full rollback and cleanup `PASS`. Separately, AI-tier Staging acceptance `34039968946` / job `101504820898` passed on exact `49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5`, including lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full transaction rollback. Its runner covers Plus -> Ultra/paused -> Starter/canceled; do not repeat those AI-ledger paths merely to resume this action.
+- Remaining evidence: provider-side inbound webhook/current provider lifecycle where still unproven, failed-payment consequences, event ordering/idempotency/conflict behavior and current canonical downstream Billing -> AI/referral reconciliation. Product/private quality-cost and Legal/Tax remain separate owner/external gates under `FM-AI-OWNER-001` and `EXT-AI-LEGAL-TAX`.
 - Risk: R3
-- Forbidden: live mode/payment/refund, Production, automatic canonical projection enablement, duplicate execution of the completed canonical Billing acceptance, SQL outside reviewed controls, or bundling paid-tier activation.
-- Resume trigger: explicit exact-commit protected Staging authorization for the remaining provider-side lifecycle evidence after fresh target/provider binding checks.
+- Forbidden: live mode/payment/refund, Production, automatic canonical projection enablement, duplicate execution of either completed rollback acceptance, SQL outside reviewed controls, or bundling paid-tier activation.
+- Resume trigger: explicit exact-commit protected Staging authorization for only the genuinely remaining provider/downstream evidence after fresh target/provider binding checks.
 
 ## FM-META-OWNER-001 — Complete external Meta acceptance
 - Status: DEFERRED_BY_OWNER
