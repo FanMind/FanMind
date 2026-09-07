@@ -101,6 +101,16 @@
       "target": "https://staging.fanmind.ch"
     },
     {
+      "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-06T20:29:44Z",
+      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams, zero AI entitlement/event/reconciliation rows and zero Push registrations",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "before_new_ai_billing_staging_action"]
+    },
+    {
       "id": "EV-PLAY-RESUME-20260906",
       "gate": "mobile",
       "class": "provider_console",
