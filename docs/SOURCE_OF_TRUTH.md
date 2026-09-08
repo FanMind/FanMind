@@ -984,7 +984,7 @@ Pflichtsatz:
   Workspace-Safe-DTO und hält CRM-/AI-/Content-Mutationen sowie Connector-
   Administration Owner-only und processing-gebunden. Die direkte
   PostgREST-/JWT-Grenze für volle Workspace-/Legal-Zeilen,
-  Connector-Bindungen, Token-/Syncdaten und zwölf Member-writable Tabellen ist
+  Connector-Bindungen, Token-/Syncdaten und zwölf Member-writable Tabellen
   ist auf Staging durch den vollständigen read-only Postflight des Controls
   `20260816120000_workspace_member_data_boundary.sql` belegt.
   Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
