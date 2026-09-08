@@ -605,8 +605,8 @@ requireText(
 );
 requireText(
   "docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md",
-  "Status: `CHECKED_NOT_APPLIED`.",
-  "Der Member-Control darf ohne externen Apply-/Postflight-Beleg nicht als angewendet gelten.",
+  "Status: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.",
+  "Der belegte Staging-Schemazustand darf nicht als reale Browser-Abnahme gelten.",
 );
 for (const file of ["README.md", "docs/SOURCE_OF_TRUTH.md"]) {
   requireText(
@@ -2025,9 +2025,19 @@ requireText(
 );
 forbidIn(
   ".github/workflows/ai-tier-staging-acceptance.yml",
-  /db:ai-tier-entitlements:apply|sk_live_|https:\/\/fanmind\.ch/iu,
+  /db:ai-tier-entitlements:apply|sk_live_|(?<!FANMIND_PRODUCTION_API_ORIGIN: )https:\/\/(?:www\.)?fanmind\.ch|FANMIND_RUNTIME_ENVIRONMENT:\s*production/iu,
   "Der KI-Stufen-Abnahmeworkflow darf weder Migrationen anwenden noch Production-Ziele enthalten.",
 );
+for (const binding of [
+  "FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}",
+  "FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch",
+]) {
+  requireText(
+    ".github/workflows/ai-tier-staging-acceptance.yml",
+    binding,
+    "Der KI-Stufen-Abnahmeworkflow muss Staging-Ziel und Production-Ausschluss unabhängig binden.",
+  );
+}
 requireText(
   "scripts/operations/ai-tier-staging-acceptance.mjs",
   "AI_TIER_STAGING_TRANSACTION=ROLLED_BACK",

@@ -899,3 +899,14 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Baseline: origin/main a1bde387 freshly verified; local correction ac5211a1 plus dd1f84f9; no remote feature branch exists yet.
 - Evidence plan: prior local 1231/1231 Operations plus focused regression; fresh exact-head PR CI/review, immutable merge and release observation. Restore target/artifact feasibility checked separately; no duplicate database Restore.
 - Recovery: revert the bounded workflow correction if needed; no database or catalog rollback. Do not retry an indeterminate external Restore.
+
+## RECEIPT-FM-AI-PR1087-TRUTH-CORRECTION-20260908
+- Task: FM-AI-001 / FM-RST-001
+- Status: IN_PROGRESS
+- Risk: R4
+- Publication: PR #1087 head 1164702f2d5ff69ca04c2e1ad931536e9a4dc323 has exact tested local tree 0bdeccb8ee8714aca51d3e23c4007a3988f9e34b. Published through the connected GitHub API after terminal Git lacked credentials; explicit public-publication authorization applies.
+- Remote evidence: seven workflows passed; FanMind CI 34271070421 failed only the final truth-result enforcement. Its PostgreSQL 17 authorization roundtrip, Operations 1231, release integration tests and production build passed.
+- Correction: central truth guard now distinguishes the required Production deny-origin from a real Production target and requires both exact origin bindings. The member-control documentation guard records the observed SCHEMA_VERIFIED state while explicitly keeping real browser acceptance open.
+- Countercheck: complete Product/Referral/Legal/Actions truth PASS. Four real verifier mutation checks reject Production target, Production runtime, missing deny origin and SQL Apply; original workflow restored and reverified. Prior local statements about truth drift refer to the separate Project Memory checker; the full npm truth gate was first executed remotely and is now reconciled locally.
+- Restore feasibility: no branch exists on either FanMind Supabase target; no local SSH identity or encrypted backup/receipt is available. Exoscale secure sign-in submitted once but portal returned invalid credentials; no authenticated server state or access change is claimed. Current official Preview pricing starts at USD 0.01344/hour plus usage, correcting the older EUR label. Target cost decision and actual protected-host access remain unresolved; no new target, database Restore, decryption, upload or cleanup action occurred.
+- Next step: final exact-head CI/review and authorized publication; then current-main Staging acceptance. Real Restore needs secure provider/host access and a distinct target before any artifact operation.
