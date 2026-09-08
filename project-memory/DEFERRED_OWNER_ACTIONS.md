@@ -47,26 +47,30 @@ Updated: 2026-09-07 Europe/Vienna
 - Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
 
 ## FM-RST-OWNER-007 — Real isolated Supabase Storage target
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 
 - Related task: `FM-RST-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Decision: on 2026-09-07 the owner selected `Nur lokal testen` after comparing a permanent project at 10 EUR/month with an isolated Preview branch at 0.01344 EUR/hour.
 - Current result: only the repository controller and synthetic local API contract may proceed. No additional Supabase project/branch may be created and neither FanMind Production nor FanMind Staging may be used as the Restore target.
 - Resume rule: a real `DB_POSTCHECKED -> STORAGE_RESTORED` transition needs a new action-time decision for a distinct disposable Supabase target plus exact current commit/artifact/project/bucket/cleanup bindings.
 
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-SEC-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Proven pre-state: protected read-only run `32997946812`, job `98271985321`, on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; both full Production audits passed and the fresh advisor set remained unchanged.
 - Deferred action: separately authorize exactly one protected `apply` through `trigger-function-hardening-production-control.yml`, bound to the then-current reviewed and deployed commit, checksum-pinned controlled SQL, full preflight/postflight and fresh advisor re-scan.
 - Safety: this read-only session does not authorize Apply. No unrelated SQL, Auth, RLS, provider, Restore or Supabase-Staging mutation may be bundled into the action.
 
 ## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-SEC-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Current classification: leaked-password protection is disabled on both exact Supabase targets and is a real Auth-control gap. Staging `ensure_current_user_workspace(...)` is technically constrained and intentionally authenticated-callable, but explicit exception acceptance is still missing.
 - Deferred action: decide and separately authorize the exact provider setting change for leaked-password protection on each target; explicitly accept or reject the documented Staging RPC exception after reviewing the evidence. Keep these actions separate from trigger hardening and Restore.
 - Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
+- Current additional RPC: get_current_workspace_member_safe_dashboard() is authenticated-only, has pinned search_path and row_security=on, and returns only five safe membership fields. Full schema rollout verify passed; current body MD5 9b7e87c856d33d3ab3b97e2941faa519 matches the canonical SQL. Both RPC exceptions remain decision-required; no blind revoke.
 
 ## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
 - Related task: `FM-MOB-001`.
@@ -77,22 +81,26 @@ Updated: 2026-09-07 Europe/Vienna
 - Safety: successful Preview configuration does not authorize EAS project reinitialization, another automatic build, Submit, Update, Store action, Supabase/Auth/DB mutation or Production-target crossover.
 
 ## FM-AI-OWNER-001 — AI product, quality and financial decision pack
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-AI-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Proven foundation: FM-EV-022 currently verifies the synthetic Staging resource, Plus/Ultra and five-price Test catalog, exact 22-event Test webhook, installed empty AI ledger and 50/100/150 context policy. These are not activation evidence.
 - Deferred action: decide model classes/distinct fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin; provide four representative weeks of privacy-safe usage/cost evidence and the real blinded private quality result; obtain Legal/Tax acceptance separately.
 - Safety: no guessing, no private raw evaluation material or provider mapping in Git/issues, no environment flag or Plus/Ultra activation from the recommendation alone.
 
 ## FM-AI-OWNER-002 — Remaining protected Staging provider/lifecycle evidence
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-AI-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Current bounded evidence: the general Billing ledger is installed on isolated Staging; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with rollout `PASS`, Billing ledger `verify`, zero cutover counters, full rollback and cleanup `PASS`. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` passed on older exact `49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5`, but later isolated Staging deploy `34058028839` of `62e6a118...` invalidated its mutable current-state freshness.
 - Deferred action: after a new explicit exact-commit protected Staging authorization, first require the shared read-only rollout-state on that exact deployed revision and isolated Staging target to return overall `PASS` with AI entitlement, AI Stripe ledger and general Billing ledger each classified `verify`; any absent, partial, drifted, mismatched or blocked state must stop before the fixture. Only then obtain a fresh AI-tier rollback acceptance on that same revision. Then separately close only genuinely remaining provider-side inbound webhook/current provider lifecycle, failed-payment consequences, event ordering/idempotency/conflict handling and current canonical downstream Billing -> AI/referral reconciliation through the installed ledgers. Product/private quality-cost and Legal/Tax remain separate gates.
 - Safety: no automatic rerun of the invalidated AI-tier acceptance, no duplicate canonical Billing acceptance while its own evidence remains current, no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL or paid-tier activation.
+- Current superseding attempt: deploy 34267819029 succeeded on a1bde387; AI acceptance 34268214078 failed at the environment gate before any fixture. Two workflow API-origin bindings are corrected locally; merge/exact-new-main deploy/fresh acceptance remain open. Webhook read-only readiness 34268317761 passed; no price setup is missing.
 
 ## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-META-001` / `FM-SOC3-001`.
-- Status: DEFERRED_BY_OWNER.
+- Status: OWNER_ACTION_REQUIRED.
 - Proven foundation: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only technical path. FM-EV-023 counterchecks the 2026-08-26 exact-main repository no-PII/security boundary and observed isolated Staging content/continuation/catch-up objects/metadata without writes, activation or provider events; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. Mutable Staging freshness is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
 - Deferred action: in an owner-controlled normal browser and the correct Meta Business/Dataset, capture positive and negative Events Manager/Test Events evidence: no event before consent, exact PageView-only reception after consent/safe navigation, no unexpected conversions and no PII/Advanced Matching. Obtain final privacy/legal acceptance separately. Meta Business permissions/App Review and real Facebook/Instagram provider E2E remain part of the later Social gate.
 - Resume rule: do not rerun FM-EV-023 merely to close the technical reconciliation or repeat Production ENV/build/deploy. After its Staging freshness expires/invalidation or before any later Meta Staging database action, use a new lock and fresh shared rollout-state-first verification. Any real event emission, provider/account/OAuth/App Review action, credential use, SQL Apply, worker/runtime activation or Production change requires its own exact scope and current evidence.

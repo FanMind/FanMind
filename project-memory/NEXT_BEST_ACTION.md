@@ -7,24 +7,24 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 - Selected action: `NBA-RESTORE-STORAGE-R4-AUTH`
 - Task: `FM-RST-001`
 - Gate: `restore` (`PARTIAL`)
-- Selection status: `DEFERRED_BY_OWNER`
+- Selection status: `OWNER_ACTION_REQUIRED`
 - Title: Isolierten Storage-Restore exakt freigeben
 
 ## Instruction
 
-PR #1081 merged the private exact archive/receipt preparation. The follow-on local controller proves target-empty, exact postwrite and rollback behavior against a synthetic API double. On 2026-09-07 the owner selected local-only testing and declined an additional Supabase project/Preview branch; real isolated Storage remains deferred under FM-RST-OWNER-007. Do not decrypt the real artifact, contact Production/FanMind Staging, create a provider target, upload or claim STORAGE_RESTORED without a new action-time decision.
+Owner resumed Restore completion on 2026-09-08. DB_POSTCHECKED and repository Storage preparation/controller are accepted. Obtain the exact distinct disposable Storage target/cost decision and artifact/commit/bucket/cleanup authorization; prior local-only choice did not authorize a provider target. Never repeat database Restore or use Production/FanMind Staging as target.
 
 ## Why this action
 
-FM-RST-OWNER-007
+owner/platform action required
 
 ## Candidate evaluation
 
-- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **DEFERRED_BY_OWNER** — FM-RST-OWNER-007
-- `NBA-SECURITY-PROTECTED` priority 15: **DEFERRED_BY_OWNER** — FM-SEC-OWNER-001
+- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **DEFERRED_BY_OWNER** — FM-AI-OWNER-001
-- `NBA-META-TECHNICAL-RECONCILE` priority 40: **DEFERRED_BY_OWNER** — FM-META-OWNER-001
+- `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE3-SOCIAL` priority 60: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL
 - `NBA-PHASE7-SOCIAL` priority 70: **WAITING_PREREQUISITE** — phase3_social=PARTIAL
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL

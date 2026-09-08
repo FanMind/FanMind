@@ -839,3 +839,63 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Result status: ACCEPTED for bounded FM-CR-010 repository preparation; FM-MOB-001 remains IMPLEMENTED_NOT_VERIFIED because external Store/device controls are open.
 - Open follow-up: keep the FM-MOB-001 Store lock active. Wait for Google approval, reuse the existing verified Android `1.0.0` AAB without a new build, then complete the Play-track/device sequence. Apple owner/legal/account decisions plus signing/TestFlight/device evidence remain Phase 8.
 - Work lock released: no; continue under `LOCK-FM-MOB-001-ANDROID-STORE-20260830`.
+## RECEIPT-FINISHLINE-REVALIDATE-20260908
+- Task: FM-SEC-001 / FM-AI-001 / FM-MOB-001 / FM-RST-001
+- Status: VERIFIED
+- Result: FM-EV-038 records current observations and unchanged counters; read-only lock released. Remaining work is explicit in the owner inbox and bounded KI correction receipt.
+- Risk: R3 read-only external state; Restore mutation remains R4.
+- Lock: LOCK-FINISHLINE-REVALIDATE-20260908
+- Authorization: Bernd requests completion of the four non-Social blocks and confirms the existing prices are complete. Reuse accepted implementations/catalog/builds.
+- Baseline: main and Production a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e.
+- Evidence plan: fresh advisors, shared rollout first, bounded read-only counters, exact protected-action preparation and canonical reconciliation.
+- Falsification: changed target/schema, nonzero device rows or a later accepted provider receipt must replace older blocker assumptions; no historical mutable observation may be presented as current.
+- Recovery: no remote write in this evidence scope; revert this repository-only continuation if necessary.
+## RECEIPT-FM-AI-STAGING-REVISION-20260908
+- Task: FM-AI-001
+- Status: VERIFIED
+- Result: deployment and independent smoke complete; the outcome below records the separate failed pre-DB acceptance and remaining correction.
+- Risk: R4
+- Lock: LOCK-FINISHLINE-RESUME-20260906
+- Authorization: owner resumed KI/Billing completion; prior explicit Staging deployment authorization is reused for the existing isolated environment. Prices and billing configuration stay unchanged.
+- Scope: deploy current reviewed main a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e with billing_write_freeze=preserve; this is needed because the last deployed Staging revision 62e6a118... predates the current main-only acceptance contract. No SQL Apply, live payment, catalog mutation or Production activation.
+- Preflight: shared read-only rollout 34267504075 / 102200475242 PASS; AI and both ledgers verify; independent counters push registrations=0, attempts=0, AI entitlements/events=0, Billing events=1.
+- Recovery: existing reviewed Staging deployment preserves runtime secrets/freeze/capture state; any failure is reconciled before a new deploy. No database rollback is needed for this deployment-only action.
+- Evidence required: exact deployed revision and health, post-deploy shared rollout/counters, then separately bounded rollback-only AI acceptance.
+
+## RECEIPT-FM-AI-ROLLOUT-BINDING-20260908
+- Task: FM-AI-001
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R4
+- Lock: LOCK-FINISHLINE-RESUME-20260906
+- Authorization: bounded repository correction within owner-resumed KI/Billing completion; no Production or price change.
+- Implementation: bind existing Staging and independent Production API origins in the AI acceptance workflow, preserving all read-only/global/three-ledger gates.
+- Countercheck: new regression failed on the old workflow with api_target_binding; corrected workflow passes 31 focused tests, including missing-origin and Production-crossover rejection. Independent live failed-run logs and unchanged database counters identify the same failure before writes.
+- Recovery: revert the two workflow bindings and test change; no schema/provider rollback required. Old failed run must not be retried unchanged.
+- Local release gates: full Operations 1231/1231, focused ESLint, Project Memory Quality/V8, sales/truth/freshness/drift/milestone/legacy controls and pinned-action checks PASS. Initial broad local run lacked installed dependencies; after copying the existing dependency tree with identical package-lock, all tests passed without a dependency/lockfile change.
+- Still required: exact-head CI/review, approved merge/deploy and fresh exact-revision rollback-only Staging acceptance. No whole AI/Billing acceptance.
+
+## RECEIPT-FM-AI-STAGING-REVISION-20260908 outcome
+- Task: FM-AI-001
+- Status: VERIFIED
+- Risk: R4
+- Deploy: 34267819029 / 102201553389 PASS on a1bde387 with billing_write_freeze=preserve, resulting false as before; all required smoke checks PASS, optional email unknown.
+- Acceptance dispatch: owner-resumed rollback-only Staging scope; 34268214078 / 102202884497 failed before DB access/fixture at environment_invalid, cleanup PASS. Not retried. See FM-FAIL-022.
+- Provider read-only: 34268317761 / 102203246459 PASS. Independent post-attempt database counters unchanged 0/0/0/0/1.
+- Scope disposition: deployment is complete; AI runtime acceptance remains open behind the reviewed workflow correction. No price or Production change.
+
+## RECEIPT-FM-AI-PUBLICATION-BLOCKED-20260908
+- Task: FM-AI-001
+- Status: BLOCKED
+- Risk: R4
+- Local result: bounded workflow origin correction and reconciled current evidence committed on ops/finishline-resume-20260908; all 1231 Operations tests and focused/governance checks pass.
+- External publication result: automatic approval review rejected the initial push for unverified organizational ownership. Read-only API then verified FanMind/FanMind, public visibility and connection admin/push permission. Review rejected the subsequent push because public code/Project Memory disclosure needs explicit user authorization. No successful push, PR, merge or new deployment occurred.
+- Next step: ask for explicit permission to publish this reviewed branch and create its PR in the existing public repository; do not try another publishing route. Keep the local branch for exact-head continuation.
+
+## RECEIPT-FINISHLINE-PUBLICATION-20260908
+- Task: FM-AI-001 / FM-RST-001
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: FM-AUTH-FINISHLINE-PUBLISH-20260908; owner explicitly approved public publication and resumed Restore completion.
+- Baseline: origin/main a1bde387 freshly verified; local correction ac5211a1 plus dd1f84f9; no remote feature branch exists yet.
+- Evidence plan: prior local 1231/1231 Operations plus focused regression; fresh exact-head PR CI/review, immutable merge and release observation. Restore target/artifact feasibility checked separately; no duplicate database Restore.
+- Recovery: revert the bounded workflow correction if needed; no database or catalog rollback. Do not retry an indeterminate external Restore.

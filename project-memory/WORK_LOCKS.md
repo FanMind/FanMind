@@ -1,5 +1,17 @@
 # Work Locks
 
+## LOCK-FINISHLINE-REVALIDATE-20260908
+- Status: RELEASED
+- Released: 2026-09-08 after live evidence/counterchecks and canonical reconciliation; follow-up workflow repair remains under LOCK-FINISHLINE-RESUME-20260906.
+- Task: FM-SEC-001 / FM-AI-001 / FM-MOB-001 / FM-RST-001
+- Holder: Codex
+- Risk: R3 read-only evidence and repository reconciliation
+- Acquired: 2026-09-08
+- Scope: fresh provider advisors, shared read-only Staging rollout, bounded metadata/device-registration counters after that gate, and concrete protected-action preparation. No runtime writes; does not take over LOCK-FINISHLINE-RESUME-20260906.
+- Evidence plan: exact current main/run/target binding, independent provider/catalog countercheck, current action inputs and unchanged commercial configuration.
+- Recovery: no remote writes; repository changes remain on ops/finishline-resume-20260908.
+
+
 ## LOCK-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907
 - Status: RELEASED
 - Task: FM-RST-001
@@ -47,11 +59,13 @@
 
 ## LOCK-FINISHLINE-RESUME-20260906
 - Status: ACTIVE
+- Current bounded follow-up: FM-FAIL-022 workflow API-origin binding correction and exact-head CI/review; remote KI rollback acceptance remains pending after approved merge/deploy.
 - Task: FM-AI-001 / FM-MOB-001
 - Holder: Codex
 - Risk: R4
 - Acquired: 2026-09-06
 - Narrowed: 2026-09-07 after the isolated database Restore, ACL completion and permanent helper correction closed.
+- Resumed: 2026-09-08 by Bernd for Android/Push and KI/Billing completion; existing prices are finished. The reviewed current-main Staging deployment preserves billing configuration and prepares revision-bound acceptance. This does not authorize live payments or paid-tier/Production activation.
 - Scope: remaining owner-resumed isolated Staging Billing and Android/Play work. FM-RST-001 is excluded; no runtime Restore lock is active. No Production database write or real payment.
 - Evidence plan: exact-commit CI/run/runtime and independent provider/device evidence; no stale acceptance or duplicate build.
 

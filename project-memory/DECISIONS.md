@@ -68,3 +68,9 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Status: DONE
 - Decision: The embeddable Website AI assistant belongs to Phase 8. Its existing disabled security, session, one-way widget and ingestion foundation means only this Phase-8 workstream is already started; iOS/TestFlight and later channel integrations remain deferred. The target includes AI dialogue, a fail-safe handoff to the FanMind user with the complete conversation, optional consented visitor email capture and manually controlled reply delivery.
 - Reason: The owner confirmed the product scope and roadmap placement after the Android closed-test release.
+
+## FM-DEC-012
+- Date: 2026-09-08
+- Status: DONE
+- Decision: Bernd confirms all existing FanMind prices have already been created and configured. Treat price creation/configuration as complete; do not recreate products/prices, reprice or ask for the same setup again.
+- Boundary: This does not supply missing model/quality/quota/financial evidence, approve real payments or activate paid AI tiers. Those separate completion gates remain open.
