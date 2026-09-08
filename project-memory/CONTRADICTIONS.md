@@ -4,6 +4,19 @@ Any conflict between project memory and actual Git/PR/CI/security/workflow/runti
 
 Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 
+## CTR-FM-021
+- Date: 2026-09-07
+- Related task/change: FM-RST-001 / PR #1082
+- Risk: R4
+- Source A: exact-head CI and the pre-merge review-thread query
+- Claim A: the local-only Storage controller was merge-ready with eight green workflows and zero visible review threads.
+- Source B: five GitHub review threads created immediately after the squash merge
+- Claim B: the merged controller could prematurely emit `STORAGE_RESTORED`, miss an indeterminate first upload, retain a partial result receipt, terminate pagination from a filtered page and obscure a successful remote outcome when local cleanup fails.
+- Stronger/current evidence: the post-merge line-bound review findings against exact PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9`.
+- Status: RECONCILIATION_REQUIRED
+- Resolution/action: repair all five findings on a new repository-only branch with focused regressions; keep the accepted Restore progression at `DB_POSTCHECKED` and the real provider transition deferred.
+- Evidence: PR #1082 review threads plus focused tests in `tests/storage-restore-drill.test.mjs`.
+
 ## CTR-FM-001
 - Date: 2026-08-19
 - Updated: 2026-08-19

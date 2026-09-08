@@ -448,7 +448,19 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 - Negative proof: Docker and Supabase CLI are unavailable locally; the test uses an in-process synthetic Storage API double. No real backup/identity was read, no external Supabase API was contacted, no project/branch/bucket was created, and Production/FanMind Staging were not modified.
 - Result status: COUNTERCHECKED_LOCAL_CONTROLLER_ONLY; overall `FM-RST-001=PARTIAL`, accepted progression remains `DB_POSTCHECKED`, and `STORAGE_RESTORED` is not claimed.
 - Final countercheck: PR #1082 exact head `3675e3d4881a91156bad07336f64ef844ddccce9` passed Project Memory Status/Guard/Quality, Landing Language CI, Supply Chain Security, FanMind CI, Browser E2E and CodeQL; zero review threads were present before the SHA-bound squash merge `205febde8ef62f632e488337a6e887d1abb532f9`.
-- Work lock released: yes; local-only controller scope is complete. No provider cleanup is required because no external target was created or contacted.
+- Delayed review invalidation: five unresolved review findings appeared immediately after merge. They cover premature `STORAGE_RESTORED` output, indeterminate first-upload reconciliation, partial receipt cleanup, raw-page pagination and post-success local-cleanup handling. The original local-controller acceptance is therefore superseded pending the repository-only repair.
+- Work lock released: superseded by `LOCK-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907`. No provider cleanup is required because no external target was created or contacted.
+
+## RECEIPT-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907
+- Task: FM-RST-001.
+- Risk: R4 repository-only repair; no runtime or provider mutation.
+- Branch: `fix/restore-storage-controller-review-20260907` from PR #1082 squash merge plus its local closeout.
+- Trigger: delayed GitHub review exposed five unresolved controller findings after PR #1082 merged.
+- Planned negative evidence: synthetic indeterminate first upload leaves the target empty; partial receipt publication leaves no receipt; a placeholder on a full raw page does not terminate pagination; local cleanup failure emits an explicit reconciliation-bound result while preserving the verified remote outcome; no local result claims canonical `STORAGE_RESTORED`.
+- Review round 2: exact-head review of `594edf6ce50e638a5a6aeddd37c8ef23ede31f52` found two additional cases: remote reconciliation was hidden by a simultaneous local cleanup failure, and a determinate upload rejection could authorize deletion of a concurrent writer's object. Both are now separated fail-closed and covered by synthetic regressions.
+- Review round 3: exact-head review of `ac09f6ba725b2b2be814a6b4e850d9b8bc956a67` found that ambiguous 5xx responses still needed indeterminate rollback treatment and that simultaneous receipt-publication/local-cleanup failures needed a combined fixed outcome. Both are now preserved fail-closed with focused regressions.
+- Local evidence: focused Storage preparation/controller tests pass 18/18, including ambiguous 500/502/504 rollback, determinate-rejection non-deletion, receipt/local dual reconciliation and remote/local dual reconciliation; full Operations pass 1206/1206; Product/Referral/Legal/Actions truth, repository ESLint and Production build pass. ESLint retains only the pre-existing unrelated Mobile warning. Project Memory Quality/V8/drift/truth/freshness/milestone checks pass; `sales_ready=false` remains correct.
+- Status: COUNTERCHECKED_LOCAL_FIX; exact-head PR CI/review remains required before resolving `CTR-FM-021` and releasing the repair lock.
 
 ## RECEIPT-FM-SUPPLY-CHAIN-MOBILE-REVIEW-20260903
 - Task: reconcile exact-main Supply Chain failure `33789359734` after the Mobile-only review deadline.

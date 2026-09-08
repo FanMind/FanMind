@@ -125,7 +125,11 @@ async function apiRequest(client, path, options = {}) {
       ...options.headers,
     },
   });
-  if (!response?.ok) throw fixedError(`storage_api_${options.label ?? "request"}_failed`);
+  if (!response?.ok) {
+    const error = fixedError(`storage_api_${options.label ?? "request"}_failed`);
+    error.responseStatus = Number.isInteger(response?.status) ? response.status : null;
+    throw error;
+  }
   return response;
 }
 
@@ -147,7 +151,10 @@ async function listPage(client, bucket, prefix, offset) {
   );
   const rows = await response.json();
   if (!Array.isArray(rows)) throw fixedError("storage_api_list_response_invalid");
-  return rows.filter((item) => item?.name !== ".emptyFolderPlaceholder");
+  return {
+    objects: rows.filter((item) => item?.name !== ".emptyFolderPlaceholder"),
+    rawCount: rows.length,
+  };
 }
 
 async function listObjects(client, bucket, prefix = "", output = [], seen = new Set()) {
@@ -156,7 +163,7 @@ async function listObjects(client, bucket, prefix = "", output = [], seen = new 
       throw fixedError("storage_restore_pagination_guard_exceeded");
     }
     const page = await listPage(client, bucket, prefix, offset);
-    for (const item of page) {
+    for (const item of page.objects) {
       if (!item || typeof item.name !== "string" || !item.name) {
         throw fixedError("storage_api_list_item_invalid");
       }
@@ -173,7 +180,7 @@ async function listObjects(client, bucket, prefix = "", output = [], seen = new 
         throw fixedError("storage_restore_object_limit_exceeded");
       }
     }
-    if (page.length < PAGE_SIZE) break;
+    if (page.rawCount < PAGE_SIZE) break;
   }
   return output.sort((left, right) =>
     Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")),
@@ -199,20 +206,30 @@ async function uploadObject(client, bucket, root, object) {
     if (bytes.length !== object.size || sha256(bytes) !== object.sha256) {
       throw fixedError("storage_restore_local_object_changed");
     }
-    await apiRequest(
-      client,
-      `/storage/v1/object/${encodeURIComponent(bucket)}/${encodeObjectPath(object.path)}`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": object.contentType,
-          "content-length": String(bytes.length),
-          "x-upsert": "false",
+    try {
+      await apiRequest(
+        client,
+        `/storage/v1/object/${encodeURIComponent(bucket)}/${encodeObjectPath(object.path)}`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": object.contentType,
+            "content-length": String(bytes.length),
+            "x-upsert": "false",
+          },
+          body: bytes,
+          label: "upload",
         },
-        body: bytes,
-        label: "upload",
-      },
-    );
+      );
+    } catch (error) {
+      const status = error?.responseStatus;
+      const unambiguousClientRejection = Number.isInteger(status)
+        && status >= 400
+        && status < 500
+        && ![408, 425, 429].includes(status);
+      error.requestOutcome = unambiguousClientRejection ? "rejected" : "indeterminate";
+      throw error;
+    }
   } finally {
     bytes.fill(0);
   }
@@ -258,7 +275,11 @@ async function verifyRemoteObject(client, bucket, object) {
   }
 }
 
-async function writePrivateReceipt(path, receipt) {
+export async function writePrivateReceipt(
+  path,
+  receipt,
+  { openFile = open, removeFile = rm } = {},
+) {
   if (!path || resolve(path) !== path) {
     throw fixedError("storage_restore_receipt_path_invalid");
   }
@@ -269,21 +290,37 @@ async function writePrivateReceipt(path, receipt) {
     throw fixedError("storage_restore_receipt_parent_invalid");
   }
   let handle;
+  let created = false;
+  let failure = null;
   try {
-    handle = await open(
+    handle = await openFile(
       path,
       fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL
         | fsConstants.O_NOFOLLOW,
       0o600,
     );
+    created = true;
     await handle.writeFile(`${JSON.stringify(receipt)}\n`);
     await handle.sync();
   } catch (error) {
-    if (error?.code === "EEXIST") throw fixedError("storage_restore_receipt_exists");
-    throw error;
+    failure = error?.code === "EEXIST"
+      ? fixedError("storage_restore_receipt_exists")
+      : error;
   } finally {
-    await handle?.close();
+    try {
+      await handle?.close();
+    } catch (error) {
+      failure ??= error;
+    }
+    if (failure && created) {
+      try {
+        await removeFile(path, { force: true });
+      } catch {
+        throw fixedError("storage_restore_receipt_reconciliation_required");
+      }
+    }
   }
+  if (failure) throw failure;
 }
 
 function assertExpected(value, pattern, code) {
@@ -302,6 +339,8 @@ export async function runStorageRestore({
   expectedStoragePartEncryptedSha256,
   fetchImpl = fetch,
   tarBin = "tar",
+  cleanupImpl = rm,
+  receiptWriter = writePrivateReceipt,
 }) {
   const binding = assertEnvironment(environment);
   const expected = {
@@ -331,7 +370,9 @@ export async function runStorageRestore({
   await chmod(temporaryRoot, 0o700);
   const snapshotPath = join(temporaryRoot, "verified-storage.tar.gz");
   const extractRoot = join(temporaryRoot, "extracted");
-  let uploaded = [];
+  const attemptedUploads = [];
+  let result = null;
+  let operationError = null;
   const client = {
     baseUrl: binding.baseUrl,
     serviceKey: binding.serviceKey,
@@ -376,8 +417,18 @@ export async function runStorageRestore({
       throw fixedError("storage_restore_target_not_empty");
     }
     for (const object of objects) {
-      await uploadObject(client, STORAGE_BUCKET, extractRoot, object);
-      uploaded.push(object.path);
+      try {
+        await uploadObject(client, STORAGE_BUCKET, extractRoot, object);
+        attemptedUploads.push(object.path);
+      } catch (error) {
+        // A transport failure may happen after the provider commits. Explicit
+        // non-2xx responses are determinate rejections and must not authorize
+        // deletion of an object that a concurrent writer may own.
+        if (error?.requestOutcome === "indeterminate") {
+          attemptedUploads.push(object.path);
+        }
+        throw error;
+      }
     }
     const remotePaths = await listObjects(client, STORAGE_BUCKET);
     if (remotePaths.length !== objects.length
@@ -388,10 +439,10 @@ export async function runStorageRestore({
     const objectSetSha256 = sha256(Buffer.from(JSON.stringify(
       objects.map(({ path, size, sha256: digest }) => ({ path, size, sha256: digest })),
     )));
-    const result = {
+    result = {
       schemaVersion: 1,
       createdAt: new Date().toISOString(),
-      status: "STORAGE_RESTORED",
+      status: "STORAGE_RESTORE_EXECUTED_PENDING_EXTERNAL_ACCEPTANCE",
       reviewedCommit: binding.reviewedCommit,
       sourceArtifactBasename: expected.sourceArtifactBasename,
       outerSha256: expected.outerSha256,
@@ -411,27 +462,72 @@ export async function runStorageRestore({
       cleanupRequired: true,
       productionDenied: true,
       stagingDenied: true,
+      localCleanupStatus: "pending",
+      reconciliationRequired: false,
     };
-    await writePrivateReceipt(resultReceiptPath, result);
-    return result;
   } catch (error) {
-    if (uploaded.length > 0) {
+    operationError = error;
+    if (attemptedUploads.length > 0) {
       try {
-        await removeObjects(client, STORAGE_BUCKET, [...uploaded].reverse());
+        await removeObjects(client, STORAGE_BUCKET, [...attemptedUploads].reverse());
         const remaining = await listObjects(client, STORAGE_BUCKET);
         if (remaining.length !== 0) {
           throw fixedError("storage_restore_rollback_incomplete");
         }
       } catch {
-        throw fixedError("storage_restore_reconciliation_required");
+        operationError = fixedError("storage_restore_reconciliation_required");
       }
     }
-    throw error;
-  } finally {
-    uploaded = [];
-    binding.serviceKey = "";
-    await rm(temporaryRoot, { recursive: true, force: true });
   }
+
+  let cleanupFailed = false;
+  try {
+    await cleanupImpl(temporaryRoot, { recursive: true, force: true });
+  } catch {
+    cleanupFailed = true;
+  }
+
+  if (operationError) {
+    binding.serviceKey = "";
+    if (cleanupFailed
+        && operationError?.code === "storage_restore_reconciliation_required") {
+      throw fixedError("storage_restore_remote_and_local_reconciliation_required");
+    }
+    if (cleanupFailed) throw fixedError("storage_restore_local_cleanup_required");
+    throw operationError;
+  }
+
+  if (cleanupFailed) {
+    result.status = "STORAGE_RESTORE_EXECUTED_LOCAL_CLEANUP_REQUIRED";
+    result.localCleanupStatus = "required";
+    result.reconciliationRequired = true;
+  } else {
+    result.localCleanupStatus = "passed";
+  }
+  try {
+    await receiptWriter(resultReceiptPath, result);
+  } catch (error) {
+    try {
+      await removeObjects(client, STORAGE_BUCKET, [...attemptedUploads].reverse());
+      const remaining = await listObjects(client, STORAGE_BUCKET);
+      if (remaining.length !== 0) {
+        throw fixedError("storage_restore_rollback_incomplete");
+      }
+    } catch {
+      binding.serviceKey = "";
+      if (cleanupFailed) {
+        throw fixedError("storage_restore_remote_and_local_reconciliation_required");
+      }
+      throw fixedError("storage_restore_reconciliation_required");
+    }
+    binding.serviceKey = "";
+    if (cleanupFailed) {
+      throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
+    }
+    throw error;
+  }
+  binding.serviceKey = "";
+  return result;
 }
 
 function parseCli(argv) {
@@ -467,9 +563,17 @@ async function main() {
   ]) {
     if (!options[key]) throw fixedError("storage_restore_argument_required");
   }
-  await runStorageRestore(options);
-  console.log("RESTORE_STORAGE_DRILL=PASS");
-  console.log("RESTORE_STORAGE_STATUS=STORAGE_RESTORED");
+  const result = await runStorageRestore(options);
+  if (result.reconciliationRequired) {
+    console.log("RESTORE_STORAGE_DRILL=RECONCILIATION_REQUIRED");
+    console.log(`RESTORE_STORAGE_STATUS=${result.status}`);
+    console.log("RESTORE_STORAGE_CLEANUP=required");
+    console.log("SECRETS_WURDEN_NICHT_AUSGEGEBEN=true");
+    process.exitCode = 2;
+    return;
+  }
+  console.log("RESTORE_STORAGE_DRILL=PASS_PENDING_EXTERNAL_ACCEPTANCE");
+  console.log(`RESTORE_STORAGE_STATUS=${result.status}`);
   console.log("RESTORE_STORAGE_CLEANUP=required");
   console.log("SECRETS_WURDEN_NICHT_AUSGEGEBEN=true");
 }

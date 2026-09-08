@@ -219,7 +219,21 @@ This test uses a synthetic in-process Storage API double because Docker and the
 Supabase CLI are not available in the local execution environment. It neither
 contacts Supabase nor decrypts the real backup. A green result proves the
 controller contract only and must never advance the state beyond
-`DB_POSTCHECKED` or be described as a real `STORAGE_RESTORED` result.
+`DB_POSTCHECKED` or be described as a real `STORAGE_RESTORED` result. The
+controller therefore emits only
+`STORAGE_RESTORE_EXECUTED_PENDING_EXTERNAL_ACCEPTANCE`; the canonical state
+transition requires separately authorized, target-bound external evidence and
+Project-Memory acceptance. An indeterminate transport outcome is reconciled
+from the attempted path. Server/proxy failures (including 5xx) remain
+indeterminate; only unambiguous non-timeout client rejections can omit that
+path from rollback. A local plaintext-cleanup failure emits
+`STORAGE_RESTORE_EXECUTED_LOCAL_CLEANUP_REQUIRED`, preserves the verified
+remote outcome and exits as reconciliation-required instead of inviting a
+retry. A simultaneous remote and local cleanup failure remains the stronger
+`storage_restore_remote_and_local_reconciliation_required` condition.
+Receipt-publication failure combined with local cleanup failure similarly emits
+`storage_restore_receipt_and_local_reconciliation_required` so neither duty is
+hidden.
 
 For a standalone database backup, content verification runs:
 

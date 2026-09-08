@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907
+- Status: ACTIVE
+- Task: FM-RST-001
+- Holder: Codex
+- Risk: R4 repository-only repair after delayed PR #1082 review
+- Acquired: 2026-09-07 after five review findings appeared immediately after the PR #1082 merge.
+- Scope: reserve the canonical `STORAGE_RESTORED` state for external acceptance; reconcile indeterminate uploads; make receipt failure cleanup fail closed; paginate from the raw provider page; preserve a verified remote outcome when local cleanup fails. Add synthetic regressions and reconcile Project Memory. No real backup, Supabase target, upload, database, Production or FanMind Staging access.
+- Evidence plan: focused negative/regression tests, full Operations, lint/build/truth/Project-Memory checks, exact-head CI and zero unresolved review findings.
+- Release condition: reviewed fix merged with every delayed #1082 finding explicitly reconciled.
+
 ## LOCK-FM-RST-001-STORAGE-LOCAL-CONTROLLER-20260907
 - Status: RELEASED
 - Task: FM-RST-001
@@ -9,7 +19,7 @@
 - Scope: implement and locally countercheck target-empty, exact postwrite, Production/Staging denial and rollback behavior. No real backup decryption, Supabase project/branch creation, provider upload, Production/Staging mutation or `STORAGE_RESTORED` claim.
 - Evidence plan: focused controller/preparation tests, full Operations, lint/build/truth/Project Memory checks and exact-head PR CI/review.
 - Released: 2026-09-07 after PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9` passed all eight workflows with zero review threads and SHA-bound squash-merged as `205febde8ef62f632e488337a6e887d1abb532f9`.
-- Resume from: no local controller work remains. Real external Storage stays deferred under `FM-RST-OWNER-007` and requires a new owner decision.
+- Resume from: superseded by `LOCK-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907` after delayed post-merge review findings. Real external Storage stays deferred under `FM-RST-OWNER-007` and requires a new owner decision.
 
 ## LOCK-FM-RST-001-DB-POSTCHECK-RECONCILIATION-20260907
 - Status: RELEASED
