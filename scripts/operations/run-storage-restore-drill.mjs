@@ -5,6 +5,7 @@ import { constants as fsConstants } from "node:fs";
 import {
   chmod,
   copyFile,
+  link,
   lstat,
   mkdir,
   mkdtemp,
@@ -429,6 +430,80 @@ export async function replacePrivateReceipt(
   }
 }
 
+async function acquireInvocationLock(lockPath, invocationId) {
+  const parent = await assertPrivateReceiptDestination(lockPath);
+  let created = false;
+  try {
+    await mkdir(lockPath, { mode: 0o700 });
+    created = true;
+    await syncDirectory(parent);
+    await writePrivateReceipt(join(lockPath, "owner.json"), {
+      invocationId,
+      status: "STORAGE_RESTORE_INVOCATION_LOCKED",
+    });
+  } catch (error) {
+    if (created) {
+      try {
+        await rm(lockPath, { recursive: true, force: true });
+        await syncDirectory(parent);
+      } catch {
+        throw fixedError("storage_restore_invocation_lock_reconciliation_required");
+      }
+    }
+    if (error?.code === "EEXIST") {
+      throw fixedError("storage_restore_invocation_lock_exists");
+    }
+    throw error;
+  }
+}
+
+async function assertInvocationLockOwned(lockPath, invocationId) {
+  let handle;
+  try {
+    handle = await open(
+      lockPath,
+      fsConstants.O_RDONLY | fsConstants.O_DIRECTORY | fsConstants.O_NOFOLLOW,
+    );
+    const metadata = await handle.stat();
+    if (!metadata.isDirectory() || metadata.uid !== process.getuid()
+        || (metadata.mode & 0o077) !== 0) {
+      throw fixedError("storage_restore_invocation_lock_ownership_changed");
+    }
+  } catch {
+    throw fixedError("storage_restore_invocation_lock_ownership_changed");
+  } finally {
+    await handle?.close();
+  }
+  await assertReceiptOwned(join(lockPath, "owner.json"), invocationId);
+}
+
+async function releaseInvocationLock(lockPath, invocationId, cleanupImpl, syncImpl) {
+  await assertInvocationLockOwned(lockPath, invocationId);
+  await cleanupImpl(lockPath, { recursive: true, force: true });
+  await syncImpl(dirname(lockPath));
+}
+
+async function promotePrivateReceipt(
+  sourcePath,
+  destinationPath,
+  { linkFile = link, removeFile = rm, syncDirectoryImpl = syncDirectory } = {},
+) {
+  const parent = await assertPrivateReceiptDestination(destinationPath);
+  try {
+    await linkFile(sourcePath, destinationPath);
+    await syncDirectoryImpl(parent);
+  } catch (error) {
+    if (error?.code === "EEXIST") throw fixedError("storage_restore_receipt_exists");
+    throw fixedError("storage_restore_receipt_reconciliation_required");
+  }
+  try {
+    await removeFile(sourcePath, { force: true });
+    await syncDirectoryImpl(parent);
+  } catch {
+    throw fixedError("storage_restore_finalizing_receipt_cleanup_required");
+  }
+}
+
 function assertExpected(value, pattern, code) {
   if (!pattern.test(clean(value))) throw fixedError(code);
   return clean(value);
@@ -450,6 +525,7 @@ export async function runStorageRestore({
   receiptWriter = writePrivateReceipt,
   receiptReplacer = replacePrivateReceipt,
   reservationWriter = writePrivateReceipt,
+  receiptPromoter = promotePrivateReceipt,
 }) {
   const binding = assertEnvironment(environment);
   const invocationId = randomUUID();
@@ -471,10 +547,25 @@ export async function runStorageRestore({
   const pendingReceiptPath = `${resultReceiptPath}.pending`;
   const replacementReceiptPath = `${pendingReceiptPath}.replacement`;
   const reservationReceiptPath = `${resultReceiptPath}.reservation`;
+  const reservationReplacementPath = `${reservationReceiptPath}.replacement`;
+  const finalizingReceiptPath = `${resultReceiptPath}.finalizing`;
+  const invocationLockPath = `${resultReceiptPath}.lock`;
   await assertPrivateReceiptDestination(resultReceiptPath);
+  await assertReceiptAbsent(
+    invocationLockPath,
+    "storage_restore_invocation_lock_reconciliation_required",
+  );
+  await assertReceiptAbsent(
+    finalizingReceiptPath,
+    "storage_restore_finalizing_receipt_reconciliation_required",
+  );
   await assertReceiptAbsent(
     reservationReceiptPath,
     "storage_restore_reservation_receipt_reconciliation_required",
+  );
+  await assertReceiptAbsent(
+    reservationReplacementPath,
+    "storage_restore_replacement_receipt_reconciliation_required",
   );
   await assertReceiptAbsent(
     replacementReceiptPath,
@@ -506,6 +597,7 @@ export async function runStorageRestore({
   let pendingReceiptRollbackPassed = false;
   let operationReceiptOwned = false;
   let operationReceiptPublicationFailed = false;
+  let lockAcquired = false;
   const client = {
     baseUrl: binding.baseUrl,
     serviceKey: binding.serviceKey,
@@ -579,6 +671,8 @@ export async function runStorageRestore({
       localCleanupStatus: "pending",
       reconciliationRequired: true,
     };
+    await acquireInvocationLock(invocationLockPath, invocationId);
+    lockAcquired = true;
     await reservationWriter(reservationReceiptPath, {
       ...reconciliationReceipt,
       status: "STORAGE_RESTORE_WRITE_RESERVED",
@@ -629,7 +723,7 @@ export async function runStorageRestore({
   }
 
   if (operationError?.code === "storage_restore_reconciliation_required"
-      && reconciliationReceipt) {
+      && reconciliationReceipt && lockAcquired) {
     try {
       await receiptWriter(pendingReceiptPath, reconciliationReceipt);
       operationReceiptOwned = true;
@@ -674,6 +768,7 @@ export async function runStorageRestore({
 
   if (operationReceiptOwned) {
     try {
+      await assertInvocationLockOwned(invocationLockPath, invocationId);
       await receiptReplacer(pendingReceiptPath, {
         ...reconciliationReceipt,
         localCleanupStatus: cleanupFailed ? "required" : "passed",
@@ -702,6 +797,7 @@ export async function runStorageRestore({
   if (receiptPublicationFailed && pendingReceiptRollbackPassed
       && receiptReconciliationRequired) {
     try {
+      await assertInvocationLockOwned(invocationLockPath, invocationId);
       await receiptReplacer(
         pendingReceiptPath,
         rolledBackRecoveryReceipt(result, cleanupFailed),
@@ -710,6 +806,24 @@ export async function runStorageRestore({
       binding.serviceKey = "";
       if (cleanupFailed) {
         throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
+      }
+      throw fixedError("storage_restore_receipt_reconciliation_required");
+    }
+  }
+
+  if (pendingReceiptRollbackPassed && lockAcquired) {
+    try {
+      await assertInvocationLockOwned(invocationLockPath, invocationId);
+      await receiptReplacer(
+        reservationReceiptPath,
+        rolledBackRecoveryReceipt(reconciliationReceipt ?? result, cleanupFailed),
+      );
+    } catch {
+      binding.serviceKey = "";
+      if (cleanupFailed) {
+        throw fixedError(
+          "storage_restore_receipt_and_local_reconciliation_required",
+        );
       }
       throw fixedError("storage_restore_receipt_reconciliation_required");
     }
@@ -747,59 +861,17 @@ export async function runStorageRestore({
     result.localCleanupStatus = "passed";
   }
   try {
-    await receiptWriter(resultReceiptPath, result);
+    await assertInvocationLockOwned(invocationLockPath, invocationId);
+    await receiptWriter(finalizingReceiptPath, result);
   } catch (error) {
-    if ([
-      "storage_restore_receipt_reconciliation_required",
-      "storage_restore_receipt_exists",
-    ].includes(error?.code)) {
-      binding.serviceKey = "";
-      if (cleanupFailed) {
-        throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
-      }
-      throw error;
-    }
-    try {
-      await removeObjects(client, STORAGE_BUCKET, [...confirmedUploads].reverse());
-      const remaining = await listObjects(client, STORAGE_BUCKET);
-      if (remaining.length !== 0) {
-        throw fixedError("storage_restore_rollback_incomplete");
-      }
-    } catch {
-      binding.serviceKey = "";
-      if (cleanupFailed) {
-        throw fixedError("storage_restore_remote_and_local_reconciliation_required");
-      }
-      throw fixedError("storage_restore_reconciliation_required");
-    }
+    binding.serviceKey = "";
     if (cleanupFailed) {
-      try {
-        await receiptReplacer(
-          pendingReceiptPath,
-          rolledBackRecoveryReceipt(result, true),
-        );
-      } catch {
-        binding.serviceKey = "";
-        throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
-      }
-      binding.serviceKey = "";
       throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
     }
-    try {
-      await assertReceiptOwned(pendingReceiptPath, invocationId);
-      await cleanupImpl(pendingReceiptPath, { force: true });
-      await syncDirectoryImpl(dirname(pendingReceiptPath));
-    } catch {
-      binding.serviceKey = "";
-      if (cleanupFailed) {
-        throw fixedError("storage_restore_receipt_and_local_reconciliation_required");
-      }
-      throw fixedError("storage_restore_receipt_reconciliation_required");
-    }
-    binding.serviceKey = "";
     throw error;
   }
   try {
+    await assertInvocationLockOwned(invocationLockPath, invocationId);
     await assertReceiptOwned(pendingReceiptPath, invocationId);
     await cleanupImpl(pendingReceiptPath, { force: true });
     await syncDirectoryImpl(dirname(pendingReceiptPath));
@@ -811,12 +883,31 @@ export async function runStorageRestore({
     throw fixedError("storage_restore_pending_receipt_cleanup_required");
   }
   try {
+    await assertInvocationLockOwned(invocationLockPath, invocationId);
     await assertReceiptOwned(reservationReceiptPath, invocationId);
     await cleanupImpl(reservationReceiptPath, { force: true });
     await syncDirectoryImpl(dirname(reservationReceiptPath));
   } catch {
     binding.serviceKey = "";
     throw fixedError("storage_restore_reservation_receipt_cleanup_required");
+  }
+  try {
+    await releaseInvocationLock(
+      invocationLockPath,
+      invocationId,
+      cleanupImpl,
+      syncDirectoryImpl,
+    );
+    lockAcquired = false;
+  } catch {
+    binding.serviceKey = "";
+    throw fixedError("storage_restore_invocation_lock_cleanup_required");
+  }
+  try {
+    await receiptPromoter(finalizingReceiptPath, resultReceiptPath);
+  } catch (error) {
+    binding.serviceKey = "";
+    throw error;
   }
   binding.serviceKey = "";
   return result;

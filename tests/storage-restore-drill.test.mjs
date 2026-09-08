@@ -109,6 +109,7 @@ function storageApiMock({
   ambiguousUploadStatus = null,
   includeRootPlaceholder = false,
   failDelete = false,
+  onList = null,
 } = {}) {
   const objects = new Map(initial.map((item) => [item.path, Buffer.from(item.bytes)]));
   const calls = [];
@@ -125,6 +126,7 @@ function storageApiMock({
     }
     if (method === "POST" && parsed.pathname === "/storage/v1/object/list/fanmind-assets") {
       const body = JSON.parse(options.body);
+      await onList?.(body, calls);
       const prefix = body.prefix;
       const directFiles = [];
       const folders = new Set();
@@ -208,6 +210,9 @@ test("local synthetic Storage drill proves empty prewrite and exact postwrite", 
     assert.equal(storedReceipt.cleanupRequired, true);
     assert.equal(storedReceipt.localCleanupStatus, "passed");
     await assert.rejects(readFile(`${resultPath}.reservation`), /ENOENT/u);
+    await assert.rejects(readFile(`${resultPath}.pending`), /ENOENT/u);
+    await assert.rejects(readFile(`${resultPath}.finalizing`), /ENOENT/u);
+    await assert.rejects(readFile(join(`${resultPath}.lock`, "owner.json")), /ENOENT/u);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -290,6 +295,69 @@ test("Storage drill blocks a stale invocation reservation before provider access
   }
 });
 
+test("Storage drill preserves a foreign invocation lock and blocks provider access", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-stale-lock-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const lockPath = `${resultPath}.lock`;
+    const owner = {
+      invocationId: "foreign-invocation",
+      status: "STORAGE_RESTORE_INVOCATION_LOCKED",
+    };
+    await mkdir(lockPath, { mode: 0o700 });
+    await writePrivateReceipt(join(lockPath, "owner.json"), owner);
+    await assert.rejects(
+      runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
+      /storage_restore_invocation_lock_reconciliation_required/u,
+    );
+    assert.equal(api.calls.length, 0);
+    assert.deepEqual(
+      JSON.parse(await readFile(join(lockPath, "owner.json"), "utf8")),
+      owner,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill preserves a lock won concurrently after the startup check", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-lock-race-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const resultPath = join(root, "result.json");
+    const lockPath = `${resultPath}.lock`;
+    const owner = {
+      invocationId: "concurrent-invocation",
+      status: "STORAGE_RESTORE_INVOCATION_LOCKED",
+    };
+    let injected = false;
+    const api = storageApiMock({
+      onList: async () => {
+        if (injected) return;
+        injected = true;
+        await mkdir(lockPath, { mode: 0o700 });
+        await writePrivateReceipt(join(lockPath, "owner.json"), owner);
+      },
+    });
+    await assert.rejects(
+      runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
+      /storage_restore_invocation_lock_exists/u,
+    );
+    assert.equal(api.calls.some((call) => call.method === "POST"
+      && call.path.includes("/storage/v1/object/fanmind-assets/")), false);
+    assert.deepEqual(
+      JSON.parse(await readFile(join(lockPath, "owner.json"), "utf8")),
+      owner,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("Storage drill rolls back all uploaded objects after a bounded write failure", async () => {
   const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-rollback-"));
   try {
@@ -299,12 +367,19 @@ test("Storage drill rolls back all uploaded objects after a bounded write failur
       { path: "b.txt", bytes: Buffer.from("b") },
     ]);
     const api = storageApiMock({ failUploadPath: "b.txt" });
+    const resultPath = join(root, "result.json");
     await assert.rejects(
-      runStorageRestore(runOptions(data, join(root, "result.json"), api.fetchImpl)),
+      runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
       /storage_api_upload_failed/u,
     );
     assert.equal(api.objects.size, 0);
     assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
+    const reservation = JSON.parse(
+      await readFile(`${resultPath}.reservation`, "utf8"),
+    );
+    assert.equal(reservation.status, "STORAGE_RESTORE_ROLLED_BACK");
+    assert.equal(reservation.rollbackStatus, "passed");
+    assert.equal(reservation.localCleanupStatus, "passed");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -505,7 +580,7 @@ test("private receipt replacement refuses an ownership change", async () => {
   }
 });
 
-test("Storage drill rolls back remote objects when receipt publication fails", async () => {
+test("Storage drill preserves verified remote state when finalization write fails", async () => {
   const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-receipt-rollback-"));
   try {
     await chmod(root, 0o700);
@@ -532,10 +607,22 @@ test("Storage drill rolls back remote objects when receipt publication fails", a
       }),
       /synthetic_receipt_write_failure/u,
     );
-    assert.equal(api.objects.size, 0);
-    assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
+    assert.equal(api.objects.size, 1);
+    assert.equal(api.calls.some((call) => call.method === "DELETE"), false);
     await assert.rejects(readFile(resultPath), /ENOENT/u);
-    await assert.rejects(readFile(`${resultPath}.pending`), /ENOENT/u);
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.pending`, "utf8")).postwriteExact,
+      true,
+    );
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.reservation`, "utf8")).status,
+      "STORAGE_RESTORE_WRITE_RESERVED",
+    );
+    assert.equal(
+      JSON.parse(await readFile(join(`${resultPath}.lock`, "owner.json"), "utf8"))
+        .status,
+      "STORAGE_RESTORE_INVOCATION_LOCKED",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -566,7 +653,7 @@ test("Storage drill preserves verified remote state when final receipt publicati
     assert.equal(api.objects.has("avatars/one.png"), true);
     assert.equal(api.calls.some((call) => call.method === "DELETE"), false);
     assert.equal(
-      JSON.parse(await readFile(resultPath, "utf8")).postwriteExact,
+      JSON.parse(await readFile(`${resultPath}.finalizing`, "utf8")).postwriteExact,
       true,
     );
     assert.equal(
@@ -586,7 +673,8 @@ test("Storage drill preserves the remote outcome when local cleanup reports fail
     const api = storageApiMock();
     const resultPath = join(root, "result.json");
     const cleanupImpl = async (path, options) => {
-      if (path.endsWith(".pending") || path.endsWith(".reservation")) {
+      if (path.endsWith(".pending") || path.endsWith(".reservation")
+          || path.endsWith(".lock")) {
         return rm(path, options);
       }
       await rm(path, options);
@@ -615,7 +703,8 @@ test("Storage drill persists pending recovery evidence before plaintext cleanup"
     const resultPath = join(root, "result.json");
     let cleanupObservedPending = false;
     const cleanupImpl = async (path, options) => {
-      if (path.endsWith(".pending") || path.endsWith(".reservation")) {
+      if (path.endsWith(".pending") || path.endsWith(".reservation")
+          || path.endsWith(".lock")) {
         return rm(path, options);
       }
       const pending = JSON.parse(await readFile(`${resultPath}.pending`, "utf8"));
@@ -822,25 +911,24 @@ test("Storage drill preserves remote receipt and local duties after triple failu
   }
 });
 
-test("Storage drill reports reconciliation when a rolled-back pending receipt remains", async () => {
+test("Storage drill records a proven rollback in pending and reservation receipts", async () => {
   const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-pending-stale-"));
   try {
     await chmod(root, 0o700);
     const data = await fixture(root);
     const api = storageApiMock();
     const resultPath = join(root, "result.json");
-    const cleanupImpl = async (path, options) => {
-      if (path.endsWith(".pending")) throw new Error("synthetic_pending_remove_failure");
-      return rm(path, options);
-    };
     const receiptWriter = async (path, receipt) => {
-      if (path.endsWith(".pending")) return writePrivateReceipt(path, receipt);
-      throw new Error("synthetic_final_receipt_failure");
+      await writePrivateReceipt(path, receipt);
+      if (path.endsWith(".pending")) {
+        const error = new Error("storage_restore_receipt_reconciliation_required");
+        error.code = "storage_restore_receipt_reconciliation_required";
+        throw error;
+      }
     };
     await assert.rejects(
       runStorageRestore({
         ...runOptions(data, resultPath, api.fetchImpl),
-        cleanupImpl,
         receiptWriter,
       }),
       /storage_restore_receipt_reconciliation_required/u,
@@ -849,7 +937,11 @@ test("Storage drill reports reconciliation when a rolled-back pending receipt re
     assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
     assert.equal(
       JSON.parse(await readFile(`${resultPath}.pending`, "utf8")).status,
-      "STORAGE_RESTORE_POSTWRITE_VERIFIED_CLEANUP_PENDING",
+      "STORAGE_RESTORE_ROLLED_BACK",
+    );
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.reservation`, "utf8")).status,
+      "STORAGE_RESTORE_ROLLED_BACK",
     );
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -876,13 +968,90 @@ test("Storage drill reports both plaintext and pending-marker cleanup failures",
       /storage_restore_pending_receipt_and_local_reconciliation_required/u,
     );
     assert.equal(api.objects.has("avatars/one.png"), true);
+    await assert.rejects(readFile(resultPath), /ENOENT/u);
     assert.equal(
-      JSON.parse(await readFile(resultPath, "utf8")).localCleanupStatus,
+      JSON.parse(await readFile(`${resultPath}.finalizing`, "utf8"))
+        .localCleanupStatus,
       "required",
     );
     assert.equal(
       JSON.parse(await readFile(`${resultPath}.pending`, "utf8")).status,
       "STORAGE_RESTORE_POSTWRITE_VERIFIED_CLEANUP_PENDING",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill withholds the final receipt until reservation cleanup is durable", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-reservation-cleanup-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const cleanupImpl = async (path, options) => {
+      if (path.endsWith(".reservation")) {
+        throw new Error("synthetic_reservation_remove_failure");
+      }
+      return rm(path, options);
+    };
+    await assert.rejects(
+      runStorageRestore({
+        ...runOptions(data, resultPath, api.fetchImpl),
+        cleanupImpl,
+      }),
+      /storage_restore_reservation_receipt_cleanup_required/u,
+    );
+    await assert.rejects(readFile(resultPath), /ENOENT/u);
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.finalizing`, "utf8")).postwriteExact,
+      true,
+    );
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.reservation`, "utf8")).status,
+      "STORAGE_RESTORE_WRITE_RESERVED",
+    );
+    assert.equal(
+      JSON.parse(await readFile(join(`${resultPath}.lock`, "owner.json"), "utf8"))
+        .status,
+      "STORAGE_RESTORE_INVOCATION_LOCKED",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill withholds the final receipt until invocation lock cleanup is durable", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-lock-cleanup-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const cleanupImpl = async (path, options) => {
+      if (path.endsWith(".lock")) {
+        throw new Error("synthetic_lock_remove_failure");
+      }
+      return rm(path, options);
+    };
+    await assert.rejects(
+      runStorageRestore({
+        ...runOptions(data, resultPath, api.fetchImpl),
+        cleanupImpl,
+      }),
+      /storage_restore_invocation_lock_cleanup_required/u,
+    );
+    await assert.rejects(readFile(resultPath), /ENOENT/u);
+    assert.equal(
+      JSON.parse(await readFile(`${resultPath}.finalizing`, "utf8")).postwriteExact,
+      true,
+    );
+    await assert.rejects(readFile(`${resultPath}.reservation`), /ENOENT/u);
+    assert.equal(
+      JSON.parse(await readFile(join(`${resultPath}.lock`, "owner.json"), "utf8"))
+        .status,
+      "STORAGE_RESTORE_INVOCATION_LOCKED",
     );
   } finally {
     await rm(root, { recursive: true, force: true });
