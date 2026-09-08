@@ -219,7 +219,67 @@ This test uses a synthetic in-process Storage API double because Docker and the
 Supabase CLI are not available in the local execution environment. It neither
 contacts Supabase nor decrypts the real backup. A green result proves the
 controller contract only and must never advance the state beyond
-`DB_POSTCHECKED` or be described as a real `STORAGE_RESTORED` result.
+`DB_POSTCHECKED` or be described as a real `STORAGE_RESTORED` result. The
+controller therefore emits only
+`STORAGE_RESTORE_EXECUTED_PENDING_EXTERNAL_ACCEPTANCE`; the canonical state
+transition requires separately authorized, target-bound external evidence and
+Project-Memory acceptance. An indeterminate transport or server outcome has no
+provable object ownership, so it stops for external reconciliation and never
+authorizes automatic deletion of that path. Only uploads with a confirmed
+success response are eligible for rollback. Before the first write, the
+controller atomically creates a private mode-0600 JSON receipt file at
+`result.json.lock` and writes a separate immutable per-invocation reservation
+that binds the artifact, target and intended write. A concurrent or stale lock
+receipt blocks before any provider write and is never removed by a losing
+invocation. The controller also writes a
+reconciliation marker before deleting temporary plaintext, then
+atomically updates that marker with the observed local-cleanup result. A
+concurrently created pending marker is never superseded by this run. After the
+exact remote postcheck, the controller
+writes a durable `.pending` recovery receipt before deleting temporary
+plaintext; both the receipt and its parent directory are `fsync`ed before
+cleanup. The plaintext tree removal and the later pending-marker removal
+are each followed by an `fsync` of their owning directory before either cleanup
+is recorded as passed. Startup rejects an existing lock, reservation, pending
+marker, interrupted replacement or finalization marker before any provider
+write so recovery must reconcile it first. After a proven bounded remote
+rollback, both the owned pending marker and reservation are durably replaced
+with the accurate rollback-passed state; neither continues to imply a populated
+target. A local plaintext-cleanup failure emits
+`STORAGE_RESTORE_EXECUTED_LOCAL_CLEANUP_REQUIRED`, preserves the verified
+remote outcome and exits as reconciliation-required instead of inviting a
+retry. A simultaneous remote and local cleanup failure remains the stronger
+`storage_restore_remote_and_local_reconciliation_required` condition.
+Receipt-publication failure combined with local cleanup failure similarly emits
+`storage_restore_receipt_and_local_reconciliation_required` so neither duty is
+hidden. Once the remote postcheck is exact, receipt-finalization failure never
+authorizes another remote rollback. The controller atomically replaces the
+owned lock receipt with the final receipt content while retaining the lock
+pathname, then durably removes the owned pending marker and reservation. A
+single atomic rename finally turns that lock inode into the terminal receipt;
+lock release and terminal publication therefore happen together. Failure at
+any cleanup or promotion boundary leaves the terminal receipt absent and
+retains the owned lock/recovery evidence for reconciliation. The receipt stays
+explicitly reconciliation-required pending external acceptance; if the
+post-rename directory sync fails, the controller attempts to rename it back to
+the lock path and never exposes a locally terminal claim. If plaintext cleanup also
+failed before a bounded remote rollback, the pending marker is deliberately
+preserved by an atomic, parent-directory-synced replacement. Its
+replacement status records that rollback passed while local cleanup remains
+required, while target cleanup is no longer required. The same replacement is
+performed if the initial pending publication was indeterminate but rollback
+succeeded and the marker is known to belong to this invocation. A marker created
+concurrently by another writer is preserved and forces reconciliation. Every
+replacement and marker removal requires the invocation lock and revalidates the
+per-invocation identity through one `O_NOFOLLOW` file handle so metadata and
+receipt JSON come from the same opened inode. A pre-existing final receipt is
+treated as an ownership conflict and never overwritten or used to authorize
+remote rollback.
+Simultaneous plaintext and pending-marker cleanup failures emit
+`storage_restore_pending_receipt_and_local_reconciliation_required`. An
+indeterminate pending-receipt publication combined with failed remote rollback
+and failed plaintext cleanup emits the complete
+`storage_restore_remote_receipt_and_local_reconciliation_required` duty.
 
 For a standalone database backup, content verification runs:
 
