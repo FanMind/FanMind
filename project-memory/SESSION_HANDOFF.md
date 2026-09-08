@@ -3,10 +3,16 @@
 Update this file at the end of a substantial work session or whenever work is paused at a non-obvious state. It is the fastest safe restart point, but it never overrides code, tests or canonical source-of-truth documents.
 
 ## Publication authorization received — 2026-09-08
-- Bounded correction and reconciliation are committed locally on `ops/finishline-resume-20260908` in `/workspace/fanmind-finishline-20260908`; no PR exists and no branch was published.
-- Automatic approval review rejected the push. A read-only GitHub API check confirmed this exact repository belongs to the FanMind organization, is public, and the connection has admin/push rights. After that verification, review still rejected publication because the user has not explicitly authorized public disclosure of the code and Project Memory contents. No indirect publishing route may bypass this rejection.
+- Published result: PR #1087 on ops/finishline-resume-20260908 contains the exact locally checked tree. Initial head 1164702f passed seven workflows; FanMind CI exposed two stale central truth assertions. Correction c518712f updates those assertions and preserves four verified negative paths. Final exact-head CI/review and merge remain pending.
+- Historical publication blocker, now superseded by explicit owner approval: automatic approval review rejected the push. A read-only GitHub API check confirmed this exact repository belongs to the FanMind organization, is public, and the connection has admin/push rights. After that verification, review still rejected publication because the user has not explicitly authorized public disclosure of the code and Project Memory contents. No indirect publishing route may bypass this rejection.
 - Owner approved public publication in the next turn: FM-AUTH-FINISHLINE-PUBLISH-20260908. The automatic-review blocker is superseded; publish this branch, complete PR checks/review and the authorized publication path. Restore continues at DB_POSTCHECKED under its exact target/artifact boundaries.
-- Latest local verification: 31 focused tests, full Operations 1231/1231, ESLint and governance checks pass. Exact Staging deployment and read-only Stripe webhook verification succeeded; KI runtime acceptance remains blocked behind the reviewed workflow fix.
+- Latest local verification: 31 focused tests, full Operations 1231/1231, ESLint, full Product/Referral/Legal/Actions truth and governance checks pass. Exact Staging deployment and read-only Stripe webhook verification succeeded; KI runtime acceptance remains blocked behind the reviewed workflow fix.
+
+## Restore access checkpoint — 2026-09-08
+- Both FanMind Supabase projects have no development branch. A distinct disposable target/cost decision remains open; current official Preview compute starts at USD 0.01344/hour plus applicable usage (Supabase branching usage documentation).
+- Secure Exoscale sign-in was submitted once and the portal returned invalid credentials. The optional retry question received no answer. No authenticated portal/server state is claimed and no login is retried automatically.
+- No SSH identity/agent or encrypted backup/private receipt is available locally. Accepted database run 33178878764 currently exposes zero downloadable artifacts. Obtain protected-host access to the existing encrypted backup and private receipts; never repeat the successful database Restore to regenerate evidence.
+- No branch/project, bucket, decryption, upload, host key/password change, target deletion or runtime Restore was performed. The next true Storage transition remains blocked on access plus exact target/artifact authorization.
 
 ## Owner resume — 2026-09-08
 - Bernd resumed Restore, Android/Push, KI/Billing and Security/Meta before real Social integrations. Existing prices are complete and must not be recreated or repriced (FM-DEC-012).
