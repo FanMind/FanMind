@@ -587,7 +587,7 @@ requireText(
   "Die vorbereitete E-Mail-Abnahme darf ohne echten Providerlauf nicht als erledigt gelten.",
 );
 
-// Member data boundary stays externally unapplied until the controlled Staging evidence exists.
+// Staging schema evidence is distinct from real browser and Production acceptance.
 requireText(
   "package.json",
   '"db:workspace-member-data-boundary:check": "node scripts/operations/workspace-member-data-boundary-runner.mjs --check"',
@@ -608,11 +608,18 @@ requireText(
   "Status: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.",
   "Der belegte Staging-Schemazustand darf nicht als reale Browser-Abnahme gelten.",
 );
+for (const file of ["README.md", "docs/SOURCE_OF_TRUTH.md", "docs/database/fanmind_current_schema.md"]) {
+  requireText(
+    file,
+    "Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.",
+    `Der belegte Member-Schemazustand und die offene Browser-Abnahme müssen in ${file} konsistent bleiben.`,
+  );
+}
 for (const file of ["README.md", "docs/SOURCE_OF_TRUTH.md"]) {
   requireText(
     file,
     "Go-live- und Member-Aktivierungsblocker",
-    `Die direkte Member-JWT-/RLS-Grenze muss in ${file} bis zum Apply ausdrücklich offen bleiben.`,
+    `Die direkte Member-JWT-/RLS-Grenze muss in ${file} bis zur realen Browser-Abnahme ausdrücklich offen bleiben.`,
   );
 }
 requireText(

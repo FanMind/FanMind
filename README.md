@@ -540,22 +540,22 @@ Die aktuelle Datenbankwahrheit steht in:
 
 Workspace-scoped Daten müssen per RLS und serverseitiger Autorisierung geschützt sein. Vor echten Kundendaten ist `docs/SECURITY_RLS_SECRETS_CHECK.md` abzuarbeiten.
 
-Die vorbereitete Member-Datengrenze liegt checksum-gebunden unter
-`supabase/controlled/20260816120000_workspace_member_data_boundary.sql` und
-steht auf `CHECKED_NOT_APPLIED`. Der App-/Renderer-Stand gibt Membern nur das
-Safe-DTO und hält Web- und Mobile-Mutationen Owner-only. Die direkte
-PostgREST-/JWT-Grenze ersetzt den Zugriff auf die volle Workspace-Zeile,
-härtet CRM-/AI-/Content-Writes auf aktive Owner und reduziert
-`social_connections` jedoch erst nach dem isoliert nachgewiesenen Control-
-Apply. Bis Apply plus Postflight belegt sind, bleibt diese direkte DB-Grenze
-ein Go-live- und Member-Aktivierungsblocker. Auch danach aktiviert sie keine
-Member-Schreibrechte; dafür wäre ein separat geprüfter atomarer DB-RPC-Vertrag
-nötig. Der getrennte, geschützte Staging-Pfad ist vorbereitet: exakten
-App-Commit zuerst deployen, kontrollierten Apply ausführen, unabhängig
-read-only verifizieren und erst dann die reale Chromium-/CSV-Abnahme mit
-abschließendem Postflight starten. Kein normaler Deploy und keine generische
-Migration wenden den Control an. Runbook:
-`docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md`.
+Die Member-Datengrenze liegt checksum-gebunden unter
+`supabase/controlled/20260816120000_workspace_member_data_boundary.sql`.
+Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
+Der gemeinsame read-only Rollout `34267504075` vom 8. September 2026 bestätigt
+den vollständigen Staging-Postflight (`WORKSPACE_MEMBER_BOUNDARY=verify`).
+Dies belegt den bestehenden Schemazustand, keine neue Apply-Ausführung und
+keine Production-Abnahme. Der App-/Renderer-Stand gibt Membern nur das
+Safe-DTO und hält Web- und Mobile-Mutationen Owner-only. Die reale
+Chromium-/CSV-Abnahme mit abschließendem unabhängigen Verify bleibt ein
+Go-live- und Member-Aktivierungsblocker. Ein erfolgreicher Schema-Postflight
+aktiviert keine Member-Schreibrechte; dafür wäre ein separat geprüfter
+atomarer DB-RPC-Vertrag nötig. Auf einem noch ungeprüften Ziel gilt weiter:
+App zuerst deployen, den getrennten geschützten Staging-Apply-/Verify-Pfad
+nutzen und den vollständigen Postflight vor der Browser-Abnahme belegen.
+Kein normaler Deploy und keine generische Migration wenden den Control an.
+Runbook: `docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md`.
 
 Die Härtung serververwalteter Workspace-Felder wird deploy-before-migrate als
 Expand-/Contract-Rollout ausgerollt: Der App-Brückenstand fällt ausschließlich

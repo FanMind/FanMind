@@ -985,14 +985,16 @@ Pflichtsatz:
   Administration Owner-only und processing-gebunden. Die direkte
   PostgREST-/JWT-Grenze für volle Workspace-/Legal-Zeilen,
   Connector-Bindungen, Token-/Syncdaten und zwölf Member-writable Tabellen ist
-  noch nicht als geschlossen belegt: Der checksum-gebundene Control
-  `20260816120000_workspace_member_data_boundary.sql` ist
-  `CHECKED_NOT_APPLIED`. Der geschützte, getrennte Staging-Apply-/Verify-Pfad
-  ist vorbereitet, aber noch nicht extern ausgeführt. App-first-Deploy,
-  isolierter Apply, unabhängiger Postflight, reale Chromium-Abnahme und finaler
-  Verify sind deshalb ein Go-live- und Member-Aktivierungsblocker. Auch ein
-  erfolgreicher RLS-Postflight aktiviert keine Member-Schreibrechte
-  (`docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md`).
+  ist auf Staging durch den vollständigen read-only Postflight des Controls
+  `20260816120000_workspace_member_data_boundary.sql` belegt.
+  Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
+  Beleg: gemeinsamer Rollout `34267504075` vom 8. September 2026,
+  `WORKSPACE_MEMBER_BOUNDARY=verify`. Dies ist keine neue Apply-Ausführung
+  und keine Production-Abnahme. Reale Chromium-/CSV-Abnahme und finaler
+  unabhängiger Verify bleiben ein Go-live- und Member-Aktivierungsblocker.
+  Der getrennte geschützte Apply-/Verify-Pfad bleibt für ungeprüfte Ziele
+  App-first gebunden. Auch ein erfolgreicher RLS-Postflight aktiviert keine
+  Member-Schreibrechte (`docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md`).
 - jede Mutation prüft User, Workspace und Ressource;
 - Demo-Workspaces enthalten keine echten Kundendaten;
 - externe Plattform-Login-Daten werden nicht gespeichert;

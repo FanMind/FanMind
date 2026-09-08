@@ -10,7 +10,7 @@ Update this file at the end of a substantial work session or whenever work is pa
 
 ## Restore access checkpoint — 2026-09-08
 - Both FanMind Supabase projects have no development branch. A distinct disposable target/cost decision remains open; current official Preview compute starts at USD 0.01344/hour plus applicable usage (Supabase branching usage documentation).
-- Secure Exoscale sign-in was submitted once and the portal returned invalid credentials. The optional retry question received no answer. No authenticated portal/server state is claimed and no login is retried automatically.
+- Superseding access evidence after owner confirmed login: the authenticated Exoscale FanMind portal shows the exact existing fanmind-restore-01 running in at-vie-2. Portal access is restored; it does not provide the protected host SSH identity. The earlier failed login is historical and must not be repeated.
 - No SSH identity/agent or encrypted backup/private receipt is available locally. Accepted database run 33178878764 currently exposes zero downloadable artifacts. Obtain protected-host access to the existing encrypted backup and private receipts; never repeat the successful database Restore to regenerate evidence.
 - No branch/project, bucket, decryption, upload, host key/password change, target deletion or runtime Restore was performed. The next true Storage transition remains blocked on access plus exact target/artifact authorization.
 

@@ -910,3 +910,13 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Countercheck: complete Product/Referral/Legal/Actions truth PASS. Four real verifier mutation checks reject Production target, Production runtime, missing deny origin and SQL Apply; original workflow restored and reverified. Prior local statements about truth drift refer to the separate Project Memory checker; the full npm truth gate was first executed remotely and is now reconciled locally.
 - Restore feasibility: no branch exists on either FanMind Supabase target; no local SSH identity or encrypted backup/receipt is available. Exoscale secure sign-in submitted once but portal returned invalid credentials; no authenticated server state or access change is claimed. Current official Preview pricing starts at USD 0.01344/hour plus usage, correcting the older EUR label. Target cost decision and actual protected-host access remain unresolved; no new target, database Restore, decryption, upload or cleanup action occurred.
 - Next step: final exact-head CI/review and authorized publication; then current-main Staging acceptance. Real Restore needs secure provider/host access and a distinct target before any artifact operation.
+
+
+## RECEIPT-FM-AI-PR1087-CANONICAL-RECONCILIATION-20260908
+- Task: FM-AI-001 / FM-SEC-001 / FM-RST-001
+- Status: IN_PROGRESS
+- Risk: R4
+- Review: final-head P2 on 4b569ecc identified stale member-boundary statements in README, SOURCE_OF_TRUTH and current schema. All three now distinguish observed Staging SCHEMA_VERIFIED from open real Chromium acceptance and unproven Production state; the central truth guard enforces the same wording in each.
+- Access: owner confirmed successful Exoscale login. Independent portal read proves FanMind organization and the exact existing fanmind-restore-01 running in at-vie-2. This supersedes the prior failed-login checkpoint only; no SSH identity, backup/receipt access or actual Storage Restore is claimed.
+- Safety: no new target, database Restore, decryption, upload, password/key/firewall change or price change. DB_POSTCHECKED remains accepted and overall Restore remains PARTIAL.
+- Next step: verify full truth and Project Memory controls, publish the reviewed correction, complete exact-head CI/review, merge and deploy; protected-host access and distinct disposable Storage target remain required.
