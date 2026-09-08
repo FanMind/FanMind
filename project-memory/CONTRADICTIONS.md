@@ -12,10 +12,10 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Claim A: the local-only Storage controller was merge-ready with eight green workflows and zero visible review threads.
 - Source B: five GitHub review threads created immediately after the squash merge
 - Claim B: the merged controller could prematurely emit `STORAGE_RESTORED`, miss an indeterminate first upload, retain a partial result receipt, terminate pagination from a filtered page and obscure a successful remote outcome when local cleanup fails.
-- Stronger/current evidence: the post-merge line-bound review findings against exact PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9` plus the later exact-head durability, reconciliation, concurrency and finalization findings through PR #1085 head `fae7ab69a9db9b1340135acb4cd3d341f9b89fc8`.
-- Status: RECONCILIATION_REQUIRED
-- Resolution/action: repair every original and follow-on finding on the repository-only PR #1085 with focused regressions and renew exact-head acceptance; keep the accepted Restore progression at `DB_POSTCHECKED` and the real provider transition deferred.
-- Evidence: PR #1082/#1085 review threads plus focused tests in `tests/storage-restore-drill.test.mjs`.
+- Stronger/current evidence: the post-merge line-bound review findings against exact PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9`, every later durability/reconciliation/concurrency/finalization finding through PR #1085, and the clean exact-head review of final head `7d32f5a0c29b8ab581a736b0744bfdcf41f5eddb`.
+- Status: RESOLVED
+- Resolution/action: PR #1085 repaired every original and follow-on finding with 42 focused regressions and 1,230 full Operations tests. The final exact head passed all seven workflows, had zero unresolved threads and received a clean Codex review before SHA-bound squash merge `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`. Keep the accepted Restore progression at `DB_POSTCHECKED`; the real provider transition remains deferred under `FM-RST-OWNER-007`.
+- Evidence: PR #1082/#1085 review threads; focused tests in `tests/storage-restore-drill.test.mjs`; PR #1085 runs `34235896782`, `34235896583`, `34235896590`, `34235896675`, `34235896490`, `34235896627`, `34235896617`; clean exact-head Codex review comment `5586466894`; merge `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`.
 
 ## CTR-FM-001
 - Date: 2026-08-19

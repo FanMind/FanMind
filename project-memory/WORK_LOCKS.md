@@ -1,7 +1,7 @@
 # Work Locks
 
 ## LOCK-FM-RST-001-STORAGE-CONTROLLER-REVIEW-20260907
-- Status: ACTIVE
+- Status: RELEASED
 - Task: FM-RST-001
 - Holder: Codex
 - Risk: R4 repository-only repair after delayed PR #1082 review
@@ -9,6 +9,8 @@
 - Scope: reserve the canonical `STORAGE_RESTORED` state for external acceptance; acquire an exclusive invocation/recovery receipt-lock and reserve every invocation durably before remote writes; reconcile indeterminate uploads and receipt publication; protect receipt ownership across replacement/removal races; durably replace both owned recovery receipts after proven rollback; atomically rename the finalized lock receipt into the terminal path only after pending/reservation cleanup; make receipt/rollback/local-cleanup combinations fail closed without dropping a duty; durably sync receipt and plaintext cleanup directories; paginate from the raw provider page; preserve a verified remote outcome when rollback ownership is absent or a foreign final receipt exists. Add synthetic regressions and reconcile Project Memory. No real backup, Supabase target, upload, database, Production or FanMind Staging access.
 - Evidence plan: focused negative/regression tests, full Operations, lint/build/truth/Project-Memory checks, exact-head CI and zero unresolved review findings.
 - Release condition: reviewed fix merged with every delayed #1082 finding explicitly reconciled.
+- Released: 2026-09-08 after final PR #1085 head `7d32f5a0c29b8ab581a736b0744bfdcf41f5eddb` passed all seven workflows, had zero unresolved review threads, received a clean exact-head Codex review and SHA-bound squash-merged as `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`.
+- Resume from: no active repository repair. Real external Storage stays deferred under `FM-RST-OWNER-007`; no Supabase target was created or contacted and no Restore was run.
 
 ## LOCK-FM-RST-001-STORAGE-LOCAL-CONTROLLER-20260907
 - Status: RELEASED
