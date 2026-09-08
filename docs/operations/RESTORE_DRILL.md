@@ -252,12 +252,13 @@ retry. A simultaneous remote and local cleanup failure remains the stronger
 Receipt-publication failure combined with local cleanup failure similarly emits
 `storage_restore_receipt_and_local_reconciliation_required` so neither duty is
 hidden. Once the remote postcheck is exact, receipt-finalization failure never
-authorizes another remote rollback. The controller first publishes an owned
-`.finalizing` receipt, then durably removes the owned pending marker and
-reservation, releases the owned invocation lock, and only then promotes the
-finalizing inode to the terminal receipt without overwriting an existing file.
-Failure at any cleanup boundary leaves the terminal receipt absent and retains
-the finalizing/recovery evidence for reconciliation. If plaintext cleanup also
+authorizes another remote rollback. The controller atomically replaces the
+owned lock receipt with the final receipt content while retaining the lock
+pathname, then durably removes the owned pending marker and reservation. A
+single atomic rename finally turns that lock inode into the terminal receipt;
+lock release and terminal publication therefore happen together. Failure at
+any cleanup or promotion boundary leaves the terminal receipt absent and
+retains the owned lock/recovery evidence for reconciliation. If plaintext cleanup also
 failed before a bounded remote rollback, the pending marker is deliberately
 preserved by an atomic, parent-directory-synced replacement. Its
 replacement status records that rollback passed while local cleanup remains
@@ -267,9 +268,9 @@ succeeded and the marker is known to belong to this invocation. A marker created
 concurrently by another writer is preserved and forces reconciliation. Every
 replacement and marker removal requires the invocation lock and revalidates the
 per-invocation identity through one `O_NOFOLLOW` file handle so metadata and
-receipt JSON come from the same opened inode. A concurrently published final
-receipt is treated as an ownership conflict and never authorizes remote
-rollback.
+receipt JSON come from the same opened inode. A pre-existing final receipt is
+treated as an ownership conflict and never overwritten or used to authorize
+remote rollback.
 Simultaneous plaintext and pending-marker cleanup failures emit
 `storage_restore_pending_receipt_and_local_reconciliation_required`. An
 indeterminate pending-receipt publication combined with failed remote rollback

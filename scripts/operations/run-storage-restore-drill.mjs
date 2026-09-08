@@ -5,7 +5,6 @@ import { constants as fsConstants } from "node:fs";
 import {
   chmod,
   copyFile,
-  link,
   lstat,
   mkdir,
   mkdtemp,
@@ -431,26 +430,13 @@ export async function replacePrivateReceipt(
 }
 
 async function acquireInvocationLock(lockPath, invocationId) {
-  const parent = await assertPrivateReceiptDestination(lockPath);
-  let created = false;
   try {
-    await mkdir(lockPath, { mode: 0o700 });
-    created = true;
-    await syncDirectory(parent);
-    await writePrivateReceipt(join(lockPath, "owner.json"), {
+    await writePrivateReceipt(lockPath, {
       invocationId,
       status: "STORAGE_RESTORE_INVOCATION_LOCKED",
     });
   } catch (error) {
-    if (created) {
-      try {
-        await rm(lockPath, { recursive: true, force: true });
-        await syncDirectory(parent);
-      } catch {
-        throw fixedError("storage_restore_invocation_lock_reconciliation_required");
-      }
-    }
-    if (error?.code === "EEXIST") {
+    if (error?.code === "storage_restore_receipt_exists") {
       throw fixedError("storage_restore_invocation_lock_exists");
     }
     throw error;
@@ -458,49 +444,27 @@ async function acquireInvocationLock(lockPath, invocationId) {
 }
 
 async function assertInvocationLockOwned(lockPath, invocationId) {
-  let handle;
   try {
-    handle = await open(
-      lockPath,
-      fsConstants.O_RDONLY | fsConstants.O_DIRECTORY | fsConstants.O_NOFOLLOW,
-    );
-    const metadata = await handle.stat();
-    if (!metadata.isDirectory() || metadata.uid !== process.getuid()
-        || (metadata.mode & 0o077) !== 0) {
-      throw fixedError("storage_restore_invocation_lock_ownership_changed");
-    }
+    await assertReceiptOwned(lockPath, invocationId);
   } catch {
     throw fixedError("storage_restore_invocation_lock_ownership_changed");
-  } finally {
-    await handle?.close();
   }
-  await assertReceiptOwned(join(lockPath, "owner.json"), invocationId);
-}
-
-async function releaseInvocationLock(lockPath, invocationId, cleanupImpl, syncImpl) {
-  await assertInvocationLockOwned(lockPath, invocationId);
-  await cleanupImpl(lockPath, { recursive: true, force: true });
-  await syncImpl(dirname(lockPath));
 }
 
 async function promotePrivateReceipt(
   sourcePath,
   destinationPath,
-  { linkFile = link, removeFile = rm, syncDirectoryImpl = syncDirectory } = {},
+  invocationId,
+  { renameFile = rename, syncDirectoryImpl = syncDirectory } = {},
 ) {
   const parent = await assertPrivateReceiptDestination(destinationPath);
+  await assertInvocationLockOwned(sourcePath, invocationId);
+  await assertReceiptAbsent(destinationPath, "storage_restore_receipt_exists");
   try {
-    await linkFile(sourcePath, destinationPath);
-    await syncDirectoryImpl(parent);
-  } catch (error) {
-    if (error?.code === "EEXIST") throw fixedError("storage_restore_receipt_exists");
-    throw fixedError("storage_restore_receipt_reconciliation_required");
-  }
-  try {
-    await removeFile(sourcePath, { force: true });
+    await renameFile(sourcePath, destinationPath);
     await syncDirectoryImpl(parent);
   } catch {
-    throw fixedError("storage_restore_finalizing_receipt_cleanup_required");
+    throw fixedError("storage_restore_receipt_reconciliation_required");
   }
 }
 
@@ -525,6 +489,7 @@ export async function runStorageRestore({
   receiptWriter = writePrivateReceipt,
   receiptReplacer = replacePrivateReceipt,
   reservationWriter = writePrivateReceipt,
+  lockFinalizer = replacePrivateReceipt,
   receiptPromoter = promotePrivateReceipt,
 }) {
   const binding = assertEnvironment(environment);
@@ -548,16 +513,16 @@ export async function runStorageRestore({
   const replacementReceiptPath = `${pendingReceiptPath}.replacement`;
   const reservationReceiptPath = `${resultReceiptPath}.reservation`;
   const reservationReplacementPath = `${reservationReceiptPath}.replacement`;
-  const finalizingReceiptPath = `${resultReceiptPath}.finalizing`;
   const invocationLockPath = `${resultReceiptPath}.lock`;
+  const invocationLockReplacementPath = `${invocationLockPath}.replacement`;
   await assertPrivateReceiptDestination(resultReceiptPath);
   await assertReceiptAbsent(
     invocationLockPath,
     "storage_restore_invocation_lock_reconciliation_required",
   );
   await assertReceiptAbsent(
-    finalizingReceiptPath,
-    "storage_restore_finalizing_receipt_reconciliation_required",
+    invocationLockReplacementPath,
+    "storage_restore_replacement_receipt_reconciliation_required",
   );
   await assertReceiptAbsent(
     reservationReceiptPath,
@@ -769,10 +734,15 @@ export async function runStorageRestore({
   if (operationReceiptOwned) {
     try {
       await assertInvocationLockOwned(invocationLockPath, invocationId);
-      await receiptReplacer(pendingReceiptPath, {
-        ...reconciliationReceipt,
-        localCleanupStatus: cleanupFailed ? "required" : "passed",
-      });
+      await receiptReplacer(
+        pendingReceiptPath,
+        pendingReceiptRollbackPassed
+          ? rolledBackRecoveryReceipt(reconciliationReceipt, cleanupFailed)
+          : {
+              ...reconciliationReceipt,
+              localCleanupStatus: cleanupFailed ? "required" : "passed",
+            },
+      );
     } catch {
       binding.serviceKey = "";
       if (cleanupFailed) {
@@ -862,7 +832,7 @@ export async function runStorageRestore({
   }
   try {
     await assertInvocationLockOwned(invocationLockPath, invocationId);
-    await receiptWriter(finalizingReceiptPath, result);
+    await lockFinalizer(invocationLockPath, result);
   } catch (error) {
     binding.serviceKey = "";
     if (cleanupFailed) {
@@ -892,19 +862,8 @@ export async function runStorageRestore({
     throw fixedError("storage_restore_reservation_receipt_cleanup_required");
   }
   try {
-    await releaseInvocationLock(
-      invocationLockPath,
-      invocationId,
-      cleanupImpl,
-      syncDirectoryImpl,
-    );
+    await receiptPromoter(invocationLockPath, resultReceiptPath, invocationId);
     lockAcquired = false;
-  } catch {
-    binding.serviceKey = "";
-    throw fixedError("storage_restore_invocation_lock_cleanup_required");
-  }
-  try {
-    await receiptPromoter(finalizingReceiptPath, resultReceiptPath);
   } catch (error) {
     binding.serviceKey = "";
     throw error;
