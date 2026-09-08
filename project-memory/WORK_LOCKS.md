@@ -59,7 +59,7 @@
 
 ## LOCK-FINISHLINE-RESUME-20260906
 - Status: ACTIVE
-- Current bounded follow-up: FM-FAIL-022 workflow API-origin binding correction and exact-head CI/review; remote KI rollback acceptance remains pending after approved merge/deploy.
+- Current bounded result: FM-FAIL-022 resolved by PR #1087 and fresh AI acceptance 34273836166 after exact-release Production/Staging deployment. No KI correction or rollback run remains active. Wider real-device and external AI activation scope is paused at owner/provider prerequisites.
 - Task: FM-AI-001 / FM-MOB-001
 - Holder: Codex
 - Risk: R4

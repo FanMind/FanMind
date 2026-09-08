@@ -216,10 +216,11 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-022
 - Date: 2026-09-08
-- Status: CORRECTION_IN_REVIEW
+- Status: RESOLVED
 - Area: AI-tier shared Staging rollout gate
 - Attempt: exact a1bde387 deployment 34267819029 passed; acceptance 34268214078 / 102202884497 failed environment_invalid before database access, metadata verification or fixture execution. Password cleanup succeeded.
 - Cause: ai-tier-staging-acceptance.yml omitted FANMIND_TARGET_API_ORIGIN and FANMIND_PRODUCTION_API_ORIGIN required by the shared gate. The standalone rollout supplied both and passed (34267504075).
 - Correction: supply the existing Staging app variable as target origin and the fixed Production origin as a deny binding; retain all gates. The executable policy regression reproduces api_target_binding before the fix, passes afterward and rejects missing origins and Production crossover. Focused suites pass 31/31.
 - Countercheck: post-attempt read-only counts unchanged at 0/0/0/0/1 for Push registrations/attempts, AI entitlements/events and Billing events.
-- Do not repeat: no retry of the unchanged workflow/revision, no gate bypass or new price/SQL/provider action. Require reviewed merge, exact-new-main Staging deployment and a fresh protected rollback-only acceptance.
+- Resolution: PR #1087 merged as 7f681d26 after eight green workflows and resolved review. Staging deployment 34273614070 and fresh protected AI acceptance 34273836166 / 102221843980 passed with full rollback and cleanup; independent counts unchanged.
+- Do not repeat: do not retry the old failed revision, bypass gates or recreate prices/SQL/provider configuration. The exact-release correction and rollback revalidation are complete; reopen only on concrete new drift.

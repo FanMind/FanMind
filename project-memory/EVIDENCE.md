@@ -474,3 +474,14 @@ Never store secrets, private credentials, plaintext sensitive payloads, or unsaf
 - Security classification: Production three mutable search paths, two legacy retention EXECUTE warnings and leaked-password protection disabled; Staging two constrained authenticated RPC warnings and leaked-password protection disabled. Service-only no-policy INFO findings are not remediated with invented browser policies.
 - Remaining: exact protected Production hardening/Auth controls, two RPC exception decisions, actual handset/Recovery/Push evidence, real isolated Storage target/postcheck/cleanup, KI product/private/provider/Legal/Production gates and Meta consent-positive/negative Events Manager evidence. Meta browser requires login. Existing prices, DB Restore and accepted build/controller work stay closed.
 - Falsification: any schema/target/config/release change invalidates the corresponding mutable observation; nonzero/new counters or accepted provider/device receipts replace the current blockers. Gates remain partial and sales_ready=false.
+
+## FM-EV-039
+- Related: FM-AI-001 / FM-SEC-001 / FM-RST-001
+- Date: 2026-09-08
+- Target: reviewed repository, Production Web and isolated Staging; Restore provider access read-only
+- Type: exact-head CI/review, immutable merge/deployment, protected rollback acceptance and independent read-only countercheck
+- Reference: PR #1087 final head 6b5194ac96aa5e297f68aaffaa8bed3d433e58c9; merge 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59; Production deploy 34273495406, audit 34273656946 and go-live 34273656942; Staging deploy 34273614070; AI acceptance 34273836166 / 102221843980.
+- Result: eight PR workflows and all release checks PASS; the origin-binding failure is resolved. AI shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger PASS; full transaction rollback and password cleanup PASS. Independent read-only counts remain 0 Push registrations, 0 deliveries, 0 AI entitlements/events and 1 retained Billing event.
+- Restore access: authenticated Exoscale FanMind and exact running fanmind-restore-01 observed. The encrypted console is connected but requires a separate Linux login; no host/artifact/Storage acceptance is inferred.
+- Limitations: no new SQL apply, price/provider change, actual payment, paid-tier activation, new build, database Restore or Storage target. Android real-device, AI private/product/Legal/Production and Meta/security external evidence remain open.
+- Acceptance: COUNTERCHECKED for the bounded workflow correction, release and Staging rollback; overall gates remain partial and sales_ready=false.

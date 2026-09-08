@@ -1,11 +1,11 @@
 # Started Work Register
 
 ## FM-AI-001 — shared rollout binding correction 2026-09-08
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: VERIFIED
 - Risk: R4
-- Work lock: LOCK-FINISHLINE-RESUME-20260906
-- Exact next step: FM-AUTH-FINISHLINE-PUBLISH-20260908 resolves the publication blocker. Push the reviewed branch, create the PR, complete exact-head CI/review and publish; then obtain fresh exact-release Staging acceptance.
-- Result: two workflow API-origin bindings repaired, 31 focused tests pass; FM-FAIL-022 and the bounded execution receipt retain exact failure, unchanged counters and next runtime gates. Remote CI/review and approved merge/deploy remain open.
+- Work lock: LOCK-FINISHLINE-RESUME-20260906; bounded workflow/publication subtask complete, wider external owner/device scope remains paused.
+- Result: PR #1087 passed eight exact-head workflows and resolved review, merged as 7f681d26; Production deployment/audit/go-live and exact Staging deployment passed. Fresh protected AI acceptance 34273836166 / 102221843980 passed with full rollback and cleanup; independent counts remained unchanged. See FM-EV-039.
+- Exact next step: keep FM-FAIL-022 and this correction closed. Do not repeat accepted prices, Billing cutover or rollback proof without a documented invalidation. Continue distinct real-device, product/private/provider/Legal/Production gates; overall FM-AI-001 remains PARTIAL.
 
 ## FM-SEC-001 / FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resume 2026-09-08
 - Status: VERIFIED

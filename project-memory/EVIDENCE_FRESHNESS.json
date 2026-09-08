@@ -104,8 +104,9 @@
     {
       "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260906",
       "gate": "ai_billing",
+      "superseded_by": "EV-STAGING-AI-TIER-ACCEPTANCE-20260908",
       "class": "staging_smoke",
-      "status": "RECONCILIATION_REQUIRED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T14:42:15Z",
       "source": "Historical AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5 passed lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback. Its current-state use was invalidated by the later isolated Staging deploy 34058028839 of 62e6a11858e85996af03f6740819b0fc6194b4a4, which introduced later canonical Billing/AI downstream code. Retain this run as historical rollback evidence only; require a fresh exact-deployed-revision revalidation before treating the AI-tier lifecycle paths as current.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
@@ -188,6 +189,22 @@
       "status": "VERIFIED",
       "observed_at": "2026-09-08T19:09:37Z",
       "source": "FM-EV-038; exact Production/Staging advisor scans; unremediated findings, not security acceptance"
+    },
+    {
+      "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260908",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-08T20:18:00Z",
+      "source": "FM-EV-039 / exact deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 / Staging deploy 34273614070 / protected AI acceptance 34273836166 job 102221843980 / shared rollout and three ledger verifies PASS / catalog, lifecycle, browser and service-role ledger PASS / full rollback and cleanup PASS / independent read-only counts unchanged 0/0/0/0/1",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "target_binding_change",
+        "ai_ledger_schema_or_acl_change",
+        "before_new_ai_tier_staging_action"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

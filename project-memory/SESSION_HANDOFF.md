@@ -1,5 +1,16 @@
 # FanMind Session Handoff
 
+## Published runtime and Restore access — 2026-09-08
+- PR #1087 final head `6b5194ac96aa5e297f68aaffaa8bed3d433e58c9` passed all eight PR workflows with every review finding resolved, then squash-merged as `7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59`.
+- Production deployment `34273495406` / `102220717543`, independent read-only audit `34273656946` / `102221248690` and public go-live check `34273656942` / `102221247360` all passed on that release. Seven required health components passed; no Production SQL apply or paid-tier activation.
+- Isolated Staging deployment `34273614070` / `102221113332` passed on the same release, with 14 public routes, seven required health components and preserved `billing_write_freeze=false`. Optional email configuration remains unknown.
+- Fresh AI acceptance `34273836166` / `102221843980` PASS on exact deployed `7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59`: shared read-only rollout and all three ledger verifies PASS, Stripe Test catalog, browser boundary, service-role ledger and lifecycle PASS, transaction ROLLED_BACK and password cleanup successful. Independent read-only counts at 20:18 UTC remained Push registrations/attempts 0/0, AI entitlements/events 0/0, Billing events 1. This closes FM-FAIL-022 and the bounded runtime revalidation only; Plus/Ultra and overall AI/Billing acceptance remain open.
+- Restore portal access is restored: authenticated Exoscale FanMind shows exact existing `fanmind-restore-01` running in `at-vie-2`. Its encrypted provider console is reachable and displays the separate Linux login prompt. Portal authentication is not host authentication. No local SSH identity or backup/private receipt is available, and accepted database-run artifacts currently cannot be downloaded.
+- Continue from accepted `DB_POSTCHECKED`. Actual Storage and config inspection require protected-host login and the existing exact backup/private receipts, then a distinct disposable Storage target with its explicit cost/artifact/cleanup decision. No second database Restore, target reset, password/key/firewall change, new provider target or real Storage operation occurred.
+- Existing prices remain complete. Android real-device registration/delivery/Recovery, Security/Auth and Meta/provider/legal acceptance remain separate; all four overall gates remain partial and `sales_ready=false`.
+- This supersedes earlier instructions in this file to publish PR #1087, deploy `a1bde387`, or repeat the failed Exoscale portal login. Older checkpoints are retained only as history.
+
+
 Update this file at the end of a substantial work session or whenever work is paused at a non-obvious state. It is the fastest safe restart point, but it never overrides code, tests or canonical source-of-truth documents.
 
 ## Publication authorization received — 2026-09-08
