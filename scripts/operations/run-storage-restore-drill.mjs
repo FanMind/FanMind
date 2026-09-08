@@ -531,20 +531,20 @@ export async function runStorageRestore({
     "storage_restore_replacement_receipt_reconciliation_required",
   );
   await assertReceiptAbsent(
-    invocationLockPath,
-    "storage_restore_invocation_lock_reconciliation_required",
-  );
-  await assertReceiptAbsent(
-    reservationReceiptPath,
-    "storage_restore_reservation_receipt_reconciliation_required",
-  );
-  await assertReceiptAbsent(
     reservationReplacementPath,
     "storage_restore_replacement_receipt_reconciliation_required",
   );
   await assertReceiptAbsent(
     replacementReceiptPath,
     "storage_restore_replacement_receipt_reconciliation_required",
+  );
+  await assertReceiptAbsent(
+    invocationLockPath,
+    "storage_restore_invocation_lock_reconciliation_required",
+  );
+  await assertReceiptAbsent(
+    reservationReceiptPath,
+    "storage_restore_reservation_receipt_reconciliation_required",
   );
   await assertReceiptAbsent(
     pendingReceiptPath,
@@ -702,8 +702,18 @@ export async function runStorageRestore({
     try {
       await receiptWriter(pendingReceiptPath, reconciliationReceipt);
       operationReceiptOwned = true;
-    } catch {
-      operationReceiptPublicationFailed = true;
+    } catch (error) {
+      if (error?.code === "storage_restore_receipt_reconciliation_required") {
+        try {
+          await assertInvocationLockOwned(invocationLockPath, invocationId);
+          await assertReceiptOwned(pendingReceiptPath, invocationId);
+          operationReceiptOwned = true;
+        } catch {
+          operationReceiptPublicationFailed = true;
+        }
+      } else {
+        operationReceiptPublicationFailed = true;
+      }
     }
   }
 

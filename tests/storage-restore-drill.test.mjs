@@ -269,6 +269,10 @@ test("Storage drill blocks an interrupted receipt replacement before provider ac
     await writeFile(`${resultPath}.pending.replacement`, "{\"status\":\"stale\"}\n", {
       mode: 0o600,
     });
+    await writePrivateReceipt(`${resultPath}.lock`, {
+      invocationId: "stale-invocation",
+      status: "STORAGE_RESTORE_INVOCATION_LOCKED",
+    });
     await assert.rejects(
       runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
       /storage_restore_replacement_receipt_reconciliation_required/u,
@@ -293,6 +297,36 @@ test("Storage drill prioritizes an interrupted lock finalization over the stale 
     await writePrivateReceipt(`${resultPath}.lock.replacement`, {
       invocationId: "stale-invocation",
       status: "STORAGE_RESTORE_EXECUTED_PENDING_EXTERNAL_ACCEPTANCE",
+    });
+    await assert.rejects(
+      runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
+      /storage_restore_replacement_receipt_reconciliation_required/u,
+    );
+    assert.equal(api.calls.length, 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill prioritizes an interrupted reservation replacement over the lock", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-reservation-replacement-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const original = {
+      invocationId: "stale-invocation",
+      status: "STORAGE_RESTORE_WRITE_RESERVED",
+    };
+    await writePrivateReceipt(`${resultPath}.lock`, {
+      invocationId: original.invocationId,
+      status: "STORAGE_RESTORE_INVOCATION_LOCKED",
+    });
+    await writePrivateReceipt(`${resultPath}.reservation`, original);
+    await writePrivateReceipt(`${resultPath}.reservation.replacement`, {
+      ...original,
+      status: "STORAGE_RESTORE_ROLLED_BACK",
     });
     await assert.rejects(
       runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
@@ -454,6 +488,41 @@ test("Storage drill supersedes both receipts after an indeterminate later upload
     const resultPath = join(root, "result.json");
     await assert.rejects(
       runStorageRestore(runOptions(data, resultPath, api.fetchImpl)),
+      /storage_restore_reconciliation_required/u,
+    );
+    assert.equal(api.objects.size, 0);
+    for (const suffix of [".pending", ".reservation"]) {
+      const recovery = JSON.parse(await readFile(`${resultPath}${suffix}`, "utf8"));
+      assert.equal(recovery.status, "STORAGE_RESTORE_ROLLED_BACK");
+      assert.equal(recovery.rollbackStatus, "passed");
+      assert.equal(recovery.cleanupRequired, false);
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill recovers an indeterminate operation marker after proven rollback", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-operation-marker-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root, [
+      { path: "a.txt", bytes: Buffer.from("a") },
+      { path: "b.txt", bytes: Buffer.from("b") },
+    ]);
+    const api = storageApiMock({ indeterminateWithoutCommitPath: "b.txt" });
+    const resultPath = join(root, "result.json");
+    const receiptWriter = async (path, receipt) => {
+      await writePrivateReceipt(path, receipt);
+      const error = new Error("storage_restore_receipt_reconciliation_required");
+      error.code = "storage_restore_receipt_reconciliation_required";
+      throw error;
+    };
+    await assert.rejects(
+      runStorageRestore({
+        ...runOptions(data, resultPath, api.fetchImpl),
+        receiptWriter,
+      }),
       /storage_restore_reconciliation_required/u,
     );
     assert.equal(api.objects.size, 0);
