@@ -1,14 +1,32 @@
 # Started Work Register
 
+## FM-AI-001 — shared rollout binding correction 2026-09-08
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R4
+- Work lock: LOCK-FINISHLINE-RESUME-20260906
+- Exact next step: FM-AUTH-FINISHLINE-PUBLISH-20260908 resolves the publication blocker. Push the reviewed branch, create the PR, complete exact-head CI/review and publish; then obtain fresh exact-release Staging acceptance.
+- Result: two workflow API-origin bindings repaired, 31 focused tests pass; FM-FAIL-022 and the bounded execution receipt retain exact failure, unchanged counters and next runtime gates. Remote CI/review and approved merge/deploy remain open.
+
+## FM-SEC-001 / FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resume 2026-09-08
+- Status: VERIFIED
+- Disposition: bounded live reconciliation complete, read-only lock released; whole finishline remains partial and the bounded KI workflow repair has its own active record.
+- Risk: R3
+- Scope: Bernd resumed the four non-Social completion blocks and confirmed existing prices are finished. Preserve the installed catalog; no price creation or repricing.
+- Work lock: LOCK-FINISHLINE-REVALIDATE-20260908 for read-only evidence and repository reconciliation only. Existing LOCK-FINISHLINE-RESUME-20260906 retains its narrower unfinished runtime scope.
+- Completed so far: exact main/Production baseline a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e; drift/freshness/selector preflight inspected; both FanMind Supabase targets healthy. Fresh security advisors still show Production trigger/Auth gaps and now two constrained Staging RPC warnings.
+- Completed evidence: FM-EV-038 records successful shared rollout, exact Staging deploy and Stripe Test webhook verification; independent counters are unchanged. AI acceptance stopped before database access due to missing workflow API-origin bindings.
+- Exact next step: review/publish the bounded FM-AI-001 workflow correction, then obtain exact-new-main runtime proof after merge/deploy. Continue remaining owner actions from the current inbox; no whole-block acceptance.
+- Owner action needed: only the exact remaining boundaries after available work is complete; never ask to recreate accepted prices, database Restore or signed builds.
+
 ## FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resumed finishline 2026-09-06
 - Status: IN_PROGRESS
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 remains ACTIVE only for FM-AI-001/FM-MOB-001; FM-RST-001 was removed after the database phase closed. Repository-only postcheck and Storage-preparation locks are released after their bounded counterchecks.
 - Completed so far: Billing schema/capture-only foundation remains proven (Apply `34040107219`, durable capture `34043010578`, unfreeze `34043148548`); #1069 merged as `294264e216ee0c6844caab5c6f51f11f2a76eeeb`; #1070 merged as `2be4f5a784eff80ba417037ed0460a77f9f8353e`; #1072 merged as `62e6a11858e85996af03f6740819b0fc6194b4a4`. Exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on that commit with rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, transaction rollback and cleanup `PASS`; the independent read-only Staging postcheck remained unchanged. Push registration runtime is configured; real device evidence remains pending. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` succeeded on its old exact revision, but the later Staging deploy `34058028839` invalidated that mutable current-state evidence.
-- Still open: actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and Restore connectivity/readiness. For AI/Billing, the bounded technical Staging canonical-Billing sub-gate is closed, while one fresh exact-deployed-revision rollback-only AI-tier revalidation is `RECONCILIATION_REQUIRED` before relying on current lifecycle acceptance; product/private quality-cost, provider-side current lifecycle/downstream reconciliation, Legal/Tax, Production runtime integration and explicit activation remain open. Canonical Production projection, real payment and paid-tier activation remain disabled.
-- Exact next step: do not redeploy `2be4f5a...` and do not repeat `staging-billing-canonical-acceptance.yml`; those actions are closed by runs `34058028839` and `34058118450`. Continue the owner-resumed Mobile path from the already built FCM replacement APK with real device registration evidence; keep provider delivery separate. In parallel, Restore remains at `TARGET_COMPATIBLE` until owner-PC TCP-22 evidence is reconciled and a new exact R4 authorization exists. Any fresh AI-tier lifecycle revalidation must target the exact currently deployed Staging revision and requires a new explicit protected-Staging authorization; do not rerun the historical `34039968946` revision as if it were current.
-- Owner action needed: actual handset observation and Exoscale authentication/connectivity evidence if no existing authorized session; any future AI-tier Staging revalidation remains separately protected/authorized.
+- Still open: actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and the distinct isolated Storage target decision (database Restore is already DB_POSTCHECKED). For AI/Billing, the bounded technical Staging canonical-Billing sub-gate is closed, while one fresh exact-deployed-revision rollback-only AI-tier revalidation is `RECONCILIATION_REQUIRED` before relying on current lifecycle acceptance; product/private quality-cost, provider-side current lifecycle/downstream reconciliation, Legal/Tax, Production runtime integration and explicit activation remain open. Canonical Production projection, real payment and paid-tier activation remain disabled.
+- Exact next step: do not redeploy `2be4f5a...` and do not repeat `staging-billing-canonical-acceptance.yml`; those actions are closed by runs `34058028839` and `34058118450`. Continue the owner-resumed Mobile path from the already built FCM replacement APK with real device registration evidence; keep provider delivery separate. Restore is accepted at `DB_POSTCHECKED`; do not repeat its database phase or retired SSH investigation. Only real isolated Storage remains open. Any fresh AI-tier lifecycle revalidation must target the exact currently deployed Staging revision and requires a new explicit protected-Staging authorization; do not rerun the historical `34039968946` revision as if it were current.
+- Owner action needed: actual handset observation and a distinct isolated Storage target/cost decision; any future AI-tier Staging revalidation remains separately protected/authorized.
 
 
 ## FM-AI-001 / FM-CR-020 — Staging activation

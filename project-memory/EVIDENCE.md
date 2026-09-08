@@ -460,3 +460,17 @@ Never store secrets, private credentials, plaintext sensitive payloads, or unsaf
 - Limitations: a dedicated isolated Storage write controller, target-empty/prewrite proof, postwrite equality evidence, rollback/cleanup behavior, current target/environment validation and new exact R4 authorization remain open.
 - Falsification: any path-set mismatch, unsafe/duplicate archive member, hash/count/commit/artifact/part binding mismatch, permissive/overwritten output, provider call in preparation mode or premature state advancement invalidates this preparation.
 - Acceptance: COUNTERCHECKED for repository preparation only; overall `FM-RST-001` remains `PARTIAL` at `DB_POSTCHECKED`.
+
+## FM-EV-038
+- Related: FM-AI-001 / FM-MOB-001 / FM-SEC-001 / FM-META-001 / FM-RST-001.
+- Date: 2026-09-08.
+- Status: VERIFIED
+- Scope: bounded live reconciliation; no full finishline acceptance.
+- Baseline: exact reviewed main/Production a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e; read-only Production audit 34266289342 and go-live 34266289377 passed.
+- Staging: shared read-only rollout 34267504075 / 102200475242 PASS; workspace-member boundary, AI, both ledgers, Push, Meta content/catch-up and trigger hardening verify. Exact-main deployment 34267819029 / 102201553389 PASS with preserved billing_write_freeze=false, 14 public routes and seven required health components; optional email unknown.
+- Provider: Stripe Test webhook readiness 34268317761 / 102203246459 PASS; exact endpoint, 22 events, configured signing secret, inbound API 2026-06-24.dahlia. No provider/catalog write or actual event delivery is inferred.
+- Failed acceptance: 34268214078 / 102202884497 rejected environment_invalid before DB/fixture; cleanup PASS. FM-FAIL-022 records the two missing origin bindings and local 31/31 regression proof. Runtime KI acceptance is not complete.
+- Independent evidence: fresh advisors on both confirmed FanMind targets; read-only post-attempt counts 0 Push registrations, 0 delivery attempts, 0 AI entitlements/events and 1 existing Billing event; current safe-dashboard RPC source hash matches canonical SQL.
+- Security classification: Production three mutable search paths, two legacy retention EXECUTE warnings and leaked-password protection disabled; Staging two constrained authenticated RPC warnings and leaked-password protection disabled. Service-only no-policy INFO findings are not remediated with invented browser policies.
+- Remaining: exact protected Production hardening/Auth controls, two RPC exception decisions, actual handset/Recovery/Push evidence, real isolated Storage target/postcheck/cleanup, KI product/private/provider/Legal/Production gates and Meta consent-positive/negative Events Manager evidence. Meta browser requires login. Existing prices, DB Restore and accepted build/controller work stay closed.
+- Falsification: any schema/target/config/release change invalidates the corresponding mutable observation; nonzero/new counters or accepted provider/device receipts replace the current blockers. Gates remain partial and sales_ready=false.

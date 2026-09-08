@@ -1,6 +1,19 @@
 # FanMind Current State
 
-Last reconciled: 2026-09-07
+Last reconciled: 2026-09-08
+
+## Owner resume — 2026-09-08
+- Bernd resumed Restore, Android/Push, KI/Billing and Security/Meta before real Social integrations. Existing prices are complete and must not be recreated or repriced (FM-DEC-012).
+- Reviewed main/Production: `a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e`. Fresh Production audit `34266289342` and public go-live check `34266289377` passed. No Production mutation in this continuation.
+- Staging: shared read-only rollout `34267504075` / `102200475242` passed. Exact-main deploy `34267819029` / `102201553389` passed with 14 public routes, seven required health components and preserved Billing configuration (`billing_write_freeze=false`); optional email configuration remains unknown.
+- Stripe Test webhook: read-only run `34268317761` / `102203246459` passed on the same main: exact endpoint, 22 events, configured secret, inbound API `2026-06-24.dahlia`. No catalog/payment/provider mutation.
+- KI rollback acceptance `34268214078` / `102202884497` stopped before database access/fixture at `environment_invalid`. The shared gate requires two API-origin bindings absent from the AI workflow. Repository correction adds those bindings; 31 focused tests pass, including a regression that failed on the old workflow and Production-crossover rejection. Remote CI/review, merge, exact-new-main Staging deploy and one fresh rollback acceptance remain required. Do not rerun the unchanged failed revision.
+- Independent post-attempt Staging counters remain 0 Push registrations, 0 delivery attempts, 0 AI entitlements, 0 AI events and 1 prior durable Billing event. Historical general Billing installation/capture/canonical acceptance remains complete; do not repeat SQL Apply or delete the retained event.
+- Restore remains accepted at `DB_POSTCHECKED`; controller preparation is complete. Real Storage still needs a distinct disposable target, exact artifact/target authorization, postcheck and cleanup. The September 7 local-only decision does not authorize a new paid target. Never repeat the database Restore, retired SSH investigation or controller build.
+- Android: reuse FCM Preview `6801d687`, workflow `34037085683`; real device registration/delivery and the applicable full 19-check/Recovery receipt remain open. The published older Play AAB cannot prove the newer Push handler. Keep the owner-deferred Play cohort timing separate.
+- Security advisors at 19:09 UTC: Production retains three mutable search paths, two browser-EXECUTE warnings on the legacy retention trigger and disabled leaked-password protection. Staging has disabled leaked-password protection and two constrained authenticated RPC warnings (`ensure_current_user_workspace` and `get_current_workspace_member_safe_dashboard`); neither exception is accepted by inference. No Auth/ACL/RLS change occurred.
+- Meta: shared Staging content/catch-up checks verify; the browser is at the Meta login screen. Real consent-positive/negative Events Manager evidence and legal acceptance remain open. App Review and real account E2E belong to the later Social gate.
+- Gates remain partial; `sales_ready=false`. Resume owner actions at their original priority, while exact Production, target/cost, device and legal boundaries remain explicit.
 
 ## Mandatory restart point
 

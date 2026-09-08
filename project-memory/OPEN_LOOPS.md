@@ -27,6 +27,7 @@ This register contains started, partially completed or follow-up work that could
 - Next check: do not queue another Store build. When FanMind is ready for the Gerhard handoff, have at least 12 approved testers opt in, keep the closed test running for at least 14 days and use the Play-installed Alpha build to generate and complete the private 19-check record, including the saved `fanmind://reset-password` route. Apply for Production access only after those gates are evidenced. Do not start iOS/TestFlight work until Phase 8 is explicitly started.
 
 ## FM-LOOP-004
+- 2026-09-08 current continuation: FM-EV-038 / FM-FAIL-022 supersede only mutable Staging/provider status. Prices are owner-confirmed complete. Exact-main deploy 34267819029 and read-only Test webhook 34268317761 passed; AI acceptance 34268214078 failed before DB/fixture because two workflow origins were absent. The bounded repository fix passes 31 focused tests; exact-head CI/review and approved merge/new-main Staging deploy/acceptance remain open. No overall gate, paid tier or Production activation.
 - Related: FM-AI-001
 - Status: OPEN
 - Updated: 2026-09-07

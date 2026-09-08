@@ -113,9 +113,15 @@ RLS-Erwartung:
 - Workspace-Mitglieder dürfen nach dem kontrollierten Member-Boundary-Apply
   nicht die Basiszeile lesen, sondern nur die parameterlose Safe-RPC-Projektion
   aus ID, Name, Plan, normalisierter Member-Rolle und Processing-Bool. Der
-  checksum-gebundene Control ist derzeit `CHECKED_NOT_APPLIED`; sein
-  geschützter Staging-Apply-/Verify-Pfad ist vorbereitet, aber noch nicht
-  extern ausgeführt.
+  checksum-gebundene Control hat den vollständigen read-only Staging-Postflight
+  im Rollout `34267504075` vom 8. September 2026 bestanden
+  (`WORKSPACE_MEMBER_BOUNDARY=verify`).
+  Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
+  Der Beleg bestätigt den vorhandenen Schemazustand, keine neue
+  Apply-Ausführung oder Production-Abnahme. Die reale Chromium-/CSV-Abnahme
+  und ihr abschließender unabhängiger Verify fehlen weiterhin; Member-Writes
+  bleiben gesperrt. Für ungeprüfte Ziele gilt der getrennte geschützte
+  App-first-Staging-Apply-/Verify-Pfad.
 - `workspace_analysis_settings` enthält administrative Legal-, AVV-,
   Retention- und Bestätigerfelder und wird erst nach nachgewiesenem Apply
   desselben Controls für direkte Browser-Reads auf den Owner begrenzt.

@@ -1,12 +1,15 @@
 # Workspace-Member-Datengrenze
 
-Status: `CHECKED_NOT_APPLIED`.
+Status: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
 
-Der kontrollierte Staging-Pfad ist implementiert, aber in diesem Repositorystand
-noch nicht extern ausgeführt. Ein Web-Deploy und ein generischer
-Supabase-Migrationslauf wenden den Control nicht an. Erst ein belegter Apply,
-ein unabhängiger Verify und die reale Chromium-Abnahme ändern den externen
-Staging-Nachweis. Production ist ausdrücklich kein zulässiges Ziel.
+Der gemeinsame read-only Staging-Rollout `34267504075` / Job `102200475242`
+bestätigt am 8. September 2026 auf geprüftem `main` `a1bde387` den vollständigen
+Datengrenzen-Postflight mit `WORKSPACE_MEMBER_BOUNDARY=verify`. Ein separater
+Katalogabgleich bestätigt den kanonischen Safe-Dashboard-RPC einschließlich
+seiner fünf Felder, festem Suchpfad, `row_security=on` und fehlendem
+`PUBLIC`-/`anon`-EXECUTE. Dies belegt den aktuellen Schemazustand, keine neue
+Apply-Ausführung oder reale Chromium-Abnahme. Production bleibt als Ziel
+dieses Staging-Controls ausgeschlossen. Siehe FM-EV-038.
 
 ## Ziel
 

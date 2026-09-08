@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import test from "node:test";
+import { evaluateStagingDatabaseRolloutStateEnvironment } from "../src/lib/stagingDatabaseRolloutStatePolicy.mjs";
 
 import {
   AI_TIER_STAGING_ACCEPTANCE_CONFIRMATION,
@@ -285,7 +286,7 @@ test("manual workflow is staging-only and never applies a migration", async () =
   );
   assert.match(workflow, /rm -f "\$PGPASSFILE"/u);
   assert.doesNotMatch(
-    workflow,
+    workflow.replace(/^      FANMIND_PRODUCTION_API_ORIGIN: https:\/\/fanmind\.ch\r?$/mu, ""),
     /db:ai-tier-entitlements:apply|sk_live_|fanmind\.ch/u,
   );
 
@@ -354,6 +355,48 @@ test("AI tier workflow requires exact shared rollout state before mutation", asy
   );
   assert.ok(rolloutGate >= 0);
   assert.ok(acceptanceFixture > rolloutGate);
+});
+
+test("AI rollout gate binds both API origins and still rejects Production crossover", async () => {
+  const workflow = await readFile(workflowPath, "utf8");
+  const jobEnvironment = workflow.split("    env:\n")[1].split("    steps:\n")[0];
+  const origin = (name) => {
+    const value = jobEnvironment.match(new RegExp(`^      ${name}: (.+)$`, "mu"))?.[1];
+    return value?.replace("${{ vars.FANMIND_STAGING_APP_URL }}", "https://staging.fanmind.ch");
+  };
+  const environment = {
+    ...stagingEnvironment(),
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_SHA: "a".repeat(40),
+    FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT: "a".repeat(40),
+    FANMIND_STAGING_DATABASE_ROLLOUT_STATE_CONFIRM: "verify-staging-database-rollout-state",
+    NEXT_PUBLIC_APP_URL: "https://staging.fanmind.ch",
+    FANMIND_TARGET_API_ORIGIN: origin("FANMIND_TARGET_API_ORIGIN"),
+    FANMIND_PRODUCTION_API_ORIGIN: origin("FANMIND_PRODUCTION_API_ORIGIN"),
+    FANMIND_ENABLE_NON_PRODUCTION_WRITES: "false",
+    FANMIND_NON_PRODUCTION_WRITE_ACK: "",
+    PGHOST: "aws-0-eu-central-1.pooler.supabase.com",
+    FANMIND_TARGET_DB_HOST: "aws-0-eu-central-1.pooler.supabase.com",
+    FANMIND_PRODUCTION_DB_HOST: "db.productionref123.supabase.co",
+    PGPORT: "5432",
+    PGDATABASE: "postgres",
+    PGUSER: "postgres.stagingref12345",
+    PGSSLMODE: "verify-full",
+    PGSSLROOTCERT: "/tmp/fanmind-test-ca.crt",
+  };
+  assert.deepEqual(evaluateStagingDatabaseRolloutStateEnvironment(environment), { ok: true, errors: [] });
+  for (const name of ["FANMIND_TARGET_API_ORIGIN", "FANMIND_PRODUCTION_API_ORIGIN"]) {
+    const missing = evaluateStagingDatabaseRolloutStateEnvironment({ ...environment, [name]: "" });
+    assert.equal(missing.ok, false);
+    assert.ok(missing.errors.includes("api_target_binding"));
+  }
+  const crossover = evaluateStagingDatabaseRolloutStateEnvironment({
+    ...environment,
+    NEXT_PUBLIC_APP_URL: "https://fanmind.ch",
+    FANMIND_TARGET_API_ORIGIN: "https://fanmind.ch",
+  });
+  assert.equal(crossover.ok, false);
+  assert.ok(crossover.errors.includes("production_api_target"));
 });
 
 test("resource workflow proves external readiness without enabling writes", async () => {

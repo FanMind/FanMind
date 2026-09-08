@@ -587,7 +587,7 @@ requireText(
   "Die vorbereitete E-Mail-Abnahme darf ohne echten Providerlauf nicht als erledigt gelten.",
 );
 
-// Member data boundary stays externally unapplied until the controlled Staging evidence exists.
+// Staging schema evidence is distinct from real browser and Production acceptance.
 requireText(
   "package.json",
   '"db:workspace-member-data-boundary:check": "node scripts/operations/workspace-member-data-boundary-runner.mjs --check"',
@@ -605,14 +605,21 @@ requireText(
 );
 requireText(
   "docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md",
-  "Status: `CHECKED_NOT_APPLIED`.",
-  "Der Member-Control darf ohne externen Apply-/Postflight-Beleg nicht als angewendet gelten.",
+  "Status: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.",
+  "Der belegte Staging-Schemazustand darf nicht als reale Browser-Abnahme gelten.",
 );
+for (const file of ["README.md", "docs/SOURCE_OF_TRUTH.md", "docs/database/fanmind_current_schema.md"]) {
+  requireText(
+    file,
+    "Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.",
+    `Der belegte Member-Schemazustand und die offene Browser-Abnahme müssen in ${file} konsistent bleiben.`,
+  );
+}
 for (const file of ["README.md", "docs/SOURCE_OF_TRUTH.md"]) {
   requireText(
     file,
     "Go-live- und Member-Aktivierungsblocker",
-    `Die direkte Member-JWT-/RLS-Grenze muss in ${file} bis zum Apply ausdrücklich offen bleiben.`,
+    `Die direkte Member-JWT-/RLS-Grenze muss in ${file} bis zur realen Browser-Abnahme ausdrücklich offen bleiben.`,
   );
 }
 requireText(
@@ -2025,9 +2032,19 @@ requireText(
 );
 forbidIn(
   ".github/workflows/ai-tier-staging-acceptance.yml",
-  /db:ai-tier-entitlements:apply|sk_live_|https:\/\/fanmind\.ch/iu,
+  /db:ai-tier-entitlements:apply|sk_live_|(?<!FANMIND_PRODUCTION_API_ORIGIN: )https:\/\/(?:www\.)?fanmind\.ch|FANMIND_RUNTIME_ENVIRONMENT:\s*production/iu,
   "Der KI-Stufen-Abnahmeworkflow darf weder Migrationen anwenden noch Production-Ziele enthalten.",
 );
+for (const binding of [
+  "FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}",
+  "FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch",
+]) {
+  requireText(
+    ".github/workflows/ai-tier-staging-acceptance.yml",
+    binding,
+    "Der KI-Stufen-Abnahmeworkflow muss Staging-Ziel und Production-Ausschluss unabhängig binden.",
+  );
+}
 requireText(
   "scripts/operations/ai-tier-staging-acceptance.mjs",
   "AI_TIER_STAGING_TRANSACTION=ROLLED_BACK",
