@@ -5,6 +5,7 @@ import {
   chmod,
   mkdir,
   mkdtemp,
+  open,
   readFile,
   rm,
   writeFile,
@@ -18,6 +19,7 @@ import {
   runStorageRestore,
   STORAGE_RESTORE_CONFIRMATION,
   STORAGE_TARGET_ACKNOWLEDGEMENT,
+  writePrivateReceipt,
 } from "../scripts/operations/run-storage-restore-drill.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -99,7 +101,13 @@ async function fixture(root, files = [
   return { archivePath, receiptPath, receipt, files };
 }
 
-function storageApiMock({ initial = [], failUploadPath = null } = {}) {
+function storageApiMock({
+  initial = [],
+  failUploadPath = null,
+  indeterminateUploadPath = null,
+  includeRootPlaceholder = false,
+  failDelete = false,
+} = {}) {
   const objects = new Map(initial.map((item) => [item.path, Buffer.from(item.bytes)]));
   const calls = [];
   const response = (body, init = {}) => new Response(
@@ -126,6 +134,9 @@ function storageApiMock({ initial = [], failUploadPath = null } = {}) {
         else directFiles.push({ id: `id-${path}`, name: first, metadata: { size: objects.get(path).length } });
       }
       const rows = [
+        ...(includeRootPlaceholder && !prefix
+          ? [{ id: null, name: ".emptyFolderPlaceholder", metadata: null }]
+          : []),
         ...[...folders].sort().map((name) => ({ id: null, name, metadata: null })),
         ...directFiles.sort((left, right) => left.name.localeCompare(right.name)),
       ];
@@ -138,11 +149,15 @@ function storageApiMock({ initial = [], failUploadPath = null } = {}) {
       if (method === "POST") {
         if (path === failUploadPath) return new Response("failed", { status: 500 });
         objects.set(path, Buffer.from(options.body));
+        if (path === indeterminateUploadPath) {
+          throw new Error("synthetic_indeterminate_upload");
+        }
         return response({ Key: path });
       }
       if (method === "GET" && objects.has(path)) return response(objects.get(path));
     }
     if (method === "DELETE" && parsed.pathname === "/storage/v1/object/fanmind-assets") {
+      if (failDelete) return new Response("failed", { status: 500 });
       const { prefixes } = JSON.parse(options.body);
       for (const path of prefixes) objects.delete(path);
       return response({ message: "Successfully deleted" });
@@ -174,7 +189,10 @@ test("local synthetic Storage drill proves empty prewrite and exact postwrite", 
     const api = storageApiMock();
     const resultPath = join(root, "result.json");
     const result = await runStorageRestore(runOptions(data, resultPath, api.fetchImpl));
-    assert.equal(result.status, "STORAGE_RESTORED");
+    assert.equal(
+      result.status,
+      "STORAGE_RESTORE_EXECUTED_PENDING_EXTERNAL_ACCEPTANCE",
+    );
     assert.equal(result.prewriteTargetEmpty, true);
     assert.equal(result.postwriteExact, true);
     assert.equal(result.productionDenied, true);
@@ -183,6 +201,7 @@ test("local synthetic Storage drill proves empty prewrite and exact postwrite", 
     const storedReceipt = JSON.parse(await readFile(resultPath, "utf8"));
     assert.equal(storedReceipt.objectCount, 1);
     assert.equal(storedReceipt.cleanupRequired, true);
+    assert.equal(storedReceipt.localCleanupStatus, "passed");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -219,6 +238,172 @@ test("Storage drill rolls back all uploaded objects after a bounded write failur
     );
     assert.equal(api.objects.size, 0);
     assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill reconciles an indeterminate first upload", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-indeterminate-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock({ indeterminateUploadPath: "avatars/one.png" });
+    await assert.rejects(
+      runStorageRestore(runOptions(data, join(root, "result.json"), api.fetchImpl)),
+      /synthetic_indeterminate_upload/u,
+    );
+    assert.equal(api.objects.size, 0);
+    assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill never deletes a concurrent object after determinate rejection", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-conflict-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock({ failUploadPath: "avatars/one.png" });
+    await assert.rejects(
+      runStorageRestore(runOptions(data, join(root, "result.json"), api.fetchImpl)),
+      /storage_api_upload_failed/u,
+    );
+    assert.equal(api.calls.some((call) => call.method === "DELETE"), false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill preserves remote reconciliation across dual cleanup failure", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-dual-failure-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock({
+      indeterminateUploadPath: "avatars/one.png",
+      failDelete: true,
+    });
+    const cleanupImpl = async (path, options) => {
+      await rm(path, options);
+      throw new Error("synthetic_cleanup_failure");
+    };
+    await assert.rejects(
+      runStorageRestore({
+        ...runOptions(data, join(root, "result.json"), api.fetchImpl),
+        cleanupImpl,
+      }),
+      /storage_restore_remote_and_local_reconciliation_required/u,
+    );
+    assert.equal(api.objects.has("avatars/one.png"), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage listing paginates using the unfiltered provider page length", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-pagination-"));
+  try {
+    await chmod(root, 0o700);
+    const files = Array.from({ length: 101 }, (_, index) => ({
+      path: `object-${String(index).padStart(3, "0")}.txt`,
+      bytes: Buffer.from(`object-${index}`),
+    }));
+    const data = await fixture(root, files);
+    const api = storageApiMock({ includeRootPlaceholder: true });
+    const result = await runStorageRestore(
+      runOptions(data, join(root, "result.json"), api.fetchImpl),
+    );
+    assert.equal(result.objectCount, 101);
+    const listCalls = api.calls.filter((call) =>
+      call.path === "/storage/v1/object/list/fanmind-assets");
+    assert.equal(listCalls.length >= 3, true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("private receipt publication removes a partially written destination", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-receipt-"));
+  try {
+    await chmod(root, 0o700);
+    const resultPath = join(root, "result.json");
+    const failingOpen = async (...args) => {
+      const handle = await open(...args);
+      return {
+        writeFile: async (content) => {
+          await handle.writeFile(content.slice(0, 8));
+          throw new Error("synthetic_receipt_write_failure");
+        },
+        sync: () => handle.sync(),
+        close: () => handle.close(),
+      };
+    };
+    await assert.rejects(
+      writePrivateReceipt(resultPath, { status: "test" }, { openFile: failingOpen }),
+      /synthetic_receipt_write_failure/u,
+    );
+    await assert.rejects(readFile(resultPath), /ENOENT/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill rolls back remote objects when receipt publication fails", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-receipt-rollback-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const failingOpen = async (...args) => {
+      const handle = await open(...args);
+      return {
+        writeFile: async (content) => {
+          await handle.writeFile(content.slice(0, 8));
+          throw new Error("synthetic_receipt_write_failure");
+        },
+        sync: () => handle.sync(),
+        close: () => handle.close(),
+      };
+    };
+    await assert.rejects(
+      runStorageRestore({
+        ...runOptions(data, resultPath, api.fetchImpl),
+        receiptWriter: (path, receipt) =>
+          writePrivateReceipt(path, receipt, { openFile: failingOpen }),
+      }),
+      /synthetic_receipt_write_failure/u,
+    );
+    assert.equal(api.objects.size, 0);
+    assert.equal(api.calls.some((call) => call.method === "DELETE"), true);
+    await assert.rejects(readFile(resultPath), /ENOENT/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Storage drill preserves the remote outcome when local cleanup reports failure", async () => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-storage-drill-cleanup-"));
+  try {
+    await chmod(root, 0o700);
+    const data = await fixture(root);
+    const api = storageApiMock();
+    const resultPath = join(root, "result.json");
+    const cleanupImpl = async (path, options) => {
+      await rm(path, options);
+      throw new Error("synthetic_cleanup_failure");
+    };
+    const result = await runStorageRestore({
+      ...runOptions(data, resultPath, api.fetchImpl),
+      cleanupImpl,
+    });
+    assert.equal(result.status, "STORAGE_RESTORE_EXECUTED_LOCAL_CLEANUP_REQUIRED");
+    assert.equal(result.reconciliationRequired, true);
+    assert.equal(api.objects.has("avatars/one.png"), true);
+    const storedReceipt = JSON.parse(await readFile(resultPath, "utf8"));
+    assert.equal(storedReceipt.localCleanupStatus, "required");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
