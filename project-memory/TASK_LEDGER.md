@@ -160,16 +160,16 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not recreate Staging host/Supabase/Stripe test baseline absent verified drift.
 
 ## FM-RST-001
-- Date: 2026-08-17 to 2026-09-07
-- Updated: 2026-09-07
+- Date: 2026-08-17 to 2026-09-08
+- Updated: 2026-09-08
 - Status: PARTIAL
 - Risk: R4
 - Goal: Complete isolated real restore drill.
 - Starting state: Dedicated restore host, PostgreSQL 17 target, runner group/workflows, accepted backup tuple and protected environment already exist.
 - Accepted database progression: `DB_POSTCHECKED`. Issue #944 comments `5453497602`, `5453599115`, `5453727223`, `5453857592` prove the exact artifact/source/target binding, committed single-transaction Restore, projected expected/actual authorization fingerprint `0604dac8562a601e2d582f76aee4203825b826b302b9b0b93a92bdd2ca603052`, exact roles/container/extensions, 120 core application grants, 12 restricted SECURITY DEFINER functions and core `5|5|5|5` table/RLS/policy checks. PR #1075 permanently fixed the target-only login projection; #1077 retired stale rerun controls.
-- Evidence: `FM-EV-036`; `receipts/FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md`; `receipts/FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`; workflow `33178878764` / job `98874745740`; PRs #1075/#1077; issue #944 closure `5573957331`.
+- Evidence: `FM-EV-036`; `receipts/FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md`; `receipts/FM-RST-001-DATABASE-POSTCHECK-ACCEPTED-20260907.md`; workflow `33178878764` / job `98874745740`; PRs #1075/#1077/#1081/#1085; issue #944 closure `5573957331`. PR #1085 final head `7d32f5a0c29b8ab581a736b0744bfdcf41f5eddb` passed seven workflows, zero unresolved threads and exact-head review before squash merge `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`; the repository-only Storage controller is accepted.
 - Still open: `STORAGE_RESTORED`, `CONFIG_RESTORED`, `DISPOSABLE_TARGET_CLEANED`, independent `COUNTERCHECKED` and final `ACCEPTED`.
-- Next step: implement/countercheck the bounded Storage restore/verification path without dispatching it, then obtain separate exact authorization for isolated Storage mutation.
+- Next step: keep the accepted repository-only Storage controller closed. Real isolated Storage mutation remains `DEFERRED_BY_OWNER` under `FM-RST-OWNER-007` and requires a new action-time owner decision plus a distinct isolated non-Production target.
 - Do not repeat: no database Restore, target reset, consumed controller/JIT/authorization reuse, Production/Supabase-Staging target, or inference of later transitions from database evidence.
 
 ## FM-MOB-001
