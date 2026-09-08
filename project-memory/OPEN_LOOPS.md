@@ -5,10 +5,10 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-001
 - Related: FM-RST-001
 - Status: OPEN
-- Updated: 2026-09-07
-- Gap: the database Restore and `DB_POSTCHECKED` reconciliation are complete, and the repository-only Storage artifact/receipt preparation is implemented and locally counterchecked. Actual isolated Storage upload/postcheck, server-config, disposable-target cleanup, countercheck and final aggregate acceptance remain separate and unproven.
+- Updated: 2026-09-08
+- Gap: the database Restore and `DB_POSTCHECKED` reconciliation are complete. PR #1081 accepted the private Storage artifact/receipt preparation; PR #1085 accepted the repository-only fail-closed Storage controller after final head `7d32f5a0c29b8ab581a736b0744bfdcf41f5eddb` passed seven workflows, zero unresolved threads and exact-head review, then merged as `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`. Actual isolated Storage upload/postcheck, server-config, disposable-target cleanup, countercheck and final aggregate acceptance remain separate and unproven.
 - Close when: every still-applicable post-database state-machine transition has current R4 quorum and independent countercheck.
-- Next check: do not repeat workflow `33178878764`, job `98874745740` or consumed controllers. After exact-head merge, require separate exact R4 authorization and a dedicated fail-closed controller before uploading the prepared, receipt-bound archive to a distinct isolated non-Production Storage target.
+- Next check: do not repeat workflow `33178878764`, job `98874745740`, consumed controllers or the accepted repository controller implementation. Real isolated Storage remains `DEFERRED_BY_OWNER` under `FM-RST-OWNER-007`; before any upload, require a new action-time owner decision, distinct isolated non-Production target and exact R4 authorization for the accepted controller.
 
 ## FM-LOOP-002
 - Related: FM-MEM-005
