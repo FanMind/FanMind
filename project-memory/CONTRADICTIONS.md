@@ -12,7 +12,7 @@ Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
 - Claim A: the local-only Storage controller was merge-ready with eight green workflows and zero visible review threads.
 - Source B: five GitHub review threads created immediately after the squash merge
 - Claim B: the merged controller could prematurely emit `STORAGE_RESTORED`, miss an indeterminate first upload, retain a partial result receipt, terminate pagination from a filtered page and obscure a successful remote outcome when local cleanup fails.
-- Stronger/current evidence: the post-merge line-bound review findings against exact PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9` plus the later exact-head durability, reconciliation, concurrency and finalization findings through PR #1085 head `638f52ba321b4f2d57834cbe101af194f3740e94`.
+- Stronger/current evidence: the post-merge line-bound review findings against exact PR #1082 head `3675e3d4881a91156bad07336f64ef844ddccce9` plus the later exact-head durability, reconciliation, concurrency and finalization findings through PR #1085 head `50b72792bc72bd1c3961ef222e1c23641f676cc3`.
 - Status: RECONCILIATION_REQUIRED
 - Resolution/action: repair every original and follow-on finding on the repository-only PR #1085 with focused regressions and renew exact-head acceptance; keep the accepted Restore progression at `DB_POSTCHECKED` and the real provider transition deferred.
 - Evidence: PR #1082/#1085 review threads plus focused tests in `tests/storage-restore-drill.test.mjs`.

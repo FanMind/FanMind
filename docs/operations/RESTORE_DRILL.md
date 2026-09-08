@@ -227,10 +227,11 @@ Project-Memory acceptance. An indeterminate transport or server outcome has no
 provable object ownership, so it stops for external reconciliation and never
 authorizes automatic deletion of that path. Only uploads with a confirmed
 success response are eligible for rollback. Before the first write, the
-controller atomically acquires an invocation-owned directory lock and writes an
-immutable per-invocation reservation that binds the artifact, target and
-intended write. A concurrent or stale lock blocks before any provider write and
-is never removed by a losing invocation. The controller also writes a
+controller atomically creates a private mode-0600 JSON receipt file at
+`result.json.lock` and writes a separate immutable per-invocation reservation
+that binds the artifact, target and intended write. A concurrent or stale lock
+receipt blocks before any provider write and is never removed by a losing
+invocation. The controller also writes a
 reconciliation marker before deleting temporary plaintext, then
 atomically updates that marker with the observed local-cleanup result. A
 concurrently created pending marker is never superseded by this run. After the
@@ -258,7 +259,10 @@ pathname, then durably removes the owned pending marker and reservation. A
 single atomic rename finally turns that lock inode into the terminal receipt;
 lock release and terminal publication therefore happen together. Failure at
 any cleanup or promotion boundary leaves the terminal receipt absent and
-retains the owned lock/recovery evidence for reconciliation. If plaintext cleanup also
+retains the owned lock/recovery evidence for reconciliation. The receipt stays
+explicitly reconciliation-required pending external acceptance; if the
+post-rename directory sync fails, the controller attempts to rename it back to
+the lock path and never exposes a locally terminal claim. If plaintext cleanup also
 failed before a bounded remote rollback, the pending marker is deliberately
 preserved by an atomic, parent-directory-synced replacement. Its
 replacement status records that rollback passed while local cleanup remains

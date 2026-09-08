@@ -451,7 +451,7 @@ async function assertInvocationLockOwned(lockPath, invocationId) {
   }
 }
 
-async function promotePrivateReceipt(
+export async function promotePrivateReceipt(
   sourcePath,
   destinationPath,
   invocationId,
@@ -460,10 +460,20 @@ async function promotePrivateReceipt(
   const parent = await assertPrivateReceiptDestination(destinationPath);
   await assertInvocationLockOwned(sourcePath, invocationId);
   await assertReceiptAbsent(destinationPath, "storage_restore_receipt_exists");
+  let renamed = false;
   try {
     await renameFile(sourcePath, destinationPath);
+    renamed = true;
     await syncDirectoryImpl(parent);
   } catch {
+    if (renamed) {
+      try {
+        await renameFile(destinationPath, sourcePath);
+        await syncDirectoryImpl(parent);
+      } catch {
+        throw fixedError("storage_restore_receipt_and_lock_reconciliation_required");
+      }
+    }
     throw fixedError("storage_restore_receipt_reconciliation_required");
   }
 }
@@ -517,12 +527,12 @@ export async function runStorageRestore({
   const invocationLockReplacementPath = `${invocationLockPath}.replacement`;
   await assertPrivateReceiptDestination(resultReceiptPath);
   await assertReceiptAbsent(
-    invocationLockPath,
-    "storage_restore_invocation_lock_reconciliation_required",
-  );
-  await assertReceiptAbsent(
     invocationLockReplacementPath,
     "storage_restore_replacement_receipt_reconciliation_required",
+  );
+  await assertReceiptAbsent(
+    invocationLockPath,
+    "storage_restore_invocation_lock_reconciliation_required",
   );
   await assertReceiptAbsent(
     reservationReceiptPath,
@@ -669,7 +679,7 @@ export async function runStorageRestore({
       rollbackStatus: "not_required",
       cleanupRequired: true,
       localCleanupStatus: "pending",
-      reconciliationRequired: false,
+      reconciliationRequired: true,
     };
   } catch (error) {
     operationError = error;
@@ -811,6 +821,11 @@ export async function runStorageRestore({
     if (operationError?.code === "storage_restore_reconciliation_required"
         && receiptReconciliationRequired) {
       throw fixedError("storage_restore_remote_and_receipt_reconciliation_required");
+    }
+    if (cleanupFailed
+        && operationError?.code === "storage_restore_reconciliation_required"
+        && pendingReceiptRollbackPassed && operationReceiptOwned) {
+      throw fixedError("storage_restore_local_cleanup_required");
     }
     if (cleanupFailed
         && operationError?.code === "storage_restore_reconciliation_required") {
