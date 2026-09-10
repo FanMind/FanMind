@@ -124,6 +124,8 @@ Im Mobile-Werkzeugbaum werden außerdem die beiden bestehenden
 `@xmldom/xmldom`-Zweige auf `0.8.15` und `0.9.12` aktualisiert. Dies behebt
 die neuen XML-Injection-/Ressourcenverbrauchsbefunde ohne Wechsel des Expo-SDK
 oder Erweiterung des bisherigen Review-Budgets.
+Expo Doctor verlangt inzwischen `expo ~57.0.21` und `expo-router ~57.0.20`;
+diese beiden Patchstände bleiben auf SDK 57 und werden mitgeprüft.
 
 Es gibt keine zusätzliche Audit-Ausnahme. Die Root-Grenze bleibt null;
 die bestehenden Mobile-Grenzen und ihr Ablaufdatum bleiben erhalten.

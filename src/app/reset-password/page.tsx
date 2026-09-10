@@ -46,8 +46,10 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
 
   useEffect(() => {
     let isMounted = true;
+    let validationVersion = 0;
 
     async function prepareRecoverySession() {
+      const version = ++validationVersion;
       // Capture once for Strict Mode effect replay, then remove all callback
       // material before any asynchronous provider request, including errors.
       if (initialRecoveryToken.current === undefined) {
@@ -58,23 +60,38 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
 
       try {
         const result = await (accessToken ? supabase.auth.getUser(accessToken) : Promise.resolve(null));
-        if (!isMounted) return;
+        if (!isMounted || version !== validationVersion) return;
         const valid = Boolean(accessToken && result?.data.user?.id && !result.error);
         setRecoveryAccessToken(valid ? accessToken : null);
         setIsValidRecoverySession(valid);
       } catch {
-        if (!isMounted) return;
+        if (!isMounted || version !== validationVersion) return;
         setRecoveryAccessToken(null);
         setIsValidRecoverySession(false);
       } finally {
-        if (isMounted) setIsCheckingSession(false);
+        if (isMounted && version === validationVersion) setIsCheckingSession(false);
       }
     }
 
+    function handleRecoveryLinkChange() {
+      initialRecoveryToken.current = undefined;
+      setRecoveryAccessToken(null);
+      setIsValidRecoverySession(false);
+      setIsCheckingSession(true);
+      setIsSubmitting(false);
+      setSuccess(false);
+      setError(null);
+      setPassword("");
+      setPasswordRepeat("");
+      void prepareRecoverySession();
+    }
+
+    window.addEventListener("hashchange", handleRecoveryLinkChange);
     void prepareRecoverySession();
 
     return () => {
       isMounted = false;
+      window.removeEventListener("hashchange", handleRecoveryLinkChange);
     };
   }, [language, supabase]);
 
@@ -99,6 +116,8 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
 
     setIsSubmitting(true);
     const { error: updateError } = await supabase.auth.updateUserWithAccessToken({ password }, recoveryAccessToken);
+    // A result from a previous link must not change the newly opened flow.
+    if (initialRecoveryToken.current !== recoveryAccessToken) return;
     setIsSubmitting(false);
 
     if (updateError) {

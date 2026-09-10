@@ -25,6 +25,9 @@ the refresh token is not retained or installed as a browser/server session.
 An authenticated `/user` response with a user ID is required before the password
 form appears. GET/PUT user requests have a 15-second transport timeout. Successful
 password updates clear the local recovery token and password fields.
+Opening another fragment link in the same page clears the previous form/token
+and validates the new link. Outdated validation and save responses cannot replace
+the new flow's result.
 
 This parser validates callback shape; the provider validates the credential.
 The `type` field is not proof of token provenance. PKCE/code and token-hash

@@ -368,6 +368,54 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     expect(authRequests).toBe(0);
   });
 
+  test("Ein neuer ungültiger Recovery-Link entfernt eine bereits bestätigte Sitzung", async ({ page }) => {
+    let userChecks = 0;
+    await page.route("**/auth/v1/user", async (route) => {
+      if (route.request().method() === "GET") userChecks += 1;
+      await fulfillCorsJson(route, 200, { id: "synthetic-first-user" });
+    });
+    await page.goto("/reset-password#access_token=synthetic-first&type=recovery");
+    const passwords = page.locator('input[autocomplete="new-password"]');
+    await expect(passwords).toHaveCount(2);
+    await passwords.nth(0).fill("Synthetic-Unsubmitted-Password");
+    const checksBeforeChange = userChecks;
+    // Same-document fragment navigation deliberately keeps the component mounted.
+    await page.goto("/reset-password#access_token=synthetic-second&type=signup");
+    await expect(page.locator('form [role="alert"]')).toContainText("Der Link ist ungültig oder abgelaufen");
+    await expect(passwords).toHaveCount(0);
+    await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
+    expect(userChecks).toBe(checksBeforeChange);
+  });
+
+  test("Eine verspätete Benutzerprüfung kann einen neu geöffneten ungültigen Link nicht freischalten", async ({ page }) => {
+    let releaseUserCheck!: () => void;
+    const gate = new Promise<void>((resolve) => { releaseUserCheck = resolve; });
+    let userChecks = 0;
+    await page.route("**/auth/v1/user", async (route) => {
+      if (route.request().method() === "GET") {
+        userChecks += 1;
+        await gate;
+      }
+      await fulfillCorsJson(route, 200, { id: "synthetic-late-user" });
+    });
+    const oldResponse = page.waitForResponse((response) =>
+      response.url().endsWith("/auth/v1/user") && response.request().method() === "GET",
+    );
+    try {
+      await page.goto("/reset-password#access_token=synthetic-pending&type=recovery");
+      await expect.poll(() => userChecks).toBeGreaterThan(0);
+      await page.goto("/reset-password#access_token=synthetic-new&type=signup");
+      await expect(page.locator('form [role="alert"]')).toContainText("Der Link ist ungültig oder abgelaufen");
+    } finally {
+      releaseUserCheck();
+    }
+    await (await oldResponse).finished();
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
+    await expect(page.locator('form [role="alert"]')).toContainText("Der Link ist ungültig oder abgelaufen");
+    await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
+  });
+
   for (const scenario of ["expired", "missing-user", "network-error"] as const) {
     test(`Recovery bleibt bei ${scenario} ohne Passwortformular`, async ({ page }) => {
       await page.route("**/auth/v1/user", async (route) => {
