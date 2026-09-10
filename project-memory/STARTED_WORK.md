@@ -1,12 +1,25 @@
 # Started Work Register
 
+## FM-BILL-002 — publication status reconciliation
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Risk: R1
+- Work lock: LOCK-FM-BILL-002-RECONCILIATION-20260910
+- Scope: synchronize existing task/receipt/handoff entries with the independently verified PR #1096 publication. No application, workflow, schema, provider or finishline-gate changes.
+- Completed so far: main tree equals the released tree; all 13 final-head checks and exact-release Deploy/Audit/Readiness independently read as successful.
+- Result: stale publication fields are synchronized; memory quality, V8, truth and drift checks pass. The scope/finishline countercheck confirms no runtime or gate change.
+- Exact next step: merge this documentation correction through its enclosing reviewed PR; merged Git history is its receipt. Do not reopen the already completed offer publication for a later documentation deployment.
+- Owner action needed: none; existing publication/status-reconciliation authorization applies.
+- Evidence plan: GitHub commit/run facts, audit log exact release, unchanged finishline and diff, existing memory/truth checks.
+- Recovery: documentation-only revert; existing published offers and security controls remain intact.
+
 ## FM-BILL-002 — three public payment offers and acceptance reconciliation
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Work lock: LOCK-FM-BILL-002-20260910
-- Completed so far: exact main/release 9a6e9d01, previous PR #1095 publication, existing Live prices, zero Tax registrations and current Production security findings verified.
-- Still open: public Daily offer, full runtime prerequisites and final publication; the four overall gates retain missing external evidence.
-- Exact next step: implement/test the public offer; use reviewed controls for concrete remaining technical fixes.
+- Completed so far: account code #1095 and three-offer catalog #1096 published. Exact #1096 release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098; final-head CI, Deploy 34502092289, independent audit 34502241951 and readiness 34502241927 succeeded. Existing Live prices reused; trigger/password controls separately complete.
+- Still open: full paid runtime engineering and acceptance in FM-LOOP-THREE-OFFERS-20260910; the four overall gates retain their precise missing work. No public Daily or account publication remains.
+- Exact next step: preserve this completed publication and continue existing Production provisioning/consent/Billing engineering plus actual external acceptance.
 - Owner action needed: none for requested source publication; actual tax/contract/recipient/Restore-target facts are not fabricated.
 
 ## FM-REG-002 — Public registration and confirmed-email continuation
@@ -14,8 +27,8 @@
 - Risk: R4
 - Work lock: LOCK-FM-REG-002-20260910
 - Completed so far: bounded account/confirmation implementation, 1,241 local Operations tests, normal build/type/lint and PR #1095 application/security/database/CRM checks plus 44 desktop/mobile browser tests on 11636d874031552f4f7ddf58fbc0009f5adf0de1.
-- Still open: final follow-up head CI/review and exact Production publication; genuine external email/paid-activation acceptance remains distinct.
-- Exact next step: publish after final-head gates; bind resulting deploy/audit/readiness and public DE/EN evidence in the enclosing PR.
+- Still open: genuine external email and full paid-activation acceptance; the final account-code CI/review/publication are complete.
+- Exact next step: continue the retained full-activation loop using the completed #1095/#1096 publication receipts; no repeat publication.
 - Owner action needed: exact payment-terms/version and tax facts for subsequent paid activation, plus an approved recipient for real email acceptance; no new permission needed for this requested normal Web publication.
 
 
