@@ -505,7 +505,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await page.route("**/api/register/workspace", async route => { workspaceWrites++; await route.abort(); });
     await page.route("**/auth/v1/signup?*", async route => {
       if (route.request().method() === "POST") signupBody = route.request().postDataJSON();
-      await fulfillCorsJson(route, 200, { user: { id: "synthetic-daily-user" }, session: null });
+      await fulfillCorsJson(route, 200, { id: "synthetic-daily-user", email: "daily@example.invalid" });
     });
     await page.goto("/register?plan=daily");
     await expect(page.getByText("Daily · 0 € Setup + 1 €/Tag", { exact: true })).toBeVisible();
@@ -516,6 +516,8 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
     await page.locator('input[name="email"]').fill("daily@example.invalid");
     await page.locator('input[name="password"]').fill("Synthetic-Only-2026!");
+    await page.locator('input[name="organisation"]').fill("Synthetic Daily Team");
+    await page.locator('select[name="rolle"]').selectOption("Creator");
     await page.getByRole("button", { name: /^Create account/u }).click();
     await expect(page.getByRole("status")).toBeVisible();
     expect(signupBody).not.toBeNull();
