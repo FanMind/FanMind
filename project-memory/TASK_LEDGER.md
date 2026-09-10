@@ -72,8 +72,8 @@
 - Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
 - Required for sales: false.
 - Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
-- Completed so far: own-account/Workspace model, controlled SQL, structured profile editor, automatic existing-pipeline Creator context, confirmed commercial entry, safe strategy and manual Social handoff implemented; 1,269 local Operations tests pass. Target/voice-quality acceptance remains open.
-- Exact next step: complete current-head build, browser and real isolated PG17 CI, publish the reviewed first package, then prepare target-bound Staging rollout and the confirmed-chat learning loop. Android remains deferred; preserve genuine provider/legal/voice-quality acceptance.
+- Completed so far: first source package #1099 and its 14-check / Deploy / Audit / Readiness quorum are published (FM-EV-CREATOR-20260910). Own-account/Workspace model, controlled SQL, structured profile editor, automatic existing-pipeline Creator context, confirmed commercial entry, safe strategy and manual Social handoff implemented; 1,269 local Operations tests pass. Target/voice-quality acceptance remains open.
+- Exact next step: preserve the published source package, finish the bounded public-roadmap closeout and prepare protected Staging rollout/runtime acceptance plus the confirmed-chat learning loop. Android remains deferred; preserve genuine provider/legal/voice-quality acceptance.
 
 ## FM-SEC-002
 - Date: 2026-09-10

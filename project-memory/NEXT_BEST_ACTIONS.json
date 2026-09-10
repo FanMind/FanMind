@@ -27,7 +27,7 @@
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
+      "title": "Begrenzte Staging-RPC-Ausnahmen pr\u00fcfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-SEC-OWNER-002",
@@ -65,7 +65,7 @@
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
@@ -103,7 +103,7 @@
       "priority": 6,
       "task": "FM-SOC3-001",
       "gate": "phase3_social",
-      "title": "Facebook/Instagram und menschliche KI-Übergabe ausbauen",
+      "title": "Facebook/Instagram und menschliche KI-\u00dcbergabe ausbauen",
       "requires_owner": false,
       "parallel_safe": true,
       "prerequisite_gates": [
@@ -121,7 +121,7 @@
       "priority": 7,
       "task": "FM-SOC7-001",
       "gate": "phase7_social",
-      "title": "OnlyFans-Machbarkeit und manuelle Übergabe ausbauen",
+      "title": "OnlyFans-Machbarkeit und manuelle \u00dcbergabe ausbauen",
       "requires_owner": false,
       "parallel_safe": true,
       "prerequisite_gates": [
@@ -139,7 +139,7 @@
       "priority": 80,
       "task": "FM-SALES-001",
       "gate": "sales_handoff",
-      "title": "Finalen Production-Demo- und Sales-Handoff schließen",
+      "title": "Finalen Production-Demo- und Sales-Handoff schlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -172,7 +172,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "FM-DEC-015: build one Creator per independent account/Workspace now alongside selected Facebook/Instagram/OnlyFans and human AI handoff. Define the six data boundaries before pipeline integration. Keep team roles, auditable approvals and multi-workspace management for later; Android follows. No inferred provider/legal or Production schema activation."
+      "instruction": "First Creator/Social source package #1099 is published at 0e5ec0a2 with all 14 checks and Deploy/Audit/Readiness. Preserve that receipt; finish only its bounded reader closeout. Then prepare the controlled Staging target/runbook-to-runner/real JWT acceptance, actual two-Creator voice quality and confirmed-chat learning. One Creator per own account/Workspace. Never start a generic DB push, repeat #1099, auto-enable a provider or advance Android/paid activation during deferral."
     }
   ]
 }

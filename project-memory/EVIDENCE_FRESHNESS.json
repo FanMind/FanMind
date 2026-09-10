@@ -56,7 +56,12 @@
       "status": "COUNTERCHECKED",
       "observed_at": "2026-08-26T19:49:00Z",
       "source": "FM-EV-023 / transaction-level read-only Staging catalog observation / exact-main runs 33007156552, 33007311870 and 33007481167",
-      "revalidate_on": ["staging_schema_or_acl_change", "workflow_contract_change", "target_binding_change", "before_new_meta_staging_database_action"]
+      "revalidate_on": [
+        "staging_schema_or_acl_change",
+        "workflow_contract_change",
+        "target_binding_change",
+        "before_new_meta_staging_database_action"
+      ]
     },
     {
       "id": "EV-MOBILE-ANDROID-PRODUCTION-AAB-20260830",
@@ -65,7 +70,11 @@
       "status": "VERIFIED",
       "observed_at": "2026-08-30T14:26:57Z",
       "source": "FM-EV-028 / exact main e96415035ffbe12f16dd3b81e13a5e62b2c4ac00 / Production readiness 33316105624 and Store build 33316172583",
-      "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]
+      "revalidate_on": [
+        "build_commit_changed",
+        "signing_identity_changed",
+        "app_config_changed"
+      ]
     },
     {
       "id": "EV-MOBILE-RECOVERY-REDIRECT-20260830",
@@ -74,22 +83,50 @@
       "status": "VERIFIED",
       "observed_at": "2026-08-30T15:34:15Z",
       "source": "FM-EV-029 / exact FanMind Production Supabase URL Configuration / saved and re-read fanmind://reset-password as URL 4 of 4",
-      "revalidate_on": ["provider_config_change", "target_binding_change", "before_real_recovery_acceptance"]
+      "revalidate_on": [
+        "provider_config_change",
+        "target_binding_change",
+        "before_real_recovery_acceptance"
+      ]
     },
     {
       "id": "EV-LEGACY-ISSUE-SNAPSHOT-20260830",
       "gate": "legacy_issue_reconciliation",
       "class": "github_issue_state",
       "status": "COUNTERCHECKED",
-      "observed_at": "2026-08-30T20:04:33Z",
-      "source": "FM-EV-032 / PR #1033 merge cc82dd7ad62e6aaf1d7b2637d49d43010789475f / independent post-write GitHub reads: #642 open, #643 open, #644 closed not_planned, #874 open",
+      "observed_at": "2026-09-10T21:03:16+00:00",
+      "source": "FM-DEC-015 / PR #1099 source completion and owner-authorized #874 priority update; independent fresh reads of all four issues on 2026-09-10. #642 open and unchanged; #643 open and unchanged, #644 closed not_planned and unchanged, #874 open with Creator/Social-before-Android and one-account-per-Creator decision. Historical acceptance boxes were preserved.",
       "issues": {
-        "642": {"updated_at": "2026-08-30T20:04:32Z", "state": "open", "state_reason": null, "body_sha256": "fa44e70daa81b071b5da64c9e54bf9f639e76f52b9753931c582e9267f2cf6f8"},
-        "643": {"updated_at": "2026-08-30T20:04:31Z", "state": "open", "state_reason": null, "body_sha256": "d3d24bdf527df55eaf4fee0db8de8e30d95ff50ffa925ad4790023d228f16ba3"},
-        "644": {"updated_at": "2026-08-30T20:04:30Z", "state": "closed", "state_reason": "not_planned", "body_sha256": "97dfe167559fad4a62224b3d3e1d7c16edac0c902e49d7e07677d3db28e40ed2"},
-        "874": {"updated_at": "2026-08-30T20:04:33Z", "state": "open", "state_reason": null, "body_sha256": "f38bde8341341b4c8051128c108ae2b52b93881041b35e272a5d67dd6be25967"}
+        "642": {
+          "updated_at": "2026-08-30T20:04:32Z",
+          "state": "open",
+          "state_reason": null,
+          "body_sha256": "fa44e70daa81b071b5da64c9e54bf9f639e76f52b9753931c582e9267f2cf6f8"
+        },
+        "643": {
+          "updated_at": "2026-08-30T20:04:31Z",
+          "state": "open",
+          "state_reason": null,
+          "body_sha256": "d3d24bdf527df55eaf4fee0db8de8e30d95ff50ffa925ad4790023d228f16ba3"
+        },
+        "644": {
+          "updated_at": "2026-08-30T20:04:30Z",
+          "state": "closed",
+          "state_reason": "not_planned",
+          "body_sha256": "97dfe167559fad4a62224b3d3e1d7c16edac0c902e49d7e07677d3db28e40ed2"
+        },
+        "874": {
+          "updated_at": "2026-09-10T21:02:48Z",
+          "state": "open",
+          "state_reason": null,
+          "body_sha256": "973c45270db4667a8b50d0c03379ccaf15d2dfc9360cda042858d042fdfd3d17"
+        }
       },
-      "revalidate_on": ["issue_body_or_state_change", "before_relying_on_legacy_issue_reconciliation", "before_reopening_reconciled_work"]
+      "revalidate_on": [
+        "issue_body_or_state_change",
+        "before_relying_on_legacy_issue_reconciliation",
+        "before_reopening_reconciled_work"
+      ]
     },
     {
       "id": "EV-STAGING-BILLING-FREEZE-20260906",
@@ -111,7 +148,13 @@
       "source": "Historical AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5 passed lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback. Its current-state use was invalidated by the later isolated Staging deploy 34058028839 of 62e6a11858e85996af03f6740819b0fc6194b4a4, which introduced later canonical Billing/AI downstream code. Retain this run as historical rollback evidence only; require a fresh exact-deployed-revision revalidation before treating the AI-tier lifecycle paths as current.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
       "invalidated_by": "Staging deploy 34058028839 on 62e6a11858e85996af03f6740819b0fc6194b4a4",
-      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "ai_ledger_schema_or_acl_change", "before_new_ai_tier_staging_action"]
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "target_binding_change",
+        "ai_ledger_schema_or_acl_change",
+        "before_new_ai_tier_staging_action"
+      ]
     },
     {
       "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
@@ -179,7 +222,11 @@
       "status": "VERIFIED",
       "observed_at": "2026-09-06T14:07:29.700939+00:00",
       "source": "Protected build workflow 34037085683 job 101497020224 SUCCESS; authenticated EAS finished Android preview APK at 6801d687cfe6048d6e32e63bcfe2862d2886fce0 version 1.0.0 (2), Google Services processed. Replaces 6d7f76cd candidate; device registration and delivery remain unaccepted. Private build identifiers omitted.",
-      "revalidate_on": ["build_commit_changed", "signing_identity_changed", "app_config_changed"]
+      "revalidate_on": [
+        "build_commit_changed",
+        "signing_identity_changed",
+        "app_config_changed"
+      ]
     },
     {
       "id": "EV-FINISHLINE-STAGING-20260908",
@@ -277,6 +324,14 @@
         "owner_source_change",
         "before_restore_host_access"
       ]
+    },
+    {
+      "id": "EV-CREATOR-SOURCE-20260910",
+      "gate": "creator_intelligence",
+      "class": "immutable_commit",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-10T21:03:16+00:00",
+      "source": "PR #1099, source merge 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c, tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4; 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a; PG17 job 103045962829 and real-browser job 103045963302. Code foundation only; no Creator target activation or whole gate completion."
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

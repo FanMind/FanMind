@@ -1,5 +1,18 @@
 # FanMind Evidence and Acceptance
 
+## FM-EV-CREATOR-20260910 — first source package published
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
+- Scope: source/application publication only; whole Creator and external gates remain open.
+- Proof: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.
+- Database countercheck: real PG17 job 103045962829 applied the actual controlled artifact in an isolated disposable database, tested ownership/RLS/FK/duplicates/atomic rollback and completed one Creator test with zero skips/failures.
+- Browser countercheck: job 103045963302 completed the Creator edit/reapproval/confirmed-purchase and existing CRM journeys, two passed. No real provider or purchase was used.
+- Runtime countercheck: audit job 103047813569 at 2026-09-10T21:02:37Z reports PRODUCTION_AUDIT_VERIFIED=true and exact release 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; readiness job 103047813324 verifies the same release. Live public Roadmap read confirms current Creator/account/status content.
+- Limitation: no Creator target migration/flag, real voice-quality approval, full learning loop or external Meta/OnlyFans approval. Read-only live category mismatch is handled by the bounded closeout.
+- Recovery: feature remains opt-in after target verification; code rollback preserves data. No listed whole-phase milestone is newly accepted, so no milestone snapshot is fabricated.
+
+
 ## FM-EV-042 — completed three-offer publication
 - Date: 2026-09-10
 - Status: COUNTERCHECKED
