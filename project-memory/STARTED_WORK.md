@@ -6,8 +6,8 @@
 - Work lock: LOCK-FM-ROADMAP-CREATOR-20260910
 - Scope: owner-requested roadmap and Project Memory update only; Phase 7 channels -> Sales Handoff -> Creator Intelligence -> further Phase 8 work.
 - Completed so far: main 7004c9ea, all mandatory readers, open PRs/CI and existing architecture reviewed; no Creator implementation exists in the reviewed main.
-- Still open: branch/PR publication and later reviewed merge; no Creator implementation has begun.
-- Exact next step: publish this verified roadmap branch/PR; later merge/release remains separate from Creator implementation.
+- Still open: current-head CI/review and later merge/release of published PR #1090; no Creator implementation has begun.
+- Exact next step: review PR #1090 and its current-head CI; do not repeat branch/PR creation or start Creator implementation before accepted handoff.
 - Owner action needed: none for this roadmap preparation; no feature implementation, schema/provider mutation or Production release included.
 - Evidence plan: final diff, existing roadmap/truth/translation/memory checks and selector checks before/after Sales Handoff.
 - Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.

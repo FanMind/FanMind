@@ -4,7 +4,8 @@
 - Status: VERIFIED
 - Risk: R2
 - Scope: FM-CR-025 roadmap recording and synchronized dependency/truth/translation controls only.
-- Exact next step: publish the locally verified roadmap branch/PR; no Production release.
+- Publication: PR #1090 is open; initial remote tree equals the locally verified tree.
+- Exact next step: finish current-head CI/review of PR #1090; merge/Production release remains unperformed.
 
 ## FM-CREATOR-001
 - Status: DEFERRED
