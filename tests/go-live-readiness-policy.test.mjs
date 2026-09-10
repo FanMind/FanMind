@@ -168,11 +168,11 @@ test("phase 4 stays technically complete while sales handoff waits for phase 7",
   assert.doesNotMatch(roadmap, /Verkaufsstart freigegeben/u);
   assert.match(
     roadmap,
-    /number: "07"[\s\S]*status: "Finaler Technikblock vor Verkaufsübergabe"[\s\S]*availability: "later"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach technischer Abnahme Phase 3 \+ Phase 7"/u,
+    /number: "07"[\s\S]*status: "Kanäle · Verkaufsübergabe · Creator-Ausbau"[\s\S]*availability: "later"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 \+ 7"/u,
   );
   assert.match(
     roadmap,
-    /number: "08"[\s\S]*status: "Website-KI begonnen · übrige Anbindungen später"[\s\S]*label: "Einbettbarer Website-KI-Assistent"[\s\S]*state: "partial"[\s\S]*label: "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7"/u,
+    /number: "08"[\s\S]*status: "Website-KI begonnen · übrige Anbindungen später"[\s\S]*label: "Einbettbarer Website-KI-Assistent"[\s\S]*state: "partial"[\s\S]*label: "Weitere Phase-8-Arbeit nach Creator Intelligence in Phase 7"/u,
   );
   assert.doesNotMatch(roadmap, /Steuerberater-Bestätigung/u);
 

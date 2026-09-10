@@ -1,5 +1,12 @@
 # FanMind Session Handoff
 
+## Creator roadmap decision — 2026-09-10
+- Owner placed Creator Intelligence & Sales Assistance in Phase 7b after technical Sales Handoff and before further Phase 8 work: FM-DEC-013 / FM-CR-025.
+- FM-CREATOR-001 is DEFERRED, not required_for_sales and not parallel_safe; its selector prerequisite is accepted sales_handoff. Do not begin Creator implementation while resuming the present finishline.
+- FM-ROADMAP-001 records roadmap/translation/truth/dependency changes only. Planned scope is docs/CREATOR_INTELLIGENCE.md; current prices, protected boundaries and the historically started disabled Website-AI foundation remain.
+- Read-only baseline: main 7004c9ea, already merged PR #1088; prior pre-merge instructions below are historical. Existing failed Production Audit runs 34451800230/34458129680 are outside this change and not resolved by it.
+- Verification: 35 existing tests, product truth, memory quality and direct roadmap/selector counterchecks passed locally. Exact next step: publish the roadmap branch/PR; no Production deployment or Creator schema/runtime action.
+
 ## Current continuation — 2026-09-10
 - Exact current main remains 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59. PR #1088 is the documentation closeout; its three delayed review findings are being reconciled before merge.
 - Owner explicitly approved the prepared single-source SSH rule. It was saved once in fanmind-restore-isolated and read back as TCP 22/22, approved owner /32, rule prefix eb474b38. Only the existing Restore VM is attached. Owner Windows SSH independently reached authentication, then failed after key/passphrase/password attempts. Network reachability is confirmed; try the other existing FanMind key without password fallback. Host login is not yet proved.

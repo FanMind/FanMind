@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FM-ROADMAP-CREATOR-20260910
+- Task: FM-ROADMAP-001
+- Status: RELEASED
+- Risk: R2
+- Holder: Codex
+- Acquired: 2026-09-10
+- Released: 2026-09-10 after local implementation/countercheck; publication/CI remains tracked in FM-ROADMAP-001.
+- Scope: roadmap, translations, canonical scope and deferred Creator work bookkeeping; no existing operational lock is taken over.
+- Evidence plan: exact-main diff, existing truth/memory checks and no premature Creator selection or sales dependency.
+
 ## LOCK-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
 - Status: ACTIVE

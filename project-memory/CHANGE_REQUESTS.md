@@ -1,5 +1,15 @@
 # FanMind Change Requests
 
+## FM-CR-025
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: owner explicitly places the reviewed Creator Intelligence & Sales Assistance proposal in Phase 7 after Sales Handoff and before Phase 8.
+- Classification: roadmap/scheduling decision only; implementation remains deferred until FM-SALES-001 is accepted.
+- Existing work checked: main 7004c9ea, FM-SOC7-001, FM-SALES-001, FM-DEC-011 and the Creator architecture review; FM-CR-023/024 are already used by open PR #1089.
+- Decision: Phase 7a = required Social channels; then technical Sales Handoff; Phase 7b = Creator Intelligence. Further Phase 8 work follows Phase 7b. The historical disabled Website-AI foundation remains started.
+- Related tasks: FM-ROADMAP-001 (this recording), FM-CREATOR-001 (future implementation).
+- Boundary: no new pre-sales requirement, pricing change, additional database, provider activation, feature implementation or Production release.
+
 Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFERRED, REJECTED, DUPLICATE or merged into an existing task.
 
 ## FM-CR-001

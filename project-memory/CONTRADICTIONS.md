@@ -1,5 +1,15 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-CREATOR-SEQUENCE-20260910
+- Date: 2026-09-10
+- Related task/change: FM-ROADMAP-001 / FM-CR-025
+- Source A: previous roadmap describes all Phase 7 as the final pre-sales technical block; old current-reader checkpoints also predate the PR #1088 merge.
+- Source B: owner now places Creator Intelligence within Phase 7 after Sales Handoff and before Phase 8; fresh GitHub main is 7004c9ea after PR #1088.
+- Status: RESOLVED
+- Resolution: distinguish Phase 7a channels, Sales Handoff and Phase 7b Creator expansion; gate Creator work on accepted handoff without adding it to required_for_sales. Preserve historically started disabled Website-AI work. The new current-reader entries supersede only the old commit/PR checkpoints, not operational evidence or locks.
+- Boundary: existing Production Audit failures are observed, not solved; no fresh runtime/provider acceptance is inferred from this roadmap decision.
+- Falsification question: would the selector start Creator work before handoff, or would an unfinished Creator gate block sales readiness? Both must be false in the countercheck.
+
 ## CTR-FM-AI-AUTH-20260910
 - Date: 2026-09-10
 - Related task/change: FM-AI-001 / PR #1088

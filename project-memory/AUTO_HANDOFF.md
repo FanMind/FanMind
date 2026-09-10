@@ -21,6 +21,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `phase7_social`: `PARTIAL`
 - `sales_handoff`: `BLOCKED`
 - `legal_tax_avv`: `BLOCKED`
+- `creator_intelligence`: `DEFERRED`
 
 ## Deferred owner actions
 

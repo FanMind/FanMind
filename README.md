@@ -249,6 +249,13 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 - Growth, Agency und Enterprise bleiben Roadmap / Coming Soon / Auf Anfrage, bis sie ausdrücklich freigegeben sind.
 - Verbindliche Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = Website-KI-Assistent, iOS/TestFlight, LinkedIn und weitere spätere Plattformanbindungen. Die deaktivierte Sicherheits-, Widget- und Nachrichteningestion-Basis des Website-Assistenten ist begonnen; KI-Dialog, menschliche Eskalation, E-Mail-Rückkanal und produktive Aktivierung fehlen noch. Die übrigen Phase-8-Anbindungen zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 - FanMind ist kein Bot: KI bereitet Antworten vor; der Mensch prüft, kopiert und sendet final selbst.
+- Phase 7 hat seit der Owner-Entscheidung vom 10. September 2026 zwei Abschnitte:
+  Phase 7a Social-Kanäle → Verkaufsübergabe an Gerhard → Phase 7b Creator
+  Intelligence & Sales Assistance → weitere Phase-8-Arbeit. Creator-Profile,
+  eigene Stimmen, Sales Playbooks, Fan-Kaufdaten, Gesprächszustände und
+  Feedback-Lernen sind geplant und keine zusätzliche Verkaufsübergabe-Bedingung.
+  Die bestehende deaktivierte Website-KI-Grundlage bleibt historisch begonnen.
+  Details: [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
 - FanMind garantiert keine fehlerfreien KI-Antworten.
 - Externe Integrationen dürfen nicht als allgemein aktive Vollfunktion dargestellt werden, solange sie nicht technisch und rechtlich validiert sind.
 - Legal-Readiness: Eine klar als nicht unterschriftsreif begrenzte

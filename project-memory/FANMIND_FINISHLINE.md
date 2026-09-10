@@ -1,6 +1,6 @@
 # FanMind Finishline Board
 
-Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the current finishline through Phase 7.
+Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Phase 7a Social acceptance and technical Sales Handoff; Phase 7b is subsequent work.
 
 | Gate | Task | Current state | What is already proven | What still closes the gate |
 |---|---|---|---|---|
@@ -22,7 +22,7 @@ Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the c
 - Current machine result remains `SALES_READY=false` because required finishline gates are still open.
 - Phase 4 is the completed Production/Billing base, not sales handoff.
 - Phase 3 is Facebook + Instagram + WhatsApp.
-- Phase 7 is TikTok + X/Twitter + Discord + conditional OnlyFans.
+- Phase 7a is TikTok + X/Twitter + Discord + conditional OnlyFans, followed by technical Sales Handoff. Phase 7b is Creator Intelligence & Sales Assistance (FM-CREATOR-001), currently DEFERRED and not required for sales. Further Phase 8 work follows Phase 7b.
 - The disabled Website-AI security/widget/message-ingestion foundation and a dormant consent-bound manual email-handoff path in Phase 8 have started, and they are not counted in this finishline. Database/Staging acceptance, dialog, automatic uncertainty escalation, verified email delivery, `iOS-TestFlight`, LinkedIn and later platforms remain deferred.
 - A gate with code/CI only is not automatically `ACCEPTED`.
 - External acceptance cannot be inferred from a repository artifact.
@@ -38,3 +38,5 @@ Machine source: `FINISHLINE_STATE.json`. Human-readable closeout board for the c
 5. Phase 3 real Social acceptance.
 6. Phase 7 real Social acceptance / OnlyFans feasibility resolution.
 7. Final Production demo and technical Sales Handoff.
+8. After handoff: Phase 7b Creator Intelligence & Sales Assistance; this does not block the preceding handoff.
+9. After accepted Phase 7b: further Phase 8 work, preserving the historically started disabled Website-AI foundation.

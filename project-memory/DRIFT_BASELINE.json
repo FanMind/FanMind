@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "baseline_commit": "6149691cb688c752e2900dcc35e0e6189537b996",
-  "captured": "2026-09-08",
+  "baseline_commit": "7004c9ea44c98f125fbd7988a2557cf356693b36",
+  "captured": "2026-09-10",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "6209ceaa8a26e0b10151746b80b5004fd359cc94",
-    "src/config/roadmap.ts": "857ff545df39cd7a94f47e45dd72306bca4eff42",
+    "docs/SOURCE_OF_TRUTH.md": "f0f4ae5ee2f8145f601f96d2eb71754f8e0c2c43",
+    "src/config/roadmap.ts": "edbc0e41d68ed4391b3c655d655ee6f73cc81b46",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

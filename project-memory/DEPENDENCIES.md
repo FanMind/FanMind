@@ -1,5 +1,13 @@
 # FanMind Dependencies
 
+## FM-DEP-011
+- From: FM-CREATOR-001
+- Requires: accepted technical Sales Handoff FM-SALES-001, then Creator data-model/authorization/migration acceptance before reply-pipeline integration.
+- Type: owner-confirmed post-handoff product sequencing
+- Status: ACTIVE
+- Updated: 2026-09-10
+- Rule: Phase 7b is not a prerequisite of sales_handoff or any required_for_sales gate. It must not run as parallel_safe work around the unfinished sales handoff. Further Phase 8 work follows accepted Phase 7b; existing disabled Website-AI preparation remains historical.
+
 Track ordering and prerequisites here. Do not mark dependent work accepted while a required prerequisite remains unresolved.
 
 ## FM-DEP-001

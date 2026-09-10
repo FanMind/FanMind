@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-29",
+  "updated": "2026-09-10",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -16,14 +16,15 @@
     "phase3_social": {"task": "FM-SOC3-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
     "phase7_social": {"task": "FM-SOC7-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
     "sales_handoff": {"task": "FM-SALES-001", "risk": "R2", "state": "BLOCKED", "required_for_sales": true},
-    "legal_tax_avv": {"task": "FM-LEGAL-001", "risk": "R3", "state": "BLOCKED", "required_for_sales": false}
+    "legal_tax_avv": {"task": "FM-LEGAL-001", "risk": "R3", "state": "BLOCKED", "required_for_sales": false},
+    "creator_intelligence": {"task": "FM-CREATOR-001", "risk": "R3", "state": "DEFERRED", "required_for_sales": false}
   },
   "sales_required_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
   "notes": {
     "phase4": "Production/Billing base only; never sales handoff.",
     "phase6": "Current Mobile finishline excludes iOS/TestFlight; native iOS implementation foundations remain, while TestFlight external acceptance is deferred to Phase 8.",
     "phase3": "Facebook, Instagram, WhatsApp.",
-    "phase7": "TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible.",
+    "phase7": "Phase 7a: TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible; then technical Sales Handoff. Phase 7b: Creator Intelligence & Sales Assistance only after accepted sales_handoff, not required for sales; then further Phase 8 work.",
     "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus a dormant consent-bound manual email handoff have started outside the current finishline; database/Staging acceptance, dialog, automatic uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and later platforms remain deferred."
   }
 }

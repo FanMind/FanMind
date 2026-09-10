@@ -1,5 +1,17 @@
 # Started Work Register
 
+## FM-ROADMAP-001 — Creator Intelligence sequencing 2026-09-10
+- Status: VERIFIED
+- Risk: R2
+- Work lock: LOCK-FM-ROADMAP-CREATOR-20260910
+- Scope: owner-requested roadmap and Project Memory update only; Phase 7 channels -> Sales Handoff -> Creator Intelligence -> further Phase 8 work.
+- Completed so far: main 7004c9ea, all mandatory readers, open PRs/CI and existing architecture reviewed; no Creator implementation exists in the reviewed main.
+- Still open: branch/PR publication and later reviewed merge; no Creator implementation has begun.
+- Exact next step: publish this verified roadmap branch/PR; later merge/release remains separate from Creator implementation.
+- Owner action needed: none for this roadmap preparation; no feature implementation, schema/provider mutation or Production release included.
+- Evidence plan: final diff, existing roadmap/truth/translation/memory checks and selector checks before/after Sales Handoff.
+- Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.
+
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
 - Status: IN_PROGRESS
 - Risk: R4

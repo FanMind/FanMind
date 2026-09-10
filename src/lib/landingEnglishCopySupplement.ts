@@ -121,12 +121,20 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Nächste Mobile-Phase": "Next mobile phase",
   "Konfiguration und Routing fertig · Zustellung offen":
     "Configuration and routing ready · Delivery pending",
-  "Weitere Social-Kanäle": "Additional social channels",
-  "Finaler Technikblock vor Verkaufsübergabe":
-    "Final technical block before sales handoff",
+  "Social-Kanäle & Creator Intelligence": "Social channels & Creator Intelligence",
+  "Kanäle · Verkaufsübergabe · Creator-Ausbau":
+    "Channels · sales handoff · Creator expansion",
   Verkaufsübergabe: "Sales handoff",
-  "Nach technischer Abnahme Phase 3 + Phase 7":
-    "After technical acceptance of Phase 3 + Phase 7",
+  "Nach Abnahme der Kanäle in Phase 3 + 7":
+    "After acceptance of the channels in Phases 3 + 7",
+  "Creator Intelligence & Sales Assistance": "Creator Intelligence & Sales Assistance",
+  "Nach Verkaufsübergabe · vor Phase 8": "After sales handoff · before Phase 8",
+  "Creator-Profile & getrenntes Fanwissen": "Creator profiles & separate fan knowledge",
+  "Eigene Creator-Stimmen & automatischer Creator-Kontext":
+    "Distinct Creator voices & automatic Creator context",
+  "Sales Playbooks & Gesprächssteuerung": "Sales playbooks & conversation guidance",
+  "Kaufdaten & Lernen aus bestätigten Chats": "Purchase data & learning from confirmed chats",
+  "Phase 7b · geplant": "Phase 7b · planned",
   "Website-KI, iOS & weitere Kanäle": "Website AI, iOS & additional channels",
   "Website-KI begonnen · übrige Anbindungen später":
     "Website AI started · remaining integrations later",
@@ -142,8 +150,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "E-Mail-Rückkanal für Besucher": "Email return channel for visitors",
   "E-Mail-Erfassung, Einwilligung und Antwortzustellung noch umzusetzen":
     "Email capture, consent and reply delivery still to be implemented",
-  "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7":
-    "Complete Phase 8 implementation after Phase 7",
+  "Weitere Phase-8-Arbeit nach Creator Intelligence in Phase 7":
+    "Further Phase 8 work after Creator Intelligence in Phase 7",
   "Website-KI-Grundlage bereits begonnen": "Website AI foundation already started",
   "Segmente & Listen": "Segments & lists",
   "Segment-Ansichten": "Segment views",

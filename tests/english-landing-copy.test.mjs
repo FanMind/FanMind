@@ -64,11 +64,11 @@ test("English landing uses the complete translation wrapper", async () => {
     '"Push für Follow-up-Erinnerungen": "Push for follow-up reminders"',
     '"Produktions- & Billing-Basis": "Production & billing foundation"',
     '"Technisch abgeschlossen": "Technically complete"',
-    '"Finaler Technikblock vor Verkaufsübergabe":',
-    '"Final technical block before sales handoff"',
+    '"Kanäle · Verkaufsübergabe · Creator-Ausbau":',
+    '"Channels · sales handoff · Creator expansion"',
     'Verkaufsübergabe: "Sales handoff"',
-    '"Nach technischer Abnahme Phase 3 + Phase 7":',
-    '"After technical acceptance of Phase 3 + Phase 7"',
+    '"Nach Abnahme der Kanäle in Phase 3 + 7":',
+    '"After acceptance of the channels in Phases 3 + 7"',
   ]) {
     assert.ok(
       supplement.includes(roadmapTranslation),
