@@ -1,5 +1,15 @@
 # FanMind Decision Log
 
+## FM-DEC-015
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: Bernd explicitly resumes Creator Intelligence and Facebook/Instagram/OnlyFans plus AI replies with human handoff now, and places Android completion afterwards.
+- Decision: develop Phase 7b Creator foundations and the selected Social/handoff work now in parallel workstreams; Android follows these increments. Further unrelated Phase 8 work stays deferred. Paid activation stays DEFERRED_BY_OWNER until actual tax/UID facts exist; do not ask again while deferred.
+- Supersedes: FM-DEC-013's implementation-after-sales prerequisite and the earlier non-Social/Mobile-before-Social development order only. Phase labels and real sales acceptance requirements are retained; no gate is marked accepted by reprioritization.
+- Scope: define all six Creator data/model/authorization contracts first, then extend the existing reply pipeline. Reuse existing Meta and manual Copy-&-Open paths; no scraping, automatic sending, inferred provider/legal approval, new Android build or paid activation.
+- Owner clarification in the same session: each Creator gets an independent FanMind account/Workspace. Enforce one Creator profile per Workspace; reuse existing workspace_id isolation and billing. Team access, extended roles/rights, auditable approvals and multi-workspace administration are later phases, not part of this increment.
+- Related tasks: FM-CREATOR-001, FM-SOC3-001, FM-SOC7-001 and the existing Website-AI handoff task.
+
 ## FM-DEC-014
 - Date: 2026-09-10
 - Status: DONE

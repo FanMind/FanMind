@@ -54,15 +54,15 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 - Only the disabled Website-AI foundation in Phase 8 may be `started`; all other Phase-8 work remains deferred and the bounded foundation is outside the current finishline.
 
 ## Next-best-action rule
-Owner decision FM-DEC-013 separates Phase 7a Social acceptance and Sales Handoff
-from the subsequent Phase 7b Creator Intelligence work. The latter is not
-required for sales and may start only after accepted Sales Handoff; further
-Phase 8 work follows accepted Phase 7b. The already prepared disabled Website-AI
-foundation remains historically started, not permission to jump this sequence.
+Owner decision FM-DEC-015 supersedes the prior development sequence: Creator
+Intelligence and selected Social/AI-handoff engineering may proceed now, before
+Android completion. Each Creator has an independent account/Workspace. This
+changes development priority only, not sales acceptance or provider/legal gates.
+Further unrelated Phase 8 work and Team/roles/multi-workspace features remain later.
 
 1. Preserve finishline priority; never mark a deferred owner step complete just because work proceeds elsewhere.
 2. If the earliest unresolved action is `DEFERRED_BY_OWNER` or otherwise owner/platform-only, later work is eligible only when explicitly `parallel_safe=true` and all listed prerequisite gates are accepted.
-3. Never select Social or Sales around an unresolved earlier owner-only/non-Social gate unless their explicit prerequisites are accepted.
+3. Selected Social engineering may proceed under FM-DEC-015; real provider activation and Sales Handoff retain their explicit acceptance prerequisites.
 4. Never auto-select payment, destructive retention, protected Production mutation, legal acceptance, credentials/signing or provider activation merely because it is next in sequence.
 5. When the owner explicitly resumes a deferred action, remove/update its deferred status; the selector must restore its original finishline priority.
 6. If nothing safe is executable, surface the earliest unresolved owner action instead of inventing work.

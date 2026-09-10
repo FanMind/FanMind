@@ -1,11 +1,16 @@
 # Assumption Verification Register
 
+## ASM-FM-CREATOR-SOCIAL-20260910
+- Status: VERIFIED for source and priority; target acceptance remains NEEDS_VERIFICATION.
+- Evidence: local baseline tree equals current remote main; Creator scope is documentation only before this work; latest owner instruction explicitly resumes implementation before Android.
+- Boundaries: no Creator assignment may be guessed from display names or the logged-in chatter. Existing legacy records must not silently acquire a different persona. Meta and OnlyFans access/consent require actual evidence; repository work does not provide it.
+
 ## ASM-FM-CREATOR-20260910
 - Date: 2026-09-10
 - Related task: FM-ROADMAP-001 / FM-CREATOR-001
 - Risk: R2
-- Assumption: owner intended sequencing after accepted Sales Handoff, not immediate Creator implementation or a new pre-sales gate.
-- Status: VERIFIED
+- Assumption: owner initially intended sequencing after accepted Sales Handoff. FM-DEC-015 now explicitly resumes Creator/Social engineering before Android, one Creator per account/Workspace.
+- Status: SUPERSEDED
 - Evidence: explicit owner instruction in this session; FM-DEC-013 and docs/CREATOR_INTELLIGENCE.md.
 - Recheck trigger: any future change to the handoff/Creator/Phase-8 sequence.
 - Action if false: reconcile a new owner decision before changing prerequisites; do not infer permission to start early.

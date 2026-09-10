@@ -166,7 +166,7 @@ test("completion tracker keeps every weighted block and supporting work line", a
   );
 });
 
-test("channel phases stay unique and phase 8 records only the Website AI foundation", async () => {
+test("channel phases stay unique and selected handoff development retains external activation gates", async () => {
   const [roadmap, publicRoadmap, adminRoadmap, sourceOfTruth, readme, tracker, databaseSchema] = await Promise.all([
     source("src/config/roadmap.ts"),
     source("src/app/roadmap/page.tsx"),
@@ -185,7 +185,7 @@ test("channel phases stay unique and phase 8 records only the Website AI foundat
   assert.match(phase3, /Facebook[\s\S]*Instagram[\s\S]*WhatsApp/u);
   assert.doesNotMatch(phase3, /TikTok|X \/ Twitter|Discord|OnlyFans|LinkedIn/u);
   assert.match(phase7, /TikTok[\s\S]*X \/ Twitter[\s\S]*Discord[\s\S]*OnlyFans/u);
-  assert.match(phase7, /label: "OnlyFans", state: "later", status: "Roadmap"/u);
+  assert.match(phase7, /label: "OnlyFans", state: "partial", status: "Manuelle Übergabe · direkte Anbindung in Prüfung"/u);
   assert.doesNotMatch(phase7, /Facebook|Instagram|WhatsApp|LinkedIn/u);
   assert.match(phase8, /Website-KI, iOS & weitere Kanäle[\s\S]*LinkedIn[\s\S]*Internationale Plattformen/u);
   assert.match(phase8, /label: "Telegram"[\s\S]*state: "later"[\s\S]*status: "Bot-\/Webhook-Grundlage vorbereitet · inaktiv; Anbindung nicht begonnen"/u);
@@ -195,7 +195,9 @@ test("channel phases stay unique and phase 8 records only the Website AI foundat
   assert.match(phase8, /status: "Website-KI begonnen · übrige Anbindungen später"/u);
   assert.match(phase8, /availability: "later"/u);
   assert.equal((phase8.match(/state: "partial"/gu) ?? []).length, 2);
-  assert.doesNotMatch(phase8, /state: "done"|state: "progress"|state: "planned"/u);
+  assert.doesNotMatch(phase8, /state: "done"|state: "planned"/u);
+  assert.equal((phase8.match(/state: "progress"/gu) ?? []).length, 1);
+  assert.match(phase8, /KI-Antworten und Übergabe an den Nutzer[\s\S]{0,160}Antwortentwürfe und manuelle Übergabe in Arbeit/u);
   assert.doesNotMatch(phase8, /Facebook|Instagram|WhatsApp|TikTok|X \/ Twitter|Discord|OnlyFans/u);
   assert.match(phase15, /Segmente & Listen[\s\S]*Segment-Ansichten[\s\S]*Listenlogik[\s\S]*Filter & Tags[\s\S]*CSV-Import für Segmente nutzen/u);
   assert.match(publicRoadmap, /import \{ roadmapPhases, type RoadmapPhase \} from "@\/config\/roadmap"/u);

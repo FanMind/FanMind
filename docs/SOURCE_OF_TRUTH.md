@@ -293,16 +293,28 @@ Abschluss von Phase 7 und zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 OnlyFans bleibt auch in Phase 7 eine unverbindliche, vor Umsetzung technisch
 und rechtlich zu prüfende Plattform.
 
-Owner-Entscheidung vom 10. September 2026: Phase 7 besteht aus zwei Abschnitten.
-**Phase 7a** umfasst die genannten erforderlichen Social-Kanäle; danach folgt
-die technische Verkaufsübergabe an Gerhard. **Phase 7b** umfasst anschließend
-Creator Intelligence & Sales Assistance auf der bestehenden CRM-/Reply-Basis:
-Creator-Zuordnung, eigene Stimmen, freigegebene Sales Playbooks, kommerzielles
-Fanwissen, Gesprächszustände und Lernen aus bestätigten Chats/Käufen. Dieser
-Ausbau ist geplant, noch nicht implementiert und ausdrücklich keine zusätzliche
-Voraussetzung für die Verkaufsübergabe. Weitere Phase-8-Arbeit folgt erst nach
-Phase 7b; die schon vorbereitete deaktivierte Website-KI-Grundlage bleibt als
-historisch begonnen dokumentiert. Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
+Owner-Entscheidung FM-DEC-015 vom 10. September 2026: Creator Intelligence
+(Phase 7b) und ausgewählte Facebook-/Instagram-/OnlyFans- und KI-Handoff-Arbeit
+beginnen jetzt; Android wird danach abgeschlossen. Jeder Creator erhält einen
+eigenen FanMind-Account mit eigenem Workspace und genau einem Creator-Profil.
+Das bestehende workspace_id trennt Fanwissen, Gespräche, Prompts und Kanäle.
+Teamzugänge, erweiterte Rollen/Rechte, auditierbare Freigaben und die Verwaltung
+mehrerer Workspaces bleiben spätere Phase-11/12-Arbeit.
+
+Das aktuelle Umsetzungspaket erweitert die bestehende Reply-Engine um
+strukturierte Creator-Stimmen/Playbooks, automatische Workspace-Kontextauflösung,
+Memories/Summary-Kontext und Recommended/Softer/Stronger mit konservativer
+Gesprächsempfehlung. Profile sind im KI-Einstellungsbereich editierbar. Neue
+SQL-Objekte und der serverseitige Creator-Schalter benötigen noch ihren
+getrennten Schema-/Staging-Rollout; Code allein bedeutet keine Live-Aktivierung.
+Bestätigte Kauf-/Angebotsereignisse und Fan-Commercial-Daten sind modelliert
+und über eine quellengestützte manuelle Prüfung erfassbar; die vollständige
+Feedback-Lernschleife und die verblindete Bewertung
+realer Creator-Antworten bleiben offen. Der manuelle OnlyFans-Originalkanalweg
+führt keinen API-Abruf oder Versand aus. Meta bleibt bis zur echten technischen,
+Provider- und Rechtsabnahme Beta. Phase 7b ist keine zusätzliche Voraussetzung
+für die Verkaufsübergabe; alle tatsächlichen Sales-Gates bleiben bestehen.
+Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
 
 Die sichtbaren Phase-5/6-Zeilen werden anhand der bereits vorhandenen Nachweise
 geführt: getrenntes Staging ist abgenommen, der Datenbank-Restore bis

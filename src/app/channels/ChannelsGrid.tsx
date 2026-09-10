@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import styles from "./channels.module.css";
@@ -812,6 +813,15 @@ export function ChannelsGrid({
               <div ref={modalBodyRef} className={styles.modalBody}>
                 <p className={styles.modalText}>{activeChannel.description}</p>
                 <div className={styles.modalDetailGrid}>
+                  {["facebook", "instagram", "onlyfans", "website-chat"].includes(activeChannel.key) ? (
+                    <div className={`${styles.releaseBox} ${styles.fullWidthBlock}`}>
+                      <strong>KI-Antworten mit menschlicher Übergabe</strong>
+                      <p>Jeder Creator verwendet seinen eigenen FanMind-Account. Öffne den passenden Fan, prüfe den KI-Entwurf, kopiere die Antwort und sende sie selbst im Originalkanal. Speichere anschließend nur den tatsächlich gesendeten Text als bestätigten Ausgang.</p>
+                      <p>Das Öffnen oder Kopieren einer Antwort ist weder ein Versand- noch ein Kaufnachweis.</p>
+                      {activeChannel.key === "onlyfans" ? <p>OnlyFans kann als manuelle Quelle verwendet werden. Eine direkte API-Anbindung, automatischer Abruf oder automatisches Senden ist damit nicht freigegeben. Die technische und rechtliche Prüfung bleibt offen.</p> : null}
+                      <Link href="/fans">Fans und Antwortentwürfe öffnen</Link>{" · "}<Link href="/settings/ai-usage">Creator-Stimme vorbereiten</Link>
+                    </div>
+                  ) : null}
                   {activeChannel.key === "facebook" ? (
                     <div
                       className={`${styles.releaseBox} ${styles.fullWidthBlock}`}

@@ -1,8 +1,20 @@
 # Started Work Register
 
-## FM-BILL-003 — paid activation engineering
+## FM-CREATOR-001 — Creator and Social continuation
 - Date: 2026-09-10
 - Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910
+- Completed so far: FM-DEC-015 / FM-CR-029 recorded, data/authorization contracts defined, own-account profile editor + automatic Creator reply context + confirmed fan review/purchase entry + manual Social handoff implemented. Local Operations 1,269 pass, one PG17-only skip; TypeScript, truth and normal build pass. Local browser execution could not launch because the Chromium executable is absent; required CI runs the real browser scenarios.
+- Still open: exact-head build/browser/PG17 CI review/publication and separate target/provider/voice quality acceptance. Full confirmed-chat learning remains subsequent work.
+- Exact next step: complete build/browser and isolated PG17 current-head CI, publish reviewed source; then continue protected Staging preparation. Existing Creator flag remains off until target acceptance.
+- Owner action needed: none for current development; no missing external evidence is inferred.
+- Evidence plan: executable policy/route tests, real isolated database constraint/RLS checks where available, full required CI, final diff and release evidence.
+- Recovery: additive schema preparation; feature unavailable until compatible rollout. Revert source without deleting existing customer data. No automatic Production migration or provider activation.
+
+## FM-BILL-003 — paid activation engineering
+- Date: 2026-09-10
+- Status: PARTIAL
 - Risk: R4
 - Work lock: LOCK-FM-BILL-003-20260910
 - Completed so far: exact revision submission implemented for both entry points/all three offers; nine executable behavior tests and 1,252 Operations tests pass, along with truth/lint/type/build checks. Production read confirms the retained rollout prerequisites.
@@ -11,6 +23,8 @@
 - Owner action needed: no repeat activation permission; actual tax/contract/provider facts are not inferred.
 - Evidence plan: negative no-mutation behavior, existing regression/CI, exact release and reviewed controlled target evidence.
 - Recovery: bounded revert, preserving real accounts and all prior acceptance.
+
+- Latest closeout: PR #1098 final receipt proves source publication, releases the work lock and records the owner tax/UID deferral. Earlier pending-publication instructions in this historical checkpoint are superseded; no repeat publication or activation now.
 
 ## FM-BILL-002 — publication status reconciliation
 - Date: 2026-09-10

@@ -2,10 +2,10 @@
   "schema_version": 1,
   "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
   "captured": "2026-09-10",
-  "last_source_of_truth_review": "2026-09-10 FM-BILL-002 / FM-CR-027 / FM-DEC-014: owner-approved permanent Daily catalog; independently verified Production trigger hardening; overall finishline gates unchanged; follow-up: both Auth protections independently verified; whole Security/Meta gate remains partial",
+  "last_source_of_truth_review": "2026-09-10 FM-DEC-015 / FM-CR-029: explicit owner resumes Creator and selected Social before Android; one Creator per independent account/Workspace. Reviewed new in-progress roadmap/model/code claims; all accepted Restore/Staging/Security/Billing sub-gates and actual Sales acceptance requirements preserved. No Creator target/provider/voice-quality completion or paid activation inferred.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "bdb416c840c2f687bfd5e68d137e56e1bc12e11e",
-    "src/config/roadmap.ts": "3dd53b65b230d91d9e39d9440a83a367848f1bac",
+    "docs/SOURCE_OF_TRUTH.md": "186cfb33cfc9b1e2ebb25fade2fa819aaf1c1096",
+    "src/config/roadmap.ts": "f2881a9d5027a9b05bfbe76342c324b70bda8826",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

@@ -317,6 +317,14 @@ export function buildBoundedReplySuggestionContext(input) {
         AI_REPLY_ANALYSIS_REPORT_CHAR_LIMIT,
       ),
   };
+  if (input?.creatorContext !== undefined && input?.creatorContext !== null) {
+    if (typeof input.creatorContext !== "object" || Array.isArray(input.creatorContext) || serializedChars(input.creatorContext) > 18000) {
+      throw new RangeError("Creator context exceeds its bounded budget.");
+    }
+    context.creatorContext = input.creatorContext;
+    context.fanMemory = normalizeText(input?.fanMemory, 7000);
+    context.conversationSummary = normalizeText(input?.conversationSummary, 4000);
+  }
   const inputChars = serializedChars(context);
 
   if (inputChars > AI_REPLY_INPUT_CHAR_LIMIT) {

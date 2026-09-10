@@ -35,9 +35,9 @@ for token in [
     'title: "Produktions- & Billing-Basis"',
     'status: "Technisch abgeschlossen"',
     'title: "Social-Kanäle & Creator Intelligence"',
-    'status: "Kanäle · Verkaufsübergabe · Creator-Ausbau"',
+    'status: "Creator und Social jetzt · Android danach"',
     'label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 + 7"',
-    'label: "Creator Intelligence & Sales Assistance", state: "later", status: "Nach Verkaufsübergabe · vor Phase 8"',
+    'label: "Creator Intelligence & Sales Assistance", state: "progress", status: "Phase 7b · jetzt in Arbeit"',
     'title: "Website-KI, iOS & weitere Kanäle"',
     'status: "Website-KI begonnen · übrige Anbindungen später"',
 ]:
@@ -51,20 +51,23 @@ for channel in ["TikTok", "X / Twitter", "Discord", "OnlyFans"]:
     if f'label: "{channel}"' not in roadmap:
         errors.append(f"phase7-channel-missing:{channel}")
 
-# Owner-approved Phase 7b must neither run before nor block Sales Handoff.
+# FM-DEC-015 resumes development now; Creator remains outside sales acceptance.
 creator_gate = state.get("gates", {}).get("creator_intelligence", {})
 catalog = json.loads(text("project-memory/NEXT_BEST_ACTIONS.json") or "{}")
 creator_action = next((a for a in catalog.get("actions", [])
                        if a.get("id") == "NBA-CREATOR-INTELLIGENCE"), {})
 if creator_gate.get("required_for_sales") is not False:
     errors.append("creator-expansion-must-not-block-sales")
-if (creator_action.get("prerequisite_gates") != ["sales_handoff"]
-        or creator_action.get("parallel_safe") is not False):
-    errors.append("creator-expansion-must-follow-sales-handoff")
+if (creator_action.get("prerequisite_gates") != ["memory_v6", "staging"]
+        or creator_action.get("parallel_safe") is not True):
+    errors.append("creator-development-must-follow-owner-decision-015")
 for action in catalog.get("actions", []):
     if state.get("gates", {}).get(action.get("gate"), {}).get("required_for_sales"):
         if "creator_intelligence" in action.get("prerequisite_gates", []):
             errors.append("pre-sales-action-must-not-require-creator-expansion")
+
+if "FM-DEC-015" not in text("project-memory/DECISIONS.md") or "Ein Creator = ein Account = ein Workspace" not in text("docs/CREATOR_INTELLIGENCE.md"):
+    errors.append("creator-account-boundary-missing")
 
 # Canonical truth invariants.
 for token in [

@@ -1,5 +1,17 @@
 # Deferred Owner Actions
 
+## FM-MOB-OWNER-CREATOR-SOCIAL-20260910 — Android after Creator/Social
+- Related task: FM-MOB-001.
+- Status: DEFERRED_BY_OWNER.
+- Decision: Bernd explicitly wants Creator Intelligence and selected Social/AI handoff built now, then Android completed. Retain existing builds, closed-Alpha evidence and every real device/push/cohort acceptance gap; no new build/cohort during this interval.
+- Resume when: the current Creator/Social increments are ready or the owner explicitly changes priority.
+
+## FM-BILL-OWNER-TAX-20260910 — paid activation pause
+- Related task: FM-BILL-003.
+- Status: DEFERRED_BY_OWNER.
+- Decision: keep activation paused until actual tax/UID facts exist. The final PR #1098 receipt confirms this owner instruction and completed code publication; do not ask again during the pause.
+- Resume when: genuine tax facts are supplied and the owner resumes the existing controlled activation work.
+
 Updated: 2026-09-07 Europe/Vienna
 
 ## FM-RST-OWNER-001 — GitHub runner-group policy evidence

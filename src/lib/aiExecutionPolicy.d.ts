@@ -58,6 +58,9 @@ export function buildBoundedFanAnalysisPayload(input: {
 }>;
 
 export type BoundedReplySuggestionContext = {
+  creatorContext?: import("./creatorIntelligencePolicy.mjs").CreatorContext;
+  fanMemory?: string;
+  conversationSummary?: string;
   contactId: string;
   displayName: string;
   handle: string | null;

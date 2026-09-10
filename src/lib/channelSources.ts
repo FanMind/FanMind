@@ -3,6 +3,7 @@ export type PreparedSourceType =
   | "facebook_comments"
   | "instagram_messages"
   | "instagram_comments"
+  | "onlyfans_manual"
   | "whatsapp_messages"
   | "telegram_messages"
   | "tiktok_comments"
@@ -21,6 +22,7 @@ export type SourceStatus =
 export type SourcePlatform =
   | "facebook"
   | "instagram"
+  | "onlyfans"
   | "whatsapp"
   | "telegram"
   | "tiktok"
@@ -36,6 +38,7 @@ export type ChannelSourceConfig = {
   platformName:
     | "Facebook"
     | "Instagram"
+    | "OnlyFans"
     | "WhatsApp"
     | "Telegram"
     | "TikTok"
@@ -76,6 +79,16 @@ export const CHANNEL_SOURCE_CONFIGS: Record<
   PreparedSourceType,
   ChannelSourceConfig
 > = {
+  onlyfans_manual: {
+    ...base,
+    sourceType: "onlyfans_manual", source_platform: "onlyfans", source_type: "onlyfans_manual",
+    label: "OnlyFans · manuell", platformName: "OnlyFans", platformKey: "onlyfans",
+    interactionType: "message", actionLabel: "Original öffnen", status: "manual",
+    inboundSupported: true, outboundSupported: false, mediaSupported: false,
+    historySyncSupported: false, liveWebhookSupported: false,
+    statusText: "Manuelle Übernahme · keine API-Verbindung",
+    statusHint: "Berechtigt vorliegende Nachrichten manuell übernehmen, KI-Entwurf prüfen und selbst auf OnlyFans senden. Technische und rechtliche Prüfung der direkten Anbindung bleibt offen.",
+  },
   facebook_messages: {
     ...base,
     sourceType: "facebook_messages",

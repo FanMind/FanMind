@@ -1,5 +1,11 @@
 # Project Authorizations
 
+## FM-AUTH-CREATOR-SOCIAL-20260910
+- Source: Bernd's current explicit instruction to continue Creator Intelligence and Social/AI handoff now and finish Android afterwards.
+- Status: ACTIVE
+- Authorized: necessary source/model/UI/route implementation, isolated synthetic local verification, branch/PR and existing normal roadmap publication workflow.
+- Boundary: no automatic migration, real platform message, provider approval, payment, new Android binary or invented legal/customer evidence. FM-DEC-015 supersedes only older scheduling restrictions.
+
 ## FM-AUTH-PAID-ACTIVATION-20260910
 - Source: Bernd explicitly requested "ok nun bitte Aktivieren" and then "arbeite bitte weiter und wir wollen alles nun aktivieren".
 - Status: ACTIVE

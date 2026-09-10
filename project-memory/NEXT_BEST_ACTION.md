@@ -4,31 +4,31 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-RESTORE-STORAGE-R4-AUTH`
-- Task: `FM-RST-001`
-- Gate: `restore` (`PARTIAL`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Isolierten Storage-Restore exakt freigeben
+- Selected action: `NBA-CREATOR-INTELLIGENCE`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_intelligence` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Instruction
 
-Owner resumed Restore completion on 2026-09-08. DB_POSTCHECKED and repository Storage preparation/controller are accepted. Obtain the exact distinct disposable Storage target/cost decision and artifact/commit/bucket/cleanup authorization; prior local-only choice did not authorize a provider target. Never repeat database Restore or use Production/FanMind Staging as target.
+FM-DEC-015: build one Creator per independent account/Workspace now alongside selected Facebook/Instagram/OnlyFans and human AI handoff. Define the six data boundaries before pipeline integration. Keep team roles, auditable approvals and multi-workspace management for later; Android follows. No inferred provider/legal or Production schema activation.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Candidate evaluation
 
+- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
+- `NBA-PHASE3-SOCIAL` priority 6: **EXECUTABLE** — standing-authorized safe work
+- `NBA-PHASE7-SOCIAL` priority 7: **EXECUTABLE** — standing-authorized safe work
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-PHASE3-SOCIAL` priority 60: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL
-- `NBA-PHASE7-SOCIAL` priority 70: **WAITING_PREREQUISITE** — phase3_social=PARTIAL
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL
-- `NBA-CREATOR-INTELLIGENCE` priority 90: **WAITING_PREREQUISITE** — sales_handoff=BLOCKED
 
 ## Selection safety rules
 

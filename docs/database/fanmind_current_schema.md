@@ -12,6 +12,23 @@ Die aktuelle Datenbankwahrheit ergibt sich aus:
 3. den tatsächlich verwendeten Queries und Typen in `src/lib/supabase/server.ts`,
 4. dieser Dokumentation.
 
+## Creator-Grundlage, 10. September 2026 — kontrolliert vorbereitet
+
+`supabase/controlled/creator_intelligence_foundation.sql` ergänzt einen Creator
+pro eigenem Workspace (UNIQUE workspace_id), strukturierte freizugebende Voice
+und Playbooks, nullable kommerzielle Fan-Einschätzungen, Conversation-Sales-State
+und bestätigte Kauf-/Angebotsereignisse mit zusammengesetzten Eltern-FKs.
+Die bestehenden Fan-/Memory-/Conversation-Workspace-Schlüssel bleiben maßgeblich;
+es gibt keine zusätzliche Mehr-Creator-Zuordnung innerhalb eines Workspaces.
+Neue Tabellen erhalten explizite RLS/Grants; bestehende contact_ai_profiles bleiben
+für authenticated SELECT-only. Ein begrenzter Owner-/Kontakt-geprüfter RPC schreibt
+ausschließlich commercial_profile und bestätigte Ereignisse. Keine neue Teamrolle.
+
+Schema ist **nicht als auf Staging oder Production angewandt nachgewiesen**;
+serverseitiger Creator-Schalter standardmäßig aus. Modell:
+`docs/CREATOR_INTELLIGENCE.md`; Artifact/Abnahme/Recovery:
+`docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`. Kein generischer Deploy/DB-Push.
+
 ## 1. Grundprinzip
 
 Alle produktiven Daten sind workspace-scoped oder user-scoped.

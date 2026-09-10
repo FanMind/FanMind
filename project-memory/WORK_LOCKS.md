@@ -1,14 +1,26 @@
 # Work Locks
 
+## LOCK-FM-CREATOR-SOCIAL-20260910
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: new owner-authorized Creator/Social implementation and current roadmap; no takeover of Restore/provider/Android operational locks.
+- Evidence plan: isolated schema/isolation tests, route/policy behavior, reviewed diff and exact-head CI/publication.
+- Recovery: additive controlled schema and bounded source revert; no real platform messages or financial mutations.
+
 ## LOCK-FM-BILL-003-20260910
 - Task: FM-BILL-003 / FM-CR-028
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Acquired: 2026-09-10
 - Scope: paid-activation source/rollout preparation, independent from closed catalog/security locks.
 - Evidence plan: current-commit behavior and CI, exact release and separately controlled target-bound operations when prerequisites are satisfied.
 - Recovery: bounded code revert; no automatic charge or consent relabeling.
+
+- Latest closeout: PR #1098 final receipt proves source publication, releases the work lock and records the owner tax/UID deferral. Earlier pending-publication instructions in this historical checkpoint are superseded; no repeat publication or activation now.
 
 ## LOCK-FM-BILL-002-RECONCILIATION-20260910
 - Task: FM-BILL-002 / FM-CR-027

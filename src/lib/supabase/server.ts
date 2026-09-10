@@ -813,6 +813,7 @@ const WORKSPACE_PROCESSING_COLUMNS =
   "id,billing_status,billing_suspended_at,billing_manual_override,billing_grace_until,subscription_effective_end_at,workspace_access_mode,test_access_flags";
 const CONTACT_COLUMNS =
   "id,workspace_id,display_name,handle,source_platform,language,status,tags,summary,internal_notes,is_top_fan,created_at,updated_at";
+
 const MEMORY_COLUMNS =
   "id,workspace_id,contact_id,type,content,importance,created_at";
 const CONTACT_REPLY_TARGET_COLUMNS =
@@ -3683,6 +3684,14 @@ export async function mergeWorkspaceContacts(input: {
   if (!source || !target)
     return contactUpdateError("Quelle oder Ziel wurde nicht gefunden.");
 
+  // The legacy merge moves tables sequentially. Preserve confirmed Creator
+  // purchase evidence until an atomic merge can move all parent keys together.
+  if (process.env.FANMIND_CREATOR_INTELLIGENCE_ENABLED === "true") {
+    const creator = await postgrestSelect<{ id: string }[]>("creators", accessToken, "id", [["workspace_id", input.workspaceId]], 1);
+    if (creator.error) return contactUpdateError("Der Creator-Kontext konnte nicht geprüft werden. Es wurden keine Kontakte zusammengeführt.");
+    if (creator.data?.length) return contactUpdateError("Kontakte in Creator-Accounts können derzeit nicht zusammengeführt werden. Bitte die getrennten Fanverläufe beibehalten.");
+  }
+
   for (const table of [
     "conversations",
     "conversation_messages",
@@ -4739,8 +4748,9 @@ export async function createManualConversationMessage(
 export async function getConversationSummary(input: {
   workspaceId: string;
   conversationId: string;
+  accessToken?: string;
 }): Promise<{ summary: ConversationSummaryRow | null; error: Error | null }> {
-  const accessToken = await getAccessToken();
+  const accessToken = await getAccessToken(input.accessToken);
   if (!accessToken)
     return {
       summary: null,
@@ -7896,6 +7906,7 @@ function isMissingMetaMessengerSyncContinuationSchema(error: Error): boolean {
 
 function normalizeMessageType(value: string | null | undefined): string {
   const normalized = normalizeOptionalText(value)?.toLowerCase();
+  if (normalized === "onlyfans_manual") return "manual";
   return [
     "facebook_messages",
     "facebook_comments",

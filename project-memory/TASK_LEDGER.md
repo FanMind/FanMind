@@ -2,7 +2,7 @@
 
 ## FM-BILL-003
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: PARTIAL
 - Risk: R4
 - Goal: continue actual paid-registration activation engineering for the three approved offers after completed catalog release #1096/#1097.
 - Scope: exact displayed payment-terms revision binding on both provisioning entry points, then existing Production Workspace/consent/Billing rollout prerequisites. No new pricing or unrelated Creator/Social activation.
@@ -10,7 +10,7 @@
 - Evidence plan: behavior tests for stale/missing/exact consent version, no mutation for rejection, existing Workspace/customer-billing and browser/CI gates; independent exact-release and controlled-target counterchecks.
 - Recovery: bounded code revert; no old consent relabeling, duplicate catalog creation or automatic charge.
 - Completed substep: exact displayed consent-revision binding and nine executable no-mutation/positive/form tests; 1,252 Operations tests, truth, lint, TypeScript and normal build pass locally. Final publication proof is recorded in the enclosing PR.
-- Exact next step: finish current-head CI/review/publication, align authoritative tax/contract facts with the jointly reviewed function revision, then complete controlled Workspace/Daily/Billing rollout and real end-to-end acceptance. Full paid activation remains PARTIAL; the current legacy June SQL is not proof of acceptance of the changed September terms.
+- Exact next step: source publication is already proved by PR #1098 (22017b3a; Deploy 34510228167, Audit 34510392821, Readiness 34510392800). Owner deferred further paid activation until actual tax/UID facts; resume only then with current target/contract evidence. Full paid activation remains PARTIAL; the current legacy June SQL is not proof of acceptance of the changed September terms.
 
 ## FM-BILL-002
 - Date: 2026-09-10
@@ -63,17 +63,18 @@
 - Risk: R4
 - Scope: FM-CR-025 roadmap recording and synchronized dependency/truth/translation controls only.
 - Publication: PR #1090 merged as 7dbd7a3a; deployment 34483135613, audit 34483304635 and readiness 34483304720 passed. Independent live DE/EN browser verification confirms the visible roadmap.
-- Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-CREATOR-001 remains deferred until accepted handoff.
+- Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-DEC-015 resumes FM-CREATOR-001 now, with Android following the selected Creator/Social increments.
 
 ## FM-CREATOR-001
-- Status: DEFERRED
-- Risk: R3
-- Phase: 7b, after technical Sales Handoff and before further Phase 8 work.
-- Scope: Creator Intelligence & Sales Assistance on the existing FanMind CRM/reply engine; `docs/CREATOR_INTELLIGENCE.md`.
+- Status: IN_PROGRESS
+- Risk: R4
+- Phase: 7b; resumed now before Android by FM-DEC-015.
+- Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
 - Required for sales: false.
-- Prerequisite: FM-SALES-001 / sales_handoff ACCEPTED or PRODUCTION_CONFIRMED.
-- Completed so far: architecture review and owner scheduling decision only; no Creator runtime/schema implemented.
-- Exact next step: after accepted Sales Handoff, revalidate source/model/auth contracts and implement Creator data boundaries before modifying the existing reply pipeline.
+- Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
+- Completed so far: own-account/Workspace model, controlled SQL, structured profile editor, automatic existing-pipeline Creator context, confirmed commercial entry, safe strategy and manual Social handoff implemented; 1,269 local Operations tests pass. Target/voice-quality acceptance remains open.
+- Exact next step: complete current-head build, browser and real isolated PG17 CI, publish the reviewed first package, then prepare target-bound Staging rollout and the confirmed-chat learning loop. Android remains deferred; preserve genuine provider/legal/voice-quality acceptance.
+
 ## FM-SEC-002
 - Date: 2026-09-10
 - Status: VERIFIED

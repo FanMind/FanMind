@@ -1,3 +1,4 @@
+import { CreatorSettings } from "./CreatorSettings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
@@ -218,6 +219,7 @@ export default async function AiUsageSettingsPage() {
         <div className={styles.stack}>
           <AccountTabs activePage="aiUsage" locale={locale} />
 
+          <CreatorSettings locale={locale} />
           <AiPromptSettings locale={locale} />
 
           {usageResult.error || !summary || !indicator || !indicatorText ? (

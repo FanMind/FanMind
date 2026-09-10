@@ -6,25 +6,88 @@
   "phase8_started": true,
   "sales_ready": false,
   "gates": {
-    "memory_v6": {"task": "FM-MEM-005", "risk": "R3", "state": "ACCEPTED", "required_for_sales": true},
-    "production_ops": {"task": "FM-OPS-001", "risk": "R3", "state": "VERIFIED", "required_for_sales": true},
-    "staging": {"task": "FM-STG-001", "risk": "R3", "state": "ACCEPTED", "required_for_sales": true},
-    "restore": {"task": "FM-RST-001", "risk": "R4", "state": "PARTIAL", "required_for_sales": true},
-    "mobile": {"task": "FM-MOB-001", "risk": "R3", "state": "IMPLEMENTED_NOT_VERIFIED", "required_for_sales": true},
-    "ai_billing": {"task": "FM-AI-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
-    "meta_security": {"task": "FM-META-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
-    "phase3_social": {"task": "FM-SOC3-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
-    "phase7_social": {"task": "FM-SOC7-001", "risk": "R3", "state": "PARTIAL", "required_for_sales": true},
-    "sales_handoff": {"task": "FM-SALES-001", "risk": "R2", "state": "BLOCKED", "required_for_sales": true},
-    "legal_tax_avv": {"task": "FM-LEGAL-001", "risk": "R3", "state": "BLOCKED", "required_for_sales": false},
-    "creator_intelligence": {"task": "FM-CREATOR-001", "risk": "R3", "state": "DEFERRED", "required_for_sales": false}
+    "memory_v6": {
+      "task": "FM-MEM-005",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": true
+    },
+    "production_ops": {
+      "task": "FM-OPS-001",
+      "risk": "R3",
+      "state": "VERIFIED",
+      "required_for_sales": true
+    },
+    "staging": {
+      "task": "FM-STG-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": true
+    },
+    "restore": {
+      "task": "FM-RST-001",
+      "risk": "R4",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "mobile": {
+      "task": "FM-MOB-001",
+      "risk": "R3",
+      "state": "IMPLEMENTED_NOT_VERIFIED",
+      "required_for_sales": true
+    },
+    "ai_billing": {
+      "task": "FM-AI-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "meta_security": {
+      "task": "FM-META-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "phase3_social": {
+      "task": "FM-SOC3-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "phase7_social": {
+      "task": "FM-SOC7-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "sales_handoff": {
+      "task": "FM-SALES-001",
+      "risk": "R2",
+      "state": "BLOCKED",
+      "required_for_sales": true
+    },
+    "legal_tax_avv": {
+      "task": "FM-LEGAL-001",
+      "risk": "R3",
+      "state": "BLOCKED",
+      "required_for_sales": false
+    },
+    "creator_intelligence": {
+      "task": "FM-CREATOR-001",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false
+    }
   },
-  "sales_required_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+  "sales_required_states": [
+    "ACCEPTED",
+    "PRODUCTION_CONFIRMED"
+  ],
   "notes": {
     "phase4": "Production/Billing base only; never sales handoff.",
-    "phase6": "Current Mobile finishline excludes iOS/TestFlight; native iOS implementation foundations remain, while TestFlight external acceptance is deferred to Phase 8.",
+    "phase6": "Existing Android artifacts and acceptance remain valid; further Android completion follows the current Creator/Social increments (FM-DEC-015). iOS/TestFlight remains Phase 8.",
     "phase3": "Facebook, Instagram, WhatsApp.",
-    "phase7": "Phase 7a: TikTok, X/Twitter, Discord, OnlyFans only if officially/contractually feasible; then technical Sales Handoff. Phase 7b: Creator Intelligence & Sales Assistance only after accepted sales_handoff, not required for sales; then further Phase 8 work.",
-    "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus a dormant consent-bound manual email handoff have started outside the current finishline; database/Staging acceptance, dialog, automatic uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and later platforms remain deferred."
+    "phase7": "FM-DEC-015 resumes Phase 7b Creator and selected Social engineering now before Android. One Creator per independent account/Workspace. Actual Phase 3/7a acceptance still precedes technical Sales Handoff; Creator is not required_for_sales. Further unrelated Phase 8 and Team/multi-workspace work stay deferred.",
+    "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus dormant consent-bound email handoff are retained. FM-DEC-015 resumes selected AI-draft/human-handoff engineering now; target acceptance, visitor dialog, uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and other later platforms remain separate."
   }
 }

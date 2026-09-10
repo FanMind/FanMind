@@ -125,6 +125,10 @@ const SECTION_LABELS: Record<
   DisclosureMetaDataset["key"],
   { de: string; en: string }
 > = {
+  creators: { de: "Creator-Persona", en: "Creator persona" },
+  creator_voices: { de: "Creator-Stimme", en: "Creator voice" },
+  creator_playbooks: { de: "Creator-Angebote und Grenzen", en: "Creator offers and boundaries" },
+  creator_commercial_events: { de: "Bestätigte Kauf- und Angebotsereignisse", en: "Confirmed purchase and offer events" },
   connections: { de: "Meta-Verbindungen (ohne Tokens)", en: "Meta connections (without tokens)" },
   messages: { de: "Gespeicherte Meta-Chats und Kommentare", en: "Stored Meta chats and comments" },
   content: { de: "Eigener Post-/Medien-Cache", en: "Owned post and media cache" },

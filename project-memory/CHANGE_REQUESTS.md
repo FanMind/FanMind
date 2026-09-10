@@ -1,5 +1,13 @@
 # FanMind Change Requests
 
+## FM-CR-029
+- Date: 2026-09-10
+- Classification: explicit owner reprioritization and bounded Creator/Social implementation.
+- Related tasks: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001.
+- Decision: FM-DEC-015 resumes Creator and selected Social/handoff development before Android. Implement the data model before wiring the existing reply engine; keep all actual external acceptance visible.
+- Risk: R4 (database boundaries and reviewed source publication).
+- Expected scope: one Creator per independent account/Workspace (owner follow-up), structured profile and scoped context, manual Social workflow, tests and canonical roadmap/memory. Existing workspace_id is the fan/conversation boundary; do not build multi-Creator tenancy or later Team/roles/approval/multi-workspace features. Controlled SQL is prepared and verified before target-bound rollout.
+
 ## FM-CR-028
 - Date: 2026-09-10
 - Status: ACCEPTED
