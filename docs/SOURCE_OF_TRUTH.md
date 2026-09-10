@@ -1,5 +1,18 @@
 # FanMind Source of Truth
 
+## Mobile-Paketstand und signierte Artefakte — 10. September 2026
+
+Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
+geprüft; die Web-Korrekturen sind produktiv veröffentlicht. Die Mobile-
+Änderungen sind dadurch noch nicht in einer signierten App veröffentlicht.
+Der vorhandene signierte FCM-Preview `6801d687` (Lauf `34037085683`) und das
+ältere Production-AAB `e9641503` enthalten diese späteren Paketupdates nicht.
+Sie bleiben Belege ihrer jeweiligen älteren Revision. Für den neuen Mobile-
+Paketstand fehlen eine separat geprüfte signierte Veröffentlichung und ihre
+Geräteabnahme unter FM-MOB-001. Ein erneuter Build derselben alten Revision
+ist dafür kein Ersatz; allein für den bisherigen Registrierungsnachweis
+muss der vorhandene FCM-Preview nicht neu gebaut werden.
+
 Stand: 16. August 2026
 
 Dieses Dokument ist die fachliche Source of Truth für FanMind. README, AGENTS.md, Landingpage, Pricing, Legal-Texte, Datenbank-Dokumentation, Roadmap und Codex-Tasks müssen mit diesem Stand synchron bleiben.
@@ -176,14 +189,15 @@ Aktiv im App-Kern:
   sichtbarer Text enthält weder Fanname noch Nachrichtentext oder anderen CRM-
   Inhalt. Ein Staging-only Serververtrag für genau eine inhaltsfreie Follow-up-
   Erinnerung mit einstündiger TTL ist synthetisch getestet. Nachrichten-
-  Providerzustellung, Delivery-Ledger-Apply, Route, Timer/Worker und Production-
-  Aktivierung bleiben ebenso deaktiviert. Der checksum-gebundene
-  service-role-only Delivery-Ledger, sein server-only RPC-Adapter und die
-  getrennte rollback-only Staging-Abnahme sind repositoryseitig kontrolliert
-  vorbereitet, aber nicht angewendet, ausgeführt oder verdrahtet; ohne
-  genehmigtes Staging-Apply samt transaktionaler Target-Revalidierung und unabhängig geprüften
-  EAS-, Staging-App-, Staging-Supabase- und Production-Supabase-Bindings gibt
-  es keine reale Zustellung;
+  Providerzustellung, Route, Timer/Worker und Production-Aktivierung bleiben
+  deaktiviert. Der checksum-gebundene service-role-only Follow-up-Delivery-
+  Ledger ist auf isoliertem Staging angewendet und rollback-only abgenommen:
+  Commit `18a6ad79`, Apply `33867831888`, Acceptance `33867922978`.
+  Der Service ist weiterhin unverdrahtet. Geschützter Einzelsende-Auslöser,
+  Receipt-Integration, aktuelle Geräte-/Provider-Abnahme und produktiver
+  Versand fehlen; die unabhängig geprüften EAS-, Staging-App-, Staging-
+  Supabase- und Production-Supabase-Bindings bleiben Pflicht. Die zusätzliche
+  Nachrichten-Reservation ist durch die Follow-up-Abnahme nicht akzeptiert;
 - checksum-festgeschriebener, strikt Staging-only Kontrollpfad für diese
   Push-Tabelle: ein read-only Ressourcencheck, ein separat bestätigter
   Migrations-Apply und eine rollback-only Acceptance sind vorbereitet. Jeder
@@ -476,7 +490,10 @@ zwingende externe Freigabe noch fehlt.
   Owner und Member als nicht schreibberechtigt, führt synthetisches
   service-role CRUD vollständig transaktional aus und verlangt danach einen
   leeren Cleanup-Nachweis. Kein normaler Deploy kann den Runner aufrufen; reale
-  Push-Registrierung, Serverkey und Delivery bleiben extern deaktiviert.
+  Geräte-/Provider-Abnahme und Delivery bleiben offen. Die Registrierungs-
+  Migration und ihre rollback-only Acceptance sind durch `33800376282` und
+  `33800742158` auf `084e19c8` belegt; die spätere Registrierungs-Runtime ist
+  konfiguriert. Ein aktueller realer Gerätebeleg fehlt weiterhin.
 - Mobile-Push-Delivery: feste Expo-HTTPS-Endpunkte, unabhängige EAS-
   Projektbindung, Workspace-/Member-/Kontakt-/Follow-up-/Registrierungsprüfung,
   Minimalpayload mit einstündiger TTL sowie Retry-, Ticket- und Receipt-
@@ -484,20 +501,25 @@ zwingende externe Freigabe noch fehlt.
   ist repositoryseitig eine datenschutzarme Policy für `message_received` und
   höchstens eine gebundene `message_reminder`-Entscheidung vorbereitet; ein
   gültiger Tap wartet auf Auth und öffnet ausschließlich den exakt gebundenen
-  Fan in `Nachrichten`. Nachrichten-Providerzustellung, Delivery-Ledger-Apply,
-  Route/Timer/Worker und Production-Aktivierung bleiben deaktiviert. Der
+  Fan in `Nachrichten`. Nachrichten-Providerzustellung, Route/Timer/Worker
+  und Production-Aktivierung bleiben deaktiviert. Der atomare Follow-up-Ledger
+  ist auf isoliertem Staging angewendet und rollback-only abgenommen; sein
+  Service besitzt weiterhin keinen Runtime-Aufrufer. Der
   server-only Loader und die spätere Ledger-Reservation erhalten exakt
   dasselbe bereits geprüfte Supabase-URL-/Ref-/Service-Role-Binding; die
   Reservation muss außerdem den aktuellen Registrierungs-/Token-Fingerprint
-  atomar binden. Ohne eine separat genehmigte service-role-only Ledger-
-  Migration mit atomarer Revalidierungs-RPC wird kein Sender verdrahtet; eine
-  CI-Invariante schützt diese Dormanz. Production bleibt strukturell gesperrt.
+  atomar binden. Die installierte service-role-only Revalidierungs-RPC allein
+  aktiviert keinen Sender; die eigenständige Versandintegration und ihre
+  Abnahme fehlen. Eine CI-Invariante schützt diese Dormanz. Production bleibt
+  strukturell gesperrt.
   Der erste geschützte read-only Staging-Postflight gegen `main`
   `283797c1fe6c14d5e9e814d8f8ec83cf9e249483` bestätigte am 2026-09-03
   Zielbindung und Ledger-Prüfsumme, endete aber erwartungsgemäß mit
-  `postflight_failed`, weil das Delivery-Ledger in Staging noch nicht
-  angewendet ist. Der Apply-Job blieb übersprungen; daraus folgt weder eine
-  Migration noch eine Lieferfreigabe.
+  `postflight_failed`, weil das Delivery-Ledger damals noch nicht angewendet
+  war. Dieser historische Ausgang wurde durch den erfolgreichen Apply
+  `33867831888` und die rollback-only Acceptance `33867922978` auf `18a6ad79`
+  abgelöst. Diese Läufe sind keine Lieferfreigabe und kein Auftrag zur
+  Wiederholung; aktuelle Geräte-/Provider-Evidenz bleibt offen.
 - Website-Chat bleibt bis zur getrennten Staging- und Rechtsabnahme
   deaktiviert. Seine Sicherheitsgrundlage darf nur workspace-gebundene,
   standardmäßig deaktivierte Installationen, exakt verifizierte HTTPS-Origins,

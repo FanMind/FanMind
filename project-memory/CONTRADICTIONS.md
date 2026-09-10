@@ -9,6 +9,8 @@
 - Resolution: close only the already published package/recovery code scopes and their historical locks, correct the ledger's historical apply/acceptance status, and explicitly retain the missing Push trigger/receipt integration, real device/provider proof and separate Production delivery/scheduling. No runtime work or required finishline gate is accepted by this correction.
 - Countercheck: GitHub run/commit evidence and source call-site inspection are independent of the stale task text; existing truth/memory checks and unchanged FINISHLINE_STATE.json validate the documentation boundary.
 
+- Review clarification: #1089 Mobile dependency changes are source/CI VERIFIED only; current signed artifacts predate them. Web publication is separately PRODUCTION_CONFIRMED and patched Mobile signing/device publication remains open under FM-MOB-001. All relevant canonical and Mobile readers are reconciled, including historical registration/ledger acceptance; no message-specific or Production delivery acceptance is inferred.
+
 ## CTR-FM-ROADMAP-VISIBILITY-20260910
 - Related task: FM-ROADMAP-001 / FM-CR-025
 - Risk: R4

@@ -1,5 +1,17 @@
 # Mobile Push Registration – kontrollierter Staging-Pfad
 
+## Belegter Stand vom 10. September 2026
+
+Registrierungs-Apply `33800376282` und rollback-only Acceptance `33800742158`
+sind auf `084e19c8` abgeschlossen. Der atomare Follow-up-Delivery-Ledger ist
+über `33867831888` und `33867922978` auf `18a6ad79` angewendet und abgenommen.
+Die Registrierungs-Runtime ist konfiguriert; ein aktueller realer Gerätebeleg
+und die Versandintegration fehlen. Die folgenden Verfahren sind Kontrollpfade
+für begründete neue Aktionen, kein Auftrag, die abgeschlossenen Läufe erneut
+auszuführen. Vor einer späteren Datenbankaktion gilt der gemeinsame lesende
+Rollout-Abgleich; echte Provider-/Geräteabnahme und Production bleiben separat.
+Details und verbleibende Implementierung: `docs/mobile/PUSH_DELIVERY.md`.
+
 ## Ziel und Status
 
 Dieser Ablauf kontrolliert ausschließlich die vorbereitete Tabelle für eine
@@ -238,8 +250,10 @@ Security Invoker, gepinnter `search_path` und ausschließlich die vorgesehenen
 `service_role`-Rechte.
 
 Der Workflow enthält keine Provider-Credentials und keinen Sendepfad. Seine
-Existenz ist keine Apply-Freigabe; bis zu einem ausdrücklich autorisierten
-geschützten Lauf bleibt der Ledger in Staging unangewendet.
+Existenz ist keine Apply-Freigabe. Der damalige Apply ist durch `33867831888`
+und die rollback-only Acceptance durch `33867922978` auf `18a6ad79` belegt;
+eine Wiederholung benötigt einen konkreten Grund und ihre eigene Freigabe.
+Die reale Versand-/Geräteabnahme bleibt offen.
 
 ## Staging-Runtime für Geräte-Registrierung
 

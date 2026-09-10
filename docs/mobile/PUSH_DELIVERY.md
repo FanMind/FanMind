@@ -21,8 +21,10 @@ Zusätzlich ist repositoryseitig eine datenschutzarme Policy für ungesehene
 eingehende Nachrichten vorbereitet. Sie kennt `message_received` und höchstens
 einen `message_reminder` nach 30 Minuten und bindet den Notification-Tap im
 nativen Client authentifiziert an den betroffenen Fan im Bereich
-`Nachrichten`. Diese Policy besitzt **keinen** Provider-Sendpfad, keinen
-Delivery-Ledger-Apply, keinen Timer/Worker und keine Production-Aktivierung.
+`Nachrichten`. Diese Nachrichten-Policy besitzt **keinen** Provider-Sendpfad, keine
+zusätzliche transaktionale Nachrichten-Reservation, keinen Timer/Worker und
+keine Production-Aktivierung. Die unten belegte Ledger-Abnahme betrifft
+Follow-up-Erinnerungen.
 Sie erweitert den bestehenden Push-Vertrag also nicht heimlich um Zustellung,
 sondern bereitet nur Semantik, Minimalpayload und Navigation für eine spätere,
 separat geschützte Staging-Integration vor.
@@ -282,6 +284,11 @@ durch den oben verlinkten Lauf belegt; eine reale Push-Abnahme folgt daraus
 nicht.
 
 ## Konkrete verbleibende Schritte
+
+Der vorhandene FCM-Preview belegt den Build-Stand `6801d687`. Die neueren
+Mobile-Paketkorrekturen aus #1089 sind nur im Quellstand und in CI verifiziert;
+ihre separate signierte Veröffentlichung und Geräteabnahme bleiben offen.
+
 
 1. Den vorhandenen Service und Ledger mit einem geschützten serverseitigen
    Einzelsende-Auslöser und Receipt-Check verbinden und diese Integration

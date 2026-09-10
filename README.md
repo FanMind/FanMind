@@ -1,5 +1,18 @@
 # FanMind
 
+## Mobile-Paketstand und signierte Artefakte — 10. September 2026
+
+Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
+geprüft; die Web-Korrekturen sind produktiv veröffentlicht. Die Mobile-
+Änderungen sind dadurch noch nicht in einer signierten App veröffentlicht.
+Der vorhandene signierte FCM-Preview `6801d687` (Lauf `34037085683`) und das
+ältere Production-AAB `e9641503` enthalten diese späteren Paketupdates nicht.
+Sie bleiben Belege ihrer jeweiligen älteren Revision. Für den neuen Mobile-
+Paketstand fehlen eine separat geprüfte signierte Veröffentlichung und ihre
+Geräteabnahme unter FM-MOB-001. Ein erneuter Build derselben alten Revision
+ist dafür kein Ersatz; allein für den bisherigen Registrierungsnachweis
+muss der vorhandene FCM-Preview nicht neu gebaut werden.
+
 FanMind ist ein KI-gestütztes CRM und Copy-&-Open-Kommunikationssystem für Fan-/Kontaktbeziehungen. Der aktive Web-Kern umfasst Login, temporären Demo-Workspace, Dashboard, Kontakte, Kontaktdetail, CSV-Import, serverseitige KI-Antwortvorschläge, Kontaktwissen, Follow-ups und Roadmap. Zusätzlich besteht unter `apps/mobile` ein eigenständiger nativer Android-/iOS-App-Kern.
 
 ## Schnellentscheidung / Reader-Stand
@@ -22,7 +35,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Postflight sind getrennt vom Web-Deploy; Meta-Verbindungen und Analysen
   bleiben deaktiviert. Ablauf:
   `docs/operations/META_CONTENT_STAGING_MIGRATION.md`.
-- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, sichtbarem read-only Gesprächsverlauf, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge. Repositoryseitig sind außerdem datenschutzarme `message_received`- und höchstens eine gebundene `message_reminder`-Entscheidung samt authentifiziertem Tap zum exakten Fan in `Nachrichten` vorbereitet; Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker und Production-Aktivierung bleiben deaktiviert. Signierte Builds und Store-Verteilung bleiben separat abzunehmen.
+- Mobile-App: eigenständiger React-Native-/Expo-Kern für Android und iOS mit Login, Passwort-Recovery, Dashboard, Owner-Kontaktanlage/-bearbeitung, Member-Nur-Lesezugang, sichtbarem read-only Gesprächsverlauf, Kontaktwissen, KI-Antwortvorschlägen, kopierbarer und nativ teilbarer Antwort, Follow-ups, verschlüsselter Offline-Kontaktübersicht und sicherem lokalen Daten-Purge. Repositoryseitig sind außerdem datenschutzarme `message_received`- und höchstens eine gebundene `message_reminder`-Entscheidung samt authentifiziertem Tap zum exakten Fan in `Nachrichten` vorbereitet; Provider-Zustellung, Route/Timer/Worker und Production-Aktivierung bleiben deaktiviert; der Follow-up-Ledger ist auf isoliertem Staging bereits abgenommen, die Versandintegration fehlt. Signierte Builds und Store-Verteilung bleiben separat abzunehmen.
 - Mobile-Signing-Gate: ein manueller `main`-gebundener Ablauf kann nach
   erfolgreichem Ressourcencheck genau einen credential-frozen internen
   Development-/Preview-Build einreihen und dessen EAS-Endstatus read-only bis
@@ -193,8 +206,9 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   checksum-gebundenen Staging-Apply und rollback-only Acceptance. Alle sind an
   `main`, den manuell geprüften exakten Commit und das geschützte
   `staging`-Environment gebunden; Production-Ziele, echte Push-Tokens und
-  Zustellung bleiben ausgeschlossen. Die rollback-only Acceptance steht noch
-  aus.
+  Zustellung bleiben ausgeschlossen. Die Registrierungs-Migration
+  `33800376282` und rollback-only Acceptance `33800742158` sind auf `084e19c8`
+  belegt; aktuelle reale Geräte-/Provider-Abnahme bleibt offen.
 - Mobile-Push-Delivery-Grundlage: Ein serverseitiger Einzelsender für fällige
   offene Follow-ups, feste inhaltsfreie Payloads mit einstündiger TTL, exakte Tenant-Bindung und
   unabhängig geprüfte EAS-, Staging-App-, Staging-Supabase- und Production-
@@ -204,13 +218,12 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   `message_reminder`-Entscheidung vorbereitet; ein gültiger Tap wartet auf Auth
   und öffnet ausschließlich den exakt gebundenen Fan in `Nachrichten`.
   Der checksum-gebundene service-role-only Delivery-Ledger samt server-only
-  RPC-Adapter und eigener rollback-only Staging-Abnahme ist repositoryseitig
-  vorbereitet, bleibt aber unangewendet, unausgeführt und unverdrahtet.
-  Nachrichten-Provider-Zustellung, Delivery-Ledger-Apply, Route/Timer/Worker
-  und Production-Aktivierung bleiben ebenso deaktiviert. Der Follow-up-Sender
-  besitzt bewusst weder Route noch Timer/Worker und bleibt ohne geprüfte
-  Bindings und einen separat genehmigten atomaren Delivery-Ledger vollständig
-  deaktiviert. Dessen Reserve-RPC muss dasselbe validierte Supabase-Binding wie
+  RPC-Adapter ist auf isoliertem Staging angewendet und rollback-only
+  abgenommen: `33867831888` / `33867922978` auf `18a6ad79`. Der Service bleibt
+  unverdrahtet. Nachrichten-Provider-Zustellung, Route/Timer/Worker und
+  Production-Aktivierung bleiben deaktiviert. Für den Follow-up-Sender fehlen
+  geschützter Auslöser, Receipt-Integration und reale Geräte-/Provider-Abnahme;
+  aktuelle Zielbindungen bleiben erforderlich. Dessen Reserve-RPC muss dasselbe validierte Supabase-Binding wie
   der Loader sowie den aktuellen Registrierungs-/Token-Fingerprint atomar
   revalidieren; Production ist strukturell gesperrt. CI verhindert eine
   unbemerkte Verdrahtung als Route, Worker, Timer oder Migration.

@@ -18,6 +18,10 @@
 
 - Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
 
+- P1/P2 review reconciliation: synchronize every identified canonical/mobile/operations Push reader with the accepted historical Staging foundation, preserve the missing message-specific reservation and real send path, and split FM-SEC-002 source/CI VERIFIED from Web PRODUCTION_CONFIRMED and still-open patched Mobile signed publication under FM-MOB-001. The old signed candidate is not evidence for #1089 Mobile updates. Source-of-truth fingerprint changes only for this reviewed documentation scope; other watched files and all finishline gates remain unchanged.
+
+- Review countercheck: all 76 existing Mobile Push/staging/native-release/boundary tests pass, including canonical reader agreement; full product truth and memory/drift checks pass. A scan finds no current unapplied-ledger claim in the reconciled readers; the only retained mention explicitly describes the superseded historical failure. The exact old artifacts remain separate from the newer Mobile source patch. Final enclosing-PR CI/review is still required.
+
 ## RECEIPT-CANONICAL-BILLING-20260906
 
 ## RECEIPT-FM-ROADMAP-VISIBLE-20260910
@@ -38,9 +42,9 @@
 
 ## RECEIPT-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024
-- Status: PRODUCTION_CONFIRMED
-- Final publication/countercheck: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
-- Supersession: the pending CI/publication instructions below are historical attempt records. The bounded package and recovery code changes are published; real registration, Mobile device/Push and protected security acceptance remain open.
+- Status: VERIFIED
+- Web publication/countercheck (PRODUCTION_CONFIRMED): PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Supersession: the pending source CI/Web publication instructions below are historical. Mobile source and complete CI are VERIFIED for the patched Expo/Expo Router/Sharp/dependency tree in #1089. The existing signed FCM Preview 6801d687 and Production AAB e9641503 predate that patch and do not contain it. Signed publication and device verification of the patched Mobile revision remain open under FM-MOB-001; a Web deploy cannot close them. Do not rebuild an old candidate merely to repeat registration proof; plan the newer signed release separately after its exact revision and applicable delivery work are reviewed. Real registration, Push and protected security acceptance remain open.
 - Risk: R3
 - Preflight: fresh dependency audit is red; root has newly listed Next.js/Sharp/browser/YAML/XML findings. The lockfile was unchanged by the auth fix. CI's earlier redacted report and fresh local audit have different package totals, so only current post-update audit may establish the result.
 - Authorization: bounded repository fix necessary for the requested completion and normal publication. No protected provider or credential action is included.

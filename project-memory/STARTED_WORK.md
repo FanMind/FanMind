@@ -17,6 +17,10 @@
 
 - Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
 
+- P1/P2 review reconciliation: synchronize every identified canonical/mobile/operations Push reader with the accepted historical Staging foundation, preserve the missing message-specific reservation and real send path, and split FM-SEC-002 source/CI VERIFIED from Web PRODUCTION_CONFIRMED and still-open patched Mobile signed publication under FM-MOB-001. The old signed candidate is not evidence for #1089 Mobile updates. Source-of-truth fingerprint changes only for this reviewed documentation scope; other watched files and all finishline gates remain unchanged.
+
+- Review countercheck: all 76 existing Mobile Push/staging/native-release/boundary tests pass, including canonical reader agreement; full product truth and memory/drift checks pass. A scan finds no current unapplied-ledger claim in the reconciled readers; the only retained mention explicitly describes the superseded historical failure. The exact old artifacts remain separate from the newer Mobile source patch. Final enclosing-PR CI/review is still required.
+
 ## FM-ROADMAP-001 — visible roadmap publication follow-up
 - Date: 2026-09-10
 - Status: PRODUCTION_CONFIRMED
@@ -46,13 +50,13 @@
 - Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.
 ## FM-SEC-002 — release dependency patches
 - Date: 2026-09-10
-- Status: PRODUCTION_CONFIRMED
+- Status: VERIFIED
 - Risk: R3
 - Work lock: LOCK-FM-SEC-002-20260910
 - Scope: patch vulnerable packages revealed by current release CI; no audit exception expansion or feature/framework-major upgrade.
-- Result: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
-- Still open: nothing within this bounded dependency patch. Mobile audit exceptions and separate Auth/database hardening remain distinct.
-- Exact next step: keep this release fix closed; its historical lock is released from the merged/deployed evidence.
+- Web publication: PRODUCTION_CONFIRMED. PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Still open: Mobile source and complete CI are VERIFIED for the patched Expo/Expo Router/Sharp/dependency tree in #1089. The existing signed FCM Preview 6801d687 and Production AAB e9641503 predate that patch and do not contain it. Signed publication and device verification of the patched Mobile revision remain open under FM-MOB-001; a Web deploy cannot close them. Do not rebuild an old candidate merely to repeat registration proof; plan the newer signed release separately after its exact revision and applicable delivery work are reviewed. Existing Mobile audit exceptions and separate Auth/database hardening remain distinct.
+- Exact next step: keep the source patch/CI and Web release closed; the historical repository lock is released and patched signed Mobile publication remains under FM-MOB-001.
 - Recovery: forward security correction preferred; review any revert because the prior release has known vulnerable versions.
 
 ## FM-REG-001 — Web password recovery before real registrations
