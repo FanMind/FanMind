@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FM-BILL-003-20260910
+- Task: FM-BILL-003 / FM-CR-028
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: paid-activation source/rollout preparation, independent from closed catalog/security locks.
+- Evidence plan: current-commit behavior and CI, exact release and separately controlled target-bound operations when prerequisites are satisfied.
+- Recovery: bounded code revert; no automatic charge or consent relabeling.
+
 ## LOCK-FM-BILL-002-RECONCILIATION-20260910
 - Task: FM-BILL-002 / FM-CR-027
 - Status: RELEASED

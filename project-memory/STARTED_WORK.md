@@ -1,5 +1,17 @@
 # Started Work Register
 
+## FM-BILL-003 — paid activation engineering
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-BILL-003-20260910
+- Completed so far: exact revision submission implemented for both entry points/all three offers; nine executable behavior tests and 1,252 Operations tests pass, along with truth/lint/type/build checks. Production read confirms the retained rollout prerequisites.
+- Still open: final CI/review/publication of the implemented consent boundary, authoritative tax/contract alignment, controlled Workspace/Billing rollout and real complete activation acceptance.
+- Exact next step: finish the bounded source release, then align the contract version in the existing function rollout using actual tax facts. Do not apply historical June-version functions as acceptance of materially changed September terms.
+- Owner action needed: no repeat activation permission; actual tax/contract/provider facts are not inferred.
+- Evidence plan: negative no-mutation behavior, existing regression/CI, exact release and reviewed controlled target evidence.
+- Recovery: bounded revert, preserving real accounts and all prior acceptance.
+
 ## FM-BILL-002 — publication status reconciliation
 - Date: 2026-09-10
 - Status: COUNTERCHECKED

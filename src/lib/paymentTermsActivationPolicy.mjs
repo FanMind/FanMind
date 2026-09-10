@@ -27,6 +27,25 @@ export function isPaymentTermsActivationEnabled() {
   return PAYMENT_TERMS_ACTIVATION_ENABLED === true;
 }
 
+export function evaluatePaymentTermsSubmission(
+  submission,
+  { activationEnabled = PAYMENT_TERMS_ACTIVATION_ENABLED } = {},
+) {
+  if (activationEnabled !== true) {
+    return Object.freeze({ ready: false, code: "version_unresolved" });
+  }
+  if (submission?.paymentTermsAccepted !== true) {
+    return Object.freeze({ ready: false, code: "not_accepted" });
+  }
+  // Compare exactly: the client identifies the revision it displayed. It may
+  // never choose the server's active revision or turn an old consent into a
+  // current one. Missing versions require a fresh confirmation too.
+  if (submission?.paymentTermsVersion !== CURRENT_PAYMENT_TERMS_VERSION) {
+    return Object.freeze({ ready: false, code: "version_mismatch" });
+  }
+  return Object.freeze({ ready: true, code: "ready" });
+}
+
 export function evaluateCurrentPaymentTermsUserEvidence(
   metadata,
   {

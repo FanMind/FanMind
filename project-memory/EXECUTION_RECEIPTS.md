@@ -1,3 +1,17 @@
+## RECEIPT-FM-BILL-003-20260910
+- Task: FM-BILL-003 / FM-CR-028
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: FM-AUTH-PAID-ACTIVATION-20260910
+- Work lock: LOCK-FM-BILL-003-20260910
+- Baseline: main 8b09275cfd5406cd9837477289d2987800fcd229 and matching local tree.
+- Scope: actual paid-activation preparation, beginning with exact consent-revision binding on both authenticated provisioning entry points.
+- Evidence plan: submitted revision mismatch/missing/disabled paths must never build trusted acceptance or call provisioning; existing workflow and target acceptance retained.
+- Recovery: bounded code revert; existing accounts/consents/Prices retained.
+- Implementation evidence: both real provisioning entry points, the trusted-user helper and rendered package forms are exercised by tests/payment-terms-submission.test.mjs; nine tests pass. Existing full Operations suite: 1,252 passed, zero failures; release truth/lint/type/build checks pass. No workflow, environment, SQL, Price or consent-row mutation.
+- Independent countercheck: fresh read-only Production catalog query confirms absent Starter/Daily RPCs and both Billing ledgers, with browser Workspace INSERT still granted. Diff review confirms no activation switch or terms-version change; rejection tests record zero provisioning calls. A stale/missing revision reaching provisioning would falsify the claimed correction; neither path does.
+- Publication: current-head CI/review and exact-release Deploy/Audit/Readiness must be completed and bound in the enclosing PR. Keep the full task PARTIAL even after this bounded code release; contract/tax, controlled Workspace/Billing rollout and actual acceptance remain open.
+
 ## RECEIPT-FM-BILL-002-RECONCILIATION-20260910
 - Task: FM-BILL-002 / FM-CR-027
 - Status: COUNTERCHECKED

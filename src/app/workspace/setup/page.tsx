@@ -6,6 +6,8 @@ import { getUserAuthorizedWorkspaceDashboard } from "@/lib/workspaceAuthorizatio
 import { isInternalDailyTestAdmissionReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import {
   isPaymentTermsActivationEnabled,
+  CURRENT_PAYMENT_TERMS_VERSION,
+  evaluatePaymentTermsSubmission,
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
@@ -53,10 +55,19 @@ async function provisionWorkspace(formData: FormData) {
     redirect("/workspace/setup?error=payment_terms_required");
   }
 
+  const paymentTermsVersion = formData.get("paymentTermsVersion");
+  if (!evaluatePaymentTermsSubmission({
+    paymentTermsAccepted,
+    paymentTermsVersion,
+  }).ready) {
+    redirect("/workspace/setup?error=payment_terms_changed");
+  }
+
   const trustedUser = buildTrustedProvisioningUser(
     data.user,
     selection,
     true,
+    paymentTermsVersion,
   );
   if (!trustedUser) {
     redirect(`/workspace/setup?error=${PAYMENT_TERMS_ACTIVATION_BLOCK_CODE}`);
@@ -149,6 +160,7 @@ export default async function WorkspaceSetupPage({
         {activationEnabled ? (
           <div className={styles.emptyState}>
             <form action={provisionWorkspace}>
+              <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
               <input type="hidden" name="planId" value="starter" />
               <input type="hidden" name="commercialOption" value="starter_paid_setup" />
               <label>
@@ -163,6 +175,7 @@ export default async function WorkspaceSetupPage({
             </form>
 
             <form action={provisionWorkspace}>
+              <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
               <input type="hidden" name="planId" value="starter" />
               <input type="hidden" name="commercialOption" value="starter_no_setup_commitment" />
               <label>
@@ -178,6 +191,7 @@ export default async function WorkspaceSetupPage({
 
             {dailyTestAvailable ? (
               <form action={provisionWorkspace}>
+                <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
                 <input type="hidden" name="planId" value="pilot" />
                 <input
                   type="hidden"
@@ -217,7 +231,11 @@ export default async function WorkspaceSetupPage({
 
         {errorCode ? (
           <p className={styles.error} role="alert">
-            {errorCode === "daily_test_window_closed"
+            {errorCode === "payment_terms_changed"
+              ? locale === "en"
+                ? "The payment terms have changed. Please review the current terms and confirm your package again."
+                : "Die Zahlungsbedingungen wurden geändert. Bitte lies die aktuellen Bedingungen und bestätige dein Paket erneut."
+              : errorCode === "daily_test_window_closed"
               ? locale === "en"
                 ? "Daily activation is not ready yet. No workspace was created. Please try again after activation becomes available."
                 : "Die Daily-Aktivierung ist noch nicht bereit. Es wurde kein Workspace angelegt. Bitte versuche es nach der Freischaltung erneut."

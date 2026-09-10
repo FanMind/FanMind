@@ -1,5 +1,11 @@
 # Project Authorizations
 
+## FM-AUTH-PAID-ACTIVATION-20260910
+- Source: Bernd explicitly requested "ok nun bitte Aktivieren" and then "arbeite bitte weiter und wir wollen alles nun aktivieren".
+- Status: ACTIVE
+- Authorized: necessary implementation, tests, reviewed branch/PR/merge/publication and technically validated controlled Production activation of the three approved plans. Do not ask for the same activation permission again.
+- Factual boundary: no invented tax treatment/UID, legal review, customer acceptance, email receipt or provider evidence. Follow the target-bound rollout with verified prerequisites; preserve existing successful releases and controls.
+
 ## FM-AUTH-THREE-OFFERS-PUBLISH-20260910
 - Status: ACTIVE
 - Source: owner requests all three listed payment models and "alles bitte voll freigeben", while asking to close/reconcile Restore, genuine registration, AI/Billing and Security/Meta.
