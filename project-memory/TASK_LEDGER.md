@@ -1,11 +1,11 @@
 # FanMind Task Ledger
 
 ## FM-ROADMAP-001
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Scope: FM-CR-025 roadmap recording and synchronized dependency/truth/translation controls only.
-- Publication: PR #1090 is open; initial remote tree equals the locally verified tree.
-- Exact next step: finish corrected current-head CI/review, normal Web release and public DE/EN/version proof in PR #1090. Scope includes visible open-point reconciliation; Creator implementation remains deferred.
+- Publication: PR #1090 merged as 7dbd7a3a; deployment 34483135613, audit 34483304635 and readiness 34483304720 passed. Independent live DE/EN browser verification confirms the visible roadmap.
+- Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-CREATOR-001 remains deferred until accepted handoff.
 
 ## FM-CREATOR-001
 - Status: DEFERRED

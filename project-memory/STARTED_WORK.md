@@ -2,7 +2,7 @@
 
 ## FM-ROADMAP-001 — visible roadmap publication follow-up
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Boundary: normal Web release with bounded roadmap/copy changes only.
 - Work lock: LOCK-FM-ROADMAP-VISIBLE-20260910
@@ -11,10 +11,12 @@
 - Scope: preserve current main, correct translation without weakening the guard, reconcile stale Staging/Android labels, retain actual open acceptance and publish the approved roadmap through existing PR #1090.
 - Evidence plan: existing tests, actual rendered DE/EN guard, fresh complete PR CI/review, normal deployment and independent public roadmap/version verification.
 - Recovery: existing isolated-release rollback; a reviewed revert of only roadmap/copy changes restores prior presentation. No database, credentials, providers or feature flags change.
-- Exact next step: fix and verify the existing PR; Creator implementation remains DEFERRED until sales_handoff is accepted.
+- Result: PR #1090 merged at 7dbd7a3a; deployment 34483135613, audit 34483304635 and readiness 34483304720 passed; independent live DE/EN content/order/layout checks passed.
+- Exact next step: bounded roadmap publication is closed; resume existing pre-sales gates. Creator implementation remains DEFERRED until sales_handoff is accepted.
 - Owner action needed: none for the requested visible roadmap correction; unrelated protected acceptance remains separate.
 
-## FM-ROADMAP-001 — Creator Intelligence sequencing 2026-09-10
+## FM-ROADMAP-001 — historical preparation checkpoint 2026-09-10
+- Superseded by: successful publication/countercheck above; the former pending PR/release instructions below are historical.
 - Status: VERIFIED
 - Risk: R2
 - Work lock: LOCK-FM-ROADMAP-CREATOR-20260910
