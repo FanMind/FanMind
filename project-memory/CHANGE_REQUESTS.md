@@ -1,5 +1,13 @@
 # FanMind Change Requests
 
+## FM-CR-027
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-BILL-002
+- Source: owner explicitly requests EUR 990 setup + EUR 312/month, EUR 0 setup + EUR 312/month, EUR 0 setup + EUR 1/day and full publication.
+- Decision: Daily becomes the third permanent public offer. This supersedes the former catalog-only/timed-beta product restriction; retain existing Flex/12-month terms and Daily daily cancellation/no referral unless separately changed.
+- Boundary: reuse existing engine/Prices; price/publication approval is not evidence of tax registration, verified email receipt, Meta review or actual Storage restore. Protected readiness and customer consent remain necessary.
+
 ## FM-CR-026
 - Date: 2026-09-10
 - Source: owner requests registration completion and immediate publication.

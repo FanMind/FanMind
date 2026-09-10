@@ -1,7 +1,18 @@
 # FanMind Task Ledger
 
+## FM-BILL-002
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R4
+- Goal: publish the owner's three offers: EUR 990 setup + EUR 312/month, EUR 0 setup + EUR 312/month, EUR 0 setup + EUR 1/day; reconcile the four questioned overall acceptance gates.
+- Scope: public Daily offer/registration choice and matching canonical readers; preserve existing Stripe Prices, secure account/Workspace separation, consent, tax, ledger and tenant boundaries. Execute only applicable existing reviewed controls under the owner's current release instruction.
+- Evidence plan: pure commercial-policy and registration/browser tests, complete CI, exact Production release; fresh Stripe/read-only database/provider observations and preserved immutable Restore/Billing receipts.
+- External facts: Stripe Live has the existing EUR 1/day, EUR 312/month and EUR 990 setup prices; zero Tax registrations. No tax status, UID, legal review, email receipt, actual Storage restore or Meta approval is inferred from price approval.
+- Recovery: bounded reviewed source revert; preserve existing accounts/contracts and Stripe objects; no automatic customer charge or Restore retry.
+- Exact next step: implement the approved public third-offer selection, verify existing secure runtime prerequisites and publish the checked result.
+
 ## FM-REG-002
-- Status: VERIFIED
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4 (owner-requested normal Web publication; full paid activation remains open).
 - Source: owner requests completing and publishing registration on 2026-09-10.
 - Scope: free account signup, email confirmation/resend and existing authenticated setup; no Workspace/commercial authority in signup metadata and no payment or provider mutation.
@@ -10,6 +21,8 @@
 - Exact next step: verify every final-head check and review, merge this PR through the normal release path, then verify exact deploy/audit/readiness and public DE/EN entry. The enclosing PR records final publication evidence. Real delivered email and paid Workspace/referral/checkout acceptance remain separate.
 - Recovery: existing isolated-release rollback / bounded source revert; preserve any real login accounts. No migration, prior-consent relabeling or automatic account deletion.
 
+
+- Publication reconciliation 2026-09-10: PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance. Earlier pending publication steps in this historical block are superseded.
 
 ## FM-STATUS-001
 - Date: 2026-09-10
@@ -400,7 +413,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-SEC-001
 - Date: 2026-08-20
-- Status: RECONCILIATION_REQUIRED
+- Status: PARTIAL
 - Risk: R3
 - Goal: reconcile current live Supabase security-advisor posture with the repository's controlled hardening design and finishline before any Production/Auth mutation.
 - Starting state: fresh Production/Staging targets are `ACTIVE_HEALTHY`, but current advisors expose unresolved warnings.
@@ -415,6 +428,11 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Next step: run the existing read-only Production hardening verify against the exact deployed commit; separately review the Staging RPC exception and leaked-password setting; do not Apply/mutate under this reconciliation task.
 - 2026-08-26 refresh: FM-EV-019 reconfirmed the same live Production/Staging advisor and exact function/ACL state with no drift. The offline Production hardening contract is ready; the protected exact-deployed-commit verify, exception acceptance and Auth-setting decision remain open. No provider mutation occurred.
 - 2026-08-26 protected verify: exact run `32997946812` job `98271985321` on deployed `5cb9c193e262f8939b5fc0c700fce154dde616e6` passed preflight/postflight audits and returned the expected read-only `hardening_not_ready` pre-state. Fresh advisors were unchanged; 24/24 focused Staging tests classified the authenticated workspace RPC as constrained intentional exposure pending explicit exception acceptance. Apply and Auth settings remain separately owner-deferred; no provider mutation occurred.
+- Current result 2026-09-10: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. The prior Production trigger pre-state and Apply owner action above are superseded. Auth leaked-password protection and the bounded Staging RPC exception review remain open; the overall Security/Meta gate is not complete.
+- Current next step: provider Auth setting/exception review and Meta external evidence; retain the completed trigger hardening.
+
+- Auth completion 2026-09-10: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Earlier Auth-setting gaps and activation requests are superseded. Remaining scope is bounded RPC exception review and separate Meta evidence, not another trigger or Auth toggle.
+
 ## RECEIPT-FM-RST-001-TARGET-PRINCIPAL-PROJECTION-20260907
 - Task: FM-RST-001.
 - Started: 2026-09-07 after reconciling issue #944 final runtime evidence with current `main` `01803752e6ae807159bcc4301591794c7c74bdfb`.

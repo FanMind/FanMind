@@ -1,5 +1,7 @@
 import type { PlanId } from "@/config/plans";
 import { getPlan } from "@/lib/plans";
+import { getBillingStatusLabel } from "@/lib/billing";
+import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 import type { CommercialOption, ProductiveCommercialOption } from "@/lib/plans";
 
 export type DashboardFeatureKey =
@@ -238,10 +240,29 @@ export function getCommercialOptionLabel(commercialOption: CommercialOption | Pr
     case "agency_preview":
       return "Agency Demo / Erstgespräch";
     case "internal_daily_test":
-      return "Internes Live-Testabo · 1 € pro Tag · nicht öffentlich";
+      return "Daily · 0 € Setup + 1 €/Tag · täglich kündbar";
     default:
       return commercialOption;
   }
+}
+
+type WorkspacePlanDisplayInput = {
+  plan_id?: string | null;
+  commercial_option?: string | null;
+  billing_status?: string | null;
+  member_safe_projection?: boolean;
+};
+
+export function getWorkspacePlanLabel(workspace: WorkspacePlanDisplayInput): string {
+  const labels = { daily: "Daily", pilot: "Pilot / Setup", starter: "Starter", growth: "Growth", agency: "Agency", member: "Teamzugang", unknown: "Paket nicht zugeordnet" };
+  return labels[resolvePublicWorkspacePlanId(workspace)];
+}
+
+export function getWorkspacePlanStatus(workspace: WorkspacePlanDisplayInput): string {
+  const plan = resolvePublicWorkspacePlanId(workspace);
+  if (plan === "daily") return getBillingStatusLabel(workspace.billing_status);
+  if (plan === "member") return "Teamzugang";
+  return plan === "starter" ? "Aktiv" : plan === "pilot" ? "Demo" : "Vorschau";
 }
 
 export function resolveDashboardFeatures(

@@ -70,6 +70,12 @@ test("Meta Pixel is limited to explicit public routes and harmless URL values", 
     }),
     true,
   );
+  for (const search of ["plan=daily", "plan=daily&lang=en"]) {
+    assert.equal(isMetaPixelPageViewAllowed({ pathname: "/register", search }), true);
+  }
+  for (const search of ["plan=daily-private", "plan=daily&ref=PRIVATE", "plan=daily&email=person%40example.com"]) {
+    assert.equal(isMetaPixelPageViewAllowed({ pathname: "/register", search }), false);
+  }
   assert.equal(
     isMetaPixelPageViewAllowed({
       pathname: "/register",

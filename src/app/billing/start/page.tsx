@@ -31,9 +31,9 @@ type BillingPlanSummary = {
 function getBillingPlanSummary(planId?: string | null, commercialOption?: string | null): BillingPlanSummary {
   if (planId === "pilot" && commercialOption === "internal_daily_test") {
     return {
-      name: "Beta-Test · 1 €/Tag",
+      name: "Daily · 0 € Setup + 1 €/Tag",
       dueToday: "1 €/Tag",
-      term: "Interner/Beta-Testplan · täglich kündbar",
+      term: "Tägliche Abrechnung · täglich kündbar",
       status: "Zahlung offen",
     };
   }

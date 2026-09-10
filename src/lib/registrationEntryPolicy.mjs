@@ -33,7 +33,8 @@ export function buildRegistrationHref({
   testPlan,
 }) {
   const query = new URLSearchParams();
-  query.set("plan", String(planId));
+  const isDaily = planId === "pilot" && testPlan === "daily";
+  query.set("plan", isDaily ? "daily" : String(planId));
 
   if (planId === "starter") {
     query.set("option", normalizeStarterOfferOption(starterOption));
@@ -42,7 +43,6 @@ export function buildRegistrationHref({
   if (String(referralCode ?? "").trim()) {
     query.set("ref", String(referralCode).trim());
   }
-  if (testPlan === "daily") query.set("test_plan", "daily");
 
   return `/register?${query.toString()}`;
 }

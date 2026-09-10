@@ -35,7 +35,7 @@ export function resolveSubscriptionCancellation(
   const hasKnownFuturePeriodEnd = Boolean(currentPeriodEnd && currentPeriodEnd.getTime() > nowMs);
   return {
     canSelfService: ((workspace?.plan_id === "starter" && ["starter_paid_setup", "starter_no_setup_commitment"].includes(option)) || (workspace?.plan_id === "pilot" && isDailyBeta)) && CANCELLATION_STATUSES.includes(workspace?.billing_status) && Boolean(workspace?.stripe_subscription_id) && hasKnownFuturePeriodEnd,
-    currentPackage: option === "starter_no_setup_commitment" ? "Starter 12 Monate" : option === "starter_paid_setup" ? "Starter Flex" : isDailyBeta ? "Beta · 1 € pro Tag" : "—",
+    currentPackage: option === "starter_no_setup_commitment" ? "Starter 12 Monate" : option === "starter_paid_setup" ? "Starter Flex" : isDailyBeta ? "Daily · 0 € Setup + 1 €/Tag" : "—",
     minimumTermEndsAt: minimumEnd?.toISOString() ?? null,
     nextBillingAt: currentPeriodEnd?.toISOString() ?? null,
     possibleCancellationAt: effective.toISOString(),

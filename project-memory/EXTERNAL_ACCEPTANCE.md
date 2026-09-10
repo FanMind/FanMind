@@ -1,5 +1,21 @@
 # FanMind External Acceptance Register
 
+## EXT-AUTH-LEAKED-PASSWORD-PROTECTION-20260910
+- Related: FM-SEC-001 / FM-SEC-OWNER-002
+- Status: ACCEPTED
+- Risk: R4
+- Result: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review.
+- Repository evidence alone sufficient: no. Authenticated provider save/reopen plus independent security advisors establish completion.
+- Boundary: one existing provider switch per exact target; no password/account/session/SQL change, email or purchase. Whole Meta/security and Workspace contract gates remain separate.
+
+## EXT-PRODUCTION-TRIGGER-HARDENING-20260910
+- Related: FM-SEC-001
+- Status: ACCEPTED
+- Risk: R4
+- Acceptance: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- External countercheck: Production Supabase security advisors, 2026-09-10T15:38:41Z. Only bounded trigger remediation is accepted; Auth protection, Workspace privilege rollout and Meta evidence remain open.
+- Repository evidence alone sufficient: no. Controlled Production action and separate provider evidence: RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910.
+
 Repository implementation cannot self-close these controls. Each entry remains open until current external evidence is bound to the exact relevant account/project/build/commit/target.
 
 Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.

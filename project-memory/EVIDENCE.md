@@ -1,5 +1,22 @@
 # FanMind Evidence and Acceptance
 
+## FM-EV-041 — Auth leaked-password protection
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Task: FM-SEC-001
+- Evidence: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review.
+- Receipt: RECEIPT-FM-SEC-001-AUTH-PROTECTION-20260910; lock released. This is dated provider evidence, to revalidate after a configuration change; no password or token values recorded.
+
+## FM-EV-040 — approved catalog, previous registration publication and Production hardening
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Related: FM-BILL-002, FM-REG-002, FM-SEC-001
+- PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance.
+- Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- Independent reads: existing Stripe Live EUR exclusive prices 99000/setup, 31200/month and 100/day; Tax registrations empty with has_more=false. Production provisioning RPC counts zero; Workspace browser INSERT contract not applied.
+- Boundary: immutable receipts establish exact actions; provider configuration is a dated mutable observation to revalidate before later activation. No whole-gate, tax/legal or real customer/payment acceptance inferred.
+- Detail: docs/operations/RELEASE_ACCEPTANCE_20260910.md and RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910.
+
 Implementation status and acceptance status are deliberately separate.
 
 ## Status model

@@ -499,6 +499,36 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test("Daily bleibt in DE/EN dauerhaft wählbar und erzeugt nur eine Kontopräferenz", async ({ page }) => {
+    let signupBody: Record<string, unknown> | null = null;
+    let workspaceWrites = 0;
+    await page.route("**/api/register/workspace", async route => { workspaceWrites++; await route.abort(); });
+    await page.route("**/auth/v1/signup?*", async route => {
+      if (route.request().method() === "POST") signupBody = route.request().postDataJSON();
+      await fulfillCorsJson(route, 200, { id: "synthetic-daily-user", email: "daily@example.invalid" });
+    });
+    await page.goto("/register?plan=daily");
+    await expect(page.getByText("Daily · 0 € Setup + 1 €/Tag", { exact: true })).toBeVisible();
+    await expect(page.getByText(/Unbekanntes Paket|frühere entgeltliche Pilotangebot/u)).toHaveCount(0);
+    await page.getByRole("link", { name: "EN", exact: true }).click();
+    await expect(page).toHaveURL(/plan=daily&lang=en/u);
+    await expect(page.getByText("Daily · €0 setup + €1/day", { exact: true })).toBeVisible();
+    await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
+    await page.locator('input[name="email"]').fill("daily@example.invalid");
+    await page.locator('input[name="password"]').fill("Synthetic-Only-2026!");
+    await page.locator('input[name="organisation"]').fill("Synthetic Daily Team");
+    await page.locator('select[name="rolle"]').selectOption("Creator");
+    await page.getByRole("button", { name: /^Create account/u }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+    expect(signupBody).not.toBeNull();
+    const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
+    expect(metadata.registration_option_preference).toBe("internal_daily_test");
+    expect(metadata).not.toHaveProperty("commercial_option");
+    expect(metadata).not.toHaveProperty("payment_terms_accepted");
+    expect(workspaceWrites).toBe(0);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test("Signup bestätigt die E-Mail-Anforderung ohne Workspace oder Zahlung anzulegen", async ({ page }) => {
     await page.clock.install();
     let signupBody: Record<string, unknown> | null = null;

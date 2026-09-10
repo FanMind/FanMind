@@ -1,5 +1,11 @@
 # Project Authorizations
 
+## FM-AUTH-THREE-OFFERS-PUBLISH-20260910
+- Status: ACTIVE
+- Source: owner requests all three listed payment models and "alles bitte voll freigeben", while asking to close/reconcile Restore, genuine registration, AI/Billing and Security/Meta.
+- Authorized: necessary implementation, relevant verification and normal reviewed FanMind/FanMind PR/merge/Production publication; reuse the existing prices and previously accepted work.
+- Retained boundaries: no fabricated tax/UID/contract-consent/provider acceptance, unapproved email recipient, automatic customer charge, destructive Restore cleanup or reuse of the previously rejected Restore password-change action.
+
 ## FM-AUTH-REGISTRATION-PUBLISH-20260910
 - Source: current owner instruction to finish registration and publish it now.
 - Scope: implement, test, review and publish the registration correction through branch/PR, green CI and the existing normal Web deployment.

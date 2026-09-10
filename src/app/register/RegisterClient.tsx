@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient, syncSupabaseSessionForServer } from "@/lib/supabase/client";
 import { isPlanId, resolvePlanId, type CommercialOption, type ProductiveCommercialOption } from "@/lib/plans";
 import { buildRegistrationAccountMetadata, buildWebRegistrationRedirect, registrationErrorMessage } from "@/lib/webRegistrationPolicy.mjs";
+import { isPublicDailyRegistrationRequest } from "@/lib/publicDailyPlanPolicy.mjs";
 import type { PlanId } from "@/config/plans";
 import FeatureStatusLabel, { type FeatureStatusLabelVariant } from "@/components/FeatureStatusLabel";
 import { FanMindLogo } from "@/components/FanMindLogo";
@@ -116,13 +117,13 @@ function getPlanSelectionCopy(
       },
       ...(enablePublicDailyTestPlan ? [{
         label: "3",
-        badge: "Beta",
-        title: "Beta-Test · 1 €/Tag",
-        price: "1 €/day",
-        description: "Interner/Beta-Testplan, täglich kündbar, 1 € pro Tag.",
-        bullets: ["daily cancellable", "beta/internal test"],
+        badge: "Daily",
+        title: "Daily",
+        price: "€0 setup + €1/day",
+        description: "Daily billing with no setup fee.",
+        bullets: ["cancel daily", "no referral discount"],
         href: buildRegistrationHref({ language, planId: "pilot", referralCode, testPlan: "daily" }),
-        cta: "Choose beta test",
+        cta: "Choose Daily",
       }] : []),
       {
         label: enablePublicDailyTestPlan ? "4" : "3",
@@ -160,13 +161,13 @@ function getPlanSelectionCopy(
     },
     ...(enablePublicDailyTestPlan ? [{
       label: "3",
-      badge: "Beta",
-      title: "Beta-Test · 1 €/Tag",
-      price: "1 €/Tag",
-      description: "Interner/Beta-Testplan, täglich kündbar, 1 € pro Tag.",
-      bullets: ["täglich kündbar", "Beta-/interner Test"],
+      badge: "Tagestarif",
+      title: "Daily",
+      price: "0 € Setup + 1 €/Tag",
+      description: "Tägliche Abrechnung ohne Einrichtungsgebühr.",
+      bullets: ["täglich kündbar", "kein Referral-Rabatt"],
       href: buildRegistrationHref({ language, planId: "pilot", referralCode, testPlan: "daily" }),
-      cta: "Beta-Test wählen",
+      cta: "Daily wählen",
     }] : []),
     {
       label: enablePublicDailyTestPlan ? "4" : "3",
@@ -234,10 +235,11 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
   const language = getFanMindLanguage(params.lang);
   const rawPlan = firstParamValue(params.plan);
   const referralCodeFromUrl = firstParamValue(params.ref) ?? firstParamValue(params.referral_code) ?? "";
-  const requestedTestPlan = firstParamValue(params.test_plan);
+  const dailyRequested = isPublicDailyRegistrationRequest({ planId: rawPlan, testPlan: firstParamValue(params.test_plan) });
+  const requestedTestPlan = dailyRequested ? "daily" : firstParamValue(params.test_plan);
   const requestedStarterOption = normalizeStarterOfferOption(firstParamValue(params.option));
-  const hasInvalidPlan = Boolean(rawPlan && !isPlanId(rawPlan));
-  const resolvedPlanId = resolvePlanId(rawPlan, "starter");
+  const hasInvalidPlan = Boolean(rawPlan && rawPlan !== "daily" && !isPlanId(rawPlan));
+  const resolvedPlanId = dailyRequested ? "pilot" : resolvePlanId(rawPlan, "starter");
   const isDailyTestPlanSelected = isDailyTestRegistration({
     enabled: enablePublicDailyTestPlan,
     planId: resolvedPlanId,
@@ -370,7 +372,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
           <aside className={styles.visualPanel} aria-label={language === "en" ? "Package logic" : "Paketlogik"}>
             <div className={styles.planIntro}>
               <p className={styles.eyebrow}>{language === "en" ? "Your FanMind account" : "Dein FanMind-Konto"}</p>
-              <h1>{language === "en" ? "Choose your Starter option" : "Wähle deine Starter-Option"}</h1>
+              <h1>{language === "en" ? "Choose your package" : "Wähle dein Paket"}</h1>
               <p>{language === "en" ? "Your choice is saved as a preference. You confirm the package after signing in." : "Deine Auswahl wird vorgemerkt. Du bestätigst das Paket nach der Anmeldung."}</p>
             </div>
 
@@ -388,7 +390,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
             <div className={styles.planSelection}>
               {planSelectionCopy.map((plan) => {
                 const planId = plan.href.match(/plan=([^&]+)/)?.[1] as RegisterPlanId;
-                const isSelected = isDailyTestPlanSelected ? plan.href.includes("test_plan=daily") : planId === selectedPlanId;
+                const isSelected = isDailyTestPlanSelected ? plan.href.includes("plan=daily") : planId === selectedPlanId;
                 return (
                   <a
                     key={plan.title}
@@ -425,6 +427,10 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
               </div>
               {!paidActivationAvailable && <p className={styles.notice}>
                 {language === "en" ? "Account registration is available. Paid package activation is still being prepared; your account does not start a subscription." : "Du kannst dich bereits registrieren. Die Aktivierung kostenpflichtiger Pakete wird noch vorbereitet; dein Konto startet kein Abo."}
+              </p>}
+              {isDailyTestPlanSelected && <p className={styles.notice}>
+                <strong>{language === "en" ? "Daily · €0 setup + €1/day" : "Daily · 0 € Setup + 1 €/Tag"}</strong><br />
+                {language === "en" ? "Daily billing, cancel daily. No referral discount. Your choice is saved for account setup; registration starts no subscription." : "Tägliche Abrechnung, täglich kündbar. Kein Referral-Rabatt. Deine Auswahl wird für die Einrichtung vorgemerkt; die Registrierung startet kein Abo."}
               </p>}
 
               {selectedPlanId === "starter" && (

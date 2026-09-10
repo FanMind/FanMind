@@ -58,10 +58,12 @@ Updated: 2026-09-07 Europe/Vienna
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-SEC-001`.
-- Status: OWNER_ACTION_REQUIRED.
+- Status: RESOLVED.
 - Proven pre-state: protected read-only run `32997946812`, job `98271985321`, on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; both full Production audits passed and the fresh advisor set remained unchanged.
 - Deferred action: separately authorize exactly one protected `apply` through `trigger-function-hardening-production-control.yml`, bound to the then-current reviewed and deployed commit, checksum-pinned controlled SQL, full preflight/postflight and fresh advisor re-scan.
 - Safety: this read-only session does not authorize Apply. No unrelated SQL, Auth, RLS, provider, Restore or Supabase-Staging mutation may be bundled into the action.
+
+- Completion 2026-09-10: current owner release/security authorization FM-AUTH-THREE-OFFERS-PUBLISH-20260910; Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. Earlier deferred-apply instructions are historical. Do not repeat the successful Apply.
 
 ## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
@@ -71,6 +73,8 @@ Updated: 2026-09-07 Europe/Vienna
 - Deferred action: decide and separately authorize the exact provider setting change for leaked-password protection on each target; explicitly accept or reject the documented Staging RPC exception after reviewing the evidence. Keep these actions separate from trigger hardening and Restore.
 - Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
 - Current additional RPC: get_current_workspace_member_safe_dashboard() is authenticated-only, has pinned search_path and row_security=on, and returns only five safe membership fields. Full schema rollout verify passed; current body MD5 9b7e87c856d33d3ab3b97e2941faa519 matches the canonical SQL. Both RPC exceptions remain decision-required; no blind revoke.
+
+- Completion 2026-09-10 supersedes the old Auth-setting gap/permission request: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Only bounded Staging RPC exception review remains under this action. Do not request another password-protection activation.
 
 ## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
 - Related task: `FM-MOB-001`.

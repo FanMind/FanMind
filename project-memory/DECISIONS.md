@@ -1,5 +1,13 @@
 # FanMind Decision Log
 
+## FM-DEC-014
+- Date: 2026-09-10
+- Status: DONE
+- Decision: permanently offer Starter Flex (EUR 990 setup + EUR 312/month), Starter 12 months (EUR 0 setup + EUR 312/month) and Daily (EUR 0 setup + EUR 1/day).
+- Source: owner's explicit three-price/full-release instruction.
+- Supersedes: only the previous rule restricting Daily to an exceptional 24-hour public beta; historical beta receipts remain valid for their original scope.
+- Boundary: existing net-price basis, monthly commitment distinction and Daily cancellation/no-referral terms remain; no invented tax/UID/legal/provider evidence or automatic customer payment.
+
 ## FM-DEC-013
 - Date: 2026-09-10
 - Status: DONE

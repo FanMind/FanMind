@@ -544,7 +544,7 @@ test("internal 1 EUR daily Stripe subscription plan remains available", () => {
 });
 
 
-test("daily test registration is controlled by an explicit fail-closed server flag", () => {
+test("public Daily selection preserves protected Workspace and payment admission", () => {
   const registerPageSource = fs.readFileSync("src/app/register/page.tsx", "utf8");
   const registerClientSource = fs.readFileSync("src/app/register/RegisterClient.tsx", "utf8");
   const registrationWindowRouteSource = fs.readFileSync("src/app/api/register/daily-test-window/route.ts", "utf8");
@@ -558,9 +558,9 @@ test("daily test registration is controlled by an explicit fail-closed server fl
   const workspaceSetupSource = fs.readFileSync("src/app/workspace/setup/page.tsx", "utf8");
   const deploySource = fs.readFileSync(".github/workflows/deploy-fanmind.yml", "utf8");
 
-  assert.match(registerPageSource, /getPublicDailyTestPlanEnabled/);
-  assert.match(registerPageSource, /isInternalDailyTestWorkspaceProvisioningReady/);
-  assert.match(registerPageSource, /isInternalDailyTestAdmissionReady\(\{[\s\S]*stripeConfig: getStripeConfigStatus\(\)/u);
+  assert.match(registerPageSource, /enablePublicDailyTestPlan = PUBLIC_DAILY_PLAN_ENABLED/u);
+  assert.match(registerPageSource, /paidActivationAvailable = isPaymentTermsActivationEnabled\(\)/u);
+  assert.match(workspaceSetupSource, /isInternalDailyTestAdmissionReady\(\{[\s\S]*stripeConfig: getStripeConfigStatus\(\)/u);
   const checkoutRouteSource = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
   assert.match(checkoutRouteSource, /await getPublicDailyTestPlanEnabled\(\)/);
   assert.match(
@@ -580,7 +580,7 @@ test("daily test registration is controlled by an explicit fail-closed server fl
   );
   assert.match(
     adminSettingsSource,
-    /windowEnabled && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
+    /PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
   );
   assert.match(deploySource, /if \[ ! -e "\$RUNTIME_SETTINGS_FILE" \]/);
   assert.doesNotMatch(deploySource, /sed -i.*FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);

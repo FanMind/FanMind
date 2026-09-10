@@ -15,7 +15,7 @@ import {
   type WorkspaceDashboardRow,
 } from "@/lib/supabase/server";
 import { getUserAuthorizedWorkspaceDashboard } from "@/lib/workspaceAuthorization";
-import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
+import { getCommercialOptionLabel, getWorkspacePlanStatus } from "@/lib/dashboardFeatures";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { getWorkspaceNavigation } from "@/lib/workspaceNavigation";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
@@ -29,6 +29,7 @@ import {
 import { getFanGroupKey } from "@/lib/fanIdentity";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import styles from "./dashboard.module.css";
+import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getMessageSourceContext } from "@/lib/sourceContext";
 
 type WorkspaceDetailsProps = {
@@ -110,6 +111,18 @@ function getWorkspaceDisplay(
         "Teammitglieder sehen nur die für den CRM-Arbeitsfluss freigegebene Workspace-Projektion.",
       contractNote:
         "Vertrags-, Rechnungs-, Stripe-, Steuer-, Adress- und Testzugangsdaten bleiben dem Workspace-Owner vorbehalten.",
+    };
+  }
+  if (resolvePublicWorkspacePlanId(workspace) === "daily") {
+    return {
+      packageName: "Daily",
+      commercialOptionName: getCommercialOptionLabel(workspace.commercial_option),
+      setupFeeLabel: "0 €",
+      monthlyFeeLabel: "1 €/Tag",
+      commitmentLabel: "täglich kündbar",
+      planHint: "Daily · tägliche Abrechnung",
+      packageSummary: "FanMind mit täglicher Abrechnung ohne Einrichtungsgebühr.",
+      contractNote: "0 € Setup + 1 €/Tag · täglich zum Ende des bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.",
     };
   }
   const setupFee = formatEuro(workspace.setup_fee_cents);
@@ -370,20 +383,6 @@ function getUserDisplayName(
   );
 }
 
-function getPlanStatus(
-  workspace: WorkspaceDashboardRow,
-): "Aktiv" | "Demo" | "Vorschau" {
-  if (workspace.plan_id === "pilot") {
-    return "Demo";
-  }
-
-  if (workspace.plan_id === "starter") {
-    return "Aktiv";
-  }
-
-  return "Vorschau";
-}
-
 function WorkspaceDetails({
   workspace,
   userDisplayName,
@@ -403,7 +402,7 @@ function WorkspaceDetails({
   const displayName = userDisplayName ?? workspace.name ?? "Nutzer";
   const pageSubtitle = wt(locale, "Willkommen zurück, Pilot Test 👋");
   const primaryActionLabel = wt(locale, "+ Neuer Kontakt");
-  const planStatus = getPlanStatus(workspace);
+  const planStatus = getWorkspacePlanStatus(workspace);
   const userLabel = displayName;
   const dueFollowupCount = countDueOrOverdueOpenFollowups(followups);
   const { mainNavigation, settingsNavigation, savedViews } =

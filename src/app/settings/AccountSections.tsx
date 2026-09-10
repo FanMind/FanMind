@@ -5,7 +5,8 @@ import {
   getBillingCheckoutActionLabel,
   shouldShowBillingCheckoutAction,
 } from "@/lib/billing";
-import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
+import { getCommercialOptionLabel, getWorkspacePlanLabel } from "@/lib/dashboardFeatures";
+import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getBillingStatusLabel } from "@/lib/billing";
 import { resolveSubscriptionCancellation } from "@/lib/subscriptionCancellation";
 import type { CustomerInvoiceSummary } from "@/lib/customerBilling";
@@ -84,6 +85,17 @@ const BASE_PACKAGE_CARDS: PackageCard[] = [
     badge: "Verfügbar",
     planId: "starter",
     commercialOption: "starter_no_setup_commitment",
+    requestMode: "checkout_if_unpaid",
+  },
+  {
+    key: "internal_daily_test",
+    name: "Daily",
+    price: "0 € Setup + 1 €/Tag",
+    description: "FanMind mit täglicher Abrechnung ohne Einrichtungsgebühr.",
+    features: ["täglich kündbar", "keine Einrichtungsgebühr", "kein Referral-Rabatt", "Copy-&-Open Workflow"],
+    badge: "Verfügbar",
+    planId: "pilot",
+    commercialOption: "internal_daily_test",
     requestMode: "checkout_if_unpaid",
   },
   {
@@ -227,6 +239,7 @@ export function getSettingsAccountPageHref(
 }
 
 export function getPlanLabel(workspace: WorkspaceDashboardRow): string {
+  if (resolvePublicWorkspacePlanId(workspace) === "daily") return getWorkspacePlanLabel(workspace);
   if (
     workspace.plan_id === "pilot" &&
     workspace.commercial_option === "pilot_only"
@@ -508,8 +521,7 @@ export function PackageSettingsSection({
           const isCurrent = card.badge === "Aktuell";
           const canStartCheckout =
             isCurrent &&
-            shouldShowBillingCheckoutAction(workspace) &&
-            card.commercialOption !== "internal_daily_test";
+            shouldShowBillingCheckoutAction(workspace);
           const isComingSoon = card.badge === "Coming Soon";
           const requestLabel =
             workspace.billing_status === "demo_free" ? "Auswählen" : "Wechseln";

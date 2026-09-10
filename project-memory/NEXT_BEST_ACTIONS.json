@@ -21,13 +21,13 @@
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Production-Härtung und Auth-Schutz separat freigeben",
+      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
       "requires_owner": true,
       "parallel_safe": true,
-      "deferred_owner_id": "FM-SEC-OWNER-001",
+      "deferred_owner_id": "FM-SEC-OWNER-002",
       "prerequisite_gates": ["memory_v6", "staging"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Read-only run 32997946812 proved hardening_not_ready on exact deployed main. Require a separate exact authorization before the protected Production trigger-hardening Apply. Keep Staging RPC exception acceptance and leaked-password protection changes explicit and separate; no provider mutation is standing-authorized."
+      "instruction": "Production trigger hardening is complete: Apply 34496892707 and independent Verify 34497099991 passed on 9a6e9d01; fresh Supabase advisors removed all five related warnings. Do not repeat the Apply or ask for its approval again. Leaked-password protection is now enabled and independently verified on Production and Staging (FM-EV-041); do not activate or request it again. Continue only the bounded Staging RPC exception review; Meta external acceptance remains separate. Do not invent browser policies or infer whole-gate completion."
     },
     {
       "id": "NBA-MOBILE-READONLY",

@@ -43,6 +43,7 @@ const SAFE_QUERY_VALUES = Object.freeze({
   lang: new Set(["de", "en"]),
   plan: new Set([
     "starter",
+    "daily",
     "growth",
     "agency",
   ]),

@@ -1,7 +1,16 @@
 # Started Work Register
 
+## FM-BILL-002 — three public payment offers and acceptance reconciliation
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-BILL-002-20260910
+- Completed so far: exact main/release 9a6e9d01, previous PR #1095 publication, existing Live prices, zero Tax registrations and current Production security findings verified.
+- Still open: public Daily offer, full runtime prerequisites and final publication; the four overall gates retain missing external evidence.
+- Exact next step: implement/test the public offer; use reviewed controls for concrete remaining technical fixes.
+- Owner action needed: none for requested source publication; actual tax/contract/recipient/Restore-target facts are not fabricated.
+
 ## FM-REG-002 — Public registration and confirmed-email continuation
-- Status: VERIFIED
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Work lock: LOCK-FM-REG-002-20260910
 - Completed so far: bounded account/confirmation implementation, 1,241 local Operations tests, normal build/type/lint and PR #1095 application/security/database/CRM checks plus 44 desktop/mobile browser tests on 11636d874031552f4f7ddf58fbc0009f5adf0de1.
@@ -9,6 +18,8 @@
 - Exact next step: publish after final-head gates; bind resulting deploy/audit/readiness and public DE/EN evidence in the enclosing PR.
 - Owner action needed: exact payment-terms/version and tax facts for subsequent paid activation, plus an approved recipient for real email acceptance; no new permission needed for this requested normal Web publication.
 
+
+- Publication reconciliation 2026-09-10: PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance. Earlier pending publication steps in this historical block are superseded.
 
 ## FM-STATUS-001 — five handoff questions
 - Date: 2026-09-10
@@ -468,7 +479,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-SEC-001
 - Started: 2026-08-20
 - Updated: 2026-08-26
-- Status: RECONCILIATION_REQUIRED
+- Status: PARTIAL
 - Risk: R3
 - Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
 - Branch/PR: read-only verify evidence PR #1008 final exact head `ed64255f3786eea257011778a40492d6c7c9447e`, squash merge `4efb4eeef07d850fd0fd9117244187cf94bfed41`; refresh PR #1006 merge `78333aae9d075a67a2d550a266d24cb8b9f443a4`; prior lock closeout #1007 merge `5cb9c193e262f8939b5fc0c700fce154dde616e6`; issue #982 comments `5428919200`/`5428996454`/`5429302086`.
@@ -476,10 +487,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Dependencies: FM-DEP-010; exact deployed Production commit; controlled trigger-hardening checksum/runner; current Production/Staging Supabase projects; provider/Auth access for leaked-password decision.
 - Assumptions: Production trigger warnings indicate pre-apply/not-accepted state; Staging authenticated workspace RPC may be intentional but its exception status must be explicitly reviewed.
 - Completed so far: provider advisors and direct Production/Staging catalogs reconfirmed no drift; deploy run `32996396550` job `98266724400` proved Production at exact `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6`. Exactly one protected `verify` then ran as `32997946812` job `98271985321`: preflight audit passed, the installed read-only database verifier returned fixed `hardening_not_ready`, and the always-run postflight audit passed on the same release. Fresh Production advisors remained unchanged. Focused Staging provisioning tests passed 24/24 and classify the RPC as constrained intentional exposure pending explicit exception acceptance.
-- Still open: separately authorized protected Production Apply and post-advisor proof; explicit Staging RPC exception acceptance; separately authorized leaked-password protection changes on both targets.
+- Still open: provider Auth protection, bounded Staging RPC exception review and separate Meta external acceptance. Production trigger Apply and its independent Verify are complete.
 - Evidence so far: FM-EV-014, FM-EV-019 and FM-EV-020; run `32997946812`/job `98271985321`; live Supabase advisors/catalog ACLs; controlled SQL/runbook; 24/24 focused Staging tests.
-- Exact next step: keep `FM-SEC-OWNER-001`/`002` deferred until explicit owner resume and continue the generated parallel-safe Mobile read-only action. Do not rerun the verify.
-- Owner action needed: yes for `FM-SEC-OWNER-001` protected Apply and `FM-SEC-OWNER-002` Auth-setting/exception decisions; neither is standing-authorized.
+- Exact next step: keep the independently verified Production trigger hardening closed; continue authenticated provider Auth protection and bounded Staging RPC exception review under FM-SEC-OWNER-002, plus separate Meta evidence.
+- Owner action needed: secure provider sign-in where required and remaining external facts; no repeated trigger-Apply or publication approval.
+
+- Current result 2026-09-10: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. The prior Production trigger pre-state and Apply owner action above are superseded. Auth leaked-password protection and the bounded Staging RPC exception review remain open; the overall Security/Meta gate is not complete.
+- Current next step: provider Auth setting/exception review and Meta external evidence; retain the completed trigger hardening.
+
+- Auth completion 2026-09-10: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Earlier Auth-setting gaps and activation requests are superseded. Remaining scope is bounded RPC exception review and separate Meta evidence, not another trigger or Auth toggle.
 
 ## Closed work
 
