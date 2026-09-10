@@ -91,6 +91,7 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 - Rule: V8 is now the active mainline memory layer; reopen only on material drift/contradiction.
 
 ## FM-DEP-010
+- Current completion 2026-09-10: FM-EV-040 closes the Production trigger Apply/postflight dependency through runs 34496892707 and 34497099991 plus independent advisors. FM-SEC-OWNER-001 is RESOLVED. Prior pre-state/authorization instructions below are historical; only Auth provider access/protection and bounded RPC exception review remain under FM-SEC-OWNER-002.
 - From: FM-SEC-001
 - Requires: exact live Production/Staging Supabase target identity and health; exact deployed Production commit; read-only catalog/ACL/advisor evidence; checksum-pinned controlled trigger-hardening runner/runbook; explicit provider/owner authorization before any Production DB or Auth-setting mutation; fresh post-action advisor evidence.
 - Type: security + external provider + protected mutation

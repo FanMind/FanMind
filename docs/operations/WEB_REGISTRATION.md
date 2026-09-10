@@ -21,6 +21,16 @@ unchanged. No provider settings, actual test email or payment is changed/sent.
 
 Read-only Auth readiness on 10 September 2026 also confirms that the FanMind Production project permits signups, has email login enabled and requires email confirmation (`disable_signup=false`, `external.email=true`, `mailer_autoconfirm=false`). This does not prove delivery of a real message.
 
+## Three-offer follow-up (FM-BILL-002 / PR #1096)
+
+FM-DEC-014 separately authorizes permanent Daily selection and publication.
+The former 24-hour admission window is superseded; existing server-side
+provisioning, consent, Tax and Billing controls still apply. Current missing
+Production RPC/contract and ledger rollout, provider naming, tax and exact
+versioned-contract prerequisites are recorded individually in
+`docs/operations/RELEASE_ACCEPTANCE_20260910.md`. The source publication
+scope above describes the already completed #1095 account release.
+
 ## Remaining full-activation requirements
 
 - Payment terms: the code/SQL currently records `2026-06-v1`, while the public document now includes the owner-approved third offer dated 10 September 2026 and its changes have no accepted version decision. Confirm the exact reviewed current document/version. A new version requires the matching separately reviewed controlled function migration; never relabel old acceptances.
