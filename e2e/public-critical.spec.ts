@@ -22,8 +22,8 @@ async function fulfillCorsJson(
       status: 204,
       headers: {
         "access-control-allow-origin": "*",
-        "access-control-allow-headers": "*",
-        "access-control-allow-methods": "POST, OPTIONS",
+        "access-control-allow-headers": "authorization, apikey, content-type",
+        "access-control-allow-methods": "GET, POST, PUT, OPTIONS",
       },
     });
     return;
@@ -279,9 +279,13 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
   });
 
   test("Passwort-Reset meldet synthetischen Erfolg ohne Konto-Offenlegung", async ({ page }) => {
-    await page.route("**/auth/v1/recover**", (route) =>
-      fulfillCorsJson(route, 200, {}),
-    );
+    let redirectTo: string | null = null;
+    await page.route("**/auth/v1/recover**", async (route) => {
+      if (route.request().method() === "POST") {
+        redirectTo = new URL(route.request().url()).searchParams.get("redirect_to");
+      }
+      await fulfillCorsJson(route, 200, {});
+    });
 
     await page.goto("/forgot-password");
     await page
@@ -293,7 +297,123 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
       "Falls ein Konto mit dieser E-Mail existiert",
     );
     await expect(page.locator('form [role="alert"]')).toHaveCount(0);
+    expect(redirectTo).toBe(`${E2E_BASE_URL}/reset-password`);
     await expectNoHorizontalOverflow(page);
+  });
+
+  test("Recovery entfernt Tokens vor der Benutzerprüfung und speichert erst nach Bestätigung", async ({ page }) => {
+    const token = "synthetic-recovery-access-token";
+    let releaseUserCheck!: () => void;
+    const userCheckGate = new Promise<void>((resolve) => { releaseUserCheck = resolve; });
+    let userChecks = 0;
+    let passwordUpdates = 0;
+    await page.route("**/auth/v1/user", async (route) => {
+      const request = route.request();
+      if (request.method() === "GET") {
+        userChecks += 1;
+        expect(request.headers().authorization).toBe(`Bearer ${token}`);
+        await userCheckGate;
+      }
+      if (request.method() === "PUT") {
+        passwordUpdates += 1;
+        expect(request.headers().authorization).toBe(`Bearer ${token}`);
+        expect(request.postDataJSON()).toEqual({ password: "Synthetic-New-Password-2026" });
+      }
+      await fulfillCorsJson(route, 200, { id: "synthetic-recovery-user" });
+    });
+    await page.route("**/api/auth/logout", (route) => fulfillCorsJson(route, 200, {}));
+
+    try {
+      await page.goto(`/reset-password?lang=en#access_token=${token}&refresh_token=synthetic-refresh&type=recovery&token_type=bearer`);
+      await expect.poll(() => userChecks).toBeGreaterThan(0);
+      await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password?lang=en`);
+      await expect(page.getByRole("status")).toHaveText("Checking your reset link…");
+      await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
+      expect(passwordUpdates).toBe(0);
+    } finally {
+      releaseUserCheck();
+    }
+
+    const passwords = page.locator('input[autocomplete="new-password"]');
+    await expect(passwords).toHaveCount(2);
+    await passwords.nth(0).fill("Synthetic-New-Password-2026");
+    await passwords.nth(1).fill("Synthetic-New-Password-2026");
+    await page.getByRole("button", { name: "Save password" }).click();
+    await expect(page.getByRole("status")).toContainText("Your password has been changed");
+    expect(passwordUpdates).toBe(1);
+    await expect(passwords).toHaveCount(0);
+    await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password?lang=en`);
+  });
+
+  test("Recovery lehnt falsche Linktypen, doppelte Tokens und Providerfehler ohne Auth-Aufruf ab", async ({ page }) => {
+    let authRequests = 0;
+    await page.route("**/auth/v1/**", async (route) => {
+      authRequests += 1;
+      await fulfillCorsJson(route, 401, { message: "synthetic unexpected request" });
+    });
+    const invalidCallbacks = [
+      "#access_token=synthetic&type=signup",
+      "#access_token=synthetic&type=recovery&access_token=second",
+      "#access_token=synthetic&type=recovery&error_description=synthetic-private-error",
+      "?access_token=synthetic&type=recovery",
+      "?code=synthetic#access_token=synthetic&type=recovery",
+    ];
+    for (const callback of invalidCallbacks) {
+      await page.goto(`/reset-password${callback}`);
+      await expect(page.getByRole("alert")).toContainText("Der Link ist ungültig oder abgelaufen");
+      await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
+      await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
+      await expect(page.locator("body")).not.toContainText("synthetic-private-error");
+    }
+    expect(authRequests).toBe(0);
+  });
+
+  for (const scenario of ["expired", "missing-user", "network-error"] as const) {
+    test(`Recovery bleibt bei ${scenario} ohne Passwortformular`, async ({ page }) => {
+      await page.route("**/auth/v1/user", async (route) => {
+        if (scenario === "network-error" && route.request().method() !== "OPTIONS") {
+          await route.abort("failed");
+          return;
+        }
+        await fulfillCorsJson(route, scenario === "expired" ? 401 : 200,
+          scenario === "expired" ? { message: "JWT expired" } : {});
+      });
+      await page.goto("/reset-password#access_token=synthetic&type=recovery");
+      await expect(page.getByRole("alert")).toContainText("Der Link ist ungültig oder abgelaufen");
+      await expect(page.getByRole("status")).toHaveCount(0);
+      await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
+      await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
+    });
+  }
+
+  test("Recovery meldet einen fehlgeschlagenen Speicherversuch und erlaubt einen bewussten erneuten Versuch", async ({ page }) => {
+    let passwordUpdates = 0;
+    await page.route("**/auth/v1/user", async (route) => {
+      if (route.request().method() === "PUT") {
+        passwordUpdates += 1;
+        if (passwordUpdates === 1) {
+          await route.abort("failed");
+          return;
+        }
+      }
+      await fulfillCorsJson(route, 200, { id: "synthetic-recovery-user" });
+    });
+    await page.route("**/api/auth/logout", (route) => fulfillCorsJson(route, 200, {}));
+    await page.goto("/reset-password#access_token=synthetic&type=recovery");
+    const passwords = page.locator('input[autocomplete="new-password"]');
+    await expect(passwords).toHaveCount(2);
+    await passwords.nth(0).fill("Synthetic-New-Password-2026");
+    await passwords.nth(1).fill("Synthetic-New-Password-2026");
+    const save = page.getByRole("button", { name: "Passwort speichern" });
+    await save.click();
+    await expect(page.getByRole("alert")).toContainText("Das Passwort konnte gerade nicht gespeichert werden");
+    await expect(page.getByRole("status")).toHaveCount(0);
+    await expect(save).toBeEnabled();
+    expect(passwordUpdates).toBe(1);
+    await save.click();
+    await expect(page.getByRole("status")).toContainText("Dein Passwort wurde geändert");
+    expect(passwordUpdates).toBe(2);
+    await expect(page.getByRole("alert")).toHaveCount(0);
   });
 
   test("öffentliche Account-Löschressource führt direkt zum authentifizierten Gesamtprozess", async ({

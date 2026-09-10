@@ -1,5 +1,17 @@
 # Started Work Register
 
+## FM-REG-001 — Web password recovery before real registrations
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Work lock: LOCK-FM-REG-001-20260910
+- Goal: fix the observed Staging-to-Production recovery redirect and reject/scrub malformed recovery links before provider validation.
+- Scope: existing Web recovery pages, pure callback/redirect policy, synthetic tests and reader updates. No real password change, email send, provider setting, registration/payment activation, migration or Restore operation.
+- Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; existing prices complete; paid registration still blocked by unresolved payment-terms version.
+- Evidence plan: executable positive/negative policy tests, synthetic browser cases, exact-head CI and diff review. Local dependency installation was cancelled before network approval; build/browser execution not yet available locally.
+- Recovery: revert this bounded application change; no provider or database rollback is needed.
+- Exact next step: publish the bounded draft and collect exact-head build, lint, security and synthetic browser evidence.
+
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
 - Status: IN_PROGRESS
 - Risk: R4

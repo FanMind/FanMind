@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FM-REG-001-20260910
+- Task: FM-REG-001 / FM-CR-023
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: existing Web recovery redirect/callback handling and synthetic verification only; independent of the blocked Restore password action.
+- Evidence plan: environment separation, malformed/duplicate/wrong-type callbacks, immediate URL cleanup and positive verified-user flow.
+- Recovery: repository revert; no external credential, provider or database mutation.
+
 ## LOCK-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
 - Status: ACTIVE

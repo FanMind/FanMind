@@ -1,5 +1,16 @@
 # FanMind Task Ledger
 
+## FM-REG-001
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: correct Web password recovery before real registrations.
+- Scope: same-environment reset redirect, strict callback parsing, URL cleanup, verified-user guard, synthetic tests and documentation.
+- Dependencies: existing isolated runtime/Supabase configuration; exact-head CI; real mail/device flow and legal registration activation remain external.
+- Evidence required: positive and fail-closed tests plus independent diff/CI review.
+- Recovery: revert only this application change; no provider settings or credentials changed.
+- Next step: complete exact-head CI for FM-CR-023; never reuse this task to bypass the rejected Restore password action.
+
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
 ## FM-WEB-004

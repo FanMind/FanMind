@@ -1,5 +1,25 @@
 ## RECEIPT-CANONICAL-BILLING-20260906
 
+## RECEIPT-FM-REG-001-20260910
+- Task: FM-REG-001 / FM-CR-023
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Authorization: owner request to finish FanMind through readiness for social integrations and real registrations; ordinary bounded application correction only.
+- Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; all seven existing application/test/reader files independently matched remote blob SHAs before editing.
+- Preflight: observed non-local recovery redirect hardcoded to Production; mixed/wrong-type callbacks and invalid-link URL cleanup gaps. Existing paid-registration block remains in force; prices are complete.
+- Scope: same-environment recovery redirect, strict fragment parser, immediate URL cleanup, verified-user guard, bounded GET/PUT transport and synthetic tests. No provider credential, real email/account, SQL, registration, billing or Restore mutation.
+- Evidence: 37 targeted Node tests PASS; commercial/product truth command completed with success output; whitespace check PASS. Browser cases are implemented but not locally executed.
+- Dependency reconciliation: local npm dependency-install request was cancelled before an approval decision. No local build/lint/browser result is claimed. Existing GitHub CI will provide exact-head evidence after draft publication.
+- Countercheck: reviewed final application diff against the observed failures, including wrong origin/type, duplicate/query credentials, provider error, missing user and network failure. Public documentation now reflects the real registration block.
+- Recovery: revert this application patch and redeploy the prior reviewed release. No database/provider rollback; reviewed, not executed.
+- External limits: Supabase redirect allowlist and real email acceptance remain unverified. This is not readiness acceptance for real registrations or social providers.
+- Restore boundary: prior automatic review rejected starting the Ubuntu password change for lack of explicit authorization for that access change. No retry is included here.
+- Next: exact-head CI/build/browser/security review, then release decision under the existing gates.
+- Required-suite follow-up: test:operations reports 1199 PASS / 7 FAIL, all seven failures caused by absent local npm packages (typescript, pdfnative, brace-expansion, sharp or next). This is not a full-suite pass. Existing CI must rerun with dependencies installed.
+- Memory/truth checks: quality, V8, next action, sales readiness structure, truth drift, freshness structure, milestone and legacy reconciliation pass. Readiness remains false and stale runtime evidence remains flagged.
+- Drift reconciliation: the only changed watched file is SOURCE_OF_TRUTH.md. Its reviewed single-line change records the existing payment-terms block and this Web recovery behavior; it does not refresh any accepted runtime evidence. The watched fingerprint is updated in this same patch; all other watched values are preserved.
+
 ## RECEIPT-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
 - Status: IN_PROGRESS
