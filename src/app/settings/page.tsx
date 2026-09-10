@@ -13,7 +13,7 @@ import {
 } from "@/lib/supabase/server";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { UserPreferenceFallback } from "@/components/UserPreferenceFallback";
-import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
+import { getCommercialOptionLabel, getWorkspacePlanLabel, getWorkspacePlanStatus } from "@/lib/dashboardFeatures";
 import { getWorkspaceNavigation } from "@/lib/workspaceNavigation";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
 import { wt } from "@/lib/workspaceCopy";
@@ -76,7 +76,7 @@ function SettingsWorkspace({
   const { mainNavigation, settingsNavigation, savedViews } =
     getWorkspaceNavigation("settings", locale, 0, showAdminArea);
   const userLabel = userDisplayName || workspace.name || "Nutzer";
-  const planLabel = workspace.plan_id === "pilot" ? "Pilot / Setup" : workspace.plan_id === "starter" ? "Starter" : workspace.plan_id === "growth" ? "Growth" : "Agency";
+  const planLabel = getWorkspacePlanLabel(workspace);
 
   return (
     <>
@@ -86,7 +86,7 @@ function SettingsWorkspace({
       userLabel={userLabel}
       planLabel={planLabel}
       planMeta={getCommercialOptionLabel(workspace.commercial_option)}
-      planStatus={workspace.plan_id === "starter" ? wt(locale, "Aktiv") : workspace.plan_id === "pilot" ? "Demo" : wt(locale, "Vorschau")}
+      planStatus={wt(locale, getWorkspacePlanStatus(workspace))}
       mainNavigation={mainNavigation}
       settingsNavigation={settingsNavigation}
       savedViews={savedViews}

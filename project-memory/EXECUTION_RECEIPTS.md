@@ -1,5 +1,20 @@
 ## RECEIPT-FM-STATUS-001-20260910
 
+## RECEIPT-FM-SEC-001-AUTH-PROTECTION-20260910
+- Scope extension before action: apply the same single leaked-password protection setting to isolated FanMind Staging vshyhvgcmrlagvfnvomc. Fresh project list and authenticated UI confirm this separate healthy target in the existing Pro organization; its switch is unchecked. Owner full Security completion and secure sign-in authorization persist. No other setting or SQL change.
+- Task: FM-SEC-001
+- Status: PRODUCTION_CONFIRMED
+- Risk: R4
+- Work lock: LOCK-FM-SEC-001-AUTH-PROTECTION-20260910
+- Scope/authorization: owner full-release/security request; secure GitHub sign-in completed. Exact FanMind Production target verified in authenticated UI.
+- Planned action: enable only Prevent use of leaked passwords, currently off. Pro organization already exists; no purchase or plan change.
+- Evidence plan: saved/reopened UI switch plus independent Supabase security-advisor read; confirmation and other settings unchanged.
+- Recovery: reviewed reversible setting toggle; no passwords/accounts/sessions/SQL changed, no email sent.
+- Exact next step: save and countercheck before reporting completion.
+
+
+- Final result/countercheck: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Both distinct projects are verified. Email signup/confirmation and secure email change remain enabled; secure password/current-password requirements remain unchanged. A failed persistence read or remaining leaked-password warning would falsify completion; neither occurred. Lock released.
+
 ## RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910
 - Task: FM-SEC-001
 - Risk: R4
@@ -14,6 +29,7 @@
 - Remaining: Auth, Workspace server-owned contract rollout, Meta/provider and overall handoff gates remain separate. No broad Security/Meta completion claim.
 
 ## RECEIPT-FM-BILL-002-20260910
+- Review scope correction: PR #1096 P1/P2 handled across authenticated Daily identity/package/cancellation/admin presentation, the exact consent-gated Daily PageView and all identified obsolete readers. 1,446 tests pass, one skipped; build/lint/type/truth pass. Fresh final-head CI and review required.
 - Status: IN_PROGRESS
 - Risk: R4
 - Authorization: FM-AUTH-THREE-OFFERS-PUBLISH-20260910

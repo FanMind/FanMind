@@ -107,7 +107,7 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Technische Nachweise vorhanden · Gesamtabnahme offen": "Technical evidence available · full acceptance pending",
   "Security- und Meta-Abnahme": "Security and Meta acceptance",
   "Externe Nachweise offen": "External evidence pending",
-  "Datenbank gehärtet · Auth und Meta offen": "Database hardened · Auth and Meta pending",
+  "Trigger/Passwortschutz aktiv · Gesamtabnahme offen": "Trigger/password protection active · full acceptance pending",
   "Operations-Grundlage": "Operations foundation",
   "Produktiv aktiv": "Active in production",
   "Produktions- und Testdaten trennen": "Separate production and test data",

@@ -1,5 +1,12 @@
 # FanMind Evidence and Acceptance
 
+## FM-EV-041 — Auth leaked-password protection
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Task: FM-SEC-001
+- Evidence: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review.
+- Receipt: RECEIPT-FM-SEC-001-AUTH-PROTECTION-20260910; lock released. This is dated provider evidence, to revalidate after a configuration change; no password or token values recorded.
+
 ## FM-EV-040 — approved catalog, previous registration publication and Production hardening
 - Date: 2026-09-10
 - Status: COUNTERCHECKED

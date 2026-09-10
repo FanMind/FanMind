@@ -1,5 +1,13 @@
 # FanMind External Acceptance Register
 
+## EXT-AUTH-LEAKED-PASSWORD-PROTECTION-20260910
+- Related: FM-SEC-001 / FM-SEC-OWNER-002
+- Status: ACCEPTED
+- Risk: R4
+- Result: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review.
+- Repository evidence alone sufficient: no. Authenticated provider save/reopen plus independent security advisors establish completion.
+- Boundary: one existing provider switch per exact target; no password/account/session/SQL change, email or purchase. Whole Meta/security and Workspace contract gates remain separate.
+
 ## EXT-PRODUCTION-TRIGGER-HARDENING-20260910
 - Related: FM-SEC-001
 - Status: ACCEPTED

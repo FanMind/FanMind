@@ -9,6 +9,7 @@ import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import { AdminBillingShell } from "./AdminBillingShell";
 import { AdminTabs } from "./AdminTabs";
 import styles from "./adminBilling.module.css";
+import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 
 const suspendedStatuses = new Set(["suspended", "manual_suspended"]);
 
@@ -29,6 +30,7 @@ function statusClass(status?: string | null) {
 
 function overviewStatusLabel(workspace: AdminBillingWorkspace) {
   if (workspace.billing_status) return getBillingStatusLabel(workspace.billing_status);
+  if (resolvePublicWorkspacePlanId(workspace) === "daily") return "Zahlung offen";
   if (workspace.plan_id === "pilot") return "Demo/Kostenlos";
   if (workspace.plan_id === "starter") return "Zahlung offen";
   return "Unbekannt";
@@ -189,7 +191,7 @@ function PackagesContent() {
 function OverviewContent({ workspaces, error }: { workspaces: AdminBillingWorkspace[]; error: string | null }) {
   const stripe = getStripeConfigStatus();
   const active = workspaces.filter((w) => w.billing_status === "active").length;
-  const pilotDemos = workspaces.filter((w) => w.plan_id === "pilot" || w.commercial_option === "pilot").length;
+  const pilotDemos = workspaces.filter((w) => resolvePublicWorkspacePlanId(w) !== "daily" && (w.plan_id === "pilot" || w.commercial_option === "pilot")).length;
   const openPayments = workspaces.filter((w) => w.billing_status?.startsWith("pending") || w.billing_status === "past_due" || w.billing_status === "payment_failed").length;
   const recentlyUpdated = workspaces.filter((w) => w.billing_updated_at || w.billing_admin_note).length;
   const aiConfigured = Boolean(process.env.OPENAI_API_KEY);

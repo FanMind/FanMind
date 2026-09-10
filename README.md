@@ -516,7 +516,7 @@ Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 | KI Standard | aktiv | in 312 €/Monat enthalten |
 | KI Plus | freigegebener Preis, technische Add-on-Aktivierung separat | +100 €/Monat |
 | KI Ultra | freigegebener Preis, technische Add-on-Aktivierung separat | +200 €/Monat |
-| Internes Live-Testabo | kontrollierter interner Beta-Test | 1 €/Tag; täglich kündbar; gleicher Billing-Lifecycle wie Starter, keine Referral-Verrechnung; kein dauerhaftes öffentliches Paket, temporäre Registrierungsfreigabe höchstens 24 Stunden |
+| Daily | dauerhaft öffentlich auswählbar; Aktivierungsabnahme offen | 0 € Setup + 1 €/Tag; täglich kündbar; vorhandener Billing-Lifecycle, keine Referral-Verrechnung; Workspace-/Consent-/Tax-/Billing-Voraussetzungen bleiben erforderlich |
 | Growth | Coming Soon | nicht produktiv buchbar |
 | Agency | Coming Soon / auf Anfrage | nicht produktiv buchbar |
 | Enterprise / Custom | später | individuelle Prüfung |

@@ -74,6 +74,8 @@ Updated: 2026-09-07 Europe/Vienna
 - Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
 - Current additional RPC: get_current_workspace_member_safe_dashboard() is authenticated-only, has pinned search_path and row_security=on, and returns only five safe membership fields. Full schema rollout verify passed; current body MD5 9b7e87c856d33d3ab3b97e2941faa519 matches the canonical SQL. Both RPC exceptions remain decision-required; no blind revoke.
 
+- Completion 2026-09-10 supersedes the old Auth-setting gap/permission request: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Only bounded Staging RPC exception review remains under this action. Do not request another password-protection activation.
+
 ## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
 - Related task: `FM-MOB-001`.
 - Status: RESOLVED.

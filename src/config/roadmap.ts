@@ -105,7 +105,7 @@ export const roadmapPhases: RoadmapPhase[] = [
       { label: "Vollständiger Restore-Test", state: "partial", status: "Datenbank geprüft · Storage und Abschluss offen" },
       { label: "Echte Registrierung vollständig abnehmen", state: "partial", status: "E-Mail, Workspace und Vertragsfreigabe offen" },
       { label: "KI-/Billing-Gesamtabnahme", state: "partial", status: "Technische Nachweise vorhanden · Gesamtabnahme offen" },
-      { label: "Security- und Meta-Abnahme", state: "partial", status: "Datenbank gehärtet · Auth und Meta offen" },
+      { label: "Security- und Meta-Abnahme", state: "partial", status: "Trigger/Passwortschutz aktiv · Gesamtabnahme offen" },
       { label: "Release-Checks", state: "done", status: "Automatisch aktiv" },
       { label: "Umgebungs-Governance", state: "done", status: "Fail-closed aktiv" },
     ],

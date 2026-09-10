@@ -431,6 +431,8 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Current result 2026-09-10: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. The prior Production trigger pre-state and Apply owner action above are superseded. Auth leaked-password protection and the bounded Staging RPC exception review remain open; the overall Security/Meta gate is not complete.
 - Current next step: provider Auth setting/exception review and Meta external evidence; retain the completed trigger hardening.
 
+- Auth completion 2026-09-10: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Earlier Auth-setting gaps and activation requests are superseded. Remaining scope is bounded RPC exception review and separate Meta evidence, not another trigger or Auth toggle.
+
 ## RECEIPT-FM-RST-001-TARGET-PRINCIPAL-PROJECTION-20260907
 - Task: FM-RST-001.
 - Started: 2026-09-07 after reconciling issue #944 final runtime evidence with current `main` `01803752e6ae807159bcc4301591794c7c74bdfb`.

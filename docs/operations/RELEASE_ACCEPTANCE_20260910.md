@@ -24,7 +24,7 @@ Paketwunsch gespeichert; sie erteilt keine Zahlungs- oder Workspace-Rechte.
 | Vollständiger Restore-Test | Isolierter Datenbank-Restore und DB_POSTCHECKED sind abgenommen. | Tatsächlicher Storage-Restore auf gesondertem temporärem Ziel, Konfigurationsprüfung, Aufräumen und Abschlusskontrolle. Der Owner hatte zuletzt nur lokale Storage-Tests gewählt; ein reales Ziel benötigt seine konkrete Kosten-/Löschentscheidung. |
 | Echte Registrierung | Kostenloses Konto, Bestätigungs-/Fortsetzungsseite und erneute Bestätigungsmail sind als Web-Code mit PR #1095 veröffentlicht. | Zugestellte Mail mit freigegebenem Testempfänger, Produktions-Rollout der Workspace-Funktionen und Rechte, passende versionierte Vertragsannahme sowie echter vollständiger Aktivierungs-/Checkout-Nachweis. |
 | KI-/Billing-Gesamtabnahme | Vorhandene Preise und die belegten technischen Staging-/Lifecycle-/Ledger-Prüfungen bleiben erhalten. | Produkt-/Qualitäts-/Kostenentscheidungen für bezahlte KI-Stufen, kanonische Billing-Verarbeitung, Produktions-Rollout, Steuer-/Vertragsvoraussetzungen und vollständige Provider-/Webhook-Abnahme. Die gesonderte Aktionsautorisierung des technischen September-8-Laufs bleibt zu klären; kein Wiederholungslauf nur für die Dokumentation. |
-| Security- und Meta-Abnahme | Web-Paketkorrekturen aus #1089 sind veröffentlicht. Die Production-Triggerhärtung ist jetzt separat angewendet und unabhängig verifiziert. | Leaked-Password-Protection, begrenzte Staging-RPC-Ausnahmen sowie echte Meta-Events-/App-Review-/Provider-Nachweise. Mobile-Pakete brauchen weiterhin ihren eigenen signierten aktuellen Release. |
+| Security- und Meta-Abnahme | Web-Paketkorrekturen aus #1089 sind veröffentlicht. Die Production-Triggerhärtung sowie der Schutz gegen geleakte Passwörter in Production und Staging sind separat umgesetzt und unabhängig verifiziert. | Begrenzte Staging-RPC-Ausnahmen sowie echte Meta-Events-/App-Review-/Provider-Nachweise. Mobile-Pakete brauchen weiterhin ihren eigenen signierten aktuellen Release. |
 
 Ein erfolgreicher Teilschritt wird nicht erneut als unerledigt behandelt.
 Ein offener Gesamtpunkt behauptet aber auch keine vollständige Abnahme seiner
@@ -63,6 +63,8 @@ ermöglicht. Es wurde keine Zahlung ausgelöst und keine Kundendaten- oder
 Vertragsmigration als Nebenwirkung der Website-Veröffentlichung ausgeführt.
 
 ## Verifizierte Nachweise
+
+- Passwortschutz: Authenticated Save/Reopen in beiden getrennten FanMind-Projekten; unabhängige Supabase-Advisors am 10. September um 16:11:50 UTC (Production) und 16:19:32 UTC (Staging) bestätigen, dass die Leaked-Password-Warnung entfernt ist. Keine anderen Auth-Einstellungen, Passwörter, Konten oder Sessions wurden verändert.
 
 - Konto-Veröffentlichung: [PR #1095](https://github.com/FanMind/FanMind/pull/1095),
   Release `9a6e9d016cb0928e58b89c6c2d5b6183379c50ed`;

@@ -1,5 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolvePublicWorkspacePlanId } from "../src/lib/publicDailyPlanPolicy.mjs";
+
+test("public Daily identity uses the persisted pair without promoting demos or preferences", () => {
+  assert.equal(resolvePublicWorkspacePlanId({ plan_id: "pilot", commercial_option: "internal_daily_test" }), "daily");
+  assert.equal(resolvePublicWorkspacePlanId({ plan_id: "pilot", commercial_option: "pilot_only" }), "pilot");
+  assert.equal(resolvePublicWorkspacePlanId({ plan_id: "starter", commercial_option: "starter_paid_setup" }), "starter");
+  assert.equal(resolvePublicWorkspacePlanId({ plan_id: "starter", commercial_option: "internal_daily_test" }), "starter");
+  assert.equal(resolvePublicWorkspacePlanId({ registration_plan_preference: "pilot", registration_option_preference: "internal_daily_test" }), "unknown");
+  assert.equal(resolvePublicWorkspacePlanId({ plan_id: "pilot", commercial_option: "internal_daily_test", member_safe_projection: true }), "member");
+  assert.equal(resolvePublicWorkspacePlanId(null), "unknown");
+});
 
 import {
   createTemporaryPublicDailyTestPlanSettings,

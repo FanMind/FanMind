@@ -35,7 +35,7 @@ test("1 EUR daily beta uses the same self-service period-end cancellation engine
     commercial_option: "internal_daily_test",
     billing_current_period_end_at: "2026-08-09T00:00:00.000Z",
   }, {}, NOW);
-  assert.equal(policy.currentPackage, "Beta · 1 € pro Tag");
+  assert.equal(policy.currentPackage, "Daily · 0 € Setup + 1 €/Tag");
   assert.equal(policy.canSelfService, true);
   assert.equal(policy.stripeCancelAtPeriodEnd, true);
   assert.equal(policy.effectiveEndAt, "2026-08-09T00:00:00.000Z");

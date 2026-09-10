@@ -6,27 +6,23 @@ FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten dauerhaften öffent
 Der bisherige 24-Stunden-Schalter steuert die öffentliche Tarifwahl nicht mehr. Die Anwendung
 verwendet weiterhin den bestehenden `internal_daily_test`-RPC-/Stripe-Vertrag; sichere
 Session, aktuelle Zahlungszustimmung, Browser-INSERT-Verbot, Provisioning-Readiness und
-Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die folgenden Fenster-
-und Admin-Öffnungsanweisungen dokumentieren den früheren Beta-Rollout und sind für das
-permanente öffentliche Angebot überholt. SQL, Checksum und isolierte Staging-Abnahme
+Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die ehemalige Fenster-
+und Admin-Öffnung ist durch diese Produktentscheidung ersetzt. SQL, Checksum und isolierte Staging-Abnahme
 bleiben gültig; Production benötigt weiterhin seinen kontrollierten Datenbank-Rollout.
 
 
-Stand: 9. August 2026
+Produktstand: 10. September 2026; gepinnter SQL-Stand: 9. August 2026
 
 ## Zweck und harte Grenze
 
-Der interne Tarif `internal_daily_test` bleibt im Normalbetrieb admin-only.
-Ein Admin darf das außergewöhnliche öffentliche Registrierungsfenster für
-höchstens 24 Stunden nur öffnen, wenn alle folgenden Grenzen gleichzeitig
-wirksam sind:
+Daily ist dauerhaft öffentlich auswählbar. Die kostenlose Kontoerstellung
+speichert nur eine Präferenz. Die kostenpflichtige Workspace-Aktivierung
+verlangt weiterhin alle folgenden Grenzen gleichzeitig:
 
 - die Anwendung provisioniert Workspaces ausschließlich nach einer
   serverseitig verifizierten Supabase-Session;
-- das Laufzeitfenster wird unmittelbar vor der Mutation frisch und
-  fail-closed gelesen;
-- `updatedAt` ist gültig und liegt nicht in der Zukunft; bereits ein um eine
-  Millisekunde zukünftiger Startzeitpunkt schließt das Fenster fail-closed;
+- die aktuelle ausdrückliche Zahlungszustimmung und die serverseitige
+  Admission werden unmittelbar vor der Mutation geprüft;
 - `public.ensure_internal_daily_test_workspace(uuid,text,boolean)` ist
   installiert und ausschließlich für `service_role` ausführbar;
 - die validierten Workspace-CHECKs bilden exakt den kanonischen Wertvertrag
@@ -38,8 +34,9 @@ wirksam sind:
 - der Readiness-RPC bestätigt diesen kombinierten Zustand;
 - `STRIPE_PRICE_INTERNAL_DAILY_TEST`, `STRIPE_SECRET_KEY`, eine App-URL und
   `STRIPE_WEBHOOK_SECRET` sind gemeinsam konfiguriert. Fehlt nur einer dieser
-  Werte, bleiben Admin-Freigabe, öffentliche Auswahl, Pre-Sign-up-Admission
-  und Daily-Workspace-Mutation fail-closed.
+  Werte oder die Tax-/Billing-Readiness, bleibt die kostenpflichtige
+  Daily-Workspace-/Checkout-Mutation gesperrt. Die kostenlose Kontoauswahl
+  und Registrierung bleiben davon getrennt verfügbar.
 
 Die Anwendung nimmt keine User-ID, Preise, Billing-Felder oder Testflags aus
 dem Registrierungs-Request an. Ein authentifizierter Same-Origin-Request darf
@@ -49,18 +46,20 @@ Server leitet die Nutzeridentität aus der verifizierten Session ab,
 überschreibt die sicherheitsrelevante Auswahl nur für den unmittelbaren
 Provisionierungsaufruf und vertraut dafür keinen persistenten
 Auth-`user_metadata`. Nach einer E-Mail-Bestätigung bietet `/workspace/setup`
-den Daily-Test nur dann erneut an, wenn Zeitfenster, RPC-Readiness und der
-vollständige Stripe-Testvertrag frisch serverseitig bereit sind; die Mutation
+Daily zur Paketbestätigung an, sobald die Vertragsfreigabe vorliegt.
+RPC-Readiness und der vollständige Stripe-/Tax-/Billing-Vertrag müssen
+frisch serverseitig bereit sein; die Mutation
 prüft diese Grenzen unmittelbar vor dem RPC nochmals. Der bestehende
 authentifizierte Starter-RPC bleibt absichtlich Starter-only. Der Daily-SQL-Schritt liegt
 außerhalb `supabase/migrations/`; ein normaler Web-Deploy und ein generisches
-`supabase db push` dürfen ihn weder entdecken noch anwenden und aktivieren das
-Fenster nicht.
+`supabase db push` dürfen ihn weder entdecken noch anwenden.
+Die öffentliche Katalogentscheidung aktiviert keinen Datenbank-Rollout.
 
 ## Artefakte
 
 - App-Grenze: `src/app/api/register/workspace/route.ts`
-- frischer Zeitfensterstatus: `src/lib/runtimeProductSettings.ts`
+- öffentlicher Katalog und Anzeigezuordnung: `src/lib/publicDailyPlanPolicy.mjs`
+- historische Beta-Fensterkompatibilität: `src/lib/runtimeProductSettings.ts`
 - gemeinsame Stripe-/Webhook-Admission:
   `src/lib/internalDailyTestReadinessPolicy.mjs`
 - serverseitige Provisionierung: `src/lib/supabase/server.ts`
@@ -143,8 +142,9 @@ Kontrollpfad.
 
 ## Verbindliche Reihenfolge
 
-1. Fenster deaktiviert lassen und den App-Stand zuerst deployen. Ohne neuen
-   RPC bleibt die Daily-Auswahl durch den Readiness-Check verborgen.
+1. Den kompatiblen App-Stand zuerst deployen. Ohne vollständig abgenommenen
+   RPC bleibt die kostenpflichtige Aktivierung gesperrt; die Kontoauswahl
+   kann bereits öffentlich erscheinen.
 2. In der isolierten Staging-Datenbank bestätigen, dass
    `20260726120000_workspace_provisioning_rpc.sql` und der kontrollierte
    Browser-INSERT-Contract vollständig abgenommen sind.
@@ -168,9 +168,9 @@ Kontrollpfad.
 8. Daily-Preis, Stripe-Secret, kanonische App-URL und Webhook-Secret im
    exakten Ziel prüfen; die Prüfung darf nur Statuswerte und keine Secrets
    ausgeben.
-9. Das öffentliche Fenster auch nach erfolgreicher Staging-Abnahme aus lassen.
-   Seine Öffnung und jeder spätere Production-Rollout benötigen getrennte
-   Freigaben.
+9. Staging-Abnahme aktiviert keine Production-Funktion. Den Production-
+   Rollout getrennt prüfen und durchführen; aktuelle Vertrags-/Steuer- und
+   Billing-Voraussetzungen vor jeder kostenpflichtigen Freigabe nachweisen.
 
 ## Read-only Preflight und Postflight
 
@@ -263,13 +263,13 @@ Staging-Abnahmen; ein grüner Runner-DB-Postflight behauptet sie nicht mit.
 
 ## Funktionsabnahme
 
-- Fenster geschlossen: Registrierung endet vor der DB-Mutation; keine
-  Workspace- und keine Membership-Zeile entsteht.
+- Kostenfreie Kontoerstellung: nur nicht autoritative Paketpräferenz; keine
+  Workspace-, Membership-, Vertrags- oder Zahlungsanlage.
 - Fehlender Daily-Preis, Stripe-Secret, App-URL oder Webhook-Secret: Die
-  Pre-Sign-up-Admission antwortet fail-closed und der Registrierungsablauf
-  ruft Supabase Sign-up nicht auf; die Workspace-Mutation bleibt ebenfalls
-  gesperrt. Der Checkout startet nicht, solange der Webhook nicht bereit ist.
-- Fenster offen und Readiness `true`: genau ein Daily-Workspace mit
+  kostenpflichtige Workspace-Mutation bleibt gesperrt. Der Checkout startet
+  nicht, solange der Webhook oder die Tax-/Billing-Readiness nicht bereit ist.
+  Die kostenlose Kontoerstellung ist weiterhin möglich.
+- Aktuelle Vertragsannahme und vollständige Readiness: genau ein Daily-Workspace mit
   `pilot`, `internal_daily_test`, `0/0/0`, `pending_payment_setup`,
   `stripe`, `card`, Zahlungsbedingung `2026-06-v1` und genau eine
   Owner-Membership entsteht.
@@ -277,14 +277,16 @@ Staging-Abnahmen; ein grüner Runner-DB-Postflight behauptet sie nicht mit.
   `created=true`, keine Duplikate.
 - Bestehender Workspace: keine Tarifkonvertierung; der vorhandene Workspace
   bleibt unverändert.
-- Direkter authentifizierter Aufruf: `EXECUTE` verweigert, auch während eines
-  offenen Fensters.
-- Abgelaufenes, fehlendes oder beschädigtes Laufzeitfile: fail-closed, keine
-  Mutation.
+- Direkter authentifizierter Aufruf: `EXECUTE` verweigert, unabhängig von
+  der öffentlichen Katalogauswahl.
+- Die historische Beta-Fensterdatei entscheidet nicht über das permanente
+  Angebot. Fehlende RPC-/Consent-/Tax-/Billing-Bereitschaft blockiert weiter.
 
 ## Rollback
 
-1. Das öffentliche Fenster zuerst deaktivieren.
+1. Vor einer Rücknahme weitere Daily-Neuanlagen über den geprüften App-Stand
+   sperren. Der historische Beta-Schalter ist kein Stoppschalter für das
+   permanente Angebot; bestehende Abos bleiben erhalten.
 2. Falls nur die App zurückgerollt wird, die RPCs installiert aber ungenutzt
    lassen; keine bestehenden Workspaces verändern.
 3. Falls die Funktionen zurückgenommen werden müssen, `EXECUTE` zuerst für

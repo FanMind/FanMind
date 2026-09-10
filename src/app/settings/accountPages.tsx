@@ -13,7 +13,7 @@ import {
 } from "@/lib/supabase/server";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { UserPreferenceFallback } from "@/components/UserPreferenceFallback";
-import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
+import { getCommercialOptionLabel, getWorkspacePlanStatus } from "@/lib/dashboardFeatures";
 import { getCustomerBillingTaxNote, listCustomerInvoicesForWorkspace, type CustomerInvoiceSummary } from "@/lib/customerBilling";
 import { isPlatformAdminEmail } from "@/lib/admin";
 import { getWorkspaceNavigation } from "@/lib/workspaceNavigation";
@@ -93,7 +93,7 @@ function AccountWorkspace({ workspace, user, activePage, userDisplayName, contac
       userLabel={userLabel}
       planLabel={getPlanLabel(workspace)}
       planMeta={getCommercialOptionLabel(workspace.commercial_option)}
-      planStatus={workspace.plan_id === "starter" ? "Aktiv" : workspace.plan_id === "pilot" ? "Demo" : "Vorschau"}
+      planStatus={getWorkspacePlanStatus(workspace)}
       mainNavigation={mainNavigation}
       settingsNavigation={settingsNavigation}
       savedViews={savedViews}

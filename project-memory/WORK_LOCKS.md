@@ -1,5 +1,20 @@
 # Work Locks
 
+## LOCK-FM-SEC-001-AUTH-PROTECTION-20260910
+- Scope extension before action: apply the same single leaked-password protection setting to isolated FanMind Staging vshyhvgcmrlagvfnvomc. Fresh project list and authenticated UI confirm this separate healthy target in the existing Pro organization; its switch is unchecked. Owner full Security completion and secure sign-in authorization persist. No other setting or SQL change.
+- Task: FM-SEC-001
+- Status: RELEASED
+- Risk: R4
+- Holder: Codex
+- Authorization: owner requests full release/security completion; owner selected GitHub in the secure Supabase sign-in handoff.
+- Scope: enable only Prevent use of leaked passwords for verified FanMind Production drqkpdvtbbrrdwmtrodz; preserve email confirmation, other password settings, OAuth, secrets and sessions.
+- Preflight: authenticated UI confirms FanMind/main Production in the existing Pro organization; this exact switch is unchecked. Current independent advisor reports disabled.
+- Recovery: reversible provider switch if an actual regression requires reviewed recovery; no password, identity, account or database modification.
+- Next: save the one switch, re-open provider settings and independently query advisors.
+
+
+- Completed/released: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. No new approval, purchase, email, account, password, session, secret or SQL mutation was needed.
+
 ## LOCK-FM-SEC-001-PRODUCTION-HARDENING-20260910
 - Task: FM-SEC-001
 - Status: RELEASED

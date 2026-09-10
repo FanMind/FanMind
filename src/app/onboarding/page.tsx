@@ -15,7 +15,7 @@ import {
   type WorkspaceDashboardRow,
 } from "@/lib/supabase/server";
 import { getBillingCheckoutActionLabel, shouldShowBillingCheckoutAction } from "@/lib/billing";
-import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
+import { getCommercialOptionLabel, getWorkspacePlanLabel, getWorkspacePlanStatus } from "@/lib/dashboardFeatures";
 import styles from "../dashboard/dashboard.module.css";
 
 export const metadata: Metadata = {
@@ -50,31 +50,6 @@ async function logout() {
 
   await signOutSupabaseServerSession();
   redirect("/");
-}
-
-function getPlanStatus(
-  workspace: WorkspaceDashboardRow,
-): "Aktiv" | "Demo" | "Vorschau" {
-  if (workspace.plan_id === "pilot") {
-    return "Demo";
-  }
-
-  if (workspace.plan_id === "starter") {
-    return "Aktiv";
-  }
-
-  return "Vorschau";
-}
-
-function getPlanLabel(workspace: WorkspaceDashboardRow): string {
-  const planLabels: Record<string, string> = {
-    pilot: "Pilot / Setup",
-    starter: "Starter",
-    growth: "Growth",
-    agency: "Agency",
-  };
-
-  return planLabels[workspace.plan_id] ?? workspace.plan_id;
 }
 
 function stringMetadataValue(
@@ -198,8 +173,8 @@ function OnboardingWorkspace({
       0,
       workspace.role,
     );
-  const planLabel = getPlanLabel(workspace);
-  const planStatus = getPlanStatus(workspace);
+  const planLabel = getWorkspacePlanLabel(workspace);
+  const planStatus = getWorkspacePlanStatus(workspace);
   const steps = getOnboardingSteps({ workspace, contacts });
   const completedCount = steps.filter((step) => step.status === "done").length;
 
