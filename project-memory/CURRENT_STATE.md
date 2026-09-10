@@ -1,5 +1,20 @@
 # FanMind Current State
 
+## Visible roadmap follow-up — 2026-09-10
+- Owner expects the approved roadmap to be visible on fanmind.ch and all open points retained. FM-ROADMAP-001 continues in existing PR #1090; do not create a duplicate implementation.
+- Fresh baseline: main 44179146926c691476364f668624ac24aab34ac9 includes merged PR #1089. Deploy 34481266092, Production audit 34481420092 and go-live readiness 34481420119 succeeded on that release. Older instructions to publish #1088/#1089 and old audit failures below are historical, not current release blockers.
+- PR #1090 initial head 976fab65 failed the rendered-language check on the identical feature name. English copy is corrected without changing the guard; both sets of additive Project Memory records are preserved while merging current main.
+- Visible Phase 5/6 now distinguish accepted isolated Staging and existing signed Android builds from open full Restore, real registration/mail/workspace/contract acceptance, AI/Billing, Security/Meta, Play-device and real Push acceptance. No existing required finishline gate is marked complete by this copy change.
+- Priority remains: finish open pre-sales work -> Phase 3/7a real channels -> technical Sales Handoff -> FM-CREATOR-001 in Phase 7b -> further Phase 8 work. FM-CREATOR-001 remains DEFERRED, required_for_sales=false, and has the accepted sales_handoff prerequisite.
+- Next for roadmap: complete exact-head CI/review, normal release and independent public DE/EN/version check. Read PR #1090 and the live version before repeating publication. Future feature scope is docs/CREATOR_INTELLIGENCE.md and task FM-CREATOR-001.
+- Unchanged external work: database Restore is accepted through DB_POSTCHECKED; real Storage/config/cleanup and access remain open. The rescue helper already ran; do not repeat it or the separately rejected password-change action. Existing signed Android artifacts and prices must not be rebuilt/recreated. Protected AI authorization reconciliation, real device/provider evidence and legal decisions remain distinct.
+
+## Creator roadmap decision — 2026-09-10
+- FM-DEC-013 / FM-CR-025: Phase 7a required Social channels -> technical Sales Handoff to Gerhard -> Phase 7b Creator Intelligence & Sales Assistance -> further Phase 8 work.
+- FM-CREATOR-001 is DEFERRED until sales_handoff is accepted, required_for_sales=false and not parallel_safe. Its architecture review is not runtime implementation. Scope: docs/CREATOR_INTELLIGENCE.md.
+- The current change is roadmap/Project Memory only. Existing overall gate states, prices and historical Website-AI preparation remain unchanged; sales_ready=false.
+- Repository reconciliation: current read-only GitHub baseline is 7004c9ea (PR #1088 already merged); older pre-merge continuation below is historical. Deployment/Browser/CodeQL succeeded on that main, while Production Audit runs 34451800230 and 34458129680 failed. This roadmap change does not resolve or rerun those audits or take over existing operational locks.
+
 ## Current continuation — 2026-09-10
 - Exact current main remains 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59. PR #1088 is the documentation closeout; its three delayed review findings are being reconciled before merge.
 - Owner explicitly approved the prepared single-source SSH rule. It was saved once in fanmind-restore-isolated and read back as TCP 22/22, approved owner /32, rule prefix eb474b38. Only the existing Restore VM is attached. Owner Windows SSH independently reached authentication, then failed after key/passphrase/password attempts. Network reachability is confirmed; try the other existing FanMind key without password fallback. Host login is not yet proved.

@@ -54,6 +54,12 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 - Only the disabled Website-AI foundation in Phase 8 may be `started`; all other Phase-8 work remains deferred and the bounded foundation is outside the current finishline.
 
 ## Next-best-action rule
+Owner decision FM-DEC-013 separates Phase 7a Social acceptance and Sales Handoff
+from the subsequent Phase 7b Creator Intelligence work. The latter is not
+required for sales and may start only after accepted Sales Handoff; further
+Phase 8 work follows accepted Phase 7b. The already prepared disabled Website-AI
+foundation remains historically started, not permission to jump this sequence.
+
 1. Preserve finishline priority; never mark a deferred owner step complete just because work proceeds elsewhere.
 2. If the earliest unresolved action is `DEFERRED_BY_OWNER` or otherwise owner/platform-only, later work is eligible only when explicitly `parallel_safe=true` and all listed prerequisite gates are accepted.
 3. Never select Social or Sales around an unresolved earlier owner-only/non-Social gate unless their explicit prerequisites are accepted.

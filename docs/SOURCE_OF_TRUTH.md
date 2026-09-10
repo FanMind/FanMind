@@ -279,6 +279,27 @@ Abschluss von Phase 7 und zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 OnlyFans bleibt auch in Phase 7 eine unverbindliche, vor Umsetzung technisch
 und rechtlich zu prüfende Plattform.
 
+Owner-Entscheidung vom 10. September 2026: Phase 7 besteht aus zwei Abschnitten.
+**Phase 7a** umfasst die genannten erforderlichen Social-Kanäle; danach folgt
+die technische Verkaufsübergabe an Gerhard. **Phase 7b** umfasst anschließend
+Creator Intelligence & Sales Assistance auf der bestehenden CRM-/Reply-Basis:
+Creator-Zuordnung, eigene Stimmen, freigegebene Sales Playbooks, kommerzielles
+Fanwissen, Gesprächszustände und Lernen aus bestätigten Chats/Käufen. Dieser
+Ausbau ist geplant, noch nicht implementiert und ausdrücklich keine zusätzliche
+Voraussetzung für die Verkaufsübergabe. Weitere Phase-8-Arbeit folgt erst nach
+Phase 7b; die schon vorbereitete deaktivierte Website-KI-Grundlage bleibt als
+historisch begonnen dokumentiert. Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
+
+Die sichtbaren Phase-5/6-Zeilen werden anhand der bereits vorhandenen Nachweise
+geführt: getrenntes Staging ist abgenommen, der Datenbank-Restore bis
+`DB_POSTCHECKED` geprüft und signierte Android-Artefakte sind vorhanden.
+Offen bleiben der vollständige Restore einschließlich Storage/Server-Konfiguration/
+Bereinigung, echte Registrierungs-/E-Mail-/Workspace-Abnahme und Vertragsfreigabe,
+KI-/Billing-Gesamtabnahme, Security-/Meta-Nachweise sowie Android-Geräte- und
+Push-Zustellung. Die dokumentierte Google-Play-Testveröffentlichung bedeutet
+keine öffentliche Store-Freigabe. Die Roadmap-Korrektur aktualisiert keine
+Provider-Abnahme und aktiviert keine Funktion; die Gesamt-Gates bleiben offen.
+
 Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme
 der erforderlichen Phase-3- und Phase-7-Kanäle. Phase 4 ist deshalb keine
 Verkaufsfreigabe mehr, sondern ausschließlich die abgeschlossene technische

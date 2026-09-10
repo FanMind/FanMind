@@ -38,6 +38,7 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
 ## Source of Truth
 
 - Canonical product and implementation truth lives in `docs/SOURCE_OF_TRUTH.md`.
+- Owner decision FM-DEC-013: Phase 7a required Social channels -> technical Sales Handoff -> Phase 7b Creator Intelligence & Sales Assistance -> further Phase 8 work. Creator expansion is not required for sales and remains deferred until accepted handoff. Preserve the historical disabled Website-AI foundation; do not treat it as permission to skip this sequence. Planned scope is `docs/CREATOR_INTELLIGENCE.md`.
 - README is the reader-friendly project overview and must match `docs/SOURCE_OF_TRUTH.md`.
 - Database/RLS truth lives in `docs/database/fanmind_current_schema.md` plus the Supabase migrations under `supabase/migrations/`.
 - Mobile product, architecture and beta handoff truth lives in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` and `docs/mobile/BETA_RELEASE.md`; Web and Mobile share backend contracts deliberately but never UI code.

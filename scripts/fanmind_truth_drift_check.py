@@ -34,9 +34,10 @@ if ci_repo and expected_repo and ci_repo != expected_repo:
 for token in [
     'title: "Produktions- & Billing-Basis"',
     'status: "Technisch abgeschlossen"',
-    'title: "Weitere Social-Kanäle"',
-    'status: "Finaler Technikblock vor Verkaufsübergabe"',
-    'label: "Verkaufsübergabe", state: "later", status: "Nach technischer Abnahme Phase 3 + Phase 7"',
+    'title: "Social-Kanäle & Creator Intelligence"',
+    'status: "Kanäle · Verkaufsübergabe · Creator-Ausbau"',
+    'label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 + 7"',
+    'label: "Creator Intelligence & Sales Assistance", state: "later", status: "Nach Verkaufsübergabe · vor Phase 8"',
     'title: "Website-KI, iOS & weitere Kanäle"',
     'status: "Website-KI begonnen · übrige Anbindungen später"',
 ]:
@@ -49,6 +50,21 @@ for channel in ["Facebook", "Instagram", "WhatsApp"]:
 for channel in ["TikTok", "X / Twitter", "Discord", "OnlyFans"]:
     if f'label: "{channel}"' not in roadmap:
         errors.append(f"phase7-channel-missing:{channel}")
+
+# Owner-approved Phase 7b must neither run before nor block Sales Handoff.
+creator_gate = state.get("gates", {}).get("creator_intelligence", {})
+catalog = json.loads(text("project-memory/NEXT_BEST_ACTIONS.json") or "{}")
+creator_action = next((a for a in catalog.get("actions", [])
+                       if a.get("id") == "NBA-CREATOR-INTELLIGENCE"), {})
+if creator_gate.get("required_for_sales") is not False:
+    errors.append("creator-expansion-must-not-block-sales")
+if (creator_action.get("prerequisite_gates") != ["sales_handoff"]
+        or creator_action.get("parallel_safe") is not False):
+    errors.append("creator-expansion-must-follow-sales-handoff")
+for action in catalog.get("actions", []):
+    if state.get("gates", {}).get(action.get("gate"), {}).get("required_for_sales"):
+        if "creator_intelligence" in action.get("prerequisite_gates", []):
+            errors.append("pre-sales-action-must-not-require-creator-expansion")
 
 # Canonical truth invariants.
 for token in [

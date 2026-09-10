@@ -8,6 +8,12 @@ außerhalb dieses Arbeitsumfangs. Ein vorhandener Codepfad, ein grüner Offline-
 Test oder ein vorbereiteter Workflow ersetzt niemals einen erforderlichen
 Staging-, externen oder Production-Nachweis.
 
+Ergänzung vom 10. September 2026 (FM-DEC-013): Der aktuelle Abschlussauftrag
+endet mit den erforderlichen Social-Kanälen in Phase 7a und der technischen
+Verkaufsübergabe. Creator Intelligence & Sales Assistance folgt als Phase 7b
+**nach** dieser Übergabe und **vor** weiterer Phase-8-Arbeit. Dieser geplante
+Ausbau ist kein neues Verkaufsübergabe-Gate. Siehe `docs/CREATOR_INTELLIGENCE.md`.
+
 ## Statusklassen
 
 Jeder noch offene Schritt gehört genau einer der folgenden Klassen:

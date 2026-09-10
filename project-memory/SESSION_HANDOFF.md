@@ -1,5 +1,21 @@
 # FanMind Session Handoff
 
+## Visible roadmap follow-up — 2026-09-10
+- Owner expects the approved roadmap to be visible on fanmind.ch and all open points retained. FM-ROADMAP-001 continues in existing PR #1090; do not create a duplicate implementation.
+- Fresh baseline: main 44179146926c691476364f668624ac24aab34ac9 includes merged PR #1089. Deploy 34481266092, Production audit 34481420092 and go-live readiness 34481420119 succeeded on that release. Older instructions to publish #1088/#1089 and old audit failures below are historical, not current release blockers.
+- PR #1090 initial head 976fab65 failed the rendered-language check on the identical feature name. English copy is corrected without changing the guard; both sets of additive Project Memory records are preserved while merging current main.
+- Visible Phase 5/6 now distinguish accepted isolated Staging and existing signed Android builds from open full Restore, real registration/mail/workspace/contract acceptance, AI/Billing, Security/Meta, Play-device and real Push acceptance. No existing required finishline gate is marked complete by this copy change.
+- Priority remains: finish open pre-sales work -> Phase 3/7a real channels -> technical Sales Handoff -> FM-CREATOR-001 in Phase 7b -> further Phase 8 work. FM-CREATOR-001 remains DEFERRED, required_for_sales=false, and has the accepted sales_handoff prerequisite.
+- Next for roadmap: complete exact-head CI/review, normal release and independent public DE/EN/version check. Read PR #1090 and the live version before repeating publication. Future feature scope is docs/CREATOR_INTELLIGENCE.md and task FM-CREATOR-001.
+- Unchanged external work: database Restore is accepted through DB_POSTCHECKED; real Storage/config/cleanup and access remain open. The rescue helper already ran; do not repeat it or the separately rejected password-change action. Existing signed Android artifacts and prices must not be rebuilt/recreated. Protected AI authorization reconciliation, real device/provider evidence and legal decisions remain distinct.
+
+## Creator roadmap decision — 2026-09-10
+- Owner placed Creator Intelligence & Sales Assistance in Phase 7b after technical Sales Handoff and before further Phase 8 work: FM-DEC-013 / FM-CR-025.
+- FM-CREATOR-001 is DEFERRED, not required_for_sales and not parallel_safe; its selector prerequisite is accepted sales_handoff. Do not begin Creator implementation while resuming the present finishline.
+- FM-ROADMAP-001 records roadmap/translation/truth/dependency changes only. Planned scope is docs/CREATOR_INTELLIGENCE.md; current prices, protected boundaries and the historically started disabled Website-AI foundation remain.
+- Read-only baseline: main 7004c9ea, already merged PR #1088; prior pre-merge instructions below are historical. Existing failed Production Audit runs 34451800230/34458129680 are outside this change and not resolved by it.
+- Publication: PR #1090, branch docs/creator-phase7-roadmap-20260910, is open and mergeable; its initial remote head a1b54975 has the exact locally verified tree c2a1616c. Do not create a duplicate PR. Git CLI push lacked credentials; the connected GitHub API published the same tree and proved equality.
+- Verification: 35 existing tests, product truth, memory quality and direct roadmap/selector counterchecks passed locally; initial remote Memory Guard/Quality/Status passed. Exact next step: finish current-head CI/review of PR #1090; merge and Production release have not occurred. Creator implementation remains deferred.
 ## 2026-09-10 — FM-REG-001 Web recovery correction
 - Goal: finish FanMind before real registrations and social integration.
 - Current follow-up: PR #1089 also carries FM-SEC-002 / FM-CR-024 for new dependency advisories found by CI. Patched root application passes 1237 local operations tests, lint and synthetic Production build. Browser assertions are corrected after the initial route-announcer ambiguity; fresh CI remains required. Full Mobile security audit is being reconciled after compatible Sharp/xmldom patches; exception limits are unchanged.

@@ -1,5 +1,21 @@
 # FanMind Task Ledger
 
+## FM-ROADMAP-001
+- Status: IN_PROGRESS
+- Risk: R4
+- Scope: FM-CR-025 roadmap recording and synchronized dependency/truth/translation controls only.
+- Publication: PR #1090 is open; initial remote tree equals the locally verified tree.
+- Exact next step: finish corrected current-head CI/review, normal Web release and public DE/EN/version proof in PR #1090. Scope includes visible open-point reconciliation; Creator implementation remains deferred.
+
+## FM-CREATOR-001
+- Status: DEFERRED
+- Risk: R3
+- Phase: 7b, after technical Sales Handoff and before further Phase 8 work.
+- Scope: Creator Intelligence & Sales Assistance on the existing FanMind CRM/reply engine; `docs/CREATOR_INTELLIGENCE.md`.
+- Required for sales: false.
+- Prerequisite: FM-SALES-001 / sales_handoff ACCEPTED or PRODUCTION_CONFIRMED.
+- Completed so far: architecture review and owner scheduling decision only; no Creator runtime/schema implemented.
+- Exact next step: after accepted Sales Handoff, revalidate source/model/auth contracts and implement Creator data boundaries before modifying the existing reply pipeline.
 ## FM-SEC-002
 - Date: 2026-09-10
 - Status: IN_PROGRESS

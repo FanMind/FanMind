@@ -1,5 +1,14 @@
 # FanMind Decision Log
 
+## FM-DEC-013
+- Date: 2026-09-10
+- Status: DONE
+- Decision: Phase 7a required Social channels -> technical Sales Handoff to Gerhard -> Phase 7b Creator Intelligence & Sales Assistance -> further Phase 8 work.
+- Reason: Owner explicitly placed the reviewed Creator expansion after the sales handoff but before Phase 8.
+- Scope: `creators`, Creator-scoped fan/conversation/channel relationships, versioned Creator voice/playbooks, commercial fan evidence, conversation states, automatic Creator context in the existing reply pipeline and later confirmed-chat feedback.
+- Boundary: scheduling only; FM-CREATOR-001 remains DEFERRED until FM-SALES-001 is accepted. It is not required_for_sales. Existing disabled Website-AI foundations remain historically started; no feature, schema, price, provider or Production activation is authorized by this decision.
+- Supersedes: only wording that made all Phase 7 work a pre-sales requirement or placed further Phase 8 work immediately after Sales Handoff. Prior accepted work and FM-DEC-011's historical Website-AI start remain valid.
+
 Decisions are append-only. If a decision changes, add a new entry that explicitly supersedes the old one.
 
 ## FM-DEC-001

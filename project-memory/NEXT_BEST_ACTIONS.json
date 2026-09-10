@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-08",
+  "updated": "2026-09-10",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -101,7 +101,19 @@
       "parallel_safe": false,
       "prerequisite_gates": ["restore", "mobile", "ai_billing", "meta_security", "phase3_social", "phase7_social"],
       "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
-      "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted."
+      "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted. Creator Intelligence is Phase 7b after this handoff, not an additional pre-sales prerequisite."
+    },
+    {
+      "id": "NBA-CREATOR-INTELLIGENCE",
+      "priority": 90,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_intelligence",
+      "title": "Phase 7b Creator Intelligence nach Verkaufsübergabe umsetzen",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": ["sales_handoff"],
+      "done_states": ["ACCEPTED", "PRODUCTION_CONFIRMED"],
+      "instruction": "Start only after accepted technical Sales Handoff, per FM-DEC-013. Revalidate docs/CREATOR_INTELLIGENCE.md and the current architecture; define and accept Creator data boundaries before extending the existing reply pipeline. Keep distinct Creator voices, approved offers and manual sending. Further Phase 8 work follows accepted Phase 7b; existing disabled Website-AI preparation remains historical. All later protected schema/provider/Production boundaries still apply."
     }
   ]
 }

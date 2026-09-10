@@ -88,6 +88,16 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Produktion & Testumgebung": "Production & test environment",
   Gestartet: "Started",
   "Technisch abgesichert": "Technically safeguarded",
+  "Staging vorhanden · weitere Abnahmen offen": "Staging available · further acceptance pending",
+  "Getrenntes Staging abgenommen": "Separate staging accepted",
+  "Vollständiger Restore-Test": "Complete restore test",
+  "Datenbank geprüft · Storage und Abschluss offen": "Database verified · storage and closeout pending",
+  "Echte Registrierung vollständig abnehmen": "Complete real registration acceptance",
+  "E-Mail, Workspace und Vertragsfreigabe offen": "Email, workspace and contract approval pending",
+  "KI-/Billing-Gesamtabnahme": "Full AI and billing acceptance",
+  "Technische Nachweise vorhanden · Gesamtabnahme offen": "Technical evidence available · full acceptance pending",
+  "Security- und Meta-Abnahme": "Security and Meta acceptance",
+  "Externe Nachweise offen": "External evidence pending",
   "Operations-Grundlage": "Operations foundation",
   "Produktiv aktiv": "Active in production",
   "Produktions- und Testdaten trennen": "Separate production and test data",
@@ -101,6 +111,10 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Fail-closed aktiv": "Fail-closed active",
   "Mobile-App für Android & iOS": "Mobile app for Android & iOS",
   "App-Kern vorhanden · interne Builds offen": "App core available · internal builds pending",
+  "Android-Build vorhanden · Geräteabnahme offen": "Android build available · device acceptance pending",
+  "Signiert · Geräteabnahme separat": "Signed · device acceptance separate",
+  "Google-Play-Test & Geräteabnahme": "Google Play testing & device acceptance",
+  "Testveröffentlichung dokumentiert · Geräteabnahme offen": "Test release documented · device acceptance pending",
   "Eigenständiger Expo-/React-Native-App-Kern": "Independent Expo/React Native app core",
   Vorhanden: "Available",
   "Login, Dashboard, Kontakte, Kontaktwissen, KI und Follow-ups": "Login, dashboard, contacts, contact knowledge, AI and follow-ups",
@@ -121,12 +135,20 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Nächste Mobile-Phase": "Next mobile phase",
   "Konfiguration und Routing fertig · Zustellung offen":
     "Configuration and routing ready · Delivery pending",
-  "Weitere Social-Kanäle": "Additional social channels",
-  "Finaler Technikblock vor Verkaufsübergabe":
-    "Final technical block before sales handoff",
+  "Social-Kanäle & Creator Intelligence": "Social channels & Creator Intelligence",
+  "Kanäle · Verkaufsübergabe · Creator-Ausbau":
+    "Channels · sales handoff · Creator expansion",
   Verkaufsübergabe: "Sales handoff",
-  "Nach technischer Abnahme Phase 3 + Phase 7":
-    "After technical acceptance of Phase 3 + Phase 7",
+  "Nach Abnahme der Kanäle in Phase 3 + 7":
+    "After acceptance of the channels in Phases 3 + 7",
+  "Creator Intelligence & Sales Assistance": "Creator intelligence and sales assistance",
+  "Nach Verkaufsübergabe · vor Phase 8": "After sales handoff · before Phase 8",
+  "Creator-Profile & getrenntes Fanwissen": "Creator profiles & separate fan knowledge",
+  "Eigene Creator-Stimmen & automatischer Creator-Kontext":
+    "Distinct Creator voices & automatic Creator context",
+  "Sales Playbooks & Gesprächssteuerung": "Sales playbooks & conversation guidance",
+  "Kaufdaten & Lernen aus bestätigten Chats": "Purchase data & learning from confirmed chats",
+  "Phase 7b · geplant": "Phase 7b · planned",
   "Website-KI, iOS & weitere Kanäle": "Website AI, iOS & additional channels",
   "Website-KI begonnen · übrige Anbindungen später":
     "Website AI started · remaining integrations later",
@@ -142,8 +164,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "E-Mail-Rückkanal für Besucher": "Email return channel for visitors",
   "E-Mail-Erfassung, Einwilligung und Antwortzustellung noch umzusetzen":
     "Email capture, consent and reply delivery still to be implemented",
-  "Vollständige Phase-8-Umsetzung nach Abschluss von Phase 7":
-    "Complete Phase 8 implementation after Phase 7",
+  "Weitere Phase-8-Arbeit nach Creator Intelligence in Phase 7":
+    "Further Phase 8 work after Creator Intelligence in Phase 7",
   "Website-KI-Grundlage bereits begonnen": "Website AI foundation already started",
   "Segmente & Listen": "Segments & lists",
   "Segment-Ansichten": "Segment views",

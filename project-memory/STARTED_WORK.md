@@ -1,5 +1,30 @@
 # Started Work Register
 
+## FM-ROADMAP-001 — visible roadmap publication follow-up
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R4
+- Boundary: normal Web release with bounded roadmap/copy changes only.
+- Work lock: LOCK-FM-ROADMAP-VISIBLE-20260910
+- Goal: owner reports Creator work absent from the live roadmap and asks how future work and open points remain visible.
+- Baseline: main 44179146926c691476364f668624ac24aab34ac9; PR #1089 deployed successfully in run 34481266092; audit 34481420092 and readiness 34481420119 passed. PR #1090 is unmerged; head 976fab65 failed only language-runtime-guard because one English feature name was identical to German.
+- Scope: preserve current main, correct translation without weakening the guard, reconcile stale Staging/Android labels, retain actual open acceptance and publish the approved roadmap through existing PR #1090.
+- Evidence plan: existing tests, actual rendered DE/EN guard, fresh complete PR CI/review, normal deployment and independent public roadmap/version verification.
+- Recovery: existing isolated-release rollback; a reviewed revert of only roadmap/copy changes restores prior presentation. No database, credentials, providers or feature flags change.
+- Exact next step: fix and verify the existing PR; Creator implementation remains DEFERRED until sales_handoff is accepted.
+- Owner action needed: none for the requested visible roadmap correction; unrelated protected acceptance remains separate.
+
+## FM-ROADMAP-001 — Creator Intelligence sequencing 2026-09-10
+- Status: VERIFIED
+- Risk: R2
+- Work lock: LOCK-FM-ROADMAP-CREATOR-20260910
+- Scope: owner-requested roadmap and Project Memory update only; Phase 7 channels -> Sales Handoff -> Creator Intelligence -> further Phase 8 work.
+- Completed so far: main 7004c9ea, all mandatory readers, open PRs/CI and existing architecture reviewed; no Creator implementation exists in the reviewed main.
+- Still open: current-head CI/review and later merge/release of published PR #1090; no Creator implementation has begun.
+- Exact next step: review PR #1090 and its current-head CI; do not repeat branch/PR creation or start Creator implementation before accepted handoff.
+- Owner action needed: none for this roadmap preparation; no feature implementation, schema/provider mutation or Production release included.
+- Evidence plan: final diff, existing roadmap/truth/translation/memory checks and selector checks before/after Sales Handoff.
+- Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.
 ## FM-SEC-002 — release dependency patches
 - Date: 2026-09-10
 - Status: IN_PROGRESS

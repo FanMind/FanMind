@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "baseline_commit": "6149691cb688c752e2900dcc35e0e6189537b996",
-  "captured": "2026-09-08",
-  "last_source_of_truth_review": "2026-09-10 FM-CR-023: registration block reconciled with code and Web recovery correction documented; no runtime acceptance refreshed",
+  "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
+  "captured": "2026-09-10",
+  "last_source_of_truth_review": "2026-09-10 FM-CR-025: retain #1089 recovery/security changes; add approved Creator sequence and reconcile visible Staging/build versus open acceptance; no provider evidence refreshed",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "31b91e659512603e844b63e20e088eb225e370dc",
-    "src/config/roadmap.ts": "857ff545df39cd7a94f47e45dd72306bca4eff42",
+    "docs/SOURCE_OF_TRUTH.md": "847f8228035300c8252cb070691fdc3a5782f797",
+    "src/config/roadmap.ts": "13c05193e8c76d0dde8a448a0b3023a3222052fe",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

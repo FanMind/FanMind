@@ -1,5 +1,14 @@
 # Assumption Verification Register
 
+## ASM-FM-CREATOR-20260910
+- Date: 2026-09-10
+- Related task: FM-ROADMAP-001 / FM-CREATOR-001
+- Risk: R2
+- Assumption: owner intended sequencing after accepted Sales Handoff, not immediate Creator implementation or a new pre-sales gate.
+- Status: VERIFIED
+- Evidence: explicit owner instruction in this session; FM-DEC-013 and docs/CREATOR_INTELLIGENCE.md.
+- Recheck trigger: any future change to the handoff/Creator/Phase-8 sequence.
+- Action if false: reconcile a new owner decision before changing prerequisites; do not infer permission to start early.
 ## ASSUMP-FM-REG-001-20260910
 - Task: FM-REG-001
 - Risk: R3

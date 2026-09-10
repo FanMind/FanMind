@@ -1,5 +1,18 @@
 ## RECEIPT-CANONICAL-BILLING-20260906
 
+## RECEIPT-FM-ROADMAP-VISIBLE-20260910
+- Task: FM-ROADMAP-001
+- Risk: R4
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-ROADMAP-VISIBLE-20260910
+- Scope/authorization: FM-AUTH-ROADMAP-VISIBLE-20260910, approved roadmap visibility and existing open-point reconciliation through the normal Web release; no feature/provider/database/credential mutation.
+- Preflight: main 44179146, merged #1089, green deployment/audit/readiness, initial #1090 language-only failure and owner screenshots independently agree. Additive memory merge keeps both prior changes. Watched source/roadmap drift is explicitly reviewed; all other watched hashes remain unchanged.
+- Implementation: corrected English feature name; Staging/build labels reflect existing acceptance/artifacts; remaining Restore/registration/AI/Security/Mobile requirements remain partial. Creator remains DEFERRED after handoff and before further Phase 8.
+- Evidence so far: 42 existing targeted tests passed; product truth checked 255 files with zero warnings; memory, truth and reviewed drift controls passed. Full Next.js 16.3.4 build and lint passed. Real local DE/EN HTTP responses passed the unchanged CI language parser with UNEXPECTED_IDENTICAL_NODE_COUNT=0. Remote checks and live publication are pending.
+- Recovery: reviewed existing isolated-release rollback restores the prior symlink/PM2 release on deployment failure; bounded roadmap revert does not alter persisted data. Previous main security patches are retained.
+- Review finding PRRT_kwDOSxGqmc6hFhD7: PHASE7_CHANNEL_READINESS.md is now explicitly Phase 7a, with the subsequent handoff/7b/8 sequence and unchanged provider boundaries.
+- Countercheck required: fresh current-head CI/review, deployment/version and live roadmap order; unchanged local rendered DE/EN guard already passes.
+
 ## RECEIPT-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024
 - Status: IN_PROGRESS
@@ -40,7 +53,7 @@
 
 ## RECEIPT-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
-- Status: IN_PROGRESS
+- Status: VERIFIED
 - Risk: R4 repository-only reconciliation
 - Authorization: standing Project Memory maintenance plus FM-AUTH-FINISHLINE-PUBLISH-20260908 for the existing public closeout PR. The separate current SSH action is FM-AUTH-RST-SSH-20260910.
 - Evidence: read-only current PR/main and seven successful old-head workflows; three delayed review threads. GitHub approval history for AI run 34273836166 returned an empty array on 2026-09-10; this does not prove whether a separate chat authorization existed, and none is verified in the available record.
@@ -156,6 +169,19 @@ Append-only audit trail proving the mandatory preflight and independent counterc
 Total output lines: 663
 
 # Execution Receipts
+
+## RECEIPT-FM-ROADMAP-CREATOR-20260910
+- Date: 2026-09-10
+- Task: FM-ROADMAP-001 / FM-CR-025
+- Risk: R2
+- Status: IN_PROGRESS
+- Baseline: GitHub main 7004c9ea44c98f125fbd7988a2557cf356693b36; open PR #1089 is separate Web-Recovery/security work.
+- Authorized scope: record Creator Intelligence in Phase 7 after Sales Handoff, before further Phase 8 work; reuse existing CRM/AI architecture later.
+- Preflight: drift/freshness/next-action controls passed; expired mutable observations are not accepted as fresh. Two existing main Production Audit failures remain outside this content change and are not reported as resolved.
+- Implementation evidence: synchronized Phase-7 roadmap and English translations, canonical scope, FM-DEC-013, deferred Creator gate and sales_handoff prerequisite. Only the two owner-changed truth/roadmap fingerprints are reconciled in DRIFT_BASELINE; no accepted runtime/provider evidence is refreshed.
+- Countercheck evidence: 35 existing roadmap/translation/product/Mobile tests passed; product truth passed across 255 files; memory quality/truth checks passed. Direct TypeScript roadmap load proves item order and translations. Selector countercheck rejects four premature handoff states, selects Creator for both accepted handoff states, preserves the current next action and proves Creator adds no sales blocker.
+- Publication: PR #1090 opened on docs/creator-phase7-roadmap-20260910. Initial GitHub commit a1b54975aeb3e38469236ff513f3afbcf5f37326 matches local tree c2a1616c02f21b06256eafc872598ff399ec30de. Initial remote Memory Guard/Quality/Status passed; other CI/review remains pending. No merge or Production release.
+- Recovery: revert the roadmap-only change; no runtime, provider or database state changed.
 
 Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
 
