@@ -1,5 +1,22 @@
 # Work Locks
 
+## LOCK-PR1088-REVIEW-20260910
+- Task: FM-AI-001 / FM-RST-001
+- Status: ACTIVE
+- Risk: R4 repository-only reconciliation
+- Scope: PR #1088 review correction and redacted owner-authorized SSH receipt. Does not authorize any AI/DB/provider operation.
+- Evidence: old exact-head seven green checks; three delayed review findings. Release after final-head checks/review and bounded documentation publication.
+
+## LOCK-FM-RST-SSH-20260910
+- Task: FM-RST-001
+- Status: PAUSED
+- Risk: R4
+- Scope: new owner-approved single-source SSH allowlist on existing isolated Restore VM only; no database restore, Storage/provider target or default-group mutation.
+- Started: 2026-09-10
+- Completion: provider rule read-back plus owner connectivity/authentication evidence; otherwise remain PARTIAL and carry the exact next step.
+
+- Provider mutation complete: exact rule read-back passed. Owner independently proved network reachability; paused for successful host authentication; no second rule or retry authorized by this lock.
+
 ## LOCK-FINISHLINE-REVALIDATE-20260908
 - Status: RELEASED
 - Released: 2026-09-08 after live evidence/counterchecks and canonical reconciliation; follow-up workflow repair remains under LOCK-FINISHLINE-RESUME-20260906.
@@ -59,7 +76,7 @@
 
 ## LOCK-FINISHLINE-RESUME-20260906
 - Status: ACTIVE
-- Current bounded follow-up: FM-FAIL-022 workflow API-origin binding correction and exact-head CI/review; remote KI rollback acceptance remains pending after approved merge/deploy.
+- Current bounded result: FM-FAIL-022 resolved by PR #1087 and fresh AI acceptance 34273836166 after exact-release Production/Staging deployment. No KI correction or rollback run remains active. The observed AI PASS has an open authorization reconciliation, CTR-FM-AI-AUTH-20260910; it must not satisfy the protected gate. Wider real-device and external AI activation scope is paused at owner/provider prerequisites.
 - Task: FM-AI-001 / FM-MOB-001
 - Holder: Codex
 - Risk: R4

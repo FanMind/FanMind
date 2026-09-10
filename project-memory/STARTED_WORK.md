@@ -1,29 +1,56 @@
 # Started Work Register
 
-## FM-AI-001 — shared rollout binding correction 2026-09-08
-- Status: IMPLEMENTED_NOT_VERIFIED
+## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
+- Status: IN_PROGRESS
 - Risk: R4
-- Work lock: LOCK-FINISHLINE-RESUME-20260906
-- Exact next step: FM-AUTH-FINISHLINE-PUBLISH-20260908 resolves the publication blocker. Push the reviewed branch, create the PR, complete exact-head CI/review and publish; then obtain fresh exact-release Staging acceptance.
-- Result: two workflow API-origin bindings repaired, 31 focused tests pass; FM-FAIL-022 and the bounded execution receipt retain exact failure, unchanged counters and next runtime gates. Remote CI/review and approved merge/deploy remain open.
+- Boundary: repository evidence correction only
+- Work lock: LOCK-PR1088-REVIEW-20260910
+- Scope: reconcile three delayed review findings, separate technical results from missing protected-action authorization, invalidate stale mutable evidence and record the separately approved SSH change.
+- Baseline: PR #1088 head 4c80de174c011a8a121ef32a176497cb3b44041e; main 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59. Seven checks passed on the old head, but three review threads remain unresolved.
+- Evidence plan: exact diff, existing governance/truth controls, fresh final-head CI and resolved review. No runtime test, new authorization inference, schema or price change.
+- Recovery: revert this documentation change; retain actual observations and do not silently erase the authorization gap.
+- Exact next step: complete the existing quality controls, publish to PR #1088 and verify fresh CI/review.
+
+## FM-RST-001 — owner SSH access repair 2026-09-10
+- Status: PARTIAL
+- Risk: R4
+- Work lock: LOCK-FM-RST-SSH-20260910
+- Authorization: owner explicitly confirmed saving the reviewed single-IPv4 TCP/22 ingress rule for the existing isolated Restore VM.
+- Scope: only fanmind-restore-isolated, attached to fanmind-restore-01; owner source address stays private. No default-group change, new key, database Restore, Storage write or new paid target.
+- Preflight: authenticated provider shows the existing VM running; neither attached group permits SSH; owner TCP probe failed and the locally available key name matches the VM base-key name. Cryptographic authentication remains unverified.
+- Evidence plan: verify persisted exact rule and target scope, then independent owner TCP/SSH observation. Reject any broader CIDR, extra ports or unrelated instance attachment.
+- Recovery: remove only this newly created rule if rollback is needed. Existing PostgreSQL self-group rule is preserved.
+- Provider result: saved once and read back ingress TCP 22/22 from the approved owner /32; rule prefix eb474b38. The sole prior PostgreSQL self-group rule remains.
+- Exact next step: owner reported SSH negotiation and failed key/passphrase/password authentication. Network reachability is independently proved; try the other existing FanMind key without server-password fallback. No successful host login is claimed.
+
+## FM-AI-001 — shared rollout binding correction 2026-09-08
+- Status: VERIFIED
+- Risk: R4
+- Work lock: LOCK-FINISHLINE-RESUME-20260906; bounded workflow/publication subtask complete, wider external owner/device scope remains paused.
+- Result: PR #1087 passed eight exact-head workflows and resolved review, merged as 7f681d26; Production deployment/audit/go-live and exact Staging deployment passed. Technically successful AI run 34273836166 / 102221843980 passed with full rollback and cleanup; independent counts remained unchanged. See FM-EV-039.
+- Protected acceptance: CTR-FM-AI-AUTH-20260910 remains RECONCILIATION_REQUIRED; technical PASS is not verified action-time authorization.
+- Exact next step: keep FM-FAIL-022 and this correction closed. Do not repeat accepted prices, Billing cutover or rollback proof without a documented invalidation. Continue distinct real-device, product/private/provider/Legal/Production gates; overall FM-AI-001 remains PARTIAL.
 
 ## FM-SEC-001 / FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resume 2026-09-08
 - Status: VERIFIED
+- Historical checkpoint: superseded by PR #1087 publication and the September 10 authorization/freshness reconciliation; no pending repair or automatic rerun follows from this record.
 - Disposition: bounded live reconciliation complete, read-only lock released; whole finishline remains partial and the bounded KI workflow repair has its own active record.
 - Risk: R3
 - Scope: Bernd resumed the four non-Social completion blocks and confirmed existing prices are finished. Preserve the installed catalog; no price creation or repricing.
 - Work lock: LOCK-FINISHLINE-REVALIDATE-20260908 for read-only evidence and repository reconciliation only. Existing LOCK-FINISHLINE-RESUME-20260906 retains its narrower unfinished runtime scope.
 - Completed so far: exact main/Production baseline a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e; drift/freshness/selector preflight inspected; both FanMind Supabase targets healthy. Fresh security advisors still show Production trigger/Auth gaps and now two constrained Staging RPC warnings.
 - Completed evidence: FM-EV-038 records successful shared rollout, exact Staging deploy and Stripe Test webhook verification; independent counters are unchanged. AI acceptance stopped before database access due to missing workflow API-origin bindings.
-- Exact next step: review/publish the bounded FM-AI-001 workflow correction, then obtain exact-new-main runtime proof after merge/deploy. Continue remaining owner actions from the current inbox; no whole-block acceptance.
+- Exact next step: use the current PR #1088 reconciliation and FM-AI-OWNER-002; PR #1087 repair, merge and deployments are complete.
 - Owner action needed: only the exact remaining boundaries after available work is complete; never ask to recreate accepted prices, database Restore or signed builds.
 
 ## FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resumed finishline 2026-09-06
-- Status: IN_PROGRESS
+- Status: PARTIAL
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 remains ACTIVE only for FM-AI-001/FM-MOB-001; FM-RST-001 was removed after the database phase closed. Repository-only postcheck and Storage-preparation locks are released after their bounded counterchecks.
 - Completed so far: Billing schema/capture-only foundation remains proven (Apply `34040107219`, durable capture `34043010578`, unfreeze `34043148548`); #1069 merged as `294264e216ee0c6844caab5c6f51f11f2a76eeeb`; #1070 merged as `2be4f5a784eff80ba417037ed0460a77f9f8353e`; #1072 merged as `62e6a11858e85996af03f6740819b0fc6194b4a4`. Exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on that commit with rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, transaction rollback and cleanup `PASS`; the independent read-only Staging postcheck remained unchanged. Push registration runtime is configured; real device evidence remains pending. Historical AI-tier rollback acceptance `34039968946` / job `101504820898` succeeded on its old exact revision, but the later Staging deploy `34058028839` invalidated that mutable current-state evidence.
+- Superseding AI result: Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically.
+- Historical checkpoint below: September 6 statuses are preserved; later deployed-revision observations and invalidations are authoritative.
 - Still open: actual Android device/provider registration/delivery evidence, Play cohort/complete Store-device acceptance and the distinct isolated Storage target decision (database Restore is already DB_POSTCHECKED). For AI/Billing, the bounded technical Staging canonical-Billing sub-gate is closed, while one fresh exact-deployed-revision rollback-only AI-tier revalidation is `RECONCILIATION_REQUIRED` before relying on current lifecycle acceptance; product/private quality-cost, provider-side current lifecycle/downstream reconciliation, Legal/Tax, Production runtime integration and explicit activation remain open. Canonical Production projection, real payment and paid-tier activation remain disabled.
 - Exact next step: do not redeploy `2be4f5a...` and do not repeat `staging-billing-canonical-acceptance.yml`; those actions are closed by runs `34058028839` and `34058118450`. Continue the owner-resumed Mobile path from the already built FCM replacement APK with real device registration evidence; keep provider delivery separate. Restore is accepted at `DB_POSTCHECKED`; do not repeat its database phase or retired SSH investigation. Only real isolated Storage remains open. Any fresh AI-tier lifecycle revalidation must target the exact currently deployed Staging revision and requires a new explicit protected-Staging authorization; do not rerun the historical `34039968946` revision as if it were current.
 - Owner action needed: actual handset observation and a distinct isolated Storage target/cost decision; any future AI-tier Staging revalidation remains separately protected/authorized.

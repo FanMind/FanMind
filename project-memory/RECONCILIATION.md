@@ -1,5 +1,14 @@
 # Project Reconciliation
 
+## RECON-PR1088-20260910
+- Detected: 2026-09-10 from three delayed PR #1088 review threads.
+- Task: FM-AI-001 / FM-RST-001
+- Mismatch: stale current AI readers, publication approval incorrectly attributed to the protected fixture, and deployment-invalidated evidence still marked usable.
+- Actual state: PR #1087 and deployments passed; AI run 34273836166 technically passed, with separate authorization unverified. SSH rule has a distinct new explicit owner approval and exact provider read-back.
+- Required correction: reconcile readers/freshness and separate observations from protected acceptance; preserve historical evidence and prohibit blind duplicate runs.
+- Status: OPEN
+- Remaining: exact-head documentation checks/review/publication; CTR-FM-AI-AUTH-20260910 remains open even after the documentation fix. Owner SSH observation remains pending.
+
 Mandatory consistency check between project memory and actual repository/runtime state.
 
 ## Invariants

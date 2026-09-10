@@ -1,4 +1,31 @@
 ## RECEIPT-CANONICAL-BILLING-20260906
+
+## RECEIPT-PR1088-REVIEW-20260910
+- Task: FM-AI-001 / FM-RST-001
+- Status: IN_PROGRESS
+- Risk: R4 repository-only reconciliation
+- Authorization: standing Project Memory maintenance plus FM-AUTH-FINISHLINE-PUBLISH-20260908 for the existing public closeout PR. The separate current SSH action is FM-AUTH-RST-SSH-20260910.
+- Evidence: read-only current PR/main and seven successful old-head workflows; three delayed review threads. GitHub approval history for AI run 34273836166 returned an empty array on 2026-09-10; this does not prove whether a separate chat authorization existed, and none is verified in the available record.
+- Decision: preserve successful technical results but withdraw the unsupported protected-acceptance claim. No retrospective authorization, repeat dispatch or change to protected requirements.
+- Recovery: documentation revert only; current application, SQL and runtime remain unchanged by this PR correction.
+- Local validation: existing Project Memory quality, sales readiness, truth drift, next-action, freshness, drift preflight, milestone, V8 and legacy checks PASS; diff whitespace check PASS. Old runtime observations retain original timestamps.
+- Next step: publication to the existing PR and fresh exact-head review/CI; no remote acceptance claimed before those gates.
+
+## RECEIPT-FM-RST-SSH-20260910
+- Task: FM-RST-001
+- Status: PARTIAL
+- Risk: R4
+- Authorization: owner action-time approval after the exact source, isolated target and TCP/22 rule were presented.
+- Target: existing fanmind-restore-01, fanmind-restore-isolated only; no new instance or cost decision.
+- Prior evidence: running VM, matching base-key name, no SSH ingress on either attached security group, failed owner TCP probe.
+- Private values: owner IP and private key material are not recorded in public project memory.
+- Success evidence: one exact provider rule plus independent owner SSH result. Failure/negative evidence: no broad CIDR, extra ports, shared default-group changes or additional instance exposure.
+- Recovery: remove only the rule created under this receipt; preserve the existing PostgreSQL rule.
+- Provider result: saved once and independently read back exact ingress TCP 22/22 with the approved /32; rule prefix eb474b38, existing PostgreSQL self-group rule preserved. No default-group change or additional instance attachment.
+- Pending: host authentication. Owner independently reached SSH and received Permission denied after passphrase/password attempts; network reachability is confirmed. Accepted DB_POSTCHECKED remains unchanged.
+
+Append-only audit trail proving the mandatory preflight and independent countercheck were performed.
+
 - Task: FM-AI-001; Risk: R4; lock LOCK-FINISHLINE-RESUME-20260906 ACTIVE.
 - Scope: missing normalized canonical Billing RPC command and ordered downstream orchestration. No Production target, new SQL, provider payment or legal activation.
 - Baseline: 8ef7970866f04d0d575522d361ebef868db23ae3; prior capture/unfreeze 34043010578 / 34043148548 PASS.
@@ -920,3 +947,17 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Access: owner confirmed successful Exoscale login. Independent portal read proves FanMind organization and the exact existing fanmind-restore-01 running in at-vie-2. This supersedes the prior failed-login checkpoint only; no SSH identity, backup/receipt access or actual Storage Restore is claimed.
 - Safety: no new target, database Restore, decryption, upload, password/key/firewall change or price change. DB_POSTCHECKED remains accepted and overall Restore remains PARTIAL.
 - Next step: verify full truth and Project Memory controls, publish the reviewed correction, complete exact-head CI/review, merge and deploy; protected-host access and distinct disposable Storage target remain required.
+
+## RECEIPT-FINISHLINE-RUNTIME-PUBLICATION-20260908
+- Task: FM-AI-001 / FM-SEC-001 / FM-RST-001
+- Status: RECONCILIATION_REQUIRED
+- Risk: R4
+- Publication authorization: FM-AUTH-FINISHLINE-PUBLISH-20260908 covers the reviewed release only.
+- Protected AI authorization: not independently verified; CTR-FM-AI-AUTH-20260910 is open. This receipt cannot use the publication scope as AI fixture-write approval.
+- Repository: PR #1087 final head 6b5194ac96aa5e297f68aaffaa8bed3d433e58c9, eight green PR workflows, all review threads resolved; SHA-bound squash merge 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59.
+- Verification: 1231 Operations tests, focused executable origin regression, four actual unsafe-workflow mutations rejected, three stale canonical-status mutations rejected, full truth/lint/build/security/browser and Project Memory gates. The intervening reviewed documentation update required its SOURCE_OF_TRUTH blob in DRIFT_BASELINE to be reconciled; final quality gate 34273201197 passed.
+- Release: Production deploy 34273495406 / 102220717543, independent audit 34273656946 / 102221248690 and public go-live check 34273656942 / 102221247360 PASS. Staging deploy 34273614070 / 102221113332 PASS on the exact same release, 14 routes, seven required health components and preserved Billing settings. Optional Staging email remains unknown.
+- Restore access: successful owner portal login independently verified; exact existing restore host running, encrypted console connected and separate Linux login required. Secure form authentication cannot fill this text console; a manual host-login handoff is required. No actual host authentication, secret retrieval, backup decryption, upload or target cleanup claimed.
+- Safety/recovery: known release rollback retained; no SQL apply, Production billing/tier/provider activation, catalog change, duplicate build or database Restore. Original artifact, receipts and distinct disposable Storage target authorization remain required.
+- AI technical observation (not protected acceptance): 34273836166 / 102221843980 PASS; shared read-only rollout and all three ledger verifies PASS, lifecycle/Test catalog/browser boundary/service-role ledger PASS, ROLLED_BACK and private password cleanup PASS. Independent read-only 20:18 UTC counters remained 0/0/0/0/1. FM-FAIL-022 is closed; no overall AI/Billing acceptance or tier activation.
+- Next step: protected manual Linux login in the existing Restore console, exact retained artifact/receipt access, then distinct disposable Storage target/cost authorization. Preserve DB_POSTCHECKED and all accepted publication/Billing/build work.

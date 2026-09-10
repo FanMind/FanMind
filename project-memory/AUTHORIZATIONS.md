@@ -1,5 +1,16 @@
 # Project Authorizations
 
+## FM-AUTH-RST-SSH-20260910
+- Granted by: Bernd in this session immediately after the exact prepared rule was presented; owner replied that if needed, save it.
+- Scope: one ingress TCP 22/22 rule from the specifically reviewed owner IPv4 /32 to fanmind-restore-isolated, which is attached only to the existing fanmind-restore-01.
+- Result: saved once and read back; rule prefix eb474b38. Source address remains private. Owner independently reached SSH authentication, but login failed after passphrase/password attempts. Network reachability is confirmed; host authentication remains open.
+- Boundary: no default-group change, broad source range, extra port, new key, database Restore, new provider target/cost or Storage operation. This is a new scope and does not reuse retired FM-RST-OWNER-005.
+
+## Protected AI run authorization reconciliation — 2026-09-10
+- Run 34273836166 technically passed on 7f681d26, but a separate exact action-time protected-Staging authorization is not verified in the available record.
+- FM-AUTH-FINISHLINE-PUBLISH-20260908 is publication/normal-release/Restore scope; it does not establish the independent AI fixture-write approval.
+- No new or retrospective authorization is created by this documentation. Keep CTR-FM-AI-AUTH-20260910 open, retain observed technical results, and do not automatically repeat the run.
+
 ## Standing authorizations from Bernd
 
 - Maintain and extend the Project Memory system.

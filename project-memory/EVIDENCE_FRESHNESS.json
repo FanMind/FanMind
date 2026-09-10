@@ -104,8 +104,9 @@
     {
       "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260906",
       "gate": "ai_billing",
+      "superseded_by": "EV-STAGING-AI-TIER-ACCEPTANCE-20260908",
       "class": "staging_smoke",
-      "status": "RECONCILIATION_REQUIRED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T14:42:15Z",
       "source": "Historical AI-tier rollback acceptance 34039968946 / job 101504820898 on exact main 49f7cbd7a1cba4bdc21bec536d3fe5992fe0d8f5 passed lifecycle, Stripe Test catalog, browser boundary, service-role ledger and full rollback. Its current-state use was invalidated by the later isolated Staging deploy 34058028839 of 62e6a11858e85996af03f6740819b0fc6194b4a4, which introduced later canonical Billing/AI downstream code. Retain this run as historical rollback evidence only; require a fresh exact-deployed-revision revalidation before treating the AI-tier lifecycle paths as current.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
@@ -116,21 +117,35 @@
       "id": "EV-STAGING-CANONICAL-BILLING-ACCEPTANCE-20260906",
       "gate": "ai_billing",
       "class": "staging_smoke",
-      "status": "COUNTERCHECKED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T20:29:44Z",
-      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only Billing/AI postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams and zero AI entitlement/event/reconciliation rows",
+      "source": "FM-EV-035 / exact main 62e6a11858e85996af03f6740819b0fc6194b4a4 / isolated Staging deploy 34058028839 / canonical rollback acceptance 34058118450 job 101553652111 / rollout PASS / Billing ledger verify / cutover pending=0 and uninventoried=0 / transaction rollback and cleanup PASS / independent read-only Billing/AI postcheck unchanged: one prior durable capture event, zero Billing reconciliations/streams and zero AI entitlement/event/reconciliation rows Historical observation only after that deployment; no fresh canonical Billing runtime acceptance is inferred.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
-      "revalidate_on": ["staging_deploy", "runtime_config_change", "target_binding_change", "before_new_ai_billing_staging_action"]
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "target_binding_change",
+        "before_new_ai_billing_staging_action"
+      ],
+      "invalidated_by": "Staging deploy 34273614070 on 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59"
     },
     {
       "id": "EV-MOBILE-PUSH-REGISTRATION-POSTCHECK-20260906",
       "gate": "mobile",
       "class": "staging_smoke",
-      "status": "COUNTERCHECKED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T20:29:44Z",
-      "source": "Independent read-only Supabase Staging postcheck recorded after canonical acceptance 34058118450 observed mobile_push_registrations=0. The timestamp is conservatively bound to the acceptance completion time; the actual postcheck occurred after it. No provider send or registration mutation occurred.",
+      "source": "Independent read-only Supabase Staging postcheck recorded after canonical acceptance 34058118450 observed mobile_push_registrations=0. The timestamp is conservatively bound to the acceptance completion time; the actual postcheck occurred after it. No provider send or registration mutation occurred. Historical observation only after that deployment; no fresh canonical Billing runtime acceptance is inferred.",
       "target": "Supabase Staging vshyhvgcmrlagvfnvomc",
-      "revalidate_on": ["mobile_push_registration_change", "device_acceptance", "staging_deploy", "target_binding_change", "before_real_provider_send"]
+      "revalidate_on": [
+        "mobile_push_registration_change",
+        "device_acceptance",
+        "staging_deploy",
+        "target_binding_change",
+        "before_real_provider_send"
+      ],
+      "invalidated_by": "Staging deploy 34273614070 on 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59",
+      "superseded_by": "EV-MOBILE-PUSH-POSTCHECK-20260908"
     },
     {
       "id": "EV-PLAY-RESUME-20260906",
@@ -152,9 +167,10 @@
       "id": "EV-RESTORE-START-20260906",
       "gate": "restore",
       "class": "restore_host",
-      "status": "VERIFIED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-06T13:18:12.895027+00:00",
-      "source": "Authenticated Exoscale: exact existing fanmind-restore-01 at-vie-2 started once and observed running. Power-state evidence only, not host/database readiness; SSH identity unavailable."
+      "source": "Authenticated Exoscale: exact existing fanmind-restore-01 at-vie-2 started once and observed running. Power-state evidence only, not host/database readiness; SSH identity unavailable.",
+      "superseded_by": "EV-RESTORE-SSH-PROVIDER-20260910"
     },
     {
       "id": "EV-ANDROID-FCM-BUILD-20260906",
@@ -169,9 +185,11 @@
       "id": "EV-FINISHLINE-STAGING-20260908",
       "gate": "ai_billing",
       "class": "staging_smoke",
-      "status": "VERIFIED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-08T19:15:54Z",
-      "source": "FM-EV-038; rollout 34267504075 and exact deployment 34267819029 on a1bde387; excludes failed AI acceptance 34268214078"
+      "source": "FM-EV-038; rollout 34267504075 and exact deployment 34267819029 on a1bde387; excludes failed AI acceptance 34268214078 Historical observation only after that deployment; no fresh canonical Billing runtime acceptance is inferred.",
+      "invalidated_by": "Staging deploy 34273614070 on 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59",
+      "superseded_by": "EV-STAGING-DEPLOY-20260908-7F681D26"
     },
     {
       "id": "EV-STRIPE-WEBHOOK-20260908",
@@ -188,6 +206,77 @@
       "status": "VERIFIED",
       "observed_at": "2026-09-08T19:09:37Z",
       "source": "FM-EV-038; exact Production/Staging advisor scans; unremediated findings, not security acceptance"
+    },
+    {
+      "id": "EV-STAGING-AI-TIER-ACCEPTANCE-20260908",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "RECONCILIATION_REQUIRED",
+      "observed_at": "2026-09-08T20:18:00Z",
+      "source": "FM-EV-039 / exact deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 / Staging deploy 34273614070 / protected AI acceptance 34273836166 job 102221843980 / shared rollout and three ledger verifies PASS / catalog, lifecycle, browser and service-role ledger PASS / full rollback and cleanup PASS / independent read-only counts unchanged 0/0/0/0/1 Technical result only; separately required protected-action authorization is unverified under CTR-FM-AI-AUTH-20260910. Not accepted.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "target_binding_change",
+        "ai_ledger_schema_or_acl_change",
+        "before_new_ai_tier_staging_action"
+      ]
+    },
+    {
+      "id": "EV-STAGING-DEPLOY-20260908-7F681D26",
+      "gate": "ai_billing",
+      "class": "staging_smoke",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-08T20:15:31Z",
+      "source": "Staging deploy 34273614070 job 102221113332 on exact 7f681d26 PASS; 14 routes, seven required health components and preserved billing_write_freeze=false. Deploy observation only, not a fresh canonical Billing fixture.",
+      "revalidate_on": [
+        "runtime_config_change",
+        "target_binding_change",
+        "staging_deploy"
+      ]
+    },
+    {
+      "id": "EV-PRODUCTION-SMOKE-20260908-7F681D26",
+      "gate": "meta_security",
+      "class": "production_smoke",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-08T20:15:12Z",
+      "source": "Production deploy 34273495406, audit 34273656946 and public go-live 34273656942 PASS on exact 7f681d26. Health/release evidence only, not Security/Auth/Meta acceptance.",
+      "revalidate_on": [
+        "runtime_config_change",
+        "target_binding_change",
+        "production_deploy"
+      ]
+    },
+    {
+      "id": "EV-MOBILE-PUSH-POSTCHECK-20260908",
+      "gate": "mobile",
+      "class": "staging_smoke",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-08T20:18:00Z",
+      "source": "FM-EV-039 independent read-only Supabase Staging counts after deploy 34273614070: registrations=0, delivery attempts=0. No real device/provider acceptance.",
+      "revalidate_on": [
+        "runtime_config_change",
+        "target_binding_change",
+        "staging_deploy"
+      ]
+    },
+    {
+      "id": "EV-RESTORE-SSH-PROVIDER-20260910",
+      "gate": "restore",
+      "class": "restore_host",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-10T07:38:01.019037Z",
+      "source": "Authenticated Exoscale: existing isolated fanmind-restore-01 running; only that VM attached to fanmind-restore-isolated. Owner-approved single-source TCP22 ingress saved once and read back, rule prefix eb474b38; prior PostgreSQL self-group rule preserved. Provider/power/network evidence only; host login/toolchain/artifact readiness and independent owner host login remain unproved. Owner separately reached SSH authentication and received Permission denied, confirming network reachability only.",
+      "revalidate_on": [
+        "runtime_config_change",
+        "target_binding_change",
+        "host_maintenance",
+        "security_group_change",
+        "owner_source_change",
+        "before_restore_host_access"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

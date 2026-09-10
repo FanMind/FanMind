@@ -1,5 +1,24 @@
 # FanMind Session Handoff
 
+## Current continuation — 2026-09-10
+- Exact current main remains 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59. PR #1088 is the documentation closeout; its three delayed review findings are being reconciled before merge.
+- Owner explicitly approved the prepared single-source SSH rule. It was saved once in fanmind-restore-isolated and read back as TCP 22/22, approved owner /32, rule prefix eb474b38. Only the existing Restore VM is attached. Owner Windows SSH independently reached authentication, then failed after key/passphrase/password attempts. Network reachability is confirmed; try the other existing FanMind key without password fallback. Host login is not yet proved.
+- Database Restore remains DB_POSTCHECKED. Actual Storage, config inspection, cleanup and final countercheck remain open; a distinct disposable Storage target still needs its concrete current cost/artifact/cleanup decision.
+- AI authorization: CTR-FM-AI-AUTH-20260910 is RECONCILIATION_REQUIRED. The September 8 technical PASS is retained, but publication authorization does not prove the separately required Staging write approval. Do not rerun it to fix a record.
+- Runtime/provider observations from September 8 retain their original timestamps and must not be described as freshly checked today. New Staging deploy 34273614070 invalidated the older mutable Billing and Push postchecks; historical installation/build/rollback evidence remains.
+- Prices are complete. Android device/Push/Recovery, Security/Auth, KI product/private/provider/Legal/Production and Meta Events/legal remain open; all overall gates stay partial and sales_ready=false.
+
+## Published runtime and Restore access — 2026-09-08
+- PR #1087 final head `6b5194ac96aa5e297f68aaffaa8bed3d433e58c9` passed all eight PR workflows with every review finding resolved, then squash-merged as `7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59`.
+- Production deployment `34273495406` / `102220717543`, independent read-only audit `34273656946` / `102221248690` and public go-live check `34273656942` / `102221247360` all passed on that release. Seven required health components passed; no Production SQL apply or paid-tier activation.
+- Isolated Staging deployment `34273614070` / `102221113332` passed on the same release, with 14 public routes, seven required health components and preserved `billing_write_freeze=false`. Optional email configuration remains unknown.
+- AI technical result and authorization boundary: Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically.
+- Restore portal access is restored: authenticated Exoscale FanMind shows exact existing `fanmind-restore-01` running in `at-vie-2`. Its encrypted provider console is reachable and displays the separate Linux login prompt. Portal authentication is not host authentication. No local SSH identity or backup/private receipt is available, and accepted database-run artifacts currently cannot be downloaded.
+- Continue from accepted `DB_POSTCHECKED`. Actual Storage and config inspection require protected-host login and the existing exact backup/private receipts, then a distinct disposable Storage target with its explicit cost/artifact/cleanup decision. No second database Restore, target reset, password/key/firewall change, new provider target or real Storage operation occurred.
+- Existing prices remain complete. Android real-device registration/delivery/Recovery, Security/Auth and Meta/provider/legal acceptance remain separate; all four overall gates remain partial and `sales_ready=false`.
+- This supersedes earlier instructions in this file to publish PR #1087, deploy `a1bde387`, or repeat the failed Exoscale portal login. Older checkpoints are retained only as history.
+
+
 Update this file at the end of a substantial work session or whenever work is paused at a non-obvious state. It is the fastest safe restart point, but it never overrides code, tests or canonical source-of-truth documents.
 
 ## Publication authorization received — 2026-09-08
@@ -15,6 +34,7 @@ Update this file at the end of a substantial work session or whenever work is pa
 - No branch/project, bucket, decryption, upload, host key/password change, target deletion or runtime Restore was performed. The next true Storage transition remains blocked on access plus exact target/artifact authorization.
 
 ## Owner resume — 2026-09-08
+- Historical checkpoint: superseded by the September 8 publication and September 10 reconciliation above; no instruction here authorizes a repeat action.
 - Bernd resumed Restore, Android/Push, KI/Billing and Security/Meta before real Social integrations. Existing prices are complete and must not be recreated or repriced (FM-DEC-012).
 - Reviewed main/Production: `a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e`. Fresh Production audit `34266289342` and public go-live check `34266289377` passed. No Production mutation in this continuation.
 - Staging: shared read-only rollout `34267504075` / `102200475242` passed. Exact-main deploy `34267819029` / `102201553389` passed with 14 public routes, seven required health components and preserved Billing configuration (`billing_write_freeze=false`); optional email configuration remains unknown.
