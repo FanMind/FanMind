@@ -2,7 +2,8 @@
 
 ## LOCK-FM-ROADMAP-VISIBLE-20260910
 - Task: FM-ROADMAP-001
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-10 after green exact-release deploy/audit/readiness and independent public DE/EN/layout countercheck.
 - Risk: R4 (normal Web release)
 - Holder: Codex
 - Acquired: 2026-09-10

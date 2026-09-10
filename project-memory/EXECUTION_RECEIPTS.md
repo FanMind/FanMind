@@ -3,7 +3,7 @@
 ## RECEIPT-FM-ROADMAP-VISIBLE-20260910
 - Task: FM-ROADMAP-001
 - Risk: R4
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Work lock: LOCK-FM-ROADMAP-VISIBLE-20260910
 - Scope/authorization: FM-AUTH-ROADMAP-VISIBLE-20260910, approved roadmap visibility and existing open-point reconciliation through the normal Web release; no feature/provider/database/credential mutation.
 - Preflight: main 44179146, merged #1089, green deployment/audit/readiness, initial #1090 language-only failure and owner screenshots independently agree. Additive memory merge keeps both prior changes. Watched source/roadmap drift is explicitly reviewed; all other watched hashes remain unchanged.
@@ -11,7 +11,10 @@
 - Evidence so far: 42 existing targeted tests passed; product truth checked 255 files with zero warnings; memory, truth and reviewed drift controls passed. Full Next.js 16.3.4 build and lint passed. Real local DE/EN HTTP responses passed the unchanged CI language parser with UNEXPECTED_IDENTICAL_NODE_COUNT=0. Remote checks and live publication are pending.
 - Recovery: reviewed existing isolated-release rollback restores the prior symlink/PM2 release on deployment failure; bounded roadmap revert does not alter persisted data. Previous main security patches are retained.
 - Review finding PRRT_kwDOSxGqmc6hFhD7: PHASE7_CHANNEL_READINESS.md is now explicitly Phase 7a, with the subsequent handoff/7b/8 sequence and unchanged provider boundaries.
-- Countercheck required: fresh current-head CI/review, deployment/version and live roadmap order; unchanged local rendered DE/EN guard already passes.
+- Final remote evidence: head 7d2995ee passed all ten checks; review thread PRRT_kwDOSxGqmc6hFhD7 resolved after the guide correction. SHA-bound squash merge 7dbd7a3a5cf52ace0e44ed3e66b3084618dc1db1; deploy 34483135613, independent audit 34483304635 and public readiness 34483304720 all succeeded. Main Browser E2E and CodeQL passed.
+- Independent countercheck: live DE/EN roadmap has all ten Phase-7 items, handoff before five planned Creator items, Phase-5/6 accepted foundations separate from partial follow-ups; card scrollHeight equals clientHeight, all item widths fit. Public registration remains payment_terms_version_unresolved. Browser API-version navigation was blocked by its client; an independent HTTPS GET returned releaseCommit=7dbd7a3a5cf52ace0e44ed3e66b3084618dc1db1 and runtimeEnvironment=production at 2026-09-10T13:34:40Z.
+- Negative check: four unaccepted handoff states refuse Creator; two accepted states select it after prior gates close; Creator remains not required_for_sales. Required gate count/states are unchanged and sales_ready=false.
+- Disposition: roadmap publication complete, lock released; no Creator feature or external acceptance is implied. This memory-only closeout carries the evidence forward without changing application files.
 
 ## RECEIPT-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024

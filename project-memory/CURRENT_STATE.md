@@ -1,5 +1,13 @@
 # FanMind Current State
 
+## Roadmap published and independently verified — 2026-09-10
+- FM-ROADMAP-001 is PRODUCTION_CONFIRMED for roadmap visibility only. PR #1090 merged as 7dbd7a3a5cf52ace0e44ed3e66b3084618dc1db1 after ten green current-head checks and the corrected Phase-7a guide review.
+- Exact-release Production deployment 34483135613, read-only audit 34483304635 and public go-live readiness 34483304720 succeeded. Main Browser E2E and CodeQL also passed. No further publication of #1090 is pending.
+- Independent live browser inspection confirms all ten Phase-7 items in DE and EN, handoff before Creator work, all five Creator entries planned, corrected Phase-5/6 statuses and no horizontal item overflow or hidden vertical card content. The public registration page independently still reports payment_terms_version_unresolved.
+- Durable future task: FM-CREATOR-001 remains DEFERRED until accepted sales_handoff; scope docs/CREATOR_INTELLIGENCE.md; no new pre-sales blocker. Required order: open pre-sales work -> Phase 3/7a channels -> Sales Handoff -> Phase 7b Creator Intelligence -> further Phase 8.
+- Still open: Restore Storage/config/cleanup and access; Android real-device/recovery/Push and Play acceptance; real registration/mail/workspace and payment-terms approval; AI quality/cost/provider/downstream/authorization and activation; Security/Meta provider evidence; real Phase-3/7a connections and final handoff. Existing Staging, database postcheck, signed artifacts and prices are not to be rebuilt.
+- Next: use the existing finishline selector and exact external-action boundaries. Do not restart the rescue helper, repeat the successful database Restore, infer approval for the rejected password action, or start Creator implementation early. This publication closes only the roadmap task; sales_ready remains false.
+
 ## Visible roadmap follow-up — 2026-09-10
 - Owner expects the approved roadmap to be visible on fanmind.ch and all open points retained. FM-ROADMAP-001 continues in existing PR #1090; do not create a duplicate implementation.
 - Fresh baseline: main 44179146926c691476364f668624ac24aab34ac9 includes merged PR #1089. Deploy 34481266092, Production audit 34481420092 and go-live readiness 34481420119 succeeded on that release. Older instructions to publish #1088/#1089 and old audit failures below are historical, not current release blockers.
