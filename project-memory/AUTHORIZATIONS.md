@@ -1,5 +1,10 @@
 # Project Authorizations
 
+## FM-AUTH-REGISTRATION-PUBLISH-20260910
+- Source: current owner instruction to finish registration and publish it now.
+- Scope: implement, test, review and publish the registration correction through branch/PR, green CI and the existing normal Web deployment.
+- Boundary: the instruction does not constitute external legal/tax evidence, consent by future customers, permission to send test emails to unapproved recipients, or a protected database/provider activation. Preserve those factual and operational gates.
+
 ## FM-AUTH-ROADMAP-VISIBLE-20260910
 - Source: current owner follow-up reports the approved Phase-7 addition missing on fanmind.ch and asks for reliable retention plus the open points.
 - Scope: complete that visible roadmap correction through existing PR #1090, green checks/review and the normal Web release path. Correct stale Staging/Android presentation only from recorded evidence.

@@ -1,5 +1,16 @@
 # Started Work Register
 
+## FM-REG-002 — Public registration and confirmed-email continuation
+- Status: IMPLEMENTED
+- Risk: R4
+- Work lock: LOCK-FM-REG-002-20260910
+- Completed so far: current repository/runtime preflight, existing setup/consent contract inspected and zero live Stripe Tax registrations independently observed.
+- Still open: implementation, synthetic browser/auth checks, final CI/review/publication and genuine external email/paid-activation acceptance.
+- Exact next step: account-only signup plus bounded confirmation and reuse of authenticated /workspace/setup.
+- Owner action needed: current payment-terms/version and tax facts for later paid activation; no new permission needed for the requested Web code/publication.
+
+- Verification checkpoint: normal Next.js build succeeded; 1,241 Operations tests and current memory/truth/drift checks passed. Additional signup callback/error/metadata tests are included. Full exact-head CI/browser verification and publication are still required. Local Chromium was unavailable and its vendor download timed out; no browser acceptance is claimed from that failed attempt.
+
 ## FM-STATUS-001 — five handoff questions
 - Date: 2026-09-10
 - Status: VERIFIED

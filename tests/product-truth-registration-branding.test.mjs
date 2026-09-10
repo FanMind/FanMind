@@ -67,15 +67,14 @@ test("daily registration is productive only behind the flag and exact daily sele
   assert.equal(isProductiveRegistrationEntry({ planId: "starter" }), true);
 });
 
-test("paused registration keeps Starter pricing visible without enabling paid activation", async () => {
+test("account registration is available while paid activation remains guarded", async () => {
   const registerPage = await source("src/app/register/page.tsx");
-
-  assert.match(
-    registerPage,
-    /if \(!isPaymentTermsActivationEnabled\(\)\)[\s\S]*Starter Flex[\s\S]*990 € Setup \+ 312 €\/Monat[\s\S]*Starter 12[\s\S]*0 € Setup \+ 312 €\/Monat/u,
-  );
-  assert.match(registerPage, /PAYMENT_TERMS_ACTIVATION_BLOCK_CODE/u);
-  assert.match(registerPage, /Kostenlose Demo starten/u);
+  const client = await source("src/app/register/RegisterClient.tsx");
+  assert.match(registerPage, /paidActivationAvailable = isPaymentTermsActivationEnabled\(\)/u);
+  assert.match(registerPage, /return <RegisterClient/u);
+  assert.doesNotMatch(registerPage, /Registrierung pausiert|PAYMENT_TERMS_ACTIVATION_BLOCK_CODE/u);
+  assert.match(client, /buildRegistrationAccountMetadata/u);
+  assert.doesNotMatch(client, /payment_terms_accepted|fetch\("\/api\/register\/workspace"/u);
 });
 
 test("active product surfaces no longer route to retired Pilot registration", async () => {
@@ -92,8 +91,8 @@ test("active product surfaces no longer route to retired Pilot registration", as
   assert.doesNotMatch(landing, /plan=starter-(?:flex|12)/u);
   assert.match(register, /isRetiredPilotRequested \? "starter" : resolvedPlanId/u);
   assert.match(register, /selectedCommercialOption[^=]*= isDailyTestPlanSelected/u);
-  assert.match(register, /requiresPaymentTermsAcceptance\(selectedPlanId, selectedCommercialOption\)/u);
-  assert.match(register, /required=\{requiresPaymentTermsAcceptance\(selectedPlanId, commercialOption\)\}/u);
+  assert.doesNotMatch(register, /name="paymentTermsAccepted"/u);
+  assert.match(register, /router.push\(setupHref\)/u);
   assert.doesNotMatch(onboarding, /<strong>Pilot \/ Setup<\/strong>/u);
   assert.doesNotMatch(dashboard, /Wenn du nach dem Pilot weiter/u);
   assert.doesNotMatch(admin, /href: "\/register\?plan=pilot"/u);

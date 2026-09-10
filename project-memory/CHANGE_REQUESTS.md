@@ -1,5 +1,13 @@
 # FanMind Change Requests
 
+## FM-CR-026
+- Date: 2026-09-10
+- Source: owner requests registration completion and immediate publication.
+- Related task: FM-REG-002
+- Classification: R4 Web Auth flow/publication; no commercial or provider activation.
+- Existing work checked: FM-REG-001, current /register, custom Supabase client, /workspace/setup and protected terms/Checkout policy on main 52b2b888.
+- Decision: permit a non-commercial login account and verified-email continuation independently from paid Workspace provisioning. Keep fresh authenticated consent and all existing terms/Tax/billing checks at activation. No previous consent or external approval is invented.
+
 ## FM-CR-025
 - Follow-up: owner reports the approved addition missing on the live roadmap and asks for retained open points. Complete this same PR through corrected DE/EN rendering, current-main reconciliation, green CI/review and normal Web publication. Reconcile only documented Staging/build facts; preserve all unresolved acceptance. This supersedes the initial preparation-only publication boundary, without authorizing Creator implementation or unrelated protected operations.
 - Date: 2026-09-10

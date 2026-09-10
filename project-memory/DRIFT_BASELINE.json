@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
   "captured": "2026-09-10",
-  "last_source_of_truth_review": "2026-09-10 FM-STATUS-001 / PR #1094 P1/P2: reconcile proven historical registration/Follow-up-ledger acceptance across canonical readers and split Web publication from pending patched Mobile signed release; no runtime, device/provider freshness or required gate acceptance changed",
+  "last_source_of_truth_review": "2026-09-10 FM-REG-002 / FM-CR-026: document account-only signup and confirmed-email continuation while preserving every paid Workspace, terms, Tax, billing and external acceptance gate; no accepted milestone changes",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "d6fa791eb05dd10dff9f1ae7480f4e7cc8f19729",
+    "docs/SOURCE_OF_TRUTH.md": "b680f3801307a588f209b162a14206a36304ace2",
     "src/config/roadmap.ts": "13c05193e8c76d0dde8a448a0b3023a3222052fe",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

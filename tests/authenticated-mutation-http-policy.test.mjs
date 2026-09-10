@@ -279,12 +279,10 @@ test("paid activation stays fail-closed and checkout uses only server-owned work
     readFile("src/lib/workspaceProvisioning.ts", "utf8"),
   ]);
 
-  assert.match(registerPage, /!isPaymentTermsActivationEnabled\(\)/u);
-  assert.match(registerPage, /Kostenlose Demo starten/u);
-  assert.match(
-    registerClient,
-    /body: JSON\.stringify\(\{[\s\S]*planId: selectedPlanId[\s\S]*commercialOption: selectedCommercialOption[\s\S]*paymentTermsAccepted/u,
-  );
+  assert.match(registerPage, /paidActivationAvailable = isPaymentTermsActivationEnabled\(\)/u);
+  assert.match(registerClient, /buildRegistrationAccountMetadata/u);
+  assert.doesNotMatch(registerClient, /payment_terms_accepted|fetch\("\/api\/register\/workspace"/u);
+  assert.match(workspaceSetup, /if \(!isPaymentTermsActivationEnabled\(\)\)/u);
   assert.match(registrationRoute, /parseTrustedProvisioningSelection/u);
   assert.match(registrationRoute, /buildTrustedProvisioningUser/u);
   assert.doesNotMatch(registrationRoute, /ensureUserWorkspace\(data\.user\)/u);

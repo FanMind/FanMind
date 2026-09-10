@@ -1,4 +1,16 @@
 ## RECEIPT-FM-STATUS-001-20260910
+
+## FM-RC-REG-002-20260910
+- Task: FM-REG-002 / FM-CR-026
+- Status: IMPLEMENTED
+- Risk: R4
+- Baseline: 52b2b888d7b54b6b52a3dc2a6d38e87ce4dc3638; existing deploy/audit/readiness green.
+- Preflight: drift passed; freshness check passed with unrelated expired external evidence retained; selector reports owner-bound Restore action, current explicit registration instruction takes priority without resuming that action.
+- Critical assumptions: signup account is not paid activation; persistent Auth metadata is never commercial/consent authority; no active Stripe Tax registration observed in the connected FanMind Live account.
+- Planned countercheck: forged/duplicate/error/recovery callbacks must not authorize signup completion, rejected provider identity must not sync a session, account creation must not provision a Workspace or start payment; authentic setup retains its exact current consent gate.
+- Recovery: reviewed existing isolated-release rollback; source-only revert, no contract/migration/provider mutation.
+- Result: pending implementation and evidence.
+
 - Task: FM-STATUS-001
 - Date: 2026-09-10
 - Status: VERIFIED
@@ -21,6 +33,8 @@
 - P1/P2 review reconciliation: synchronize every identified canonical/mobile/operations Push reader with the accepted historical Staging foundation, preserve the missing message-specific reservation and real send path, and split FM-SEC-002 source/CI VERIFIED from Web PRODUCTION_CONFIRMED and still-open patched Mobile signed publication under FM-MOB-001. The old signed candidate is not evidence for #1089 Mobile updates. Source-of-truth fingerprint changes only for this reviewed documentation scope; other watched files and all finishline gates remain unchanged.
 
 - Review countercheck: all 76 existing Mobile Push/staging/native-release/boundary tests pass, including canonical reader agreement; full product truth and memory/drift checks pass. A scan finds no current unapplied-ledger claim in the reconciled readers; the only retained mention explicitly describes the superseded historical failure. The exact old artifacts remain separate from the newer Mobile source patch. Final enclosing-PR CI/review is still required.
+
+- Verification checkpoint: normal Next.js build succeeded; 1,241 Operations tests and current memory/truth/drift checks passed. Additional signup callback/error/metadata tests are included. Full exact-head CI/browser verification and publication are still required. Local Chromium was unavailable and its vendor download timed out; no browser acceptance is claimed from that failed attempt.
 
 ## RECEIPT-CANONICAL-BILLING-20260906
 

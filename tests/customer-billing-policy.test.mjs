@@ -591,7 +591,8 @@ test("daily test registration is controlled by an explicit fail-closed server fl
   );
   assert.match(registerClientSource, /isRetiredPilotRequested \? "starter" : resolvedPlanId/u);
   assert.match(registerClientSource, /commercialOption = isDailyTestPlanSelected \? "internal_daily_test"/);
-  assert.match(registerClientSource, /fanmind_locale: language/u);
+  assert.match(registerClientSource, /buildRegistrationAccountMetadata/u);
+  assert.match(fs.readFileSync("src/lib/webRegistrationPolicy.mjs", "utf8"), /fanmind_locale: input.language/u);
   assert.match(registrationWindowRouteSource, /export const dynamic = "force-dynamic"/u);
   assert.match(registrationWindowRouteSource, /isTrustedFanMindMutationRequest\(request\)/u);
   assert.match(registrationWindowRouteSource, /readBoundedJsonRequest\([\s\S]*MAX_DAILY_TEST_WINDOW_BODY_BYTES/u);
@@ -600,15 +601,14 @@ test("daily test registration is controlled by an explicit fail-closed server fl
   assert.match(registrationWindowRouteSource, /daily_test_window_closed/u);
   assert.match(registrationWindowRouteSource, /"Cache-Control": "no-store"/u);
   assert.doesNotMatch(registrationWindowRouteSource, /createStripeCheckoutSession/u);
-  const windowCheckIndex = registerClientSource.indexOf('fetch("/api/register/daily-test-window"');
+  // A free login account is no longer a Daily subscription admission. Only
+  // authenticated setup can create the Workspace and retains every Daily gate.
+  assert.doesNotMatch(registerClientSource, /fetch\("\/api\/register\/(?:workspace|daily-test-window)"/u);
   const signUpIndex = registerClientSource.indexOf("supabase.auth.signUp");
-  assert.ok(windowCheckIndex >= 0 && signUpIndex > windowCheckIndex);
-  assert.match(registerClientSource, /selectedCommercialOption === "internal_daily_test"[\s\S]*fetch\("\/api\/register\/daily-test-window"/u);
-  assert.match(registerClientSource, /windowResponse\.json\(\)\.catch\(\(\) => null\)[\s\S]*!windowResponse\.ok \|\| windowPayload\?\.ok !== true[\s\S]*setError\(DAILY_TEST_WINDOW_CLOSED_MESSAGES\[language\]\)[\s\S]*return;/u);
-  assert.doesNotMatch(registerClientSource, /DAILY_TEST_WINDOW_CLOSED_MESSAGES[\s\S]*selectedCommercialOption\s*=\s*"starter/u);
   const sessionSyncIndex = registerClientSource.indexOf("await syncSupabaseSessionForServer(data.session)");
-  const workspaceMutationIndex = registerClientSource.indexOf('fetch("/api/register/workspace"');
-  assert.ok(sessionSyncIndex > signUpIndex && workspaceMutationIndex > sessionSyncIndex);
+  assert.ok(signUpIndex >= 0 && sessionSyncIndex > signUpIndex);
+  assert.match(registerClientSource, /router.push\(setupHref\)/u);
+  assert.doesNotMatch(registerClientSource, /payment_terms_accepted|billing_status:/u);
   assert.doesNotMatch(registerClientSource, /supabase\.rpc|\.from\("workspaces"\)|\.from\("workspace_members"\)/u);
   assert.match(
     registrationWorkspaceRouteSource,
@@ -639,10 +639,8 @@ test("daily test registration is controlled by an explicit fail-closed server fl
     workspaceSetupSource,
     /\{setupResult\.error\.message\}/u,
   );
-  assert.match(
-    registerClientSource,
-    /DAILY_TEST_WORKSPACE_RECOVERY_MESSAGES[\s\S]*Do not register again[\s\S]*workspacePayload\?\.code === "daily_test_window_closed"[\s\S]*DAILY_TEST_WORKSPACE_RECOVERY_MESSAGES\[language\]/u,
-  );
+  assert.match(registerClientSource, /Do not register again/u);
+  assert.match(workspaceSetupSource, /daily_test_window_closed/u);
 });
 
 test("daily beta admin checkout targets the workspace owner and cancels at paid-day end", () => {

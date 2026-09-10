@@ -5,6 +5,7 @@ import { getSupabaseHeaders, getSupabaseRestUrl, getSupabaseAuthUrl } from "./co
 type SupabaseAuthUser = {
   id: string;
   email?: string;
+  email_confirmed_at?: string;
   user_metadata?: Record<string, unknown>;
 };
 
@@ -42,6 +43,7 @@ type SignUpInput = {
   password: string;
   options?: {
     data?: Record<string, unknown>;
+    emailRedirectTo?: string;
   };
 };
 
@@ -141,6 +143,7 @@ async function postAuth(path: string, body: Record<string, unknown>, rememberSes
       method: "POST",
       headers: getSupabaseHeaders(accessToken),
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {
@@ -174,7 +177,7 @@ async function getAuthUser(accessToken: string | undefined): Promise<SupabaseUse
     }
 
     const payload = (await response.json()) as SupabaseAuthPayload;
-    const user = payload.user ?? (payload.id ? { id: payload.id, email: payload.email, user_metadata: payload.user_metadata } : null);
+    const user = payload.user ?? (payload.id ? { id: payload.id, email: payload.email, email_confirmed_at: payload.email_confirmed_at, user_metadata: payload.user_metadata } : null);
 
     return { data: { user }, error: null };
   } catch (error) {
@@ -359,7 +362,13 @@ export function createSupabaseBrowserClient() {
   return {
     auth: {
       signUp({ email, password, options }: SignUpInput) {
-        return postAuth("/signup", { email, password, data: options?.data }, rememberSession);
+        const path = options?.emailRedirectTo
+          ? `/signup?redirect_to=${encodeURIComponent(options.emailRedirectTo)}` : "/signup";
+        return postAuth(path, { email, password, data: options?.data }, rememberSession);
+      },
+      resendSignup({ email, emailRedirectTo }: { email: string; emailRedirectTo: string }) {
+        return postAuth(`/resend?redirect_to=${encodeURIComponent(emailRedirectTo)}`,
+          { type: "signup", email }, rememberSession);
       },
       signInWithPassword({ email, password }: SignInInput) {
         return postAuth("/token?grant_type=password", { email, password }, rememberSession);
