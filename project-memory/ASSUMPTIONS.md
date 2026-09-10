@@ -9,6 +9,15 @@
 - Evidence: explicit owner instruction in this session; FM-DEC-013 and docs/CREATOR_INTELLIGENCE.md.
 - Recheck trigger: any future change to the handoff/Creator/Phase-8 sequence.
 - Action if false: reconcile a new owner decision before changing prerequisites; do not infer permission to start early.
+## ASSUMP-FM-REG-001-20260910
+- Task: FM-REG-001
+- Risk: R3
+- Status: VERIFIED
+- Assumption: local existing application, test and reader sources match current remote main before this correction.
+- Evidence: all seven existing paths match remote tree e9c1fd702a840759f661f4e2d8d1e3bd6322c702 blob SHAs.
+- Invalidated assumption: all non-local password recovery requests should return to fanmind.ch; Staging must retain its own origin.
+- Needs verification: provider allowlist accepts the exact DE/EN callback URLs; real email delivery and usable link on the intended environment; current CI on the proposed commit.
+- Boundary: fragment type is syntactic routing information, not proof of token provenance; Auth validates the access token. No PKCE support is added to Web.
 
 Critical assumptions used to plan or execute FanMind work must be recorded before they are relied upon.
 

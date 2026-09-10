@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "baseline_commit": "7004c9ea44c98f125fbd7988a2557cf356693b36",
+  "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
   "captured": "2026-09-10",
+  "last_source_of_truth_review": "2026-09-10 FM-CR-025: retain #1089 recovery/security changes; add approved Creator sequence and reconcile visible Staging/build versus open acceptance; no provider evidence refreshed",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "f0f4ae5ee2f8145f601f96d2eb71754f8e0c2c43",
-    "src/config/roadmap.ts": "edbc0e41d68ed4391b3c655d655ee6f73cc81b46",
+    "docs/SOURCE_OF_TRUTH.md": "847f8228035300c8252cb070691fdc3a5782f797",
+    "src/config/roadmap.ts": "13c05193e8c76d0dde8a448a0b3023a3222052fe",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

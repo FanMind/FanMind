@@ -5,8 +5,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const ROOT_REVIEWED_AT = "2026-08-17T10:53:01.000Z";
-const ROOT_REVIEWED_FRAMEWORK_VERSION = "16.3.1";
+const ROOT_REVIEWED_AT = "2026-09-10T12:33:13.109Z";
+const ROOT_REVIEWED_FRAMEWORK_VERSION = "16.3.4";
 const ROOT_REVIEW_HIGH_MAXIMUM = 0;
 const ROOT_REVIEW_MODERATE_MAXIMUM = 0;
 const REVIEWED_ROOT_PACKAGES = Object.freeze([]);

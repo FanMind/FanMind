@@ -256,6 +256,11 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Feedback-Lernen sind geplant und keine zusätzliche Verkaufsübergabe-Bedingung.
   Die bestehende deaktivierte Website-KI-Grundlage bleibt historisch begonnen.
   Details: [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
+- Phase 5/6 zeigen getrenntes Staging und signierte Android-Builds als vorhandene
+  Nachweise. Vollständiger Restore, echte Registrierung/E-Mail/Workspace,
+  Vertragsfreigabe, KI-/Billing-Gesamtabnahme, Security/Meta und Geräte-/Push-Abnahme
+  bleiben sichtbar offen. Die dokumentierte Play-Testveröffentlichung ist keine
+  öffentliche Store-Freigabe.
 - FanMind garantiert keine fehlerfreien KI-Antworten.
 - Externe Integrationen dürfen nicht als allgemein aktive Vollfunktion dargestellt werden, solange sie nicht technisch und rechtlich validiert sind.
 - Legal-Readiness: Eine klar als nicht unterschriftsreif begrenzte
@@ -464,7 +469,8 @@ Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 | --- | --- | --- |
 | `/` | öffentliche Landingpage | aktiv |
 | `/login` | Login und Demo-Einstieg | aktiv |
-| `/register` | Starter-Registrierung | aktiv |
+| `/register` | Starter-Registrierung | entgeltliche Aktivierung bis zur bestätigten Zahlungsbedingungen-Version gesperrt |
+| `/forgot-password`, `/reset-password` | Web-Passwort-Recovery | Rücksprung auf die anfordernde FanMind-Umgebung; Details und externe Abnahme in `docs/operations/WEB_AUTH_RECOVERY.md` |
 | `/support` | öffentliche Hilfe- und App-Store-Supportseite | aktiv |
 | `/dashboard` | geschützter Arbeitsbereich | aktiv |
 | `/fans` | Kontaktliste | aktiv |

@@ -166,6 +166,7 @@ async function getAuthUser(accessToken: string | undefined): Promise<SupabaseUse
     const response = await fetch(getSupabaseAuthUrl("/user"), {
       method: "GET",
       headers: getSupabaseHeaders(accessToken),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {
@@ -191,6 +192,7 @@ async function putAuthUser(body: UpdateUserInput, accessToken: string | undefine
       method: "PUT",
       headers: getSupabaseHeaders(accessToken),
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {

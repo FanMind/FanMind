@@ -1,5 +1,14 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-ROADMAP-VISIBILITY-20260910
+- Related task: FM-ROADMAP-001 / FM-CR-025
+- Risk: R4
+- Status: RESOLVED
+- Source A: user screenshot and public page show no Creator expansion, missing Staging resources and pending Android signing.
+- Source B: PR #1090 contains the approved Creator plan but its exact-head language check failed; canonical immutable Staging/build evidence already exists. Current main 44179146 is successfully deployed.
+- Resolution: cause is established and repository correction passes the unchanged rendered DE/EN guard. Existing facts and pending acceptance are separated; no live visibility is yet claimed. Publish the corrected existing PR and verify public content/release SHA under the active lock before closing the publication task.
+- Falsification: absent Creator text or wrong ordering on the actual public page, another untranslated node, or an unfinished required acceptance marked done blocks completion.
+
 ## CTR-FM-CREATOR-SEQUENCE-20260910
 - Date: 2026-09-10
 - Related task/change: FM-ROADMAP-001 / FM-CR-025

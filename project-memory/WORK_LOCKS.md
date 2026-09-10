@@ -1,5 +1,15 @@
 # Work Locks
 
+## LOCK-FM-ROADMAP-VISIBLE-20260910
+- Task: FM-ROADMAP-001
+- Status: ACTIVE
+- Risk: R4 (normal Web release)
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: approved public roadmap and visible open-point reconciliation through PR #1090; no takeover of runtime/Restore/provider work.
+- Evidence plan: current main preservation, complete current-head CI, DE/EN render, Production deploy/version and public roadmap countercheck.
+- Recovery: existing isolated-release rollback and bounded roadmap revert; no persistent data change.
+
 ## LOCK-FM-ROADMAP-CREATOR-20260910
 - Task: FM-ROADMAP-001
 - Status: RELEASED
@@ -9,6 +19,23 @@
 - Released: 2026-09-10 after local implementation/countercheck; publication/CI remains tracked in FM-ROADMAP-001.
 - Scope: roadmap, translations, canonical scope and deferred Creator work bookkeeping; no existing operational lock is taken over.
 - Evidence plan: exact-main diff, existing truth/memory checks and no premature Creator selection or sales dependency.
+## LOCK-FM-SEC-002-20260910
+- Task: FM-SEC-002 / FM-CR-024
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex
+- Scope: bounded security dependencies and current release verification.
+- Recovery: controlled application patch; no database, provider or mobile store publication.
+
+## LOCK-FM-REG-001-20260910
+- Task: FM-REG-001 / FM-CR-023
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: existing Web recovery redirect/callback handling and synthetic verification only; independent of the blocked Restore password action.
+- Evidence plan: environment separation, malformed/duplicate/wrong-type callbacks, immediate URL cleanup and positive verified-user flow.
+- Recovery: repository revert; no external credential, provider or database mutation.
 
 ## LOCK-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001

@@ -31,7 +31,7 @@ FanMind ist nicht:
 Aktiv beziehungsweise produktnah:
 
 - deutsche und englische Landingpage mit automatischer Sprachprüfung;
-- Login und öffentliche Starter-Registrierung;
+- Login und vorbereitete öffentliche Starter-Registrierung; die entgeltliche Aktivierung bleibt bis zur bestätigten Zahlungsbedingungen-Version gesperrt (`payment_terms_version_unresolved`). Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
 - kostenloser temporärer Demo-Workspace, getrennt vom entgeltlichen Angebot;
 - geschütztes Dashboard;
 - Kontakte, Kontaktdetail und Suche;
@@ -289,6 +289,16 @@ Ausbau ist geplant, noch nicht implementiert und ausdrücklich keine zusätzlich
 Voraussetzung für die Verkaufsübergabe. Weitere Phase-8-Arbeit folgt erst nach
 Phase 7b; die schon vorbereitete deaktivierte Website-KI-Grundlage bleibt als
 historisch begonnen dokumentiert. Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
+
+Die sichtbaren Phase-5/6-Zeilen werden anhand der bereits vorhandenen Nachweise
+geführt: getrenntes Staging ist abgenommen, der Datenbank-Restore bis
+`DB_POSTCHECKED` geprüft und signierte Android-Artefakte sind vorhanden.
+Offen bleiben der vollständige Restore einschließlich Storage/Server-Konfiguration/
+Bereinigung, echte Registrierungs-/E-Mail-/Workspace-Abnahme und Vertragsfreigabe,
+KI-/Billing-Gesamtabnahme, Security-/Meta-Nachweise sowie Android-Geräte- und
+Push-Zustellung. Die dokumentierte Google-Play-Testveröffentlichung bedeutet
+keine öffentliche Store-Freigabe. Die Roadmap-Korrektur aktualisiert keine
+Provider-Abnahme und aktiviert keine Funktion; die Gesamt-Gates bleiben offen.
 
 Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme
 der erforderlichen Phase-3- und Phase-7-Kanäle. Phase 4 ist deshalb keine

@@ -1,5 +1,10 @@
 # Project Authorizations
 
+## FM-AUTH-ROADMAP-VISIBLE-20260910
+- Source: current owner follow-up reports the approved Phase-7 addition missing on fanmind.ch and asks for reliable retention plus the open points.
+- Scope: complete that visible roadmap correction through existing PR #1090, green checks/review and the normal Web release path. Correct stale Staging/Android presentation only from recorded evidence.
+- Boundary: no Creator implementation, migration, payment, credential/access change, provider activation, Mobile build or acceptance inferred from publication. Existing protected gates remain applicable.
+
 ## FM-AUTH-RST-SSH-20260910
 - Granted by: Bernd in this session immediately after the exact prepared rule was presented; owner replied that if needed, save it.
 - Scope: one ingress TCP 22/22 rule from the specifically reviewed owner IPv4 /32 to fanmind-restore-isolated, which is attached only to the existing fanmind-restore-01.

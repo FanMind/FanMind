@@ -107,11 +107,48 @@ Jeder Workflow benötigt außerdem einen ausdrücklichen top-level `permissions:
 - exakte Next.js-/ESLint-Config-Patchstände;
 - einen vollständig sauberen Root-Production-Baum ohne Review-Ausnahme.
 
-### Aktueller geprüfter Zustand vom 3. September 2026
+### Release-Korrektur vom 10. September 2026 (FM-SEC-002)
+
+Die aktuelle Prüfung von PR #1089 hat die unten dokumentierte frühere
+Abnahme überholt. Next.js, Sharp und Browser-/YAML-Werkzeuge enthalten neue
+Advisory-Befunde. Der neue Release bleibt bis zu grüner Prüfung gesperrt.
+
+Der vorbereitete Patch bindet Next.js und `eslint-config-next` an `16.3.4`,
+Sharp an `0.35.4` (Web sowie Mobile-Buildwerkzeug) und den bestehenden
+js-yaml-4.x-Override an `4.3.2`. Der Root-Lockfile aktualisiert außerdem
+Browserslist auf `4.28.9` und baseline-browser-mapping auf `2.11.21` innerhalb
+der vorhandenen Abhängigkeitsbereiche. Die zugehörigen Plattformpakete und
+Browserdaten werden konsistent vom Paketmanager aufgelöst.
+
+Im Mobile-Werkzeugbaum werden außerdem die beiden bestehenden
+`@xmldom/xmldom`-Zweige auf `0.8.15` und `0.9.12` aktualisiert. Dies behebt
+die neuen XML-Injection-/Ressourcenverbrauchsbefunde ohne Wechsel des Expo-SDK
+oder Erweiterung des bisherigen Review-Budgets.
+Expo Doctor verlangt inzwischen `expo ~57.0.21` und `expo-router ~57.0.20`;
+diese beiden Patchstände bleiben auf SDK 57 und werden mitgeprüft.
+
+Es gibt keine zusätzliche Audit-Ausnahme. Die Root-Grenze bleibt null;
+die bestehenden Mobile-Grenzen und ihr Ablaufdatum bleiben erhalten.
+Audit, Bildverarbeitung, Build, Browser- und Mobile-CI müssen den neuen
+Commit bestätigen. Ein Web-Release veröffentlicht kein neues Mobile-Binary.
+
+Der lokale Audit nach diesen Änderungen besteht: Root-Production `0` Befunde;
+Mobile `18` insgesamt, davon `4` hoch und `0` kritisch, ohne unbekannte Pakete.
+Mobile bleibt innerhalb der unveränderten, bis 17. September befristeten
+Review-Grenze und ist damit nicht vollständig befundfrei. Die Web-Anwendung
+besteht lokal 1237 Operations-Tests, Lint und den synthetisch konfigurierten
+Production-Build; die abschließende CI muss den veröffentlichten Commit prüfen.
+
+Quellen: [Next.js Image-Optimization-Advisory](https://github.com/vercel/next.js/security/advisories/GHSA-2xp9-vwfh-vxw4),
+[Sharp/libheif-Advisory](https://github.com/lovell/sharp/security/advisories/GHSA-rgj7-g3m4-5g8c)
+und die aktuelle npm-Audit-Ausgabe. Historische Zähler unten gelten nur für
+den damaligen Stand und begründen keine heutige Release-Freigabe.
+
+### Historischer geprüfter Zustand vom 3. September 2026
 
 Am 17. August wurde Next.js `16.3.1` zusammen mit dem passenden
 `eslint-config-next` erneut gegen den vollständigen Release- und
-Production-Audit geprüft. FanMind verwendet jetzt:
+Production-Audit geprüft. FanMind verwendete damals:
 
 - Next.js und `eslint-config-next` exakt `16.3.1`;
 - `postcss` `8.5.23`;

@@ -1,5 +1,19 @@
 # Started Work Register
 
+## FM-ROADMAP-001 — visible roadmap publication follow-up
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R4
+- Boundary: normal Web release with bounded roadmap/copy changes only.
+- Work lock: LOCK-FM-ROADMAP-VISIBLE-20260910
+- Goal: owner reports Creator work absent from the live roadmap and asks how future work and open points remain visible.
+- Baseline: main 44179146926c691476364f668624ac24aab34ac9; PR #1089 deployed successfully in run 34481266092; audit 34481420092 and readiness 34481420119 passed. PR #1090 is unmerged; head 976fab65 failed only language-runtime-guard because one English feature name was identical to German.
+- Scope: preserve current main, correct translation without weakening the guard, reconcile stale Staging/Android labels, retain actual open acceptance and publish the approved roadmap through existing PR #1090.
+- Evidence plan: existing tests, actual rendered DE/EN guard, fresh complete PR CI/review, normal deployment and independent public roadmap/version verification.
+- Recovery: existing isolated-release rollback; a reviewed revert of only roadmap/copy changes restores prior presentation. No database, credentials, providers or feature flags change.
+- Exact next step: fix and verify the existing PR; Creator implementation remains DEFERRED until sales_handoff is accepted.
+- Owner action needed: none for the requested visible roadmap correction; unrelated protected acceptance remains separate.
+
 ## FM-ROADMAP-001 — Creator Intelligence sequencing 2026-09-10
 - Status: VERIFIED
 - Risk: R2
@@ -11,6 +25,26 @@
 - Owner action needed: none for this roadmap preparation; no feature implementation, schema/provider mutation or Production release included.
 - Evidence plan: final diff, existing roadmap/truth/translation/memory checks and selector checks before/after Sales Handoff.
 - Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.
+## FM-SEC-002 — release dependency patches
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R3
+- Work lock: LOCK-FM-SEC-002-20260910
+- Scope: patch vulnerable packages revealed by current release CI; no audit exception expansion or feature/framework-major upgrade.
+- Exact next step: resolve Next.js 16.3.4 / Sharp 0.35.4 and patched browser/YAML dependencies, then verify complete locked trees and CI.
+- Recovery: forward security correction preferred; review any revert because the prior release has known vulnerable versions.
+
+## FM-REG-001 — Web password recovery before real registrations
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Work lock: LOCK-FM-REG-001-20260910
+- Goal: fix the observed Staging-to-Production recovery redirect and reject/scrub malformed recovery links before provider validation.
+- Scope: existing Web recovery pages, pure callback/redirect policy, synthetic tests and reader updates. No real password change, email send, provider setting, registration/payment activation, migration or Restore operation.
+- Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; existing prices complete; paid registration still blocked by unresolved payment-terms version.
+- Evidence plan: executable positive/negative policy tests, synthetic browser cases, exact-head CI and diff review. Local dependency installation was cancelled before network approval; build/browser execution not yet available locally.
+- Recovery: revert this bounded application change; no provider or database rollback is needed.
+- Exact next step: publish the bounded draft and collect exact-head build, lint, security and synthetic browser evidence.
 
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
 - Status: IN_PROGRESS

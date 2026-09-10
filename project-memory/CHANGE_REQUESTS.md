@@ -1,6 +1,7 @@
 # FanMind Change Requests
 
 ## FM-CR-025
+- Follow-up: owner reports the approved addition missing on the live roadmap and asks for retained open points. Complete this same PR through corrected DE/EN rendering, current-main reconciliation, green CI/review and normal Web publication. Reconcile only documented Staging/build facts; preserve all unresolved acceptance. This supersedes the initial preparation-only publication boundary, without authorizing Creator implementation or unrelated protected operations.
 - Date: 2026-09-10
 - Status: ACCEPTED
 - Source: owner explicitly places the reviewed Creator Intelligence & Sales Assistance proposal in Phase 7 after Sales Handoff and before Phase 8.
@@ -9,6 +10,21 @@
 - Decision: Phase 7a = required Social channels; then technical Sales Handoff; Phase 7b = Creator Intelligence. Further Phase 8 work follows Phase 7b. The historical disabled Website-AI foundation remains started.
 - Related tasks: FM-ROADMAP-001 (this recording), FM-CREATOR-001 (future implementation).
 - Boundary: no new pre-sales requirement, pricing change, additional database, provider activation, feature implementation or Production release.
+## FM-CR-024
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-SEC-002
+- Risk: R3
+- Source: current PR #1089 dependency audit failure blocks the requested normal release.
+- Decision: bounded security patch updates for Next.js, Sharp and affected browser/YAML/XML tooling, including lockfiles and existing version-contract tests. Keep zero root vulnerabilities and the unchanged Mobile exception limits/expiry; no bypass or broader feature upgrade.
+
+## FM-CR-023
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: owner continuation toward Social implementation and real registrations; observed existing Web recovery defects.
+- Classification: bounded authentication correction, Risk R3.
+- Related task: FM-REG-001
+- Decision: preserve the current FanMind environment in password-reset redirects and validate/scrub existing implicit recovery callbacks. Keep registration, payment terms, provider configuration and Ubuntu recovery permissions unchanged.
 
 Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFERRED, REJECTED, DUPLICATE or merged into an existing task.
 

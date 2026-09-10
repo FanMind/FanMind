@@ -1,11 +1,20 @@
-# Phase-7-Kanalbereitschaft
+# Phase-7a-Kanalbereitschaft
 
 ## Zweck und Grenze
 
-Roadmap-Phase 7 umfasst ausschließlich TikTok, X/Twitter, Discord und eine
-unverbindliche OnlyFans-Evaluation. Diese Datei dokumentiert die technische
+Der Kanalabschnitt Phase 7a umfasst TikTok, X/Twitter, Discord und eine
+unverbindliche OnlyFans-Evaluation. Diese Datei dokumentiert dessen technische
 Vorbereitungsgrenze; sie aktiviert keinen Kanal. LinkedIn und weitere Kanäle
 aus Phase 8 oder später sind ausdrücklich nicht Teil dieses Pakets.
+
+Nach Abnahme der erforderlichen Phase-3-/Phase-7a-Kanäle folgt die technische
+Verkaufsübergabe. Danach wird innerhalb von Phase 7b
+[Creator Intelligence & Sales Assistance](../CREATOR_INTELLIGENCE.md) auf der
+bestehenden FanMind-Architektur umgesetzt; erst anschließend folgt weitere
+Phase-8-Arbeit (FM-DEC-013). Phase 7b ist keine Voraussetzung für die vorherige
+Verkaufsübergabe. Die schon vorbereitete deaktivierte Website-KI-Grundlage
+bleibt historisch dokumentiert. Dieser Kanalvertrag aktiviert auch keine
+Creator-Funktion.
 
 `src/lib/phase7ChannelReadiness.ts` hält den maschinenlesbaren, providerfreien
 Fail-closed-Vertrag. Für alle vier Einträge bleiben Inbound, Outbound,

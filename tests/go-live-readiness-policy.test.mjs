@@ -32,12 +32,19 @@ function healthyRequiredChecks() {
   }));
 }
 
-test("roadmap separates completed technical foundations from external staging resources", async () => {
+test("roadmap separates accepted staging from open end-to-end acceptance", async () => {
   const roadmap = await read(roadmapPath);
 
   assert.match(roadmap, /label: "Operations-Grundlage", state: "done", status: "Produktiv aktiv"/);
   assert.match(roadmap, /label: "Release-Checks", state: "done", status: "Automatisch aktiv"/);
-  assert.match(roadmap, /label: "Produktions- und Testdaten trennen", state: "partial", status: "Technik fertig · externe Ressourcen offen"/);
+  assert.match(roadmap, /label: "Produktions- und Testdaten trennen", state: "done", status: "Getrenntes Staging abgenommen"/);
+  assert.match(roadmap, /label: "Vollständiger Restore-Test", state: "partial"/);
+  assert.match(roadmap, /label: "Echte Registrierung vollständig abnehmen", state: "partial"/);
+  assert.match(roadmap, /label: "KI-\/Billing-Gesamtabnahme", state: "partial"/);
+  assert.match(roadmap, /label: "Security- und Meta-Abnahme", state: "partial"/);
+  assert.match(roadmap, /label: "Signierter interner Android-Build", state: "done"/);
+  assert.match(roadmap, /label: "Google-Play-Test & Geräteabnahme", state: "partial"/);
+  assert.match(roadmap, /label: "Push für Follow-up-Erinnerungen", state: "partial"/);
   assert.match(roadmap, /label: "Umgebungs-Governance", state: "done", status: "Fail-closed aktiv"/);
 });
 
