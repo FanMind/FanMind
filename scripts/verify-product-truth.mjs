@@ -1557,8 +1557,30 @@ forbidIn(
 );
 requireText(
   "docs/mobile/PUSH_DELIVERY.md",
-  "Kontrollierter Ledger – vorbereitet, nicht angewendet",
-  "Die Push-Delivery-Dokumentation muss den ungeklärten persistenten Ledger als Aktivierungsblocker benennen.",
+  "Kontrollierter Ledger – isolierte Staging-Abnahme belegt",
+  "Die Push-Delivery-Dokumentation muss die bereits belegte isolierte Staging-Ledger-Abnahme erhalten.",
+);
+for (const evidence of ["33867831888", "33867922978"]) {
+  requireText(
+    "docs/mobile/PUSH_DELIVERY.md",
+    evidence,
+    "Die Push-Ledger-Abnahme muss auf die getrennten Apply- und Rollback-Abnahmeläufe verweisen.",
+  );
+}
+forbidIn(
+  "docs/mobile/PUSH_DELIVERY.md",
+  /Kontrollierter Ledger – vorbereitet, nicht angewendet/,
+  "Die Push-Dokumentation darf den bereits angewendeten Staging-Ledger nicht wieder als unangewendet darstellen.",
+);
+requireText(
+  "docs/mobile/PUSH_DELIVERY.md",
+  "Er sendet im aktuellen Produktstand nichts.",
+  "Die Ledger-Abnahme darf keinen bereits aktiven Push-Versand behaupten.",
+);
+requireText(
+  "docs/mobile/PUSH_DELIVERY.md",
+  "keinen ausführbaren Produktpfad",
+  "Die Push-Dokumentation muss die noch fehlende Versandintegration ausdrücklich offenhalten.",
 );
 requireText(
   "docs/mobile/PUSH_DELIVERY.md",

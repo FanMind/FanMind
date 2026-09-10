@@ -3,7 +3,7 @@
 ## FM-STATUS-001
 - Date: 2026-09-10
 - Status: VERIFIED
-- Risk: R1
+- Risk: R2
 - Goal: answer the owner's five specific handoff-status questions from current evidence and reconcile stale completion records.
 - Scope: documentation and Project Memory only; reuse accepted Staging and signed Android artifacts, close the already published package/recovery code work, and retain the missing Push trigger/device/Production steps.
 - Evidence plan: merged PR #1089 and final-head CI; successful deployment/audit/readiness on current main 20f51f784f7e647ce7e3c3c237f74d558f08e85a; immutable Android and Push-ledger runs; source import/call-site inspection; unchanged finishline gates.
@@ -11,6 +11,10 @@
 - Publication contract: publish this bounded closeout through its enclosing branch + PR with green final-head checks; merged history is the durable publication evidence. Do not reopen the already completed #1089 code release.
 - Next step after publication: continue the retained pre-sales work, including the explicitly missing Push implementation and separately authorized acceptance.
 - Recovery: revert only these documentation changes; no runtime, schema, provider, credentials, signing or device action.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
+
+- Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
 
 ## FM-ROADMAP-001
 - Status: PRODUCTION_CONFIRMED

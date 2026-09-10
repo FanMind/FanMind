@@ -3,13 +3,16 @@
 ## LOCK-FM-STATUS-001-20260910
 - Task: FM-STATUS-001
 - Status: RELEASED
-- Released: 2026-09-10 after independent evidence and bounded local countercheck; enclosing-PR publication remains the delivery step, with no runtime lock acquired.
-- Risk: R1
+- Released after reconciliation: 2026-09-10; full product-truth command, 22 existing Push-delivery tests and three negative documentation probes pass. Final-head CI and enclosing-PR publication remain required.
+- Reacquired: 2026-09-10 to reconcile the stale product-truth assertion discovered in PR #1094 CI; no runtime lock is acquired.
+- Risk: R2
 - Holder: Codex
 - Acquired: 2026-09-10
 - Scope: owner-requested status reconciliation for Staging, Android signing, Push and completed #1089 release tasks. Historical FM-SEC-002/FM-REG-001 locks are reconciled only from their merged and deployed exact-head evidence; other locks are unchanged.
 - Evidence plan: GitHub commit/workflow facts, executable source import inspection, existing documentation governance and unchanged finishline gates.
 - Recovery: revert only the documentation patch; no protected operation.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
 
 ## LOCK-FM-ROADMAP-VISIBLE-20260910
 - Task: FM-ROADMAP-001

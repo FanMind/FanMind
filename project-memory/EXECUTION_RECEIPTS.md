@@ -2,7 +2,7 @@
 - Task: FM-STATUS-001
 - Date: 2026-09-10
 - Status: VERIFIED
-- Risk: R1
+- Risk: R2
 - Work lock: LOCK-FM-STATUS-001-20260910
 - Authorization: owner asks for the three specific technical statuses and the two incomplete tasks in the screenshot; existing standing authorization permits memory maintenance and branch/PR publication. No provider, database, signing, password, Push send or external acceptance is authorized by this record.
 - Preflight: main 20f51f784f7e647ce7e3c3c237f74d558f08e85a; clean isolated worktree; no duplicate open PR; memory/drift/freshness/selector inspected. Earlier external gates remain open and the selector still returns NBA-RESTORE-STORAGE-R4-AUTH.
@@ -13,6 +13,10 @@
 - Implementation result: updated only the bounded status records, Push guide, external acceptance note and Mobile next-action instruction; no application, dependency, workflow, migration or required gate changed.
 - Countercheck result: existing memory quality, product truth, accepted-state drift and whitespace checks pass; sales_ready remains false with the identical eight required blockers. The source search and successful immutable build/ledger runs independently reject both "Push already works" and "build/ledger still absent".
 - Publication contract: the enclosing PR must pass fresh final-head checks and merge before documentation publication is claimed; its merged Git history is the receipt. External evidence remains unaccepted.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
+
+- Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
 
 ## RECEIPT-CANONICAL-BILLING-20260906
 

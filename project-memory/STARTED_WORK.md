@@ -3,7 +3,7 @@
 ## FM-STATUS-001 — five handoff questions
 - Date: 2026-09-10
 - Status: VERIFIED
-- Risk: R1
+- Risk: R2
 - Work lock: LOCK-FM-STATUS-001-20260910
 - Scope: evidence-based status reconciliation only. No takeover of the unfinished FM-MOB-001 or Restore runtime work.
 - Completed so far: current-main release and all final #1089 checks verified; signed Android run 34037085683 and rollback-only Push-ledger acceptance 33867922978 succeeded. Source inspection proves the delivery service has no runtime caller.
@@ -12,6 +12,10 @@
 - Exact next step: complete the enclosing PR with green final-head checks; once merged, keep this documentation reconciliation closed and continue the existing finishline.
 - Owner action needed: none for this documentation correction; it grants no protected-action permission.
 - Recovery: bounded documentation revert.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
+
+- Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
 
 ## FM-ROADMAP-001 — visible roadmap publication follow-up
 - Date: 2026-09-10
