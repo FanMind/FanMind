@@ -5,6 +5,7 @@ import {
 } from "@/lib/httpMutationPolicy.mjs";
 import {
   isPaymentTermsActivationEnabled,
+  evaluatePaymentTermsSubmission,
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import {
@@ -59,11 +60,12 @@ export async function POST(request: NextRequest) {
     planId?: unknown;
     commercialOption?: unknown;
     paymentTermsAccepted?: unknown;
+    paymentTermsVersion?: unknown;
   };
   if (
     Object.keys(payload).some(
       (key) =>
-        !["planId", "commercialOption", "paymentTermsAccepted"].includes(key),
+        !["planId", "commercialOption", "paymentTermsAccepted", "paymentTermsVersion"].includes(key),
     )
   ) {
     return jsonNoStore({ ok: false, code: "invalid_request" }, 400);
@@ -90,10 +92,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const termsSubmission = evaluatePaymentTermsSubmission(payload);
+  if (!termsSubmission.ready) {
+    return jsonNoStore({ ok: false, code: "payment_terms_changed" }, 409);
+  }
+
   const trustedUser = buildTrustedProvisioningUser(
     data.user,
     selection,
     true,
+    payload.paymentTermsVersion,
   );
   if (!trustedUser) {
     return jsonNoStore(

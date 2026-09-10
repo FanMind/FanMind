@@ -2,7 +2,7 @@ import "server-only";
 
 import {
   CURRENT_PAYMENT_TERMS_VERSION,
-  isPaymentTermsActivationEnabled,
+  evaluatePaymentTermsSubmission,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import type { SupabaseServerUser } from "@/lib/supabase/server";
 
@@ -43,9 +43,13 @@ export function buildTrustedProvisioningUser(
   user: SupabaseServerUser,
   selection: TrustedProvisioningSelection,
   paymentTermsAccepted: boolean,
+  paymentTermsVersion: unknown,
   now = new Date(),
 ): SupabaseServerUser | null {
-  if (!isPaymentTermsActivationEnabled() || paymentTermsAccepted !== true) {
+  if (!evaluatePaymentTermsSubmission({
+    paymentTermsAccepted,
+    paymentTermsVersion,
+  }).ready) {
     return null;
   }
 

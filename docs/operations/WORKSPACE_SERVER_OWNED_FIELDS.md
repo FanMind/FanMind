@@ -23,6 +23,25 @@ Plan, Preise, Billing, Stripe, Subscription, Zahlungsannahme,
 serververwaltet. Neue Starter-Workspaces entstehen atomar über
 `ensure_current_user_workspace(...)`.
 
+## Angezeigte Vertragsversion bestätigen
+
+Vor der kostenpflichtigen Anlage übertragen alle drei Paketformulare die
+angezeigte `paymentTermsVersion` zusätzlich zu Paketwahl und ausdrücklicher
+Zustimmung. Auch `POST /api/register/workspace` verlangt diese Version.
+Beide authentifizierten Einstiegspunkte und der gemeinsame
+`buildTrustedProvisioningUser`-Helper vergleichen sie exakt mit der aktiven
+Serverversion, bevor `ensureUserWorkspace` erreicht wird. Fehlende oder alte
+Versionen erfordern eine neue Bestätigung; die API antwortet mit HTTP 409 und
+`payment_terms_changed`. Ein Eintrag in veränderbarer Auth-Metadaten ersetzt
+keine übermittelte Bestätigung. Zeitpunkt, Owner und kommerzielle Werte bleiben
+serververwaltet.
+
+Die Codekorrektur aus FM-BILL-003 ist keine Vertragsfreigabe oder SQL-Aktivierung.
+Insbesondere müssen eine neue Fassung und die bestehenden SQL-Funktionen vor
+Freischaltung gemeinsam versioniert werden. Die historischen Annahmedaten
+werden dabei nicht auf eine neue Fassung umgeschrieben. Die folgenden
+kontrollierten Rollout- und Abnahmeschritte bleiben erforderlich.
+
 ## Harte Release-Grenze
 
 Der Rollout ist ein Expand-/Contract-Verfahren mit einer verpflichtenden

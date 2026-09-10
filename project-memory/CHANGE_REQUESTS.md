@@ -1,5 +1,14 @@
 # FanMind Change Requests
 
+## FM-CR-028
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-BILL-003
+- Source: repeated explicit owner request to continue and activate all three approved paid plans.
+- Scope: paid-registration/Workspace/contract/Billing implementation and validated controlled rollout; retain catalog prices and successful prior acceptance.
+- Initial finding: setup/API submit only an acceptance boolean, so a stale form cannot prove which revision the customer saw. Bind the exact submitted revision before creating trusted provisioning metadata or any Workspace.
+- Boundary: deployment does not imply tax/legal/customer consent or automatically execute SQL/Stripe mutations.
+
 ## FM-CR-027
 - Date: 2026-09-10
 - Status: ACCEPTED

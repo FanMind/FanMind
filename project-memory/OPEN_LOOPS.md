@@ -1,10 +1,11 @@
 # FanMind Open Loops
 
 ## FM-LOOP-THREE-OFFERS-20260910 — full registration activation
-- Task: FM-BILL-002 / FM-REG-002 / FM-LEGAL-001
+- Task: FM-BILL-003 / FM-BILL-002 / FM-REG-002 / FM-LEGAL-001
 - Status: PARTIAL
 - Owner approved three prices and normal publication; do not ask for that approval again.
 - Complete/retain: account flow #1095 and three-offer catalog #1096 published; exact catalog release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098, Deploy 34502092289 / audit 34502241951 / readiness 34502241927 passed. Live prices already exist; Production trigger hardening and password protection in both environments complete.
+- Current progress: FM-BILL-003 adds tested exact displayed-revision binding to both authenticated provisioning entry points; the enclosing PR records final CI/publication. Repeated activation approval is retained under FM-AUTH-PAID-ACTIVATION-20260910. This does not make the legacy June-version SQL match September public terms.
 - Remaining engineering: reviewed Workspace Expand/Contract and Daily provisioning rollout, compatible current consent-version migration, Billing ledger/canonical downstream rollout and end-to-end registration/checkout/webhook acceptance.
 - Remaining actual external facts: approved real email recipient; applicable tax registration/status and authoritative versioned contract. Zero Live Tax registrations freshly observed September 10. No customer charge to manufacture acceptance.
 - Next: controlled Production Workspace/Daily/consent/Billing implementation and actual email/tax/checkout/webhook acceptance. Public-offer approval and publication are already complete. Four-gate matrix: docs/operations/RELEASE_ACCEPTANCE_20260910.md.

@@ -1,5 +1,17 @@
 # FanMind Task Ledger
 
+## FM-BILL-003
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R4
+- Goal: continue actual paid-registration activation engineering for the three approved offers after completed catalog release #1096/#1097.
+- Scope: exact displayed payment-terms revision binding on both provisioning entry points, then existing Production Workspace/consent/Billing rollout prerequisites. No new pricing or unrelated Creator/Social activation.
+- Baseline: exact main 8b09275cfd5406cd9837477289d2987800fcd229; current approved source tree ce985c24729b7e3d62a8a16dac427d48ee6f3700. Starter/Daily RPCs and both ledgers absent in Production; all seven provisioning columns exist, RLS enabled, duplicate owner/membership counts zero. Actual tax/terms facts remain unresolved.
+- Evidence plan: behavior tests for stale/missing/exact consent version, no mutation for rejection, existing Workspace/customer-billing and browser/CI gates; independent exact-release and controlled-target counterchecks.
+- Recovery: bounded code revert; no old consent relabeling, duplicate catalog creation or automatic charge.
+- Completed substep: exact displayed consent-revision binding and nine executable no-mutation/positive/form tests; 1,252 Operations tests, truth, lint, TypeScript and normal build pass locally. Final publication proof is recorded in the enclosing PR.
+- Exact next step: finish current-head CI/review/publication, align authoritative tax/contract facts with the jointly reviewed function revision, then complete controlled Workspace/Daily/Billing rollout and real end-to-end acceptance. Full paid activation remains PARTIAL; the current legacy June SQL is not proof of acceptance of the changed September terms.
+
 ## FM-BILL-002
 - Date: 2026-09-10
 - Status: PRODUCTION_CONFIRMED
