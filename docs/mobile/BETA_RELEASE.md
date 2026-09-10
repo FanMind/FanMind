@@ -1,5 +1,18 @@
 # FanMind Mobile Beta – Recovery, EAS und externe Freigaben
 
+## Mobile-Paketstand und signierte Artefakte — 10. September 2026
+
+Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
+geprüft; die Web-Korrekturen sind produktiv veröffentlicht. Die Mobile-
+Änderungen sind dadurch noch nicht in einer signierten App veröffentlicht.
+Der vorhandene signierte FCM-Preview `6801d687` (Lauf `34037085683`) und das
+ältere Production-AAB `e9641503` enthalten diese späteren Paketupdates nicht.
+Sie bleiben Belege ihrer jeweiligen älteren Revision. Für den neuen Mobile-
+Paketstand fehlen eine separat geprüfte signierte Veröffentlichung und ihre
+Geräteabnahme unter FM-MOB-001. Ein erneuter Build derselben alten Revision
+ist dafür kein Ersatz; allein für den bisherigen Registrierungsnachweis
+muss der vorhandene FCM-Preview nicht neu gebaut werden.
+
 ## Ziel
 
 Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den einmaligen externen Konten und Einstellungen. Für FanMind existiert genau ein verifiziertes Android-Production-AAB für `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Dieses AAB wurde am 3. September 2026 im geschlossenen Google-Play-Alpha-Track für Deutschland, Österreich und die Schweiz veröffentlicht. Das ist noch keine öffentliche Production-Veröffentlichung: Der geforderte Test mit mindestens zwölf angemeldeten Testern über mindestens 14 Tage sowie der anschließende Antrag auf Produktionszugang sind weiterhin offen.
@@ -60,7 +73,7 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
   `message_received`-Hinweis und höchstens eine gebundene
   `message_reminder`-Entscheidung; sichtbarer Text enthält weder Fanname noch
   Nachrichtentext oder sonstigen CRM-Inhalt. Provider-Zustellung,
-  Delivery-Ledger-Apply, Route/Timer/Worker, Production-Aktivierung,
+  Route/Timer/Worker, Production-Aktivierung,
   Store-Aktion und Android-Neubau sind ausdrücklich nicht Bestandteil dieses
   Repository-Blocks;
 - checksum-gebundener, strikt Staging-only Push-Kontrollpfad mit getrenntem
@@ -311,16 +324,18 @@ exakt gebundenen Fan im Bereich `Nachrichten`. Diese Nachrichten-Policy ist
 noch nicht an den Follow-up-Delivery-Service oder einen anderen Providerpfad
 angeschlossen.
 
-Der notwendige persistente Idempotenz-/Receipt-Ledger existiert noch nicht.
-Seine Tabellen- und Aufbewahrungsentscheidung sowie eine checksum-gebundene
-Migration brauchen eine eigene Genehmigung und rollback-only Staging-Abnahme.
+Der persistente Follow-up-Idempotenz-/Receipt-Ledger ist auf isoliertem Staging
+angewendet und rollback-only abgenommen: Apply `33867831888` und Acceptance
+`33867922978` auf `18a6ad79`. Die bereits abgeschlossene Schema-Abnahme wird
+wiederverwendet; geschützter Auslöser, Receipt-Integration und reale Geräte-/
+Provider-Abnahme fehlen weiterhin. Production-Versand bleibt gesondert offen.
 Die Reserve-RPC muss alle Workspace-, Membership-, Kontakt-, Follow-up- und
 Registrierungsgrenzen in derselben Transaktion mit demselben validierten
 Supabase-Binding wie der Loader erneut prüfen und den aktuellen Token-
 Fingerprint atomar binden. Vor einer späteren Nachrichten-Zustellung muss der
 Ledger zusätzlich die recipient-spezifische User-/Registrierungs-/EAS-Bindung
 und den aktuellen ungesehenen Nachrichtenstatus transaktional revalidieren.
-Bis dahin bleiben Provider-Zustellung, Delivery-Ledger-Apply,
+Bis zur eigenen Implementierung und Abnahme bleiben Provider-Zustellung,
 Route/Timer/Worker und Production-Aktivierung fail-closed; auch Store-Aktion
 und Android-Neubau gehören nicht zu diesem Repository-Block.
 
@@ -563,13 +578,15 @@ commitgenau registriert.
 - iPhone-App-Store-Metadaten, Support-/Review-Handoff und Screenshotplan sind
   vorbereitet; iOS-Signierung, Icon-/Gerätenachweis und TestFlight erst in
   Phase 8;
-- Push-Migration und dedizierten Serverkey kontrolliert aktivieren, danach
-  nach grünem Ressourcencheck, Apply und rollback-only Acceptance die
-  Berechtigung und Token-Registrierung im signierten Build real abnehmen;
-- atomaren Delivery-Ledger separat genehmigen, migrieren und rollback-only in
-  Staging abnehmen; erst danach dürfen Follow-up- oder Nachrichten-Provider-
-  Zustellungen verdrahtet und mit einem synthetischen Send-/Receipt-Test
-  geprüft werden;
+- vorhandene Registrierungs-Migration, konfigurierte Registrierungs-Runtime
+  und rollback-only Acceptance (`33800376282` / `33800742158` auf `084e19c8`)
+  wiederverwenden; Berechtigung und aktuelle Token-Registrierung im vorhandenen
+  signierten FCM-Preview `6801d687` real abnehmen;
+- den bereits auf Staging abgenommenen atomaren Follow-up-Ledger
+  (`33867831888` / `33867922978` auf `18a6ad79`) mit einem geschützten
+  Einzelsende-Auslöser und Receipt-Check verbinden und prüfen; erst danach
+  einen konkret freigegebenen synthetischen Send-/Receipt-/Gerätetest ausführen.
+  Die Nachrichten-Zustellung benötigt ihre eigene transaktionale Erweiterung;
 - echte Follow-up- und Nachrichten-Zustellung sowie Production-Push erst nach
   gesonderter Staging-/Datenschutzprüfung und separater Aktivierungsentscheidung;
 - Store-Aktionen und ein Android-Neubau bleiben von diesem Push-Repository-

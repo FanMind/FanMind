@@ -9,9 +9,9 @@ FM-MOB-005 is accepted for its bounded repository-only message reminder/data-bou
 - Persisted timestamp validation: bounded PostgreSQL timestamp parsing and microsecond-precise ordering/causality checks are used; impossible, malformed or inconsistent timestamps fail closed.
 - Real push provider delivery: not activated.
 - Production push delivery: not authorized/activated.
-- Delivery ledger migration: not applied.
-- Push Staging migration/rollback-only acceptance: remains a separate protected gate.
+- Follow-up delivery ledger: applied and rollback-only accepted on isolated Staging at `18a6ad79` via `33867831888` / `33867922978`. This does not accept the additional message-specific unseen/recipient reservation or activate delivery.
+- Registration Staging migration/rollback-only acceptance: historical success on `084e19c8` via `33800376282` / `33800742158`; reuse those foundations. Fresh registration and provider/device evidence remain open under their protected gates.
 - Play baseline artifact: reuse the existing verified Android `1.0.0` AAB for the pending Play app record/test track and the already-defined baseline Android acceptance; FM-MOB-005 produced no replacement AAB.
 - Message-push artifact boundary: the existing `1.0.0` AAB predates the new `message_received` / `message_reminder` native tap handler and cannot validate this feature.
-- Final message-push device acceptance: only after the Push Staging and Delivery-Ledger gates, using a separately reviewed signed Android build bound to a commit that contains the merged message-notification handler.
+- Device candidate: the signed FCM replacement Preview already exists at `6801d687` via `34037085683` and contains the native handler. Reuse it for current opt-in/registration evidence. Message-specific server integration, real delivery acceptance and the later signed publication of #1089 Mobile dependency updates remain open; the old candidate cannot prove those newer patches.
 - Broader Mobile status: FM-MOB-001 remains `IMPLEMENTED_NOT_VERIFIED`; real provider/device/Store acceptance stays open.

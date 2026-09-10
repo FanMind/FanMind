@@ -1,5 +1,18 @@
 # FanMind Mobile
 
+## Mobile-Paketstand und signierte Artefakte — 10. September 2026
+
+Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
+geprüft; die Web-Korrekturen sind produktiv veröffentlicht. Die Mobile-
+Änderungen sind dadurch noch nicht in einer signierten App veröffentlicht.
+Der vorhandene signierte FCM-Preview `6801d687` (Lauf `34037085683`) und das
+ältere Production-AAB `e9641503` enthalten diese späteren Paketupdates nicht.
+Sie bleiben Belege ihrer jeweiligen älteren Revision. Für den neuen Mobile-
+Paketstand fehlen eine separat geprüfte signierte Veröffentlichung und ihre
+Geräteabnahme unter FM-MOB-001. Ein erneuter Build derselben alten Revision
+ist dafür kein Ersatz; allein für den bisherigen Registrierungsnachweis
+muss der vorhandene FCM-Preview nicht neu gebaut werden.
+
 Eigenständige FanMind-App für Android und iOS auf Basis von React Native und Expo.
 
 ## Architekturgrenze
@@ -71,12 +84,14 @@ Gemeinsam mit der Web-Anwendung bleiben ausschließlich:
   ausdrückliches Opt-in bleibt Voraussetzung für die verschlüsselte,
   kontogebundene Ein-Gerät-Registrierung. Die Nachrichten-Push-Policy ist
   repositoryseitig vorbereitet, aber ebenso wie der getrennte Staging-Vertrag
-  für Follow-up-Erinnerungen ohne Provider-Zustellung, Delivery-Ledger-Apply,
-  Route, Timer oder Worker deaktiviert;
+  für Follow-up-Erinnerungen ohne Provider-Zustellung, Route, Timer oder Worker
+  deaktiviert; der Follow-up-Ledger ist auf isoliertem Staging angewendet und
+  rollback-only abgenommen (`33867831888` / `33867922978` auf `18a6ad79`);
 - checksum-gebundener, strikt Staging-only Kontrollpfad für die vorbereitete
   Push-Tabelle: read-only Ressourcenprüfung, separat bestätigter Apply und
-  rollback-only Acceptance ohne echte Tokens oder Zustellung; externe Läufe
-  stehen noch aus;
+  rollback-only Acceptance ohne echte Tokens oder Zustellung; Apply
+  `33800376282` und Acceptance `33800742158` sind auf `084e19c8` belegt.
+  Aktuelle Geräte-/Provider-Abnahme bleibt offen;
 - nativer quadratischer Splashscreen mit `FM` über der bestätigten
   FanMind-Wortmarke für das dunkle App-Theme;
 - eigenständiges deckendes 1024×1024-App-Icon für iOS/Legacy-Android und
@@ -217,9 +232,10 @@ Konfiguration: `docs/operations/MOBILE_PUSH_STAGING_CONTROL.md`.
 
 Der nachgelagerte, weiterhin inaktive Push-Vertrag ist in
 `docs/mobile/PUSH_DELIVERY.md` und `docs/mobile/MESSAGE_PUSH_REMINDERS.md`
-beschrieben. Der vorhandene Follow-up-Delivery-Service bleibt ohne atomaren
-Idempotenz-Ledger, unabhängig geprüfte EAS-/Staging-/Production-Bindings und
-separate Staging-Abnahme vollständig dormant. Die neue Nachrichten-Policy
+beschrieben. Der atomare Follow-up-Ledger ist auf isoliertem Staging bereits
+abgenommen. Der Service bleibt ohne Runtime-Aufrufer dormant; geschützter
+Auslöser, Receipt-Integration, aktuelle EAS-/Staging-/Production-Bindings und
+reale Geräte-/Provider-Abnahme fehlen weiterhin. Die neue Nachrichten-Policy
 bereitet ausschließlich `message_received` und höchstens eine gebundene
 `message_reminder`-Entscheidung samt datensparsamer Tap-Navigation vor; sie ist
 nicht an den Provider-Service verdrahtet. Ein Merge dieses Codes aktiviert
@@ -363,12 +379,13 @@ E-Mail-/Gerätetest bleibt separat offen; Details stehen in
 2. Erst nach Download aus diesem Track den gespeicherten Supabase-Redirect
    `fanmind://reset-password`, den vollständigen privaten receipt-gebundenen
    19-Punkte-Android-Gerätenachweis sowie App-Icon/Splashscreen real abnehmen.
-3. Den getrennten read-only Push-Ressourcencheck, Staging-Apply und die
-   rollback-only Acceptance durchführen; erst danach Migration/Secret-
-   Konfiguration in einem signierten Development-/Preview-Build real testen;
-   den separat zu genehmigenden Delivery-Ledger entwerfen, migrieren und
-   rollback-only abnehmen; danach genau einen synthetischen Send-/Receipt-Test
-   ausführen.
+3. Vorhandene Registrierungs-/Ledger-Installation und ihre belegten
+   Staging-Abnahmen wiederverwenden. Den geschützten Einzelsende-Auslöser und
+   Receipt-Check implementieren und prüfen; den vorhandenen FCM-Preview
+   `6801d687` für aktuelle Opt-in-/Registrierungsbelege nutzen. Erst nach
+   konkreter Freigabe genau eine synthetische Erinnerung am eigenen Testgerät
+   mit Receipt, Anzeige, Tap und Widerruf abnehmen. Produktiver Versand samt
+   Fälligkeitsauslösung bleibt gesonderte Implementierungs-/Aktivierungsarbeit.
 4. Data Safety und das portalgeforderte Testprogramm vervollständigen, nach
    der Track-Installation sechs reale Screenshots erstellen und anschließend
    die Review-/Rollout-Entscheidung getrennt bestätigen. Die exakte Reihenfolge

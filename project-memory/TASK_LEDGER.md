@@ -1,5 +1,25 @@
 # FanMind Task Ledger
 
+## FM-STATUS-001
+- Date: 2026-09-10
+- Status: VERIFIED
+- Risk: R2
+- Goal: answer the owner's five specific handoff-status questions from current evidence and reconcile stale completion records.
+- Scope: canonical documentation, Project Memory and existing product-truth assertions only; reuse accepted Staging and signed Android artifacts, close the already published package/recovery code work, and retain the missing Push trigger/device/Production steps.
+- Evidence plan: merged PR #1089 and final-head CI; successful deployment/audit/readiness on current main 20f51f784f7e647ce7e3c3c237f74d558f08e85a; immutable Android and Push-ledger runs; source import/call-site inspection; unchanged finishline gates.
+- Result: the five statuses are reconciled against independent run/commit/source evidence; existing memory/truth/drift checks pass and sales_ready remains false with the same eight required blockers.
+- Publication contract: publish this bounded closeout through its enclosing branch + PR with green final-head checks; merged history is the durable publication evidence. Do not reopen the already completed #1089 code release.
+- Next step after publication: continue the retained pre-sales work, including the explicitly missing Push implementation and separately authorized acceptance.
+- Recovery: revert only these documentation changes; no runtime, schema, provider, credentials, signing or device action.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
+
+- Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
+
+- P1/P2 review reconciliation: synchronize every identified canonical/mobile/operations Push reader with the accepted historical Staging foundation, preserve the missing message-specific reservation and real send path, and split FM-SEC-002 source/CI VERIFIED from Web PRODUCTION_CONFIRMED and still-open patched Mobile signed publication under FM-MOB-001. The old signed candidate is not evidence for #1089 Mobile updates. Source-of-truth fingerprint changes only for this reviewed documentation scope; other watched files and all finishline gates remain unchanged.
+
+- Review countercheck: all 76 existing Mobile Push/staging/native-release/boundary tests pass, including canonical reader agreement; full product truth and memory/drift checks pass. A scan finds no current unapplied-ledger claim in the reconciled readers; the only retained mention explicitly describes the superseded historical failure. The exact old artifacts remain separate from the newer Mobile source patch. Final enclosing-PR CI/review is still required.
+
 ## FM-ROADMAP-001
 - Status: PRODUCTION_CONFIRMED
 - Risk: R4
@@ -18,24 +38,29 @@
 - Exact next step: after accepted Sales Handoff, revalidate source/model/auth contracts and implement Creator data boundaries before modifying the existing reply pipeline.
 ## FM-SEC-002
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: VERIFIED
 - Risk: R3
 - Goal: remove newly verified dependency vulnerabilities blocking the FanMind release.
 - Scope: reviewed patch versions and lockfiles for Web/Mobile tooling, audit version contract, regression tests and documented verification.
-- Evidence: failed Supply Chain run 34476430052 on f3b2b92a; fresh local npm audit confirms Next.js, Sharp, baseline-browser-mapping, Browserslist and js-yaml findings. Official maintainer advisories checked.
-- Next step: generate bounded patched lockfiles, run audit/build/browser/image regression and exact-head CI. No release while red.
+- Historical pre-patch evidence: failed Supply Chain run 34476430052 on f3b2b92a; fresh local npm audit confirms Next.js, Sharp, baseline-browser-mapping, Browserslist and js-yaml findings. Official maintainer advisories checked.
+- Web publication: PRODUCTION_CONFIRMED. PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Scope limit: the root Production audit has zero findings; the existing Mobile exceptions remain bounded and expire on 2026-09-17. Separate Auth/database hardening and provider acceptance remain open under FM-SEC-001.
+- Mobile publication boundary: Mobile source and complete CI are VERIFIED for the patched Expo/Expo Router/Sharp/dependency tree in #1089. The existing signed FCM Preview 6801d687 and Production AAB e9641503 predate that patch and do not contain it. Signed publication and device verification of the patched Mobile revision remain open under FM-MOB-001; a Web deploy cannot close them. Do not rebuild an old candidate merely to repeat registration proof; plan the newer signed release separately after its exact revision and applicable delivery work are reviewed.
+- Next step: keep the completed source patch/CI and Web release closed; retain the separate patched Mobile publication under FM-MOB-001 and investigate future audit findings independently.
 - Recovery: repository revert is possible but restores known vulnerable packages; prefer a forward patch. No database or provider migration.
 
 ## FM-REG-001
 - Date: 2026-09-10
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: PRODUCTION_CONFIRMED
 - Risk: R3
 - Goal: correct Web password recovery before real registrations.
 - Scope: same-environment reset redirect, strict callback parsing, URL cleanup, verified-user guard, synthetic tests and documentation.
 - Dependencies: existing isolated runtime/Supabase configuration; exact-head CI; real mail/device flow and legal registration activation remain external.
 - Evidence required: positive and fail-closed tests plus independent diff/CI review.
 - Recovery: revert only this application change; no provider settings or credentials changed.
-- Next step: complete exact-head CI for FM-CR-023; never reuse this task to bypass the rejected Restore password action.
+- Result: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Scope limit: only the Web recovery code correction and its synthetic acceptance are closed. Real mail delivery, signup/workspace creation, device Recovery and payment-terms approval remain separate and unaccepted.
+- Next step: reuse the deployed correction for real external acceptance; do not rerun its completed code publication or infer permission for the rejected Restore password action.
 
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
@@ -218,6 +243,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Evidence: Issues #584/#690; `apps/mobile`; mobile docs; current Source of Truth; PRs #988/#1019/#1021/#1025/#1028/#1030/#1031/#1037; protected preview run `33298699290` / job `99222705186`; Production readiness `33316105624` / `99269748215`; Store build `33316172583` / `99269924756`; FM-EV-028/FM-EV-029/FM-EV-030/FM-EV-031/FM-EV-034; FCM correction commits `1d15d8e4698392174ad7d5be23a7f174ebb2303d` and `547843cad7a1f6ecb3ba6131e155d9d068799c2b`; replacement Preview workflow `34037085683` / job `101497020224` at descendant/build commit `6801d687cfe6048d6e32e63bcfe2862d2886fce0`.
 - Next step: use the already delivered FCM replacement Preview on the owner's Android device, allow notifications and prove an active isolated-Staging Push registration; do not create another handler-containing Preview. Provider delivery remains a separate authorized acceptance. Preserve the exact Production AAB; the Play cohort/19-check Recovery/screenshot path remains separately external before Production access. Do not start an iOS build before Phase 8.
 - Do not repeat: Do not restart the mobile app, replace it with a WebView, rebuild the FCM Preview, or rebuild the exact Production AAB merely to continue portal work.
+
+- Push continuation clarified 2026-09-10: registration capability and the accepted atomic Staging ledger do not implement delivery. createMobilePushDeliveryService has no runtime caller; an explicitly scoped server-side single-reminder trigger and receipt-check integration still need to be implemented and reviewed. Reuse the existing FCM Preview for opt-in and prove a current active Staging registration. Only then run separately authorized provider/device acceptance (ticket/receipt, actual display, correct Follow-up tap and token revocation). Production delivery and any due-follow-up scheduling remain separate unimplemented/disabled work; no ENV-only activation or new Android build follows from this status correction.
+
+- Patched Mobile release follow-up: Mobile source and complete CI are VERIFIED for the patched Expo/Expo Router/Sharp/dependency tree in #1089. The existing signed FCM Preview 6801d687 and Production AAB e9641503 predate that patch and do not contain it. Signed publication and device verification of the patched Mobile revision remain open under FM-MOB-001; a Web deploy cannot close them. Do not rebuild an old candidate merely to repeat registration proof; plan the newer signed release separately after its exact revision and applicable delivery work are reviewed.
 
 ## FM-MOB-002
 - Date: 2026-08-29

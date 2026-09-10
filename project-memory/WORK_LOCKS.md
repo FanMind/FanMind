@@ -1,5 +1,22 @@
 # Work Locks
 
+## LOCK-FM-STATUS-001-20260910
+- Task: FM-STATUS-001
+- Status: RELEASED
+- Review closeout: 2026-09-10 after canonical-reader reconciliation and 76 passing relevant existing tests; no runtime lock or provider action. Enclosing-PR publication remains the final step.
+- Released after reconciliation: 2026-09-10; full product-truth command, 22 existing Push-delivery tests and three negative documentation probes pass. Final-head CI and enclosing-PR publication remain required.
+- Reacquired: 2026-09-10 to reconcile the stale product-truth assertion discovered in PR #1094 CI; no runtime lock is acquired.
+- Risk: R2
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: owner-requested status reconciliation for Staging, Android signing, Push and completed #1089 release tasks. Historical FM-SEC-002/FM-REG-001 locks are reconciled only from their merged and deployed exact-head evidence; other locks are unchanged.
+- Evidence plan: GitHub commit/workflow facts, executable source import inspection, existing documentation governance and unchanged finishline gates.
+- Recovery: revert only the documentation patch; no protected operation.
+
+- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
+
+- Review scope reconciliation: address PR #1094 P1/P2 by synchronizing the relevant canonical Mobile/Push readers and reviewed source-of-truth fingerprint, and separating Web package publication from verified Mobile source changes whose signed publication remains open. No runtime activation or new build.
+
 ## LOCK-FM-ROADMAP-VISIBLE-20260910
 - Task: FM-ROADMAP-001
 - Status: RELEASED
@@ -22,15 +39,19 @@
 - Evidence plan: exact-main diff, existing truth/memory checks and no premature Creator selection or sales dependency.
 ## LOCK-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-10 after fresh reconciliation of merged PR #1089, all final-head checks and exact-release deployment/audit/readiness. This closes only the completed code/publication scope; external acceptance and other work locks are unchanged.
 - Risk: R3
 - Holder: Codex
 - Scope: bounded security dependencies and current release verification.
 - Recovery: controlled application patch; no database, provider or mobile store publication.
 
+- Scope split after review: release covers the source patch/CI and Web publication only. Mobile signed publication of #1089 is retained under FM-MOB-001; the old Preview is not patched-build evidence.
+
 ## LOCK-FM-REG-001-20260910
 - Task: FM-REG-001 / FM-CR-023
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-10 after fresh reconciliation of merged PR #1089, all final-head checks and exact-release deployment/audit/readiness. This closes only the completed code/publication scope; external acceptance and other work locks are unchanged.
 - Risk: R3
 - Holder: Codex
 - Acquired: 2026-09-10

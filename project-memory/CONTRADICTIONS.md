@@ -1,5 +1,16 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-HANDOFF-STATUS-20260910
+- Related task: FM-STATUS-001 / FM-SEC-002 / FM-REG-001 / FM-MOB-001
+- Risk: R1 documentation reconciliation
+- Status: RESOLVED
+- Source A: task/started-work/receipt records retain IN_PROGRESS and pending publication for #1089; the Push guide says its Staging ledger was not applied. Some handoff wording suggests only the device confirmation remains.
+- Source B: merged #1089, its green final-head checks and current exact-release deployment/audit/readiness; successful Staging ledger runs 33867831888/33867922978; executable-source inspection finds no delivery-service caller.
+- Resolution: close only the already published package/recovery code scopes and their historical locks, correct the ledger's historical apply/acceptance status, and explicitly retain the missing Push trigger/receipt integration, real device/provider proof and separate Production delivery/scheduling. No runtime work or required finishline gate is accepted by this correction.
+- Countercheck: GitHub run/commit evidence and source call-site inspection are independent of the stale task text; existing truth/memory checks and unchanged FINISHLINE_STATE.json validate the documentation boundary.
+
+- Review clarification: #1089 Mobile dependency changes are source/CI VERIFIED only; current signed artifacts predate them. Web publication is separately PRODUCTION_CONFIRMED and patched Mobile signing/device publication remains open under FM-MOB-001. All relevant canonical and Mobile readers are reconciled, including historical registration/ledger acceptance; no message-specific or Production delivery acceptance is inferred.
+
 ## CTR-FM-ROADMAP-VISIBILITY-20260910
 - Related task: FM-ROADMAP-001 / FM-CR-025
 - Risk: R4

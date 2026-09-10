@@ -32,6 +32,8 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Store-build evidence: run `33316172583` / job `99269924756` completed exactly one signed Android Production AAB for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, verified terminal artifact/commit/platform/profile/store class, stored a redacted receipt and cleaned temporary state. This is build evidence, not a replacement for the private device runbook or Play acceptance.
 - Repository evidence alone sufficient: no
 
+- Current-source distinction: Mobile source and complete CI are VERIFIED for the patched Expo/Expo Router/Sharp/dependency tree in #1089. The existing signed FCM Preview 6801d687 and Production AAB e9641503 predate that patch and do not contain it. Signed publication and device verification of the patched Mobile revision remain open under FM-MOB-001; a Web deploy cannot close them. Do not rebuild an old candidate merely to repeat registration proof; plan the newer signed release separately after its exact revision and applicable delivery work are reviewed.
+
 ## EXT-MOBILE-IOS
 - Related: FM-MOB-001 / FM-DEC-009
 - Status: OPEN
@@ -44,6 +46,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-PUSH-STORE
+- Clarification 2026-09-10: the atomic isolated-Staging ledger is historically accepted via 33867831888/33867922978, and FCM Preview 34037085683 already exists. The actual delivery-service trigger/receipt integration still has to be implemented and reviewed; fresh registration, authorized real provider/device receipt/display/tap and revocation proof remain missing. Production delivery/scheduling is unimplemented/disabled, not activatable by an ENV switch. Do not infer completion from the build or ledger and do not repeat either merely for status closeout.
 - Related: FM-MOB-001
 - Status: OPEN
 - Risk: R3
