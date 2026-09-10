@@ -1,5 +1,13 @@
 # Project Reconciliation
 
+## Three-offer publication source reconciliation — 2026-09-10
+- Task: FM-BILL-002 / FM-CR-027; Risk: R1.
+- PR #1096 publication already completed before this correction. The source snapshot is synchronized with its final receipt and independently read exact-release evidence; this is not a new offer implementation or paid activation.
+- Removed superseded current instructions to implement/publish Daily, hold the original release lock or await #1095 account-code publication. Historical checkpoints retain their dated scope.
+- Public catalog/account scope: PRODUCTION_CONFIRMED. Full activation: PARTIAL in FM-LOOP-THREE-OFFERS-20260910. Production Workspace/Daily/consent/Billing rollout and actual email/tax/provider proof remain visible.
+- DB_POSTCHECKED, isolated Staging, existing signed artifacts and separately completed trigger/password protection remain intact. Full Restore, Mobile/Push, AI/Billing, Security/Meta and Sales Handoff are not newly accepted; Creator remains Phase 7b after accepted Sales Handoff and before further Phase 8.
+- Evidence: FM-EV-042 and RECEIPT-FM-BILL-002-20260910. Recovery: documentation-only revert. A future documentation merge is not a new runtime acceptance gate and must not reopen the completed offer release.
+
 ## RECON-PR1088-20260910
 - Detected: 2026-09-10 from three delayed PR #1088 review threads.
 - Task: FM-AI-001 / FM-RST-001

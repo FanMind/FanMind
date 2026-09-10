@@ -1,3 +1,17 @@
+## RECEIPT-FM-BILL-002-RECONCILIATION-20260910
+- Task: FM-BILL-002 / FM-CR-027
+- Status: COUNTERCHECKED
+- Risk: R1
+- Work lock: LOCK-FM-BILL-002-RECONCILIATION-20260910
+- Authorization: FM-AUTH-THREE-OFFERS-PUBLISH-20260910; owner repeated the prices and requested the actual four-gate status.
+- Baseline: published main 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098, tree 10700d47c0c139c50643c40b69c8a6c59138cafe. Local checkout has the same reviewed tree.
+- Scope: reconcile stale source fields with the final PR #1096 receipt; preserve all missing full-activation and external evidence.
+- Evidence plan: final-head checks plus independently read successful Deploy/Audit/Readiness and exact-release audit log; documentation controls and unchanged finishline.
+- Recovery: documentation-only revert; no application/provider/database operation.
+
+- Result: current task, started-work, lock, loop, receipt, handoff and four-gate fields agree with #1096. Existing memory quality/V8/truth/drift checks pass; scope and unchanged-finishline countercheck pass. Original publication stays closed, full activation stays PARTIAL. The enclosing documentation PR/merge is the publication record for this correction, not a new runtime acceptance gate.
+- Work lock closeout: LOCK-FM-BILL-002-RECONCILIATION-20260910 RELEASED after bounded source countercheck; no runtime lock or pending provider action is inherited.
+
 ## RECEIPT-FM-STATUS-001-20260910
 
 ## RECEIPT-FM-SEC-001-AUTH-PROTECTION-20260910
@@ -25,17 +39,23 @@
 - Controlled SQL: supabase/controlled/20260806203023_harden_trigger_function_privileges.sql, SHA-256 6eb928fe7df73072ce03d6e78dfca7feb5c77c950fbdd70ffe1169e4dabf1132.
 - Result: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
 - Negative boundary/recovery: only reviewed transactional function search_path/EXECUTE hardening ran; no customer rows, artificial RLS policies, trigger removals, grants, Auth settings, credentials or Stripe objects changed. Failed SQL would roll back atomically; successful hardening is retained.
-- Falsification/countercheck: a failing independent post-Verify or fresh advisor showing the old trigger warnings would invalidate completion. Neither occurred. Fourteen service-only RLS INFO findings remain intentional; leaked-password protection still reports disabled.
-- Remaining: Auth, Workspace server-owned contract rollout, Meta/provider and overall handoff gates remain separate. No broad Security/Meta completion claim.
+- Falsification/countercheck: a failing independent post-Verify or fresh advisor showing the old trigger warnings would invalidate completion. Neither occurred. Fourteen service-only RLS INFO findings remain intentional; the then-disabled leaked-password setting was subsequently enabled and counterchecked in both projects under RECEIPT-FM-SEC-001-AUTH-PROTECTION-20260910.
+- Remaining: bounded Staging RPC review, Workspace server-owned contract rollout, Meta/provider and overall handoff gates remain separate; Auth protection is completed by its own receipt. No broad Security/Meta completion claim.
 
 ## RECEIPT-FM-BILL-002-20260910
-- Review scope correction: PR #1096 P1/P2 handled across authenticated Daily identity/package/cancellation/admin presentation, the exact consent-gated Daily PageView and all identified obsolete readers. 1,446 tests pass, one skipped; build/lint/type/truth pass. Fresh final-head CI and review required.
-- Status: IN_PROGRESS
+- Task: FM-BILL-002 / FM-CR-027
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
-- Authorization: FM-AUTH-THREE-OFFERS-PUBLISH-20260910
-- Baseline: main/Production 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; #1095 deploy 34493661010, audit 34493830507 and readiness 34493830467 all succeeded.
-- Fresh observations: existing Live EUR 990/EUR 312/month/EUR 1/day prices, zero Tax registrations, Production trigger/Auth warnings still present.
-- Scope/remaining/result: see FM-BILL-002; current source work has not yet been published.
+- Authorization: FM-AUTH-THREE-OFFERS-PUBLISH-20260910; price/publication approval already given.
+- Scope: public catalog/account selection for all three offers; consistent DE/EN and Daily account identity. Existing Price IDs, Workspace/consent/billing authority and human approval remain intact.
+- Baseline: previously confirmed account release #1095 at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed.
+- Implementation evidence: reviewed final head 637e72790e651ba84c7a6c4868768410f9da8378, tree 10700d47c0c139c50643c40b69c8a6c59138cafe; 1,446 local tests passed, one skipped, no failures; all 13 final-head checks succeeded and all three review threads resolved.
+- Publication: PR #1096 squash release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098; Deploy 34502092289 / job 102955105569 succeeded.
+- Independent countercheck: Production audit 34502241951 / job 102955612165 and public readiness 34502241927 / job 102955609571 succeeded on the exact release. Audit log: PRODUCTION_AUDIT_VERIFIED=true, PRODUCTION_AUDIT_UTC=2026-09-10T16:27:53Z. Final PR receipt retains the actual live DE/EN Daily/account and landing-page checks.
+- Negative/completion boundary: no real signup/email/charge was used for release verification. Customer/Workspace consent, tax, provisioning and billing gates remain required. Whole paid activation stays PARTIAL; docs/operations/RELEASE_ACCEPTANCE_20260910.md retains all four missing overall scopes.
+- Falsification: a different/failed exact-release audit, failing final-head check or absent live offer would invalidate publication. Independent GitHub run/log rereads confirm the successful historical release and its unchanged reviewed tree.
+- Recovery: normal isolated-release rollback or bounded source revert; preserve real accounts, existing Stripe objects and successful Security hardening.
+- Work lock: LOCK-FM-BILL-002-20260910 RELEASED by the final PR receipt; pending-publication instructions from preparation are superseded.
 
 ## FM-RC-REG-002-20260910
 - Task: FM-REG-002 / FM-CR-026
@@ -46,7 +66,7 @@
 - Countercheck: 1,241 local Operations tests, normal Next build/type/lint and truth/memory/drift checks pass. PR #1095 head 11636d874031552f4f7ddf58fbc0009f5adf0de1: application, PostgreSQL 17, security/CodeQL, language, synthetic regular-user and 44 public desktop/mobile Chromium cases pass (browser run 34492632205 / job 102923001644). Metadata forgery, unconfirmed/error/wrong-purpose callbacks and session-write absence are covered. Only generated PROJECT_STATUS needed refreshing; this follow-up does so and requires fresh complete checks before merge.
 - External facts: Stripe Live has no Tax registrations; legal/tax and exact contract-version acceptance are not invented. No real test email, provider setting, DB migration, commercial activation or payment was performed.
 - Recovery: normal isolated-release rollback / bounded code revert reviewed; signup writes no commercial data. Retain any subsequently created Auth accounts; never delete them as application rollback.
-- Final publication proof: the enclosing PR #1095 must record merge SHA, exact release/audit/readiness and public entry verification after successful final-head checks. Until then source VERIFIED is not a Production or full paid-onboarding completion claim.
+- Final publication proof: completed #1095 receipt below records exact release/audit/readiness and public entry verification. The account-code scope is PRODUCTION_CONFIRMED; genuine email and full paid-onboarding acceptance remain separate.
 
 - Fresh read-only Production Auth settings: signup enabled, email enabled and email confirmation required; no configuration was changed and no message was sent.
 

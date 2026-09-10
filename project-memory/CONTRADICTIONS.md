@@ -1,5 +1,14 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-BILL-002-PUBLICATION-20260910
+- Task: FM-BILL-002 / FM-REG-002
+- Status: RESOLVED
+- Risk: R1
+- Source A: the pre-release source snapshot still says IN_PROGRESS, requests final publication and holds the original FM-BILL-002 lock. Some already-closed FM-REG-002 fields also retain superseded next steps.
+- Source B: PR #1096 final receipt closes publication/releases the lock; independent commit, all final-head checks, Deploy 34502092289, audit 34502241951 and readiness 34502241927 verify exact release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098.
+- Resolution: synchronize current task, started-work, lock, loop, receipt, handoff and acceptance-document fields. Public catalog/account release is PRODUCTION_CONFIRMED; full activation remains PARTIAL with its actual engineering/external work retained. Neither prices nor successful controls are recreated.
+- Countercheck/falsifier: missing or failed exact-release evidence would prevent closure. The independent runs/checks and audit log are successful. FINISHLINE_STATE.json and runtime files remain unchanged; existing documentation controls validate the bounded correction.
+
 ## CTR-FM-HANDOFF-STATUS-20260910
 - Related task: FM-STATUS-001 / FM-SEC-002 / FM-REG-001 / FM-MOB-001
 - Risk: R1 documentation reconciliation

@@ -2,14 +2,16 @@
 
 ## FM-BILL-002
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Goal: publish the owner's three offers: EUR 990 setup + EUR 312/month, EUR 0 setup + EUR 312/month, EUR 0 setup + EUR 1/day; reconcile the four questioned overall acceptance gates.
 - Scope: public Daily offer/registration choice and matching canonical readers; preserve existing Stripe Prices, secure account/Workspace separation, consent, tax, ledger and tenant boundaries. Execute only applicable existing reviewed controls under the owner's current release instruction.
 - Evidence plan: pure commercial-policy and registration/browser tests, complete CI, exact Production release; fresh Stripe/read-only database/provider observations and preserved immutable Restore/Billing receipts.
 - External facts: Stripe Live has the existing EUR 1/day, EUR 312/month and EUR 990 setup prices; zero Tax registrations. No tax status, UID, legal review, email receipt, actual Storage restore or Meta approval is inferred from price approval.
 - Recovery: bounded reviewed source revert; preserve existing accounts/contracts and Stripe objects; no automatic customer charge or Restore retry.
-- Exact next step: implement the approved public third-offer selection, verify existing secure runtime prerequisites and publish the checked result.
+- Result: bounded catalog/account scope published in PR #1096 at 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098; final head 637e72790e651ba84c7a6c4868768410f9da8378 has all 13 successful checks. Deploy 34502092289, independent audit 34502241951 and public readiness 34502241927 confirm the exact release. Original work lock released.
+- Exact next step: no further catalog implementation/publication. Continue the PARTIAL full-activation loop FM-LOOP-THREE-OFFERS-20260910: Production Workspace/Daily/consent/Billing rollout and actual email/tax/checkout/provider evidence.
+- Completion boundary: this task's public-offer scope is closed; the four overall gates and paid runtime activation are not marked accepted.
 
 ## FM-REG-002
 - Status: PRODUCTION_CONFIRMED
@@ -18,7 +20,7 @@
 - Scope: free account signup, email confirmation/resend and existing authenticated setup; no Workspace/commercial authority in signup metadata and no payment or provider mutation.
 - Code proof: PR #1095 head 11636d874031552f4f7ddf58fbc0009f5adf0de1 has the exact local tree 995ea799d1a4c710145b094f289099400985f7be. Application CI, both PostgreSQL 17 checks, CodeQL/security, language, Memory Guard/Quality, synthetic CRM and all 44 desktop/mobile public browser tests passed. The sole status-generation failure is reconciled in this follow-up.
 - Fresh external finding: connected FanMind Stripe Live account has zero Tax registrations (list has_more=false); active settings alone are insufficient. Current terms version and existing controlled billing runtime requirements remain open.
-- Exact next step: verify every final-head check and review, merge this PR through the normal release path, then verify exact deploy/audit/readiness and public DE/EN entry. The enclosing PR records final publication evidence. Real delivered email and paid Workspace/referral/checkout acceptance remain separate.
+- Exact next step: account-code publication is closed by the #1095 receipt below; the three-offer follow-up is also closed by #1096. Continue only genuine delivered email and paid Workspace/contract/checkout acceptance in the existing full-activation loop.
 - Recovery: existing isolated-release rollback / bounded source revert; preserve any real login accounts. No migration, prior-consent relabeling or automatic account deletion.
 
 

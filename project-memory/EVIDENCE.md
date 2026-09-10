@@ -1,5 +1,15 @@
 # FanMind Evidence and Acceptance
 
+## FM-EV-042 — completed three-offer publication
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Related: FM-BILL-002 / FM-REG-002
+- Type: immutable commit/workflow evidence, with dated live browser countercheck in the final PR receipt.
+- Evidence: PR #1096 merged as 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098; tree 10700d47c0c139c50643c40b69c8a6c59138cafe matches the reviewed source. All 13 checks on final head 637e72790e651ba84c7a6c4868768410f9da8378 succeeded.
+- Independent countercheck: Deploy 34502092289, audit 34502241951 and public readiness 34502241927 all succeeded on that exact release. Audit job 102955612165 confirms PRODUCTION_AUDIT_VERIFIED=true and that exact SHA at 16:27:53Z. These run/check facts were independently reread during the source-status reconciliation.
+- Boundary: confirms public offers/account code only. No real signup/email/charge, customer consent, tax registration, Production provisioning or complete external acceptance inferred. No immutable receipt expires merely because another session asks about it; mutable live settings still need checking before later activation.
+- Receipt: RECEIPT-FM-BILL-002-20260910; original lock released. Four overall gates retain their precise open steps.
+
 ## FM-EV-041 — Auth leaked-password protection
 - Date: 2026-09-10
 - Status: COUNTERCHECKED

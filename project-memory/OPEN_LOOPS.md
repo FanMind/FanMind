@@ -4,16 +4,16 @@
 - Task: FM-BILL-002 / FM-REG-002 / FM-LEGAL-001
 - Status: PARTIAL
 - Owner approved three prices and normal publication; do not ask for that approval again.
-- Complete/retain: account flow published in #1095; Live prices already exist; Production trigger hardening Apply/Verify complete.
+- Complete/retain: account flow #1095 and three-offer catalog #1096 published; exact catalog release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098, Deploy 34502092289 / audit 34502241951 / readiness 34502241927 passed. Live prices already exist; Production trigger hardening and password protection in both environments complete.
 - Remaining engineering: reviewed Workspace Expand/Contract and Daily provisioning rollout, compatible current consent-version migration, Billing ledger/canonical downstream rollout and end-to-end registration/checkout/webhook acceptance.
 - Remaining actual external facts: approved real email recipient; applicable tax registration/status and authoritative versioned contract. Zero Live Tax registrations freshly observed September 10. No customer charge to manufacture acceptance.
-- Next: publish the checked three-offer UI and record exact CI/release evidence in the enclosing PR. Four-gate matrix: docs/operations/RELEASE_ACCEPTANCE_20260910.md.
+- Next: controlled Production Workspace/Daily/consent/Billing implementation and actual email/tax/checkout/webhook acceptance. Public-offer approval and publication are already complete. Four-gate matrix: docs/operations/RELEASE_ACCEPTANCE_20260910.md.
 
 ## Registration is the current owner priority — 2026-09-10
-- FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication remain in progress.
+- FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication are complete in #1095, followed by the confirmed three-offer release #1096.
 - The free login account is separated from existing protected paid Workspace/Checkout activation. No terms approval, migration, tax registration, payment or third-party email send is inferred.
 - Fresh Stripe Live read: zero Tax registrations; active Tax settings alone are insufficient. Exact current payment-terms/version acceptance and the existing billing runtime gates also remain open.
-- Next: finish verification, publish the bounded account flow, verify its exact release/public DE/EN entry, then present the specific remaining full-activation requirements. Preserve Mobile, Push, Restore and Phase-7b Creator sequencing under their existing tasks.
+- Next: preserve completed account/catalog publication and continue the specific remaining full-activation engineering and acceptance requirements. Preserve Mobile, Push, Restore and Phase-7b Creator sequencing under their existing tasks.
 
 This register contains started, partially completed or follow-up work that could otherwise disappear between sessions. Do not use it as a second task backlog; link each loop to an existing task/change ID whenever possible.
 

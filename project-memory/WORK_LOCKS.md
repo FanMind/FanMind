@@ -1,5 +1,17 @@
 # Work Locks
 
+## LOCK-FM-BILL-002-RECONCILIATION-20260910
+- Task: FM-BILL-002 / FM-CR-027
+- Status: RELEASED
+- Risk: R1
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: source-documentation reconciliation only. The original publication lock is already released by PR #1096's final receipt; no runtime lock is acquired.
+- Evidence plan: independent release/check/run evidence plus existing documentation controls and unchanged finishline gates.
+- Recovery: bounded documentation revert.
+
+- Released: source reconciliation counterchecked on 2026-09-10; the reviewed enclosing documentation PR carries any review correction. No application, database or provider action was performed.
+
 ## LOCK-FM-SEC-001-AUTH-PROTECTION-20260910
 - Scope extension before action: apply the same single leaked-password protection setting to isolated FanMind Staging vshyhvgcmrlagvfnvomc. Fresh project list and authenticated UI confirm this separate healthy target in the existing Pro organization; its switch is unchecked. Owner full Security completion and secure sign-in authorization persist. No other setting or SQL change.
 - Task: FM-SEC-001
@@ -31,13 +43,15 @@
 
 ## LOCK-FM-BILL-002-20260910
 - Task: FM-BILL-002 / FM-CR-027
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Acquired: 2026-09-10
 - Scope: owner-requested three-offer publication and current acceptance reconciliation on exact baseline 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed.
 - Evidence plan: local commercial/negative tests, exact-head CI, reviewed PR, exact release plus external read-only counterchecks.
 - Recovery: bounded source revert; no re-created prices, automatic charge, destructive cleanup or retry of rejected Restore access changes.
+
+- Released: 2026-09-10 by the final PR #1096 receipt after exact-release Deploy/Audit/Readiness. Release 0b54ffba3e46757f47e1a3a1c6c4696d6e26b098; this source entry now matches that receipt. Full paid activation remains separate.
 
 ## LOCK-FM-REG-002-20260910
 - Task: FM-REG-002 / FM-CR-026
@@ -48,7 +62,7 @@
 - Scope: registration/Auth UI and normal reviewed Web publication; independent of existing Restore/Mobile/AI locks.
 - Evidence plan: source/behavior tests, negative callback/commercial boundaries, CI, exact release and public DE/EN browser inspection.
 - Recovery: unchanged isolated-release rollback and source revert; no DB migration, terms-evidence rewrite or Stripe mutation.
-- Verification: PR #1095 source is VERIFIED (including 44 browser cases); retain this lock through the final follow-up checks, review and normal Production publication. Release/remaining external scope is recorded in the enclosing PR.
+- Verification: PR #1095 final publication and lock release are confirmed by its enclosing receipt. The newer catalog release #1096 is also confirmed. No account-code release lock remains held; full external activation stays open.
 
 - Released: PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance.
 
