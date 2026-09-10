@@ -8,6 +8,15 @@ Worker angeschlossen. Er sendet im aktuellen Produktstand nichts.
 `deliveryEnabled` bleibt in der öffentlichen Registrierungsantwort deshalb
 `false`.
 
+Standabgleich vom 10. September 2026: Die getrennte Staging-Datenbank und der
+signierte FCM-Android-Preview sind bereits vorhanden. Auch der atomare
+Delivery-Ledger wurde auf isoliertem Staging angewendet und mit synthetischen
+Daten abgenommen (Belege unten). **Die echte Follow-up-Zustellung ist weiterhin
+nicht implementiert und abgenommen:** Es fehlen die Verdrahtung des vorhandenen
+Service mit einem geschützten Einzelsende-Auslöser und Receipt-Check, die reale
+Geräte-/Provider-Abnahme sowie die getrennte produktive Versandsteuerung.
+Eine Benachrichtigungsfreigabe am Telefon allein schließt diese Lücke nicht.
+
 Zusätzlich ist repositoryseitig eine datenschutzarme Policy für ungesehene
 eingehende Nachrichten vorbereitet. Sie kennt `message_received` und höchstens
 einen `message_reminder` nach 30 Minuten und bindet den Notification-Tap im
@@ -201,9 +210,21 @@ Ein Expo-Receipt mit `status=ok` bestätigt nur die Übergabe an APNs oder FCM,
 nicht die Anzeige auf dem Gerät. Grundlage sind die offiziellen
 [Expo-Hinweise zu Tickets, Receipts und Retry](https://docs.expo.dev/push-notifications/sending-notifications/).
 
-## Kontrollierter Ledger – vorbereitet, nicht angewendet
+## Kontrollierter Ledger – isolierte Staging-Abnahme belegt
 
-Der geschützte Staging-Pfad ist repository-seitig vorbereitet.
+Der geschützte Staging-Pfad wurde für den exakten Commit
+`18a6ad79cb72331b4daa41ee87dd2430a8ffd473` ausgeführt:
+
+- [Staging-Apply 33867831888](https://github.com/FanMind/FanMind/actions/runs/33867831888),
+  Job `101006621418`, erfolgreich;
+- [Rollback-Abnahme 33867922978](https://github.com/FanMind/FanMind/actions/runs/33867922978),
+  Job `101006906941`, erfolgreich mit synthetischen Zeilen, vollständigem
+  Rollback und Cleanup; Provider-Versand blieb deaktiviert.
+
+Diese Belege schließen die damalige Schema-/Transaktionsabnahme. Sie sind kein
+aktueller Gerätebeleg und keine Freigabe für eine erneute Anwendung oder einen
+echten Versand. Vor einem späteren Staging-Datenbankeingriff gilt weiterhin
+der gemeinsame, nur lesende Rollout-Abgleich auf dem dann geprüften Commit.
 
 `supabase/controlled/20260903190000_mobile_push_delivery_ledger.sql` stellt
 eine checksum-gebundene, service-role-only Zustellhistorie mit atomarer
@@ -213,9 +234,10 @@ server-only Adapter `src/lib/mobilePushDeliveryLedger.ts` bindet jeden RPC an
 dasselbe validierte Staging-Ziel. Eine In-Memory-Map, ein Prozess-Lock oder das
 Follow-up selbst bleiben ausdrücklich unzulässig.
 
-Der kontrollierte SQL-Baustein wurde nicht angewendet und wird von keiner
-Route, keinem Timer und keinem Worker importiert. Deshalb gibt es weiterhin
-keinen Provideraufruf und keine reale Zustellung. Offline prüft
+Der kontrollierte SQL-Baustein ist auf isoliertem Staging angewendet. Der
+Delivery-Service wird weiterhin von keiner Route, keinem Timer und keinem
+Worker aufgerufen. Deshalb gibt es im aktuellen Produkt weiterhin keinen
+Provideraufruf und keine reale Zustellung. Offline prüft
 `npm run db:mobile-push-delivery-ledger:check` den exakten Hash und die
 Sicherheitsgrenzen.
 
@@ -227,18 +249,19 @@ read-only Postflight aus. Die getrennte Aktion `apply` verlangt
 `apply-mobile-push-delivery-ledger`, aktiviert ausschließlich für diesen Lauf
 den Non-Production-Write-Guard und führt danach denselben Postflight aus.
 Beide Wege prüfen Production-Zielabweichung, verwenden eine private
-`PGPASSFILE` und enthalten weder Expo-Zugang noch Provideraufruf. Der Workflow
-wurde mit dieser Repository-Änderung nicht gestartet; Staging bleibt daher
-unverändert.
+`PGPASSFILE` und enthalten weder Expo-Zugang noch Provideraufruf. Die obigen
+Läufe dokumentieren den bereits abgeschlossenen Apply und die Abnahme;
+dieser Dokumentationsabgleich führt keinen Workflow erneut aus.
 
 Der Service ist allein nicht aktivierbar: Vor einem realen Staging-Send müssen
 die unabhängig geprüften App-, Staging-Supabase-, Production-Supabase- und
-EAS-Bindings serverseitig übergeben werden. Zusätzlich ist eine eigene
-Entscheidung und separat genehmigtes, checksum-gebundenes Staging-Apply
-erforderlich. Der vorbereitete Baustein enthält eine service-role-only Tabelle mit eindeutigem
+EAS-Bindings serverseitig übergeben werden. Die bereits abgenommene
+Ledger-Grundlage muss dabei wiederverwendet und vor der Aktion aktuell geprüft
+werden; ihre vorhandene Installation ist kein Auftrag für ein weiteres Apply.
+Der Baustein enthält eine service-role-only Tabelle mit eindeutigem
 Idempotenzschlüssel, Versuchsnummer, Send- und Receipt-Reservation/Lease,
 Receipt-Zähler, redigiertem Zustand, privater Receipt-ID,
-Retry-/Receipt-Zeitpunkten und definierter Aufbewahrung bereitstellen. Die
+Retry-/Receipt-Zeitpunkten und definierter Aufbewahrung. Die
 Reserve-RPC muss mit dem vom Service strukturell validierten gemeinsamen
 Zielbinding arbeiten, die oben genannten Target-Grenzen und den aktuellen
 Token-Fingerprint in derselben Transaktion erneut prüfen und den festen
@@ -254,10 +277,32 @@ verlangt die getrennte Bestätigung
 Reservation/Lease-Exklusivität, Ticket-/Receipt-Übergang und die atomare
 `DeviceNotRegistered`-Deaktivierung ausschließlich mit synthetischen
 Staging-Zeilen in einer vollständig zurückgerollten Transaktion. Er enthält
-weder Providerzugang noch Sendepfad. Der Workflow wurde nicht gestartet; das
-Ledger bleibt unangewendet und die reale PostgreSQL-Abnahme offen.
+weder Providerzugang noch Sendepfad. Die PostgreSQL-Abnahme dieses Vertrags ist
+durch den oben verlinkten Lauf belegt; eine reale Push-Abnahme folgt daraus
+nicht.
 
-Erst danach folgen: expliziter serverseitiger Trigger ohne Timer, ein einziger
-synthetischer Staging-Send an ein eigenes Testgerät, Receipt-Nachweis,
-Token-Widerrufstest, Datenschutzabnahme und eine weiterhin getrennte
-Production-Entscheidung.
+## Konkrete verbleibende Schritte
+
+1. Den vorhandenen Service und Ledger mit einem geschützten serverseitigen
+   Einzelsende-Auslöser und Receipt-Check verbinden und diese Integration
+   prüfen. Es gibt dafür derzeit keinen ausführbaren Produktpfad. Der erste
+   Staging-Pfad bleibt ohne Timer und ohne automatische Wiederholung.
+2. Den bereits signierten FCM-Preview auf dem eigenen Android-Testgerät
+   verwenden: Commit `6801d687cfe6048d6e32e63bcfe2862d2886fce0`,
+   [Build 34037085683](https://github.com/FanMind/FanMind/actions/runs/34037085683).
+   Benachrichtigungen ausdrücklich erlauben und eine aktuelle aktive
+   Registrierung auf isoliertem Staging nachweisen. Kein weiterer Build ist
+   allein für diesen Schritt nötig. Der am 8. September protokollierte
+   Nullbestand ist kein aktueller Registrierungsnachweis.
+3. Nach eigener, konkreter Freigabe genau eine Erinnerung für ein synthetisches
+   Staging-Follow-up an dieses Testgerät senden. Ticket und Receipt speichern,
+   die tatsächliche Anzeige und den Tap zum richtigen Follow-up beobachten
+   sowie Token-Widerruf und Datenschutzgrenzen abnehmen.
+4. Den produktiven Versand einschließlich Auslösung fälliger Follow-ups
+   gesondert implementieren, prüfen und freigeben. Der bestehende Service
+   unterstützt ausschließlich Staging; ein ENV-Schalter allein kann ihn
+   nicht produktiv aktivieren.
+
+Bis diese Schritte nachgewiesen sind, bleibt „Push für Follow-up-Erinnerungen“
+offen. Weder ein grüner Android-Build noch eine synthetische Ledger-Abnahme
+ersetzt den realen Empfang am Gerät.

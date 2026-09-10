@@ -1,5 +1,18 @@
 # Started Work Register
 
+## FM-STATUS-001 — five handoff questions
+- Date: 2026-09-10
+- Status: VERIFIED
+- Risk: R1
+- Work lock: LOCK-FM-STATUS-001-20260910
+- Scope: evidence-based status reconciliation only. No takeover of the unfinished FM-MOB-001 or Restore runtime work.
+- Completed so far: current-main release and all final #1089 checks verified; signed Android run 34037085683 and rollback-only Push-ledger acceptance 33867922978 succeeded. Source inspection proves the delivery service has no runtime caller.
+- Result: stale package/recovery task, started-work, receipt and lock statuses are reconciled; the Push guide and next-action catalog now explicitly retain the implementation gap. Existing memory/truth/drift checks pass and the finishline remains unchanged.
+- Still open: publication through the enclosing PR; real Push trigger integration, opt-in/registration, provider/device acceptance and Production activation remain separate unfinished work.
+- Exact next step: complete the enclosing PR with green final-head checks; once merged, keep this documentation reconciliation closed and continue the existing finishline.
+- Owner action needed: none for this documentation correction; it grants no protected-action permission.
+- Recovery: bounded documentation revert.
+
 ## FM-ROADMAP-001 — visible roadmap publication follow-up
 - Date: 2026-09-10
 - Status: PRODUCTION_CONFIRMED
@@ -29,24 +42,28 @@
 - Recovery: revert only this bounded roadmap change; preserve accepted evidence and existing prices.
 ## FM-SEC-002 — release dependency patches
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R3
 - Work lock: LOCK-FM-SEC-002-20260910
 - Scope: patch vulnerable packages revealed by current release CI; no audit exception expansion or feature/framework-major upgrade.
-- Exact next step: resolve Next.js 16.3.4 / Sharp 0.35.4 and patched browser/YAML dependencies, then verify complete locked trees and CI.
+- Result: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Still open: nothing within this bounded dependency patch. Mobile audit exceptions and separate Auth/database hardening remain distinct.
+- Exact next step: keep this release fix closed; its historical lock is released from the merged/deployed evidence.
 - Recovery: forward security correction preferred; review any revert because the prior release has known vulnerable versions.
 
 ## FM-REG-001 — Web password recovery before real registrations
 - Date: 2026-09-10
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: PRODUCTION_CONFIRMED
 - Risk: R3
 - Work lock: LOCK-FM-REG-001-20260910
 - Goal: fix the observed Staging-to-Production recovery redirect and reject/scrub malformed recovery links before provider validation.
 - Scope: existing Web recovery pages, pure callback/redirect policy, synthetic tests and reader updates. No real password change, email send, provider setting, registration/payment activation, migration or Restore operation.
 - Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; existing prices complete; paid registration still blocked by unresolved payment-terms version.
-- Evidence plan: executable positive/negative policy tests, synthetic browser cases, exact-head CI and diff review. Local dependency installation was cancelled before network approval; build/browser execution not yet available locally.
+- Historical pre-publication evidence plan: executable positive/negative policy tests, synthetic browser cases, exact-head CI and diff review. Local dependency installation was cancelled before network approval; build/browser execution not yet available locally.
 - Recovery: revert this bounded application change; no provider or database rollback is needed.
-- Exact next step: publish the bounded draft and collect exact-head build, lint, security and synthetic browser evidence.
+- Result: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Still open: real mail/signup/workspace/device Recovery and payment-terms approval, outside this completed code correction.
+- Exact next step: preserve the deployed Web correction and continue only the separately authorized external acceptance.
 
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
 - Status: IN_PROGRESS

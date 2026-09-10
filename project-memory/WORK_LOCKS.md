@@ -1,5 +1,16 @@
 # Work Locks
 
+## LOCK-FM-STATUS-001-20260910
+- Task: FM-STATUS-001
+- Status: RELEASED
+- Released: 2026-09-10 after independent evidence and bounded local countercheck; enclosing-PR publication remains the delivery step, with no runtime lock acquired.
+- Risk: R1
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: owner-requested status reconciliation for Staging, Android signing, Push and completed #1089 release tasks. Historical FM-SEC-002/FM-REG-001 locks are reconciled only from their merged and deployed exact-head evidence; other locks are unchanged.
+- Evidence plan: GitHub commit/workflow facts, executable source import inspection, existing documentation governance and unchanged finishline gates.
+- Recovery: revert only the documentation patch; no protected operation.
+
 ## LOCK-FM-ROADMAP-VISIBLE-20260910
 - Task: FM-ROADMAP-001
 - Status: RELEASED
@@ -22,7 +33,8 @@
 - Evidence plan: exact-main diff, existing truth/memory checks and no premature Creator selection or sales dependency.
 ## LOCK-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-10 after fresh reconciliation of merged PR #1089, all final-head checks and exact-release deployment/audit/readiness. This closes only the completed code/publication scope; external acceptance and other work locks are unchanged.
 - Risk: R3
 - Holder: Codex
 - Scope: bounded security dependencies and current release verification.
@@ -30,7 +42,8 @@
 
 ## LOCK-FM-REG-001-20260910
 - Task: FM-REG-001 / FM-CR-023
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-10 after fresh reconciliation of merged PR #1089, all final-head checks and exact-release deployment/audit/readiness. This closes only the completed code/publication scope; external acceptance and other work locks are unchanged.
 - Risk: R3
 - Holder: Codex
 - Acquired: 2026-09-10

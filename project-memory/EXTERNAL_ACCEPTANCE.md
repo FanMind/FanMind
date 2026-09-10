@@ -44,6 +44,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-MOBILE-PUSH-STORE
+- Clarification 2026-09-10: the atomic isolated-Staging ledger is historically accepted via 33867831888/33867922978, and FCM Preview 34037085683 already exists. The actual delivery-service trigger/receipt integration still has to be implemented and reviewed; fresh registration, authorized real provider/device receipt/display/tap and revocation proof remain missing. Production delivery/scheduling is unimplemented/disabled, not activatable by an ENV switch. Do not infer completion from the build or ledger and do not repeat either merely for status closeout.
 - Related: FM-MOB-001
 - Status: OPEN
 - Risk: R3

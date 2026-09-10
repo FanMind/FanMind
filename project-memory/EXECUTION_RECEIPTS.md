@@ -1,3 +1,19 @@
+## RECEIPT-FM-STATUS-001-20260910
+- Task: FM-STATUS-001
+- Date: 2026-09-10
+- Status: VERIFIED
+- Risk: R1
+- Work lock: LOCK-FM-STATUS-001-20260910
+- Authorization: owner asks for the three specific technical statuses and the two incomplete tasks in the screenshot; existing standing authorization permits memory maintenance and branch/PR publication. No provider, database, signing, password, Push send or external acceptance is authorized by this record.
+- Preflight: main 20f51f784f7e647ce7e3c3c237f74d558f08e85a; clean isolated worktree; no duplicate open PR; memory/drift/freshness/selector inspected. Earlier external gates remain open and the selector still returns NBA-RESTORE-STORAGE-R4-AUTH.
+- Independent evidence: PR #1089 is merged at 44179146926c691476364f668624ac24aab34ac9; all final-head checks for 7205fa3785659bab6b3cf75a2eab4c05891361d4 succeeded, including dependency audit, full CI, Mobile native CI and browser recovery tests. Current main deployment 34484012525, audit 34484145499 and readiness 34484145715 succeeded; deployment job 102893604521 records exact release 20f51f784f7e647ce7e3c3c237f74d558f08e85a.
+- Additional evidence: signed Android Preview workflow 34037085683 succeeded on 6801d687cfe6048d6e32e63bcfe2862d2886fce0; Push-ledger rollback-only acceptance 33867922978 succeeded on 18a6ad79cb72331b4daa41ee87dd2430a8ffd473. Source search finds no runtime caller of createMobilePushDeliveryService. Device registration and delivery were not freshly observed.
+- Falsification: an unmerged/failed final #1089 release, an existing active delivery caller, or a newly accepted required finishline gate would invalidate the stated reconciliation. Check those directly; do not use a green build as device evidence.
+- Recovery: reviewed bounded documentation revert; no runtime or persistent data changes.
+- Implementation result: updated only the bounded status records, Push guide, external acceptance note and Mobile next-action instruction; no application, dependency, workflow, migration or required gate changed.
+- Countercheck result: existing memory quality, product truth, accepted-state drift and whitespace checks pass; sales_ready remains false with the identical eight required blockers. The source search and successful immutable build/ledger runs independently reject both "Push already works" and "build/ledger still absent".
+- Publication contract: the enclosing PR must pass fresh final-head checks and merge before documentation publication is claimed; its merged Git history is the receipt. External evidence remains unaccepted.
+
 ## RECEIPT-CANONICAL-BILLING-20260906
 
 ## RECEIPT-FM-ROADMAP-VISIBLE-20260910
@@ -18,7 +34,9 @@
 
 ## RECEIPT-FM-SEC-002-20260910
 - Task: FM-SEC-002 / FM-CR-024
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
+- Final publication/countercheck: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Supersession: the pending CI/publication instructions below are historical attempt records. The bounded package and recovery code changes are published; real registration, Mobile device/Push and protected security acceptance remain open.
 - Risk: R3
 - Preflight: fresh dependency audit is red; root has newly listed Next.js/Sharp/browser/YAML/XML findings. The lockfile was unchanged by the auth fix. CI's earlier redacted report and fresh local audit have different package totals, so only current post-update audit may establish the result.
 - Authorization: bounded repository fix necessary for the requested completion and normal publication. No protected provider or credential action is included.
@@ -37,7 +55,9 @@
 ## RECEIPT-FM-REG-001-20260910
 - Task: FM-REG-001 / FM-CR-023
 - Date: 2026-09-10
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: PRODUCTION_CONFIRMED
+- Final publication/countercheck: PR #1089 final head 7205fa3785659bab6b3cf75a2eab4c05891361d4 passed all checks and merged as 44179146926c691476364f668624ac24aab34ac9. Deployment 34481266092, audit 34481420092 and readiness 34481420119 passed; the later current-main release 20f51f784f7e647ce7e3c3c237f74d558f08e85a is also confirmed by deployment 34484012525, audit 34484145499 and readiness 34484145715.
+- Supersession: the pending CI/publication instructions below are historical attempt records. The bounded package and recovery code changes are published; real registration, Mobile device/Push and protected security acceptance remain open.
 - Risk: R3
 - Authorization: owner request to finish FanMind through readiness for social integrations and real registrations; ordinary bounded application correction only.
 - Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; all seven existing application/test/reader files independently matched remote blob SHAs before editing.
