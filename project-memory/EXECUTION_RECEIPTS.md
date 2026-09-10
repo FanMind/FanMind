@@ -1,8 +1,17 @@
-## RECEIPT-FM-CREATOR-SOCIAL-20260910
-- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
+## RECEIPT-FM-CREATOR-CLOSEOUT-20260910
+- Task: FM-CREATOR-001 / FM-CR-029
 - Status: IN_PROGRESS
 - Risk: R4
-- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910
+- Work lock: LOCK-FM-CREATOR-CLOSEOUT-20260910
+- Scope: preserve #1099 source publication, release its original lock, correct public Phase-7 category/integration summary and refresh the exact authorized #874 body hash after fresh reads of #642/#643/#644/#874. No guard weakened and no legacy issue reopened.
+- Exact next: required reader/memory/current-head CI and enclosing normal release; final receipt in the enclosing PR releases this bounded lock. Then resume genuine remaining Creator target/quality/learning work.
+- Recovery: bounded reader correction only; retain immutable source/release proof and real data.
+
+## RECEIPT-FM-CREATOR-SOCIAL-20260910
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
+- Status: PARTIAL
+- Risk: R4
+- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910 RELEASED
 - Authorization: latest explicit owner instruction, FM-DEC-015 / FM-CR-029; existing normal roadmap publication authorization retained.
 - Baseline: main 22017b3a8927b47c8ca67447f00e596d21cb9ae7, exact local tree 6c78cd2ccb87e1ba3f5e2e601a1dad1571fa0189 restored from retained commit f7acff09.
 - Preflight: accepted-state drift passed; mutable evidence retains original timestamps. Existing Creator task was planned only; existing Meta, voice, contact and reply foundations are reused.
@@ -12,6 +21,10 @@
 - Build outcome: dependency copy resolved the Turbopack root issue; normal Next build passed. Local browser tests could not launch because Chromium is absent; no UI acceptance is claimed. The existing required synthetic-browser CI now includes Creator edit/reapproval and confirmed purchase-entry scenarios.
 - Genuine remaining scope: protected Staging SQL/runtime proof, two-Creator blinded voice quality, full suggestion→confirmed chat→reaction→purchase learning, Meta/OnlyFans legal/provider proof. No accepted overall gate is inferred.
 - Recovery: normal code revert, no automatic schema/drop or provider/payment activation. Existing legacy contacts stay intact and unassigned until explicit reviewed mapping.
+
+- Final source publication: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.
+- Independent production audit job 103047813569 returned PRODUCTION_AUDIT_VERIFIED=true and the exact release. Public readiness job 103047813324 checked that same deployed revision. Live Roadmap browser showed Creator/Social-now and own-account text; only the old Later grouping needs the bounded reader follow-up.
+- Falsifier checked: a different merge tree/release, skipped PG17 isolation proof, mixed-context output or absent browser controls would defeat the source claim; none occurred. Missing target/voice/provider proof explicitly prevents claiming a complete Creator rollout.
 
 ## RECEIPT-FM-BILL-003-20260910
 - Task: FM-BILL-003 / FM-CR-028

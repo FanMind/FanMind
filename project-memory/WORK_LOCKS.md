@@ -1,14 +1,26 @@
 # Work Locks
 
+## LOCK-FM-CREATOR-CLOSEOUT-20260910
+- Task: FM-CREATOR-001 / FM-CR-029
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Scope: evidence/status closeout, fresh #874 revision binding and correcting the public Phase-7 preparation category. No schema/flag/provider/Android/paid activation.
+- Evidence plan: existing release proof, reviewed reader diff, memory/truth and required exact-head CI; final publication/release in enclosing PR receipt.
+- Recovery: bounded reader revert; historical evidence is retained.
+
+
 ## LOCK-FM-CREATOR-SOCIAL-20260910
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Acquired: 2026-09-10
 - Scope: new owner-authorized Creator/Social implementation and current roadmap; no takeover of Restore/provider/Android operational locks.
 - Evidence plan: isolated schema/isolation tests, route/policy behavior, reviewed diff and exact-head CI/publication.
 - Recovery: additive controlled schema and bounded source revert; no real platform messages or financial mutations.
+
+- Release evidence: FM-EV-CREATOR-20260910 / #1099; 14 CI checks, exact Deploy/Audit/Readiness and live Roadmap countercheck complete. Whole Creator phase remains open.
 
 ## LOCK-FM-BILL-003-20260910
 - Task: FM-BILL-003 / FM-CR-028

@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-FM-DEC-015: build one Creator per independent account/Workspace now alongside selected Facebook/Instagram/OnlyFans and human AI handoff. Define the six data boundaries before pipeline integration. Keep team roles, auditable approvals and multi-workspace management for later; Android follows. No inferred provider/legal or Production schema activation.
+First Creator/Social source package #1099 is published at 0e5ec0a2 with all 14 checks and Deploy/Audit/Readiness. Preserve that receipt; finish only its bounded reader closeout. Then prepare the controlled Staging target/runbook-to-runner/real JWT acceptance, actual two-Creator voice quality and confirmed-chat learning. One Creator per own account/Workspace. Never start a generic DB push, repeat #1099, auto-enable a provider or advance Android/paid activation during deferral.
 
 ## Why this action
 

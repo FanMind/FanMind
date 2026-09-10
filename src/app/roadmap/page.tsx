@@ -75,7 +75,7 @@ export default function RoadmapPage() {
         <section className={styles.integrationNotice}>
           <h2>Integrationen</h2>
           <p>
-            Phase 3 umfasst Facebook, Instagram und WhatsApp. Phase 7 umfasst TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung. Phase 8 mit LinkedIn und den übrigen Plattformen ist noch nicht begonnen. Es werden keine Nachrichten automatisch aus externen Plattformen gesendet.
+            Creator Intelligence und die ausgewählte Facebook-/Instagram-/OnlyFans- sowie KI-Übergabearbeit sind jetzt in Arbeit. Jeder Creator erhält einen eigenen Account und Workspace; Android folgt danach. Weitere Phase-8-Kanäle sowie Teamzugänge und mehrere Workspaces bleiben später geplant. Direkte Plattformanbindungen benötigen weiterhin ihre technische und rechtliche Abnahme. Es werden keine Nachrichten automatisch aus externen Plattformen gesendet.
           </p>
         </section>
 

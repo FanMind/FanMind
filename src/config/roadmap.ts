@@ -141,7 +141,7 @@ export const roadmapPhases: RoadmapPhase[] = [
     status: "Creator und Social jetzt · Android danach",
     statusIcon: "◇",
     tone: "gold",
-    availability: "later",
+    availability: "upcoming",
     items: [
       { label: "TikTok", state: "later", status: "Roadmap" },
       { label: "X / Twitter", state: "later", status: "Roadmap" },

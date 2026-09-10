@@ -3,8 +3,8 @@
 ## FM-LOOP-CREATOR-SOCIAL-20260910
 - Status: IN_PROGRESS; current priority per FM-DEC-015.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
-- Source implementation and local tests are present; current-head CI/publication, protected target rollout and real voice quality remain independently open. Full confirmed-chat/purchase learning is not implemented yet.
-- Exact next: finish current package verification/publication, then bound Staging acceptance and the next learning slice. OnlyFans direct API/Meta provider/legal acceptance stays open; Android follows Creator/Social.
+- Source package #1099, all 14 checks and exact Deploy/Audit/Readiness are complete. Only its bounded public category/evidence closeout and genuine protected target rollout/voice quality remain. Full confirmed-chat/purchase learning is not implemented yet.
+- Exact next: finish the bounded reader closeout, then prepare protected Staging acceptance and the next learning slice. OnlyFans direct API/Meta provider/legal acceptance stays open; Android follows Creator/Social.
 - Paid activation deferral: PR #1098 already published the consent correction. FM-BILL-003 is PARTIAL and owner-deferred until actual tax/UID facts arrive. Earlier activation-first instructions below are historical and must not restart questions/actions during this deferral.
 
 

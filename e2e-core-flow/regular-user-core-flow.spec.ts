@@ -270,11 +270,15 @@ test("regular Gerhard journey stays workspace-scoped and human controlled", asyn
     .locator("xpath=..");
   await expect(
     integrationNotice.getByText(
-      /Phase 8 mit LinkedIn.*noch nicht begonnen/u,
+      /Weitere Phase-8-Kanäle.*Teamzugänge.*später geplant/u,
     ),
   ).toBeVisible();
   await expect(
     integrationNotice.getByText(/keine Nachrichten automatisch/u),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "In Arbeit / Vorbereitung", exact: true })
+      .locator("..").getByRole("heading", { name: "Social-Kanäle & Creator Intelligence", exact: true }),
   ).toBeVisible();
 
   const stateResponse = await request.get(`${FIXTURE_ORIGIN}/__state`, {

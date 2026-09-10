@@ -175,7 +175,7 @@ test("phase 4 stays technically complete while sales handoff waits for phase 7",
   assert.doesNotMatch(roadmap, /Verkaufsstart freigegeben/u);
   assert.match(
     roadmap,
-    /number: "07"[\s\S]*status: "Creator und Social jetzt · Android danach"[\s\S]*availability: "later"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 \+ 7"/u,
+    /number: "07"[\s\S]*status: "Creator und Social jetzt · Android danach"[\s\S]*availability: "upcoming"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 \+ 7"/u,
   );
   assert.match(
     roadmap,

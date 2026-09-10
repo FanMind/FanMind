@@ -2,15 +2,15 @@
 
 ## FM-CREATOR-001 — Creator and Social continuation
 - Date: 2026-09-10
-- Status: IN_PROGRESS
+- Status: PARTIAL
 - Risk: R4
-- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910
-- Completed so far: FM-DEC-015 / FM-CR-029 recorded, data/authorization contracts defined, own-account profile editor + automatic Creator reply context + confirmed fan review/purchase entry + manual Social handoff implemented. Local Operations 1,269 pass, one PG17-only skip; TypeScript, truth and normal build pass. Local browser execution could not launch because the Chromium executable is absent; required CI runs the real browser scenarios.
-- Still open: exact-head build/browser/PG17 CI review/publication and separate target/provider/voice quality acceptance. Full confirmed-chat learning remains subsequent work.
-- Exact next step: complete build/browser and isolated PG17 current-head CI, publish reviewed source; then continue protected Staging preparation. Existing Creator flag remains off until target acceptance.
-- Owner action needed: none for current development; no missing external evidence is inferred.
-- Evidence plan: executable policy/route tests, real isolated database constraint/RLS checks where available, full required CI, final diff and release evidence.
-- Recovery: additive schema preparation; feature unavailable until compatible rollout. Revert source without deleting existing customer data. No automatic Production migration or provider activation.
+- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910 RELEASED for first source package.
+- Completed so far: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.
+- Still open: controlled Staging target/runtime, actual voice quality, full confirmed-chat learning, Meta/OnlyFans provider/legal acceptance. No target SQL or feature activation was performed.
+- Exact next step: bounded reader closeout, then a fresh Creator target-preparation lock. Never repeat the completed code/CI/publication as if absent.
+- Owner action needed: none for source engineering; do not infer external evidence or launch Android/paid activation during deferral.
+- Evidence: FM-EV-CREATOR-20260910; actual PG17 RLS/FK/atomic counterchecks and real Chromium edit/reapproval/purchase-entry acceptance passed.
+- Recovery: controlled flag-off/application revert preserves real data; no automatic schema rollback or provider send.
 
 ## FM-BILL-003 — paid activation engineering
 - Date: 2026-09-10
