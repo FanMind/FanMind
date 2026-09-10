@@ -1,17 +1,15 @@
 # FanMind Task Ledger
 
 ## FM-REG-002
-- Status: IMPLEMENTED
-- Risk: R4 (Web Auth code and owner-requested normal Production publication).
-- Source: owner requests completing and publishing registration on 2026-09-10; the public payment-terms pause currently prevents account creation.
-- Scope: account-only signup, explicit email confirmation/return, existing authenticated workspace setup and honest activation status; preserve paid Workspace/Checkout/terms, Tax and billing-ledger gates.
-- Baseline: main 52b2b888d7b54b6b52a3dc2a6d38e87ce4dc3638; deploy 34488756368, audit 34488915216 and readiness 34488915387 passed. FM-REG-001 remains the completed password-recovery correction.
-- Fresh external finding: connected FanMind Stripe Live account has zero Tax registrations (list has_more=false); Tax settings active alone is insufficient. No provider mutation or payment performed.
-- Acceptance: tested account creation and verified-email continuation, unchanged negative commercial/auth boundaries, green final-head CI, exact release and public DE/EN form verification. Real delivered-email/activation evidence remains separate if unavailable.
-- Recovery: existing isolated-release rollback / bounded code revert; account-only signup writes no Workspace/commercial fields and never relabels prior terms evidence.
-- Exact next step: implement and verify the bounded account flow, then publish normally. Full paid activation also needs the actual current contract version, matching controlled SQL, tax evidence and existing billing runtime gates.
+- Status: VERIFIED
+- Risk: R4 (owner-requested normal Web publication; full paid activation remains open).
+- Source: owner requests completing and publishing registration on 2026-09-10.
+- Scope: free account signup, email confirmation/resend and existing authenticated setup; no Workspace/commercial authority in signup metadata and no payment or provider mutation.
+- Code proof: PR #1095 head 11636d874031552f4f7ddf58fbc0009f5adf0de1 has the exact local tree 995ea799d1a4c710145b094f289099400985f7be. Application CI, both PostgreSQL 17 checks, CodeQL/security, language, Memory Guard/Quality, synthetic CRM and all 44 desktop/mobile public browser tests passed. The sole status-generation failure is reconciled in this follow-up.
+- Fresh external finding: connected FanMind Stripe Live account has zero Tax registrations (list has_more=false); active settings alone are insufficient. Current terms version and existing controlled billing runtime requirements remain open.
+- Exact next step: verify every final-head check and review, merge this PR through the normal release path, then verify exact deploy/audit/readiness and public DE/EN entry. The enclosing PR records final publication evidence. Real delivered email and paid Workspace/referral/checkout acceptance remain separate.
+- Recovery: existing isolated-release rollback / bounded source revert; preserve any real login accounts. No migration, prior-consent relabeling or automatic account deletion.
 
-- Verification checkpoint: normal Next.js build succeeded; 1,241 Operations tests and current memory/truth/drift checks passed. Additional signup callback/error/metadata tests are included. Full exact-head CI/browser verification and publication are still required. Local Chromium was unavailable and its vendor download timed out; no browser acceptance is claimed from that failed attempt.
 
 ## FM-STATUS-001
 - Date: 2026-09-10

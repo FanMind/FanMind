@@ -2,39 +2,16 @@
 
 ## FM-RC-REG-002-20260910
 - Task: FM-REG-002 / FM-CR-026
-- Status: IMPLEMENTED
-- Risk: R4
-- Baseline: 52b2b888d7b54b6b52a3dc2a6d38e87ce4dc3638; existing deploy/audit/readiness green.
-- Preflight: drift passed; freshness check passed with unrelated expired external evidence retained; selector reports owner-bound Restore action, current explicit registration instruction takes priority without resuming that action.
-- Critical assumptions: signup account is not paid activation; persistent Auth metadata is never commercial/consent authority; no active Stripe Tax registration observed in the connected FanMind Live account.
-- Planned countercheck: forged/duplicate/error/recovery callbacks must not authorize signup completion, rejected provider identity must not sync a session, account creation must not provision a Workspace or start payment; authentic setup retains its exact current consent gate.
-- Recovery: reviewed existing isolated-release rollback; source-only revert, no contract/migration/provider mutation.
-- Result: pending implementation and evidence.
-
-- Task: FM-STATUS-001
-- Date: 2026-09-10
 - Status: VERIFIED
-- Risk: R2
-- Work lock: LOCK-FM-STATUS-001-20260910
-- Authorization: owner asks for the three specific technical statuses and the two incomplete tasks in the screenshot; existing standing authorization permits memory maintenance and branch/PR publication. No provider, database, signing, password, Push send or external acceptance is authorized by this record.
-- Preflight: main 20f51f784f7e647ce7e3c3c237f74d558f08e85a; clean isolated worktree; no duplicate open PR; memory/drift/freshness/selector inspected. Earlier external gates remain open and the selector still returns NBA-RESTORE-STORAGE-R4-AUTH.
-- Independent evidence: PR #1089 is merged at 44179146926c691476364f668624ac24aab34ac9; all final-head checks for 7205fa3785659bab6b3cf75a2eab4c05891361d4 succeeded, including dependency audit, full CI, Mobile native CI and browser recovery tests. Current main deployment 34484012525, audit 34484145499 and readiness 34484145715 succeeded; deployment job 102893604521 records exact release 20f51f784f7e647ce7e3c3c237f74d558f08e85a.
-- Additional evidence: signed Android Preview workflow 34037085683 succeeded on 6801d687cfe6048d6e32e63bcfe2862d2886fce0; Push-ledger rollback-only acceptance 33867922978 succeeded on 18a6ad79cb72331b4daa41ee87dd2430a8ffd473. Source search finds no runtime caller of createMobilePushDeliveryService. Device registration and delivery were not freshly observed.
-- Falsification: an unmerged/failed final #1089 release, an existing active delivery caller, or a newly accepted required finishline gate would invalidate the stated reconciliation. Check those directly; do not use a green build as device evidence.
-- Recovery: reviewed bounded documentation revert; no runtime or persistent data changes.
-- Implementation result: updated only the bounded status records, Push guide, external acceptance note and Mobile next-action instruction; no application, dependency, workflow, migration or required gate changed.
-- Countercheck result: existing memory quality, product truth, accepted-state drift and whitespace checks pass; sales_ready remains false with the identical eight required blockers. The source search and successful immutable build/ledger runs independently reject both "Push already works" and "build/ledger still absent".
-- Publication contract: the enclosing PR must pass fresh final-head checks and merge before documentation publication is claimed; its merged Git history is the receipt. External evidence remains unaccepted.
+- Risk: R4
+- Baseline: 52b2b888d7b54b6b52a3dc2a6d38e87ce4dc3638; deployment 34488756368, audit 34488915216 and readiness 34488915387 green.
+- Action: implemented account-only signup with bounded preferences, explicit same-environment email redirect/resend, URL scrubbing, confirmed provider identity and deliberate session continuation; reused protected Workspace setup, including existing members. Existing activation gates and SQL are unchanged.
+- Countercheck: 1,241 local Operations tests, normal Next build/type/lint and truth/memory/drift checks pass. PR #1095 head 11636d874031552f4f7ddf58fbc0009f5adf0de1: application, PostgreSQL 17, security/CodeQL, language, synthetic regular-user and 44 public desktop/mobile Chromium cases pass (browser run 34492632205 / job 102923001644). Metadata forgery, unconfirmed/error/wrong-purpose callbacks and session-write absence are covered. Only generated PROJECT_STATUS needed refreshing; this follow-up does so and requires fresh complete checks before merge.
+- External facts: Stripe Live has no Tax registrations; legal/tax and exact contract-version acceptance are not invented. No real test email, provider setting, DB migration, commercial activation or payment was performed.
+- Recovery: normal isolated-release rollback / bounded code revert reviewed; signup writes no commercial data. Retain any subsequently created Auth accounts; never delete them as application rollback.
+- Final publication proof: the enclosing PR #1095 must record merge SHA, exact release/audit/readiness and public entry verification after successful final-head checks. Until then source VERIFIED is not a Production or full paid-onboarding completion claim.
 
-- CI reconciliation: PR #1094 first head 2c36651e failed only the product-truth assertion requiring the historically false heading "Kontrollierter Ledger – vorbereitet, nicht angewendet". Scope explicitly expands to that existing documentation assertion in scripts/verify-product-truth.mjs: require the proven ledger evidence and the still-missing delivery path while preserving every runtime/Production gate. Revalidate with the full existing truth command and meaningful negative documentation probes. No activation or runtime implementation is included.
-
-- Follow-up countercheck: npm run verify:truth passes (255 product-truth files, zero warnings); all 22 existing Push-delivery tests pass, including the unchanged dormancy/Production boundaries. Three negative probes reject missing ledger evidence, missing inactive-send status and missing integration-gap text; the original guide was restored after each probe set. Memory/truth/drift checks pass. Require fresh final-head CI for this corrected assertion.
-
-- P1/P2 review reconciliation: synchronize every identified canonical/mobile/operations Push reader with the accepted historical Staging foundation, preserve the missing message-specific reservation and real send path, and split FM-SEC-002 source/CI VERIFIED from Web PRODUCTION_CONFIRMED and still-open patched Mobile signed publication under FM-MOB-001. The old signed candidate is not evidence for #1089 Mobile updates. Source-of-truth fingerprint changes only for this reviewed documentation scope; other watched files and all finishline gates remain unchanged.
-
-- Review countercheck: all 76 existing Mobile Push/staging/native-release/boundary tests pass, including canonical reader agreement; full product truth and memory/drift checks pass. A scan finds no current unapplied-ledger claim in the reconciled readers; the only retained mention explicitly describes the superseded historical failure. The exact old artifacts remain separate from the newer Mobile source patch. Final enclosing-PR CI/review is still required.
-
-- Verification checkpoint: normal Next.js build succeeded; 1,241 Operations tests and current memory/truth/drift checks passed. Additional signup callback/error/metadata tests are included. Full exact-head CI/browser verification and publication are still required. Local Chromium was unavailable and its vendor download timed out; no browser acceptance is claimed from that failed attempt.
+- Fresh read-only Production Auth settings: signup enabled, email enabled and email confirmation required; no configuration was changed and no message was sent.
 
 ## RECEIPT-CANONICAL-BILLING-20260906
 

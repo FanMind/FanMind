@@ -19,6 +19,8 @@ onboarding or provide missing legal/tax evidence. All existing protected SQL,
 commercial pricing, activation flag, terms evidence and billing gates remain
 unchanged. No provider settings, actual test email or payment is changed/sent.
 
+Read-only Auth readiness on 10 September 2026 also confirms that the FanMind Production project permits signups, has email login enabled and requires email confirmation (`disable_signup=false`, `external.email=true`, `mailer_autoconfirm=false`). This does not prove delivery of a real message.
+
 ## Remaining full-activation requirements
 
 - Payment terms: the code/SQL currently records `2026-06-v1`, while the public document says July 2026 and its changes have no accepted version decision. Confirm the exact reviewed current document/version. A new version requires the matching separately reviewed controlled function migration; never relabel old acceptances.

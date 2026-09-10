@@ -9,6 +9,7 @@
 - Scope: registration/Auth UI and normal reviewed Web publication; independent of existing Restore/Mobile/AI locks.
 - Evidence plan: source/behavior tests, negative callback/commercial boundaries, CI, exact release and public DE/EN browser inspection.
 - Recovery: unchanged isolated-release rollback and source revert; no DB migration, terms-evidence rewrite or Stripe mutation.
+- Verification: PR #1095 source is VERIFIED (including 44 browser cases); retain this lock through the final follow-up checks, review and normal Production publication. Release/remaining external scope is recorded in the enclosing PR.
 
 ## LOCK-FM-STATUS-001-20260910
 - Task: FM-STATUS-001
