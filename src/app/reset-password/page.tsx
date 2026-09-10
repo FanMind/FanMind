@@ -1,37 +1,13 @@
 "use client";
 
-import { FormEvent, use, useEffect, useMemo, useState } from "react";
+import { FormEvent, use, useEffect, useMemo, useRef, useState } from "react";
 import { FanMindLogo } from "@/components/FanMindLogo";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { readWebRecoveryAccessToken } from "@/lib/webRecoveryPolicy.mjs";
 import { fanmindCopy, getFanMindLanguage, landingPath, localizedPath } from "@/lib/fanmindCopy";
 import styles from "../login/login.module.css";
 
 type ResetPasswordPageProps = { searchParams: Promise<{ lang?: string | string[] }> };
-
-function readRecoverySessionFromUrl() {
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const queryParams = new URLSearchParams(window.location.search);
-  const error = hashParams.get("error") ?? queryParams.get("error");
-  const errorCode = hashParams.get("error_code") ?? queryParams.get("error_code");
-  const errorDescription = hashParams.get("error_description") ?? queryParams.get("error_description");
-
-  if (error || errorCode || errorDescription) {
-    return { session: null, hasRecoveryError: true };
-  }
-
-  const accessToken = hashParams.get("access_token") ?? queryParams.get("access_token");
-  if (!accessToken) return { session: null, hasRecoveryError: false };
-
-  return {
-    session: {
-      access_token: accessToken,
-      refresh_token: hashParams.get("refresh_token") ?? queryParams.get("refresh_token") ?? undefined,
-      expires_in: Number(hashParams.get("expires_in") ?? queryParams.get("expires_in") ?? undefined) || undefined,
-      expires_at: Number(hashParams.get("expires_at") ?? queryParams.get("expires_at") ?? undefined) || undefined,
-    },
-    hasRecoveryError: false,
-  };
-}
 
 function getPasswordUpdateErrorMessage(updateError: Error, language: "de" | "en") {
   const normalizedMessage = updateError.message.toLowerCase();
@@ -56,6 +32,7 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
   const language = getFanMindLanguage(params.lang);
   const copy = fanmindCopy[language].login;
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const initialRecoveryToken = useRef<string | null | undefined>(undefined);
   const [recoveryAccessToken, setRecoveryAccessToken] = useState<string | null>(null);
   const [isValidRecoverySession, setIsValidRecoverySession] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -69,38 +46,52 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
 
   useEffect(() => {
     let isMounted = true;
+    let validationVersion = 0;
 
     async function prepareRecoverySession() {
-      const { session, hasRecoveryError } = readRecoverySessionFromUrl();
-      if (!session || hasRecoveryError) {
-        await Promise.resolve();
-        if (!isMounted) return;
-        setIsValidRecoverySession(false);
-        setIsCheckingSession(false);
-        return;
+      const version = ++validationVersion;
+      // Capture once for Strict Mode effect replay, then remove all callback
+      // material before any asynchronous provider request, including errors.
+      if (initialRecoveryToken.current === undefined) {
+        initialRecoveryToken.current = readWebRecoveryAccessToken(window.location);
       }
+      const accessToken = initialRecoveryToken.current;
+      window.history.replaceState(null, "", localizedPath("/reset-password", language));
 
-      const { error: userError } = await supabase.auth.getUser(session.access_token);
-      if (!isMounted) return;
-
-      if (userError) {
+      try {
+        const result = await (accessToken ? supabase.auth.getUser(accessToken) : Promise.resolve(null));
+        if (!isMounted || version !== validationVersion) return;
+        const valid = Boolean(accessToken && result?.data.user?.id && !result.error);
+        setRecoveryAccessToken(valid ? accessToken : null);
+        setIsValidRecoverySession(valid);
+      } catch {
+        if (!isMounted || version !== validationVersion) return;
         setRecoveryAccessToken(null);
         setIsValidRecoverySession(false);
-        setIsCheckingSession(false);
-        window.history.replaceState(null, "", localizedPath("/reset-password", language));
-        return;
+      } finally {
+        if (isMounted && version === validationVersion) setIsCheckingSession(false);
       }
-
-      setRecoveryAccessToken(session.access_token);
-      setIsValidRecoverySession(true);
-      setIsCheckingSession(false);
-      window.history.replaceState(null, "", localizedPath("/reset-password", language));
     }
 
+    function handleRecoveryLinkChange() {
+      initialRecoveryToken.current = undefined;
+      setRecoveryAccessToken(null);
+      setIsValidRecoverySession(false);
+      setIsCheckingSession(true);
+      setIsSubmitting(false);
+      setSuccess(false);
+      setError(null);
+      setPassword("");
+      setPasswordRepeat("");
+      void prepareRecoverySession();
+    }
+
+    window.addEventListener("hashchange", handleRecoveryLinkChange);
     void prepareRecoverySession();
 
     return () => {
       isMounted = false;
+      window.removeEventListener("hashchange", handleRecoveryLinkChange);
     };
   }, [language, supabase]);
 
@@ -125,6 +116,8 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
 
     setIsSubmitting(true);
     const { error: updateError } = await supabase.auth.updateUserWithAccessToken({ password }, recoveryAccessToken);
+    // A result from a previous link must not change the newly opened flow.
+    if (initialRecoveryToken.current !== recoveryAccessToken) return;
     setIsSubmitting(false);
 
     if (updateError) {
@@ -138,8 +131,15 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
     }
 
     setRecoveryAccessToken(null);
+    initialRecoveryToken.current = null;
+    setPassword("");
+    setPasswordRepeat("");
     setSuccess(true);
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      setError(language === "en" ? "Your password was changed, but sign-out could not be confirmed. Please sign in again." : "Dein Passwort wurde geändert, aber die Abmeldung konnte nicht bestätigt werden. Bitte melde dich erneut an.");
+    }
   }
 
   const invalidLink = !isCheckingSession && !isValidRecoverySession && !success;
@@ -156,6 +156,7 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
           <aside className={styles.visualPanel} aria-label={language === "en" ? "Security note" : "Sicherheitshinweis"}><div className={styles.orbit} aria-hidden="true"><div className={styles.orbitRing} /><div className={styles.orbitRingInner} /><div className={styles.planetOne} /><div className={styles.planetTwo} /><div className={styles.planetThree} /><div className={styles.lockShield}>▣</div></div></aside>
           <form className={styles.formCard} onSubmit={handleSubmit}>
             <div className={styles.formHeader}><h1>{language === "en" ? "Set new password" : "Neues Passwort setzen"}</h1><p>{language === "en" ? "Choose a new secure password for your FanMind account." : "Wähle ein neues sicheres Passwort für dein FanMind-Konto."}</p></div>
+            {isCheckingSession ? <p role="status">{language === "en" ? "Checking your reset link…" : "Dein Link wird geprüft…"}</p> : null}
             {invalidLink ? <p className={styles.error} role="alert">{language === "en" ? "The link is invalid or expired. Please request a new link." : "Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an."} <a href={localizedPath("/forgot-password", language)}>{language === "en" ? "Request new link" : "Neuen Link anfordern"}</a></p> : null}
             {isValidRecoverySession && !success ? <>
               <label className={styles.field}><span>{language === "en" ? "New password" : "Neues Passwort"}</span><div className={styles.inputWrap}><span aria-hidden="true">▣</span><input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className={styles.passwordToggle} type="button" aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"} onClick={() => setShowPassword((current) => !current)}>{showPassword ? "◉" : "◌"}</button></div></label>

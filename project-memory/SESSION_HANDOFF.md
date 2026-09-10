@@ -1,5 +1,17 @@
 # FanMind Session Handoff
 
+## 2026-09-10 — FM-REG-001 Web recovery correction
+- Goal: finish FanMind before real registrations and social integration.
+- Current follow-up: PR #1089 also carries FM-SEC-002 / FM-CR-024 for new dependency advisories found by CI. Patched root application passes 1237 local operations tests, lint and synthetic Production build. Browser assertions are corrected after the initial route-announcer ambiguity; fresh CI remains required. Full Mobile security audit is being reconciled after compatible Sharp/xmldom patches; exception limits are unchanged.
+- Latest follow-up: c8956089 passes application CI, CodeQL and dependency security. Its remaining failures exposed same-page fragment navigation and two Expo SDK patch mismatches; both are corrected for the next head. Existing Production database/Auth warnings were confirmed read-only at 12:40Z and remain separate from the dependency patch.
+- Implemented: environment-preserving reset redirect; callback validation and immediate address cleanup; password form requires provider-confirmed user; bounded GET/PUT; synthetic browser coverage.
+- Local evidence: 37 targeted Node tests PASS; truth checks produced success; diff whitespace PASS. Local build/lint/browser execution unavailable after dependency installation was cancelled before an approval decision.
+- Full operations attempt: 1199 passed; seven dependency-dependent failures due to absent local packages. Full-suite success must come from exact-head CI, not this local result.
+- Publication: draft PR preparation from verified main 7004c9ea44c98f125fbd7988a2557cf356693b36; exact-head CI and deployment are not yet claimed.
+- Existing prices remain complete. Payment-terms version confirmation, real signup/mail/workspace/payment acceptance, Android device delivery, security and Meta external evidence remain open.
+- Restore update supersedes earlier preparation-only notes: owner helper completed its single stop/rescue start; SystemRescue boot and exact Ubuntu disk/user were verified. The later password-change command was rejected by automatic approval review for missing explicit authorization for that access change. Cleanup left /mnt read-only and /mnt/dev unmounted. Do not restart the helper or retry the rejected command on the basis of a repeated general completion goal.
+- Next: obtain exact-head CI for this application correction. Restore password preparation remains a separate owner authorization and secret-entry handoff.
+
 ## Current continuation — 2026-09-10
 - Exact current main remains 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59. PR #1088 is the documentation closeout; its three delayed review findings are being reconciled before merge.
 - Owner explicitly approved the prepared single-source SSH rule. It was saved once in fanmind-restore-isolated and read back as TCP 22/22, approved owner /32, rule prefix eb474b38. Only the existing Restore VM is attached. Owner Windows SSH independently reached authentication, then failed after key/passphrase/password attempts. Network reachability is confirmed; try the other existing FanMind key without password fallback. Host login is not yet proved.

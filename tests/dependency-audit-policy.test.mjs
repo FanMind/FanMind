@@ -20,10 +20,10 @@ import {
 import { validateCycloneDx } from "../scripts/security/generate-sbom.mjs";
 
 const patchedManifest = {
-  dependencies: { next: "16.3.1" },
+  dependencies: { next: "16.3.4" },
   devDependencies: {
     eslint: "9.39.5",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "16.3.4",
   },
 };
 
@@ -259,18 +259,18 @@ test("reviewed overrides stay narrow and resolve to the patched root tree", asyn
   assert.deepEqual(manifest.overrides, {
     "brace-expansion@>=1.0.0 <1.1.18": "1.1.18",
     "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
-    "js-yaml@>=4.0.0 <4.3.1": "4.3.1",
+    "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
     "nanoid@<3.3.18": "3.3.18",
-    "next@16.3.1": {
+    "next@16.3.4": {
       postcss: "8.5.23",
-      sharp: "0.35.3",
+      sharp: "0.35.4",
     },
   });
   assert.equal(manifest.devDependencies.eslint, "9.39.5");
   assert.equal(lock.packages["node_modules/eslint"].version, "9.39.5");
-  assert.equal(lock.packages["node_modules/next"].version, "16.3.1");
+  assert.equal(lock.packages["node_modules/next"].version, "16.3.4");
   assert.equal(lock.packages["node_modules/postcss"].version, "8.5.23");
-  assert.equal(lock.packages["node_modules/sharp"].version, "0.35.3");
+  assert.equal(lock.packages["node_modules/sharp"].version, "0.35.4");
   assert.equal(lock.packages["node_modules/brace-expansion"].version, "5.0.9");
   for (const dependencyPath of [
     "node_modules/@eslint/config-array/node_modules/brace-expansion",
@@ -280,7 +280,7 @@ test("reviewed overrides stay narrow and resolve to the patched root tree", asyn
   ]) {
     assert.equal(lock.packages[dependencyPath].version, "1.1.18");
   }
-  assert.equal(lock.packages["node_modules/js-yaml"].version, "4.3.1");
+  assert.equal(lock.packages["node_modules/js-yaml"].version, "4.3.2");
   assert.equal(lock.packages["node_modules/nanoid"].version, "3.3.18");
 });
 

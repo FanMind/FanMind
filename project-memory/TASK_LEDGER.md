@@ -1,5 +1,26 @@
 # FanMind Task Ledger
 
+## FM-SEC-002
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R3
+- Goal: remove newly verified dependency vulnerabilities blocking the FanMind release.
+- Scope: reviewed patch versions and lockfiles for Web/Mobile tooling, audit version contract, regression tests and documented verification.
+- Evidence: failed Supply Chain run 34476430052 on f3b2b92a; fresh local npm audit confirms Next.js, Sharp, baseline-browser-mapping, Browserslist and js-yaml findings. Official maintainer advisories checked.
+- Next step: generate bounded patched lockfiles, run audit/build/browser/image regression and exact-head CI. No release while red.
+- Recovery: repository revert is possible but restores known vulnerable packages; prefer a forward patch. No database or provider migration.
+
+## FM-REG-001
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Goal: correct Web password recovery before real registrations.
+- Scope: same-environment reset redirect, strict callback parsing, URL cleanup, verified-user guard, synthetic tests and documentation.
+- Dependencies: existing isolated runtime/Supabase configuration; exact-head CI; real mail/device flow and legal registration activation remain external.
+- Evidence required: positive and fail-closed tests plus independent diff/CI review.
+- Recovery: revert only this application change; no provider settings or credentials changed.
+- Next step: complete exact-head CI for FM-CR-023; never reuse this task to bypass the rejected Restore password action.
+
 Use one heading per task/attempt. Never delete historical entries; supersede them explicitly.
 
 ## FM-WEB-004

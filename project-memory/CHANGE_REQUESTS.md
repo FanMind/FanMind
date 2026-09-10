@@ -1,5 +1,21 @@
 # FanMind Change Requests
 
+## FM-CR-024
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-SEC-002
+- Risk: R3
+- Source: current PR #1089 dependency audit failure blocks the requested normal release.
+- Decision: bounded security patch updates for Next.js, Sharp and affected browser/YAML/XML tooling, including lockfiles and existing version-contract tests. Keep zero root vulnerabilities and the unchanged Mobile exception limits/expiry; no bypass or broader feature upgrade.
+
+## FM-CR-023
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: owner continuation toward Social implementation and real registrations; observed existing Web recovery defects.
+- Classification: bounded authentication correction, Risk R3.
+- Related task: FM-REG-001
+- Decision: preserve the current FanMind environment in password-reset redirects and validate/scrub existing implicit recovery callbacks. Keep registration, payment terms, provider configuration and Ubuntu recovery permissions unchanged.
+
 Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFERRED, REJECTED, DUPLICATE or merged into an existing task.
 
 ## FM-CR-001

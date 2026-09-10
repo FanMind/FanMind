@@ -457,7 +457,8 @@ Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 | --- | --- | --- |
 | `/` | öffentliche Landingpage | aktiv |
 | `/login` | Login und Demo-Einstieg | aktiv |
-| `/register` | Starter-Registrierung | aktiv |
+| `/register` | Starter-Registrierung | entgeltliche Aktivierung bis zur bestätigten Zahlungsbedingungen-Version gesperrt |
+| `/forgot-password`, `/reset-password` | Web-Passwort-Recovery | Rücksprung auf die anfordernde FanMind-Umgebung; Details und externe Abnahme in `docs/operations/WEB_AUTH_RECOVERY.md` |
 | `/support` | öffentliche Hilfe- und App-Store-Supportseite | aktiv |
 | `/dashboard` | geschützter Arbeitsbereich | aktiv |
 | `/fans` | Kontaktliste | aktiv |

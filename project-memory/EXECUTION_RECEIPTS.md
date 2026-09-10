@@ -1,5 +1,43 @@
 ## RECEIPT-CANONICAL-BILLING-20260906
 
+## RECEIPT-FM-SEC-002-20260910
+- Task: FM-SEC-002 / FM-CR-024
+- Status: IN_PROGRESS
+- Risk: R3
+- Preflight: fresh dependency audit is red; root has newly listed Next.js/Sharp/browser/YAML/XML findings. The lockfile was unchanged by the auth fix. CI's earlier redacted report and fresh local audit have different package totals, so only current post-update audit may establish the result.
+- Authorization: bounded repository fix necessary for the requested completion and normal publication. No protected provider or credential action is included.
+- Plan: exact compatible patch versions, inspect dependency diff, run current audit with existing limits, image-processing regression, build/lint/public browser and Mobile CI. No audit force-fix or exception expansion.
+- Independent sources: maintainer advisories GHSA-2xp9-vwfh-vxw4 and GHSA-rgj7-g3m4-5g8c; npm audit also identifies GHSA-p293-qw3h-jr36, GHSA-w5vr-8v7q-w6rv, GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g and GHSA-2883-xcg3-v3hh.
+- Recovery: forward patch preferred; revert only with explicit recognition that it restores the vulnerable dependency tree. No irreversible data operation.
+- Implemented versions: Next.js/ESLint Config 16.3.4; Sharp 0.35.4 Web/Mobile; root js-yaml 4.3.2, Browserslist 4.28.9 and baseline-browser-mapping 2.11.21; Mobile xmldom 0.8.15/0.9.12. Platform binaries and browser data follow the package-manager resolution. Existing Mobile review limits and expiry are unchanged.
+- Local verification: dependency installation now succeeded with lifecycle scripts disabled. All 1237 operations tests pass, including real Sharp image processing; Production-compatible synthetic build passes; lint passes with one pre-existing unused-variable warning in the push-delivery runner. Local browser launch is unavailable because Chromium is not installed, so browser acceptance remains with CI.
+- Browser countercheck: first-head f3b2b92a CI passed the valid recovery flow on desktop/mobile, but ten negative-path tests failed because the global alert locator also matched Next.js route announcer. Four assertions now target only the recovery form; the product error responses were present. Current-head browser CI is required.
+- Initial CI evidence: f3b2b92a FanMind CI 34476430059 and CodeQL 34476429966 passed. These results do not cover the subsequent dependency patch or corrected browser assertions.
+- Post-patch security audit: PASS. Root Production has zero findings; Mobile has 18 total / 4 high / zero critical / zero unknown packages under the unchanged existing review limits and 2026-09-17 expiry. This is not a claim of zero Mobile findings or of a new signed build.
+- CI compatibility follow-up: c8956089 Supply Chain 34477895450 passed. Mobile Doctor job 102873071139 found only two current SDK patch mismatches (expo expected ~57.0.21 versus 57.0.20, expo-router expected ~57.0.20 versus 57.0.19); 19/20 checks passed. Update those two compatible SDK-57 patches and rerun; no exclude flag or SDK major upgrade. Direct changelog retrieval was unavailable, so the live Expo Doctor recommendation is the verified compatibility source.
+- Browser follow-up: c8956089 passed 32 public browser cases; two failed on a second fragment link in the already mounted reset page. This revealed a real missing hash-change handler. The new handler clears the prior token/form, scrubs/revalidates the new link and rejects outdated asynchronous results. A dedicated valid-to-invalid link regression supplements the existing invalid-link sequence.
+- Read-only database/Auth observation at 2026-09-10T12:40Z: Production still has three mutable-search-path warnings, anon/authenticated execution warnings for the retention function, and disabled leaked-password protection. Staging retains its two documented authenticated-RPC warnings and disabled leaked-password protection. Service-role-only RLS-without-policy entries are informational, not a reason to grant browser access. No database/Auth configuration was changed. Dependency audit success does not close these separate protected security actions.
+
+## RECEIPT-FM-REG-001-20260910
+- Task: FM-REG-001 / FM-CR-023
+- Date: 2026-09-10
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Authorization: owner request to finish FanMind through readiness for social integrations and real registrations; ordinary bounded application correction only.
+- Baseline: remote main 7004c9ea44c98f125fbd7988a2557cf356693b36; all seven existing application/test/reader files independently matched remote blob SHAs before editing.
+- Preflight: observed non-local recovery redirect hardcoded to Production; mixed/wrong-type callbacks and invalid-link URL cleanup gaps. Existing paid-registration block remains in force; prices are complete.
+- Scope: same-environment recovery redirect, strict fragment parser, immediate URL cleanup, verified-user guard, bounded GET/PUT transport and synthetic tests. No provider credential, real email/account, SQL, registration, billing or Restore mutation.
+- Evidence: 37 targeted Node tests PASS; commercial/product truth command completed with success output; whitespace check PASS. Browser cases are implemented but not locally executed.
+- Dependency reconciliation: local npm dependency-install request was cancelled before an approval decision. No local build/lint/browser result is claimed. Existing GitHub CI will provide exact-head evidence after draft publication.
+- Countercheck: reviewed final application diff against the observed failures, including wrong origin/type, duplicate/query credentials, provider error, missing user and network failure. Public documentation now reflects the real registration block.
+- Recovery: revert this application patch and redeploy the prior reviewed release. No database/provider rollback; reviewed, not executed.
+- External limits: Supabase redirect allowlist and real email acceptance remain unverified. This is not readiness acceptance for real registrations or social providers.
+- Restore boundary: prior automatic review rejected starting the Ubuntu password change for lack of explicit authorization for that access change. No retry is included here.
+- Next: exact-head CI/build/browser/security review, then release decision under the existing gates.
+- Required-suite follow-up: test:operations reports 1199 PASS / 7 FAIL, all seven failures caused by absent local npm packages (typescript, pdfnative, brace-expansion, sharp or next). This is not a full-suite pass. Existing CI must rerun with dependencies installed.
+- Memory/truth checks: quality, V8, next action, sales readiness structure, truth drift, freshness structure, milestone and legacy reconciliation pass. Readiness remains false and stale runtime evidence remains flagged.
+- Drift reconciliation: the only changed watched file is SOURCE_OF_TRUTH.md. Its reviewed single-line change records the existing payment-terms block and this Web recovery behavior; it does not refresh any accepted runtime evidence. The watched fingerprint is updated in this same patch; all other watched values are preserved.
+
 ## RECEIPT-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
 - Status: IN_PROGRESS

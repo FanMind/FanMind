@@ -31,7 +31,7 @@ FanMind ist nicht:
 Aktiv beziehungsweise produktnah:
 
 - deutsche und englische Landingpage mit automatischer Sprachprüfung;
-- Login und öffentliche Starter-Registrierung;
+- Login und vorbereitete öffentliche Starter-Registrierung; die entgeltliche Aktivierung bleibt bis zur bestätigten Zahlungsbedingungen-Version gesperrt (`payment_terms_version_unresolved`). Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
 - kostenloser temporärer Demo-Workspace, getrennt vom entgeltlichen Angebot;
 - geschütztes Dashboard;
 - Kontakte, Kontaktdetail und Suche;
