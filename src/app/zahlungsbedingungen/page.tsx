@@ -31,7 +31,7 @@ type PaymentSection = {
 };
 
 const trustItems = [
-  "Derzeit kein Umsatzsteuerausweis",
+  "Nettopreise · Steuer im Checkout",
   "Keine Bankdaten in FanMind",
   "SEPA über Zahlungsdienstleister",
   "Zwei aktive Starter-Optionen",

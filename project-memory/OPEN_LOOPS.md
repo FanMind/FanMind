@@ -1,5 +1,11 @@
 # FanMind Open Loops
 
+## Registration is the current owner priority — 2026-09-10
+- FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication remain in progress.
+- The free login account is separated from existing protected paid Workspace/Checkout activation. No terms approval, migration, tax registration, payment or third-party email send is inferred.
+- Fresh Stripe Live read: zero Tax registrations; active Tax settings alone are insufficient. Exact current payment-terms/version acceptance and the existing billing runtime gates also remain open.
+- Next: finish verification, publish the bounded account flow, verify its exact release/public DE/EN entry, then present the specific remaining full-activation requirements. Preserve Mobile, Push, Restore and Phase-7b Creator sequencing under their existing tasks.
+
 This register contains started, partially completed or follow-up work that could otherwise disappear between sessions. Do not use it as a second task backlog; link each loop to an existing task/change ID whenever possible.
 
 ## FM-LOOP-001

@@ -15,7 +15,7 @@ function requiresAll(text, fragments, context) {
   }
 }
 
-test("regular registration provisions a server-authorized workspace before entering the CRM", async () => {
+test("regular registration continues to authenticated setup before entering the CRM", async () => {
   const [registration, workspaceRoute] = await Promise.all([
     source("src/app/register/RegisterClient.tsx"),
     source("src/app/api/register/workspace/route.ts"),
@@ -26,8 +26,8 @@ test("regular registration provisions a server-authorized workspace before enter
     [
       /supabase\.auth\.signUp\(/u,
       /syncSupabaseSessionForServer\(data\.session\)/u,
-      /fetch\("\/api\/register\/workspace",\s*\{\s*method: "POST"/u,
-      /router\.push\("\/billing\/start"\)/u,
+      /buildRegistrationAccountMetadata/u,
+      /router\.push\(setupHref\)/u,
     ],
     "registration journey",
   );

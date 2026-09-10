@@ -877,6 +877,14 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 - Checkout ist fail-closed an `FANMIND_TAX_MODE=stripe_tax` und die getrennte Bestätigung der tatsächlich eingerichteten Stripe-Tax-Registrierung gebunden. Eine fehlende oder alte Kleinunternehmer-Konfiguration erzeugt keinen steuerfreien Checkout.
 - Die technische Entscheidung ersetzt nicht die im externen Freigaberegister weiterhin offene steuerliche Prüfung von UID, internationalen Fällen, Pflichtangaben und Aufbewahrungsfristen.
 
+### Registrierung und kostenpflichtige Aktivierung
+
+- `/register` erstellt ein kostenloses Anmeldekonto. Es schreibt weder Workspace- noch Billing- oder Zahlungsannahmewerte. Paket- und Referral-Auswahl sind unverbindliche, begrenzte Profilpräferenzen.
+- `/register/confirm` akzeptiert nur den unterstützten Signup-Callback, bereinigt die URL sofort und prüft die bestätigte E-Mail über Supabase. Erst der ausdrückliche Klick auf das angezeigte Konto synchronisiert die Session. Ein gültiger Signup-Rücksprung zur bestehenden Site URL wird in diesen Ablauf übernommen.
+- Nach der Anmeldung führt `/workspace/setup` die bestehende serverseitige Paket-/Zustimmungsprüfung aus. Das Verfahren für Workspace-RPC, Preise und Vertragsversion sowie Checkout-, Tax- und Billing-Ledger-Gates bleiben unverändert.
+- Beobachtung vom 10. September 2026: Im verbundenen FanMind-Stripe-Live-Konto existieren keine Tax-Registrierungen. Aktive Tax-Settings allein sind keine Freigabe. Kostenpflichtige Aktivierung, echte E-Mail-Zustellung und anschließende vollständige Workspace-/Referral-/Zahlungsabnahme sind daher nicht durch diesen Code-Nachweis erledigt.
+- Ausführlicher Ablauf und verbleibende Voraussetzungen: `docs/operations/WEB_REGISTRATION.md`; Task `FM-REG-002`. Die separate abgeschlossene Passwort-Recovery-Korrektur bleibt `FM-REG-001`.
+
 ### Datenschutz- und AVV-Readiness
 
 - `docs/legal/AVV_WORKING_DRAFT.md` enthält eine ausdrücklich nicht

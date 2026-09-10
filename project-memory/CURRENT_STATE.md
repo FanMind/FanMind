@@ -1,5 +1,11 @@
 # FanMind Current State
 
+## Registration is the current owner priority — 2026-09-10
+- FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication remain in progress.
+- The free login account is separated from existing protected paid Workspace/Checkout activation. No terms approval, migration, tax registration, payment or third-party email send is inferred.
+- Fresh Stripe Live read: zero Tax registrations; active Tax settings alone are insufficient. Exact current payment-terms/version acceptance and the existing billing runtime gates also remain open.
+- Next: finish verification, publish the bounded account flow, verify its exact release/public DE/EN entry, then present the specific remaining full-activation requirements. Preserve Mobile, Push, Restore and Phase-7b Creator sequencing under their existing tasks.
+
 ## Five handoff questions reconciled — 2026-09-10
 - Production/test separation: FM-STG-001 remains ACCEPTED for the separate Supabase and Web Staging foundation. Do not rebuild it or confuse it with the unfinished full Restore and feature-specific acceptance.
 - Signed internal Android: successful immutable workflow 34037085683 proves the existing FCM replacement Preview at 6801d687cfe6048d6e32e63bcfe2862d2886fce0. Reuse it; the older Production AAB and real-device acceptance remain distinct.

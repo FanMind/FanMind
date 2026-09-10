@@ -1,5 +1,15 @@
 # Started Work Register
 
+## FM-REG-002 — Public registration and confirmed-email continuation
+- Status: VERIFIED
+- Risk: R4
+- Work lock: LOCK-FM-REG-002-20260910
+- Completed so far: bounded account/confirmation implementation, 1,241 local Operations tests, normal build/type/lint and PR #1095 application/security/database/CRM checks plus 44 desktop/mobile browser tests on 11636d874031552f4f7ddf58fbc0009f5adf0de1.
+- Still open: final follow-up head CI/review and exact Production publication; genuine external email/paid-activation acceptance remains distinct.
+- Exact next step: publish after final-head gates; bind resulting deploy/audit/readiness and public DE/EN evidence in the enclosing PR.
+- Owner action needed: exact payment-terms/version and tax facts for subsequent paid activation, plus an approved recipient for real email acceptance; no new permission needed for this requested normal Web publication.
+
+
 ## FM-STATUS-001 — five handoff questions
 - Date: 2026-09-10
 - Status: VERIFIED

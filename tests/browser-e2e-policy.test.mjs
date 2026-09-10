@@ -182,7 +182,10 @@ test("public browser spec uses synthetic responses and cannot create a demo or a
   assert.match(source, /Demo-Bestätigung[\s\S]*startet aber keine Demo/u);
   assert.match(source, /geschütztes Dashboard führt ohne Sitzung zum Login/u);
   assert.doesNotMatch(source, /\/api\/demo\/start/u);
-  assert.doesNotMatch(source, /signUp|Konto erstellen"\s*\}\)\.click/u);
+  assert.match(source, /context.route\("\*\*\/auth\/v1\/signup\*\*", \(route\) => route.abort\(\)\)/u);
+  assert.match(source, /context.route\("\*\*\/auth\/v1\/resend\*\*", \(route\) => route.abort\(\)\)/u);
+  assert.match(source, /fulfillCorsJson\(route, 200, \{ id: "synthetic-signup-user"/u);
+  assert.doesNotMatch(source, /signUp/u);
   assert.doesNotMatch(
     source,
     /OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|STRIPE_SECRET_KEY/u,

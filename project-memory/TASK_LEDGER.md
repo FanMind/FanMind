@@ -1,5 +1,16 @@
 # FanMind Task Ledger
 
+## FM-REG-002
+- Status: VERIFIED
+- Risk: R4 (owner-requested normal Web publication; full paid activation remains open).
+- Source: owner requests completing and publishing registration on 2026-09-10.
+- Scope: free account signup, email confirmation/resend and existing authenticated setup; no Workspace/commercial authority in signup metadata and no payment or provider mutation.
+- Code proof: PR #1095 head 11636d874031552f4f7ddf58fbc0009f5adf0de1 has the exact local tree 995ea799d1a4c710145b094f289099400985f7be. Application CI, both PostgreSQL 17 checks, CodeQL/security, language, Memory Guard/Quality, synthetic CRM and all 44 desktop/mobile public browser tests passed. The sole status-generation failure is reconciled in this follow-up.
+- Fresh external finding: connected FanMind Stripe Live account has zero Tax registrations (list has_more=false); active settings alone are insufficient. Current terms version and existing controlled billing runtime requirements remain open.
+- Exact next step: verify every final-head check and review, merge this PR through the normal release path, then verify exact deploy/audit/readiness and public DE/EN entry. The enclosing PR records final publication evidence. Real delivered email and paid Workspace/referral/checkout acceptance remain separate.
+- Recovery: existing isolated-release rollback / bounded source revert; preserve any real login accounts. No migration, prior-consent relabeling or automatic account deletion.
+
+
 ## FM-STATUS-001
 - Date: 2026-09-10
 - Status: VERIFIED

@@ -49,6 +49,10 @@ async function metaQueue(page: Page): Promise<unknown[][]> {
 
 test.describe("öffentliche kritische FanMind-Flows", () => {
   test.beforeEach(async ({ context }) => {
+    // No public test may reach an actual signup/resend endpoint. Individual
+    // cases override this guard only with local synthetic fulfill responses.
+    await context.route("**/auth/v1/signup**", (route) => route.abort());
+    await context.route("**/auth/v1/resend**", (route) => route.abort());
     await context.addCookies([
       {
         name: "fanmind_marketing_consent",
@@ -485,45 +489,96 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("entgeltliche Registrierung bleibt bis zur bestätigten Zahlungsbedingungen-Version geschlossen", async ({
-    page,
-  }) => {
-    await page.goto("/register");
-
-    await expect(
-      page.getByRole("heading", {
-        name: "Entgeltliche Aktivierung ist vorübergehend nicht verfügbar",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(/verbindliche Version der Zahlungsbedingungen/u),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Kostenlose Demo starten" }),
-    ).toHaveAttribute("href", "/login?demo=1");
-    await expect(
-      page.getByRole("link", { name: "Bestehenden Zugang öffnen" }),
-    ).toHaveAttribute("href", "/login");
-    await expect(
-      page.getByText("payment_terms_version_unresolved", { exact: true }),
-    ).toBeVisible();
-    await expect(page.locator("form")).toHaveCount(0);
-    const pausedPrices = page.locator(
-      '[aria-label="Preise der Starter-Pakete"]',
-    );
-    await expect(
-      pausedPrices.getByText("Starter Flex", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      pausedPrices.getByText("990 € Setup + 312 €/Monat", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      pausedPrices.getByText("Starter 12", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      pausedPrices.getByText("0 € Setup + 312 €/Monat", { exact: true }),
-    ).toBeVisible();
+  test("Kontoregistrierung bleibt vor kostenpflichtiger Aktivierung erreichbar", async ({ page }) => {
+    await page.goto("/register?plan=starter&option=starter_no_setup_commitment&lang=en");
+    await expect(page.getByRole("heading", { name: "Create your FanMind account" })).toBeVisible();
+    await expect(page.getByText(/Paid package activation is still being prepared/u)).toBeVisible();
+    await expect(page.locator('input[value="starter_no_setup_commitment"]')).toBeChecked();
+    await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
+    await expect(page.getByText("payment_terms_version_unresolved", { exact: true })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
+  });
+
+  test("Signup bestätigt die E-Mail-Anforderung ohne Workspace oder Zahlung anzulegen", async ({ page }) => {
+    await page.clock.install();
+    let signupBody: Record<string, unknown> | null = null;
+    let signupRedirect: string | null = null;
+    let forbiddenCalls = 0;
+    await page.route("**/api/register/workspace", async (route) => { forbiddenCalls++; await route.abort(); });
+    await page.route("**/api/billing/**", async (route) => { forbiddenCalls++; await route.abort(); });
+    await page.route("**/auth/v1/signup?*", async (route) => {
+      if (route.request().method() === "POST") {
+        signupBody = route.request().postDataJSON() as Record<string, unknown>;
+        signupRedirect = new URL(route.request().url()).searchParams.get("redirect_to");
+      }
+      await fulfillCorsJson(route, 200, { id: "synthetic-signup-user", email: "signup@example.com" });
+    });
+    await page.goto("/register?option=starter_no_setup_commitment&ref=REF-SYNTHETIC");
+    await page.locator('input[name="name"]').fill("Synthetic Signup");
+    await page.locator('input[name="email"]').fill("signup@example.com");
+    await page.locator('input[name="password"]').fill("Synthetic-Password-2026!");
+    await page.locator('input[name="organisation"]').fill("Synthetic Team");
+    await page.locator('select[name="rolle"]').selectOption("Creator");
+    await page.getByRole("button", { name: "Konto erstellen" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Bitte prüfe dein Postfach" })).toBeVisible();
+    expect(signupRedirect).toBe(`${E2E_BASE_URL}/register/confirm`);
+    expect(signupBody).not.toBeNull();
+    const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
+    expect(metadata.registration_option_preference).toBe("starter_no_setup_commitment");
+    expect(metadata.referral_code).toBe("REF-SYNTHETIC");
+    for (const field of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) expect(metadata).not.toHaveProperty(field);
+    let resendRequests = 0;
+    await page.route("**/auth/v1/resend?*", async (route) => {
+      if (route.request().method() === "POST") {
+        resendRequests++;
+        expect(route.request().postDataJSON()).toEqual({ type: "signup", email: "signup@example.com" });
+        expect(new URL(route.request().url()).searchParams.get("redirect_to")).toBe(`${E2E_BASE_URL}/register/confirm`);
+      }
+      await fulfillCorsJson(route, 200, {});
+    });
+    await page.clock.fastForward(60_001);
+    await page.getByRole("button", { name: "Bestätigungs-E-Mail erneut senden", exact: true }).click();
+    await expect.poll(() => resendRequests).toBe(1);
+    expect(forbiddenCalls).toBe(0);
+    await expect(page.getByRole("button", { name: "Konto erstellen" })).toBeDisabled();
+    await expect(page.getByRole("link", { name: "Mit meinem Konto fortfahren" })).toHaveAttribute("href", "/login?returnTo=%2Fworkspace%2Fsetup");
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("Signup-Rückkehr prüft bestätigte Identität und entfernt Tokens vor dem Provider-Aufruf", async ({ page }) => {
+    let cleanBeforeVerify = false;
+    let sessionCalls = 0;
+    await page.route("**/api/auth/session", async (route) => { sessionCalls++; await route.fulfill({ status: 200, body: '{"ok":true}', contentType: "application/json" }); });
+    await page.route("**/auth/v1/user", async (route) => {
+      if (route.request().method() === "GET") cleanBeforeVerify = !page.url().includes("access_token") && !page.url().includes("refresh_token");
+      await fulfillCorsJson(route, 200, { id: "synthetic-confirmed-user", email: "signup@example.com", email_confirmed_at: "2026-09-10T00:00:00Z" });
+    });
+    const fragment = "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer&expires_in=3600";
+    // Exercise the existing Supabase Site URL fallback as well as the new page.
+    await page.goto(`/${fragment}`);
+    await expect(page).toHaveURL(`${E2E_BASE_URL}/register/confirm`);
+    await expect(page.getByRole("heading", { name: "Deine E-Mail ist bestätigt" })).toBeVisible();
+    expect(cleanBeforeVerify).toBe(true);
+    expect(sessionCalls).toBe(0);
+    await expect(page.getByText("signup@example.com", { exact: true })).toBeVisible();
+    await page.route("**/workspace/setup", async (route) => route.fulfill({ status: 200, body: "Synthetic setup continuation" }));
+    await page.getByRole("button", { name: "Mit diesem Konto fortfahren" }).click();
+    await expect(page).toHaveURL(`${E2E_BASE_URL}/workspace/setup`);
+    expect(sessionCalls).toBe(1);
+  });
+
+  test("Unbestätigte oder fehlerhafte Signup-Links erzeugen keine Sitzung", async ({ page }) => {
+    let sessionCalls = 0;
+    await page.route("**/api/auth/session", async (route) => { sessionCalls++; await route.abort(); });
+    await page.route("**/auth/v1/user", (route) => fulfillCorsJson(route, 200, { id: "synthetic-unconfirmed", email: "signup@example.com" }));
+    const fragment = "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer&expires_in=3600";
+    for (const suffix of [fragment, `${fragment}&error_code=otp_expired`, fragment.replace("type=signup", "type=recovery")]) {
+      await page.goto(`/register/confirm?lang=en${suffix}`);
+      await expect(page.getByText(/This link is invalid, expired/u)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Continue with this account" })).toHaveCount(0);
+      await expect(page).toHaveURL(`${E2E_BASE_URL}/register/confirm?lang=en`);
+    }
+    expect(sessionCalls).toBe(0);
   });
 
   test("geschütztes Dashboard führt ohne Sitzung zum Login zurück", async ({ page }) => {

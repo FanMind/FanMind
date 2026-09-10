@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getBillingContinuationHref } from "@/lib/preActivation";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
+import { getUserAuthorizedWorkspaceDashboard } from "@/lib/workspaceAuthorization";
 import { isInternalDailyTestAdmissionReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import {
   isPaymentTermsActivationEnabled,
@@ -16,7 +17,6 @@ import {
 import {
   ensureUserWorkspace,
   getSupabaseServerUser,
-  getUserWorkspaceDashboard,
   isInternalDailyTestWorkspaceProvisioningReady,
   PUBLIC_DAILY_TEST_PLAN_UNAVAILABLE_ERROR,
   PUBLIC_DAILY_TEST_BILLING_UNAVAILABLE_ERROR,
@@ -99,7 +99,7 @@ export default async function WorkspaceSetupPage({
     user: data.user,
   });
 
-  const existingWorkspaceResult = await getUserWorkspaceDashboard(data.user);
+  const existingWorkspaceResult = await getUserAuthorizedWorkspaceDashboard(data.user);
   if (existingWorkspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") redirect("/login?demo_deleted=1");
   if (existingWorkspaceResult.workspace) redirect(getBillingContinuationHref(existingWorkspaceResult.workspace));
 
@@ -131,17 +131,17 @@ export default async function WorkspaceSetupPage({
                 ? "Confirm your package option"
                 : "Bestätige deine Paketoption"
               : locale === "en"
-                ? "Paid activation is currently paused"
-                : "Entgeltliche Aktivierung ist aktuell pausiert"}
+                ? "Your account is ready"
+                : "Dein Konto ist bereit"}
           </h1>
           <p>
             {activationEnabled
               ? locale === "en"
-                ? "For security, an account without a workspace is never provisioned from editable profile metadata. Choose an available package again and explicitly accept the current payment terms."
-                : "Aus Sicherheitsgründen wird ein Konto ohne Workspace niemals aus bearbeitbaren Profildaten automatisch provisioniert. Wähle eine verfügbare Paketoption erneut und akzeptiere die aktuellen Zahlungsbedingungen ausdrücklich."
+                ? "Choose your package and confirm the current payment terms. Payment starts only when you continue to checkout."
+                : "Wähle dein Paket und bestätige die aktuellen Zahlungsbedingungen. Die Zahlung startest du erst anschließend im Checkout."
               : locale === "en"
-                ? "The binding payment-terms version has not yet been released. No paid workspace or Stripe checkout can be created until that version is confirmed."
-                : "Die verbindliche Version der Zahlungsbedingungen ist noch nicht freigegeben. Bis zur Bestätigung wird weder ein entgeltlicher Workspace noch ein Stripe-Checkout erzeugt."}
+                ? "Your registration is complete. Paid package activation is still being prepared. Your account remains available, and you can return here after signing in. No subscription has started."
+                : "Deine Registrierung ist abgeschlossen. Die Aktivierung kostenpflichtiger Pakete wird noch vorbereitet. Dein Konto bleibt erhalten; du kannst nach der Anmeldung hier fortfahren. Es wurde kein Abo gestartet."}
           </p>
         </div>
 
@@ -207,7 +207,6 @@ export default async function WorkspaceSetupPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <strong>{PAYMENT_TERMS_ACTIVATION_BLOCK_CODE}</strong>
             <p>{locale === "en" ? "The free demo remains available." : "Die kostenlose Demo bleibt verfügbar."}</p>
             <Link className={styles.primaryButton} href={locale === "en" ? "/login?demo=1&lang=en" : "/login?demo=1"}>
               {locale === "en" ? "Start free demo" : "Kostenlose Demo starten"}
@@ -222,8 +221,8 @@ export default async function WorkspaceSetupPage({
                 ? "The Daily Test window is closed or no longer ready. No workspace was created. Choose Starter or try again only after the beta window is reopened."
                 : "Das Daily-Test-Fenster ist geschlossen oder nicht mehr bereit. Es wurde kein Workspace angelegt. Wähle Starter oder versuche es erst nach einer erneuten Beta-Freigabe."
               : locale === "en"
-                ? `Workspace provisioning is still blocked (${errorCode}).`
-                : `Die Workspace-Einrichtung ist weiterhin gesperrt (${errorCode}).`}
+                ? "Your workspace could not be set up. Please try again later."
+                : "Dein Workspace konnte noch nicht eingerichtet werden. Bitte versuche es später erneut."}
           </p>
         ) : null}
 

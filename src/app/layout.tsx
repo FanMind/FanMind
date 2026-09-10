@@ -1,3 +1,4 @@
+import { RegistrationCallbackRedirect } from "@/components/RegistrationCallbackRedirect";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
@@ -92,6 +93,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={getThemeClass(brightness)} style={{ "--fanmind-brightness-filter": String(brightness / 80), "--fanmind-dimmer": String(brightness), "--fanmind-dimmer-bg-lift": String(Math.max(0, (brightness - 80) / 40)) } as Record<string, string>} suppressHydrationWarning>
       <body>
+        <RegistrationCallbackRedirect />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var b=localStorage.getItem("fanmind_brightness");var l=localStorage.getItem("fanmind_locale");if(l==="de"||l==="en")document.documentElement.lang=l;var n=b==="standard"?80:b==="brighter"?100:b==="light"?120:parseInt(b||"80",10);if(!isFinite(n))n=80;n=Math.max(50,Math.min(120,n));document.documentElement.classList.remove("fanmind-theme-standard","fanmind-theme-brighter","fanmind-theme-light");document.documentElement.classList.add(n>=115?"fanmind-theme-light":n>=95?"fanmind-theme-brighter":"fanmind-theme-standard");document.documentElement.style.setProperty("--fanmind-dimmer",String(n));document.documentElement.style.setProperty("--fanmind-brightness-filter",String(n/80));document.documentElement.style.setProperty("--fanmind-dimmer-bg-lift",String(Math.max(0,(n-80)/40)));}catch(e){}`,

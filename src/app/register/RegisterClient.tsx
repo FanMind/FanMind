@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, use, useState } from "react";
+import { FormEvent, use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient, syncSupabaseSessionForServer } from "@/lib/supabase/client";
 import { isPlanId, resolvePlanId, type CommercialOption, type ProductiveCommercialOption } from "@/lib/plans";
-import { PAYMENT_TERMS_VERSION, getBillingProvider, getInitialBillingStatus, getPaymentCollectionMethod, requiresPaymentTermsAcceptance } from "@/lib/billing";
+import { buildRegistrationAccountMetadata, buildWebRegistrationRedirect, registrationErrorMessage } from "@/lib/webRegistrationPolicy.mjs";
 import type { PlanId } from "@/config/plans";
 import FeatureStatusLabel, { type FeatureStatusLabelVariant } from "@/components/FeatureStatusLabel";
 import { FanMindLogo } from "@/components/FanMindLogo";
@@ -24,6 +24,7 @@ type StarterOfferOptionId = "starter_paid_setup" | "starter_no_setup_commitment"
 type RegisterPageProps = {
   searchParams: Promise<{ lang?: string | string[]; plan?: string | string[]; option?: string | string[]; ref?: string | string[]; referral_code?: string | string[]; test_plan?: string | string[] }> | { lang?: string | string[]; plan?: string | string[]; option?: string | string[]; ref?: string | string[]; referral_code?: string | string[]; test_plan?: string | string[] };
   enablePublicDailyTestPlan: boolean;
+  paidActivationAvailable: boolean;
 };
 
 type PlanSelectionCopy = {
@@ -228,27 +229,7 @@ function getStarterOptionsCopy(language: FanMindLanguage): StarterOptionCopy[] {
   ];
 }
 
-const EMAIL_CONFIRMATION_WORKSPACE_MESSAGES: Record<FanMindLanguage, string> = {
-  de: "Registrierung angelegt. Bitte bestätige deine E-Mail-Adresse oder melde dich nach Freischaltung an.",
-  en: "Registration created. Please confirm your email address or sign in after activation.",
-};
-
-const DAILY_TEST_WINDOW_CLOSED_MESSAGES: Record<FanMindLanguage, string> = {
-  de: "Das Beta-Zeitfenster ist abgelaufen oder aktuell nicht verfügbar. Bitte aktualisiere die Seite oder wähle Starter.",
-  en: "The beta window has expired or is currently unavailable. Refresh the page or choose Starter.",
-};
-
-const DAILY_TEST_WORKSPACE_RECOVERY_MESSAGES: Record<FanMindLanguage, string> = {
-  de: "Dein Konto wurde erstellt, aber es wurde kein Daily-Test-Workspace angelegt. Bitte registriere dich nicht erneut, sondern kontaktiere FanMind für einen kontrollierten Wechsel zu Starter.",
-  en: "Your account was created, but no Daily Test workspace was provisioned. Do not register again; contact FanMind for a controlled switch to Starter.",
-};
-
-const WORKSPACE_RECOVERY_MESSAGES: Record<FanMindLanguage, string> = {
-  de: "Dein Konto wurde erstellt, aber der Workspace konnte noch nicht sicher eingerichtet werden. Bitte registriere dich nicht erneut; versuche es später erneut oder kontaktiere FanMind.",
-  en: "Your account was created, but the workspace could not yet be provisioned securely. Do not register again; retry later or contact FanMind.",
-};
-
-export default function RegisterClient({ searchParams, enablePublicDailyTestPlan }: RegisterPageProps) {
+export default function RegisterClient({ searchParams, enablePublicDailyTestPlan, paidActivationAvailable }: RegisterPageProps) {
   const params = searchParams instanceof Promise ? use(searchParams) : searchParams;
   const language = getFanMindLanguage(params.lang);
   const rawPlan = firstParamValue(params.plan);
@@ -272,8 +253,8 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
       testPlan: requestedTestPlan,
     });
   const copy = fanmindCopy[language].register;
-  const loginHref = localizedPath("/login", language);
-  const billingStartHref = "/billing/start";
+  const setupHref = language === "en" ? "/workspace/setup?lang=en" : "/workspace/setup";
+  const loginHref = `${localizedPath("/login", language)}${language === "en" ? "&" : "?"}returnTo=${encodeURIComponent(setupHref)}`;
   const paymentTermsHref = language === "en" ? "/zahlungsbedingungen?lang=en" : "/zahlungsbedingungen";
   const starterOptionsCopy = getStarterOptionsCopy(language);
   const [starterOption, setStarterOption] =
@@ -289,153 +270,81 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [resendReady, setResendReady] = useState(false);
+  useEffect(() => {
+    if (!pendingEmail || resendReady) return;
+    const timer = window.setTimeout(() => setResendReady(true), 60_000);
+    return () => window.clearTimeout(timer);
+  }, [pendingEmail, resendReady]);
   const router = useRouter();
   const commercialOption = isDailyTestPlanSelected ? "internal_daily_test" : planCommercialOption(selectedPlanId, starterOption);
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
+    if (isSubmitting || success) return;
     if (!isProductiveRegistration || (selectedPlanId !== "pilot" && selectedPlanId !== "starter")) {
-      setError(language === "en" ? "This package is currently a preview. Please start with Starter or request a demo." : "Dieses Paket ist aktuell eine Vorschau. Bitte starte mit Starter oder frage eine Demo an.");
+      setError(language === "en" ? "Please select Starter to create an account." : "Bitte wähle Starter, um ein Konto anzulegen.");
       return;
     }
-
-    setSuccess(false);
-    setAwaitingEmailConfirmation(false);
     setError(null);
     setIsSubmitting(true);
-
     const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const organization = String(formData.get("organisation") ?? "").trim();
-    const role = String(formData.get("rolle") ?? "").trim();
-    const message = String(formData.get("nachricht") ?? "").trim();
     const commercialOptionValue = String(formData.get("commercialOption") ?? starterOption);
-    const selectedCommercialOption: ProductiveCommercialOption | StarterOfferOptionId = isDailyTestPlanSelected && commercialOptionValue === "internal_daily_test"
+    const selectedCommercialOption: ProductiveCommercialOption | StarterOfferOptionId = isDailyTestPlanSelected
       ? "internal_daily_test"
-      : selectedPlanId === "starter" && (commercialOptionValue === "starter_paid_setup" || commercialOptionValue === "starter_no_setup_commitment")
-        ? commercialOptionValue
-        : "pilot_only";
-    const paymentTermsAccepted = formData.get("paymentTermsAccepted") === "on";
-    const referralCode = String(formData.get("referralCode") ?? referralCodeFromUrl).trim();
-
-    if (requiresPaymentTermsAcceptance(selectedPlanId, selectedCommercialOption) && !paymentTermsAccepted) {
-      setError(language === "en" ? "Please accept the payment terms before continuing." : "Bitte akzeptiere die Zahlungsbedingungen, bevor du fortfährst.");
-      setIsSubmitting(false);
-      return;
-    }
-
+      : normalizeStarterOfferOption(commercialOptionValue);
     try {
-      if (selectedCommercialOption === "internal_daily_test") {
-        let windowResponse: Response;
-        let windowPayload: { ok?: boolean } | null;
-        try {
-          windowResponse = await fetch("/api/register/daily-test-window", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ commercialOption: "internal_daily_test" }),
-            cache: "no-store",
-          });
-          windowPayload = await windowResponse.json().catch(() => null) as
-            | { ok?: boolean }
-            | null;
-        } catch {
-          setError(DAILY_TEST_WINDOW_CLOSED_MESSAGES[language]);
-          return;
-        }
-
-        if (!windowResponse.ok || windowPayload?.ok !== true) {
-          setError(DAILY_TEST_WINDOW_CLOSED_MESSAGES[language]);
-          return;
-        }
-      }
-
       const supabase = createSupabaseBrowserClient();
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: name || undefined,
-            display_name: name || undefined,
-            organization: organization || undefined,
-            role: role || undefined,
-            message: message || undefined,
-            fanmind_locale: language,
-            plan_id: selectedPlanId,
-            commercial_option: selectedCommercialOption,
-            payment_terms_version: PAYMENT_TERMS_VERSION,
-            payment_terms_accepted_at: paymentTermsAccepted ? new Date().toISOString() : undefined,
-            payment_terms_accepted: paymentTermsAccepted || undefined,
-            billing_provider: getBillingProvider(),
-            payment_collection_method: getPaymentCollectionMethod(selectedPlanId, selectedCommercialOption),
-            billing_status: getInitialBillingStatus(selectedPlanId, selectedCommercialOption),
-            referral_code: referralCode || undefined,
-          },
+          emailRedirectTo: buildWebRegistrationRedirect(window.location.origin, language),
+          data: buildRegistrationAccountMetadata({
+            name: formData.get("name"), organization: formData.get("organisation"),
+            role: formData.get("rolle"), message: formData.get("nachricht"),
+            language, planId: selectedPlanId, commercialOption: selectedCommercialOption,
+            referralCode: String(formData.get("referralCode") ?? referralCodeFromUrl),
+          }),
         },
       });
-
-      if (!authError && data.session?.access_token) {
-        await syncSupabaseSessionForServer(data.session);
-      }
-
-      if (!authError && data.session?.user) {
-        const workspaceResponse = await fetch("/api/register/workspace", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            planId: selectedPlanId,
-            commercialOption: selectedCommercialOption,
-            paymentTermsAccepted,
-          }),
-          cache: "no-store",
-        });
-        const workspacePayload = await workspaceResponse.json().catch(() => null) as
-          | { ok?: boolean; code?: string }
-          | null;
-
-        if (!workspaceResponse.ok || workspacePayload?.ok !== true) {
-          setError(
-            workspacePayload?.code === "daily_test_window_closed"
-              ? DAILY_TEST_WORKSPACE_RECOVERY_MESSAGES[language]
-              : WORKSPACE_RECOVERY_MESSAGES[language],
-          );
-          return;
-        }
-
-        if (referralCode) {
-          const referralResponse = await fetch("/api/referrals/attribution", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ referralCode }),
-          });
-          if (!referralResponse.ok) {
-            const referralPayload = await referralResponse.json().catch(() => ({}));
-            setError(typeof referralPayload.error === "string" ? referralPayload.error : (language === "en" ? "Referral code could not be saved." : "Referral-Code konnte nicht gespeichert werden."));
-            return;
-          }
-        }
-      }
-
-      if (authError) {
-        setError(authError.message);
-        return;
-      }
-
+      if (authError) { setError(registrationErrorMessage(authError, language)); return; }
+      if (!data.user) { setError(registrationErrorMessage(null, language)); return; }
+      // Supabase deliberately obfuscates an already registered account. Do not
+      // claim a newly created account until a real authenticated session exists.
       setSuccess(true);
       setAwaitingEmailConfirmation(!data.session);
-
-      if (data.session?.user) {
-        router.push("/billing/start");
+      if (!data.session) { setPendingEmail(email); return; }
+      try {
+        await syncSupabaseSessionForServer(data.session);
+        router.push(setupHref);
         router.refresh();
+      } catch {
+        setError(language === "en"
+          ? "Your account is ready. Please sign in to continue. Do not register again."
+          : "Dein Konto ist bereit. Bitte melde dich an, um fortzufahren. Registriere dich nicht erneut.");
       }
     } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Unbekannter Supabase-Fehler.");
-    } finally {
-      setIsSubmitting(false);
-    }
+      setError(registrationErrorMessage(authError, language));
+    } finally { setIsSubmitting(false); }
+  }
+
+  async function resendConfirmation() {
+    if (!pendingEmail || !resendReady || isSubmitting) return;
+    setResendReady(false);
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const result = await createSupabaseBrowserClient().auth.resendSignup({
+        email: pendingEmail,
+        emailRedirectTo: buildWebRegistrationRedirect(window.location.origin, language),
+      });
+      if (result.error) setError(registrationErrorMessage(result.error, language));
+    } catch (error) { setError(registrationErrorMessage(error, language)); }
+    finally { setIsSubmitting(false); }
   }
 
   return (
@@ -460,9 +369,9 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
         <div className={styles.authGrid}>
           <aside className={styles.visualPanel} aria-label={language === "en" ? "Package logic" : "Paketlogik"}>
             <div className={styles.planIntro}>
-              <p className={styles.eyebrow}>{language === "en" ? "Setup first" : "Setup zuerst"}</p>
-              <h1>{language === "en" ? "Choose your FanMind entry" : "Wähle deinen FanMind-Einstieg"}</h1>
-              <p>{language === "en" ? "Compact overview for Starter and roadmap." : "Kompakte Paketübersicht für Starter und Roadmap."}</p>
+              <p className={styles.eyebrow}>{language === "en" ? "Your FanMind account" : "Dein FanMind-Konto"}</p>
+              <h1>{language === "en" ? "Choose your Starter option" : "Wähle deine Starter-Option"}</h1>
+              <p>{language === "en" ? "Your choice is saved as a preference. You confirm the package after signing in." : "Deine Auswahl wird vorgemerkt. Du bestätigst das Paket nach der Anmeldung."}</p>
             </div>
 
             {hasInvalidPlan && (
@@ -510,10 +419,13 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
           {isProductiveRegistration ? (
             <form className={styles.formCard} onSubmit={handleRegister}>
               <div className={styles.formHeader}>
-                <p className={styles.eyebrow}>{isDailyTestPlanSelected ? "Beta-Test" : "Starter-Paket"}</p>
-                <h1>{isDailyTestPlanSelected ? "Beta-Test · 1 €/Tag" : (language === "en" ? "Start Starter" : "Starter starten")}</h1>
-                <p>{isDailyTestPlanSelected ? "Interner/Beta-Testplan, täglich kündbar, 1 € pro Tag." : (language === "en" ? "Choose your Starter option. No payment is triggered here." : "Wähle deine Starter-Variante. Hier wird noch keine Zahlung ausgelöst.")}</p>
+                <p className={styles.eyebrow}>{language === "en" ? "1 · Create account" : "1 · Konto anlegen"}</p>
+                <h1>{language === "en" ? "Create your FanMind account" : "Erstelle dein FanMind-Konto"}</h1>
+                <p>{language === "en" ? "Create your account for free and confirm your email address. You choose and activate your paid package separately after signing in." : "Lege dein Konto kostenlos an und bestätige deine E-Mail-Adresse. Dein kostenpflichtiges Paket bestätigst und aktivierst du anschließend separat."}</p>
               </div>
+              {!paidActivationAvailable && <p className={styles.notice}>
+                {language === "en" ? "Account registration is available. Paid package activation is still being prepared; your account does not start a subscription." : "Du kannst dich bereits registrieren. Die Aktivierung kostenpflichtiger Pakete wird noch vorbereitet; dein Konto startet kein Abo."}
+              </p>}
 
               {selectedPlanId === "starter" && (
                 <fieldset className={styles.commercialOptions}>
@@ -551,7 +463,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                   <span>{copy.name}</span>
                   <div className={styles.inputWrap}>
                     <span aria-hidden="true">♙</span>
-                    <input type="text" name="name" placeholder={language === "en" ? "Your name" : "Dein Name"} autoComplete="name" />
+                    <input type="text" name="name" maxLength={120} placeholder={language === "en" ? "Your name" : "Dein Name"} autoComplete="name" />
                   </div>
                 </label>
 
@@ -559,7 +471,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                   <span>{copy.email}</span>
                   <div className={styles.inputWrap}>
                     <span aria-hidden="true">✉</span>
-                    <input type="email" name="email" placeholder={language === "en" ? "Your email address" : "Deine E-Mail-Adresse"} autoComplete="email" required />
+                    <input type="email" name="email" maxLength={254} placeholder={language === "en" ? "Your email address" : "Deine E-Mail-Adresse"} autoComplete="email" required />
                   </div>
                 </label>
               </div>
@@ -568,7 +480,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 <span>{copy.password}</span>
                 <div className={styles.inputWrap}>
                   <span aria-hidden="true">▣</span>
-                  <input type={showPassword ? "text" : "password"} name="password" placeholder={language === "en" ? "Choose a secure password" : "Wähle ein sicheres Passwort"} autoComplete="new-password" minLength={6} required />
+                  <input type={showPassword ? "text" : "password"} name="password" maxLength={128} placeholder={language === "en" ? "Choose a secure password" : "Wähle ein sicheres Passwort"} autoComplete="new-password" minLength={8} required />
                   <button
                     className={styles.passwordToggle}
                     type="button"
@@ -585,7 +497,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 <span>{copy.organization}</span>
                 <div className={styles.inputWrap}>
                   <span aria-hidden="true">▤</span>
-                  <input type="text" name="organisation" placeholder={language === "en" ? "e.g. Team Arena, club or creator name" : "z. B. Team Arena, Club oder Creator-Name"} autoComplete="organization" required />
+                  <input type="text" name="organisation" maxLength={160} placeholder={language === "en" ? "e.g. Team Arena, club or creator name" : "z. B. Team Arena, Club oder Creator-Name"} autoComplete="organization" required />
                 </div>
               </label>
 
@@ -616,28 +528,25 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 ) : null}
                 <div className={styles.inputWrap}>
                   <span aria-hidden="true">%</span>
-                  <input type="text" name="referralCode" defaultValue={referralCodeFromUrl} placeholder={language === "en" ? "Optional, e.g. FM-ABC123" : "Optional, z. B. FM-ABC123"} autoComplete="off" />
+                  <input type="text" name="referralCode" maxLength={80} defaultValue={referralCodeFromUrl} placeholder={language === "en" ? "Optional, e.g. FM-ABC123" : "Optional, z. B. FM-ABC123"} autoComplete="off" />
                 </div>
               </label>
 
               <label className={styles.field}>
                 <span>{copy.message}</span>
                 <div className={styles.textareaWrap}>
-                  <textarea name="nachricht" placeholder={language === "en" ? "What would you like to improve first with FanMind?" : "Was möchtest du mit FanMind zuerst verbessern?"} rows={1} />
+                  <textarea name="nachricht" maxLength={2000} placeholder={language === "en" ? "What would you like to improve first with FanMind?" : "Was möchtest du mit FanMind zuerst verbessern?"} rows={1} />
                 </div>
               </label>
 
-              <label className={styles.termsCheckbox}>
-                <input type="checkbox" name="paymentTermsAccepted" required={requiresPaymentTermsAcceptance(selectedPlanId, commercialOption)} />
-                <span>
-                  {language === "en"
-                    ? "I accept the payment terms and understand that no payment is collected here."
-                    : "Ich akzeptiere die Zahlungsbedingungen. Mir ist bewusst, dass hier noch keine Zahlung ausgelöst wird."} {" "}
-                  <a href={paymentTermsHref} target="_blank" rel="noreferrer">{language === "en" ? "Payment terms" : "Zahlungsbedingungen"}</a>
-                </span>
-              </label>
+              <p className={styles.notice}>
+                {language === "en" ? "Information about how we handle your account data:" : "Informationen zum Umgang mit deinen Kontodaten:"}{" "}
+                <a href={language === "en" ? "/datenschutz?lang=en" : "/datenschutz"} target="_blank" rel="noreferrer">
+                  {language === "en" ? "Privacy policy" : "Datenschutzhinweise"}
+                </a>
+              </p>
 
-              <button className={styles.primaryButton} type="submit" disabled={isSubmitting}>
+              <button className={styles.primaryButton} type="submit" disabled={isSubmitting || success}>
                 {isSubmitting ? (language === "en" ? "Creating account…" : "Konto wird erstellt…") : copy.submit} <span>→</span>
               </button>
 
@@ -647,17 +556,21 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 </p>
               )}
 
-              {success && (
-                <p className={styles.success} role="status">
-                  {copy.success} {awaitingEmailConfirmation
-                    ? (EMAIL_CONFIRMATION_WORKSPACE_MESSAGES[language])
-                    : isDailyTestPlanSelected
-                      ? (language === "en" ? "Your beta test access is prepared. Open payment to activate the daily test subscription." : "Dein Beta-Testzugang ist vorbereitet. Öffne die Zahlung, um das tägliche Testabo zu aktivieren.")
-                      : (language === "en" ? "Profile, workspace and Starter option are prepared. You will be forwarded to onboarding." : "Profil, Workspace und Starter-Option sind vorbereitet. Dein Zugang wurde erstellt. Starte jetzt die Zahlung, um FanMind freizuschalten.")} <a href={billingStartHref}>{language === "en" ? "Open payment" : "Zahlung öffnen"}</a>
-                </p>
-              )}
-
-              <p className={styles.notice}>{language === "en" ? "No payment on this page. No checkout, no debit, no subscription activation." : "Keine Zahlung auf dieser Seite. Kein Checkout, keine Abbuchung, keine Subscription-Aktivierung."}</p>
+              {success && <div className={styles.success} role="status">
+                {awaitingEmailConfirmation
+                  ? (language === "en"
+                    ? "Please check your inbox and spam folder. Open the confirmation link, then continue with your account. If this email already has an account, please sign in or reset your password."
+                    : "Bitte prüfe dein Postfach und den Spam-Ordner. Öffne den Bestätigungslink und fahre anschließend mit deinem Konto fort. Falls für diese E-Mail bereits ein Konto besteht, melde dich an oder setze dein Passwort zurück.")
+                  : (language === "en" ? "Your account is ready. Continue with setup." : "Dein Konto ist bereit. Weiter zur Einrichtung.")}
+                <p><a href={awaitingEmailConfirmation ? loginHref : setupHref}>{language === "en" ? "Continue with my account" : "Mit meinem Konto fortfahren"}</a></p>
+                {awaitingEmailConfirmation && <button type="button" className={styles.secondaryButton}
+                  disabled={!resendReady || isSubmitting} onClick={resendConfirmation}>
+                  {resendReady ? (language === "en" ? "Resend confirmation email" : "Bestätigungs-E-Mail erneut senden")
+                    : (language === "en" ? "Resend available after 60 seconds" : "Erneut senden nach 60 Sekunden möglich")}
+                </button>}
+                <p><a href={localizedPath("/forgot-password", language)}>{language === "en" ? "Forgot password?" : "Passwort vergessen?"}</a></p>
+              </div>}
+              <p className={styles.notice}>{language === "en" ? "Registration is free. No payment details are required. The package choice and payment terms are confirmed separately before paid activation." : "Die Registrierung ist kostenlos. Du brauchst keine Zahlungsdaten. Paketwahl und Zahlungsbedingungen bestätigst du separat vor der kostenpflichtigen Aktivierung."}</p>
 
               <div className={styles.footerLinks}>
                 <a href={loginHref}>{copy.loginPrompt} {copy.loginLink}</a>

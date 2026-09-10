@@ -647,7 +647,8 @@ test("registration and login provisioning are server-owned and only bridge an ex
   ]);
 
   assert.match(client, /rpc\/\$\{functionName\}/u);
-  assert.match(register, /await syncSupabaseSessionForServer\(data\.session\)[\s\S]*fetch\("\/api\/register\/workspace"/u);
+  assert.match(register, /await syncSupabaseSessionForServer\(data\.session\)[\s\S]*router.push\(setupHref\)/u);
+  assert.doesNotMatch(register, /payment_terms_accepted|fetch\("\/api\/register\/workspace"/u);
   assert.doesNotMatch(register, /supabase\.rpc|\.from\("workspaces"\)|\.from\("workspace_members"\)/u);
   assert.match(
     registerWorkspaceRoute,
