@@ -1,5 +1,15 @@
 # FanMind Evidence and Acceptance
 
+## FM-EV-040 — approved catalog, previous registration publication and Production hardening
+- Date: 2026-09-10
+- Status: COUNTERCHECKED
+- Related: FM-BILL-002, FM-REG-002, FM-SEC-001
+- PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance.
+- Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- Independent reads: existing Stripe Live EUR exclusive prices 99000/setup, 31200/month and 100/day; Tax registrations empty with has_more=false. Production provisioning RPC counts zero; Workspace browser INSERT contract not applied.
+- Boundary: immutable receipts establish exact actions; provider configuration is a dated mutable observation to revalidate before later activation. No whole-gate, tax/legal or real customer/payment acceptance inferred.
+- Detail: docs/operations/RELEASE_ACCEPTANCE_20260910.md and RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910.
+
 Implementation status and acceptance status are deliberately separate.
 
 ## Status model

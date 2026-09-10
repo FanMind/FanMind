@@ -4,7 +4,7 @@ Task FM-REG-002 / FM-CR-026, 10 September 2026.
 
 ## Implemented account flow
 
-1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. The retired Pilot, permanent Daily catalog entry and Growth/Agency activation remain unavailable.
+1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. FM-DEC-014 adds the permanent public Daily choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
 2. Signup submits only bounded personal profile data and non-authoritative package/referral preferences. No `plan_id`, `commercial_option`, billing state, payment-terms version or acceptance timestamp is written. It creates no Workspace and invokes no Stripe operation.
 3. The custom Supabase Auth client supplies an explicit same-environment `emailRedirectTo`. Success explains email confirmation, existing-account login and recovery without claiming that an obfuscated existing-account response represents a new account. Resend uses the existing provider signup-resend endpoint with a 60-second UI cooldown; provider rate limits remain authoritative.
 4. `/register/confirm` requires one bounded `type=signup` implicit session, rejects errors/mixed/query/duplicate credentials, scrubs callback material before async work and checks the confirmed email through authenticated Supabase `/user`. It displays the verified address; the user explicitly continues before cookies are synchronized. Invalid, expired or used links offer a direct confirmation resend form, login and password recovery.
@@ -23,7 +23,7 @@ Read-only Auth readiness on 10 September 2026 also confirms that the FanMind Pro
 
 ## Remaining full-activation requirements
 
-- Payment terms: the code/SQL currently records `2026-06-v1`, while the public document says July 2026 and its changes have no accepted version decision. Confirm the exact reviewed current document/version. A new version requires the matching separately reviewed controlled function migration; never relabel old acceptances.
+- Payment terms: the code/SQL currently records `2026-06-v1`, while the public document now includes the owner-approved third offer dated 10 September 2026 and its changes have no accepted version decision. Confirm the exact reviewed current document/version. A new version requires the matching separately reviewed controlled function migration; never relabel old acceptances.
 - Tax: read-only Stripe Live observation on 2026-09-10 returned zero Tax registrations (`has_more=false`). Settings were active, which is insufficient. The actual approved tax facts, applicable registration and account evidence must be supplied before the existing Tax gate can pass. Do not invent a UID or create a tax registration from an assumption.
 - Billing: preserve both existing ledger/canonical runtime controls and the remaining Production acceptance/activation requirements. Publishing this Web change does not apply their SQL or enable canonical billing/Plus/Ultra.
 - Real account acceptance: verify the received confirmation email, final callback, existing-account and expired-link recovery with an explicitly approved controlled recipient. Check the exact Production/Staging redirect configuration as part of that proof. Synthetic tests are code evidence only.

@@ -1,8 +1,29 @@
 ## RECEIPT-FM-STATUS-001-20260910
 
+## RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910
+- Task: FM-SEC-001
+- Risk: R4
+- Status: PRODUCTION_CONFIRMED
+- Authorization: current owner full-release/security request, FM-AUTH-THREE-OFFERS-PUBLISH-20260910; action-specific protected workflow confirmation and exact live commit.
+- Work lock: LOCK-FM-SEC-001-PRODUCTION-HARDENING-20260910 RELEASED.
+- Preflight: current Production release and offline runner/checksum passed; read-only run 34495654500 returned expected hardening_not_ready with successful audits before/after.
+- Controlled SQL: supabase/controlled/20260806203023_harden_trigger_function_privileges.sql, SHA-256 6eb928fe7df73072ce03d6e78dfca7feb5c77c950fbdd70ffe1169e4dabf1132.
+- Result: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- Negative boundary/recovery: only reviewed transactional function search_path/EXECUTE hardening ran; no customer rows, artificial RLS policies, trigger removals, grants, Auth settings, credentials or Stripe objects changed. Failed SQL would roll back atomically; successful hardening is retained.
+- Falsification/countercheck: a failing independent post-Verify or fresh advisor showing the old trigger warnings would invalidate completion. Neither occurred. Fourteen service-only RLS INFO findings remain intentional; leaked-password protection still reports disabled.
+- Remaining: Auth, Workspace server-owned contract rollout, Meta/provider and overall handoff gates remain separate. No broad Security/Meta completion claim.
+
+## RECEIPT-FM-BILL-002-20260910
+- Status: IN_PROGRESS
+- Risk: R4
+- Authorization: FM-AUTH-THREE-OFFERS-PUBLISH-20260910
+- Baseline: main/Production 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; #1095 deploy 34493661010, audit 34493830507 and readiness 34493830467 all succeeded.
+- Fresh observations: existing Live EUR 990/EUR 312/month/EUR 1/day prices, zero Tax registrations, Production trigger/Auth warnings still present.
+- Scope/remaining/result: see FM-BILL-002; current source work has not yet been published.
+
 ## FM-RC-REG-002-20260910
 - Task: FM-REG-002 / FM-CR-026
-- Status: VERIFIED
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Baseline: 52b2b888d7b54b6b52a3dc2a6d38e87ce4dc3638; deployment 34488756368, audit 34488915216 and readiness 34488915387 green.
 - Action: implemented account-only signup with bounded preferences, explicit same-environment email redirect/resend, URL scrubbing, confirmed provider identity and deliberate session continuation; reused protected Workspace setup, including existing members. Existing activation gates and SQL are unchanged.
@@ -12,6 +33,8 @@
 - Final publication proof: the enclosing PR #1095 must record merge SHA, exact release/audit/readiness and public entry verification after successful final-head checks. Until then source VERIFIED is not a Production or full paid-onboarding completion claim.
 
 - Fresh read-only Production Auth settings: signup enabled, email enabled and email confirmation required; no configuration was changed and no message was sent.
+
+- Publication reconciliation: PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance. Earlier pending publication instructions are superseded.
 
 ## RECEIPT-CANONICAL-BILLING-20260906
 

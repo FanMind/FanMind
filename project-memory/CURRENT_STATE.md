@@ -1,5 +1,14 @@
 # FanMind Current State
 
+## Three approved offers and verified completion evidence — 2026-09-10
+- Owner decision FM-DEC-014 / FM-CR-027 authorizes three permanent public offers and publication: Starter Flex 990 EUR setup + 312 EUR/month; Starter 12 Monate 0 EUR setup + 312 EUR/month with the existing 12-month term; Daily 0 EUR setup + 1 EUR/day. Daily reuses the existing price/engine and supersedes only the former 24-hour public beta restriction.
+- FM-BILL-002: catalog, DE/EN account selection, terms presentation and existing protected setup/checkout compatibility are implemented locally; 1,445 tests pass, one is skipped, build/type/lint and full truth checks pass. Final browser/remote review and normal publication remain next. This is not paid runtime activation.
+- PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance.
+- Security trigger subtask is PRODUCTION_CONFIRMED: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- Fresh Production read: both Starter and Daily provisioning RPCs are absent and direct browser Workspace INSERT privileges have not been contracted. Live Stripe has zero Tax registrations. Current consent version remains unresolved. These are rollout/tax/contract dependencies, not missing permission to publish the three prices.
+- Four-gate explanation and exact next steps: docs/operations/RELEASE_ACCEPTANCE_20260910.md. Accepted Staging and DB_POSTCHECKED are preserved; no duplicate Restore/build/price creation or automatic payment.
+- Continue requested publication first. Actual recipient, disposable Restore target/cost, Auth provider access and authoritative tax facts remain explicit. Creator stays Phase 7b after accepted Sales Handoff and before further Phase 8; sales_ready remains false.
+
 ## Registration is the current owner priority — 2026-09-10
 - FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication remain in progress.
 - The free login account is separated from existing protected paid Workspace/Checkout activation. No terms approval, migration, tax registration, payment or third-party email send is inferred.

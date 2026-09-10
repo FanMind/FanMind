@@ -20,6 +20,15 @@ const combinedAiPriceGerman = `${plus.name} +${germanMonthlyPrice(plus.monthlyAd
 const combinedAiPriceEnglish = `${aiName(plus.name)} +${englishMonthlyPrice(plus.monthlyAddOnCents)} · ${aiName(ultra.name)} +${englishMonthlyPrice(ultra.monthlyAddOnCents)}`;
 
 export const landingEnglishCopySupplement: Record<string, string> = {
+  "Daily": "Daily plan",
+  "Täglich kündbar": "Cancel daily",
+  "Für einen flexiblen Einstieg mit täglicher Abrechnung.": "For a flexible start with daily billing.",
+  "0 € Setup + 1 €/Tag": "€0 setup + €1/day",
+  "tägliche Abrechnung · täglich kündbar": "daily billing · cancel daily",
+  "Registrierung offen": "Registration open",
+  "Keine Einrichtungsgebühr": "No setup fee",
+  "Kein Referral-Rabatt": "No referral discount",
+  "Zahlung separat nach Kontoerstellung": "Payment separately after account creation",
   NEU: "NEW",
   "Kontrolle & Sicherheit": "Control & security",
   "ohne Versandautomatik.": "without automated sending.",
@@ -98,6 +107,7 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Technische Nachweise vorhanden · Gesamtabnahme offen": "Technical evidence available · full acceptance pending",
   "Security- und Meta-Abnahme": "Security and Meta acceptance",
   "Externe Nachweise offen": "External evidence pending",
+  "Datenbank gehärtet · Auth und Meta offen": "Database hardened · Auth and Meta pending",
   "Operations-Grundlage": "Operations foundation",
   "Produktiv aktiv": "Active in production",
   "Produktions- und Testdaten trennen": "Separate production and test data",

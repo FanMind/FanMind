@@ -1,8 +1,32 @@
 # Work Locks
 
+## LOCK-FM-SEC-001-PRODUCTION-HARDENING-20260910
+- Task: FM-SEC-001
+- Status: RELEASED
+- Risk: R4
+- Holder: Codex
+- Authorization: current owner request to fully release and finish Security, FM-AUTH-THREE-OFFERS-PUBLISH-20260910.
+- Exact target: existing FanMind Production on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed.
+- Scope: once-only existing checksum-pinned trigger hardening Apply, followed by read-only Verify and advisors. No customer rows, RLS policies, new credentials or new grants.
+- Preflight: read-only workflow 34495654500 has green before/after Production audits and expected hardening_not_ready on the existing four-function legacy state; offline checksum check passed.
+- Recovery: reviewed SQL is transactional; an incomplete apply rolls back. Successful hardening is retained unless a separately reviewed recovery requires a change.
+
+
+- Completed/released: 2026-09-10. Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. No other database or Auth action is included.
+
+## LOCK-FM-BILL-002-20260910
+- Task: FM-BILL-002 / FM-CR-027
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Acquired: 2026-09-10
+- Scope: owner-requested three-offer publication and current acceptance reconciliation on exact baseline 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed.
+- Evidence plan: local commercial/negative tests, exact-head CI, reviewed PR, exact release plus external read-only counterchecks.
+- Recovery: bounded source revert; no re-created prices, automatic charge, destructive cleanup or retry of rejected Restore access changes.
+
 ## LOCK-FM-REG-002-20260910
 - Task: FM-REG-002 / FM-CR-026
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Acquired: 2026-09-10
@@ -10,6 +34,8 @@
 - Evidence plan: source/behavior tests, negative callback/commercial boundaries, CI, exact release and public DE/EN browser inspection.
 - Recovery: unchanged isolated-release rollback and source revert; no DB migration, terms-evidence rewrite or Stripe mutation.
 - Verification: PR #1095 source is VERIFIED (including 44 browser cases); retain this lock through the final follow-up checks, review and normal Production publication. Release/remaining external scope is recorded in the enclosing PR.
+
+- Released: PR #1095 is PRODUCTION_CONFIRMED at 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed; deployment 34493661010, independent audit 34493830507 and public readiness 34493830467 succeeded. Its final PR receipt releases the lock. This closes the account-only Web publication, not genuine email delivery or paid Workspace/Checkout acceptance.
 
 ## LOCK-FM-STATUS-001-20260910
 - Task: FM-STATUS-001

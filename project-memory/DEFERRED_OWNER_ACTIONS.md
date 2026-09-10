@@ -58,10 +58,12 @@ Updated: 2026-09-07 Europe/Vienna
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
 - Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
 - Related task: `FM-SEC-001`.
-- Status: OWNER_ACTION_REQUIRED.
+- Status: RESOLVED.
 - Proven pre-state: protected read-only run `32997946812`, job `98271985321`, on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; both full Production audits passed and the fresh advisor set remained unchanged.
 - Deferred action: separately authorize exactly one protected `apply` through `trigger-function-hardening-production-control.yml`, bound to the then-current reviewed and deployed commit, checksum-pinned controlled SQL, full preflight/postflight and fresh advisor re-scan.
 - Safety: this read-only session does not authorize Apply. No unrelated SQL, Auth, RLS, provider, Restore or Supabase-Staging mutation may be bundled into the action.
+
+- Completion 2026-09-10: current owner release/security authorization FM-AUTH-THREE-OFFERS-PUBLISH-20260910; Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. Earlier deferred-apply instructions are historical. Do not repeat the successful Apply.
 
 ## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
 - Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.

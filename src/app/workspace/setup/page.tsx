@@ -9,6 +9,7 @@ import {
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import {
   buildTrustedProvisioningUser,
@@ -106,7 +107,7 @@ export default async function WorkspaceSetupPage({
   const activationEnabled = isPaymentTermsActivationEnabled();
   const dailyTestAvailable = activationEnabled
     ? isInternalDailyTestAdmissionReady({
-        windowEnabled: await getPublicDailyTestPlanEnabled(),
+        windowEnabled: PUBLIC_DAILY_PLAN_ENABLED || await getPublicDailyTestPlanEnabled(),
         workspaceProvisioningReady:
           await isInternalDailyTestWorkspaceProvisioningReady(),
         stripeConfig: getStripeConfigStatus(),
@@ -199,8 +200,8 @@ export default async function WorkspaceSetupPage({
                 </p>
                 <button className={styles.primaryButton} type="submit">
                   {locale === "en"
-                    ? "Daily Test · €1/day"
-                    : "Daily-Test · 1 €/Tag"}
+                    ? "Daily · €0 setup + €1/day"
+                    : "Daily · 0 € Setup + 1 €/Tag"}
                 </button>
               </form>
             ) : null}
@@ -218,8 +219,8 @@ export default async function WorkspaceSetupPage({
           <p className={styles.error} role="alert">
             {errorCode === "daily_test_window_closed"
               ? locale === "en"
-                ? "The Daily Test window is closed or no longer ready. No workspace was created. Choose Starter or try again only after the beta window is reopened."
-                : "Das Daily-Test-Fenster ist geschlossen oder nicht mehr bereit. Es wurde kein Workspace angelegt. Wähle Starter oder versuche es erst nach einer erneuten Beta-Freigabe."
+                ? "Daily activation is not ready yet. No workspace was created. Please try again after activation becomes available."
+                : "Die Daily-Aktivierung ist noch nicht bereit. Es wurde kein Workspace angelegt. Bitte versuche es nach der Freischaltung erneut."
               : locale === "en"
                 ? "Your workspace could not be set up. Please try again later."
                 : "Dein Workspace konnte noch nicht eingerichtet werden. Bitte versuche es später erneut."}

@@ -11,7 +11,7 @@ import {
   isInternalDailyTestStripeReady,
 } from "../src/lib/internalDailyTestReadinessPolicy.mjs";
 
-test("public daily test access is a bounded 24-hour window, never a permanent catalog offer", () => {
+test("legacy beta flag remains a bounded 24-hour window independent of the public Daily offer", () => {
   const now = new Date("2026-08-08T18:00:00.000Z");
   const settings = createTemporaryPublicDailyTestPlanSettings(true, "admin@example.invalid", now);
   assert.equal(
@@ -127,4 +127,18 @@ test("Daily admission requires complete checkout and webhook configuration", () 
     windowEnabled: true,
     workspaceProvisioningReady: true,
   }), false);
+});
+
+
+test("owner-approved public Daily aliases do not admit retired Pilot or arbitrary plans", async () => {
+  const { isPublicDailyRegistrationRequest, PUBLIC_DAILY_PLAN_PRICE_CENTS, PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS } = await import("../src/lib/publicDailyPlanPolicy.mjs");
+  assert.equal(PUBLIC_DAILY_PLAN_PRICE_CENTS, 100);
+  assert.equal(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS, 0);
+  assert.equal(isPublicDailyRegistrationRequest({ planId: "daily" }), true);
+  assert.equal(isPublicDailyRegistrationRequest({ planId: "pilot", testPlan: "daily" }), true);
+  for (const input of [{}, {planId: "pilot"}, {planId:"Daily"}, {planId:"growth",testPlan:"daily"}, {planId:["daily"]}]) {
+    assert.equal(isPublicDailyRegistrationRequest(input), false);
+  }
+  const { buildRegistrationHref } = await import("../src/lib/registrationEntryPolicy.mjs");
+  assert.equal(buildRegistrationHref({ language:"en", planId:"pilot", testPlan:"daily", referralCode:"test-ref" }), "/register?plan=daily&lang=en&ref=test-ref");
 });

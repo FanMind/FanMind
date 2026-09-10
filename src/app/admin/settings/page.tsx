@@ -1,5 +1,6 @@
 import { requirePlatformAdmin } from "@/lib/admin";
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
+import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
@@ -13,12 +14,10 @@ type AdminSettingsPageProps = {
 
 export default async function AdminSettingsPage({ searchParams }: AdminSettingsPageProps) {
   const user = await requirePlatformAdmin();
-  const [windowEnabled, provisioningReady] = await Promise.all([
-    getPublicDailyTestPlanEnabled(),
-    isInternalDailyTestWorkspaceProvisioningReady(),
-  ]);
+  const provisioningReady = await isInternalDailyTestWorkspaceProvisioningReady();
+  const termsReady = isPaymentTermsActivationEnabled();
   const stripeReady = isInternalDailyTestStripeReady(getStripeConfigStatus());
-  const enabled = windowEnabled && provisioningReady && stripeReady;
+  const enabled = PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady;
   const params = await searchParams;
   const result = Array.isArray(params.daily_test_plan)
     ? params.daily_test_plan[0]
@@ -28,7 +27,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
     <AdminBillingShell
       user={user}
       title="Produktfreigaben"
-      subtitle="Öffentliche Beta- und Verkaufsfreigaben sicher steuern"
+      subtitle="Öffentliche Tarife und technische Aktivierung prüfen"
     >
       <main className={styles.adminStack}>
         <AdminTabs activeTab="settings" />
@@ -36,20 +35,20 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
           <p className={result === "enabled" ? styles.badgeOk : styles.badgeWarn}>
             {result === "not_ready"
               ? "Freigabe blockiert: Daily-Provisioning oder Stripe-/Webhook-Konfiguration ist noch nicht vollständig bereit."
-              : `1-€/Tag-Beta-Abo wurde ${result === "enabled" ? "aktiviert" : "deaktiviert"}.`}
+              : "Die frühere Beta-Freigabe ändert das dauerhafte Daily-Angebot nicht."}
           </p>
         ) : null}
         <section className={styles.card}>
           <div className={styles.cardHeader}>
             <div>
-              <span className={styles.eyebrow}>Beta-Freigabe</span>
-              <h2>1-€/Tag-Beta-Abo</h2>
+              <span className={styles.eyebrow}>Öffentlicher Tagestarif</span>
+              <h2>Daily · 0 € Setup + 1 €/Tag</h2>
               <p className={styles.cardSubtitle}>
-                Öffnet ausschließlich ein zeitlich begrenztes 24-Stunden-Fenster für neue Beta-Testnutzer.
+                Daily ist dauerhaft in der öffentlichen Tarifauswahl. Die kostenpflichtige Aktivierung setzt alle technischen und vertraglichen Voraussetzungen voraus.
               </p>
             </div>
             <span className={enabled ? styles.badgeOk : styles.badgeWarn}>
-              {enabled ? "Aktiv" : windowEnabled ? "Sicher blockiert" : "Aus"}
+              {enabled ? "Aktivierung bereit" : "Registrierung offen · Aktivierung ausstehend"}
             </span>
           </div>
           <div className={styles.statusList}>
@@ -69,21 +68,13 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               <span>Stripe &amp; Webhook</span><strong>{stripeReady ? "Bereit" : "Konfiguration unvollständig"}</strong>
             </div>
           </div>
+          <div className={styles.statusItem}>
+            <span>Zahlungsbedingungen</span><strong>{termsReady ? "Freigegeben" : "Vertragsversion offen"}</strong>
+          </div>
           <p className={styles.muted}>
-            Ausschalten entfernt nur die Auswahl für neue Registrierungen. Bestehende Stripe-Abos,
-            Workspaces und Zahlungen werden nicht gekündigt oder verändert. Eine Aktivierung läuft
-            automatisch nach spätestens 24 Stunden ab und wird nie zum dauerhaften öffentlichen Paket.
+            Der frühere 24-Stunden-Beta-Schalter steuert diesen öffentlichen Tarif nicht mehr.
+            Bestehende Abos und Workspaces werden durch die Katalogfreigabe nicht verändert.
           </p>
-          <form action="/api/admin/settings/daily-test-plan" method="post">
-            <input type="hidden" name="enabled" value={windowEnabled ? "false" : "true"} />
-            <button
-              className={windowEnabled ? styles.buttonDanger : styles.buttonPrimary}
-              type="submit"
-              disabled={!windowEnabled && (!provisioningReady || !stripeReady)}
-            >
-              {windowEnabled ? "1-€/Tag-Abo ausschalten" : "1-€/Tag-Abo einschalten"}
-            </button>
-          </form>
         </section>
       </main>
     </AdminBillingShell>

@@ -1215,8 +1215,8 @@ forbidIn(
 );
 requireText(
   "src/app/register/page.tsx",
-  "getPublicDailyTestPlanEnabled",
-  "Die Registrierung muss den serverseitigen, admin-gesteuerten 1-€/Tag-Schalter auswerten.",
+  "PUBLIC_DAILY_PLAN_ENABLED",
+  "Die Registrierung muss das vom Owner freigegebene öffentliche Daily-Angebot anbieten.",
 );
 requireText(
   "src/lib/runtimeProductSettings.ts",
@@ -1230,8 +1230,8 @@ requireText(
 );
 requireText(
   "src/app/admin/settings/page.tsx",
-  "1-€/Tag-Beta-Abo",
-  "Der Adminbereich muss den 1-€/Tag-Schalter sichtbar anbieten.",
+  "Daily · 0 € Setup + 1 €/Tag",
+  "Der Adminbereich muss den permanenten Daily-Tarif und seine Aktivierungsbereitschaft zeigen.",
 );
 requireText(
   "src/lib/publicDailyTestPlanPolicy.mjs",
@@ -1245,8 +1245,8 @@ requireText(
 );
 requireText(
   "README.md",
-  "kein drittes dauerhaftes öffentliches Paket",
-  "README muss das 1-€/Tag-Beta-Testabo vom dauerhaften öffentlichen Katalog trennen.",
+  "Drei dauerhafte öffentliche Zahlungsmodelle",
+  "README muss die drei vom Owner freigegebenen Zahlungsmodelle nennen.",
 );
 requireText(
   "src/lib/stripeBilling.ts",

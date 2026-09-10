@@ -1,5 +1,17 @@
 # Öffentliche Daily-Test-Provisionierung
 
+## Aktuelle Produktentscheidung — 10. September 2026
+
+FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten dauerhaften öffentlichen Angebot.
+Der bisherige 24-Stunden-Schalter steuert die öffentliche Tarifwahl nicht mehr. Die Anwendung
+verwendet weiterhin den bestehenden `internal_daily_test`-RPC-/Stripe-Vertrag; sichere
+Session, aktuelle Zahlungszustimmung, Browser-INSERT-Verbot, Provisioning-Readiness und
+Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die folgenden Fenster-
+und Admin-Öffnungsanweisungen dokumentieren den früheren Beta-Rollout und sind für das
+permanente öffentliche Angebot überholt. SQL, Checksum und isolierte Staging-Abnahme
+bleiben gültig; Production benötigt weiterhin seinen kontrollierten Datenbank-Rollout.
+
+
 Stand: 9. August 2026
 
 ## Zweck und harte Grenze

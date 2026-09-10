@@ -1,5 +1,20 @@
 # Triggerfunktionen – kontrollierter Production-Härtungspfad
 
+## Abnahme am 10. September 2026
+
+Der geschützte Apply ist abgeschlossen: Run `34496892707` / Job
+`102937525772` meldet `applied`. Der getrennte Verify `34497099991` /
+`102938240926` meldet `verified`. Sämtliche Production-Audits davor/danach
+bestätigen Release `9a6e9d016cb0928e58b89c6c2d5b6183379c50ed`.
+Die unabhängige Supabase-Advisor-Prüfung um 15:38:41 UTC findet keine der
+bisherigen drei Search-Path- und zwei Browser-EXECUTE-Warnungen mehr.
+
+Dieser begrenzte Härtungsschritt ist produktiv abgenommen; ein erneuter Apply
+ist nicht erforderlich. Leaked-Password-Protection, Workspace-Vertrag und
+Meta-Abnahme bleiben getrennt offen. Vollständiger Nachweis:
+`project-memory/EXECUTION_RECEIPTS.md`,
+`RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910`.
+
 ## Ziel und aktuelle Grenze
 
 Dieser Pfad übernimmt ausschließlich die bereits im isolierten Staging

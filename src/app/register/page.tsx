@@ -1,8 +1,5 @@
 import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
-import { getStripeConfigStatus } from "@/lib/stripeBilling";
-import { isInternalDailyTestAdmissionReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import RegisterClient from "./RegisterClient";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +20,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const paidActivationAvailable = isPaymentTermsActivationEnabled();
   // A login account creates no commercial Workspace. Authenticated setup still
   // requires fresh consent and all existing paid-activation gates.
-  const enablePublicDailyTestPlan = paidActivationAvailable
-    ? isInternalDailyTestAdmissionReady({
-        windowEnabled: await getPublicDailyTestPlanEnabled(),
-        workspaceProvisioningReady: await isInternalDailyTestWorkspaceProvisioningReady(),
-        stripeConfig: getStripeConfigStatus(),
-      })
-    : false;
+  const enablePublicDailyTestPlan = PUBLIC_DAILY_PLAN_ENABLED;
   return <RegisterClient searchParams={params}
     enablePublicDailyTestPlan={enablePublicDailyTestPlan}
     paidActivationAvailable={paidActivationAvailable} />;

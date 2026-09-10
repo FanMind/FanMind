@@ -1,5 +1,13 @@
 # FanMind External Acceptance Register
 
+## EXT-PRODUCTION-TRIGGER-HARDENING-20260910
+- Related: FM-SEC-001
+- Status: ACCEPTED
+- Risk: R4
+- Acceptance: Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions.
+- External countercheck: Production Supabase security advisors, 2026-09-10T15:38:41Z. Only bounded trigger remediation is accepted; Auth protection, Workspace privilege rollout and Meta evidence remain open.
+- Repository evidence alone sufficient: no. Controlled Production action and separate provider evidence: RECEIPT-FM-SEC-001-PRODUCTION-HARDENING-20260910.
+
 Repository implementation cannot self-close these controls. Each entry remains open until current external evidence is bound to the exact relevant account/project/build/commit/target.
 
 Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.

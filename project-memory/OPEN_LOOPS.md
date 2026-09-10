@@ -1,5 +1,14 @@
 # FanMind Open Loops
 
+## FM-LOOP-THREE-OFFERS-20260910 — full registration activation
+- Task: FM-BILL-002 / FM-REG-002 / FM-LEGAL-001
+- Status: PARTIAL
+- Owner approved three prices and normal publication; do not ask for that approval again.
+- Complete/retain: account flow published in #1095; Live prices already exist; Production trigger hardening Apply/Verify complete.
+- Remaining engineering: reviewed Workspace Expand/Contract and Daily provisioning rollout, compatible current consent-version migration, Billing ledger/canonical downstream rollout and end-to-end registration/checkout/webhook acceptance.
+- Remaining actual external facts: approved real email recipient; applicable tax registration/status and authoritative versioned contract. Zero Live Tax registrations freshly observed September 10. No customer charge to manufacture acceptance.
+- Next: publish the checked three-offer UI and record exact CI/release evidence in the enclosing PR. Four-gate matrix: docs/operations/RELEASE_ACCEPTANCE_20260910.md.
+
 ## Registration is the current owner priority — 2026-09-10
 - FM-REG-002 / FM-CR-026: owner requested completing and publishing registration now. Account-only signup and confirmed-email continuation are VERIFIED in PR #1095 by application/security/database/CRM checks and 44 public Chromium cases on 11636d87; the generated-status follow-up, final review and Production publication remain in progress.
 - The free login account is separated from existing protected paid Workspace/Checkout activation. No terms approval, migration, tax registration, payment or third-party email send is inferred.
