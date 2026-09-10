@@ -1,5 +1,15 @@
 # FanMind Task Ledger
 
+## FM-SEC-002
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R3
+- Goal: remove newly verified dependency vulnerabilities blocking the FanMind release.
+- Scope: reviewed patch versions and lockfiles for Web/Mobile tooling, audit version contract, regression tests and documented verification.
+- Evidence: failed Supply Chain run 34476430052 on f3b2b92a; fresh local npm audit confirms Next.js, Sharp, baseline-browser-mapping, Browserslist and js-yaml findings. Official maintainer advisories checked.
+- Next step: generate bounded patched lockfiles, run audit/build/browser/image regression and exact-head CI. No release while red.
+- Recovery: repository revert is possible but restores known vulnerable packages; prefer a forward patch. No database or provider migration.
+
 ## FM-REG-001
 - Date: 2026-09-10
 - Status: IMPLEMENTED_NOT_VERIFIED

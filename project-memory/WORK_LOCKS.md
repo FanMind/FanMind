@@ -1,5 +1,13 @@
 # Work Locks
 
+## LOCK-FM-SEC-002-20260910
+- Task: FM-SEC-002 / FM-CR-024
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex
+- Scope: bounded security dependencies and current release verification.
+- Recovery: controlled application patch; no database, provider or mobile store publication.
+
 ## LOCK-FM-REG-001-20260910
 - Task: FM-REG-001 / FM-CR-023
 - Status: ACTIVE

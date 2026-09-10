@@ -1,5 +1,13 @@
 # FanMind Change Requests
 
+## FM-CR-024
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-SEC-002
+- Risk: R3
+- Source: current PR #1089 dependency audit failure blocks the requested normal release.
+- Decision: bounded security patch updates for Next.js, Sharp and affected browser/YAML/XML tooling, including lockfiles and existing version-contract tests. Keep zero root vulnerabilities and the unchanged Mobile exception limits/expiry; no bypass or broader feature upgrade.
+
 ## FM-CR-023
 - Date: 2026-09-10
 - Status: ACCEPTED

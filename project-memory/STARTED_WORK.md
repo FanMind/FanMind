@@ -1,5 +1,14 @@
 # Started Work Register
 
+## FM-SEC-002 — release dependency patches
+- Date: 2026-09-10
+- Status: IN_PROGRESS
+- Risk: R3
+- Work lock: LOCK-FM-SEC-002-20260910
+- Scope: patch vulnerable packages revealed by current release CI; no audit exception expansion or feature/framework-major upgrade.
+- Exact next step: resolve Next.js 16.3.4 / Sharp 0.35.4 and patched browser/YAML dependencies, then verify complete locked trees and CI.
+- Recovery: forward security correction preferred; review any revert because the prior release has known vulnerable versions.
+
 ## FM-REG-001 — Web password recovery before real registrations
 - Date: 2026-09-10
 - Status: IMPLEMENTED_NOT_VERIFIED

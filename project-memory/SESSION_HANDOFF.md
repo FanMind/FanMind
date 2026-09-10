@@ -2,6 +2,7 @@
 
 ## 2026-09-10 — FM-REG-001 Web recovery correction
 - Goal: finish FanMind before real registrations and social integration.
+- Current follow-up: PR #1089 also carries FM-SEC-002 / FM-CR-024 for new dependency advisories found by CI. Patched root application passes 1237 local operations tests, lint and synthetic Production build. Browser assertions are corrected after the initial route-announcer ambiguity; fresh CI remains required. Full Mobile security audit is being reconciled after compatible Sharp/xmldom patches; exception limits are unchanged.
 - Implemented: environment-preserving reset redirect; callback validation and immediate address cleanup; password form requires provider-confirmed user; bounded GET/PUT; synthetic browser coverage.
 - Local evidence: 37 targeted Node tests PASS; truth checks produced success; diff whitespace PASS. Local build/lint/browser execution unavailable after dependency installation was cancelled before an approval decision.
 - Full operations attempt: 1199 passed; seven dependency-dependent failures due to absent local packages. Full-suite success must come from exact-head CI, not this local result.

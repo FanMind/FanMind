@@ -360,7 +360,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     ];
     for (const callback of invalidCallbacks) {
       await page.goto(`/reset-password${callback}`);
-      await expect(page.getByRole("alert")).toContainText("Der Link ist ungültig oder abgelaufen");
+      await expect(page.locator('form [role="alert"]')).toContainText("Der Link ist ungültig oder abgelaufen");
       await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
       await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
       await expect(page.locator("body")).not.toContainText("synthetic-private-error");
@@ -379,7 +379,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
           scenario === "expired" ? { message: "JWT expired" } : {});
       });
       await page.goto("/reset-password#access_token=synthetic&type=recovery");
-      await expect(page.getByRole("alert")).toContainText("Der Link ist ungültig oder abgelaufen");
+      await expect(page.locator('form [role="alert"]')).toContainText("Der Link ist ungültig oder abgelaufen");
       await expect(page.getByRole("status")).toHaveCount(0);
       await expect(page.locator('input[autocomplete="new-password"]')).toHaveCount(0);
       await expect(page).toHaveURL(`${E2E_BASE_URL}/reset-password`);
@@ -406,14 +406,14 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await passwords.nth(1).fill("Synthetic-New-Password-2026");
     const save = page.getByRole("button", { name: "Passwort speichern" });
     await save.click();
-    await expect(page.getByRole("alert")).toContainText("Das Passwort konnte gerade nicht gespeichert werden");
+    await expect(page.locator('form [role="alert"]')).toContainText("Das Passwort konnte gerade nicht gespeichert werden");
     await expect(page.getByRole("status")).toHaveCount(0);
     await expect(save).toBeEnabled();
     expect(passwordUpdates).toBe(1);
     await save.click();
     await expect(page.getByRole("status")).toContainText("Dein Passwort wurde geändert");
     expect(passwordUpdates).toBe(2);
-    await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(page.locator('form [role="alert"]')).toHaveCount(0);
   });
 
   test("öffentliche Account-Löschressource führt direkt zum authentifizierten Gesamtprozess", async ({
