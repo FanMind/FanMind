@@ -111,8 +111,10 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
   customer/base-subscription binding, distinct Price allowlist, complete
   single-item list, event-order and idempotency checks fail-closed; never log
   its internal Stripe mutation. The controlled AI event-ledger SQL is installed
-  on isolated Staging (Apply 32038152382; latest rollback acceptance
-  34039968946). Production remains unapplied and runtime gates remain required.
+  on isolated Staging (Apply 32038152382; historical rollback acceptance
+  34039968946; latest observed rollback run 34273836166 on 7f681d26
+  technically passed, but its separate authorization remains
+  RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910). Production remains unapplied and runtime gates remain required.
   Never sort equal-second events by
   Event ID: atomically persist `reconciliation_needed`, make the paid tier
   fail closed and require a request-ID/fingerprint/revision-bound canonical

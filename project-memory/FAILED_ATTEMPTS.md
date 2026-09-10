@@ -224,3 +224,5 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Countercheck: post-attempt read-only counts unchanged at 0/0/0/0/1 for Push registrations/attempts, AI entitlements/events and Billing events.
 - Resolution: PR #1087 merged as 7f681d26 after eight green workflows and resolved review. Staging deployment 34273614070 and fresh protected AI acceptance 34273836166 / 102221843980 passed with full rollback and cleanup; independent counts unchanged.
 - Do not repeat: do not retry the old failed revision, bypass gates or recreate prices/SQL/provider configuration. The exact-release correction and rollback revalidation are complete; reopen only on concrete new drift.
+
+- Scope clarification 2026-09-10: the origin-binding defect is resolved. The successful runtime observation is not a verified protected-action authorization; CTR-FM-AI-AUTH-20260910 remains open separately. Do not rerun the accepted code fix or historical runtime merely to reconcile that record.

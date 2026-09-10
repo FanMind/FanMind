@@ -1,5 +1,25 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-AI-AUTH-20260910
+- Date: 2026-09-10
+- Related task/change: FM-AI-001 / PR #1088
+- Risk: R4
+- Source A: RECEIPT-FINISHLINE-RUNTIME-PUBLICATION-20260908 claimed protected AI rollback acceptance under a publication authorization.
+- Source B: AUTHORIZATIONS.md publication scope and FM-AI-OWNER-002 require a separate exact protected-Staging authorization. No such binding is verified in the available record; GitHub run approval history returned an empty array, which alone does not prove whether separate chat approval existed.
+- Stronger/current evidence: the technical PASS and rollback/cleanup are observed; authorization is not established by technical success.
+- Status: OPEN
+- Resolution/action: protected acceptance remains RECONCILIATION_REQUIRED. Reconcile an existing contemporaneous approval if available; do not invent retrospective approval, change requirements, or rerun automatically.
+- Falsification question: a verified contemporaneous exact-action approval bound to run/commit/target would resolve the authorization gap; another green run would not.
+
+## CTR-FM-PR1088-STALE-READERS-20260910
+- Date: 2026-09-10
+- Related task/change: FM-AI-001 / FM-RST-001 / PR #1088
+- Risk: R4 repository evidence only
+- Source A: old current readers instructed repeating PR #1087/deployment/AI work and retained invalidated mutable observations as verified.
+- Source B: immutable PR #1087 merge/release results and Staging deploy 34273614070 supersede those instructions.
+- Status: RESOLVED
+- Resolution/action: current readers now name the observed run and separate authorization hold; historical checkpoints are explicitly superseded, invalidated evidence is marked and new runtime/host observations retain real timestamps. Exact-head CI/review remains required before publication acceptance.
+
 Any conflict between project memory and actual Git/PR/CI/security/workflow/runtime/target evidence is recorded here and forces `RECONCILIATION_REQUIRED` until resolved.
 
 Statuses: `OPEN`, `RECONCILIATION_REQUIRED`, `RESOLVED`, `SUPERSEDED`.
