@@ -2,7 +2,7 @@
 
 ## FM-DEP-011
 - From: FM-CREATOR-001
-- Requires: accepted technical Sales Handoff FM-SALES-001, then Creator data-model/authorization/migration acceptance before reply-pipeline integration.
+- Requires: existing isolated Staging and reviewed Creator model/authorization contract. FM-DEC-015 resumes development now before Android; sales_handoff is no longer a development prerequisite. One Creator per independent account/Workspace; target/provider acceptance remains separate.
 - Type: owner-confirmed post-handoff product sequencing
 - Status: ACTIVE
 - Updated: 2026-09-10
@@ -51,11 +51,11 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 
 ## FM-DEP-005
 - From: FM-SOC3-001
-- Requires: FM-RST-001/FM-MOB-001/FM-AI-001/FM-META-001 sufficiently closed according to #874, plus Facebook/Instagram/WhatsApp credentials/permissions/test assets and legal boundaries.
+- Requires: FM-DEC-015 allows selected Social development now. Real activation still needs Facebook/Instagram/WhatsApp credentials, permissions, test assets and legal boundaries; earlier accepted non-Social gates are not rewritten.
 - Type: finishline ordering + provider
 - Status: ACTIVE
 - Updated: 2026-08-19
-- Rule: Social is intentionally the last technical block; reuse existing Meta/WhatsApp foundations.
+- Rule: reuse existing Meta/WhatsApp foundations. FM-DEC-015 overrides the earlier development-after-Mobile sequence; genuine external activation gates remain.
 
 ## FM-DEP-006
 - From: FM-SOC7-001

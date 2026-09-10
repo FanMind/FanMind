@@ -1,11 +1,14 @@
 "use client";
 
+import type { CreatorStrategy } from "@/lib/creatorIntelligencePolicy.mjs";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FanMindLanguage } from "@/lib/fanmindCopy";
 import { wt } from "@/lib/workspaceCopy";
 import { saveSuggestedFollowup, saveSuggestedMemory } from "../actions";
 import { OriginalChannelButton } from "./OriginalChannelButton";
+import { CreatorFanReview } from "./CreatorFanReview";
 import dashboardStyles from "../../dashboard/dashboard.module.css";
 import styles from "./fan-detail.module.css";
 
@@ -33,6 +36,7 @@ type AiSuggestionsResult = {
   suggested_memory?: SuggestedMemory;
   suggested_followup?: SuggestedFollowup;
   safety_note: string;
+  creator_context?: { name: string; revision: number; strategy: CreatorStrategy };
 };
 
 type Props = {
@@ -320,6 +324,7 @@ export function AiReplySuggestions({
         </span>
       </div>
 
+      {!demoConnectionsDisabled ? <CreatorFanReview key={contact.contactId} contactId={contact.contactId} locale={locale} /> : null}
       <div className={styles.modeBar} aria-label="Antwort-Richtung wählen">
         {modes.map((mode) => (
           <button
@@ -412,6 +417,16 @@ export function AiReplySuggestions({
           <strong>{error}</strong>
         </p>
       ) : null}
+
+      {suggestions?.creator_context ? <aside className={styles.suggestionCard} aria-label={locale === "en" ? "Creator strategy" : "Creator-Strategie"}>
+        <strong>{suggestions.creator_context.name} · {suggestions.creator_context.strategy.state}</strong>
+        <p>{locale === "en" ? "Conversation temperature" : "Gesprächstemperatur"}: {suggestions.creator_context.strategy.temperature ?? "—"}/100 · Purchase Intent: {suggestions.creator_context.strategy.purchaseIntent ?? "—"}/100 · Offer Fatigue: {suggestions.creator_context.strategy.offerFatigue ?? "—"}/100</p>
+        <p>{suggestions.creator_context.strategy.sellNow
+          ? locale === "en" ? "An approved offer can fit. Review the context before sending." : "Ein freigegebenes Angebot kann passen. Vor dem Senden den Kontext prüfen."
+          : locale === "en" ? "Do not sell now. Focus on the conversation and aftercare." : "Jetzt nicht verkaufen. Gespräch und Betreuung haben Vorrang."}</p>
+        {suggestions.creator_context.strategy.offer ? <p>{suggestions.creator_context.strategy.offer.name} · {new Intl.NumberFormat(locale === "en" ? "en-GB" : "de-DE", { style: "currency", currency: suggestions.creator_context.strategy.offer.currency }).format(suggestions.creator_context.strategy.offer.priceMinor / 100)}</p> : null}
+        <small>{locale === "en" ? "— means no reviewed value. Copying a reply does not confirm sending or a purchase." : "— bedeutet: kein geprüfter Wert. Kopieren bestätigt weder Versand noch Kauf."}</small>
+      </aside> : null}
 
       <div className={styles.suggestionGrid} aria-live="polite">
         {(suggestions?.reply_options ?? []).map((option, index) => (

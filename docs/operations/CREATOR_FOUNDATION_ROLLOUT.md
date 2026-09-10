@@ -1,0 +1,73 @@
+# Creator foundation: controlled rollout contract
+
+Status: source preparation, not a completed Staging or Production rollout.
+Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Workspace.
+
+## Reviewed artifact and target boundary
+
+- SQL: `supabase/controlled/creator_intelligence_foundation.sql`
+- SHA-256: `4523a98ebebd1ef44b1791dcda781806048069f093f348569cf9e7e83d46f967`
+- Required PostgreSQL major: 17. Real isolated CI checks use the existing pinned PG17 service and a dedicated disposable database only.
+- Observed FanMind Staging on 2026-09-10: PostgreSQL 170006; creators, creator_voice_profiles and creator_sales_playbooks absent. This read proves absence, not permission or successful application.
+- No migration was applied during this implementation. No customer records or provider settings were changed.
+- A Supabase CLI scaffold attempt was interrupted during dependency acquisition; an empty scaffold and temporary version marker were removed. The reviewed SQL remains outside the generic migration ledger. No generic db push or ledger repair is authorized by this file.
+
+## Before a target write
+
+Bind the reviewed commit and artifact hash to the explicit isolated Staging target,
+current source/release, target schema, existing RLS/ACLs and recovery evidence.
+Confirm that the three new profile tables and event table are absent and that
+contacts/conversations/contact_ai_profiles have the expected existing parent
+columns and the Meta SELECT-only authenticated profile permissions. Verify
+constraint/function names are unused, workspace isolation is current, and the
+normal application still operates with the Creator flag absent/false. Stop on
+drift or an already/partially installed artifact; do not rerun or repair blindly.
+
+A protected, target-bound Apply/Verify path and synthetic signed-in owner/member
+acceptance are still required. This document is not an executable deployment
+runner or an automatic authorization for Production. The new SQL contains no
+backfill and no real fan or Creator data. Its transaction rolls back on errors;
+locks time out after 5 seconds and statements after 60 seconds.
+
+## SQL and API counterchecks
+
+The required CI job applies the actual artifact to its disposable database and
+checks one Creator per Workspace, authenticated owner/member/foreign/anonymous
+access, composite event parents, explicit approval revisions, duplicate purchase
+evidence, server-owned reviewer/time, and atomic rollback after a partial-save
+failure. The existing contact_ai_profiles table remains authenticated SELECT-only.
+Only `record_creator_fan_review`, a fixed-search-path, explicitly owner- and
+contact-scoped SECURITY DEFINER function, updates its commercial_profile column.
+It cannot update existing AI-derived profile fields. Profile bundle saving uses
+SECURITY INVOKER plus the new tables' RLS. Trigger EXECUTE is revoked from
+PUBLIC/anon/authenticated. These controls are not future team approval workflows.
+
+Then verify the same contracts with real Staging JWTs, including the existing
+legacy account, two independent synthetic Creator accounts, stale profile changes
+while a request is in flight, DSAR export and account/contact deletion. No real
+purchase, provider send, scraped text or customer data is needed for this check.
+
+## Activation and recovery
+
+`FANMIND_CREATOR_INTELLIGENCE_ENABLED` is server-only and defaults false. It may
+be enabled on a compatible reviewed target only after the target checks above.
+With the flag off, the original reply system remains in use; settings show the
+extension as being prepared. With a configured Creator, incomplete/unapproved/
+paused profiles block Creator generation instead of borrowing the chatter voice.
+No Creator profile is invented from signup metadata.
+
+Recovery for a bad application release: disable the target's Creator flag and
+revert the reviewed application change through normal release controls. Preserve
+all created persona and purchase records. Do not automatically drop tables,
+columns or event history. A schema rollback after real writes requires a separate
+export/recovery plan. Ordinary deletion follows Workspace/contact cascades;
+deleting a historical approving user clears the actor and invalidates that
+approval. Contact merging inside Creator accounts is blocked until an atomic
+merge can preserve all commercial parent relationships.
+
+## Remaining acceptance
+
+Real target migration/runtime proof, two-Creator blinded voice quality, complete
+purchase/outcome attribution and provider/legal acceptance remain open. A green
+code build is not evidence for any of these external gates. Android, paid
+activation and the already accepted Restore/Staging sub-gates are unchanged.

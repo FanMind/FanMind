@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-RESTORE-STORAGE-R4-AUTH`
-- Next action title: Isolierten Storage-Restore exakt freigeben
+- Next action: `NBA-CREATOR-INTELLIGENCE`
+- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Finishline gates
 
@@ -21,7 +21,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `phase7_social`: `PARTIAL`
 - `sales_handoff`: `BLOCKED`
 - `legal_tax_avv`: `BLOCKED`
-- `creator_intelligence`: `DEFERRED`
+- `creator_intelligence`: `IN_PROGRESS`
 
 ## Deferred owner actions
 

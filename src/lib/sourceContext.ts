@@ -1,3 +1,5 @@
+import { onlyFansManualTarget } from "@/lib/socialHandoffPolicy.mjs";
+
 export type SourceContextType =
   | "general_chat"
   | "post"
@@ -174,6 +176,20 @@ export function buildReplyTargetAction(
   const externalThreadId = normalizeText(
     primary?.external_thread_id ?? fallback?.external_thread_id,
   );
+
+  if (platform === "onlyfans") {
+    const target = onlyFansManualTarget(replyTargetUrl) ?? onlyFansManualTarget(sourceUrl);
+    return {
+      href: target ?? "https://onlyfans.com/",
+      label: target ? "OnlyFans-Original öffnen" : "OnlyFans öffnen",
+      quality: target ? "attempted_thread_link" : "inbox_fallback",
+      reason: "Manuell öffnen und den richtigen Fan prüfen. Keine automatische OnlyFans-Anbindung oder Sendefunktion.",
+      disabledHint: "OnlyFans wird manuell geöffnet.",
+      platform, selectedItemSource: "not_detected",
+      fallbackContactLabel: options?.fallbackContactLabel ?? null,
+      fallbackContactId: options?.fallbackContactId ?? null,
+    };
+  }
 
   if (platform === "facebook" && isMessengerSource(sourceType)) {
     const storedReplyTargetUrl =

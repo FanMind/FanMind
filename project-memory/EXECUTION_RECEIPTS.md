@@ -1,6 +1,21 @@
+## RECEIPT-FM-CREATOR-SOCIAL-20260910
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-CREATOR-SOCIAL-20260910
+- Authorization: latest explicit owner instruction, FM-DEC-015 / FM-CR-029; existing normal roadmap publication authorization retained.
+- Baseline: main 22017b3a8927b47c8ca67447f00e596d21cb9ae7, exact local tree 6c78cd2ccb87e1ba3f5e2e601a1dad1571fa0189 restored from retained commit f7acff09.
+- Preflight: accepted-state drift passed; mutable evidence retains original timestamps. Existing Creator task was planned only; existing Meta, voice, contact and reply foundations are reused.
+- Evidence plan: Creator/fan isolation and no generic fallback, confirmed data provenance, offer/aftercare/human-send boundaries, meaningful route tests, isolated database constraints and full current-head CI.
+- Local result: 1,269 Operations tests pass; one PG17-specific test skipped locally because no local PostgreSQL/Docker. TypeScript, truth and lint pass (one pre-existing unrelated Mobile warning). Actual API counterchecks reject foreign contact before AI, mixed summary before AI, stale profile after generation, cross-origin/non-owner/disabled-rollout fan writes.
+- Tooling: an empty Supabase CLI scaffold/temp marker was removed; reviewed SQL is controlled-only and no target DDL ran. Initial local build failed because Turbopack rejected the external node_modules symlink; dependencies were copied into this isolated worktree before retry, no package/version change.
+- Build outcome: dependency copy resolved the Turbopack root issue; normal Next build passed. Local browser tests could not launch because Chromium is absent; no UI acceptance is claimed. The existing required synthetic-browser CI now includes Creator edit/reapproval and confirmed purchase-entry scenarios.
+- Genuine remaining scope: protected Staging SQL/runtime proof, two-Creator blinded voice quality, full suggestion→confirmed chat→reaction→purchase learning, Meta/OnlyFans legal/provider proof. No accepted overall gate is inferred.
+- Recovery: normal code revert, no automatic schema/drop or provider/payment activation. Existing legacy contacts stay intact and unassigned until explicit reviewed mapping.
+
 ## RECEIPT-FM-BILL-003-20260910
 - Task: FM-BILL-003 / FM-CR-028
-- Status: IN_PROGRESS
+- Status: PARTIAL
 - Risk: R4
 - Authorization: FM-AUTH-PAID-ACTIVATION-20260910
 - Work lock: LOCK-FM-BILL-003-20260910
@@ -11,6 +26,8 @@
 - Implementation evidence: both real provisioning entry points, the trusted-user helper and rendered package forms are exercised by tests/payment-terms-submission.test.mjs; nine tests pass. Existing full Operations suite: 1,252 passed, zero failures; release truth/lint/type/build checks pass. No workflow, environment, SQL, Price or consent-row mutation.
 - Independent countercheck: fresh read-only Production catalog query confirms absent Starter/Daily RPCs and both Billing ledgers, with browser Workspace INSERT still granted. Diff review confirms no activation switch or terms-version change; rejection tests record zero provisioning calls. A stale/missing revision reaching provisioning would falsify the claimed correction; neither path does.
 - Publication: current-head CI/review and exact-release Deploy/Audit/Readiness must be completed and bound in the enclosing PR. Keep the full task PARTIAL even after this bounded code release; contract/tax, controlled Workspace/Billing rollout and actual acceptance remain open.
+
+- Latest closeout: PR #1098 final receipt proves source publication, releases the work lock and records the owner tax/UID deferral. Earlier pending-publication instructions in this historical checkpoint are superseded; no repeat publication or activation now.
 
 ## RECEIPT-FM-BILL-002-RECONCILIATION-20260910
 - Task: FM-BILL-002 / FM-CR-027

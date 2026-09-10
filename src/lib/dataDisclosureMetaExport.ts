@@ -23,7 +23,11 @@ export type DisclosureMetaDataset = {
     | "contact_profiles"
     | "voice_profiles"
     | "conversation_reports"
-    | "analysis_settings";
+    | "analysis_settings"
+    | "creators"
+    | "creator_voices"
+    | "creator_playbooks"
+    | "creator_commercial_events";
   rows: DisclosureMetaRow[];
 };
 
@@ -37,6 +41,10 @@ type DatasetDefinition = {
 };
 
 const DATASETS: DatasetDefinition[] = [
+  { key: "creators", table: "creators", selectVariants: ["id,workspace_id,display_name,bio,public_age,location,languages,platforms,status,internal_notes,revision,created_at,updated_at"], optional: true, order: "id.asc" },
+  { key: "creator_voices", table: "creator_voice_profiles", selectVariants: ["workspace_id,creator_id,fingerprint,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
+  { key: "creator_playbooks", table: "creator_sales_playbooks", selectVariants: ["workspace_id,creator_id,rules,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
+  { key: "creator_commercial_events", table: "creator_commercial_events", selectVariants: ["id,workspace_id,creator_id,contact_id,conversation_id,kind,occurred_at,amount_minor,currency,category,evidence_reference,confirmed_by,confirmed_at"], optional: true, order: "occurred_at.asc,id.asc" },
   {
     key: "connections",
     table: "social_connections",
@@ -83,6 +91,7 @@ const DATASETS: DatasetDefinition[] = [
     key: "contact_profiles",
     table: "contact_ai_profiles",
     selectVariants: [
+      "id,workspace_id,contact_id,commercial_profile,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,source_from_at,source_to_at,review_status,reviewed_at,created_at,updated_at",
       "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,source_from_at,source_to_at,review_status,reviewed_at,created_at,updated_at",
       "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,created_at,updated_at",
     ],

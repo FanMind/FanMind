@@ -145,6 +145,17 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Nächste Mobile-Phase": "Next mobile phase",
   "Konfiguration und Routing fertig · Zustellung offen":
     "Configuration and routing ready · Delivery pending",
+  "Creator und Social jetzt · Android danach": "Creator and social work now · Android afterwards",
+  "Phase 7b · jetzt in Arbeit": "Phase 7b · work started now",
+  "Ein Creator · ein eigener Account und Workspace": "One creator · one dedicated account and workspace",
+  "Strukturierte Profile · Umsetzung begonnen": "Structured profiles · implementation started",
+  "Angebotsregeln und Gesprächszustände in Arbeit": "Offer rules and conversation states in development",
+  "Datenmodell begonnen · Lernschleife folgt": "Data model started · learning loop follows",
+  "Anbindung und Abnahme in Arbeit": "Connection and acceptance in progress",
+  "Provider-Freigaben weiterhin erforderlich": "Provider approvals still required",
+  "Manuelle Übergabe · direkte Anbindung in Prüfung": "Manual handoff · direct connection under review",
+  "Android-Abschluss nach Creator- und Social-Ausbau": "Android completion after creator and social work",
+  "Antwortentwürfe und manuelle Übergabe in Arbeit": "Reply drafts and manual handoff in progress",
   "Social-Kanäle & Creator Intelligence": "Social channels & Creator Intelligence",
   "Kanäle · Verkaufsübergabe · Creator-Ausbau":
     "Channels · sales handoff · Creator expansion",

@@ -240,3 +240,9 @@ jobs:
           FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
           FANMIND_PG17_REQUIRE_SERVICE_CONTAINERS: "true"
         run: npm run test:database-authorization:pg17
+
+      - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_CREATOR_PG17_REQUIRED: "true"
+        run: node --test tests/creator-intelligence-pg17.test.mjs

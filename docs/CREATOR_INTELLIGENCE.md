@@ -1,41 +1,68 @@
 # Creator Intelligence & Sales Assistance — Phase 7b
 
-Owner-Entscheidung: 10. September 2026, FM-DEC-013 / FM-CR-025.
-Implementierung: `FM-CREATOR-001`, `DEFERRED` bis zur akzeptierten technischen
-Verkaufsübergabe `FM-SALES-001`. Diese Datei beschreibt geplanten Scope.
+Owner-Entscheidung FM-DEC-015 / FM-CR-029 vom 10. September 2026:
+Creator Intelligence und die ausgewählten Social-/Handoff-Arbeiten beginnen
+jetzt. Android folgt danach. Dies ersetzt die frühere Startabhängigkeit von
+der Verkaufsübergabe (FM-DEC-013), ohne eine offene Abnahme abzuhaken.
+`FM-CREATOR-001` ist IN_PROGRESS; Phase 7b bleibt kein zusätzlicher Verkaufs-Gate.
+Weitere nicht beauftragte Phase-8-Arbeit bleibt zurückgestellt.
 
-## Verbindliche Reihenfolge
+## Ein Creator = ein Account = ein Workspace
 
-1. Bestehende Finishline einschließlich der erforderlichen Phase-3- und
-   Phase-7a-Social-Kanäle abschließen; OnlyFans-Machbarkeit separat klären.
-2. Technische Verkaufsübergabe an Gerhard akzeptieren.
-3. Creator Intelligence & Sales Assistance als **Phase 7b** umsetzen und abnehmen.
-4. Weitere Arbeit an Phase 8 aufnehmen.
+Bernds anschließende Klarstellung ist maßgeblich: Jeder Creator erhält einen
+eigenen FanMind-Account mit eigenem Workspace. Das vorhandene `workspace_id`
+trennt bereits Fans, Conversations, Memories, Follow-ups, Prompts und Kanäle.
+`creators.workspace_id` ist UNIQUE: genau ein Creator-Profil pro Workspace,
+keine zusätzliche Auswahl bei jeder Nachricht und keine gemeinsame Fanbasis.
+Derselbe Fan bei zwei Creatorn wird in zwei unabhängigen Workspaces geführt.
+Der angemeldete Chatter bleibt Nutzer, niemals automatisch die Persona.
 
-Phase 7b ist keine Voraussetzung für die vorherige Verkaufsübergabe. Der
-maschinenlesbare Gate `creator_intelligence` hat `required_for_sales=false`
-und seine nächste Aktion benötigt `sales_handoff=ACCEPTED` oder
-`PRODUCTION_CONFIRMED`. Die bereits deaktiviert vorbereitete Website-KI-Basis
-bleibt historisch begonnen; ihre Existenz hebt die neue Arbeitsreihenfolge
-nicht auf. Weitere Team-/Agency-/Analytics-Roadmap-Flächen werden durch diese
-gezielte Creator-Erweiterung nicht pauschal vorgezogen oder freigeschaltet.
+Teamzugänge, erweiterte Rollen/Rechte, auditierbare Freigabeabläufe und die
+Verwaltung mehrerer Workspaces bleiben in Phase 11/12. Die bestehende Owner-/
+Member-Sicherheit wird beibehalten, ohne hier neue Teamrollen freizuschalten.
 
-## Vorhandene Architektur erweitern
+## Datenmodell und Rollout-Vertrag
+
+Vor der Pipeline-Integration festgelegt:
+
+| Objekt | Schlüssel und Inhalt | Schreib-/Quellenvertrag |
+|---|---|---|
+| creators | id, UNIQUE workspace_id, display_name, bio, public_age, location, languages, platforms, status, internal_notes, revision | Owner pflegt bestätigte Persona; keine erfundene Identität oder automatische neue Lizenz |
+| Fans / Conversations / Channels | bestehendes workspace_id → genau ein Creator | Bestehende Datensätze werden nicht kopiert, zusammengeführt oder verschoben; Kontakt-Autorisierung bleibt vor jeder KI-Anfrage erforderlich |
+| creator_voice_profiles | workspace_id + creator_id, fingerprint, revision, approved_at/by | Strukturierte Tonwerte, Länge, Emojis, Wortschatz und Beispiele; nur die freigegebene aktuelle Revision kommt in die KI |
+| creator_sales_playbooks | workspace_id + creator_id, strukturierte rules/offers, revision, approved_at/by | Preise als Minor Units + Währung, Grenzen, Bestätigungspflichten und No-Gos; unbekannt ist nicht freigegeben |
+| contact_ai_profiles | existing row plus commercial_profile | Bestätigte Facts/Quelle von Scores mit Review/Zeitraum trennen; unbekannte Werte bleiben NULL |
+| conversations | sales_state, sales_state_updated_at, sales_state_source | CONNECT bis REACTIVATE; eine Empfehlung ändert nicht automatisch den bestätigten Zustand |
+| creator_commercial_events | Workspace + Creator + Kontakt + optionale Conversation, kind, occurred_at, amount_minor/currency, category, evidence_reference, confirmed_by/at | Bestätigte Kauf-/Angebotsereignisse, niemals Kauf aus Copy, Klick oder KI-Vermutung |
+
+Zusammengesetzte Fremdschlüssel binden neue kommerzielle Ereignisse an denselben
+Workspace, Creator, Kontakt und gegebenenfalls dieselbe Conversation. Profil-
+Änderungen werden als ein atomarer Bundle-Save mit optimistischer Revision
+gespeichert. Eine unvollständige, veraltete oder pausierte Stimme führt zur
+Korrekturaufforderung, nicht zum Chatter-/Workspace-Stil eines anderen Creators.
+Interne Notizen werden nicht an die Text-KI übergeben.
+
+Die additive SQL-Vorbereitung liegt unter `supabase/controlled/`; normale
+Web-Deploys führen sie nicht aus. Der serverseitige Creator-Schalter bleibt
+bis zur kompatiblen Schema-/Staging-Abnahme aus. Bestehende Accounts ohne
+Creator-Profil behalten ihre bisherigen CRM-Funktionen. Profile werden vom
+Owner angelegt, nicht aus einem Accountnamen geraten.
+
+## Vorhandene Architektur erweitern (Ausgangspunkt vor diesem Paket)
 
 Die Prüfung von Main `7004c9ea` belegt Contacts, Conversations, Messages,
 Memories, Follow-ups, Summaries, Fan-Analyse, `contact_ai_profiles`,
 `workspace_voice_profiles`, `workspace_ai_prompt_settings` und drei strukturierte
-Reply-Vorschläge. Die aktuelle Pipeline nutzt nur wenige Voice-/Fanprofilfelder
-und lädt Memories/Summaries nicht unmittelbar. Creator-Identität, Creator-
-Playbook, kommerzielle Zustände und eine vollständige Ergebnisverkettung fehlen.
+Reply-Vorschläge. Die damals geprüfte Pipeline nutzte nur wenige Voice-/Fanprofilfelder
+und lud Memories/Summaries nicht unmittelbar. Dieses Paket ergänzt Creator-Kontext,
+Memory, Summary und die unten beschriebenen kommerziellen Eingaben. Die vollständige
+Ergebnisverkettung bleibt der nächste Ausbau.
 
-Kein separates neues CRM und keine weitere Datenbank: Workspace bleibt die
-Mandanten-/Abrechnungsgrenze; Creator ist die zusätzliche Identität. Ein Kontakt
-bildet die Beziehung eines Fans zu genau einem Creator ab. Derselbe Mensch
-kann mehrere getrennte Beziehungen haben; vertrauliches Fanwissen wird nicht
-zwischen Creatorn geteilt. Chatter und Creator sind unterschiedliche Identitäten.
+Kein separates neues CRM und keine weitere Datenbank: Der unabhängige Workspace
+ist zugleich Mandanten-, Abrechnungs- und Creator-Datengrenze. Chatter und
+Creator sind unterschiedliche Identitäten.
 
-## Geplante Datenmodell-Bausteine
+## Produktumfang
 
 | Baustein | Geplanter Inhalt |
 |---|---|
@@ -46,15 +73,19 @@ zwischen Creatorn geteilt. Chatter und Creator sind unterschiedliche Identitäte
 | Fan Commercial Data | Bestehendes Fanprofil erweitern; belegte Kauf-/Angebotsereignisse von Schätzungen trennen; unbekannte Werte nicht erfinden |
 | Conversation/Sales State | CONNECT, ENGAGE, BUILD_INTEREST, QUALIFY, TEASE, OFFER, NEGOTIATE, CLOSE, AFTERCARE, REACTIVATE |
 
-Zuerst das Datenmodell und seine Autorisierungs-/Migrationsverträge abnehmen,
-danach die bestehende `/api/ai/reply-suggestions`-Pipeline erweitern. Der Server
+Das Datenmodell und seine Autorisierungs-/Migrationsverträge wurden vor der
+Pipeline-Änderung definiert; die reale Zielabnahme bleibt offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code erweitert. Der Server
 lädt automatisch Agenturregeln, richtigen Creator, freigegebene Voice und
 Playbook, Fanwissen, Gesprächskontext und aktuelles Ziel. Keine Prompt-Auswahl
 pro Nachricht. Missing-/Mismatch-Kontext darf nicht auf eine fremde Stimme fallen.
 
 Die drei Varianten werden Recommended, Softer und Stronger; jede bleibt in
 derselben Creator-Stimme und innerhalb desselben zulässigen Gesprächsziels.
-Angebots-/Preisgrenzen gelten serverseitig. Keine erfundene Verknappung oder
+Strukturierte Angebots-/Preisempfehlungen kommen ausschließlich aus dem
+freigegebenen Server-Datensatz. Freie Antworttexte enthalten keine Preise;
+unzulässiger Wortschatz und Währungsangaben werden geprüft. Semantische
+Produkt-/Versprechensgrenzen brauchen zusätzlich Promptregeln und menschliche
+Prüfung; dieser erste Validator beweist keine vollständige semantische Sicherheit. Keine erfundene Verknappung oder
 persönliche Zusage und kein Verkaufsdruck bei erkennbarer Not/Krise. Kopieren
 ist kein Versandnachweis. Menschliche Prüfung und manuelles Senden bleiben.
 
@@ -74,10 +105,58 @@ Korrelation ist kein Kausalitätsbeweis; Preise/Grenzen lernen nicht autonom um.
   Stronger darf Verkaufssperren nicht übergehen.
 - Quellenlose Kaufzahlen, verbotene Angebote, fremde IDs, veraltete Profil-
   versionen und bloß kopierte Entwürfe müssen korrekt abgefangen werden.
-- Web-/Mobile-Kompatibilität, RLS, Lizenzgrenzen, Datenschutz, Kosten und
-  kontrollierte Staging-Migrationen gehören zur späteren Umsetzung.
+- Web-/Mobile-Kompatibilität, RLS, Datenschutz, Kosten und kontrollierte
+  Staging-Migrationen benötigen die passenden Code-, Ziel- und Qualitätsnachweise.
+  Der Rollout-Vertrag steht in `docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`.
 
 Diese Roadmap-Entscheidung aktiviert keine Agency-Lizenz, keine Plus-/Ultra-
 Stufe, keine Plattformanbindung und keine automatische Kommunikation. Bestehende
 Preise bleiben bestehen. Reale Creator-/Fan-Kaufdaten und insbesondere OnlyFans-
 Zugriffe benötigen ihre tatsächliche freigegebene Quellen-/Providergrundlage.
+
+## Im ersten Paket umgesetzt
+
+- Editor unter Einstellungen → KI-Nutzung: Persona, strukturierte Stimme,
+  echte Beispieltexte, Playbook/Angebote. Änderungen verwerfen die bisherige
+  Versionsfreigabe. Name, Alter und freie Beispiele werden nicht erfunden.
+- Fan-Detail: explizit bestätigte Einschätzungen mit Quellenreferenz und optional
+  tatsächlicher Kauf, gesendetes oder abgelehntes Angebot. Geld als Minor Units
+  plus Währung; eindeutig wiederholte Belege werden abgewiesen. Der Server setzt
+  Prüfer und Zeitpunkt, kein Klick erzeugt einen Kauf.
+- Null statt erfundener Scores; Einschätzungen verfallen für die Verkaufssteuerung
+  nach 24 Stunden. Eine manuelle Verkaufspause bleibt wirksam. Aktuelle bestätigte
+  Käufe führen zu AFTERCARE, Angebotspause/Ablehnung/Ermüdung verhindern OFFER.
+  Ein tatsächliches Offer braucht eine aktuelle explizite Anfrage, hohe geprüfte
+  Kaufabsicht und ein aktives Angebot ohne weitere Bestätigungspflicht.
+- Die volle Creator-Revision wird nach der Textgenerierung erneut geladen und
+  verglichen. Fremde oder währenddessen veränderte Kontexte werden nicht ausgegeben.
+- Datenschutzexport umfasst Persona, Stimme, Playbook, kommerzielle Profile und
+  Ereignisse; neue Tabellen bleiben für alte Schemas optional. Der alte mehrstufige
+  Kontakt-Merge ist in Creator-Accounts vorerst gesperrt, damit Belege nicht
+  getrennt vom Fan verschoben werden.
+
+## Fan Commercial Data: vollständiger Ausbauvertrag
+
+| Gewünschte Information | Quelle / Behandlung |
+|---|---|
+| fan_stage, bevorzugte Inhalte/Stil, VIP | Manuell geprüfte Profileingabe mit Quelle; unbekannt bleibt unbekannt. Ein Label allein beweist keinen Kauf. |
+| lifetime_spend, recent_spend, average_purchase, last_purchase_at | Spätere Aggregation bestätigter Kaufereignisse je Creator/Fan/Währung; nur vollständige Importzeiträume dürfen als Lifetime bezeichnet werden. Keine Vermischung von EUR/CHF/USD/GBP. |
+| Content-Kategorien, PPV-Käufe, Customs | Belegtes Ereignis mit Kategorie; PPV-/Custom-Typen und Plattformreferenzen folgen im Importvertrag. |
+| PPV-Unlock-Rate | Bestätigte Unlocks / tatsächlich zugestellte PPV-Angebote im benannten Zeitraum; fehlender Nenner ist NULL. |
+| Engagement, Purchase Intent, Offer Fatigue | In diesem Paket explizit überprüfte nullable Einschätzungen mit Quelle und 24-h-Gültigkeit; keine modell-erfundenen Kaufzahlen. |
+| Zeitpunkt letztes Angebot / Ablehnungen | Bestätigte offer-/offer_declined-Ereignisse; Copy/Open zählt nicht als Ereignis. |
+| Relationship / Conversation State | Serverempfehlung in der Antwort; gespeicherter Conversation-State wird nicht automatisch als menschlich bestätigt ausgegeben. |
+| Korrekturen / Erstattungen | Später über belegte Gegenereignisse mit Verweis auf das Original; keine unbemerkte Umschreibung der Historie. |
+
+## Lernen aus Chats: verbleibender Ausbau
+
+Die SQL-Grundlage erfasst bestätigte Kauf-/Angebotsereignisse, aber noch keine
+vollständige Lernschleife. Nächster Vertrag: Vorschlags-ID mit Creator-/Prompt-
+Revision → vom Nutzer tatsächlich bestätigte outbound Message-ID und bearbeiteter
+Text → belegte inbound Fanreaktion → unabhängige Kaufbeleg-ID. Jede Beziehung
+muss denselben Workspace, Fan und gegebenenfalls dieselbe Conversation tragen.
+Unbekannte Reaktion/Kauf bleiben NULL; eine ausgewählte Variante ist kein Ausgang.
+Lernstatistiken dürfen nur explizit verknüpfte, belegte Ereignisse verwenden und
+keinen kausalen Verkaufserfolg aus zeitlicher Nähe behaupten. Preise/Grenzen
+ändern sich nicht automatisch. Voice-Onboarding aus 30–100 freigegebenen echten
+Creator-Nachrichten und die verblindete Stimmenbewertung sind noch offen.

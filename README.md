@@ -262,12 +262,13 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 - Growth, Agency und Enterprise bleiben Roadmap / Coming Soon / Auf Anfrage, bis sie ausdrücklich freigegeben sind.
 - Verbindliche Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = Website-KI-Assistent, iOS/TestFlight, LinkedIn und weitere spätere Plattformanbindungen. Die deaktivierte Sicherheits-, Widget- und Nachrichteningestion-Basis des Website-Assistenten ist begonnen; KI-Dialog, menschliche Eskalation, E-Mail-Rückkanal und produktive Aktivierung fehlen noch. Die übrigen Phase-8-Anbindungen zählen nicht zum aktuellen Verkaufsübergabe-Gate.
 - FanMind ist kein Bot: KI bereitet Antworten vor; der Mensch prüft, kopiert und sendet final selbst.
-- Phase 7 hat seit der Owner-Entscheidung vom 10. September 2026 zwei Abschnitte:
-  Phase 7a Social-Kanäle → Verkaufsübergabe an Gerhard → Phase 7b Creator
-  Intelligence & Sales Assistance → weitere Phase-8-Arbeit. Creator-Profile,
-  eigene Stimmen, Sales Playbooks, Fan-Kaufdaten, Gesprächszustände und
-  Feedback-Lernen sind geplant und keine zusätzliche Verkaufsübergabe-Bedingung.
-  Die bestehende deaktivierte Website-KI-Grundlage bleibt historisch begonnen.
+- FM-DEC-015: Creator Intelligence und die ausgewählte Social-/KI-Handoff-Arbeit
+  beginnen jetzt, Android folgt danach. Jeder Creator hat einen eigenen Account
+  und Workspace; Teamzugänge, erweiterte Rechte, auditierbare Freigaben und
+  Multi-Workspace-Verwaltung bleiben später. Die bestehende Reply-Engine erhält
+  strukturierte Creator-Profile/Stimmen/Playbooks und automatische Kontexte.
+  Schema-/Staging-Rollout, reale Voice-Abnahme und die vollständige Kauf-/Lernschleife
+  sind eigene offene Schritte; Code bedeutet keine Live-Aktivierung.
   Details: [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
 - Phase 5/6 zeigen getrenntes Staging und signierte Android-Builds als vorhandene
   Nachweise. Vollständiger Restore, echte Registrierung/E-Mail/Workspace,
