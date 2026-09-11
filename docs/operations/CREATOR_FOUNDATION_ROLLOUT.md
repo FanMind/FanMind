@@ -23,8 +23,7 @@ constraint/function names are unused, workspace isolation is current, and the
 normal application still operates with the Creator flag absent/false. Stop on
 drift or an already/partially installed artifact; do not rerun or repair blindly.
 
-A protected, target-bound Apply/Verify path and synthetic signed-in owner/member
-acceptance are still required. This document is not an executable deployment
+The protected, target-bound Apply/Verify path is implemented in `creator-foundation-staging.yml`. Synthetic signed-in owner/member runtime acceptance is still required. This document is not an executable deployment
 runner or an automatic authorization for Production. The new SQL contains no
 backfill and no real fan or Creator data. Its transaction rolls back on errors;
 locks time out after 5 seconds and statements after 60 seconds.
@@ -71,3 +70,25 @@ Real target migration/runtime proof, two-Creator blinded voice quality, complete
 purchase/outcome attribution and provider/legal acceptance remain open. A green
 code build is not evidence for any of these external gates. Android, paid
 activation and the already accepted Restore/Staging sub-gates are unchanged.
+
+## Resumed Staging controller — 11 September 2026
+
+The preserved controller from cd5cac7c is resumed against reviewed main d19254f0.
+`npm run db:creator-foundation:check` checks the unchanged SQL checksum offline.
+The protected workflow accepts only `main`, the exact reviewed commit and
+`verify-creator-foundation` / `apply-creator-foundation` for the respective action.
+It reuses the existing isolated Staging session pooler with `verify-full`, a
+private password-file snapshot, Production-target exclusion and two write gates.
+Verify classifies absence or performs an exact temporary-reference catalog
+comparison. Apply is advisory-locked and transactional, compares before COMMIT
+and independently verifies afterwards. Indeterminate writes stop for Verify;
+no automatic retry, global migration or schema deletion. Runtime stays disabled.
+
+Actual PG17 CI tests include parent RLS prerequisites, rollback after an unsafe
+parent, rejection of weakened constraints/policies/column rights/functions and
+original single-Creator, stale-revision and cross-account behavior.
+
+The source now excludes both explicit and default legacy reply-profile prompts
+from a configured Creator's AI context. When the Creator rollout is enabled,
+settings expose business rules and the one Creator style; the reply menu does
+not offer legacy profiles. Stored legacy settings are preserved for recovery.

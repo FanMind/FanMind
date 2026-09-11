@@ -63,8 +63,10 @@ function draftId() {
 
 export function AiPromptSettings({
   locale,
+  singleWritingStyle = false,
 }: {
   locale: FanMindLanguage;
+  singleWritingStyle?: boolean;
 }) {
   const [settings, setSettings] = useState<PromptSettings>(EMPTY_SETTINGS);
   const [canManage, setCanManage] = useState(false);
@@ -233,8 +235,8 @@ export function AiPromptSettings({
       setStatus(
         text(
           locale,
-          "Unternehmens-Prompt und Antwortprofile wurden gespeichert.",
-          "Company prompt and reply profiles were saved.",
+          singleWritingStyle ? "Geschäftsregeln wurden gespeichert." : "Unternehmens-Prompt und Antwortprofile wurden gespeichert.",
+          singleWritingStyle ? "Business rules were saved." : "Company prompt and reply profiles were saved.",
         ),
       );
     } catch (saveError) {
@@ -262,19 +264,19 @@ export function AiPromptSettings({
           <h2 id="ai-prompt-settings-title">
             {text(
               locale,
-              "Unternehmens-Prompt & Antwortprofile",
-              "Company prompt & reply profiles",
+              singleWritingStyle ? "Geschäftsregeln" : "Unternehmens-Prompt & Antwortprofile",
+              singleWritingStyle ? "Business rules" : "Company prompt & reply profiles",
             )}
           </h2>
           <p>
             {text(
               locale,
-              "Der Unternehmens-Prompt gilt für alle Antwortvorschläge. Zusätzlich kannst du bis zu acht Profile für unterschiedliche Gesprächssituationen anlegen.",
-              "The company prompt applies to every reply suggestion. You can also create up to eight profiles for different conversation situations.",
+              singleWritingStyle ? "Deinen einzigen Schreibstil bearbeitest du im Creator-Profil. Hier ergänzt du damit vereinbare Geschäftsregeln für alle Kanäle." : "Der Unternehmens-Prompt gilt für alle Antwortvorschläge. Zusätzlich kannst du bis zu acht Profile für unterschiedliche Gesprächssituationen anlegen.",
+              singleWritingStyle ? "Edit your single writing style in the Creator profile. Add compatible business rules for all channels here." : "The company prompt applies to every reply suggestion. You can also create up to eight profiles for different conversation situations.",
             )}
           </p>
         </div>
-        <span>{activeCount} / 8 {text(locale, "aktiv", "active")}</span>
+        {!singleWritingStyle ? <span>{activeCount} / 8 {text(locale, "aktiv", "active")}</span> : null}
       </div>
 
       {loading ? (
@@ -296,8 +298,8 @@ export function AiPromptSettings({
               }
               placeholder={text(
                 locale,
-                "Beschreibe Unternehmen, Zielgruppe, Leistungen, gewünschte Ansprache, wichtige Regeln, No-Gos und den typischen nächsten Schritt.",
-                "Describe the company, audience, services, preferred voice, important rules, no-gos and the typical next step.",
+                singleWritingStyle ? "Beschreibe Leistungen, verbindliche Regeln, Grenzen und zulässige nächste Schritte." : "Beschreibe Unternehmen, Zielgruppe, Leistungen, gewünschte Ansprache, wichtige Regeln, No-Gos und den typischen nächsten Schritt.",
+                singleWritingStyle ? "Describe services, binding rules, boundaries and permitted next steps." : "Describe the company, audience, services, preferred voice, important rules, no-gos and the typical next step.",
               )}
               rows={7}
               value={settings.companyPrompt}
@@ -305,6 +307,7 @@ export function AiPromptSettings({
             <small>{settings.companyPrompt.length} / 3000</small>
           </label>
 
+          {!singleWritingStyle ? <>
           <div className={styles.templateArea}>
             <div>
               <strong>{text(locale, "Empfohlene Profile", "Recommended profiles")}</strong>
@@ -402,6 +405,7 @@ export function AiPromptSettings({
             ))}
           </div>
 
+          </> : null}
           <div className={styles.footer}>
             <div>
               <p>
@@ -422,13 +426,13 @@ export function AiPromptSettings({
               ) : null}
             </div>
             <div className={styles.footerActions}>
-              <button
+              {!singleWritingStyle ? <button
                 disabled={!canManage || settings.profiles.length >= 8}
                 onClick={addEmptyProfile}
                 type="button"
               >
                 {text(locale, "Leeres Profil", "Blank profile")}
-              </button>
+              </button> : null}
               <button
                 className={styles.primaryButton}
                 disabled={!canManage || saving}

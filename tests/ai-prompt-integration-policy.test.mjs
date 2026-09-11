@@ -138,7 +138,7 @@ test("reply generation accepts only a profile id and loads prompt content server
 test("settings and reply UI expose global plus selectable scenario prompts", async () => {
   const source = await sources();
 
-  assert.match(source.settingsPage, /<AiPromptSettings locale=\{locale\} \/>/u);
+  assert.match(source.settingsPage, /<AiPromptSettings locale=\{locale\} singleWritingStyle=\{creatorIntelligenceEnabled\(\)\} \/>/u);
   assert.match(source.settingsUi, /Unternehmens-Prompt & Antwortprofile/u);
   assert.match(source.settingsUi, /Verkauf & Beratung/u);
   assert.match(source.settingsUi, /Kundenservice/u);

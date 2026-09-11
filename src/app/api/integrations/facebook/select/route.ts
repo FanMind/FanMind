@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/channels");
     return clearAndRedirect(
       request,
-      `/channels?connected=${result.connectedType}`,
+      `/channels?connected=${result.connectedType}&meta_import=${result.initialImport}`,
     );
   } catch {
     return clearAndRedirect(

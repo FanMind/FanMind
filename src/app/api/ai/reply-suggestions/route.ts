@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
   }
 
   const [workspacePromptContext, resolvedTier] = await Promise.all([
-    getWorkspaceAiPromptContext(workspace.id, payload.promptProfileId),
+    getWorkspaceAiPromptContext(workspace.id, payload.promptProfileId, creatorContext !== null),
     getResolvedWorkspaceAiTier(workspace.id),
   ]);
   const contextMessageLimit =

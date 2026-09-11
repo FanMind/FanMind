@@ -1,3 +1,4 @@
+import { creatorIntelligenceEnabled } from "@/lib/creatorIntelligence";
 import { CreatorSettings } from "./CreatorSettings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -220,7 +221,7 @@ export default async function AiUsageSettingsPage() {
           <AccountTabs activePage="aiUsage" locale={locale} />
 
           <CreatorSettings locale={locale} />
-          <AiPromptSettings locale={locale} />
+          <AiPromptSettings locale={locale} singleWritingStyle={creatorIntelligenceEnabled()} />
 
           {usageResult.error || !summary || !indicator || !indicatorText ? (
             <section className={styles.noticeCard} aria-labelledby="ai-usage-unavailable-title">

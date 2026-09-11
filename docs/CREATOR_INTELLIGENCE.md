@@ -100,9 +100,9 @@ derselben Creator-Stimme und innerhalb desselben zulässigen Gesprächsziels.
 Gemeint sind drei mögliche Formulierungen im einzigen Account-Schreibstil,
 keine drei Schreibstile. Bestehende Unternehmens-Prompts und auswählbare
 Legacy-Antwortprofile dürfen nur damit vereinbare Geschäftshinweise oder
-Gesprächsziele ergänzen. Die noch vorhandene Legacy-Auswahl und ihre
-Beschriftung sind vor der Creator-Aktivierung gegen diese Regel abzugleichen;
-dieses Dokument behauptet keine bereits umgestellte Oberfläche.
+Gesprächsziele ergänzen. Bei aktiviertem Creator-Rollout ist die Legacy-Auswahl jetzt ausgeblendet.
+Bei konfiguriertem Creator werden weder explizite noch Default-Legacy-Profile
+als Stil an die KI gegeben. Die Freigabe des tatsächlichen Zielsystems bleibt separat.
 Strukturierte Angebots-/Preisempfehlungen kommen ausschließlich aus dem
 freigegebenen Server-Datensatz. Freie Antworttexte enthalten keine Preise;
 unzulässiger Wortschatz und Währungsangaben werden geprüft. Semantische

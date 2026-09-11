@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { CREATOR_STATE_SQL, buildCreatorApply, buildCreatorVerification } from "../scripts/operations/creator-foundation-sql.mjs";
 
 const container = process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled = process.env.FANMIND_CREATOR_PG17_REQUIRED === "true";
@@ -40,7 +41,44 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
       insert into public.contacts values('cccccccc-cccc-4ccc-8ccc-cccccccccccc','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),('dddddddd-dddd-4ddd-8ddd-dddddddddddd','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
       insert into public.conversations values('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc');
     `);
-    sql(readFileSync(new URL("../supabase/controlled/creator_intelligence_foundation.sql", import.meta.url), "utf8"));
+    // Existing live parent RLS is a prerequisite. No control may disable it.
+    sql(`
+      alter table public.workspaces enable row level security;
+      create policy ci_owner_read on public.workspaces for select to authenticated using(owner_user_id=auth.uid());
+      alter table public.workspace_members enable row level security;
+      create policy ci_member_read on public.workspace_members for select to authenticated using(user_id=auth.uid());
+      alter table public.contacts enable row level security;
+      create policy ci_contact_read on public.contacts for select to authenticated using(exists(select 1 from public.workspace_members m where m.workspace_id=contacts.workspace_id and m.user_id=auth.uid()));
+      alter table public.conversations enable row level security;
+      create policy ci_conversation_read on public.conversations for select to authenticated using(exists(select 1 from public.workspace_members m where m.workspace_id=conversations.workspace_id and m.user_id=auth.uid()));
+    `);
+    const artifact=readFileSync(new URL("../supabase/controlled/creator_intelligence_foundation.sql", import.meta.url), "utf8");
+    assert.equal(sql(CREATOR_STATE_SQL).trim(), "CREATOR_FOUNDATION_STATE=absent");
+    // A stale/unsafe parent causes no partially created tables.
+    sql("grant update on public.contact_ai_profiles to authenticated;");
+    assert.throws(()=>sql(buildCreatorApply(artifact)));
+    assert.equal(sql(CREATOR_STATE_SQL).trim(), "CREATOR_FOUNDATION_STATE=absent");
+    sql("revoke update on public.contact_ai_profiles from authenticated;");
+    assert.match(sql(buildCreatorApply(artifact)), /CREATOR_FOUNDATION_APPLY=COMMITTED/u);
+    assert.equal(sql(CREATOR_STATE_SQL).trim(), "CREATOR_FOUNDATION_STATE=present");
+    const verification=buildCreatorVerification(artifact);
+    assert.match(sql(verification.verify), /CREATOR_FOUNDATION_POSTFLIGHT=PASS/u);
+    // Real PostgreSQL mutations: weaken a check, RLS, column ACL or function.
+    // Each must be rejected, and its temporary transaction must roll back.
+    for (const corruption of [
+      "alter table public.creators disable row level security;",
+      "alter table public.creators drop constraint creators_public_age_check; alter table public.creators add constraint creators_public_age_check check(public_age>=0);",
+      "create policy unexpected_creator_read on public.creators for select to authenticated using(true);",
+      "grant update(amount_minor) on public.creator_commercial_events to authenticated;",
+      "alter table public.creator_voice_profiles disable trigger creator_voice_identity_guard;",
+      "alter function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) security definer;",
+      "create or replace function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) returns void language plpgsql security definer set search_path='' as $$ begin return; end $$;",
+    ]) {
+      assert.throws(()=>sql(`begin; ${corruption} ${verification.reference} ${verification.body} rollback;`));
+      assert.match(sql(verification.verify),/CREATOR_FOUNDATION_POSTFLIGHT=PASS/u);
+    }
+    assert.throws(()=>sql(buildCreatorApply(artifact)));
+    assert.equal(sql("select count(*) from public.creators").trim(),"0");
     const outcome = sql(`
       begin;
       create function pg_temp.expect_denied(command text) returns void language plpgsql as $$

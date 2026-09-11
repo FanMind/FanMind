@@ -60,8 +60,8 @@ export function CreatorSettings({ locale }: { locale: FanMindLanguage }) {
   return <section className={styles.card} aria-labelledby="creator-settings-title">
     <div className={styles.header}><div>
       <p className={styles.eyebrow}>{t("Creator Intelligence · Phase 7b", "Creator intelligence · Phase 7b")}</p>
-      <h2 id="creator-settings-title">{t("Dein Creator-Profil und deine Stimme", "Your creator profile and voice")}</h2>
-      <p>{t("Ein Creator, ein Account, ein eigener Workspace. Fanwissen, Stimme und Angebote bleiben in diesem Account. Teamzugänge und die Verwaltung mehrerer Workspaces folgen später.", "One creator, one account, one dedicated workspace. Fan knowledge, voice and offers stay in this account. Team access and managing multiple workspaces follow later.")}</p>
+      <h2 id="creator-settings-title">{t("Dein Creator-Profil und dein Schreibstil", "Your creator profile and writing style")}</h2>
+      <p>{t("Ein Creator, ein Account, ein eigener Workspace. Fanwissen, Schreibstil und Angebote bleiben in diesem Account. Teamzugänge und die Verwaltung mehrerer Workspaces folgen später.", "One creator, one account, one dedicated workspace. Fan knowledge, writing style and offers stay in this account. Team access and managing multiple workspaces follow later.")}</p>
     </div></div>
     {loading ? <p role="status">{t("Profil wird geladen …", "Loading profile…")}</p> : !ready ? <p className={styles.notice}>
       {t("Die Creator-Erweiterung ist in Vorbereitung. Das bestehende Kontaktwissen und die bisherigen KI-Antworten bleiben verfügbar.", "The creator extension is being prepared. Existing contact knowledge and AI replies remain available.")}
@@ -80,7 +80,7 @@ export function CreatorSettings({ locale }: { locale: FanMindLanguage }) {
           <option value="draft">{t("Entwurf", "Draft")}</option><option value="active">{t("Aktiv", "Active")}</option><option value="paused">{t("Pausiert", "Paused")}</option><option value="archived">{t("Archiviert", "Archived")}</option>
         </select></label>
       </fieldset>
-      <fieldset disabled={disabled} className={styles.profileCard}><legend>{t("Sprachlicher Fingerabdruck", "Voice fingerprint")}</legend>
+      <fieldset disabled={disabled} className={styles.profileCard}><legend>{t("Dein einziger Schreibstil", "Your single writing style")}</legend>
         {voiceTexts.map(([key, de, en]) => <label className={styles.field} key={key}><span>{t(de, en)}</span><input maxLength={240} value={bundle.voice[key]} onChange={(event) => updateVoice(key, event.target.value)} /></label>)}
         {scales.map(([key, de, en]) => <label className={styles.field} key={key}><span>{t(de, en)} · {bundle.voice[key]}/100</span><input type="range" min="0" max="100" value={bundle.voice[key]} onChange={(event) => updateVoice(key, Number(event.target.value))} /></label>)}
         {voiceLists.map(([key, de, en]) => <label className={styles.field} key={key}><span>{t(de, en)}</span><textarea rows={key.endsWith("Examples") ? 4 : 2} value={bundle.voice[key].join("\n")} onChange={(event) => updateVoice(key, event.target.value.split("\n"))} /><small>{t("Ein Eintrag pro Zeile. Gute Beispiele: mindestens drei bestätigte eigene Nachrichten.", "One entry per line. Good examples: at least three confirmed messages of your own.")}</small></label>)}

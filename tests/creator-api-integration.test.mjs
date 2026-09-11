@@ -30,7 +30,7 @@ function context() {
     strategy: creatorPolicy.deriveCreatorStrategy({ playbook: bundle.playbook }) };
 }
 function harness({ denied = false, owner = true, changed = false, summaryMismatch = false, enabled = true } = {}) {
-  const calls = { ai: [], voices: 0, memories: 0, contexts: 0, saves: [] };
+  const calls = { promptModes: [], ai: [], voices: 0, memories: 0, contexts: 0, saves: [] };
   const dependencies = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/creatorIntelligencePolicy.mjs": creatorPolicy,
@@ -44,7 +44,7 @@ function harness({ denied = false, owner = true, changed = false, summaryMismatc
     "@/lib/subscriptionCancellation": { isWorkspaceArchivedAfterSubscriptionEnd: () => false },
     "@/lib/workspaceAiTierEntitlements": { getResolvedWorkspaceAiTier: async () => ({ entitlement: { effectiveTierId: "starter" } }) },
     "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => {} },
-    "@/lib/workspaceAiPrompts": { getWorkspaceAiPromptContext: async () => ({ companyPrompt: "Agency rules", profileName: "Default", profilePrompt: "Follow approved rules" }) },
+    "@/lib/workspaceAiPrompts": { getWorkspaceAiPromptContext: async (_workspace, _profile, companyOnly) => { calls.promptModes.push(companyOnly); return { companyPrompt: "Agency rules", profileName: companyOnly ? "" : "Default", profilePrompt: companyOnly ? "" : "Follow approved rules" }; } },
     "@/lib/workspaceAuthorization": { ...authPolicy, requireContactInActiveAuthorizedWorkspace: async (id) => {
       if (denied || id !== contactId) throw new authPolicy.WorkspaceAuthorizationError("Denied", "resource_forbidden");
       return { workspace: { id: workspaceId, owner_user_id: "owner" }, user: { id: owner ? "owner" : "member" }, contact: { id: contactId, workspace_id: workspaceId, display_name: "Synthetic fan" } };
@@ -87,6 +87,8 @@ test("actual reply route auto-loads the account Creator, memory and summary and 
   assert.match(sent.fanMemory, /likes hiking/); assert.equal(sent.conversationSummary, "Synthetic summary");
   assert.doesNotMatch(JSON.stringify(sent), /forged|Chatter voice/);
   assert.equal(h.calls.ai[0].store, false);
+  assert.deepEqual(h.calls.promptModes, [true]);
+  assert.equal(sent.promptProfilePrompt, null);
 });
 
 test("foreign contact and mixed summary produce no AI request, while a changed profile discards the generated draft", async () => {
@@ -131,4 +133,21 @@ test("actual loader uses the user's JWT and Workspace filter, and disabled rollo
   assert.equal(calls[0].url.searchParams.get("workspace_id"), `eq.${workspaceId}`);
   assert.equal(calls[0].options.headers.Authorization, "Bearer synthetic-jwt");
   assert.equal(calls[0].options.cache, "no-store");
+});
+
+
+test("actual prompt loader excludes default and explicitly selected legacy styles in Creator mode", async () => {
+  const policy = await import("../src/lib/aiPromptPolicy.mjs");
+  const promptLoader = evaluate(compile("src/lib/workspaceAiPrompts.ts"), {
+    "@/lib/aiPromptPolicy.mjs": policy,
+    "@/lib/supabase/config": { getSupabaseHeaders: () => ({}), getSupabaseRestUrl: table => `https://synthetic.invalid/${table}` },
+  }, { process: { env: { SUPABASE_SERVICE_ROLE_KEY: "synthetic" } },
+    fetch: async () => Response.json([{ workspace_id: workspaceId, company_prompt: "Approved business rules", profiles: [{ id: creatorId, name: "OTHER STYLE", instruction: "ALTERNATE STYLE", isActive: true, isDefault: true }] }]),
+  });
+  for (const profile of [undefined, creatorId]) {
+    const result = await promptLoader.getWorkspaceAiPromptContext(workspaceId, profile, true);
+    assert.equal(result.companyPrompt, "Approved business rules");
+    assert.doesNotMatch(JSON.stringify(result), /OTHER STYLE|ALTERNATE STYLE/);
+  }
+  assert.match(JSON.stringify(await promptLoader.getWorkspaceAiPromptContext(workspaceId, creatorId, false)), /ALTERNATE STYLE/);
 });
