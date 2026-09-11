@@ -2,6 +2,7 @@
 
 ## FM-LOOP-CREATOR-SOCIAL-20260910
 - Status: IN_PROGRESS; current priority per FM-DEC-015.
+- FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
 - Source package #1099, all 14 checks and exact Deploy/Audit/Readiness are complete. Only its bounded public category/evidence closeout and genuine protected target rollout/voice quality remain. Full confirmed-chat/purchase learning is not implemented yet.
 - Exact next: finish the bounded reader closeout, then prepare protected Staging acceptance and the next learning slice. OnlyFans direct API/Meta provider/legal acceptance stays open; Android follows Creator/Social.

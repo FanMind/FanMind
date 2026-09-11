@@ -1,5 +1,16 @@
 # FanMind Decision Log
 
+## FM-DEC-016
+- Date: 2026-09-11
+- Status: ACCEPTED
+- Source: Bernd clarifies that each normal user is the Creator represented by their own account, every account has exactly one personal writing style, and only a manager may supervise multiple Creator/user accounts and their channels. "Voice" means written expression, not sound or a real voice.
+- Decision: one user/Creator account = one Workspace = one current writing-style profile. Vocabulary, sentence structure, punctuation, emoji use and expression belong to that account. Revisions improve the same style; they are not a menu of different identities. Every suggested reply and connected channel uses that same account style.
+- Manager boundary: a future manager access may operate across separately authorized Creator accounts/channels. Every action remains bound to the selected Creator's Workspace, writing style, fan knowledge and history; never use the manager's personal style or a pooled style. Existing roles/manager switching are not activated by this clarification.
+- Terminology: use "Schreibstil" / "writing style" in product explanations. Existing internal voice/fingerprint identifiers refer to text only. No audio, speech synthesis, voice recording or voice cloning is in scope.
+- Reply variants and legacy prompts: Recommended/Softer/Stronger are alternative replies within the same style, not three styles. Existing company prompts and legacy reply profiles may supply compatible business context or conversation goals, never an additional Creator identity/style. Verify the legacy UI and runtime interaction before Creator activation; this documentation does not prove that migration/acceptance is complete.
+- Supersedes: ambiguous "Creator-Stimmen"/voice wording and any reading of legacy reply profiles as permission for several styles in one Creator account. FM-DEC-015's Creator/Social-before-Android priority and later manager/team/roles scope remain.
+- Related tasks/change: FM-CREATOR-001 / FM-CR-030.
+
 ## FM-DEC-015
 - Date: 2026-09-10
 - Status: ACCEPTED

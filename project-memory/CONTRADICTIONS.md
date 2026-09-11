@@ -1,5 +1,14 @@
 # Contradiction / Reconciliation Register
 
+## CTR-FM-CREATOR-WRITING-STYLE-20260911
+- Task/change: FM-CREATOR-001 / FM-CR-030
+- Risk: R1
+- Status: RESOLVED
+- Source A: earlier "Creator-Stimmen"/voice wording and the existing legacy selection of up to eight reply profiles could be understood as audio or several account identities/styles.
+- Source B: Bernd explicitly specifies text only, exactly one personal writing style per normal user/Creator account, and a future manager supervising separate accounts/channels.
+- Resolution: FM-DEC-016 and canonical readers now define this account/style/manager contract. The current Creator SQL and reply policy support one profile and the same style across variants. Legacy UI/runtime conformance and target activation are retained as open implementation acceptance in FM-LOOP-CREATOR-SOCIAL-20260910; no code change is claimed here.
+- Falsifier: audio scope, a second selectable Creator style, or manager-style substitution would violate the decision. Manager/team rights remain later.
+
 ## CTR-FM-BILL-002-PUBLICATION-20260910
 - Task: FM-BILL-002 / FM-REG-002
 - Status: RESOLVED

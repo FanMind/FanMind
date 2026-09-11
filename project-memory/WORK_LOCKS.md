@@ -1,5 +1,14 @@
 # Work Locks
 
+## LOCK-FM-CREATOR-STYLE-20260911
+- Task: FM-CREATOR-001 / FM-CR-030
+- Status: ACTIVE
+- Risk: R1
+- Holder: Codex
+- Scope: one text writing style per user/Creator account and future manager context, documentation only. No takeover of the separately prepared Creator Staging rollout.
+- Evidence plan: current source/constraint comparison, final diff, existing truth/memory controls and enclosing PR checks.
+- Recovery: bounded documentation revert.
+
 ## LOCK-FM-CREATOR-CLOSEOUT-20260910
 - Task: FM-CREATOR-001 / FM-CR-029
 - Status: ACTIVE

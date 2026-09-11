@@ -3,6 +3,23 @@
 Unter `Einstellungen → KI-Nutzung` kann ein Workspace seine gewünschte
 Unternehmenssprache für KI-Antwortvorschläge pflegen.
 
+## Ein Account, ein Schreibstil — FM-DEC-016
+
+Jeder Nutzer-/Creator-Account hat genau einen persönlichen Schreibstil.
+Die unten beschriebene bestehende Legacy-Profilverwaltung ist kein Modell
+für mehrere Creator oder wechselnde Schreibstile in einem Account. Im
+Creator-Pfad bestimmt allein das freigegebene Account-Profil den Schreibstil;
+Unternehmens-Prompt und Antwortprofile dürfen nur vereinbare Geschäftshinweise
+und Gesprächsziele ergänzen. Auch Recommended/Softer/Stronger bleiben im
+selben Stil. Audio oder echte Stimmen sind nicht gemeint.
+
+Ein späterer Manager darf mehrere getrennte Creator-Accounts und deren
+Kanäle betreuen; der Stil wird dabei aus dem jeweils autorisierten
+Creator-Account geladen, nicht aus dem Managerzugang. Die heutige Legacy-UI
+und ihr Zusammenspiel mit dem Creator-Pfad müssen vor dessen Aktivierung
+gegen diese Regel geprüft werden. Diese Klarstellung ändert weder bestehende
+gespeicherte Profile noch behauptet sie eine bereits abgeschlossene Umstellung.
+
 ## Struktur
 
 1. **Unternehmens-Prompt**

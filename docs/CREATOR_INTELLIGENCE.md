@@ -9,6 +9,22 @@ Weitere nicht beauftragte Phase-8-Arbeit bleibt zurückgestellt.
 
 ## Ein Creator = ein Account = ein Workspace
 
+Klarstellung FM-DEC-016 vom 11. September 2026: Ein normaler Nutzer ist der
+Creator seines Accounts. Jeder Account besitzt genau **einen persönlichen
+Schreibstil**: Wortwahl, Satzbau, Satzzeichen, Emojis und Ausdruck. Alle
+Antwortvorschläge und zugehörigen Kanäle bleiben in diesem Stil. Eine spätere
+Überarbeitung aktualisiert denselben Stil; sie eröffnet keinen zweiten Stil
+zur Auswahl. "Voice", "Stimme" und die bestehenden technischen
+`creator_voice_profiles`-Bezeichner meinen ausschließlich diesen Textstil.
+Audio, echte Stimmen, Sprachsynthese und Stimmklonen gehören nicht dazu.
+
+Nur ein Manager darf später mehrere getrennte Nutzer-/Creator-Accounts und
+deren Kanäle betreuen. Der Manager ist dabei der Bediener des ausgewählten
+Accounts; die KI verwendet dessen Schreibstil und Fanwissen. Ein Wechsel des
+Managers ändert den Stil nicht. Ein Wechsel des betreuten Accounts wechselt
+den vollständigen autorisierten Creator-Kontext, ohne Stile oder Fanwissen
+zu vermischen. Der Managerzugang mit diesen Rechten bleibt spätere Arbeit.
+
 Bernds anschließende Klarstellung ist maßgeblich: Jeder Creator erhält einen
 eigenen FanMind-Account mit eigenem Workspace. Das vorhandene `workspace_id`
 trennt bereits Fans, Conversations, Memories, Follow-ups, Prompts und Kanäle.
@@ -81,6 +97,12 @@ pro Nachricht. Missing-/Mismatch-Kontext darf nicht auf eine fremde Stimme falle
 
 Die drei Varianten werden Recommended, Softer und Stronger; jede bleibt in
 derselben Creator-Stimme und innerhalb desselben zulässigen Gesprächsziels.
+Gemeint sind drei mögliche Formulierungen im einzigen Account-Schreibstil,
+keine drei Schreibstile. Bestehende Unternehmens-Prompts und auswählbare
+Legacy-Antwortprofile dürfen nur damit vereinbare Geschäftshinweise oder
+Gesprächsziele ergänzen. Die noch vorhandene Legacy-Auswahl und ihre
+Beschriftung sind vor der Creator-Aktivierung gegen diese Regel abzugleichen;
+dieses Dokument behauptet keine bereits umgestellte Oberfläche.
 Strukturierte Angebots-/Preisempfehlungen kommen ausschließlich aus dem
 freigegebenen Server-Datensatz. Freie Antworttexte enthalten keine Preise;
 unzulässiger Wortschatz und Währungsangaben werden geprüft. Semantische
