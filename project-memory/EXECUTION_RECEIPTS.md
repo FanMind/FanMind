@@ -1,4 +1,5 @@
 ## RECEIPT-FM-SOCIAL-OAUTH-20260911
+- Refresh follow-through: a separate negative test reproduced an orphaned newly refreshed token when profile/rotation failed. The bounded fix revokes that token on failed or indeterminate rotation, reports unconfirmed cleanup and preserves safely stored tokens on later DM failure. All eighteen provider behavior tests now pass; final publication remains subject to exact-head CI.
 - PR review countercheck: #1102 initial 13 checks passed at a80e03e, but the separately completed review identified three real issues. Before merge, current source now requires the configured Production project comparison even for cleanup, revokes newly issued credentials on callback/normalization failure, and uses same-origin POST plus separately allowlisted browser navigation without widening CSP. Sixteen behavior tests pass; updated Chromium navigation and exact-head CI must pass before completion.
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Task: FM-SOC7-001 / FM-CR-031

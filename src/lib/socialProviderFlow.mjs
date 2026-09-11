@@ -81,11 +81,11 @@ export async function handleSocialRequest({ request, provider, action, authorize
         if (saved !== true) throw new SocialProviderError("connection_changed");
         return new Response(null, { status: 303, headers: { ...headers, Location: `${origin}/channels?social=${provider}&social_result=connected` } });
       } catch (error) {
-          // Revoke only the newly issued token, including failed profile reads,
-          // lost authorization, failed/indeterminate persistence and disconnect races.
-          try { await client.revokeSocialToken(config, token); }
-          catch { throw new SocialProviderError("provider_cleanup_required"); }
-          throw error;
+        // Revoke only the newly issued token, including failed profile reads,
+        // lost authorization, failed/indeterminate persistence and disconnect races.
+        try { await client.revokeSocialToken(config, token); }
+        catch { throw new SocialProviderError("provider_cleanup_required"); }
+        throw error;
       }
     }
     if (provider !== "x") throw new SocialProviderError("messaging_unavailable");
@@ -99,9 +99,17 @@ export async function handleSocialRequest({ request, provider, action, authorize
     let token = openSocialSecret(current.encrypted_token, binding(workspaceId, provider, current.external_account_id), config.key);
     if (Date.parse(token.expiresAt) < Date.now() + 60000) {
       token = await client.refreshSocialToken(config, token);
-      const identity = await client.readSocialProfile(config, token);
-      if (identity.id !== current.external_account_id) throw new SocialProviderError("provider_identity_invalid");
-      if (await store.rpc("rotate", { ...leaseParams, p_token: sealSocialSecret(token, binding(workspaceId, provider, identity.id), config.key), p_expires: token.expiresAt }) !== true) throw new SocialProviderError("connection_changed");
+      try {
+        const identity = await client.readSocialProfile(config, token);
+        if (identity.id !== current.external_account_id) throw new SocialProviderError("provider_identity_invalid");
+        if (await store.rpc("rotate", { ...leaseParams, p_token: sealSocialSecret(token, binding(workspaceId, provider, identity.id), config.key), p_expires: token.expiresAt }) !== true) throw new SocialProviderError("connection_changed");
+      } catch (error) {
+        // Disconnect or an indeterminate rotation must not orphan the new token.
+        // Once safely stored, a later DM failure must preserve that connection.
+        try { await client.revokeSocialToken(config, token); }
+        catch { throw new SocialProviderError("provider_cleanup_required"); }
+        throw error;
+      }
     }
     const result = await client.readXDirectMessages(token, current.external_account_id);
     const stillAuthorized = await authorize("active");

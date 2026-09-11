@@ -33,7 +33,9 @@ Antworten werden weiterhin auf der Originalplattform manuell gesendet.
   laufenden Callback ungültig macht. Neue Versuche ersetzen den früheren State.
 - Scheitert ein Schritt nach Ausgabe neuer Tokens, wird deren Provider-Widerruf
   versucht. Das gilt auch für unzureichende Token-Scopes, abgebrochene Profilprüfung
-  und unklare Speicherung. Ein unbestätigter Widerruf erscheint als nötige manuelle
+  und unklare Speicherung, einschließlich fehlgeschlagener Refresh-Rotation.
+  Ein späterer DM-Abruffehler lässt bereits sicher gespeicherte Tokens bestehen.
+  Ein unbestätigter Widerruf erscheint als nötige manuelle
   Entfernung der App-Freigabe; ein vollständiges Cleanup wird dann nicht behauptet.
 - AES-256-GCM bindet Tokens zusätzlich kryptografisch an Provider, Workspace und
   externe Konto-ID; der PKCE-Verifier ist ebenfalls verschlüsselt. Tokens und

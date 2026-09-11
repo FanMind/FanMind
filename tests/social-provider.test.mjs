@@ -157,3 +157,45 @@ test("every failure after token exchange attempts revocation; cleanup failure is
     if (failure === "revoke") assert.match(response.headers.get("location"), /provider_cleanup_required$/);
   }
 });
+test("failed refresh identity or persistence revokes the newly issued credential before any DM read", async () => {
+  const expired = { ...token, expiresAt: new Date(Date.now() - 1000).toISOString() };
+  const staleRow = { ...row, encrypted_token: sealSocialSecret(expired, `social:${workspace}:x:123`, config.key), expires_at: expired.expiresAt };
+  const refreshed = { ...token, accessToken: "new-synthetic-access", refreshToken: "new-synthetic-refresh" };
+  for (const failure of ["profile", "identity", "save_false", "save_unknown", "revoke"]) {
+    let revoked = 0, reads = 0;
+    const response = await handleSocialRequest({ request: request("messages"), provider: "x", action: "messages", authorize: async () => context, env,
+      store: { read: async () => staleRow, rpc: async name => {
+        if (name === "claim_read") return [staleRow];
+        assert.equal(name, "rotate");
+        if (failure === "save_unknown") throw new Error("private save timeout");
+        return false;
+      } }, client: {
+        refreshSocialToken: async () => refreshed,
+        readSocialProfile: async () => { if (failure === "profile") throw new Error("private profile error"); return { id: failure === "identity" ? "456" : "123" }; },
+        readXDirectMessages: async () => { reads++; return { messages: [] }; },
+        revokeSocialToken: async (_config, issued) => { assert.equal(issued.accessToken, refreshed.accessToken); revoked++; if (failure === "revoke") throw new Error("private revoke error"); },
+      } });
+    assert.equal(revoked, 1); assert.equal(reads, 0);
+    const body = await response.text(); assert.doesNotMatch(body, /private|new-synthetic/);
+    if (failure === "revoke") assert.match(body, /provider_cleanup_required/);
+  }
+});
+test("successful refresh is durably rotated before reading; a later DM failure keeps the saved token", async () => {
+  const expired = { ...token, expiresAt: new Date(Date.now() - 1000).toISOString() };
+  const staleRow = { ...row, encrypted_token: sealSocialSecret(expired, `social:${workspace}:x:123`, config.key), expires_at: expired.expiresAt };
+  const refreshed = { ...token, accessToken: "new-synthetic-access", refreshToken: "new-synthetic-refresh" };
+  let saved = false, reads = 0, revoked = 0;
+  const response = await handleSocialRequest({ request: request("messages"), provider: "x", action: "messages", authorize: async () => context, env,
+    store: { read: async () => staleRow, rpc: async (name, params) => {
+      if (name === "claim_read") return [staleRow];
+      assert.equal(name, "rotate");
+      assert.equal(openSocialSecret(params.p_token, `social:${workspace}:x:123`, config.key).refreshToken, refreshed.refreshToken);
+      saved = true; return true;
+    } }, client: {
+      refreshSocialToken: async () => refreshed, readSocialProfile: async () => ({ id: "123" }),
+      readXDirectMessages: async issued => { reads++; assert.equal(saved, true); assert.equal(issued.accessToken, refreshed.accessToken); throw new Error("private provider timeout"); },
+      revokeSocialToken: async () => { revoked++; },
+    } });
+  assert.equal(saved, true); assert.equal(reads, 1); assert.equal(revoked, 0);
+  assert.doesNotMatch(await response.text(), /private|new-synthetic/);
+});
