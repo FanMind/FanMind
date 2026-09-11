@@ -385,7 +385,11 @@ Staging-Schema-Workflow hat die Installation mit Verify 34591253931 und Apply
 34591339718 / POSTFLIGHT=PASS abgeschlossen; Staging Deploy 34591566257 auf
 d19254f0 bestand ebenfalls. Diese datierte Grundlagenabnahme ist keine aktuelle
 Provider-/Pilotabnahme. Vor neuer Zielarbeit Zustand und Berechtigungen prüfen;
-keine erneute Installation der bereits angewendeten Grundlage. Der unter #1102 dokumentierte nächtliche Backup-Fehler
+keine erneute Installation der bereits angewendeten Grundlage. Der historische
+Nachweis ist unter EV-SOCIAL-STAGING-FOUNDATION-20260911 registriert; spätere
+Staging-Deploys haben seine Verwendung als aktuellen Zielnachweis bereits
+ungültig gemacht. Für neue Ziel-/Pilotabnahmen ist eine aktuelle Prüfung nötig,
+keine Wiederholung der abgeschlossenen Installation. Der unter #1102 dokumentierte nächtliche Backup-Fehler
 bleibt offen und ist keine neue Voraussetzung für unabhängige Social-Quellarbeit;
 er verhindert weiterhin eine vollständig grüne aktuelle Betriebsabnahme.
 

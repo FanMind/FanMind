@@ -3,7 +3,7 @@
 ## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
 - Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
 - Source #1102-#1104 is published; selected-channel return and once-only X preview are implemented, Social Staging schema installed via 34591339718 / deploy 34591566257.
-- Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-TIKTOK-X-EXTERNAL (Phase 7), after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
+- Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7), after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
 
 ## FM-LOOP-BACKUP-DATABASE-20260911
 - Status: OPEN; task FM-OPS-001, separate from Social source engineering under current owner priority.
@@ -15,7 +15,7 @@
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
 - Source #1099-#1108 is published. Creator schema/upgrade/JWT/revision/PDF foundation acceptance 34629009649 passed. Actual deployed flag, enabled UI, full contact/account deletion and real quality/confirmed-chat learning remain open; full learning is not implemented yet.
-- Exact next: controlled repository/synthetic-Staging UI/delete/learning engineering under NBA-CREATOR-INTELLIGENCE; external app/account/provider acceptance is separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-TIKTOK-X-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL; Android follows Creator/Social.
+- Exact next: controlled repository/synthetic-Staging UI/delete/learning engineering under NBA-CREATOR-INTELLIGENCE; external app/account/provider acceptance is separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL; Android follows Creator/Social.
 - Paid activation deferral: PR #1098 already published the consent correction. FM-BILL-003 is PARTIAL and owner-deferred until actual tax/UID facts arrive. Earlier activation-first instructions below are historical and must not restart questions/actions during this deferral.
 
 

@@ -350,6 +350,25 @@
         "credential_rotation_after_observation",
         "before_new_creator_staging_action_or_current_target_acceptance"
       ]
+    },
+    {
+      "id": "EV-SOCIAL-STAGING-FOUNDATION-20260911",
+      "gate": "phase7_social",
+      "class": "staging_smoke",
+      "status": "RECONCILIATION_REQUIRED",
+      "observed_at": "2026-09-11T10:56:52Z",
+      "source": "Historical #1104 / main d19254f06da3205a954e903f72e5c5b6928de3ab: Verify 34591253931, Apply 34591339718 committed with POSTFLIGHT=PASS at 10:53:12Z; independent 10:54:15Z catalog/ACL read confirms two RLS tables/eight functions and zero connections/attempts; Staging Deploy 34591566257 confirms that release at 10:56:52Z. Bounded installation remains completed history. This entry does not attest current target/process/provider state and does not authorize another Apply.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "invalidated_by": "Later Staging deployments, including 34628740980 on f0c7a84e6105752d34b489520fb92d2bb7e5b61a; revalidate current state before a new Social target/pilot acceptance.",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "social_schema_or_acl_change",
+        "target_binding_change",
+        "workflow_contract_change",
+        "credential_rotation",
+        "before_new_social_target_or_provider_acceptance"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

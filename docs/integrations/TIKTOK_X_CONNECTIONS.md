@@ -93,7 +93,11 @@ interne Funktionen, korrekte Rechte und null Verbindungen/OAuth-Versuche. Das is
 ein datierter Grundlagenbeleg, keine reale App-/Nachrichten-/Pilotabnahme.
 Vor neuer Zielarbeit den aktuellen Zustand prüfen; die Installation nicht erneut
 als offene Aufgabe starten. Ein tatsächlich fehlendes Schema blockiert weiterhin
-die Anmeldung vor dem Provider-Redirect.
+die Anmeldung vor dem Provider-Redirect. Der historische
+Nachweis ist unter EV-SOCIAL-STAGING-FOUNDATION-20260911 registriert; spätere
+Staging-Deploys haben seine Verwendung als aktuellen Zielnachweis bereits
+ungültig gemacht. Für neue Ziel-/Pilotabnahmen ist eine aktuelle Prüfung nötig,
+keine Wiederholung der abgeschlossenen Installation.
 
 Serverkonfiguration (Werte niemals in Git oder Chat):
 
