@@ -10,15 +10,15 @@ Der Audit ist insbesondere für Issue #524 und den zentralen P1-Tracker #644 vor
 
 Der Audit gibt ausschließlich die folgenden Kategorien aus:
 
-- Zeitpunkt und sichere Runtime-Versionen;
+- Zeitpunkt, Shell-Node-Version und die von PM2 für den einzigen FanMind-Prozess gemeldete Node-Version; die Shell-Version ist kein Beleg für die App-Version;
 - Server-HEAD, `origin/main`, öffentlicher Release-Commit und Environment;
 - explizite öffentliche Runtime-Umgebung aus `/api/version`;
 - öffentlicher Health-Gesamtstatus und veröffentlichte Komponentenstatus;
 - ausgewählte PM2-Metadaten: Status, Restart-Zähler, instabile Restarts, Uptime, CWD, Ausführungsmodus und Memory;
 - ausschließlich die normalisierten Booleschen Zustände des Server-Fehlertrackings und seiner getrennten E-Mail-Alarmierung;
-- Ergebnis von `nginx -t`;
+- Ergebnis von `nginx -t` und aktiver Zustand von `nginx.service`;
 - HTTP-Status des lokalen und öffentlichen Login-Endpunkts;
-- Root-Dateisystembelegung, verfügbarer Arbeitsspeicher und Reboot-Hinweis;
+- Root-Dateisystembelegung, verfügbarer Arbeitsspeicher, Host-Uptime, Boot-ID und Reboot-Hinweis;
 - Namen und Aktivierungsstatus der `fanmind-*`-systemd-Units;
 - stabile Timer-Metadaten je konkreter `fanmind-*.timer`-Unit über `NextElapseUSecRealtime`, `NextElapseUSecMonotonic` und `LastTriggerUSec`;
 - Anzahl und Aktualität verschlüsselter Backup-/Prüfsummen-Paare;
@@ -187,7 +187,7 @@ der zweiten Variante:
 - ein manueller Lauf ist ausschließlich auf `main` mit
   `run-read-only-production-audit` und einem exakten 40-stelligen erwarteten
   Commit möglich;
-- Rohdaten bleiben in einer temporären Runner-Datei und werden nach dem Lauf
+- Rohdaten und stderr bleiben in getrennten privaten temporären Runner-Dateien und werden nach dem Lauf
   gelöscht. Es wird kein Audit-Artefakt hochgeladen;
 - nur die redigierte, maschinengeprüfte Zusammenfassung erscheint im
   Workflow-Log.
@@ -204,6 +204,32 @@ npm run production:audit:verify -- \
 Er lehnt unter anderem Commit- oder Runtime-Drift, ungesunde Pflichtkomponenten,
 PM2-/nginx-Fehler, veraltete oder verwaiste Backup-Paare, Offsite-Abweichungen
 und Backup-Worker-Fehler im 24-Stunden-Fenster ab.
+
+## Diagnose bei Abbruch
+
+Der Workflow ruft den Verifier auch nach einem fehlgeschlagenen Audit-Skript auf
+und übergibt dessen tatsächlichen Exit-Code als optionales drittes Argument.
+Ein von null verschiedener Code bleibt ein Fehler, selbst wenn die private
+Ausgabe einen Success-Marker enthält. Der EXIT-Trap des Audits erhält den letzten
+fest definierten Prüfabschnitt; private Zwischendateien werden auch bei einem
+frühen oder expliziten Abbruch gelöscht. Ungeprüftes stderr, Fehlertexte und
+Pfadwerte erscheinen nicht im Workflow-Log.
+
+Die Fehlerausgabe enthält nur `PRODUCTION_AUDIT_VERIFIED=false`, einen festen
+`PRODUCTION_AUDIT_FAILURE_CODE`, den allowlisteten
+`PRODUCTION_AUDIT_FAILED_STAGE` und den normalisierten Exit-Code. Fehlt eine
+auswertbare Stufe, lautet sie `unknown`; ein Fehler der abschließenden
+Pass-Prüfung lautet `validation`.
+
+Ein gesondert vollständig validierter Runtime-Teil kann zusätzlich
+`PRODUCTION_RUNTIME_VERIFIED=true` melden. Dafür müssen derselbe erwartete
+Production-Commit, alle acht Health-Komponenten, PM2, beide Fehlertracking-
+Schalter, nginx, HTTP und die Host-Messwerte bestehen. Er dokumentiert die
+Shell-Node-Version getrennt von `PRODUCTION_PM2_NODE_VERSION` (PM2-Prozessmetadaten),
+die acht einzelnen Health-Status, Restart-Zähler, nginx-Status, Boot-ID und
+Host-/Prozess-Uptime. Dieser Teilnachweis schließt weder den Gesamt-Audit noch
+Backup-/Restore-Arbeit oder den Ubuntu-Neustart ab. Für den Neustart sind
+separate Vorher-/Nachher-Messungen mit geänderter Boot-ID erforderlich.
 
 ## Dokumentation eines Laufs
 

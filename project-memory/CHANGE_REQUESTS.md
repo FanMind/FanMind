@@ -324,3 +324,8 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Dependencies: exact immutable workflow/run evidence, independent read-only counterchecks, complete rollback/cleanup evidence and exact-head CI/review before merge.
 - Decision: Accept only the bounded documentation/evidence closeout. Preserve `FM-AI-001=PARTIAL`, `ai_billing=PARTIAL`, `sales_ready=false`, disabled canonical Production projection and disabled Plus/Ultra. Product/private/provider/Legal/Tax/Production gates, Mobile real-device/Play and Restore remain open under their existing controls.
 - Related task: FM-AI-001
+## FM-CR-034 — expose safe Production audit failure evidence
+- Date: 2026-09-11; Status: IN_PROGRESS; Task FM-OPS-001; Risk R4.
+- Source: Bernd requests continuing the open reboot/Creator/Restore work after the verified status report.
+- Scope: preserve the failed probe and exit code through the private-output workflow, report validated runtime/host measurements, keep every existing Operations acceptance rule. No backup redesign, repeated database restore, SQL, runtime activation or OS reboot.
+- Acceptance: executable failure/redaction/gate tests, reviewed exact-head CI and an installed current-release audit diagnostic. Whole Operations acceptance remains separate until the real fault and reboot evidence are closed.

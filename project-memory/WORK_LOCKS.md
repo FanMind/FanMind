@@ -645,3 +645,12 @@ Prevents two agents/sessions from independently working the same task.
 - Resume from: no resume required unless V8 evidence becomes stale or contradictory; then create a new reconciliation lock rather than reviving this one.
 
 All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be acquired before substantive continuation of their respective task IDs.
+## LOCK-FM-OPS-AUDIT-20260911
+- Task: FM-OPS-001 / FM-CR-034
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Scope: bounded read-only audit diagnosis/runtime evidence, normal reviewed source publication. No OS restart, backup/restore write or Creator scope takeover.
+- Baseline: main e0f2a517855a65bd927c3968c8e0700f06bb54db; tree 3149df013a74345822acc5f1f1afde4144c3ca77.
+- Evidence: executable silent-failure/redaction/negative-gate tests, current-head CI/review, installed exact-release audit result.
+- Recovery: bounded source revert via existing isolated deployment; preserve backup history and all accepted restores/schema work.

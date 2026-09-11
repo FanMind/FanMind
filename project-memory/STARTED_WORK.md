@@ -616,3 +616,12 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Result: after correcting missing V5 bookkeeping and stale generated status, final exact head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed Guard, Quality, Status, FanMind CI, Supply Chain, Landing, CodeQL and Browser E2E, then squash-merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
 - Evidence: exact-head GitHub workflow runs and merge commit; independent Browser E2E run #915.
 - Follow-up: maintain V8; any stale/contradictory handoff must downgrade to revalidation rather than being trusted.
+## FM-OPS-001 — bounded Production audit diagnosis — 2026-09-11
+- Status: IN_PROGRESS
+- Risk: R4
+- Change: FM-CR-034; lock LOCK-FM-OPS-AUDIT-20260911.
+- Owner requests continuing the reported completion work, including controlled reboot evidence. Baseline main e0f2a517855a65bd927c3968c8e0700f06bb54db, tree 3149df013a74345822acc5f1f1afde4144c3ca77; clean local tree matches. Drift/freshness/next-action preflights pass; Creator remains the product priority after this bounded diagnosis.
+- Observed: audit 34639783862 exits 1 before publishing a diagnostic; shell failure skips the verifier and deletes private output. The latest failing probe is unproven. Preserve the historical database-backup failure under FM-LOOP-BACKUP-DATABASE-20260911.
+- Scope: fixed-stage failure diagnostics and safe runtime/host evidence only. No backup job, restore, SQL, feature activation or reboot in this source change. DB_POSTCHECKED and accepted Creator foundation remain closed.
+- Evidence/recovery: executable shell/workflow failure and redaction tests, unchanged fail-closed acceptance gates, current-head CI/review and installed exact-release audit. Revert the bounded source through the existing isolated release path if needed. A failed full audit remains failed; a diagnostic is not reboot or Operations acceptance.
+- Exact next step: publish the bounded correction, read the real failure stage, then address only its demonstrated cause. Restore-target and console recovery facts must precede the separately requested OS restart.

@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+audit_stage=prerequisites
+cleanup_files=()
+cleanup() {
+  local exit_code=$?
+  trap - EXIT
+  if (( exit_code != 0 )); then
+    printf 'AUDIT_FAILED_STAGE=%s\nAUDIT_EXIT_CODE=%s\nAUDIT_RESULT=failed\n' "$audit_stage" "$exit_code"
+  fi
+  rm -f "${cleanup_files[@]}" || true
+  exit "$exit_code"
+}
+trap cleanup EXIT
+
 APP_ROOT="${FANMIND_AUDIT_APP_ROOT:-/var/www/fanmind}"
 BACKUP_ROOT="${FANMIND_AUDIT_BACKUP_ROOT:-/var/backups/fanmind}"
 PUBLIC_BASE_URL="${FANMIND_AUDIT_PUBLIC_BASE_URL:-https://fanmind.ch}"
@@ -19,11 +32,14 @@ for command in node npm pm2 git curl systemctl journalctl sudo awk find sort cut
   require_command "$command"
 done
 
+audit_stage=runtime
 printf 'AUDIT_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'NODE_VERSION=%s\n' "$(node --version)"
 printf 'NPM_VERSION=%s\n' "$(npm --version)"
 printf 'PM2_VERSION=%s\n' "$(pm2 --version)"
 printf 'HOST_UPTIME_SECONDS=%s\n' "$(cut -d. -f1 /proc/uptime)"
+printf 'HOST_BOOT_ID=%s\n' "$(</proc/sys/kernel/random/boot_id)"
+audit_stage=release
 printf 'SERVER_HEAD=%s\n' "$(git -C "$APP_ROOT" rev-parse HEAD)"
 printf 'ORIGIN_MAIN=%s\n' "$(git -C "$APP_ROOT" rev-parse origin/main)"
 
@@ -38,6 +54,7 @@ curl -fsSL --max-time 15 "$PUBLIC_BASE_URL/api/version" | node -e '
   });
 '
 
+audit_stage=health
 curl -fsSL --max-time 15 "$PUBLIC_BASE_URL/api/health" | node -e '
   let input = "";
   process.stdin.on("data", chunk => input += chunk);
@@ -50,18 +67,21 @@ curl -fsSL --max-time 15 "$PUBLIC_BASE_URL/api/health" | node -e '
   });
 '
 
+audit_stage=pm2
 pm2 jlist | PM2_APP_NAME="$PM2_APP_NAME" node -e '
   let input = "";
   process.stdin.on("data", chunk => input += chunk);
   process.stdin.on("end", () => {
     const rows = JSON.parse(input);
-    const processRow = rows.find(row => row && row.name === process.env.PM2_APP_NAME);
-    if (!processRow) throw new Error("fanmind PM2 process missing");
+    const matches = rows.filter(row => row && row.name === process.env.PM2_APP_NAME);
+    if (matches.length !== 1) throw new Error("fanmind PM2 process count invalid");
+    const [processRow] = matches;
     const env = processRow.pm2_env || {};
     const uptimeMs = Number.isFinite(env.pm_uptime)
       ? Math.max(0, Date.now() - env.pm_uptime)
       : Number.NaN;
     console.log(`PM2_STATUS=${env.status || "unknown"}`);
+    console.log(`PM2_NODE_VERSION=${env.node_version || "unknown"}`);
     console.log(`PM2_RESTARTS=${Number.isFinite(env.restart_time) ? env.restart_time : "unknown"}`);
     console.log(`PM2_UNSTABLE_RESTARTS=${Number.isFinite(env.unstable_restarts) ? env.unstable_restarts : "unknown"}`);
     console.log(`PM2_UPTIME_SECONDS=${Number.isFinite(uptimeMs) ? Math.floor(uptimeMs / 1000) : "unknown"}`);
@@ -71,6 +91,7 @@ pm2 jlist | PM2_APP_NAME="$PM2_APP_NAME" node -e '
   });
 '
 
+audit_stage=env_flags
 sudo -n node - "$PRODUCTION_ENV_PATH" <<'NODE'
 const fs = require('node:fs');
 const path = require('node:path');
@@ -160,15 +181,19 @@ try {
 }
 NODE
 
+audit_stage=nginx
 if sudo -n nginx -t >/dev/null 2>&1; then
   echo "NGINX_CONFIG=ok"
 else
   echo "NGINX_CONFIG=failed"
   exit 1
 fi
+printf 'NGINX_ACTIVE=%s\n' "$(systemctl is-active nginx.service 2>/dev/null || true)"
 
+audit_stage=http
 printf 'LOCAL_LOGIN_HTTP=%s\n' "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 http://127.0.0.1:3000/login)"
 printf 'PUBLIC_LOGIN_HTTP=%s\n' "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$PUBLIC_BASE_URL/login")"
+audit_stage=host
 printf 'ROOT_DISK_USED_PERCENT=%s\n' "$(df -P / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')"
 printf 'MEMORY_AVAILABLE_KIB=%s\n' "$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)"
 
@@ -181,6 +206,7 @@ else
   echo "REBOOT_REQUIRED=false"
 fi
 
+audit_stage=systemd
 mapfile -t units < <(systemctl list-unit-files 'fanmind-*' --no-legend 2>/dev/null | awk '{print $1}' | sort -u)
 printf 'FANMIND_SYSTEMD_UNIT_COUNT=%s\n' "${#units[@]}"
 for unit in "${units[@]}"; do
@@ -198,13 +224,11 @@ for unit in "${units[@]}"; do
     "$unit" "${next_realtime:-unknown}" "${next_monotonic:-unknown}" "${last:-unknown}"
 done
 
+audit_stage=backup_inventory
 inventory="$(mktemp)"
+cleanup_files+=("$inventory")
 worker_log="$(mktemp)"
-cleanup_files=("$inventory" "$worker_log")
-cleanup() {
-  rm -f "${cleanup_files[@]}"
-}
-trap cleanup EXIT
+cleanup_files+=("$worker_log")
 
 if ! sudo -n test -d "$BACKUP_ROOT"; then
   echo "BACKUP_ROOT=unavailable"
@@ -259,6 +283,7 @@ for (const type of ['database', 'storage', 'server_config', 'full']) {
 }
 NODE
 
+audit_stage=backup_checksum
 latest_full="$(sudo -n find "$BACKUP_ROOT" -maxdepth 1 -type f -name 'fanmind-full-*.tar.gz.age' -printf '%T@|%p\n' | sort -t'|' -k1,1nr | head -n1 | cut -d'|' -f2-)"
 if [[ -z "$latest_full" ]]; then
   echo "LATEST_FULL_BACKUP=missing"
@@ -279,6 +304,7 @@ sudo -n node "$VERIFIER_PATH" --artifact "$latest_full" --json | node -e '
   });
 '
 
+audit_stage=offsite
 env_file=/etc/fanmind-backup/worker.env
 if ! sudo -n test -r "$env_file"; then
   echo "OFFSITE_ENV=unavailable"
@@ -354,6 +380,7 @@ NODE
   fi
 fi
 
+audit_stage=worker
 sudo -n journalctl -u fanmind-backup-worker.service --since '14 days ago' --no-pager -o cat > "$worker_log"
 
 WORKER_LOG="$worker_log" node <<'NODE'
