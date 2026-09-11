@@ -27,7 +27,10 @@ test("PG17 proves controlled Social schema apply, rollback and exact drift rejec
   alter table public.workspaces enable row level security;
   grant usage on schema auth to authenticated,service_role;
   grant select(id,owner_user_id) on public.workspaces to authenticated;
-  grant select on public.workspaces to service_role;`);
+  grant select on public.workspaces to service_role;
+  -- Model the independently observed Supabase public-schema default ACLs.
+  alter default privileges for role postgres in schema public grant all on tables to anon,authenticated,service_role;
+  alter default privileges for role postgres in schema public grant execute on functions to anon,authenticated,service_role;`);
   assert.match(sql(SOCIAL_STATE_SQL),/STATE=absent/u);
   const apply=buildSocialApply(artifact);
   const verify=buildSocialVerification(artifact);
@@ -46,6 +49,7 @@ test("PG17 proves controlled Social schema apply, rollback and exact drift rejec
    "grant execute on function public.fanmind_social_owner(uuid,uuid) to public;",
    "alter table public.social_provider_connections disable trigger all;",
    "create index unexpected_social_index on public.social_provider_connections(provider);",
+   "grant truncate on public.social_provider_connections to service_role;",
   ];
   for(const mutation of mutations) {
    assert.throws(()=>sql(`begin; ${mutation} ${verify.reference} ${verify.body} rollback;`),error=>/social_.*drift/u.test(String(error.stderr)),mutation);

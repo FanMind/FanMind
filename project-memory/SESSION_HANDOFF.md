@@ -1,3 +1,11 @@
+## Social schema Staging follow-through — 2026-09-11
+- FM-SOC7-001 / FM-CR-032 remains active under LOCK-FM-SOCIAL-CONNECT-FLOW-20260911, Risk R4. Source #1103 is published as main 3df6f5f87cb71ee4775f1c6797f42db810ded32c, exact reviewed tree 323eb2ce; 13 PR checks and independent review completed. Deploy 34589815376 and public Readiness 34589929792 passed. Earlier source/CI pending text below is superseded by #1103's final receipt.
+- Controlled Verify 34590000782 passed on that exact main: STATE=absent, no apply. Apply 34590217929 then stopped with apply_indeterminate_verify_before_retry. Independent read-only target check at 10:40:58 UTC proves both Social tables absent and zero Social functions; no partial installation or provider activation exists.
+- Fresh target metadata shows Supabase grants service_role ALL table privileges by default in public. The bounded correction revokes those inherited grants on the two new tables before granting only SELECT/INSERT/UPDATE/DELETE. Exact ACL verification stays intact; the real PG17 fixture now models these observed defaults and must reject an extra service-role TRUNCATE grant.
+- Next: review/test/publish only this grant correction, run the protected Verify then Apply/Postflight against the new reviewed main, and record target success before releasing the lock. Do not rerun the old Apply, change global default privileges, delete schema or use ad-hoc target DDL.
+- Remaining: central provider app/Creator consent/X budget and real provider acceptance; Meta historical first import still needs its automatic callback handoff. Existing Webhooks/manual sync are retained. Creator draft cd5cac7c remains unchanged; Android follows Creator/Social.
+- Production audit 34589929800 still reports the separate historical Backup worker failure. No complete Operations/provider/sales acceptance is claimed; sales_ready=false.
+
 ## Connection return and first preview — 2026-09-11
 - Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018; Risk R4; LOCK-FM-SOCIAL-CONNECT-FLOW-20260911.
 - Owner confirms FanMind login -> choose channel -> official platform login/consent -> return and permitted retrieval. Central FanMind developer-app configuration is distinct from each Creator's own consent; no platform passwords in FanMind. One text writing style per account remains binding.

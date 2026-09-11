@@ -3,9 +3,9 @@
 - Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018
 - Risk: R4
 - Work lock: LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
-- Completed so far: exact current main recovered and compared, #1102 final receipt reconciled, drift/freshness controls passed, isolated Staging project freshly verified; both Social tables are absent on PostgreSQL 17.
-- Still open: implementation, independent negative/PG17/browser evidence and reviewed publication; actual app/consent/budget and target/provider acceptance.
-- Exact next step: implement a once-only initial X read based on stored connection state and the controlled Staging schema setup.
+- Completed so far: #1103 published at 3df6f5f8, all 13 PR checks and independent review passed; Deploy/Readiness passed. Protected Verify 34590000782 passed. Apply 34590217929 stopped; independent catalog proof shows no Social objects installed. Supabase-specific inherited service_role grants are now modeled in the bounded correction and PG17 fixture.
+- Still open: exact-head CI/review/publication of the grant correction, protected new-main Verify/Apply/Postflight, actual app/consent/budget and provider acceptance; later automatic Meta first-import handoff.
+- Exact next step: finish this grant correction, then use only the reviewed protected Staging workflow. Do not repeat the old Apply or completed #1103 source work.
 - Owner action needed: none for source engineering. Existing platform/account credentials are not requested in chat. Protected deployment/provider prerequisites remain factual boundaries.
 - Retained work: Creator draft cd5cac7c remains separately preserved; #1102 source publication is not repeated. Historical Backup failure at 00:30 UTC remains tracked under FM-OPS-001.
 
