@@ -95,3 +95,33 @@ The source now excludes both explicit and default legacy reply-profile prompts
 from a configured Creator's AI context. When the Creator rollout is enabled,
 settings expose business rules and the one Creator style; the reply menu does
 not offer legacy profiles. Stored legacy settings are preserved for recovery.
+
+## Real JWT foundation acceptance
+
+The same protected workflow offers `accept` with `accept-creator-foundation`.
+It first requires the exact schema postflight on the reviewed main commit; an
+absent schema cannot start the test. It then uses the two existing named, marked,
+active synthetic Staging workspaces and the existing ephemeral member controller.
+No owner password is changed. The member credential is generated and masked for
+this job only, then independently rotated and proven unusable in an always step.
+
+The test refuses preexisting Creator rows. Real owner/member/foreign JWTs verify
+one Creator per workspace, denial of direct table writes, separate text contexts,
+revocation of approval on edit, stale revisions, simultaneous saves and reapproval.
+It uses only synthetic text and no model/provider call. PostgreSQL SQLSTATE 40001
+is checked alongside its PostgREST HTTP 500 mapping; unrelated server failures are
+not accepted as revision evidence. References: PostgREST `/references/errors.html`
+and the existing Supabase local-session sign-out contract.
+
+Each created profile contains the exact workflow run ID, attempt and reviewed SHA
+as its marker. After normal or indeterminate replies, cleanup rechecks the owner,
+workspace identity and marker before deleting only that run's newly created
+bundle. A separate always step repeats cleanup and verifies all four Creator
+tables are empty for both synthetic workspaces. Another run's data is never
+removed. Cleanup failure fails the workflow; inspect the recorded run before any
+retry. The normal application Creator flag stays off throughout.
+
+This proves only the foundation JWT/approval/bundle-cascade contract when the real
+run succeeds. It does not prove a deployed enabled Creator UI, whole-account or
+contact deletion, DSAR delivery, genuine writing quality, learning, provider
+approval or Production readiness. Those existing acceptance steps remain open.

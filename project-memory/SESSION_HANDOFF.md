@@ -1,3 +1,10 @@
+## Creator JWT acceptance continuation — 2026-09-11
+- FM-CR-033 / FM-CREATOR-001 under LOCK-FM-CREATOR-META-FINISH-20260911, Risk R4. Continues the authorized isolated Creator Staging completion, separate from Backup and paid activation.
+- Source #1105 adds Meta first import, one writing style and the controlled schema installation. Its review corrections make authenticated Creator tables SELECT-only and the two mutation RPCs explicitly owner checked. Native PG17 tests pass; final current-head source/native/review and target receipts are tracked in the PR.
+- New controlled `accept` mode verifies the installed schema first, then the two existing marked synthetic owners and the temporary marked member with real JWTs. It refuses prior Creator data, validates direct-write denial, one Creator, foreign/member boundaries, drafts/reapproval and simultaneous expected revisions. Run/attempt/SHA-bound cleanup has an independent always step; member credential rotation/rejection also always runs.
+- Five local behavior tests prove zero network on invalid targets, no mutation of existing/unmarked fixtures, lost-create-response cleanup, cleanup failure and retry for the same run, and denial of foreign-run cleanup. No real JWT acceptance or runtime activation is claimed from mocks. Provider calls and synthetic-to-learning ingestion remain zero.
+- Next: source review/CI, exact-main schema Verify/Apply, then protected real JWT acceptance. Runtime/UI, DSAR/account/contact deletion, real writing quality/learning and provider apps/consent remain separate proof requirements. No change to accepted Sales gates.
+
 ## Creator / Meta continuation — 2026-09-11
 - Task FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4; LOCK-FM-CREATOR-META-FINISH-20260911. Owner explicitly requests finishing the reported Creator/Social steps.
 - Prior #1104 is complete: main d19254f0, empty Social Staging Apply 34591339718 and deploy 34591566257 accepted in its final receipt; previous pending/active checkpoints below are superseded for that scope. No repeated Social schema installation.
