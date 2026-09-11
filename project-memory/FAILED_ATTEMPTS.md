@@ -1,3 +1,9 @@
+## 2026-09-11 — controlled Social schema index comparison
+- Context: FM-CR-032 / PR #1103, head 66e56ebd07cd18cb8684dbe6f98da0e3804529cd; isolated PostgreSQL 17 CI only, no target SQL applied.
+- Evidence: FanMind CI 34588059915 / job 103226733395 rejected the reference comparison with `social_index_drift` before the forced-postflight rollback checkpoint; the runtime Social isolation tests passed.
+- Correction: normalize PostgreSQL's `pg_temp` alias as well as numbered temporary-schema names. An additional-index mutation must still be rejected by the real database test. The complete apply, rollback and postflight proof remains pending a fresh CI run.
+- Do not repeat: do not remove index checks or declare target installation from a synthetic fixture or a failed comparison.
+
 ## 2026-09-11 — local Social verification tooling
 - Context: FM-SOC7-001 on main baseline 25c042ba; no target/provider action.
 - Initial TypeScript run in clean worktree lacked generated RouteContext; `next typegen` resolved the pre-existing route type declarations. A new disclosure label omission was fixed before build.

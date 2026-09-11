@@ -45,6 +45,7 @@ test("PG17 proves controlled Social schema apply, rollback and exact drift rejec
    "create or replace function public.fanmind_social_owner(p_workspace uuid,p_user uuid) returns boolean language sql stable security invoker set search_path='' as $$ select true $$;",
    "grant execute on function public.fanmind_social_owner(uuid,uuid) to public;",
    "alter table public.social_provider_connections disable trigger all;",
+   "create index unexpected_social_index on public.social_provider_connections(provider);",
   ];
   for(const mutation of mutations) {
    assert.throws(()=>sql(`begin; ${mutation} ${verify.reference} ${verify.body} rollback;`),error=>/social_.*drift/u.test(String(error.stderr)),mutation);

@@ -53,7 +53,7 @@ create temporary table pg_temp.users(id uuid primary key);
 create temporary table pg_temp.workspaces(id uuid primary key,owner_user_id uuid);
 ${ddl}
 create function pg_temp.social_schema_normalize(def text) returns text language sql immutable as $norm$
- select replace(regexp_replace(def,'(public|pg_temp_[0-9]+)\\.','','g'),'auth.users','users')
+ select replace(regexp_replace(def,'(public|pg_temp(_[0-9]+)?)\\.','','g'),'auth.users','users')
 $norm$;
 create function pg_temp.social_schema_acl(acl aclitem[],owner_id oid,kind \"char\") returns jsonb language sql immutable as $acl$
  select jsonb_agg(jsonb_build_array(grantor,grantee,privilege_type,is_grantable) order by grantor,grantee,privilege_type,is_grantable)
