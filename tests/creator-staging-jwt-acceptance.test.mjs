@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { runCreatorJwtAcceptance, validateCreatorAcceptanceEnvironment } from '../scripts/operations/creator-staging-jwt-acceptance.mjs';
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME, STAGING_SYNTHETIC_MEMBER_EMAIL } from '../src/lib/stagingSyntheticFixturePolicy.mjs';
 const primary = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -18,13 +19,20 @@ function environment() { return {
   FANMIND_STAGING_E2E_PASSWORD: 'SyntheticPrimaryOnly1234!', FANMIND_STAGING_E2E_SECONDARY_PASSWORD: 'SyntheticSecondaryOnly1234!', FANMIND_STAGING_E2E_MEMBER_PASSWORD: 'Fm1!'+'a'.repeat(64),
   FANMIND_STAGING_SUPABASE_ANON_KEY: 'sb_publishable_synthetic', FANMIND_STAGING_SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_synthetic',
 }; }
-function harness({ changedFixture = false, preexisting = false, interruptedCreate = false, failedDelete = false } = {}) {
+function harness({ changedFixture = false, preexisting = false, interruptedCreate = false, failedDelete = false, legacyKeys = false } = {}) {
   const env = environment(); const calls = []; const saved = new Map(); const logouts = [];
+  if (legacyKeys) { env.FANMIND_STAGING_SUPABASE_ANON_KEY = 'eyJ.synthetic.anon'; env.FANMIND_STAGING_SUPABASE_SERVICE_ROLE_KEY = 'eyJ.synthetic.service'; }
   if (preexisting) saved.set(primary, { id: creator, workspace_id: primary, internal_notes: 'Existing data, never ours' });
   const users = new Map([[env.FANMIND_STAGING_E2E_EMAIL, owner], [env.FANMIND_STAGING_E2E_SECONDARY_EMAIL, other], [STAGING_SYNTHETIC_MEMBER_EMAIL, member]]);
   const json = (value, status=200) => new Response(value === null ? null : JSON.stringify(value), {status});
   async function fetchImpl(url, init) {
     assert.equal(url.origin, 'https://stagingref.supabase.co'); assert.equal(init.redirect, 'error');
+    const service = init.headers.apikey === env.FANMIND_STAGING_SUPABASE_SERVICE_ROLE_KEY;
+    if (service || url.pathname === '/auth/v1/token') {
+      assert.equal(init.headers.Authorization, legacyKeys ? `Bearer ${init.headers.apikey}` : undefined);
+    } else {
+      assert.match(init.headers.Authorization, /^Bearer (synthetic-|fanmind-ai-member-staging)/u);
+    }
     calls.push({ path:url.pathname, method:init.method, query:Object.fromEntries(url.searchParams), body:init.body ? JSON.parse(init.body) : null });
     const current = calls.at(-1);
     if (url.pathname === '/auth/v1/token') return json({ access_token: current.body.email });
@@ -81,4 +89,14 @@ test('unconfirmed cleanup fails closed and a fresh cleanup invocation can finish
 test('cleanup never removes a row created by a different run', async () => {
   const h=harness({preexisting:true});await assert.rejects(runCreatorJwtAcceptance(h.env,{...h,cleanupOnly:true}),/cleanup_incomplete/);
   assert.equal(h.saved.size,1);assert.equal(h.calls.filter(c=>c.method==='DELETE').length,0);
+});
+test('legacy JWT API keys retain their supported headers through indeterminate-response cleanup', async () => {
+  const h=harness({legacyKeys:true,interruptedCreate:true});await assert.rejects(runCreatorJwtAcceptance(h.env,h));
+  assert.equal(h.saved.size,0);assert.equal(h.logouts.length,3);
+});
+test('both shared-member credential lifecycles use the same non-cancelling workflow lock', () => {
+  const workflows=['creator-foundation-staging.yml','browser-e2e-staging-write.yml'].map(name=>readFileSync(new URL(`../.github/workflows/${name}`,import.meta.url),'utf8'));
+  for (const source of workflows) assert.match(source,/concurrency:\n  group: fanmind-staging-core-csv-write\n  cancel-in-progress: false/u);
+  assert.match(workflows[0],/always\(\)[\s\S]*?--cleanup/u);
+  assert.match(workflows[0],/always\(\)[\s\S]*?revoke-staging-ephemeral-member-credential/u);
 });

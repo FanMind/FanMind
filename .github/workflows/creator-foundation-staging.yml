@@ -19,7 +19,7 @@ on:
         type: string
 
 concurrency:
-  group: fanmind-creator-foundation-staging-write
+  group: fanmind-staging-core-csv-write
   cancel-in-progress: false
 
 permissions:

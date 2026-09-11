@@ -2,6 +2,7 @@
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { isStrongEphemeralMemberPassword } from '../../src/lib/stagingEphemeralMemberCredentialPolicy.mjs';
+import { buildSupabaseApiKeyHeaders } from '../../src/lib/supabase/apiKeyPolicy.mjs';
 import {
   STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME,
   STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME,
@@ -59,7 +60,7 @@ export async function runCreatorJwtAcceptance(env, {
     requireFact(url.origin === origin(base) && ['/rest/v1/', '/auth/v1/'].some(p => url.pathname.startsWith(p)), 'request_target');
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
     const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(15000),
-      headers: { apikey: admin ? serviceKey : anonKey, Authorization: `Bearer ${token ?? anonKey}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      headers: { ...buildSupabaseApiKeyHeaders(admin ? serviceKey : anonKey, admin ? undefined : token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: body === undefined ? undefined : JSON.stringify(body) });
     const text = await response.text();
     requireFact(text.length <= 100000, 'response_bound');

@@ -98,6 +98,11 @@ not offer legacy profiles. Stored legacy settings are preserved for recovery.
 
 ## Real JWT foundation acceptance
 
+The workflow shares `fanmind-staging-core-csv-write` with every other current
+consumer of the fixed ephemeral member, so activation, tests and revocation
+cannot overlap. API-key headers use the shared Supabase builder: opaque keys
+are never presented as Bearer JWTs.
+
 The same protected workflow offers `accept` with `accept-creator-foundation`.
 It first requires the exact schema postflight on the reviewed main commit; an
 absent schema cannot start the test. It then uses the two existing named, marked,

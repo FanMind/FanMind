@@ -2,7 +2,7 @@
 - Task/change: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4.
 - Status: IN_PROGRESS; lock LOCK-FM-CREATOR-META-FINISH-20260911. Controlled JWT acceptance is now prepared with five behavior-tested failure/cleanup boundaries; real target execution remains pending.
 - Implementation evidence: PR #1105 at first head a37eb23; Web/build/browser/security passed. Review P1/P2 prompted authenticated SELECT-only Creator tables, owner-checked atomic save RPC and complete grantee allowlists. The PG17 temporary-schema comparator and Expo57 patches are corrected; new-head CI/review and target proof remain required. Baseline d19254f0/tree79e9d176 verified. Previous Social #1104 receipt is ACCEPTED only for its empty Staging/source foundation and its lock is released.
-- Countercheck evidence: current main/PR completion and local source hashes independently match; required source/target tests remain open.
+- Countercheck evidence: current main/PR completion and local source hashes independently match. #1106 review identified opaque-key Bearer handling and shared-member concurrency; the shared Supabase header builder and existing core/CSV workflow lock now cover both. Seven acceptance behavior/contract tests plus native schema/control checks must pass on the new head. Real target tests remain open.
 - Falsifier: a forged callback URL causing an import, an account mismatch, two selectable Creator styles, or a claimed active provider without real consent would contradict this goal.
 - Recovery: transactional Staging installation, unchanged default-off gates until current target/runtime proof; code revert preserves data.
 
