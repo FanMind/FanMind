@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { runCreatorJwtAcceptance, validateCreatorAcceptanceEnvironment } from '../scripts/operations/creator-staging-jwt-acceptance.mjs';
+import { readBoundedCreatorResponse, runCreatorJwtAcceptance, validateCreatorAcceptanceEnvironment } from '../scripts/operations/creator-staging-jwt-acceptance.mjs';
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME, STAGING_SYNTHETIC_MEMBER_EMAIL } from '../src/lib/stagingSyntheticFixturePolicy.mjs';
 const primary = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const secondary = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -94,9 +94,45 @@ test('legacy JWT API keys retain their supported headers through indeterminate-r
   const h=harness({legacyKeys:true,interruptedCreate:true});await assert.rejects(runCreatorJwtAcceptance(h.env,h));
   assert.equal(h.saved.size,0);assert.equal(h.logouts.length,3);
 });
-test('both shared-member credential lifecycles use the same non-cancelling workflow lock', () => {
-  const workflows=['creator-foundation-staging.yml','browser-e2e-staging-write.yml'].map(name=>readFileSync(new URL(`../.github/workflows/${name}`,import.meta.url),'utf8'));
+test('all shared-member credential writers use the same non-cancelling workflow lock', () => {
+  const workflows=['creator-foundation-staging.yml','browser-e2e-staging-write.yml','staging-synthetic-fixture-provisioning.yml'].map(name=>readFileSync(new URL(`../.github/workflows/${name}`,import.meta.url),'utf8'));
   for (const source of workflows) assert.match(source,/concurrency:\n  group: fanmind-staging-core-csv-write\n  cancel-in-progress: false/u);
   assert.match(workflows[0],/always\(\)[\s\S]*?--cleanup/u);
   assert.match(workflows[0],/always\(\)[\s\S]*?revoke-staging-ephemeral-member-credential/u);
+});
+test('explicit recovery can remove the original failed attempt without touching another run', async () => {
+  const h=harness();
+  h.env.GITHUB_RUN_ID='456'; h.env.GITHUB_RUN_ATTEMPT='2'; h.env.GITHUB_SHA='b'.repeat(40); h.env.FANMIND_CREATOR_FOUNDATION_REVIEWED_COMMIT=h.env.GITHUB_SHA;
+  delete h.env.FANMIND_STAGING_E2E_MEMBER_PASSWORD;
+  h.env.FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM='cleanup-creator-foundation';
+  h.env.FANMIND_CREATOR_CLEANUP_RECEIPT=`123:1:${'a'.repeat(40)}`;
+  h.saved.set(primary,{id:creator,workspace_id:primary,internal_notes:`FanMind Creator acceptance ${h.env.FANMIND_CREATOR_CLEANUP_RECEIPT}`});
+  h.saved.set(secondary,{id:creator,workspace_id:secondary,internal_notes:`FanMind Creator acceptance 999:1:${'a'.repeat(40)}`});
+  await assert.rejects(runCreatorJwtAcceptance(h.env,{...h,cleanupOnly:true}),/cleanup_incomplete/);
+  assert.equal(h.saved.has(primary),false); assert.equal(h.saved.has(secondary),true);
+  assert.equal(h.calls.filter(c=>c.method==='DELETE').length,1);
+  assert.equal(h.calls.filter(c=>c.path.includes('/rpc/')).length,0);
+  assert.equal(h.logouts.length,2);
+});
+test('recovery receipt requires cleanup mode and exact explicit confirmation before any network call', async () => {
+  const receipt=`123:1:${'a'.repeat(40)}`;
+  for(const [patch,cleanupOnly] of [
+    [{FANMIND_CREATOR_CLEANUP_RECEIPT:receipt},true],
+    [{FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM:'cleanup-creator-foundation',FANMIND_CREATOR_CLEANUP_RECEIPT:receipt},false],
+    [{FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM:'cleanup-creator-foundation',FANMIND_CREATOR_CLEANUP_RECEIPT:'123:0:invalid'},true],
+    [{FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM:'cleanup-creator-foundation'},true],
+  ]) {
+    let calls=0;await assert.rejects(runCreatorJwtAcceptance({...environment(),...patch},{cleanupOnly,fetchImpl:async()=>{calls++;throw Error('network forbidden')}}));assert.equal(calls,0);
+  }
+});
+test('response byte bound cancels a streaming success or error before buffering its tail', async () => {
+  for(const status of [200,500]) {
+    let chunks=0;let cancelled=false;
+    const body=new ReadableStream({pull(controller){chunks++;controller.enqueue(new Uint8Array(60000));},cancel(){cancelled=true;}},{highWaterMark:0});
+    await assert.rejects(readBoundedCreatorResponse(new Response(body,{status})),/response_bound/);
+    assert.equal(chunks,2);assert.equal(cancelled,true);
+  }
+  const bytes=new TextEncoder().encode('"Grüße"');
+  const body=new ReadableStream({start(controller){controller.enqueue(bytes.slice(0,4));controller.enqueue(bytes.slice(4));controller.close();}});
+  assert.equal(await readBoundedCreatorResponse(new Response(body)),'"Grüße"');
 });

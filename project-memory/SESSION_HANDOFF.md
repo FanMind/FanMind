@@ -1,3 +1,9 @@
+
+## Creator schema and acceptance review follow-through — 2026-09-11
+- FM-CR-033 / FM-CREATOR-001, Risk R4, existing LOCK-FM-CREATOR-META-FINISH-20260911. #1105 is merged as 3f6178bd58a05a0457feea87fb7a894aba6e6591, tree da35ac81e7f985f9fa21914ac15a6666de77f619. Exact-head native Android/iOS, PG17, Web/browser and independent review passed. Production Deploy 34622111581 and public Readiness 34622261563 passed; the separate historical Backup audit remains failed.
+- Protected Creator Verify 34622658443 passed on that main with STATE=absent / NEXT=apply. Controlled Apply 34623104141 committed at 16:38:15 UTC and independently returned STATE=verified / POSTFLIGHT=PASS / RUNTIME_ACTIVATED=false. No schema retry is needed. Creator runtime stays off.
+- #1106 review corrections now include opaque-key headers, the shared member lock for fixture provisioning too, response byte limits before buffering, and an explicitly confirmed original-run receipt for cleanup recovery. Ten behavior tests / 27 targeted tests pass; current source review/CI and real JWT acceptance remain pending.
+- Next: finish exact-source review, verify target installation, run the controlled real-JWT test, then DSAR/runtime/deletion/quality/provider acceptance. No new Backup work or paid activation.
 ## Creator JWT acceptance continuation — 2026-09-11
 - FM-CR-033 / FM-CREATOR-001 under LOCK-FM-CREATOR-META-FINISH-20260911, Risk R4. Continues the authorized isolated Creator Staging completion, separate from Backup and paid activation.
 - Source #1105 adds Meta first import, one writing style and the controlled schema installation. Its review corrections make authenticated Creator tables SELECT-only and the two mutation RPCs explicitly owner checked. Native PG17 tests pass; final current-head source/native/review and target receipts are tracked in the PR.

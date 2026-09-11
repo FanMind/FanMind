@@ -13,7 +13,7 @@ on:
         type: string
 
 concurrency:
-  group: fanmind-staging-synthetic-fixture-write
+  group: fanmind-staging-core-csv-write
   cancel-in-progress: false
 
 permissions:

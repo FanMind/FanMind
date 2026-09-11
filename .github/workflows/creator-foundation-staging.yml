@@ -8,14 +8,19 @@ on:
         required: true
         default: verify
         type: choice
-        options: [verify, apply, accept]
+        options: [verify, apply, accept, cleanup]
       reviewed_commit:
         description: 'Exact reviewed main commit containing the pinned controlled SQL'
         required: true
         type: string
       confirmation:
-        description: 'Type verify-creator-foundation, apply-creator-foundation or accept-creator-foundation'
+        description: 'Type the selected action followed by -creator-foundation'
         required: true
+        type: string
+      cleanup_receipt:
+        description: 'Cleanup only: original RUN_ID:RUN_ATTEMPT:COMMIT from the failed acceptance'
+        required: false
+        default: ''
         type: string
 
 concurrency:
@@ -32,7 +37,8 @@ jobs:
       ${{
         github.ref == 'refs/heads/main' &&
         inputs.reviewed_commit == github.sha &&
-        ((inputs.action == 'verify' && inputs.confirmation == 'verify-creator-foundation') || (inputs.action == 'apply' && inputs.confirmation == 'apply-creator-foundation') || (inputs.action == 'accept' && inputs.confirmation == 'accept-creator-foundation'))
+        ((inputs.action == 'verify' && inputs.confirmation == 'verify-creator-foundation') || (inputs.action == 'apply' && inputs.confirmation == 'apply-creator-foundation') || (inputs.action == 'accept' && inputs.confirmation == 'accept-creator-foundation') || (inputs.action == 'cleanup' && inputs.confirmation == 'cleanup-creator-foundation')) &&
+        ((inputs.action == 'cleanup' && inputs.cleanup_receipt != '') || (inputs.action != 'cleanup' && inputs.cleanup_receipt == ''))
       }}
     timeout-minutes: 20
     runs-on: ubuntu-24.04
@@ -49,7 +55,7 @@ jobs:
       FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ inputs.action == 'apply' && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
       FANMIND_CREATOR_FOUNDATION_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
       FANMIND_CREATOR_FOUNDATION_APPLY_CONFIRM: ${{ inputs.confirmation }}
-      FANMIND_CREATOR_FOUNDATION_VERIFY_CONFIRM: ${{ inputs.action == 'accept' && 'verify-creator-foundation' || inputs.confirmation }}
+      FANMIND_CREATOR_FOUNDATION_VERIFY_CONFIRM: ${{ (inputs.action == 'accept' || inputs.action == 'cleanup') && 'verify-creator-foundation' || inputs.confirmation }}
       FANMIND_CREATOR_INTELLIGENCE_ENABLED: 'false'
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
@@ -102,7 +108,7 @@ jobs:
           case "$CREATOR_ACTION" in
             verify) node scripts/operations/creator-foundation-staging-runner.mjs --verify ;;
             apply) node scripts/operations/creator-foundation-staging-runner.mjs --apply ;;
-            accept)
+            accept|cleanup)
               RESULT="$(node scripts/operations/creator-foundation-staging-runner.mjs --verify)"
               printf '%s\n' "$RESULT"
               grep -Fxq 'CREATOR_FOUNDATION_POSTFLIGHT=PASS' <<< "$RESULT"
@@ -115,8 +121,8 @@ jobs:
         id: member_generation
         run: node scripts/operations/staging-ephemeral-member-credential.mjs --generate
 
-      - name: Activate only the marked synthetic member credential
-        if: ${{ inputs.action == 'accept' }}
+      - name: Prepare the protected acceptance or cleanup invocation
+        if: ${{ inputs.action == 'accept' || inputs.action == 'cleanup' }}
         id: member_activation
         env: &creator_acceptance_environment
           FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
@@ -131,6 +137,8 @@ jobs:
           FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
           FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
           FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM: ${{ inputs.confirmation }}
+          FANMIND_CREATOR_CLEANUP_RECEIPT: ${{ inputs.cleanup_receipt }}
+          CREATOR_ACTION: ${{ inputs.action }}
           FANMIND_STAGING_EPHEMERAL_MEMBER_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
           FANMIND_STAGING_EPHEMERAL_MEMBER_CONFIRM: activate-staging-ephemeral-member-credential
           NODE_OPTIONS: ''
@@ -142,7 +150,11 @@ jobs:
         run: |
           set -euo pipefail
           unset http_proxy https_proxy all_proxy
-          node scripts/operations/staging-ephemeral-member-credential.mjs --activate
+          case "$CREATOR_ACTION" in
+            accept) node scripts/operations/staging-ephemeral-member-credential.mjs --activate ;;
+            cleanup) node scripts/operations/creator-staging-jwt-acceptance.mjs --validate-cleanup ;;
+            *) exit 1 ;;
+          esac
 
       - name: Prove real JWT Creator isolation and atomic approval
         if: ${{ inputs.action == 'accept' }}
@@ -152,6 +164,14 @@ jobs:
           set -euo pipefail
           unset http_proxy https_proxy all_proxy
           node scripts/operations/creator-staging-jwt-acceptance.mjs --run
+
+      - name: Recover only the explicitly selected failed acceptance
+        if: ${{ inputs.action == 'cleanup' }}
+        env: *creator_acceptance_environment
+        run: |
+          set -euo pipefail
+          unset http_proxy https_proxy all_proxy
+          node scripts/operations/creator-staging-jwt-acceptance.mjs --cleanup
 
       - name: Independently verify exact test-bundle cleanup
         if: ${{ always() && inputs.action == 'accept' && steps.creator_acceptance.outcome != 'skipped' && steps.member_generation.outcome == 'success' }}

@@ -12,20 +12,23 @@ import {
 import { defaultCreatorBundle, buildCreatorReplyContext } from '../../src/lib/creatorIntelligencePolicy.mjs';
 
 const CONFIRMATION = 'accept-creator-foundation';
+const CLEANUP_CONFIRMATION = 'cleanup-creator-foundation';
+const RECEIPT_PATTERN = /^[1-9][0-9]{0,19}:[1-9][0-9]{0,3}:[0-9a-f]{40}$/u;
 const TABLES = ['creators', 'creator_voice_profiles', 'creator_sales_playbooks', 'creator_commercial_events'];
 function revisionConflict(result) { return result.status === 500 && result.data?.code === '40001' && result.data?.message === 'creator_revision_conflict'; }
 function deniedWrite(result) { return result.status === 403 && result.data?.code === '42501'; }
 function requireFact(ok, code) { if (!ok) throw new Error(code); }
 function origin(value) { try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && u.pathname === '/' && !u.search && !u.hash ? u.origin : ''; } catch { return ''; } }
-export function validateCreatorAcceptanceEnvironment(env) {
+export function validateCreatorAcceptanceEnvironment(env, { cleanupOnly = false } = {}) {
   const stage = env.FANMIND_TARGET_SUPABASE_PROJECT_REF;
   const prod = env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF;
   requireFact(env.FANMIND_RUNTIME_ENVIRONMENT === 'staging' && origin(env.NEXT_PUBLIC_APP_URL) === 'https://staging.fanmind.ch', 'target');
   requireFact(/^[a-z0-9]{8,64}$/u.test(stage ?? '') && /^[a-z0-9]{8,64}$/u.test(prod ?? '') && stage !== prod && origin(env.FANMIND_STAGING_SUPABASE_URL) === `https://${stage}.supabase.co`, 'target');
   requireFact(env.GITHUB_REF === 'refs/heads/main' && /^[0-9a-f]{40}$/u.test(env.GITHUB_SHA ?? '') && env.GITHUB_SHA === env.FANMIND_CREATOR_FOUNDATION_REVIEWED_COMMIT, 'reviewed_commit');
-  requireFact(env.FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM === CONFIRMATION && env.FANMIND_ENABLE_NON_PRODUCTION_WRITES === 'true' && env.FANMIND_NON_PRODUCTION_WRITE_ACK === 'I_UNDERSTAND_NON_PRODUCTION_ONLY', 'confirmation');
+  const recovery = env.FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM === CLEANUP_CONFIRMATION;
+  requireFact((recovery ? cleanupOnly && RECEIPT_PATTERN.test(env.FANMIND_CREATOR_CLEANUP_RECEIPT ?? '') : env.FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM === CONFIRMATION && !env.FANMIND_CREATOR_CLEANUP_RECEIPT) && env.FANMIND_ENABLE_NON_PRODUCTION_WRITES === 'true' && env.FANMIND_NON_PRODUCTION_WRITE_ACK === 'I_UNDERSTAND_NON_PRODUCTION_ONLY', 'confirmation');
   requireFact(env.FANMIND_CREATOR_INTELLIGENCE_ENABLED !== 'true', 'runtime_must_remain_off');
-  requireFact(/^[1-9][0-9]{0,19}$/u.test(env.GITHUB_RUN_ID ?? '') && /^[1-9][0-9]{0,3}$/u.test(env.GITHUB_RUN_ATTEMPT ?? '') && isStrongEphemeralMemberPassword(env.FANMIND_STAGING_E2E_MEMBER_PASSWORD), 'run_identity');
+  requireFact(/^[1-9][0-9]{0,19}$/u.test(env.GITHUB_RUN_ID ?? '') && /^[1-9][0-9]{0,3}$/u.test(env.GITHUB_RUN_ATTEMPT ?? '') && (cleanupOnly || isStrongEphemeralMemberPassword(env.FANMIND_STAGING_E2E_MEMBER_PASSWORD)), 'run_identity');
   const ids = [env.FANMIND_STAGING_E2E_WORKSPACE_ID, env.FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID];
   requireFact(ids.every(x => STAGING_SYNTHETIC_UUID_PATTERN.test(x ?? '')) && new Set(ids).size === 2, 'fixture_identity');
   const emails = [env.FANMIND_STAGING_E2E_EMAIL, env.FANMIND_STAGING_E2E_SECONDARY_EMAIL];
@@ -38,17 +41,40 @@ export function validateCreatorAcceptanceEnvironment(env) {
   return true;
 }
 
+// Bound bytes while reading, including error bodies; never buffer an unlimited
+// response and then try to enforce the limit afterwards.
+export async function readBoundedCreatorResponse(response, limit = 100000) {
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  const chunks = [];
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > limit) {
+        await reader.cancel().catch(() => {});
+        throw new Error('response_bound');
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+}
+
 // Only exact, already marked synthetic workspaces. No credentials or provider
 // data are printed. Each session and any test-created bundle are cleaned up.
 export async function runCreatorJwtAcceptance(env, {
   fetchImpl = fetch,
   cleanupOnly = false,
 } = {}) {
-  validateCreatorAcceptanceEnvironment(env);
+  validateCreatorAcceptanceEnvironment(env, { cleanupOnly });
   const base = env.FANMIND_STAGING_SUPABASE_URL;
   const anonKey = env.FANMIND_STAGING_SUPABASE_ANON_KEY;
   const serviceKey = env.FANMIND_STAGING_SUPABASE_SERVICE_ROLE_KEY;
-  const marker = `FanMind Creator acceptance ${env.GITHUB_RUN_ID}:${env.GITHUB_RUN_ATTEMPT}:${env.GITHUB_SHA}`;
+  const receipt = env.FANMIND_CREATOR_CLEANUP_RECEIPT || `${env.GITHUB_RUN_ID}:${env.GITHUB_RUN_ATTEMPT}:${env.GITHUB_SHA}`;
+  const marker = `FanMind Creator acceptance ${receipt}`;
   const actors = [];
   const fixtures = [
     { workspaceId: env.FANMIND_STAGING_E2E_WORKSPACE_ID, name: STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, email: env.FANMIND_STAGING_E2E_EMAIL, password: env.FANMIND_STAGING_E2E_PASSWORD },
@@ -62,8 +88,7 @@ export async function runCreatorJwtAcceptance(env, {
     const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(15000),
       headers: { ...buildSupabaseApiKeyHeaders(admin ? serviceKey : anonKey, admin ? undefined : token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: body === undefined ? undefined : JSON.stringify(body) });
-    const text = await response.text();
-    requireFact(text.length <= 100000, 'response_bound');
+    const text = await readBoundedCreatorResponse(response);
     let data = null;
     if (text) { try { data = JSON.parse(text); } catch { throw new Error('response_format'); } }
     return { ok: response.ok, status: response.status, data };
@@ -178,6 +203,9 @@ export async function runCreatorJwtAcceptance(env, {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  if (!['--run','--cleanup'].includes(process.argv[2])) { console.error('CREATOR_JWT_ACCEPTANCE_ERROR=mode'); process.exitCode = 1; }
+  if (process.argv[2] === '--validate-cleanup') {
+    try { validateCreatorAcceptanceEnvironment(process.env, { cleanupOnly: true }); console.log('CREATOR_CLEANUP_INPUT=PASS'); }
+    catch { console.error('CREATOR_CLEANUP_INPUT=FAIL'); process.exitCode = 1; }
+  } else if (!['--run','--cleanup'].includes(process.argv[2])) { console.error('CREATOR_JWT_ACCEPTANCE_ERROR=mode'); process.exitCode = 1; }
   else runCreatorJwtAcceptance(process.env, { cleanupOnly: process.argv[2] === '--cleanup' }).then(result => console.log(`CREATOR_JWT_ACCEPTANCE=${JSON.stringify(result)}`)).catch(() => { console.error('CREATOR_JWT_ACCEPTANCE_ERROR=failed_verify_before_retry'); process.exitCode = 1; });
 }

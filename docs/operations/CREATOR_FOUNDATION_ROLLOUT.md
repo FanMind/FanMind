@@ -1,6 +1,6 @@
 # Creator foundation: controlled rollout contract
 
-Status: source preparation, not a completed Staging or Production rollout.
+Status: source #1105 published on main 3f6178bd; protected Staging Verify 34622658443 passed with STATE=absent / NEXT=apply. Apply 34623104141 committed at 16:38:15 UTC with exact POSTFLIGHT=PASS and runtime disabled; real JWT/runtime acceptance remains pending.
 Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Workspace.
 
 ## Reviewed artifact and target boundary
@@ -9,7 +9,7 @@ Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Wo
 - SHA-256: `8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f`
 - Required PostgreSQL major: 17. Real isolated CI checks use the existing pinned PG17 service and a dedicated disposable database only.
 - Observed FanMind Staging on 2026-09-10: PostgreSQL 170006; creators, creator_voice_profiles and creator_sales_playbooks absent. This read proves absence, not permission or successful application.
-- No migration was applied during this implementation. No customer records or provider settings were changed.
+- The original source preparation did not apply a migration. No customer records or provider settings were changed.
 - A Supabase CLI scaffold attempt was interrupted during dependency acquisition; an empty scaffold and temporary version marker were removed. The reviewed SQL remains outside the generic migration ledger. No generic db push or ledger repair is authorized by this file.
 
 ## Before a target write
@@ -123,10 +123,27 @@ as its marker. After normal or indeterminate replies, cleanup rechecks the owner
 workspace identity and marker before deleting only that run's newly created
 bundle. A separate always step repeats cleanup and verifies all four Creator
 tables are empty for both synthetic workspaces. Another run's data is never
-removed. Cleanup failure fails the workflow; inspect the recorded run before any
-retry. The normal application Creator flag stays off throughout.
+removed by an ordinary test or its always-cleanup. Cleanup failure fails the workflow; inspect the recorded run before any retry. The normal application Creator flag stays off throughout.
 
 This proves only the foundation JWT/approval/bundle-cascade contract when the real
 run succeeds. It does not prove a deployed enabled Creator UI, whole-account or
 contact deletion, DSAR delivery, genuine writing quality, learning, provider
 approval or Production readiness. Those existing acceptance steps remain open.
+
+## Interrupted acceptance recovery
+
+The protected `cleanup` action requires `cleanup-creator-foundation`, the current
+exact reviewed main commit and an explicit `cleanup_receipt` containing the
+original `RUN_ID:RUN_ATTEMPT:COMMIT`. Read the failed workflow before selecting
+this receipt. The current invocation must not silently substitute its own attempt.
+Recovery rechecks the installed schema, both owner sessions and marked fixture
+identities, then deletes only bundles matching that original receipt. It refuses
+all other data and never provisions or rotates a member credential. Ordinary
+`accept` rejects any recovery receipt. A failed cleanup remains failed and must
+be independently reconciled before another acceptance.
+
+Fixture provisioning also shares the Core/CSV member lock. All acceptance and
+cleanup HTTP response bodies are counted as bytes while streaming and cancelled
+at 100 KB, including error responses. Ten behavior tests cover these corrections;
+27 targeted acceptance, fixture and workflow-supply-chain tests pass locally.
+Fresh independent source review and CI are required before target acceptance.
