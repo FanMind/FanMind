@@ -16,25 +16,31 @@ export function providerPolicy(provider) {
   if (!Object.hasOwn(SOCIAL_PROVIDERS, provider)) throw new SocialProviderError("unsupported_provider");
   return SOCIAL_PROVIDERS[provider];
 }
-export function socialConfig(provider, workspaceId, env = process.env) {
-  providerPolicy(provider);
-  const prefix = provider === "x" ? "FANMIND_X" : "FANMIND_TIKTOK";
+export function socialTarget(env = process.env) {
   let origin, target;
   try { origin = new URL(env.FANMIND_APP_URL); target = new URL(env.NEXT_PUBLIC_SUPABASE_URL); } catch { throw new SocialProviderError("pilot_unavailable"); }
-  const workspaceIds = (env.FANMIND_SOCIAL_PILOT_WORKSPACE_IDS ?? "").split(",").map(v => v.trim()).filter(Boolean);
-  if (env.FANMIND_SOCIAL_PILOT_ENABLED !== "true" || env.FANMIND_RUNTIME_ENVIRONMENT !== "staging"
-    || !workspaceIds.includes(workspaceId) || origin.protocol !== "https:" || origin.username || origin.password
+  if (env.FANMIND_RUNTIME_ENVIRONMENT !== "staging" || origin.protocol !== "https:" || origin.username || origin.password
     || origin.hostname === "fanmind.ch" || origin.hostname.endsWith(".fanmind.ch") && origin.hostname !== "staging.fanmind.ch"
     || origin.pathname !== "/" || origin.search || origin.hash
     || !/^[a-z]{20}$/.test(env.FANMIND_SOCIAL_STAGING_PROJECT_REF ?? "")
+    || !/^[a-z]{20}$/.test(env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF ?? "")
+    || env.FANMIND_SOCIAL_STAGING_PROJECT_REF === env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF
     || env.FANMIND_SOCIAL_STAGING_PROJECT_REF === "drqkpdvtbbrrdwmtrodz"
     || target.origin !== `https://${env.FANMIND_SOCIAL_STAGING_PROJECT_REF}.supabase.co`
-    || target.username || target.password || target.pathname !== "/" || target.search || target.hash
+    || target.username || target.password || target.pathname !== "/" || target.search || target.hash) throw new SocialProviderError("pilot_unavailable");
+  return origin.origin;
+}
+export function socialConfig(provider, workspaceId, env = process.env) {
+  providerPolicy(provider);
+  const origin = socialTarget(env);
+  const prefix = provider === "x" ? "FANMIND_X" : "FANMIND_TIKTOK";
+  const workspaceIds = (env.FANMIND_SOCIAL_PILOT_WORKSPACE_IDS ?? "").split(",").map(v => v.trim()).filter(Boolean);
+  if (env.FANMIND_SOCIAL_PILOT_ENABLED !== "true" || !workspaceIds.includes(workspaceId)
     || !env[`${prefix}_CLIENT_ID`] || !env[`${prefix}_CLIENT_SECRET`]
     || !/^[a-f0-9]{64}$/i.test(env.FANMIND_SOCIAL_TOKEN_KEY ?? "")
     || env[`${prefix}_PILOT_APPROVED`] !== "true") throw new SocialProviderError("pilot_unavailable");
-  return { provider, origin: origin.origin, clientId: env[`${prefix}_CLIENT_ID`], clientSecret: env[`${prefix}_CLIENT_SECRET`],
-    key: env.FANMIND_SOCIAL_TOKEN_KEY, redirectUri: `${origin.origin}/api/integrations/social/${provider}/callback` };
+  return { provider, origin, clientId: env[`${prefix}_CLIENT_ID`], clientSecret: env[`${prefix}_CLIENT_SECRET`],
+    key: env.FANMIND_SOCIAL_TOKEN_KEY, redirectUri: `${origin}/api/integrations/social/${provider}/callback` };
 }
 export function randomSecret() { return randomBytes(32).toString("base64url"); }
 export function stateDigest(state) {

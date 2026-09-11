@@ -12,6 +12,7 @@ const errors: Record<string, string> = {
   oauth_denied: "Die Anmeldung wurde abgebrochen.",
   oauth_invalid: "Diese Anmeldung ist abgelaufen oder bereits verwendet. Bitte starte sie erneut.",
   connection_changed: "Die Verbindung hat sich geändert. Bitte lade ihren Status erneut.",
+  provider_cleanup_required: "Die Anmeldung konnte nicht abgeschlossen und die Plattformfreigabe nicht bestätigt entfernt werden. Entferne FanMind bitte in den App-Berechtigungen der Plattform.",
 };
 function errorMessage(code: unknown) {
   return typeof code === "string" && Object.hasOwn(errors, code)
@@ -43,13 +44,19 @@ export function SocialProviderConnection({ provider, demo }: { provider: "tiktok
       .catch(() => { if (!controller.signal.aborted) setNotice("Verbindungsstatus derzeit nicht verfügbar."); });
     return () => controller.abort();
   }, [demo, endpoint, provider]);
-  async function perform(action: "disconnect" | "messages") {
+  async function perform(action: "start" | "disconnect" | "messages") {
     setBusy(true); setMessages([]);
     try {
-      const response = await fetch(`${endpoint}/${action}`, { method: "POST", cache: "no-store" });
+      const response = await fetch(`${endpoint}/${action}`, { method: "POST", cache: "no-store", redirect: "error" });
       const result = await response.json();
       if (!response.ok) { setNotice(errorMessage(result.error)); return; }
-      if (action === "disconnect") {
+      if (action === "start") {
+        const target = new URL(result.authorizationUrl);
+        const expected = provider === "x" ? "https://x.com/i/oauth2/authorize" : "https://www.tiktok.com/v2/auth/authorize/";
+        if (`${target.origin}${target.pathname}` !== expected || target.username || target.password || target.hash) throw new Error();
+        // Top-level navigation after a same-origin POST respects form-action 'self'.
+        window.location.assign(target.href);
+      } else if (action === "disconnect") {
         setStatus(current => current ? { ...current, connected: false, accountName: null } : null);
         setNotice(result.providerRevoked ? "Verbindung getrennt und Zugriff bei der Plattform widerrufen." : "Verbindung in FanMind getrennt. Entferne FanMind zusätzlich in den App-Berechtigungen der Plattform.");
       } else {
@@ -68,9 +75,7 @@ export function SocialProviderConnection({ provider, demo }: { provider: "tiktok
     {status?.connected ? <p>Verbundenes Konto: <strong>{status.accountName}</strong></p> : null}
     <p>{demo ? "Verbindungen sind im Demo-Modus deaktiviert." : status?.available ? "Für diesen Testaccount freigegeben." : "Die Verbindung wird nach Einrichtung der Plattform-App und Freigabe des Testzugangs verfügbar."}</p>
     <div className={styles.connectionCardActions}>
-      <form action={`${endpoint}/start`} method="post">
-        <button type="submit" disabled={demo || busy || !status?.available}>{status?.connected ? "Anmeldung erneuern" : `Eigenes ${name}-Konto verbinden`}</button>
-      </form>
+      <button type="button" disabled={demo || busy || !status?.available} onClick={() => perform("start")}>{status?.connected ? "Anmeldung erneuern" : `Eigenes ${name}-Konto verbinden`}</button>
       {status?.connected ? <button type="button" disabled={busy} onClick={() => perform("disconnect")}>Verbindung trennen</button> : null}
       {provider === "x" && status?.connected ? <button type="button" disabled={busy || !status.available} onClick={() => perform("messages")}>Direktnachrichten prüfen</button> : null}
     </div>

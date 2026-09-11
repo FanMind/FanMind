@@ -31,13 +31,22 @@ export async function exchangeSocialToken(config, code, verifier, fetcher = fetc
   const params = { grant_type: "authorization_code", code, redirect_uri: config.redirectUri };
   if (config.provider === "x") params.code_verifier = verifier;
   const value = await boundedProviderJson(providerPolicy(config.provider).token, tokenForm(config, params), fetcher);
-  return normalizeToken(config.provider, value);
+  return normalizeOrRevoke(config, value, fetcher);
 }
 export async function refreshSocialToken(config, token, fetcher = fetch) {
   if (!token.refreshToken || token.refreshExpiresAt && Date.parse(token.refreshExpiresAt) <= Date.now()) throw new SocialProviderError("reconnect_required");
   const value = await boundedProviderJson(providerPolicy(config.provider).token, tokenForm(config, { grant_type: "refresh_token", refresh_token: token.refreshToken }), fetcher);
   // Do not guess scope, identity or refresh rotation after an incomplete response.
-  return normalizeToken(config.provider, value);
+  return normalizeOrRevoke(config, value, fetcher);
+}
+async function normalizeOrRevoke(config, value, fetcher) {
+  try { return normalizeToken(config.provider, value); }
+  catch (error) {
+    if (typeof value.access_token !== "string" || !value.access_token || value.access_token.length > 8192) throw new SocialProviderError("provider_cleanup_required");
+    try { await revokeSocialToken(config, { accessToken: value.access_token }, fetcher); }
+    catch { throw new SocialProviderError("provider_cleanup_required"); }
+    throw error;
+  }
 }
 function normalizeToken(provider, value) {
   const scopes = typeof value.scope === "string" ? value.scope.split(/[ ,]+/).filter(Boolean) : [];

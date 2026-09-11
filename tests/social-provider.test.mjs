@@ -6,6 +6,7 @@ import { handleSocialRequest } from "../src/lib/socialProviderFlow.mjs";
 
 const workspace = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const env = { FANMIND_APP_URL: "https://staging.fanmind.ch", NEXT_PUBLIC_SUPABASE_URL: "https://vshyhvgcmrlagvfnvomc.supabase.co",
+  FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: "drqkpdvtbbrrdwmtrodz",
   FANMIND_RUNTIME_ENVIRONMENT: "staging", FANMIND_SOCIAL_STAGING_PROJECT_REF: "vshyhvgcmrlagvfnvomc", FANMIND_SOCIAL_PILOT_ENABLED: "true",
   FANMIND_SOCIAL_PILOT_WORKSPACE_IDS: workspace, FANMIND_X_CLIENT_ID: "synthetic-client", FANMIND_X_CLIENT_SECRET: "synthetic-secret",
   FANMIND_X_PILOT_APPROVED: "true", FANMIND_TIKTOK_CLIENT_ID: "synthetic-client", FANMIND_TIKTOK_CLIENT_SECRET: "synthetic-secret",
@@ -21,6 +22,8 @@ const row = { workspace_id: workspace, provider: "x", external_account_id: "123"
 test("pilot requires exact Staging target, explicit account and app approval; Production cannot activate", () => {
   assert.equal(config.provider, "x");
   for (const change of [{ FANMIND_SOCIAL_PILOT_ENABLED: "false" }, { FANMIND_RUNTIME_ENVIRONMENT: "production" },
+    { FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: "" },
+    { FANMIND_SOCIAL_STAGING_PROJECT_REF: "p".repeat(20), NEXT_PUBLIC_SUPABASE_URL: `https://${"p".repeat(20)}.supabase.co`, FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: "p".repeat(20) },
     { FANMIND_SOCIAL_STAGING_PROJECT_REF: "drqkpdvtbbrrdwmtrodz", NEXT_PUBLIC_SUPABASE_URL: "https://drqkpdvtbbrrdwmtrodz.supabase.co" },
     { FANMIND_SOCIAL_PILOT_WORKSPACE_IDS: "other" }, { FANMIND_X_PILOT_APPROVED: "false" }, { FANMIND_SOCIAL_TOKEN_KEY: "" },
     { FANMIND_APP_URL: "https://fanmind.ch" }, { FANMIND_APP_URL: "http://staging.fanmind.ch" }, { FANMIND_APP_URL: "https://staging.fanmind.ch/path" }])
@@ -47,11 +50,13 @@ test("AEAD rejects a different account, provider, key, version or changed cipher
 test("official token request never follows redirects or leaks secret into URL; wrong scopes fail", async () => {
   let calls = 0;
   const fetcher = async (url, options) => {
-    calls++; assert.equal(url, "https://api.x.com/2/oauth2/token"); assert.equal(options.redirect, "error"); assert.equal(options.cache, "no-store");
+    calls++; assert.equal(options.redirect, "error"); assert.equal(options.cache, "no-store");
+    if (url === "https://api.x.com/2/oauth2/revoke") { assert.equal(new URLSearchParams(options.body).get("token"), "access"); return Response.json({ revoked: true }); }
+    assert.equal(url, "https://api.x.com/2/oauth2/token");
     assert.match(options.headers.Authorization, /^Basic /); assert.equal(new URLSearchParams(options.body).get("code_verifier"), "verifier");
     return Response.json({ access_token: "access", refresh_token: "refresh", expires_in: 7200, token_type: "bearer", scope: "tweet.read users.read dm.write offline.access" });
   };
-  await assert.rejects(exchangeSocialToken(config, "code", "verifier", fetcher), /provider_scope_invalid/); assert.equal(calls, 1);
+  await assert.rejects(exchangeSocialToken(config, "code", "verifier", fetcher), /provider_scope_invalid/); assert.equal(calls, 2);
 });
 test("provider response size and status are bounded and redacted without retries", async () => {
   await assert.rejects(boundedProviderJson("fixed", {}, async () => new Response("x".repeat(256001))), /provider_invalid/);
@@ -119,4 +124,36 @@ test("TikTok never calls a DM provider and rate-limit failure never calls X", as
     assert.ok([429, 503].includes(response.status));
   }
   assert.equal(calls, 0);
+});
+test("start returns only the fixed authorization URL after a protected POST, avoiding form-action redirect blocking", async () => {
+  const response = await handleSocialRequest({ request: request("start"), provider: "x", action: "start", authorize: async () => context, env, store: { rpc: async () => true } });
+  assert.equal(response.status, 200); assert.equal(response.headers.has("location"), false);
+  const body = await response.json(); assert.deepEqual(Object.keys(body), ["authorizationUrl"]);
+  assert.equal(new URL(body.authorizationUrl).origin, "https://x.com");
+  assert.doesNotMatch(JSON.stringify(body), /synthetic-secret|encrypted|workspace/);
+});
+test("disconnect cannot mutate a changed Production target even when the pilot switch is off", async () => {
+  let calls = 0; const production = "p".repeat(20);
+  const response = await handleSocialRequest({ request: request("disconnect"), provider: "x", action: "disconnect", authorize: async () => context,
+    env: { ...env, FANMIND_SOCIAL_PILOT_ENABLED: "false", FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: production, FANMIND_SOCIAL_STAGING_PROJECT_REF: production, NEXT_PUBLIC_SUPABASE_URL: `https://${production}.supabase.co` },
+    store: { rpc: async () => { calls++; return []; } } });
+  assert.equal(calls, 0); assert.equal(response.status, 503);
+});
+test("every failure after token exchange attempts revocation; cleanup failure is explicitly reported", async () => {
+  for (const failure of ["profile", "authorization", "save_false", "save_unknown", "revoke"]) {
+    const state = randomSecret(), hash = stateDigest(state); let auth = 0, revoked = 0;
+    const response = await handleSocialRequest({ request: new Request(`${request("callback").url}?state=${state}&code=code`), provider: "x", action: "callback", env,
+      authorize: async () => { auth++; if (failure === "authorization" && auth === 2) throw new Error("private auth error"); return context; },
+      store: { rpc: async name => {
+        if (name === "consume") return sealSocialSecret({ verifier: "verifier" }, `social:${workspace}:x:${hash}`, config.key);
+        if (failure === "save_unknown") throw new Error("private database timeout");
+        return false;
+      } }, client: {
+        exchangeSocialToken: async () => token,
+        readSocialProfile: async () => { if (failure === "profile") throw new Error("private profile error"); return { id: "123", name: "Synthetic" }; },
+        revokeSocialToken: async (_config, issued) => { assert.equal(issued.accessToken, token.accessToken); revoked++; if (failure === "revoke") throw new Error("private revoke error"); },
+      } });
+    assert.equal(revoked, 1); assert.doesNotMatch(response.headers.get("location"), /private|access|refresh/);
+    if (failure === "revoke") assert.match(response.headers.get("location"), /provider_cleanup_required$/);
+  }
 });

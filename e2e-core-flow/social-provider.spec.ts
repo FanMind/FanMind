@@ -4,12 +4,14 @@ test("TikTok profile capability and X read preview are explicit; disconnect clea
   await request.post("http://127.0.0.1:54321/__reset", { headers: { Authorization: "Bearer fanmind-local-core-flow-service-role-key" } });
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  let connected = true, reads = 0, disconnects = 0;
+  let connected = true, reads = 0, disconnects = 0, starts = 0;
+  await page.route("https://x.com/i/oauth2/authorize?*", route => route.fulfill({ contentType: "text/html", body: "<main>Synthetic provider authorization</main>" }));
   await page.route("**/api/integrations/social/tiktok/status", route => route.fulfill({ json: { available: false, connected: false, accountName: null, capability: "profile_only" } }));
   await page.route("**/api/integrations/social/x/*", async route => {
     const action = new URL(route.request().url()).pathname.split("/").pop();
     if (action === "status") { await route.fulfill({ json: { available: true, connected, accountName: "Synthetic X", capability: "dm_read_preview" } }); return; }
     expect(route.request().method()).toBe("POST");
+    if (action === "start") { starts++; await route.fulfill({ json: { authorizationUrl: "https://x.com/i/oauth2/authorize?state=synthetic" } }); return; }
     if (action === "messages") { reads++; await route.fulfill({ json: { messages: [{ id: "1", senderId: "456", text: "Synthetic inbound message", receivedAt: "2026-09-11T09:00:00Z", openUrl: "https://x.com/messages" }], skipped: 0, hasMore: false } }); return; }
     expect(action).toBe("disconnect"); disconnects++; connected = false;
     await route.fulfill({ json: { disconnected: true, providerRevoked: false } });
@@ -40,4 +42,8 @@ test("TikTok profile capability and X read preview are explicit; disconnect clea
   await expect(x.getByText("Synthetic inbound message", { exact: true })).toHaveCount(0);
   await expect(x.getByText(/Entferne FanMind zusätzlich in den App-Berechtigungen/)).toBeVisible();
   expect(reads).toBe(1); expect(disconnects).toBe(1); expect(errors).toEqual([]);
+  await x.getByRole("button", { name: "Eigenes X / Twitter-Konto verbinden" }).click();
+  await page.waitForURL("https://x.com/i/oauth2/authorize?state=synthetic");
+  await expect(page.getByText("Synthetic provider authorization")).toBeVisible();
+  expect(starts).toBe(1); expect(errors).toEqual([]);
 });

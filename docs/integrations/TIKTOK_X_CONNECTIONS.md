@@ -23,11 +23,18 @@ Antworten werden weiterhin auf der Originalplattform manuell gesendet.
 - Der Server autorisiert den aktuellen aktiven Workspace-Owner; Demo und Member
   dürfen keine Verbindung verwalten. Lesen des Status und lokales Trennen bleiben
   für den Owner auch bei pausierter Verarbeitung möglich.
-- Start/Trennen/Abruf sind POST mit exaktem Origin-Vergleich. Callback bindet
+- Start/Trennen/Abruf sind POST mit exaktem Origin-Vergleich.
+  Die Startantwort liefert nur die feste Provider-Anmelde-URL; der Browser
+  navigiert anschließend separat dorthin, ohne die bestehende `form-action 'self'`
+  CSP zu erweitern. Callback bindet
   Provider, Workspace und Nutzer an einen zufälligen einmaligen State mit zehn
   Minuten Gültigkeit. Der State wird in der Datenbank atomar verbraucht; die
   vollständige Verbindung prüft ihn noch einmal, damit Trennen einen schon
   laufenden Callback ungültig macht. Neue Versuche ersetzen den früheren State.
+- Scheitert ein Schritt nach Ausgabe neuer Tokens, wird deren Provider-Widerruf
+  versucht. Das gilt auch für unzureichende Token-Scopes, abgebrochene Profilprüfung
+  und unklare Speicherung. Ein unbestätigter Widerruf erscheint als nötige manuelle
+  Entfernung der App-Freigabe; ein vollständiges Cleanup wird dann nicht behauptet.
 - AES-256-GCM bindet Tokens zusätzlich kryptografisch an Provider, Workspace und
   externe Konto-ID; der PKCE-Verifier ist ebenfalls verschlüsselt. Tokens und
   Provider-Fehlertexte erscheinen nicht in UI, Export, Logs oder Redirects.
@@ -68,6 +75,7 @@ Serverkonfiguration (Werte niemals in Git oder Chat):
 | `FANMIND_APP_URL` | Exakte HTTPS-Staging-Origin; Callback wird ausschließlich daraus abgeleitet. |
 | `FANMIND_RUNTIME_ENVIRONMENT=staging` | Getrennte Laufzeit. |
 | `FANMIND_SOCIAL_STAGING_PROJECT_REF` | Exakter isolierter Supabase-Ref, verschieden von Production und passend zu `NEXT_PUBLIC_SUPABASE_URL`. |
+| `FANMIND_PRODUCTION_SUPABASE_PROJECT_REF` | Aktuell bestätigter Production-Ref; Pflicht und verschieden vom Testziel, auch für Status/Disconnect bei ausgeschaltetem Pilot. |
 | `FANMIND_SOCIAL_PILOT_WORKSPACE_IDS` | Explizite synthetische Test-Workspace-Allowlist. |
 | `FANMIND_SOCIAL_PILOT_ENABLED` | Kill Switch; Standard aus. |
 | `FANMIND_SOCIAL_TOKEN_KEY` | Separater zufälliger 32-Byte-Schlüssel als 64 Hexzeichen. |

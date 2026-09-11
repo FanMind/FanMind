@@ -1,4 +1,5 @@
 ## RECEIPT-FM-SOCIAL-OAUTH-20260911
+- PR review countercheck: #1102 initial 13 checks passed at a80e03e, but the separately completed review identified three real issues. Before merge, current source now requires the configured Production project comparison even for cleanup, revokes newly issued credentials on callback/normalization failure, and uses same-origin POST plus separately allowlisted browser navigation without widening CSP. Sixteen behavior tests pass; updated Chromium navigation and exact-head CI must pass before completion.
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Task: FM-SOC7-001 / FM-CR-031
 - Risk: R4

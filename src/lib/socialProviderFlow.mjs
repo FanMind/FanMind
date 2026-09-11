@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { socialConfig, providerPolicy, randomSecret, stateDigest, sealSocialSecret, openSocialSecret, socialAuthorizeUrl, socialErrorCode, SocialProviderError } from "./socialProviderPolicy.mjs";
+import { socialConfig, socialTarget, providerPolicy, randomSecret, stateDigest, sealSocialSecret, openSocialSecret, socialAuthorizeUrl, socialErrorCode, SocialProviderError } from "./socialProviderPolicy.mjs";
 import * as providerClient from "./socialProviderClient.mjs";
 
 const headers = { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
@@ -24,6 +24,9 @@ export async function handleSocialRequest({ request, provider, action, authorize
     if (method === "POST" && request.headers.get("origin") !== origin) return json({ error: "origin_denied" }, 403);
     const context = await authorize(action === "disconnect" || action === "status" ? "read" : "active");
     if (context.workspace.role !== "owner" || context.demo) throw new SocialProviderError("owner_required");
+    // Even status/disconnect must use the verified isolated target. The pilot
+    // kill switch may be off during cleanup; the target boundary never is.
+    socialTarget(env);
     const workspaceId = context.workspace.id;
     const params = { p_workspace: workspaceId, p_user: context.user.id, p_provider: provider };
     if (action === "disconnect") {
@@ -59,7 +62,7 @@ export async function handleSocialRequest({ request, provider, action, authorize
       const state = randomSecret(); const verifier = randomSecret(); const hash = stateDigest(state);
       const saved = await store.rpc("begin", { ...params, p_hash: hash, p_verifier: sealSocialSecret({ verifier }, binding(workspaceId, provider, hash), config.key) });
       if (saved !== true) throw new SocialProviderError("rate_limited");
-      return new Response(null, { status: 303, headers: { ...headers, Location: socialAuthorizeUrl(config, state, verifier) } });
+      return json({ authorizationUrl: socialAuthorizeUrl(config, state, verifier) });
     }
     if (action === "callback") {
       const query = new URL(request.url).searchParams;
@@ -69,13 +72,21 @@ export async function handleSocialRequest({ request, provider, action, authorize
       if (!encryptedVerifier) throw new SocialProviderError("oauth_invalid");
       const { verifier } = openSocialSecret(encryptedVerifier, binding(workspaceId, provider, hash), config.key);
       const token = await client.exchangeSocialToken(config, query.get("code"), verifier);
-      const profile = await client.readSocialProfile(config, token);
-      const stillAuthorized = await authorize("active");
-      if (stillAuthorized.workspace.id !== workspaceId || stillAuthorized.user.id !== context.user.id || stillAuthorized.workspace.role !== "owner" || stillAuthorized.demo) throw new SocialProviderError("connection_changed");
-      const saved = await store.rpc("complete", { ...params, p_hash: hash, p_account: profile.id, p_name: profile.name,
-        p_token: sealSocialSecret(token, binding(workspaceId, provider, profile.id), config.key), p_expires: token.expiresAt });
-      if (saved !== true) throw new SocialProviderError("connection_changed");
-      return new Response(null, { status: 303, headers: { ...headers, Location: `${origin}/channels?social=${provider}&social_result=connected` } });
+      try {
+        const profile = await client.readSocialProfile(config, token);
+        const stillAuthorized = await authorize("active");
+        if (stillAuthorized.workspace.id !== workspaceId || stillAuthorized.user.id !== context.user.id || stillAuthorized.workspace.role !== "owner" || stillAuthorized.demo) throw new SocialProviderError("connection_changed");
+        const saved = await store.rpc("complete", { ...params, p_hash: hash, p_account: profile.id, p_name: profile.name,
+          p_token: sealSocialSecret(token, binding(workspaceId, provider, profile.id), config.key), p_expires: token.expiresAt });
+        if (saved !== true) throw new SocialProviderError("connection_changed");
+        return new Response(null, { status: 303, headers: { ...headers, Location: `${origin}/channels?social=${provider}&social_result=connected` } });
+      } catch (error) {
+          // Revoke only the newly issued token, including failed profile reads,
+          // lost authorization, failed/indeterminate persistence and disconnect races.
+          try { await client.revokeSocialToken(config, token); }
+          catch { throw new SocialProviderError("provider_cleanup_required"); }
+          throw error;
+      }
     }
     if (provider !== "x") throw new SocialProviderError("messaging_unavailable");
     const row = assertRow(await store.read(workspaceId, provider), workspaceId, provider);
