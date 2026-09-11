@@ -1,3 +1,10 @@
+## 2026-09-11 — Supabase inherited service-role grants
+- Context: FM-CR-032 / protected Staging Apply 34590217929, reviewed main 3df6f5f8. Verify 34590000782 had passed with schema absent; initial plain-PG17 proof did not model schema-specific Supabase default ACLs.
+- Result: apply_indeterminate_verify_before_retry, no automatic retry. Independent read-only catalog check at 10:40:58 UTC confirmed both tables absent and zero Social functions.
+- Evidence: target pg_default_acl gives service_role ALL on new public tables, including TRUNCATE/REFERENCES/TRIGGER/MAINTAIN. The original SQL reset browser grants only, so its limited DML GRANT did not remove these inherited extras. Exact comparison with temporary reference tables correctly rejects that difference.
+- Correction: explicitly revoke existing table grants from service_role too, then grant the four required DML privileges. Add the observed defaults to real PG17 setup and prove that an added service-role TRUNCATE grant still fails verification. No global defaults or existing objects are changed.
+- Do not repeat: do not loosen the ACL comparison, re-run old Apply, assume commit from an unclear response, or use ad-hoc target DDL. Complete new-main protected Verify/Apply/Postflight after current CI and review.
+
 ## 2026-09-11 — Meta browser fixture configuration
 - Follow-through: job 103228269190 reached the external redirect after enabling the synthetic key, but Playwright only routes the first URL of an HTTP redirect chain (confirmed in installed official typings). Replace the second provider route mock with an actual static HTML response on the existing separate local fixture origin. The test still crosses an origin under the unchanged app CSP and never needs a real Meta request.
 - Context: FM-CR-032 / PR #1103, isolated synthetic browser job 103226861219 in run 34588101442.

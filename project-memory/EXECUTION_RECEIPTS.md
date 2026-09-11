@@ -1,4 +1,7 @@
 ## RECEIPT-FM-SOCIAL-CONNECT-FLOW-20260911
+- Follow-through: #1103 source published at 3df6f5f8 after all 13 checks and independent review; exact tree 323eb2ce. Deploy 34589815376 and Readiness 34589929792 passed. This supersedes the earlier source-CI pending checkpoint below.
+- Target state: protected Verify 34590000782 passed; Apply 34590217929 stopped. Fresh read-only catalog proof at 10:40:58 UTC shows both tables absent and zero functions. No target success/activation is claimed. Metadata independently identifies service_role ALL defaults; correction removes inherited grants only on the new tables, with unchanged exact ACL checks and a Supabase-default PG17 fixture.
+- Current next step: bounded grant-fix PR, exact-head PG17/CI/review, protected new-main Verify then Apply/Postflight. Same lock remains active for this already-started target work; no blind retry or global ACL change.
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Implementation evidence: selected-channel return, explicit provider-hosted credentials, X once-only initial preview, corrected Meta document navigation and controlled Staging schema runner/workflow are present. Twenty-five focused tests, TypeScript and Next build pass. First Operations pass had 1,293 passes plus one exact workflow-inventory mismatch after adding the new pinned workflow; inventory counts were reconciled (no pin/gate removed) and all eleven supply-chain tests now pass. Real PG17 and Chromium/current-head CI remain mandatory before source completion.
 - Task: FM-SOC7-001 / FM-CR-032

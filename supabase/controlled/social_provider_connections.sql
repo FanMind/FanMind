@@ -32,7 +32,9 @@ create table public.social_provider_oauth_attempts (
 );
 alter table public.social_provider_connections enable row level security;
 alter table public.social_provider_oauth_attempts enable row level security;
-revoke all on public.social_provider_connections, public.social_provider_oauth_attempts from public, anon, authenticated;
+-- Supabase's schema-specific defaults also grant service_role ALL privileges.
+-- Reset those inherited grants before installing this bounded DML contract.
+revoke all on public.social_provider_connections, public.social_provider_oauth_attempts from public, anon, authenticated, service_role;
 grant select,insert,update,delete on public.social_provider_connections, public.social_provider_oauth_attempts to service_role;
 grant select(workspace_id,provider,external_account_id,display_name,expires_at,connected_at)
   on public.social_provider_connections to authenticated;

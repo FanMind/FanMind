@@ -1,6 +1,7 @@
 # Work Locks
 
 ## LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
+- Current checkpoint: #1103 source is published as 3df6f5f8. Continue only the controlled Staging grant correction and its Verify/Apply/Postflight; observed failed Apply left zero Social objects. The original source publication is not reopened.
 - Task: FM-SOC7-001 / FM-CR-032
 - Status: ACTIVE
 - Risk: R4

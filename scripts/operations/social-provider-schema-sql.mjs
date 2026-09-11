@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const SOCIAL_PROVIDER_SCHEMA_SHA256 = "e05b9a8b023d6058a1d69486cebb2d4d8caecb3092e2479c488addc6cbb3acf5";
+export const SOCIAL_PROVIDER_SCHEMA_SHA256 = "a9b5519eb66e782cb45a5ae9ae0f35bfcba2c7ea438fa7f9adf22ddf3a6597bf";
 export const SOCIAL_TABLES = ["social_provider_connections", "social_provider_oauth_attempts"];
 const FUNCTIONS = [
   ["fanmind_social_owner(uuid,uuid)", "boolean", "sql", "s", false],
