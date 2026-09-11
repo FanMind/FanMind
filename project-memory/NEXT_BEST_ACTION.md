@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-Preserve the published #1099 source and #1100 reader closeout at 8c03b78c; neither needs republishing. Resume the existing controlled Creator Staging continuation and actual target/JWT acceptance, then writing-style quality and confirmed-chat learning. FM-DEC-016: one user/Creator account, one text writing style; no audio. All variants and channels retain that style. Review legacy prompt/UI conformance before activation; future managers use each selected account's style and fan context, with manager roles remaining later. Reuse the already prepared local rollout source after reconciliation; never launch a generic DB push, provider/paid activation or deferred Android work.
+Preserve published #1105-#1108 and the accepted foundation on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: controlled Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup and temporary-member rejection. Do not repeat foundation Apply, Upgrade or acceptance merely for a reader commit. Continue controlled enabled-UI and full account/contact deletion acceptance, real writing-style quality and confirmed-chat learning, and central Meta/TikTok/X app configuration plus each Creator's consent and separate provider acceptance. FM-DEC-016: one user/Creator account, one text writing style; no audio. All variants and channels retain that style; future managers use each selected account's style and fan context, with manager roles remaining later. The runtime flag stays off until its controlled activation gate; no generic DB push, paid activation, deferred Android work or renewed Backup debugging.
 
 ## Why this action
 

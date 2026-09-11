@@ -28,15 +28,21 @@ Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
 Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
 11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
 waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
-Der reale Staging-Lauf 34626769355 auf Main 03ecdc18 hat Owner-/Member-/
-Fremdkonto-Trennung, genau einen Stil pro Konto und beide tatsächlichen
-PDF-Datenauskünfte geprüft. Testdaten-Cleanup und Sperrung des temporären
-Testzugangs bestanden. Der Gesamtlauf scheiterte am Timeout einer veralteten
-Profilrevision: SQLSTATE 40001 löst in betroffenen PostgREST-Versionen
-Wiederholungen aus. Die gezielte, separat bestätigte PT409-Funktionskorrektur
-und die vollständige Revisionsabnahme stehen noch aus. Der Creator-Schalter
-bleibt aus; aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität
-und Plattformfreigaben bleiben offen. Production ist damit nicht aktiviert.
+Der geschützte Staging-Lauf [34629009649](https://github.com/FanMind/FanMind/actions/runs/34629009649)
+auf Main f0c7a84e bestand am 11. September 2026 die reale Creator-Grundlagenabnahme:
+Owner-/Member-/Fremdkonto-Trennung, genau ein Stil pro Konto, Freigabeentzug bei
+Änderungen, veraltete und gleichzeitige Speicherungen sowie beide echten
+PDF-Datenauskünfte. Unabhängige Bereinigung und Sperrung des temporären
+Testzugangs bestanden. Die Nachprüfung um 17:42:49 UTC bestätigt vier leere
+Creator-Tabellen und keine hängenden Creator-RPCs.
+
+Die gezielte PT409-Funktionskorrektur wurde zuvor durch Verify 34628681395 und
+Upgrade 34628886294 geprüft/installiert; die ursprüngliche Foundation wurde
+nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
+und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
+Grundlage. Der Creator-Schalter bleibt aus; aktivierte Oberfläche,
+Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und Plattformfreigaben
+bleiben offen. Production ist damit nicht für Creator aktiviert.
 
 
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026

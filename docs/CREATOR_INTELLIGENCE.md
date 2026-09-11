@@ -90,7 +90,10 @@ Creator sind unterschiedliche Identitäten.
 | Conversation/Sales State | CONNECT, ENGAGE, BUILD_INTEREST, QUALIFY, TEASE, OFFER, NEGOTIATE, CLOSE, AFTERCARE, REACTIVATE |
 
 Das Datenmodell und seine Autorisierungs-/Migrationsverträge wurden vor der
-Pipeline-Änderung definiert; die reale Zielabnahme bleibt offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code erweitert. Der Server
+Pipeline-Änderung definiert. Die geschützte Staging-Grundlagenabnahme 34629009649
+auf f0c7a84e belegt echte JWT-Kontentrennung, einen Stil, atomare Freigaben/
+Revisionen, PDF-Auskunft und Testbereinigung. Aktivierte Oberfläche, vollständige
+Kontakt-/Kontolöschung, reale Qualität/Lernen und Provider-Freigaben bleiben offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code erweitert. Der Server
 lädt automatisch Agenturregeln, richtigen Creator, freigegebene Voice und
 Playbook, Fanwissen, Gesprächskontext und aktuelles Ziel. Keine Prompt-Auswahl
 pro Nachricht. Missing-/Mismatch-Kontext darf nicht auf eine fremde Stimme fallen.

@@ -1,6 +1,6 @@
 # Creator foundation: controlled rollout contract
 
-Status: source #1105 published on main 3f6178bd; protected Staging Verify 34622658443 passed with STATE=absent / NEXT=apply. Apply 34623104141 committed at 16:38:15 UTC with exact POSTFLIGHT=PASS and runtime disabled; real JWT isolation/PDF subchecks passed in 34626769355; revision correction and full runtime acceptance remain pending.
+Status: foundation Apply 34623104141 and PT409 Upgrade 34628886294 are verified on isolated Staging. Real owner/member/foreign JWT, one-style, revisions/approval and PDF acceptance 34629009649 passed on reviewed main f0c7a84e6105752d34b489520fb92d2bb7e5b61a. Runtime remains disabled; enabled UI, full account/contact deletion, actual quality/learning and provider acceptance remain open. Historical pending/failed execution notes below are superseded only for this bounded technical foundation.
 Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Workspace.
 
 ## Reviewed artifact and target boundary
@@ -248,3 +248,17 @@ or the separately named exact legacy postflight. This allows removal of an
 interrupted old run's marked fixtures before the empty-foundation upgrade.
 Normal acceptance accepts only the current postflight; a legacy result cannot
 start authentication, create fixtures or count as the corrected revision proof.
+
+## Accepted technical foundation receipt — 11 September 2026
+
+- Source: #1108, final reviewed head 9a421bc3, merged main f0c7a84e6105752d34b489520fb92d2bb7e5b61a, tree 2e01ad99. All 13 exact-head checks passed, including native PG17; independent review completed 17:34:55 UTC without findings.
+- Read-only Verify 34628681395: exact legacy postflight, upgrade_required, no write.
+- Upgrade 34628886294: function-only correction committed, full POSTFLIGHT=PASS at 17:39:36 UTC, original Apply not requested, runtime disabled. Independent 17:40:14 UTC check confirms PT409 without 40001, four empty tables and denied browser style updates.
+- Staging Deploy 34628740980, normal Web Deploy 34628626636 and public Readiness 34628752787 passed.
+- Actual protected acceptance [34629009649](https://github.com/FanMind/FanMind/actions/runs/34629009649): exact deployment and schema; real owner/member/foreign JWTs; one writing style; edit invalidation, stale and concurrent saves, reapproval; both actual PDF exports; exact-run bundle cleanup all PASS. Revisions completed at 17:41:57 UTC and the aggregate PASS at 17:41:59 UTC.
+- Independent always-cleanup PASS at 17:42:07 UTC; temporary-member unknown-password rotation and known-password rejection PASS at 17:42:09 UTC. Final independent database read at 17:42:49 UTC: creators/styles/playbooks/events all zero, unfinished Creator RPC count zero.
+- No provider/model calls, runtime activation, normal-account deletion or real writing-quality result is claimed. Creator remains IN_PROGRESS for those remaining steps. The separate Backup/Operations finding and owner-deferred paid/Android work are unchanged.
+
+Do not repeat Apply, Upgrade or the already passed foundation acceptance merely
+to recreate this receipt. Any later implementation change needs the relevant
+new source/target evidence. This reader closeout changes no executable behavior.
