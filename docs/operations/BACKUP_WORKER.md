@@ -107,6 +107,22 @@ Der Worker nutzt `spawn(..., { shell:false })`, feste Jobtypen und feste Backup-
 
 ## Datenbank-Authorization-Contract
 
+Der lesende Source-Guard erkennt neben der historischen Legacy-Ausnahme auch
+die bereits abgenommene Härtung von
+`public.trim_conversation_messages_to_latest_50()`: exakt diese parameterlose
+SECURITY-DEFINER-Triggerfunktion, ausschließlich
+`search_path=pg_catalog, pg_temp`, kein effektives EXECUTE für `anon` oder
+`authenticated`, EXECUTE für `service_role`. Gesamtzahl 13 und die zwölf
+geschützten Nicht-Triggerfunktionen bleiben verbindlich. Genau einer der
+beiden vollständigen Zustände muss vorliegen; Teilzustände, unklare Pfade oder
+abweichende Privilegien werden abgewiesen. Die Prüfung ändert selbst keine Rechte.
+
+Der historische Legacy-Zustand bleibt für vorhandene Archive und ihre
+Restore-Prüfungen interpretierbar. Receipt-Schema 2, Kanonisierung und die
+bestehenden Fingerprint-/ACL-Vergleiche werden nicht umgeschrieben. Neue
+Sicherungen binden die tatsächlichen gehärteten ACLs in ihrem eigenen
+Fingerprint. Ein alter erfolgreicher Datenbank-Restore wird dafür nicht wiederholt.
+
 Ab Worker-Version `phase5-backup-worker-6` werden PostgreSQL-Eigentümer,
 normale ACLs, Spalten-ACLs und Default ACLs als Teil des
 Wiederherstellungsvertrags gesichert. Der Worker öffnet dafür eine

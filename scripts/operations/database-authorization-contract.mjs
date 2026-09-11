@@ -2691,6 +2691,40 @@ exposed_security_definer_exception as (
       false
     )
 ),
+hardened_security_definer_exception as (
+  select count(*)::integer as function_count
+  from pg_catalog.pg_proc as function_definition
+  join pg_catalog.pg_namespace as namespace
+    on namespace.oid = function_definition.pronamespace
+  where namespace.nspname = 'public'
+    and function_definition.prosecdef
+    and function_definition.proname =
+        'trim_conversation_messages_to_latest_50'
+    and pg_catalog.pg_get_function_identity_arguments(
+      function_definition.oid
+    ) = ''
+    and pg_catalog.pg_get_function_result(function_definition.oid) = 'trigger'
+    and function_definition.proconfig =
+        array['search_path=pg_catalog, pg_temp']::text[]
+    and not coalesce(
+      pg_catalog.has_function_privilege(
+        (select oid from app_roles where rolname = 'anon'),
+        function_definition.oid, 'EXECUTE'
+      ), false
+    )
+    and not coalesce(
+      pg_catalog.has_function_privilege(
+        (select oid from app_roles where rolname = 'authenticated'),
+        function_definition.oid, 'EXECUTE'
+      ), false
+    )
+    and coalesce(
+      pg_catalog.has_function_privilege(
+        (select oid from app_roles where rolname = 'service_role'),
+        function_definition.oid, 'EXECUTE'
+      ), false
+    )
+),
 unsupported_default_acl_types as (
   select count(*)::integer as unsupported_count
   from pg_catalog.pg_default_acl
@@ -2760,6 +2794,8 @@ authorization_result as (
       restricted_functions.function_count,
     'exposed_security_definer_exception_count',
       exposed_exception.function_count,
+    'hardened_security_definer_exception_count',
+      hardened_exception.function_count,
     'unsupported_default_acl_type_count', unsupported.unsupported_count,
     'unresolved_role_oid_count', unresolved.unresolved_count
   ) as value
@@ -2777,6 +2813,7 @@ authorization_result as (
   cross join public_security_definer_totals as security_definer_totals
   cross join restricted_security_definers as restricted_functions
   cross join exposed_security_definer_exception as exposed_exception
+  cross join hardened_security_definer_exception as hardened_exception
   cross join unsupported_default_acl_types as unsupported
   cross join unresolved_roles as unresolved
 )
@@ -3403,7 +3440,12 @@ function contractFromDatabasePayload(value) {
   }
   if (
     value.public_security_definer_function_count !== 13 ||
-    value.exposed_security_definer_exception_count !== 1
+    !(
+      (value.exposed_security_definer_exception_count === 1 &&
+        value.hardened_security_definer_exception_count === 0) ||
+      (value.exposed_security_definer_exception_count === 0 &&
+        value.hardened_security_definer_exception_count === 1)
+    )
   ) {
     throw fixedError("authorization_security_definer_boundary_invalid");
   }

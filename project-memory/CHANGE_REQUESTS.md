@@ -325,7 +325,17 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Decision: Accept only the bounded documentation/evidence closeout. Preserve `FM-AI-001=PARTIAL`, `ai_billing=PARTIAL`, `sales_ready=false`, disabled canonical Production projection and disabled Plus/Ultra. Product/private/provider/Legal/Tax/Production gates, Mobile real-device/Play and Restore remain open under their existing controls.
 - Related task: FM-AI-001
 ## FM-CR-034 — expose safe Production audit failure evidence
-- Date: 2026-09-11; Status: IN_PROGRESS; Task FM-OPS-001; Risk R4.
+- Final receipt: #1110 comment 5640486486 closes this bounded Production-confirmed diagnostic package; the overall Operations and reboot gates remain open.
+- Date: 2026-09-11; Status: PRODUCTION_CONFIRMED; Task FM-OPS-001; Risk R4.
 - Source: Bernd requests continuing the open reboot/Creator/Restore work after the verified status report.
 - Scope: preserve the failed probe and exit code through the private-output workflow, report validated runtime/host measurements, keep every existing Operations acceptance rule. No backup redesign, repeated database restore, SQL, runtime activation or OS reboot.
 - Acceptance: executable failure/redaction/gate tests, reviewed exact-head CI and an installed current-release audit diagnostic. Whole Operations acceptance remains separate until the real fault and reboot evidence are closed.
+
+## FM-CR-035 — accept the approved hardened trigger in backup capture
+- Date: 2026-09-11
+- Status: IN_PROGRESS
+- Task: FM-OPS-001
+- Risk: R4
+- Source: continue the owner's requested Operations completion using the newly proven blocker.
+- Observation: Production catalog at 20:50:08 UTC has the 13 public SECURITY DEFINER functions and the retained trigger is now browser-denied with the approved fixed search path. The backup source snapshot still requires that exact trigger to be browser-executable, so the hardened state is deterministically rejected. No historical job stack is available; this is a proven current blocker, not a claim that no other failure exists.
+- Scope: support the precise approved hardened state while preserving the historical legacy tuple and immutable Restore receipt schema/fingerprints; current source/PG17/security proof, reviewed publication, one controlled fresh database-backup proof. No rights change, database restore or weakening of the overall audit.

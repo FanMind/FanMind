@@ -2041,5 +2041,51 @@ where namespace.nspname = 'app_acl'
 
     const checksum = (await readFile(result.checksum_path, "utf8")).trim();
     assert.match(checksum, new RegExp(`^${result.sha256}\\s+`, "u"));
+
+    // The complete legacy restore above remains the immutable compatibility proof.
+    // Exercise the already approved Production hardening only in this CI source.
+    const beforeHardening = await captureContract(sourcePsql, pgpassFile);
+    await dockerPsql(SOURCE_CONTAINER_ID, password, String.raw`
+alter function public.trim_conversation_messages_to_latest_50()
+  set search_path = pg_catalog, pg_temp;
+revoke execute on function public.trim_conversation_messages_to_latest_50()
+  from public, anon, authenticated;
+grant execute on function public.trim_conversation_messages_to_latest_50()
+  to service_role;
+`);
+    const hardenedContract = await captureContract(sourcePsql, pgpassFile);
+    assert.notEqual(hardenedContract.fingerprintSha256, beforeHardening.fingerprintSha256);
+    assert.equal(hardenedContract.restrictedSecurityDefinerFunctionCount, 12);
+    assert.equal(hardenedContract.coreTableAppGrantTupleCount, 120);
+    assert.equal(validateAuthorizationContract(result.manifest.authorization_contract).fingerprintSha256,
+      expectedContract.fingerprintSha256, "the old backup contract is not rewritten");
+
+    const hardenedPgDump = join(toolsDirectory, "pg-dump-hardened");
+    await writeExecutable(hardenedPgDump, pgDumpWrapperLines({
+      containerId: SOURCE_CONTAINER_ID, password, noPrivileges: false, injectLateGrant: false,
+    }));
+    const hardenedDirectory = join(temporaryRoot, "hardened-backup");
+    await mkdir(hardenedDirectory, { mode: 0o700 });
+    process.env.FANMIND_PG_DUMP_BIN = hardenedPgDump;
+    const hardenedBackup = await createDatabase(hardenedDirectory);
+    assert.equal(hardenedBackup.manifest.privileges_archived, true);
+    assert.equal(hardenedBackup.manifest.ownership_archived, true);
+    assert.deepEqual(validateAuthorizationContract(hardenedBackup.manifest.authorization_contract),
+      hardenedContract, "real pg_dump and held snapshot retain the hardened ACL fingerprint");
+
+    const trigger = "public.trim_conversation_messages_to_latest_50()";
+    for (const [bad, repair] of [
+      [`grant execute on function ${trigger} to anon;`, `revoke execute on function ${trigger} from anon;`],
+      [`alter function ${trigger} set search_path = public;`, `alter function ${trigger} set search_path = pg_catalog, pg_temp;`],
+      [`revoke execute on function ${trigger} from service_role;`, `grant execute on function ${trigger} to service_role;`],
+    ]) {
+      await dockerPsql(SOURCE_CONTAINER_ID, password, bad);
+      try {
+        await assert.rejects(captureContract(sourcePsql, pgpassFile), /authorization_security_definer_boundary_invalid/u);
+      } finally {
+        await dockerPsql(SOURCE_CONTAINER_ID, password, repair);
+      }
+      assert.deepEqual(await captureContract(sourcePsql, pgpassFile), hardenedContract);
+    }
   },
 );

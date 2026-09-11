@@ -40,6 +40,7 @@ const authorizationContractFrame = Buffer.from(JSON.stringify({
   public_security_definer_function_count: 13,
   restricted_security_definer_function_count: 12,
   exposed_security_definer_exception_count: 1,
+  hardened_security_definer_exception_count: 0,
   unsupported_default_acl_type_count: 0,
   unresolved_role_oid_count: 0,
 }), 'utf8').toString('hex');

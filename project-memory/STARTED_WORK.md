@@ -617,7 +617,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Evidence: exact-head GitHub workflow runs and merge commit; independent Browser E2E run #915.
 - Follow-up: maintain V8; any stale/contradictory handoff must downgrade to revalidation rather than being trusted.
 ## FM-OPS-001 — bounded Production audit diagnosis — 2026-09-11
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
+- Final receipt: #1110 comment 5640486486 closes only this package; lock released. Overall Operations remains PARTIAL. Its previous pending-publication statements below are historical.
 - Risk: R4
 - Change: FM-CR-034; lock LOCK-FM-OPS-AUDIT-20260911.
 - Owner requests continuing the reported completion work, including controlled reboot evidence. Baseline main e0f2a517855a65bd927c3968c8e0700f06bb54db, tree 3149df013a74345822acc5f1f1afde4144c3ca77; clean local tree matches. Drift/freshness/next-action preflights pass; Creator remains the product priority after this bounded diagnosis.
@@ -625,3 +626,12 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: fixed-stage failure diagnostics and safe runtime/host evidence only. No backup job, restore, SQL, feature activation or reboot in this source change. DB_POSTCHECKED and accepted Creator foundation remain closed.
 - Evidence/recovery: executable shell/workflow failure and redaction tests, unchanged fail-closed acceptance gates, current-head CI/review and installed exact-release audit. Revert the bounded source through the existing isolated release path if needed. A failed full audit remains failed; a diagnostic is not reboot or Operations acceptance.
 - Exact next step: publish the bounded correction, read the real failure stage, then address only its demonstrated cause. Restore-target and console recovery facts must precede the separately requested OS restart.
+
+## FM-OPS-001 — hardened backup contract continuation — 2026-09-11
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-OPS-BACKUP-CONTRACT-20260911; Change FM-CR-035.
+- Completed preflight: exact released tree/runtime, current backup job/age and read-only Production function privileges compared with installed source. The source wrongly requires the legacy exposed retention trigger; current approved hardening has removed that exposure.
+- Scope: bounded compatibility correction with old receipts/Restore acceptance preserved. No SQL privilege change, repeated Restore or generic backup rewrite.
+- Exact next step: test both exact legacy and hardened states, publish through current-head CI/review, then use the existing authorized backup path for one fresh database-only proof after checking the installed release and worker.
+- Recovery: bounded source revert; no deletion of source data, prior backups or accepted receipts. A fresh failure remains open and must not be hidden or retried automatically.

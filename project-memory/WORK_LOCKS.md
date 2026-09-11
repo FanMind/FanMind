@@ -647,10 +647,20 @@ Prevents two agents/sessions from independently working the same task.
 All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be acquired before substantive continuation of their respective task IDs.
 ## LOCK-FM-OPS-AUDIT-20260911
 - Task: FM-OPS-001 / FM-CR-034
-- Status: ACTIVE
+- Status: RELEASED
+- Bounded final receipt: #1110 comment 5640486486 confirms reviewed publication, exact Production runtime and remaining failed overall audit. Do not repeat the completed diagnostics package.
 - Risk: R4
 - Holder: Codex
 - Scope: bounded read-only audit diagnosis/runtime evidence, normal reviewed source publication. No OS restart, backup/restore write or Creator scope takeover.
 - Baseline: main e0f2a517855a65bd927c3968c8e0700f06bb54db; tree 3149df013a74345822acc5f1f1afde4144c3ca77.
 - Evidence: executable silent-failure/redaction/negative-gate tests, current-head CI/review, installed exact-release audit result.
 - Recovery: bounded source revert via existing isolated deployment; preserve backup history and all accepted restores/schema work.
+
+## LOCK-FM-OPS-BACKUP-CONTRACT-20260911
+- Task: FM-OPS-001 / FM-CR-035
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Baseline: main e536cecd2be5ed3d4f485fd95c88c22b597f5a68, exact runtime verified by 34646003122; actual backup ages checked independently at 20:48:44 UTC.
+- Scope: accept the already approved hardened retention trigger in the read-only backup authorization snapshot, preserve exact legacy receipt/fingerprint behavior, normal reviewed source publication and one controlled fresh database-backup proof after target verification. No permission rollback, database restore, schema mutation or OS reboot.
+- Evidence/recovery: raw-payload negatives, real PG17 legacy roundtrip plus hardened live-schema capture/dump/ACL countercheck, full current-head CI/review; exact installed source and backup result. Revert only the source if needed; preserve existing artifacts, histories, DB_POSTCHECKED and all real data.

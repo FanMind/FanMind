@@ -73,6 +73,7 @@ const AUTHORIZATION_PAYLOAD = Object.freeze({
   public_security_definer_function_count: 13,
   restricted_security_definer_function_count: 12,
   exposed_security_definer_exception_count: 1,
+  hardened_security_definer_exception_count: 0,
   unsupported_default_acl_type_count: 0,
   unresolved_role_oid_count: 0,
 });
@@ -343,6 +344,38 @@ test("rejects a source with a noncanonical recovery extension inventory", async 
     captureDatabaseAuthorizationContract(options),
     /authorization_extension_recovery_invariant_invalid/u,
   );
+});
+
+test("accepts the exact hardened trigger without changing the historical receipt contract", async () => {
+  const legacy = await captureDatabaseAuthorizationContract(connectionOptions());
+  const options = connectionOptions();
+  options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({
+    ...AUTHORIZATION_PAYLOAD,
+    exposed_security_definer_exception_count: 0,
+    hardened_security_definer_exception_count: 1,
+  });
+  const hardened = await captureDatabaseAuthorizationContract(options);
+  // The new discriminator is a live SQL guard, not a new/rewritten receipt field.
+  assert.deepEqual(hardened, legacy);
+  assert.equal(validateAuthorizationContract(fullReceipt()).restrictedSecurityDefinerFunctionCount, 12);
+  const snapshot = await openDatabaseAuthorizationSnapshot(options);
+  try {
+    assert.deepEqual(snapshot.contract, legacy);
+  } finally {
+    await snapshot.close();
+  }
+});
+
+test("rejects missing, partial, duplicate and malformed trigger boundary states", async () => {
+  for (const [exposed, hardened] of [[0, 0], [1, 1], [0, 2], [2, 0], [0, "1"], [1, undefined]]) {
+    const options = connectionOptions();
+    options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({
+      ...AUTHORIZATION_PAYLOAD,
+      exposed_security_definer_exception_count: exposed,
+      hardened_security_definer_exception_count: hardened,
+    });
+    await assert.rejects(captureDatabaseAuthorizationContract(options), /authorization_security_definer_boundary_invalid/u);
+  }
 });
 
 test("role preflight rejects an inbound membership component expansion", async () => {

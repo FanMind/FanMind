@@ -6,6 +6,7 @@
 - Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7), after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
 
 ## FM-LOOP-BACKUP-DATABASE-20260911
+- Current proven blocker: #1110 exposes stale database backup in 34646003122. Read-only Production count/path/privilege checks at 20:50:08 and 20:53:56 UTC show the approved hardened retention trigger, whereas the source guard still demands its legacy browser exposure. FM-CR-035 repairs only that guard; old archive/Restore evidence remains intact. The historical job's raw cause is unavailable; a fresh result must still prove all remaining host/dump/offsite steps.
 - Status: OPEN; task FM-OPS-001, separate from Social source engineering under current owner priority.
 - Historical observation bound to #1102: Production audit 34582645378 failed. The database backup job failed at 2026-09-11 00:30:34 UTC with backup_worker_failed, before that source release. Latest observed database success was 2026-09-10 00:30:44 UTC; Storage/config succeeded September 11. These observations are not refreshed by this entry.
 - Next: protected host-side diagnosis and controlled function proof. A generic code does not identify the cause. Keep audit/history unchanged and do not claim a fresh fully green Operations acceptance.
