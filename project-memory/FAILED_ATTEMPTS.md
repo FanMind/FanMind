@@ -1,3 +1,8 @@
+## 2026-09-11 — Meta browser fixture configuration
+- Context: FM-CR-032 / PR #1103, isolated synthetic browser job 103226861219 in run 34588101442.
+- Evidence: TikTok/X steps including return and initial X read completed; the Instagram connection button stayed disabled because the local fixture lacked its encryption key. This is the intended configuration guard, not a reason to force-click or weaken it.
+- Correction: add a deterministic synthetic 32-byte key and both local callback URLs only to the explicitly acknowledged local Playwright server environment. Real app credentials, provider calls and target configuration are unchanged. A fresh browser run is required.
+
 ## 2026-09-11 — controlled Social schema index comparison
 - Context: FM-CR-032 / PR #1103, head 66e56ebd07cd18cb8684dbe6f98da0e3804529cd; isolated PostgreSQL 17 CI only, no target SQL applied.
 - Evidence: FanMind CI 34588059915 / job 103226733395 rejected the reference comparison with `social_index_drift` before the forced-postflight rollback checkpoint; the runtime Social isolation tests passed.
