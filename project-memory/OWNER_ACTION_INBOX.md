@@ -2,6 +2,22 @@
 
 This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
 
+## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
+- Status: OWNER_ACTION_REQUIRED
+- NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external control EXT-META-CREATOR-APP-20260911.
+- Needed: missing personal Meta developer access, actual central FanMind Facebook/Instagram app and permissions, each Creator's own consent and real provider acceptance. Reuse the owner's existing authorization; no renewed general permission request.
+- Current access: secure login connection interrupted; fresh Meta target still shows login methods. App/permission state remains unknown; no provider mutation occurred.
+- Where: secure provider sign-in/console, never passwords or tokens in chat.
+- Boundary: no payment, auto-send or Production activation implied. TikTok/X are separate below, with their own Phase 7 completion state.
+
+## FM-SOC7-OWNER-TIKTOK-X-20260911 — TikTok/X-App-Zugang und Creator-Freigaben
+- Status: OWNER_ACTION_REQUIRED
+- NBA: NBA-TIKTOK-X-EXTERNAL; Task FM-SOC7-001; Gate phase7_social; external controls EXT-TIKTOK-X-PILOT-20260911 and EXT-SOCIAL-CONNECT-JOURNEY-20260911.
+- Needed: existing own app/account access, callbacks/scopes, each Creator's consent, actual X usage budget and real positive/negative provider evidence. Existing engineering authorization persists; no invented consent or app approval.
+- Where: secure TikTok/X provider sign-in/console, never passwords or tokens in chat.
+- Boundary: TikTok profile login is not a DM approval; X read preview is not permanent CRM ingestion. No payment, auto-send or Production activation implied; installed Social schema is preserved.
+- Revalidation: current provider/app/credential/target state before pilot or acceptance. This stays open independently when phase3_social is accepted.
+
 ## FM-RST-OWNER-001 — Restore runner-group policy + host readiness
 - Status: COMPLETED
 - Where: GitHub Organization `FanMind` -> Settings -> Actions -> Runner groups -> `fanmind-restore-drill`

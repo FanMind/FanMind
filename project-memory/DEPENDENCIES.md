@@ -1,6 +1,6 @@
 ## DEP-SOCIAL-CONNECT-FLOW-20260911
 - Task: FM-SOC7-001 / FM-CR-032
-- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. The Social schema setup is complete (#1104 / 34591339718); full provider activation still depends on central FanMind apps, per-Creator consent, X budget and current external evidence under NBA-CREATOR-SOCIAL-EXTERNAL.
+- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. The Social schema setup is complete (#1104 / 34591339718); full provider activation still depends on central FanMind apps, per-Creator consent, X budget and current external evidence under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-TIKTOK-X-EXTERNAL (Phase 7).
 - The earlier database-backup failure blocks fresh overall Operations acceptance, not independent default-off Social source preparation under FM-DEC-018. Do not remove or dilute that gate.
 
 ## TikTok / X resumed dependencies — FM-DEC-017

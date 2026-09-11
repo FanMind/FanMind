@@ -1,3 +1,10 @@
+## EXT-META-CREATOR-APP-20260911
+- Related: FM-SOC3-001 / phase3_social; Status: OPEN; Risk R4.
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; missing personal Meta access and individual Creator consent remain factual requirements.
+- Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. Code/schema/feature flags cannot close this control.
+- Current access observation: the secure login request ended with a connection error; a fresh canonical Meta developer tab still shows the sign-in methods. No signed-in app state, credentials or successful login is claimed. No app configuration was changed.
+- TikTok/X are independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-TIKTOK-X-EXTERNAL / phase7_social; Meta completion cannot close them.
+
 ## Provider resources / Creator continuation — 2026-09-11
 - Protected Staging inventory read through the existing GitHub environment: DB and synthetic owner/secondary credentials present; no TikTok/X/Meta app secret names among its 16 secrets. This does not prove host or provider app state. No consent or real platform test can be inferred; central app setup and per-Creator authorization remain distinct.
 - Creator installation/upgrade and real JWT/revision/PDF acceptance are verified by 34623104141, 34628886294 and 34629009649 on Staging. This closes the bounded foundation only. Deployed-process flag, enabled UI, full account/contact deletion, real quality/learning and provider acceptance remain unverified; no activation action was performed.
@@ -14,7 +21,7 @@
 - Risk: R4
 - Needed: exact own provider apps, account consent, allowed callback/scopes, X usage budget, current contract/privacy basis and real positive/negative provider tests after controlled isolated-Staging SQL rollout.
 - Code preparation: TikTok profile-only; X bounded read preview. No automatic send/CRM ingestion/learning or Production switch. A provider flag, code or fixture is not external acceptance.
-- Next: owner-required NBA-CREATOR-SOCIAL-EXTERNAL establishes concrete app/account access, per-Creator consent and factual provider prerequisites. Source #1102-#1104 and isolated Social schema are already published/installed. Reuse existing authorization; secure sign-in handles missing personal access. Never request passwords/session cookies in chat, and do not infer consent or app approval from the scope expansion.
+- Next: owner-required NBA-TIKTOK-X-EXTERNAL / FM-SOC7-OWNER-TIKTOK-X-20260911 establishes concrete app/account access, per-Creator consent and factual provider prerequisites. Source #1102-#1104 and isolated Social schema are already published/installed. Reuse existing authorization; secure sign-in handles missing personal access. Never request passwords/session cookies in chat, and do not infer consent or app approval from the scope expansion.
 
 # FanMind External Acceptance Register
 

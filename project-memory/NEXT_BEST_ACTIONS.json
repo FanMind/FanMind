@@ -172,14 +172,14 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL. FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging."
+      "instruction": "Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-TIKTOK-X-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging."
     },
     {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
       "priority": 8,
       "task": "FM-SOC3-001",
       "gate": "phase3_social",
-      "title": "Creator-Zugänge und echte Plattform-Abnahme herstellen",
+      "title": "Meta-App-Zugang und Creator-Freigaben herstellen",
       "requires_owner": true,
       "parallel_safe": true,
       "prerequisite_gates": [
@@ -190,7 +190,27 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "External account work for Meta/TikTok/X: reuse existing owner authorization for the FanMind apps, obtain missing access through secure personal sign-in, and establish each Creator's own consent, allowed callback/scopes, X budget and actual provider/quality evidence. EXT-SOCIAL-CONNECT-JOURNEY-20260911 and EXT-TIKTOK-X-PILOT-20260911 remain OPEN. Missing credentials/consent/third-party approval cannot be supplied by repository tests or another Creator. Never ask for passwords or tokens in chat. No live payment, automatic sending or Production activation is implied; all actual target/provider prerequisites remain binding."
+      "instruction": "External Meta account work only (Phase 3): reuse existing owner authorization for the FanMind Facebook/Instagram app, obtain missing access through secure personal sign-in, and establish each Creator's own consent, allowed callback/scopes and real Meta provider evidence. EXT-META-CREATOR-APP-20260911 and FM-SOC3-OWNER-APP-20260911 remain OPEN/OWNER_ACTION_REQUIRED. Missing credentials/consent/third-party approval cannot be supplied by repository tests or another Creator. Never ask for passwords or tokens in chat. No live payment, automatic sending or Production activation is implied. TikTok/X work is tracked independently under NBA-TIKTOK-X-EXTERNAL and phase7_social.",
+      "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
+    },
+    {
+      "id": "NBA-TIKTOK-X-EXTERNAL",
+      "priority": 9,
+      "task": "FM-SOC7-001",
+      "gate": "phase7_social",
+      "title": "TikTok/X-App-Zugang und Creator-Freigaben herstellen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "owner_action_id": "FM-SOC7-OWNER-TIKTOK-X-20260911",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "External TikTok/X account work only (Phase 7): reuse existing owner authorization, obtain missing app/account access through secure sign-in, and establish each Creator's own consent, allowed callback/scopes, actual X budget and real positive/negative provider evidence. EXT-TIKTOK-X-PILOT-20260911 and FM-SOC7-OWNER-TIKTOK-X-20260911 remain OPEN/OWNER_ACTION_REQUIRED. Existing Social schema is installed; do not repeat it. TikTok profile login does not prove Messaging access; X preview does not prove durable CRM ingestion. No password/token in chat, payment, automatic send or Production activation is implied. Phase 3 completion cannot close this separate Phase 7 action."
     }
   ]
 }
