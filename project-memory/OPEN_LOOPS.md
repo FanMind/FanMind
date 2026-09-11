@@ -2,8 +2,8 @@
 
 ## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
 - Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
-- Source #1102 is already published. Current increment: return to the selected channel, central FanMind app versus individual Creator consent, once-only initial X read and controlled Staging schema setup.
-- Next: current-head PG17/browser/CI countercheck and source publication; separate real target/app/budget/consent acceptance. No Production or provider activation inferred. Preserve Creator draft cd5cac7c.
+- Source #1102-#1104 is published; selected-channel return and once-only X preview are implemented, Social Staging schema installed via 34591339718 / deploy 34591566257.
+- Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL, after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
 
 ## FM-LOOP-BACKUP-DATABASE-20260911
 - Status: OPEN; task FM-OPS-001, separate from Social source engineering under current owner priority.
@@ -14,8 +14,8 @@
 - Status: IN_PROGRESS; current priority per FM-DEC-015.
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
-- Source package #1099, all 14 checks and exact Deploy/Audit/Readiness are complete. Only its bounded public category/evidence closeout and genuine protected target rollout/voice quality remain. Full confirmed-chat/purchase learning is not implemented yet.
-- Exact next: finish the bounded reader closeout, then prepare protected Staging acceptance and the next learning slice. OnlyFans direct API/Meta provider/legal acceptance stays open; Android follows Creator/Social.
+- Source #1099-#1108 is published. Creator schema/upgrade/JWT/revision/PDF foundation acceptance 34629009649 passed. Actual deployed flag, enabled UI, full contact/account deletion and real quality/confirmed-chat learning remain open; full learning is not implemented yet.
+- Exact next: controlled repository/synthetic-Staging UI/delete/learning engineering under NBA-CREATOR-INTELLIGENCE; external app/account/provider acceptance is separate under NBA-CREATOR-SOCIAL-EXTERNAL. Revalidate mutable target evidence after triggers/TTL; Android follows Creator/Social.
 - Paid activation deferral: PR #1098 already published the consent correction. FM-BILL-003 is PARTIAL and owner-deferred until actual tax/UID facts arrive. Earlier activation-first instructions below are historical and must not restart questions/actions during this deferral.
 
 

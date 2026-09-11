@@ -59,8 +59,10 @@ Korrekturaufforderung, nicht zum Chatter-/Workspace-Stil eines anderen Creators.
 Interne Notizen werden nicht an die Text-KI übergeben.
 
 Die additive SQL-Vorbereitung liegt unter `supabase/controlled/`; normale
-Web-Deploys führen sie nicht aus. Der serverseitige Creator-Schalter bleibt
-bis zur kompatiblen Schema-/Staging-Abnahme aus. Bestehende Accounts ohne
+Web-Deploys führen sie nicht aus. Der serverseitige Creator-Schalter darf erst
+nach kompatibler Schema-/Staging-Abnahme kontrolliert aktiviert werden. Die
+Foundation-Abnahme hat keine Aktivierung vorgenommen; der tatsächliche Schalter
+im laufenden Staging-Prozess wurde noch nicht unabhängig geprüft. Bestehende Accounts ohne
 Creator-Profil behalten ihre bisherigen CRM-Funktionen. Profile werden vom
 Owner angelegt, nicht aus einem Accountnamen geraten.
 

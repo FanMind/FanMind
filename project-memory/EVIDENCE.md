@@ -1,3 +1,10 @@
+## FM-EV-CREATOR-FOUNDATION-20260911
+- Status: COUNTERCHECKED; bounded source/schema/JWT/revision/PDF foundation accepted, overall Creator/Social gates remain open.
+- Source: #1105-#1108, executable main f0c7a84e, tree 2e01ad99, 13 green exact-head checks and independent review; Staging Deploy 34628740980, Verify 34628681395, PT409 Upgrade 34628886294 and real acceptance 34629009649 passed.
+- Independent proof: real owner/member/foreign JWTs, one style, stale/concurrent revisions and approvals, both PDF exports; independent cleanup and temporary-member password rotation/rejection; database post-read 2026-09-11T17:42:49.476978Z confirms four empty tables and zero unfinished Creator RPCs.
+- Limits: no runtime activation action or model/provider call; the job-local false flag does not prove the actual deployed process flag. Enabled UI, full account/contact deletion, actual quality/learning/provider acceptance remain open.
+- Freshness: EV-CREATOR-STAGING-FOUNDATION-20260911, staging_smoke TTL 24 hours plus deploy/config/target/schema/ACL/workflow/later-credential-rotation triggers. Preserve immutable run history; revalidate current target claims as needed without repeating a successful installation.
+
 # FanMind Evidence and Acceptance
 
 ## FM-EV-CREATOR-20260910 — first source package published

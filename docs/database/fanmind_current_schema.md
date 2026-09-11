@@ -40,8 +40,9 @@ Die reale JWT-/Freigabe-/Revisions-/PDF-Abnahme 34629009649 bestand ebenfalls.
 Cleanup und temporärer Passwort-Widerruf bestanden; unabhängig um 17:42:49 UTC
 vier leere Creator-Tabellen und keine hängenden Creator-RPCs. Der Lauf beweist
 keine aktivierte Creator-Oberfläche, vollständige Kontakt-/Kontolöschung oder
-echte Schreibqualität. Runtime bleibt aus; Production ist nicht installiert oder
-für Creator aktiviert. Modell:
+echte Schreibqualität. Der Controller hat nichts aktiviert; der tatsächliche
+Staging-Prozessschalter ist noch unbestätigt. Eine Creator-Installation oder
+-Aktivierung auf Production wird durch diese Staging-Nachweise nicht belegt. Modell:
 `docs/CREATOR_INTELLIGENCE.md`; Artifact/Abnahme/Recovery:
 `docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`. Kein generischer Deploy/DB-Push.
 

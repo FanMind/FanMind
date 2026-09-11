@@ -1,3 +1,9 @@
+## CTR-FM-CREATOR-FOUNDATION-CLOSEOUT-20260911
+- Related: FM-CREATOR-001 / FM-CR-033 / #1109; Risk R4; Status: RESOLVED for reader scope.
+- Source A: older started-work, dependency/loop/external fields still instructed completed source/schema work; reader draft also treated a job-local false flag as deployed-process evidence and mixed external consent into an executable next action.
+- Source B: actual #1105-#1108 and Staging foundation acceptance 34629009649 prove only their bounded source/schema/JWT/revision/PDF/cleanup scope. Deployed flag and real account/provider access remain unverified.
+- Resolution: reconcile active readers and new mutable freshness entry, separate owner-required NBA-CREATOR-SOCIAL-EXTERNAL, and explicitly retain deployed-flag verification as open. No runtime/provider/quality/whole-Creator acceptance or authorization is invented.
+
 # Contradiction / Reconciliation Register
 
 ## CTR-FM-CREATOR-WRITING-STYLE-20260911

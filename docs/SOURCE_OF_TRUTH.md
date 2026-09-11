@@ -40,9 +40,10 @@ Die gezielte PT409-Funktionskorrektur wurde zuvor durch Verify 34628681395 und
 Upgrade 34628886294 geprüft/installiert; die ursprüngliche Foundation wurde
 nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
 und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
-Grundlage. Der Creator-Schalter bleibt aus; aktivierte Oberfläche,
-Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und Plattformfreigaben
-bleiben offen. Production ist damit nicht für Creator aktiviert.
+Grundlage. Der Lauf hat keine Creator-Aktivierung vorgenommen. Der tatsächliche
+Creator-Schalter im laufenden Staging-Prozess wurde nicht unabhängig geprüft.
+Aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und
+Plattformfreigaben bleiben offen; eine Production-Aktivierung ist nicht belegt.
 
 
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
