@@ -30,6 +30,8 @@ function validAuditOutput(overrides = {}) {
     LIVE_RUNTIME_ENVIRONMENT: "production",
     LIVE_HEALTH: "healthy",
     PM2_STATUS: "online",
+    PM2_EXEC_MODE: "cluster_mode",
+    PM2_CWD: "/var/www/fanmind-current",
     PM2_RESTARTS: "12",
     PM2_UNSTABLE_RESTARTS: "0",
     PM2_UPTIME_SECONDS: "7200",
@@ -97,8 +99,8 @@ function validAuditOutput(overrides = {}) {
     `PM2_RESTARTS=${values.PM2_RESTARTS}`,
     `PM2_UNSTABLE_RESTARTS=${values.PM2_UNSTABLE_RESTARTS}`,
     `PM2_UPTIME_SECONDS=${values.PM2_UPTIME_SECONDS}`,
-    "PM2_CWD=/var/www/fanmind-current",
-    "PM2_EXEC_MODE=cluster_mode",
+    `PM2_CWD=${values.PM2_CWD}`,
+    `PM2_EXEC_MODE=${values.PM2_EXEC_MODE}`,
     "PM2_MEMORY_BYTES=100000000",
     `SERVER_ERROR_TRACKING_ENABLED=${values.SERVER_ERROR_TRACKING_ENABLED}`,
     `SERVER_ERROR_EMAIL_ENABLED=${values.SERVER_ERROR_EMAIL_ENABLED}`,
@@ -196,6 +198,8 @@ test("actual workflow keeps backup and runtime validation failures fail-closed a
     [{ BACKUP_WORKER_24H_FAILURE_EVENT_COUNT: "1" }, "backup_worker_failures_present"],
     [{ OFFSITE_ORPHAN_PAIR_COUNT: "1" }, "offsite_orphans_present"],
     [{ PM2_NODE_VERSION: "RAW_SECRET_CANARY" }, "pm2_node_version_invalid"],
+    [{ PM2_EXEC_MODE: "fork_mode" }, "pm2_launch_contract_invalid"],
+    [{ PM2_CWD: "/var/www/RAW_SECRET_CANARY" }, "pm2_launch_contract_invalid"],
     [{ NGINX_ACTIVE: "inactive" }, "nginx_inactive"],
   ]) {
     const result = await runAuditWorkflow(t, validAuditOutput(override), 0);
@@ -227,7 +231,7 @@ case "\${0##*/}" in
   git) printf '%s\\n' "$AUDIT_TEST_COMMIT" ;;
   pm2)
     if [[ "$1" == --version ]]; then echo 6.0.14; else
-      printf '%s\\n' '[{"name":"fanmind","pm2_env":{"status":"online","node_version":"24.19.0","restart_time":12,"unstable_restarts":0,"pm_uptime":1,"SECRET":"RAW_SECRET_CANARY"}}]'
+      printf '%s\\n' '[{"name":"fanmind","pm2_env":{"status":"online","exec_mode":"cluster_mode","pm_cwd":"/var/www/fanmind-current","node_version":"24.19.0","restart_time":12,"unstable_restarts":0,"pm_uptime":1,"SECRET":"RAW_SECRET_CANARY"}}]'
     fi ;;
   curl)
     case "\${!#}" in

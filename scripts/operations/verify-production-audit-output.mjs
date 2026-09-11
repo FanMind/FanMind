@@ -194,6 +194,10 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
 
   const healthComponentCount = healthSummary(values);
   if (single(values, "PM2_STATUS") !== "online") fail("pm2_offline");
+  if (single(values, "PM2_EXEC_MODE") !== "cluster_mode" ||
+      single(values, "PM2_CWD") !== "/var/www/fanmind-current") {
+    fail("pm2_launch_contract_invalid");
+  }
   const pm2Restarts = integer(values, "PM2_RESTARTS");
   if (integer(values, "PM2_UNSTABLE_RESTARTS") !== 0) {
     fail("pm2_unstable_restarts");
@@ -314,6 +318,8 @@ export function printProductionRuntimeSummary(summary) {
     console.log(`PRODUCTION_HEALTH_COMPONENT=${component}:healthy`);
   }
   console.log("PRODUCTION_PM2_STATUS=online");
+  console.log("PRODUCTION_PM2_EXEC_MODE=cluster_mode");
+  console.log("PRODUCTION_PM2_CWD=/var/www/fanmind-current");
   console.log("PRODUCTION_PM2_UNSTABLE_RESTARTS=0");
   console.log(`PRODUCTION_PM2_RESTARTS=${summary.pm2Restarts}`);
   console.log(`PRODUCTION_PM2_UPTIME_SECONDS=${summary.pm2UptimeSeconds}`);

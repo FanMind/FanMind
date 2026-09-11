@@ -223,7 +223,8 @@ Pass-Prüfung lautet `validation`.
 
 Ein gesondert vollständig validierter Runtime-Teil kann zusätzlich
 `PRODUCTION_RUNTIME_VERIFIED=true` melden. Dafür müssen derselbe erwartete
-Production-Commit, alle acht Health-Komponenten, PM2, beide Fehlertracking-
+Production-Commit, alle acht Health-Komponenten, genau ein PM2-Prozess im
+Cluster-Modus mit CWD `/var/www/fanmind-current`, beide Fehlertracking-
 Schalter, nginx, HTTP und die Host-Messwerte bestehen. Er dokumentiert die
 Shell-Node-Version getrennt von `PRODUCTION_PM2_NODE_VERSION` (PM2-Prozessmetadaten),
 die acht einzelnen Health-Status, Restart-Zähler, nginx-Status, Boot-ID und
