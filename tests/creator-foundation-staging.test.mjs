@@ -70,6 +70,7 @@ test("legacy verification requests the separately confirmed upgrade without writ
  const replies=[result("CREATOR_FOUNDATION_STATE=present"),{status:1,stdout:""},result("CREATOR_FOUNDATION_POSTFLIGHT=PASS")];
  const markers=runCreatorDatabaseMode("verify",sql,environment(),q=>{calls.push(q);return replies.shift();});
  assert.ok(markers.includes("CREATOR_FOUNDATION_NEXT=upgrade"));
+ assert.ok(markers.includes("CREATOR_FOUNDATION_LEGACY_POSTFLIGHT=PASS"));
  assert.ok(!markers.includes("CREATOR_FOUNDATION_POSTFLIGHT=PASS"));
  assert.equal(calls.length,3);
  assert.ok(calls.every(q=>!q.includes("create or replace function public.")));

@@ -134,7 +134,7 @@ export function runCreatorDatabaseMode(mode, sql, environment, database, conflic
   return ["CREATOR_FOUNDATION_APPLY=not_requested","CREATOR_FOUNDATION_UPGRADE=not_requested","CREATOR_FOUNDATION_STATE=verified","CREATOR_FOUNDATION_POSTFLIGHT=PASS","CREATOR_FOUNDATION_RUNTIME_ACTIVATED=false"];
  } else {
   if (!passed(database(buildCreatorVerification(sql).verify))) fail("postflight_failed");
-  if (mode==="verify") return ["CREATOR_FOUNDATION_STATE=upgrade_required","CREATOR_FOUNDATION_NEXT=upgrade","CREATOR_FOUNDATION_APPLY=not_requested","CREATOR_FOUNDATION_UPGRADE=not_requested"];
+  if (mode==="verify") return ["CREATOR_FOUNDATION_STATE=upgrade_required","CREATOR_FOUNDATION_NEXT=upgrade","CREATOR_FOUNDATION_LEGACY_POSTFLIGHT=PASS","CREATOR_FOUNDATION_APPLY=not_requested","CREATOR_FOUNDATION_UPGRADE=not_requested"];
   if (mode!=="upgrade") fail("upgrade_confirmation_required");
   const result=database(buildCreatorConflictUpgrade(sql, conflictFixSql));
   if (result.error || result.status!==0 || !result.stdout.trim().split(/\r?\n/u).includes("CREATOR_FOUNDATION_UPGRADE=COMMITTED")) fail("upgrade_indeterminate_verify_before_retry");

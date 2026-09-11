@@ -242,3 +242,9 @@ stale and competing saves, with the ordinary 15-second limit restored. The
 longer-wait diagnostic was not a fix and is removed. No timeout, HTTP 500 or
 generic HTTP 409 can count as success. Source review, native PostgreSQL 17 CI,
 controlled upgrade, exact Staging deploy and full real acceptance remain required.
+
+Receipt-bound recovery-only cleanup accepts either an exact current postflight
+or the separately named exact legacy postflight. This allows removal of an
+interrupted old run's marked fixtures before the empty-foundation upgrade.
+Normal acceptance accepts only the current postflight; a legacy result cannot
+start authentication, create fixtures or count as the corrected revision proof.

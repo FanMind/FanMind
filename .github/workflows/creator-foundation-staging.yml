@@ -113,7 +113,11 @@ jobs:
             accept|cleanup)
               RESULT="$(node scripts/operations/creator-foundation-staging-runner.mjs --verify)"
               printf '%s\n' "$RESULT"
-              grep -Fxq 'CREATOR_FOUNDATION_POSTFLIGHT=PASS' <<< "$RESULT"
+              if [ "$CREATOR_ACTION" = 'cleanup' ]; then
+                grep -Fxq -e 'CREATOR_FOUNDATION_POSTFLIGHT=PASS' -e 'CREATOR_FOUNDATION_LEGACY_POSTFLIGHT=PASS' <<< "$RESULT"
+              else
+                grep -Fxq 'CREATOR_FOUNDATION_POSTFLIGHT=PASS' <<< "$RESULT"
+              fi
               ;;
             *) exit 1 ;;
           esac
