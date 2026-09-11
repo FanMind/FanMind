@@ -19,13 +19,14 @@ test("TikTok profile capability and X read preview are explicit; disconnect clea
   await page.locator('input[name="password"]').fill("FanMind-Local-Core-Flow-2026!");
   await page.getByRole("button", { name: /Einloggen/u }).click();
   await page.waitForURL("**/dashboard");
-  await page.goto("/channels");
+  await page.goto("/channels?social=tiktok&social_result=toString");
   await page.getByRole("heading", { name: "TikTok", exact: true }).click();
   const tiktok = page.getByRole("region", { name: "TikTok verbinden" });
   await expect(tiktok).toBeVisible();
   await expect(tiktok.getByText(/Die offizielle Anmeldung verbindet dein Profil/)).toBeVisible();
   await expect(tiktok.getByRole("button", { name: "Eigenes TikTok-Konto verbinden" })).toBeDisabled();
   await expect(tiktok.getByRole("button", { name: "Direktnachrichten prüfen" })).toHaveCount(0);
+  await expect(tiktok.getByText("Die Verbindung konnte nicht abgeschlossen werden.")).toBeVisible();
   await page.keyboard.press("Escape");
   await page.getByRole("heading", { name: "X / Twitter", exact: true }).click();
   const x = page.getByRole("region", { name: "X / Twitter verbinden" });

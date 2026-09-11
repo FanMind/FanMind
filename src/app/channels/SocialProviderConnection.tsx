@@ -13,6 +13,10 @@ const errors: Record<string, string> = {
   oauth_invalid: "Diese Anmeldung ist abgelaufen oder bereits verwendet. Bitte starte sie erneut.",
   connection_changed: "Die Verbindung hat sich geändert. Bitte lade ihren Status erneut.",
 };
+function errorMessage(code: unknown) {
+  return typeof code === "string" && Object.hasOwn(errors, code)
+    ? errors[code] : "Die Verbindung konnte nicht abgeschlossen werden.";
+}
 export function SocialProviderConnection({ provider, demo }: { provider: "tiktok" | "x"; demo: boolean }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [notice, setNotice] = useState("");
@@ -32,7 +36,8 @@ export function SocialProviderConnection({ provider, demo }: { provider: "tiktok
         const query = new URLSearchParams(window.location.search);
         if (query.get("social") === provider) {
           const code = query.get("social_result");
-          if (code) setNotice(code === "connected" ? "Dein Konto wurde verbunden." : errors[code] ?? "Die Verbindung konnte nicht abgeschlossen werden.");
+          if (code) setNotice(code === "connected" && nextStatus.connected === true
+            ? "Dein Konto wurde verbunden." : errorMessage(code));
         }
       })
       .catch(() => { if (!controller.signal.aborted) setNotice("Verbindungsstatus derzeit nicht verfügbar."); });
@@ -43,7 +48,7 @@ export function SocialProviderConnection({ provider, demo }: { provider: "tiktok
     try {
       const response = await fetch(`${endpoint}/${action}`, { method: "POST", cache: "no-store" });
       const result = await response.json();
-      if (!response.ok) { setNotice(errors[result.error] ?? "Die Aktion konnte nicht abgeschlossen werden."); return; }
+      if (!response.ok) { setNotice(errorMessage(result.error)); return; }
       if (action === "disconnect") {
         setStatus(current => current ? { ...current, connected: false, accountName: null } : null);
         setNotice(result.providerRevoked ? "Verbindung getrennt und Zugriff bei der Plattform widerrufen." : "Verbindung in FanMind getrennt. Entferne FanMind zusätzlich in den App-Berechtigungen der Plattform.");
