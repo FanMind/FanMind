@@ -1,3 +1,11 @@
+## EXT-TIKTOK-X-PILOT-20260911
+- Related: FM-SOC7-001 / FM-CR-031
+- Status: OPEN
+- Risk: R4
+- Needed: exact own provider apps, account consent, allowed callback/scopes, X usage budget, current contract/privacy basis and real positive/negative provider tests after controlled isolated-Staging SQL rollout.
+- Code preparation: TikTok profile-only; X bounded read preview. No automatic send/CRM ingestion/learning or Production switch. A provider flag, code or fixture is not external acceptance.
+- Next: finish source review and target-bound rollout control, then establish the concrete app/account prerequisites; never request passwords/session cookies in chat. No account credentials or app approval were supplied by the owner scope expansion.
+
 # FanMind External Acceptance Register
 
 ## EXT-AUTH-LEAKED-PASSWORD-PROTECTION-20260910

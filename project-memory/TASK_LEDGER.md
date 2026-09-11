@@ -360,14 +360,14 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not rebuild Facebook/Instagram foundation from zero; do not expose fake active badges before real acceptance.
 
 ## FM-SOC7-001
-- Date: 2026-08-19 reconciliation of prior work
-- Updated: 2026-08-20
+- Updated: 2026-09-11
 - Status: PARTIAL
 - Goal: Real technical acceptance of Phase 7 — TikTok, X/Twitter, Discord and conditional OnlyFans.
-- Result: Platform feasibility has been partially researched/documented; no complete real Phase-7 connector acceptance exists.
-- Evidence: Issue #874 and its platform-feasibility comment.
-- Next step: after Phase 3/non-Social gates, verify official TikTok scope, X Developer/API prerequisites/cost approval, implement official Discord bot/guild connector, and decide OnlyFans feasibility strictly from official/contractual basis.
-- Do not repeat: No scraping, self-bot, reverse engineering or unofficial bypass.
+- Owner scope: FM-DEC-017 / FM-CR-031 resumes TikTok and X now alongside Creator. One account has one text writing style; Discord remains later.
+- Result: official own-profile OAuth and X DM preview source prepared with encrypted account-bound storage, one-use state, read lease/rotation/disconnect and honest UI. No generally live connector, target SQL apply or full CRM ingestion claim.
+- Evidence: docs/integrations/TIKTOK_X_CONNECTIONS.md and RECEIPT-FM-SOCIAL-OAUTH-20260911; required current-head PG17/browser/CI and publication are next.
+- Next step: finish source review/publication, then the target-bound controlled schema rollout and actual provider/app/account/budget/legal acceptance. Resume retained Creator Staging draft separately; preserve prior work.
+- Do not repeat: No scraping, self-bot, reverse engineering, unofficial bypass or reimplementation of existing Meta/Creator foundations.
 
 ## FM-SALES-001
 - Date: 2026-08-19 reconciliation of prior work

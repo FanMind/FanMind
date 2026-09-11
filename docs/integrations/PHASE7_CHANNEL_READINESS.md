@@ -2,6 +2,15 @@
 
 ## Zweck und Grenze
 
+FM-DEC-017 (11. September 2026) nimmt TikTok und X/Twitter in die aktuelle
+Creator-/Social-Entwicklung auf. Der zusätzliche, standardmäßig ausgeschaltete
+Staging-Pilot ist in [TIKTOK_X_CONNECTIONS.md](TIKTOK_X_CONNECTIONS.md) beschrieben:
+TikTok-Profilanmeldung und X-Kontoanmeldung mit begrenzter DM-Lesevorschau.
+Der unten beschriebene allgemeine Readiness-Vertrag bleibt unverändert fail closed;
+der Pilot ist weder allgemeine Kanalaktivierung noch vollständiger CRM-Import.
+Die aktuelle Entwicklungsreihenfolge folgt FM-DEC-015/017 und hat Vorrang vor der
+nachfolgend historisch beschriebenen Reihenfolge FM-DEC-013.
+
 Der Kanalabschnitt Phase 7a umfasst TikTok, X/Twitter, Discord und eine
 unverbindliche OnlyFans-Evaluation. Diese Datei dokumentiert dessen technische
 Vorbereitungsgrenze; sie aktiviert keinen Kanal. LinkedIn und weitere Kanäle

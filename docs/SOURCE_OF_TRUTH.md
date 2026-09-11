@@ -316,6 +316,16 @@ Provider- und Rechtsabnahme Beta. Phase 7b ist keine zusätzliche Voraussetzung
 für die Verkaufsübergabe; alle tatsächlichen Sales-Gates bleiben bestehen.
 Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
 
+FM-DEC-017 / FM-CR-031 vom 11. September 2026 nimmt auch TikTok und X/Twitter in
+die aktuelle Anbindungsarbeit auf. Implementiert sind offizielle Kontoanmeldung,
+verschlüsselte accountgebundene Tokens, Trennen und eine begrenzte X-DM-Lesevorschau.
+TikTok gibt in diesem Umfang ausschließlich das eigene Profil frei. Der zusätzliche
+Pilot bleibt standardmäßig aus und strukturell auf isoliertes Staging begrenzt;
+kontrolliertes Schema-Rollout, App-/Provider-/Budget-/Datenschutzabnahme und spätere
+Production-Aktivierung sind offen. Die Vorschau speichert keine Fans oder Chats im
+CRM und erzeugt keinen weiteren Schreibstil. Discord bleibt später.
+Details: `docs/integrations/TIKTOK_X_CONNECTIONS.md`.
+
 FM-DEC-016 vom 11. September 2026 präzisiert: Ein normaler Nutzer ist der
 Creator seines Accounts; jeder Account hat genau einen persönlichen
 Schreibstil. "Stimme"/"Voice" meint ausschließlich geschriebenen Text, keine

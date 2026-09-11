@@ -1,3 +1,9 @@
+## 2026-09-11 — local Social verification tooling
+- Context: FM-SOC7-001 on main baseline 25c042ba; no target/provider action.
+- Initial TypeScript run in clean worktree lacked generated RouteContext; `next typegen` resolved the pre-existing route type declarations. A new disclosure label omission was fixed before build.
+- Chromium download from the Playwright CDN repeatedly timed out. No local browser pass is claimed; use the existing required GitHub synthetic-browser job with the new Social scenario. Do not keep retrying this network path.
+- Current provider-doc cross-check: X MessageCreate does not normally include participant_ids. Use the official smaller/larger-user-ID conversation format and explicit sender_id field; reject group/foreign/ambiguous events. This corrects the initial fixture-only shape before source publication.
+
 # FanMind Failed Attempts / Do-Not-Repeat Log
 
 Record failed, unsafe, superseded or misleading approaches here. Do not store secrets.

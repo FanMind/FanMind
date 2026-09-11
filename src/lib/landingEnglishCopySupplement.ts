@@ -146,6 +146,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Konfiguration und Routing fertig · Zustellung offen":
     "Configuration and routing ready · Delivery pending",
   "Creator und Social jetzt · Android danach": "Creator and social work now · Android afterwards",
+  "Profilanmeldung in Arbeit · Nachrichtenzugang separat": "Profile sign-in in progress · messaging access is separate",
+  "Kontoanmeldung und DM-Lesevorschau in Arbeit": "Account sign-in and DM read preview in progress",
   "Phase 7b · jetzt in Arbeit": "Phase 7b · work started now",
   "Ein Creator · ein eigener Account und Workspace": "One creator · one dedicated account and workspace",
   "Strukturierte Profile · Umsetzung begonnen": "Structured profiles · implementation started",
