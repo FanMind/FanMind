@@ -77,12 +77,16 @@ jobs:
           fi
 
           AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-production-audit.XXXXXX")"
-          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          AUDIT_STDERR=""
+          trap 'rm -f "$AUDIT_OUTPUT" "$AUDIT_STDERR"' EXIT
+          AUDIT_STDERR="$(mktemp "$RUNNER_TEMP/fanmind-production-audit-stderr.XXXXXX")"
 
+          AUDIT_EXIT_CODE=0
           FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
           /usr/local/lib/fanmind-audit/read-only-production-audit.sh \
-            > "$AUDIT_OUTPUT"
+            > "$AUDIT_OUTPUT" 2> "$AUDIT_STDERR" || AUDIT_EXIT_CODE=$?
           node \
             /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
             "$AUDIT_OUTPUT" \
-            "$EXPECTED_COMMIT"
+            "$EXPECTED_COMMIT" \
+            "$AUDIT_EXIT_CODE"

@@ -8,6 +8,11 @@ import {
 } from "../public-health-policy.mjs";
 
 const SHA_PATTERN = /^[0-9a-f]{40}$/u;
+const AUDIT_STAGES = new Set([
+  "prerequisites", "runtime", "release", "health", "pm2", "env_flags",
+  "nginx", "http", "host", "systemd", "backup_inventory", "backup_checksum",
+  "offsite", "worker",
+]);
 const BACKUP_MAX_AGE_HOURS = Object.freeze({
   database: 36,
   storage: 36,
@@ -15,8 +20,10 @@ const BACKUP_MAX_AGE_HOURS = Object.freeze({
   full: 192,
 });
 
+class ProductionAuditError extends Error {}
+
 function fail(code) {
-  throw new Error(`production_audit_${code}`);
+  throw new ProductionAuditError(`production_audit_${code}`);
 }
 
 export function parseProductionAuditOutput(source) {
@@ -147,11 +154,23 @@ function backupSummary(values) {
   );
 }
 
-export function verifyProductionAuditOutput(source, expectedCommit) {
+export function verifyProductionRuntimeOutput(source, expectedCommit) {
   if (!SHA_PATTERN.test(expectedCommit ?? "")) fail("expected_commit_invalid");
 
   const values = parseProductionAuditOutput(source);
-  if (single(values, "AUDIT_RESULT") !== "success") fail("result_failed");
+
+  const auditUtc = single(values, "AUDIT_UTC");
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u.test(auditUtc) ||
+      !Number.isFinite(Date.parse(auditUtc))) fail("timestamp_invalid");
+  const nodeVersion = single(values, "NODE_VERSION");
+  const pm2NodeVersion = single(values, "PM2_NODE_VERSION");
+  if (!/^v\d+\.\d+\.\d+$/u.test(nodeVersion)) fail("node_version_invalid");
+  if (!/^\d+\.\d+\.\d+$/u.test(pm2NodeVersion)) fail("pm2_node_version_invalid");
+  const hostUptimeSeconds = integer(values, "HOST_UPTIME_SECONDS");
+  const hostBootId = single(values, "HOST_BOOT_ID");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(hostBootId)) {
+    fail("host_boot_id_invalid");
+  }
 
   const releaseValues = [
     single(values, "SERVER_HEAD"),
@@ -175,6 +194,10 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
 
   const healthComponentCount = healthSummary(values);
   if (single(values, "PM2_STATUS") !== "online") fail("pm2_offline");
+  if (single(values, "PM2_EXEC_MODE") !== "cluster_mode" ||
+      single(values, "PM2_CWD") !== "/var/www/fanmind-current") {
+    fail("pm2_launch_contract_invalid");
+  }
   const pm2Restarts = integer(values, "PM2_RESTARTS");
   if (integer(values, "PM2_UNSTABLE_RESTARTS") !== 0) {
     fail("pm2_unstable_restarts");
@@ -185,12 +208,12 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
   if (!serverErrorTrackingEnabled) {
     fail("server_error_tracking_disabled");
   }
-  const serverErrorEmailEnabled =
-    single(values, "SERVER_ERROR_EMAIL_ENABLED") === "true";
-  if (serverErrorEmailEnabled) {
+  if (single(values, "SERVER_ERROR_EMAIL_ENABLED") !== "false") {
     fail("server_error_email_enabled");
   }
+  const serverErrorEmailEnabled = false;
   if (single(values, "NGINX_CONFIG") !== "ok") fail("nginx_invalid");
+  if (single(values, "NGINX_ACTIVE") !== "active") fail("nginx_inactive");
   const localLoginHttp = httpStatus(values, "LOCAL_LOGIN_HTTP");
   const publicLoginHttp = httpStatus(values, "PUBLIC_LOGIN_HTTP");
   const diskUsedPercent = integer(values, "ROOT_DISK_USED_PERCENT", {
@@ -206,6 +229,21 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
   const systemdUnitCount = integer(values, "FANMIND_SYSTEMD_UNIT_COUNT", {
     minimum: 1,
   });
+
+  return {
+    auditUtc, nodeVersion, pm2NodeVersion, hostUptimeSeconds, hostBootId,
+    releaseCommit: expectedCommit, healthComponentCount, pm2Restarts,
+    pm2UptimeSeconds, serverErrorTrackingEnabled, serverErrorEmailEnabled,
+    localLoginHttp, publicLoginHttp, diskUsedPercent, memoryAvailableKiB,
+    rebootRequired: rebootRequired === "true", systemdUnitCount,
+  };
+}
+
+export function verifyProductionAuditOutput(source, expectedCommit) {
+  if (!SHA_PATTERN.test(expectedCommit ?? "")) fail("expected_commit_invalid");
+  const values = parseProductionAuditOutput(source);
+  if (single(values, "AUDIT_RESULT") !== "success") fail("result_failed");
+  const runtime = verifyProductionRuntimeOutput(source, expectedCommit);
 
   if (single(values, "BACKUP_ROOT") !== "available") {
     fail("backup_root_unavailable");
@@ -259,19 +297,7 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
   }
 
   return {
-    auditUtc: single(values, "AUDIT_UTC"),
-    releaseCommit: expectedCommit,
-    healthComponentCount,
-    pm2Restarts,
-    pm2UptimeSeconds,
-    serverErrorTrackingEnabled,
-    serverErrorEmailEnabled,
-    localLoginHttp,
-    publicLoginHttp,
-    diskUsedPercent,
-    memoryAvailableKiB,
-    rebootRequired: rebootRequired === "true",
-    systemdUnitCount,
+    ...runtime,
     backupCompletePairCount,
     backups,
     offsiteCompletePairCount,
@@ -279,13 +305,28 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
   };
 }
 
-export function printProductionAuditSummary(summary) {
-  console.log("PRODUCTION_AUDIT_VERIFIED=true");
+export function printProductionRuntimeSummary(summary) {
+  console.log("PRODUCTION_RUNTIME_VERIFIED=true");
   console.log(`PRODUCTION_AUDIT_UTC=${summary.auditUtc}`);
   console.log(`PRODUCTION_RELEASE=${summary.releaseCommit}`);
+  console.log(`PRODUCTION_SHELL_NODE_VERSION=${summary.nodeVersion}`);
+  console.log(`PRODUCTION_PM2_NODE_VERSION=${summary.pm2NodeVersion}`);
+  console.log(`PRODUCTION_HOST_UPTIME_SECONDS=${summary.hostUptimeSeconds}`);
+  console.log(`PRODUCTION_HOST_BOOT_ID=${summary.hostBootId}`);
   console.log(`PRODUCTION_HEALTH_COMPONENTS=${summary.healthComponentCount}`);
+  for (const component of [...REQUIRED_PUBLIC_HEALTH_COMPONENTS, ...OPTIONAL_PUBLIC_HEALTH_COMPONENTS]) {
+    console.log(`PRODUCTION_HEALTH_COMPONENT=${component}:healthy`);
+  }
+  console.log("PRODUCTION_PM2_STATUS=online");
+  console.log("PRODUCTION_PM2_EXEC_MODE=cluster_mode");
+  console.log("PRODUCTION_PM2_CWD=/var/www/fanmind-current");
+  console.log("PRODUCTION_PM2_UNSTABLE_RESTARTS=0");
   console.log(`PRODUCTION_PM2_RESTARTS=${summary.pm2Restarts}`);
   console.log(`PRODUCTION_PM2_UPTIME_SECONDS=${summary.pm2UptimeSeconds}`);
+  console.log("PRODUCTION_NGINX_CONFIG=ok");
+  console.log("PRODUCTION_NGINX_ACTIVE=active");
+  console.log(`PRODUCTION_LOCAL_LOGIN_HTTP=${summary.localLoginHttp}`);
+  console.log(`PRODUCTION_PUBLIC_LOGIN_HTTP=${summary.publicLoginHttp}`);
   console.log(
     `PRODUCTION_SERVER_ERROR_TRACKING_ENABLED=${summary.serverErrorTrackingEnabled}`,
   );
@@ -296,6 +337,11 @@ export function printProductionAuditSummary(summary) {
   console.log(`PRODUCTION_MEMORY_AVAILABLE_KIB=${summary.memoryAvailableKiB}`);
   console.log(`PRODUCTION_REBOOT_REQUIRED=${summary.rebootRequired}`);
   console.log(`PRODUCTION_SYSTEMD_UNIT_COUNT=${summary.systemdUnitCount}`);
+}
+
+export function printProductionAuditSummary(summary) {
+  console.log("PRODUCTION_AUDIT_VERIFIED=true");
+  printProductionRuntimeSummary(summary);
   console.log(
     `PRODUCTION_BACKUP_COMPLETE_PAIR_COUNT=${summary.backupCompletePairCount}`,
   );
@@ -313,22 +359,42 @@ export function printProductionAuditSummary(summary) {
 }
 
 async function main() {
-  const [auditOutputPath, expectedCommit] = process.argv.slice(2);
+  const [auditOutputPath, expectedCommit, auditExitCode = "0"] = process.argv.slice(2);
   if (!auditOutputPath || !expectedCommit) {
     console.error(
-      "Usage: verify-production-audit-output.mjs <audit-output-path> <expected-commit>",
+      "Usage: verify-production-audit-output.mjs <audit-output-path> <expected-commit> [audit-exit-code]",
     );
     process.exit(2);
   }
 
+  let source = "";
   try {
-    const source = await readFile(auditOutputPath, "utf8");
+    if (!/^\d{1,3}$/u.test(auditExitCode) || Number(auditExitCode) > 255) {
+      fail("exit_code_invalid");
+    }
+    source = await readFile(auditOutputPath, "utf8");
+    if (Number(auditExitCode) !== 0) fail("probe_failed");
     const summary = verifyProductionAuditOutput(source, expectedCommit);
     printProductionAuditSummary(summary);
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "production_audit_verify_failed",
-    );
+    console.log("PRODUCTION_AUDIT_VERIFIED=false");
+    const code = error instanceof ProductionAuditError ? error.message : "production_audit_output_unavailable";
+    console.log(`PRODUCTION_AUDIT_FAILURE_CODE=${code}`);
+    let stage = Number(auditExitCode) === 0 ? "validation" : "unknown";
+    try {
+      const reported = single(parseProductionAuditOutput(source), "AUDIT_FAILED_STAGE");
+      if (AUDIT_STAGES.has(reported)) stage = reported;
+    } catch {}
+    console.log(`PRODUCTION_AUDIT_FAILED_STAGE=${stage}`);
+    if (/^\d{1,3}$/u.test(auditExitCode) && Number(auditExitCode) <= 255) {
+      console.log(`PRODUCTION_AUDIT_EXIT_CODE=${Number(auditExitCode)}`);
+    }
+    try {
+      // A separately verified runtime subset is never a full Operations pass.
+      printProductionRuntimeSummary(verifyProductionRuntimeOutput(source, expectedCommit));
+    } catch {
+      console.log("PRODUCTION_RUNTIME_VERIFIED=false");
+    }
     process.exit(1);
   }
 }

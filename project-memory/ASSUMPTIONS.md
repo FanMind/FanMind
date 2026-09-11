@@ -179,3 +179,8 @@ Statuses: `NEEDS_VERIFICATION`, `VERIFIED`, `INVALIDATED`, `SUPERSEDED`.
 - Action if false: diagnose the exact query/policy mismatch before any migration; do not add service-role access, broaden grants or duplicate demo rows.
 
 Do not delete invalid assumptions; preserve them so the same mistaken premise is not reused later.
+## ASM-FM-OPS-AUDIT-20260911
+- Task: FM-OPS-001 / FM-CR-034; Risk R4.
+- VERIFIED: actual main e0f2a517855a65bd927c3968c8e0700f06bb54db tree matches the clean baseline. Existing deploy installs root-owned audit/verifier; its independent workflow executes those installed files with no checkout. Audit 34639783862 failed without a published probe diagnostic.
+- NEEDS_VERIFICATION: the actual failed Production probe and current PM2-reported Node version/host boot measurements. Shell Node, build Node and an old audit cannot establish current process or reboot acceptance.
+- Countercheck: executable negative/redaction tests plus actual current-head installed audit after reviewed publication. Preserve full failure state if the new runtime subset passes but backups do not.

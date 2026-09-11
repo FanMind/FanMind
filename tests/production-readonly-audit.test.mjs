@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import yaml from "js-yaml";
 
-import { verifyProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
@@ -16,6 +19,10 @@ async function readAuditScript() {
 
 function validAuditOutput(overrides = {}) {
   const values = {
+    NODE_VERSION: "v22.13.1",
+    PM2_NODE_VERSION: "24.19.0",
+    HOST_UPTIME_SECONDS: "9000",
+    HOST_BOOT_ID: "01234567-89ab-cdef-0123-456789abcdef",
     SERVER_HEAD: expectedCommit,
     ORIGIN_MAIN: expectedCommit,
     LIVE_RELEASE: expectedCommit,
@@ -23,12 +30,15 @@ function validAuditOutput(overrides = {}) {
     LIVE_RUNTIME_ENVIRONMENT: "production",
     LIVE_HEALTH: "healthy",
     PM2_STATUS: "online",
+    PM2_EXEC_MODE: "cluster_mode",
+    PM2_CWD: "/var/www/fanmind-current",
     PM2_RESTARTS: "12",
     PM2_UNSTABLE_RESTARTS: "0",
     PM2_UPTIME_SECONDS: "7200",
     SERVER_ERROR_TRACKING_ENABLED: "true",
     SERVER_ERROR_EMAIL_ENABLED: "false",
     NGINX_CONFIG: "ok",
+    NGINX_ACTIVE: "active",
     LOCAL_LOGIN_HTTP: "200",
     PUBLIC_LOGIN_HTTP: "200",
     ROOT_DISK_USED_PERCENT: "41",
@@ -74,6 +84,10 @@ function validAuditOutput(overrides = {}) {
   );
   return [
     "AUDIT_UTC=2026-07-30T12:00:00Z",
+    `NODE_VERSION=${values.NODE_VERSION}`,
+    `PM2_NODE_VERSION=${values.PM2_NODE_VERSION}`,
+    `HOST_UPTIME_SECONDS=${values.HOST_UPTIME_SECONDS}`,
+    `HOST_BOOT_ID=${values.HOST_BOOT_ID}`,
     `SERVER_HEAD=${values.SERVER_HEAD}`,
     `ORIGIN_MAIN=${values.ORIGIN_MAIN}`,
     `LIVE_RELEASE=${values.LIVE_RELEASE}`,
@@ -85,12 +99,13 @@ function validAuditOutput(overrides = {}) {
     `PM2_RESTARTS=${values.PM2_RESTARTS}`,
     `PM2_UNSTABLE_RESTARTS=${values.PM2_UNSTABLE_RESTARTS}`,
     `PM2_UPTIME_SECONDS=${values.PM2_UPTIME_SECONDS}`,
-    "PM2_CWD=/var/www/fanmind-current",
-    "PM2_EXEC_MODE=cluster_mode",
+    `PM2_CWD=${values.PM2_CWD}`,
+    `PM2_EXEC_MODE=${values.PM2_EXEC_MODE}`,
     "PM2_MEMORY_BYTES=100000000",
     `SERVER_ERROR_TRACKING_ENABLED=${values.SERVER_ERROR_TRACKING_ENABLED}`,
     `SERVER_ERROR_EMAIL_ENABLED=${values.SERVER_ERROR_EMAIL_ENABLED}`,
     `NGINX_CONFIG=${values.NGINX_CONFIG}`,
+    `NGINX_ACTIVE=${values.NGINX_ACTIVE}`,
     `LOCAL_LOGIN_HTTP=${values.LOCAL_LOGIN_HTTP}`,
     `PUBLIC_LOGIN_HTTP=${values.PUBLIC_LOGIN_HTTP}`,
     `ROOT_DISK_USED_PERCENT=${values.ROOT_DISK_USED_PERCENT}`,
@@ -120,6 +135,141 @@ function validAuditOutput(overrides = {}) {
     "",
   ].join("\n");
 }
+
+async function runWithResult(command, args, options) {
+  try {
+    return { ...(await execFileAsync(command, args, options)), code: 0 };
+  } catch (error) {
+    if (typeof error.code !== "number") throw error;
+    return { code: error.code, stdout: error.stdout, stderr: error.stderr };
+  }
+}
+
+async function runAuditWorkflow(t, output, exitCode) {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-audit-workflow-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const runnerTemp = join(root, "runner");
+  await mkdir(runnerTemp);
+  const audit = join(root, "audit.sh");
+  await writeFile(audit, '#!/bin/bash\nprintf "%s" "$AUDIT_TEST_OUTPUT"\nprintf "%s\\n" "RAW_SECRET_CANARY" >&2\nexit "$AUDIT_TEST_EXIT"\n', { mode: 0o700 });
+  const workflow = yaml.load(await readFile(".github/workflows/production-readonly-audit.yml", "utf8"));
+  // Execute the actual production step, substituting only its installed paths.
+  const step = workflow.jobs.audit.steps[0].run
+    .replaceAll("/usr/local/lib/fanmind-audit/read-only-production-audit.sh", '"$AUDIT_TEST_SCRIPT"')
+    .replaceAll("/usr/local/lib/fanmind-audit/verify-production-audit-output.mjs", '"$AUDIT_TEST_VERIFIER"');
+  const result = await runWithResult("bash", ["-euo", "pipefail", "-c", step], {
+    env: { ...process.env, RUNNER_TEMP: runnerTemp, EXPECTED_COMMIT: expectedCommit,
+      AUDIT_TEST_SCRIPT: audit, AUDIT_TEST_VERIFIER: resolve("scripts/operations/verify-production-audit-output.mjs"),
+      AUDIT_TEST_OUTPUT: output, AUDIT_TEST_EXIT: String(exitCode) },
+  });
+  assert.deepEqual(await readdir(runnerTemp), [], "both private files must be removed");
+  assert.doesNotMatch(result.stdout + result.stderr, /RAW_SECRET_CANARY/u);
+  return result;
+}
+
+test("actual workflow preserves successful full audit and measured runtime versions", async (t) => {
+  const result = await runAuditWorkflow(t, validAuditOutput(), 0);
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.match(result.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  assert.match(result.stdout, /^PRODUCTION_SHELL_NODE_VERSION=v22\.13\.1$/mu);
+  assert.match(result.stdout, /^PRODUCTION_PM2_NODE_VERSION=24\.19\.0$/mu);
+  assert.equal(result.stdout.match(/^PRODUCTION_HEALTH_COMPONENT=.+:healthy$/gmu)?.length, 8);
+});
+
+test("actual workflow diagnoses a silent shell failure and cannot turn it into a pass", async (t) => {
+  const output = validAuditOutput({ AUDIT_RESULT: "failed" }) + "AUDIT_FAILED_STAGE=backup_inventory\nAUDIT_EXIT_CODE=7\n";
+  const result = await runAuditWorkflow(t, output, 7);
+  assert.equal(result.code, 1);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=false$/mu);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_FAILED_STAGE=backup_inventory$/mu);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_EXIT_CODE=7$/mu);
+  assert.match(result.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  assert.doesNotMatch(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  const forgedSuccess = await runAuditWorkflow(t, validAuditOutput(), 7);
+  assert.equal(forgedSuccess.code, 1, "process failure overrides a success marker");
+  const empty = await runAuditWorkflow(t, "", 7);
+  assert.equal(empty.code, 1);
+  assert.match(empty.stdout, /^PRODUCTION_RUNTIME_VERIFIED=false$/mu);
+});
+
+test("actual workflow keeps backup and runtime validation failures fail-closed and redacted", async (t) => {
+  for (const [override, code] of [
+    [{ BACKUP_WORKER_24H_FAILURE_EVENT_COUNT: "1" }, "backup_worker_failures_present"],
+    [{ OFFSITE_ORPHAN_PAIR_COUNT: "1" }, "offsite_orphans_present"],
+    [{ PM2_NODE_VERSION: "RAW_SECRET_CANARY" }, "pm2_node_version_invalid"],
+    [{ PM2_EXEC_MODE: "fork_mode" }, "pm2_launch_contract_invalid"],
+    [{ PM2_CWD: "/var/www/RAW_SECRET_CANARY" }, "pm2_launch_contract_invalid"],
+    [{ NGINX_ACTIVE: "inactive" }, "nginx_inactive"],
+  ]) {
+    const result = await runAuditWorkflow(t, validAuditOutput(override), 0);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, new RegExp(`^PRODUCTION_AUDIT_FAILURE_CODE=production_audit_${code}$`, "mu"));
+  }
+  const injected = await runAuditWorkflow(t, validAuditOutput({ AUDIT_RESULT: "failed" }) + "AUDIT_FAILED_STAGE=RAW_SECRET_CANARY\n", 7);
+  assert.equal(injected.code, 1);
+  assert.match(injected.stdout, /^PRODUCTION_AUDIT_FAILED_STAGE=unknown$/mu);
+  const malformed = await runAuditWorkflow(t, "RAW_SECRET_CANARY\n", 0);
+  assert.equal(malformed.code, 1);
+});
+
+test("runtime subset rejects release drift and an omitted eighth health component", () => {
+  assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput({ LIVE_RELEASE: "b".repeat(40) }), expectedCommit), /release_drift/u);
+  assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput().replace("HEALTH_COMPONENT=email_config:healthy\n", ""), expectedCommit), /health_components_unhealthy/u);
+});
+
+test("real audit shell captures early probe failure and later explicit exit without leaking PM2 environment", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-audit-shell-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const bin = join(root, "bin");
+  await mkdir(bin);
+  await symlink(process.execPath, join(bin, "node"));
+  const checks = ["application", "supabase_config", "supabase_database", "supabase_storage", "stripe_config", "openai_config", "shared_rate_limit_config", "email_config"].map(component => ({ component, status: "healthy" }));
+  const mock = `#!/bin/bash
+case "\${0##*/}" in
+  npm) echo 10.8.0 ;;
+  git) printf '%s\\n' "$AUDIT_TEST_COMMIT" ;;
+  pm2)
+    if [[ "$1" == --version ]]; then echo 6.0.14; else
+      printf '%s\\n' '[{"name":"fanmind","pm2_env":{"status":"online","exec_mode":"cluster_mode","pm_cwd":"/var/www/fanmind-current","node_version":"24.19.0","restart_time":12,"unstable_restarts":0,"pm_uptime":1,"SECRET":"RAW_SECRET_CANARY"}}]'
+    fi ;;
+  curl)
+    case "\${!#}" in
+      */api/version)
+        if [[ "$AUDIT_TEST_MODE" == early ]]; then echo RAW_SECRET_CANARY >&2; exit 7; fi
+        printf '%s\\n' '{"releaseCommit":"${expectedCommit}","environment":"production","runtimeEnvironment":"production"}' ;;
+      */api/health) printf '%s\\n' '${JSON.stringify({ status: "healthy", checks })}' ;;
+      *) printf '200' ;;
+    esac ;;
+  sudo) shift; exec "$@" ;;
+  nginx) exit 0 ;;
+  systemctl)
+    if [[ "$1" == list-unit-files ]]; then echo 'fanmind-monitor.service enabled'; else echo active; fi ;;
+  journalctl) exit 1 ;;
+esac
+`;
+  for (const command of ["npm", "git", "pm2", "curl", "sudo", "nginx", "systemctl", "journalctl"]) {
+    await writeFile(join(bin, command), mock, { mode: 0o700 });
+  }
+  const envPath = join(root, "production.env");
+  await writeFile(envPath, "FANMIND_SERVER_ERROR_TRACKING_ENABLED=true\nFANMIND_SERVER_ERROR_EMAIL_ENABLED=false\nOTHER_SECRET=RAW_SECRET_CANARY\n", { mode: 0o600 });
+  for (const [mode, stage] of [["early", "release"], ["later", "backup_inventory"]]) {
+    const result = await runWithResult("bash", [auditScriptPath], {
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TMPDIR: root,
+        AUDIT_TEST_MODE: mode, AUDIT_TEST_COMMIT: expectedCommit,
+        FANMIND_AUDIT_BACKUP_ROOT: join(root, "absent"), FANMIND_AUDIT_PRODUCTION_ENV_PATH: envPath },
+    });
+    assert.notEqual(result.code, 0);
+    assert.match(result.stdout, new RegExp(`^AUDIT_FAILED_STAGE=${stage}$`, "mu"));
+    assert.match(result.stdout, /^AUDIT_RESULT=failed$/mu);
+    assert.doesNotMatch(result.stdout, /RAW_SECRET_CANARY/u);
+    assert.equal((await readdir(root)).filter(name => name.startsWith("tmp.")).length, 0, "internal private files cleaned on explicit exit");
+    const published = await runAuditWorkflow(t, result.stdout, result.code);
+    assert.equal(published.code, 1);
+    assert.match(published.stdout, new RegExp(`^PRODUCTION_AUDIT_FAILED_STAGE=${stage}$`, "mu"));
+    if (mode === "later") assert.match(published.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  }
+});
 
 test("production audit is valid bash", async () => {
   await execFileAsync("bash", ["-n", auditScriptPath]);
@@ -275,7 +425,7 @@ test("permanent Production audit runs installed root-owned code only", async () 
     workflow,
     /FANMIND_AUDIT_VERIFIER_PATH=\/usr\/local\/lib\/fanmind-ops\/verify-backup-artifact\.mjs/u,
   );
-  assert.match(workflow, /trap 'rm -f "\$AUDIT_OUTPUT"' EXIT/u);
+  assert.match(workflow, /trap 'rm -f "\$AUDIT_OUTPUT" "\$AUDIT_STDERR"' EXIT/u);
   assert.doesNotMatch(workflow, /actions\/checkout|upload-artifact/u);
   assert.doesNotMatch(
     workflow,
