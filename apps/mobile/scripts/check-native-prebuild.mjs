@@ -273,8 +273,8 @@ try {
     sourcePackage.scripts,
     "Expo prebuild must not rewrite the checked-in Mobile scripts.",
   );
-  assert.equal(sourcePackage.dependencies["expo-dev-client"], "~57.0.18");
-  assert.equal(sourcePackage.dependencies["expo-system-ui"], "~57.0.3");
+  assert.equal(sourcePackage.dependencies["expo-dev-client"], "~57.0.19");
+  assert.equal(sourcePackage.dependencies["expo-system-ui"], "~57.0.4");
   assert.ok(appConfig.expo.plugins.includes("expo-dev-client"));
   assert.ok(appConfig.expo.plugins.includes("expo-system-ui"));
   assert.equal(appConfig.expo.extra?.eas?.projectId, undefined);
