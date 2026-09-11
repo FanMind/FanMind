@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { PlatformLogo } from "@/components/PlatformLogo";
+import { SocialProviderConnection } from "./SocialProviderConnection";
 import styles from "./channels.module.css";
 import { type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import {
@@ -256,14 +257,14 @@ const channelGroups: ChannelGroup[] = [
         "tiktok",
         "TikTok",
         "Inbox",
-        "Nachrichten und Kommentare bleiben getrennte Roadmap-Verbindungen.",
-        "2 vorbereitete Eingänge",
+        "Offizielle Profilanmeldung in Vorbereitung. Nachrichten und Kommentare benötigen eine gesonderte Freigabe.",
+        "Profilanbindung in Arbeit",
         [
           makeInput(
             "tiktok-messages",
             "Nachrichten",
             "Nachrichten",
-            "TikTok-DMs für spätere Inbox-Bündelung.",
+            "Nachrichtenzugang wird separat geprüft; Login allein gibt keine DMs frei.",
           ),
           makeInput(
             "tiktok-comments",
@@ -391,7 +392,7 @@ const channelGroups: ChannelGroup[] = [
         "twitter",
         "X / Twitter",
         "Inbox",
-        "DMs, Mentions und Antworten als geplanter Eingang.",
+        "Offizielle Kontoanmeldung und Direktnachrichten-Lesevorschau in Vorbereitung. Mentions und Antworten folgen separat.",
       ),
       makeChannel(
         "Globale Hauptkanäle",
@@ -1002,6 +1003,10 @@ export function ChannelsGrid({
                     </div>
                   ) : null}
 
+                  {activeChannel.key === "tiktok" || activeChannel.key === "twitter" ? (
+                    <SocialProviderConnection key={activeChannel.key} provider={activeChannel.key === "twitter" ? "x" : "tiktok"} demo={demoConnectionsDisabled} />
+                  ) : null}
+
                   <div className={styles.releaseBox}>
                     <strong>Details</strong>
                     <ul className={styles.compactStatusList}>
@@ -1019,6 +1024,8 @@ export function ChannelsGrid({
                           <li>Cache und Chat-Sync bleiben bis Staging-/Rechtsabnahme gesperrt</li>
                           <li>Automatisches Senden bleibt deaktiviert</li>
                         </>
+                      ) : activeChannel.key === "tiktok" || activeChannel.key === "twitter" ? (
+                        <li>Offizielle Kontoanbindung in Vorbereitung; Nutzung erst nach Testfreigabe.</li>
                       ) : (
                         <>
                           <li>Keine OAuth-, Connect- oder Sync-Aktion</li>

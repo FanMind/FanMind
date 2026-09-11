@@ -44,5 +44,8 @@ erlaubter Nachrichten-/Kommentar-/Medienumfang, Account-Zustimmung, App Review,
 Zweck/Rechtsgrundlage, Transparenz, Aufbewahrung, Export/Löschung und echte
 positive/negative Provider-Proben dokumentieren. Die manuelle Produktfunktion
 ersetzt diese Bestätigung nicht. Keine Plattform wird durch einen Roadmap-Status
-oder vorhandene Tokens als abgenommen/produktiv erklärt. TikTok, X, Discord und
-sonstige spätere Kanäle werden in diesem Paket nicht neu angebunden.
+oder vorhandene Tokens als abgenommen/produktiv erklärt. FM-DEC-017 erweitert
+den aktuellen Entwicklungsumfang anschließend um TikTok und X/Twitter:
+offizielle Profilanmeldung und begrenzte X-DM-Lesevorschau gemäß
+[TikTok/X-Vertrag](TIKTOK_X_CONNECTIONS.md). Ein echter Provider-/Staging-Abschluss
+ist weiterhin offen. Discord und sonstige spätere Kanäle bleiben zurückgestellt.

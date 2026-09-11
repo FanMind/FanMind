@@ -79,6 +79,7 @@ This register contains started, partially completed or follow-up work that could
 - Next check: do not start until earlier non-Social gates are sufficiently closed per #874.
 
 ## FM-LOOP-007
+- Update 2026-09-11: FM-DEC-017 resumes TikTok/X now. Source OAuth/profile/X-DM-preview package is in review; controlled target rollout, real app/access/budget/legal and future persistent CRM ingestion remain open. Do not infer an accepted integration from fixtures or profile login. Discord remains later.
 - Related: FM-SOC7-001
 - Status: OPEN
 - Updated: 2026-08-19

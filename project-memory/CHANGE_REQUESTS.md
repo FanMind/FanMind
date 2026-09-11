@@ -1,3 +1,12 @@
+## FM-CR-031 — Resume TikTok and X/Twitter integration
+- Date: 2026-09-11
+- Status: IN_PROGRESS
+- Source: Bernd: TikTok and X/Twitter should also be connected now; continue working.
+- Decision: FM-DEC-017, retaining FM-DEC-016.
+- Task: FM-SOC7-001
+- Scope: official account connection and supported read capability, isolated by own Creator account. No scraping, auto-send, account style selector or manager expansion.
+- Acceptance: concrete code/CI and honest capability UI; external activation remains separately evidenced.
+
 # FanMind Change Requests
 
 ## FM-CR-030

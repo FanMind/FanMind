@@ -1,3 +1,8 @@
+## TikTok / X resumed dependencies — FM-DEC-017
+- FM-SOC7-001 source may proceed now independently of Android under the owner's explicit instruction.
+- Real pilot depends on the new controlled schema rollout, exact isolated target, provider app/account/permission/budget and privacy evidence. Production remains structurally disabled.
+- Reuse FM-CREATOR-001 single-account writing style; do not create provider-specific style profiles. Its retained Staging draft remains separate and unapplied.
+
 # FanMind Dependencies
 
 ## FM-DEP-011

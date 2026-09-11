@@ -1,3 +1,13 @@
+## TikTok / X connection implementation — 2026-09-11
+- Task: FM-SOC7-001 / FM-CR-031 / FM-DEC-017; Risk R4; LOCK-FM-SOCIAL-OAUTH-20260911.
+- Owner now explicitly includes TikTok and X/Twitter in ongoing Creator/Social work. One account, one text writing style remains FM-DEC-016; Discord/manager/team work stays later.
+- Source: official TikTok profile OAuth and X OAuth2/PKCE, account-bound encrypted credentials, atomic one-use state, unique account bindings, controlled refresh/disconnect and bounded X inbound one-to-one preview. UI explicitly distinguishes profile-only from DM access. No preview CRM ingestion or learning writes.
+- Verification so far: 13 behavior tests; full Operations suite 1,282 passed, zero failures, two actual-PG17 cases deferred to required CI; Next build passed. Type generation resolves the clean-worktree RouteContext preflight requirement. Database/Chromium proof and final exact-head review/publication still pending.
+- Remaining: new schema target-bound controlled rollout, approved provider apps/account consent, X budget and actual provider/legal proof, later persistent CRM import and Production activation. Both provider paths are default-off and structurally Staging-only. Do not call this a live integration.
+- Retained Creator draft: cd5cac7c5b559b1f6aeef1808bf3ac0e978fbfe1 re-materialized without edits; its earlier protected Creator Staging work is not applied or superseded. Continue separately after its own review.
+- #1101 final receipt releases the earlier style-documentation lock; #1100 receipt already released the reader closeout lock. Those publications are not to be repeated.
+- Next: complete current PR CI/database/browser counterchecks; final PR receipt binds source completion and releases only this bounded source lock. Then continue the recorded rollout/provider prerequisites, not completed billing/Android tasks.
+
 # FanMind Current State
 
 ## One account, one text writing style — 2026-09-11

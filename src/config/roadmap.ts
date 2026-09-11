@@ -143,8 +143,8 @@ export const roadmapPhases: RoadmapPhase[] = [
     tone: "gold",
     availability: "upcoming",
     items: [
-      { label: "TikTok", state: "later", status: "Roadmap" },
-      { label: "X / Twitter", state: "later", status: "Roadmap" },
+      { label: "TikTok", state: "progress", status: "Profilanmeldung in Arbeit · Nachrichtenzugang separat" },
+      { label: "X / Twitter", state: "progress", status: "Kontoanmeldung und DM-Lesevorschau in Arbeit" },
       { label: "Discord", state: "later", status: "Roadmap" },
       { label: "OnlyFans", state: "partial", status: "Manuelle Übergabe · direkte Anbindung in Prüfung" },
       { label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 + 7" },

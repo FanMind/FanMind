@@ -1,23 +1,37 @@
 # Work Locks
 
+## LOCK-FM-SOCIAL-OAUTH-20260911
+- Task: FM-SOC7-001 / FM-CR-031
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Scope: owner explicitly resumes TikTok and X/Twitter connection engineering. Official OAuth, encrypted account-bound storage, bounded read-only X DM adapter and honest channel capability UI; one text writing style per account. Discord remains later.
+- Baseline: current main 25c042ba4bb2df134bad7484c951cf04681c1f26; #1101 final receipt releases the documentation lock. Creator Staging source draft cd5cac7c remains separately retained, unapplied.
+- Evidence plan: independent provider documentation, negative OAuth/tenant/token tests, real PG17 isolation/rollback checks, route/UI and current-head CI. Fixtures cannot prove external access.
+- Recovery: disabled-by-default runtime, controlled SQL only, bounded code revert; disconnect deletes local encrypted credentials. No automatic send or paid provider purchase.
+
 ## LOCK-FM-CREATOR-STYLE-20260911
 - Task: FM-CREATOR-001 / FM-CR-030
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R1
 - Holder: Codex
 - Scope: one text writing style per user/Creator account and future manager context, documentation only. No takeover of the separately prepared Creator Staging rollout.
 - Evidence plan: current source/constraint comparison, final diff, existing truth/memory controls and enclosing PR checks.
 - Recovery: bounded documentation revert.
 
+- Reconciled 2026-09-11 from PR #1101 final receipt; previous publication is complete and is not reopened by the Social OAuth task.
+
 ## LOCK-FM-CREATOR-CLOSEOUT-20260910
 - Task: FM-CREATOR-001 / FM-CR-029
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Scope: evidence/status closeout, fresh #874 revision binding and correcting the public Phase-7 preparation category. No schema/flag/provider/Android/paid activation.
 - Evidence plan: existing release proof, reviewed reader diff, memory/truth and required exact-head CI; final publication/release in enclosing PR receipt.
 - Recovery: bounded reader revert; historical evidence is retained.
 
+
+- Reconciled 2026-09-11 from PR #1100 final receipt; previous publication is complete and is not reopened by the Social OAuth task.
 
 ## LOCK-FM-CREATOR-SOCIAL-20260910
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001

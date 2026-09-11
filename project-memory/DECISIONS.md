@@ -1,3 +1,10 @@
+## FM-DEC-017 — TikTok and X/Twitter now
+- Date: 2026-09-11
+- Status: CONFIRMED
+- Decision owner: Bernd
+- Decision: add TikTok and X/Twitter to the current Creator/Social implementation scope under FM-DEC-015. FM-DEC-016 remains binding: one Creator account, one text writing style across channels; managers remain later.
+- Boundary: official own-account authorization only; TikTok Login/profile access is not a DM capability. X has a separately permissioned, metered read API. Real provider/app/legal/Staging evidence is not supplied by this scope decision. Discord and unrelated Phase 8 remain deferred.
+
 # FanMind Decision Log
 
 ## FM-DEC-016

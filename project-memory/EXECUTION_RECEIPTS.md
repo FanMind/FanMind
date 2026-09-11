@@ -1,3 +1,15 @@
+## RECEIPT-FM-SOCIAL-OAUTH-20260911
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Task: FM-SOC7-001 / FM-CR-031
+- Risk: R4
+- Work lock: LOCK-FM-SOCIAL-OAUTH-20260911
+- Authorization: Bernd explicitly requests TikTok and X/Twitter now and continued implementation; FM-DEC-016 remains binding.
+- Completed so far: new official OAuth/preview source and controlled schema added; 13 behavior tests, 1,282 Operations tests and normal Next build passed. Targeted TypeScript/lint corrections complete. Required actual PG17/Chromium CI remains pending. Current main/PR receipts and existing Meta/TikTok/source contracts read, accepted-state drift and evidence freshness pass. Official X OAuth/DM and TikTok Login/token/profile docs read. No provider app or real DM approval is inferred.
+- Still open: implementation, negative and independent database/CI proof, source publication, separate protected target and provider acceptance.
+- Exact next step: implement official read-only connectors and account isolation in this branch; preserve the existing Creator rollout draft and all completed work.
+- Owner action needed: none for engineering. Actual account consent/app access and X usage budget must be established before a real provider pilot; no secrets requested in chat.
+- Recovery: default-off gates and bounded source revert; no uncontrolled target SQL or provider send.
+
 ## RECEIPT-FM-CREATOR-STYLE-20260911
 - Task: FM-CREATOR-001 / FM-CR-030
 - Status: COUNTERCHECKED
