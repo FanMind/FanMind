@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { readBoundedCreatorResponse, runCreatorJwtAcceptance, validateCreatorAcceptanceEnvironment } from '../scripts/operations/creator-staging-jwt-acceptance.mjs';
+import { creatorAcceptanceFailureCode, readBoundedCreatorResponse, runCreatorJwtAcceptance, validateCreatorAcceptanceEnvironment } from '../scripts/operations/creator-staging-jwt-acceptance.mjs';
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME, STAGING_SYNTHETIC_MEMBER_EMAIL } from '../src/lib/stagingSyntheticFixturePolicy.mjs';
 const primary = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const secondary = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -9,6 +9,11 @@ const owner = '11111111-1111-4111-8111-111111111111';
 const other = '22222222-2222-4222-8222-222222222222';
 const member = '33333333-3333-4333-8333-333333333333';
 const creator = '44444444-4444-4444-8444-444444444444';
+test('acceptance diagnostics expose only fixed reviewed failure codes, never provider text or tokens',()=>{
+  assert.equal(creatorAcceptanceFailureCode(new Error('disclosure_response')),'disclosure_response');
+  assert.equal(creatorAcceptanceFailureCode(new Error('private-token-and-response')),'failed_verify_before_retry');
+  assert.equal(creatorAcceptanceFailureCode({message:'login'}),'failed_verify_before_retry');
+});
 function environment() { return {
   FANMIND_RUNTIME_ENVIRONMENT: 'staging', NEXT_PUBLIC_APP_URL: 'https://staging.fanmind.ch',
   FANMIND_TARGET_SUPABASE_PROJECT_REF: 'stagingref', FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: 'productionref', FANMIND_STAGING_SUPABASE_URL: 'https://stagingref.supabase.co',

@@ -192,6 +192,7 @@ function positiveFetch(calls, options = {}) {
     }
     if (parsed.pathname === "/auth/v1/token") {
       tokenRequests += 1;
+      if (options.tokenPayload) return jsonResponse(400, options.tokenPayload);
       if (
         typeof options.tokenResponse === "function"
           ? options.tokenResponse(tokenRequests) === "accepted"
@@ -661,7 +662,28 @@ test("revoke rotates to an unpersisted password and proves the known password is
     password: ACTIVE_PASSWORD,
   });
   assert.equal(token.headers.apikey, ANON_KEY);
+  assert.equal(token.headers["X-Supabase-Api-Version"], "2024-01-01");
   assert.equal(calls.some((call) => call.pathname === "/auth/v1/logout"), false);
+});
+
+test("revoke accepts only the exact legacy invalid-credentials response and rejects unrelated 400 bodies", async () => {
+  const legacy = { error: "invalid_grant", error_description: "Invalid login credentials" };
+  for (const [tokenPayload, accepted] of [
+    [legacy, true],
+    [{ error: "invalid_grant", error_description: "Email not confirmed" }, false],
+    [{ error: "invalid_request", error_description: "Invalid login credentials" }, false],
+    [{ ...legacy, code: "captcha_failed" }, false],
+    [{ message: "Invalid login credentials" }, false],
+  ]) {
+    const calls = [];
+    const result = await revokeStagingEphemeralMemberCredential(environment("revoke"), {
+      fetchImplementation: positiveFetch(calls, { tokenPayload }),
+      randomBytesImplementation: () => Buffer.alloc(48, 40),
+    });
+    assert.equal(result.ok, accepted);
+    if (!accepted) assert.equal(result.error, "password_rejection_invalid");
+    assert.equal(calls.filter(call => call.method === "PUT").length, 1);
+  }
 });
 
 test("revoke bounds an unexpected known-password session, logs it out and rotates once more", async () => {

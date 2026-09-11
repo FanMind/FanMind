@@ -19,6 +19,11 @@ const TABLES = ['creators', 'creator_voice_profiles', 'creator_sales_playbooks',
 function revisionConflict(result) { return result.status === 500 && result.data?.code === '40001' && result.data?.message === 'creator_revision_conflict'; }
 function deniedWrite(result) { return result.status === 403 && result.data?.code === '42501'; }
 function requireFact(ok, code) { if (!ok) throw new Error(code); }
+const FAILURE_CODES = new Set(['target','reviewed_commit','confirmation','runtime_must_remain_off','run_identity','fixture_identity','credentials','network_redirect','request_target','response_bound','response_format','login','login_identity','read','fixture_changed','bundle_cardinality','fixture_not_empty','owner_identity','member_identity','create','one_creator','direct_write','foreign_read','foreign_write','member_read','member_write','style_isolation','draft_save','draft_approval','stale_revision','reapproval','concurrent_revision','current_revision','cleanup_incomplete_verify_before_retry','disclosure_target','disclosure_body','disclosure_bound','disclosure_release','disclosure_identity','disclosure_session','disclosure_response','disclosure_format','disclosure_own_data','disclosure_foreign_data','disclosure_writing_style','disclosure_secret']);
+export function creatorAcceptanceFailureCode(error) {
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return 'request_timeout';
+  return error instanceof Error && FAILURE_CODES.has(error.message) ? error.message : 'failed_verify_before_retry';
+}
 function origin(value) { try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && u.pathname === '/' && !u.search && !u.hash ? u.origin : ''; } catch { return ''; } }
 export function validateCreatorAcceptanceEnvironment(env, { cleanupOnly = false } = {}) {
   const stage = env.FANMIND_TARGET_SUPABASE_PROJECT_REF;
@@ -71,6 +76,7 @@ export async function runCreatorJwtAcceptance(env, {
   cleanupOnly = false,
   verifyRelease = verifyCreatorDisclosureRelease,
   verifyDisclosure = verifyCreatorDisclosure,
+  report = () => {},
 } = {}) {
   validateCreatorAcceptanceEnvironment(env, { cleanupOnly });
   if (!cleanupOnly) await verifyRelease(env, { fetchImpl });
@@ -85,11 +91,11 @@ export async function runCreatorJwtAcceptance(env, {
     { workspaceId: env.FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID, name: STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME, email: env.FANMIND_STAGING_E2E_SECONDARY_EMAIL, password: env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD },
   ];
   const prepared = [];
-  async function request(path, token, { method = 'GET', body, query = {}, admin = false } = {}) {
+  async function request(path, token, { method = 'GET', body, query = {}, admin = false, timeoutMs = 15000 } = {}) {
     const url = new URL(path, base);
     requireFact(url.origin === origin(base) && ['/rest/v1/', '/auth/v1/'].some(p => url.pathname.startsWith(p)), 'request_target');
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
-    const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(15000),
+    const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
       headers: { ...buildSupabaseApiKeyHeaders(admin ? serviceKey : anonKey, admin ? undefined : token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: body === undefined ? undefined : JSON.stringify(body) });
     const text = await readBoundedCreatorResponse(response);
@@ -126,9 +132,9 @@ export async function runCreatorJwtAcceptance(env, {
     return { p_workspace_id: fixture.workspaceId, p_creator_id: fixture.creatorId ?? null, p_expected_revision: revision,
       p_persona: bundle.persona, p_voice: bundle.voice, p_playbook: bundle.playbook, p_approve: approve };
   }
-  async function save(fixture, revision, approve, actor = fixture.actor) {
+  async function save(fixture, revision, approve, actor = fixture.actor, timeoutMs = 15000) {
     await verifyFixture(fixture);
-    return request('/rest/v1/rpc/save_creator_bundle', actor.token, { method: 'POST', body: payload(fixture, revision, approve) });
+    return request('/rest/v1/rpc/save_creator_bundle', actor.token, { method: 'POST', body: payload(fixture, revision, approve), timeoutMs });
   }
   async function context(fixture) {
     const [creators, voices, playbooks] = await Promise.all(['creators','creator_voice_profiles','creator_sales_playbooks'].map(t => rows(t, fixture, fixture.actor)));
@@ -147,6 +153,7 @@ export async function runCreatorJwtAcceptance(env, {
     if (!cleanupOnly) {
     const member = await login(STAGING_SYNTHETIC_MEMBER_EMAIL, env.FANMIND_STAGING_E2E_MEMBER_PASSWORD);
     requireFact(fixtures.every(f => f.actor.id !== member.id), 'member_identity');
+    report('authenticated');
     for (const fixture of fixtures) {
       prepared.push(fixture); // Includes an indeterminate create response.
       const created = await save(fixture, 0, true);
@@ -168,23 +175,28 @@ export async function runCreatorJwtAcceptance(env, {
     const initial = await Promise.all(fixtures.map(context));
     const styles = initial.map(input => buildCreatorReplyContext(input).voice.tone);
     requireFact(styles[0] !== styles[1], 'style_isolation');
+    report('isolation_verified');
     for (let index = 0; index < fixtures.length; index++) {
       await verifyDisclosure(env, { ...fixtures[index], writingStyle: styles[index] }, { ...fixtures[1-index], writingStyle: styles[1-index] }, { fetchImpl });
     }
+    report('disclosure_verified');
     for (const fixture of fixtures) {
       requireFact((await save(fixture, 1, false)).ok, 'draft_save');
       const draft = await context(fixture);
       let rejected = false;
       try { buildCreatorReplyContext(draft); } catch { rejected = true; }
       requireFact(rejected && draft.creator.revision === 2 && !draft.voice.approved_at && !draft.playbook.approved_at, 'draft_approval');
-      requireFact(revisionConflict(await save(fixture, 1, true)), 'stale_revision');
+      // Allow a bounded server rollback/error response to finish. A timeout is
+      // never accepted as the expected SQLSTATE or retried by this client.
+      requireFact(revisionConflict(await save(fixture, 1, true, fixture.actor, 60000)), 'stale_revision');
       requireFact((await save(fixture, 2, true)).ok, 'reapproval');
-      const simultaneous = await Promise.all([save(fixture, 3, true), save(fixture, 3, true)]);
+      const simultaneous = await Promise.all([save(fixture, 3, true, fixture.actor, 60000), save(fixture, 3, true, fixture.actor, 60000)]);
       requireFact(simultaneous.filter(r => r.ok).length === 1 && simultaneous.filter(revisionConflict).length === 1, 'concurrent_revision');
       const current = await context(fixture);
       requireFact(current.creator.revision === 4 && current.voice.revision === 4 && current.playbook.revision === 4 && current.voice.approved_by === fixture.actor.id, 'current_revision');
       buildCreatorReplyContext(current);
     }
+    report('revisions_verified');
     }
   } catch (error) { failure = error; }
   const cleanup = [];
@@ -214,5 +226,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     try { validateCreatorAcceptanceEnvironment(process.env, { cleanupOnly: true }); console.log('CREATOR_CLEANUP_INPUT=PASS'); }
     catch { console.error('CREATOR_CLEANUP_INPUT=FAIL'); process.exitCode = 1; }
   } else if (!['--run','--cleanup'].includes(process.argv[2])) { console.error('CREATOR_JWT_ACCEPTANCE_ERROR=mode'); process.exitCode = 1; }
-  else runCreatorJwtAcceptance(process.env, { cleanupOnly: process.argv[2] === '--cleanup' }).then(result => console.log(`CREATOR_JWT_ACCEPTANCE=${JSON.stringify(result)}`)).catch(() => { console.error('CREATOR_JWT_ACCEPTANCE_ERROR=failed_verify_before_retry'); process.exitCode = 1; });
+  else runCreatorJwtAcceptance(process.env, { cleanupOnly: process.argv[2] === '--cleanup', report: phase => console.log(`CREATOR_JWT_CHECKPOINT=${phase}`) }).then(result => console.log(`CREATOR_JWT_ACCEPTANCE=${JSON.stringify(result)}`)).catch(error => { console.error(`CREATOR_JWT_ACCEPTANCE_ERROR=${creatorAcceptanceFailureCode(error)}`); process.exitCode = 1; });
 }

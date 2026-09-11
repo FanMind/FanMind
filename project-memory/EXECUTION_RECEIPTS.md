@@ -1,5 +1,7 @@
 ## RECEIPT-FM-CREATOR-META-FINISH-20260911
 
+- Actual acceptance update: #1106 source/main 0ea87d3c and both Deploys are confirmed. Run 34625034162 failed its combined JWT/PDF/revision step and member rejection proof; independent Creator cleanup passed and all four tables are independently empty. Controlled diagnostic/Auth-format correction is in progress; no runtime or full acceptance is claimed.
+
 - Target update: #1105 source published as 3f6178bd (tree da35ac81), Deploy 34622111581 / public Readiness 34622261563 pass. Protected Creator Verify 34622658443 and Apply 34623104141 confirm exact schema installation on isolated Staging with runtime off; independent 16:39:30 UTC catalog confirms four empty RLS tables and browser update denial. No repeat Apply.
 - #1106 source continuation: real JWT test, exact-run recovery, shared fixture-member lock and bounded responses. Necessary Social metadata export correction plus exact-release-bound real PDF acceptance are included so the same fixture run can prove both account isolation and delivery. Local Operations: 1325 pass, three local PG17 skips, zero failures; real PG17 CI remains required. Current final-source review, deploy and JWT/PDF result are pending. Full runtime, account/contact deletion, style quality and provider consent remain open.
 - Task/change: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4.
