@@ -28,9 +28,15 @@ Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
 Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
 11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
 waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
-Der Creator-Schalter bleibt aus. Echte JWT-/Lösch-/Export-Abnahme, aktivierte
-Oberfläche, Schreibqualität und Plattformfreigaben sind weiterhin offen;
-eine Produktionsinstallation oder allgemeine Aktivierung ist damit nicht belegt.
+Der reale Staging-Lauf 34626769355 auf Main 03ecdc18 hat Owner-/Member-/
+Fremdkonto-Trennung, genau einen Stil pro Konto und beide tatsächlichen
+PDF-Datenauskünfte geprüft. Testdaten-Cleanup und Sperrung des temporären
+Testzugangs bestanden. Der Gesamtlauf scheiterte am Timeout einer veralteten
+Profilrevision: SQLSTATE 40001 löst in betroffenen PostgREST-Versionen
+Wiederholungen aus. Die gezielte, separat bestätigte PT409-Funktionskorrektur
+und die vollständige Revisionsabnahme stehen noch aus. Der Creator-Schalter
+bleibt aus; aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität
+und Plattformfreigaben bleiben offen. Production ist damit nicht aktiviert.
 
 
 Kanalverbindung nach FM-DEC-018: in FanMind anmelden, Kanal wählen, direkt bei der

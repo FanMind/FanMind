@@ -16,7 +16,7 @@ const CONFIRMATION = 'accept-creator-foundation';
 const CLEANUP_CONFIRMATION = 'cleanup-creator-foundation';
 const RECEIPT_PATTERN = /^[1-9][0-9]{0,19}:[1-9][0-9]{0,3}:[0-9a-f]{40}$/u;
 const TABLES = ['creators', 'creator_voice_profiles', 'creator_sales_playbooks', 'creator_commercial_events'];
-function revisionConflict(result) { return result.status === 500 && result.data?.code === '40001' && result.data?.message === 'creator_revision_conflict'; }
+function revisionConflict(result) { return result.status === 409 && result.data?.code === 'PT409' && result.data?.message === 'creator_revision_conflict'; }
 function deniedWrite(result) { return result.status === 403 && result.data?.code === '42501'; }
 function requireFact(ok, code) { if (!ok) throw new Error(code); }
 const FAILURE_CODES = new Set(['target','reviewed_commit','confirmation','runtime_must_remain_off','run_identity','fixture_identity','credentials','network_redirect','request_target','response_bound','response_format','login','login_identity','read','fixture_changed','bundle_cardinality','fixture_not_empty','owner_identity','member_identity','create','one_creator','direct_write','foreign_read','foreign_write','member_read','member_write','style_isolation','draft_save','draft_approval','stale_revision','reapproval','concurrent_revision','current_revision','cleanup_incomplete_verify_before_retry','disclosure_target','disclosure_body','disclosure_bound','disclosure_release','disclosure_identity','disclosure_session','disclosure_response','disclosure_format','disclosure_own_data','disclosure_foreign_data','disclosure_writing_style','disclosure_secret']);
@@ -91,11 +91,11 @@ export async function runCreatorJwtAcceptance(env, {
     { workspaceId: env.FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID, name: STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME, email: env.FANMIND_STAGING_E2E_SECONDARY_EMAIL, password: env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD },
   ];
   const prepared = [];
-  async function request(path, token, { method = 'GET', body, query = {}, admin = false, timeoutMs = 15000 } = {}) {
+  async function request(path, token, { method = 'GET', body, query = {}, admin = false } = {}) {
     const url = new URL(path, base);
     requireFact(url.origin === origin(base) && ['/rest/v1/', '/auth/v1/'].some(p => url.pathname.startsWith(p)), 'request_target');
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
-    const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
+    const response = await fetchImpl(url, { method, redirect: 'error', signal: AbortSignal.timeout(15000),
       headers: { ...buildSupabaseApiKeyHeaders(admin ? serviceKey : anonKey, admin ? undefined : token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: body === undefined ? undefined : JSON.stringify(body) });
     const text = await readBoundedCreatorResponse(response);
@@ -132,9 +132,9 @@ export async function runCreatorJwtAcceptance(env, {
     return { p_workspace_id: fixture.workspaceId, p_creator_id: fixture.creatorId ?? null, p_expected_revision: revision,
       p_persona: bundle.persona, p_voice: bundle.voice, p_playbook: bundle.playbook, p_approve: approve };
   }
-  async function save(fixture, revision, approve, actor = fixture.actor, timeoutMs = 15000) {
+  async function save(fixture, revision, approve, actor = fixture.actor) {
     await verifyFixture(fixture);
-    return request('/rest/v1/rpc/save_creator_bundle', actor.token, { method: 'POST', body: payload(fixture, revision, approve), timeoutMs });
+    return request('/rest/v1/rpc/save_creator_bundle', actor.token, { method: 'POST', body: payload(fixture, revision, approve) });
   }
   async function context(fixture) {
     const [creators, voices, playbooks] = await Promise.all(['creators','creator_voice_profiles','creator_sales_playbooks'].map(t => rows(t, fixture, fixture.actor)));
@@ -186,11 +186,10 @@ export async function runCreatorJwtAcceptance(env, {
       let rejected = false;
       try { buildCreatorReplyContext(draft); } catch { rejected = true; }
       requireFact(rejected && draft.creator.revision === 2 && !draft.voice.approved_at && !draft.playbook.approved_at, 'draft_approval');
-      // Allow a bounded server rollback/error response to finish. A timeout is
-      // never accepted as the expected SQLSTATE or retried by this client.
-      requireFact(revisionConflict(await save(fixture, 1, true, fixture.actor, 60000)), 'stale_revision');
+      // Application revision conflicts use PT409, never the transient 40001.
+      requireFact(revisionConflict(await save(fixture, 1, true, fixture.actor)), 'stale_revision');
       requireFact((await save(fixture, 2, true)).ok, 'reapproval');
-      const simultaneous = await Promise.all([save(fixture, 3, true, fixture.actor, 60000), save(fixture, 3, true, fixture.actor, 60000)]);
+      const simultaneous = await Promise.all([save(fixture, 3, true, fixture.actor), save(fixture, 3, true, fixture.actor)]);
       requireFact(simultaneous.filter(r => r.ok).length === 1 && simultaneous.filter(revisionConflict).length === 1, 'concurrent_revision');
       const current = await context(fixture);
       requireFact(current.creator.revision === 4 && current.voice.revision === 4 && current.playbook.revision === 4 && current.voice.approved_by === fixture.actor.id, 'current_revision');

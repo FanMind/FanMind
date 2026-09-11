@@ -7,10 +7,12 @@ export const CREATOR_FOUNDATION_VERIFY_CONFIRMATION =
   "verify-creator-foundation";
 export const CREATOR_FOUNDATION_APPLY_CONFIRMATION =
   "apply-creator-foundation";
+export const CREATOR_FOUNDATION_UPGRADE_CONFIRMATION =
+  "upgrade-creator-foundation";
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 const DB_IDENTITY_PATTERN = /^[A-Za-z0-9_.-]{1,128}$/u;
 const HOST_PATTERN = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/u;
-const MODES = new Set(["verify", "apply"]);
+const MODES = new Set(["verify", "apply", "upgrade"]);
 
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -117,7 +119,7 @@ export function evaluateCreatorFoundationStagingEnvironment(
   if (!MODES.has(mode)) {
     return Object.freeze({ ok: false, mode, writeEnabled: false, errors: ["mode"] });
   }
-  const allowWrite = mode === "apply";
+  const allowWrite = mode === "apply" || mode === "upgrade";
   const errors = [];
   const boundary = evaluateEnvironmentBoundary(environment, { allowWrite });
   if (!boundary.ok) errors.push("environment_boundary");
@@ -137,8 +139,8 @@ export function evaluateCreatorFoundationStagingEnvironment(
   if (mode === "verify" && clean(environment.FANMIND_ENABLE_NON_PRODUCTION_WRITES) !== "false") errors.push("verify_write_gate");
   evaluateTargets(environment, errors);
 
-  const confirmation = clean(mode === "apply" ? environment.FANMIND_CREATOR_FOUNDATION_APPLY_CONFIRM : environment.FANMIND_CREATOR_FOUNDATION_VERIFY_CONFIRM);
-  const expected = mode === "apply" ? CREATOR_FOUNDATION_APPLY_CONFIRMATION : CREATOR_FOUNDATION_VERIFY_CONFIRMATION;
+  const confirmation = clean(mode === "upgrade" ? environment.FANMIND_CREATOR_FOUNDATION_UPGRADE_CONFIRM : mode === "apply" ? environment.FANMIND_CREATOR_FOUNDATION_APPLY_CONFIRM : environment.FANMIND_CREATOR_FOUNDATION_VERIFY_CONFIRM);
+  const expected = mode === "upgrade" ? CREATOR_FOUNDATION_UPGRADE_CONFIRMATION : mode === "apply" ? CREATOR_FOUNDATION_APPLY_CONFIRMATION : CREATOR_FOUNDATION_VERIFY_CONFIRMATION;
   if (confirmation !== expected) errors.push("confirmation");
   if (
     allowWrite &&

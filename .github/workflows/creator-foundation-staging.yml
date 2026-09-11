@@ -8,7 +8,7 @@ on:
         required: true
         default: verify
         type: choice
-        options: [verify, apply, accept, cleanup]
+        options: [verify, apply, upgrade, accept, cleanup]
       reviewed_commit:
         description: 'Exact reviewed main commit containing the pinned controlled SQL'
         required: true
@@ -37,7 +37,7 @@ jobs:
       ${{
         github.ref == 'refs/heads/main' &&
         inputs.reviewed_commit == github.sha &&
-        ((inputs.action == 'verify' && inputs.confirmation == 'verify-creator-foundation') || (inputs.action == 'apply' && inputs.confirmation == 'apply-creator-foundation') || (inputs.action == 'accept' && inputs.confirmation == 'accept-creator-foundation') || (inputs.action == 'cleanup' && inputs.confirmation == 'cleanup-creator-foundation')) &&
+        ((inputs.action == 'verify' && inputs.confirmation == 'verify-creator-foundation') || (inputs.action == 'apply' && inputs.confirmation == 'apply-creator-foundation') || (inputs.action == 'upgrade' && inputs.confirmation == 'upgrade-creator-foundation') || (inputs.action == 'accept' && inputs.confirmation == 'accept-creator-foundation') || (inputs.action == 'cleanup' && inputs.confirmation == 'cleanup-creator-foundation')) &&
         ((inputs.action == 'cleanup' && inputs.cleanup_receipt != '') || (inputs.action != 'cleanup' && inputs.cleanup_receipt == ''))
       }}
     timeout-minutes: 20
@@ -51,10 +51,11 @@ jobs:
       FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
-      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ inputs.action == 'apply' && 'true' || 'false' }}
-      FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ inputs.action == 'apply' && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ (inputs.action == 'apply' || inputs.action == 'upgrade') && 'true' || 'false' }}
+      FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ (inputs.action == 'apply' || inputs.action == 'upgrade') && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
       FANMIND_CREATOR_FOUNDATION_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
       FANMIND_CREATOR_FOUNDATION_APPLY_CONFIRM: ${{ inputs.confirmation }}
+      FANMIND_CREATOR_FOUNDATION_UPGRADE_CONFIRM: ${{ inputs.confirmation }}
       FANMIND_CREATOR_FOUNDATION_VERIFY_CONFIRM: ${{ (inputs.action == 'accept' || inputs.action == 'cleanup') && 'verify-creator-foundation' || inputs.confirmation }}
       FANMIND_CREATOR_INTELLIGENCE_ENABLED: 'false'
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
@@ -108,6 +109,7 @@ jobs:
           case "$CREATOR_ACTION" in
             verify) node scripts/operations/creator-foundation-staging-runner.mjs --verify ;;
             apply) node scripts/operations/creator-foundation-staging-runner.mjs --apply ;;
+            upgrade) node scripts/operations/creator-foundation-staging-runner.mjs --upgrade ;;
             accept|cleanup)
               RESULT="$(node scripts/operations/creator-foundation-staging-runner.mjs --verify)"
               printf '%s\n' "$RESULT"

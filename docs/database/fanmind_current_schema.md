@@ -30,9 +30,13 @@ Die kontrollierte Staging-Installation ist nachgewiesen: Verify 34622658443,
 Apply 34623104141 auf Main 3f6178bd, exakter POSTFLIGHT=PASS am 11. September
 2026 um 16:38:15 UTC. Die unabhängige Katalogprüfung um 16:39:30 UTC bestätigt
 vier leere RLS-Tabellen, drei Funktionen und gesperrte Creator-/Stil-Updates für
-authenticated. Der serverseitige Creator-Schalter bleibt aus. Reale JWT-/UI-,
-Lösch-, Export- und Qualitätsabnahme bleiben erforderlich; Production ist damit
-nicht installiert oder aktiviert. Modell:
+authenticated. Lauf 34626769355 bestätigt reale JWT-Kontentrennung und beide
+Owner-PDF-Exporte, scheitert aber am Revisionskonflikt mit SQLSTATE 40001.
+Die originale Grundlage bleibt unverändert; `creator_revision_conflict_fix.sql`
+bereitet eine getrennt bestätigte Funktionskorrektur auf PT409 vor. Nur ein
+exakt geprüftes, leeres Staging-Schema darf aktualisiert werden. Runtime bleibt
+aus; volle Revisions-/UI-, Lösch- und Qualitätsabnahme bleiben erforderlich.
+Production ist nicht installiert oder aktiviert. Modell:
 `docs/CREATOR_INTELLIGENCE.md`; Artifact/Abnahme/Recovery:
 `docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`. Kein generischer Deploy/DB-Push.
 

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const CREATOR_FOUNDATION_SHA256 = "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f";
+export const CREATOR_CONFLICT_FIX_SHA256 = "7e1111357bf1b210023fe43913d11247f3fe6eea32d1a7440b8079d988e671ee";
 export const CREATOR_TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
 const FUNCTIONS = [
   ["guard_creator_identity()", false, "trigger"],
@@ -10,6 +11,13 @@ const FUNCTIONS = [
 export function checkCreatorArtifact(sql) {
   if (typeof sql !== "string" || createHash("sha256").update(sql).digest("hex") !== CREATOR_FOUNDATION_SHA256) {
     throw new Error("CREATOR_FOUNDATION_ERROR=artifact_checksum");
+  }
+  return sql;
+}
+
+export function checkCreatorConflictFix(sql) {
+  if (typeof sql !== "string" || createHash("sha256").update(sql).digest("hex") !== CREATOR_CONFLICT_FIX_SHA256) {
+    throw new Error("CREATOR_FOUNDATION_ERROR=conflict_artifact_checksum");
   }
   return sql;
 }
@@ -98,10 +106,11 @@ $norm$;
 `;
 }
 
-function functionChecks(sql) {
+function functionChecks(sql, conflictFixSql) {
   return FUNCTIONS.map(([signature,definer,returns]) => {
     const name=signature.split("(")[0];
-    const match=sql.match(new RegExp(`create function public\\.${name}\\([\\s\\S]*?as \\$\\$([\\s\\S]*?)\\$\\$;`,"u"));
+    const source=name === "save_creator_bundle" && conflictFixSql ? conflictFixSql.replace("create or replace function", "create function") : sql;
+    const match=source.match(new RegExp(`create function public\\.${name}\\([\\s\\S]*?as \\$\\$([\\s\\S]*?)\\$\\$;`,"u"));
     if (!match) throw new Error("CREATOR_FOUNDATION_ERROR=function_contract");
     const body=Buffer.from(match[1],"utf8").toString("hex");
     return `
@@ -121,8 +130,9 @@ function functionChecks(sql) {
   }).join("\n");
 }
 
-export function buildCreatorVerification(sql) {
+export function buildCreatorVerification(sql, { conflictFixSql } = {}) {
  checkCreatorArtifact(sql);
+ if (conflictFixSql !== undefined) checkCreatorConflictFix(conflictFixSql);
  const reference=referenceSql(sql);
  const body=`${CREATOR_PREFLIGHT_BODY}
 do $verify$
@@ -185,7 +195,7 @@ begin
     and (a.grantee not in (c.relowner,(select oid from pg_roles where rolname='authenticated'),(select oid from pg_roles where rolname='service_role')) or (a.is_grantable and a.grantee<>c.relowner))) then raise exception 'creator_public_grant_drift'; end if;
   end if;
  end loop;
- ${functionChecks(sql)}
+ ${functionChecks(sql, conflictFixSql)}
  select jsonb_agg(jsonb_build_array(c.relname,t.tgname,t.tgtype,t.tgenabled,p.proname,t.tgnargs,encode(t.tgargs,'hex'),pg_get_expr(t.tgqual,t.tgrelid)) order by c.relname) into a
   from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_proc p on p.oid=t.tgfoid
   where c.oid in ('public.creators'::regclass,'public.creator_voice_profiles'::regclass,'public.creator_sales_playbooks'::regclass,'public.creator_commercial_events'::regclass) and not t.tgisinternal;
@@ -196,8 +206,8 @@ end $verify$;
  return { reference, body, verify: `\\set ON_ERROR_STOP on\n${reference}\nbegin read only;\nset local statement_timeout='60s';\n${body}\nselect 'CREATOR_FOUNDATION_POSTFLIGHT=PASS';\nrollback;\n` };
 }
 
-export function buildCreatorApply(sql) {
- const {reference,body}=buildCreatorVerification(sql);
+export function buildCreatorApply(sql, { conflictFixSql } = {}) {
+ const {reference,body}=buildCreatorVerification(sql, { conflictFixSql });
  const artifact=sql.replace(/^begin;$/mu,"").replace(/commit;\s*$/u,"");
  return `\\set ON_ERROR_STOP on
 begin;
@@ -208,9 +218,36 @@ ${CREATOR_PREFLIGHT_BODY}
 -- The artifact uses CREATE and ADD without IF NOT EXISTS. A concurrent,
 -- repeated or partially installed target cannot be silently overwritten.
 ${artifact}
+${conflictFixSql ?? ""}
 ${reference}
 ${body}
 commit;
 select 'CREATOR_FOUNDATION_APPLY=COMMITTED';
+`;
+}
+
+// Preserve the installed foundation. Only an exactly verified legacy contract
+// may receive this function-only correction; grants and data are never repaired.
+export function buildCreatorConflictUpgrade(sql, conflictFixSql) {
+ checkCreatorConflictFix(conflictFixSql);
+ const legacy=buildCreatorVerification(sql);
+ const current=buildCreatorVerification(sql, { conflictFixSql });
+ return `\\set ON_ERROR_STOP on
+begin;
+set local lock_timeout='5s';
+set local statement_timeout='60s';
+select pg_advisory_xact_lock(617041729113::bigint);
+${legacy.reference}
+${legacy.body}
+lock table public.creators, public.creator_voice_profiles, public.creator_sales_playbooks, public.creator_commercial_events in share row exclusive mode;
+do $empty$ begin
+ if exists(select 1 from public.creators) or exists(select 1 from public.creator_voice_profiles)
+  or exists(select 1 from public.creator_sales_playbooks) or exists(select 1 from public.creator_commercial_events)
+ then raise exception 'creator_upgrade_requires_empty_foundation'; end if;
+end $empty$;
+${conflictFixSql}
+${current.body}
+commit;
+select 'CREATOR_FOUNDATION_UPGRADE=COMMITTED';
 `;
 }
