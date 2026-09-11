@@ -605,9 +605,10 @@ async function knownPasswordIsRejected(
     "/auth/v1/token?grant_type=password",
     {
       method: "POST",
-      headers: buildSupabaseApiKeyHeaders(
-        environment.FANMIND_STAGING_SUPABASE_ANON_KEY,
-      ),
+      headers: {
+        ...buildSupabaseApiKeyHeaders(environment.FANMIND_STAGING_SUPABASE_ANON_KEY),
+        "X-Supabase-Api-Version": "2024-01-01",
+      },
       body: JSON.stringify({
         email: STAGING_SYNTHETIC_MEMBER_EMAIL,
         password,
@@ -617,7 +618,9 @@ async function knownPasswordIsRejected(
   );
   if (response.status === 400) {
     const code = clean(payload?.code ?? payload?.error_code).toLowerCase();
-    if (code !== "invalid_credentials") {
+    const legacyRejection = !code && payload?.error === "invalid_grant" &&
+      payload?.error_description === "Invalid login credentials";
+    if (code !== "invalid_credentials" && !legacyRejection) {
       fail("password_rejection_invalid");
     }
     return true;

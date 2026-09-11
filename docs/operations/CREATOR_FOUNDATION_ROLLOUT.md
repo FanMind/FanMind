@@ -174,3 +174,29 @@ authorization, safe projection, optional schema handling and the actual collecto
 These are source checks; only a successful protected target `accept` establishes
 real Staging PDF delivery. Whole-account/contact deletion, enabled runtime UI,
 real writing quality and provider approval remain separate.
+
+## First real target run and bounded correction
+
+Run 34625034162 on main 0ea87d3c passed the exact installed-schema check, deployed
+release check and marked member activation. The combined JWT/PDF/revision step
+failed without a specific code. The independent Creator cleanup passed; a fresh
+read at 17:00:24 UTC on 11 September 2026 confirms all four tables are empty.
+Member password rotation reached its Admin update and identity postflight, but
+its final rejection check returned `password_rejection_invalid`. This remains
+an incomplete acceptance, not permission to activate or reapply the schema.
+
+The follow-up retains strict rejection proof while requesting the structured
+Supabase Auth API version. It supports `invalid_credentials` and, only without a
+structured code, the exact legacy OAuth `invalid_grant` / `Invalid login
+credentials` pair. CAPTCHA, unconfirmed-email, rate-limit and unrelated errors
+cannot pass. See the primary Auth source in
+https://github.com/supabase/auth/blob/master/internal/api/errors.go and
+https://github.com/supabase/auth/blob/master/internal/api/token.go. The old job
+did not expose its response body, so a particular legacy response is not claimed
+as an observed fact.
+
+The next run reports only fixed completed-phase and error codes. Intentional
+revision-conflict checks allow at most 60 seconds for the server response and
+still require the exact HTTP 500 / SQLSTATE 40001 / creator_revision_conflict
+triple. There is no client retry and a timeout is a failure. Ordinary requests
+keep their 15-second limit. A complete new target receipt is still required.
