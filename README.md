@@ -1,5 +1,11 @@
 # FanMind
 
+Kanalverbindung nach FM-DEC-018: in FanMind anmelden, Kanal wählen, direkt bei der
+Plattform anmelden und den Zugriff freigeben. Danach öffnet FanMind den gewählten
+Kanal wieder. Für X ist ein einmaliger Erstabruf als Vorschau vorbereitet; die
+zentrale App-Freigabe und echte Ziel-/Provider-Abnahme bleiben offen.
+Plattform-Passwörter werden direkt bei der Plattform eingegeben.
+
 Ein normaler Nutzer ist der Creator seines Accounts. Jeder Account hat genau
 einen persönlichen **Schreibstil** für Textantworten; damit sind keine echten
 Stimmen oder Audios gemeint. Ein späterer Managerzugang kann mehrere getrennte

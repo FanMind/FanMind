@@ -1,3 +1,15 @@
+## RECEIPT-FM-SOCIAL-CONNECT-FLOW-20260911
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Implementation evidence: selected-channel return, explicit provider-hosted credentials, X once-only initial preview, corrected Meta document navigation and controlled Staging schema runner/workflow are present. Twenty-five focused tests, TypeScript and Next build pass. First Operations pass had 1,293 passes plus one exact workflow-inventory mismatch after adding the new pinned workflow; inventory counts were reconciled (no pin/gate removed) and all eleven supply-chain tests now pass. Real PG17 and Chromium/current-head CI remain mandatory before source completion.
+- Task: FM-SOC7-001 / FM-CR-032
+- Risk: R4
+- Work lock: LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
+- Authorization: Bernd explicitly confirms the platform-hosted login/return/retrieval journey and continued Social engineering. Existing branch/PR/publication authorization persists; no password collection or invented provider acceptance.
+- Baseline: main 95bbd13a, tree 6cb730eb; #1102 final source receipt and Backup finding read. Staging project independently ACTIVE_HEALTHY, PostgreSQL 17, Social tables absent. Mutable evidence retains its original timestamps.
+- Evidence/falsifier: callback query alone must never authorize a provider request; a second initial read, cross-account token use, partial-schema acceptance, wrong-target connection or automatic Production SQL would defeat the claim. Require real PG17, browser and current PR security/CI counterchecks.
+- Recovery: default-off source, bounded revert, one transactional target apply after reviewed checks, no schema deletion or automatic retry; record unknown apply as indeterminate.
+- Exact next step: implementation and negative tests, then independent verification and source publication.
+
 ## RECEIPT-FM-SOCIAL-OAUTH-20260911
 - Refresh follow-through: a separate negative test reproduced an orphaned newly refreshed token when profile/rotation failed. The bounded fix revokes that token on failed or indeterminate rotation, reports unconfirmed cleanup and preserves safely stored tokens on later DM failure. All eighteen provider behavior tests now pass; final publication remains subject to exact-head CI.
 - PR review countercheck: #1102 initial 13 checks passed at a80e03e, but the separately completed review identified three real issues. Before merge, current source now requires the configured Production project comparison even for cleanup, revokes newly issued credentials on callback/normalization failure, and uses same-origin POST plus separately allowlisted browser navigation without widening CSP. Sixteen behavior tests pass; updated Chromium navigation and exact-head CI must pass before completion.

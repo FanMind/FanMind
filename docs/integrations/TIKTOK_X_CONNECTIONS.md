@@ -5,10 +5,26 @@ Bernd nimmt beide Kanäle am 11. September 2026 in die laufende Entwicklung auf
 einen persönlichen Text-Schreibstil. Die Verbindung legt kein weiteres
 Schreibstilprofil an. Manager und Discord bleiben später.
 
+FM-DEC-018 / FM-CR-032 präzisiert den Weg: im eigenen FanMind-Account einen Kanal
+wählen, auf „Verbinden“ klicken, direkt bei der Plattform anmelden und den Zugriff
+bestätigen. Dort werden auch Passwort und etwaige MFA eingegeben; FanMind erhält
+kein Plattform-Passwort. Eine bestehende Plattform-Sitzung kann die erneute
+Passworteingabe ersetzen. Die Entwickler-App und ihre technischen Zugangsdaten
+richtet FanMind zentral ein. Einzelne Creator brauchen keine eigene Entwickler-App.
+Jeder Creator erteilt dieser App die Freigabe für sein eigenes Konto.
+
+Nach der Rückkehr öffnet sich der gewählte Kanal für TikTok, X, Instagram und
+Facebook wieder. X versucht den ersten Abruf einmalig, wenn die Datenbank eine
+bestätigte neue Verbindung und ein freies Abruffenster meldet. Die Abruf-Lease
+verbraucht die Erstabruf-Freigabe atomar. Wiederladen, mehrere Tabs oder ein
+gefälschter Rückkehrparameter erzeugen keine weitere Freigabe. Auch ein fehlgeschlagener
+Provider-Aufruf wird nicht automatisch wiederholt; danach bleibt der manuelle
+Abruf mit derselben 15-Minuten-Grenze. Eine erneute Anmeldung umgeht diese Grenze nicht.
+
 | Kanal | Implementierter Umfang | Noch offen |
 |---|---|---|
 | TikTok | Offizieller Login Kit Web-Codeaustausch, Prüfung des eigenen Profils, verschlüsselte Speicherung, erneute Anmeldung und Trennen. Scope `user.info.basic`. | Konkrete App-/Testfreigabe; separater offizieller Nachrichten-/Kommentarzugang. Profil-Login ist keine DM-Freigabe. |
-| X / Twitter | OAuth2 mit S256-PKCE, eigene Identität, verschlüsselte Access-/Refresh-Tokens, kontrollierte Rotation, Trennen und manuell ausgelöste Lesevorschau. | Eigene freigegebene App, Account-Zustimmung, API-Guthaben/-Budget, echte Provider-Abnahme und dauerhafte CRM-Ingestion. |
+| X / Twitter | OAuth2 mit S256-PKCE, eigene Identität, verschlüsselte Access-/Refresh-Tokens, kontrollierte Rotation, Trennen, einmaliger Erstabruf und manuelle Lesevorschau. | Zentral freigegebene FanMind-App, Account-Zustimmung, API-Guthaben/-Budget, echte Provider-Abnahme und dauerhafte CRM-Ingestion. |
 
 X lädt höchstens 20 Ereignisse in einem Abruf, frühestens alle 15 Minuten pro
 Account. Angezeigt werden nur validierte eingehende Einzelchat-Nachrichten.
@@ -65,9 +81,11 @@ Der gesamte Provider-Zugriff bleibt standardmäßig aus und ist in dieser Versio
 strukturell auf isoliertes Staging begrenzt. Ein normaler Merge/Deploy spielt
 keine SQL ein und aktiviert keinen Provider. Das additive Schema liegt unter
 `supabase/controlled/social_provider_connections.sql`; keine generische
-`supabase db push`-Anwendung. Es existiert noch kein freigegebener zielgebundener
-Apply-Workflow für dieses neue Schema. Vor realer Nutzung dessen kontrollierten
-Verify/Apply/Postflight nach dem vorhandenen Creator-/Meta-Vorbild abschließen.
+`supabase db push`-Anwendung. Der separate manuelle Workflow
+`social-provider-schema-staging.yml` prüft den exakten Main-Commit, das geschützte
+Staging-Ziel und das gepinnte SQL. Verify/Apply/Postflight und tatsächliche
+Zielabnahme sind in `docs/operations/SOCIAL_PROVIDER_SCHEMA_STAGING.md` beschrieben.
+Die Quellimplementierung dieses Wegs ist noch keine tatsächlich ausgeführte Zielabnahme.
 Ein fehlendes Schema blockiert die Anmeldung vor dem Provider-Redirect.
 
 Serverkonfiguration (Werte niemals in Git oder Chat):

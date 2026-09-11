@@ -199,3 +199,28 @@ test("successful refresh is durably rotated before reading; a later DM failure k
   assert.equal(saved, true); assert.equal(reads, 1); assert.equal(revoked, 0);
   assert.doesNotMatch(await response.text(), /private|new-synthetic/);
 });
+test("initial preview is authorized by a pending database claim, never by a callback query", async () => {
+  let pending = true, reads = 0;
+  const store = { read: async () => row, rpc: async (name, params) => {
+    if (name === "claim_read") { assert.equal(params.p_initial_only, true); const allowed = pending; pending = false; return allowed ? [row] : []; }
+    assert.equal(name, "finish_read"); return true;
+  } };
+  for (const expected of [200, 429]) {
+    const response = await handleSocialRequest({ request: new Request(`${request("initial-messages").url}?social_result=connected`, { method: "POST", headers: { origin: config.origin } }),
+      provider: "x", action: "initial-messages", authorize: async () => context, env, store,
+      client: { readXDirectMessages: async () => { reads++; return { messages: [] }; } } });
+    assert.equal(response.status, expected);
+  }
+  assert.equal(reads, 1);
+});
+test("status offers an initial read only when the server has a pending, enabled, currently eligible X connection", async () => {
+  for (const [change, settings, expected] of [
+    [{ initial_read_pending: true, next_read_at: new Date(Date.now()-1000).toISOString() }, {}, true],
+    [{ initial_read_pending: false, next_read_at: new Date(Date.now()-1000).toISOString() }, {}, false],
+    [{ initial_read_pending: true, next_read_at: new Date(Date.now()+900000).toISOString() }, {}, false],
+    [{ initial_read_pending: true, next_read_at: new Date(Date.now()-1000).toISOString() }, { FANMIND_SOCIAL_PILOT_ENABLED: "false" }, false],
+  ]) {
+    const response = await handleSocialRequest({ request: request("status"), provider: "x", action: "status", authorize: async () => context, env: { ...env, ...settings }, store: { read: async () => ({ ...row, ...change }) } });
+    assert.equal((await response.json()).initialReadPending, expected);
+  }
+});

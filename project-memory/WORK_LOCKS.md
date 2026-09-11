@@ -1,11 +1,22 @@
 # Work Locks
 
-## LOCK-FM-SOCIAL-OAUTH-20260911
-- Task: FM-SOC7-001 / FM-CR-031
+## LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
+- Task: FM-SOC7-001 / FM-CR-032
 - Status: ACTIVE
 - Risk: R4
 - Holder: Codex
+- Baseline: verified main 95bbd13a1a579a0c6c9361d81e4a7bf912637879, exact tree 6cb730ebd069ebe03f585f70e9ce826635b5975a; final #1102 source receipt read.
+- Scope: official sign-in/return UI, server-authorized once-only X initial preview and isolated Staging schema control. No Production SQL or provider activation; no Backup implementation changes.
+- Evidence plan: independent provider docs, browser navigation, real PostgreSQL 17 constraints/duplicate/rollback/schema comparison, negative route/target tests and required current-head PR checks. Existing Production audit failure is retained and cannot support fresh operational acceptance.
+- Recovery: default-off source revert; transactional target apply with pre/postflight. A partial or indeterminate schema stops for read-only verification, never automatic drop or retry.
+
+## LOCK-FM-SOCIAL-OAUTH-20260911
+- Task: FM-SOC7-001 / FM-CR-031
+- Status: RELEASED
+- Risk: R4
+- Holder: Codex
 - Scope: owner explicitly resumes TikTok and X/Twitter connection engineering. Official OAuth, encrypted account-bound storage, bounded read-only X DM adapter and honest channel capability UI; one text writing style per account. Discord remains later.
+- Closeout: final PR #1102 receipt releases this bounded source lock. The preceding publication is complete; its separate Backup audit failure and real provider prerequisites remain open.
 - Baseline: current main 25c042ba4bb2df134bad7484c951cf04681c1f26; #1101 final receipt releases the documentation lock. Creator Staging source draft cd5cac7c remains separately retained, unapplied.
 - Evidence plan: independent provider documentation, negative OAuth/tenant/token tests, real PG17 isolation/rollback checks, route/UI and current-head CI. Fixtures cannot prove external access.
 - Recovery: disabled-by-default runtime, controlled SQL only, bounded code revert; disconnect deletes local encrypted credentials. No automatic send or paid provider purchase.

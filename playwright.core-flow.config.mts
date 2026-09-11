@@ -75,6 +75,12 @@ export default defineConfig({
         ...process.env,
         HOSTNAME: "127.0.0.1",
         PORT: "3100",
+        // Isolated browser fixtures intercept both OAuth routes; these are not real apps.
+        META_APP_ID: "fanmind-synthetic-meta-app",
+        META_APP_SECRET: "fanmind-synthetic-meta-secret",
+        INSTAGRAM_REDIRECT_URI: `${APP_ORIGIN}/api/integrations/instagram/callback`,
+        FACEBOOK_REDIRECT_URI: `${APP_ORIGIN}/api/integrations/facebook/callback`,
+        FANMIND_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
       },
     },
   ],

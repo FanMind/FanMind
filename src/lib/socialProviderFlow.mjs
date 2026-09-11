@@ -17,7 +17,7 @@ export async function handleSocialRequest({ request, provider, action, authorize
   let origin;
   try {
     providerPolicy(provider);
-    if (!Object.hasOwn({ status: "GET", callback: "GET", start: "POST", disconnect: "POST", messages: "POST" }, action)) return json({ error: "not_found" }, 404);
+    if (!Object.hasOwn({ status: "GET", callback: "GET", start: "POST", disconnect: "POST", messages: "POST", "initial-messages": "POST" }, action)) return json({ error: "not_found" }, 404);
     const method = action === "status" || action === "callback" ? "GET" : "POST";
     if (request.method !== method) return json({ error: "method_not_allowed" }, 405);
     origin = canonicalOrigin(env);
@@ -56,7 +56,9 @@ export async function handleSocialRequest({ request, provider, action, authorize
       catch { storageReady = false; }
       return json({ available: Boolean(config) && storageReady, connected: Boolean(row),
         accountName: row?.display_name ?? null, expiresAt: row?.expires_at ?? null,
-        nextReadAt: row?.next_read_at ?? null, capability: provider === "tiktok" ? "profile_only" : "dm_read_preview" });
+        nextReadAt: row?.next_read_at ?? null,
+        initialReadPending: Boolean(config) && provider === "x" && row?.initial_read_pending === true && Date.parse(row.next_read_at) <= Date.now(),
+        capability: provider === "tiktok" ? "profile_only" : "dm_read_preview" });
     }
     if (action === "start") {
       const state = randomSecret(); const verifier = randomSecret(); const hash = stateDigest(state);
@@ -92,7 +94,7 @@ export async function handleSocialRequest({ request, provider, action, authorize
     const row = assertRow(await store.read(workspaceId, provider), workspaceId, provider);
     const lease = randomUUID();
     const leaseParams = { ...params, p_revision: row.revision, p_lease: lease };
-    const claimed = await store.rpc("claim_read", leaseParams);
+    const claimed = await store.rpc("claim_read", { ...leaseParams, p_initial_only: action === "initial-messages" });
     if (!Array.isArray(claimed) || claimed.length !== 1) throw new SocialProviderError("rate_limited");
     const current = assertRow(claimed[0], workspaceId, provider);
     if (current.revision !== row.revision) throw new SocialProviderError("connection_changed");

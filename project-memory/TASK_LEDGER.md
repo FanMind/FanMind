@@ -365,8 +365,8 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Goal: Real technical acceptance of Phase 7 — TikTok, X/Twitter, Discord and conditional OnlyFans.
 - Owner scope: FM-DEC-017 / FM-CR-031 resumes TikTok and X now alongside Creator. One account has one text writing style; Discord remains later.
 - Result: official own-profile OAuth and X DM preview source prepared with encrypted account-bound storage, one-use state, read lease/rotation/disconnect and honest UI. No generally live connector, target SQL apply or full CRM ingestion claim.
-- Evidence: docs/integrations/TIKTOK_X_CONNECTIONS.md and RECEIPT-FM-SOCIAL-OAUTH-20260911; required current-head PG17/browser/CI and publication are next.
-- Next step: finish source review/publication, then the target-bound controlled schema rollout and actual provider/app/account/budget/legal acceptance. Resume retained Creator Staging draft separately; preserve prior work.
+- Evidence: #1102 final receipt proves completed source publication on 95bbd13a. FM-CR-032 / FM-DEC-018 continues the official sign-in/return journey, once-only X initial preview and controlled Staging schema setup. No repeated publication of #1102 is pending.
+- Next step: verify and publish the current journey/control increment, then target-bound schema Verify/Apply/Postflight and actual central FanMind app/account/budget/legal acceptance. Resume retained Creator Staging draft separately; preserve prior work. Backup incident under FM-OPS-001 stays open separately.
 - Do not repeat: No scraping, self-bot, reverse engineering, unofficial bypass or reimplementation of existing Meta/Creator foundations.
 
 ## FM-SALES-001

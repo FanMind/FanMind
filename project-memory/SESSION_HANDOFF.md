@@ -1,3 +1,13 @@
+## Connection return and first preview — 2026-09-11
+- Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018; Risk R4; LOCK-FM-SOCIAL-CONNECT-FLOW-20260911.
+- Owner confirms FanMind login -> choose channel -> official platform login/consent -> return and permitted retrieval. Central FanMind developer-app configuration is distinct from each Creator's own consent; no platform passwords in FanMind. One text writing style per account remains binding.
+- Implemented: return opens TikTok/X/Instagram/Facebook; Meta login buttons use document navigation compatible with the existing CSP. X initial preview requires a server-confirmed pending connection and consumes the same DB read lease atomically; duplicate URL/tab/reload cannot authorize another first read. Manual reads retain the 15-minute bound.
+- Controlled Staging schema Verify/Apply/Postflight source uses pinned SQL, target/commit/TLS binding, private passfile and exact catalog/function/ACL comparison. Both Social tables were absent in the fresh read-only Staging preflight. No target SQL or provider activation has run.
+- Verification so far: 25 focused behavior/control tests pass; TypeScript and Next build pass. Required independent PG17/schema/rollback and Chromium journey checks remain pending in current-head CI.
+- Prior #1102 publication is closed: merged 95bbd13a, matching tree 6cb730eb, Deploy 34582527767 and public Readiness 34582645358 passed. Final receipt released LOCK-FM-SOCIAL-OAUTH-20260911; previous pending-source instructions below are superseded.
+- Backup audit 34582645378 failed due to the earlier September 11 database backup. Follow-up is recorded separately under FM-OPS-001; no current all-green Operations claim. Owner prioritizes Social engineering; no check/history is weakened.
+- Next: independent source countercheck/publication, controlled Staging installation, then central app/consent/budget/provider acceptance. Creator draft cd5cac7c is retained unchanged; Android and owner-deferred paid activation keep their prior order.
+
 ## TikTok / X connection implementation — 2026-09-11
 - Task: FM-SOC7-001 / FM-CR-031 / FM-DEC-017; Risk R4; LOCK-FM-SOCIAL-OAUTH-20260911.
 - Owner now explicitly includes TikTok and X/Twitter in ongoing Creator/Social work. One account, one text writing style remains FM-DEC-016; Discord/manager/team work stays later.

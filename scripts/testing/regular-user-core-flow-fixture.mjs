@@ -1081,6 +1081,20 @@ function createRequestHandler(state) {
         });
         return;
       }
+      const syntheticAuthorization = /^\/__social-authorization\/(instagram|facebook)$/u.exec(url.pathname);
+      if (syntheticAuthorization) {
+        if (request.method !== "GET" || url.search) {
+          sendError(request, response, 405, "method_not_allowed");
+          return;
+        }
+        response.writeHead(200, {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+          "Content-Security-Policy": "default-src 'none'",
+        });
+        response.end(`<main>Synthetic ${syntheticAuthorization[1]} authorization</main>`);
+        return;
+      }
       if (url.pathname === "/__state") {
         if (request.method !== "GET") {
           methodNotAllowed(request, response, new Set(["GET"]));
