@@ -1,8 +1,11 @@
 ## RECEIPT-FM-CREATOR-META-FINISH-20260911
+
+- Target update: #1105 source published as 3f6178bd (tree da35ac81), Deploy 34622111581 / public Readiness 34622261563 pass. Protected Creator Verify 34622658443 and Apply 34623104141 confirm exact schema installation on isolated Staging with runtime off; independent 16:39:30 UTC catalog confirms four empty RLS tables and browser update denial. No repeat Apply.
+- #1106 source continuation: real JWT test, exact-run recovery, shared fixture-member lock and bounded responses. Necessary Social metadata export correction plus exact-release-bound real PDF acceptance are included so the same fixture run can prove both account isolation and delivery. Local Operations: 1325 pass, three local PG17 skips, zero failures; real PG17 CI remains required. Current final-source review, deploy and JWT/PDF result are pending. Full runtime, account/contact deletion, style quality and provider consent remain open.
 - Task/change: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4.
-- Status: IN_PROGRESS; lock LOCK-FM-CREATOR-META-FINISH-20260911.
+- Status: IN_PROGRESS; lock LOCK-FM-CREATOR-META-FINISH-20260911. Controlled JWT acceptance is now prepared with five behavior-tested failure/cleanup boundaries; real target execution remains pending.
 - Implementation evidence: PR #1105 at first head a37eb23; Web/build/browser/security passed. Review P1/P2 prompted authenticated SELECT-only Creator tables, owner-checked atomic save RPC and complete grantee allowlists. The PG17 temporary-schema comparator and Expo57 patches are corrected; new-head CI/review and target proof remain required. Baseline d19254f0/tree79e9d176 verified. Previous Social #1104 receipt is ACCEPTED only for its empty Staging/source foundation and its lock is released.
-- Countercheck evidence: current main/PR completion and local source hashes independently match; required source/target tests remain open.
+- Countercheck evidence: current main/PR completion and local source hashes independently match. #1106 review identified opaque-key Bearer handling and shared-member concurrency; the shared Supabase header builder and existing core/CSV workflow lock now cover both. Seven acceptance behavior/contract tests plus native schema/control checks must pass on the new head. Real target tests remain open.
 - Falsifier: a forged callback URL causing an import, an account mismatch, two selectable Creator styles, or a claimed active provider without real consent would contradict this goal.
 - Recovery: transactional Staging installation, unchanged default-off gates until current target/runtime proof; code revert preserves data.
 

@@ -127,7 +127,7 @@ const SECTION_LABELS: Record<
 > = {
   social_provider_connections: { de: "TikTok- und X-Kontoverbindungen (ohne Tokens)", en: "TikTok and X account connections (without tokens)" },
   creators: { de: "Creator-Persona", en: "Creator persona" },
-  creator_voices: { de: "Creator-Stimme", en: "Creator voice" },
+  creator_voices: { de: "Creator-Schreibstil", en: "Creator writing style" },
   creator_playbooks: { de: "Creator-Angebote und Grenzen", en: "Creator offers and boundaries" },
   creator_commercial_events: { de: "Bestätigte Kauf- und Angebotsereignisse", en: "Confirmed purchase and offer events" },
   connections: { de: "Meta-Verbindungen (ohne Tokens)", en: "Meta connections (without tokens)" },

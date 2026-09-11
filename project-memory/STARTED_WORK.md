@@ -1,3 +1,8 @@
+## Creator JWT follow-through — 2026-09-11
+- Scope: FM-CREATOR-001 / FM-CR-033, existing active lock LOCK-FM-CREATOR-META-FINISH-20260911.
+- Owner's explicit finish request includes controlled isolated Staging and synthetic tests. The new acceptance action is exact-reviewed-main and protected-Staging bound; it changes only its own marked test bundles and the already controlled temporary member credential.
+- State: IMPLEMENTED_NOT_VERIFIED. No runtime/quality/provider acceptance inferred from local mocked checks. Recovery uses exact run markers, independent cleanup and ephemeral credential revocation.
+
 ## Creator and Meta continuation — 2026-09-11
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4; LOCK-FM-CREATOR-META-FINISH-20260911.
 - Owner requests completing the listed Social/Creator steps. Normal branch/PR/publication and technically validated isolated Staging work are authorized in the current session; no new request for the same permission.

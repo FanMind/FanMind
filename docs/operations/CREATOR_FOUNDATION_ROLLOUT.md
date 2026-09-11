@@ -1,6 +1,6 @@
 # Creator foundation: controlled rollout contract
 
-Status: source preparation, not a completed Staging or Production rollout.
+Status: source #1105 published on main 3f6178bd; protected Staging Verify 34622658443 passed with STATE=absent / NEXT=apply. Apply 34623104141 committed at 16:38:15 UTC with exact POSTFLIGHT=PASS and runtime disabled; real JWT/runtime acceptance remains pending.
 Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Workspace.
 
 ## Reviewed artifact and target boundary
@@ -9,7 +9,7 @@ Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Wo
 - SHA-256: `8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f`
 - Required PostgreSQL major: 17. Real isolated CI checks use the existing pinned PG17 service and a dedicated disposable database only.
 - Observed FanMind Staging on 2026-09-10: PostgreSQL 170006; creators, creator_voice_profiles and creator_sales_playbooks absent. This read proves absence, not permission or successful application.
-- No migration was applied during this implementation. No customer records or provider settings were changed.
+- The original source preparation did not apply a migration. No customer records or provider settings were changed.
 - A Supabase CLI scaffold attempt was interrupted during dependency acquisition; an empty scaffold and temporary version marker were removed. The reviewed SQL remains outside the generic migration ledger. No generic db push or ledger repair is authorized by this file.
 
 ## Before a target write
@@ -95,3 +95,82 @@ The source now excludes both explicit and default legacy reply-profile prompts
 from a configured Creator's AI context. When the Creator rollout is enabled,
 settings expose business rules and the one Creator style; the reply menu does
 not offer legacy profiles. Stored legacy settings are preserved for recovery.
+
+## Real JWT foundation acceptance
+
+The workflow shares `fanmind-staging-core-csv-write` with every other current
+consumer of the fixed ephemeral member, so activation, tests and revocation
+cannot overlap. API-key headers use the shared Supabase builder: opaque keys
+are never presented as Bearer JWTs.
+
+The same protected workflow offers `accept` with `accept-creator-foundation`.
+It first requires the exact schema postflight on the reviewed main commit; an
+absent schema cannot start the test. It then uses the two existing named, marked,
+active synthetic Staging workspaces and the existing ephemeral member controller.
+No owner password is changed. The member credential is generated and masked for
+this job only, then independently rotated and proven unusable in an always step.
+
+The test refuses preexisting Creator rows. Real owner/member/foreign JWTs verify
+one Creator per workspace, denial of direct table writes, separate text contexts,
+revocation of approval on edit, stale revisions, simultaneous saves and reapproval.
+It uses only synthetic text and no model/provider call. PostgreSQL SQLSTATE 40001
+is checked alongside its PostgREST HTTP 500 mapping; unrelated server failures are
+not accepted as revision evidence. References: PostgREST `/references/errors.html`
+and the existing Supabase local-session sign-out contract.
+
+Each created profile contains the exact workflow run ID, attempt and reviewed SHA
+as its marker. After normal or indeterminate replies, cleanup rechecks the owner,
+workspace identity and marker before deleting only that run's newly created
+bundle. A separate always step repeats cleanup and verifies all four Creator
+tables are empty for both synthetic workspaces. Another run's data is never
+removed by an ordinary test or its always-cleanup. Cleanup failure fails the workflow; inspect the recorded run before any retry. The normal application Creator flag stays off throughout.
+
+This proves only the foundation JWT/approval/bundle-cascade contract when the real
+run succeeds. It does not prove a deployed enabled Creator UI, whole-account or
+contact deletion, DSAR delivery, genuine writing quality, learning, provider
+approval or Production readiness. Those existing acceptance steps remain open.
+
+## Interrupted acceptance recovery
+
+The protected `cleanup` action requires `cleanup-creator-foundation`, the current
+exact reviewed main commit and an explicit `cleanup_receipt` containing the
+original `RUN_ID:RUN_ATTEMPT:COMMIT`. Read the failed workflow before selecting
+this receipt. The current invocation must not silently substitute its own attempt.
+Recovery rechecks the installed schema, both owner sessions and marked fixture
+identities, then deletes only bundles matching that original receipt. It refuses
+all other data and never provisions or rotates a member credential. Ordinary
+`accept` rejects any recovery receipt. A failed cleanup remains failed and must
+be independently reconciled before another acceptance.
+
+Fixture provisioning also shares the Core/CSV member lock. All acceptance and
+cleanup HTTP response bodies are counted as bytes while streaming and cancelled
+at 100 KB, including error responses. Ten behavior tests cover these corrections;
+27 targeted acceptance, fixture and workflow-supply-chain tests pass locally.
+Fresh independent source review and CI are required before target acceptance.
+
+## Owner data disclosure after Social schema installation
+
+`social_provider_connections` remains service-role-only. The PDF export now uses
+a server-only metadata reader for six explicitly selected fields, with an owner
+check before and after the scoped read. Unexpected secret columns are discarded,
+responses are stream-bounded to 32 KB and only a recognized missing optional
+table is treated as empty. Creator datasets continue to use the owner's JWT and
+RLS; a failed authorized read blocks export instead of silently omitting data.
+
+The protected `accept` action installs only the pinned dependencies without
+lifecycle scripts and requires `/api/version` to match the reviewed Staging
+commit before any test login or bundle write. While the two marked test profiles
+exist, each owner downloads the actual PDF endpoint with that owner's session.
+The bounded in-memory parser requires the owner's Creator ID and writing style
+and rejects the other Creator/workspace/style or credentials. Version checks
+surround each download. PDF bytes and extracted text are never saved or logged.
+A failure still uses the same receipt-bound cleanup and member revocation.
+Recovery-only cleanup needs neither the application deployment nor PDF packages.
+
+Four local cases exercise the real PDF generator/parser, foreign records and
+credentials, rejected targets/releases/sessions, HTML/error bodies, release
+changes and streaming size limits. Four metadata-reader tests cover exact owner
+authorization, safe projection, optional schema handling and the actual collector.
+These are source checks; only a successful protected target `accept` establishes
+real Staging PDF delivery. Whole-account/contact deletion, enabled runtime UI,
+real writing quality and provider approval remain separate.
