@@ -1,4 +1,5 @@
 ## 2026-09-11 — Meta browser fixture configuration
+- Follow-through: job 103228269190 reached the external redirect after enabling the synthetic key, but Playwright only routes the first URL of an HTTP redirect chain (confirmed in installed official typings). Replace the second provider route mock with an actual static HTML response on the existing separate local fixture origin. The test still crosses an origin under the unchanged app CSP and never needs a real Meta request.
 - Context: FM-CR-032 / PR #1103, isolated synthetic browser job 103226861219 in run 34588101442.
 - Evidence: TikTok/X steps including return and initial X read completed; the Instagram connection button stayed disabled because the local fixture lacked its encryption key. This is the intended configuration guard, not a reason to force-click or weaken it.
 - Correction: add a deterministic synthetic 32-byte key and both local callback URLs only to the explicitly acknowledged local Playwright server environment. Real app credentials, provider calls and target configuration are unchanged. A fresh browser run is required.

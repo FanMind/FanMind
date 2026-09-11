@@ -62,12 +62,14 @@ test("TikTok profile capability and X read preview are explicit; disconnect clea
   await expect(x.getByText("Synthetic inbound message", { exact: true })).toHaveCount(0);
   expect(initialReads).toBe(1); expect(reads).toBe(2); expect(errors).toEqual([]);
   for (const provider of ["instagram", "facebook"] as const) {
-    const target = provider === "instagram" ? "https://www.instagram.com/accounts/login/" : "https://www.facebook.com/dialog/oauth";
+    // Playwright routes intercept only the first URL of a redirect chain. A real
+    // response on the isolated fixture origin proves cross-origin document
+    // navigation under CSP without allowing a request to a real provider.
+    const target = `http://127.0.0.1:54321/__social-authorization/${provider}`;
     await page.route(`**/api/integrations/${provider}/start?type=${provider}_messages`, async route => {
       expect(route.request().method()).toBe("GET");
       await route.fulfill({ status: 302, headers: { Location: target } });
     });
-    await page.route(target, route => route.fulfill({ contentType: "text/html", body: `<main>Synthetic ${provider} authorization</main>` }));
     await page.goto(`/channels?connected=${provider}_messages`);
     const modal = page.getByRole("dialog");
     await expect(modal).toBeVisible();
