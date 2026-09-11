@@ -4,11 +4,11 @@ This is the single compact queue for actions that genuinely require the owner, a
 
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
-- NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external control EXT-META-CREATOR-APP-20260911.
-- Needed: missing personal Meta developer access, actual central FanMind Facebook/Instagram app and permissions, each Creator's own consent and real provider acceptance. Reuse the owner's existing authorization; no renewed general permission request.
+- NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external controls EXT-META-CREATOR-APP-20260911 and EXT-WHATSAPP.
+- Needed: missing personal Meta developer access, actual central FanMind Facebook/Instagram app and permissions, each Creator's own consent and real provider acceptance. Phase 3 additionally requires separately approved WhatsApp Business credentials/permissions and real Staging/E2E/revocation/reconnect/tenant/idempotency proof for its dormant foundation. Reuse the owner's existing authorization; no renewed general permission request.
 - Current access: secure login connection interrupted; fresh Meta target still shows login methods. App/permission state remains unknown; no provider mutation occurred.
 - Where: secure provider sign-in/console, never passwords or tokens in chat.
-- Boundary: no payment, auto-send or Production activation implied. TikTok/X are separate below, with their own Phase 7 completion state.
+- Boundary: no payment, auto-send, WhatsApp or Production activation implied. TikTok/X are separate below, with their own Phase 7 completion state. Existing OnlyFans/Discord external controls remain open; this selected-channel queue does not accept the whole Phase 7 gate.
 
 ## FM-SOC7-OWNER-TIKTOK-X-20260911 — TikTok/X-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED

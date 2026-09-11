@@ -1,5 +1,7 @@
 # Social-Verbindungen auf isoliertem Staging einrichten
 
+Die Installation ist abgeschlossen: #1104 / Main d19254f06da3205a954e903f72e5c5b6928de3ab, Verify 34591253931, Apply 34591339718 am 11.09.2026 um 10:53:12 UTC mit POSTFLIGHT=PASS und Staging Deploy 34591566257. Unabhängig um 10:54:15 UTC: zwei RLS-Tabellen, acht interne Funktionen, korrekte Rechte und null Verbindungen/OAuth-Versuche. RUNTIME_ACTIVATED=false bezeichnet hier, dass der Controller keine Aktivierung vorgenommen hat; es ist keine Messung eines Host-Schalters. Der Ablauf unten dokumentiert die Installation und darf nicht als Aufforderung zu einem erneuten Apply gelesen werden. Tatsächliche App-/Creator-/Provider-/Pilotabnahme bleibt offen; vor weiterer Zielarbeit aktuellen Zustand prüfen.
+
 Dieser Weg installiert nur das neue TikTok-/X-Verbindungsschema. Er aktiviert
 keinen Provider, lädt keine Nachrichten und verändert keine Produktionsdaten.
 Er verwendet das bereits vorhandene Staging-Projekt; eine weitere Datenbank oder
@@ -11,7 +13,7 @@ zwei Tabellen und acht interne Funktionen. Der SHA256 in
 `scripts/operations/social-provider-schema-sql.mjs` bindet exakt diesen Inhalt.
 Stand vor Umsetzung: beide Tabellen auf dem am 11.09.2026 lesend geprüften
 Staging-Projekt nicht vorhanden. Vor jeder Anwendung den Zielzustand neu prüfen.
-Dieses bislang uninstallierte Schema ersetzt keine frühere Installation still.
+Diese damalige Vorbedingung ist durch den oben belegten Apply überholt. Eine vorhandene oder abweichende Installation wird nicht still ersetzt.
 
 Der manuelle Workflow `.github/workflows/social-provider-schema-staging.yml`
 verwendet das geschützte GitHub-Environment `staging`. Er läuft ausschließlich

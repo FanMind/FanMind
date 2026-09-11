@@ -351,8 +351,10 @@ Das aktuelle Umsetzungspaket erweitert die bestehende Reply-Engine um
 strukturierte Creator-Stimmen/Playbooks, automatische Workspace-Kontextauflösung,
 Memories/Summary-Kontext und Recommended/Softer/Stronger mit konservativer
 Gesprächsempfehlung. Profile sind im KI-Einstellungsbereich editierbar. Neue
-SQL-Objekte und der serverseitige Creator-Schalter benötigen noch ihren
-getrennten Schema-/Staging-Rollout; Code allein bedeutet keine Live-Aktivierung.
+Creator-SQL-Objekte sind auf isoliertem Staging installiert und durch
+34629009649 samt JWT-/Revisions-/PDF-Abnahme belegt. Der tatsächliche
+Prozessschalter und die aktivierte Oberfläche sind noch nicht unabhängig
+abgenommen; Code allein bedeutet keine Live-Aktivierung.
 Bestätigte Kauf-/Angebotsereignisse und Fan-Commercial-Daten sind modelliert
 und über eine quellengestützte manuelle Prüfung erfassbar; die vollständige
 Feedback-Lernschleife und die verblindete Bewertung
@@ -367,8 +369,10 @@ die aktuelle Anbindungsarbeit auf. Implementiert sind offizielle Kontoanmeldung,
 verschlüsselte accountgebundene Tokens, Trennen und eine begrenzte X-DM-Lesevorschau.
 TikTok gibt in diesem Umfang ausschließlich das eigene Profil frei. Der zusätzliche
 Pilot bleibt standardmäßig aus und strukturell auf isoliertes Staging begrenzt;
-kontrolliertes Schema-Rollout, App-/Provider-/Budget-/Datenschutzabnahme und spätere
-Production-Aktivierung sind offen. Die Vorschau speichert keine Fans oder Chats im
+das kontrollierte Schema wurde am 11. September durch #1104 / Apply 34591339718
+auf d19254f0 installiert und unabhängig nachgeprüft. App-/Provider-/Budget-/
+Datenschutzabnahme, tatsächlicher Pilotbetrieb und spätere Production-Aktivierung
+bleiben offen. Die Vorschau speichert keine Fans oder Chats im
 CRM und erzeugt keinen weiteren Schreibstil. Discord bleibt später.
 Details: `docs/integrations/TIKTOK_X_CONNECTIONS.md`.
 
@@ -377,8 +381,11 @@ eigene Anmeldung und Zustimmung auf der offiziellen Plattformseite, Rückkehr zu
 gewählten Kanal. FanMind erhält kein Plattform-Passwort; die Entwickler-App wird
 zentral eingerichtet. X hat einen einmaligen, datenbankgebundenen Erstabruf und
 danach manuelle Vorschauen mit unveränderter Begrenzung. Der kontrollierte
-Staging-Schema-Workflow ist vorbereitet; tatsächlicher Rollout und Provider-Zugang
-bleiben separat zu belegen. Der unter #1102 dokumentierte nächtliche Backup-Fehler
+Staging-Schema-Workflow hat die Installation mit Verify 34591253931 und Apply
+34591339718 / POSTFLIGHT=PASS abgeschlossen; Staging Deploy 34591566257 auf
+d19254f0 bestand ebenfalls. Diese datierte Grundlagenabnahme ist keine aktuelle
+Provider-/Pilotabnahme. Vor neuer Zielarbeit Zustand und Berechtigungen prüfen;
+keine erneute Installation der bereits angewendeten Grundlage. Der unter #1102 dokumentierte nächtliche Backup-Fehler
 bleibt offen und ist keine neue Voraussetzung für unabhängige Social-Quellarbeit;
 er verhindert weiterhin eine vollständig grüne aktuelle Betriebsabnahme.
 

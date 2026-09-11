@@ -21,8 +21,6 @@ standing-authorized safe work
 ## Candidate evaluation
 
 - `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
-- `NBA-PHASE3-SOCIAL` priority 6: **EXECUTABLE** — standing-authorized safe work
-- `NBA-PHASE7-SOCIAL` priority 7: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-TIKTOK-X-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required

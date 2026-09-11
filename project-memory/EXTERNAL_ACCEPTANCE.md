@@ -1,7 +1,7 @@
 ## EXT-META-CREATOR-APP-20260911
 - Related: FM-SOC3-001 / phase3_social; Status: OPEN; Risk R4.
 - Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; missing personal Meta access and individual Creator consent remain factual requirements.
-- Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. Code/schema/feature flags cannot close this control.
+- Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. The same Phase 3 owner queue also retains the separate dormant WhatsApp credentials/permissions and Staging/E2E control under EXT-WHATSAPP. Code/schema/feature flags cannot close this control.
 - Current access observation: the secure login request ended with a connection error; a fresh canonical Meta developer tab still shows the sign-in methods. No signed-in app state, credentials or successful login is claimed. No app configuration was changed.
 - TikTok/X are independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-TIKTOK-X-EXTERNAL / phase7_social; Meta completion cannot close them.
 
@@ -148,6 +148,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-WHATSAPP
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL; no activation implied.
 - Related: FM-SOC3-001
 - Status: OPEN
 - Risk: R3
