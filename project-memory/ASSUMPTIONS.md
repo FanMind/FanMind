@@ -1,3 +1,9 @@
+## ASM-FM-CREATOR-DEPLOYED-FLAG-20260911
+- Related: FM-CREATOR-001 / FM-CR-033; Risk R4; Status: NEEDS_VERIFICATION.
+- Assumption: job-local FANMIND_CREATOR_INTELLIGENCE_ENABLED=false proves the running Staging process is disabled. That inference is INVALIDATED: /api/version does not attest this flag and the acceptance validates only its own environment.
+- Evidence: #1109 independent review; workflow/acceptance source inspection. No activation operation was performed, but no host/process flag proof is available.
+- Next: independent actual process or authenticated feature-state observation before an enabled-runtime/current-off claim; never read or expose secret values. The bounded schema/JWT/PDF result remains valid within its stated scope.
+
 # Assumption Verification Register
 
 ## ASM-FM-CREATOR-SOCIAL-20260910

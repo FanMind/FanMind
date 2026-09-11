@@ -85,8 +85,19 @@ keine SQL ein und aktiviert keinen Provider. Das additive Schema liegt unter
 `social-provider-schema-staging.yml` prüft den exakten Main-Commit, das geschützte
 Staging-Ziel und das gepinnte SQL. Verify/Apply/Postflight und tatsächliche
 Zielabnahme sind in `docs/operations/SOCIAL_PROVIDER_SCHEMA_STAGING.md` beschrieben.
-Die Quellimplementierung dieses Wegs ist noch keine tatsächlich ausgeführte Zielabnahme.
-Ein fehlendes Schema blockiert die Anmeldung vor dem Provider-Redirect.
+Die begrenzte Schema-Installation wurde am 11. September 2026 tatsächlich
+abgeschlossen: #1104 / Main d19254f06da3205a954e903f72e5c5b6928de3ab, Verify
+34591253931, Apply 34591339718 / POSTFLIGHT=PASS und Staging Deploy 34591566257.
+Die unabhängige Nachprüfung um 10:54:15 UTC bestätigte zwei RLS-Tabellen, acht
+interne Funktionen, korrekte Rechte und null Verbindungen/OAuth-Versuche. Das ist
+ein datierter Grundlagenbeleg, keine reale App-/Nachrichten-/Pilotabnahme.
+Vor neuer Zielarbeit den aktuellen Zustand prüfen; die Installation nicht erneut
+als offene Aufgabe starten. Ein tatsächlich fehlendes Schema blockiert weiterhin
+die Anmeldung vor dem Provider-Redirect. Der historische
+Nachweis ist unter EV-SOCIAL-STAGING-FOUNDATION-20260911 registriert; spätere
+Staging-Deploys haben seine Verwendung als aktuellen Zielnachweis bereits
+ungültig gemacht. Für neue Ziel-/Pilotabnahmen ist eine aktuelle Prüfung nötig,
+keine Wiederholung der abgeschlossenen Installation.
 
 Serverkonfiguration (Werte niemals in Git oder Chat):
 

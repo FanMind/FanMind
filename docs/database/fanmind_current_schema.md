@@ -30,13 +30,19 @@ Die kontrollierte Staging-Installation ist nachgewiesen: Verify 34622658443,
 Apply 34623104141 auf Main 3f6178bd, exakter POSTFLIGHT=PASS am 11. September
 2026 um 16:38:15 UTC. Die unabhängige Katalogprüfung um 16:39:30 UTC bestätigt
 vier leere RLS-Tabellen, drei Funktionen und gesperrte Creator-/Stil-Updates für
-authenticated. Lauf 34626769355 bestätigt reale JWT-Kontentrennung und beide
-Owner-PDF-Exporte, scheitert aber am Revisionskonflikt mit SQLSTATE 40001.
-Die originale Grundlage bleibt unverändert; `creator_revision_conflict_fix.sql`
-bereitet eine getrennt bestätigte Funktionskorrektur auf PT409 vor. Nur ein
-exakt geprüftes, leeres Staging-Schema darf aktualisiert werden. Runtime bleibt
-aus; volle Revisions-/UI-, Lösch- und Qualitätsabnahme bleiben erforderlich.
-Production ist nicht installiert oder aktiviert. Modell:
+authenticated. Die Funktionskorrektur `creator_revision_conflict_fix.sql` ist
+nach Verify 34628681395 durch Upgrade 34628886294 auf Main f0c7a84e installiert:
+PT409 ersetzt ausschließlich die zwei Anwendungs-Versionskonflikte. Vollständiger
+alter und neuer Vertrag, leere Tabellen und unabhängiger Postflight bestanden.
+Die ursprüngliche Foundation wurde nicht erneut angewendet.
+
+Die reale JWT-/Freigabe-/Revisions-/PDF-Abnahme 34629009649 bestand ebenfalls.
+Cleanup und temporärer Passwort-Widerruf bestanden; unabhängig um 17:42:49 UTC
+vier leere Creator-Tabellen und keine hängenden Creator-RPCs. Der Lauf beweist
+keine aktivierte Creator-Oberfläche, vollständige Kontakt-/Kontolöschung oder
+echte Schreibqualität. Der Controller hat nichts aktiviert; der tatsächliche
+Staging-Prozessschalter ist noch unbestätigt. Eine Creator-Installation oder
+-Aktivierung auf Production wird durch diese Staging-Nachweise nicht belegt. Modell:
 `docs/CREATOR_INTELLIGENCE.md`; Artifact/Abnahme/Recovery:
 `docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`. Kein generischer Deploy/DB-Push.
 

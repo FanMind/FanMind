@@ -73,8 +73,8 @@
 - Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
 - Required for sales: false.
 - Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
-- Completed so far: first source package #1099 and its 14-check / Deploy / Audit / Readiness quorum are published (FM-EV-CREATOR-20260910). Own-account/Workspace model, controlled SQL, structured profile editor, automatic existing-pipeline Creator context, confirmed commercial entry, safe strategy and manual Social handoff implemented; 1,269 local Operations tests pass. Target/voice-quality acceptance remains open.
-- Exact next step: preserve the published source package, finish the bounded public-roadmap closeout and prepare protected Staging rollout/runtime acceptance plus the confirmed-chat learning loop. Android remains deferred; preserve genuine provider/legal/voice-quality acceptance.
+- Completed so far: source #1099-#1108 published. Own-account/single-style schema installed and upgraded on isolated Staging; real JWT/revision/approval/PDF acceptance 34629009649 and independent cleanup/member revocation/post-read passed (FM-EV-CREATOR-FOUNDATION-20260911). Deployed flag, enabled UI, full contact/account deletion, actual quality/learning/provider acceptance remain open.
+- Exact next step: repository and controlled synthetic-Staging UI/delete/learning engineering plus independent deployed-flag verification; external account/consent/provider/quality steps remain separate. Follow mutable freshness triggers/TTL; no repeated foundation Apply/Upgrade, Android or paid activation.
 
 ## FM-SEC-002
 - Date: 2026-09-10
@@ -364,9 +364,9 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Status: PARTIAL
 - Goal: Real technical acceptance of Phase 7 — TikTok, X/Twitter, Discord and conditional OnlyFans.
 - Owner scope: FM-DEC-017 / FM-CR-031 resumes TikTok and X now alongside Creator. One account has one text writing style; Discord remains later.
-- Result: official own-profile OAuth and X DM preview source prepared with encrypted account-bound storage, one-use state, read lease/rotation/disconnect and honest UI. No generally live connector, target SQL apply or full CRM ingestion claim.
+- Result: #1102-#1104 official own-profile OAuth, X DM preview/initial read and controlled Social schema are published; isolated Staging Apply 34591339718 / deploy 34591566257 completed. No generally live connector or full CRM ingestion claim.
 - Evidence: #1102 final receipt proves completed source publication on 95bbd13a. FM-CR-032 / FM-DEC-018 continues the official sign-in/return journey, once-only X initial preview and controlled Staging schema setup. No repeated publication of #1102 is pending.
-- Next step: verify and publish the current journey/control increment, then target-bound schema Verify/Apply/Postflight and actual central FanMind app/account/budget/legal acceptance. Resume retained Creator Staging draft separately; preserve prior work. Backup incident under FM-OPS-001 stays open separately.
+- Next step: owner-required actual central FanMind app/account/consent/budget/provider acceptance, with current target preflight. Creator foundation is already accepted in 34629009649; preserve installed schemas. Backup incident under FM-OPS-001 stays separate.
 - Do not repeat: No scraping, self-bot, reverse engineering, unofficial bypass or reimplementation of existing Meta/Creator foundations.
 
 ## FM-SALES-001

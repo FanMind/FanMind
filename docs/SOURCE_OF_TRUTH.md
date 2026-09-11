@@ -28,15 +28,22 @@ Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
 Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
 11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
 waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
-Der reale Staging-Lauf 34626769355 auf Main 03ecdc18 hat Owner-/Member-/
-Fremdkonto-Trennung, genau einen Stil pro Konto und beide tatsächlichen
-PDF-Datenauskünfte geprüft. Testdaten-Cleanup und Sperrung des temporären
-Testzugangs bestanden. Der Gesamtlauf scheiterte am Timeout einer veralteten
-Profilrevision: SQLSTATE 40001 löst in betroffenen PostgREST-Versionen
-Wiederholungen aus. Die gezielte, separat bestätigte PT409-Funktionskorrektur
-und die vollständige Revisionsabnahme stehen noch aus. Der Creator-Schalter
-bleibt aus; aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität
-und Plattformfreigaben bleiben offen. Production ist damit nicht aktiviert.
+Der geschützte Staging-Lauf [34629009649](https://github.com/FanMind/FanMind/actions/runs/34629009649)
+auf Main f0c7a84e bestand am 11. September 2026 die reale Creator-Grundlagenabnahme:
+Owner-/Member-/Fremdkonto-Trennung, genau ein Stil pro Konto, Freigabeentzug bei
+Änderungen, veraltete und gleichzeitige Speicherungen sowie beide echten
+PDF-Datenauskünfte. Unabhängige Bereinigung und Sperrung des temporären
+Testzugangs bestanden. Die Nachprüfung um 17:42:49 UTC bestätigt vier leere
+Creator-Tabellen und keine hängenden Creator-RPCs.
+
+Die gezielte PT409-Funktionskorrektur wurde zuvor durch Verify 34628681395 und
+Upgrade 34628886294 geprüft/installiert; die ursprüngliche Foundation wurde
+nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
+und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
+Grundlage. Der Lauf hat keine Creator-Aktivierung vorgenommen. Der tatsächliche
+Creator-Schalter im laufenden Staging-Prozess wurde nicht unabhängig geprüft.
+Aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und
+Plattformfreigaben bleiben offen; eine Production-Aktivierung ist nicht belegt.
 
 
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
@@ -344,8 +351,10 @@ Das aktuelle Umsetzungspaket erweitert die bestehende Reply-Engine um
 strukturierte Creator-Stimmen/Playbooks, automatische Workspace-Kontextauflösung,
 Memories/Summary-Kontext und Recommended/Softer/Stronger mit konservativer
 Gesprächsempfehlung. Profile sind im KI-Einstellungsbereich editierbar. Neue
-SQL-Objekte und der serverseitige Creator-Schalter benötigen noch ihren
-getrennten Schema-/Staging-Rollout; Code allein bedeutet keine Live-Aktivierung.
+Creator-SQL-Objekte sind auf isoliertem Staging installiert und durch
+34629009649 samt JWT-/Revisions-/PDF-Abnahme belegt. Der tatsächliche
+Prozessschalter und die aktivierte Oberfläche sind noch nicht unabhängig
+abgenommen; Code allein bedeutet keine Live-Aktivierung.
 Bestätigte Kauf-/Angebotsereignisse und Fan-Commercial-Daten sind modelliert
 und über eine quellengestützte manuelle Prüfung erfassbar; die vollständige
 Feedback-Lernschleife und die verblindete Bewertung
@@ -360,8 +369,10 @@ die aktuelle Anbindungsarbeit auf. Implementiert sind offizielle Kontoanmeldung,
 verschlüsselte accountgebundene Tokens, Trennen und eine begrenzte X-DM-Lesevorschau.
 TikTok gibt in diesem Umfang ausschließlich das eigene Profil frei. Der zusätzliche
 Pilot bleibt standardmäßig aus und strukturell auf isoliertes Staging begrenzt;
-kontrolliertes Schema-Rollout, App-/Provider-/Budget-/Datenschutzabnahme und spätere
-Production-Aktivierung sind offen. Die Vorschau speichert keine Fans oder Chats im
+das kontrollierte Schema wurde am 11. September durch #1104 / Apply 34591339718
+auf d19254f0 installiert und unabhängig nachgeprüft. App-/Provider-/Budget-/
+Datenschutzabnahme, tatsächlicher Pilotbetrieb und spätere Production-Aktivierung
+bleiben offen. Die Vorschau speichert keine Fans oder Chats im
 CRM und erzeugt keinen weiteren Schreibstil. Discord bleibt später.
 Details: `docs/integrations/TIKTOK_X_CONNECTIONS.md`.
 
@@ -370,8 +381,15 @@ eigene Anmeldung und Zustimmung auf der offiziellen Plattformseite, Rückkehr zu
 gewählten Kanal. FanMind erhält kein Plattform-Passwort; die Entwickler-App wird
 zentral eingerichtet. X hat einen einmaligen, datenbankgebundenen Erstabruf und
 danach manuelle Vorschauen mit unveränderter Begrenzung. Der kontrollierte
-Staging-Schema-Workflow ist vorbereitet; tatsächlicher Rollout und Provider-Zugang
-bleiben separat zu belegen. Der unter #1102 dokumentierte nächtliche Backup-Fehler
+Staging-Schema-Workflow hat die Installation mit Verify 34591253931 und Apply
+34591339718 / POSTFLIGHT=PASS abgeschlossen; Staging Deploy 34591566257 auf
+d19254f0 bestand ebenfalls. Diese datierte Grundlagenabnahme ist keine aktuelle
+Provider-/Pilotabnahme. Vor neuer Zielarbeit Zustand und Berechtigungen prüfen;
+keine erneute Installation der bereits angewendeten Grundlage. Der historische
+Nachweis ist unter EV-SOCIAL-STAGING-FOUNDATION-20260911 registriert; spätere
+Staging-Deploys haben seine Verwendung als aktuellen Zielnachweis bereits
+ungültig gemacht. Für neue Ziel-/Pilotabnahmen ist eine aktuelle Prüfung nötig,
+keine Wiederholung der abgeschlossenen Installation. Der unter #1102 dokumentierte nächtliche Backup-Fehler
 bleibt offen und ist keine neue Voraussetzung für unabhängige Social-Quellarbeit;
 er verhindert weiterhin eine vollständig grüne aktuelle Betriebsabnahme.
 

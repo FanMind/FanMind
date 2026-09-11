@@ -28,15 +28,22 @@ Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
 Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
 11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
 waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
-Der reale Staging-Lauf 34626769355 auf Main 03ecdc18 hat Owner-/Member-/
-Fremdkonto-Trennung, genau einen Stil pro Konto und beide tatsächlichen
-PDF-Datenauskünfte geprüft. Testdaten-Cleanup und Sperrung des temporären
-Testzugangs bestanden. Der Gesamtlauf scheiterte am Timeout einer veralteten
-Profilrevision: SQLSTATE 40001 löst in betroffenen PostgREST-Versionen
-Wiederholungen aus. Die gezielte, separat bestätigte PT409-Funktionskorrektur
-und die vollständige Revisionsabnahme stehen noch aus. Der Creator-Schalter
-bleibt aus; aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität
-und Plattformfreigaben bleiben offen. Production ist damit nicht aktiviert.
+Der geschützte Staging-Lauf [34629009649](https://github.com/FanMind/FanMind/actions/runs/34629009649)
+auf Main f0c7a84e bestand am 11. September 2026 die reale Creator-Grundlagenabnahme:
+Owner-/Member-/Fremdkonto-Trennung, genau ein Stil pro Konto, Freigabeentzug bei
+Änderungen, veraltete und gleichzeitige Speicherungen sowie beide echten
+PDF-Datenauskünfte. Unabhängige Bereinigung und Sperrung des temporären
+Testzugangs bestanden. Die Nachprüfung um 17:42:49 UTC bestätigt vier leere
+Creator-Tabellen und keine hängenden Creator-RPCs.
+
+Die gezielte PT409-Funktionskorrektur wurde zuvor durch Verify 34628681395 und
+Upgrade 34628886294 geprüft/installiert; die ursprüngliche Foundation wurde
+nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
+und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
+Grundlage. Der Lauf hat keine Creator-Aktivierung vorgenommen. Der tatsächliche
+Creator-Schalter im laufenden Staging-Prozess wurde nicht unabhängig geprüft.
+Aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und
+Plattformfreigaben bleiben offen; eine Production-Aktivierung ist nicht belegt.
 
 
 Kanalverbindung nach FM-DEC-018: in FanMind anmelden, Kanal wählen, direkt bei der
@@ -313,15 +320,17 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 - Referral-Rabatte gelten nur auf die Starter-Grundgebühr von 312 €/Monat. Einrichtung, KI-Add-ons, Connection-Pakete und Agency-Erweiterungen sind nicht rabattfähig; Referral und Agency-Mengenrabatt sind nicht kombinierbar.
 - Growth, Agency und Enterprise bleiben Roadmap / Coming Soon / Auf Anfrage, bis sie ausdrücklich freigegeben sind.
 - Verbindliche Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = Website-KI-Assistent, iOS/TestFlight, LinkedIn und weitere spätere Plattformanbindungen. Die deaktivierte Sicherheits-, Widget- und Nachrichteningestion-Basis des Website-Assistenten ist begonnen; KI-Dialog, menschliche Eskalation, E-Mail-Rückkanal und produktive Aktivierung fehlen noch. Die übrigen Phase-8-Anbindungen zählen nicht zum aktuellen Verkaufsübergabe-Gate.
-- FM-DEC-017: TikTok und X/Twitter sind jetzt in Anbindungsarbeit. Offizielle Kontoanmeldung, verschlüsselte Tokens und begrenzte X-DM-Lesevorschau sind als standardmäßig ausgeschalteter Staging-Pilot vorbereitet. TikTok-Login verbindet nur das Profil; direkter Nachrichtenzugang, Schema-/Provider-Abnahme und Production-Aktivierung bleiben offen. Ein Account behält auf allen Kanälen genau einen Text-Schreibstil. [Umfang und Einrichtung](docs/integrations/TIKTOK_X_CONNECTIONS.md).
+- FM-DEC-017: TikTok und X/Twitter sind jetzt in Anbindungsarbeit. Offizielle Kontoanmeldung, verschlüsselte Tokens und begrenzte X-DM-Lesevorschau sind als standardmäßig ausgeschalteter Staging-Pilot vorbereitet. TikTok-Login verbindet nur das Profil. Die begrenzte Social-Schema-Installation ist durch #1104 / Apply 34591339718 und Staging Deploy 34591566257 historisch abgeschlossen; spätere Deploys verlangen eine neue aktuelle Zielprüfung vor weiterer Nutzung. Direkter TikTok-Nachrichtenzugang, tatsächlicher Pilotbetrieb, Provider-Abnahme und Production-Aktivierung bleiben offen. Ein Account behält auf allen Kanälen genau einen Text-Schreibstil. [Umfang und Einrichtung](docs/integrations/TIKTOK_X_CONNECTIONS.md).
 - FanMind ist kein Bot: KI bereitet Antworten vor; der Mensch prüft, kopiert und sendet final selbst.
 - FM-DEC-015: Creator Intelligence und die ausgewählte Social-/KI-Handoff-Arbeit
   beginnen jetzt, Android folgt danach. Jeder Creator hat einen eigenen Account
   und Workspace; Teamzugänge, erweiterte Rechte, auditierbare Freigaben und
   Multi-Workspace-Verwaltung bleiben später. Die bestehende Reply-Engine erhält
   strukturierte Creator-Profile/Stimmen/Playbooks und automatische Kontexte.
-  Schema-/Staging-Rollout, reale Voice-Abnahme und die vollständige Kauf-/Lernschleife
-  sind eigene offene Schritte; Code bedeutet keine Live-Aktivierung.
+  Die Creator-Schema-/JWT-/Revisions-/PDF-Grundlage ist mit Lauf 34629009649
+  auf Staging abgenommen. Der tatsächliche Prozessschalter, die eingeschaltete
+  Oberfläche, vollständige Kontakt-/Kontolöschung, echte Schreibqualität und
+  Kauf-/Lernschleife bleiben offen; Code bedeutet keine Live-Aktivierung.
   Details: [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
 - Phase 5/6 zeigen getrenntes Staging und signierte Android-Builds als vorhandene
   Nachweise. Vollständiger Restore, echte Registrierung/E-Mail/Workspace,

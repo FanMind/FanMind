@@ -332,6 +332,43 @@
       "status": "COUNTERCHECKED",
       "observed_at": "2026-09-10T21:03:16+00:00",
       "source": "PR #1099, source merge 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c, tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4; 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a; PG17 job 103045962829 and real-browser job 103045963302. Code foundation only; no Creator target activation or whole gate completion."
+    },
+    {
+      "id": "EV-CREATOR-STAGING-FOUNDATION-20260911",
+      "gate": "creator_intelligence",
+      "class": "staging_smoke",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-11T17:42:49.476978Z",
+      "source": "Executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a, tree 2e01ad99; Staging deploy 34628740980, Verify 34628681395, PT409 Upgrade 34628886294, real JWT/revision/PDF acceptance 34629009649 and independent cleanup/member rejection PASS. Final independent read: four empty Creator tables and zero unfinished Creator RPCs. Historical bounded foundation proof only; actual deployed process flag, enabled UI, full account/contact deletion, quality/learning/provider acceptance are unverified. No runtime activation operation or provider/model call occurred.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "target_binding_change",
+        "creator_schema_or_acl_change",
+        "workflow_contract_change",
+        "credential_rotation_after_observation",
+        "before_new_creator_staging_action_or_current_target_acceptance"
+      ]
+    },
+    {
+      "id": "EV-SOCIAL-STAGING-FOUNDATION-20260911",
+      "gate": "phase7_social",
+      "class": "staging_smoke",
+      "status": "RECONCILIATION_REQUIRED",
+      "observed_at": "2026-09-11T10:56:52Z",
+      "source": "Historical #1104 / main d19254f06da3205a954e903f72e5c5b6928de3ab: Verify 34591253931, Apply 34591339718 committed with POSTFLIGHT=PASS at 10:53:12Z; independent 10:54:15Z catalog/ACL read confirms two RLS tables/eight functions and zero connections/attempts; Staging Deploy 34591566257 confirms that release at 10:56:52Z. Bounded installation remains completed history. This entry does not attest current target/process/provider state and does not authorize another Apply.",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "invalidated_by": "Later Staging deployments, including 34628740980 on f0c7a84e6105752d34b489520fb92d2bb7e5b61a; revalidate current state before a new Social target/pilot acceptance.",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "social_schema_or_acl_change",
+        "target_binding_change",
+        "workflow_contract_change",
+        "credential_rotation",
+        "before_new_social_target_or_provider_acceptance"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

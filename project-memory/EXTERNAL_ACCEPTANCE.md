@@ -1,12 +1,19 @@
+## EXT-META-CREATOR-APP-20260911
+- Related: FM-SOC3-001 / phase3_social; Status: OPEN; Risk R4.
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; missing personal Meta access and individual Creator consent remain factual requirements.
+- Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. The same Phase 3 owner queue also retains the separate dormant WhatsApp credentials/permissions and Staging/E2E control under EXT-WHATSAPP. Code/schema/feature flags cannot close this control.
+- Current access observation: the secure login request ended with a connection error; a fresh canonical Meta developer tab still shows the sign-in methods. No signed-in app state, credentials or successful login is claimed. No app configuration was changed.
+- TikTok/X are independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-PHASE7-EXTERNAL / phase7_social; Meta completion cannot close them.
+
 ## Provider resources / Creator continuation — 2026-09-11
 - Protected Staging inventory read through the existing GitHub environment: DB and synthetic owner/secondary credentials present; no TikTok/X/Meta app secret names among its 16 secrets. This does not prove host or provider app state. No consent or real platform test can be inferred; central app setup and per-Creator authorization remain distinct.
-- Creator target installation and real signed-in runtime/quality evidence remain pending under FM-CR-033.
+- Creator installation/upgrade and real JWT/revision/PDF acceptance are verified by 34623104141, 34628886294 and 34629009649 on Staging. This closes the bounded foundation only. Deployed-process flag, enabled UI, full account/contact deletion, real quality/learning and provider acceptance remain unverified; no activation action was performed.
 
 ## EXT-SOCIAL-CONNECT-JOURNEY-20260911
 - Related: FM-SOC7-001 / FM-CR-032
 - Status: OPEN
 - Central FanMind platform apps and Creator consent are distinct requirements. Official hosted login handles passwords/MFA; FanMind receives scoped tokens. A configured flag or synthetic first-read test is not real provider approval.
-- New controlled schema setup is prepared; exact target Verify/Apply/Postflight, real positive/negative provider tests, X budget, legal basis and Production activation remain open.
+- The controlled Social schema is already installed on isolated Staging by #1104 / Apply 34591339718 / deploy 34591566257; do not repeat it as pending setup. Real positive/negative provider tests, X budget, legal basis and Production activation remain open.
 
 ## EXT-TIKTOK-X-PILOT-20260911
 - Related: FM-SOC7-001 / FM-CR-031
@@ -14,7 +21,7 @@
 - Risk: R4
 - Needed: exact own provider apps, account consent, allowed callback/scopes, X usage budget, current contract/privacy basis and real positive/negative provider tests after controlled isolated-Staging SQL rollout.
 - Code preparation: TikTok profile-only; X bounded read preview. No automatic send/CRM ingestion/learning or Production switch. A provider flag, code or fixture is not external acceptance.
-- Next: finish source review and target-bound rollout control, then establish the concrete app/account prerequisites; never request passwords/session cookies in chat. No account credentials or app approval were supplied by the owner scope expansion.
+- Next: owner-required NBA-PHASE7-EXTERNAL / FM-SOC7-OWNER-EXTERNAL-20260911 establishes concrete app/account access, per-Creator consent and factual provider prerequisites. Source #1102-#1104 and isolated Social schema are already published/installed. Reuse existing authorization; secure sign-in handles missing personal access. Never request passwords/session cookies in chat, and do not infer consent or app approval from the scope expansion.
 
 # FanMind External Acceptance Register
 
@@ -141,6 +148,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-WHATSAPP
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL; no activation implied.
 - Related: FM-SOC3-001
 - Status: OPEN
 - Risk: R3
@@ -149,6 +157,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-TIKTOK
+- Owner queue: FM-SOC7-OWNER-EXTERNAL-20260911 / NBA-PHASE7-EXTERNAL; retain per-channel completion and existing owner deferrals.
 - Related: FM-SOC7-001
 - Status: OPEN
 - Risk: R3
@@ -157,6 +166,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-X
+- Owner queue: FM-SOC7-OWNER-EXTERNAL-20260911 / NBA-PHASE7-EXTERNAL; retain per-channel completion and existing owner deferrals.
 - Related: FM-SOC7-001
 - Status: BLOCKED
 - Risk: R3
@@ -166,6 +176,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Financial boundary: no credits/spend without separate approval.
 
 ## EXT-DISCORD
+- Owner queue: FM-SOC7-OWNER-EXTERNAL-20260911 / NBA-PHASE7-EXTERNAL; retain per-channel completion and existing owner deferrals.
 - Related: FM-SOC7-001
 - Status: OPEN
 - Risk: R3
@@ -174,6 +185,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Repository evidence alone sufficient: no
 
 ## EXT-ONLYFANS
+- Owner queue: FM-SOC7-OWNER-EXTERNAL-20260911 / NBA-PHASE7-EXTERNAL; retain per-channel completion and existing owner deferrals.
 - Related: FM-SOC7-001
 - Status: OPEN
 - Risk: R3

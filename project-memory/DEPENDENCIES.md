@@ -1,12 +1,12 @@
 ## DEP-SOCIAL-CONNECT-FLOW-20260911
 - Task: FM-SOC7-001 / FM-CR-032
-- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. Full provider activation depends on controlled schema setup, central FanMind apps, per-Creator consent, X budget and current external evidence.
+- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. The Social schema setup is complete (#1104 / 34591339718); full provider activation still depends on central FanMind apps, per-Creator consent, X budget and current external evidence under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7).
 - The earlier database-backup failure blocks fresh overall Operations acceptance, not independent default-off Social source preparation under FM-DEC-018. Do not remove or dilute that gate.
 
 ## TikTok / X resumed dependencies — FM-DEC-017
 - FM-SOC7-001 source may proceed now independently of Android under the owner's explicit instruction.
-- Real pilot depends on the new controlled schema rollout, exact isolated target, provider app/account/permission/budget and privacy evidence. Production remains structurally disabled.
-- Reuse FM-CREATOR-001 single-account writing style; do not create provider-specific style profiles. Its retained Staging draft remains separate and unapplied.
+- The controlled Social schema was installed on isolated Staging by 34591339718. A real pilot still depends on current exact-target, provider app/account/permission/budget and privacy evidence. Production remains structurally disabled.
+- Reuse FM-CREATOR-001 single-account writing style; do not create provider-specific style profiles. Its source/schema/JWT/revision/PDF foundation is accepted by 34629009649; actual deployed-flag/UI/delete/quality evidence remains separate.
 
 # FanMind Dependencies
 
@@ -16,7 +16,7 @@
 - Type: owner-confirmed post-handoff product sequencing
 - Status: ACTIVE
 - Updated: 2026-09-10
-- Rule: Phase 7b is not a prerequisite of sales_handoff or any required_for_sales gate. It must not run as parallel_safe work around the unfinished sales handoff. Further Phase 8 work follows accepted Phase 7b; existing disabled Website-AI preparation remains historical.
+- Rule: Phase 7b is not a prerequisite of sales_handoff or any required_for_sales gate. FM-DEC-015 permits the current Creator/Social engineering as parallel_safe before the unfinished sales handoff; its external and sales prerequisites remain separate. Further Phase 8 work follows accepted Phase 7b; existing disabled Website-AI preparation remains historical.
 
 Track ordering and prerequisites here. Do not mark dependent work accepted while a required prerequisite remains unresolved.
 

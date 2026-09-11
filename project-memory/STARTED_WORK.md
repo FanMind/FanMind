@@ -1,15 +1,9 @@
-## Creator JWT follow-through — 2026-09-11
-- Scope: FM-CREATOR-001 / FM-CR-033, existing active lock LOCK-FM-CREATOR-META-FINISH-20260911.
-- Owner's explicit finish request includes controlled isolated Staging and synthetic tests. The new acceptance action is exact-reviewed-main and protected-Staging bound; it changes only its own marked test bundles and the already controlled temporary member credential.
-- State: IMPLEMENTED_NOT_VERIFIED. No runtime/quality/provider acceptance inferred from local mocked checks. Recovery uses exact run markers, independent cleanup and ephemeral credential revocation.
-
-## Creator and Meta continuation — 2026-09-11
-- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4; LOCK-FM-CREATOR-META-FINISH-20260911.
-- Owner requests completing the listed Social/Creator steps. Normal branch/PR/publication and technically validated isolated Staging work are authorized in the current session; no new request for the same permission.
-- Completed so far: exact GitHub main recovered and every source blob/tree verified; prior #1104 completion reconciled; drift and freshness checks pass. Meta successful callbacks currently do not invoke historical sync.
-- Still open: connection-bound first import, single text-style legacy behavior, reviewed Creator Staging controller/target/runtime, actual provider access and genuine quality evidence.
-- Exact next step: implement and test callback-bound Meta import, then resume retained Creator controller source.
-- Owner action needed: only genuinely unavailable per-Creator provider consent/external factual evidence; no credential values in repository.
+## Creator foundation closeout — 2026-09-11
+- Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.
+- Completed: #1105-#1108 are published; executable main f0c7a84e, Verify 34628681395, PT409-only Upgrade 34628886294, Staging Deploy 34628740980 and real acceptance 34629009649 passed. Owner/member/foreign isolation, one style, approval/revisions, both PDFs, independent cleanup and temporary-member rotation/rejection passed; 17:42:49 UTC post-read confirms empty Creator tables/no unfinished Creator RPCs.
+- No runtime activation was performed. The deployed process flag is UNVERIFIED; controller input false is not host evidence. Enabled UI, full contact/account deletion, actual quality and confirmed-chat learning remain open.
+- Exact next step: repository and controlled synthetic-Staging engineering under NBA-CREATOR-INTELLIGENCE, with current target preflight and appropriate new scope. Provider-account access, central apps, individual Creator consent and real provider acceptance remain separate under owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7); reuse existing authorization and obtain only missing access/factual evidence.
+- Historical checkpoints below are superseded for already-published #1102-#1108 source and installed Social/Creator foundations. Social Apply 34591339718 and deploy 34591566257 completed #1104. Do not repeat those source/installations or treat old locks/next-step text as active. Mutable current-target evidence must be revalidated after listed triggers/TTL; historical successful runs are retained.
 
 ## FM-SOC7-001 — Connection return and initial preview
 - Status: IN_PROGRESS

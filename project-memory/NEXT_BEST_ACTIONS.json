@@ -99,42 +99,6 @@
       "instruction": "FM-EV-023 completes the bounded 2026-08-26 technical read-only reconciliation; mutable Staging freshness is tracked by EV-META-STAGING-FOUNDATION-20260826. Do not rerun its workflows merely for closeout or repeat Production activation/deploy. After expiry/invalidation or before a later Meta Staging database action, use a new lock and shared rollout-state-first verification. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
     },
     {
-      "id": "NBA-PHASE3-SOCIAL",
-      "priority": 6,
-      "task": "FM-SOC3-001",
-      "gate": "phase3_social",
-      "title": "Facebook/Instagram und menschliche KI-\u00dcbergabe ausbauen",
-      "requires_owner": false,
-      "parallel_safe": true,
-      "prerequisite_gates": [
-        "memory_v6",
-        "staging"
-      ],
-      "done_states": [
-        "ACCEPTED",
-        "PRODUCTION_CONFIRMED"
-      ],
-      "instruction": "FM-DEC-015 resumes selected Social development now, before Android. Reuse existing Meta/WhatsApp foundations. Real App Review, permissions, tenant E2E and legal/provider activation remain independent gates; the task is not complete from code alone."
-    },
-    {
-      "id": "NBA-PHASE7-SOCIAL",
-      "priority": 7,
-      "task": "FM-SOC7-001",
-      "gate": "phase7_social",
-      "title": "OnlyFans-Machbarkeit und manuelle \u00dcbergabe ausbauen",
-      "requires_owner": false,
-      "parallel_safe": true,
-      "prerequisite_gates": [
-        "memory_v6",
-        "staging"
-      ],
-      "done_states": [
-        "ACCEPTED",
-        "PRODUCTION_CONFIRMED"
-      ],
-      "instruction": "FM-DEC-015 resumes the OnlyFans manual handoff and official/contractual feasibility work alongside Creator development. TikTok/X/Discord retain their existing scope. No scraping, external credentials, self-bot, reverse engineering or provider send."
-    },
-    {
       "id": "NBA-SALES-HANDOFF",
       "priority": 80,
       "task": "FM-SALES-001",
@@ -172,7 +136,92 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Preserve the published #1099 source and #1100 reader closeout at 8c03b78c; neither needs republishing. Resume the existing controlled Creator Staging continuation and actual target/JWT acceptance, then writing-style quality and confirmed-chat learning. FM-DEC-016: one user/Creator account, one text writing style; no audio. All variants and channels retain that style. Review legacy prompt/UI conformance before activation; future managers use each selected account's style and fan context, with manager roles remaining later. Reuse the already prepared local rollout source after reconciliation; never launch a generic DB push, provider/paid activation or deferred Android work."
+      "instruction": "Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging."
+    },
+    {
+      "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
+      "priority": 8,
+      "task": "FM-SOC3-001",
+      "gate": "phase3_social",
+      "title": "Meta-App-Zugang und Creator-Freigaben herstellen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "External Meta account work only (Phase 3): reuse existing owner authorization for the FanMind Facebook/Instagram app and separately scoped WhatsApp Business resources, obtain missing access through secure personal sign-in, and establish each Creator's own consent, allowed callback/scopes and real Meta provider evidence for Facebook, Instagram and the separately gated WhatsApp foundation. EXT-META-CREATOR-APP-20260911, EXT-WHATSAPP and FM-SOC3-OWNER-APP-20260911 remain OPEN/OWNER_ACTION_REQUIRED. Missing credentials/consent/third-party approval cannot be supplied by repository tests or another Creator. Never ask for passwords or tokens in chat. No live payment, automatic sending or Production activation is implied. The dormant WhatsApp implementation is not activated by this queue; its approved credentials/permissions and Staging/E2E/revocation/reconnect/tenant/idempotency evidence are still required. TikTok/X work is tracked independently under NBA-PHASE7-EXTERNAL and phase7_social.",
+      "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
+    },
+    {
+      "id": "NBA-PHASE7-EXTERNAL",
+      "priority": 9,
+      "task": "FM-SOC7-001",
+      "gate": "phase7_social",
+      "title": "Externe Phase-7-Abnahme kanalweise abschließen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "owner_action_id": "FM-SOC7-OWNER-EXTERNAL-20260911",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "External Phase 7 gate work, covering EXT-TIKTOK-X-PILOT-20260911, EXT-TIKTOK, EXT-X, EXT-DISCORD and EXT-ONLYFANS. Start with the currently selected TikTok/X app access, per-Creator consent, callbacks/scopes, actual X budget and real positive/negative provider evidence using existing authorization. Read each external control's current status first; preserve any completed channel and advance only the remaining controls, never request completed TikTok/X work again merely because phase7_social is PARTIAL. Discord remains later under the owner decision: retain its open control without starting it or asking for early activation. OnlyFans retains the manual handoff; direct access requires actual official/contractual feasibility evidence. This action represents the whole Phase 7 gate, not only TikTok/X, and completes when that aggregate gate is accepted. Missing implementation remains open under its tasks and a bounded engineering action can use existing authorization. Installed Social schema is preserved; current target evidence needs revalidation. No password/token in chat, payment, automatic send or Production activation is implied.",
+      "external_controls": [
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-TIKTOK",
+        "EXT-X",
+        "EXT-DISCORD",
+        "EXT-ONLYFANS"
+      ]
+    }
+  ],
+  "retired_actions": [
+    {
+      "id": "NBA-PHASE3-SOCIAL",
+      "task": "FM-SOC3-001",
+      "status": "SUPERSEDED",
+      "retired_at": "2026-09-11",
+      "bounded_source_evidence": "#1099 manual Creator/OnlyFans handoff, #1102-#1104 TikTok/X source and isolated Social schema, #1105 Meta first-import source are published. Whole Phase 3/7 provider and product gates remain PARTIAL.",
+      "reason": "Retire the broad engineering placeholder: its already-published source must not keep an aggregate phase gate executable forever and hide required external prerequisites. Remaining Creator UI/delete/learning source stays under NBA-CREATOR-INTELLIGENCE. Further connector/CRM-ingestion source remains open and can proceed under a new bounded engineering action using existing authorization; only actual provider operations depend on the factual external prerequisites. It is not declared complete here.",
+      "replaced_by": [
+        "NBA-CREATOR-INTELLIGENCE",
+        "NBA-CREATOR-SOCIAL-EXTERNAL",
+        "NBA-PHASE7-EXTERNAL"
+      ],
+      "retained_external_controls": [
+        "EXT-WHATSAPP",
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-ONLYFANS",
+        "EXT-DISCORD"
+      ]
+    },
+    {
+      "id": "NBA-PHASE7-SOCIAL",
+      "task": "FM-SOC7-001",
+      "status": "SUPERSEDED",
+      "retired_at": "2026-09-11",
+      "bounded_source_evidence": "#1099 manual Creator/OnlyFans handoff, #1102-#1104 TikTok/X source and isolated Social schema, #1105 Meta first-import source are published. Whole Phase 3/7 provider and product gates remain PARTIAL.",
+      "reason": "Retire the broad engineering placeholder: its already-published source must not keep an aggregate phase gate executable forever and hide required external prerequisites. Remaining Creator UI/delete/learning source stays under NBA-CREATOR-INTELLIGENCE. Further connector/CRM-ingestion source remains open and can proceed under a new bounded engineering action using existing authorization; only actual provider operations depend on the factual external prerequisites. It is not declared complete here.",
+      "replaced_by": [
+        "NBA-CREATOR-INTELLIGENCE",
+        "NBA-CREATOR-SOCIAL-EXTERNAL",
+        "NBA-PHASE7-EXTERNAL"
+      ],
+      "retained_external_controls": [
+        "EXT-WHATSAPP",
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-ONLYFANS",
+        "EXT-DISCORD"
+      ]
     }
   ]
 }

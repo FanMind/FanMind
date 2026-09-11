@@ -2,6 +2,23 @@
 
 This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
 
+## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
+- Status: OWNER_ACTION_REQUIRED
+- NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external controls EXT-META-CREATOR-APP-20260911 and EXT-WHATSAPP.
+- Needed: missing personal Meta developer access, actual central FanMind Facebook/Instagram app and permissions, each Creator's own consent and real provider acceptance. Phase 3 additionally requires separately approved WhatsApp Business credentials/permissions and real Staging/E2E/revocation/reconnect/tenant/idempotency proof for its dormant foundation. Reuse the owner's existing authorization; no renewed general permission request.
+- Current access: secure login connection interrupted; fresh Meta target still shows login methods. App/permission state remains unknown; no provider mutation occurred.
+- Where: secure provider sign-in/console, never passwords or tokens in chat.
+- Boundary: no payment, auto-send, WhatsApp or Production activation implied. TikTok/X are separate below, with their own Phase 7 completion state. Existing OnlyFans/Discord external controls remain open; this selected-channel queue does not accept the whole Phase 7 gate.
+
+## FM-SOC7-OWNER-EXTERNAL-20260911 — Externe Phase-7-Abnahme
+- Status: OWNER_ACTION_REQUIRED
+- NBA: NBA-PHASE7-EXTERNAL; Task FM-SOC7-001; Gate phase7_social; all external controls EXT-TIKTOK-X-PILOT-20260911, EXT-TIKTOK, EXT-X, EXT-DISCORD and EXT-ONLYFANS.
+- Current priority: TikTok/X own app/account access, callbacks/scopes, each Creator's consent, actual X budget and real provider evidence using existing authorization. Credentials belong only in secure provider sign-in, never chat.
+- Completion scope: this queue item covers the whole Phase 7 gate. Check each named control's status and reuse its accepted evidence; once TikTok/X is completed, request only remaining channel evidence, never repeat completed TikTok/X setup or acceptance just because phase7_social is PARTIAL.
+- Deferred scope: Discord remains later; preserve its open control without starting it or asking for early activation. OnlyFans keeps the existing manual handoff; any direct access still requires actual official/contractual feasibility and provider evidence. No new consent or permission is inferred.
+- Boundary: TikTok profile login is not a DM approval; X preview is not CRM ingestion. Missing connector/CRM source remains open under the existing tasks and can proceed as bounded engineering within existing authorization. No payment, auto-send or Production activation implied; installed Social schema is preserved.
+- Revalidation: current provider/app/credential/target state before reliance. This item remains independent of Phase 3 and closes only with whole Phase 7 acceptance.
+
 ## FM-RST-OWNER-001 — Restore runner-group policy + host readiness
 - Status: COMPLETED
 - Where: GitHub Organization `FanMind` -> Settings -> Actions -> Runner groups -> `fanmind-restore-drill`
