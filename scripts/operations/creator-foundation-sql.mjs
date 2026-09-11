@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 
-export const CREATOR_FOUNDATION_SHA256 = "4523a98ebebd1ef44b1791dcda781806048069f093f348569cf9e7e83d46f967";
+export const CREATOR_FOUNDATION_SHA256 = "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f";
 export const CREATOR_TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
 const FUNCTIONS = [
   ["guard_creator_identity()", false, "trigger"],
-  ["save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)", false, "uuid"],
+  ["save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)", true, "uuid"],
   ["record_creator_fan_review(uuid,uuid,jsonb,jsonb)", true, "void"],
 ];
 export function checkCreatorArtifact(sql) {
@@ -93,7 +93,7 @@ create temporary table pg_temp.contact_ai_profiles(workspace_id uuid,contact_id 
 ${ddl}
 ${policies}
 create function pg_temp.creator_normalize(def text) returns text language sql immutable as $norm$
- select replace(regexp_replace(def,'(public|pg_temp_[0-9]+)\\.','','g'),'auth.users','users')
+ select replace(regexp_replace(def,'(public|pg_temp(_[0-9]+)?)\\.','','g'),'auth.users','users')
 $norm$;
 `;
 }
@@ -108,13 +108,14 @@ function functionChecks(sql) {
  f := to_regprocedure('public.${signature}');
  if not exists(select 1 from pg_proc p join pg_language l on l.oid=p.prolang
   where p.oid=f and p.prosrc=convert_from(decode('${body}','hex'),'UTF8')
-  and p.prosecdef=${definer} and p.proconfig=array['search_path=""']::text[] and l.lanname='plpgsql'
+  and p.prosecdef=${definer} and not p.proleakproof and p.prokind='f' and p.proparallel='u'
+  and p.proconfig=array['search_path=""']::text[] and l.lanname='plpgsql'
   and p.prorettype='${returns}'::regtype and not p.proretset and p.provolatile='v'
   and p.proowner=(select oid from pg_roles where rolname=session_user)) then raise exception 'creator_function_drift'; end if;
- if has_function_privilege('anon',f,'EXECUTE') or
+ if has_function_privilege('anon',f,'EXECUTE') or has_function_privilege('service_role',f,'EXECUTE') or
   has_function_privilege('authenticated',f,'EXECUTE') <> ${name !== "guard_creator_identity"} or
   exists(select 1 from pg_proc p cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
-   where p.oid=f and (a.grantee=0 or (a.is_grantable and a.grantee<>(select oid from pg_roles where rolname=session_user))))
+   where p.oid=f and (a.grantee not in (p.proowner${name !== "guard_creator_identity" ? ",(select oid from pg_roles where rolname='authenticated')" : ""}) or (a.is_grantable and a.grantee<>p.proowner)))
  then raise exception 'creator_function_acl_drift'; end if;
 `;
   }).join("\n");
@@ -173,15 +174,15 @@ begin
    if a is distinct from e then raise exception 'creator_indexes_drift'; end if;
    foreach role_name in array array['anon','authenticated','service_role'] loop
     foreach privilege in array array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER'] loop
-     allowed:=role_name='service_role' or (role_name='authenticated' and (privilege in ('SELECT','INSERT') or (privilege='UPDATE' and tab<>'creator_commercial_events')));
+     allowed:=role_name='service_role' or (role_name='authenticated' and privilege='SELECT');
      if has_table_privilege(role_name,actual,privilege) <> allowed then raise exception 'creator_table_acl_drift'; end if;
      if privilege in ('SELECT','INSERT','UPDATE','REFERENCES') and not allowed and has_any_column_privilege(role_name,actual,privilege) then raise exception 'creator_column_acl_drift'; end if;
     end loop;
    end loop;
    if exists(select 1 from pg_attribute c cross join lateral aclexplode(c.attacl) a where c.attrelid=actual and not c.attisdropped
-    and (a.grantee=0 or (a.is_grantable and a.grantee<>(select oid from pg_roles where rolname=session_user)))) then raise exception 'creator_column_grant_drift'; end if;
+    and a.grantee<>(select oid from pg_roles where rolname=session_user)) then raise exception 'creator_column_grant_drift'; end if;
    if exists(select 1 from pg_class c cross join lateral aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a where c.oid=actual
-    and (a.grantee=0 or (a.is_grantable and a.grantee<>(select oid from pg_roles where rolname=session_user)))) then raise exception 'creator_public_grant_drift'; end if;
+    and (a.grantee not in (c.relowner,(select oid from pg_roles where rolname='authenticated'),(select oid from pg_roles where rolname='service_role')) or (a.is_grantable and a.grantee<>c.relowner))) then raise exception 'creator_public_grant_drift'; end if;
   end if;
  end loop;
  ${functionChecks(sql)}

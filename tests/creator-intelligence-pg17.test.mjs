@@ -21,6 +21,7 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
         if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
         if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
         if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
+        if not exists(select 1 from pg_roles where rolname='creator_ci_unexpected') then create role creator_ci_unexpected nologin bypassrls; end if;
       end $$;
       create schema auth;
       create table auth.users(id uuid primary key);
@@ -70,8 +71,13 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
       "alter table public.creators drop constraint creators_public_age_check; alter table public.creators add constraint creators_public_age_check check(public_age>=0);",
       "create policy unexpected_creator_read on public.creators for select to authenticated using(true);",
       "grant update(amount_minor) on public.creator_commercial_events to authenticated;",
+      "grant update on public.creator_voice_profiles to authenticated;",
+      "grant select on public.creators to creator_ci_unexpected;",
+      "grant select(fingerprint) on public.creator_voice_profiles to creator_ci_unexpected;",
+      "grant execute on function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) to creator_ci_unexpected;",
+      "drop index public.creator_commercial_events_contact_idx; create index creator_commercial_events_contact_idx on public.creator_commercial_events(contact_id);",
       "alter table public.creator_voice_profiles disable trigger creator_voice_identity_guard;",
-      "alter function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) security definer;",
+      "alter function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) security invoker;",
       "create or replace function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) returns void language plpgsql security definer set search_path='' as $$ begin return; end $$;",
     ]) {
       assert.throws(()=>sql(`begin; ${corruption} ${verification.reference} ${verification.body} rollback;`));
@@ -95,6 +101,15 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
         '{"tone":"warm","goodExamples":["Hi there","Thanks","How are you?"]}','{"offers":[]}',true);
       do $$ begin
         if (select count(*) from public.creators) <> 1 then raise exception 'owner read failed'; end if;
+      end $$;
+      -- An owner cannot bypass revision/approval using PostgREST table PATCH.
+      select pg_temp.expect_denied($q$update public.creator_voice_profiles set fingerprint='{"tone":"UNREVIEWED_DIRECT_WRITE"}'$q$);
+      select pg_temp.expect_denied($q$update public.creator_sales_playbooks set rules='{"offers":[]}',approved_at=now()$q$);
+      select pg_temp.expect_denied($q$update public.creators set display_name='UNREVIEWED_DIRECT_WRITE'$q$);
+      select pg_temp.expect_denied(format('select public.save_creator_bundle(%L,null,0,%L,%L,%L,false)',workspace_id,
+        '{"displayName":"duplicate"}','{}','{}')) from public.creators;
+      do $$ begin
+        if exists(select 1 from public.creator_voice_profiles where fingerprint->>'tone'<>'warm' or revision<>1 or approved_by<>auth.uid()) then raise exception 'direct mutation bypassed approval'; end if;
       end $$;
       select pg_temp.expect_denied($q$insert into public.creators(workspace_id,display_name) values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','duplicate')$q$);
       select pg_temp.expect_denied($q$insert into public.creators(workspace_id,display_name) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','foreign')$q$);
@@ -130,9 +145,9 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
       select pg_temp.expect_denied($q$select public.record_creator_fan_review('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc','{"sourceReference":"member"}',null)$q$);
       do $$ begin
         if (select count(*) from public.creators) <> 1 then raise exception 'member read failed'; end if;
-        update public.creators set display_name='member mutation';
-        if found then raise exception 'member changed creator'; end if;
       end $$;
+      select pg_temp.expect_denied($q$update public.creators set display_name='member mutation'$q$);
+      select pg_temp.expect_denied(format('select public.save_creator_bundle(%L,%L,1,%L,%L,%L,false)',workspace_id,id,'{}','{}','{}')) from public.creators;
       select pg_temp.expect_denied($q$insert into public.creators(workspace_id,display_name) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','member creator')$q$);
       select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
       do $$ begin

@@ -20,8 +20,10 @@ und Playbooks, nullable kommerzielle Fan-Einschätzungen, Conversation-Sales-Sta
 und bestätigte Kauf-/Angebotsereignisse mit zusammengesetzten Eltern-FKs.
 Die bestehenden Fan-/Memory-/Conversation-Workspace-Schlüssel bleiben maßgeblich;
 es gibt keine zusätzliche Mehr-Creator-Zuordnung innerhalb eines Workspaces.
-Neue Tabellen erhalten explizite RLS/Grants; bestehende contact_ai_profiles bleiben
-für authenticated SELECT-only. Ein begrenzter Owner-/Kontakt-geprüfter RPC schreibt
+Die vier neuen Tabellen und bestehende contact_ai_profiles sind für authenticated
+SELECT-only; RLS isoliert Owner-/Member-Lesezugriffe. Änderungen am Creator-Bündel
+erfolgen ausschließlich über den Owner-geprüften SECURITY-DEFINER-RPC mit
+Versionsprüfung und atomarer Freigabe; direkte PATCH-/INSERT-Zugriffe sind gesperrt. Ein begrenzter Owner-/Kontakt-geprüfter RPC schreibt
 ausschließlich commercial_profile und bestätigte Ereignisse. Keine neue Teamrolle.
 
 Schema ist **nicht als auf Staging oder Production angewandt nachgewiesen**;

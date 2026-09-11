@@ -1,4 +1,5 @@
 ## FM-CR-033 — Finish Meta initial import and Creator Staging
+- CI follow-through includes the compatible Expo SDK57 patch alignment required by the current Mobile gate and the Creator approval/ACL review corrections before Staging Apply; no Android/store feature activation.
 - Task: FM-CREATOR-001 / FM-SOC3-001; Risk R4.
 - Source: owner says to finish all listed Social/Creator steps after the verified status report.
 - Scope: automatic first import for verified Meta messaging connections; controlled existing Creator Staging rollout and one-text-style conformance. Central provider resources and real consent are checked separately.

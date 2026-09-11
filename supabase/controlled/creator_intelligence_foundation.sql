@@ -80,8 +80,8 @@ create table public.creator_commercial_events (
 );
 create index creator_commercial_events_contact_idx on public.creator_commercial_events(workspace_id,creator_id,contact_id,occurred_at desc);
 
--- Workspace identity cannot be moved by a profile edit. Direct authenticated
--- writes also receive the actual actor/time, never a client-supplied approver.
+-- Workspace identity cannot be moved by an atomic profile save. RPC writes
+-- receive the actual actor/time, never a client-supplied approver.
 create function public.guard_creator_identity() returns trigger language plpgsql security invoker set search_path = '' as $$
 begin
   if tg_op = 'UPDATE' and new.workspace_id is distinct from old.workspace_id then
@@ -100,40 +100,37 @@ begin
   end if;
   return new;
 end $$;
-revoke all on function public.guard_creator_identity() from public, anon, authenticated;
+revoke all on function public.guard_creator_identity() from public, anon, authenticated, service_role;
 create trigger creators_identity_guard before update on public.creators for each row execute function public.guard_creator_identity();
 create trigger creator_voice_identity_guard before insert or update on public.creator_voice_profiles for each row execute function public.guard_creator_identity();
 create trigger creator_playbook_identity_guard before insert or update on public.creator_sales_playbooks for each row execute function public.guard_creator_identity();
 create trigger creator_event_actor_guard before insert on public.creator_commercial_events for each row execute function public.guard_creator_identity();
 
--- RLS: authenticated Workspace members may read; only the owner manages profiles.
+-- RLS reads retain Workspace isolation. Browsers cannot bypass revision and
+-- approval checks with direct table writes; owner mutations use only the RPCs.
 do $$
 declare tab text;
 begin
   foreach tab in array array['creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events'] loop
     execute format('alter table public.%I enable row level security', tab);
-    execute format('revoke all on public.%I from public, anon, authenticated', tab);
-    execute format('grant select, insert on public.%I to authenticated', tab);
+    execute format('revoke all on public.%I from public, anon, authenticated, service_role', tab);
+    execute format('grant select on public.%I to authenticated', tab);
     execute format('grant all on public.%I to service_role', tab);
     execute format('create policy %I on public.%I for select to authenticated using (exists (select 1 from public.workspace_members m where m.workspace_id = %I.workspace_id and m.user_id = (select auth.uid())) or exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid())))', tab || '_member_read', tab, tab, tab);
-    execute format('create policy %I on public.%I for insert to authenticated with check (exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid())))', tab || '_owner_insert', tab, tab);
-    if tab <> 'creator_commercial_events' then
-      execute format('grant update on public.%I to authenticated', tab);
-      execute format('create policy %I on public.%I for update to authenticated using (exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid()))) with check (exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid())))', tab || '_owner_update', tab, tab, tab);
-    end if;
   end loop;
 end $$;
 
+-- The narrow owner-checked definer is the only browser profile write path.
 -- Atomic optimistic revision: a partial save must never become a current voice.
 create function public.save_creator_bundle(p_workspace_id uuid, p_creator_id uuid, p_expected_revision integer, p_persona jsonb, p_voice jsonb, p_playbook jsonb, p_approve boolean)
-returns uuid language plpgsql security invoker set search_path = '' as $$
+returns uuid language plpgsql security definer set search_path = '' as $$
 declare target uuid; next_revision integer; approver uuid;
 begin
   if (select auth.uid()) is null or not exists (select 1 from public.workspaces w where w.id = p_workspace_id and w.owner_user_id = (select auth.uid())) then
     raise exception 'creator_owner_required' using errcode = '42501';
   end if;
   if p_creator_id is null then
-    if p_expected_revision <> 0 then raise exception 'creator_revision_conflict' using errcode = '40001'; end if;
+    if p_expected_revision is distinct from 0 then raise exception 'creator_revision_conflict' using errcode = '40001'; end if;
     insert into public.creators(workspace_id,display_name) values(p_workspace_id,p_persona->>'displayName') returning id into target;
     next_revision := 1;
   else
@@ -160,7 +157,7 @@ begin
     on conflict(workspace_id,creator_id) do update set rules=excluded.rules,revision=excluded.revision,approved_by=excluded.approved_by,approved_at=excluded.approved_at;
   return target;
 end $$;
-revoke all on function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) from public, anon;
+revoke all on function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) from public, anon, authenticated, service_role;
 grant execute on function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) to authenticated;
 
 -- Existing contact_ai_profiles deliberately stays SELECT-only for authenticated.
@@ -189,6 +186,6 @@ begin
         (p_event->>'amountMinor')::bigint,p_event->>'currency',p_event->>'category',p_event->>'evidenceReference',(select auth.uid()));
   end if;
 end $$;
-revoke all on function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) from public, anon;
+revoke all on function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) from public, anon, authenticated, service_role;
 grant execute on function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) to authenticated;
 commit;
