@@ -392,12 +392,16 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-OPS-001
 - Date: through 2026-08-19
-- Status: VERIFIED
+- Status: PARTIAL
+- Risk: R4
 - Goal: Production operations, monitoring, backups, audit and deployment baseline.
-- Result: Core Operations/backup/deploy/audit/monitoring foundation is production-proven. Optional/destructive follow-ups remain separately controlled.
+- Historical accepted result: Core Operations/backup/deploy/audit/monitoring foundation is production-proven and remains accepted. Optional/destructive follow-ups remain separately controlled.
 - Evidence: Issues #524/#534 and Production operations run history.
 - Limitations: full Restore remains FM-RST-001; Remote offsite delete #658 is not authorized; optional email/failure-matrix items are not blanket-complete.
-- Next step: maintain, do not rebuild.
+- Current bounded continuation: FM-CR-034 / LOCK-FM-OPS-AUDIT-20260911 restores safe failure diagnostics and validated runtime/host evidence to the installed read-only Production audit.
+- Baseline: main e0f2a517855a65bd927c3968c8e0700f06bb54db deploy/readiness passed; full audit 34639783862 exits 1 without a published probe diagnostic. The historical database-backup failure remains FM-LOOP-BACKUP-DATABASE-20260911.
+- Exact next step: current-head review/CI and normal source publication, then read the actual installed audit result and address its demonstrated cause. No source-test pass is a completed OS reboot or full Operations/Restore acceptance.
+- Preserve: accepted database restore and Creator Staging foundation; no backup redesign, SQL, job retry or activation in this bounded change.
 
 ## FM-MEM-008
 - Date: 2026-08-19 to 2026-08-20
@@ -484,10 +488,3 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Evidence: FM-EV-037; focused 15/15 tests; full Operations/build/focused ESLint; Product Truth and immutable Actions checks.
 - Open follow-up: after exact-head merge, obtain separate exact R4 authorization for a distinct isolated non-Production Storage target and dedicated fail-closed write/postcheck/rollback/cleanup controller. Accepted progression remains `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
 - Work lock released: yes; repository-only local countercheck complete.
-## FM-OPS-001
-- Status: IN_PROGRESS
-- Risk: R4
-- Scope: FM-CR-034 / LOCK-FM-OPS-AUDIT-20260911 restores safe failure diagnostics and validated runtime/host evidence to the installed read-only Production audit.
-- Baseline: main e0f2a517855a65bd927c3968c8e0700f06bb54db deploy/readiness passed; full audit 34639783862 exits 1 without a published probe diagnostic. The historical database-backup failure remains FM-LOOP-BACKUP-DATABASE-20260911.
-- Exact next step: current-head review/CI and normal source publication, then read the actual installed audit result and address its demonstrated cause. No source-test pass is a completed OS reboot or full Operations/Restore acceptance.
-- Preserve: accepted database restore and Creator Staging foundation; no backup redesign, SQL, job retry or activation in this bounded change.
