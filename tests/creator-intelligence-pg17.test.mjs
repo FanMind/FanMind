@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { CREATOR_STATE_SQL, buildCreatorApply, buildCreatorVerification } from "../scripts/operations/creator-foundation-sql.mjs";
+import { CREATOR_STATE_SQL, buildCreatorApply, buildCreatorVerification, buildCreatorConflictUpgrade } from "../scripts/operations/creator-foundation-sql.mjs";
 
 const container = process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled = process.env.FANMIND_CREATOR_PG17_REQUIRED === "true";
@@ -85,12 +85,29 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
     }
     assert.throws(()=>sql(buildCreatorApply(artifact)));
     assert.equal(sql("select count(*) from public.creators").trim(),"0");
+    const conflictFixSql=readFileSync(new URL("../supabase/controlled/creator_revision_conflict_fix.sql",import.meta.url),"utf8");
+    const upgrade=buildCreatorConflictUpgrade(artifact,conflictFixSql);
+    // Existing data or a weakened legacy contract must roll back the correction.
+    for(const setup of [
+      "insert into public.creators(workspace_id,display_name) values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','must block upgrade');",
+      "grant update on public.creator_voice_profiles to authenticated;",
+    ]) {
+      assert.throws(()=>sql(upgrade.replace("begin;",`begin; ${setup}`)));
+      assert.match(sql(verification.verify),/CREATOR_FOUNDATION_POSTFLIGHT=PASS/u);
+      assert.equal(sql("select count(*) from public.creators").trim(),"0");
+    }
+    assert.match(sql(upgrade),/CREATOR_FOUNDATION_UPGRADE=COMMITTED/u);
+    const corrected=buildCreatorVerification(artifact,{conflictFixSql});
+    assert.match(sql(corrected.verify),/CREATOR_FOUNDATION_POSTFLIGHT=PASS/u);
+    assert.throws(()=>sql(verification.verify));
+    assert.throws(()=>sql(upgrade)); // The controller skips an already current schema.
+    assert.match(sql(corrected.verify),/CREATOR_FOUNDATION_POSTFLIGHT=PASS/u);
     const outcome = sql(`
       begin;
       create function pg_temp.expect_denied(command text) returns void language plpgsql as $$
       begin
         begin execute command;
-        exception when insufficient_privilege or foreign_key_violation or unique_violation or check_violation or serialization_failure then return;
+        exception when insufficient_privilege or foreign_key_violation or unique_violation or check_violation or sqlstate 'PT409' then return;
         end;
         raise exception 'expected denial did not happen';
       end $$;
@@ -118,6 +135,14 @@ test("real PostgreSQL 17 proves one Creator per account, RLS, FK boundaries and 
       select pg_temp.expect_denied($q$insert into public.creator_commercial_events(workspace_id,creator_id,contact_id,kind,occurred_at,amount_minor,currency,evidence_reference,confirmed_by)
         select workspace_id,id,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','purchase',now(),-1,'EUR','negative-price','11111111-1111-4111-8111-111111111111' from public.creators$q$);
       select pg_temp.expect_denied(format('select public.save_creator_bundle(%L,%L,99,%L,%L,%L,false)',workspace_id,id,'{}','{}','{}')) from public.creators;
+      do $$ begin
+        begin
+          perform public.save_creator_bundle('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',null,99,'{}','{}','{}',false);
+          raise exception 'missing revision conflict';
+        exception when sqlstate 'PT409' then
+          if sqlerrm <> 'creator_revision_conflict' then raise exception 'wrong application conflict'; end if;
+        end;
+      end $$;
       -- The authenticated table remains read-only; the narrow owner RPC is the write path.
       select pg_temp.expect_denied($q$update public.contact_ai_profiles set commercial_profile='{}'$q$);
       select public.record_creator_fan_review('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc',

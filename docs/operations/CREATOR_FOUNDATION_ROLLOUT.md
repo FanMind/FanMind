@@ -1,6 +1,6 @@
 # Creator foundation: controlled rollout contract
 
-Status: source #1105 published on main 3f6178bd; protected Staging Verify 34622658443 passed with STATE=absent / NEXT=apply. Apply 34623104141 committed at 16:38:15 UTC with exact POSTFLIGHT=PASS and runtime disabled; real JWT/runtime acceptance remains pending.
+Status: source #1105 published on main 3f6178bd; protected Staging Verify 34622658443 passed with STATE=absent / NEXT=apply. Apply 34623104141 committed at 16:38:15 UTC with exact POSTFLIGHT=PASS and runtime disabled; real JWT isolation/PDF subchecks passed in 34626769355; revision correction and full runtime acceptance remain pending.
 Decision: FM-DEC-015 / FM-CR-029, 2026-09-10. One Creator per own account and Workspace.
 
 ## Reviewed artifact and target boundary
@@ -69,7 +69,7 @@ merge can preserve all commercial parent relationships.
 
 ## Remaining acceptance
 
-Real target migration/runtime proof, two-Creator blinded voice quality, complete
+The controlled Staging installation is proven. Full revision/runtime proof, two-Creator blinded voice quality, complete
 purchase/outcome attribution and provider/legal acceptance remain open. A green
 code build is not evidence for any of these external gates. Android, paid
 activation and the already accepted Restore/Staging sub-gates are unchanged.
@@ -113,9 +113,9 @@ this job only, then independently rotated and proven unusable in an always step.
 The test refuses preexisting Creator rows. Real owner/member/foreign JWTs verify
 one Creator per workspace, denial of direct table writes, separate text contexts,
 revocation of approval on edit, stale revisions, simultaneous saves and reapproval.
-It uses only synthetic text and no model/provider call. PostgreSQL SQLSTATE 40001
-is checked alongside its PostgREST HTTP 500 mapping; unrelated server failures are
-not accepted as revision evidence. References: PostgREST `/references/errors.html`
+It uses only synthetic text and no model/provider call. The corrected application conflict must be exactly HTTP 409, SQLSTATE PT409
+and creator_revision_conflict; unrelated failures never count as revision evidence.
+The previous SQLSTATE 40001 contract is retired through the separate upgrade below. References: PostgREST `/references/errors.html`
 and the existing Supabase local-session sign-out contract.
 
 Each created profile contains the exact workflow run ID, attempt and reviewed SHA
@@ -127,7 +127,7 @@ removed by an ordinary test or its always-cleanup. Cleanup failure fails the wor
 
 This proves only the foundation JWT/approval/bundle-cascade contract when the real
 run succeeds. It does not prove a deployed enabled Creator UI, whole-account or
-contact deletion, DSAR delivery, genuine writing quality, learning, provider
+contact deletion, genuine writing quality, learning, provider
 approval or Production readiness. Those existing acceptance steps remain open.
 
 ## Interrupted acceptance recovery
@@ -200,3 +200,51 @@ revision-conflict checks allow at most 60 seconds for the server response and
 still require the exact HTTP 500 / SQLSTATE 40001 / creator_revision_conflict
 triple. There is no client retry and a timeout is a failure. Ordinary requests
 keep their 15-second limit. A complete new target receipt is still required.
+
+## Confirmed conflict timeout and forward correction
+
+Run 34626769355 on reviewed main 03ecdc181147b59608288dbb9eb553c95cb74efe
+passed authenticated, isolation_verified and disclosure_verified checkpoints.
+At 17:18:39 UTC it failed with request_timeout on the stale-revision check.
+Independent cleanup and member password rotation/rejection both passed. A fresh
+read confirms all four Creator tables empty. The two remaining retry backends
+from the 16:59 and 17:17 synthetic runs were identified by exact PID, backend
+start, authenticator role and matching Creator-RPC statement fingerprint. Only
+those two were terminated, conditional on all four tables being empty; a fresh
+check returned zero remaining matching backends. No project restart, unrelated
+backend cancellation, table deletion, grant change or Production action occurred.
+
+Supabase documents the SQLSTATE 40001 retry loop in PostgREST 14 and its fix in
+16: [official troubleshooting](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b).
+The actual target symptoms match this failure; no exact target PostgREST release
+number is inferred from the PostgreSQL 17 database version.
+
+The original foundation artifact and its checksum stay immutable. The forward
+artifact `supabase/controlled/creator_revision_conflict_fix.sql`, SHA-256
+`7e1111357bf1b210023fe43913d11247f3fe6eea32d1a7440b8079d988e671ee`,
+changes only the two application-conflict raises in save_creator_bundle to
+PT409. CREATE OR REPLACE preserves identity, ownership and ACLs; the exact
+function/body/ACL and full schema comparator checks before and after the change.
+
+On the new reviewed main, protected Verify returns upgrade_required / NEXT=upgrade
+only if the complete old contract still matches. The separate `upgrade` action
+requires `upgrade-creator-foundation` and both Staging write gates. Within one
+advisory-locked transaction it rechecks the old contract, locks and requires all
+four tables empty, replaces only that function and checks the complete new
+contract before COMMIT. An independent postflight follows. Absent, partial,
+drifted or nonempty schemas cannot upgrade. A current schema is verified and
+skipped; an uncertain commit requires Verify before any retry. A fresh absent
+installation applies the original foundation plus the correction in one
+transaction. Normal deploys never apply either artifact.
+
+Acceptance now requires exact HTTP 409 / PT409 / creator_revision_conflict for
+stale and competing saves, with the ordinary 15-second limit restored. The
+longer-wait diagnostic was not a fix and is removed. No timeout, HTTP 500 or
+generic HTTP 409 can count as success. Source review, native PostgreSQL 17 CI,
+controlled upgrade, exact Staging deploy and full real acceptance remain required.
+
+Receipt-bound recovery-only cleanup accepts either an exact current postflight
+or the separately named exact legacy postflight. This allows removal of an
+interrupted old run's marked fixtures before the empty-foundation upgrade.
+Normal acceptance accepts only the current postflight; a legacy result cannot
+start authentication, create fixtures or count as the corrected revision proof.

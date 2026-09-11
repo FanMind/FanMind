@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { evaluateCreatorFoundationStagingEnvironment } from "../../src/lib/creatorFoundationStagingPolicy.mjs";
-import { checkCreatorArtifact, CREATOR_STATE_SQL, CREATOR_PREFLIGHT_BODY, buildCreatorVerification, buildCreatorApply } from "./creator-foundation-sql.mjs";
+import { checkCreatorArtifact, checkCreatorConflictFix, CREATOR_STATE_SQL, CREATOR_PREFLIGHT_BODY, buildCreatorVerification, buildCreatorApply, buildCreatorConflictUpgrade } from "./creator-foundation-sql.mjs";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 function fail(code) { throw new Error(`CREATOR_FOUNDATION_ERROR=${code}`); }
 function privatePassfileSnapshot(environment) {
@@ -116,32 +116,46 @@ export function creatorStateFromOutput(result) {
  if (lines.length!==1 || !/^CREATOR_FOUNDATION_STATE=(absent|present|partial)$/u.test(lines[0])) fail("state_response_invalid");
  return lines[0].split("=")[1];
 }
-export function runCreatorDatabaseMode(mode, sql, environment, database) {
+export function runCreatorDatabaseMode(mode, sql, environment, database, conflictFixSql) {
  checkCreatorArtifact(sql);
+ checkCreatorConflictFix(conflictFixSql);
  if (!evaluateCreatorFoundationStagingEnvironment(environment,{mode}).ok) fail("environment_invalid");
  const state=creatorStateFromOutput(database(`begin read only; ${CREATOR_PREFLIGHT_BODY} ${CREATOR_STATE_SQL} rollback;`));
  if (state==="partial") fail("partial_schema");
+ if (state==="absent" && mode==="upgrade") fail("upgrade_requires_installed_foundation");
  if (state==="absent" && mode==="verify") return ["CREATOR_FOUNDATION_STATE=absent","CREATOR_FOUNDATION_NEXT=apply","CREATOR_FOUNDATION_APPLY=not_requested"];
+ const current=buildCreatorVerification(sql, { conflictFixSql });
+ const passed=result=>!result.error && result.status===0 && result.stdout.trim()==="CREATOR_FOUNDATION_POSTFLIGHT=PASS";
+ let upgraded=false;
  if (state==="absent") {
-  const result=database(buildCreatorApply(sql));
+  const result=database(buildCreatorApply(sql, { conflictFixSql }));
   if (result.error || result.status!==0 || !result.stdout.trim().split(/\r?\n/u).includes("CREATOR_FOUNDATION_APPLY=COMMITTED")) fail("apply_indeterminate_verify_before_retry");
+ } else if (passed(database(current.verify))) {
+  return ["CREATOR_FOUNDATION_APPLY=not_requested","CREATOR_FOUNDATION_UPGRADE=not_requested","CREATOR_FOUNDATION_STATE=verified","CREATOR_FOUNDATION_POSTFLIGHT=PASS","CREATOR_FOUNDATION_RUNTIME_ACTIVATED=false"];
+ } else {
+  if (!passed(database(buildCreatorVerification(sql).verify))) fail("postflight_failed");
+  if (mode==="verify") return ["CREATOR_FOUNDATION_STATE=upgrade_required","CREATOR_FOUNDATION_NEXT=upgrade","CREATOR_FOUNDATION_LEGACY_POSTFLIGHT=PASS","CREATOR_FOUNDATION_APPLY=not_requested","CREATOR_FOUNDATION_UPGRADE=not_requested"];
+  if (mode!=="upgrade") fail("upgrade_confirmation_required");
+  const result=database(buildCreatorConflictUpgrade(sql, conflictFixSql));
+  if (result.error || result.status!==0 || !result.stdout.trim().split(/\r?\n/u).includes("CREATOR_FOUNDATION_UPGRADE=COMMITTED")) fail("upgrade_indeterminate_verify_before_retry");
+  upgraded=true;
  }
- const result=database(buildCreatorVerification(sql).verify);
- if (result.error || result.status!==0 || result.stdout.trim()!=="CREATOR_FOUNDATION_POSTFLIGHT=PASS") fail("postflight_failed");
- return [`CREATOR_FOUNDATION_APPLY=${state==="absent" ? "committed" : "not_requested"}`,"CREATOR_FOUNDATION_STATE=verified","CREATOR_FOUNDATION_POSTFLIGHT=PASS","CREATOR_FOUNDATION_RUNTIME_ACTIVATED=false"];
+ if (!passed(database(current.verify))) fail("postflight_failed");
+ return [`CREATOR_FOUNDATION_APPLY=${state==="absent" ? "committed" : "not_requested"}`,`CREATOR_FOUNDATION_UPGRADE=${upgraded ? "committed" : "not_requested"}`,"CREATOR_FOUNDATION_STATE=verified","CREATOR_FOUNDATION_POSTFLIGHT=PASS","CREATOR_FOUNDATION_RUNTIME_ACTIVATED=false"];
 }
 export function main(args=process.argv.slice(2), environment=process.env) {
  const arg=args[0] ?? "--check";
- if (args.length>1 || !["--check","--verify","--apply"].includes(arg)) fail("mode_invalid");
+ if (args.length>1 || !["--check","--verify","--apply","--upgrade"].includes(arg)) fail("mode_invalid");
  const sql=checkCreatorArtifact(readFileSync(new URL("../../supabase/controlled/creator_intelligence_foundation.sql",import.meta.url),"utf8"));
- buildCreatorVerification(sql);
+ const conflictFixSql=checkCreatorConflictFix(readFileSync(new URL("../../supabase/controlled/creator_revision_conflict_fix.sql",import.meta.url),"utf8"));
+ buildCreatorVerification(sql, { conflictFixSql });
  if (arg==="--check") { console.log("CREATOR_FOUNDATION_CHECKSUM=verified"); return; }
  const mode=arg.slice(2);
  if (!evaluateCreatorFoundationStagingEnvironment(environment,{mode}).ok) fail("environment_invalid");
  const actual=spawnSync("git",["rev-parse","HEAD"],{encoding:"utf8",stdio:["ignore","pipe","ignore"]});
  if (actual.status!==0 || actual.stdout.trim()!==environment.FANMIND_CREATOR_FOUNDATION_REVIEWED_COMMIT) fail("checkout_mismatch");
  const {snapshotDirectory,snapshotPath}=privatePassfileSnapshot(environment);
- try { for (const marker of runCreatorDatabaseMode(mode,sql,environment,input=>runPsql(input,environment,snapshotPath))) console.log(marker); }
+ try { for (const marker of runCreatorDatabaseMode(mode,sql,environment,input=>runPsql(input,environment,snapshotPath),conflictFixSql)) console.log(marker); }
  finally { rmSync(snapshotDirectory,{recursive:true,force:true}); }
 }
 if (process.argv[1] && import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
