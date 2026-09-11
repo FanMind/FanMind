@@ -1,4 +1,10 @@
 
+## Creator/Social data disclosure continuation — 2026-09-11
+- FM-CR-033 / FM-CREATOR-001 under the existing R4 Creator/Meta lock. Creator schema Apply 34623104141 is verified, with independent 16:39:30 UTC catalog proof: four empty RLS tables, three functions, browser Creator/style updates denied. No repeated schema Apply.
+- Concrete defect: the existing PDF collector attempted user-JWT access to the service-only Social connection table after its Staging installation. The corrected server-only reader exports only six scoped metadata fields after renewed owner authorization; all Creator datasets still use the real owner's JWT/RLS. Optional absence is distinct from failed access.
+- The controlled real-JWT acceptance now also requires the deployed exact main and proves each synthetic owner's actual PDF contains their own Creator/style and excludes the other account and secrets. No files/private contents are retained; cleanup remains exact-run-bound. Source tests use the real PDF builder/parser.
+- Source review/CI, exact Staging Web deploy and actual JWT/PDF run remain required. Runtime/UI, contact/account deletion, real quality/learning and external provider consent are still open. Creator flags stay off; paid activation and Backup are unchanged.
+
 ## Creator schema and acceptance review follow-through — 2026-09-11
 - FM-CR-033 / FM-CREATOR-001, Risk R4, existing LOCK-FM-CREATOR-META-FINISH-20260911. #1105 is merged as 3f6178bd58a05a0457feea87fb7a894aba6e6591, tree da35ac81e7f985f9fa21914ac15a6666de77f619. Exact-head native Android/iOS, PG17, Web/browser and independent review passed. Production Deploy 34622111581 and public Readiness 34622261563 passed; the separate historical Backup audit remains failed.
 - Protected Creator Verify 34622658443 passed on that main with STATE=absent / NEXT=apply. Controlled Apply 34623104141 committed at 16:38:15 UTC and independently returned STATE=verified / POSTFLIGHT=PASS / RUNTIME_ACTIVATED=false. No schema retry is needed. Creator runtime stays off.

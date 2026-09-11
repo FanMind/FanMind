@@ -5,6 +5,7 @@ import {
   SUPABASE_ACCESS_TOKEN_COOKIE,
 } from "@/lib/supabase/config";
 import { DataDisclosureExportError } from "@/lib/dataDisclosurePagination";
+import { getSocialConnectionMetadataForDisclosure } from "@/lib/socialConnectionDisclosure";
 
 const PAGE_SIZE = 500;
 const MAX_ROWS_PER_DATASET = 20_000;
@@ -42,7 +43,6 @@ type DatasetDefinition = {
 };
 
 const DATASETS: DatasetDefinition[] = [
-  { key: "social_provider_connections", table: "social_provider_connections", selectVariants: ["workspace_id,provider,external_account_id,display_name,expires_at,connected_at"], optional: true, order: "provider.asc" },
   { key: "creators", table: "creators", selectVariants: ["id,workspace_id,display_name,bio,public_age,location,languages,platforms,status,internal_notes,revision,created_at,updated_at"], optional: true, order: "id.asc" },
   { key: "creator_voices", table: "creator_voice_profiles", selectVariants: ["workspace_id,creator_id,fingerprint,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
   { key: "creator_playbooks", table: "creator_sales_playbooks", selectVariants: ["workspace_id,creator_id,rules,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
@@ -272,13 +272,15 @@ export async function getWorkspaceMetaDataForDisclosure(
     );
   }
   return Promise.all(
-    DATASETS.map((definition) =>
+    [getSocialConnectionMetadataForDisclosure(normalizedWorkspaceId, accessToken, fetchImpl)
+      .then(rows => ({ key: "social_provider_connections" as const, rows })),
+    ...DATASETS.map((definition) =>
       fetchDataset({
         definition,
         workspaceId: normalizedWorkspaceId,
         accessToken,
         fetchImpl,
       }),
-    ),
+    )],
   );
 }

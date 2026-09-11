@@ -147,3 +147,30 @@ cleanup HTTP response bodies are counted as bytes while streaming and cancelled
 at 100 KB, including error responses. Ten behavior tests cover these corrections;
 27 targeted acceptance, fixture and workflow-supply-chain tests pass locally.
 Fresh independent source review and CI are required before target acceptance.
+
+## Owner data disclosure after Social schema installation
+
+`social_provider_connections` remains service-role-only. The PDF export now uses
+a server-only metadata reader for six explicitly selected fields, with an owner
+check before and after the scoped read. Unexpected secret columns are discarded,
+responses are stream-bounded to 32 KB and only a recognized missing optional
+table is treated as empty. Creator datasets continue to use the owner's JWT and
+RLS; a failed authorized read blocks export instead of silently omitting data.
+
+The protected `accept` action installs only the pinned dependencies without
+lifecycle scripts and requires `/api/version` to match the reviewed Staging
+commit before any test login or bundle write. While the two marked test profiles
+exist, each owner downloads the actual PDF endpoint with that owner's session.
+The bounded in-memory parser requires the owner's Creator ID and writing style
+and rejects the other Creator/workspace/style or credentials. Version checks
+surround each download. PDF bytes and extracted text are never saved or logged.
+A failure still uses the same receipt-bound cleanup and member revocation.
+Recovery-only cleanup needs neither the application deployment nor PDF packages.
+
+Four local cases exercise the real PDF generator/parser, foreign records and
+credentials, rejected targets/releases/sessions, HTML/error bodies, release
+changes and streaming size limits. Four metadata-reader tests cover exact owner
+authorization, safe projection, optional schema handling and the actual collector.
+These are source checks; only a successful protected target `accept` establishes
+real Staging PDF delivery. Whole-account/contact deletion, enabled runtime UI,
+real writing quality and provider approval remain separate.

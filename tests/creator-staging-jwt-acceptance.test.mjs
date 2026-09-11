@@ -60,7 +60,7 @@ function harness({ changedFixture = false, preexisting = false, interruptedCreat
     if(['/rest/v1/creator_voice_profiles','/rest/v1/creator_sales_playbooks','/rest/v1/creator_commercial_events'].includes(url.pathname)) return json([]);
     throw new Error('Unexpected endpoint');
   }
-  return {env,fetchImpl,calls,saved,logouts};
+  return {env,fetchImpl,calls,saved,logouts,verifyRelease:async()=>{},verifyDisclosure:async()=>{}};
 }
 test('wrong target, changed release, missing acknowledgement, proxy and runtime activation produce zero network calls', async () => {
   for(const patch of [{FANMIND_TARGET_SUPABASE_PROJECT_REF:'productionref'},{FANMIND_STAGING_SUPABASE_URL:'https://productionref.supabase.co'},{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{GITHUB_SHA:'b'.repeat(40)},{GITHUB_REF:'refs/heads/feature'},{FANMIND_ENABLE_NON_PRODUCTION_WRITES:'false'},{FANMIND_STAGING_CREATOR_ACCEPT_CONFIRM:'apply-creator-foundation'},{HTTP_PROXY:'https://unexpected.invalid'},{GITHUB_RUN_ID:''},{FANMIND_CREATOR_INTELLIGENCE_ENABLED:'true'},{FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID:primary}]) {

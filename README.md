@@ -24,8 +24,13 @@ Bei konfiguriertem Creator werden weder ausgewählte noch voreingestellte
 Legacy-Antwortprofile als weiterer Stil in die KI geladen. Bei aktiviertem
 Creator-Rollout zeigt die Oberfläche ein Creator-Profil und ergänzende
 Geschäftsregeln. Alle Antwortvarianten bleiben im einzigen Account-Schreibstil.
-Der kontrollierte Creator-Staging-Workflow ist implementiert; echter Ziel-
-Rollout, JWT-/Lösch-/Export- und Stilqualität müssen separat belegt werden.
+Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
+Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
+11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
+waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
+Der Creator-Schalter bleibt aus. Echte JWT-/Lösch-/Export-Abnahme, aktivierte
+Oberfläche, Schreibqualität und Plattformfreigaben sind weiterhin offen;
+eine Produktionsinstallation oder allgemeine Aktivierung ist damit nicht belegt.
 
 
 Kanalverbindung nach FM-DEC-018: in FanMind anmelden, Kanal wählen, direkt bei der

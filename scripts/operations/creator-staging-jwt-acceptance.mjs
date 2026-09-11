@@ -10,6 +10,7 @@ import {
   STAGING_SYNTHETIC_UUID_PATTERN,
 } from '../../src/lib/stagingSyntheticFixturePolicy.mjs';
 import { defaultCreatorBundle, buildCreatorReplyContext } from '../../src/lib/creatorIntelligencePolicy.mjs';
+import { verifyCreatorDisclosureRelease, verifyCreatorDisclosure } from './creator-staging-disclosure-acceptance.mjs';
 
 const CONFIRMATION = 'accept-creator-foundation';
 const CLEANUP_CONFIRMATION = 'cleanup-creator-foundation';
@@ -68,8 +69,11 @@ export async function readBoundedCreatorResponse(response, limit = 100000) {
 export async function runCreatorJwtAcceptance(env, {
   fetchImpl = fetch,
   cleanupOnly = false,
+  verifyRelease = verifyCreatorDisclosureRelease,
+  verifyDisclosure = verifyCreatorDisclosure,
 } = {}) {
   validateCreatorAcceptanceEnvironment(env, { cleanupOnly });
+  if (!cleanupOnly) await verifyRelease(env, { fetchImpl });
   const base = env.FANMIND_STAGING_SUPABASE_URL;
   const anonKey = env.FANMIND_STAGING_SUPABASE_ANON_KEY;
   const serviceKey = env.FANMIND_STAGING_SUPABASE_SERVICE_ROLE_KEY;
@@ -164,6 +168,9 @@ export async function runCreatorJwtAcceptance(env, {
     const initial = await Promise.all(fixtures.map(context));
     const styles = initial.map(input => buildCreatorReplyContext(input).voice.tone);
     requireFact(styles[0] !== styles[1], 'style_isolation');
+    for (let index = 0; index < fixtures.length; index++) {
+      await verifyDisclosure(env, { ...fixtures[index], writingStyle: styles[index] }, { ...fixtures[1-index], writingStyle: styles[1-index] }, { fetchImpl });
+    }
     for (const fixture of fixtures) {
       requireFact((await save(fixture, 1, false)).ok, 'draft_save');
       const draft = await context(fixture);
@@ -199,7 +206,7 @@ export async function runCreatorJwtAcceptance(env, {
   requireFact(cleanup.length === 0, 'cleanup_incomplete_verify_before_retry');
   if (failure) throw failure;
   if (cleanupOnly) return { result: 'PASS', cleanupOnly, bundleCascadeCleanup: 'PASS', runtimeActivated: false };
-  return { result: 'PASS', cleanupOnly, ownerMemberForeign: 'PASS', oneWritingStyle: 'PASS', revisionsAndApproval: 'PASS', bundleCascadeCleanup: 'PASS', runtimeActivated: false, providerCalls: 0, qualityAcceptance: false };
+  return { result: 'PASS', cleanupOnly, ownerMemberForeign: 'PASS', oneWritingStyle: 'PASS', revisionsAndApproval: 'PASS', bundleCascadeCleanup: 'PASS', disclosure: 'PASS', runtimeActivated: false, providerCalls: 0, qualityAcceptance: false };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

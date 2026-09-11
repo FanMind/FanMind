@@ -12,7 +12,7 @@ Die aktuelle Datenbankwahrheit ergibt sich aus:
 3. den tatsächlich verwendeten Queries und Typen in `src/lib/supabase/server.ts`,
 4. dieser Dokumentation.
 
-## Creator-Grundlage, 10. September 2026 — kontrolliert vorbereitet
+## Creator-Grundlage, 11. September 2026 — auf Staging installiert
 
 `supabase/controlled/creator_intelligence_foundation.sql` ergänzt einen Creator
 pro eigenem Workspace (UNIQUE workspace_id), strukturierte freizugebende Voice
@@ -26,8 +26,13 @@ erfolgen ausschließlich über den Owner-geprüften SECURITY-DEFINER-RPC mit
 Versionsprüfung und atomarer Freigabe; direkte PATCH-/INSERT-Zugriffe sind gesperrt. Ein begrenzter Owner-/Kontakt-geprüfter RPC schreibt
 ausschließlich commercial_profile und bestätigte Ereignisse. Keine neue Teamrolle.
 
-Schema ist **nicht als auf Staging oder Production angewandt nachgewiesen**;
-serverseitiger Creator-Schalter standardmäßig aus. Modell:
+Die kontrollierte Staging-Installation ist nachgewiesen: Verify 34622658443,
+Apply 34623104141 auf Main 3f6178bd, exakter POSTFLIGHT=PASS am 11. September
+2026 um 16:38:15 UTC. Die unabhängige Katalogprüfung um 16:39:30 UTC bestätigt
+vier leere RLS-Tabellen, drei Funktionen und gesperrte Creator-/Stil-Updates für
+authenticated. Der serverseitige Creator-Schalter bleibt aus. Reale JWT-/UI-,
+Lösch-, Export- und Qualitätsabnahme bleiben erforderlich; Production ist damit
+nicht installiert oder aktiviert. Modell:
 `docs/CREATOR_INTELLIGENCE.md`; Artifact/Abnahme/Recovery:
 `docs/operations/CREATOR_FOUNDATION_ROLLOUT.md`. Kein generischer Deploy/DB-Push.
 

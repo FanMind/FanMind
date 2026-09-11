@@ -116,6 +116,14 @@ jobs:
             *) exit 1 ;;
           esac
 
+      - name: Install the pinned PDF acceptance dependency without lifecycle scripts
+        if: ${{ inputs.action == 'accept' }}
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify the reviewed Staging deployment before fixture authentication
+        if: ${{ inputs.action == 'accept' }}
+        run: node scripts/operations/creator-staging-disclosure-acceptance.mjs --verify-release
+
       - name: Generate a masked ephemeral member credential
         if: ${{ inputs.action == 'accept' }}
         id: member_generation
