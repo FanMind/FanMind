@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-First Creator/Social source package #1099 is published at 0e5ec0a2 with all 14 checks and Deploy/Audit/Readiness. Preserve that receipt; finish only its bounded reader closeout. Then prepare the controlled Staging target/runbook-to-runner/real JWT acceptance, actual two-Creator voice quality and confirmed-chat learning. One Creator per own account/Workspace. Never start a generic DB push, repeat #1099, auto-enable a provider or advance Android/paid activation during deferral.
+Preserve the published #1099 source and #1100 reader closeout at 8c03b78c; neither needs republishing. Resume the existing controlled Creator Staging continuation and actual target/JWT acceptance, then writing-style quality and confirmed-chat learning. FM-DEC-016: one user/Creator account, one text writing style; no audio. All variants and channels retain that style. Review legacy prompt/UI conformance before activation; future managers use each selected account's style and fan context, with manager roles remaining later. Reuse the already prepared local rollout source after reconciliation; never launch a generic DB push, provider/paid activation or deferred Android work.
 
 ## Why this action
 

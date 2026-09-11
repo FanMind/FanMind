@@ -1,5 +1,14 @@
 # FanMind Change Requests
 
+## FM-CR-030
+- Date: 2026-09-11
+- Status: ACCEPTED
+- Related task/decision: FM-CREATOR-001 / FM-DEC-016.
+- Source: owner clarification: normal user = Creator; one writing style per account; a manager may supervise several separate users/Creators and channels. No generated sound or real voices.
+- Classification: R1 documentation/account-semantics clarification for the existing Creator workstream.
+- Scope: canonical terminology and single-style contract, same-style reply variants and future manager context. Retain the open legacy prompt/UI and actual Staging acceptance checks. No code, SQL, permission, provider, billing or mobile change.
+- Acceptance: current source/cardinality comparison, synchronized readers and existing documentation/truth/memory controls. No runtime capability is accepted through this change.
+
 ## FM-CR-029
 - Date: 2026-09-10
 - Classification: explicit owner reprioritization and bounded Creator/Social implementation.

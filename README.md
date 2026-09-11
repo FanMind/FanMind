@@ -1,5 +1,12 @@
 # FanMind
 
+Ein normaler Nutzer ist der Creator seines Accounts. Jeder Account hat genau
+einen persönlichen **Schreibstil** für Textantworten; damit sind keine echten
+Stimmen oder Audios gemeint. Ein späterer Managerzugang kann mehrere getrennte
+Creator-Accounts und deren Kanäle betreuen und verwendet jeweils den Stil des
+betreuten Accounts. Diese Klarstellung aktiviert keine Managerfunktion oder
+Creator-Umstellung. Vertrag: `docs/CREATOR_INTELLIGENCE.md`, FM-DEC-016.
+
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
 
 Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI

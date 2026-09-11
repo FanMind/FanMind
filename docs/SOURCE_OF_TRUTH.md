@@ -316,6 +316,17 @@ Provider- und Rechtsabnahme Beta. Phase 7b ist keine zusätzliche Voraussetzung
 für die Verkaufsübergabe; alle tatsächlichen Sales-Gates bleiben bestehen.
 Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
 
+FM-DEC-016 vom 11. September 2026 präzisiert: Ein normaler Nutzer ist der
+Creator seines Accounts; jeder Account hat genau einen persönlichen
+Schreibstil. "Stimme"/"Voice" meint ausschließlich geschriebenen Text, keine
+Audioerzeugung oder echte Stimme. Alle Antwortvarianten und Kanäle des Accounts
+verwenden denselben Schreibstil. Nur ein späterer Managerzugang darf mehrere
+getrennte Nutzer-/Creator-Accounts und deren Kanäle betreuen; jede Aktion
+verwendet den Stil und das getrennte Fanwissen des ausgewählten Accounts.
+Managerrechte sind damit nicht aktiviert. Bestehende Legacy-Antwortprofile
+sind keine zusätzlichen Schreibstile; ihr UI-/Runtime-Abgleich bleibt Teil
+der offenen Creator-Aktivierung. Technische Voice-Bezeichner bleiben kompatibel.
+
 Die sichtbaren Phase-5/6-Zeilen werden anhand der bereits vorhandenen Nachweise
 geführt: getrenntes Staging ist abgenommen, der Datenbank-Restore bis
 `DB_POSTCHECKED` geprüft und signierte Android-Artefakte sind vorhanden.

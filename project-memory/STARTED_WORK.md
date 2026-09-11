@@ -1,5 +1,17 @@
 # Started Work Register
 
+## FM-CREATOR-001 — one account, one writing style clarification
+- Date: 2026-09-11
+- Status: COUNTERCHECKED
+- Risk: R1
+- Work lock: LOCK-FM-CREATOR-STYLE-20260911
+- Scope: record Bernd's terminology/account/manager clarification in canonical documentation and Project Memory. No application, database, provider, pricing or role activation.
+- Completed so far: unchanged main 8c03b78c and mandatory readers inspected; #1100 final receipt confirms the prior reader closeout is already released. Existing Creator SQL has one style row per Creator; the reply policy requires the same style across all variants. The legacy prompt-profile UI remains a separate compatibility item.
+- Still open: reviewed publication of the completed documentation clarification; Creator runtime/legacy UI and manager features remain separate.
+- Exact next step: publish the counterchecked FM-DEC-016 / FM-CR-030 documentation change through its enclosing PR and preserve the separate Creator Staging continuation.
+- Owner action needed: none for recording this explicit clarification. Manager access remains a later feature.
+- Recovery: revert only these documentation additions; no data or runtime state changes.
+
 ## FM-CREATOR-001 — Creator and Social continuation
 - Date: 2026-09-10
 - Status: PARTIAL

@@ -1,5 +1,11 @@
 # FanMind Current State
 
+## One account, one text writing style — 2026-09-11
+- FM-DEC-016 / FM-CR-030: each normal user is the Creator of their own account. Exactly one writing style per account; voice means written expression, never audio or real voices. All reply variants stay in that style.
+- A future manager may supervise separate Creator/user accounts and their channels. Use the selected account's style and fan context; no pooled style or manager-persona substitution. Manager/team/multi-workspace implementation remains later.
+- This is a documentation clarification only. Existing Creator SQL cardinality and same-style reply policy support the contract, but legacy prompt/UI conformance and real Creator target acceptance remain open. The separately prepared local Staging rollout is not published or applied by this change.
+- #1100's final receipt already closes the prior reader release at 8c03b78c; do not repeat it. Continue the existing Creator/Social work before Android; retain all current sales/provider/billing/restore gates.
+
 ## Creator und Social jetzt, Android danach — 2026-09-10
 - FM-DEC-015 / FM-CR-029 is current: one Creator per independent account/Workspace. Team access, extended roles, auditable approval workflows and multiple Workspaces remain later. Android follows the current Creator/Social increments; paid activation remains owner-deferred until actual tax/UID facts.
 - First source package is published: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.

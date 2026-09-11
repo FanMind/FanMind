@@ -1,3 +1,16 @@
+## RECEIPT-FM-CREATOR-STYLE-20260911
+- Task: FM-CREATOR-001 / FM-CR-030
+- Status: COUNTERCHECKED
+- Risk: R1
+- Work lock: LOCK-FM-CREATOR-STYLE-20260911
+- Authorization: Bernd's explicit September 11 clarification; existing authorization to maintain canonical documentation and publish reviewed branches/PRs.
+- Baseline: main 8c03b78c838a29a129b27e518fea3ebcf54be191; unchanged mandatory readers, current #1100 final publication receipt and independent prior deployment/audit/readiness evidence.
+- Scope: clarify one user/Creator account, one text writing style, no audio, and future manager access to separate accounts. Preserve existing runtime status and open rollout/legacy UI acceptance.
+- Evidence plan: SQL uniqueness and same-style reply policy, final documentation diff, unchanged executable files and existing truth/memory/PR checks.
+- Falsifier: a claim that audio, multiple selectable Creator styles, live manager access or completed target activation exists would invalidate this clarification; none is intended.
+- Recovery: documentation-only revert, no target/customer data affected.
+- Countercheck: SQL primary key (workspace_id,creator_id), one Creator per Workspace, and same-style reply policy were independently read. Product Truth and memory quality/truth/V8/drift/NBA controls pass; executable files, schema and finishline gate states remain unchanged. Final enclosing-PR checks/publication remain to be bound before the lock is released.
+
 ## RECEIPT-FM-CREATOR-CLOSEOUT-20260910
 - Task: FM-CREATOR-001 / FM-CR-029
 - Status: IN_PROGRESS

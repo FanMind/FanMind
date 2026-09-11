@@ -67,6 +67,7 @@
 
 ## FM-CREATOR-001
 - Status: IN_PROGRESS
+- Owner clarification FM-DEC-016 / FM-CR-030 (2026-09-11): one normal user/Creator account, one text writing style, no audio. Future manager access supervises separate Creator accounts/channels using each selected account's own style and fan knowledge. Same-style reply variants and revisions do not create additional styles. Legacy prompt/UI conformance remains an explicit pre-activation check; manager functionality stays later.
 - Risk: R4
 - Phase: 7b; resumed now before Android by FM-DEC-015.
 - Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
