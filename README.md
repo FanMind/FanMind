@@ -320,15 +320,17 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 - Referral-Rabatte gelten nur auf die Starter-Grundgebühr von 312 €/Monat. Einrichtung, KI-Add-ons, Connection-Pakete und Agency-Erweiterungen sind nicht rabattfähig; Referral und Agency-Mengenrabatt sind nicht kombinierbar.
 - Growth, Agency und Enterprise bleiben Roadmap / Coming Soon / Auf Anfrage, bis sie ausdrücklich freigegeben sind.
 - Verbindliche Roadmap: Phase 3 = Facebook, Instagram und WhatsApp; Phase 7 = TikTok, X/Twitter, Discord und die unverbindliche OnlyFans-Prüfung; Phase 8 = Website-KI-Assistent, iOS/TestFlight, LinkedIn und weitere spätere Plattformanbindungen. Die deaktivierte Sicherheits-, Widget- und Nachrichteningestion-Basis des Website-Assistenten ist begonnen; KI-Dialog, menschliche Eskalation, E-Mail-Rückkanal und produktive Aktivierung fehlen noch. Die übrigen Phase-8-Anbindungen zählen nicht zum aktuellen Verkaufsübergabe-Gate.
-- FM-DEC-017: TikTok und X/Twitter sind jetzt in Anbindungsarbeit. Offizielle Kontoanmeldung, verschlüsselte Tokens und begrenzte X-DM-Lesevorschau sind als standardmäßig ausgeschalteter Staging-Pilot vorbereitet. TikTok-Login verbindet nur das Profil; direkter Nachrichtenzugang, Schema-/Provider-Abnahme und Production-Aktivierung bleiben offen. Ein Account behält auf allen Kanälen genau einen Text-Schreibstil. [Umfang und Einrichtung](docs/integrations/TIKTOK_X_CONNECTIONS.md).
+- FM-DEC-017: TikTok und X/Twitter sind jetzt in Anbindungsarbeit. Offizielle Kontoanmeldung, verschlüsselte Tokens und begrenzte X-DM-Lesevorschau sind als standardmäßig ausgeschalteter Staging-Pilot vorbereitet. TikTok-Login verbindet nur das Profil. Die begrenzte Social-Schema-Installation ist durch #1104 / Apply 34591339718 und Staging Deploy 34591566257 historisch abgeschlossen; spätere Deploys verlangen eine neue aktuelle Zielprüfung vor weiterer Nutzung. Direkter TikTok-Nachrichtenzugang, tatsächlicher Pilotbetrieb, Provider-Abnahme und Production-Aktivierung bleiben offen. Ein Account behält auf allen Kanälen genau einen Text-Schreibstil. [Umfang und Einrichtung](docs/integrations/TIKTOK_X_CONNECTIONS.md).
 - FanMind ist kein Bot: KI bereitet Antworten vor; der Mensch prüft, kopiert und sendet final selbst.
 - FM-DEC-015: Creator Intelligence und die ausgewählte Social-/KI-Handoff-Arbeit
   beginnen jetzt, Android folgt danach. Jeder Creator hat einen eigenen Account
   und Workspace; Teamzugänge, erweiterte Rechte, auditierbare Freigaben und
   Multi-Workspace-Verwaltung bleiben später. Die bestehende Reply-Engine erhält
   strukturierte Creator-Profile/Stimmen/Playbooks und automatische Kontexte.
-  Schema-/Staging-Rollout, reale Voice-Abnahme und die vollständige Kauf-/Lernschleife
-  sind eigene offene Schritte; Code bedeutet keine Live-Aktivierung.
+  Die Creator-Schema-/JWT-/Revisions-/PDF-Grundlage ist mit Lauf 34629009649
+  auf Staging abgenommen. Der tatsächliche Prozessschalter, die eingeschaltete
+  Oberfläche, vollständige Kontakt-/Kontolöschung, echte Schreibqualität und
+  Kauf-/Lernschleife bleiben offen; Code bedeutet keine Live-Aktivierung.
   Details: [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
 - Phase 5/6 zeigen getrenntes Staging und signierte Android-Builds als vorhandene
   Nachweise. Vollständiger Restore, echte Registrierung/E-Mail/Workspace,
