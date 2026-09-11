@@ -1,3 +1,11 @@
+## RECEIPT-FM-CREATOR-META-FINISH-20260911
+- Task/change: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4.
+- Status: IN_PROGRESS; lock LOCK-FM-CREATOR-META-FINISH-20260911.
+- Implementation evidence: PR #1105 at first head a37eb23; Web/build/browser/security passed. Review P1/P2 prompted authenticated SELECT-only Creator tables, owner-checked atomic save RPC and complete grantee allowlists. The PG17 temporary-schema comparator and Expo57 patches are corrected; new-head CI/review and target proof remain required. Baseline d19254f0/tree79e9d176 verified. Previous Social #1104 receipt is ACCEPTED only for its empty Staging/source foundation and its lock is released.
+- Countercheck evidence: current main/PR completion and local source hashes independently match; required source/target tests remain open.
+- Falsifier: a forged callback URL causing an import, an account mismatch, two selectable Creator styles, or a claimed active provider without real consent would contradict this goal.
+- Recovery: transactional Staging installation, unchanged default-off gates until current target/runtime proof; code revert preserves data.
+
 ## RECEIPT-FM-SOCIAL-CONNECT-FLOW-20260911
 - Follow-through: #1103 source published at 3df6f5f8 after all 13 checks and independent review; exact tree 323eb2ce. Deploy 34589815376 and Readiness 34589929792 passed. This supersedes the earlier source-CI pending checkpoint below.
 - Target state: protected Verify 34590000782 passed; Apply 34590217929 stopped. Fresh read-only catalog proof at 10:40:58 UTC shows both tables absent and zero functions. No target success/activation is claimed. Metadata independently identifies service_role ALL defaults; correction removes inherited grants only on the new tables, with unchanged exact ACL checks and a Supabase-default PG17 fixture.

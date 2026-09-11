@@ -114,7 +114,7 @@ test("mobile uses the square FM-over-wordmark splash and dedicated high-resoluti
   );
 
   assert.ok(splashPlugin);
-  assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.8");
+  assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.9");
   assert.equal(splashPlugin[1].image, "./assets/branding/fanmind-splash.png");
   assert.equal(splashPlugin[1].dark, undefined);
   assert.equal(splashPlugin[1].resizeMode, "contain");

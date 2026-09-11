@@ -178,13 +178,14 @@ export async function saveWorkspaceAiPromptSettings(input: {
 export async function getWorkspaceAiPromptContext(
   workspaceId: string,
   requestedProfileId: unknown,
+  companyOnly = false,
 ) {
   const result = await getWorkspaceAiPromptSettings(workspaceId);
   if (result.error) {
     return selectAiPromptContext(EMPTY_SETTINGS, null);
   }
   return selectAiPromptContext(
-    result.settings,
+    companyOnly ? { ...result.settings, profiles: [] } : result.settings,
     typeof requestedProfileId === "string" ? requestedProfileId : null,
   );
 }

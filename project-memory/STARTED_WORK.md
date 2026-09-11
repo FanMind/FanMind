@@ -1,3 +1,11 @@
+## Creator and Meta continuation — 2026-09-11
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; Risk R4; LOCK-FM-CREATOR-META-FINISH-20260911.
+- Owner requests completing the listed Social/Creator steps. Normal branch/PR/publication and technically validated isolated Staging work are authorized in the current session; no new request for the same permission.
+- Completed so far: exact GitHub main recovered and every source blob/tree verified; prior #1104 completion reconciled; drift and freshness checks pass. Meta successful callbacks currently do not invoke historical sync.
+- Still open: connection-bound first import, single text-style legacy behavior, reviewed Creator Staging controller/target/runtime, actual provider access and genuine quality evidence.
+- Exact next step: implement and test callback-bound Meta import, then resume retained Creator controller source.
+- Owner action needed: only genuinely unavailable per-Creator provider consent/external factual evidence; no credential values in repository.
+
 ## FM-SOC7-001 — Connection return and initial preview
 - Status: IN_PROGRESS
 - Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018

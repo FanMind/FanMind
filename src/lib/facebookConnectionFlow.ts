@@ -1,3 +1,4 @@
+import { runMetaInitialImport, type MetaInitialImportStatus } from "@/lib/metaInitialImport";
 import {
   encryptToken,
   fetchFacebookGrantedPermissions,
@@ -38,6 +39,7 @@ export type FacebookConnectionFlowResult =
       connectedType: FacebookPageSelectionConnectionType;
       pageId: string;
       pageName: string;
+      initialImport: MetaInitialImportStatus;
     }
   | {
       ok: false;
@@ -139,7 +141,7 @@ export async function completeFacebookOAuthConnection(input: {
     permissionsVerifiedAt: new Date().toISOString(),
   });
 
-  if (result.error) {
+  if (result.error || !result.connection) {
     console.error("Facebook social connection save failed", {
       code: "facebook_connection_save_failed",
       workspaceIdPresent: Boolean(input.workspaceId),
@@ -177,8 +179,11 @@ export async function completeFacebookOAuthConnection(input: {
     }
   }
 
+  const initialImport = await runMetaInitialImport(result.connection, input.connectionType);
+
   return {
     ok: true,
+    initialImport,
     connectedType: input.connectionType,
     pageId: page.id,
     pageName: page.name,

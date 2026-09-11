@@ -101,7 +101,7 @@ export async function GET(request: Request) {
     revalidatePath("/channels");
     return redirectToChannels(
       appOrigin,
-      `connected=${result.connectedType}`,
+      `connected=${result.connectedType}&meta_import=${result.initialImport}`,
     );
   } catch {
     console.error("Facebook OAuth callback failed", {

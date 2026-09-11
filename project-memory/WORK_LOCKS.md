@@ -1,9 +1,20 @@
+## LOCK-FM-CREATOR-META-FINISH-20260911
+- Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Baseline: current main d19254f06da3205a954e903f72e5c5b6928de3ab, verified local tree 79e9d176cb4c922e67456c741d933fba4d08250d; #1104 final receipt read.
+- Scope: automatic bounded Meta first import after verified connection, one-style legacy conformance and protected Creator Staging rollout. Existing provider and processing gates remain required; no paid activation or Android changes.
+- Evidence plan: callback/tenant/failure behavior tests, actual PG17/schema/rollback, browser tests and current reviewed PR checks; independent target postflight before any activation claim.
+- Recovery: bounded source revert, fail-closed target checks and transactional schema apply; preserve all pre-existing data and no automatic schema deletion.
+
 # Work Locks
 
 ## LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
+- Final closeout: #1104 final receipt supersedes earlier checkpoints. Source/main d19254f0, Apply 34591339718, independent Staging postcheck and Staging Deploy 34591566257 are complete; no repeat installation.
 - Current checkpoint: #1103 source is published as 3df6f5f8. Continue only the controlled Staging grant correction and its Verify/Apply/Postflight; observed failed Apply left zero Social objects. The original source publication is not reopened.
 - Task: FM-SOC7-001 / FM-CR-032
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Baseline: verified main 95bbd13a1a579a0c6c9361d81e4a7bf912637879, exact tree 6cb730ebd069ebe03f585f70e9ce826635b5975a; final #1102 source receipt read.

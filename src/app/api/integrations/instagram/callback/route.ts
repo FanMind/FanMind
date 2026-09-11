@@ -1,3 +1,4 @@
+import { runMetaInitialImport } from "@/lib/metaInitialImport";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
@@ -88,7 +89,7 @@ export async function GET(request: Request) {
       tokenExpiresAt,
       permissionsVerifiedAt: null,
     });
-    if (result.error) {
+    if (result.error || !result.connection) {
       console.error("Instagram social connection save failed", {
         code: "instagram_connection_save_failed",
         workspaceIdPresent: Boolean(state.workspaceId),
@@ -118,10 +119,11 @@ export async function GET(request: Request) {
       }
     }
 
+    const initialImport = await runMetaInitialImport(result.connection, state.connectionType);
     revalidatePath("/channels");
     return redirectToChannels(
       appOrigin,
-      `connected=${state.connectionType}`,
+      `connected=${state.connectionType}&meta_import=${initialImport}`,
     );
   } catch {
     console.error("Instagram OAuth callback failed", {

@@ -1,3 +1,4 @@
+import { creatorIntelligenceEnabled } from "@/lib/creatorIntelligence";
 import { NextResponse } from "next/server";
 import { isPlatformAdminEmail } from "@/lib/admin";
 import {
@@ -209,6 +210,7 @@ export async function GET(request: Request) {
       ok: true,
       settings: result.settings,
       canManage: canManage(context),
+      singleWritingStyle: creatorIntelligenceEnabled(),
     });
   } catch (error) {
     return mapError(error);

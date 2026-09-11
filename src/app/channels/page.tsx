@@ -240,6 +240,13 @@ export default async function ChannelsPage({
 
   return (
     <main className={dashboardStyles.page}>
+      {(facebookConnection || instagramConnection) && ["failed", "deferred", "partial"].includes(singleSearchParam(params.meta_import) ?? "") ? (
+        <p role="status">
+          {locale === "en"
+            ? "The first message import is not complete. Check the import status in your channel and continue with the manual sync if needed."
+            : "Der erste Nachrichtenimport ist noch nicht vollständig. Prüfe den Importstatus im Kanal und setze den Abgleich bei Bedarf manuell fort."}
+        </p>
+      ) : null}
       {workspace ? (
         <ChannelsWorkspace
           workspace={workspace}

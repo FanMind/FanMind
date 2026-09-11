@@ -27,7 +27,7 @@ test("Creator editor and confirmed fan purchase stay human controlled", async ({
   await page.getByRole("button", { name: /Einloggen/u }).click();
   await page.waitForURL("**/dashboard");
   await page.goto("/settings/ai-usage");
-  const profile = page.getByRole("region", { name: "Dein Creator-Profil und deine Stimme" });
+  const profile = page.getByRole("region", { name: "Dein Creator-Profil und dein Schreibstil" });
   await expect(profile).toBeVisible();
   await expect(profile.getByLabel(/Ich habe Persona/u)).toBeChecked();
   await profile.getByLabel("Grundton", { exact: true }).fill("ruhig und klar");
@@ -37,7 +37,9 @@ test("Creator editor and confirmed fan purchase stay human controlled", async ({
   await expect(profile.getByRole("status")).toContainText("Geprüfte Version gespeichert");
   expect(saved).toMatchObject({ persona: { displayName: "Synthetic Sophie" }, voice: { tone: "ruhig und klar" }, approve: true });
 
+  await page.route("**/api/ai/prompt-settings", route => route.fulfill({ json: { singleWritingStyle: true, settings: { profiles: [{ id: "legacy", name: "Legacy alternate style", isActive: true, isDefault: true }] } } }));
   await page.goto("/fans/30000000-0000-4000-8000-000000000001");
+  await expect(page.getByRole("option", { name: "Legacy alternate style" })).toHaveCount(0);
   await page.getByText("Creator-Fanwissen und bestätigte Käufe", { exact: true }).click();
   const save = page.getByRole("button", { name: "Geprüfte Fandaten speichern" });
   await expect(save).toBeDisabled();

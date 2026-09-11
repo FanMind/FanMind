@@ -1,5 +1,33 @@
 # FanMind Source of Truth
 
+## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
+
+Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
+Nachrichtenverbindung startet der vorhandene begrenzte historische Import.
+Bei mehreren Facebook-Seiten geschieht dies erst nach der expliziten Auswahl.
+Die Verbindung wird anhand Account, Workspace, Plattform, Seite und
+Verbindungsrevision erneut geladen; aktuelle Verarbeitungs- und Ownerrechte
+bleiben erforderlich. Kommentar-/Insights-Anmeldungen und Kanalseiten-URLs
+starten keinen Nachrichtenimport. Eine bestehende abgeschlossene Synchronisation
+wird nicht automatisch wiederholt. Der gemeinsame Datenbank-Ratenbegrenzer
+erlaubt höchstens einen automatischen Versuch je Verbindung und 15-Minuten-
+Fenster; bei Fehlern gibt es keinen unkontrollierten Wiederholungsabruf.
+
+Der Abruf bleibt bei den bestehenden Grenzen (bis 25 Gespräche und 150
+Nachrichten je Gespräch im ersten Durchlauf, Zeitbudget und Fortsetzung).
+Ein begrenzter Durchlauf bedeutet nicht den vollständigen Download aller
+Nachrichten. Teilimporte und Fehler bleiben sichtbar; der manuelle Abgleich
+und Webhook-Pfad bleiben erhalten. Kein Versand, keine neue externe Freigabe
+und kein automatisches Stil-Lernen aus eingehenden Nachrichten.
+
+Bei konfiguriertem Creator werden weder ausgewählte noch voreingestellte
+Legacy-Antwortprofile als weiterer Stil in die KI geladen. Bei aktiviertem
+Creator-Rollout zeigt die Oberfläche ein Creator-Profil und ergänzende
+Geschäftsregeln. Alle Antwortvarianten bleiben im einzigen Account-Schreibstil.
+Der kontrollierte Creator-Staging-Workflow ist implementiert; echter Ziel-
+Rollout, JWT-/Lösch-/Export- und Stilqualität müssen separat belegt werden.
+
+
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
 
 Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI

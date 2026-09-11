@@ -86,11 +86,12 @@ export function AiReplySuggestions({
         if (!response.ok) return null;
         return (await response.json().catch(() => null)) as {
           settings?: { profiles?: PromptProfileOption[] };
+          singleWritingStyle?: boolean;
         } | null;
       })
       .then((data) => {
         if (!active) return;
-        const profiles = (data?.settings?.profiles ?? []).filter(
+        const profiles = (data?.singleWritingStyle ? [] : data?.settings?.profiles ?? []).filter(
           (profile) => profile.isActive,
         );
         setPromptProfiles(profiles);
