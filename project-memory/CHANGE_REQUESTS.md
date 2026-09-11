@@ -1,3 +1,10 @@
+## FM-CR-032 — Complete the connection return and initial-read journey
+- Date: 2026-09-11
+- Status: IN_PROGRESS
+- Task: FM-SOC7-001 / FM-DEC-018
+- Scope: provider-hosted sign-in explanation, return to the selected channel, one atomic initial X preview and controlled isolated-Staging schema Verify/Apply/Postflight. Reuse the existing account boundaries; preserve the separate Creator rollout draft.
+- Acceptance: browser return/first-load proof, duplicate/foreign/missing-consent rejection, real PG17 atomicity and controlled schema checks, current PR security/CI. Source work does not establish actual provider access or a clean Production-operations gate.
+
 ## FM-CR-031 — Resume TikTok and X/Twitter integration
 - Date: 2026-09-11
 - Status: IN_PROGRESS

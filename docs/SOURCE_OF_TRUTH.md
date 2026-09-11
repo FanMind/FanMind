@@ -326,6 +326,16 @@ Production-Aktivierung sind offen. Die Vorschau speichert keine Fans oder Chats 
 CRM und erzeugt keinen weiteren Schreibstil. Discord bleibt später.
 Details: `docs/integrations/TIKTOK_X_CONNECTIONS.md`.
 
+FM-DEC-018 / FM-CR-032 konkretisiert die Anmeldung: FanMind-Login, Kanal auswählen,
+eigene Anmeldung und Zustimmung auf der offiziellen Plattformseite, Rückkehr zum
+gewählten Kanal. FanMind erhält kein Plattform-Passwort; die Entwickler-App wird
+zentral eingerichtet. X hat einen einmaligen, datenbankgebundenen Erstabruf und
+danach manuelle Vorschauen mit unveränderter Begrenzung. Der kontrollierte
+Staging-Schema-Workflow ist vorbereitet; tatsächlicher Rollout und Provider-Zugang
+bleiben separat zu belegen. Der unter #1102 dokumentierte nächtliche Backup-Fehler
+bleibt offen und ist keine neue Voraussetzung für unabhängige Social-Quellarbeit;
+er verhindert weiterhin eine vollständig grüne aktuelle Betriebsabnahme.
+
 FM-DEC-016 vom 11. September 2026 präzisiert: Ein normaler Nutzer ist der
 Creator seines Accounts; jeder Account hat genau einen persönlichen
 Schreibstil. "Stimme"/"Voice" meint ausschließlich geschriebenen Text, keine

@@ -1,3 +1,10 @@
+## FM-DEC-018 — Creator connects through the platform and returns to FanMind
+- Date: 2026-09-11
+- Status: CONFIRMED
+- Source: Bernd confirms FanMind login -> select a channel -> connect own platform account -> retrieve permitted messages, and requests continued Social work without another Backup detour.
+- Decision: platform username/password and any MFA are entered only on the official provider page. FanMind receives scoped authorization, never the provider password. Existing provider sessions may skip a redundant login. Return to the chosen channel; attempt the first supported X preview once from server-confirmed connection state, never from a forged callback query alone.
+- Boundaries: TikTok profile consent is not messaging permission. Instagram's existing authorized account/DM path remains distinct from unverified App Review and future complete platform support. One account keeps one writing style (FM-DEC-016). Provider apps/consent/budget/legal proof are not supplied by the desired journey. Backup incident remains open separately; no red control or history is erased.
+
 ## FM-DEC-017 — TikTok and X/Twitter now
 - Date: 2026-09-11
 - Status: CONFIRMED

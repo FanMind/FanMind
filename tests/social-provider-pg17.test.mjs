@@ -65,9 +65,13 @@ test("PG17 proves social OAuth one-use state, owner isolation, uniqueness, lease
       reset role;
       set role service_role;
       select pg_temp.expect((select count(*)=1 from public.fanmind_social_claim_read('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','x',
-        (select revision from public.social_provider_connections where provider='x'),'33333333-3333-4333-8333-333333333333')));
+        (select revision from public.social_provider_connections where provider='x'),'33333333-3333-4333-8333-333333333333',true)));
+      select pg_temp.expect((select not initial_read_pending from public.social_provider_connections where provider='x'));
       select pg_temp.expect((select count(*)=0 from public.fanmind_social_claim_read('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','x',
         (select revision from public.social_provider_connections where provider='x'),'44444444-4444-4444-8444-444444444444')));
+      update public.social_provider_connections set next_read_at=now()-interval '1 minute',lease_until=now()-interval '1 minute' where provider='x';
+      select pg_temp.expect((select count(*)=0 from public.fanmind_social_claim_read('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','x',
+        (select revision from public.social_provider_connections where provider='x'),'44444444-4444-4444-8444-444444444444',true)));
       select pg_temp.expect(not public.fanmind_social_rotate('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','x',
         '55555555-5555-4555-8555-555555555555','33333333-3333-4333-8333-333333333333','stale',now()+interval '1 hour'));
       select pg_temp.expect(public.fanmind_social_begin('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','x',repeat('c',64),'verifier'));

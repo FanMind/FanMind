@@ -1,3 +1,8 @@
+## DEP-SOCIAL-CONNECT-FLOW-20260911
+- Task: FM-SOC7-001 / FM-CR-032
+- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. Full provider activation depends on controlled schema setup, central FanMind apps, per-Creator consent, X budget and current external evidence.
+- The earlier database-backup failure blocks fresh overall Operations acceptance, not independent default-off Social source preparation under FM-DEC-018. Do not remove or dilute that gate.
+
 ## TikTok / X resumed dependencies — FM-DEC-017
 - FM-SOC7-001 source may proceed now independently of Android under the owner's explicit instruction.
 - Real pilot depends on the new controlled schema rollout, exact isolated target, provider app/account/permission/budget and privacy evidence. Production remains structurally disabled.

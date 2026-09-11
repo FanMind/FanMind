@@ -245,4 +245,4 @@ jobs:
         env:
           FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
           FANMIND_CREATOR_PG17_REQUIRED: "true"
-        run: node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/social-provider-pg17.test.mjs
+        run: node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs

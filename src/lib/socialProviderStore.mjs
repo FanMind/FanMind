@@ -18,7 +18,7 @@ export function socialProviderStore(env = process.env, fetcher = fetch) {
   return {
     rpc: (name, params) => request(`rpc/fanmind_social_${name}`, params),
     async read(workspaceId, provider) {
-      const query = new URLSearchParams({ workspace_id: `eq.${workspaceId}`, provider: `eq.${provider}`, select: "workspace_id,provider,external_account_id,display_name,encrypted_token,expires_at,revision,connected_at,next_read_at", limit: "1" });
+      const query = new URLSearchParams({ workspace_id: `eq.${workspaceId}`, provider: `eq.${provider}`, select: "workspace_id,provider,external_account_id,display_name,encrypted_token,expires_at,revision,connected_at,next_read_at,initial_read_pending", limit: "1" });
       const rows = await request(`social_provider_connections?${query}`);
       if (!Array.isArray(rows) || rows.length > 1) throw new SocialProviderError("storage_unavailable");
       return rows[0] ?? null;

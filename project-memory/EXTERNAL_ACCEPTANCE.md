@@ -1,3 +1,9 @@
+## EXT-SOCIAL-CONNECT-JOURNEY-20260911
+- Related: FM-SOC7-001 / FM-CR-032
+- Status: OPEN
+- Central FanMind platform apps and Creator consent are distinct requirements. Official hosted login handles passwords/MFA; FanMind receives scoped tokens. A configured flag or synthetic first-read test is not real provider approval.
+- New controlled schema setup is prepared; exact target Verify/Apply/Postflight, real positive/negative provider tests, X budget, legal basis and Production activation remain open.
+
 ## EXT-TIKTOK-X-PILOT-20260911
 - Related: FM-SOC7-001 / FM-CR-031
 - Status: OPEN

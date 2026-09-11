@@ -1,3 +1,14 @@
+## FM-SOC7-001 — Connection return and initial preview
+- Status: IN_PROGRESS
+- Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018
+- Risk: R4
+- Work lock: LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
+- Completed so far: exact current main recovered and compared, #1102 final receipt reconciled, drift/freshness controls passed, isolated Staging project freshly verified; both Social tables are absent on PostgreSQL 17.
+- Still open: implementation, independent negative/PG17/browser evidence and reviewed publication; actual app/consent/budget and target/provider acceptance.
+- Exact next step: implement a once-only initial X read based on stored connection state and the controlled Staging schema setup.
+- Owner action needed: none for source engineering. Existing platform/account credentials are not requested in chat. Protected deployment/provider prerequisites remain factual boundaries.
+- Retained work: Creator draft cd5cac7c remains separately preserved; #1102 source publication is not repeated. Historical Backup failure at 00:30 UTC remains tracked under FM-OPS-001.
+
 ## FM-SOC7-001 — TikTok / X connection engineering
 - Status: IN_PROGRESS
 - Task: FM-SOC7-001 / FM-CR-031

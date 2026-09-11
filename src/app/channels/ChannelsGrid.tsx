@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import { SocialProviderConnection } from "./SocialProviderConnection";
+import { ChannelConnectionSteps } from "./ChannelConnectionSteps";
 import styles from "./channels.module.css";
 import { type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import {
@@ -140,6 +141,13 @@ const phase3ChannelKeys = new Set(["facebook", "instagram", "whatsapp"]);
 const phase7ChannelKeys = new Set(["tiktok", "twitter", "discord", "discord-server", "onlyfans"]);
 const currentChannelKeys = new Set(["email", "website-chat", "webform", "manual"]);
 const preparedPhase8ChannelKeys = new Set(["telegram"]);
+
+function beginMetaAuthorization(provider: "facebook" | "instagram", scope: "messages" | "comments" | "insights") {
+  // OAuth needs a document navigation: an SPA fetch cannot follow the external login.
+  const target = new URL(`/api/integrations/${provider}/start`, window.location.origin);
+  target.searchParams.set("type", `${provider}_${scope}`);
+  window.location.assign(target.href);
+}
 
 function roadmapPhaseForChannel(key: string) {
   if (phase3ChannelKeys.has(key)) return 3;
@@ -632,6 +640,24 @@ export function ChannelsGrid({
     facebookLiveSetupStatus.publicBaseUrlConfigured;
 
   useEffect(() => {
+    const openReturnedChannel = () => {
+      const query = new URLSearchParams(window.location.search);
+      const provider = query.get("social");
+      const connected = query.get("connected");
+      const instagramReturn = ["instagram_messages", "instagram_comments", "instagram_insights"].includes(connected ?? "") || query.has("instagram_error");
+      const facebookReturn = ["facebook_messages", "facebook_comments", "facebook_insights"].includes(connected ?? "") || query.has("facebook_error");
+      const key = provider === "x" ? "twitter" : provider === "tiktok" ? "tiktok" : instagramReturn ? "instagram" : facebookReturn ? "facebook" : null;
+      if (!key) return;
+      const group = channelGroups.find(group => group.channels.some(channel => channel.key === key));
+      const channel = group?.channels.find(channel => channel.key === key);
+      if (group && channel) { setActiveGroupId(group.id); setActiveChannel(channel); }
+    };
+    const frame = window.requestAnimationFrame(openReturnedChannel);
+    window.addEventListener("popstate", openReturnedChannel);
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("popstate", openReturnedChannel); };
+  }, []);
+
+  useEffect(() => {
     if (!activeChannel) return;
 
     modalBodyRef.current?.scrollTo({ top: 0, left: 0 });
@@ -828,6 +854,7 @@ export function ChannelsGrid({
                       className={`${styles.releaseBox} ${styles.fullWidthBlock}`}
                     >
                       <strong>Eigene Facebook-Seite verbinden · Beta</strong>
+                      <ChannelConnectionSteps name="Facebook" />
                       {facebookError ? (
                         <p className={styles.modalNotice} role="alert">
                           {facebookError === "page_selection_required"
@@ -866,24 +893,15 @@ export function ChannelsGrid({
                                 Facebook-DMs jetzt synchronisieren
                               </button>
                             </form>
-                            <form action="/api/integrations/facebook/start" method="get">
-                              <input type="hidden" name="type" value="facebook_messages" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "messages")}>
                                 Messenger-Berechtigung prüfen
                               </button>
-                            </form>
-                            <form action="/api/integrations/facebook/start" method="get">
-                              <input type="hidden" name="type" value="facebook_comments" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "comments")}>
                                 Kommentare freigeben
                               </button>
-                            </form>
-                            <form action="/api/integrations/facebook/start" method="get">
-                              <input type="hidden" name="type" value="facebook_insights" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "insights")}>
                                 Insights freigeben
                               </button>
-                            </form>
                             <form action="/api/integrations/facebook/disconnect" method="post">
                               <button type="submit" disabled={demoConnectionsDisabled}>
                                 Verbindung trennen
@@ -905,15 +923,12 @@ export function ChannelsGrid({
                             </li>
                           </ul>
                           <div className={styles.connectionCardActions}>
-                            <form action="/api/integrations/facebook/start" method="get">
-                              <input type="hidden" name="type" value="facebook_messages" />
-                              <button
-                                type="submit"
+                            <button
+                                type="button"
                                 disabled={demoConnectionsDisabled || !facebookOAuthConfigured}
-                              >
+                               onClick={() => beginMetaAuthorization("facebook", "messages")}>
                                 Eigene Facebook-Seite verbinden
                               </button>
-                            </form>
                           </div>
                         </>
                       )}
@@ -925,6 +940,7 @@ export function ChannelsGrid({
                       className={`${styles.releaseBox} ${styles.fullWidthBlock}`}
                     >
                       <strong>Eigenes Instagram-Professional-Konto · Beta</strong>
+                      <ChannelConnectionSteps name="Instagram" />
                       {instagramError ? (
                         <p className={styles.modalNotice} role="alert">
                           Die Instagram-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten oder Meta-Rohinhalte gespeichert.
@@ -952,24 +968,15 @@ export function ChannelsGrid({
                                 Instagram-DMs jetzt synchronisieren
                               </button>
                             </form>
-                            <form action="/api/integrations/instagram/start" method="get">
-                              <input type="hidden" name="type" value="instagram_messages" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("instagram", "messages")}>
                                 DM-Zugriff prüfen
                               </button>
-                            </form>
-                            <form action="/api/integrations/instagram/start" method="get">
-                              <input type="hidden" name="type" value="instagram_comments" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("instagram", "comments")}>
                                 Kommentare freigeben
                               </button>
-                            </form>
-                            <form action="/api/integrations/instagram/start" method="get">
-                              <input type="hidden" name="type" value="instagram_insights" />
-                              <button type="submit" disabled={demoConnectionsDisabled}>
+                            <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("instagram", "insights")}>
                                 Insights freigeben
                               </button>
-                            </form>
                             <form action="/api/integrations/instagram/disconnect" method="post">
                               <button type="submit" disabled={demoConnectionsDisabled}>
                                 Verbindung trennen
@@ -988,15 +995,12 @@ export function ChannelsGrid({
                             <li>Serverkonfiguration: {instagramOAuthConfigured ? "bereit" : "noch unvollständig"}</li>
                           </ul>
                           <div className={styles.connectionCardActions}>
-                            <form action="/api/integrations/instagram/start" method="get">
-                              <input type="hidden" name="type" value="instagram_messages" />
-                              <button
-                                type="submit"
+                            <button
+                                type="button"
                                 disabled={demoConnectionsDisabled || !instagramOAuthConfigured}
-                              >
+                               onClick={() => beginMetaAuthorization("instagram", "messages")}>
                                 Eigenes Instagram-Konto verbinden
                               </button>
-                            </form>
                           </div>
                         </>
                       )}

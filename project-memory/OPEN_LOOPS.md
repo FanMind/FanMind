@@ -1,5 +1,15 @@
 # FanMind Open Loops
 
+## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
+- Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
+- Source #1102 is already published. Current increment: return to the selected channel, central FanMind app versus individual Creator consent, once-only initial X read and controlled Staging schema setup.
+- Next: current-head PG17/browser/CI countercheck and source publication; separate real target/app/budget/consent acceptance. No Production or provider activation inferred. Preserve Creator draft cd5cac7c.
+
+## FM-LOOP-BACKUP-DATABASE-20260911
+- Status: OPEN; task FM-OPS-001, separate from Social source engineering under current owner priority.
+- Historical observation bound to #1102: Production audit 34582645378 failed. The database backup job failed at 2026-09-11 00:30:34 UTC with backup_worker_failed, before that source release. Latest observed database success was 2026-09-10 00:30:44 UTC; Storage/config succeeded September 11. These observations are not refreshed by this entry.
+- Next: protected host-side diagnosis and controlled function proof. A generic code does not identify the cause. Keep audit/history unchanged and do not claim a fresh fully green Operations acceptance.
+
 ## FM-LOOP-CREATOR-SOCIAL-20260910
 - Status: IN_PROGRESS; current priority per FM-DEC-015.
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
