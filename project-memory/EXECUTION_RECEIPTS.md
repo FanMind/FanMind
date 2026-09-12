@@ -1234,6 +1234,7 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Evidence plan: keep legacy receipts byte/semantic-compatible; require exact named trigger/signature/search-path/ACL for the hardened alternative. Real PG17 and negative capture cases plus current CI/review, deployed release/worker and a single accepted fresh backup result. Source revert preserves all prior backups and data; no DB Restore or permission rollback.
 
 ## RECEIPT-FM-OPS-REBOOT-20260912
+- Publication superseding receipt: current owner explicitly confirmed "ja darf er" for the presented eef3f26b public GitHub publication and reviewed rollout. FM-AUTH-OPS-BOOT-PUBLISH-20260912 records that new confirmation. The connected GitHub transport published exactly tree fb61de76fc59b65802ac2937af7d6061b4e55d8e as a33eedad075d506f566ac5347fc3c0ac74f9a2ff after local Git reported missing credentials. Earlier automatic-rejection fields below are historical and resolved; current-head CI/review/deploy and real boot proof remain pending.
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Task: FM-OPS-001 / FM-CR-036
 - Risk: R4

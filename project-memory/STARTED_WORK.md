@@ -638,10 +638,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: bounded source revert; no deletion of source data, prior backups or accepted receipts. A fresh failure remains open and must not be hidden or retried automatically.
 
 ## FM-OPS-001 — controlled Ubuntu reboot — 2026-09-12
-- Status: BLOCKED
+- Status: IN_PROGRESS
 - Risk: R4
 - Change: FM-CR-036; Work lock: LOCK-FM-OPS-REBOOT-20260912.
 - Baseline: clean exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 / tree 4509e2931478c0af046def29760ca139ac51b45f; independently verified Production audit and exact authenticated Exoscale instance. Drift/freshness preflights passed; prior backup closure reconciled from its final durable receipt.
 - Scope: bounded read-only boot readiness followed by the already requested controlled restart, only after actual boot/recovery preflight. No startup-state mutation in the collector.
-- Exact next step: obtain the concrete publication confirmation required by automatic approval review for this locally completed patch in public FanMind/FanMind, then push the same reviewed branch, run current-head CI/review and normal deploy, and read actual boot prerequisites. No alternate publication path after the rejection.
+- Exact next step: finish current-head PR/CI/review for the approved published source, normal deploy and installed boot-readiness readout; resolve only demonstrated startup gaps, then the already requested controlled reboot with before/after evidence.
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.

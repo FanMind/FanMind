@@ -343,7 +343,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-036 — Production boot-readiness and controlled reboot
 - Date: 2026-09-12
-- Status: BLOCKED
+- Status: IN_PROGRESS
 - Task: FM-OPS-001
 - Risk: R4
 - Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.

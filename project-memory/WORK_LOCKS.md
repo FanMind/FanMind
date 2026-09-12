@@ -667,6 +667,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence/recovery: raw-payload negatives, real PG17 legacy roundtrip plus hardened live-schema capture/dump/ACL countercheck, full current-head CI/review; exact installed source and backup result. Revert only the source if needed; preserve existing artifacts, histories, DB_POSTCHECKED and all real data.
 
 ## LOCK-FM-OPS-REBOOT-20260912
+- Continuation 2026-09-12: current owner publication approval confirmed; remote branch a33eedad matches the exact approved eef3f26b tree. Existing lock retained for PR/CI/review, normal rollout and installed verification; no competing PR found.
 - Task: FM-OPS-001 / FM-CR-036
 - Status: ACTIVE
 - Risk: R4

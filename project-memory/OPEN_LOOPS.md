@@ -1,9 +1,11 @@
 # FanMind Open Loops
 
 ## FM-LOOP-REBOOT-PUBLICATION-20260912
-- Status: BLOCKED; task FM-OPS-001 / FM-CR-036; LOCK-FM-OPS-REBOOT-20260912 retained.
+- Status: CLOSED; task FM-OPS-001 / FM-CR-036; LOCK-FM-OPS-REBOOT-20260912 retained.
 - Finished local read-only boot collector/verifier, executable failure/redaction tests and Operations regression checks. Automatic approval review rejects publication of this exact code/memory payload to public FanMind/FanMind despite the verified existing repository and recorded earlier grants. No remote branch/PR/deploy/reboot created; do not bypass via another tool.
-- Exact next step: concrete owner confirmation for the prepared patch's public publication, then normal current-head CI/review/deploy and actual boot-state/recovery preflight. The previously accepted backup/DB Restore/Creator foundation remain closed.
+- Historical blocked next step: concrete owner confirmation for the prepared patch's public publication, then normal current-head CI/review/deploy and actual boot-state/recovery preflight. The previously accepted backup/DB Restore/Creator foundation remain closed.
+
+- Resolution: explicit current owner confirmation FM-AUTH-OPS-BOOT-PUBLISH-20260912; approved source tree published unchanged as a33eedad075d506f566ac5347fc3c0ac74f9a2ff. The earlier automatic rejection remains historical; resume current-head PR review/CI and normal rollout. No runtime/reboot acceptance is implied.
 
 ## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
 - Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
