@@ -28,7 +28,7 @@ const FIXED_CHECKS = ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND
 const PM2_HOME = "/home/ubuntu/.pm2";
 const CURRENT = "/var/www/fanmind-current";
 const RELEASE_ROOT = "/var/www/fanmind-releases";
-const START_HOOKS = ["ExecCondition", "ExecStartPre", "ExecStartPost"];
+const START_HOOKS = ["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost"];
 const SERVICE_INPUTS = ["EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"];
 const LAUNCH_ENV = ["NODE_OPTIONS", "NODE_PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT", "BASH_ENV", "ENV", "OPENSSL_CONF", "OPENSSL_MODULES"];
 
@@ -127,6 +127,8 @@ export function startupContract(unit) {
   if (tokens.length !== 2 || homes.length !== 1 || homes[0] !== `PM2_HOME=${PM2_HOME}` || paths.length !== 1) return null;
   const match = (unit.ExecStart ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/bin\/pm2) ; argv\[\]=\1 resurrect ; ignore_errors=no ; [^{}]* \}$/u);
   if (!match) return null;
+  const stop = (unit.ExecStop ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/bin\/pm2) ; argv\[\]=\1 kill ; ignore_errors=no ; [^{}]* \}$/u);
+  if (!stop || stop[1] !== match[1]) return null;
   const directories = paths[0].slice(5).split(":");
   if (directories.some(directory => !directory.startsWith("/") || path.normalize(directory) !== directory)) return null;
   return { executable: match[1], directories };
@@ -197,19 +199,36 @@ export const RUNNER_SCRIPT_HASHES = Object.freeze({
   "bin/RunnerService.js": "843c5d27f4e92ce2b11d3ae0ba974f200e705eb762475c06fe0d732cb585331d",
 });
 
-export function runnerStartupMatches(unit, unitName, context) {
+export function runnerEndpointsMatch(settings) {
+  const endpoint = (value, host) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password && !url.port && !url.search && !url.hash &&
+        host.test(url.hostname) && /^\/(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?)?$/u.test(url.pathname);
+    } catch { return false; }
+  };
+  if (!Number.isSafeInteger(settings.agentId) || settings.agentId < 1 || !Number.isSafeInteger(settings.poolId) || settings.poolId < 1 ||
+      ![undefined, false, true].includes(settings.useV2Flow)) return false;
+  if (!endpoint(settings.serverUrl, /^pipelines[a-z0-9-]*\.actions\.githubusercontent\.com$/u)) return false;
+  if (settings.useV2Flow === true || settings.serverUrlV2 !== undefined) {
+    if (!endpoint(settings.serverUrlV2, /^broker[a-z0-9-]*\.actions\.githubusercontent\.com$/u)) return false;
+  }
+  return true;
+}
+
+export function runnerConfigurationMatches(unit, unitName, context) {
   try {
     const root = unit.WorkingDirectory;
     if (unit.User !== "ubuntu" || unit.Type !== "simple" ||
         !/^\/[A-Za-z0-9_./-]+$/u.test(root ?? "") || path.normalize(root) !== root ||
         fs.realpathSync(root) !== root ||
-        ![...START_HOOKS, ...SERVICE_INPUTS].every(key => unit[key] === "") || unit.Environment !== "") return false;
+        ![...START_HOOKS, ...SERVICE_INPUTS, "ExecStop"].every(key => unit[key] === "") || unit.Environment !== "") return false;
     const executable = `${root}/runsvc.sh`;
     const launch = (unit.ExecStart ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/runsvc\.sh) ; argv\[\]=\1 ; ignore_errors=no ; [^{}]* \}$/u);
     if (!launch || launch[1] !== executable || context.repository !== "FanMind/FanMind" || !context.name || !context.workspace) return false;
     if (readOwnedFile(`${root}/.service`, 1024).trim() !== unitName) return false;
     const settings = JSON.parse(readOwnedFile(`${root}/.runner`, 16 * 1024));
-    if (settings.agentName !== context.name || settings.ephemeral === true ||
+    if (!runnerEndpointsMatch(settings) || settings.agentName !== context.name || settings.ephemeral === true ||
         !["https://github.com/FanMind/FanMind", "https://github.com/Bernds-tech/FanMind"].includes(settings.gitHubUrl) ||
         settings.workFolder !== "_work" || path.join(root, settings.workFolder, "FanMind") !== context.workspace) return false;
     const savedPath = readOwnedFile(`${root}/.path`, 16 * 1024).trim();
@@ -239,13 +258,84 @@ export function runnerStartupMatches(unit, unitName, context) {
   } catch { return false; }
 }
 
+function boundedKernelRead(file, limit = 64 * 1024) {
+  const fd = fs.openSync(file, fs.constants.O_RDONLY);
+  try {
+    const buffer = Buffer.alloc(limit + 1);
+    const count = fs.readSync(fd, buffer, 0, buffer.length, 0);
+    if (count > limit) throw new Error("kernel_value_oversized");
+    return buffer.subarray(0, count).toString("utf8");
+  } finally { fs.closeSync(fd); }
+}
+
+function sameImage(a, b) {
+  return a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
+}
+
+// Bind next-boot files to the kernel-held images of the currently functioning
+// runner. Never execute a candidate to learn its version. Replaced/deleted or
+// changed images fail closed, even if a replacement has the same filename.
+export function loadedExecutableMatches(file, pid) {
+  let candidate, loaded;
+  try {
+    if (!Number.isSafeInteger(pid) || pid < 1 || fs.realpathSync(file) !== file) return false;
+    candidate = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    loaded = fs.openSync(`/proc/${pid}/exe`, fs.constants.O_RDONLY);
+    const before = fs.fstatSync(candidate);
+    if (!before.isFile() || before.size < 4 || before.size > 256 * 1024 * 1024 || (before.mode & 0o111) === 0 ||
+        !sameImage(before, fs.fstatSync(loaded))) return false;
+    const digests = [];
+    for (const fd of [candidate, loaded]) {
+      const hash = createHash("sha256"), buffer = Buffer.alloc(1024 * 1024);
+      let at = 0;
+      while (at < before.size) {
+        const count = fs.readSync(fd, buffer, 0, Math.min(buffer.length, before.size - at), at);
+        if (count === 0 || (at === 0 && !buffer.subarray(0, 4).equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46])))) return false;
+        hash.update(buffer.subarray(0, count)); at += count;
+      }
+      digests.push(hash.digest("hex"));
+    }
+    return digests[0] === digests[1] && sameImage(before, fs.fstatSync(candidate)) && sameImage(before, fs.fstatSync(loaded)) &&
+      sameImage(before, fs.lstatSync(file)) && sameImage(before, fs.statSync(`/proc/${pid}/exe`));
+  } catch { return false; }
+  finally {
+    if (candidate !== undefined) fs.closeSync(candidate);
+    if (loaded !== undefined) fs.closeSync(loaded);
+  }
+}
+
+export function runnerStartupMatches(unit, unitName, context) {
+  try {
+    if (!runnerConfigurationMatches(unit, unitName, context) || unit.ControlGroup !== `/system.slice/${unitName}`) return false;
+    const source = boundedKernelRead(`/sys/fs/cgroup${unit.ControlGroup}/cgroup.procs`);
+    if (!/^(?:[1-9][0-9]{0,9}\n)+$/u.test(source)) return false;
+    const pids = [...new Set(source.trim().split("\n").map(Number))];
+    const root = unit.WorkingDirectory;
+    return ["bin/Runner.Listener", "externals/node20/bin/node"].every(relative => {
+      const file = path.join(root, relative);
+      const matches = pids.filter(pid => {
+        try {
+          if (fs.realpathSync(`/proc/${pid}/cwd`) !== root || fs.realpathSync(`/proc/${pid}/exe`) !== file) return false;
+          const args = boundedKernelRead(`/proc/${pid}/cmdline`, 8192).split("\0").filter(Boolean);
+          const expected = relative === "bin/Runner.Listener" ?
+            args.length === 4 && args[0] === file && args.slice(1).join(" ") === "run --startuptype service" :
+            args.length === 2 && path.resolve(root, args[0]) === file && path.resolve(root, args[1]) === path.join(root, "bin/RunnerService.js");
+          if (!expected || !loadedExecutableMatches(file, pid)) return false;
+          return runnerUnitFromCgroup(boundedKernelRead(`/proc/${pid}/cgroup`)) === unitName && fs.realpathSync(`/proc/${pid}/cwd`) === root;
+        } catch { return false; }
+      });
+      return matches.length === 1;
+    });
+  } catch { return false; }
+}
+
 export function collectBootReadiness(expectedCommit) {
   const units = Object.fromEntries(Object.entries(BOOT_UNITS).map(([role, name]) => [
-    role, readUnit(name, role === "PM2" ? ["User", "Type", "PIDFile", "Environment", "ExecStart", ...START_HOOKS, ...SERVICE_INPUTS] : []),
+    role, readUnit(name, role === "PM2" ? ["User", "Type", "PIDFile", "Environment", "ExecStart", "ExecStop", ...START_HOOKS, ...SERVICE_INPUTS] : []),
   ]));
   let runner;
   try { runner = runnerUnitFromCgroup(fs.readFileSync("/proc/self/cgroup", "utf8")); } catch {}
-  units.RUNNER = runner ? readUnit(runner, ["User", "Type", "WorkingDirectory", "Environment", "ExecStart", ...START_HOOKS, ...SERVICE_INPUTS]) : {};
+  units.RUNNER = runner ? readUnit(runner, ["User", "Type", "WorkingDirectory", "ControlGroup", "Environment", "ExecStart", "ExecStop", ...START_HOOKS, ...SERVICE_INPUTS]) : {};
   const startup = startupContract(units.PM2);
   const checks = {
     PM2_STARTUP: Boolean(startup && trustedExecutable(startup.executable)),

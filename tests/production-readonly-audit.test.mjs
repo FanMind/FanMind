@@ -1,16 +1,18 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { once } from "node:events";
+import { closeSync, openSync, realpathSync } from "node:fs";
 import test from "node:test";
 import yaml from "js-yaml";
 
 import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 import {
   BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
-  readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches,
+  readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
 } from "../scripts/operations/production-boot-readiness.mjs";
 import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
@@ -101,14 +103,17 @@ test("saved PM2 app binds exactly one cluster app and the current release withou
 test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
   const unit = parseUnitProperties([
     "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
-    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => `${key}=`),
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => `${key}=`),
     "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
+    "ExecStop={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 kill ; ignore_errors=no ; pid=0 ; code=(null) ; status=0/0 }",
     "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
   ].join("\n"));
   assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
   for (const overrides of [
     { User: "root" }, { Type: "simple" }, { PIDFile: "/tmp/pm2.pid" },
-    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].flatMap(key => [{ [key]: undefined }, { [key]: "/private/RAW_SECRET_CANARY" }]),
+    { ExecStop: undefined }, { ExecStop: unit.ExecStop.replace(" kill ", " kill extra ") },
+    { ExecStop: unit.ExecStop.replaceAll("/usr/lib/node_modules/pm2", "/tmp/other") },
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].flatMap(key => [{ [key]: undefined }, { [key]: "/private/RAW_SECRET_CANARY" }]),
     { Environment: `${unit.Environment} NODE_OPTIONS=--require=/tmp/hook.cjs` },
     { ExecStart: unit.ExecStart.replace(" resurrect ", " resurrect extra ") },
     { ExecStart: `${unit.ExecStart} ${unit.ExecStart}` },
@@ -162,14 +167,14 @@ test("next-boot release rejects a repointed symlink, wrong deployment ID and mis
   assert.equal(releaseTargetMatches(expectedCommit, release, releases), false);
 });
 
-test("runner boot binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
+test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "fanmind-boot-runner-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, "bin"));
   await mkdir(join(root, "externals/node20/bin"), { recursive: true });
   const unitName = "actions.runner.FanMind-FanMind.production.service";
   const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
-  const settings = { agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work" };
+  const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
   await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
   await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
   await writeFile(join(root, ".path"), "/usr/local/bin:/usr/bin:/bin", { mode: 0o600 });
@@ -180,38 +185,39 @@ test("runner boot binds the actual registration and rejects missing or replaced 
   await writeFile(join(root, "runsvc.sh"), runsvc, { mode: 0o700 });
   await writeFile(join(root, "bin/RunnerService.js"), await readFile("tests/fixtures/runner-startup-v2.337.0/RunnerService.js.txt"));
   const unit = {
-    User: "ubuntu", Type: "simple", WorkingDirectory: root, Environment: "",
+    User: "ubuntu", Type: "simple", WorkingDirectory: root, Environment: "", ExecStop: "",
     ExecStart: `{ path=${root}/runsvc.sh ; argv[]=${root}/runsvc.sh ; ignore_errors=no ; pid=1 ; code=(null) ; status=0/0 }`,
-    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => [key, ""])),
+    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => [key, ""])),
   };
-  assert.equal(runnerStartupMatches(unit, unitName, context), true);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
+  assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
   for (const overrides of [
     { User: "root" }, { WorkingDirectory: "/tmp/absent" }, { ExecStart: unit.ExecStart.replace(" ; ignore", " extra ; ignore") },
     { ExecStartPre: "/tmp/RAW_SECRET_CANARY" }, { Environment: "NODE_OPTIONS=--require=/tmp/hook.cjs" },
-  ]) assert.equal(runnerStartupMatches({ ...unit, ...overrides }, unitName, context), false);
-  assert.equal(runnerStartupMatches(unit, unitName, { ...context, name: "foreign" }), false);
-  assert.equal(runnerStartupMatches(unit, unitName, { ...context, workspace: root }), false);
+  ]) assert.equal(runnerConfigurationMatches({ ...unit, ...overrides }, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, name: "foreign" }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, workspace: root }), false);
   await writeFile(join(root, ".path"), "/usr/bin NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY");
-  assert.equal(runnerStartupMatches(unit, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
   await writeFile(join(root, ".path"), "/usr/bin:/bin");
   await writeFile(join(root, ".env"), "NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY\n");
-  assert.equal(runnerStartupMatches(unit, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
   await writeFile(join(root, ".env"), "LANG=C.UTF-8\n");
   await writeFile(join(root, "runsvc.sh"), "#!/bin/bash\nexit 1\n");
-  assert.equal(runnerStartupMatches(unit, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
   await writeFile(join(root, "runsvc.sh"), runsvc);
   await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, gitHubUrl: "https://github.com/other/repo" }));
-  assert.equal(runnerStartupMatches(unit, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
   await writeFile(join(root, ".runner"), JSON.stringify(settings));
   for (const relative of ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", "externals/node20/bin/node", ".service", ".credentials", ".credentials_rsaparams"]) {
     const file = join(root, relative), content = await readFile(file);
     await rm(file);
-    assert.equal(runnerStartupMatches(unit, unitName, context), false, relative);
+    assert.equal(runnerConfigurationMatches(unit, unitName, context), false, relative);
     await writeFile(file, content, { mode: 0o700 });
   }
-  assert.equal(runnerStartupMatches(unit, unitName, context), true);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
   await chmod(join(root, ".credentials"), 0o644);
-  assert.equal(runnerStartupMatches(unit, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
 });
 
 test("actual workflow keeps boot readiness separate and never publishes private unit values", async (t) => {
@@ -224,6 +230,53 @@ test("actual workflow keeps boot readiness separate and never publishes private 
   assert.match(bad.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
   assert.match(bad.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=false$/mu);
   assert.doesNotMatch(bad.stdout, /RAW_SECRET_CANARY/u);
+});
+
+test("runner registration endpoints reject missing, foreign and untrusted targets", () => {
+  const valid = { agentId: 1, poolId: 1, serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  assert.equal(runnerEndpointsMatch(valid), true);
+  assert.equal(runnerEndpointsMatch({ ...valid, useV2Flow: false, serverUrlV2: undefined }), true);
+  for (const key of ["serverUrl", "serverUrlV2"]) {
+    for (const value of [undefined, "", "https://example.com/", "http://broker.actions.githubusercontent.com/", "https://secret@broker.actions.githubusercontent.com/", "https://broker.actions.githubusercontent.com/?private=RAW_SECRET_CANARY"]) {
+      assert.equal(runnerEndpointsMatch({ ...valid, [key]: value }), false);
+    }
+  }
+  for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+});
+
+test("Linux kernel image fingerprints reject replacement even when executable bytes are identical", async (t) => {
+  try { closeSync(openSync(`/proc/${process.pid}/exe`, "r")); }
+  catch (error) {
+    assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), false);
+    // Native Linux CI must run this proof, never skip it. The local managed
+    // workspace denies even /proc/self/exe; that is not a positive boot result.
+    if (process.env.GITHUB_ACTIONS === "true" || !["EACCES", "EPERM", "ENOENT"].includes(error.code)) throw error;
+    t.skip("local kernel image access denied; native GitHub Linux proof required");
+    return;
+  }
+  assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), true);
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-image-"));
+  const candidate = join(root, "runner-image");
+  // Copy a known installed native utility, never execute a candidate supplied
+  // by an audit or a configuration file.
+  await copyFile("/usr/bin/sleep", candidate);
+  await chmod(candidate, 0o700);
+  const child = spawn(candidate, ["30"], { stdio: "ignore" });
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit"); child.kill("SIGTERM"); await exited;
+    }
+    await rm(root, { recursive: true, force: true });
+  });
+  await once(child, "spawn");
+  assert.equal(loadedExecutableMatches(candidate, child.pid), true);
+  await rename(candidate, join(root, "old-running-image"));
+  await copyFile("/usr/bin/sleep", candidate);
+  await chmod(candidate, 0o700);
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  await writeFile(candidate, "synthetic-not-an-executable");
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  assert.equal(loadedExecutableMatches(candidate, 0), false);
 });
 
 test("boot Node rejects a writable or missing earlier PATH directory", () => {

@@ -254,6 +254,9 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   ausschließlich dem gespeicherten `pm2 resurrect`-Startbefehl; zusätzliche
   `ExecCondition`-/`ExecStartPre`-/`ExecStartPost`-Hooks, Environment-Dateien,
   zusätzliche Environment-Werte und unbekannte Startumgebungen werden abgelehnt;
+  beim Herunterfahren ist nur derselbe PM2-Pfad mit `kill` erlaubt, zusätzliche
+  `ExecStopPost`-Befehle bleiben gesperrt. Auch der Runner darf keine eigenen
+  Stop-/StopPost-Befehle besitzen;
 - root-eigene, nicht durch andere beschreibbare PM2-/Node-Startpfade; der erste
   ausführbare Node-Treffer im systemd-PATH muss derselbe sein wie beim Audit.
   Auch ein früheres beschreibbares oder nicht vorhandenes PATH-Verzeichnis
@@ -281,6 +284,14 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   Review. `.path` und `.env` dürfen keine zusätzlichen Loader-Optionen einführen.
   Credentials werden nur über Dateimetadaten geprüft, nie gelesen oder ausgegeben.
   Das beweist keine künftige Provider-Anmeldung und ersetzt keinen Recovery-Zugang.
+  Registrierung benötigt gültige positive Agent-/Pool-IDs, ein HTTPS-Pipelines-
+  Ziel unter `actions.githubusercontent.com` und im V2-Flow ein passendes
+  Broker-Ziel; Credentials, Query und Fragment sind in den URLs ausgeschlossen.
+  Die nativen Listener-/Node-Dateien müssen zusätzlich mit jeweils genau einem
+  tatsächlich laufenden Programm derselben Runner-cgroup, Startargumente und
+  Arbeitsverzeichnis übereinstimmen: Kernel-Dateiidentität, ELF-Format und
+  SHA-256 sowie unveränderte Metadaten vor/nach dem Lesen. Ersetzte Dateien oder
+  verweigerter Kernel-Zugriff sperren den Nachweis. Kein Kandidat wird ausgeführt.
 
 Ausgegeben werden nur feste Rollen, normalisierte Zustände und Boolesche Werte.
 Unbekannte, fehlende und doppelte Messwerte verhindern den Boot-Pass; private
