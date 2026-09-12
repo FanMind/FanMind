@@ -400,7 +400,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Limitations: full Restore remains FM-RST-001; Remote offsite delete #658 is not authorized; optional email/failure-matrix items are not blanket-complete.
 - Completed: FM-CR-034 / #1110 diagnostic receipt 5640486486; FM-CR-035 / #1111 backup receipt 5644711203. Both bounded packages are Production-confirmed and their locks released. Full installed audit 34648286758 / 103525002411 PASS on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, 2026-09-12T08:20:31Z.
 - Baseline: eight healthy components, nginx active/valid, one PM2 cluster worker, process Node 24.18.0, restart count 0 (reset cause not proven), unchanged host boot ID 7507920b-1401-470e-b8b4-716479c448c6, reboot-required=true.
-- Exact next step: FM-CR-036 / LOCK-FM-OPS-REBOOT-20260912 has explicit public publication/rollout confirmation; approved tree published unchanged. Complete current-head PR/CI/review and normal deploy, then installed boot-readiness/recovery facts and controlled reboot with pre/post evidence.
+- Exact next step: #1112 is published and Production-confirmed at ce9b842c (final receipt 5645444721). Under FM-CR-036 / LOCK-FM-OPS-REBOOT-20260912 and the explicit owner continuation, diagnose the measured PM2 boot failures through bounded read-only codes, verify the independent server reference and authenticated recovery, then the controlled reboot with actual pre/post evidence. Overall boot readiness remains false.
 - Preserve: no extra backup, repeated accepted database Restore/Creator foundation, SQL, provider activation or arbitrary Production workflow execution.
 
 ## FM-MEM-008

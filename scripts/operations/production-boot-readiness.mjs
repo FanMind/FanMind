@@ -25,6 +25,14 @@ const STATES = Object.freeze({
   reload: ["no", "yes"],
 });
 const FIXED_CHECKS = ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET", "REFERENCE_BOUND", "UNIT_CONTRACTS"];
+const DIAGNOSTIC_CODES = Object.freeze({
+  PM2_STARTUP: ["ok", "user", "type", "pid_file", "hooks", "service_inputs", "conditions", "environment_format", "environment_binding", "start_command", "stop_command", "path_format", "executable_untrusted"],
+  PM2_SAVED_APP: ["ok", "file_unverified", "json_invalid", "release_format", "app_count", "app_name", "mode", "cwd", "script", "args", "interpreter", "instances", "autorestart", "loader_override", "node_args", "runtime_environment", "release_binding"],
+  BOOT_NODE: ["ok", "startup_unverified", "path_unverified", "node_untrusted", "node_mismatch", "node_missing"],
+});
+function diagnosticCode(key, value) {
+  return DIAGNOSTIC_CODES[key].includes(value) ? value : "unknown";
+}
 const PM2_HOME = "/home/ubuntu/.pm2";
 const CURRENT = "/var/www/fanmind-current";
 const RELEASE_ROOT = "/var/www/fanmind-releases";
@@ -105,7 +113,14 @@ function readOwnedFile(file, maxBytes = 1024 * 1024, owner = process.getuid()) {
 }
 
 export function readSavedApp(file, expectedCommit) {
-  try { return savedAppMatches(JSON.parse(readOwnedFile(file)), expectedCommit); } catch { return false; }
+  return readSavedAppDiagnostic(file, expectedCommit) === "ok";
+}
+
+export function readSavedAppDiagnostic(file, expectedCommit) {
+  let source, rows;
+  try { source = readOwnedFile(file); } catch { return "file_unverified"; }
+  try { rows = JSON.parse(source); } catch { return "json_invalid"; }
+  return savedAppDiagnostic(rows, expectedCommit);
 }
 
 function noLaunchOverrides(value) {
@@ -114,45 +129,68 @@ function noLaunchOverrides(value) {
 }
 
 export function savedAppMatches(rows, expectedCommit) {
-  if (!/^[a-f0-9]{40}$/u.test(expectedCommit ?? "") || !Array.isArray(rows) || rows.length !== 1) return false;
+  return savedAppDiagnostic(rows, expectedCommit) === "ok";
+}
+
+// Return only fixed reason codes, never a saved value or an exception message.
+export function savedAppDiagnostic(rows, expectedCommit) {
+  if (!/^[a-f0-9]{40}$/u.test(expectedCommit ?? "")) return "release_format";
+  if (!Array.isArray(rows) || rows.length !== 1) return "app_count";
   const app = rows[0];
-  if (!app || app.name !== "fanmind" || app.exec_mode !== "cluster_mode" ||
-      app.pm_cwd !== CURRENT || app.pm_exec_path !== `${CURRENT}/node_modules/next/dist/bin/next` ||
-      !Array.isArray(app.args) || app.args.length !== 1 || app.args[0] !== "start" ||
-      !["node", "/usr/bin/node"].includes(app.exec_interpreter) ||
-      // PM2 dump() removes instances and writes one entry per running worker.
-      // rows.length above binds the persisted worker count; an explicit future
-      // instances value may not widen it on resurrection.
-      (app.instances !== undefined && app.instances !== 1) || app.autorestart !== true) return false;
-  if (!noLaunchOverrides(app) || (app.env !== undefined && !noLaunchOverrides(app.env))) return false;
+  if (!app || app.name !== "fanmind") return "app_name";
+  if (app.exec_mode !== "cluster_mode") return "mode";
+  if (app.pm_cwd !== CURRENT) return "cwd";
+  if (app.pm_exec_path !== `${CURRENT}/node_modules/next/dist/bin/next`) return "script";
+  if (!Array.isArray(app.args) || app.args.length !== 1 || app.args[0] !== "start") return "args";
+  if (!["node", "/usr/bin/node"].includes(app.exec_interpreter)) return "interpreter";
+  // PM2 dump() removes instances and writes one entry per running worker.
+  // An explicit future instances value may not widen that persisted count.
+  if (app.instances !== undefined && app.instances !== 1) return "instances";
+  if (app.autorestart !== true) return "autorestart";
+  if (!noLaunchOverrides(app) || (app.env !== undefined && !noLaunchOverrides(app.env))) return "loader_override";
   for (const key of ["node_args", "interpreter_args"]) {
-    if (app[key] !== undefined && app[key] !== "" && !(Array.isArray(app[key]) && app[key].length === 0)) return false;
+    if (app[key] !== undefined && app[key] !== "" && !(Array.isArray(app[key]) && app[key].length === 0)) return "node_args";
   }
   for (const [key, expected] of Object.entries({
     NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production", FANMIND_RELEASE_COMMIT: expectedCommit,
   })) {
-    if (app[key] !== expected || (app.env && Object.hasOwn(app.env, key) && app.env[key] !== expected)) return false;
+    if (app[key] !== expected || (app.env && Object.hasOwn(app.env, key) && app.env[key] !== expected)) {
+      return key === "FANMIND_RELEASE_COMMIT" ? "release_binding" : "runtime_environment";
+    }
   }
-  return true;
+  return "ok";
 }
 
 // Only accept the simple unescaped PM2 startup environment produced by PM2.
 // Unknown quoting fails closed; it is never evaluated as shell input.
 export function startupContract(unit) {
-  if (unit.User !== "ubuntu" || unit.Type !== "forking" || unit.PIDFile !== `${PM2_HOME}/pm2.pid`) return null;
-  if (![...START_HOOKS, ...SERVICE_INPUTS, "Conditions", "Asserts"].every(key => unit[key] === "")) return null;
+  return inspectStartupContract(unit).contract;
+}
+
+export function startupDiagnostic(unit) {
+  return inspectStartupContract(unit).code;
+}
+
+function inspectStartupContract(unit) {
+  const failed = code => ({ code, contract: null });
+  if (unit.User !== "ubuntu") return failed("user");
+  if (unit.Type !== "forking") return failed("type");
+  if (unit.PIDFile !== `${PM2_HOME}/pm2.pid`) return failed("pid_file");
+  if (!START_HOOKS.every(key => unit[key] === "")) return failed("hooks");
+  if (!SERVICE_INPUTS.every(key => unit[key] === "")) return failed("service_inputs");
+  if (!["Conditions", "Asserts"].every(key => unit[key] === "")) return failed("conditions");
   const tokens = (unit.Environment ?? "").split(" ");
-  if (tokens.some(token => !/^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_/:.=-]+$/u.test(token))) return null;
+  if (tokens.some(token => !/^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_/:.=-]+$/u.test(token))) return failed("environment_format");
   const homes = tokens.filter(token => token.startsWith("PM2_HOME="));
   const paths = tokens.filter(token => token.startsWith("PATH="));
-  if (tokens.length !== 2 || homes.length !== 1 || homes[0] !== `PM2_HOME=${PM2_HOME}` || paths.length !== 1) return null;
+  if (tokens.length !== 2 || homes.length !== 1 || homes[0] !== `PM2_HOME=${PM2_HOME}` || paths.length !== 1) return failed("environment_binding");
   const match = (unit.ExecStart ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/bin\/pm2) ; argv\[\]=\1 resurrect ; ignore_errors=no ; [^{}]* \}$/u);
-  if (!match) return null;
+  if (!match) return failed("start_command");
   const stop = (unit.ExecStop ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/bin\/pm2) ; argv\[\]=\1 kill ; ignore_errors=no ; [^{}]* \}$/u);
-  if (!stop || stop[1] !== match[1]) return null;
+  if (!stop || stop[1] !== match[1]) return failed("stop_command");
   const directories = paths[0].slice(5).split(":");
-  if (directories.some(directory => !directory.startsWith("/") || path.normalize(directory) !== directory)) return null;
-  return { executable: match[1], directories };
+  if (directories.some(directory => !directory.startsWith("/") || path.normalize(directory) !== directory)) return failed("path_format");
+  return { code: "ok", contract: { executable: match[1], directories } };
 }
 
 function trustedPath(file) {
@@ -224,15 +262,20 @@ function installedUnitMatches(unit, name, expectedSha256) {
 }
 
 export function bootNodeMatches(directories) {
+  return bootNodeDiagnostic(directories) === "ok";
+}
+
+export function bootNodeDiagnostic(directories) {
   try {
     for (const directory of directories) {
-      if (!path.isAbsolute(directory) || !fs.statSync(directory).isDirectory() || !trustedPath(directory)) return false;
+      if (!path.isAbsolute(directory) || !fs.statSync(directory).isDirectory() || !trustedPath(directory)) return "path_unverified";
       const candidate = path.join(directory, "node");
       try { fs.accessSync(candidate, fs.constants.X_OK); } catch { continue; }
-      return trustedExecutable(candidate) && fs.realpathSync(candidate) === fs.realpathSync(process.execPath);
+      if (!trustedExecutable(candidate)) return "node_untrusted";
+      return fs.realpathSync(candidate) === fs.realpathSync(process.execPath) ? "ok" : "node_mismatch";
     }
-  } catch {}
-  return false;
+  } catch { return "path_unverified"; }
+  return "node_missing";
 }
 
 export function runnerUnitFromCgroup(source) {
@@ -411,11 +454,17 @@ export function collectBootReadiness(expectedCommit) {
     const template = name.replace(/@[^.]+\.service$/u, "@.service");
     contracts.push(installedUnitMatches(readUnit(name), name, MANAGED_UNIT_HASHES[template]));
   }
-  const startup = startupContract(units.PM2);
+  const inspection = inspectStartupContract(units.PM2);
+  const startup = inspection.contract;
+  const diagnostics = {
+    PM2_STARTUP: startup ? (trustedExecutable(startup.executable) ? "ok" : "executable_untrusted") : inspection.code,
+    PM2_SAVED_APP: readSavedAppDiagnostic(`${PM2_HOME}/dump.pm2`, expectedCommit),
+    BOOT_NODE: startup ? bootNodeDiagnostic(startup.directories) : "startup_unverified",
+  };
   const checks = {
-    PM2_STARTUP: Boolean(startup && trustedExecutable(startup.executable)),
-    PM2_SAVED_APP: readSavedApp(`${PM2_HOME}/dump.pm2`, expectedCommit),
-    BOOT_NODE: Boolean(startup && bootNodeMatches(startup.directories)),
+    PM2_STARTUP: diagnostics.PM2_STARTUP === "ok",
+    PM2_SAVED_APP: diagnostics.PM2_SAVED_APP === "ok",
+    BOOT_NODE: diagnostics.BOOT_NODE === "ok",
     RUNNER_BOUND: Boolean(runner && runnerStartupMatches(units.RUNNER, runner, {
       name: process.env.RUNNER_NAME, workspace: process.env.RUNNER_WORKSPACE, repository: process.env.GITHUB_REPOSITORY,
       registrationSha256: reference?.runnerRegistrationSha256,
@@ -424,14 +473,15 @@ export function collectBootReadiness(expectedCommit) {
     REFERENCE_BOUND: reference !== null,
     UNIT_CONTRACTS: contracts.every(Boolean),
   };
-  return { units, checks };
+  return { units, checks, diagnostics };
 }
 
-export function bootReadinessLines({ units, checks }) {
+export function bootReadinessLines({ units, checks, diagnostics = {} }) {
   return ["BOOT_COLLECTOR=available", ...BOOT_ROLES.map(role => {
     const unit = units[role] ?? {};
     return `BOOT_UNIT_${role}=${state(unit.LoadState, "load")}|${state(unit.UnitFileState, "enabled")}|${state(unit.ActiveState, "active")}|${state(unit.NeedDaemonReload, "reload")}`;
-  }), ...FIXED_CHECKS.map(key => `BOOT_${key}=${checks[key] === true}`)];
+  }), ...FIXED_CHECKS.map(key => `BOOT_${key}=${checks[key] === true}`),
+  ...Object.keys(DIAGNOSTIC_CODES).map(key => `BOOT_DIAGNOSTIC_${key}=${diagnosticCode(key, diagnostics[key])}`)];
 }
 
 export function bootSummaryFromValues(values) {
@@ -441,7 +491,10 @@ export function bootSummaryFromValues(values) {
     return [role, parts.length === 4 ? `${state(parts[0], "load")}|${state(parts[1], "enabled")}|${state(parts[2], "active")}|${state(parts[3], "reload")}` : "unknown|unknown|unknown|unknown"];
   }));
   const checks = Object.fromEntries(FIXED_CHECKS.map(key => [key, one(`BOOT_${key}`) === "true"]));
-  return { units, checks, verified: one("BOOT_COLLECTOR") === "available" &&
+  // Diagnostics explain observations only; they cannot satisfy an acceptance gate.
+  const diagnostics = Object.fromEntries(Object.keys(DIAGNOSTIC_CODES).map(key =>
+    [key, diagnosticCode(key, one(`BOOT_DIAGNOSTIC_${key}`))]));
+  return { units, checks, diagnostics, verified: one("BOOT_COLLECTOR") === "available" &&
     Object.values(units).every(value => value === "loaded|enabled|active|no") && Object.values(checks).every(Boolean) };
 }
 

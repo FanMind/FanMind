@@ -86,6 +86,7 @@ FanMind has stricter governance gates than the WellFit repositories. A green Pro
 - Boundary: no second database Restore, no Production/FanMind Staging Storage target, no inferred acceptance of a new provider target/cost, no secret or private artifact publication. Existing prices remain complete.
 
 ## FM-AUTH-OPS-BOOT-PUBLISH-20260912
+- Explicit continuation: Bernd now says "ok mach das bitte" to the stated remaining PM2 startup, independent server reference and recovery checks. Existing reviewed source-publication/rollout authority continues for bounded read-only diagnosis of those measured failures; actual boot/reference and recovery gates remain necessary before the requested restart. No credential reset, gate bypass or unreviewed reference bootstrap is implied.
 - Status: ACTIVE
 - Granted by: Bernd in the current session, replying "ja darf er" directly to the concrete publication/rollout question for local eef3f26b.
 - Authorized payload/destination: the prepared read-only boot-readiness collector, its existing-audit/deploy integration, tests and project documentation in the existing public FanMind/FanMind repository, followed by review, green current-head CI and the normal rollout.
