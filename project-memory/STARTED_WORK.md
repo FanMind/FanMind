@@ -638,6 +638,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: bounded source revert; no deletion of source data, prior backups or accepted receipts. A fresh failure remains open and must not be hidden or retried automatically.
 
 ## FM-OPS-001 — controlled Ubuntu reboot — 2026-09-12
+- Review follow-through #1112 (09:41 UTC): five blocking startup gaps were corrected before merge: NeedDaemonReload=no for every unit; rejected PM2 Node/loader overrides and service launch hooks; actual runner command/registration/artifact binding with official v2.337.0 script fingerprints; resolved release symlink plus Next deployment ID. Twenty-one focused tests pass, including the corresponding failing paths and secret redaction. Current-head remote CI/review and installed target evidence remain pending; no service mutation or reboot.
 - Status: IN_PROGRESS
 - Risk: R4
 - Change: FM-CR-036; Work lock: LOCK-FM-OPS-REBOOT-20260912.

@@ -245,11 +245,15 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
 `PRODUCTION_BOOT_READINESS_VERIFIED=true` verlangt:
 
 - nginx, `pm2-ubuntu`, Backup-Worker, die fünf Backup-/Retention-Timer und den
-  Operations-Monitor-Timer jeweils `loaded|enabled|active`;
+  Operations-Monitor-Timer jeweils `loaded|enabled|active|no`; das letzte Feld
+  ist `NeedDaemonReload`. Ausstehender Reload oder eine fehlende Messung
+  sperrt den Nachweis, weil beim Boot die Dateien statt des systemd-Caches gelten;
 - den tatsächlich ausführenden GitHub-Runner über seine eigene systemd-cgroup
   gebunden, mit Benutzer `ubuntu`, ebenfalls dauerhaft enabled und active;
 - den PM2-Start als `ubuntu`, `forking`, mit dem festen PM2-Home/PIDFile und
-  ausschließlich dem gespeicherten `pm2 resurrect`-Startbefehl;
+  ausschließlich dem gespeicherten `pm2 resurrect`-Startbefehl; zusätzliche
+  `ExecCondition`-/`ExecStartPre`-/`ExecStartPost`-Hooks, Environment-Dateien,
+  zusätzliche Environment-Werte und unbekannte Startumgebungen werden abgelehnt;
 - root-eigene, nicht durch andere beschreibbare PM2-/Node-Startpfade; der erste
   ausführbare Node-Treffer im systemd-PATH muss derselbe sein wie beim Audit.
   Auch ein früheres beschreibbares oder nicht vorhandenes PATH-Verzeichnis
@@ -261,6 +265,22 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   PM2 entfernt `instances` beim Dump und speichert je laufendem Worker einen
   Eintrag: entscheidend ist deshalb genau ein gespeicherter Eintrag, nicht das
   Vorhandensein dieses Felds. Ein expliziter anderer Instanzwert bleibt ungültig.
+  Zusätzliche `node_args`/`interpreter_args` sowie Node-/Loader-Overrides in
+  gespeicherten Top-Level- oder Environment-Werten verhindern ebenfalls den Pass;
+- den tatsächlichen Zielpfad des stabilen Release-Links unter
+  `/var/www/fanmind-releases/<expectedCommit>`, denselben Next deployment ID
+  und vorhandene reguläre Build-/Startdateien. Ein nur im Environment
+  behaupteter Release-Commit reicht nicht;
+- für den aktuellen Runner: passender `runsvc.sh`-Start und WorkingDirectory,
+  leere zusätzliche Hooks/Service-Environment-Eingänge, passende `.service`-
+  und `.runner`-Bindung an die aktuell ausführende Identität/Workspace sowie
+  vorhandene geschützte Registrierungsdateien und ausführbare Startartefakte.
+  Die zwei offiziellen Startup-Skripte aus `actions/runner` v2.337.0 sind per
+  SHA-256 gebunden; diese Version wurde im Production-Audit 34683879279
+  beobachtet. Geänderte Skripte nach einem Runner-Update verlangen erneutes
+  Review. `.path` und `.env` dürfen keine zusätzlichen Loader-Optionen einführen.
+  Credentials werden nur über Dateimetadaten geprüft, nie gelesen oder ausgegeben.
+  Das beweist keine künftige Provider-Anmeldung und ersetzt keinen Recovery-Zugang.
 
 Ausgegeben werden nur feste Rollen, normalisierte Zustände und Boolesche Werte.
 Unbekannte, fehlende und doppelte Messwerte verhindern den Boot-Pass; private
