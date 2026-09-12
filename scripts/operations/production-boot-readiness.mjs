@@ -24,13 +24,34 @@ const STATES = Object.freeze({
   active: ["active", "inactive", "failed", "activating", "deactivating", "reloading"],
   reload: ["no", "yes"],
 });
-const FIXED_CHECKS = ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET"];
+const FIXED_CHECKS = ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET", "REFERENCE_BOUND", "UNIT_CONTRACTS"];
 const PM2_HOME = "/home/ubuntu/.pm2";
 const CURRENT = "/var/www/fanmind-current";
 const RELEASE_ROOT = "/var/www/fanmind-releases";
 const START_HOOKS = ["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost"];
 const SERVICE_INPUTS = ["EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"];
 const LAUNCH_ENV = ["NODE_OPTIONS", "NODE_PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT", "BASH_ENV", "ENV", "OPENSSL_CONF", "OPENSSL_MODULES"];
+const UNIT_PROPERTIES = ["Id", "FragmentPath", "DropInPaths", "Conditions", "Asserts"];
+const REFERENCE_FILE = "/etc/fanmind/production-boot-reference.json";
+const SHA256 = /^[a-f0-9]{64}$/u;
+export const MANAGED_UNIT_HASHES = Object.freeze({
+  "fanmind-backup-worker.service": "ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896",
+  "fanmind-backup-database.timer": "2c38eed5918afe5fe22eb994484183842c9d5362ef84dc15dbede9541a3d61fd",
+  "fanmind-backup-storage.timer": "9357029954d54d930ad99e9409914e702097b221fa8bcd1443a94dcf646b8249",
+  "fanmind-backup-server_config.timer": "dd32a9144a4d963824cf187cdf107dab7b2d1d1af7ae7db54d6f768e2643b178",
+  "fanmind-backup-full.timer": "460ecd1c6ea441cd00060c823e7dd45079a3b32841c0f6d3589f4b4d401bc889",
+  "fanmind-backup-retention.timer": "c9202e6bb273bc08e2132551a9911b8ad91ac626366491c96e4d8c1185dfc614",
+  "fanmind-backup-enqueue@.service": "47f6a51b945293ca28f736e3e44681e8cdf2694a44af03b5682437e76237b082",
+  "fanmind-backup-retention.service": "8c3412bc1e343aa059252eec883c80abf7b9005153a70f2d7153b27417f7e029",
+  "fanmind-operations-monitor.timer": "8acdaa1857021cdc96b11154d99ac5d9a3b378faa45cd3fc22bdda43684355f8",
+  "fanmind-operations-monitor.service": "db8e3dc3cce87fd9b2155e7b4b92e1d2711740083df0937b57d23fcd4dbe42be",
+});
+const TIMER_SERVICES = [
+  "fanmind-backup-enqueue@backup_database.service", "fanmind-backup-enqueue@backup_storage.service",
+  "fanmind-backup-enqueue@backup_server_config.service", "fanmind-backup-enqueue@backup_full.service",
+  "fanmind-backup-retention.service", "fanmind-operations-monitor.service",
+];
+const digest = source => createHash("sha256").update(source).digest("hex");
 
 function state(value, kind) {
   return STATES[kind].includes(value) ? value : "unknown";
@@ -51,8 +72,8 @@ export function parseUnitProperties(source) {
 function readUnit(unit, extra = []) {
   try {
     return parseUnitProperties(execFileSync("/bin/systemctl", [
-      "show", "--no-pager",
-      ...["LoadState", "UnitFileState", "ActiveState", "NeedDaemonReload", ...extra].map(key => `--property=${key}`),
+      "show", "--no-pager", "--all",
+      ...["LoadState", "UnitFileState", "ActiveState", "NeedDaemonReload", ...UNIT_PROPERTIES, ...extra].map(key => `--property=${key}`),
       "--", unit,
     ], { encoding: "utf8", timeout: 10_000, maxBuffer: 128 * 1024, stdio: ["ignore", "pipe", "pipe"] }));
   } catch {
@@ -62,14 +83,14 @@ function readUnit(unit, extra = []) {
 
 // Read one bounded regular file without following final/ancestor symlinks or
 // accepting a replacement during the read. No private value leaves this module.
-function readOwnedFile(file, maxBytes = 1024 * 1024) {
+function readOwnedFile(file, maxBytes = 1024 * 1024, owner = process.getuid()) {
   let fd;
   try {
     if (fs.realpathSync(file) !== file) throw new Error("file_path_invalid");
     fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
     const before = fs.fstatSync(fd);
     if (!before.isFile() || before.size > maxBytes ||
-        before.uid !== process.getuid() || (before.mode & 0o022) !== 0) throw new Error("file_metadata_invalid");
+        before.uid !== owner || (before.mode & 0o022) !== 0) throw new Error("file_metadata_invalid");
     const buffer = Buffer.alloc(before.size + 1);
     const bytes = fs.readSync(fd, buffer, 0, buffer.length, 0);
     const after = fs.fstatSync(fd);
@@ -119,7 +140,7 @@ export function savedAppMatches(rows, expectedCommit) {
 // Unknown quoting fails closed; it is never evaluated as shell input.
 export function startupContract(unit) {
   if (unit.User !== "ubuntu" || unit.Type !== "forking" || unit.PIDFile !== `${PM2_HOME}/pm2.pid`) return null;
-  if (![...START_HOOKS, ...SERVICE_INPUTS].every(key => unit[key] === "")) return null;
+  if (![...START_HOOKS, ...SERVICE_INPUTS, "Conditions", "Asserts"].every(key => unit[key] === "")) return null;
   const tokens = (unit.Environment ?? "").split(" ");
   if (tokens.some(token => !/^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_/:.=-]+$/u.test(token))) return null;
   const homes = tokens.filter(token => token.startsWith("PM2_HOME="));
@@ -157,6 +178,49 @@ function trustedExecutable(file) {
   } catch {
     return false;
   }
+}
+
+export function runnerPathMatches(source) {
+  try {
+    return /^[A-Za-z0-9_/:.-]+$/u.test(source) && source.split(":").every(directory =>
+      directory.startsWith("/") && path.normalize(directory) === directory &&
+      fs.statSync(directory).isDirectory() && trustedPath(directory));
+  } catch { return false; }
+}
+
+// This independent, root-owned reference must be reviewed and installed by an
+// authenticated operator. Never learn a trusted baseline from the files under
+// inspection, and never create/update it during deploy or audit.
+export function parseBootReference(source) {
+  try {
+    const value = JSON.parse(source);
+    const keys = ["schemaVersion", "runnerRegistrationSha256", "nginxUnitSha256", "pm2UnitSha256", "runnerUnitSha256"];
+    if (!value || Object.keys(value).sort().join("|") !== keys.sort().join("|") || value.schemaVersion !== 1 ||
+        !keys.filter(key => key !== "schemaVersion").every(key => typeof value[key] === "string" && SHA256.test(value[key]))) return null;
+    return value;
+  } catch { return null; }
+}
+
+function readBootReference() {
+  try {
+    if (!trustedPath(REFERENCE_FILE)) return null;
+    return parseBootReference(readOwnedFile(REFERENCE_FILE, 4096, 0));
+  } catch { return null; }
+}
+
+export function unitDefinitionMatches(unit, name, source, expectedSha256) {
+  return unit.Id === name && unit.LoadState === "loaded" && unit.NeedDaemonReload === "no" &&
+    ["DropInPaths", "Conditions", "Asserts"].every(key => unit[key] === "") &&
+    typeof source === "string" && SHA256.test(expectedSha256 ?? "") && digest(source) === expectedSha256;
+}
+
+function installedUnitMatches(unit, name, expectedSha256) {
+  try {
+    const file = unit.FragmentPath;
+    if (!path.isAbsolute(file) || !trustedPath(file)) return false;
+    const source = readOwnedFile(fs.realpathSync(file), 64 * 1024, 0);
+    return unitDefinitionMatches(unit, name, source, expectedSha256);
+  } catch { return false; }
 }
 
 export function bootNodeMatches(directories) {
@@ -222,17 +286,19 @@ export function runnerConfigurationMatches(unit, unitName, context) {
     if (unit.User !== "ubuntu" || unit.Type !== "simple" ||
         !/^\/[A-Za-z0-9_./-]+$/u.test(root ?? "") || path.normalize(root) !== root ||
         fs.realpathSync(root) !== root ||
-        ![...START_HOOKS, ...SERVICE_INPUTS, "ExecStop"].every(key => unit[key] === "") || unit.Environment !== "") return false;
+        ![...START_HOOKS, ...SERVICE_INPUTS, "ExecStop", "Conditions", "Asserts"].every(key => unit[key] === "") || unit.Environment !== "") return false;
     const executable = `${root}/runsvc.sh`;
     const launch = (unit.ExecStart ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/runsvc\.sh) ; argv\[\]=\1 ; ignore_errors=no ; [^{}]* \}$/u);
     if (!launch || launch[1] !== executable || context.repository !== "FanMind/FanMind" || !context.name || !context.workspace) return false;
     if (readOwnedFile(`${root}/.service`, 1024).trim() !== unitName) return false;
-    const settings = JSON.parse(readOwnedFile(`${root}/.runner`, 16 * 1024));
+    const registration = readOwnedFile(`${root}/.runner`, 16 * 1024);
+    if (!SHA256.test(context.registrationSha256 ?? "") || digest(registration) !== context.registrationSha256) return false;
+    const settings = JSON.parse(registration);
     if (!runnerEndpointsMatch(settings) || settings.agentName !== context.name || settings.ephemeral === true ||
         !["https://github.com/FanMind/FanMind", "https://github.com/Bernds-tech/FanMind"].includes(settings.gitHubUrl) ||
         settings.workFolder !== "_work" || path.join(root, settings.workFolder, "FanMind") !== context.workspace) return false;
     const savedPath = readOwnedFile(`${root}/.path`, 16 * 1024).trim();
-    if (!savedPath || savedPath.split(":").some(value => !/^\/[A-Za-z0-9_./-]+$/u.test(value) || path.normalize(value) !== value)) return false;
+    if (!runnerPathMatches(savedPath)) return false;
     for (const line of readOwnedFile(`${root}/.env`, 64 * 1024).split("\n").filter(Boolean)) {
       const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/u);
       if (!match || (LAUNCH_ENV.includes(match[1]) && match[2] !== "")) return false;
@@ -330,12 +396,21 @@ export function runnerStartupMatches(unit, unitName, context) {
 }
 
 export function collectBootReadiness(expectedCommit) {
+  const reference = readBootReference();
   const units = Object.fromEntries(Object.entries(BOOT_UNITS).map(([role, name]) => [
     role, readUnit(name, role === "PM2" ? ["User", "Type", "PIDFile", "Environment", "ExecStart", "ExecStop", ...START_HOOKS, ...SERVICE_INPUTS] : []),
   ]));
   let runner;
   try { runner = runnerUnitFromCgroup(fs.readFileSync("/proc/self/cgroup", "utf8")); } catch {}
   units.RUNNER = runner ? readUnit(runner, ["User", "Type", "WorkingDirectory", "ControlGroup", "Environment", "ExecStart", "ExecStop", ...START_HOOKS, ...SERVICE_INPUTS]) : {};
+  const contracts = Object.entries(BOOT_UNITS).map(([role, name]) =>
+    installedUnitMatches(units[role], name, role === "NGINX" ? reference?.nginxUnitSha256 :
+      role === "PM2" ? reference?.pm2UnitSha256 : MANAGED_UNIT_HASHES[name]));
+  contracts.push(Boolean(runner && installedUnitMatches(units.RUNNER, runner, reference?.runnerUnitSha256)));
+  for (const name of TIMER_SERVICES) {
+    const template = name.replace(/@[^.]+\.service$/u, "@.service");
+    contracts.push(installedUnitMatches(readUnit(name), name, MANAGED_UNIT_HASHES[template]));
+  }
   const startup = startupContract(units.PM2);
   const checks = {
     PM2_STARTUP: Boolean(startup && trustedExecutable(startup.executable)),
@@ -343,8 +418,11 @@ export function collectBootReadiness(expectedCommit) {
     BOOT_NODE: Boolean(startup && bootNodeMatches(startup.directories)),
     RUNNER_BOUND: Boolean(runner && runnerStartupMatches(units.RUNNER, runner, {
       name: process.env.RUNNER_NAME, workspace: process.env.RUNNER_WORKSPACE, repository: process.env.GITHUB_REPOSITORY,
+      registrationSha256: reference?.runnerRegistrationSha256,
     })),
     RELEASE_TARGET: releaseTargetMatches(expectedCommit),
+    REFERENCE_BOUND: reference !== null,
+    UNIT_CONTRACTS: contracts.every(Boolean),
   };
   return { units, checks };
 }

@@ -6,6 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { once } from "node:events";
 import { closeSync, openSync, realpathSync } from "node:fs";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import yaml from "js-yaml";
 
@@ -13,6 +14,7 @@ import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../s
 import {
   BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
   readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
+  MANAGED_UNIT_HASHES, parseBootReference, unitDefinitionMatches, runnerPathMatches,
 } from "../scripts/operations/production-boot-readiness.mjs";
 import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
@@ -29,7 +31,7 @@ function validBootLines() {
     units: Object.fromEntries(BOOT_ROLES.map(role => [role, {
       LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active", NeedDaemonReload: "no",
     }])),
-    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true },
+    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true, REFERENCE_BOUND: true, UNIT_CONTRACTS: true },
   });
 }
 
@@ -64,7 +66,7 @@ test("boot preflight rejects missing, duplicate, masked, transient and inactive 
       assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
     }
   }
-  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET"]) {
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET", "REFERENCE_BOUND", "UNIT_CONTRACTS"]) {
     assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, `BOOT_${key}=false`))).verified, false);
   }
 });
@@ -103,7 +105,7 @@ test("saved PM2 app binds exactly one cluster app and the current release withou
 test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
   const unit = parseUnitProperties([
     "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
-    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => `${key}=`),
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => `${key}=`),
     "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
     "ExecStop={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 kill ; ignore_errors=no ; pid=0 ; code=(null) ; status=0/0 }",
     "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
@@ -175,6 +177,7 @@ test("runner configuration binds the actual registration and rejects missing or 
   const unitName = "actions.runner.FanMind-FanMind.production.service";
   const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
   const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  context.registrationSha256 = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
   await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
   await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
   await writeFile(join(root, ".path"), "/usr/local/bin:/usr/bin:/bin", { mode: 0o600 });
@@ -187,7 +190,7 @@ test("runner configuration binds the actual registration and rejects missing or 
   const unit = {
     User: "ubuntu", Type: "simple", WorkingDirectory: root, Environment: "", ExecStop: "",
     ExecStart: `{ path=${root}/runsvc.sh ; argv[]=${root}/runsvc.sh ; ignore_errors=no ; pid=1 ; code=(null) ; status=0/0 }`,
-    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].map(key => [key, ""])),
+    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => [key, ""])),
   };
   assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
   assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
@@ -197,6 +200,10 @@ test("runner configuration binds the actual registration and rejects missing or 
   ]) assert.equal(runnerConfigurationMatches({ ...unit, ...overrides }, unitName, context), false);
   assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, name: "foreign" }), false);
   assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, workspace: root }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, registrationSha256: undefined }), false);
+  await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, serverUrl: settings.serverUrl.replace("11111111-1111", "22222222-2222") }));
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "valid URL shape is not the reviewed endpoint identity");
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
   await writeFile(join(root, ".path"), "/usr/bin NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY");
   assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
   await writeFile(join(root, ".path"), "/usr/bin:/bin");
@@ -242,6 +249,49 @@ test("runner registration endpoints reject missing, foreign and untrusted target
     }
   }
   for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+});
+
+test("complete managed unit definitions reject substituted commands, drop-ins, conditions and asserts", async () => {
+  for (const [name, fingerprint] of Object.entries(MANAGED_UNIT_HASHES)) {
+    const source = await readFile(`ops/systemd/${name}`, "utf8");
+    const unit = { Id: name, LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+    assert.equal(unitDefinitionMatches(unit, name, source, fingerprint), true, name);
+    assert.equal(unitDefinitionMatches(unit, name, `${source}\n[Service]\nExecStart=/usr/bin/false\n`, fingerprint), false, name);
+    for (const overrides of [
+      { Id: "foreign.service" }, { LoadState: "not-found" }, { NeedDaemonReload: "yes" },
+      { DropInPaths: "/etc/systemd/system/override.conf" }, { DropInPaths: undefined },
+      { Conditions: "ConditionPathExists=/tmp/missing" }, { Conditions: undefined },
+      { Asserts: "AssertPathExists=/tmp/missing" }, { Asserts: undefined },
+    ]) assert.equal(unitDefinitionMatches({ ...unit, ...overrides }, name, source, fingerprint), false, name);
+    assert.equal(unitDefinitionMatches(unit, name, source, undefined), false, "missing independent pin");
+  }
+  const source = "[Service]\nExecStart=/usr/sbin/nginx\n";
+  const unit = { Id: "nginx.service", LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+  const reference = createHash("sha256").update(source).digest("hex");
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source, reference), true);
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source.replace("nginx", "false"), reference), false);
+});
+
+test("boot reference requires all independent fingerprints and rejects missing or unknown fields", () => {
+  const reference = { schemaVersion: 1, runnerRegistrationSha256: "a".repeat(64), nginxUnitSha256: "b".repeat(64), pm2UnitSha256: "c".repeat(64), runnerUnitSha256: "d".repeat(64) };
+  assert.deepEqual(parseBootReference(JSON.stringify(reference)), reference);
+  for (const key of Object.keys(reference)) {
+    const missing = { ...reference }; delete missing[key];
+    assert.equal(parseBootReference(JSON.stringify(missing)), null);
+    assert.equal(parseBootReference(JSON.stringify({ ...reference, [key]: "RAW_SECRET_CANARY" })), null);
+  }
+  for (const source of ["", "{}", "null", "[]", "RAW_SECRET_CANARY", JSON.stringify({ ...reference, extra: true })]) assert.equal(parseBootReference(source), null);
+});
+
+test("runner saved PATH rejects writable and missing directories in every position", async (t) => {
+  assert.equal(runnerPathMatches("/usr/bin:/bin"), true);
+  for (const source of ["/tmp:/usr/bin", "/usr/bin:/tmp", "/usr/bin:/fanmind-missing-path", "/usr/bin:", ".:/usr/bin", "/usr/bin/../bin", ""]) {
+    assert.equal(runnerPathMatches(source), false, source);
+  }
+  const root = await mkdtemp(join(tmpdir(), "fanmind-runner-path-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await symlink("/usr/bin", join(root, "system-bin"));
+  assert.equal(runnerPathMatches(`${root}/system-bin:/usr/bin`), false, "writable symlink ancestor");
 });
 
 test("Linux kernel image fingerprints reject replacement even when executable bytes are identical", async (t) => {

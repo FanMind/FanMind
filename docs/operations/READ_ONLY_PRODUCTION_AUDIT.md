@@ -239,7 +239,7 @@ separate Vorher-/Nachher-Messungen mit geänderter Boot-ID erforderlich.
 Der normale Deploy installiert zusätzlich `production-boot-readiness.mjs`
 root-owned und nur lesbar in `/usr/local/lib/fanmind-audit`. Der bestehende Audit
 ruft diesen Collector unprivilegiert auf. Er liest ausschließlich systemd-
-Properties, die eigene Runner-cgroup und die gespeicherte PM2-Prozessliste;
+Properties, feste geschützte Startup-Dateien, die eigene Runner-cgroup und die gespeicherte PM2-Prozessliste;
 er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
 
 `PRODUCTION_BOOT_READINESS_VERIFIED=true` verlangt:
@@ -250,6 +250,15 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   sperrt den Nachweis, weil beim Boot die Dateien statt des systemd-Caches gelten;
 - den tatsächlich ausführenden GitHub-Runner über seine eigene systemd-cgroup
   gebunden, mit Benutzer `ubuntu`, ebenfalls dauerhaft enabled und active;
+- vollständige Unit-Definitionen statt nur aktiver Zustände: alle zehn
+  Repository-Definitionen für Worker, Timer und deren tatsächlich gestartete
+  Dienste sind im Collector per SHA-256 gebunden. nginx, PM2 und Runner
+  benötigen unabhängige bestätigte Unit-Prüfsummen. Fragment-Dateien und alle
+  Pfadkomponenten müssen root-eigen und gegen fremde Schreibzugriffe geschützt
+  sein; zusätzliche Drop-ins sowie jede nichtleere oder fehlende `Conditions`-
+  oder `Asserts`-Messung verhindern den Pass. Das gilt auch für die vom Timer
+  ausgelösten One-Shot-Dienste. Geänderte Befehle nach `daemon-reload` werden
+  dadurch auch bei weiterhin gesundem laufenden Prozess erkannt;
 - den PM2-Start als `ubuntu`, `forking`, mit dem festen PM2-Home/PIDFile und
   ausschließlich dem gespeicherten `pm2 resurrect`-Startbefehl; zusätzliche
   `ExecCondition`-/`ExecStartPre`-/`ExecStartPost`-Hooks, Environment-Dateien,
@@ -282,16 +291,41 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   SHA-256 gebunden; diese Version wurde im Production-Audit 34683879279
   beobachtet. Geänderte Skripte nach einem Runner-Update verlangen erneutes
   Review. `.path` und `.env` dürfen keine zusätzlichen Loader-Optionen einführen.
+  Jeder gespeicherte PATH-Eintrag muss existieren, root-eigen und entlang des
+  gesamten Pfads gegen fremde Schreibzugriffe geschützt sein, auch nach dem
+  ersten Systemverzeichnis und bei Symlinks.
   Credentials werden nur über Dateimetadaten geprüft, nie gelesen oder ausgegeben.
   Das beweist keine künftige Provider-Anmeldung und ersetzt keinen Recovery-Zugang.
   Registrierung benötigt gültige positive Agent-/Pool-IDs, ein HTTPS-Pipelines-
   Ziel unter `actions.githubusercontent.com` und im V2-Flow ein passendes
   Broker-Ziel; Credentials, Query und Fragment sind in den URLs ausgeschlossen.
+  Zusätzlich muss die vollständige `.runner`-Datei exakt der unabhängig
+  bestätigten SHA-256 entsprechen. Ein anderer syntaktisch gültiger GitHub-
+  Tenant oder eine bloß passende öffentliche Repository-URL genügt nicht.
   Die nativen Listener-/Node-Dateien müssen zusätzlich mit jeweils genau einem
   tatsächlich laufenden Programm derselben Runner-cgroup, Startargumente und
   Arbeitsverzeichnis übereinstimmen: Kernel-Dateiidentität, ELF-Format und
   SHA-256 sowie unveränderte Metadaten vor/nach dem Lesen. Ersetzte Dateien oder
   verweigerter Kernel-Zugriff sperren den Nachweis. Kein Kandidat wird ausgeführt.
+
+Die externe Referenz liegt ausschließlich unter
+`/etc/fanmind/production-boot-reference.json`, als reguläre root-eigene Datei
+ohne Symlinks und fremde Schreibrechte (höchstens 4096 Bytes). Das feste Schema
+enthält ausschließlich `schemaVersion: 1` sowie die vier kleingeschriebenen
+64-stelligen SHA-256-Werte `runnerRegistrationSha256`, `nginxUnitSha256`,
+`pm2UnitSha256` und `runnerUnitSha256`. Die Registrierung wird als vollständige
+Datei in ihrer bestätigten Byte-Darstellung gebunden, die Units als vollständige
+Fragment-Dateien. Es dürfen keine privaten Registrierungswerte ins Git oder Log.
+
+Ein authentifizierter Operator muss die echte laufende Runner-Registrierung und
+die erwarteten Unit-Definitionen unabhängig bestätigen, den Review-Beleg
+dokumentieren und erst danach diese Referenz geschützt installieren. Niemals
+eine Referenz ungeprüft aus den gerade untersuchten Dateien erzeugen. Audit und
+normaler Deploy erstellen oder aktualisieren diese Referenz nicht. Ihre aktuelle
+Production-Existenz ist nicht belegt; bis zur bestätigten Installation bleiben
+`BOOT_REFERENCE_BOUND`, `BOOT_UNIT_CONTRACTS` und die gesamte Boot-Bereitschaft
+bei fehlender Referenz false. Ein erfolgreicher Source-Rollout schließt diese
+konkrete externe Voraussetzung nicht automatisch ab.
 
 Ausgegeben werden nur feste Rollen, normalisierte Zustände und Boolesche Werte.
 Unbekannte, fehlende und doppelte Messwerte verhindern den Boot-Pass; private
