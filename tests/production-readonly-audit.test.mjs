@@ -1,13 +1,22 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { once } from "node:events";
+import { closeSync, openSync, realpathSync } from "node:fs";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import yaml from "js-yaml";
 
 import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import {
+  BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
+  readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
+  MANAGED_UNIT_HASHES, parseBootReference, unitDefinitionMatches, runnerPathMatches,
+} from "../scripts/operations/production-boot-readiness.mjs";
+import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
@@ -16,6 +25,319 @@ const expectedCommit = "a".repeat(40);
 async function readAuditScript() {
   return readFile(auditScriptPath, "utf8");
 }
+
+function validBootLines() {
+  return bootReadinessLines({
+    units: Object.fromEntries(BOOT_ROLES.map(role => [role, {
+      LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active", NeedDaemonReload: "no",
+    }])),
+    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true, REFERENCE_BOUND: true, UNIT_CONTRACTS: true },
+  });
+}
+
+function savedApp() {
+  return {
+    name: "fanmind", exec_mode: "cluster_mode", autorestart: true,
+    pm_cwd: "/var/www/fanmind-current",
+    pm_exec_path: "/var/www/fanmind-current/node_modules/next/dist/bin/next",
+    exec_interpreter: "node", args: ["start"],
+    NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production", FANMIND_RELEASE_COMMIT: expectedCommit,
+    env: { FANMIND_RELEASE_COMMIT: expectedCommit, PRIVATE_SECRET: "RAW_SECRET_CANARY" },
+  };
+}
+
+test("boot preflight rejects missing, duplicate, masked, transient and inactive units", () => {
+  const valid = validBootLines().join("\n");
+  assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid)).verified, true);
+  for (const role of BOOT_ROLES) {
+    const line = `BOOT_UNIT_${role}=loaded|enabled|active|no`;
+    for (const altered of [
+      valid.replace(line, ""), `${valid}\n${line}`,
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|active|yes`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|active`),
+      valid.replace(line, `BOOT_UNIT_${role}=not-found|disabled|inactive|no`),
+      valid.replace(line, `BOOT_UNIT_${role}=masked|masked|inactive`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled-runtime|active`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|failed`),
+      valid.replace(line, `BOOT_UNIT_${role}=RAW_SECRET_CANARY|enabled|active`),
+    ]) {
+      const result = bootSummaryFromValues(parseProductionAuditOutput(altered));
+      assert.equal(result.verified, false, role);
+      assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
+    }
+  }
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET", "REFERENCE_BOUND", "UNIT_CONTRACTS"]) {
+    assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, `BOOT_${key}=false`))).verified, false);
+  }
+});
+
+test("saved PM2 app binds exactly one cluster app and the current release without returning private environment", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-dump-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = join(root, "dump.pm2");
+  await writeFile(file, JSON.stringify([savedApp()]), { mode: 0o600 });
+  assert.equal(readSavedApp(file, expectedCommit), true);
+  assert.equal(savedAppMatches([{ ...savedApp(), instances: 1 }], expectedCommit), true);
+  assert.equal(readSavedApp(file, "b".repeat(40)), false);
+  assert.equal(savedAppMatches([], expectedCommit), false);
+  assert.equal(savedAppMatches([savedApp(), savedApp()], expectedCommit), false);
+  for (const overrides of [
+    { name: "other" }, { exec_mode: "fork_mode" }, { instances: 2 }, { autorestart: false },
+    { pm_cwd: "/var/www/old-release" }, { pm_exec_path: "/private/RAW_SECRET_CANARY" },
+    { exec_interpreter: "/private/node" }, { args: ["dev"] }, { NODE_ENV: "development" },
+    { FANMIND_RUNTIME_ENVIRONMENT: "staging" }, { FANMIND_RELEASE_COMMIT: "b".repeat(40) },
+    { env: { FANMIND_RELEASE_COMMIT: "b".repeat(40) } },
+  ]) assert.equal(savedAppMatches([{ ...savedApp(), ...overrides }], expectedCommit), false);
+  const link = join(root, "link.pm2");
+  await symlink(file, link);
+  assert.equal(readSavedApp(link, expectedCommit), false);
+  await chmod(file, 0o666);
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  await chmod(file, 0o600);
+  await writeFile(file, "RAW_SECRET_CANARY");
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  await writeFile(file, "x".repeat(1024 * 1024 + 1));
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedApp(root, expectedCommit), false);
+  assert.equal(readSavedApp(join(root, "missing"), expectedCommit), false);
+});
+
+test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
+  const unit = parseUnitProperties([
+    "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => `${key}=`),
+    "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
+    "ExecStop={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 kill ; ignore_errors=no ; pid=0 ; code=(null) ; status=0/0 }",
+    "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
+  ].join("\n"));
+  assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
+  for (const overrides of [
+    { User: "root" }, { Type: "simple" }, { PIDFile: "/tmp/pm2.pid" },
+    { ExecStop: undefined }, { ExecStop: unit.ExecStop.replace(" kill ", " kill extra ") },
+    { ExecStop: unit.ExecStop.replaceAll("/usr/lib/node_modules/pm2", "/tmp/other") },
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].flatMap(key => [{ [key]: undefined }, { [key]: "/private/RAW_SECRET_CANARY" }]),
+    { Environment: `${unit.Environment} NODE_OPTIONS=--require=/tmp/hook.cjs` },
+    { ExecStart: unit.ExecStart.replace(" resurrect ", " resurrect extra ") },
+    { ExecStart: `${unit.ExecStart} ${unit.ExecStart}` },
+    { Environment: `${unit.Environment} PM2_HOME=/private/RAW_SECRET_CANARY` },
+    { Environment: unit.Environment.replace("/usr/bin", "relative") },
+    { Environment: 'PATH="$(RAW_SECRET_CANARY)" PM2_HOME=/home/ubuntu/.pm2' },
+  ]) assert.equal(startupContract({ ...unit, ...overrides }), null);
+  assert.throws(() => parseUnitProperties("User=ubuntu\nUser=root"), /duplicate/u);
+  assert.throws(() => parseUnitProperties("RAW_SECRET_CANARY"), /invalid/u);
+  const runner = "actions.runner.FanMind-FanMind.production.service";
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}`), runner);
+  assert.equal(runnerUnitFromCgroup("0::/user.slice/session.scope"), null);
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}/actions.runner.other.service`), null);
+});
+
+test("saved PM2 launch rejects Node arguments and loader environment overrides", () => {
+  assert.equal(savedAppMatches([{ ...savedApp(), node_args: [], interpreter_args: "" }], expectedCommit), true);
+  for (const key of ["node_args", "interpreter_args"]) {
+    for (const value of [["--require=/tmp/RAW_SECRET_CANARY"], "--inspect", null, {}]) {
+      assert.equal(savedAppMatches([{ ...savedApp(), [key]: value }], expectedCommit), false);
+    }
+  }
+  for (const key of ["NODE_OPTIONS", "NODE_PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT", "BASH_ENV", "ENV", "OPENSSL_CONF", "OPENSSL_MODULES"]) {
+    assert.equal(savedAppMatches([{ ...savedApp(), [key]: "/tmp/RAW_SECRET_CANARY" }], expectedCommit), false);
+    assert.equal(savedAppMatches([{ ...savedApp(), env: { [key]: "/tmp/RAW_SECRET_CANARY" } }], expectedCommit), false);
+  }
+});
+
+test("next-boot release rejects a repointed symlink, wrong deployment ID and missing build artifacts", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-release-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const releases = join(root, "releases"), current = join(root, "current"), release = join(releases, expectedCommit);
+  await mkdir(join(release, ".next"), { recursive: true });
+  await mkdir(join(release, "node_modules/next/dist/bin"), { recursive: true });
+  const metadata = join(release, ".next/required-server-files.json");
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: expectedCommit } }));
+  await writeFile(join(release, ".next/BUILD_ID"), "build-id");
+  const launcher = join(release, "node_modules/next/dist/bin/next");
+  await writeFile(launcher, "// synthetic non-executed Next launcher");
+  await symlink(release, current);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), true);
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: "b".repeat(40) } }));
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: expectedCommit } }));
+  await rm(launcher);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  await writeFile(launcher, "// synthetic non-executed Next launcher");
+  await rm(current);
+  await symlink(root, current);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  assert.equal(releaseTargetMatches(expectedCommit, release, releases), false);
+});
+
+test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-runner-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, "bin"));
+  await mkdir(join(root, "externals/node20/bin"), { recursive: true });
+  const unitName = "actions.runner.FanMind-FanMind.production.service";
+  const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
+  const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  context.registrationSha256 = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
+  await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
+  await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
+  // GitHub runner images may grant the build user writes under /usr/local;
+  // the positive fixture uses only the protected distro paths proven below.
+  await writeFile(join(root, ".path"), "/usr/bin:/bin", { mode: 0o600 });
+  await writeFile(join(root, ".env"), "LANG=C.UTF-8\n", { mode: 0o600 });
+  for (const relative of [".credentials", ".credentials_rsaparams"]) await writeFile(join(root, relative), "synthetic-not-a-credential", { mode: 0o600 });
+  for (const relative of ["bin/Runner.Listener", "externals/node20/bin/node"]) await writeFile(join(root, relative), "synthetic-not-executed", { mode: 0o700 });
+  const runsvc = await readFile("tests/fixtures/runner-startup-v2.337.0/runsvc.sh.txt", "utf8");
+  await writeFile(join(root, "runsvc.sh"), runsvc, { mode: 0o700 });
+  await writeFile(join(root, "bin/RunnerService.js"), await readFile("tests/fixtures/runner-startup-v2.337.0/RunnerService.js.txt"));
+  const unit = {
+    User: "ubuntu", Type: "simple", WorkingDirectory: root, Environment: "", ExecStop: "",
+    ExecStart: `{ path=${root}/runsvc.sh ; argv[]=${root}/runsvc.sh ; ignore_errors=no ; pid=1 ; code=(null) ; status=0/0 }`,
+    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => [key, ""])),
+  };
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
+  assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
+  for (const overrides of [
+    { User: "root" }, { WorkingDirectory: "/tmp/absent" }, { ExecStart: unit.ExecStart.replace(" ; ignore", " extra ; ignore") },
+    { ExecStartPre: "/tmp/RAW_SECRET_CANARY" }, { Environment: "NODE_OPTIONS=--require=/tmp/hook.cjs" },
+  ]) assert.equal(runnerConfigurationMatches({ ...unit, ...overrides }, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, name: "foreign" }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, workspace: root }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, registrationSha256: undefined }), false);
+  await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, serverUrl: settings.serverUrl.replace("11111111-1111", "22222222-2222") }));
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "valid URL shape is not the reviewed endpoint identity");
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  await writeFile(join(root, ".path"), "/usr/bin NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".path"), "/usr/bin:/bin");
+  await writeFile(join(root, ".env"), "NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY\n");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".env"), "LANG=C.UTF-8\n");
+  await writeFile(join(root, "runsvc.sh"), "#!/bin/bash\nexit 1\n");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, "runsvc.sh"), runsvc);
+  await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, gitHubUrl: "https://github.com/other/repo" }));
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  for (const relative of ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", "externals/node20/bin/node", ".service", ".credentials", ".credentials_rsaparams"]) {
+    const file = join(root, relative), content = await readFile(file);
+    await rm(file);
+    assert.equal(runnerConfigurationMatches(unit, unitName, context), false, relative);
+    await writeFile(file, content, { mode: 0o700 });
+  }
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
+  await chmod(join(root, ".credentials"), 0o644);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+});
+
+test("actual workflow keeps boot readiness separate and never publishes private unit values", async (t) => {
+  const good = await runAuditWorkflow(t, validAuditOutput(), 0);
+  assert.equal(good.code, 0);
+  assert.match(good.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=true$/mu);
+  const bad = await runAuditWorkflow(t, validAuditOutput().replace(
+    "BOOT_UNIT_PM2=loaded|enabled|active|no", "BOOT_UNIT_PM2=RAW_SECRET_CANARY|disabled|inactive"), 0);
+  assert.equal(bad.code, 0, "the prior live Operations contract remains independent");
+  assert.match(bad.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.match(bad.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=false$/mu);
+  assert.doesNotMatch(bad.stdout, /RAW_SECRET_CANARY/u);
+});
+
+test("runner registration endpoints reject missing, foreign and untrusted targets", () => {
+  const valid = { agentId: 1, poolId: 1, serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  assert.equal(runnerEndpointsMatch(valid), true);
+  assert.equal(runnerEndpointsMatch({ ...valid, useV2Flow: false, serverUrlV2: undefined }), true);
+  for (const key of ["serverUrl", "serverUrlV2"]) {
+    for (const value of [undefined, "", "https://example.com/", "http://broker.actions.githubusercontent.com/", "https://secret@broker.actions.githubusercontent.com/", "https://broker.actions.githubusercontent.com/?private=RAW_SECRET_CANARY"]) {
+      assert.equal(runnerEndpointsMatch({ ...valid, [key]: value }), false);
+    }
+  }
+  for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+});
+
+test("complete managed unit definitions reject substituted commands, drop-ins, conditions and asserts", async () => {
+  for (const [name, fingerprint] of Object.entries(MANAGED_UNIT_HASHES)) {
+    const source = await readFile(`ops/systemd/${name}`, "utf8");
+    const unit = { Id: name, LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+    assert.equal(unitDefinitionMatches(unit, name, source, fingerprint), true, name);
+    assert.equal(unitDefinitionMatches(unit, name, `${source}\n[Service]\nExecStart=/usr/bin/false\n`, fingerprint), false, name);
+    for (const overrides of [
+      { Id: "foreign.service" }, { LoadState: "not-found" }, { NeedDaemonReload: "yes" },
+      { DropInPaths: "/etc/systemd/system/override.conf" }, { DropInPaths: undefined },
+      { Conditions: "ConditionPathExists=/tmp/missing" }, { Conditions: undefined },
+      { Asserts: "AssertPathExists=/tmp/missing" }, { Asserts: undefined },
+    ]) assert.equal(unitDefinitionMatches({ ...unit, ...overrides }, name, source, fingerprint), false, name);
+    assert.equal(unitDefinitionMatches(unit, name, source, undefined), false, "missing independent pin");
+  }
+  const source = "[Service]\nExecStart=/usr/sbin/nginx\n";
+  const unit = { Id: "nginx.service", LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+  const reference = createHash("sha256").update(source).digest("hex");
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source, reference), true);
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source.replace("nginx", "false"), reference), false);
+});
+
+test("boot reference requires all independent fingerprints and rejects missing or unknown fields", () => {
+  const reference = { schemaVersion: 1, runnerRegistrationSha256: "a".repeat(64), nginxUnitSha256: "b".repeat(64), pm2UnitSha256: "c".repeat(64), runnerUnitSha256: "d".repeat(64) };
+  assert.deepEqual(parseBootReference(JSON.stringify(reference)), reference);
+  for (const key of Object.keys(reference)) {
+    const missing = { ...reference }; delete missing[key];
+    assert.equal(parseBootReference(JSON.stringify(missing)), null);
+    assert.equal(parseBootReference(JSON.stringify({ ...reference, [key]: "RAW_SECRET_CANARY" })), null);
+  }
+  for (const source of ["", "{}", "null", "[]", "RAW_SECRET_CANARY", JSON.stringify({ ...reference, extra: true })]) assert.equal(parseBootReference(source), null);
+});
+
+test("runner saved PATH rejects writable and missing directories in every position", async (t) => {
+  assert.equal(runnerPathMatches("/usr/bin:/bin"), true);
+  for (const source of ["/tmp:/usr/bin", "/usr/bin:/tmp", "/usr/bin:/fanmind-missing-path", "/usr/bin:", ".:/usr/bin", "/usr/bin/../bin", ""]) {
+    assert.equal(runnerPathMatches(source), false, source);
+  }
+  const root = await mkdtemp(join(tmpdir(), "fanmind-runner-path-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await symlink("/usr/bin", join(root, "system-bin"));
+  assert.equal(runnerPathMatches(`${root}/system-bin:/usr/bin`), false, "writable symlink ancestor");
+});
+
+test("Linux kernel image fingerprints reject replacement even when executable bytes are identical", async (t) => {
+  try { closeSync(openSync(`/proc/${process.pid}/exe`, "r")); }
+  catch (error) {
+    assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), false);
+    // Native Linux CI must run this proof, never skip it. The local managed
+    // workspace denies even /proc/self/exe; that is not a positive boot result.
+    if (process.env.GITHUB_ACTIONS === "true" || !["EACCES", "EPERM", "ENOENT"].includes(error.code)) throw error;
+    t.skip("local kernel image access denied; native GitHub Linux proof required");
+    return;
+  }
+  assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), true);
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-image-"));
+  const candidate = join(root, "runner-image");
+  // Copy a known installed native utility, never execute a candidate supplied
+  // by an audit or a configuration file.
+  await copyFile("/usr/bin/sleep", candidate);
+  await chmod(candidate, 0o700);
+  const child = spawn(candidate, ["30"], { stdio: "ignore" });
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit"); child.kill("SIGTERM"); await exited;
+    }
+    await rm(root, { recursive: true, force: true });
+  });
+  await once(child, "spawn");
+  assert.equal(loadedExecutableMatches(candidate, child.pid), true);
+  await rename(candidate, join(root, "old-running-image"));
+  await copyFile("/usr/bin/sleep", candidate);
+  await chmod(candidate, 0o700);
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  await writeFile(candidate, "synthetic-not-an-executable");
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  assert.equal(loadedExecutableMatches(candidate, 0), false);
+});
+
+test("boot Node rejects a writable or missing earlier PATH directory", () => {
+  // The test runtime need not be root-installed (for example hostedtoolcache
+  // on CI), but an unsafe prefix must reject independently of that runtime.
+  assert.equal(bootNodeMatches([tmpdir(), dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches([]), false);
+});
 
 function validAuditOutput(overrides = {}) {
   const values = {
@@ -83,6 +405,7 @@ function validAuditOutput(overrides = {}) {
       `BACKUP_LATEST=${type}|file=fanmind-${type}-redacted.age|age_hours=${age}|size_bytes=1000|pair=complete`,
   );
   return [
+    ...validBootLines(),
     "AUDIT_UTC=2026-07-30T12:00:00Z",
     `NODE_VERSION=${values.NODE_VERSION}`,
     `PM2_NODE_VERSION=${values.PM2_NODE_VERSION}`,

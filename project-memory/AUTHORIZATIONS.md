@@ -84,3 +84,10 @@ FanMind has stricter governance gates than the WellFit repositories. A green Pro
 - Owner instruction: yes, publish and finish Restore.
 - Scope: publish the reviewed correction and updated Project Memory in the existing public FanMind/FanMind repository and create its PR; complete publication through review/green CI and the normal release path. Continue the resumed Restore work from DB_POSTCHECKED.
 - Boundary: no second database Restore, no Production/FanMind Staging Storage target, no inferred acceptance of a new provider target/cost, no secret or private artifact publication. Existing prices remain complete.
+
+## FM-AUTH-OPS-BOOT-PUBLISH-20260912
+- Status: ACTIVE
+- Granted by: Bernd in the current session, replying "ja darf er" directly to the concrete publication/rollout question for local eef3f26b.
+- Authorized payload/destination: the prepared read-only boot-readiness collector, its existing-audit/deploy integration, tests and project documentation in the existing public FanMind/FanMind repository, followed by review, green current-head CI and the normal rollout.
+- Transport proof: local Git lacked a GitHub credential after authorization; connected GitHub published a33eedad075d506f566ac5347fc3c0ac74f9a2ff with exactly the approved tree fb61de76fc59b65802ac2937af7d6061b4e55d8e. No code change was needed for that transport. This receipt reconciles the now resolved automatic publication block; normal bounded review corrections and evidence updates remain part of that workflow.
+- Retained boundary: no secret/private payload, bypass of CI/review, source or database Restore, extra backup, provider activation or startup-state mutation. The separately owner-requested Ubuntu reboot still requires actual boot/recovery preflight and before/after proof.

@@ -1,15 +1,21 @@
 # FanMind Open Loops
 
+## FM-LOOP-REBOOT-PUBLICATION-20260912
+- Status: CLOSED; task FM-OPS-001 / FM-CR-036; LOCK-FM-OPS-REBOOT-20260912 retained.
+- Finished local read-only boot collector/verifier, executable failure/redaction tests and Operations regression checks. Automatic approval review rejects publication of this exact code/memory payload to public FanMind/FanMind despite the verified existing repository and recorded earlier grants. No remote branch/PR/deploy/reboot created; do not bypass via another tool.
+- Historical blocked next step: concrete owner confirmation for the prepared patch's public publication, then normal current-head CI/review/deploy and actual boot-state/recovery preflight. The previously accepted backup/DB Restore/Creator foundation remain closed.
+
+- Resolution: explicit current owner confirmation FM-AUTH-OPS-BOOT-PUBLISH-20260912; approved source tree published unchanged as a33eedad075d506f566ac5347fc3c0ac74f9a2ff. The earlier automatic rejection remains historical; resume current-head PR review/CI and normal rollout. No runtime/reboot acceptance is implied.
+
 ## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
 - Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
 - Source #1102-#1104 is published; selected-channel return and once-only X preview are implemented, Social Staging schema installed via 34591339718 / deploy 34591566257.
 - Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7), after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
 
 ## FM-LOOP-BACKUP-DATABASE-20260911
-- Current proven blocker: #1110 exposes stale database backup in 34646003122. Read-only Production count/path/privilege checks at 20:50:08 and 20:53:56 UTC show the approved hardened retention trigger, whereas the source guard still demands its legacy browser exposure. FM-CR-035 repairs only that guard; old archive/Restore evidence remains intact. The historical job's raw cause is unavailable; a fresh result must still prove all remaining host/dump/offsite steps.
-- Status: OPEN; task FM-OPS-001, separate from Social source engineering under current owner priority.
-- Historical observation bound to #1102: Production audit 34582645378 failed. The database backup job failed at 2026-09-11 00:30:34 UTC with backup_worker_failed, before that source release. Latest observed database success was 2026-09-10 00:30:44 UTC; Storage/config succeeded September 11. These observations are not refreshed by this entry.
-- Next: protected host-side diagnosis and controlled function proof. A generic code does not identify the cause. Keep audit/history unchanged and do not claim a fresh fully green Operations acceptance.
+- Status: CLOSED; task FM-OPS-001 / FM-CR-035.
+- Final evidence: #1111 comment 5644711203. Reviewed hardened/legacy contract correction, scheduled September 12 database backup succeeded/validated/uploaded encrypted; installed full audit 34648286758 / 103525002411 passed on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 at 08:20:31 UTC. Historical failure remains in the unchanged records; no extra backup was created.
+- Preserve: this does not complete the requested Ubuntu reboot or remaining isolated Storage/config Restore. Do not repeat the accepted database Restore or reopen the corrected contract without fresh contradictory evidence.
 
 ## FM-LOOP-CREATOR-SOCIAL-20260910
 - Status: IN_PROGRESS; current priority per FM-DEC-015.

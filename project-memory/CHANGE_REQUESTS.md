@@ -332,10 +332,20 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Acceptance: executable failure/redaction/gate tests, reviewed exact-head CI and an installed current-release audit diagnostic. Whole Operations acceptance remains separate until the real fault and reboot evidence are closed.
 
 ## FM-CR-035 — accept the approved hardened trigger in backup capture
+- Final superseding receipt: https://github.com/FanMind/FanMind/pull/1111#issuecomment-5644711203 confirms reviewed #1111 on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, scheduled database backup at 2026-09-12T00:31:01.985Z (validated and encrypted offsite), and full installed audit 34648286758 / 103525002411 PASS at 08:20:31 UTC. This bounded package and lock are closed; earlier pending fields below are historical. No extra backup or database Restore is required.
 - Date: 2026-09-11
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Task: FM-OPS-001
 - Risk: R4
 - Source: continue the owner's requested Operations completion using the newly proven blocker.
 - Observation: Production catalog at 20:50:08 UTC has the 13 public SECURITY DEFINER functions and the retained trigger is now browser-denied with the approved fixed search path. The backup source snapshot still requires that exact trigger to be browser-executable, so the hardened state is deterministically rejected. No historical job stack is available; this is a proven current blocker, not a claim that no other failure exists.
 - Scope: support the precise approved hardened state while preserving the historical legacy tuple and immutable Restore receipt schema/fingerprints; current source/PG17/security proof, reviewed publication, one controlled fresh database-backup proof. No rights change, database restore or weakening of the overall audit.
+
+## FM-CR-036 — Production boot-readiness and controlled reboot
+- Date: 2026-09-12
+- Status: IN_PROGRESS
+- Task: FM-OPS-001
+- Risk: R4
+- Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.
+- Scope: read-only installed boot-readiness collector/verifier and normal reviewed publication; then exact-target controlled reboot only after concrete start/recovery facts, with pre/post evidence. No generic remote command, migration, backup or restore repetition.
+- Acceptance: negative/redaction tests, current-head CI/security/review, installed target-bound readout and changed host boot ID plus exact release/nginx/PM2/process Node/eight health postchecks. Source-only proof cannot accept a reboot.

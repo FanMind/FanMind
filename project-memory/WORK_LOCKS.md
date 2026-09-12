@@ -657,10 +657,23 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: bounded source revert via existing isolated deployment; preserve backup history and all accepted restores/schema work.
 
 ## LOCK-FM-OPS-BACKUP-CONTRACT-20260911
+- Final superseding receipt: https://github.com/FanMind/FanMind/pull/1111#issuecomment-5644711203 confirms reviewed #1111 on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, scheduled database backup at 2026-09-12T00:31:01.985Z (validated and encrypted offsite), and full installed audit 34648286758 / 103525002411 PASS at 08:20:31 UTC. This bounded package and lock are closed; earlier pending fields below are historical. No extra backup or database Restore is required.
 - Task: FM-OPS-001 / FM-CR-035
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R4
 - Holder: Codex
 - Baseline: main e536cecd2be5ed3d4f485fd95c88c22b597f5a68, exact runtime verified by 34646003122; actual backup ages checked independently at 20:48:44 UTC.
 - Scope: accept the already approved hardened retention trigger in the read-only backup authorization snapshot, preserve exact legacy receipt/fingerprint behavior, normal reviewed source publication and one controlled fresh database-backup proof after target verification. No permission rollback, database restore, schema mutation or OS reboot.
 - Evidence/recovery: raw-payload negatives, real PG17 legacy roundtrip plus hardened live-schema capture/dump/ACL countercheck, full current-head CI/review; exact installed source and backup result. Revert only the source if needed; preserve existing artifacts, histories, DB_POSTCHECKED and all real data.
+
+## LOCK-FM-OPS-REBOOT-20260912
+- Third review continuation: four further findings corrected in source; renewed current-head CI/review required. Installation of an independently confirmed private boot reference and authenticated host recovery remain concrete external prerequisites, never automatic deploy side effects.
+- Review continuation: PR #1112 remains open under this lock. Both completed reviews are addressed in bounded source corrections; the second correction still requires its own completed review and green CI before merge. No Production startup or reboot mutation has occurred.
+- Continuation 2026-09-12: current owner publication approval confirmed; remote branch a33eedad matches the exact approved eef3f26b tree. Existing lock retained for PR/CI/review, normal rollout and installed verification; no competing PR found.
+- Task: FM-OPS-001 / FM-CR-036
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Baseline: exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, Production audit 34648286758 / 103525002411; exact Exoscale Production instance verified in authenticated portal/console.
+- Scope: reviewed read-only boot-readiness evidence and owner-requested controlled Ubuntu restart, contingent on real start/recovery preflight. Preserve accepted Backup/DB Restore/Creator evidence.
+- Evidence/recovery: meaningful negative/redaction tests and current-head CI/review, installed current-release readout, exact before/after host and service receipts. Readout performs no service/data mutation; normal release revert retained; host-login recovery still unverified.

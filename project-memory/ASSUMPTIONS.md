@@ -184,3 +184,9 @@ Do not delete invalid assumptions; preserve them so the same mistaken premise is
 - VERIFIED: actual main e0f2a517855a65bd927c3968c8e0700f06bb54db tree matches the clean baseline. Existing deploy installs root-owned audit/verifier; its independent workflow executes those installed files with no checkout. Audit 34639783862 failed without a published probe diagnostic.
 - NEEDS_VERIFICATION: the actual failed Production probe and current PM2-reported Node version/host boot measurements. Shell Node, build Node and an old audit cannot establish current process or reboot acceptance.
 - Countercheck: executable negative/redaction tests plus actual current-head installed audit after reviewed publication. Preserve full failure state if the new runtime subset passes but backups do not.
+
+## FM-CR-036 — Production restart assumptions — 2026-09-12
+- VERIFIED: exact current main/release c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 and complete installed audit; previous backup blocker closed by #1111 final receipt 5644711203.
+- VERIFIED: authenticated provider page and encrypted console identify fanmind-prod-01 / 855fe169-f3ea-4dcf-8849-e7fe0c729f5b / at-vie-2; do not operate the separate restore host.
+- UNVERIFIED: systemd startup for nginx, PM2, runner and operational units, matching saved PM2 launch definition, and authenticated host-login recovery. Running status/portal access alone does not prove these.
+- Owner authorization: explicit controlled Ubuntu reboot plus latest continuation, not inferred from generic publication authorization. No extra backup, rights change or restore repetition.
