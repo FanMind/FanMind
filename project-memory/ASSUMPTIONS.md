@@ -190,3 +190,10 @@ Do not delete invalid assumptions; preserve them so the same mistaken premise is
 - VERIFIED: authenticated provider page and encrypted console identify fanmind-prod-01 / 855fe169-f3ea-4dcf-8849-e7fe0c729f5b / at-vie-2; do not operate the separate restore host.
 - UNVERIFIED: systemd startup for nginx, PM2, runner and operational units, matching saved PM2 launch definition, and authenticated host-login recovery. Running status/portal access alone does not prove these.
 - Owner authorization: explicit controlled Ubuntu reboot plus latest continuation, not inferred from generic publication authorization. No extra backup, rights change or restore repetition.
+
+## ASM-FM-OPS-BOOT-DIAGNOSIS-20260912
+- Task: FM-OPS-001 / FM-CR-036; Risk R4; Status: NEEDS_VERIFICATION.
+- Fresh source: current main ce9b842cf0f18dcd0d34d5232ad4ab6e2c25f9f3 equals the #1112 accepted tree; final receipt and current GitHub state read at 11:18 UTC. Drift/freshness preflight pass; old source-publication pending fields are superseded.
+- Target observation: installed audit 34689543073 at 10:51:34 UTC confirms healthy runtime and all ten enabled/active units but six failed boot predicates. Those booleans do not establish which PM2 field or trust check failed; fixed redacted reason codes are needed before proposing a correction.
+- Recovery observation: the exact authenticated Exoscale Production console still shows the Ubuntu login prompt. No authenticated OS recovery session exists; the previously unreachable SSH route has no new evidence supporting a retry.
+- Falsifier: diagnostics changing a boot verdict, leaking private values, or treating a syntactically valid/current-file reference as independent confirmation invalidates this change. A source pass cannot close host boot/recovery prerequisites.

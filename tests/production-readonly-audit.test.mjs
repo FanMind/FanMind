@@ -15,6 +15,7 @@ import {
   BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
   readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
   MANAGED_UNIT_HASHES, parseBootReference, unitDefinitionMatches, runnerPathMatches,
+  savedAppDiagnostic, readSavedAppDiagnostic, startupDiagnostic, bootNodeDiagnostic,
 } from "../scripts/operations/production-boot-readiness.mjs";
 import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
@@ -32,6 +33,7 @@ function validBootLines() {
       LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active", NeedDaemonReload: "no",
     }])),
     checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true, REFERENCE_BOUND: true, UNIT_CONTRACTS: true },
+    diagnostics: { PM2_STARTUP: "ok", PM2_SAVED_APP: "ok", BOOT_NODE: "ok" },
   });
 }
 
@@ -77,8 +79,10 @@ test("saved PM2 app binds exactly one cluster app and the current release withou
   const file = join(root, "dump.pm2");
   await writeFile(file, JSON.stringify([savedApp()]), { mode: 0o600 });
   assert.equal(readSavedApp(file, expectedCommit), true);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "ok");
   assert.equal(savedAppMatches([{ ...savedApp(), instances: 1 }], expectedCommit), true);
   assert.equal(readSavedApp(file, "b".repeat(40)), false);
+  assert.equal(readSavedAppDiagnostic(file, "b".repeat(40)), "release_binding");
   assert.equal(savedAppMatches([], expectedCommit), false);
   assert.equal(savedAppMatches([savedApp(), savedApp()], expectedCommit), false);
   for (const overrides of [
@@ -91,15 +95,33 @@ test("saved PM2 app binds exactly one cluster app and the current release withou
   const link = join(root, "link.pm2");
   await symlink(file, link);
   assert.equal(readSavedApp(link, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(link, expectedCommit), "file_unverified");
   await chmod(file, 0o666);
   assert.equal(readSavedApp(file, expectedCommit), false);
   await chmod(file, 0o600);
   await writeFile(file, "RAW_SECRET_CANARY");
   assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "json_invalid");
   await writeFile(file, "x".repeat(1024 * 1024 + 1));
   assert.equal(readSavedApp(file, expectedCommit), false);
   assert.equal(readSavedApp(root, expectedCommit), false);
   assert.equal(readSavedApp(join(root, "missing"), expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(join(root, "RAW_SECRET_CANARY"), expectedCommit), "file_unverified");
+});
+
+test("saved app diagnostics identify the failed contract without publishing values", () => {
+  for (const [overrides, code] of [
+    [{ pm_exec_path: "/private/RAW_SECRET_CANARY" }, "script"],
+    [{ args: ["RAW_SECRET_CANARY"] }, "args"],
+    [{ exec_interpreter: "/private/RAW_SECRET_CANARY" }, "interpreter"],
+    [{ NODE_OPTIONS: "RAW_SECRET_CANARY" }, "loader_override"],
+    [{ node_args: ["RAW_SECRET_CANARY"] }, "node_args"],
+    [{ NODE_ENV: "RAW_SECRET_CANARY" }, "runtime_environment"],
+    [{ env: { FANMIND_RELEASE_COMMIT: "RAW_SECRET_CANARY" } }, "release_binding"],
+  ]) {
+    assert.equal(savedAppDiagnostic([{ ...savedApp(), ...overrides }], expectedCommit), code);
+    assert.equal(savedAppMatches([{ ...savedApp(), ...overrides }], expectedCommit), false);
+  }
 });
 
 test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
@@ -111,6 +133,15 @@ test("PM2 startup and current runner binding fail closed on alternate commands, 
     "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
   ].join("\n"));
   assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
+  assert.equal(startupDiagnostic(unit), "ok");
+  for (const [overrides, code] of [
+    [{ ExecStartPre: "/private/RAW_SECRET_CANARY" }, "hooks"],
+    [{ EnvironmentFiles: "/private/RAW_SECRET_CANARY" }, "service_inputs"],
+    [{ Environment: 'PATH="RAW_SECRET_CANARY"' }, "environment_format"],
+    [{ Environment: `${unit.Environment} EXTRA=RAW_SECRET_CANARY` }, "environment_binding"],
+    [{ ExecStart: "RAW_SECRET_CANARY" }, "start_command"],
+    [{ ExecStop: "RAW_SECRET_CANARY" }, "stop_command"],
+  ]) assert.equal(startupDiagnostic({ ...unit, ...overrides }), code);
   for (const overrides of [
     { User: "root" }, { Type: "simple" }, { PIDFile: "/tmp/pm2.pid" },
     { ExecStop: undefined }, { ExecStop: unit.ExecStop.replace(" kill ", " kill extra ") },
@@ -233,12 +264,41 @@ test("actual workflow keeps boot readiness separate and never publishes private 
   const good = await runAuditWorkflow(t, validAuditOutput(), 0);
   assert.equal(good.code, 0);
   assert.match(good.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=true$/mu);
+  assert.match(good.stdout, /^PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP=ok$/mu);
   const bad = await runAuditWorkflow(t, validAuditOutput().replace(
-    "BOOT_UNIT_PM2=loaded|enabled|active|no", "BOOT_UNIT_PM2=RAW_SECRET_CANARY|disabled|inactive"), 0);
+    "BOOT_UNIT_PM2=loaded|enabled|active|no", "BOOT_UNIT_PM2=RAW_SECRET_CANARY|disabled|inactive").replace(
+    "BOOT_DIAGNOSTIC_PM2_STARTUP=ok", "BOOT_DIAGNOSTIC_PM2_STARTUP=RAW_SECRET_CANARY"), 0);
   assert.equal(bad.code, 0, "the prior live Operations contract remains independent");
   assert.match(bad.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
   assert.match(bad.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=false$/mu);
+  assert.match(bad.stdout, /^PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP=unknown$/mu);
   assert.doesNotMatch(bad.stdout, /RAW_SECRET_CANARY/u);
+});
+
+test("diagnostics accept only fixed codes once and cannot supply a missing or failed boot check", () => {
+  const valid = validBootLines().join("\n");
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE"]) {
+    const line = `BOOT_DIAGNOSTIC_${key}=ok`;
+    for (const altered of [
+      valid.replace(line, ""), `${valid}\n${line}`,
+      valid.replace(line, `BOOT_DIAGNOSTIC_${key}=RAW_SECRET_CANARY`),
+    ]) {
+      const result = bootSummaryFromValues(parseProductionAuditOutput(altered));
+      assert.equal(result.diagnostics[key], "unknown");
+      assert.equal(result.verified, true, "diagnostics do not alter the established acceptance contract");
+      assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
+    }
+    for (const replacement of ["", `BOOT_${key}=false`]) {
+      assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, replacement))).verified, false);
+    }
+  }
+  const emitted = bootReadinessLines({ units: {}, checks: {}, diagnostics: {
+    PM2_STARTUP: "RAW_SECRET_CANARY", PM2_SAVED_APP: "json_invalid", BOOT_NODE: "startup_unverified", PRIVATE_SECRET: "RAW_SECRET_CANARY",
+  } }).join("\n");
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_PM2_STARTUP=unknown$/mu);
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_PM2_SAVED_APP=json_invalid$/mu);
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_BOOT_NODE=startup_unverified$/mu);
+  assert.doesNotMatch(emitted, /RAW_SECRET_CANARY|PRIVATE_SECRET/u);
 });
 
 test("runner registration endpoints reject missing, foreign and untrusted targets", () => {
@@ -337,6 +397,9 @@ test("boot Node rejects a writable or missing earlier PATH directory", () => {
   assert.equal(bootNodeMatches([tmpdir(), dirname(process.execPath)]), false);
   assert.equal(bootNodeMatches(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), false);
   assert.equal(bootNodeMatches([]), false);
+  assert.equal(bootNodeDiagnostic([tmpdir(), dirname(process.execPath)]), "path_unverified");
+  assert.equal(bootNodeDiagnostic(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), "path_unverified");
+  assert.equal(bootNodeDiagnostic([]), "node_missing");
 });
 
 function validAuditOutput(overrides = {}) {

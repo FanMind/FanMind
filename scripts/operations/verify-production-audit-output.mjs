@@ -348,6 +348,9 @@ export function printProductionRuntimeSummary(summary) {
   for (const [key, value] of Object.entries(summary.bootReadiness.checks)) {
     console.log(`PRODUCTION_BOOT_${key}=${value}`);
   }
+  for (const [key, value] of Object.entries(summary.bootReadiness.diagnostics)) {
+    console.log(`PRODUCTION_BOOT_DIAGNOSTIC_${key}=${value}`);
+  }
 }
 
 export function printProductionAuditSummary(summary) {

@@ -327,8 +327,19 @@ Production-Existenz ist nicht belegt; bis zur bestätigten Installation bleiben
 bei fehlender Referenz false. Ein erfolgreicher Source-Rollout schließt diese
 konkrete externe Voraussetzung nicht automatisch ab.
 
-Ausgegeben werden nur feste Rollen, normalisierte Zustände und Boolesche Werte.
-Unbekannte, fehlende und doppelte Messwerte verhindern den Boot-Pass; private
+Ausgegeben werden nur feste Rollen, normalisierte Zustände, Boolesche Werte und
+drei feste Diagnosecodes unter `PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP`,
+`PRODUCTION_BOOT_DIAGNOSTIC_PM2_SAVED_APP` und
+`PRODUCTION_BOOT_DIAGNOSTIC_BOOT_NODE`. Der Collector meldet jeweils die erste
+nicht bestätigte Bedingung, beispielsweise `start_command`, `release_binding`
+oder `path_unverified`. `file_unverified` bestätigt keine konkrete Dateifehler-
+ursache; `startup_unverified` bedeutet, dass Node ohne parsebaren PM2-Startvertrag
+nicht geprüft werden konnte. Ein passender Teilvertrag ergibt `ok`. Alle Codes
+stammen aus einer festen Liste; Werte und Fehlertexte werden niemals übernommen.
+Fehlende, doppelte oder unbekannte Diagnosecodes werden zu `unknown`.
+Die Diagnosen ändern keine Pass-Bedingung und ersetzen keinen Booleschen
+Nachweis. Auch `ok` kann einen fehlenden oder falschen Boot-Check nicht ersetzen.
+Unbekannte, fehlende und doppelte Unit-/Boolesche Messwerte verhindern den Boot-Pass; private
 Unit-Properties, Runner-Namen, PM2-Environment und Dateiinhalte erscheinen
 nicht im Log. Ein manueller Audit außerhalb der Runner-cgroup kann weiterhin
 den bisherigen Operations-Vertrag erfüllen, aber keine Runner-Boot-Bindung
