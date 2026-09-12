@@ -180,7 +180,9 @@ test("runner configuration binds the actual registration and rejects missing or 
   context.registrationSha256 = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
   await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
   await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
-  await writeFile(join(root, ".path"), "/usr/local/bin:/usr/bin:/bin", { mode: 0o600 });
+  // GitHub runner images may grant the build user writes under /usr/local;
+  // the positive fixture uses only the protected distro paths proven below.
+  await writeFile(join(root, ".path"), "/usr/bin:/bin", { mode: 0o600 });
   await writeFile(join(root, ".env"), "LANG=C.UTF-8\n", { mode: 0o600 });
   for (const relative of [".credentials", ".credentials_rsaparams"]) await writeFile(join(root, relative), "synthetic-not-a-credential", { mode: 0o600 });
   for (const relative of ["bin/Runner.Listener", "externals/node20/bin/node"]) await writeFile(join(root, relative), "synthetic-not-executed", { mode: 0o700 });

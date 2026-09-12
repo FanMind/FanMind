@@ -260,3 +260,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Result: /proc process-image reads returned EACCES or ENOENT for a live local process; the production predicate correctly returned false. Local result is 22 passes and one explicitly skipped positive native proof, not 23 passes.
 - Correction: keep the real kernel/inode/ELF/hash check unchanged. Require the positive process-image and replaced-image regression on native GitHub Linux; GITHUB_ACTIONS=true forbids the local skip. Current-head CI must prove it before merge.
 - Do not repeat: do not weaken production identity checks, execute an untrusted candidate, infer native success from synthetic text files, or repeatedly probe the restricted local process namespace.
+
+## FM-FAIL-024
+- Date: 2026-09-12
+- Status: CORRECTION_IN_REVIEW
+- Area: FM-OPS-001 / FM-CR-036 positive runner configuration fixture.
+- Attempt: current-head CI on 7699f333c88303537471fe94828be4624653069e, job 103541155006.
+- Result: exactly one Operations test failed at the positive runner-configuration assertion; the native executable proof and the dedicated /usr/bin:/bin protected-PATH proof passed.
+- Cause/correction: the positive fixture included /usr/local/bin, which is not a portable protected path on a hosted build image. Use only the already-proven /usr/bin:/bin fixture paths. Keep all Production ownership, write protection and missing-path checks unchanged.
+- Next evidence: current-head native CI must pass all 26 focused tests and full review must complete before merge.
+- Do not repeat: do not weaken the Production PATH contract, rerun the unchanged failing revision or merge red CI.
