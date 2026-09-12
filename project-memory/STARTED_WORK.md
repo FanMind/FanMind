@@ -628,10 +628,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: publish the bounded correction, read the real failure stage, then address only its demonstrated cause. Restore-target and console recovery facts must precede the separately requested OS restart.
 
 ## FM-OPS-001 — hardened backup contract continuation — 2026-09-11
-- Status: IN_PROGRESS
+- Final superseding receipt: https://github.com/FanMind/FanMind/pull/1111#issuecomment-5644711203 confirms reviewed #1111 on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, scheduled database backup at 2026-09-12T00:31:01.985Z (validated and encrypted offsite), and full installed audit 34648286758 / 103525002411 PASS at 08:20:31 UTC. This bounded package and lock are closed; earlier pending fields below are historical. No extra backup or database Restore is required.
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Work lock: LOCK-FM-OPS-BACKUP-CONTRACT-20260911; Change FM-CR-035.
 - Completed preflight: exact released tree/runtime, current backup job/age and read-only Production function privileges compared with installed source. The source wrongly requires the legacy exposed retention trigger; current approved hardening has removed that exposure.
 - Scope: bounded compatibility correction with old receipts/Restore acceptance preserved. No SQL privilege change, repeated Restore or generic backup rewrite.
 - Exact next step: test both exact legacy and hardened states, publish through current-head CI/review, then use the existing authorized backup path for one fresh database-only proof after checking the installed release and worker.
 - Recovery: bounded source revert; no deletion of source data, prior backups or accepted receipts. A fresh failure remains open and must not be hidden or retried automatically.
+
+## FM-OPS-001 — controlled Ubuntu reboot — 2026-09-12
+- Status: BLOCKED
+- Risk: R4
+- Change: FM-CR-036; Work lock: LOCK-FM-OPS-REBOOT-20260912.
+- Baseline: clean exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 / tree 4509e2931478c0af046def29760ca139ac51b45f; independently verified Production audit and exact authenticated Exoscale instance. Drift/freshness preflights passed; prior backup closure reconciled from its final durable receipt.
+- Scope: bounded read-only boot readiness followed by the already requested controlled restart, only after actual boot/recovery preflight. No startup-state mutation in the collector.
+- Exact next step: obtain the concrete publication confirmation required by automatic approval review for this locally completed patch in public FanMind/FanMind, then push the same reviewed branch, run current-head CI/review and normal deploy, and read actual boot prerequisites. No alternate publication path after the rejection.
+- Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.

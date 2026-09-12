@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { bootSummaryFromValues } from "./production-boot-readiness.mjs";
 
 import {
   OPTIONAL_PUBLIC_HEALTH_COMPONENTS,
@@ -10,7 +11,7 @@ import {
 const SHA_PATTERN = /^[0-9a-f]{40}$/u;
 const AUDIT_STAGES = new Set([
   "prerequisites", "runtime", "release", "health", "pm2", "env_flags",
-  "nginx", "http", "host", "systemd", "backup_inventory", "backup_checksum",
+  "nginx", "http", "host", "systemd", "boot_readiness", "backup_inventory", "backup_checksum",
   "offsite", "worker",
 ]);
 const BACKUP_MAX_AGE_HOURS = Object.freeze({
@@ -236,6 +237,7 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
     pm2UptimeSeconds, serverErrorTrackingEnabled, serverErrorEmailEnabled,
     localLoginHttp, publicLoginHttp, diskUsedPercent, memoryAvailableKiB,
     rebootRequired: rebootRequired === "true", systemdUnitCount,
+    bootReadiness: bootSummaryFromValues(values),
   };
 }
 
@@ -337,6 +339,15 @@ export function printProductionRuntimeSummary(summary) {
   console.log(`PRODUCTION_MEMORY_AVAILABLE_KIB=${summary.memoryAvailableKiB}`);
   console.log(`PRODUCTION_REBOOT_REQUIRED=${summary.rebootRequired}`);
   console.log(`PRODUCTION_SYSTEMD_UNIT_COUNT=${summary.systemdUnitCount}`);
+  // Boot preflight is a separate result. A live Operations pass alone must
+  // never authorize a reboot or imply that the host has actually restarted.
+  console.log(`PRODUCTION_BOOT_READINESS_VERIFIED=${summary.bootReadiness.verified}`);
+  for (const [role, value] of Object.entries(summary.bootReadiness.units)) {
+    console.log(`PRODUCTION_BOOT_UNIT_${role}=${value}`);
+  }
+  for (const [key, value] of Object.entries(summary.bootReadiness.checks)) {
+    console.log(`PRODUCTION_BOOT_${key}=${value}`);
+  }
 }
 
 export function printProductionAuditSummary(summary) {

@@ -224,6 +224,10 @@ for unit in "${units[@]}"; do
     "$unit" "${next_realtime:-unknown}" "${next_monotonic:-unknown}" "${last:-unknown}"
 done
 
+audit_stage=boot_readiness
+node "$(dirname "$0")/production-boot-readiness.mjs" "$(git -C "$APP_ROOT" rev-parse HEAD)" ||
+  printf 'BOOT_COLLECTOR=unavailable\n'
+
 audit_stage=backup_inventory
 inventory="$(mktemp)"
 cleanup_files+=("$inventory")

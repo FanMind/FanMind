@@ -145,6 +145,7 @@ jobs:
           sudo install -o root -g root -m 0750 scripts/operations/offsite-backup-retention-plan.mjs /usr/local/lib/fanmind-ops/offsite-backup-retention-plan.mjs
           sudo install -o root -g root -m 0750 scripts/operations/verify-backup-artifact.mjs /usr/local/lib/fanmind-ops/verify-backup-artifact.mjs
           sudo install -o root -g root -m 0755 scripts/operations/read-only-production-audit.sh /usr/local/lib/fanmind-audit/read-only-production-audit.sh
+          sudo install -o root -g root -m 0644 scripts/operations/production-boot-readiness.mjs /usr/local/lib/fanmind-audit/production-boot-readiness.mjs
           sudo install -o root -g root -m 0755 scripts/operations/verify-production-audit-output.mjs /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs
           sudo install -o root -g root -m 0755 scripts/operations/verify-operations-monitor-probe-log.mjs /usr/local/lib/fanmind-audit/verify-operations-monitor-probe-log.mjs
           sudo install -o root -g root -m 0755 scripts/operations/verify-operations-monitor-lifecycle-log.mjs /usr/local/lib/fanmind-audit/verify-operations-monitor-lifecycle-log.mjs

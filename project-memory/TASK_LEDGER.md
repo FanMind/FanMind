@@ -398,10 +398,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Historical accepted result: Core Operations/backup/deploy/audit/monitoring foundation is production-proven and remains accepted. Optional/destructive follow-ups remain separately controlled.
 - Evidence: Issues #524/#534 and Production operations run history.
 - Limitations: full Restore remains FM-RST-001; Remote offsite delete #658 is not authorized; optional email/failure-matrix items are not blanket-complete.
-- Completed diagnostic package: FM-CR-034 / #1110 is Production-confirmed in final receipt 5640486486; its lock is released. Runtime healthy at e536cecd with Node 24.18.0; full audit fails on stale backup.
-- Baseline: main e0f2a517855a65bd927c3968c8e0700f06bb54db deploy/readiness passed; full audit 34639783862 exits 1 without a published probe diagnostic. The historical database-backup failure remains FM-LOOP-BACKUP-DATABASE-20260911.
-- Exact next step: FM-CR-035 / LOCK-FM-OPS-BACKUP-CONTRACT-20260911 fixes the snapshot guard that still requires the exposed pre-hardening retention trigger. Preserve historical receipt/Restore compatibility; prove legacy and hardened cases in PG17, publish with current-head CI/review, then verify one controlled fresh database backup. No source-test pass is an OS reboot or full Operations/Restore acceptance.
-- Preserve: accepted database restore and Creator Staging foundation; no backup redesign, SQL, job retry or activation in this bounded change.
+- Completed: FM-CR-034 / #1110 diagnostic receipt 5640486486; FM-CR-035 / #1111 backup receipt 5644711203. Both bounded packages are Production-confirmed and their locks released. Full installed audit 34648286758 / 103525002411 PASS on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, 2026-09-12T08:20:31Z.
+- Baseline: eight healthy components, nginx active/valid, one PM2 cluster worker, process Node 24.18.0, restart count 0 (reset cause not proven), unchanged host boot ID 7507920b-1401-470e-b8b4-716479c448c6, reboot-required=true.
+- Exact next step: FM-CR-036 / LOCK-FM-OPS-REBOOT-20260912 is locally implemented; automatic approval review blocks this exact public branch push and requires concrete publication confirmation. After that, normal current-head CI/review/deploy, installed boot-readiness and the authorized controlled reboot with pre/post evidence. No publication workaround.
+- Preserve: no extra backup, repeated accepted database Restore/Creator foundation, SQL, provider activation or arbitrary Production workflow execution.
 
 ## FM-MEM-008
 - Date: 2026-08-19 to 2026-08-20

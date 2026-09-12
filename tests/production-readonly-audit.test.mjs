@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
 import yaml from "js-yaml";
 
 import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import {
+  BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
+  readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract,
+} from "../scripts/operations/production-boot-readiness.mjs";
+import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
@@ -16,6 +21,123 @@ const expectedCommit = "a".repeat(40);
 async function readAuditScript() {
   return readFile(auditScriptPath, "utf8");
 }
+
+function validBootLines() {
+  return bootReadinessLines({
+    units: Object.fromEntries(BOOT_ROLES.map(role => [role, {
+      LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active",
+    }])),
+    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true },
+  });
+}
+
+function savedApp() {
+  return {
+    name: "fanmind", exec_mode: "cluster_mode", autorestart: true,
+    pm_cwd: "/var/www/fanmind-current",
+    pm_exec_path: "/var/www/fanmind-current/node_modules/next/dist/bin/next",
+    exec_interpreter: "node", args: ["start"],
+    NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production", FANMIND_RELEASE_COMMIT: expectedCommit,
+    env: { FANMIND_RELEASE_COMMIT: expectedCommit, PRIVATE_SECRET: "RAW_SECRET_CANARY" },
+  };
+}
+
+test("boot preflight rejects missing, duplicate, masked, transient and inactive units", () => {
+  const valid = validBootLines().join("\n");
+  assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid)).verified, true);
+  for (const role of BOOT_ROLES) {
+    const line = `BOOT_UNIT_${role}=loaded|enabled|active`;
+    for (const altered of [
+      valid.replace(line, ""), `${valid}\n${line}`,
+      valid.replace(line, `BOOT_UNIT_${role}=not-found|disabled|inactive`),
+      valid.replace(line, `BOOT_UNIT_${role}=masked|masked|inactive`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled-runtime|active`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|failed`),
+      valid.replace(line, `BOOT_UNIT_${role}=RAW_SECRET_CANARY|enabled|active`),
+    ]) {
+      const result = bootSummaryFromValues(parseProductionAuditOutput(altered));
+      assert.equal(result.verified, false, role);
+      assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
+    }
+  }
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND"]) {
+    assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, `BOOT_${key}=false`))).verified, false);
+  }
+});
+
+test("saved PM2 app binds exactly one cluster app and the current release without returning private environment", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-dump-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = join(root, "dump.pm2");
+  await writeFile(file, JSON.stringify([savedApp()]), { mode: 0o600 });
+  assert.equal(readSavedApp(file, expectedCommit), true);
+  assert.equal(savedAppMatches([{ ...savedApp(), instances: 1 }], expectedCommit), true);
+  assert.equal(readSavedApp(file, "b".repeat(40)), false);
+  assert.equal(savedAppMatches([], expectedCommit), false);
+  assert.equal(savedAppMatches([savedApp(), savedApp()], expectedCommit), false);
+  for (const overrides of [
+    { name: "other" }, { exec_mode: "fork_mode" }, { instances: 2 }, { autorestart: false },
+    { pm_cwd: "/var/www/old-release" }, { pm_exec_path: "/private/RAW_SECRET_CANARY" },
+    { exec_interpreter: "/private/node" }, { args: ["dev"] }, { NODE_ENV: "development" },
+    { FANMIND_RUNTIME_ENVIRONMENT: "staging" }, { FANMIND_RELEASE_COMMIT: "b".repeat(40) },
+    { env: { FANMIND_RELEASE_COMMIT: "b".repeat(40) } },
+  ]) assert.equal(savedAppMatches([{ ...savedApp(), ...overrides }], expectedCommit), false);
+  const link = join(root, "link.pm2");
+  await symlink(file, link);
+  assert.equal(readSavedApp(link, expectedCommit), false);
+  await chmod(file, 0o666);
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  await chmod(file, 0o600);
+  await writeFile(file, "RAW_SECRET_CANARY");
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  await writeFile(file, "x".repeat(1024 * 1024 + 1));
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedApp(root, expectedCommit), false);
+  assert.equal(readSavedApp(join(root, "missing"), expectedCommit), false);
+});
+
+test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
+  const unit = parseUnitProperties([
+    "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
+    "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
+    "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
+  ].join("\n"));
+  assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
+  for (const overrides of [
+    { User: "root" }, { Type: "simple" }, { PIDFile: "/tmp/pm2.pid" },
+    { ExecStart: unit.ExecStart.replace(" resurrect ", " resurrect extra ") },
+    { ExecStart: `${unit.ExecStart} ${unit.ExecStart}` },
+    { Environment: `${unit.Environment} PM2_HOME=/private/RAW_SECRET_CANARY` },
+    { Environment: unit.Environment.replace("/usr/bin", "relative") },
+    { Environment: 'PATH="$(RAW_SECRET_CANARY)" PM2_HOME=/home/ubuntu/.pm2' },
+  ]) assert.equal(startupContract({ ...unit, ...overrides }), null);
+  assert.throws(() => parseUnitProperties("User=ubuntu\nUser=root"), /duplicate/u);
+  assert.throws(() => parseUnitProperties("RAW_SECRET_CANARY"), /invalid/u);
+  const runner = "actions.runner.FanMind-FanMind.production.service";
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}`), runner);
+  assert.equal(runnerUnitFromCgroup("0::/user.slice/session.scope"), null);
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}/actions.runner.other.service`), null);
+});
+
+test("actual workflow keeps boot readiness separate and never publishes private unit values", async (t) => {
+  const good = await runAuditWorkflow(t, validAuditOutput(), 0);
+  assert.equal(good.code, 0);
+  assert.match(good.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=true$/mu);
+  const bad = await runAuditWorkflow(t, validAuditOutput().replace(
+    "BOOT_UNIT_PM2=loaded|enabled|active", "BOOT_UNIT_PM2=RAW_SECRET_CANARY|disabled|inactive"), 0);
+  assert.equal(bad.code, 0, "the prior live Operations contract remains independent");
+  assert.match(bad.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.match(bad.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=false$/mu);
+  assert.doesNotMatch(bad.stdout, /RAW_SECRET_CANARY/u);
+});
+
+test("boot Node rejects a writable or missing earlier PATH directory", () => {
+  // The test runtime need not be root-installed (for example hostedtoolcache
+  // on CI), but an unsafe prefix must reject independently of that runtime.
+  assert.equal(bootNodeMatches([tmpdir(), dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches([]), false);
+});
 
 function validAuditOutput(overrides = {}) {
   const values = {
@@ -83,6 +205,7 @@ function validAuditOutput(overrides = {}) {
       `BACKUP_LATEST=${type}|file=fanmind-${type}-redacted.age|age_hours=${age}|size_bytes=1000|pair=complete`,
   );
   return [
+    ...validBootLines(),
     "AUDIT_UTC=2026-07-30T12:00:00Z",
     `NODE_VERSION=${values.NODE_VERSION}`,
     `PM2_NODE_VERSION=${values.PM2_NODE_VERSION}`,
