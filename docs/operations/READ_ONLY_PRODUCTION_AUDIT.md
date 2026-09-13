@@ -327,6 +327,28 @@ Production-Existenz ist nicht belegt; bis zur bestätigten Installation bleiben
 bei fehlender Referenz false. Ein erfolgreicher Source-Rollout schließt diese
 konkrete externe Voraussetzung nicht automatisch ab.
 
+Leere strukturierte Properties können in Ubuntu systemd 255 auch bei
+`systemctl show --all` vollständig fehlen: Der
+[offizielle systemd-Printer](https://github.com/systemd/systemd/blob/v255/src/systemctl/systemctl-show.c)
+gibt `Exec*` und `EnvironmentFiles` nur innerhalb seiner Elementschleife aus.
+Der [generische Printer](https://github.com/systemd/systemd/blob/v255/src/shared/bus-print-properties.c)
+kennzeichnet nicht darstellbare strukturierte Werte wie
+Conditions/Asserts als `[unprintable]`; auch dieser Marker beweist keine Leere.
+Der Collector fragt ausschließlich fehlende oder so markierte bekannte Array-Properties zusätzlich
+über [busctl](https://manpages.ubuntu.com/manpages/noble/man1/busctl.1.html) ab.
+`GetUnit` muss die bereits geladene, exakt benannte Unit auflösen; anschließend
+gelten nur erfolgreiche Antworten mit exaktem Interface, Array-Typ und null
+Elementen als leer. Das umfasst auch Conditions/Asserts und den leeren Runner-
+ExecStop. Falsche Anzahl/Typen, zusätzliche Daten, Abfragefehler und nichtleere
+Werte bleiben gesperrt. Bereits dargestellte Werte werden nicht überschrieben.
+Es gibt keine Service-Aktivierung, implizite Reparatur oder Rohwert-Ausgabe.
+
+Die authentifizierte Owner-Gegenprobe vom 13. September 2026 bestätigte alle vier
+PM2-Hooks direkt als leer. Sie identifizierte außerdem `dump.pm2` mit Modus 0664;
+die ausgeführte Korrektur wurde als 0600 bestätigt. Der gespeicherte App-/Release-
+Vertrag und die Rechte werden nach dem normalen Rollout erneut geprüft. Diese
+Teilnachweise ersetzen weder die unabhängige Referenz noch die übrigen Boot-Gates.
+
 Ausgegeben werden nur feste Rollen, normalisierte Zustände, Boolesche Werte und
 drei feste Diagnosecodes unter `PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP`,
 `PRODUCTION_BOOT_DIAGNOSTIC_PM2_SAVED_APP` und

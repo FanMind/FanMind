@@ -40,6 +40,15 @@ const START_HOOKS = ["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStop
 const SERVICE_INPUTS = ["EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"];
 const LAUNCH_ENV = ["NODE_OPTIONS", "NODE_PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT", "BASH_ENV", "ENV", "OPENSSL_CONF", "OPENSSL_MODULES"];
 const UNIT_PROPERTIES = ["Id", "FragmentPath", "DropInPaths", "Conditions", "Asserts"];
+const EMPTY_STRUCTURED_PROPERTIES = Object.freeze({
+  ...Object.fromEntries([...START_HOOKS, "ExecStop"].map(key => [key, ["Service", "a(sasbttttuii)"]])),
+  EnvironmentFiles: ["Service", "a(sb)"],
+  Conditions: ["Unit", "a(sbbsi)"],
+  Asserts: ["Unit", "a(sbbsi)"],
+});
+const READ_COMMAND_OPTIONS = Object.freeze({
+  encoding: "utf8", timeout: 10_000, maxBuffer: 128 * 1024, stdio: ["ignore", "pipe", "pipe"],
+});
 const REFERENCE_FILE = "/etc/fanmind/production-boot-reference.json";
 const SHA256 = /^[a-f0-9]{64}$/u;
 export const MANAGED_UNIT_HASHES = Object.freeze({
@@ -77,16 +86,48 @@ export function parseUnitProperties(source) {
   return result;
 }
 
-function readUnit(unit, extra = []) {
+export function readUnit(unit, extra = [], run = execFileSync) {
+  const requested = [...new Set(["LoadState", "UnitFileState", "ActiveState", "NeedDaemonReload", ...UNIT_PROPERTIES, ...extra])];
+  let properties;
   try {
-    return parseUnitProperties(execFileSync("/bin/systemctl", [
+    properties = parseUnitProperties(run("/bin/systemctl", [
       "show", "--no-pager", "--all",
-      ...["LoadState", "UnitFileState", "ActiveState", "NeedDaemonReload", ...UNIT_PROPERTIES, ...extra].map(key => `--property=${key}`),
+      ...requested.map(key => `--property=${key}`),
       "--", unit,
-    ], { encoding: "utf8", timeout: 10_000, maxBuffer: 128 * 1024, stdio: ["ignore", "pipe", "pipe"] }));
+    ], READ_COMMAND_OPTIONS));
   } catch {
     return {};
   }
+  // systemctl v255 omits empty Exec*/EnvironmentFiles struct arrays even with
+  // --all; unsupported struct arrays appear as [unprintable]. Neither proves
+  // emptiness: require a typed, zero-element D-Bus reply for these markers.
+  const missing = requested.filter(key => Object.hasOwn(EMPTY_STRUCTURED_PROPERTIES, key) &&
+    (!Object.hasOwn(properties, key) || properties[key] === "[unprintable]"));
+  if (!missing.length || properties.LoadState !== "loaded" || properties.Id !== unit) return properties;
+  const busArgs = ["--system", "--no-pager", "--auto-start=no", "--allow-interactive-authorization=no", "--timeout=10"];
+  const destination = "org.freedesktop.systemd1";
+  let objectPath;
+  try {
+    // GetUnit only resolves an already loaded unit; never call LoadUnit/StartUnit.
+    const reply = run("/usr/bin/busctl", [...busArgs, "call", destination, "/org/freedesktop/systemd1",
+      `${destination}.Manager`, "GetUnit", "s", unit], READ_COMMAND_OPTIONS).trim();
+    objectPath = reply.match(/^o "(\/org\/freedesktop\/systemd1\/unit\/[A-Za-z0-9_]+)"$/u)?.[1];
+    const label = unit.replace(/[^A-Za-z0-9]/gu, character => `_${character.charCodeAt(0).toString(16).padStart(2, "0")}`);
+    if (objectPath !== `/org/freedesktop/systemd1/unit/${label}`) return properties;
+  } catch { return properties; }
+  for (const interfaceName of ["Unit", "Service"]) {
+    const keys = missing.filter(key => EMPTY_STRUCTURED_PROPERTIES[key][0] === interfaceName);
+    if (!keys.length) continue;
+    try {
+      const lines = run("/usr/bin/busctl", [...busArgs, "get-property", destination, objectPath,
+        `${destination}.${interfaceName}`, ...keys], READ_COMMAND_OPTIONS).trim().split("\n");
+      if (lines.length !== keys.length) continue;
+      for (const [index, key] of keys.entries()) {
+        if (lines[index] === `${EMPTY_STRUCTURED_PROPERTIES[key][1]} 0`) properties[key] = "";
+      }
+    } catch { /* Unreadable properties remain missing; no raw bus errors escape. */ }
+  }
+  return properties;
 }
 
 // Read one bounded regular file without following final/ancestor symlinks or
