@@ -369,6 +369,64 @@ export const RUNNER_SCRIPT_HASHES = Object.freeze({
   "bin/RunnerService.js": "843c5d27f4e92ce2b11d3ae0ba974f200e705eb762475c06fe0d732cb585331d",
 });
 
+// The official v2.337.0 updater replaces both top-level directories with
+// absolute links to versioned siblings. This is a narrow artifact exception;
+// registration, environment, credentials and unit reads still reject links.
+const RUNNER_LAYOUT_VERSION = "2.337.0";
+const RUNNER_ARTIFACTS = ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", "externals/node20/bin/node"];
+function readRunnerLayout(root) {
+  try {
+    if (!/^\/[A-Za-z0-9_./-]+$/u.test(root ?? "") || path.normalize(root) !== root || fs.realpathSync(root) !== root) return null;
+    const owner = BigInt(process.getuid()), observed = new Map(), directories = {}, files = {};
+    const inspect = (file, kind, ancestor = false) => {
+      const stat = fs.lstatSync(file, { bigint: true });
+      if ((stat.uid !== owner && !(ancestor && stat.uid === 0n)) ||
+          (kind === "link" ? !stat.isSymbolicLink() :
+            (stat.mode & 0o022n) !== 0n || fs.realpathSync(file) !== file ||
+            (kind === "directory" ? !stat.isDirectory() : !stat.isFile()))) throw new Error("runner_layout_unverified");
+      const link = kind === "link" ? fs.readlinkSync(file) : "";
+      const stamp = [stat.dev, stat.ino, stat.uid, stat.gid, stat.mode, stat.size, stat.mtimeNs, stat.ctimeNs, link].join("|");
+      if (observed.has(file) && observed.get(file) !== stamp) throw new Error("runner_layout_changed");
+      observed.set(file, stamp);
+      return { stat, link };
+    };
+    // The runner owns its installation. Every ancestor must be a direct,
+    // protected directory owned by that user or root, including alias parents.
+    for (let current = root;; current = path.dirname(current)) {
+      inspect(current, "directory", current !== root);
+      if (current === "/") break;
+    }
+    const kinds = [];
+    for (const name of ["bin", "externals"]) {
+      const alias = path.join(root, name), linked = fs.lstatSync(alias).isSymbolicLink();
+      kinds.push(linked);
+      if (linked) {
+        const expected = path.join(root, `${name}.${RUNNER_LAYOUT_VERSION}`);
+        if (inspect(alias, "link").link !== expected || fs.realpathSync(alias) !== expected) return null;
+        inspect(expected, "directory");
+        directories[name] = expected;
+      } else {
+        inspect(alias, "directory");
+        directories[name] = alias;
+      }
+    }
+    if (kinds[0] !== kinds[1]) return null; // An update in progress is not a stable layout.
+    for (const relative of RUNNER_ARTIFACTS) {
+      const parts = relative.split("/");
+      let current = root;
+      for (const part of parts.slice(0, -1)) {
+        current = current === root && directories[part] ? directories[part] : path.join(current, part);
+        inspect(current, "directory");
+      }
+      const file = path.join(current, parts.at(-1)), { stat } = inspect(file, "file");
+      if (stat.size === 0n || stat.size > 256n * 1024n * 1024n ||
+          (relative !== "bin/RunnerService.js" && (stat.mode & 0o100n) === 0n)) return null;
+      files[relative] = file;
+    }
+    return { files, stamp: JSON.stringify([...observed]) };
+  } catch { return null; }
+}
+
 export function runnerEndpointsMatch(settings) {
   const endpoint = (value, host, pathname) => {
     if (typeof value !== "string") return false;
@@ -410,6 +468,8 @@ export function runnerConfigurationMatches(unit, unitName, context) {
     const executable = `${root}/runsvc.sh`;
     const launch = (unit.ExecStart ?? "").match(/^\{ path=(\/[A-Za-z0-9_/.-]+\/runsvc\.sh) ; argv\[\]=\1 ; ignore_errors=no ; [^{}]* \}$/u);
     if (!launch || launch[1] !== executable || context.repository !== "FanMind/FanMind" || !context.name || !context.workspace) return false;
+    const layout = readRunnerLayout(root);
+    if (!layout) return false;
     if (readOwnedFile(`${root}/.service`, 1024).trim() !== unitName) return false;
     const registration = readOwnedFile(`${root}/.runner`, 16 * 1024);
     if (!SHA256.test(context.registrationSha256 ?? "") || digest(registration) !== context.registrationSha256) return false;
@@ -433,13 +493,7 @@ export function runnerConfigurationMatches(unit, unitName, context) {
       if (!match || (LAUNCH_ENV.includes(match[1]) && match[2] !== "")) return false;
     }
     for (const [relative, expected] of Object.entries(RUNNER_SCRIPT_HASHES)) {
-      if (createHash("sha256").update(readOwnedFile(path.join(root, relative), 64 * 1024)).digest("hex") !== expected) return false;
-    }
-    for (const relative of ["runsvc.sh", "bin/Runner.Listener", "externals/node20/bin/node"]) {
-      const file = path.join(root, relative);
-      const stat = fs.lstatSync(file);
-      if (fs.realpathSync(file) !== file || !stat.isFile() || stat.size === 0 || stat.uid !== process.getuid() ||
-          (stat.mode & 0o022) !== 0 || (stat.mode & 0o100) === 0) return false;
+      if (createHash("sha256").update(readOwnedFile(layout.files[relative], 64 * 1024)).digest("hex") !== expected) return false;
     }
     // Credentials are not read or returned. Missing, linked, empty or exposed
     // registration material blocks readiness; this is not a provider auth test.
@@ -449,7 +503,7 @@ export function runnerConfigurationMatches(unit, unitName, context) {
       if (fs.realpathSync(file) !== file || !stat.isFile() || stat.size < 2 || stat.size > 64 * 1024 ||
           stat.uid !== process.getuid() || (stat.mode & 0o077) !== 0) return false;
     }
-    return true;
+    return layout.stamp === readRunnerLayout(root)?.stamp;
   } catch { return false; }
 }
 
@@ -501,26 +555,30 @@ export function loadedExecutableMatches(file, pid) {
 
 export function runnerStartupMatches(unit, unitName, context) {
   try {
-    if (!runnerConfigurationMatches(unit, unitName, context) || unit.ControlGroup !== `/system.slice/${unitName}`) return false;
+    const root = unit.WorkingDirectory, layout = readRunnerLayout(root);
+    if (!layout || !runnerConfigurationMatches(unit, unitName, context) ||
+        layout.stamp !== readRunnerLayout(root)?.stamp || unit.ControlGroup !== `/system.slice/${unitName}`) return false;
     const source = boundedKernelRead(`/sys/fs/cgroup${unit.ControlGroup}/cgroup.procs`);
     if (!/^(?:[1-9][0-9]{0,9}\n)+$/u.test(source)) return false;
     const pids = [...new Set(source.trim().split("\n").map(Number))];
-    const root = unit.WorkingDirectory;
-    return ["bin/Runner.Listener", "externals/node20/bin/node"].every(relative => {
-      const file = path.join(root, relative);
+    const verified = ["bin/Runner.Listener", "externals/node20/bin/node"].every(relative => {
+      const file = layout.files[relative];
+      const spellingMatches = (value, artifact) => value === path.join(root, artifact) || value === layout.files[artifact];
       const matches = pids.filter(pid => {
         try {
           if (fs.realpathSync(`/proc/${pid}/cwd`) !== root || fs.realpathSync(`/proc/${pid}/exe`) !== file) return false;
           const args = boundedKernelRead(`/proc/${pid}/cmdline`, 8192).split("\0").filter(Boolean);
           const expected = relative === "bin/Runner.Listener" ?
-            args.length === 4 && args[0] === file && args.slice(1).join(" ") === "run --startuptype service" :
-            args.length === 2 && path.resolve(root, args[0]) === file && path.resolve(root, args[1]) === path.join(root, "bin/RunnerService.js");
+            args.length === 4 && spellingMatches(args[0], relative) && args.slice(1).join(" ") === "run --startuptype service" :
+            args.length === 2 && spellingMatches(path.resolve(root, args[0]), relative) &&
+              spellingMatches(path.resolve(root, args[1]), "bin/RunnerService.js");
           if (!expected || !loadedExecutableMatches(file, pid)) return false;
           return runnerUnitFromCgroup(boundedKernelRead(`/proc/${pid}/cgroup`)) === unitName && fs.realpathSync(`/proc/${pid}/cwd`) === root;
         } catch { return false; }
       });
       return matches.length === 1;
     });
+    return verified && layout.stamp === readRunnerLayout(root)?.stamp;
   } catch { return false; }
 }
 

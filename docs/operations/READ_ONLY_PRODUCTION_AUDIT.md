@@ -340,6 +340,36 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   SHA-256 sowie unveränderte Metadaten vor/nach dem Lesen. Ersetzte Dateien oder
   verweigerter Kernel-Zugriff sperren den Nachweis. Kein Kandidat wird ausgeführt.
 
+Der authentifizierte Owner-Nachweis vom 13. September 2026 bestätigt nach
+Runner-Update v2.337.0 das offizielle versionierte Layout. Der
+[offizielle Updater](https://github.com/actions/runner/blob/v2.337.0/src/Misc/layoutbin/update.sh.template)
+legt die beiden absoluten Verknüpfungen `bin -> bin.2.337.0` und
+`externals -> externals.2.337.0` innerhalb desselben Runner-Verzeichnisses an.
+Der Collector akzeptiert entweder beide direkten Verzeichnisse oder genau
+diese beiden absoluten Ziele. Eine gemischte Update-Phase, relative Ziele,
+andere Versionen, fremde Ziele und weitere Verknüpfungen innerhalb der
+Zielverzeichnisse bleiben gesperrt. Das Runner-Verzeichnis und seine Artefakte
+müssen dem Runner-Benutzer gehören; alle Elternverzeichnisse müssen direkt,
+gegen Gruppen-/Fremdschreiben geschützt und root- oder benutzereigen sein.
+
+Nur die vier festen Startartefakte werden über dieses Layout auf ihre geprüften
+kanonischen Dateien abgebildet. Die vollständigen Skript-Hashes bleiben Pflicht;
+Registrierung, Environment, Service-Zuordnung und Credentials erhalten keine
+Link-Ausnahme. Vor und nach der Konfigurations- und Kernel-Prüfung müssen
+Datei-/Verzeichnisidentität, Eigentümer, Rechte, Nanosekunden-Zeitstempel und
+Link-Ziele unverändert sein. Auch ein Austausch gegen einen Link mit demselben
+Ziel verhindert den Pass dieser Beobachtung.
+
+Die laufenden Programme müssen weiterhin aus derselben Service-cgroup und
+dem richtigen Arbeitsverzeichnis stammen. Nur die festen Alias-/Zielpfade
+mit den bekannten Startargumenten sind gültig; ELF, Kernel-Dateiidentität und
+vollständiger Hash müssen zum aktuellen kanonischen Artefakt passen. Ein noch
+geladenes altes Programm nach einem Update bleibt unbestätigt. Kein Kandidat
+wird zur Versionsbestimmung ausgeführt, kein Link repariert und kein Dienst
+automatisch neu gestartet. Native CI prüft echte kontrollierte Programmimages,
+Argumente und Arbeitsverzeichnisse mit synthetischer cgroup-Zuordnung; die
+echte Production-Zuordnung bleibt dem installierten Audit vorbehalten.
+
 Die externe Referenz liegt ausschließlich unter
 `/etc/fanmind/production-boot-reference.json`, als reguläre root-eigene Datei
 ohne Symlinks und fremde Schreibrechte (höchstens 4096 Bytes). Das feste Schema

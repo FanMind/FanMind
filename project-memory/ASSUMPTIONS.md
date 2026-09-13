@@ -6,6 +6,13 @@
 
 # Assumption Verification Register
 
+## ASM-FM-OPS-RUNNER-LAYOUT-20260913
+- Task: FM-OPS-001 / FM-CR-036; Risk R4.
+- VERIFIED: #1116 final receipt 5653464231 and current main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6 agree. Owner independently confirms the installed collector SHA and exact release, followed by a false runner configuration check.
+- INVALIDATED: a supported runner installation always has direct bin/externals directories. Official actions/runner v2.337.0 update.sh.template creates links to the same versioned sibling directories. The owner proves those exact 2.337.0 resolved targets, correct owners, 0755 directories/executables and 0644 RunnerService.js.
+- NEEDS_VERIFICATION: protected complete path/target identity, unchanged layout throughout inspection, actual loaded native images and current registration binding after the correction. A version-looking path alone is not trust; arbitrary links, stale loaded images and current-file hashes alone cannot approve the reference.
+- Required evidence: regression/negative/native tests, independent current-head review/CI, normal installed rollout, then authenticated reference/recovery/idle and changed-boot-ID postflight. No reboot has occurred.
+
 ## ASM-FM-OPS-RUNNER-REGISTRATION-20260913
 - Task: FM-OPS-001 / FM-CR-036; Risk R4.
 - VERIFIED: current main 1bdf55838208788b361f48d8cc45a92c4571173a matches #1115 final receipt 5652891341. Owner host read proves an HTTPS Pipelines URL with one opaque identifier, a root Broker URL, byte-identical base/migrated registrations and absent migrated credentials. Both saved PATH lists pass after guarded creation of the missing protected /snap/bin directory.
