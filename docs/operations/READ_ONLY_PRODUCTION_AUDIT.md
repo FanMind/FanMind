@@ -255,8 +255,11 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   Dienste sind im Collector per SHA-256 gebunden. nginx, PM2 und Runner
   benötigen unabhängige bestätigte Unit-Prüfsummen. Fragment-Dateien und alle
   Pfadkomponenten müssen root-eigen und gegen fremde Schreibzugriffe geschützt
-  sein; zusätzliche Drop-ins sowie jede nichtleere oder fehlende `Conditions`-
-  oder `Asserts`-Messung verhindern den Pass. Das gilt auch für die vom Timer
+  sein; zusätzliche Drop-ins sowie fehlende/zusätzliche Bedingungen oder
+  Assertions verhindern den Pass. Die einzige erlaubte nichtleere Bedingung
+  ist die unten beschriebene, vollständig gebundene nginx-Standardbedingung.
+  Für alle anderen Definitionen müssen `Conditions` und `Asserts` ausdrücklich
+  leer sein. Das gilt auch für die vom Timer
   ausgelösten One-Shot-Dienste. Geänderte Befehle nach `daemon-reload` werden
   dadurch auch bei weiterhin gesundem laufenden Prozess erkannt;
 - den PM2-Start als `ubuntu`, `forking`, mit dem festen PM2-Home/PIDFile und
@@ -302,6 +305,13 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   Zusätzlich muss die vollständige `.runner`-Datei exakt der unabhängig
   bestätigten SHA-256 entsprechen. Ein anderer syntaktisch gültiger GitHub-
   Tenant oder eine bloß passende öffentliche Repository-URL genügt nicht.
+  Der [offizielle Runner-Schreiber](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Sdk/Util/IOUtil.cs)
+  verwendet `Encoding.UTF8`, einschließlich einer möglichen führenden
+  UTF-8-Markierung (BOM). Genau eine solche Markierung wird erst nach der
+  vollständigen Hashprüfung für das JSON-Parsen entfernt; die Datei und ihre
+  Referenzbytes bleiben unverändert. Doppelte/verschobene BOM und ungültiges
+  JSON bleiben gesperrt. Die Ursache des aktuell nicht verfügbaren
+  Owner-Registrierungsabgleichs ist damit noch nicht auf dem Host bestätigt.
   Die nativen Listener-/Node-Dateien müssen zusätzlich mit jeweils genau einem
   tatsächlich laufenden Programm derselben Runner-cgroup, Startargumente und
   Arbeitsverzeichnis übereinstimmen: Kernel-Dateiidentität, ELF-Format und
@@ -316,6 +326,32 @@ enthält ausschließlich `schemaVersion: 1` sowie die vier kleingeschriebenen
 `pm2UnitSha256` und `runnerUnitSha256`. Die Registrierung wird als vollständige
 Datei in ihrer bestätigten Byte-Darstellung gebunden, die Units als vollständige
 Fragment-Dateien. Es dürfen keine privaten Registrierungswerte ins Git oder Log.
+
+Der authentifizierte Owner-Abgleich vom 13. September 2026 bestätigt die exakte
+nginx-Unit aus dem offiziellen
+[Ubuntu-Paket nginx-common 1.24.0-2ubuntu7.17](https://security.ubuntu.com/ubuntu/pool/main/n/nginx/nginx-common_1.24.0-2ubuntu7.17_all.deb).
+Ihr vollständiger SHA-256 ist
+`6c759c229d4dacf65c1f98c1733646f8b979d3e75e13a98bfbcfe26f8a2f793c`.
+Sie enthält `ConditionFileIsExecutable=/usr/sbin/nginx`. Der Collector erlaubt
+diese eine Bedingung nur für `nginx.service`, denselben vollständigen Hash in
+der unabhängigen Referenz und eine typisierte Antwort der exakt aufgelösten
+D-Bus-Unit: ein Element vom Typ `a(sbbsi)`, genau dieser Bedingungstyp/Pfad,
+ohne Trigger oder Negation. Die private Messmarkierung kann nicht durch einen
+angezeigten String oder serialisierte Properties ersetzt werden. Die Bedingung
+wird nicht als leer umgedeutet. Der historische Ergebniswert ersetzt keinen
+neuen Dateinachweis: `/usr/sbin/nginx` muss aktuell eine reguläre ausführbare
+Datei sein, einschließlich aller Pfadkomponenten root-eigen und gegen fremdes
+Schreiben geschützt. Die [systemd-v255-Implementierung](https://github.com/systemd/systemd/blob/v255/src/shared/condition.c)
+prüft Dateityp und Ausführungsbits; zusätzliche Pfadschutzprüfungen bleiben
+hier erforderlich. Andere Hashes, zusätzliche/negierte Bedingungen, Assertions,
+Drop-ins, fehlende Daten oder ausstehendes `daemon-reload` bleiben gesperrt.
+
+Der gleiche Owner-Abgleich bestätigt die PM2-7.0.3- und Runner-v2.337.0-Vorlagen.
+Die Runner-Unit ist jedoch noch 0664, die Registrierungsprüfung unavailable und
+die separate Prüfung sämtlicher PM2-PATH-Verzeichnisse false. Diese Befunde
+werden nicht durch die nginx-Korrektur geschlossen. Production und Staging
+haben je einen aktiven Runner auf demselben Host; beide benötigen frische
+Idle-Prüfung vor dem späteren Neustart.
 
 Ein authentifizierter Operator muss die echte laufende Runner-Registrierung und
 die erwarteten Unit-Definitionen unabhängig bestätigen, den Review-Beleg

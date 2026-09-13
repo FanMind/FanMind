@@ -6,6 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { once } from "node:events";
 import { closeSync, openSync, realpathSync } from "node:fs";
+import fs from "node:fs";
 import { createHash } from "node:crypto";
 import test from "node:test";
 import yaml from "js-yaml";
@@ -140,6 +141,111 @@ function startupUnit() {
 function unitText(unit) {
   return Object.entries(unit).map(([key, value]) => `${key}=${value}`).join("\n");
 }
+
+const nginxStandardSha = "6c759c229d4dacf65c1f98c1733646f8b979d3e75e13a98bfbcfe26f8a2f793c";
+const nginxConditionReply = 'a(sbbsi) 1 "ConditionFileIsExecutable" false false "/usr/sbin/nginx" 1';
+
+function nginxUnitWithReply(reply, overrides = {}) {
+  const unit = { Id: "nginx.service", LoadState: "loaded", NeedDaemonReload: "no",
+    DropInPaths: "", Conditions: "[unprintable]", Asserts: "", ...overrides };
+  return readUnit(unit.Id, [], (command, args) => {
+    if (command === "/bin/systemctl") return unitText(unit);
+    if (args.includes("GetUnit")) {
+      assert.equal(args.at(-1), unit.Id);
+      return 'o "/org/freedesktop/systemd1/unit/nginx_2eservice"';
+    }
+    assert.deepEqual(args.slice(7), ["/org/freedesktop/systemd1/unit/nginx_2eservice",
+      "org.freedesktop.systemd1.Unit", "Conditions"]);
+    if (reply instanceof Error) throw reply;
+    return reply;
+  });
+}
+
+test("official nginx condition requires its complete independent pin and a fresh executable check", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  assert.equal(createHash("sha256").update(source).digest("hex"), nginxStandardSha);
+  for (const result of [-1, 0, 1]) {
+    const unit = nginxUnitWithReply(nginxConditionReply.replace(/ 1$/u, ` ${result}`));
+    assert.equal(unit.Conditions, "[unprintable]", "a real condition stays nonempty");
+    const checks = [];
+    const executableCheck = file => { checks.push(file); return true; };
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, executableCheck), true);
+    assert.deepEqual(checks, ["/usr/sbin/nginx"]);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => false), false,
+      "a cached success cannot substitute for a current executable check");
+    for (const pin of [undefined, "a".repeat(64)]) {
+      assert.equal(unitDefinitionMatches(unit, unit.Id, source, pin, () => assert.fail("unbound executable check")), false);
+    }
+    const altered = source + "\nExecStartPost=/private/RAW_SECRET_CANARY\n";
+    const alteredSha = createHash("sha256").update(altered).digest("hex");
+    for (const pin of [nginxStandardSha, alteredSha]) {
+      assert.equal(unitDefinitionMatches(unit, unit.Id, altered, pin, () => true), false);
+    }
+  }
+});
+
+test("nginx rejects empty, extra, negated, triggered, wrong-path and unverified condition replies", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  const replies = ["", "a(sbbsi) 0", "[unprintable]", "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY"),
+    nginxConditionReply.replace("false false", "true false"), nginxConditionReply.replace("false false", "false true"),
+    nginxConditionReply.replace("/usr/sbin/nginx", "/private/RAW_SECRET_CANARY"),
+    nginxConditionReply.replace("ConditionFileIsExecutable", "ConditionPathExists"),
+    nginxConditionReply.replace("a(sbbsi)", "a(sbbss)"), nginxConditionReply.replace(/ 1$/u, " 2"),
+    nginxConditionReply.replace("a(sbbsi) 1", "a(sbbsi) 2"), `${nginxConditionReply}\n${nginxConditionReply}`,
+    `${nginxConditionReply} "ConditionPathExists" false false "/private/RAW_SECRET_CANARY" 1`];
+  for (const reply of replies) {
+    const unit = nginxUnitWithReply(reply);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => assert.fail("unproven condition")), false);
+    assert.doesNotMatch(bootReadinessLines({ units: { NGINX: unit }, checks: {} }).join("\n"), /RAW_SECRET_CANARY/u);
+  }
+  for (const Conditions of ["", "ConditionFileIsExecutable=/usr/sbin/nginx", "verified-nginx-executable-condition"]) {
+    const unit = nginxUnitWithReply(nginxConditionReply, { Conditions });
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => true), false,
+      "a displayed string is not private typed D-Bus proof");
+  }
+});
+
+test("nginx default executable check rejects missing, nonregular, nonexecuting and writable paths", async t => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  const unit = nginxUnitWithReply(nginxConditionReply);
+  const original = { stat: fs.statSync, lstat: fs.lstatSync, realpath: fs.realpathSync };
+  let state;
+  const metadata = () => {
+    if (state.missing) throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    return { uid: state.uid ?? 0, mode: state.mode ?? 0o755,
+      isFile: () => !state.directory, isSymbolicLink: () => false };
+  };
+  t.mock.method(fs, "statSync", (file, ...args) => file === "/usr/sbin/nginx" ? metadata() : original.stat(file, ...args));
+  t.mock.method(fs, "lstatSync", (file, ...args) => {
+    if (file === "/usr/sbin/nginx") return metadata();
+    if (file === "/usr/sbin" && state.writableParent) {
+      return { uid: 0, mode: 0o777, isSymbolicLink: () => false };
+    }
+    return original.lstat(file, ...args);
+  });
+  t.mock.method(fs, "realpathSync", (file, ...args) => file === "/usr/sbin/nginx" ? file : original.realpath(file, ...args));
+  for (const candidate of [{}, { missing: true }, { directory: true }, { mode: 0o644 },
+    { mode: 0o775 }, { uid: 1000 }, { writableParent: true }]) {
+    state = candidate;
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha), Object.keys(candidate).length === 0);
+  }
+});
+
+test("nginx exception cannot bypass unit identity, assertions, drop-ins or reload state", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  for (const overrides of [
+    { Id: "pm2-ubuntu.service" }, { LoadState: "not-found" }, { NeedDaemonReload: "yes" },
+    { DropInPaths: "/private/RAW_SECRET_CANARY" }, { DropInPaths: undefined },
+    { Asserts: "AssertPathExists=/private/RAW_SECRET_CANARY" }, { Asserts: undefined },
+  ]) {
+    const unit = nginxUnitWithReply(nginxConditionReply, overrides);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => true), false);
+  }
+  const unit = nginxUnitWithReply(nginxConditionReply);
+  const transported = JSON.parse(JSON.stringify(unit));
+  assert.equal(unitDefinitionMatches(transported, unit.Id, source, nginxStandardSha, () => true), false,
+    "serialized properties cannot carry the private proof");
+});
 
 test("systemctl omitted struct arrays require typed D-Bus emptiness on the same loaded unit", () => {
   const omitted = startupUnit();
@@ -346,6 +452,21 @@ test("runner configuration binds the actual registration and rejects missing or 
   };
   assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
   assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
+  // IOUtil.SaveObject's Encoding.UTF8 can emit a BOM, unlike our original
+  // JSON.stringify-only fixture. Its presence remains part of the reference.
+  const bomRegistration = "\uFEFF" + JSON.stringify(settings);
+  await writeFile(join(root, ".runner"), bomRegistration);
+  const bomContext = { ...context, registrationSha256: createHash("sha256").update(bomRegistration).digest("hex") };
+  assert.equal(runnerConfigurationMatches(unit, unitName, bomContext), true);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "the BOM cannot be removed before hashing");
+  for (const registration of ["\uFEFF" + bomRegistration, " " + bomRegistration, "\uFEFFRAW_SECRET_CANARY"]) {
+    await writeFile(join(root, ".runner"), registration);
+    assert.equal(runnerConfigurationMatches(unit, unitName, {
+      ...context, registrationSha256: createHash("sha256").update(registration).digest("hex"),
+    }), false);
+  }
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  assert.equal(runnerConfigurationMatches(unit, unitName, bomContext), false, "changed original bytes fail their old pin");
   for (const overrides of [
     { User: "root" }, { WorkingDirectory: "/tmp/absent" }, { ExecStart: unit.ExecStart.replace(" ; ignore", " extra ; ignore") },
     { ExecStartPre: "/tmp/RAW_SECRET_CANARY" }, { Environment: "NODE_OPTIONS=--require=/tmp/hook.cjs" },
