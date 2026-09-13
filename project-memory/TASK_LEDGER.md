@@ -391,6 +391,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not treat technical checks as legal approval.
 
 ## FM-OPS-001
+- Latest continuation: #1116 is Production-confirmed by final receipt 5653464231 on main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6. Owner proves the official protected 2.337.0 bin/externals update links; the canonical-only checker rejects that layout. Finish its bounded stable-path correction through current-head review/CI and installed rollout, then independent reference/recovery/idle/reboot evidence. Older source-pending next steps below are historical; no reboot has occurred.
 - Date: through 2026-08-19
 - Status: PARTIAL
 - Risk: R4

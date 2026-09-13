@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
-import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { chmod, chown, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { once } from "node:events";
@@ -426,8 +426,12 @@ test("next-boot release rejects a repointed symlink, wrong deployment ID and mis
 });
 
 async function runnerConfigurationFixture(t, overrides = {}) {
-  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-runner-"));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  // The startup path must have protected ancestors too; /tmp is deliberately
+  // not a valid runner installation parent, even for an owner-only leaf.
+  const parent = await mkdtemp(join(realpathSync(homedir()), "fanmind-boot-runner-"));
+  t.after(() => rm(parent, { recursive: true, force: true }));
+  const root = join(parent, "runner");
+  await mkdir(root);
   await mkdir(join(root, "bin"));
   await mkdir(join(root, "externals/node20/bin"), { recursive: true });
   const unitName = "actions.runner.FanMind-FanMind.production.service";
@@ -452,6 +456,102 @@ async function runnerConfigurationFixture(t, overrides = {}) {
   };
   return { root, unitName, context, settings, unit, runsvc };
 }
+
+async function useVersionedRunnerLayout(root) {
+  for (const directory of ["bin", "externals"]) {
+    const target = join(root, `${directory}.2.337.0`);
+    await rename(join(root, directory), target);
+    await symlink(target, join(root, directory));
+  }
+}
+
+test("official runner versioned layout retains complete registration and artifact contracts", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "official updater links must not require a host layout rewrite");
+  assert.equal(runnerStartupMatches(unit, unitName, context), false, "a valid layout is not a live-image proof");
+  assert.equal(fs.lstatSync(join(root, "bin")).isSymbolicLink(), true);
+  assert.equal(fs.lstatSync(join(root, "externals")).isSymbolicLink(), true);
+  for (const relative of [".runner", ".service", ".path", ".env", ".credentials", ".credentials_rsaparams"]) {
+    const file = join(root, relative), target = `${file}.original`;
+    await rename(file, target);
+    await symlink(target, file);
+    assert.equal(check(), false, `${relative} never inherits the artifact-link exception`);
+    await rm(file);
+    await rename(target, file);
+  }
+  await writeFile(join(root, "bin.2.337.0/RunnerService.js"), "RAW_SECRET_CANARY");
+  assert.equal(check(), false, "approved layout cannot replace the complete script pin");
+});
+
+test("runner layout rejects unknown targets, mixed updates, nested links and unprotected parents", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  const bin = join(root, "bin"), approved = join(root, "bin.2.337.0");
+  const other = join(root, "bin.2.338.0");
+  await mkdir(other);
+  for (const name of ["Runner.Listener", "RunnerService.js"]) await copyFile(join(approved, name), join(other, name));
+  await chmod(join(other, "Runner.Listener"), 0o700);
+  for (const target of [other, "bin.2.337.0", `${root}/./bin.2.337.0`, join(root, "missing")]) {
+    await rm(bin); await symlink(target, bin);
+    assert.equal(check(), false, "only the exact reviewed absolute sibling is permitted");
+  }
+  await rm(bin); await symlink(approved, bin);
+  const external = join(root, "externals"), externalTarget = `${external}.2.337.0`;
+  await rm(external); await rename(externalTarget, external);
+  assert.equal(check(), false, "an in-progress mixed layout cannot pass");
+  await rename(external, externalTarget); await symlink(externalTarget, external);
+  for (const directory of [dirname(root), root, approved, externalTarget, join(externalTarget, "node20"), join(externalTarget, "node20/bin")]) {
+    const mode = fs.statSync(directory).mode & 0o777;
+    await chmod(directory, mode | 0o020);
+    assert.equal(check(), false, "every alias/target parent must be protected");
+    await chmod(directory, mode);
+  }
+  for (const file of [join(approved, "RunnerService.js"), join(externalTarget, "node20/bin/node")]) {
+    await rename(file, `${file}.original`); await symlink(`${file}.original`, file);
+    assert.equal(check(), false, "nested artifact links remain rejected");
+    await rm(file); await rename(`${file}.original`, file);
+  }
+  await rename(approved, `${approved}.original`); await symlink(`${approved}.original`, approved);
+  assert.equal(check(), false, "a versioned directory must itself be direct");
+  await rm(approved); await rename(`${approved}.original`, approved);
+  const lstat = fs.lstatSync;
+  const wrongOwner = t.mock.method(fs, "lstatSync", (file, ...args) => {
+    const value = lstat(file, ...args);
+    return file === bin ? Object.assign(Object.create(Object.getPrototypeOf(value)), value,
+      { uid: typeof value.uid === "bigint" ? value.uid + 1n : value.uid + 1 }) : value;
+  });
+  assert.equal(check(), false, "the alias itself must belong to the runner owner");
+  wrongOwner.mock.restore();
+  assert.equal(check(), true);
+});
+
+test("runner layout detects alias replacement during a protected artifact read", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const file = join(root, "bin.2.337.0/RunnerService.js"), link = join(root, "bin");
+  const open = fs.openSync, read = fs.readSync;
+  let watched, changed = false;
+  t.mock.method(fs, "openSync", (candidate, ...args) => {
+    const fd = open(candidate, ...args);
+    if (candidate === file) watched = fd;
+    return fd;
+  });
+  t.mock.method(fs, "readSync", (fd, ...args) => {
+    const count = read(fd, ...args);
+    if (fd === watched && !changed) {
+      changed = true;
+      fs.unlinkSync(link);
+      fs.symlinkSync(join(root, "bin.2.337.0"), link);
+    }
+    return count;
+  });
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "same-target replacement invalidates the snapshot");
+  assert.equal(changed, true, "the canonical artifact was actually read");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true, "a fresh stable observation can pass");
+});
 
 test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
   const { root, unitName, context, settings, unit, runsvc } = await runnerConfigurationFixture(t);
@@ -685,7 +785,7 @@ test("runner saved PATH rejects writable and missing directories in every positi
   assert.equal(runnerPathMatches(`${root}/system-bin:/usr/bin`), false, "writable symlink ancestor");
 });
 
-test("Linux kernel image fingerprints reject replacement even when executable bytes are identical", async (t) => {
+test("Linux kernel image and versioned runner startup proofs reject replaced files and aliases", async (t) => {
   try { closeSync(openSync(`/proc/${process.pid}/exe`, "r")); }
   catch (error) {
     assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), false);
@@ -718,6 +818,97 @@ test("Linux kernel image fingerprints reject replacement even when executable by
   await writeFile(candidate, "synthetic-not-an-executable");
   assert.equal(loadedExecutableMatches(candidate, child.pid), false);
   assert.equal(loadedExecutableMatches(candidate, 0), false);
+
+  const fixture = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(fixture.root);
+  // Only known installed Node copies execute, inside a synthetic installation.
+  // The pinned official service script launches our inert local 'run' file;
+  // there is no GitHub client, credential read or network request in that file.
+  const listenerFile = join(fixture.root, "bin.2.337.0/Runner.Listener");
+  const nodeFile = join(fixture.root, "externals.2.337.0/node20/bin/node");
+  for (const file of [listenerFile, nodeFile]) {
+    await copyFile(realpathSync(process.execPath), file);
+    // Privileged copies can preserve the installed binary's foreign owner.
+    // These private test artifacts must belong to the synthetic runner user.
+    await chown(file, process.getuid(), process.getgid());
+    await chmod(file, 0o700);
+  }
+  await writeFile(join(fixture.root, "package.json"), '{"type":"commonjs"}');
+  await writeFile(join(fixture.root, "run"), 'console.log("SYNTHETIC_RUNNER_READY"); setInterval(() => {}, 1000);');
+  const service = spawn(join(fixture.root, "externals/node20/bin/node"), ["./bin/RunnerService.js"], {
+    cwd: fixture.root, env: { PATH: "/usr/bin:/bin" }, stdio: ["ignore", "pipe", "pipe"],
+  });
+  let listenerPid;
+  t.after(async () => {
+    if (service.exitCode === null && service.signalCode === null) {
+      const exited = once(service, "exit");
+      const timer = setTimeout(() => {
+        service.kill("SIGKILL");
+        if (listenerPid) { try { process.kill(listenerPid, "SIGKILL"); } catch {} }
+      }, 5000);
+      service.kill("SIGTERM");
+      await exited; clearTimeout(timer);
+    }
+  });
+  await new Promise((resolveReady, reject) => {
+    let output = "";
+    const timer = setTimeout(() => reject(new Error("synthetic runner startup timed out")), 10000);
+    service.once("error", error => { clearTimeout(timer); reject(error); });
+    service.stdout.on("data", data => {
+      output += data.toString("utf8");
+      listenerPid = Number(output.match(/Started listener process, pid: ([1-9][0-9]*)/u)?.[1]) || listenerPid;
+      if (listenerPid && output.includes("SYNTHETIC_RUNNER_READY")) { clearTimeout(timer); resolveReady(); }
+      if (output.length > 8192) { clearTimeout(timer); reject(new Error("synthetic runner output oversized")); }
+    });
+    service.once("exit", () => { clearTimeout(timer); reject(new Error("synthetic runner stopped before readiness")); });
+  });
+  const group = `/system.slice/${fixture.unitName}`;
+  const members = join(fixture.root, "members.fixture"), membership = join(fixture.root, "membership.fixture");
+  const badArguments = join(fixture.root, "arguments.fixture");
+  await writeFile(members, `${service.pid}\n${listenerPid}\n`);
+  await writeFile(membership, `0::${group}\n`);
+  const redirects = new Map([
+    [`/sys/fs/cgroup${group}/cgroup.procs`, members],
+    [`/proc/${service.pid}/cgroup`, membership], [`/proc/${listenerPid}/cgroup`, membership],
+  ]);
+  // Only cgroup membership is simulated: cmdline, cwd, executable descriptors,
+  // inodes, ELF bytes and hashes are from the real native child processes.
+  const originalOpen = fs.openSync;
+  let replaceAlias = false, aliasReplaced = false;
+  t.mock.method(fs, "openSync", (file, ...args) => {
+    const fd = originalOpen(redirects.get(file) ?? file, ...args);
+    if (replaceAlias && !aliasReplaced && file === `/proc/${listenerPid}/exe`) {
+      aliasReplaced = true;
+      fs.unlinkSync(join(fixture.root, "bin"));
+      fs.symlinkSync(join(fixture.root, "bin.2.337.0"), join(fixture.root, "bin"));
+    }
+    return fd;
+  });
+  fixture.unit.ControlGroup = group;
+  const check = () => runnerStartupMatches(fixture.unit, fixture.unitName, fixture.context);
+  assert.equal(check(), true, "real native images match the protected versioned targets");
+  await writeFile(membership, "0::/system.slice/foreign.service\n");
+  assert.equal(check(), false, "the correct binary in another cgroup is not the bound runner");
+  await writeFile(membership, `0::${group}\n`);
+  for (const [pid, args] of [
+    [listenerPid, [join(fixture.root, "bin/Runner.Listener"), "run", "--startuptype", "interactive"]],
+    [service.pid, ["./externals/node20/bin/node", "./bin/other.js"]],
+  ]) {
+    await writeFile(badArguments, args.join("\0") + "\0");
+    redirects.set(`/proc/${pid}/cmdline`, badArguments);
+    assert.equal(check(), false, "a matching kernel image cannot substitute different launch arguments");
+    redirects.delete(`/proc/${pid}/cmdline`);
+  }
+  replaceAlias = true;
+  assert.equal(check(), false, "a same-target alias replacement during native inspection is not stable");
+  assert.equal(aliasReplaced, true);
+  assert.equal(check(), true, "the next complete stable observation can pass");
+  await rename(listenerFile, `${listenerFile}.running`);
+  await copyFile(realpathSync(process.execPath), listenerFile);
+  await chown(listenerFile, process.getuid(), process.getgid());
+  await chmod(listenerFile, 0o700);
+  assert.equal(runnerConfigurationMatches(fixture.unit, fixture.unitName, fixture.context), true);
+  assert.equal(check(), false, "same native bytes under the versioned path do not replace the kernel-held inode");
 });
 
 test("boot Node rejects a writable or missing earlier PATH directory", () => {

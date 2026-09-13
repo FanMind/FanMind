@@ -650,6 +650,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: bounded read-only boot readiness followed by the already requested controlled restart, only after actual boot/recovery preflight. No startup-state mutation in the collector.
 - Exact next step: finish current-head PR/CI/review for the approved published source, normal deploy and installed boot-readiness readout; resolve only demonstrated startup gaps, then the already requested controlled reboot with before/after evidence.
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.
+## FM-OPS-001 — official runner update layout — 2026-09-13
+- Status: IN_PROGRESS
+- Risk: R4
+- Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
+- Prior source: #1116 final receipt 5653464231 confirms reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0, Deploy 34758542991 and installed audit 34758613627. Its earlier source-pending notes are historical.
+- Owner evidence: installed collector and release match; candidate runner configuration/startup remain false. Protected owner-owned bin and externals links resolve to the official 2.337.0 sibling directories; root, scripts and native files have the expected direct/versioned layout and 0755/0644 modes.
+- Scope: accept only the reviewed direct or complete versioned layout, protect the path chain and reject changes during inspection; retain complete registration/script pins, credential metadata-only handling and actual kernel image identity. Never replace the host links to satisfy a checker.
+- Evidence plan: the observed layout must fail on old source, then pass corrected configuration and native-image tests; wrong targets, versions, parents, permissions, nested links and link replacement must fail. Current-head independent review/CI and normal installed rollout remain required.
+- Completed local verification: all three new regressions fail on old source; corrected focused tests 41 pass/0 fail/1 local kernel skip, full Operations 1366 pass/0 fail/4 environment skips, build/truth/lint/memory/drift pass. The existing native-kernel test now exercises real versioned child images, wrong arguments/group, alias replacement and byte-identical native replacement; GitHub must run it without skipping before merge.
+- Recovery: existing isolated source rollback; no startup mutation, reference bootstrap, SQL, extra backup or repeated accepted Restore/Creator work. Independent reference, privileged recovery, both runners idle and actual before/after reboot proof remain open.
+- Exact next step: implement the bounded layout correction, verify its negative/native paths, then review/CI/normal rollout and host binding. Owner action needed: subsequent authenticated host observations only; reuse existing source publication authority.
+
 ## FM-OPS-001 — runner registration compatibility — 2026-09-13
 - Status: IN_PROGRESS
 - Risk: R4
