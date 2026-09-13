@@ -1,3 +1,11 @@
+## FM-FAIL-025
+- Date: 2026-09-13
+- Status: BLOCKED
+- Area: FM-OPS-001 / FM-CR-036, GitHub PR creation transport.
+- Observed: the connected GitHub API published source head 988bbb2db534566352e060f2ccf08b4455308365 on fix/production-systemd-empty-arrays-20260913 with the exact locally verified tree cedbf5b58865b910e6ee746c84f3639d168f0b45. PR creation returned internal errors/read timeouts with documented argument forms. Each attempt was followed by a read-only lookup; no PR exists for this branch and latest repository PR remains #1113.
+- Distinction: this is a technical transport failure, not a reported automatic-approval rejection. Existing owner publication/review/rollout authority remains active. Do not infer a merge, deploy or reboot from branch publication.
+- Next: owner may create the already prepared branch-to-main PR through the prefilled GitHub compare page; then resume exact-head review/CI and normal rollout. Check for an existing PR before any retry to avoid duplication. No direct-main write or bypass of the Browser skill's prohibition on plugin-failure fallback.
+
 ## 2026-09-11 — Supabase inherited service-role grants
 - Context: FM-CR-032 / protected Staging Apply 34590217929, reviewed main 3df6f5f8. Verify 34590000782 had passed with schema absent; initial plain-PG17 proof did not model schema-specific Supabase default ACLs.
 - Result: apply_indeterminate_verify_before_retry, no automatic retry. Independent read-only catalog check at 10:40:58 UTC confirmed both tables absent and zero Social functions.
