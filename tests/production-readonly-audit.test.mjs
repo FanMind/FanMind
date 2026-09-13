@@ -425,14 +425,14 @@ test("next-boot release rejects a repointed symlink, wrong deployment ID and mis
   assert.equal(releaseTargetMatches(expectedCommit, release, releases), false);
 });
 
-test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
+async function runnerConfigurationFixture(t, overrides = {}) {
   const root = await mkdtemp(join(tmpdir(), "fanmind-boot-runner-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, "bin"));
   await mkdir(join(root, "externals/node20/bin"), { recursive: true });
   const unitName = "actions.runner.FanMind-FanMind.production.service";
   const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
-  const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/", ...overrides };
   context.registrationSha256 = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
   await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
   await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
@@ -450,6 +450,11 @@ test("runner configuration binds the actual registration and rejects missing or 
     ExecStart: `{ path=${root}/runsvc.sh ; argv[]=${root}/runsvc.sh ; ignore_errors=no ; pid=1 ; code=(null) ; status=0/0 }`,
     ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => [key, ""])),
   };
+  return { root, unitName, context, settings, unit, runsvc };
+}
+
+test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
+  const { root, unitName, context, settings, unit, runsvc } = await runnerConfigurationFixture(t);
   assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
   assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
   // IOUtil.SaveObject's Encoding.UTF8 can emit a BOM, unlike our original
@@ -500,6 +505,82 @@ test("runner configuration binds the actual registration and rejects missing or 
   assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
 });
 
+test("runner migration accepts only byte-identical protected settings under the independent pin", async (t) => {
+  const { root, unitName, context, settings, unit } = await runnerConfigurationFixture(t, {
+    serverUrl: `https://pipelines.actions.githubusercontent.com/${"Synthetic_".repeat(5)}A`,
+  });
+  const file = join(root, ".runner_migrated"), source = "\uFEFF" + JSON.stringify(settings);
+  await writeFile(join(root, ".runner"), source);
+  context.registrationSha256 = createHash("sha256").update(source).digest("hex");
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "absence uses the existing independently pinned registration");
+  await writeFile(file, source, { mode: 0o644 });
+  assert.equal(check(), true, "the optional file has exactly the same original BOM and bytes");
+  for (const replacement of [source.slice(1), source + "\n", source.replace("Synthetic_", "Different_"), "RAW_SECRET_CANARY"]) {
+    await writeFile(file, replacement);
+    assert.equal(check(), false, "valid syntax or equal parsed settings cannot replace byte identity");
+  }
+  await writeFile(file, source);
+  await chmod(file, 0o664);
+  assert.equal(check(), false, "a group-writable migration is not trusted");
+  await rm(file);
+  await symlink(join(root, ".runner"), file);
+  assert.equal(check(), false, "a same-content link is still a different startup path");
+  await rm(file);
+  await mkdir(file);
+  assert.equal(check(), false, "a non-file is not absence");
+  await rm(file, { recursive: true });
+  assert.equal(check(), true);
+});
+
+test("runner alternate credentials and unavailable migration state remain blocked without reading credentials", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  const file = join(root, ".credentials_migrated"), settingsFile = join(root, ".runner_migrated");
+  const open = fs.openSync, lstat = fs.lstatSync;
+  let credentialReads = 0;
+  t.mock.method(fs, "openSync", (file, ...args) => {
+    if (typeof file === "string" && file.startsWith(join(root, ".credentials"))) {
+      credentialReads += 1;
+      throw new Error("RAW_SECRET_CANARY");
+    }
+    return open(file, ...args);
+  });
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "the observed absent sidecar keeps the original credential path");
+  await writeFile(file, "RAW_SECRET_CANARY", { mode: 0o600 });
+  assert.equal(check(), false, "alternate credentials need a separate reviewed binding even at mode 0600");
+  await rm(file);
+  await symlink(join(root, "absent-credential-target"), file);
+  assert.equal(check(), false, "a dangling link is present");
+  await rm(file);
+  for (const target of [file, settingsFile]) {
+    for (const code of ["EACCES", "EIO", "ENOTDIR"]) {
+      const mock = t.mock.method(fs, "lstatSync", (candidate, ...args) => {
+        if (candidate === target) throw Object.assign(new Error("RAW_SECRET_CANARY"), { code });
+        return lstat(candidate, ...args);
+      });
+      assert.equal(check(), false, "only ENOENT can prove absence");
+      mock.mock.restore();
+    }
+  }
+  assert.equal(credentialReads, 0);
+  assert.equal(check(), true);
+});
+
+test("runner registration byte pins reject malformed UTF-8 that decodes like the approved text", async (t) => {
+  const { root, unitName, context, settings, unit } = await runnerConfigurationFixture(t, { poolName: "\uFFFD" });
+  const source = Buffer.from(JSON.stringify(settings)), at = source.indexOf(Buffer.from("\uFFFD"));
+  assert.notEqual(at, -1);
+  const malformed = Buffer.concat([source.subarray(0, at), Buffer.from([0xff]), source.subarray(at + 3)]);
+  assert.equal(malformed.toString("utf8"), source.toString("utf8"), "lossy decoding alone hides the different bytes");
+  assert.notEqual(createHash("sha256").update(malformed).digest("hex"), context.registrationSha256);
+  await writeFile(join(root, ".runner_migrated"), malformed, { mode: 0o600 });
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await rm(join(root, ".runner_migrated"));
+  await writeFile(join(root, ".runner"), malformed);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+});
+
 test("actual workflow keeps boot readiness separate and never publishes private unit values", async (t) => {
   const good = await runAuditWorkflow(t, validAuditOutput(), 0);
   assert.equal(good.code, 0);
@@ -545,12 +626,20 @@ test("runner registration endpoints reject missing, foreign and untrusted target
   const valid = { agentId: 1, poolId: 1, serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
   assert.equal(runnerEndpointsMatch(valid), true);
   assert.equal(runnerEndpointsMatch({ ...valid, useV2Flow: false, serverUrlV2: undefined }), true);
+  for (const pathname of ["/", "/A", `/${"Synthetic_".repeat(5)}A`, `/${"a".repeat(256)}/`]) {
+    assert.equal(runnerEndpointsMatch({ ...valid, serverUrl: `https://pipelines.actions.githubusercontent.com${pathname}` }), true);
+  }
+  for (const pathname of [`/${"a".repeat(257)}/`, "/one/two/", "/%41/", "/one%2Ftwo/", "/one/../two/", "/./", "/../", "/one//", "/a.b/", "/?", "/#"]) {
+    assert.equal(runnerEndpointsMatch({ ...valid, serverUrl: `https://pipelines.actions.githubusercontent.com${pathname}` }), false, pathname);
+  }
+  assert.equal(runnerEndpointsMatch({ ...valid, serverUrlV2: "https://broker.actions.githubusercontent.com/opaque/" }), false, "the Broker path contract is not broadened");
   for (const key of ["serverUrl", "serverUrlV2"]) {
-    for (const value of [undefined, "", "https://example.com/", "http://broker.actions.githubusercontent.com/", "https://secret@broker.actions.githubusercontent.com/", "https://broker.actions.githubusercontent.com/?private=RAW_SECRET_CANARY"]) {
+    for (const value of [undefined, null, "", 1, "https://example.com/", "http://broker.actions.githubusercontent.com/", "https://secret@broker.actions.githubusercontent.com/", "https://broker.actions.githubusercontent.com/?private=RAW_SECRET_CANARY", "https://pipelines.actions.githubusercontent.com.evil.example/", "https://pipelines.actions.githubusercontent.com:443/", " https://pipelines.actions.githubusercontent.com/", "https://pipelines.actions.githubusercontent.com/\n"]) {
       assert.equal(runnerEndpointsMatch({ ...valid, [key]: value }), false);
     }
   }
-  for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+  for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }, { useRunnerAdminFlow: true }, { useRunnerAdminFlow: "false" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+  for (const settings of [null, undefined, [], 1]) assert.equal(runnerEndpointsMatch(settings), false);
 });
 
 test("complete managed unit definitions reject substituted commands, drop-ins, conditions and asserts", async () => {

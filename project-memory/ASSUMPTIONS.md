@@ -6,6 +6,13 @@
 
 # Assumption Verification Register
 
+## ASM-FM-OPS-RUNNER-REGISTRATION-20260913
+- Task: FM-OPS-001 / FM-CR-036; Risk R4.
+- VERIFIED: current main 1bdf55838208788b361f48d8cc45a92c4571173a matches #1115 final receipt 5652891341. Owner host read proves an HTTPS Pipelines URL with one opaque identifier, a root Broker URL, byte-identical base/migrated registrations and absent migrated credentials. Both saved PATH lists pass after guarded creation of the missing protected /snap/bin directory.
+- INVALIDATED: every valid Pipelines tenant path is a UUID. Official actions/runner v2.337.0 ConfigurationManager receives TenantUrl from GitHub; the exact owner-observed format supplies the bounded compatibility case.
+- VERIFIED source behavior: Runner.cs tries migrated settings first and can fall back; CredentialManager.cs prefers an available OAuth migration credential. Therefore alternate settings must match the same complete byte pin, and this bounded observed contract requires migrated credentials to remain absent. Credentials are never read.
+- NEEDS_VERIFICATION: current-head source tests/review/CI and installed audit, independent running-registration/reference binding, protected reference installation, fresh privileged recovery and both runners idle, then changed boot ID and complete runtime postflight. Matching syntax or IDs alone never creates a trusted reference.
+
 ## ASM-FM-OPS-SYSTEMD-EMPTY-20260913
 - Task: FM-OPS-001 / FM-CR-036; Risk R4.
 - VERIFIED: current main remains 62fecd108d1d0157652ac0a293a7eb738d402a83, matching the #1113 final receipt 5645657817; no competing Operations PR. Drift/freshness preflights pass; the next-action catalog still selects Creator, while the owner explicitly resumes this bounded reboot prerequisite.

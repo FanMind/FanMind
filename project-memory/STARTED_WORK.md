@@ -650,6 +650,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: bounded read-only boot readiness followed by the already requested controlled restart, only after actual boot/recovery preflight. No startup-state mutation in the collector.
 - Exact next step: finish current-head PR/CI/review for the approved published source, normal deploy and installed boot-readiness readout; resolve only demonstrated startup gaps, then the already requested controlled reboot with before/after evidence.
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.
+## FM-OPS-001 — runner registration compatibility — 2026-09-13
+- Status: IN_PROGRESS
+- Risk: R4
+- Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
+- Authorization: the owner's explicit continuation covers demonstrated boot prerequisites, reviewed source publication and normal rollout; the controlled restart remains conditional on actual boot/recovery evidence.
+- Baseline: current remote main 1bdf55838208788b361f48d8cc45a92c4571173a, tree d16cac544935f6788c99ef9302da04a0c4f49434. #1115 final receipt 5652891341 closes the nginx/BOM source package and supersedes its older pending notes. Drift/freshness preflights pass; the owner explicitly continues Operations before the catalog's next Creator task.
+- Owner-proven host progress: runner unit 0644; base registration, saved PATH/environment and credentials 0600; PM2 dump 0600 retained. The owner created only the missing root-protected /snap/bin directory; both complete saved PATH lists now pass. Base and protected migrated registrations are byte-identical, their IDs/repository/work directory match, and migrated credentials are absent. Private registration values remain outside Git.
+- Demonstrated source gap: the provider-supplied Pipelines URL has one opaque identifier segment, not a UUID; HTTPS and host checks pass. Broker uses its root URL. The collector also needs to bind the possible migrated registration and exclude unreviewed alternate credentials.
+- Scope/evidence: allow one bounded opaque Pipelines identifier with unchanged full registration pin; accept only absent or byte-identical protected migrated settings and the observed absence of alternate credentials. Add negative/byte-integrity/redaction checks; require exact-head review/CI, normal deploy and installed audit.
+- Exact next step: implement and verify this bounded source correction, then resume independent registration/unit reference, recovery and fresh pre/post reboot evidence. No additional backup, repeated Restore or credential read/reset.
+- Recovery: revert source through the existing isolated release flow; host reference is never learned or installed by the collector/deploy. FM-OPS-001 remains PARTIAL until the actual reboot and its postflight.
+
 ## FM-OPS-001 — Ubuntu nginx condition correction — 2026-09-13
 - Related source finding: actions/runner v2.337.0 IOUtil.SaveObject writes settings with Encoding.UTF8; its optional leading UTF-8 BOM currently makes the collector's JSON.parse fail. Accept exactly one leading BOM for parsing after hashing the complete original source. Reproduce it in the existing runner fixture; do not claim this is the cause of the owner's unavailable read until host metadata is inspected.
 - Date: 2026-09-13
