@@ -205,3 +205,9 @@ Do not delete invalid assumptions; preserve them so the same mistaken premise is
 - Target observation: installed audit 34689543073 at 10:51:34 UTC confirms healthy runtime and all ten enabled/active units but six failed boot predicates. Those booleans do not establish which PM2 field or trust check failed; fixed redacted reason codes are needed before proposing a correction.
 - Recovery observation: the exact authenticated Exoscale Production console still shows the Ubuntu login prompt. No authenticated OS recovery session exists; the previously unreachable SSH route has no new evidence supporting a retry.
 - Falsifier: diagnostics changing a boot verdict, leaking private values, or treating a syntactically valid/current-file reference as independent confirmation invalidates this change. A source pass cannot close host boot/recovery prerequisites.
+## ASM-FM-NGINX-STANDARD-CONDITION-20260913
+- Related: FM-OPS-001 / FM-CR-036; Risk R4; Status: NEEDS_VERIFICATION.
+- Invalidated assumption: every valid installed boot unit has no Conditions. Exact official Ubuntu nginx-common 1.24.0-2ubuntu7.17 and authenticated owner evidence prove its standard executable condition is present.
+- Proposed correction: only this complete pinned unit and a typed, unit-bound single condition for /usr/sbin/nginx may pass after a current protected executable check. A cached condition result alone is insufficient.
+- Falsifiers: accepting another unit/hash/path, negation/trigger/additional conditions, missing typed proof, missing/non-executable/writable nginx, unknown reads or reference bootstrap defeats the claim.
+- Separate unresolved observations: runner unit mode 0664; registration unavailable; PM2 all-directory PATH probe false; independent reference missing; final idle/backup/runtime and changed boot-ID proof remain open. Admin UID 0 and retained PM2 dump mode 0600 are owner-confirmed.

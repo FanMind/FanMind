@@ -650,3 +650,16 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: bounded read-only boot readiness followed by the already requested controlled restart, only after actual boot/recovery preflight. No startup-state mutation in the collector.
 - Exact next step: finish current-head PR/CI/review for the approved published source, normal deploy and installed boot-readiness readout; resolve only demonstrated startup gaps, then the already requested controlled reboot with before/after evidence.
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.
+## FM-OPS-001 — Ubuntu nginx condition correction — 2026-09-13
+- Related source finding: actions/runner v2.337.0 IOUtil.SaveObject writes settings with Encoding.UTF8; its optional leading UTF-8 BOM currently makes the collector's JSON.parse fail. Accept exactly one leading BOM for parsing after hashing the complete original source. Reproduce it in the existing runner fixture; do not claim this is the cause of the owner's unavailable read until host metadata is inspected.
+- Date: 2026-09-13
+- Status: IN_PROGRESS
+- Risk: R4
+- Change: FM-CR-036; existing LOCK-FM-OPS-REBOOT-20260912 retained.
+- Exact next step: verify the bounded source correction, complete current-head review/CI and normal rollout, then resume demonstrated host prerequisites and installed boot proof.
+- Authorization: Bernd's explicit continuation covers the demonstrated boot-check correction, reviewed source publication and normal rollout. No actual reboot or reference bootstrap is performed by this source package.
+- Baseline: reviewed/deployed main 41d2547806fc7f8288268c45446c3467b268f150; #1114 final receipt 5652605280 closes the prior structured-array correction and supersedes its historical pending/PR-creation notes.
+- Authenticated owner evidence: nginx matches the complete official nginx-common 1.24.0-2ubuntu7.17 unit and its one non-negated/non-trigger ConditionFileIsExecutable=/usr/sbin/nginx. The generic empty-Conditions rule incorrectly rejects it. PM2 matches the 7.0.3 template; Production runner matches the official v2.337.0 template but has mode 0664. Registration read is unavailable; the independent reference is absent. PM2's separate all-directory PATH probe is false; its cause is unverified.
+- Scope: accept only the independently pinned nginx unit plus its exact typed D-Bus condition and a fresh protected executable check; retain all unknown/additional-condition, drop-in, assertion, reference and runner gates.
+- Evidence plan: official package/source, exact owner readout, executable positive/negative/redaction tests, current-head review/CI, normal deploy and installed audit. Production and Staging runners share this host; both need fresh idle evidence before reboot.
+- Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.

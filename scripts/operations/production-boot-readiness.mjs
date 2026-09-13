@@ -51,6 +51,10 @@ const READ_COMMAND_OPTIONS = Object.freeze({
 });
 const REFERENCE_FILE = "/etc/fanmind/production-boot-reference.json";
 const SHA256 = /^[a-f0-9]{64}$/u;
+// Official nginx-common 1.24.0-2ubuntu7.17, independently compared with the
+// authenticated host readout. This pin does not replace the external reference.
+const NGINX_STANDARD_UNIT_SHA256 = "6c759c229d4dacf65c1f98c1733646f8b979d3e75e13a98bfbcfe26f8a2f793c";
+const NGINX_EXECUTABLE_CONDITION = Symbol("verified-nginx-executable-condition");
 export const MANAGED_UNIT_HASHES = Object.freeze({
   "fanmind-backup-worker.service": "ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896",
   "fanmind-backup-database.timer": "2c38eed5918afe5fe22eb994484183842c9d5362ef84dc15dbede9541a3d61fd",
@@ -124,6 +128,13 @@ export function readUnit(unit, extra = [], run = execFileSync) {
       if (lines.length !== keys.length) continue;
       for (const [index, key] of keys.entries()) {
         if (lines[index] === `${EMPTY_STRUCTURED_PROPERTIES[key][1]} 0`) properties[key] = "";
+        else if (unit === BOOT_UNITS.NGINX && key === "Conditions" &&
+            /^a\(sbbsi\) 1 "ConditionFileIsExecutable" false false "\/usr\/sbin\/nginx" (?:-1|0|1)$/u.test(lines[index])) {
+          // Preserve Conditions; never relabel a nonempty array as empty. The
+          // private marker cannot be supplied through a systemctl string field.
+          // Its last-result integer is historical, not a current executable test.
+          Object.defineProperty(properties, NGINX_EXECUTABLE_CONDITION, { value: true });
+        }
       }
     } catch { /* Unreadable properties remain missing; no raw bus errors escape. */ }
   }
@@ -287,10 +298,17 @@ function readBootReference() {
   } catch { return null; }
 }
 
-export function unitDefinitionMatches(unit, name, source, expectedSha256) {
-  return unit.Id === name && unit.LoadState === "loaded" && unit.NeedDaemonReload === "no" &&
-    ["DropInPaths", "Conditions", "Asserts"].every(key => unit[key] === "") &&
-    typeof source === "string" && SHA256.test(expectedSha256 ?? "") && digest(source) === expectedSha256;
+export function unitDefinitionMatches(unit, name, source, expectedSha256, executableCheck = trustedExecutable) {
+  if (unit.Id !== name || unit.LoadState !== "loaded" || unit.NeedDaemonReload !== "no" ||
+      !["DropInPaths", "Asserts"].every(key => unit[key] === "") ||
+      typeof source !== "string" || !SHA256.test(expectedSha256 ?? "") || digest(source) !== expectedSha256) return false;
+  if (name === BOOT_UNITS.NGINX && expectedSha256 === NGINX_STANDARD_UNIT_SHA256) {
+    // The package's exact condition must be proven through the resolved D-Bus
+    // object, then checked against the current protected executable. An empty,
+    // displayed, unknown or cached-only condition cannot satisfy this branch.
+    return unit[NGINX_EXECUTABLE_CONDITION] === true && executableCheck("/usr/sbin/nginx") === true;
+  }
+  return unit.Conditions === "";
 }
 
 function installedUnitMatches(unit, name, expectedSha256) {
@@ -377,7 +395,9 @@ export function runnerConfigurationMatches(unit, unitName, context) {
     if (readOwnedFile(`${root}/.service`, 1024).trim() !== unitName) return false;
     const registration = readOwnedFile(`${root}/.runner`, 16 * 1024);
     if (!SHA256.test(context.registrationSha256 ?? "") || digest(registration) !== context.registrationSha256) return false;
-    const settings = JSON.parse(registration);
+    // Official runner IOUtil.SaveObject uses Encoding.UTF8, which can include
+    // one leading BOM. Bind the original bytes above; remove it only to parse.
+    const settings = JSON.parse(registration.startsWith("\uFEFF") ? registration.slice(1) : registration);
     if (!runnerEndpointsMatch(settings) || settings.agentName !== context.name || settings.ephemeral === true ||
         !["https://github.com/FanMind/FanMind", "https://github.com/Bernds-tech/FanMind"].includes(settings.gitHubUrl) ||
         settings.workFolder !== "_work" || path.join(root, settings.workFolder, "FanMind") !== context.workspace) return false;
