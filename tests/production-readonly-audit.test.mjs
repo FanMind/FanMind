@@ -12,7 +12,7 @@ import yaml from "js-yaml";
 
 import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 import {
-  BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties,
+  BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties, readUnit,
   readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
   MANAGED_UNIT_HASHES, parseBootReference, unitDefinitionMatches, runnerPathMatches,
   savedAppDiagnostic, readSavedAppDiagnostic, startupDiagnostic, bootNodeDiagnostic,
@@ -96,9 +96,11 @@ test("saved PM2 app binds exactly one cluster app and the current release withou
   await symlink(file, link);
   assert.equal(readSavedApp(link, expectedCommit), false);
   assert.equal(readSavedAppDiagnostic(link, expectedCommit), "file_unverified");
-  await chmod(file, 0o666);
+  await chmod(file, 0o664);
   assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "file_unverified");
   await chmod(file, 0o600);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "ok");
   await writeFile(file, "RAW_SECRET_CANARY");
   assert.equal(readSavedApp(file, expectedCommit), false);
   assert.equal(readSavedAppDiagnostic(file, expectedCommit), "json_invalid");
@@ -124,14 +126,131 @@ test("saved app diagnostics identify the failed contract without publishing valu
   }
 });
 
-test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
-  const unit = parseUnitProperties([
+function startupUnit() {
+  return parseUnitProperties([
+    "Id=pm2-ubuntu.service", "LoadState=loaded", "NeedDaemonReload=no", "DropInPaths=",
     "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
     ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => `${key}=`),
     "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
     "ExecStop={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 kill ; ignore_errors=no ; pid=0 ; code=(null) ; status=0/0 }",
     "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
   ].join("\n"));
+}
+
+function unitText(unit) {
+  return Object.entries(unit).map(([key, value]) => `${key}=${value}`).join("\n");
+}
+
+test("systemctl omitted struct arrays require typed D-Bus emptiness on the same loaded unit", () => {
+  const omitted = startupUnit();
+  const emptyTypes = {
+    ExecCondition: "a(sasbttttuii)", ExecStartPre: "a(sasbttttuii)", ExecStartPost: "a(sasbttttuii)",
+    ExecStopPost: "a(sasbttttuii)", EnvironmentFiles: "a(sb)", Conditions: "a(sbbsi)", Asserts: "a(sbbsi)",
+  };
+  for (const key of Object.keys(emptyTypes)) delete omitted[key];
+  // v255's generic printer cannot render the Conditions/Asserts struct type.
+  omitted.Conditions = "[unprintable]";
+  omitted.Asserts = "[unprintable]";
+  assert.equal(startupDiagnostic(omitted), "hooks");
+  const calls = [];
+  const result = readUnit("pm2-ubuntu.service", Object.keys(startupUnit()), (command, args, options) => {
+    calls.push([command, args]);
+    assert.equal(options.timeout, 10_000);
+    assert.equal(options.maxBuffer, 128 * 1024);
+    assert.deepEqual(options.stdio, ["ignore", "pipe", "pipe"]);
+    if (command === "/bin/systemctl") return unitText(omitted);
+    assert.equal(command, "/usr/bin/busctl");
+    assert.deepEqual(args.slice(0, 5), ["--system", "--no-pager", "--auto-start=no", "--allow-interactive-authorization=no", "--timeout=10"]);
+    if (args[5] === "call") {
+      assert.deepEqual(args.slice(6), ["org.freedesktop.systemd1", "/org/freedesktop/systemd1", "org.freedesktop.systemd1.Manager", "GetUnit", "s", "pm2-ubuntu.service"]);
+      return 'o "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice"\n';
+    }
+    assert.equal(args[5], "get-property");
+    assert.equal(args[7], "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice");
+    assert.equal(args[8], `org.freedesktop.systemd1.${args[9] === "Conditions" ? "Unit" : "Service"}`);
+    return args.slice(9).map(key => `${emptyTypes[key]} 0`).join("\n") + "\n";
+  });
+  assert.equal(startupDiagnostic(result), "ok");
+  assert.deepEqual(result, startupUnit());
+  assert.equal(calls.length, 4);
+});
+
+test("typed emptiness never accepts a failed, missing, malformed, wrong-type or nonempty reply", () => {
+  for (const [key, type, marker, code] of [
+    ["ExecStartPre", "a(sasbttttuii)", undefined, "hooks"],
+    ["Conditions", "a(sbbsi)", "[unprintable]", "conditions"],
+  ]) {
+    for (const reply of [
+      "", "as 0", `${type} 1 /private/RAW_SECRET_CANARY`, `${type} -0`,
+      `${type} 0 extra`, `${type} 0\n${type} 0`, "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY"),
+    ]) {
+      const unit = startupUnit();
+      if (marker === undefined) delete unit[key];
+      else unit[key] = marker;
+      const result = readUnit(unit.Id, [key], (command, args) => {
+        if (command === "/bin/systemctl") return unitText(unit);
+        if (args.includes("GetUnit")) return 'o "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice"';
+        if (reply instanceof Error) throw reply;
+        return reply;
+      });
+      assert.equal(result[key], marker);
+      assert.equal(startupDiagnostic(result), code);
+      assert.doesNotMatch(bootReadinessLines({ units: { PM2: result }, checks: {}, diagnostics: {
+        PM2_STARTUP: startupDiagnostic(result),
+      } }).join("\n"), /RAW_SECRET_CANARY/u);
+    }
+  }
+});
+
+test("structured fallback preserves measured commands and rejects an unresolved or different unit", () => {
+  for (const value of ["", "/private/RAW_SECRET_CANARY"]) {
+    const unit = { ...startupUnit(), ExecStartPre: value };
+    const result = readUnit(unit.Id, ["ExecStartPre"], (command) => {
+      assert.equal(command, "/bin/systemctl");
+      return unitText(unit);
+    });
+    assert.equal(result.ExecStartPre, value);
+    assert.equal(startupDiagnostic(result), value ? "hooks" : "ok");
+  }
+  for (const resolution of ["", 'o "/org/freedesktop/systemd1/unit/other_2eservice"', "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY")]) {
+    const unit = startupUnit();
+    delete unit.ExecStartPre;
+    const result = readUnit(unit.Id, ["ExecStartPre"], (command, args) => {
+      if (command === "/bin/systemctl") return unitText(unit);
+      assert.ok(args.includes("GetUnit"));
+      if (resolution instanceof Error) throw resolution;
+      return resolution;
+    });
+    assert.equal(startupDiagnostic(result), "hooks");
+  }
+  for (const source of ["Id=pm2-ubuntu.service\nId=other.service", "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY")]) {
+    assert.deepEqual(readUnit("pm2-ubuntu.service", ["ExecStop"], command => {
+      assert.equal(command, "/bin/systemctl");
+      if (source instanceof Error) throw source;
+      return source;
+    }), {});
+  }
+});
+
+test("runner empty ExecStop and timer Conditions use their exact interfaces and array signatures", () => {
+  for (const [name, extra, expectedPath, signature, interfaceName] of [
+    ["actions.runner.FanMind-FanMind.production.service", "ExecStop", "actions_2erunner_2eFanMind_2dFanMind_2eproduction_2eservice", "a(sasbttttuii)", "Service"],
+    ["fanmind-backup-server_config.timer", "Conditions", "fanmind_2dbackup_2dserver_5fconfig_2etimer", "a(sbbsi)", "Unit"],
+  ]) {
+    const unit = { Id: name, LoadState: "loaded", Conditions: "", Asserts: "" };
+    delete unit[extra];
+    const result = readUnit(name, [extra], (command, args) => {
+      if (command === "/bin/systemctl") return unitText(unit);
+      if (args.includes("GetUnit")) return `o "/org/freedesktop/systemd1/unit/${expectedPath}"`;
+      assert.deepEqual(args.slice(7), [`/org/freedesktop/systemd1/unit/${expectedPath}`, `org.freedesktop.systemd1.${interfaceName}`, extra]);
+      return `${signature} 0`;
+    });
+    assert.equal(result[extra], "");
+  }
+});
+
+test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
+  const unit = startupUnit();
   assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
   assert.equal(startupDiagnostic(unit), "ok");
   for (const [overrides, code] of [

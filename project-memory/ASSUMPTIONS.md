@@ -6,6 +6,14 @@
 
 # Assumption Verification Register
 
+## ASM-FM-OPS-SYSTEMD-EMPTY-20260913
+- Task: FM-OPS-001 / FM-CR-036; Risk R4.
+- VERIFIED: current main remains 62fecd108d1d0157652ac0a293a7eb738d402a83, matching the #1113 final receipt 5645657817; no competing Operations PR. Drift/freshness preflights pass; the next-action catalog still selects Creator, while the owner explicitly resumes this bounded reboot prerequisite.
+- VERIFIED by authenticated owner host read: dump.pm2 metadata was valid except mode 0664; executed chmod now reports 0600. Four direct D-Bus hook replies report typed empty arrays. Upstream systemd v255 systemctl-show.c confirms empty Exec and EnvironmentFiles arrays omit the property even with --all.
+- INVALIDATED: an omitted structured systemctl property alone proves the real value is unavailable. Never replace omission with assumed emptiness: require a successful type- and count-bound D-Bus read of that exact loaded unit/property.
+- VERIFIED from the official v255 generic property printer: unsupported structured arrays are represented as [unprintable]. That marker also requires direct typed measurement, never unconditional normalization; positive/negative Conditions/Asserts fixtures cover it.
+- NEEDS_VERIFICATION: installed corrected collector, saved-app contract and retained permissions after normal PM2 save, independent server reference, privileged recovery, current idle/runtime/backup evidence and changed boot ID after the requested restart.
+
 ## ASM-FM-CREATOR-SOCIAL-20260910
 - Status: VERIFIED for source and priority; target acceptance remains NEEDS_VERIFICATION.
 - Evidence: local baseline tree equals current remote main; Creator scope is documentation only before this work; latest owner instruction explicitly resumes implementation before Android.
