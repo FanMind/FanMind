@@ -302,6 +302,15 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   Registrierung benötigt gültige positive Agent-/Pool-IDs, ein HTTPS-Pipelines-
   Ziel unter `actions.githubusercontent.com` und im V2-Flow ein passendes
   Broker-Ziel; Credentials, Query und Fragment sind in den URLs ausgeschlossen.
+  GitHub liefert den Pipelines-Tenant-Pfad bei der Registrierung über
+  [ConfigurationManager](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Listener/Configuration/ConfigurationManager.cs).
+  Der Owner-Abgleich vom 13. September 2026 beweist einen einzelnen undurchsichtigen
+  Kennungspfad statt einer UUID. Erlaubt sind dort die Wurzel oder genau ein
+  Segment aus 1–256 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen,
+  optional mit abschließendem Slash. Broker behält seinen Wurzel-/UUID-Vertrag.
+  Die ursprüngliche URL-Schreibweise muss passen; Ports, Whitespace, kodierte
+  Separatoren, Punktsegmente und zusätzliche Pfadsegmente bleiben gesperrt.
+  Der separate Runner-Admin-Flow ist in diesem belegten Vertrag nicht freigegeben.
   Zusätzlich muss die vollständige `.runner`-Datei exakt der unabhängig
   bestätigten SHA-256 entsprechen. Ein anderer syntaktisch gültiger GitHub-
   Tenant oder eine bloß passende öffentliche Repository-URL genügt nicht.
@@ -310,8 +319,21 @@ er führt weder einen gespeicherten Befehl noch eine Service-Änderung aus.
   UTF-8-Markierung (BOM). Genau eine solche Markierung wird erst nach der
   vollständigen Hashprüfung für das JSON-Parsen entfernt; die Datei und ihre
   Referenzbytes bleiben unverändert. Doppelte/verschobene BOM und ungültiges
-  JSON bleiben gesperrt. Die Ursache des aktuell nicht verfügbaren
-  Owner-Registrierungsabgleichs ist damit noch nicht auf dem Host bestätigt.
+  JSON bleiben gesperrt. Ungültiges UTF-8 darf nicht durch verlustbehaftete
+  Dekodierung dieselbe Prüfsumme wie ein gültiger Ersatzbuchstabe erhalten.
+  Der Owner hat die führende BOM inzwischen auf dem Host bestätigt.
+  Der [offizielle Runner](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Listener/Runner.cs)
+  kann zuerst `.runner_migrated` versuchen. Diese Datei muss entweder fehlen
+  oder regulär, eigentümergeführt, pfadgeschützt und einschließlich BOM exakt
+  bytegleich zur unabhängig bestätigten `.runner`-Datei sein. Abweichende Bytes,
+  Links, fremde Schreibrechte und Lesefehler verhindern den Pass. Nur `ENOENT`
+  beweist Abwesenheit. Der Owner-Abgleich bestätigt aktuell bytegleiche Dateien.
+  [CredentialManager](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Listener/Configuration/CredentialManager.cs)
+  kann außerdem alternative OAuth-Credentials bevorzugen. Der hier belegte
+  Vertrag verlangt deshalb die bestätigte Abwesenheit von `.credentials_migrated`;
+  eine vorhandene Datei oder ein Link benötigt einen separaten geprüften Vertrag.
+  Ihre Inhalte werden niemals gelesen, gehasht oder ausgegeben. Die vorhandenen
+  ursprünglichen Credentials behalten ihre strenge reine Metadatenprüfung.
   Die nativen Listener-/Node-Dateien müssen zusätzlich mit jeweils genau einem
   tatsächlich laufenden Programm derselben Runner-cgroup, Startargumente und
   Arbeitsverzeichnis übereinstimmen: Kernel-Dateiidentität, ELF-Format und
@@ -347,11 +369,14 @@ hier erforderlich. Andere Hashes, zusätzliche/negierte Bedingungen, Assertions,
 Drop-ins, fehlende Daten oder ausstehendes `daemon-reload` bleiben gesperrt.
 
 Der gleiche Owner-Abgleich bestätigt die PM2-7.0.3- und Runner-v2.337.0-Vorlagen.
-Die Runner-Unit ist jedoch noch 0664, die Registrierungsprüfung unavailable und
-die separate Prüfung sämtlicher PM2-PATH-Verzeichnisse false. Diese Befunde
-werden nicht durch die nginx-Korrektur geschlossen. Production und Staging
-haben je einen aktiven Runner auf demselben Host; beide benötigen frische
-Idle-Prüfung vor dem späteren Neustart.
+Die folgenden ausgeführten Owner-Schritte schließen die früheren Rechte- und
+PATH-Befunde: Runner-Unit 0644; ursprüngliche Registrierung, PATH, Environment
+und Credentials 0600; PM2-Dump weiterhin 0600. Nur `/snap/bin` fehlte in den
+gespeicherten Suchpfaden. Der Owner hat dieses Verzeichnis nach Prüfung der
+root-eigenen, geschützten Eltern angelegt; beide vollständigen PATH-Prüfungen
+melden jetzt true. Es wurden keine Zugangsdaten zurückgesetzt oder Snap-Pakete
+installiert. Production und Staging haben je einen aktiven Runner auf demselben
+Host; beide benötigen frische Idle-Prüfung vor dem späteren Neustart.
 
 Ein authentifizierter Operator muss die echte laufende Runner-Registrierung und
 die erwarteten Unit-Definitionen unabhängig bestätigen, den Review-Beleg

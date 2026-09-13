@@ -158,7 +158,11 @@ function readOwnedFile(file, maxBytes = 1024 * 1024, owner = process.getuid()) {
     if (bytes !== before.size || before.size !== after.size || before.mtimeMs !== after.mtimeMs ||
         before.ctimeMs !== after.ctimeMs || before.ino !== current.ino || before.dev !== current.dev ||
         current.isSymbolicLink() || fs.realpathSync(file) !== file) throw new Error("file_changed");
-    return buffer.subarray(0, bytes).toString("utf8");
+    const data = buffer.subarray(0, bytes), source = data.toString("utf8");
+    // Byte pins must not collapse malformed UTF-8 into the same replacement
+    // character as valid, independently reviewed text.
+    if (!Buffer.from(source, "utf8").equals(data)) throw new Error("file_encoding_invalid");
+    return source;
   } finally {
     if (fd !== undefined) fs.closeSync(fd);
   }
@@ -366,20 +370,34 @@ export const RUNNER_SCRIPT_HASHES = Object.freeze({
 });
 
 export function runnerEndpointsMatch(settings) {
-  const endpoint = (value, host) => {
-    try {
-      const url = new URL(value);
-      return url.protocol === "https:" && !url.username && !url.password && !url.port && !url.search && !url.hash &&
-        host.test(url.hostname) && /^\/(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?)?$/u.test(url.pathname);
-    } catch { return false; }
+  const endpoint = (value, host, pathname) => {
+    if (typeof value !== "string") return false;
+    // Match the original spelling: URL normalization must not hide dot
+    // segments, encoded separators, credentials, ports or control characters.
+    const match = value.match(/^https:\/\/([a-z0-9.-]+)(\/[A-Za-z0-9_/-]*)?$/u);
+    return Boolean(match && host.test(match[1]) && pathname.test(match[2] ?? "/"));
   };
+  if (!settings || typeof settings !== "object" || Array.isArray(settings)) return false;
   if (!Number.isSafeInteger(settings.agentId) || settings.agentId < 1 || !Number.isSafeInteger(settings.poolId) || settings.poolId < 1 ||
-      ![undefined, false, true].includes(settings.useV2Flow)) return false;
-  if (!endpoint(settings.serverUrl, /^pipelines[a-z0-9-]*\.actions\.githubusercontent\.com$/u)) return false;
+      ![undefined, false, true].includes(settings.useV2Flow) || ![undefined, false].includes(settings.useRunnerAdminFlow)) return false;
+  // GitHub supplies TenantUrl; the observed single identifier is opaque, not
+  // necessarily a UUID. The complete registration's independent pin still
+  // binds the exact tenant. Broker retains its narrower root/UUID contract.
+  if (!endpoint(settings.serverUrl, /^pipelines[a-z0-9-]*\.actions\.githubusercontent\.com$/u,
+    /^\/(?:[A-Za-z0-9_-]{1,256}\/?)?$/u)) return false;
   if (settings.useV2Flow === true || settings.serverUrlV2 !== undefined) {
-    if (!endpoint(settings.serverUrlV2, /^broker[a-z0-9-]*\.actions\.githubusercontent\.com$/u)) return false;
+    if (!endpoint(settings.serverUrlV2, /^broker[a-z0-9-]*\.actions\.githubusercontent\.com$/u,
+      /^\/(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?)?$/u)) return false;
   }
   return true;
+}
+
+function filePresent(file) {
+  try { fs.lstatSync(file); return true; }
+  catch (error) {
+    if (error.code === "ENOENT") return false;
+    throw error;
+  }
 }
 
 export function runnerConfigurationMatches(unit, unitName, context) {
@@ -395,6 +413,13 @@ export function runnerConfigurationMatches(unit, unitName, context) {
     if (readOwnedFile(`${root}/.service`, 1024).trim() !== unitName) return false;
     const registration = readOwnedFile(`${root}/.runner`, 16 * 1024);
     if (!SHA256.test(context.registrationSha256 ?? "") || digest(registration) !== context.registrationSha256) return false;
+    // Runner v2.337.0 tries migrated settings first. Only the observed absent
+    // or byte-identical protected copy can share this independent reference.
+    const migrated = `${root}/.runner_migrated`;
+    if (filePresent(migrated) && readOwnedFile(migrated, 16 * 1024) !== registration) return false;
+    // CredentialManager can prefer alternate OAuth credentials. Their absence
+    // is the observed contract; a new alternative needs review, never a read.
+    if (filePresent(`${root}/.credentials_migrated`)) return false;
     // Official runner IOUtil.SaveObject uses Encoding.UTF8, which can include
     // one leading BOM. Bind the original bytes above; remove it only to parse.
     const settings = JSON.parse(registration.startsWith("\uFEFF") ? registration.slice(1) : registration);
