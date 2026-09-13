@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
-import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, chown, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -828,6 +828,9 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   const nodeFile = join(fixture.root, "externals.2.337.0/node20/bin/node");
   for (const file of [listenerFile, nodeFile]) {
     await copyFile(realpathSync(process.execPath), file);
+    // Privileged copies can preserve the installed binary's foreign owner.
+    // These private test artifacts must belong to the synthetic runner user.
+    await chown(file, process.getuid(), process.getgid());
     await chmod(file, 0o700);
   }
   await writeFile(join(fixture.root, "package.json"), '{"type":"commonjs"}');
@@ -902,6 +905,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   assert.equal(check(), true, "the next complete stable observation can pass");
   await rename(listenerFile, `${listenerFile}.running`);
   await copyFile(realpathSync(process.execPath), listenerFile);
+  await chown(listenerFile, process.getuid(), process.getgid());
   await chmod(listenerFile, 0o700);
   assert.equal(runnerConfigurationMatches(fixture.unit, fixture.unitName, fixture.context), true);
   assert.equal(check(), false, "same native bytes under the versioned path do not replace the kernel-held inode");
