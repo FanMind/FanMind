@@ -29,8 +29,11 @@ export function readWebRegistrationSession({ hash = "", search = "" } = {}) {
   const query = new URLSearchParams(search);
   if ([...query.keys()].some((key) => key !== "lang") || query.getAll("lang").length > 1) return null;
   const params = new URLSearchParams(hash.replace(/^#/, ""));
-  const allowed = new Set(["access_token", "refresh_token", "token_type", "type", "expires_in", "expires_at"]);
+  const allowed = new Set(["access_token", "refresh_token", "token_type", "type", "expires_in", "expires_at", "sb"]);
   if ([...params.keys()].some((key) => !allowed.has(key) || params.getAll(key).length !== 1)) return null;
+  // Supabase AsRedirectURL adds the empty sb marker; it is not a credential.
+  // Accept only that exact single marker, keeping all other fields strict.
+  if (params.has("sb") && params.get("sb") !== "") return null;
   if (params.get("type") !== "signup" || params.get("token_type") !== "bearer") return null;
   const accessToken = params.get("access_token");
   const refreshToken = params.get("refresh_token");
