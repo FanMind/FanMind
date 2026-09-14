@@ -416,3 +416,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 6. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
 7. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
 8. **FM-META-001:** real App Review/provider/legal evidence stays separate. Sales Handoff still requires the genuine remaining gate quorum and final Production demo. Creator development is not an added pre-sales gate.
+## Manual Daily beta admission — 2026-09-14
+- FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.
+- Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
+- Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.

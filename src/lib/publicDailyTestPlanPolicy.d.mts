@@ -1,15 +1,14 @@
-export const PUBLIC_DAILY_TEST_PLAN_WINDOW_MS: number;
-export function getTemporaryPublicDailyTestPlanStatus(
+export function getPublicDailyBetaStatus(
   settings: unknown,
   now?: Date,
-): { enabled: boolean; enabledUntil: string | null };
-export function createTemporaryPublicDailyTestPlanSettings(
+): { enabled: boolean; updatedAt: string | null };
+export function createPublicDailyBetaSettings(
   enabled: boolean,
   updatedBy: string,
   now?: Date,
 ): {
   publicDailyTestPlanEnabled: boolean;
-  publicDailyTestPlanEnabledUntil: string | null;
+  publicDailyTestPlanEnabledUntil: null;
   updatedAt: string;
   updatedBy: string;
 };
