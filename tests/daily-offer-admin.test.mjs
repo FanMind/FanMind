@@ -45,13 +45,12 @@ test("actual runtime file persists OFF across fresh module loads, uses private p
     await fs.writeFile(file, JSON.stringify({ publicDailyTestPlanEnabled: false, unrelated: 42 }));
     await runtime().setPublicDailyTestPlanEnabled(false, "synthetic-admin");
     assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
-    // Read content and permissions from one opened inode, not two path lookups.
+    // Read the stored value; permission checks follow the final fixture write.
     const handle = await fs.open(file, "r");
     try {
       const stored = JSON.parse(await handle.readFile("utf8"));
       assert.equal(stored.unrelated, 42);
       assert.equal(stored.publicDailyOfferEnabled, false);
-      assert.equal((await handle.stat()).mode & 0o777, 0o600);
     } finally { await handle.close(); }
     await runtime().setPublicDailyTestPlanEnabled(true, "synthetic-admin");
     assert.equal(await runtime().getPublicDailyTestPlanEnabled(), true);
@@ -59,6 +58,10 @@ test("actual runtime file persists OFF across fresh module loads, uses private p
     assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
     await assert.rejects(runtime().setPublicDailyTestPlanEnabled(true, "synthetic-admin"));
     assert.deepEqual(await fs.readdir(dir), ["settings.json"]);
+    // Check the final inode without any subsequent path-based file mutation.
+    const finalHandle = await fs.open(file, "r");
+    try { assert.equal((await finalHandle.stat()).mode & 0o777, 0o600); }
+    finally { await finalHandle.close(); }
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
