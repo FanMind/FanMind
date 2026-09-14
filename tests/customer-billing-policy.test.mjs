@@ -567,17 +567,18 @@ test("public Daily selection preserves protected Workspace and payment admission
     checkoutRouteSource,
     /commercialOption === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(config\)/u,
   );
-  assert.match(runtimeSettingsSource, /publicDailyTestPlanEnabled/);
-  assert.match(runtimeSettingsSource, /getTemporaryPublicDailyTestPlanStatus/);
+  assert.match(runtimeSettingsSource, /getPublicDailyPlanState/);
+  assert.match(runtimeSettingsSource, /readDailyPlanSettings/);
+  assert.doesNotMatch(runtimeSettingsSource, /getTemporaryPublicDailyTestPlanStatus/);
   assert.match(publicDailyTestPolicySource, /PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 \* 60 \* 60 \* 1000/);
   assert.match(publicDailyTestPolicySource, /enabledUntilMs - updatedAtMs <= PUBLIC_DAILY_TEST_PLAN_WINDOW_MS/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
-  assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
+  assert.match(fs.readFileSync("src/lib/dailyPlanSettings.mjs", "utf8"), /rename\(temporary, file\)/);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled/);
   assert.match(
     adminSettingsSource,
-    /PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
+    /activationReady = termsReady && provisioningReady && stripeReady[\s\S]*Workspace-Erstellung[\s\S]*Stripe &amp; Webhook/u,
   );
   assert.match(deploySource, /if \[ ! -e "\$RUNTIME_SETTINGS_FILE" \]/);
   assert.doesNotMatch(deploySource, /sed -i.*FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);

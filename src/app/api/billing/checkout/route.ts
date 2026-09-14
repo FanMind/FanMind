@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   if (!payload?.planId || !payload.commercialOption) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
   if (payload.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
-    return NextResponse.json({ error: "Das interne Live-Testabo kann nur im Adminbereich gestartet werden." }, { status: 403 });
+    return NextResponse.json({ error: "Dieses Angebot ist derzeit für neue Buchungen nicht verfügbar." }, { status: 403 });
   }
 
   const config = getStripeConfigStatus();

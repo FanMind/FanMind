@@ -30,7 +30,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         </div>
         <form method="post" action="/api/admin/settings/daily-test-plan">
           <input type="hidden" name="enabled" value={String(!visibility.enabled)} />
-          <button type="submit" role="switch" aria-checked={visibility.enabled} aria-label="Daily-Angebot auf der Website" disabled={!visibility.available}>
+          <button className={visibility.enabled ? styles.buttonSecondary : styles.buttonPrimary} type="submit" role="switch" aria-checked={visibility.enabled} aria-label="Daily-Angebot auf der Website" disabled={!visibility.available}>
             {visibility.enabled ? "Daily ausschalten" : "Daily einschalten"}
           </button>
         </form>
