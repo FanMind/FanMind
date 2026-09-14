@@ -1,0 +1,69 @@
+name: Reconcile Daily storage truth
+on:
+  push:
+    branches: [fix/daily-admin-visibility-20260914]
+    paths: [.github/workflows/daily-admin-truth-reconcile.yml]
+permissions:
+  contents: write
+jobs:
+  source:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/fix/daily-admin-visibility-20260914'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.13.1
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Relocate exactly the persistent-boolean assertion; retain the server-reader check
+        run: |
+          python3 - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          file = 'scripts/verify-product-truth.mjs'
+          assert subprocess.check_output(['git','hash-object',file],text=True).strip() == '2dc860fdf79142d144585c6d52cb1bda98a7b7af'
+          text = Path(file).read_text()
+          pattern = r'requireText\(\s*"src/lib/runtimeProductSettings\.ts",\s*"publicDailyTestPlanEnabled",'
+          text, count = re.subn(pattern, 'requireText("src/lib/dailyPlanSettings.mjs", "publicDailyPlanEnabled",', text)
+          assert count == 1, 'Expected exactly the native truth-report mismatch'
+          insertion = '\nrequireText("src/lib/runtimeProductSettings.ts", "readDailyPlanSettings", "The server reader must use the persistent Daily settings module.");\n'
+          index = text.find('if (errors.length')
+          if index < 0:
+              index = text.find('if (failures.length')
+          assert index >= 0, 'Truth result boundary missing'
+          text = text[:index] + insertion + text[index:]
+          Path(file).write_text(text)
+          receipt = Path('project-memory/receipts/FM-BILL-003-DAILY-ADMIN-20260914.md')
+          receipt.write_text(receipt.read_text() + '\n## Native verification reconciliation\nThe exact native truth artifact 10360126267 from run 34873695522 on 041248f36a5a3509004e3ae96e6c1ac91634e574 identifies the old publicDailyTestPlanEnabled literal in runtimeProductSettings.ts. The persistent field is now publicDailyPlanEnabled in dailyPlanSettings.mjs. Relocate that one assertion to the actual storage module and also require the server reader to call it; do not remove the persistence requirement. Hosted source inspection 34873690194 proves the previously reported persisted-config-error sentence is absent from this verifier blob. The native artifact is authoritative; do not change the already-tested 503 persistence error on that contradictory report. No runtime behavior, setting, provider or SQL is changed by this reconciliation.\n')
+          subprocess.run(['git','diff','--check'],check=True)
+          PY
+          npm run verify:truth
+          node --test tests/customer-billing-policy.test.mjs tests/daily-offer-admin.test.mjs
+      - name: Create unreferenced corrected tree only; no branch or runtime update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, urllib.request
+          from pathlib import Path
+          assert os.environ['GITHUB_REPOSITORY'] == 'FanMind/FanMind'
+          assert os.environ['GITHUB_REF'] == 'refs/heads/fix/daily-admin-visibility-20260914'
+          files = ['scripts/verify-product-truth.mjs','project-memory/receipts/FM-BILL-003-DAILY-ADMIN-20260914.md']
+          assert set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()) == set(files)
+          def api(endpoint,payload):
+              request=urllib.request.Request('https://api.github.com/repos/FanMind/FanMind/git/'+endpoint,data=json.dumps(payload).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+              with urllib.request.urlopen(request,timeout=30) as response: return json.load(response)
+          entries=[]
+          for file in files:
+              sha=api('blobs',{'content':Path(file).read_text(),'encoding':'utf-8'})['sha']
+              entries.append({'path':file,'mode':'100644','type':'blob','sha':sha})
+          for file in ['.github/workflows/daily-admin-truth-diagnostic.yml','.github/workflows/daily-admin-truth-reconcile.yml']:
+              entries.append({'path':file,'mode':'100644','type':'blob','sha':None})
+          tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          print('DAILY_TRUTH_TREE='+api('trees',{'base_tree':tree,'tree':entries})['sha'])
+          print('DAILY_TRUTH_PARENT='+subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+          PY
