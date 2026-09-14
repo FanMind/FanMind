@@ -1,37 +1,35 @@
-export const PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_ADMIN_ID_LENGTH = 320;
 
-export function getTemporaryPublicDailyTestPlanStatus(settings, now = new Date()) {
+export function getPublicDailyBetaStatus(settings, now = new Date()) {
   const nowMs = now instanceof Date ? now.getTime() : Number.NaN;
-  const updatedAtMs = Date.parse(typeof settings?.updatedAt === "string" ? settings.updatedAt : "");
-  const enabledUntilMs = Date.parse(
-    typeof settings?.publicDailyTestPlanEnabledUntil === "string"
-      ? settings.publicDailyTestPlanEnabledUntil
-      : "",
-  );
-  const validWindow = Number.isFinite(nowMs)
+  const updatedAt = typeof settings?.updatedAt === "string" ? settings.updatedAt : "";
+  const updatedAtMs = Date.parse(updatedAt);
+  const updatedBy = typeof settings?.updatedBy === "string" ? settings.updatedBy.trim() : "";
+  const valid = Number.isFinite(nowMs)
     && Number.isFinite(updatedAtMs)
-    && Number.isFinite(enabledUntilMs)
     && updatedAtMs <= nowMs
-    && enabledUntilMs > nowMs
-    && enabledUntilMs > updatedAtMs
-    && enabledUntilMs - updatedAtMs <= PUBLIC_DAILY_TEST_PLAN_WINDOW_MS;
+    && updatedBy.length > 0
+    && updatedBy.length <= MAX_ADMIN_ID_LENGTH
+    && typeof settings?.publicDailyTestPlanEnabled === "boolean"
+    && (settings.publicDailyTestPlanEnabledUntil === undefined || settings.publicDailyTestPlanEnabledUntil === null);
 
   return {
-    enabled: settings?.publicDailyTestPlanEnabled === true && validWindow,
-    enabledUntil: validWindow ? new Date(enabledUntilMs).toISOString() : null,
+    enabled: valid && settings.publicDailyTestPlanEnabled === true,
+    updatedAt: valid ? new Date(updatedAtMs).toISOString() : null,
   };
 }
 
-export function createTemporaryPublicDailyTestPlanSettings(enabled, updatedBy, now = new Date()) {
+export function createPublicDailyBetaSettings(enabled, updatedBy, now = new Date()) {
   const updatedAtMs = now instanceof Date ? now.getTime() : Number.NaN;
+  const normalizedAdmin = typeof updatedBy === "string" ? updatedBy.trim() : "";
   if (!Number.isFinite(updatedAtMs)) throw new TypeError("invalid_now");
-  const updatedAt = new Date(updatedAtMs).toISOString();
+  if (!normalizedAdmin || normalizedAdmin.length > MAX_ADMIN_ID_LENGTH) {
+    throw new TypeError("invalid_updated_by");
+  }
   return {
     publicDailyTestPlanEnabled: enabled === true,
-    publicDailyTestPlanEnabledUntil: enabled === true
-      ? new Date(updatedAtMs + PUBLIC_DAILY_TEST_PLAN_WINDOW_MS).toISOString()
-      : null,
-    updatedAt,
-    updatedBy,
+    publicDailyTestPlanEnabledUntil: null,
+    updatedAt: new Date(updatedAtMs).toISOString(),
+    updatedBy: normalizedAdmin,
   };
 }

@@ -105,7 +105,7 @@ const sections: PaymentSection[] = [
   },
   {
     title: "Daily",
-    content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist ein dauerhaftes öffentliches Zahlungsmodell und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
+    content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist während der manuell freigegebenen internen Beta ein kostenpflichtiges Zahlungsmodell und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
   },
   {
     title: "KI-Stufen und Referral-Rabatte",

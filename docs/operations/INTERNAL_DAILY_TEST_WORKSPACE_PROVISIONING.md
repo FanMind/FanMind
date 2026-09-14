@@ -2,8 +2,7 @@
 
 ## Aktuelle Produktentscheidung — 10. September 2026
 
-FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten dauerhaften öffentlichen Angebot.
-Der bisherige 24-Stunden-Schalter steuert die öffentliche Tarifwahl nicht mehr. Die Anwendung
+FM-DEC-019 macht Daily (0 € Setup + 1 €/Tag) zu einer manuell vom Platform-Admin gesteuerten internen Beta. Es gibt keinen automatischen Countdown. Bei Aus bleibt Daily öffentlich unsichtbar und neue Aufnahme ist gesperrt; bestehende Daily-Abos laufen unverändert weiter. Die Anwendung
 verwendet weiterhin den bestehenden `internal_daily_test`-RPC-/Stripe-Vertrag; sichere
 Session, aktuelle Zahlungszustimmung, Browser-INSERT-Verbot, Provisioning-Readiness und
 Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die ehemalige Fenster-
@@ -15,7 +14,7 @@ Produktstand: 10. September 2026; gepinnter SQL-Stand: 9. August 2026
 
 ## Zweck und harte Grenze
 
-Daily ist dauerhaft öffentlich auswählbar. Die kostenlose Kontoerstellung
+Daily ist nur bei aktiver serverseitiger Admin-Freigabe öffentlich auswählbar. Die kostenlose Kontoerstellung
 speichert nur eine Präferenz. Die kostenpflichtige Workspace-Aktivierung
 verlangt weiterhin alle folgenden Grenzen gleichzeitig:
 

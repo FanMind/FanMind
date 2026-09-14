@@ -13,83 +13,37 @@ test("public Daily identity uses the persisted pair without promoting demos or p
 });
 
 import {
-  createTemporaryPublicDailyTestPlanSettings,
-  getTemporaryPublicDailyTestPlanStatus,
-  PUBLIC_DAILY_TEST_PLAN_WINDOW_MS,
+  createPublicDailyBetaSettings,
+  getPublicDailyBetaStatus,
 } from "../src/lib/publicDailyTestPlanPolicy.mjs";
 import {
   isInternalDailyTestAdmissionReady,
   isInternalDailyTestStripeReady,
 } from "../src/lib/internalDailyTestReadinessPolicy.mjs";
 
-test("legacy beta flag remains a bounded 24-hour window independent of the public Daily offer", () => {
-  const now = new Date("2026-08-08T18:00:00.000Z");
-  const settings = createTemporaryPublicDailyTestPlanSettings(true, "admin@example.invalid", now);
-  assert.equal(
-    Date.parse(settings.publicDailyTestPlanEnabledUntil) - Date.parse(settings.updatedAt),
-    PUBLIC_DAILY_TEST_PLAN_WINDOW_MS,
-  );
-  assert.equal(getTemporaryPublicDailyTestPlanStatus(settings, now).enabled, true);
-  assert.equal(
-    getTemporaryPublicDailyTestPlanStatus(
-      settings,
-      new Date(now.getTime() + PUBLIC_DAILY_TEST_PLAN_WINDOW_MS - 1),
-    ).enabled,
-    true,
-  );
-  assert.equal(
-    getTemporaryPublicDailyTestPlanStatus(
-      settings,
-      new Date(now.getTime() + PUBLIC_DAILY_TEST_PLAN_WINDOW_MS),
-    ).enabled,
-    false,
-  );
-  assert.equal(
-    getTemporaryPublicDailyTestPlanStatus(
-      settings,
-      new Date(now.getTime() + PUBLIC_DAILY_TEST_PLAN_WINDOW_MS + 1),
-    ).enabled,
-    false,
-  );
+test("manual Daily beta has no countdown and remains enabled until an admin turns it off", () => {
+  const started = new Date("2026-09-14T18:00:00.000Z");
+  const settings = createPublicDailyBetaSettings(true, "admin@example.invalid", started);
+  assert.equal(settings.publicDailyTestPlanEnabledUntil, null);
+  assert.equal(getPublicDailyBetaStatus(settings, started).enabled, true);
+  assert.equal(getPublicDailyBetaStatus(settings, new Date("2036-09-14T18:00:00.000Z")).enabled, true);
+
+  const disabled = createPublicDailyBetaSettings(false, "admin@example.invalid", new Date("2026-09-15T18:00:00.000Z"));
+  assert.equal(getPublicDailyBetaStatus(disabled).enabled, false);
 });
 
-test("legacy, malformed and overlong public daily test flags fail closed", () => {
-  const now = new Date("2026-08-08T18:00:00.000Z");
-  assert.equal(getTemporaryPublicDailyTestPlanStatus({ publicDailyTestPlanEnabled: true }, now).enabled, false);
-  assert.equal(getTemporaryPublicDailyTestPlanStatus({
-    publicDailyTestPlanEnabled: true,
-    updatedAt: now.toISOString(),
-    publicDailyTestPlanEnabledUntil: new Date(now.getTime() + PUBLIC_DAILY_TEST_PLAN_WINDOW_MS * 2).toISOString(),
-  }, now).enabled, false);
-  assert.equal(getTemporaryPublicDailyTestPlanStatus({
-    ...createTemporaryPublicDailyTestPlanSettings(false, "admin@example.invalid", now),
-    publicDailyTestPlanEnabled: false,
-  }, now).enabled, false);
-});
-
-test("future-dated public daily test windows fail closed at the start boundary", () => {
-  const now = new Date("2026-08-08T18:00:00.000Z");
-  const startsNow = createTemporaryPublicDailyTestPlanSettings(
-    true,
-    "admin@example.invalid",
-    now,
-  );
-  assert.deepEqual(getTemporaryPublicDailyTestPlanStatus(startsNow, now), {
-    enabled: true,
-    enabledUntil: startsNow.publicDailyTestPlanEnabledUntil,
-  });
-
-  for (const futureOffsetMs of [1, 60_000, PUBLIC_DAILY_TEST_PLAN_WINDOW_MS]) {
-    const futureStart = new Date(now.getTime() + futureOffsetMs);
-    const futureSettings = createTemporaryPublicDailyTestPlanSettings(
-      true,
-      "admin@example.invalid",
-      futureStart,
-    );
-    assert.deepEqual(
-      getTemporaryPublicDailyTestPlanStatus(futureSettings, now),
-      { enabled: false, enabledUntil: null },
-    );
+test("legacy timed, malformed, future and unaudited Daily states fail closed", () => {
+  const now = new Date("2026-09-14T18:00:00.000Z");
+  const valid = createPublicDailyBetaSettings(true, "admin@example.invalid", now);
+  assert.deepEqual(getPublicDailyBetaStatus(valid, now), { enabled: true, updatedAt: now.toISOString() });
+  for (const settings of [
+    { publicDailyTestPlanEnabled: true },
+    { ...valid, updatedBy: "" },
+    { ...valid, publicDailyTestPlanEnabled: "true" },
+    { ...valid, publicDailyTestPlanEnabledUntil: "2026-10-14T18:00:00.000Z" },
+    createPublicDailyBetaSettings(true, "admin@example.invalid", new Date(now.getTime() + 1)),
+  ]) {
+    assert.deepEqual(getPublicDailyBetaStatus(settings, now), { enabled: false, updatedAt: null });
   }
 });
 
@@ -107,6 +61,7 @@ test("Daily admission requires complete checkout and webhook configuration", () 
   assert.equal(isInternalDailyTestAdmissionReady({
     windowEnabled: true,
     workspaceProvisioningReady: true,
+    billingRuntimeReady: true,
     stripeConfig,
   }), true);
 
@@ -120,6 +75,7 @@ test("Daily admission requires complete checkout and webhook configuration", () 
     assert.equal(isInternalDailyTestAdmissionReady({
       windowEnabled: true,
       workspaceProvisioningReady: true,
+      billingRuntimeReady: true,
       stripeConfig: incompleteConfig,
     }), false);
   }
@@ -127,11 +83,13 @@ test("Daily admission requires complete checkout and webhook configuration", () 
   assert.equal(isInternalDailyTestAdmissionReady({
     windowEnabled: false,
     workspaceProvisioningReady: true,
+    billingRuntimeReady: true,
     stripeConfig,
   }), false);
   assert.equal(isInternalDailyTestAdmissionReady({
     windowEnabled: true,
     workspaceProvisioningReady: false,
+    billingRuntimeReady: true,
     stripeConfig,
   }), false);
   assert.equal(isInternalDailyTestAdmissionReady({
@@ -141,12 +99,27 @@ test("Daily admission requires complete checkout and webhook configuration", () 
 });
 
 
+test("Daily billing runtime requires the canonical ledger and no write freeze", async () => {
+  const { isInternalDailyTestBillingRuntimeReady } = await import("../src/lib/internalDailyTestReadinessPolicy.mjs");
+  const ready = {
+    FANMIND_STRIPE_BILLING_EVENT_LEDGER_ENABLED: "true",
+    FANMIND_STRIPE_BILLING_EVENT_LEDGER_CONTROL_CONFIRMED: "20260816210000",
+    FANMIND_STRIPE_BILLING_CANONICAL_RECONCILIATION_CONFIRMED: "true",
+    FANMIND_STRIPE_BILLING_WRITE_FREEZE: "false",
+  };
+  assert.equal(isInternalDailyTestBillingRuntimeReady(ready), true);
+  for (const key of Object.keys(ready)) {
+    assert.equal(isInternalDailyTestBillingRuntimeReady({ ...ready, [key]: key.endsWith("WRITE_FREEZE") ? "true" : "false" }), false);
+  }
+});
+
+
 test("owner-approved public Daily aliases do not admit retired Pilot or arbitrary plans", async () => {
   const { isPublicDailyRegistrationRequest, PUBLIC_DAILY_PLAN_PRICE_CENTS, PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS } = await import("../src/lib/publicDailyPlanPolicy.mjs");
   assert.equal(PUBLIC_DAILY_PLAN_PRICE_CENTS, 100);
   assert.equal(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS, 0);
-  assert.equal(isPublicDailyRegistrationRequest({ planId: "daily" }), true);
-  assert.equal(isPublicDailyRegistrationRequest({ planId: "pilot", testPlan: "daily" }), true);
+  assert.equal(isPublicDailyRegistrationRequest({ enabled: true, planId: "daily" }), true);
+  assert.equal(isPublicDailyRegistrationRequest({ enabled: true, planId: "pilot", testPlan: "daily" }), true);
   for (const input of [{}, {planId: "pilot"}, {planId:"Daily"}, {planId:"growth",testPlan:"daily"}, {planId:["daily"]}]) {
     assert.equal(isPublicDailyRegistrationRequest(input), false);
   }

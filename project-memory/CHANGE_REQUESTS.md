@@ -349,3 +349,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.
 - Scope: read-only installed boot-readiness collector/verifier and normal reviewed publication; then exact-target controlled reboot only after concrete start/recovery facts, with pre/post evidence. No generic remote command, migration, backup or restore repetition.
 - Acceptance: negative/redaction tests, current-head CI/security/review, installed target-bound readout and changed host boot ID plus exact release/nginx/PM2/process Node/eight health postchecks. Source-only proof cannot accept a reboot.
+# FM-CR-037 — manual Daily beta admission
+- Status: IN_PROGRESS
+- Decision: implement FM-DEC-019 as a server-owned, Platform-Admin-controlled manual Daily beta without countdown. Disabled means no public visibility or new admission/checkout; existing Daily subscriptions continue unchanged.
+- Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
