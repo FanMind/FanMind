@@ -5,10 +5,10 @@ export const PAYMENT_TERMS_ACCEPTED_NOT_BEFORE_MS = Date.parse(
   PAYMENT_TERMS_ACCEPTED_NOT_BEFORE_ISO,
 );
 
-// Fail closed until Legal confirms whether the materially changed July 2026
-// public payment terms may still be represented by 2026-06-v1 or publishes a
-// new version. Do not flip this flag as part of a normal deploy.
-export const PAYMENT_TERMS_ACTIVATION_ENABLED = false;
+// Explicitly enabled by the owner on 2026-09-14 for the existing account flow.
+// This does not change the contract revision, recorded consents, Stripe
+// configuration, or the separate Workspace and checkout readiness checks.
+export const PAYMENT_TERMS_ACTIVATION_ENABLED = true;
 export const PAYMENT_TERMS_ACTIVATION_BLOCK_CODE =
   "payment_terms_version_unresolved";
 
