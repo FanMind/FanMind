@@ -14,6 +14,7 @@ export default function ConfirmRegistrationPage({ searchParams }: {
   const english = language === "en";
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const callback = useRef<ReturnType<typeof readWebRegistrationSession> | undefined>(undefined);
+  const handoff = useRef<AbortController | null>(null);
   const [checking, setChecking] = useState(true);
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
   const [continuing, setContinuing] = useState(false);
@@ -68,15 +69,19 @@ export default function ConfirmRegistrationPage({ searchParams }: {
         setVerifiedEmail(user.email);
         setChecking(false);
         setContinuing(true);
+        const controller = new AbortController();
+        handoff.current = controller;
         try {
-          // Only a provider-verified signup session may reach authenticated setup.
+          // Abort a replaced callback before its pending response can set cookies.
           // Email confirmation alone never creates a Workspace or starts payment.
-          await syncSupabaseSessionForServer(session);
-          if (!active || current !== generation || callback.current !== session) return;
+          await syncSupabaseSessionForServer(session, { signal: controller.signal });
+          if (!active || current !== generation || controller.signal.aborted || callback.current !== session) return;
           callback.current = null;
           window.location.replace(setupHref);
         } catch {
-          if (active && current === generation) { setError(true); setContinuing(false); }
+          if (active && current === generation && !controller.signal.aborted) { setError(true); setContinuing(false); }
+        } finally {
+          if (handoff.current === controller) handoff.current = null;
         }
       } catch {
         if (active && current === generation) setVerifiedEmail(null);
@@ -85,6 +90,8 @@ export default function ConfirmRegistrationPage({ searchParams }: {
       }
     }
     function changed() {
+      handoff.current?.abort();
+      handoff.current = null;
       callback.current = undefined;
       setVerifiedEmail(null);
       setChecking(true);
@@ -94,22 +101,31 @@ export default function ConfirmRegistrationPage({ searchParams }: {
     }
     window.addEventListener("hashchange", changed);
     void verify();
-    return () => { active = false; window.removeEventListener("hashchange", changed); };
+    return () => {
+      active = false;
+      handoff.current?.abort();
+      handoff.current = null;
+      window.removeEventListener("hashchange", changed);
+    };
   }, [confirmHref, setupHref, supabase]);
 
   async function continueWithAccount() {
     const session = callback.current;
-    if (!session || !verifiedEmail || checking || continuing) return;
+    if (!session || !verifiedEmail || checking || continuing || handoff.current) return;
+    const controller = new AbortController();
+    handoff.current = controller;
     setContinuing(true);
     setError(false);
     try {
       // Explicit retry only after the automatic session handoff failed.
-      await syncSupabaseSessionForServer(session);
-      if (callback.current !== session) return;
+      await syncSupabaseSessionForServer(session, { signal: controller.signal });
+      if (controller.signal.aborted || callback.current !== session) return;
       callback.current = null;
       window.location.replace(setupHref);
     } catch {
-      if (callback.current === session) { setError(true); setContinuing(false); }
+      if (!controller.signal.aborted && callback.current === session) { setError(true); setContinuing(false); }
+    } finally {
+      if (handoff.current === controller) handoff.current = null;
     }
   }
 
