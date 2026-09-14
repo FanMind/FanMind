@@ -103,6 +103,51 @@ test.describe("Signup callback compatibility and automatic continuation", () => 
     await expect(page).toHaveURL(`${BASE}/register/confirm`);
   });
 
+  for (const retry of [false, true]) {
+    test(`${retry ? "retry" : "automatic"} pending handoff is aborted before a replaced link can install cookies`, async ({ page, context }) => {
+      let release!: () => void;
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      let sessions = 0;
+      let aborted = false;
+      let replyFinished = false;
+      await page.route("**/auth/v1/user", route => authResponse(route));
+      page.on("requestfailed", request => {
+        if (new URL(request.url()).pathname === "/api/auth/session") aborted = true;
+      });
+      await page.route("**/api/auth/session", async route => {
+        sessions++;
+        if (retry && sessions === 1) {
+          await route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"unavailable"}' });
+          return;
+        }
+        await gate;
+        try {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            headers: { "set-cookie": "fanmind_sb_access_token=synthetic-obsolete-session; Path=/; HttpOnly; Secure; SameSite=Lax" },
+            body: '{"ok":true}',
+          });
+        } catch (error) {
+          if (!aborted) throw error;
+        } finally { replyFinished = true; }
+      });
+      try {
+        await page.goto(`/register/confirm${CURRENT}`);
+        if (retry) await page.getByRole("button", { name: "Mit diesem Konto fortfahren" }).click();
+        await expect.poll(() => sessions).toBe(retry ? 2 : 1);
+        await page.goto(`/register/confirm${CURRENT}&error_code=otp_expired`);
+        await expect(page.getByText(/Dieser Link ist ungültig/u)).toBeVisible();
+        await expect.poll(() => aborted).toBe(true);
+      } finally { release(); }
+      await expect.poll(() => replyFinished).toBe(true);
+      const cookies = await context.cookies();
+      expect(cookies.some(cookie => ["fanmind_sb_access_token", "fanmind_sb_refresh_token"].includes(cookie.name))).toBe(false);
+      await expect(page).toHaveURL(`${BASE}/register/confirm`);
+      await expect(page.getByRole("button", { name: "Mit diesem Konto fortfahren" })).toHaveCount(0);
+    });
+  }
+
   test("failed session handoff preserves confirmed identity and allows only explicit retry", async ({ page }) => {
     let sessions = 0;
     await page.route("**/auth/v1/user", route => authResponse(route));
