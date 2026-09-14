@@ -1,0 +1,33 @@
+name: Inspect Daily truth assertion
+on:
+  push:
+    branches: [fix/daily-admin-visibility-20260914]
+    paths: [.github/workflows/daily-admin-truth-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/fix/daily-admin-visibility-20260914'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Read exact committed persistence assertion and source contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          print('DIAGNOSTIC_COMMIT=' + subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+          file = 'scripts/verify-product-truth.mjs'
+          print('VERIFIER_BLOB=' + subprocess.check_output(['git','hash-object',file],text=True).strip())
+          lines = Path(file).read_text().splitlines()
+          found = 0
+          for i,line in enumerate(lines):
+              if 'persisted config cannot be written' in line:
+                  found += 1
+                  print('\n'.join(f'{j+1}: {lines[j]}' for j in range(max(0,i-14),min(len(lines),i+5))))
+          print('MATCHES=' + str(found))
+          print(Path('src/app/api/admin/settings/daily-test-plan/route.ts').read_text())
+          PY
