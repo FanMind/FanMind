@@ -27,7 +27,7 @@
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Begrenzte Staging-RPC-Ausnahmen pr\u00fcfen",
+      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-SEC-OWNER-002",
@@ -46,18 +46,19 @@
       "priority": 20,
       "task": "FM-MOB-001",
       "gate": "mobile",
-      "title": "Android Runbook, Recovery und Push/Store abnehmen",
+      "title": "Nach der Übergabe: Android, Recovery und Push/Store abschließen",
       "requires_owner": true,
       "parallel_safe": true,
       "prerequisite_gates": [
         "memory_v6",
-        "staging"
+        "staging",
+        "sales_handoff"
       ],
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "FM-DEC-015: Android completion is deferred until the current Creator/Social increments; do not start a new build or cohort now. The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. The later FCM replacement signed Android Preview at exact commit 6801d687 is the current real-device candidate; do not rebuild older artifacts. The delivery service still has no runtime caller: implement and review a protected single-reminder trigger plus receipt integration before any real send. Use the existing artifact for current opt-in/registration evidence; keep real provider/device acceptance separately authorized and Production delivery/scheduling unimplemented/disabled until its own reviewed implementation and activation. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved testers for at least 14 days and complete the private Android/Recovery proof before requesting Production access. The old Preview/AAB cannot prove the newer #1089 Mobile package patch: retain its separately reviewed signed publication/device verification as open Mobile work; no repeat build of the old candidate is needed for registration alone. Do not expose private artifact values, start iOS/TestFlight or mutate Production.",
+      "instruction": "FM-DEC-019: Android and Push resume only after technical handoff. Preserve all historical accepted substeps and all still-open device/Store work; do not start a new build or cohort before handoff. The bounded FM-MOB-003/FM-MOB-004 UI/runtime scope and published Android 1.0.0 closed-Alpha baseline remain closed. FM-MOB-006 accepted the isolated-Staging atomic Push Delivery-Ledger gate on exact commit 18a6ad79cb72331b4daa41ee87dd2430a8ffd473 via apply run 33867831888/job 101006621418 and rollback-only acceptance 33867922978/job 101006906941; provider sending stayed disabled and no Production or real fan data was touched. The later FCM replacement signed Android Preview at exact commit 6801d687 is the current real-device candidate; do not rebuild older artifacts. The delivery service still has no runtime caller: implement and review a protected single-reminder trigger plus receipt integration before any real send. Use the existing artifact for current opt-in/registration evidence; keep real provider/device acceptance separately authorized and Production delivery/scheduling unimplemented/disabled until its own reviewed implementation and activation. After the technical Gerhard handoff, enroll at least 12 approved testers for at least 14 days and complete the private Android/Recovery proof before requesting Production access. The old Preview/AAB cannot prove the newer #1089 Mobile package patch: retain its separately reviewed signed publication/device verification as open Mobile work; no repeat build of the old candidate is needed for registration alone. Do not expose private artifact values, start iOS/TestFlight or mutate Production.",
       "deferred_owner_id": "FM-MOB-OWNER-CREATOR-SOCIAL-20260910"
     },
     {
@@ -65,7 +66,7 @@
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Produkt- und Provider-Lifecycle abschlie\u00dfen",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
@@ -77,7 +78,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Owner resumed KI/Billing and confirmed existing prices complete on 2026-09-08. Staging deploy 34267819029 and Stripe Test webhook readiness 34268317761 passed. AI acceptance 34268214078 failed before DB access because two API-origin bindings were missing; review the bounded workflow fix, then merge/deploy exact new main and obtain a fresh rollback-only acceptance. Historical general Billing Apply/capture/canonical acceptance remains complete. Continue only remaining product/private/provider/Legal/Production gates; no live payment, repricing or paid-tier activation."
+      "instruction": "Use HANDOFF_AUDIT_20260914.md and RELEASE_ACCEPTANCE_20260910.md to reconcile the actual outstanding provider, tax, contract and paid-tier activation facts. Existing price creation, isolated Staging Apply/capture and technically successful lifecycle receipts remain complete for their scope; the separate authorization reconciliation of the later September run is not a reason to repeat the run. Independent remaining source work is NBA-CUSTOMER-ACTIVATION-ENGINEERING and does not wait for invented owner approval. No live payment, repricing, paid activation or repeated completed installation is implied."
     },
     {
       "id": "NBA-META-TECHNICAL-RECONCILE",
@@ -103,12 +104,11 @@
       "priority": 80,
       "task": "FM-SALES-001",
       "gate": "sales_handoff",
-      "title": "Finalen Production-Demo- und Sales-Handoff schlie\u00dfen",
+      "title": "Finalen Production-Demo- und Sales-Handoff schließen",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
         "restore",
-        "mobile",
         "ai_billing",
         "meta_security",
         "phase3_social",
@@ -118,7 +118,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted. Creator development now proceeds under FM-DEC-015, without becoming an additional pre-sales prerequisite."
+      "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted. Creator development now proceeds under FM-DEC-015, without becoming an additional pre-sales prerequisite. FM-DEC-019: Android and Push are explicitly after technical handoff and must not block it; no other gate is accepted by this scope change."
     },
     {
       "id": "NBA-CREATOR-INTELLIGENCE",
@@ -182,6 +182,24 @@
         "EXT-DISCORD",
         "EXT-ONLYFANS"
       ]
+    },
+    {
+      "id": "NBA-CUSTOMER-ACTIVATION-ENGINEERING",
+      "priority": 2,
+      "task": "FM-BILL-003",
+      "gate": "ai_billing",
+      "title": "Bestehenden Kundenweg und KI-Budget technisch fertigstellen",
+      "requires_owner": false,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Follow HANDOFF_AUDIT_20260914.md: finish the existing account -> server-owned Workspace -> versioned consent -> Stripe billing projection -> entitlement path and connect monthly AI usage budgets to that path. Read existing controlled rollout code and current target facts before preparing any missing source; reuse completed prices, Staging installations and receipts. This is repository/engineering work, separate from NBA-AI-LIFECYCLE-RECONCILE owner/provider acceptance. Prepare a concrete reviewed rollout without executing protected target mutations, inventing tax/contract facts, billing a customer or enabling paid tiers through this action. Preserve the explicit paid-activation pause until genuine prerequisites exist. The 1/1.5/2 million quantities remain examples. No new login, Stripe catalog, billing platform, database Restore or Android build."
     }
   ],
   "retired_actions": [

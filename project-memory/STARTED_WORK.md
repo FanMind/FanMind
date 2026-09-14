@@ -1,3 +1,9 @@
+## FM-SALES-001 / FM-CR-038 — Handoff status reconciliation
+- Status: COUNTERCHECKED
+- Risk: R2
+- Scope: dated four-area audit plus owner-approved Android/Push scheduling; no executable/runtime change. Existing aggregate task gates remain open where evidence is missing.
+- Exact next step: publish the verified audit/priority correction through a reviewed PR. No new paid-tier quota decision or repeat operations.
+
 ## Creator foundation closeout — 2026-09-11
 - Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.
 - Completed: #1105-#1108 are published; executable main f0c7a84e, Verify 34628681395, PT409-only Upgrade 34628886294, Staging Deploy 34628740980 and real acceptance 34629009649 passed. Owner/member/foreign isolation, one style, approval/revisions, both PDFs, independent cleanup and temporary-member rotation/rejection passed; 17:42:49 UTC post-read confirms empty Creator tables/no unfinished Creator RPCs.

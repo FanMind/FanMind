@@ -1,6 +1,6 @@
 # FanMind Finishline Board
 
-Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Phase 7a Social acceptance and technical Sales Handoff. FM-DEC-015 now allows Creator and selected Social development before Android; development priority does not close acceptance gates.
+Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Phase 7a Social acceptance and technical Sales Handoff. FM-DEC-019 places technical handoff before Android and Push. Mobile is no longer required_for_sales; existing Mobile evidence and outstanding work are preserved.
 
 | Gate | Task | Current state | What is already proven | What still closes the gate |
 |---|---|---|---|---|
@@ -8,7 +8,7 @@ Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Pha
 | Production/Ops | FM-OPS-001 | VERIFIED | production deploy, health/version, audit, monitoring, encrypted backups and checksum verification | maintain; optional/destructive follow-ups remain separate |
 | Isolated Staging | FM-STG-001 | ACCEPTED | separate Supabase/Web Staging, DNS/TLS, synthetic workspaces, test resources and primary acceptance | reuse; feature-specific acceptance stays in its own gate |
 | Restore | FM-RST-001 | PARTIAL | isolated database Restore and full database postcheck accepted through DB_POSTCHECKED; bounded Storage controller prepared | protected-host access, distinct disposable Storage target and exact action scope, real Storage/config verification, cleanup and final evidence; never repeat database Restore |
-| Mobile | FM-MOB-001 | IMPLEMENTED_NOT_VERIFIED | native app, signed Android AAB and FCM Preview, documented closed Play test release; recovery redirect configured | complete build-bound Android/Recovery/device evidence, real opt-in/registration/Push delivery, Play cohort and later public Store acceptance; iOS/TestFlight remains Phase 8 |
+| Mobile (after handoff; not required) | FM-MOB-001 | IMPLEMENTED_NOT_VERIFIED | native app, signed Android AAB and FCM Preview, documented closed Play test release; recovery redirect configured | complete build-bound Android/Recovery/device evidence, real opt-in/registration/Push delivery, Play cohort and later public Store acceptance; iOS/TestFlight remains Phase 8 |
 | AI/Billing | FM-AI-001 | PARTIAL | Standard active; Plus/Ultra fail-closed policy, test/storage/lifecycle foundations | written tier decisions, quality/cost, complete Staging lifecycle, legal/tax, explicit activation |
 | Meta/Security | FM-META-001 | PARTIAL | PageView-only Pixel production path; advanced Meta foundation | Events Manager/no-PII, App Review/real E2E, final security/legal evidence |
 | Phase 3 Social | FM-SOC3-001 | PARTIAL | Facebook/Instagram advanced foundations; dormant WhatsApp inbound foundation | real E2E Facebook + Instagram + WhatsApp including auth/revocation/reconnect/tenant/idempotency |
@@ -29,10 +29,10 @@ Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Pha
 - Restore remains R4 and never targets Production or Supabase Staging.
 - No real payment, destructive offsite retention, platform bypass or protected Production mutation is authorized by this board.
 
-## Retained acceptance gates (development priority: FM-DEC-015)
+## Retained acceptance gates (handoff priority: FM-DEC-019)
 
 1. Restore accepted end-to-end.
-2. Mobile current-finishline acceptance: redirect/recovery, complete receipt-bound 19-check signed Android real-device runbook/private validator and applicable Push/Store evidence; the bounded FM-MOB-003/FM-MOB-004 UI observation is already accepted and there is no iOS/TestFlight requirement.
+2. Deferred until after technical handoff: Mobile acceptance: redirect/recovery, complete receipt-bound 19-check signed Android real-device runbook/private validator and applicable Push/Store evidence; the bounded FM-MOB-003/FM-MOB-004 UI observation is already accepted and there is no iOS/TestFlight requirement.
 3. AI/Billing tier decisions and lifecycle acceptance.
 4. Meta Events/Security external acceptance.
 5. Phase 3 real Social acceptance.

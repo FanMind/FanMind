@@ -1,5 +1,18 @@
 # FanMind Source of Truth
 
+## Übergabe-Stand — 14. September 2026
+
+FM-DEC-019: **Technische Übergabe zuerst, Android und Push danach.**
+Vorhandene Mobile-Artefakte und Abnahmen bleiben gültig für ihren belegten
+Umfang; die offenen Mobile-/Push-Arbeiten sind keine Übergabevoraussetzung.
+Die aktuelle Bestandsaufnahme trennt funktionierende Anmeldung, vorhandene
+Preise/Standard-KI und abgeschlossenen Datenbank-Restore von der fehlenden
+bezahlten Kundenaktivierung, KI-Monatsbudgets, dem tatsächlichen Ubuntu-Neustart
+und dem Storage-/Konfigurations-Rest. Frühere pauschale Offen-/Fertigmeldungen
+werden durch diese konkreten Teilstände ersetzt.
+
+Verbindliche Einzelbefunde und Abschlussfolge: [Übergabe-Analyse](../project-memory/HANDOFF_AUDIT_20260914.md).
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-

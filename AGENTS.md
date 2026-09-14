@@ -37,6 +37,8 @@ Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase 
 
 ## Source of Truth
 
+- FM-DEC-019 (2026-09-14) supersedes the prior Mobile-before-handoff acceptance order: technical handoff first, Android and Push afterwards. Preserve existing Mobile evidence and open Mobile work, but do not use it as a prerequisite of the technical handoff. Read `project-memory/HANDOFF_AUDIT_20260914.md` before repeating registration, billing, Operations or Restore work. Historical completed substeps remain complete; proceed only with a demonstrated missing step.
+
 - Canonical product and implementation truth lives in `docs/SOURCE_OF_TRUTH.md`.
 - Owner clarification FM-DEC-016: one normal user/Creator account has exactly one text writing style across its channels and reply variants. "Voice" is text only; no audio or real voices. A future manager may supervise multiple separately authorized Creator accounts/channels, always using the selected account's style and fan context, never the manager's style. Do not turn legacy reply profiles or profile revisions into multiple selectable Creator styles. Manager access remains later; legacy UI/runtime conformance and actual Creator activation remain unverified until their existing acceptance.
 - FM-DEC-017 adds TikTok and X/Twitter to current implementation. `docs/integrations/TIKTOK_X_CONNECTIONS.md` defines the default-off, Staging-only OAuth/profile and X DM-preview scope. TikTok Login does not authorize DMs. Do not apply its controlled SQL during normal deploys, invent provider/budget approval, persist preview chats or enable Production through its pilot switches.

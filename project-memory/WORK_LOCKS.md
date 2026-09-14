@@ -1,3 +1,11 @@
+## LOCK-FM-HANDOFF-AUDIT-20260914
+- Task: FM-SALES-001 / FM-CR-038
+- Status: ACTIVE
+- Risk: R2
+- Holder: Codex
+- Scope: isolated docs/handoff-audit-20260914 source from main 4d6d0c4f; current evidence reconciliation and explicit Mobile deferral only. Preserve separate PR #1121 source and all host locks.
+- Recovery: revert this bounded source correction; no target mutation or customer charge.
+
 ## LOCK-FM-CREATOR-META-FINISH-20260911
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033
 - Status: RELEASED

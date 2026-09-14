@@ -1,3 +1,18 @@
+## Current handoff reconciliation — 2026-09-14
+
+FM-SALES-001 / FM-CR-038 / FM-DEC-019. Read
+[HANDOFF_AUDIT_20260914.md](HANDOFF_AUDIT_20260914.md) first. It supersedes
+older pending-source/reference instructions below with the later completed
+PR #1117, reference and installed-audit evidence. No actual reboot occurred:
+last owner output is REBOOT_NOT_REQUESTED=true after a login-session warning.
+Database Restore remains accepted through DB_POSTCHECKED; only Storage/config
+and final cleanup remain. Existing prices/login/Standard AI are preserved;
+paid customer activation and paid-tier monthly budget integration remain.
+Android and Push are after technical handoff and no longer block it.
+Current main independently read: 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b.
+Meta Instagram use-case Save already succeeded; PR #1121 comment 5662337495
+is the external receipt. No new provider connection or payment is claimed.
+
 ## Production runner update layout correction — 2026-09-13
 - Current task: FM-OPS-001 / FM-CR-036, Risk R4, LOCK-FM-OPS-REBOOT-20260912 retained. Branch fix/production-runner-versioned-layout-20260913 handles the independently demonstrated official 2.337.0 artifact layout.
 - Prior #1116 is closed by final receipt 5653464231 on reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Deploy 34758542991 and installed audit 34758613627 confirm eight healthy components, PM2 Node 24.18.0 and unchanged boot ID. Its earlier source-pending notes below are historical.
