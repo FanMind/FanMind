@@ -4,7 +4,6 @@ import {
   getSupabaseRestUrl,
 } from "@/lib/supabase/config";
 import type { PlanId } from "@/config/plans";
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import type Stripe from "stripe";
 import {
   createStripeIntegrationIdentifier,
@@ -229,11 +228,6 @@ export async function createStripeCheckoutSession(input: {
       error: STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
       code: STRIPE_BILLING_WRITE_FREEZE_CODE,
     };
-  }
-  // Every new Daily checkout, including page/GET/admin callers, shares this
-  // persistent admission gate. Existing subscriptions and renewals are untouched.
-  if (input.plan.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
-    return { code: "offer_unavailable", error: "Dieses Angebot ist derzeit nicht verfügbar. Bestehende Abos bleiben unverändert." };
   }
   const stripe = getStripeClient();
   const appUrl = getAppUrl();

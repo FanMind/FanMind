@@ -7124,9 +7124,9 @@ export async function ensureUserWorkspace(
         );
       }
 
-      // The administrator may close new Daily activations without changing
-      // existing contracts. RPC, Stripe/Tax and consent checks still apply.
-      if ((!PUBLIC_DAILY_PLAN_ENABLED || !(await getPublicDailyTestPlanEnabled()))) {
+      // FM-DEC-014 admits the permanent public Daily offer. Legacy beta windows
+      // remain compatible; RPC, Stripe/Tax and consent checks still apply.
+      if (!PUBLIC_DAILY_PLAN_ENABLED && !(await getPublicDailyTestPlanEnabled())) {
         return workspaceBackfillError(
           PUBLIC_DAILY_TEST_PLAN_UNAVAILABLE_ERROR,
         );

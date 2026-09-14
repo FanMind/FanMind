@@ -1,7 +1,5 @@
 import { requirePlatformAdmin } from "@/lib/admin";
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-
-export const dynamic = "force-dynamic";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
@@ -19,8 +17,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
   const provisioningReady = await isInternalDailyTestWorkspaceProvisioningReady();
   const termsReady = isPaymentTermsActivationEnabled();
   const stripeReady = isInternalDailyTestStripeReady(getStripeConfigStatus());
-  const visible = await getPublicDailyTestPlanEnabled();
-  const enabled = visible && termsReady && provisioningReady && stripeReady;
+  const enabled = PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady;
   const params = await searchParams;
   const result = Array.isArray(params.daily_test_plan)
     ? params.daily_test_plan[0]
@@ -36,7 +33,9 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
         <AdminTabs activeTab="settings" />
         {result ? (
           <p className={result === "enabled" ? styles.badgeOk : styles.badgeWarn}>
-            {result === "enabled" ? "Daily-Angebot eingeschaltet." : result === "disabled" ? "Daily-Angebot auf der gesamten öffentlichen Website ausgeblendet." : "Einstellung bitte prüfen."}
+            {result === "not_ready"
+              ? "Freigabe blockiert: Daily-Provisioning oder Stripe-/Webhook-Konfiguration ist noch nicht vollständig bereit."
+              : "Die frühere Beta-Freigabe ändert das dauerhafte Daily-Angebot nicht."}
           </p>
         ) : null}
         <section className={styles.card}>
@@ -45,11 +44,11 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               <span className={styles.eyebrow}>Öffentlicher Tagestarif</span>
               <h2>Daily · 0 € Setup + 1 €/Tag</h2>
               <p className={styles.cardSubtitle}>
-                Schaltet das Daily-Angebot auf Landingpage, Registrierung, Paketwahl und öffentlichen Angebotsbedingungen ein oder aus. Die Einstellung bleibt bis zu deiner nächsten Änderung bestehen, auch länger als 14 Tage.
+                Daily ist dauerhaft in der öffentlichen Tarifauswahl. Die kostenpflichtige Aktivierung setzt alle technischen und vertraglichen Voraussetzungen voraus.
               </p>
             </div>
             <span className={enabled ? styles.badgeOk : styles.badgeWarn}>
-              {!visible ? "Angebot ausgeschaltet" : enabled ? "Angebot an · Aktivierung bereit" : "Angebot an · Aktivierung ausstehend"}
+              {enabled ? "Aktivierung bereit" : "Registrierung offen · Aktivierung ausstehend"}
             </span>
           </div>
           <div className={styles.statusList}>
@@ -72,16 +71,9 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
           <div className={styles.statusItem}>
             <span>Zahlungsbedingungen</span><strong>{termsReady ? "Freigegeben" : "Vertragsversion offen"}</strong>
           </div>
-          <form action="/api/admin/settings/daily-test-plan" method="post">
-            <input type="hidden" name="enabled" value={visible ? "false" : "true"} />
-            <button type="submit" className={visible ? styles.buttonDanger : styles.buttonPrimary}>
-              {visible ? "Daily-Angebot ausschalten" : "Daily-Angebot einschalten"}
-            </button>
-          </form>
           <p className={styles.muted}>
-            Aus blendet das Angebot überall öffentlich aus und sperrt neue Daily-Aktivierungen.
-            Bestehende Abos, Testerzugänge, Rechnungen und Kündigungen bleiben unverändert.
-            Einschalten ersetzt nicht die separat angezeigte technische Zahlungsfreigabe.
+            Der frühere 24-Stunden-Beta-Schalter steuert diesen öffentlichen Tarif nicht mehr.
+            Bestehende Abos und Workspaces werden durch die Katalogfreigabe nicht verändert.
           </p>
         </section>
       </main>

@@ -1,5 +1,3 @@
-> Aktualisierung 14.09.2026 (FM-DEC-020): Daily-Sichtbarkeit und neue Buchungen werden dauerhaft unter `/admin/settings` ein-/ausgeschaltet. Aus blendet das öffentliche Angebot seitenweit aus; bestehende Abos und Vertragsdaten bleiben erhalten. Frühere Aussagen zur bedingungslosen Sichtbarkeit sind dadurch ersetzt. Technische Workspace-/Stripe-/Tax-/Billing-Freigaben bleiben erforderlich.
-
 # FanMind
 
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
@@ -104,9 +102,9 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Abschlussantwort darf nicht automatisch wiederholt werden, sondern muss
   zuerst direkt im geschützten EAS-Projekt geprüft werden; Gerätetest und
   Store-Verteilung bleiben externe Nachweise.
-- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Drei Zahlungsmodelle im Katalog: Starter Flex (990 € Setup + 312 €/Monat), Starter 12 Monate (0 € Setup + 312 €/Monat) und Daily (0 € Setup + 1 €/Tag), gemäß FM-DEC-014. Daily ist nur bei Admin ON öffentlich auswählbar; FM-DEC-020 steuert die Sichtbarkeit und sperrt neue Daily-Aktivierungen bei OFF. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
+- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Drei dauerhafte öffentliche Zahlungsmodelle: Starter Flex (990 € Setup + 312 €/Monat), Starter 12 Monate (0 € Setup + 312 €/Monat) und Daily (0 € Setup + 1 €/Tag), gemäß FM-DEC-014. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
 - Kostenlose Demo: temporärer, geschützter Demo-Workspace; kein entgeltliches Pilot-Paket.
-- Daily: öffentliches Angebot nur bei Admin ON gemäß FM-DEC-020, täglich kündbar und von Referral ausgeschlossen. OFF erhält bestehende Abos und Vertragszugriff. Der bestehende technische Bezeichner `internal_daily_test`, der 1-€/Tag-Stripe-Preis und die Billing-Engine werden wiederverwendet. Die bisherige 24-Stunden-Beta-Ausnahme ist historisch; sie steuert die öffentliche Daily-Auswahl nicht mehr. Sichere Workspace-Provisionierung, Browser-INSERT-Verbot, Stripe/Webhook/Tax und aktuelle Zahlungszustimmung bleiben Pflicht. `docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md` beschreibt den weiter erforderlichen kontrollierten Datenbankvertrag.
+- Daily: dauerhaftes öffentliches Angebot, täglich kündbar und von Referral ausgeschlossen. Der bestehende technische Bezeichner `internal_daily_test`, der 1-€/Tag-Stripe-Preis und die Billing-Engine werden wiederverwendet. Die bisherige 24-Stunden-Beta-Ausnahme ist historisch; sie steuert die öffentliche Daily-Auswahl nicht mehr. Sichere Workspace-Provisionierung, Browser-INSERT-Verbot, Stripe/Webhook/Tax und aktuelle Zahlungszustimmung bleiben Pflicht. `docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md` beschreibt den weiter erforderlichen kontrollierten Datenbankvertrag.
 - Billing-Steuermodus: veröffentlichte Beträge sind Nettopreise. `FANMIND_TAX_MODE=stripe_tax` plus die getrennte Registrierungsbestätigung sind Pflicht; ohne beides bleibt Checkout fail-closed. Für steuerpflichtige Österreich-Umsätze gelten 20 %, international bestimmt Stripe Tax den anwendbaren Satz oder Reverse Charge. Die externe steuerliche Prüfung bleibt im Freigaberegister offen.
 - Kommerzielle Wahrheit: Starter-Grundgebühr `312 €/Monat`.
 - Starter Flex: `990 € einmalige Einrichtung + 312 €/Monat`; jederzeit zum Ende des laufenden, vollständig zu bezahlenden Abrechnungsmonats kündbar.
@@ -581,7 +579,7 @@ Verbindliche Details: `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`,
 | KI Standard | aktiv | in 312 €/Monat enthalten |
 | KI Plus | freigegebener Preis, technische Add-on-Aktivierung separat | +100 €/Monat |
 | KI Ultra | freigegebener Preis, technische Add-on-Aktivierung separat | +200 €/Monat |
-| Daily | nur bei Admin ON öffentlich auswählbar; Aktivierungsabnahme offen | 0 € Setup + 1 €/Tag; täglich kündbar; vorhandener Billing-Lifecycle, keine Referral-Verrechnung; Workspace-/Consent-/Tax-/Billing-Voraussetzungen bleiben erforderlich |
+| Daily | dauerhaft öffentlich auswählbar; Aktivierungsabnahme offen | 0 € Setup + 1 €/Tag; täglich kündbar; vorhandener Billing-Lifecycle, keine Referral-Verrechnung; Workspace-/Consent-/Tax-/Billing-Voraussetzungen bleiben erforderlich |
 | Growth | Coming Soon | nicht produktiv buchbar |
 | Agency | Coming Soon / auf Anfrage | nicht produktiv buchbar |
 | Enterprise / Custom | später | individuelle Prüfung |

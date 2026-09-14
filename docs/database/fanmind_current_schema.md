@@ -165,7 +165,7 @@ RLS-Erwartung:
   atomar über `ensure_current_user_workspace(...)`; Plan, Preis, Billing und
   Zahlungsannahme werden dort serverseitig abgeleitet.
 - Vorbereiteter Daily-Provisioning-Rollout (noch nicht als Production-Stand
-  abgenommen): Der Daily-Tarif (FM-DEC-014; öffentlich nur bei Admin ON gemäß FM-DEC-020) nutzt separat
+  abgenommen): Der dauerhafte öffentliche Daily-Tarif (FM-DEC-014) nutzt separat
   `ensure_internal_daily_test_workspace(...)`. Dieser atomare RPC nimmt nur
   die serververifizierte Auth-ID, den Anzeigenamen und die bestätigte
   Zahlungsbedingung an; Tarif, Nullbeträge, Stripe/Card und Billing-Status sind
@@ -182,7 +182,7 @@ RLS-Erwartung:
   Wertvertrag abbilden und weder `anon` noch `authenticated` direkte Tabellen-
   oder Spaltenrechte für Workspace-`INSERT` besitzen. Ohne diesen Postflight
   bleibt die kostenpflichtige Daily-Aktivierung blockiert. Die öffentliche
-  Auswahl für das kostenlose Konto ist nur bei Admin ON sichtbar und speichert lediglich eine Präferenz; OFF erhält bestehende Abos und Vertragszugriff. Erst Migration,
+  Auswahl für das kostenlose Konto bleibt sichtbar und ist nur eine Präferenz. Erst Migration,
   Staging-Abnahme und Production-Postflight nach
   `docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md` machen diesen
   vorbereiteten Vertrag zum produktiven Schema. Die App öffnet die Admission
@@ -910,7 +910,7 @@ RLS-/Security-Erwartung:
 - Normale User dürfen Billing-Felder nicht beliebig ändern.
 - Admin-Änderungen nur über admin-only Routen.
 - Kostenfreie interne Testzugänge nutzen eine admin-only Markierung auf `workspaces` (`billing_status = demo_free`, `billing_manual_override = true`, `billing_admin_note` enthält „Interner Testzugang“) und serverseitige `test_access_flags` (`admin`, `demo`, `internal`, `test`, `billing_disabled`, `mail_confirmed`, `no_expiry`, `ai_maintenance`). Normale Kunden behalten den Default `{}` und werden davon nicht beeinflusst.
-- Das interne Stripe-Live-Testabo nutzt dieselben Billing-Felder mit `commercial_option = internal_daily_test`, `STRIPE_PRICE_INTERNAL_DAILY_TEST` und Stripe-Webhook-Updates für Checkout-Session, Subscription, letzte Zahlung und Rechnungsstatus. Ein im Adminbereich gestarteter Lauf setzt zusätzlich `test_access_flags.stripe_live_daily_test = true`. FM-DEC-014 ersetzt die ehemalige admin-only/24-Stunden-Beta-Auswahl durch das Daily-Katalogmodell. FM-DEC-020 erlaubt öffentliche Auswahl und neue Admission nur bei Admin ON; OFF lässt bestehende Abos und Vertragszugriff unverändert. Die kostenfreie Kontoregistrierung speichert nur den Paketwunsch; kostenpflichtige Aktivierung benötigt weiterhin den getrennt abgenommenen Daily-Provisioning-Rollout, aktuelle Consent-Evidenz und vollständige Stripe-/Tax-/Webhook-/Billing-Bereitschaft. Der Tarif kostet 1 € pro Tag, ist kündbar/deaktivierbar und löst keine Referral- oder Rabatt-Automation aus.
+- Das interne Stripe-Live-Testabo nutzt dieselben Billing-Felder mit `commercial_option = internal_daily_test`, `STRIPE_PRICE_INTERNAL_DAILY_TEST` und Stripe-Webhook-Updates für Checkout-Session, Subscription, letzte Zahlung und Rechnungsstatus. Ein im Adminbereich gestarteter Lauf setzt zusätzlich `test_access_flags.stripe_live_daily_test = true`. FM-DEC-014 ersetzt die ehemalige admin-only/24-Stunden-Beta-Auswahl durch den dauerhaften öffentlichen Daily-Katalog. Die kostenfreie Kontoregistrierung speichert nur den Paketwunsch; kostenpflichtige Aktivierung benötigt weiterhin den getrennt abgenommenen Daily-Provisioning-Rollout, aktuelle Consent-Evidenz und vollständige Stripe-/Tax-/Webhook-/Billing-Bereitschaft. Der Tarif kostet 1 € pro Tag, ist kündbar/deaktivierbar und löst keine Referral- oder Rabatt-Automation aus.
 - Stripe-Webhooks müssen Signatur prüfen.
 - Vor jedem Stripe-Billing-PATCH wird das Workspace-Ziel per Service Role
   gegen eine temporäre Demo-Session und die feste Sandra-Auth-Identität

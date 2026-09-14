@@ -72,7 +72,6 @@ async function startCheckout() {
   if (!checkoutReady) return redirectTo("/billing/start?error=payment-start");
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspace.id, userEmail: data.user.email });
-  if (session.code === "offer_unavailable") return redirectTo("/billing/start?error=offer_unavailable");
   if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
     return redirectTo(`/billing/start?error=${STRIPE_BILLING_WRITE_FREEZE_CODE}`);
   }

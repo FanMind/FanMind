@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import { showDailyOfferTerms } from "@/lib/dailyOfferTermsVisibility";
-
-export const dynamic = "force-dynamic";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
 import styles from "./agb.module.css";
@@ -17,7 +14,7 @@ type TermsSection = {
   content: React.ReactNode;
 };
 
-const getSections = (showDaily: boolean): TermsSection[] => [
+const sections: TermsSection[] = [
   {
     title: "Vertragspartner und Vertragsgegenstand",
     content: (
@@ -224,7 +221,7 @@ const getSections = (showDaily: boolean): TermsSection[] => [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für einen kostenpflichtigen Zugang stehen die aktuell freigegebenen Tarife zur Auswahl. Eine Kontoerstellung startet noch kein Abo.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl. Eine Kontoerstellung startet noch kein Abo.</p>
       </>
     ),
   },
@@ -244,7 +241,7 @@ const getSections = (showDaily: boolean): TermsSection[] => [
         <ul>
           <li><strong>Starter Flex:</strong> 990 € einmalige Einrichtung + 312 €/Monat; jederzeit zum Ende des laufenden, bereits bezahlten Abrechnungsmonats kündbar.</li>
           <li><strong>Starter 12 Monate:</strong> 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach Verlängerung um jeweils einen Monat.</li>
-          {showDaily && <li><strong>Daily:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.</li>}
+          <li><strong>Daily:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.</li>
           <li><strong>KI Standard:</strong> in der Starter-Grundgebühr enthalten.</li>
           <li><strong>KI Plus:</strong> zusätzlich 100 €/Monat.</li>
           <li><strong>KI Ultra:</strong> zusätzlich 200 €/Monat.</li>
@@ -425,8 +422,7 @@ function sectionId(index: number) {
   return `abschnitt-${index + 1}`;
 }
 
-export default async function AgbPage() {
-  const sections = getSections(await showDailyOfferTerms());
+export default function AgbPage() {
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />

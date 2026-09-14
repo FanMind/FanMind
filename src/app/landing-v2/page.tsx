@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-
-export const dynamic = "force-dynamic";
 import Image from "next/image";
 import { roadmapNotes, roadmapPhases } from "@/config/roadmap";
 import { createFanMindTranslator, getFanMindLanguage, landingPath, localizedPath, localizeFanMindValue, type FanMindLanguage } from "@/lib/fanmindCopy";
@@ -888,7 +885,6 @@ type LandingV2Props = {
 };
 
 export default async function LandingV2({ searchParams }: LandingV2Props) {
-  const dailyOfferEnabled = await getPublicDailyTestPlanEnabled();
   const params = await searchParams;
   const language = getFanMindLanguage(params?.lang);
   const t = createFanMindTranslator(language);
@@ -942,7 +938,7 @@ export default async function LandingV2({ searchParams }: LandingV2Props) {
       href: link.href === LANDING_ROADMAP_HREF ? roadmapHref : link.href === "/login" ? loginHref : link.href === "/register" ? registerHref : link.href,
     })),
   }));
-  const localizedPricingPlans = localizeFanMindValue(pricingPlans.filter(plan => dailyOfferEnabled || plan.name !== "Daily"), t).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
+  const localizedPricingPlans = localizeFanMindValue(pricingPlans, t).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
   const localizedPricingProofs = localizeFanMindValue(pricingProofs, t);
   const localizedRoadmapPhases = localizeFanMindValue(roadmapPhases, t);
   const localizedRoadmapNotes = localizeFanMindValue(roadmapNotes, t);

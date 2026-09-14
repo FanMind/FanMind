@@ -43,12 +43,9 @@
   veralteten Pilot-Produkt abgeleitet.
 - KI Plus und KI Ultra verwenden getrennte monatliche Testpreise von 100 Euro
   beziehungsweise 200 Euro und bleiben außerhalb der Referral-Rabattbasis.
-- Bei Admin ON erlaubt FM-DEC-020 die kostenlose Supabase-Registrierung mit
-  vorgemerkter Daily-Auswahl auch ohne Stripe-Readiness; sie erzeugt weder
-  Workspace noch Zahlungszustimmung oder Abo. Erst Workspace-Aktivierung und
-  Checkout benötigen sämtliche RPC-/Consent-/Stripe-/Tax-/Webhook-Freigaben.
-  Admin OFF blendet das Angebot aus und blockiert neue Daily-Aktivierung;
-  bestehende Abos, Kündigung und Vertragszugriff bleiben erhalten.
+- Die öffentliche Daily-Admission bleibt vor Supabase Sign-up geschlossen,
+  solange Daily-Preis, Stripe-Secret, App-URL oder Webhook-Secret fehlen; auch
+  ein Daily-Checkout darf ohne vollständige Webhook-Konfiguration nicht starten.
 - Checkout-Sessions tragen die Workspace-ID in `client_reference_id` und Metadata.
 - Einmalige Starter-Setup-Zahlungen tragen dieselbe Metadata zusätzlich am
   Payment Intent.

@@ -1,17 +1,5 @@
 # FanMind Source of Truth
 
-## Daily-Angebot per Administrator steuern — 14. September 2026
-
-FM-DEC-020 ersetzt die bedingungslose öffentliche Sichtbarkeit aus FM-DEC-014.
-Unter `/admin/settings` steuert der Administrator das Daily-Angebot dauerhaft,
-ohne 24-Stunden-Ablauf. Aus blendet Landing-, Registrierungs-, Setup- und
-öffentliche Angebotsbedingungen aus und sperrt neue Daily-Provisionierung und
-Checkout-Anforderungen. Bestehende Abos, Testerzugänge, Rechnungen und
-Kündigungen bleiben unverändert; bestehende Kunden behalten ihre Vertragsbedingungen.
-Ein verändert keine Preise, ersetzt keine ausdrückliche Zahlungszustimmung und
-überspringt keine Workspace-/Stripe-/Tax-/Billing-Prüfung. Die echte vollständige
-Daily-Aktivierung und Google-Play-Kohortenabnahme bleiben getrennt offen.
-
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
@@ -102,7 +90,7 @@ FanMind ist nicht:
 Aktiv beziehungsweise produktnah:
 
 - deutsche und englische Landingpage mit automatischer Sprachprüfung;
-- Login und kostenlose öffentliche Registrierung sind veröffentlicht. Der Zahlungsbedingungen-Schalter ist seit #1123 eingeschaltet; die tatsächliche entgeltliche Aktivierung verlangt weiterhin Workspace-/Vertrags-/Tax-/Billing-Readiness. Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
+- Login und vorbereitete öffentliche Starter-Registrierung; die entgeltliche Aktivierung bleibt bis zur bestätigten Zahlungsbedingungen-Version gesperrt (`payment_terms_version_unresolved`). Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
 - kostenloser temporärer Demo-Workspace, getrennt vom entgeltlichen Angebot;
 - geschütztes Dashboard;
 - Kontakte, Kontaktdetail und Suche;
@@ -147,7 +135,7 @@ Aktiv beziehungsweise produktnah:
   `0600` sein. Owner-/Secondary-Zugangsdaten bleiben davon unberührt. Bis zum
   tatsächlichen grünen Lauf bleibt die externe Staging-Abnahme offen;
 - consent-gesteuerte Meta-Pixel-Infrastruktur als ausdrücklich begrenzte Marketing-Messung auf einer festen Allowlist öffentlicher Seiten: ausschließlich `PageView` ohne Eventparameter; keine geschützten CRM-/Admin-/Billing-Routen, keine Produkt-Analytics-Suite, kein Laden ohne Einwilligung, keine PII-/CRM-/Billing-Daten, blockierte geschützte same-origin Referrer, kein Advanced Matching und keine Conversions API; vorbereitete Conversion-Events bleiben ohne separate fachliche und datenschutzrechtliche Freigabe unverdrahtet; ohne gültige `NEXT_PUBLIC_META_PIXEL_ID` vollständig deaktiviert;
-- Daily (0 € Setup + 1 €/Tag) ist gemäß FM-DEC-014 das dritte Zahlungsmodell im Katalog, täglich kündbar und ohne Referral-Rabatt. Gemäß FM-DEC-020 ist es nur bei Admin ON öffentlich auswählbar; OFF sperrt neue Aufnahmen und erhält bestehende Abos sowie Vertragszugriff. Die bestehende Engine samt `internal_daily_test` und Stripe-Preis bleibt kompatibel erhalten. Die öffentliche Account-Auswahl hängt nicht mehr von einem 24-Stunden-Fenster ab. Authentifizierte Workspace-Provisionierung und Checkout benötigen weiterhin sichere RPCs, Browser-INSERT-Verbot, aktuelle ausdrückliche Zustimmung sowie vollständige Tax-/Stripe-/Webhook-/Billing-Readiness. Die historische Beta-Fensterlogik ist kein Ersatz für diese Freigaben; generische Migrationen bleiben ausgeschlossen.
+- Daily (0 € Setup + 1 €/Tag) ist gemäß FM-DEC-014 das dritte dauerhafte öffentliche Zahlungsmodell, täglich kündbar und ohne Referral-Rabatt. Die bestehende Engine samt `internal_daily_test` und Stripe-Preis bleibt kompatibel erhalten. Die öffentliche Account-Auswahl hängt nicht mehr von einem 24-Stunden-Fenster ab. Authentifizierte Workspace-Provisionierung und Checkout benötigen weiterhin sichere RPCs, Browser-INSERT-Verbot, aktuelle ausdrückliche Zustimmung sowie vollständige Tax-/Stripe-/Webhook-/Billing-Readiness. Die historische Beta-Fensterlogik ist kein Ersatz für diese Freigaben; generische Migrationen bleiben ausgeschlossen.
 
 Das entgeltliche öffentliche Pilot-/Setup-Paket ist eingestellt. Legacy-Pilot-Checkout bleibt gesperrt. Die kostenlose Demo ist kein entgeltliches Paket.
 
@@ -782,7 +770,7 @@ Alte Preise wie `299 €/Monat`, `499 €/Monat` oder `Agency ab 990 €/Monat` 
 | Starter 12 Monate | aktiv | 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach monatliche Verlängerung |
 
 Starter-Abos können unter `/settings/package` sicher zum Vertragsende gekündigt werden. Starter Flex endet frühestens zum bezahlten Periodenende; Starter 12 Monate frühestens zum Ende der Mindestlaufzeit. Nach Vertragsende bleiben Account, Login, CRM-Historie, Rechnungen und Export sichtbar; neue Nachrichten, Channel-Sync, externe Ingress-Webhooks, KI-Vorschläge, KI-Analysen und kostenpflichtige Hintergrundverarbeitung sind fail-closed zu deaktivieren.
-| Daily | Drittes Katalogmodell; öffentlich nur bei Admin ON, FM-DEC-014 / FM-DEC-020 | 0 € Setup + 1 €/Tag; täglich kündbar; kein Referral-Rabatt; vorhandene Daily-Engine/Prices bleiben erhalten. Kontoauswahl nur bei Admin ON, kostenpflichtige Aktivierung benötigt weiterhin Vertrags-, Tax-, Workspace- und Billing-Nachweise. |
+| Daily | Drittes dauerhaftes öffentliches Angebot, FM-DEC-014 | 0 € Setup + 1 €/Tag; täglich kündbar; kein Referral-Rabatt; vorhandene Daily-Engine/Prices bleiben erhalten. Kontoauswahl offen, kostenpflichtige Aktivierung benötigt weiterhin Vertrags-, Tax-, Workspace- und Billing-Nachweise. |
 | Growth | Coming Soon | nicht produktiv buchbar |
 | Agency | Coming Soon / auf Anfrage | nicht als Vollversion freigeschaltet |
 | Enterprise / Custom | später | individuelle Prüfung |
@@ -994,7 +982,7 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 - `/register` erstellt ein kostenloses Anmeldekonto. Es schreibt weder Workspace- noch Billing- oder Zahlungsannahmewerte. Paket- und Referral-Auswahl sind unverbindliche, begrenzte Profilpräferenzen.
 - `/register/confirm` akzeptiert nur den unterstützten Signup-Callback einschließlich des optionalen einzelnen leeren Supabase-Markers `sb`, bereinigt die URL sofort und prüft die bestätigte E-Mail über Supabase. Nach erfolgreicher Prüfung synchronisiert die Seite die Session automatisch und führt unmittelbar zu `/workspace/setup`. Nur nach fehlgeschlagener Sitzungsübernahme erscheint ein ausdrücklich auszulösender Wiederholungsbutton; eine erneute Bestätigungsmail ist dafür nicht erforderlich. Ein ersetzter Callback oder das Verlassen der Seite bricht eine noch ausstehende Sitzungsübernahme ab. Ein gültiger Signup-Rücksprung zur bestehenden Site URL wird in diesen Ablauf übernommen.
 - Nach der Anmeldung führt `/workspace/setup` die bestehende serverseitige Paket-/Zustimmungsprüfung aus. Das Verfahren für Workspace-RPC, Preise und Vertragsversion sowie Checkout-, Tax- und Billing-Ledger-Gates bleiben unverändert.
-- Owner-Test vom 14. September 2026 auf dem veröffentlichten #1124-Stand: Daily-Auswahl bei der Registrierung, tatsächlich zugestellte Bestätigungsmail und Rückkehr nach Bestätigung beziehungsweise Login zu `/workspace/setup` sind im gezeigten Fall bestätigt. Die dort fehlende Daily-Anzeige wird unabhängig von der weiterhin offenen kostenpflichtigen Aktivierung korrigiert. Die frische Stripe-Live-Abfrage zeigt weiterhin keine Tax-Registrierungen. Vollständige Workspace-/Referral-/Zahlungsabnahme bleibt offen.
+- Beobachtung vom 10. September 2026: Im verbundenen FanMind-Stripe-Live-Konto existieren keine Tax-Registrierungen. Aktive Tax-Settings allein sind keine Freigabe. Kostenpflichtige Aktivierung, echte E-Mail-Zustellung und anschließende vollständige Workspace-/Referral-/Zahlungsabnahme sind daher nicht durch diesen Code-Nachweis erledigt.
 - Ausführlicher Ablauf und verbleibende Voraussetzungen: `docs/operations/WEB_REGISTRATION.md`; Task `FM-REG-002`. Die separate abgeschlossene Passwort-Recovery-Korrektur bleibt `FM-REG-001`.
 
 ### Datenschutz- und AVV-Readiness

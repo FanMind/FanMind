@@ -1,7 +1,3 @@
-## FM-DEC-020 — administrator-controlled Daily offer
-
-Owner instruction 2026-09-14 resumes Daily release for the intended 12-tester/14-day cohort and requires an Admin ON/OFF switch. Supersedes only FM-DEC-014 unconditional public visibility: Daily remains an approved EUR 1/day offer, but visibility/new admission now follow a persistent administrator switch with no 24-hour expiry. OFF hides public offers including Landing/registration/setup/AGB/payment terms, blocks new Daily provisioning/checkout, and does not cancel existing subscriptions or remove their customer terms/invoices/cancellation. No tester opt-ins, actual payment, tax registration or paid-flow completion inferred.
-
 ## FM-DEC-018 — Creator connects through the platform and returns to FanMind
 - Date: 2026-09-11
 - Status: CONFIRMED

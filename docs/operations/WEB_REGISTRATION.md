@@ -1,12 +1,10 @@
-> Aktualisierung 14.09.2026 (FM-DEC-020): Daily-Sichtbarkeit und neue Buchungen werden dauerhaft unter `/admin/settings` ein-/ausgeschaltet. Aus blendet das öffentliche Angebot seitenweit aus; bestehende Abos und Vertragsdaten bleiben erhalten. Frühere Aussagen zur bedingungslosen Sichtbarkeit sind dadurch ersetzt. Technische Workspace-/Stripe-/Tax-/Billing-Freigaben bleiben erforderlich.
-
 # Web registration and activation
 
 Task FM-REG-002 / FM-CR-026, 10 September 2026.
 
 ## Implemented account flow
 
-1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. The form explains that free account creation does not activate a paid package. FM-DEC-014 adds Daily to the catalog; FM-DEC-020 makes the public choice available only at Admin ON, via `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
+1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. FM-DEC-014 adds the permanent public Daily choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
 2. Signup submits only bounded personal profile data and non-authoritative package/referral preferences. No `plan_id`, `commercial_option`, billing state, payment-terms version or acceptance timestamp is written. It creates no Workspace and invokes no Stripe operation.
 3. The custom Supabase Auth client supplies an explicit same-environment `emailRedirectTo`. Success explains email confirmation, existing-account login and recovery without claiming that an obfuscated existing-account response represents a new account. Resend uses the existing provider signup-resend endpoint with a 60-second UI cooldown; provider rate limits remain authoritative.
 4. `/register/confirm` requires one bounded `type=signup` implicit session, accepts and discards Supabase's optional single empty `sb` marker, rejects errors/mixed/query/duplicate credentials, scrubs callback material before async work and checks the confirmed email through authenticated Supabase `/user`. After verification it automatically synchronizes the existing server session and continues to localized `/workspace/setup`. A failed session handoff retains the verified identity and offers an explicit retry or login; it does not automatically resend. Invalid, expired or used links offer a direct confirmation resend form, login and password recovery.
@@ -25,7 +23,7 @@ Read-only Auth readiness on 10 September 2026 also confirms that the FanMind Pro
 
 ## Three-offer follow-up (FM-BILL-002 / PR #1096)
 
-FM-DEC-014 authorizes the Daily catalog model. FM-DEC-020 limits public selection and new admission to Admin ON; OFF preserves existing subscriptions and contract access.
+FM-DEC-014 separately authorizes permanent Daily selection and publication.
 The former 24-hour admission window is superseded; existing server-side
 provisioning, consent, Tax and Billing controls still apply. Current missing
 Production RPC/contract and ledger rollout, provider naming, tax and exact
@@ -70,7 +68,3 @@ former redundant continuation click. Receipt:
 The separately deployed #1123 payment-terms switch stays enabled; this correction
 does not reconfigure Stripe, install provisioning SQL or accept the entire paid
 customer flow. The owner-controlled real email-to-setup result remains required.
-
-## Owner walkthrough after #1124 — 14 September 2026
-
-The owner supplied the real selected-Daily registration screen, delivered confirmation email and authenticated /workspace/setup result; ordinary login reaches the same setup page. This accepts that bounded real account/email/session path for the shown test. Do not repeat signup, delete the account or reopen the corrected callback/template. Setup still displayed only the two Starter options; the current consolidated #1125 candidate preserves Daily visibility and preference while keeping actual admission gated. Complete Workspace/checkout/webhook and recovery-negative acceptance remain separate.

@@ -63,9 +63,6 @@ async function provisionWorkspace(formData: FormData) {
     redirect("/workspace/setup?error=payment_terms_changed");
   }
 
-  if (selection.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
-    redirect("/workspace/setup?error=offer_unavailable");
-  }
   const trustedUser = buildTrustedProvisioningUser(
     data.user,
     selection,
@@ -118,12 +115,12 @@ export default async function WorkspaceSetupPage({
   if (existingWorkspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") redirect("/login?demo_deleted=1");
   if (existingWorkspaceResult.workspace) redirect(getBillingContinuationHref(existingWorkspaceResult.workspace));
 
+  const dailyPreferred =
+    data.user.user_metadata?.registration_option_preference === "internal_daily_test";
   const activationEnabled = isPaymentTermsActivationEnabled();
-  const dailyOfferEnabled = PUBLIC_DAILY_PLAN_ENABLED && await getPublicDailyTestPlanEnabled();
-  const dailyPreferred = data.user.user_metadata?.registration_option_preference === "internal_daily_test";
   const dailyTestAvailable = activationEnabled
     ? isInternalDailyTestAdmissionReady({
-        windowEnabled: dailyOfferEnabled,
+        windowEnabled: PUBLIC_DAILY_PLAN_ENABLED || await getPublicDailyTestPlanEnabled(),
         workspaceProvisioningReady:
           await isInternalDailyTestWorkspaceProvisioningReady(),
         stripeConfig: getStripeConfigStatus(),
@@ -162,14 +159,6 @@ export default async function WorkspaceSetupPage({
           </p>
         </div>
 
-        {dailyPreferred && !dailyOfferEnabled && (
-          <p role="status">
-            {locale === "en"
-              ? "Your saved offer is currently unavailable. Your choice is retained; no monthly plan was selected and no payment was started."
-              : "Dein vorgemerktes Angebot ist derzeit nicht verfügbar. Deine Auswahl bleibt erhalten; es wurde kein Monatstarif ausgewählt und keine Zahlung gestartet."}
-          </p>
-        )}
-
         {activationEnabled ? (
           <div className={styles.emptyState}>
             <form action={provisionWorkspace}>
@@ -201,39 +190,6 @@ export default async function WorkspaceSetupPage({
                 {locale === "en" ? "Starter 12 months · €0 setup + €312/month" : "Starter 12 Monate · 0 € Setup + 312 €/Monat"}
               </button>
             </form>
-
-            {dailyOfferEnabled ? (
-              <form action={provisionWorkspace}>
-                <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
-                <input type="hidden" name="planId" value="pilot" />
-                <input
-                  type="hidden"
-                  name="commercialOption"
-                  value="internal_daily_test"
-                />
-                <label>
-                  <input type="checkbox" name="paymentTermsAccepted" required />
-                  {" "}
-                  {locale === "en"
-                    ? "I accept the current payment terms."
-                    : "Ich akzeptiere die aktuellen Zahlungsbedingungen."}
-                </label>
-                <p>
-                  <Link href={paymentTermsHref}>
-                    {locale === "en"
-                      ? "Open payment terms"
-                      : "Zahlungsbedingungen öffnen"}
-                  </Link>
-                </p>
-                <button className={styles.primaryButton} type="submit" disabled={!dailyTestAvailable}>
-                  {locale === "en"
-                    ? "Daily · €0 setup + €1/day"
-                    : "Daily · 0 € Setup + 1 €/Tag"}
-                </button>
-                {dailyPreferred && <p>{locale === "en" ? "Your saved choice. No monthly plan is selected for you." : "Deine vorgemerkte Auswahl. Es wird kein Monatstarif für dich ausgewählt."}</p>}
-                {!dailyTestAvailable && <p role="status">{locale === "en" ? "Activation is being prepared. Your choice is retained; no payment has started." : "Die Aktivierung wird vorbereitet. Deine Auswahl bleibt erhalten; es wurde keine Zahlung gestartet."}</p>}
-              </form>
-            ) : null}
           </div>
         ) : (
           <div className={styles.emptyState}>
@@ -244,16 +200,61 @@ export default async function WorkspaceSetupPage({
           </div>
         )}
 
+        <div className={styles.emptyState}>
+          <form action={provisionWorkspace}>
+            {dailyPreferred ? (
+              <p>
+                <strong>{locale === "en" ? "Your saved selection: Daily" : "Deine vorgemerkte Auswahl: Daily"}</strong>
+              </p>
+            ) : null}
+            <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
+            <input type="hidden" name="planId" value="pilot" />
+            <input
+              type="hidden"
+              name="commercialOption"
+              value="internal_daily_test"
+            />
+            <label>
+              <input type="checkbox" name="paymentTermsAccepted" required disabled={!dailyTestAvailable} />
+              {" "}
+              {locale === "en"
+                ? "I accept the current payment terms."
+                : "Ich akzeptiere die aktuellen Zahlungsbedingungen."}
+            </label>
+            <p>
+              <Link href={paymentTermsHref}>
+                {locale === "en"
+                  ? "Open payment terms"
+                  : "Zahlungsbedingungen öffnen"}
+              </Link>
+            </p>
+            <button
+              className={styles.primaryButton}
+              type="submit"
+              disabled={!dailyTestAvailable}
+              aria-describedby={!dailyTestAvailable ? "daily-activation-status" : undefined}
+              style={!dailyTestAvailable ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+            >
+              {locale === "en"
+                ? "Daily · €0 setup + €1/day"
+                : "Daily · 0 € Setup + 1 €/Tag"}
+            </button>
+            {!dailyTestAvailable ? (
+              <p id="daily-activation-status" role="status">
+                {locale === "en"
+                  ? "Daily activation is still being prepared. Your account and saved selection remain available. No subscription or payment has started."
+                  : "Die Daily-Aktivierung wird noch vorbereitet. Dein Konto und deine vorgemerkte Auswahl bleiben erhalten. Es wurde kein Abo und keine Zahlung gestartet."}
+              </p>
+            ) : null}
+          </form>
+        </div>
+
         {errorCode ? (
           <p className={styles.error} role="alert">
             {errorCode === "payment_terms_changed"
               ? locale === "en"
                 ? "The payment terms have changed. Please review the current terms and confirm your package again."
                 : "Die Zahlungsbedingungen wurden geändert. Bitte lies die aktuellen Bedingungen und bestätige dein Paket erneut."
-              : errorCode === "offer_unavailable" || (!dailyOfferEnabled && errorCode === "daily_test_window_closed")
-              ? locale === "en"
-                ? "This offer is currently unavailable. No workspace was created."
-                : "Dieses Angebot ist derzeit nicht verfügbar. Es wurde kein Workspace angelegt."
               : errorCode === "daily_test_window_closed"
               ? locale === "en"
                 ? "Daily activation is not ready yet. No workspace was created. Please try again after activation becomes available."

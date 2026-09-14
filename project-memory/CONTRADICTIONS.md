@@ -1,9 +1,3 @@
-## CTR-FM-REGISTRATION-DAILY-20260914
-- Task: FM-REG-002 / FM-BILL-003. Status: RESOLVED for bounded source/evidence reconciliation; complete Daily activation remains PARTIAL.
-- Older central readers and callback receipts describe undelivered/unaccepted mail or pending #1123/#1124 publication. Actual merged releases, independent deployed audit 34866973595 and the owner's new screenshots prove payment-terms switch enabled and real mail-to-setup continuation. No new callback repair or repeat registration is needed.
-- Main setup hides Daily when admission readiness is false, despite Daily selected and promised during registration. #1126 implements visibility and saved-choice retention separately from admission. Existing #1125 and #1126 overlap; consolidate the exact reviewed #1126 source into the earlier #1125, with one settings authority and current-head CI/review. Do not merge both.
-- The observed empty Tax-registration list does not mean Stripe is unconfigured. Missing Production Daily RPC/readiness and actual Tax/consent/billing prerequisites remain separately unaccepted. Do not convert the owner's successful email test into paid Workspace/checkout acceptance.
-
 ## CTR-FM-CREATOR-FOUNDATION-CLOSEOUT-20260911
 - Related: FM-CREATOR-001 / FM-CR-033 / #1109; Risk R4; Status: RESOLVED for reader scope.
 - Source A: older started-work, dependency/loop/external fields still instructed completed source/schema work; reader draft also treated a job-local false flag as deployed-process evidence and mixed external consent into an executable next action.

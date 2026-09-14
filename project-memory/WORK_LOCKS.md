@@ -1,8 +1,8 @@
-## LOCK-FM-DAILY-ADMIN-20260914
-
-- 2026-09-14 review follow-through: Final review of consolidated head 4ded389c8814301cb177952d3cb5de10883985ac completed with five actionable findings despite fourteen green CI checks. Bounded corrections now align root AGENTS with FM-DEC-020, reject unrecognized/partial settings objects, number visible payment-term sections consecutively, require an isolated fresh browser-test server, and disable/report closed Daily admission in the Admin start flow including a concurrent closure. These are additions to the imported #1126 baseline; its prior green review is not treated as final acceptance of this new head. Sixty focused tests, Production build and TypeScript pass locally; require fresh final-head CI/review and normal deployment before a release claim.
-
-Task: FM-BILL-003 / FM-DEC-020. Status: ACTIVE. Holder: Codex registration continuation. Risk: R4. Branch/PR: fix/daily-admin-visibility-20260914 / #1125. The independently reviewed #1126 source at 0f3dff00549ec329b76a2be2bc56523ef3397c60 is consolidated into the existing earlier #1125, whose checked parent is e2761e7d94b26ab3e8f66ebdfc30ced5a1b10312. Both refs were unchanged and no workflow was running at takeover. #1126 is a superseded candidate, never a second release. No takeover of the separate #1121 Social/#1122 handoff task scope; shared reader edits must be reconciled before their later merge. Completed #1124 callback stays intact. Evidence: policy/runtime/HTTP/browser regressions, current-head CI/review and exact deployed audit. Recovery: bounded source revert or Admin OFF; no change to accounts/contracts/Stripe/schema.
+## LOCK-FM-DAILY-SETUP-UI-20260914
+- Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
+- Scope: current owner-narrowed Daily setup UI only, existing branch fix/daily-admin-visibility-20260914 and single PR #1125. Broader Admin control and duplicate #1126 are superseded for this release.
+- Evidence: actual rendered setup regressions including unavailable readiness, persisted preference and absence of automatic provisioning; independent final-diff review; all current-head CI; normal deploy and exact live /api/version SHA.
+- Closeout: the final #1125 receipt releases this bounded lock and records deployment/browser instructions; no subsequent work starts. DB/provisioning remains separate. Recovery is a normal reviewed source revert, with no data migration or provider transaction to undo.
 
 ## LOCK-FM-CREATOR-META-FINISH-20260911
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033

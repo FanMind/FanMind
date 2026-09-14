@@ -499,7 +499,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Daily ist in DE/EN bei eingeschaltetem Angebot wählbar und erzeugt nur eine Kontopräferenz", async ({ page }) => {
+  test("Daily bleibt in DE/EN dauerhaft wählbar und erzeugt nur eine Kontopräferenz", async ({ page }) => {
     let signupBody: Record<string, unknown> | null = null;
     let workspaceWrites = 0;
     await page.route("**/api/register/workspace", async route => { workspaceWrites++; await route.abort(); });

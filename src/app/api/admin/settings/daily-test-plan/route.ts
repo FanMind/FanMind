@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { requirePlatformAdmin } from "@/lib/admin";
 import {
   isTrustedFanMindMutationRequest,
   readBoundedFormDataRequest,
 } from "@/lib/httpMutationPolicy.mjs";
 import { setPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
+import { getStripeConfigStatus } from "@/lib/stripeBilling";
+import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 
 const MAX_DAILY_TEST_PLAN_BODY_BYTES = 1_000;
 
@@ -25,20 +27,21 @@ export async function POST(request: NextRequest) {
     );
   }
   const formData = parsedBody.value;
-  const values = formData.getAll("enabled");
-  if (values.length !== 1 || !["true", "false"].includes(String(values[0])) ||
-      [...formData.keys()].some(key => key !== "enabled")) {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  const enabled = formData.get("enabled") === "true";
+
+  if (
+    enabled &&
+    (
+      !(await isInternalDailyTestWorkspaceProvisioningReady()) ||
+      !isInternalDailyTestStripeReady(getStripeConfigStatus())
+    )
+  ) {
+    const destination = new URL("/admin/settings", request.url);
+    destination.searchParams.set("daily_test_plan", "not_ready");
+    return NextResponse.redirect(destination, { status: 303 });
   }
-  const enabled = values[0] === "true";
-  // Catalog visibility is independent of paid-activation readiness. Turning
-  // OFF must always be possible; turning ON never skips billing/schema checks.
-  try {
-    await setPublicDailyTestPlanEnabled(enabled, admin.email ?? admin.id);
-  } catch {
-    return NextResponse.json({ error: "settings_not_saved" }, { status: 503 });
-  }
-  revalidatePath("/", "layout");
+
+  await setPublicDailyTestPlanEnabled(enabled, admin.email ?? admin.id);
 
   const destination = new URL("/admin/settings", request.url);
   destination.searchParams.set("daily_test_plan", enabled ? "enabled" : "disabled");

@@ -1,10 +1,8 @@
-> Aktualisierung 14.09.2026 (FM-DEC-020): Daily-Sichtbarkeit und neue Buchungen werden dauerhaft unter `/admin/settings` ein-/ausgeschaltet. Aus blendet das öffentliche Angebot seitenweit aus; bestehende Abos und Vertragsdaten bleiben erhalten. Frühere Aussagen zur bedingungslosen Sichtbarkeit sind dadurch ersetzt. Technische Workspace-/Stripe-/Tax-/Billing-Freigaben bleiben erforderlich.
-
 # Öffentliche Daily-Test-Provisionierung
 
-## Aktuelle Produktentscheidung — 14. September 2026
+## Aktuelle Produktentscheidung — 10. September 2026
 
-FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten Zahlungsmodell im Katalog. FM-DEC-020 begrenzt seine öffentliche Auswahl auf Admin ON; OFF sperrt neue Aufnahmen und erhält bestehende Abos und Vertragszugriff.
+FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten dauerhaften öffentlichen Angebot.
 Der bisherige 24-Stunden-Schalter steuert die öffentliche Tarifwahl nicht mehr. Die Anwendung
 verwendet weiterhin den bestehenden `internal_daily_test`-RPC-/Stripe-Vertrag; sichere
 Session, aktuelle Zahlungszustimmung, Browser-INSERT-Verbot, Provisioning-Readiness und
@@ -13,11 +11,11 @@ und Admin-Öffnung ist durch diese Produktentscheidung ersetzt. SQL, Checksum un
 bleiben gültig; Production benötigt weiterhin seinen kontrollierten Datenbank-Rollout.
 
 
-Produktstand: 14. September 2026; gepinnter SQL-Stand: 9. August 2026
+Produktstand: 10. September 2026; gepinnter SQL-Stand: 9. August 2026
 
 ## Zweck und harte Grenze
 
-Daily ist nur bei Admin ON öffentlich auswählbar. Die kostenlose Kontoerstellung
+Daily ist dauerhaft öffentlich auswählbar. Die kostenlose Kontoerstellung
 speichert nur eine Präferenz. Die kostenpflichtige Workspace-Aktivierung
 verlangt weiterhin alle folgenden Grenzen gleichzeitig:
 

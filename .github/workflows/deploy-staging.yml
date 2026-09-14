@@ -102,7 +102,6 @@ jobs:
           rsync --archive --delete \
             --exclude '.git/' \
             --exclude '.env.production' \
-            --exclude '.fanmind-runtime-settings.json' \
             "$GITHUB_WORKSPACE/" "$SOURCE_DIR/"
           if [ -e "$SOURCE_DIR/.git" ]; then
             echo "Git metadata must not persist in the staging runtime path." >&2

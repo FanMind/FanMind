@@ -1,10 +1,10 @@
-## FM-BILL-003 — Daily admin publication 2026-09-14
-
-- 2026-09-14 review follow-through: Final review of consolidated head 4ded389c8814301cb177952d3cb5de10883985ac completed with five actionable findings despite fourteen green CI checks. Bounded corrections now align root AGENTS with FM-DEC-020, reject unrecognized/partial settings objects, number visible payment-term sections consecutively, require an isolated fresh browser-test server, and disable/report closed Daily admission in the Admin start flow including a concurrent closure. These are additions to the imported #1126 baseline; its prior green review is not treated as final acceptance of this new head. Sixty focused tests, Production build and TypeScript pass locally; require fresh final-head CI/review and normal deployment before a release claim.
-
-Continuation after the owner's real screenshots: registration with Daily selected, delivered confirmation email, and both confirmation/login reaching /workspace/setup are owner-observed. Only the two Starter forms are shown on deployed main 1e011edd. Preserve this completed email-to-setup substep and the existing account. Consolidate the reviewed #1126 source into earlier #1125 under the existing lock; retain one settings authority and remove the superseded diagnostic workflows. Current candidate tests/review/deployment are still required. Actual Daily provisioning/Tax/checkout remain open; a visible disabled offer is not paid activation.
-
-Status: IN_PROGRESS. Risk: R4. Lock: LOCK-FM-DAILY-ADMIN-20260914. Source publication explicitly authorized. Scope: existing persistent Admin catalog control, public visibility, new-admission boundary, retained preference and tests. Completed: mandatory readers/current main 1e011edd and PR #1124 release reconciled. Still open: source tests/review/normal deploy; separate controlled Production provisioning and actual Tax/checkout acceptance. No callback rebuild, new DB, price recreation, account deletion, auto-charge or invented Google Play cohort. Owner action: later actual test; no repeated publication approval.
+## FM-REG-001 — Daily setup display closeout
+- Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
+- Baseline: main 1e011edd422d3cc7165ac3a4be221af8b8c57f56, already deployed #1124; final source continues the existing branch fix/daily-admin-visibility-20260914 and single PR #1125.
+- Completed so far: reconciled the owner test and narrowed the final tree to setup presentation and meaningful regression tests. Removed the broader Admin switch from this release; preserved all existing actions and readiness gates.
+- Still open/exact next step: complete current-head automated checks and independent review, merge #1125, normal Production deploy and exact /api/version proof, then existing-account browser handoff and stop. The final PR receipt closes this bounded lock; overall Daily provisioning remains PARTIAL.
+- Owner action needed: existing-account browser test after deployed confirmation, no re-registration. No Production DB migration, real payment, Price creation or next work package is authorized here.
+- Recovery: bounded source revert through the normal isolated release; this presentation change has no data mutation.
 
 ## Creator foundation closeout — 2026-09-11
 - Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.
