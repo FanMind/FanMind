@@ -23,10 +23,8 @@ test("signup account metadata cannot grant a paid plan, billing state or terms a
   for (const key of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) assert.equal(Object.hasOwn(metadata, key), false);
 });
 
-test("signup callback accepts bounded Supabase signup sessions", () => {
+test("signup callback accepts only one bounded signup session in a clean fragment", () => {
   assert.deepEqual(readWebRegistrationSession({ hash: signupHash, search: "?lang=en" }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh", expires_in: 3600 });
-  assert.deepEqual(readWebRegistrationSession({ hash: "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer" }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh" });
-  assert.deepEqual(readWebRegistrationSession({ hash: `${signupHash}&provider_token=provider-token&provider_refresh_token=provider-refresh` }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh", expires_in: 3600 });
   for (const hash of ["", validHash, signupHash.replace("type=signup", "type=recovery"), `${signupHash}&access_token=other`, `${signupHash}&error=denied`, `${signupHash}&code=mixed`, signupHash.replace("expires_in=3600", "expires_in=0"), signupHash.replace("expires_in=3600", "expires_in=86401"), signupHash.replace("synthetic-refresh", "x".repeat(4001)), "x".repeat(16385)]) {
     assert.equal(readWebRegistrationSession({ hash }), null);
   }
@@ -78,4 +76,26 @@ test("query credentials and mixed query/fragment recovery flows are rejected", (
   }
   assert.equal(readWebRecoveryAccessToken({ search: "?type=recovery&access_token=token" }), null);
   assert.equal(readWebRecoveryAccessToken({ hash: validHash, search: "a".repeat(2049) }), null);
+});
+
+test("signup accepts Supabase's empty sb redirect marker without retaining it", () => {
+  // Matches supabase/auth internal/tokens/service.go AsRedirectURL:
+  // access_token, expires_at, expires_in, refresh_token, sb=, token_type, type.
+  const upstreamHash = "#access_token=synthetic.signup.token&expires_at=1800000000&expires_in=3600&refresh_token=synthetic-refresh&sb=&token_type=bearer&type=signup";
+  const expected = { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh", expires_in: 3600 };
+  for (const hash of [upstreamHash, upstreamHash.replace("&sb=", "&sb"), signupHash]) {
+    assert.deepEqual(readWebRegistrationSession({ hash }), expected);
+  }
+});
+
+test("the sb marker cannot weaken signup credential, purpose or error checks", () => {
+  for (const suffix of ["&sb=&sb=", "&sb=unexpected", "&sb=%20", "&sb=&provider_token=unrelated", "&sb=&error_code=otp_expired", "&sb=&code=mixed", "&sb=&token_hash=mixed", "&sb=&access_token=other"]) {
+    assert.equal(readWebRegistrationSession({ hash: `${signupHash}${suffix}` }), null);
+  }
+  for (const type of ["recovery", "magiclink", "invite", "email_change"]) {
+    assert.equal(readWebRegistrationSession({ hash: `${signupHash.replace("type=signup", `type=${type}`)}&sb=` }), null);
+  }
+  assert.equal(readWebRegistrationSession({ hash: `${signupHash}&sb=`, search: "?sb=" }), null);
+  assert.equal(readWebRegistrationSession({ hash: `${signupHash.replace("&expires_in=3600", "")}&sb=` }), null);
+  assert.equal(readWebRegistrationSession({ hash: "#type=signup&sb=" }), null);
 });

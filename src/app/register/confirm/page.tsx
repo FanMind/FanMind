@@ -61,7 +61,23 @@ export default function ConfirmRegistrationPage({ searchParams }: {
         const result = session ? await supabase.auth.getUser(session.access_token) : null;
         if (!active || current !== generation) return;
         const user = result?.data.user;
-        setVerifiedEmail(!result?.error && user?.id && user.email && user.email_confirmed_at ? user.email : null);
+        if (result?.error || !session || !user?.id || !user.email || !user.email_confirmed_at) {
+          setVerifiedEmail(null);
+          return;
+        }
+        setVerifiedEmail(user.email);
+        setChecking(false);
+        setContinuing(true);
+        try {
+          // Only a provider-verified signup session may reach authenticated setup.
+          // Email confirmation alone never creates a Workspace or starts payment.
+          await syncSupabaseSessionForServer(session);
+          if (!active || current !== generation || callback.current !== session) return;
+          callback.current = null;
+          window.location.replace(setupHref);
+        } catch {
+          if (active && current === generation) { setError(true); setContinuing(false); }
+        }
       } catch {
         if (active && current === generation) setVerifiedEmail(null);
       } finally {
@@ -79,14 +95,15 @@ export default function ConfirmRegistrationPage({ searchParams }: {
     window.addEventListener("hashchange", changed);
     void verify();
     return () => { active = false; window.removeEventListener("hashchange", changed); };
-  }, [confirmHref, supabase]);
+  }, [confirmHref, setupHref, supabase]);
 
   async function continueWithAccount() {
     const session = callback.current;
     if (!session || !verifiedEmail || checking || continuing) return;
     setContinuing(true);
+    setError(false);
     try {
-      // The verified address is shown before the user chooses this account.
+      // Explicit retry only after the automatic session handoff failed.
       await syncSupabaseSessionForServer(session);
       if (callback.current !== session) return;
       callback.current = null;
@@ -111,10 +128,12 @@ export default function ConfirmRegistrationPage({ searchParams }: {
           {checking ? <p role="status">{english ? "Please wait a moment." : "Einen Moment bitte."}</p>
             : verifiedEmail ? <>
               <p>{verifiedEmail}</p>
-              <p>{english ? "Your account is ready. Continue to your package setup." : "Dein Konto ist bereit. Weiter zur Einrichtung deines Pakets."}</p>
-              <button type="button" className={styles.primaryButton} disabled={continuing} onClick={continueWithAccount}>
+              <p role="status">{continuing
+                ? (english ? "Opening your workspace setup…" : "Deine Workspace-Einrichtung wird geöffnet…")
+                : (english ? "Your account is ready. Continue to your package setup." : "Dein Konto ist bereit. Weiter zur Einrichtung deines Pakets.")}</p>
+              {error && <button type="button" className={styles.primaryButton} disabled={continuing} onClick={continueWithAccount}>
                 {english ? "Continue with this account" : "Mit diesem Konto fortfahren"}
-              </button>
+              </button>}
             </> : <p className={styles.notice} role="status">
               {english ? "This link is invalid, expired or has already been used. If you have already confirmed your email, sign in. Otherwise request a new confirmation below." : "Dieser Link ist ungültig, abgelaufen oder wurde bereits verwendet. Wenn du deine E-Mail bereits bestätigt hast, melde dich an. Andernfalls fordere hier eine neue Bestätigung an."}
             </p>}

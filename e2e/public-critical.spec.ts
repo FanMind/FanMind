@@ -492,7 +492,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
   test("Kontoregistrierung bleibt vor kostenpflichtiger Aktivierung erreichbar", async ({ page }) => {
     await page.goto("/register?plan=starter&option=starter_no_setup_commitment&lang=en");
     await expect(page.getByRole("heading", { name: "Create your FanMind account" })).toBeVisible();
-    await expect(page.getByText(/Paid package activation is still being prepared/u)).toBeVisible();
+    await expect(page.getByText(/Paid package activation is still being prepared/u)).toHaveCount(0);
     await expect(page.locator('input[value="starter_no_setup_commitment"]')).toBeChecked();
     await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
     await expect(page.getByText("payment_terms_version_unresolved", { exact: true })).toHaveCount(0);
@@ -575,24 +575,34 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Signup-Rückkehr prüft bestätigte Identität und entfernt Tokens vor dem Provider-Aufruf", async ({ page }) => {
+  test("Signup-Rückkehr prüft Identität und öffnet Setup erst nach Sitzungsübernahme automatisch", async ({ page }) => {
     let cleanBeforeVerify = false;
     let sessionCalls = 0;
-    await page.route("**/api/auth/session", async (route) => { sessionCalls++; await route.fulfill({ status: 200, body: '{"ok":true}', contentType: "application/json" }); });
+    let releaseSession!: () => void;
+    const sessionGate = new Promise<void>((resolve) => { releaseSession = resolve; });
+    await page.route("**/api/auth/session", async (route) => {
+      sessionCalls++;
+      await sessionGate;
+      await route.fulfill({ status: 200, body: '{"ok":true}', contentType: "application/json" });
+    });
     await page.route("**/auth/v1/user", async (route) => {
       if (route.request().method() === "GET") cleanBeforeVerify = !page.url().includes("access_token") && !page.url().includes("refresh_token");
       await fulfillCorsJson(route, 200, { id: "synthetic-confirmed-user", email: "signup@example.com", email_confirmed_at: "2026-09-10T00:00:00Z" });
     });
-    const fragment = "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer&expires_in=3600";
-    // Exercise the existing Supabase Site URL fallback as well as the new page.
-    await page.goto(`/${fragment}`);
-    await expect(page).toHaveURL(`${E2E_BASE_URL}/register/confirm`);
-    await expect(page.getByRole("heading", { name: "Deine E-Mail ist bestätigt" })).toBeVisible();
-    expect(cleanBeforeVerify).toBe(true);
-    expect(sessionCalls).toBe(0);
-    await expect(page.getByText("signup@example.com", { exact: true })).toBeVisible();
     await page.route("**/workspace/setup", async (route) => route.fulfill({ status: 200, body: "Synthetic setup continuation" }));
-    await page.getByRole("button", { name: "Mit diesem Konto fortfahren" }).click();
+    const fragment = "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer&expires_in=3600&expires_at=1800000000&sb=";
+    try {
+      // Exercise the provider's current redirect shape and Site URL fallback.
+      await page.goto(`/${fragment}`);
+      await expect(page).toHaveURL(`${E2E_BASE_URL}/register/confirm`);
+      await expect(page.getByRole("heading", { name: "Deine E-Mail ist bestätigt" })).toBeVisible();
+      expect(cleanBeforeVerify).toBe(true);
+      await expect.poll(() => sessionCalls).toBe(1);
+      await expect(page.getByText("signup@example.com", { exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Mit diesem Konto fortfahren" })).toHaveCount(0);
+    } finally {
+      releaseSession();
+    }
     await expect(page).toHaveURL(`${E2E_BASE_URL}/workspace/setup`);
     expect(sessionCalls).toBe(1);
   });

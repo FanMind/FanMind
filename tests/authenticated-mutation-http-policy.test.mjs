@@ -226,10 +226,10 @@ test("selected browser and admin boundaries never forward provider error text", 
   );
 });
 
-test("paid activation stays fail-closed and checkout uses only server-owned workspace evidence", async () => {
+test("owner-enabled terms retain consent checks and server-owned checkout evidence", async () => {
   assert.equal(CURRENT_PAYMENT_TERMS_VERSION, "2026-06-v1");
-  assert.equal(PAYMENT_TERMS_ACTIVATION_ENABLED, false);
-  assert.equal(isPaymentTermsActivationEnabled(), false);
+  assert.equal(PAYMENT_TERMS_ACTIVATION_ENABLED, true);
+  assert.equal(isPaymentTermsActivationEnabled(), true);
   assert.equal(PAYMENT_TERMS_ACTIVATION_BLOCK_CODE, "payment_terms_version_unresolved");
 
   const validMetadataShape = {
@@ -240,6 +240,13 @@ test("paid activation stays fail-closed and checkout uses only server-owned work
   assert.deepEqual(
     evaluateCurrentPaymentTermsUserEvidence(validMetadataShape, {
       now: Date.parse("2026-08-09T12:01:00.000Z"),
+    }).blockers,
+    [],
+  );
+  assert.deepEqual(
+    evaluateCurrentPaymentTermsUserEvidence(validMetadataShape, {
+      now: Date.parse("2026-08-09T12:01:00.000Z"),
+      activationEnabled: false,
     }).blockers,
     ["version_unresolved"],
   );

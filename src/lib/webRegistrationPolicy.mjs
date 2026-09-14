@@ -27,24 +27,20 @@ export function buildRegistrationAccountMetadata(input) {
 export function readWebRegistrationSession({ hash = "", search = "" } = {}) {
   if (typeof hash !== "string" || typeof search !== "string" || hash.length > 16384 || search.length > 2048) return null;
   const query = new URLSearchParams(search);
-  // Supabase may preserve the requested locale in the query, but all auth
-  // credentials must remain in the fragment. Reject provider errors/codes.
   if ([...query.keys()].some((key) => key !== "lang") || query.getAll("lang").length > 1) return null;
   const params = new URLSearchParams(hash.replace(/^#/, ""));
-  const allowed = new Set(["access_token", "refresh_token", "token_type", "type", "expires_in", "expires_at", "provider_token", "provider_refresh_token"]);
+  const allowed = new Set(["access_token", "refresh_token", "token_type", "type", "expires_in", "expires_at", "sb"]);
   if ([...params.keys()].some((key) => !allowed.has(key) || params.getAll(key).length !== 1)) return null;
+  // Supabase AsRedirectURL adds the empty sb marker; it is not a credential.
+  // Accept only that exact single marker, keeping all other fields strict.
+  if (params.has("sb") && params.get("sb") !== "") return null;
   if (params.get("type") !== "signup" || params.get("token_type") !== "bearer") return null;
   const accessToken = params.get("access_token");
   const refreshToken = params.get("refresh_token");
   const token = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && /^[A-Za-z0-9._~-]+$/.test(value);
-  const expiresRaw = params.get("expires_in");
-  const expiresIn = expiresRaw === null ? undefined : Number(expiresRaw);
-  if (!token(accessToken, 8192) || !token(refreshToken, 4000)) return null;
-  if (expiresIn !== undefined && (!Number.isSafeInteger(expiresIn) || expiresIn <= 0 || expiresIn > 86400)) return null;
-  // provider_* values are never retained; they are irrelevant for email signup.
-  return expiresIn === undefined
-    ? { access_token: accessToken, refresh_token: refreshToken }
-    : { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn };
+  const expiresIn = Number(params.get("expires_in"));
+  if (!token(accessToken, 8192) || !token(refreshToken, 4000) || !Number.isSafeInteger(expiresIn) || expiresIn <= 0 || expiresIn > 86400) return null;
+  return { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn };
 }
 
 export function registrationErrorMessage(error, language = "de") {
