@@ -189,3 +189,6 @@ test("all three rendered package forms carry the displayed revision", async () =
     assert.equal(fields.paymentTermsVersion, revision);
   }
 });
+
+// Keep setup access checks in the existing test:operations entry point.
+import "./payment-terms-setup-access.test.mjs";
