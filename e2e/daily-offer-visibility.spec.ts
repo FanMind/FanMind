@@ -13,6 +13,8 @@ async function setOffer(enabled: boolean) {
 }
 
 test.beforeEach(async ({ context }) => {
+  // Match the existing public suite: the synthetic visitor rejects marketing.
+  await context.addCookies([{ name: "fanmind_marketing_consent", value: "denied", url: "http://127.0.0.1:3100", sameSite: "Lax" }]);
   await context.route("**/*.supabase.co/**", route => route.abort());
   await context.route("**/api/register/workspace", route => route.abort());
   await context.route("**/api/billing/**", route => route.abort());
