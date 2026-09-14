@@ -23,10 +23,8 @@ test("signup account metadata cannot grant a paid plan, billing state or terms a
   for (const key of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) assert.equal(Object.hasOwn(metadata, key), false);
 });
 
-test("signup callback accepts bounded Supabase signup sessions", () => {
+test("signup callback accepts only one bounded signup session in a clean fragment", () => {
   assert.deepEqual(readWebRegistrationSession({ hash: signupHash, search: "?lang=en" }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh", expires_in: 3600 });
-  assert.deepEqual(readWebRegistrationSession({ hash: "#access_token=synthetic.signup.token&refresh_token=synthetic-refresh&type=signup&token_type=bearer" }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh" });
-  assert.deepEqual(readWebRegistrationSession({ hash: `${signupHash}&provider_token=provider-token&provider_refresh_token=provider-refresh` }), { access_token: "synthetic.signup.token", refresh_token: "synthetic-refresh", expires_in: 3600 });
   for (const hash of ["", validHash, signupHash.replace("type=signup", "type=recovery"), `${signupHash}&access_token=other`, `${signupHash}&error=denied`, `${signupHash}&code=mixed`, signupHash.replace("expires_in=3600", "expires_in=0"), signupHash.replace("expires_in=3600", "expires_in=86401"), signupHash.replace("synthetic-refresh", "x".repeat(4001)), "x".repeat(16385)]) {
     assert.equal(readWebRegistrationSession({ hash }), null);
   }

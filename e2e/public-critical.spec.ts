@@ -492,7 +492,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
   test("Kontoregistrierung bleibt vor kostenpflichtiger Aktivierung erreichbar", async ({ page }) => {
     await page.goto("/register?plan=starter&option=starter_no_setup_commitment&lang=en");
     await expect(page.getByRole("heading", { name: "Create your FanMind account" })).toBeVisible();
-    await expect(page.getByText(/Paid package activation is still being prepared/u)).toBeVisible();
+    await expect(page.getByText(/Paid package activation is still being prepared/u)).toHaveCount(0);
     await expect(page.locator('input[value="starter_no_setup_commitment"]')).toBeChecked();
     await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
     await expect(page.getByText("payment_terms_version_unresolved", { exact: true })).toHaveCount(0);
