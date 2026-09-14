@@ -1,16 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { lstat, open, rename, unlink } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open, rename, unlink } from "node:fs/promises";
 
 const MAX_BYTES = 8192;
 
 async function readPayload(file) {
   try {
-    const stat = await lstat(file);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_BYTES) throw new Error("daily_settings_invalid");
-    const handle = await open(file, "r");
+    // Open without following a terminal symlink, then inspect only that same
+    // descriptor. NONBLOCK prevents a replaced path/FIFO from hanging a request.
+    const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     try {
       const opened = await handle.stat();
-      if (!opened.isFile() || opened.ino !== stat.ino || opened.dev !== stat.dev || opened.size > MAX_BYTES) throw new Error("daily_settings_invalid");
+      if (!opened.isFile() || opened.size > MAX_BYTES) throw new Error("daily_settings_invalid");
       const buffer = Buffer.alloc(MAX_BYTES + 1);
       const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
       if (bytesRead > MAX_BYTES) throw new Error("daily_settings_invalid");

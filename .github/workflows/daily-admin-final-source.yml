@@ -1,0 +1,43 @@
+name: Assemble final Daily visibility regression correction
+on:
+  push:
+    branches: [fix/daily-admin-visibility-20260914]
+    paths: [.github/workflows/daily-admin-final-source.yml]
+permissions:
+  contents: write
+jobs:
+  source:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/fix/daily-admin-visibility-20260914'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Bind and correct the remaining public AGB Daily sentence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, urllib.request
+          from pathlib import Path
+          assert os.environ['GITHUB_REPOSITORY'] == 'FanMind/FanMind'
+          assert os.environ['GITHUB_REF'] == 'refs/heads/fix/daily-admin-visibility-20260914'
+          file = 'src/app/agb/page.tsx'
+          assert subprocess.check_output(['git','hash-object',file], text=True).strip() == 'c3d29624bb32af560a36d3c5f2a9e8dd524ccc25'
+          text = Path(file).read_text()
+          old = 'Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl.'
+          new = '{showDaily ? "Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl." : "Die verfügbaren kostenpflichtigen Pakete werden bei der Registrierung angezeigt."}'
+          assert text.count(old) == 1
+          text = text.replace(old,new)
+          Path(file).write_text(text)
+          subprocess.run(['git','diff','--check'],check=True)
+          def api(endpoint,payload):
+              req = urllib.request.Request('https://api.github.com/repos/FanMind/FanMind/git/'+endpoint, data=json.dumps(payload).encode(), method='POST', headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+              with urllib.request.urlopen(req,timeout=30) as response: return json.load(response)
+          sha = api('blobs', {'content':text,'encoding':'utf-8'})['sha']
+          entries = [{'path':file,'mode':'100644','type':'blob','sha':sha},{'path':'.github/workflows/daily-admin-final-source.yml','mode':'100644','type':'blob','sha':None}]
+          tree = subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          print('FINAL_DAILY_TREE='+api('trees',{'base_tree':tree,'tree':entries})['sha'])
+          print('FINAL_DAILY_PARENT='+subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+          PY
