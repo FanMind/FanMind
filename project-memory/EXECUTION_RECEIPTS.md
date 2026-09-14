@@ -1,3 +1,13 @@
+## RECEIPT-FM-SOCIAL-INBOUND-SETUP-20260914
+- Status: PARTIAL; Task FM-SOC3-001 / FM-SOC7-001 / FM-CR-037; Risk R4; LOCK-FM-SOCIAL-INBOUND-20260914 remains tied to the pending access steps.
+- Baseline: remote main and local source both 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b. Main rechecked before publication; existing OAuth, webhook and initial-import foundations reused.
+- Implementation: bounded Facebook/Instagram workspace_inactive error guidance and redacted setup handoff. No processing-policy, billing, OAuth, token, dependency, migration or workflow changes.
+- Independent input: authenticated central Meta app and FanMind channel/admin surfaces. Facebook stops before Meta at Workspace admission; Instagram configuration is incomplete. Existing messages/feed subscriptions are present; no subscription change. The requested Instagram use-case save was rejected by automatic approval review and remains unsaved pending specific owner confirmation.
+- Local verification: 26 existing initial-import, integration-foundation and disclosure tests pass with zero skips/failures, including inactive/foreign/member rejection and safe metadata export. Changed-file ESLint and diff whitespace checks pass. Memory quality required explicit Risk/next-step field formatting; corrected before publication. CI/review and deployed UI proof remain separate.
+- Falsifier: a completed OAuth/received-message claim would be contradicted by the observed workspace_inactive return and incomplete Instagram configuration. No real inbound, account grant or completed App Review is claimed. Existing broad internal-test activation changes prices/email/no_expiry and was not used.
+- Recovery: review/revert the small source-copy change using the normal release flow if later deployed. No runtime/provider/billing mutation occurred, so no account or data rollback is needed for this checkpoint.
+- Retained open work: precise Workspace access, approved Instagram setup, each Creator's consent and current provider positive/negative acceptance; OnlyFans official/contractual direct access; proposed tester cohort and the separate Ubuntu reboot. Owner helper stopped at dry_run with LOGIN_SESSION_WARNING=true / REBOOT_NOT_REQUESTED=true and unchanged boot ID.
+
 ## RECEIPT-FM-OPS-RUNNER-LAYOUT-20260913
 - Status: IN_PROGRESS; Task FM-OPS-001 / FM-CR-036; Risk R4; retain LOCK-FM-OPS-REBOOT-20260912.
 - Prior source closure: #1116 final receipt 5653464231; reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Backup/database Restore/Creator foundation remain closed within their accepted scope.

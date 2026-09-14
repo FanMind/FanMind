@@ -687,3 +687,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: accept only the independently pinned nginx unit plus its exact typed D-Bus condition and a fresh protected executable check; retain all unknown/additional-condition, drop-in, assertion, reference and runner gates.
 - Evidence plan: official package/source, exact owner readout, executable positive/negative/redaction tests, current-head review/CI, normal deploy and installed audit. Production and Staging runners share this host; both need fresh idle evidence before reboot.
 - Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.
+
+## Facebook / Instagram / OnlyFans inbound continuation — 2026-09-14
+- Task/change: FM-SOC3-001 / FM-SOC7-001 / FM-CR-037; Risk R4; LOCK-FM-SOCIAL-INBOUND-20260914.
+- Risk: R4
+- Owner intent: connect incoming messages first, finish the app and remaining work afterwards, then recruit 12 people for a useful 14-day test. This is not proof that a Store cohort or provider approval has started.
+- Status: PARTIAL; provider setup blocked at concrete access boundaries, source clarification prepared.
+- Completed so far: current GitHub main/source comparison and secure FanMind login. Authenticated Meta app is in Development; callback and messages/feed v25.0 subscriptions exist, message_echoes is unsubscribed. Facebook reports server configuration ready but its actual start returns workspace_inactive before reaching Meta. Instagram reports server configuration incomplete. Both channel error branches now explain workspace_inactive without exposing raw provider errors or changing processing gates.
+- Countercheck: source start routes independently produce workspace_inactive on failed Workspace admission; admin UI status is unknown. The existing free-internal-access action also changes billing, administratively confirms email and sets no_expiry; it was not used. Detailed bounded evidence is in docs/integrations/CREATOR_SOCIAL_HANDOFF.md.
+- Still open: narrowly scoped Workspace processing access, Instagram Login use-case/server configuration, account consent, current target acceptance and real inbound messages. OnlyFans official/contractual direct access remains unproven; the evaluated third party describes credential storage/automated login and was not used.
+- Exact next step: publish the unaffected source checkpoint, then obtain the specific Meta use-case confirmation and complete the authorized setup.
+- Owner action needed: automatic approval review rejected saving the selected Instagram Messaging/Content use case because it requires specific action-time approval for expanding this Meta app's permissions. Selection remains unsaved; ask only for that concrete action. Never retry the rejected save through another route.
+- Retained Operations: latest owner helper reports dry_run exit 1, LOGIN_SESSION_WARNING=true and REBOOT_NOT_REQUESTED=true, with unchanged host boot ID. LOCK-FM-OPS-REBOOT-20260912 stays open; no forced restart or session termination.

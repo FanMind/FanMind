@@ -682,3 +682,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, Production audit 34648286758 / 103525002411; exact Exoscale Production instance verified in authenticated portal/console.
 - Scope: reviewed read-only boot-readiness evidence and owner-requested controlled Ubuntu restart, contingent on real start/recovery preflight. Preserve accepted Backup/DB Restore/Creator evidence.
 - Evidence/recovery: meaningful negative/redaction tests and current-head CI/review, installed current-release readout, exact before/after host and service receipts. Readout performs no service/data mutation; normal release revert retained; host-login recovery still unverified.
+
+## LOCK-FM-SOCIAL-INBOUND-20260914
+- Task: FM-SOC3-001 / FM-SOC7-001 / FM-CR-037
+- Status: ACTIVE
+- Risk: R4
+- Holder: Codex
+- Baseline: independently read GitHub main 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b, matching local source. Drift/freshness controls pass; expired Staging observations cannot prove current provider acceptance.
+- Scope: owner resumes Facebook, Instagram and OnlyFans incoming-message setup before Android and the proposed 12-person, 14-day test. Reuse existing source and prepare central provider configuration and account-specific consent.
+- Evidence plan: current authenticated Meta app state, actual FanMind channel state and source-contract comparison; real authorized inbound, isolation, duplicate, disconnect and reconnect evidence before acceptance.
+- Recovery boundary: preserve existing Facebook subscriptions/callbacks and existing data. No destructive reset, guessed resource binding, automatic send, secret disclosure, general Production activation or OnlyFans bypass. Provider/account consent and any required action-time confirmation remain at their concrete boundary.
+- Parallel work: LOCK-FM-OPS-REBOOT-20260912 stays open; latest owner helper stopped at dry_run with LOGIN_SESSION_WARNING=true and REBOOT_NOT_REQUESTED=true. No reboot retry is implied by this Social work.
+- Current checkpoint: source/UI clarification and provider evidence prepared; real connections remain blocked by Workspace admission and Instagram configuration. Automatic approval review rejected the concrete Meta use-case save pending explicit owner confirmation. Keep this lock tied to that continuation; no provider or billing acceptance claimed.
