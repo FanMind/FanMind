@@ -157,6 +157,35 @@ export default async function WorkspaceSetupPage({
           </p>
         </div>
 
+        {!activationEnabled && (
+          <section
+            className={styles.emptyState}
+            aria-label={locale === "en" ? "Review payment terms" : "Zahlungsbedingungen prüfen"}
+          >
+            <h2>{locale === "en" ? "Payment terms" : "Zahlungsbedingungen"}</h2>
+            <p>
+              {locale === "en"
+                ? "You can already review prices, contract periods and payment terms. Opening the document does not confirm a package or start a subscription."
+                : "Preise, Laufzeiten und Zahlungsbedingungen kannst du bereits prüfen. Das Öffnen des Dokuments bestätigt kein Paket und startet kein Abo."}
+            </p>
+            <Link
+              className={styles.primaryButton}
+              href={paymentTermsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {locale === "en"
+                ? "Open payment terms (new tab)"
+                : "Zahlungsbedingungen öffnen (neuer Tab)"}
+            </Link>
+            <p role="status">
+              {locale === "en"
+                ? "Package confirmation and checkout are not enabled yet. This is access to the document, not a payment activation."
+                : "Verbindliche Paketbestätigung und Checkout sind noch nicht freigeschaltet. Hier öffnest du die Bedingungen, nicht die Zahlungsaktivierung."}
+            </p>
+          </section>
+        )}
+
         {activationEnabled ? (
           <div className={styles.emptyState}>
             <form action={provisionWorkspace}>
