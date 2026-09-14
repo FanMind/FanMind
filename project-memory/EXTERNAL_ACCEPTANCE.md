@@ -1,8 +1,10 @@
 ## EXT-META-CREATOR-APP-20260911
 - Related: FM-SOC3-001 / phase3_social; Status: OPEN; Risk R4.
-- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; missing personal Meta access and individual Creator consent remain factual requirements.
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; concrete app-permission approval and individual Creator consent remain factual requirements.
 - Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. The same Phase 3 owner queue also retains the separate dormant WhatsApp credentials/permissions and Staging/E2E control under EXT-WHATSAPP. Code/schema/feature flags cannot close this control.
-- Current access observation: the secure login request ended with a connection error; a fresh canonical Meta developer tab still shows the sign-in methods. No signed-in app state, credentials or successful login is claimed. No app configuration was changed.
+- Historical access observation, 2026-09-11: secure login failed. Superseded for access only by the authenticated 2026-09-14 FanMind Meta app inspection and successful secure FanMind login; no provider acceptance follows from login.
+- Current checkpoint, FM-CR-037: Facebook messages/feed callbacks exist in the development app, but FanMind stops connection before Meta with workspace_inactive. Instagram server configuration is incomplete. The matching direct Instagram Login use case is prepared but saving it was rejected by automatic approval review pending specific action-time owner approval for expanding app permissions. No app configuration, subscription or billing access was changed. See docs/integrations/CREATOR_SOCIAL_HANDOFF.md; real account consent and inbound/isolation/duplicate/revocation proof remain open.
+- Follow-up owner consent: Bernd explicitly approved adding that named use case. The subsequent single save was again rejected by automatic approval review, this time requiring explicit approval of the bundle's content-publishing capability. No save occurred. Existing source requests only basic/manage_messages for messaging; this does not prove a narrower option exists in the Meta setup dialog. Retain the user's approval and the distinct remaining review block separately.
 - TikTok/X are independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-PHASE7-EXTERNAL / phase7_social; Meta completion cannot close them.
 
 ## Provider resources / Creator continuation — 2026-09-11
@@ -144,7 +146,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Risk: R3
 - External system: Meta Business/App Review
 - Acceptance: required permissions/accounts approved and real Facebook/Instagram E2E passes.
-- Current evidence: technical data/token/content/conversation foundations exist and FM-EV-023 confirms their current server-only Staging metadata boundaries; no Meta account, OAuth, permission, App Review or real provider E2E action was performed.
+- Current evidence: technical foundations and historical FM-EV-023 Staging metadata proof exist. The authenticated 2026-09-14 central-app inspection and blocked FanMind connection attempt are recorded under EXT-META-CREATOR-APP-20260911. No completed account OAuth, new permission grant, App Review or real provider E2E acceptance is claimed; old Staging proof is not current target evidence.
 - Repository evidence alone sufficient: no
 
 ## EXT-WHATSAPP
@@ -193,6 +195,7 @@ Statuses: `OPEN`, `BLOCKED`, `ACCEPTED`, `NOT_REQUIRED`, `SUPERSEDED`.
 - Acceptance: either official/contractual API basis with real accepted connector, or explicit documented `NOT_REQUIRED/unavailable` finishline decision because no compliant integration path exists.
 - Repository evidence alone sufficient: no
 - Hard boundary: no scraping, proxy reverse engineering or platform bypass.
+- 2026-09-14 checkpoint: official/contractual direct access remains unproven. Reviewed third-party docs describe stored platform credentials and automated login; that service was not used. This is neither a positive OnlyFans approval nor proof that no allowed access could exist. Manual import does not satisfy automatic inbound acceptance.
 
 ## EXT-LEGAL-TAX-AVV
 - Related: FM-LEGAL-001

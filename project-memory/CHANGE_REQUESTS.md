@@ -349,3 +349,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.
 - Scope: read-only installed boot-readiness collector/verifier and normal reviewed publication; then exact-target controlled reboot only after concrete start/recovery facts, with pre/post evidence. No generic remote command, migration, backup or restore repetition.
 - Acceptance: negative/redaction tests, current-head CI/security/review, installed target-bound readout and changed host boot ID plus exact release/nginx/PM2/process Node/eight health postchecks. Source-only proof cannot accept a reboot.
+
+## FM-CR-037 — Real incoming messages before the app test
+- Date: 2026-09-14
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001 / FM-SOC7-001; Risk R4.
+- Source: Bernd explicitly requests Facebook, Instagram and OnlyFans connections for actual incoming messages, with app completion and the proposed 12-person/14-day test afterwards.
+- Scope: resume existing provider setup, identify actual access/configuration gaps and complete bounded authorized incoming-message acceptance. Preserve FM-DEC-016/018 account isolation, provider-hosted credentials and one text writing style.
+- Acceptance: each claimed connection must have real provider/account authorization and a received-message proof plus isolation, duplicate and revocation checks. Manual OnlyFans import, a central app, successful OAuth or repository tests alone do not prove automatic message reception. No unofficial login/scraping implementation or invented provider/legal approval.
