@@ -223,7 +223,7 @@ const getSections = (showDaily: boolean): TermsSection[] => [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl. Eine Kontoerstellung startet noch kein Abo.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. {showDaily ? "Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl." : "Die verfügbaren kostenpflichtigen Pakete werden bei der Registrierung angezeigt."} Eine Kontoerstellung startet noch kein Abo.</p>
       </>
     ),
   },
