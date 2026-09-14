@@ -31,6 +31,15 @@ Setup-Zwischenstand auf Main `4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b`.
   Freigabeprüfung verlangt die ausdrückliche Bestätigung dieser konkreten
   Erweiterung der App-Berechtigungen. Die älteren Instagram-Einstellungen unter
   Messenger belegen keine fertige Konfiguration dieses Login-Pfads.
+  Bernd hat das Hinzufügen anschließend ausdrücklich bestätigt. Der daraufhin
+  einmal angeforderte Speichervorgang wurde erneut durch die automatische
+  Freigabeprüfung abgelehnt: Sie verlangt nun ausdrücklich die Bestätigung,
+  dass dieser gebündelte Anwendungsfall auch Content-Veröffentlichung umfasst.
+  Es wurde weiterhin nichts gespeichert. Der vorhandene FanMind-Nachrichtenpfad
+  fordert nur `instagram_business_basic` und `instagram_business_manage_messages`
+  an; `instagram_business_content_publish` kommt im Anwendungscode nicht vor.
+  Das belegt die Begrenzung des bestehenden OAuth-Pfads, aber keine getrennte
+  Nachrichten-Auswahl im noch ungespeicherten Meta-Einrichtungsdialog.
 - **Workspace-Zugang:** Der bestehende interne Testzugang-Knopf bestätigt zugleich
   die E-Mail administrativ, überschreibt Abrechnungsfelder und setzt unter anderem
   `no_expiry`. Er ist keine begrenzte 14-Tage-Freigabe und wurde nicht betätigt.
