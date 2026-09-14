@@ -44,7 +44,7 @@ const compiledRoute = compile("src/app/api/register/workspace/route.ts");
 // Expose the actual private action only in the test VM; production exports stay unchanged.
 const compiledPage = compile("src/app/workspace/setup/page.tsx", "\nexport { provisionWorkspace };\n");
 
-function harness({ activationEnabled = true, authenticated = true } = {}) {
+function harness({ activationEnabled = true, authenticated = true, dailyEnabled = true } = {}) {
   const calls = [];
   const user = {
     id: "synthetic-owner",
@@ -79,7 +79,7 @@ function harness({ activationEnabled = true, authenticated = true } = {}) {
     "@/lib/workspaceLocale": { resolveWorkspaceLocale: async () => "de" },
     "@/lib/workspaceAuthorization": { getUserAuthorizedWorkspaceDashboard: async () => ({ workspace: null }) },
     "@/lib/internalDailyTestReadinessPolicy.mjs": { isInternalDailyTestAdmissionReady: () => true },
-    "@/lib/runtimeProductSettings": { getPublicDailyTestPlanEnabled: async () => true },
+    "@/lib/runtimeProductSettings": { getPublicDailyTestPlanEnabled: async () => dailyEnabled },
     "@/lib/publicDailyPlanPolicy.mjs": { PUBLIC_DAILY_PLAN_ENABLED: true },
     "@/lib/stripeBilling": { getStripeConfigStatus: () => ({}) },
     "@/lib/supabase/server": {
@@ -188,4 +188,16 @@ test("all three rendered package forms carry the displayed revision", async () =
     walk(renderedForm, (node) => { if (node.type === "input") fields[node.props.name] = node.props.value; });
     assert.equal(fields.paymentTermsVersion, revision);
   }
+});
+
+
+test("administrator OFF blocks Daily through both authenticated entry points without replacing it with a monthly plan", async () => {
+  const h = harness({ dailyEnabled: false });
+  const response = await h.route.POST(request({ ...selections[2], ...accepted }));
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).code, "offer_unavailable");
+  await assert.rejects(h.page.provisionWorkspace(form(selections[2])), error => error.location === "/workspace/setup?error=offer_unavailable");
+  assert.equal(h.calls.length, 0);
+  assert.equal((await h.route.POST(request({ ...selections[0], ...accepted }))).status, 200);
+  assert.equal(h.calls.length, 1);
 });

@@ -3,17 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { chmod, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  createTemporaryPublicDailyTestPlanSettings,
-  getTemporaryPublicDailyTestPlanStatus,
-} from "@/lib/publicDailyTestPlanPolicy.mjs";
-
-type RuntimeProductSettings = {
-  publicDailyTestPlanEnabled: boolean;
-  publicDailyTestPlanEnabledUntil?: string | null;
-  updatedAt?: string;
-  updatedBy?: string;
-};
+import { createPublicDailyOfferSettings, readPublicDailyOfferEnabled } from "@/lib/publicDailyOfferSettingsPolicy.mjs";
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
@@ -33,10 +23,11 @@ export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
         /* turbopackIgnore: true */ getSettingsPath(),
         "utf8",
       ),
-    ) as Partial<RuntimeProductSettings>;
-    return getTemporaryPublicDailyTestPlanStatus(payload).enabled;
+    ) as Record<string, unknown>;
+    return readPublicDailyOfferEnabled(payload);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    // Preserve the already-public offer on first deployment; malformed reads fail closed.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
     return false;
   }
 }
@@ -47,10 +38,15 @@ export async function setPublicDailyTestPlanEnabled(
 ): Promise<void> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  const payload: RuntimeProductSettings = createTemporaryPublicDailyTestPlanSettings(
-    enabled,
-    updatedBy,
-  );
+  let previous: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(await readFile(/* turbopackIgnore: true */ settingsPath, "utf8"));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid_settings");
+    previous = parsed as Record<string, unknown>;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  const payload = createPublicDailyOfferSettings(enabled, updatedBy, previous);
 
   await writeFile(temporaryPath, `${JSON.stringify(payload)}\n`, {
     encoding: "utf8",

@@ -1,3 +1,7 @@
+## FM-LOOP-DAILY-ADMIN-20260914
+
+FM-BILL-003 resumed by explicit owner instruction. Persistent Daily catalog switch and site-wide OFF behavior are the current bounded release. Existing paid prerequisites stay open: fresh Production query still finds all three provisioning functions absent, browser INSERT allowed and one Starter missing terms evidence. Fresh connected Stripe Live Tax registration list is empty (has_more=false). Price configuration is not reopened. No generic db push, old consent relabeling or readiness bypass. Do not invite a paid cohort or claim full payment readiness from this UI release.
+
 # FanMind Open Loops
 
 ## FM-LOOP-REBOOT-PUBLICATION-20260912

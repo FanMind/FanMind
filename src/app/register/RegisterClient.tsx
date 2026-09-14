@@ -245,6 +245,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
     planId: resolvedPlanId,
     testPlan: requestedTestPlan,
   });
+  const dailyOfferClosed = dailyRequested && !enablePublicDailyTestPlan;
   const isRetiredPilotRequested = resolvedPlanId === "pilot" && !isDailyTestPlanSelected;
   const selectedPlanId = isRetiredPilotRequested ? "starter" : resolvedPlanId;
   const isProductiveRegistration =
@@ -285,6 +286,10 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting || success) return;
+    if (dailyOfferClosed) {
+      setError(language === "en" ? "This offer is currently unavailable. Please choose an available package explicitly." : "Dieses Angebot ist derzeit nicht verfügbar. Bitte wähle ausdrücklich ein verfügbares Paket.");
+      return;
+    }
     if (!isProductiveRegistration || (selectedPlanId !== "pilot" && selectedPlanId !== "starter")) {
       setError(language === "en" ? "Please select Starter to create an account." : "Bitte wähle Starter, um ein Konto anzulegen.");
       return;
@@ -358,10 +363,10 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
           <nav className={styles.topLinks} aria-label="Registrierung Navigation">
             <LanguageSwitch
               language={language}
-              planId={selectedPlanId}
+              planId={dailyRequested ? resolvedPlanId : selectedPlanId}
               starterOption={starterOption}
               referralCode={referralCodeFromUrl}
-              testPlan={isDailyTestPlanSelected ? "daily" : undefined}
+              testPlan={dailyRequested ? "daily" : undefined}
             />
             <span>{copy.loginPrompt}</span>
             <a href={loginHref}>{copy.loginLink}</a>
@@ -381,7 +386,8 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 {language === "en" ? `Unknown package “${rawPlan}”. Starter is shown instead.` : `Unbekanntes Paket „${rawPlan}“. Starter wird stattdessen angezeigt.`}
               </p>
             )}
-            {isRetiredPilotRequested && (
+            {dailyOfferClosed && <p className={styles.warning} role="status">{language === "en" ? "This offer is currently unavailable. Please choose an available package explicitly." : "Dieses Angebot ist derzeit nicht verfügbar. Bitte wähle ausdrücklich ein verfügbares Paket."}</p>}
+            {isRetiredPilotRequested && !dailyOfferClosed && (
               <p className={styles.warning} role="status">
                 {language === "en" ? "The former paid pilot offer is closed. Starter is shown instead." : "Das frühere entgeltliche Pilotangebot ist geschlossen. Stattdessen wird Starter angezeigt."}
               </p>

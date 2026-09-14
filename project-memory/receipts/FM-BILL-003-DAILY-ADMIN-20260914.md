@@ -1,0 +1,16 @@
+# Daily administrator switch — 2026-09-14
+
+Risk R4; FM-BILL-003 / FM-DEC-020; LOCK-FM-DAILY-ADMIN-20260914.
+State: IMPLEMENTED_NOT_VERIFIED. Owner requested publication and persistent site-wide switching for the intended Play test cohort. Actual opt-in/device duration and payments are not asserted.
+
+Fresh baseline main 1e011edd422d3cc7165ac3a4be221af8b8c57f56 includes the deployed #1124 callback. Mandatory memory/canonical sources and current PRs were inspected. Supabase Production catalog read still has no Starter/Daily/readiness RPC, browser INSERT remains and one Starter lacks terms evidence. Stripe Live Tax registration read returned an empty complete list. These are retained distinct blockers, not missing pricing work.
+
+The temporary branch-only workbench workflow transported tracked public source and reproducibly installed public dependencies with contents-read permission, no secrets, persist-credentials=false and one-day retention. Its artifact SHA256 f0da72de81d31c0afa819c649ef9360b2853405956e64892b4d885674805cb43 was independently matched. It is removed from the final change; no persistent workflow is added. Local source modules/mandatory readers can now be inspected and tested without unverified excerpt reconstruction. All final edits must be published through current branch/PR, final-head CI/review and normal deploy.
+
+Visibility and new admission use the existing runtime settings file and Admin endpoint. Explicit OFF survives restarts/releases; no 24-hour expiry. OFF does not cancel subscriptions or revoke active tester access. Contract terms remain accessible to an authenticated existing Daily customer; public promotion/registration/setup offers disappear. Missing initial setting preserves already-published visibility, malformed settings fail closed. Schema/Tax/Billing admission remains independent and unchanged. No database write or Stripe change is in this UI release.
+
+Verification and deployment outcomes are appended only from actual results. Recovery: Admin OFF or bounded source revert, never delete accounts or relabel consent. Full paid rollout remains separately open.
+
+Local checks: Production-compatible Next 16.3.4 build, product truth and accepted-state drift checks passed. Thirty-four focused policy, real filesystem, admin HTTP, consent/admission, settings and test-ownership checks passed. Full Operations run produced 1362 passes, three environment-reserved PG17 skips and eight failures: the missing test-script ownership was corrected; seven unchanged Production-runner native/path checks remain unverified in this restricted container and must pass in native CI. The installed local Chromium refuses loopback navigation with ERR_BLOCKED_BY_ADMINISTRATOR; no browser acceptance is claimed and no browser security policy is overridden. Required native desktop/mobile CI runs the new full-site ON/OFF and stale-deep-link scenarios.
+
+Source publication uses a temporary exact-branch-only hosted transport for a checksum-bound, allowlisted public source patch because local GitHub DNS/credentials are unavailable. It cannot update main, use protected environments or mutate providers. Transport files/workflows are removed before final PR review. No schema rollout or paid-flow completion is inferred.

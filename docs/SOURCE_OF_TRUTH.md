@@ -1,5 +1,17 @@
 # FanMind Source of Truth
 
+## Daily-Angebot per Administrator steuern — 14. September 2026
+
+FM-DEC-020 ersetzt die bedingungslose öffentliche Sichtbarkeit aus FM-DEC-014.
+Unter `/admin/settings` steuert der Administrator das Daily-Angebot dauerhaft,
+ohne 24-Stunden-Ablauf. Aus blendet Landing-, Registrierungs-, Setup- und
+öffentliche Angebotsbedingungen aus und sperrt neue Daily-Provisionierung und
+Checkout-Anforderungen. Bestehende Abos, Testerzugänge, Rechnungen und
+Kündigungen bleiben unverändert; bestehende Kunden behalten ihre Vertragsbedingungen.
+Ein verändert keine Preise, ersetzt keine ausdrückliche Zahlungszustimmung und
+überspringt keine Workspace-/Stripe-/Tax-/Billing-Prüfung. Die echte vollständige
+Daily-Aktivierung und Google-Play-Kohortenabnahme bleiben getrennt offen.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-

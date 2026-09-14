@@ -1,3 +1,7 @@
+## LOCK-FM-DAILY-ADMIN-20260914
+
+Task: FM-BILL-003 / FM-DEC-020. Status: ACTIVE. Holder: ChatGPT. Risk: R4. Branch: fix/daily-admin-rollout-20260914. No overlap with pending #1121 Social/#1122 handoff documentation or completed #1124 callback. Evidence: policy/runtime/HTTP/browser regressions, current-head CI/review and exact deployed audit. Recovery: bounded source revert or Admin OFF; no change to accounts/contracts/Stripe/schema.
+
 ## LOCK-FM-CREATOR-META-FINISH-20260911
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033
 - Status: RELEASED

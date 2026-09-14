@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import {
   isTrustedFanMindMutationRequest,
   readBoundedJsonRequest,
@@ -97,6 +98,9 @@ export async function POST(request: NextRequest) {
     return jsonNoStore({ ok: false, code: "payment_terms_changed" }, 409);
   }
 
+  if (selection.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
+    return jsonNoStore({ error: "Das gewählte Angebot ist derzeit nicht verfügbar.", code: "offer_unavailable" }, 409);
+  }
   const trustedUser = buildTrustedProvisioningUser(
     data.user,
     selection,

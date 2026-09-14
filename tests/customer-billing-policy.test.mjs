@@ -567,8 +567,9 @@ test("public Daily selection preserves protected Workspace and payment admission
     checkoutRouteSource,
     /commercialOption === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(config\)/u,
   );
-  assert.match(runtimeSettingsSource, /publicDailyTestPlanEnabled/);
-  assert.match(runtimeSettingsSource, /getTemporaryPublicDailyTestPlanStatus/);
+  assert.match(runtimeSettingsSource, /createPublicDailyOfferSettings/);
+  assert.match(runtimeSettingsSource, /readPublicDailyOfferEnabled/);
+  assert.doesNotMatch(runtimeSettingsSource, /getTemporaryPublicDailyTestPlanStatus/);
   assert.match(publicDailyTestPolicySource, /PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 \* 60 \* 60 \* 1000/);
   assert.match(publicDailyTestPolicySource, /enabledUntilMs - updatedAtMs <= PUBLIC_DAILY_TEST_PLAN_WINDOW_MS/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
@@ -576,11 +577,11 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,
-    /enabled &&[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*daily_test_plan", "not_ready"[\s\S]*setPublicDailyTestPlanEnabled/u,
+    /getAll\("enabled"\)[\s\S]*setPublicDailyTestPlanEnabled[\s\S]*revalidatePath\("\/", "layout"\)/u,
   );
   assert.match(
     adminSettingsSource,
-    /PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
+    /visible && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
   );
   assert.match(deploySource, /if \[ ! -e "\$RUNTIME_SETTINGS_FILE" \]/);
   assert.doesNotMatch(deploySource, /sed -i.*FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
@@ -633,7 +634,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   );
   assert.match(
     workspaceSetupSource,
-    /dailyTestAvailable[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*getStripeConfigStatus\(\)[\s\S]*internal_daily_test[\s\S]*No workspace was created[\s\S]*Es wurde kein Workspace angelegt/u,
+    /dailyOfferEnabled[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*dailyTestAvailable[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*getStripeConfigStatus\(\)[\s\S]*internal_daily_test[\s\S]*No workspace was created[\s\S]*Es wurde kein Workspace angelegt/u,
   );
   assert.doesNotMatch(
     workspaceSetupSource,

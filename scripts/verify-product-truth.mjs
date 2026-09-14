@@ -1220,7 +1220,7 @@ requireText(
 );
 requireText(
   "src/lib/runtimeProductSettings.ts",
-  "publicDailyTestPlanEnabled",
+  "createPublicDailyOfferSettings",
   "Die Laufzeitkonfiguration muss den 1-€/Tag-Schalter persistent speichern.",
 );
 requireText(
