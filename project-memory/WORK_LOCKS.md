@@ -1,3 +1,9 @@
+## LOCK-FM-DAILY-SETUP-UI-20260914
+- Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
+- Scope: current owner-narrowed Daily setup UI only, existing branch fix/daily-admin-visibility-20260914 and single PR #1125. Broader Admin control and duplicate #1126 are superseded for this release.
+- Evidence: actual rendered setup regressions including unavailable readiness, persisted preference and absence of automatic provisioning; independent final-diff review; all current-head CI; normal deploy and exact live /api/version SHA.
+- Closeout: the final #1125 receipt releases this bounded lock and records deployment/browser instructions; no subsequent work starts. DB/provisioning remains separate. Recovery is a normal reviewed source revert, with no data migration or provider transaction to undo.
+
 ## LOCK-FM-CREATOR-META-FINISH-20260911
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033
 - Status: RELEASED

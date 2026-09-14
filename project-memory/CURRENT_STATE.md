@@ -1,3 +1,9 @@
+## Daily setup UI closeout — 2026-09-14
+- Owner scope for PR #1125 is only the Daily setup display: always show 0 EUR setup + 1 EUR/day, show the saved registration preference, and explain unavailable activation with disabled consent/submit. Existing admission, consent, registration and confirmation behavior remain unchanged; #1124 is already deployed at 1e011edd422d3cc7165ac3a4be221af8b8c57f56.
+- The owner's real account test confirms registration email and confirmation/login arrival at setup. It exposed the missing Daily display; paid onboarding is not accepted by that evidence.
+- This release excludes the earlier global Admin switch proposal and duplicate #1126, all Production migrations/provisioning, Daily activation, new Stripe prices and real payments. Remaining Daily readiness requires the separately controlled Production provisioning and retained payment/tax prerequisites.
+- Source closeout is tracked by #1125 and its final receipt for exact head, CI/review, merge, normal Production deploy and /api/version. Until that receipt, publication is pending. After verified deployment and existing-account browser instructions, stop; no next work package is authorized in this session.
+
 ## Production runner update layout correction — 2026-09-13
 - Current task: FM-OPS-001 / FM-CR-036, Risk R4, LOCK-FM-OPS-REBOOT-20260912 retained. Branch fix/production-runner-versioned-layout-20260913 handles the independently demonstrated official 2.337.0 artifact layout.
 - Prior #1116 is closed by final receipt 5653464231 on reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Deploy 34758542991 and installed audit 34758613627 confirm eight healthy components, PM2 Node 24.18.0 and unchanged boot ID. Its earlier source-pending notes below are historical.

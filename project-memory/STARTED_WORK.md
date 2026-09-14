@@ -1,3 +1,11 @@
+## FM-REG-001 — Daily setup display closeout
+- Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
+- Baseline: main 1e011edd422d3cc7165ac3a4be221af8b8c57f56, already deployed #1124; final source continues the existing branch fix/daily-admin-visibility-20260914 and single PR #1125.
+- Completed so far: reconciled the owner test and narrowed the final tree to setup presentation and meaningful regression tests. Removed the broader Admin switch from this release; preserved all existing actions and readiness gates.
+- Still open/exact next step: complete current-head automated checks and independent review, merge #1125, normal Production deploy and exact /api/version proof, then existing-account browser handoff and stop. The final PR receipt closes this bounded lock; overall Daily provisioning remains PARTIAL.
+- Owner action needed: existing-account browser test after deployed confirmation, no re-registration. No Production DB migration, real payment, Price creation or next work package is authorized here.
+- Recovery: bounded source revert through the normal isolated release; this presentation change has no data mutation.
+
 ## Creator foundation closeout — 2026-09-11
 - Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.
 - Completed: #1105-#1108 are published; executable main f0c7a84e, Verify 34628681395, PT409-only Upgrade 34628886294, Staging Deploy 34628740980 and real acceptance 34629009649 passed. Owner/member/foreign isolation, one style, approval/revisions, both PDFs, independent cleanup and temporary-member rotation/rejection passed; 17:42:49 UTC post-read confirms empty Creator tables/no unfinished Creator RPCs.

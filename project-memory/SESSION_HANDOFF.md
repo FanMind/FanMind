@@ -1,3 +1,8 @@
+## Daily UI only — owner closeout boundary, 2026-09-14
+- Finish only PR #1125 against main 1e011edd: visible Daily at /workspace/setup, saved selection, unavailable-state explanation, disabled unavailable activation and unchanged registration/confirmation/actions. The earlier broader Admin offer switch is excluded; #1126 is superseded for this release.
+- Required closeout: final committed head, all current-head checks green, independent review, one merged PR, successful normal Production deployment, exact /api/version commit, and browser test with the existing account. The final #1125 conversation receipt binds those results; pending source notes must not be mistaken for deployed evidence.
+- Daily Production provisioning remains open. No SQL, new Price, activation, payment, unrelated feature or repeated #1124 work belongs here. Stop after this release; the subsequent Codex handles DB/provisioning separately.
+
 ## Production runner update layout correction — 2026-09-13
 - Current task: FM-OPS-001 / FM-CR-036, Risk R4, LOCK-FM-OPS-REBOOT-20260912 retained. Branch fix/production-runner-versioned-layout-20260913 handles the independently demonstrated official 2.337.0 artifact layout.
 - Prior #1116 is closed by final receipt 5653464231 on reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Deploy 34758542991 and installed audit 34758613627 confirm eight healthy components, PM2 Node 24.18.0 and unchanged boot ID. Its earlier source-pending notes below are historical.
