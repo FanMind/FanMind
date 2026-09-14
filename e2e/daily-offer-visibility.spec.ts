@@ -49,11 +49,13 @@ test("a retained Daily deep link does not create a monthly signup while OFF", as
   await expect(page).toHaveURL(/plan=daily&lang=en/u);
   await expect(page.getByRole("status")).toContainText("This offer is currently unavailable");
   await page.getByRole("link", { name: "DE", exact: true }).click();
+  await expect(page).toHaveURL(/plan=daily(?!.*lang=en)/u);
+  await expect(page.getByRole("status")).toContainText("Dieses Angebot ist derzeit nicht verfügbar");
   await page.locator('input[name="email"]').fill("synthetic@example.invalid");
   await page.locator('input[name="password"]').fill("Synthetic-Only-2026!");
   await page.locator('input[name="organisation"]').fill("Synthetic");
   await page.locator('select[name="rolle"]').selectOption("Creator");
-  await page.getByRole("button", { name: "Konto erstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Konto erstellen →", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Dieses Angebot" })).toBeVisible();
   expect(signupRequests).toBe(0);
 });

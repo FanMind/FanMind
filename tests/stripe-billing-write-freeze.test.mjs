@@ -87,7 +87,7 @@ const compiledBilling = ts.default.transpileModule(
   { compilerOptions: { module: ts.default.ModuleKind.CommonJS, target: ts.default.ScriptTarget.ES2022 } },
 ).outputText;
 
-function billingHarness(frozen) {
+function billingHarness(frozen, dailyEnabled = true) {
   const environment = {
     FANMIND_STRIPE_BILLING_WRITE_FREEZE: frozen,
     STRIPE_SECRET_KEY: "synthetic-not-a-key",
@@ -104,6 +104,7 @@ function billingHarness(frozen) {
   const exports = {};
   const unused = new Proxy({}, { get() { throw new Error("Unexpected dependency access"); } });
   const dependencies = {
+    "@/lib/runtimeProductSettings": { getPublicDailyTestPlanEnabled: async () => dailyEnabled },
     "@/lib/stripeClient": {
       getStripeClient() {
         clientReads += 1;
@@ -314,4 +315,19 @@ test("signed freeze probe requires exact release, binding, fixed retry code and 
   await assert.rejects(runSignedBillingFreezeProbe(env,fakeFetch({signedStatus:200})));
   await assert.rejects(runSignedBillingFreezeProbe({...env,GITHUB_REF:"refs/heads/other"},fakeFetch()));
   assert.ok(requests.every(r=>r.url.startsWith("https://staging.fanmind.ch/")));
+});
+
+
+test("administrator OFF stops every shared Daily checkout before Stripe access but preserves monthly checkout", async () => {
+  const harness = billingHarness("false", false);
+  const daily = { plan: harness.billing.resolveCheckoutPlan("pilot", "internal_daily_test"), userId: "synthetic-user", workspaceId: "synthetic-workspace" };
+  const blocked = await harness.billing.createStripeCheckoutSession(daily);
+  assert.equal(blocked.code, "offer_unavailable");
+  assert.equal(blocked.url, undefined);
+  assert.equal(blocked.id, undefined);
+  assert.equal(harness.clientReads(), 0);
+  assert.equal(harness.calls.length, 0);
+  const monthly = await harness.billing.createStripeCheckoutSession({ ...daily, plan: harness.billing.resolveCheckoutPlan("starter", "starter_paid_setup") });
+  assert.equal(monthly.url, "https://checkout.invalid/synthetic");
+  assert.equal(harness.calls.length, 1);
 });

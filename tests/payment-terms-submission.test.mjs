@@ -201,3 +201,24 @@ test("administrator OFF blocks Daily through both authenticated entry points wit
   assert.equal((await h.route.POST(request({ ...selections[0], ...accepted }))).status, 200);
   assert.equal(h.calls.length, 1);
 });
+
+
+test("setup acknowledges a saved closed offer without displaying a Daily or preselecting monthly contract", async () => {
+  const h = harness({ dailyEnabled: false });
+  h.user.user_metadata.registration_option_preference = "internal_daily_test";
+  const tree = await h.page.default({ searchParams: Promise.resolve({}) });
+  const statuses = [], dailyInputs = [], checkedInputs = [];
+  function walk(node) {
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (!node || typeof node !== "object") return;
+    if (node.props?.role === "status") statuses.push(node.props.children);
+    if (node.type === "input" && node.props.value === "internal_daily_test") dailyInputs.push(node);
+    if (node.type === "input" && (node.props.checked || node.props.defaultChecked)) checkedInputs.push(node);
+    walk(node.props?.children);
+  }
+  walk(tree);
+  assert.ok(statuses.some(text => typeof text === "string" && text.includes("Dein vorgemerktes Angebot ist derzeit nicht verfügbar")));
+  assert.equal(dailyInputs.length, 0);
+  assert.equal(checkedInputs.length, 0);
+  assert.equal(h.calls.length, 0);
+});

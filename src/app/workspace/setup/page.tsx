@@ -162,6 +162,14 @@ export default async function WorkspaceSetupPage({
           </p>
         </div>
 
+        {dailyPreferred && !dailyOfferEnabled && (
+          <p role="status">
+            {locale === "en"
+              ? "Your saved offer is currently unavailable. Your choice is retained; no monthly plan was selected and no payment was started."
+              : "Dein vorgemerktes Angebot ist derzeit nicht verfügbar. Deine Auswahl bleibt erhalten; es wurde kein Monatstarif ausgewählt und keine Zahlung gestartet."}
+          </p>
+        )}
+
         {activationEnabled ? (
           <div className={styles.emptyState}>
             <form action={provisionWorkspace}>
