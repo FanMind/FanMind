@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-INTELLIGENCE`
-- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Next action: `NBA-CUSTOMER-ACTIVATION-ENGINEERING`
+- Next action title: Bestehenden Kundenweg und KI-Budget technisch fertigstellen
 
 ## Finishline gates
 

@@ -1,5 +1,12 @@
 # FanMind Mobile
 
+## Reihenfolge nach FM-DEC-019 — 14. September 2026
+
+Android-Fertigstellung, Push-Zustellung und die zugehörige Geräte-/Store-Abnahme
+folgen **nach der technischen FanMind-Übergabe**. Vorhandene Builds und
+Teilabnahmen bleiben erhalten. Offene Mobile-Arbeit wird dadurch weder
+abgenommen noch als Voraussetzung der vorherigen technischen Übergabe geführt.
+
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
 
 Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI

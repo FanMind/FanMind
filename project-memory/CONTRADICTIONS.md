@@ -1,3 +1,11 @@
+## CTR-FM-HANDOFF-RECONCILIATION-20260914
+- Task/change: FM-SALES-001 / FM-CR-038 / FM-DEC-019
+- Status: RESOLVED for source reconciliation; actual missing execution remains open.
+- Source A: aggregate open/final statements mixed registration with paid activation and database Restore with complete Storage/config recovery; current readers retained completed PR-1117 prerequisites and mobile remained a sales dependency after owner deferral.
+- Source B: current source/public registration and completed receipts prove the distinct partial states described in HANDOFF_AUDIT_20260914.md. The owner explicitly places Android and Push after technical handoff.
+- Resolution: add a dated single audit, supersede old reader checkpoints, preserve historical accepted substeps, defer Mobile in machine/queue/readers and keep paid activation, real reboot and Storage/config completion open. Prepare remaining engineering separately from unavailable external facts.
+- Falsifier: a later current source/target receipt changes the corresponding specific finding; expiration of a mutable check does not reopen its historical completed implementation.
+
 ## CTR-FM-CREATOR-FOUNDATION-CLOSEOUT-20260911
 - Related: FM-CREATOR-001 / FM-CR-033 / #1109; Risk R4; Status: RESOLVED for reader scope.
 - Source A: older started-work, dependency/loop/external fields still instructed completed source/schema work; reader draft also treated a job-local false flag as deployed-process evidence and mixed external consent into an executable next action.

@@ -1,5 +1,12 @@
 # FanMind Mobile Architecture
 
+## Reihenfolge nach FM-DEC-019 — 14. September 2026
+
+Android-Fertigstellung, Push-Zustellung und die zugehörige Geräte-/Store-Abnahme
+folgen **nach der technischen FanMind-Übergabe**. Vorhandene Builds und
+Teilabnahmen bleiben erhalten. Offene Mobile-Arbeit wird dadurch weder
+abgenommen noch als Voraussetzung der vorherigen technischen Übergabe geführt.
+
 ## Decision
 
 FanMind Mobile is a native React Native / Expo product, not a mobile rendering of the public website.

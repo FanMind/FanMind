@@ -1,3 +1,12 @@
+## FM-DEC-019 — Technical handoff before Android and Push
+- Date: 2026-09-14
+- Status: ACCEPTED
+- Source: Bernd explicitly places technical handoff before Android and Push and requests reconciliation of repeated registration, KI/billing, server and Restore completion claims.
+- Decision: Mobile/Push completion is not required for this technical handoff. Preserve existing builds, accepted observations and outstanding Mobile release/device work; resume it after FM-SALES-001. This is scheduling, not Mobile acceptance or permission to skip remaining non-Mobile customer/provider/financial requirements.
+- Supersedes: only the prior Mobile-before-handoff requirement and FM-DEC-015's weaker Android-after-Creator/Social resume condition. Creator/Social authorization and the other existing scopes remain.
+- Commercial boundary: retain configured prices and Standard/Plus/Ultra. The spoken 1 / 1.5 / 2 million token quantities are examples, not final approved quotas or new prices. Prepare the missing existing billing/usage integration; no inferred live charge, tax fact or paid activation.
+- Reconciliation: HANDOFF_AUDIT_20260914.md is the current bounded status. Do not reopen completed registration publication, price creation, Staging setup, DB_POSTCHECKED or released autostart fixes without a concrete new defect.
+
 ## FM-DEC-018 — Creator connects through the platform and returns to FanMind
 - Date: 2026-09-11
 - Status: CONFIRMED

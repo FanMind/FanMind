@@ -1,3 +1,18 @@
+## Current handoff reconciliation — 2026-09-14
+
+FM-SALES-001 / FM-CR-038 / FM-DEC-019. Read
+[HANDOFF_AUDIT_20260914.md](HANDOFF_AUDIT_20260914.md) first. It supersedes
+older pending-source/reference instructions below with the later completed
+PR #1117, reference and installed-audit evidence. No actual reboot occurred:
+last owner output is REBOOT_NOT_REQUESTED=true after a login-session warning.
+Database Restore remains accepted through DB_POSTCHECKED; only Storage/config
+and final cleanup remain. Existing prices/login/Standard AI are preserved;
+paid customer activation and paid-tier monthly budget integration remain.
+Android and Push are after technical handoff and no longer block it.
+Current main independently read: 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b.
+Meta Instagram use-case Save already succeeded; PR #1121 comment 5662337495
+is the external receipt. No new provider connection or payment is claimed.
+
 ## Production runner update layout correction — 2026-09-13
 - Current task: FM-OPS-001 / FM-CR-036, Risk R4, LOCK-FM-OPS-REBOOT-20260912 retained. Branch fix/production-runner-versioned-layout-20260913 handles the independently demonstrated official 2.337.0 artifact layout.
 - Prior #1116 is closed by final receipt 5653464231 on reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Deploy 34758542991 and installed audit 34758613627 confirm eight healthy components, PM2 Node 24.18.0 and unchanged boot ID. Its earlier source-pending notes below are historical.
@@ -402,11 +417,9 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-CREATOR-001:** source #1099-#1108 and the bounded schema/JWT/revision/PDF foundation 34629009649 are complete. Continue independent deployed-flag verification, controlled enabled UI/full contact-account deletion acceptance and the next writing-quality/confirmed-chat-learning source scope. One account, one text writing style; do not repeat installed SQL or completed publication. Revalidate current target claims after freshness triggers/TTL.
-2. **FM-SOC3-001:** current account handoff is Facebook/Instagram app access and each Creator’s real consent/provider evidence through NBA-CREATOR-SOCIAL-EXTERNAL. Meta first-import source is published. WhatsApp remains dormant and outside the currently selected runtime work, while EXT-WHATSAPP stays explicit in the owner queue as a requirement of eventual whole Phase 3 acceptance; the queue does not authorize activation.
-3. **FM-SOC7-001:** TikTok/X are the current selected channels. Their connection/preview source and dated Social schema installation #1104 / 34591339718 / 34591566257 are complete; actual apps/consent/budget/provider and full CRM ingestion remain open. NBA-PHASE7-EXTERNAL covers the whole Phase 7 gate, preserving accepted channel evidence and exposing only remaining controls. Discord stays later; OnlyFans retains the implemented manual handoff and separate direct-access feasibility. No repeated completed TikTok/X work or early Discord activation.
-4. **FM-MOB-001:** Android follows the current Creator/Social increments (FM-MOB-OWNER-CREATOR-SOCIAL-20260910). Preserve signed Preview/Alpha and Push-ledger evidence; do not rebuild the old artifact, start a cohort, or resend push now. The newer package patch still needs its own signed/device publication later.
-5. **FM-RST-001:** DB_POSTCHECKED and private Storage controller preparation remain accepted. Real Storage target/upload/cost and final acceptance remain owner-deferred; no repeated database Restore.
-6. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
-7. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
-8. **FM-META-001:** real App Review/provider/legal evidence stays separate. Sales Handoff still requires the genuine remaining gate quorum and final Production demo. Creator development is not an added pre-sales gate.
+1. **FM-BILL-003:** Finish the existing customer activation and AI-budget engineering described in HANDOFF_AUDIT_20260914.md. Reuse completed prices, login and Staging installations. Prepare the remaining controlled rollout; preserve actual financial/target activation requirements.
+2. **FM-OPS-001:** Source/autostart/reference work is complete. Resolve the actual login-session warning, use the existing authorized normal reboot after fresh preflight and verify the changed boot plus runtime. No repeat source/backup cycle.
+3. **FM-RST-001:** Continue only Storage/config verification and cleanup on the separately scoped isolated target. Database Restore and DB_POSTCHECKED remain accepted.
+4. **FM-CREATOR-001:** Continue remaining selected Creator/Social engineering and real provider acceptance with existing authorizations. Meta Instagram use-case Save is already complete; do not request it again.
+5. **FM-SALES-001:** Complete the required non-Mobile acceptance and exact-release customer demonstration, then technical handoff.
+6. **FM-MOB-001:** Android and Push resume after technical handoff under FM-DEC-019; preserve existing builds and accepted observations.
