@@ -1,6 +1,7 @@
-import { showDailyTerms } from "@/lib/dailyTermsVisibility";
-export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
+import { showDailyOfferTerms } from "@/lib/dailyOfferTermsVisibility";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
 import type { ReactNode } from "react";
@@ -37,7 +38,7 @@ const trustItems = [
   "Nettopreise · Steuer im Checkout",
   "Keine Bankdaten in FanMind",
   "SEPA über Zahlungsdienstleister",
-  "Veröffentlichte Zahlungsmodelle",
+  "Transparente Zahlungsmodelle",
 ];
 
 const packageCards: PackageCard[] = [
@@ -78,7 +79,7 @@ const packageCards: PackageCard[] = [
 ];
 
 
-const getSections = (showDaily: boolean): PaymentSection[] => [
+const sections: PaymentSection[] = [
   {
     title: "Geltungsbereich",
     content: (
@@ -107,7 +108,7 @@ const getSections = (showDaily: boolean): PaymentSection[] => [
   },
   {
     title: "Daily",
-    content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist ein dauerhaftes öffentliches Zahlungsmodell und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
+    content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist ein kostenpflichtiger Tagestarif und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
   },
   {
     title: "KI-Stufen und Referral-Rabatte",
@@ -119,7 +120,7 @@ const getSections = (showDaily: boolean): PaymentSection[] => [
   },
   {
     title: "Registrierung und Zahlungsstart",
-    content: <p>Die Registrierung erstellt ein kostenloses Anmeldekonto und löst keine Zahlung aus. Nach der E-Mail-Bestätigung werden das gewählte Paket und die aktuellen Zahlungsbedingungen gesondert bestätigt. Erst danach kann der Workspace eingerichtet und der freigegebene Zahlungsprozess aktiv fortgesetzt werden. {showDaily ? "Dies gilt für Starter Flex, Starter 12 Monate und Daily." : "Dies gilt für die hier aufgeführten Pakete."} Demo-User und temporäre Demo-Workspaces können keinen Checkout starten.</p>,
+    content: <p>Die Registrierung erstellt ein kostenloses Anmeldekonto und löst keine Zahlung aus. Nach der E-Mail-Bestätigung werden das gewählte Paket und die aktuellen Zahlungsbedingungen gesondert bestätigt. Erst danach kann der Workspace eingerichtet und der freigegebene Zahlungsprozess aktiv fortgesetzt werden. Dies gilt für alle angebotenen Tarife. Demo-User und temporäre Demo-Workspaces können keinen Checkout starten.</p>,
   },
   {
     title: "Zahlungsabwicklung über Stripe",
@@ -175,8 +176,7 @@ function sectionId(index: number) {
 }
 
 export default async function ZahlungsbedingungenPage() {
-  const showDaily = await showDailyTerms();
-  const sections = getSections(showDaily).map((section, index) => ({ ...section, originalIndex: index })).filter(section => showDaily || section.title !== "Daily");
+  const showDaily = await showDailyOfferTerms();
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />
@@ -187,7 +187,7 @@ export default async function ZahlungsbedingungenPage() {
         <header className={styles.hero}>
           <h1>ZAHLUNGSBEDINGUNGEN</h1>
           <p className={styles.subtitle}>Preise, Laufzeiten, Zahlungsprozess und Freischaltung bei FanMind</p>
-          <p className={styles.stand}>Stand: 10. September 2026</p>
+          <p className={styles.stand}>Stand: 10. September 2026 · Transparente Zahlungsmodelle</p>
           <p className={styles.intro}>Diese Zahlungsbedingungen ergänzen die AGB / Vertragsbedingungen und beschreiben Preise, Pakete, Laufzeiten, Zahlungsabläufe, Freischaltung und Zahlungsstatus bei FanMind. Abweichende individuelle Angebote, Auftragsbestätigungen oder Vereinbarungen gehen diesen Zahlungsbedingungen vor.</p>
           <div className={styles.trustBox} aria-label="Wichtige Zahlungs-Hinweise">
             {trustItems.map((item) => <span key={item}>✓ {item}</span>)}
@@ -206,9 +206,9 @@ export default async function ZahlungsbedingungenPage() {
         </section>
 
         <article className={styles.document} aria-label="Paket- und Zahlungsbedingungen für FanMind">
-          {sections.map((section) => (
-            <section className={styles.section} id={sectionId(section.originalIndex)} key={section.title}>
-              <div className={styles.number} aria-hidden="true">{section.originalIndex + 1}</div>
+          {sections.map((section, index) => !showDaily && section.title === "Daily" ? null : (
+            <section className={styles.section} id={sectionId(index)} key={section.title}>
+              <div className={styles.number} aria-hidden="true">{index + 1}</div>
               <div className={styles.sectionBody}>
                 <h2>{section.title}</h2>
                 {section.content}

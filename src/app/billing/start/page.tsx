@@ -1,4 +1,3 @@
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import buttonStyles from "@/components/BillingCheckoutButton.module.css";
@@ -17,6 +16,7 @@ import {
   STRIPE_BILLING_WRITE_FREEZE_CODE,
   STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
 } from "@/lib/stripeBillingWriteFreeze.mjs";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import styles from "./billingStart.module.css";
 
 export const dynamic = "force-dynamic";
@@ -110,10 +110,10 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   const checkoutReady = workspace?.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(stripe)
     : stripe.readyForCheckout;
-  const dailyOfferAvailable = workspace?.commercial_option !== "internal_daily_test" || await getPublicDailyTestPlanEnabled();
+  let offerClosed = workspace?.commercial_option === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled());
   const canStartCheckout = Boolean(
     workspace &&
-      dailyOfferAvailable &&
+      !offerClosed &&
       !checkoutFrozen &&
       paymentTermsReady &&
       shouldShowBillingCheckoutAction(workspace) &&
@@ -132,6 +132,7 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
         workspaceId: workspace.id,
         userEmail: data.user.email,
       });
+      offerClosed = session.code === "offer_unavailable";
       checkoutFrozen = session.code === STRIPE_BILLING_WRITE_FREEZE_CODE;
       checkoutUrl = session.url;
       checkoutPreparationFailed = !checkoutUrl;
@@ -206,8 +207,8 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
             <li>Rechnungs- und Zahlungsdaten werden von FanMind nicht gespeichert</li>
           </ul>
           <div className={styles.actions}>
-            {!dailyOfferAvailable ? (
-              <div className={styles.infoBox}>Dieses Angebot ist für neue Buchungen derzeit nicht verfügbar. Bestehende Verträge bleiben unverändert.</div>
+            {offerClosed || params?.error === "offer_unavailable" ? (
+              <div className={styles.infoBox} role="status">Dein vorgemerktes Angebot ist derzeit nicht verfügbar. Es wurde keine Zahlung gestartet und kein anderes Paket ausgewählt.</div>
             ) : checkoutFrozen ? (
               <div className={styles.infoBox}>{STRIPE_BILLING_WRITE_FREEZE_MESSAGE}</div>
             ) : paymentTermsBlocked ? (

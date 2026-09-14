@@ -1,4 +1,3 @@
-import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { NextResponse } from "next/server";
 import { shouldShowBillingCheckoutAction, isWorkspaceBillingSuspended } from "@/lib/billing";
 import { isPlatformAdminEmail } from "@/lib/admin";
@@ -63,8 +62,6 @@ async function startCheckout() {
     );
   }
 
-  if (workspace.commercial_option === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) return redirectTo("/billing/start?error=offer_unavailable");
-
   const plan = resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option);
   if (!plan) return redirectTo("/billing/start?error=payment-option");
 
@@ -75,6 +72,7 @@ async function startCheckout() {
   if (!checkoutReady) return redirectTo("/billing/start?error=payment-start");
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspace.id, userEmail: data.user.email });
+  if (session.code === "offer_unavailable") return redirectTo("/billing/start?error=offer_unavailable");
   if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
     return redirectTo(`/billing/start?error=${STRIPE_BILLING_WRITE_FREEZE_CODE}`);
   }

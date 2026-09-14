@@ -1,3 +1,5 @@
+> Aktualisierung 14.09.2026 (FM-DEC-020): Daily-Sichtbarkeit und neue Buchungen werden dauerhaft unter `/admin/settings` ein-/ausgeschaltet. Aus blendet das öffentliche Angebot seitenweit aus; bestehende Abos und Vertragsdaten bleiben erhalten. Frühere Aussagen zur bedingungslosen Sichtbarkeit sind dadurch ersetzt. Technische Workspace-/Stripe-/Tax-/Billing-Freigaben bleiben erforderlich.
+
 # Web registration and activation
 
 Task FM-REG-002 / FM-CR-026, 10 September 2026.
@@ -69,20 +71,6 @@ The separately deployed #1123 payment-terms switch stays enabled; this correctio
 does not reconfigure Stripe, install provisioning SQL or accept the entire paid
 customer flow. The owner-controlled real email-to-setup result remains required.
 
-## Daily admin visibility — 14 September 2026
+## Owner walkthrough after #1124 — 14 September 2026
 
-The owner now controls Daily visibility in `/admin/settings`. This supersedes only
-the unconditional catalog visibility of FM-DEC-014: the existing EUR 0 setup +
-EUR 1/day offer stays in the catalog, but can be hidden on all public pages.
-The server-only deployment-persistent setting has no 24-hour expiry. Off removes
-Landing, registration, public legal catalog and new-package presentation and
-blocks new web admission/checkout attempts; stale direct registration links do
-not silently select a monthly package. Existing authorized Daily customers
-retain their contract text, account, invoices, cancellation and subscription.
-A catalog toggle never changes an existing Stripe object, expires an already
-issued Stripe session, grants a Workspace or bypasses consent/Tax/RLS/Billing.
-Paid Daily Production provisioning and actual payment/activation acceptance
-remain separately open under FM-BILL-003; the intended test cohort is not
-created or accepted by this source change. Missing legacy settings preserve the
-previously public catalog until an explicit admin choice; corrupt/read-failed
-settings fail closed. The stored explicit off survives normal release changes.
+The owner supplied the real selected-Daily registration screen, delivered confirmation email and authenticated /workspace/setup result; ordinary login reaches the same setup page. This accepts that bounded real account/email/session path for the shown test. Do not repeat signup, delete the account or reopen the corrected callback/template. Setup still displayed only the two Starter options; the current consolidated #1125 candidate preserves Daily visibility and preference while keeping actual admission gated. Complete Workspace/checkout/webhook and recovery-negative acceptance remain separate.

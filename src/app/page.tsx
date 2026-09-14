@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import LandingV2 from "./landing-v2/page";
 import { getFanMindLanguage } from "@/lib/fanmindCopy";
@@ -27,5 +26,7 @@ export async function generateMetadata({
       "FanMind bündelt Kontakte, Gespräche, Kontaktwissen und Follow-ups für smarte Fan-Beziehungen; externe Integrationen bleiben bis zur technischen und rechtlichen Freigabe klar als Coming Soon markiert.",
   };
 }
+
+export const dynamic = "force-dynamic";
 
 export default LandingV2;

@@ -1,5 +1,17 @@
 # FanMind Source of Truth
 
+## Daily-Angebot per Administrator steuern — 14. September 2026
+
+FM-DEC-020 ersetzt die bedingungslose öffentliche Sichtbarkeit aus FM-DEC-014.
+Unter `/admin/settings` steuert der Administrator das Daily-Angebot dauerhaft,
+ohne 24-Stunden-Ablauf. Aus blendet Landing-, Registrierungs-, Setup- und
+öffentliche Angebotsbedingungen aus und sperrt neue Daily-Provisionierung und
+Checkout-Anforderungen. Bestehende Abos, Testerzugänge, Rechnungen und
+Kündigungen bleiben unverändert; bestehende Kunden behalten ihre Vertragsbedingungen.
+Ein verändert keine Preise, ersetzt keine ausdrückliche Zahlungszustimmung und
+überspringt keine Workspace-/Stripe-/Tax-/Billing-Prüfung. Die echte vollständige
+Daily-Aktivierung und Google-Play-Kohortenabnahme bleiben getrennt offen.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
@@ -90,7 +102,7 @@ FanMind ist nicht:
 Aktiv beziehungsweise produktnah:
 
 - deutsche und englische Landingpage mit automatischer Sprachprüfung;
-- Login und vorbereitete öffentliche Starter-Registrierung; die entgeltliche Aktivierung bleibt bis zur bestätigten Zahlungsbedingungen-Version gesperrt (`payment_terms_version_unresolved`). Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
+- Login und kostenlose öffentliche Registrierung sind veröffentlicht. Der Zahlungsbedingungen-Schalter ist seit #1123 eingeschaltet; die tatsächliche entgeltliche Aktivierung verlangt weiterhin Workspace-/Vertrags-/Tax-/Billing-Readiness. Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
 - kostenloser temporärer Demo-Workspace, getrennt vom entgeltlichen Angebot;
 - geschütztes Dashboard;
 - Kontakte, Kontaktdetail und Suche;
@@ -982,7 +994,7 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 - `/register` erstellt ein kostenloses Anmeldekonto. Es schreibt weder Workspace- noch Billing- oder Zahlungsannahmewerte. Paket- und Referral-Auswahl sind unverbindliche, begrenzte Profilpräferenzen.
 - `/register/confirm` akzeptiert nur den unterstützten Signup-Callback einschließlich des optionalen einzelnen leeren Supabase-Markers `sb`, bereinigt die URL sofort und prüft die bestätigte E-Mail über Supabase. Nach erfolgreicher Prüfung synchronisiert die Seite die Session automatisch und führt unmittelbar zu `/workspace/setup`. Nur nach fehlgeschlagener Sitzungsübernahme erscheint ein ausdrücklich auszulösender Wiederholungsbutton; eine erneute Bestätigungsmail ist dafür nicht erforderlich. Ein ersetzter Callback oder das Verlassen der Seite bricht eine noch ausstehende Sitzungsübernahme ab. Ein gültiger Signup-Rücksprung zur bestehenden Site URL wird in diesen Ablauf übernommen.
 - Nach der Anmeldung führt `/workspace/setup` die bestehende serverseitige Paket-/Zustimmungsprüfung aus. Das Verfahren für Workspace-RPC, Preise und Vertragsversion sowie Checkout-, Tax- und Billing-Ledger-Gates bleiben unverändert.
-- Beobachtung vom 10. September 2026: Im verbundenen FanMind-Stripe-Live-Konto existieren keine Tax-Registrierungen. Aktive Tax-Settings allein sind keine Freigabe. Kostenpflichtige Aktivierung, echte E-Mail-Zustellung und anschließende vollständige Workspace-/Referral-/Zahlungsabnahme sind daher nicht durch diesen Code-Nachweis erledigt.
+- Owner-Test vom 14. September 2026 auf dem veröffentlichten #1124-Stand: Daily-Auswahl bei der Registrierung, tatsächlich zugestellte Bestätigungsmail und Rückkehr nach Bestätigung beziehungsweise Login zu `/workspace/setup` sind im gezeigten Fall bestätigt. Die dort fehlende Daily-Anzeige wird unabhängig von der weiterhin offenen kostenpflichtigen Aktivierung korrigiert. Die frische Stripe-Live-Abfrage zeigt weiterhin keine Tax-Registrierungen. Vollständige Workspace-/Referral-/Zahlungsabnahme bleibt offen.
 - Ausführlicher Ablauf und verbleibende Voraussetzungen: `docs/operations/WEB_REGISTRATION.md`; Task `FM-REG-002`. Die separate abgeschlossene Passwort-Recovery-Korrektur bleibt `FM-REG-001`.
 
 ### Datenschutz- und AVV-Readiness
@@ -1232,21 +1244,3 @@ Bei Änderungen an Preis, Paketen, Referral, aktivem Scope, Demo, Integrationen,
 - `docs/database/fanmind_current_schema.md`;
 - `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md` bei Mobile- oder Backend-Vertragsänderungen;
 - relevante Security-, KI-, Referral-, Landingpage- und Legal-Dateien.
-
-## Daily admin visibility — 14 September 2026
-
-The owner now controls Daily visibility in `/admin/settings`. This supersedes only
-the unconditional catalog visibility of FM-DEC-014: the existing EUR 0 setup +
-EUR 1/day offer stays in the catalog, but can be hidden on all public pages.
-The server-only deployment-persistent setting has no 24-hour expiry. Off removes
-Landing, registration, public legal catalog and new-package presentation and
-blocks new web admission/checkout attempts; stale direct registration links do
-not silently select a monthly package. Existing authorized Daily customers
-retain their contract text, account, invoices, cancellation and subscription.
-A catalog toggle never changes an existing Stripe object, expires an already
-issued Stripe session, grants a Workspace or bypasses consent/Tax/RLS/Billing.
-Paid Daily Production provisioning and actual payment/activation acceptance
-remain separately open under FM-BILL-003; the intended test cohort is not
-created or accepted by this source change. Missing legacy settings preserve the
-previously public catalog until an explicit admin choice; corrupt/read-failed
-settings fail closed. The stored explicit off survives normal release changes.

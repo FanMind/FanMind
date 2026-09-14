@@ -1,26 +1,68 @@
 import "server-only";
+
+import { randomUUID } from "node:crypto";
+import { chmod, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { readDailyPlanSettings, writeDailyPlanSettings } from "@/lib/dailyPlanSettings.mjs";
+import { createPublicDailyOfferSettings, readPublicDailyOfferEnabled } from "@/lib/publicDailyOfferSettingsPolicy.mjs";
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
   if (configured) return configured;
-  return process.env.NODE_ENV === "production"
+  // Next production mode also serves Staging; never share its settings file.
+  const runtime = process.env.FANMIND_RUNTIME_ENVIRONMENT?.trim();
+  const isolatedRuntime = ["staging", "test", "development"].includes(runtime ?? "");
+  return process.env.NODE_ENV === "production" && !isolatedRuntime
     ? "/var/www/fanmind/.fanmind-runtime-settings.json"
-    : path.join(/* turbopackIgnore: true */ process.cwd(), ".fanmind-runtime-settings.json");
+    : path.join(
+        /* turbopackIgnore: true */ process.cwd(),
+        ".fanmind-runtime-settings.json",
+      );
 }
 
-// No process cache: every worker and every new request observes the same
-// atomic, deployment-persistent admin setting. Only the boolean is public.
-export async function getPublicDailyPlanState() {
-  return readDailyPlanSettings(/* turbopackIgnore: true */ getSettingsPath());
-}
-
-// Compatibility names retained for existing call sites; no 24-hour expiry.
 export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
-  return (await getPublicDailyPlanState()).enabled;
+  try {
+    const payload = JSON.parse(
+      await readFile(
+        /* turbopackIgnore: true */ getSettingsPath(),
+        "utf8",
+      ),
+    ) as Record<string, unknown>;
+    return readPublicDailyOfferEnabled(payload);
+  } catch (error) {
+    // Preserve the already-public offer on first deployment; malformed reads fail closed.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
+    return false;
+  }
 }
 
-export async function setPublicDailyTestPlanEnabled(enabled: boolean, updatedBy: string): Promise<void> {
-  await writeDailyPlanSettings(/* turbopackIgnore: true */ getSettingsPath(), enabled, updatedBy);
+export async function setPublicDailyTestPlanEnabled(
+  enabled: boolean,
+  updatedBy: string,
+): Promise<void> {
+  const settingsPath = getSettingsPath();
+  const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
+  let previous: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(await readFile(/* turbopackIgnore: true */ settingsPath, "utf8"));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid_settings");
+    previous = parsed as Record<string, unknown>;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  const payload = createPublicDailyOfferSettings(enabled, updatedBy, previous);
+
+  await writeFile(temporaryPath, `${JSON.stringify(payload)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+    flag: "wx",
+  });
+
+  try {
+    await rename(temporaryPath, settingsPath);
+    await chmod(settingsPath, 0o600);
+  } catch (error) {
+    const { unlink } = await import("node:fs/promises");
+    await unlink(temporaryPath).catch(() => undefined);
+    throw error;
+  }
 }

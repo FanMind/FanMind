@@ -1,10 +1,8 @@
-## Daily admin visibility — 2026-09-14
-- Task FM-BILL-003; IN_PROGRESS; Risk R3 source / R4 normal publication.
-- Lock LOCK-FM-DAILY-ADMIN-20260914, holder ChatGPT.
-- Completed so far: existing runtime/admin surfaces inventoried; bounded persistent switch and public/server consumers implemented.
-- Still open: exact-head tests/review, normal publication and owner on/off acceptance; paid Daily SQL/checkout acceptance remains separate.
-- Next: complete current PR verification and publish, then retain actual admin/browser result.
-- Owner action: website acceptance after verified release, no repeated publication permission.
+## FM-BILL-003 — Daily admin publication 2026-09-14
+
+Continuation after the owner's real screenshots: registration with Daily selected, delivered confirmation email, and both confirmation/login reaching /workspace/setup are owner-observed. Only the two Starter forms are shown on deployed main 1e011edd. Preserve this completed email-to-setup substep and the existing account. Consolidate the reviewed #1126 source into earlier #1125 under the existing lock; retain one settings authority and remove the superseded diagnostic workflows. Current candidate tests/review/deployment are still required. Actual Daily provisioning/Tax/checkout remain open; a visible disabled offer is not paid activation.
+
+Status: IN_PROGRESS. Risk: R4. Lock: LOCK-FM-DAILY-ADMIN-20260914. Source publication explicitly authorized. Scope: existing persistent Admin catalog control, public visibility, new-admission boundary, retained preference and tests. Completed: mandatory readers/current main 1e011edd and PR #1124 release reconciled. Still open: source tests/review/normal deploy; separate controlled Production provisioning and actual Tax/checkout acceptance. No callback rebuild, new DB, price recreation, account deletion, auto-charge or invented Google Play cohort. Owner action: later actual test; no repeated publication approval.
 
 ## Creator foundation closeout — 2026-09-11
 - Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.

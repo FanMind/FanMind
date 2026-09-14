@@ -28,6 +28,10 @@ Engine. Die frühere 24-Stunden-Freigabe beschränkt den öffentlichen Katalog
 nicht mehr. Die Auswahl wird im kostenlosen Konto nur als unverbindlicher
 Paketwunsch gespeichert; sie erteilt keine Zahlungs- oder Workspace-Rechte.
 
+## Aktualisierung vom 14. September 2026
+
+#1123 hat den Zahlungsbedingungen-Schalter eingeschaltet; #1124 ist veröffentlicht. Der neue Owner-Test belegt tatsächliche Bestätigungsmail und den erfolgreichen Rücksprung nach Bestätigung sowie normalem Login zu `/workspace/setup`. Frühere Angaben unten zu fehlender Mailzustellung oder ausgeschaltetem Schalter sind für diesen gezeigten Fall überholt. Daily fehlt dort weiterhin; dessen Darstellung und vorgemerkte Auswahl werden in #1125 konsolidiert. Produktions-Provisionierung, passende Vertragsannahme, Tax und vollständiger Checkout/Webhook bleiben offen.
+
 ## Was erledigt ist und was tatsächlich noch fehlt
 
 | Gesamtpunkt | Belegt erledigt | Offene Abschlussarbeit |

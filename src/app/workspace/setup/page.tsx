@@ -11,6 +11,7 @@ import {
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import {
   buildTrustedProvisioningUser,
@@ -62,6 +63,9 @@ async function provisionWorkspace(formData: FormData) {
     redirect("/workspace/setup?error=payment_terms_changed");
   }
 
+  if (selection.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
+    redirect("/workspace/setup?error=offer_unavailable");
+  }
   const trustedUser = buildTrustedProvisioningUser(
     data.user,
     selection,
@@ -115,9 +119,11 @@ export default async function WorkspaceSetupPage({
   if (existingWorkspaceResult.workspace) redirect(getBillingContinuationHref(existingWorkspaceResult.workspace));
 
   const activationEnabled = isPaymentTermsActivationEnabled();
+  const dailyOfferEnabled = PUBLIC_DAILY_PLAN_ENABLED && await getPublicDailyTestPlanEnabled();
+  const dailyPreferred = data.user.user_metadata?.registration_option_preference === "internal_daily_test";
   const dailyTestAvailable = activationEnabled
     ? isInternalDailyTestAdmissionReady({
-        windowEnabled: await getPublicDailyTestPlanEnabled(),
+        windowEnabled: dailyOfferEnabled,
         workspaceProvisioningReady:
           await isInternalDailyTestWorkspaceProvisioningReady(),
         stripeConfig: getStripeConfigStatus(),
@@ -156,6 +162,14 @@ export default async function WorkspaceSetupPage({
           </p>
         </div>
 
+        {dailyPreferred && !dailyOfferEnabled && (
+          <p role="status">
+            {locale === "en"
+              ? "Your saved offer is currently unavailable. Your choice is retained; no monthly plan was selected and no payment was started."
+              : "Dein vorgemerktes Angebot ist derzeit nicht verfügbar. Deine Auswahl bleibt erhalten; es wurde kein Monatstarif ausgewählt und keine Zahlung gestartet."}
+          </p>
+        )}
+
         {activationEnabled ? (
           <div className={styles.emptyState}>
             <form action={provisionWorkspace}>
@@ -188,7 +202,7 @@ export default async function WorkspaceSetupPage({
               </button>
             </form>
 
-            {dailyTestAvailable ? (
+            {dailyOfferEnabled ? (
               <form action={provisionWorkspace}>
                 <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
                 <input type="hidden" name="planId" value="pilot" />
@@ -211,11 +225,13 @@ export default async function WorkspaceSetupPage({
                       : "Zahlungsbedingungen öffnen"}
                   </Link>
                 </p>
-                <button className={styles.primaryButton} type="submit">
+                <button className={styles.primaryButton} type="submit" disabled={!dailyTestAvailable}>
                   {locale === "en"
                     ? "Daily · €0 setup + €1/day"
                     : "Daily · 0 € Setup + 1 €/Tag"}
                 </button>
+                {dailyPreferred && <p>{locale === "en" ? "Your saved choice. No monthly plan is selected for you." : "Deine vorgemerkte Auswahl. Es wird kein Monatstarif für dich ausgewählt."}</p>}
+                {!dailyTestAvailable && <p role="status">{locale === "en" ? "Activation is being prepared. Your choice is retained; no payment has started." : "Die Aktivierung wird vorbereitet. Deine Auswahl bleibt erhalten; es wurde keine Zahlung gestartet."}</p>}
               </form>
             ) : null}
           </div>
@@ -234,6 +250,10 @@ export default async function WorkspaceSetupPage({
               ? locale === "en"
                 ? "The payment terms have changed. Please review the current terms and confirm your package again."
                 : "Die Zahlungsbedingungen wurden geändert. Bitte lies die aktuellen Bedingungen und bestätige dein Paket erneut."
+              : errorCode === "offer_unavailable" || (!dailyOfferEnabled && errorCode === "daily_test_window_closed")
+              ? locale === "en"
+                ? "This offer is currently unavailable. No workspace was created."
+                : "Dieses Angebot ist derzeit nicht verfügbar. Es wurde kein Workspace angelegt."
               : errorCode === "daily_test_window_closed"
               ? locale === "en"
                 ? "Daily activation is not ready yet. No workspace was created. Please try again after activation becomes available."

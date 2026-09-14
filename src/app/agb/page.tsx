@@ -1,6 +1,7 @@
-import { showDailyTerms } from "@/lib/dailyTermsVisibility";
-export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
+import { showDailyOfferTerms } from "@/lib/dailyOfferTermsVisibility";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
 import styles from "./agb.module.css";
@@ -223,7 +224,7 @@ const getSections = (showDaily: boolean): TermsSection[] => [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. {showDaily ? "Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl." : "Die verfügbaren kostenpflichtigen Pakete werden bei der Registrierung angezeigt."} Eine Kontoerstellung startet noch kein Abo.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für einen kostenpflichtigen Zugang stehen die aktuell freigegebenen Tarife zur Auswahl. Eine Kontoerstellung startet noch kein Abo.</p>
       </>
     ),
   },
@@ -425,7 +426,7 @@ function sectionId(index: number) {
 }
 
 export default async function AgbPage() {
-  const sections = getSections(await showDailyTerms());
+  const sections = getSections(await showDailyOfferTerms());
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />

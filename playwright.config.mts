@@ -1,7 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
+import { mkdtempSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL?.trim() || "http://127.0.0.1:3100";
 const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+// Never mutate a developer/production runtime-settings file from browser tests.
+// Worker subprocesses inherit the same isolated path created by the launcher.
+if (!skipWebServer && !process.env.FANMIND_DAILY_E2E_SETTINGS_FILE) {
+  process.env.FANMIND_DAILY_E2E_SETTINGS_FILE = path.join(mkdtempSync(path.join(os.tmpdir(), "fanmind-daily-e2e-")), "settings.json");
+}
+if (!skipWebServer) process.env.FANMIND_RUNTIME_SETTINGS_FILE = process.env.FANMIND_DAILY_E2E_SETTINGS_FILE;
 
 export default defineConfig({
   testDir: "./e2e",

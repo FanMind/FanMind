@@ -14,6 +14,7 @@ import {
 } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 
 const MAX_CHECKOUT_BODY_BYTES = 4096;
@@ -60,8 +61,8 @@ export async function POST(request: NextRequest) {
   const payload = parsedBody.value as { planId?: string; commercialOption?: string } | null;
   if (!payload?.planId || !payload.commercialOption) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
-  if (payload.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
-    return NextResponse.json({ error: "Dieses Angebot ist derzeit für neue Buchungen nicht verfügbar." }, { status: 403 });
+  if (payload.commercialOption === "internal_daily_test" && (!PUBLIC_DAILY_PLAN_ENABLED || !(await getPublicDailyTestPlanEnabled()))) {
+    return NextResponse.json({ error: "Dieses Angebot ist derzeit nicht verfügbar. Bestehende Abos bleiben unverändert." }, { status: 403 });
   }
 
   const config = getStripeConfigStatus();

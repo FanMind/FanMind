@@ -1,101 +1,139 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, writeFile, readFile, stat, rm, symlink } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { execFileSync } from "node:child_process";
+import fs from "node:fs/promises";
 import { readFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { runInNewContext } from "node:vm";
+import crypto from "node:crypto";
 import ts from "typescript";
-import { readDailyPlanSettings, writeDailyPlanSettings } from "../src/lib/dailyPlanSettings.mjs";
-import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
+import * as policy from "../src/lib/publicDailyOfferSettingsPolicy.mjs";
+import * as http from "../src/lib/httpMutationPolicy.mjs";
 
-async function fixture(fn) {
-  const dir = await mkdtemp(path.join(tmpdir(), "fanmind-daily-setting-"));
-  try { await fn(path.join(dir, "settings.json"), dir); } finally { await rm(dir, { recursive: true, force: true }); }
+function load(file, dependencies, env = {}, cwd = process.cwd()) {
+  const exports = {};
+  const compiled = ts.transpileModule(readFileSync(file, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  runInNewContext(compiled, { exports, URL, process: { env, cwd: () => cwd }, require(name) {
+    assert.ok(Object.hasOwn(dependencies, name), `Unexpected dependency ${name}`);
+    return dependencies[name];
+  } });
+  return exports;
 }
-test("admin setting persists on/off across independent processes with private atomic storage", async () => fixture(async file => {
-  assert.equal((await readDailyPlanSettings(file)).enabled, true);
-  for (const enabled of [false, true, false]) {
-    await writeDailyPlanSettings(file, enabled, "synthetic-admin");
-    const state = await readDailyPlanSettings(file);
-    assert.equal(state.enabled, enabled);
-    assert.equal(state.source, "saved");
-    assert.equal((await stat(file)).mode & 0o777, 0o600);
-    const module = new URL("../src/lib/dailyPlanSettings.mjs", import.meta.url).href;
-    const output = execFileSync(process.execPath, ["--input-type=module", "-e", `import {readDailyPlanSettings} from ${JSON.stringify(module)}; console.log((await readDailyPlanSettings(${JSON.stringify(file)})).enabled)`], { encoding: "utf8" });
-    assert.equal(output.trim(), String(enabled));
-  }
-}));
-test("saved Daily visibility has no beta timer and survives more than fourteen days", async () => fixture(async file => {
-  await writeFile(file, JSON.stringify({ publicDailyPlanEnabled: true, updatedAt: "2000-01-01T00:00:00Z", publicDailyTestPlanEnabledUntil: "2000-01-02T00:00:00Z" }));
-  assert.equal((await readDailyPlanSettings(file)).enabled, true);
-  await writeDailyPlanSettings(file, false, "synthetic-admin");
-  assert.equal((await readDailyPlanSettings(file)).enabled, false);
-  assert.equal(JSON.parse(await readFile(file, "utf8")).publicDailyTestPlanEnabledUntil, "2000-01-02T00:00:00Z");
-}));
-test("corrupt or wrongly typed settings fail closed and are not overwritten", async () => fixture(async file => {
-  for (const body of ["broken", "null", "[]", '{"publicDailyPlanEnabled":"true"}', " ".repeat(9000)]) {
-    await writeFile(file, body);
-    assert.equal((await readDailyPlanSettings(file)).available, false);
-    assert.equal((await readDailyPlanSettings(file)).enabled, false);
-    await assert.rejects(writeDailyPlanSettings(file, true, "synthetic-admin"));
-    assert.equal(await readFile(file, "utf8"), body);
-  }
-}));
-test("settings links and invalid boolean writes are rejected", async () => fixture(async (file, dir) => {
-  const target = path.join(dir, "target.json");
-  await writeFile(target, '{"publicDailyPlanEnabled":true}');
-  await symlink(target, file);
-  assert.equal((await readDailyPlanSettings(file)).available, false);
-  await assert.rejects(writeDailyPlanSettings(file, false, "synthetic-admin"));
-  for (const value of ["false", 0, null, undefined]) await assert.rejects(writeDailyPlanSettings(target, value, "synthetic-admin"));
-}));
 
-const routeSource = ts.transpileModule(readFileSync("src/app/api/admin/settings/daily-test-plan/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function handler({ admin = true, trusted = true, failWrite = false } = {}) {
-  const calls = []; const invalidations = []; const exports = {};
-  const deps = {
-    "next/server": { NextResponse: { json: (body, init) => Response.json(body, init), redirect: (url, init) => new Response(null, { status: init.status, headers: { location: String(url) } }) } },
+test("persistent offer setting has no 24-hour or 14-day expiration and preserves unrelated settings", () => {
+  const settings = policy.createPublicDailyOfferSettings(true, "synthetic-admin", { unrelated: 42 }, new Date("2026-01-01Z"));
+  assert.equal(policy.readPublicDailyOfferEnabled(settings), true);
+  assert.equal(settings.unrelated, 42);
+  assert.equal(policy.readPublicDailyOfferEnabled({ ...settings, publicDailyOfferEnabled: false }), false);
+  for (const value of [null, [], "true", true, 1]) assert.equal(policy.readPublicDailyOfferEnabled(value), false);
+  for (const value of ["true", 1, undefined, null]) assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyOfferEnabled: value }), false);
+  assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyTestPlanEnabled: false }), true);
+  assert.throws(() => policy.createPublicDailyOfferSettings("true", "admin"));
+});
+
+test("actual runtime file persists OFF across fresh module loads, uses private permissions and fails closed on corruption", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "fanmind-daily-unit-"));
+  const file = path.join(dir, "settings.json");
+  const runtime = () => load("src/lib/runtimeProductSettings.ts", {
+    "server-only": {}, "node:crypto": crypto, "node:fs/promises": fs, "node:path": path,
+    "@/lib/publicDailyOfferSettingsPolicy.mjs": policy,
+  }, { NODE_ENV: "test", FANMIND_RUNTIME_SETTINGS_FILE: file });
+  try {
+    assert.equal(await runtime().getPublicDailyTestPlanEnabled(), true);
+    await fs.writeFile(file, JSON.stringify({ publicDailyTestPlanEnabled: false, unrelated: 42 }));
+    await runtime().setPublicDailyTestPlanEnabled(false, "synthetic-admin");
+    assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
+    const stored = JSON.parse(await fs.readFile(file, "utf8"));
+    assert.equal(stored.unrelated, 42);
+    assert.equal(stored.publicDailyOfferEnabled, false);
+    await runtime().setPublicDailyTestPlanEnabled(true, "synthetic-admin");
+    assert.equal(await runtime().getPublicDailyTestPlanEnabled(), true);
+    // Bind the permission check and corruption fixture to the same descriptor.
+    const handle = await fs.open(file, "r+");
+    try {
+      assert.equal((await handle.stat()).mode & 0o777, 0o600);
+      await handle.truncate(0);
+      await handle.writeFile("malformed");
+    } finally { await handle.close(); }
+    assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
+    await assert.rejects(runtime().setPublicDailyTestPlanEnabled(true, "synthetic-admin"));
+    assert.deepEqual(await fs.readdir(dir), ["settings.json"]);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+function adminHarness({ admin = true, saveFails = false } = {}) {
+  const writes = [], invalidations = [];
+  const route = load("src/app/api/admin/settings/daily-test-plan/route.ts", {
+    "next/server": { NextResponse: { json: (body, options) => Response.json(body, options), redirect: (url, options) => new Response(null, { ...options, headers: { location: String(url) } }) } },
     "next/cache": { revalidatePath: (...args) => invalidations.push(args) },
-    "@/lib/admin": { requirePlatformAdmin: async () => { if (!admin) throw new Error("forbidden"); return { id: "synthetic-admin" }; } },
-    "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: () => trusted },
-    "@/lib/runtimeProductSettings": { setPublicDailyTestPlanEnabled: async (...args) => { if (failWrite) throw new Error("private-internal-detail"); calls.push(args); } },
+    "@/lib/admin": { requirePlatformAdmin: async () => { if (!admin) throw new Error("not-admin"); return { id: "synthetic-admin" }; } },
+    "@/lib/httpMutationPolicy.mjs": { ...http, isTrustedFanMindMutationRequest: r => http.isTrustedFanMindMutationRequest(r, {}) },
+    "@/lib/runtimeProductSettings": { setPublicDailyTestPlanEnabled: async (...args) => { if (saveFails) throw new Error("private-storage-error"); writes.push(args); } },
+  });
+  const request = (body, origin = "https://fanmind.ch") => {
+    const r = new Request("https://fanmind.ch/api/admin/settings/daily-test-plan", { method: "POST", body, headers: { origin, "content-type": "application/x-www-form-urlencoded" } });
+    r.nextUrl = new URL(r.url); return r;
   };
-  runInNewContext(routeSource, { exports, URL, Response, require: name => { assert.ok(name in deps, name); return deps[name]; } });
-  return { post: exports.POST, calls, invalidations };
+  return { route, request, writes, invalidations };
 }
-function request(values) {
-  const body = new URLSearchParams();
-  for (const value of values) body.append("enabled", value);
-  return new Request("https://fanmind.invalid/api/admin/settings/daily-test-plan", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin: "https://fanmind.invalid" }, body });
-}
-test("admin can persist either catalog state and invalidates the whole public layout", async () => {
-  for (const enabled of ["true", "false"]) {
-    const h = handler(); const result = await h.post(request([enabled]));
-    assert.equal(result.status, 303);
-    assert.equal(h.calls.length, 1);
-    assert.equal(h.calls[0][0], enabled === "true");
-    assert.equal(h.calls[0][1], "synthetic-admin");
-    assert.equal(h.invalidations[0][0], "/");
-    assert.equal(h.invalidations[0][1], "layout");
+
+test("only an authenticated same-origin admin can persist exact ON/OFF and invalidate the entire public tree", async () => {
+  const h = adminHarness();
+  for (const value of ["true", "false"]) {
+    const response = await h.route.POST(h.request(`enabled=${value}`));
+    assert.equal(response.status, 303);
+    assert.ok(response.headers.get("location").includes(value === "true" ? "enabled" : "disabled"));
   }
-});
-test("non-admin, foreign origin, malformed or duplicated values never write settings", async () => {
-  const unauthorized = handler({ admin: false }); await assert.rejects(unauthorized.post(request(["false"]))); assert.equal(unauthorized.calls.length, 0);
-  const foreign = handler({ trusted: false }); assert.equal((await foreign.post(request(["true"]))).status, 403); assert.equal(foreign.calls.length, 0);
-  for (const values of [[], ["on"], ["1"], ["TRUE"], ["true", "false"], ["false", "false"]]) {
-    const h = handler(); assert.equal((await h.post(request(values))).status, 400); assert.equal(h.calls.length, 0);
+  assert.deepEqual(h.writes, [[true, "synthetic-admin"], [false, "synthetic-admin"]]);
+  assert.deepEqual(h.invalidations, [["/", "layout"], ["/", "layout"]]);
+  for (const body of ["", "enabled=yes", "enabled=true&enabled=false", "enabled=true&other=value"]) {
+    assert.equal((await h.route.POST(h.request(body))).status, 400);
   }
+  assert.equal((await h.route.POST(h.request("enabled=true", "https://foreign.invalid"))).status, 403);
+  const unauthorized = adminHarness({ admin: false });
+  await assert.rejects(unauthorized.route.POST(unauthorized.request("enabled=true")), /not-admin/);
+  assert.equal(unauthorized.writes.length, 0);
+  const failed = adminHarness({ saveFails: true });
+  const response = await failed.route.POST(failed.request("enabled=true"));
+  assert.equal(response.status, 503);
+  assert.equal(failed.invalidations.length, 0);
+  assert.equal((await response.text()).includes("private-storage-error"), false);
+  assert.equal(h.writes.length, 2);
 });
-test("failed persistence has a fixed error and cannot announce success", async () => {
-  const h = handler({ failWrite: true }); const result = await h.post(request(["false"]));
-  assert.equal(result.status, 503); assert.equal((await result.json()).error, "daily_settings_write_failed"); assert.equal(h.invalidations.length, 0);
-});
-test("runtime gate is wired to all public admission and web checkout boundaries", () => {
-  for (const file of ["src/app/landing-v2/page.tsx", "src/app/register/page.tsx", "src/app/workspace/setup/page.tsx", "src/app/api/billing/checkout/route.ts", "src/app/billing/checkout/route.ts", "src/app/billing/start/page.tsx", "src/lib/supabase/server.ts"]) {
-    const source = readFileSync(file, "utf8");
-    assert.match(source, /await getPublicDailyTestPlanEnabled\(\)/u, file);
-    assert.doesNotMatch(source, /PUBLIC_DAILY_PLAN_ENABLED/u, file);
+
+
+test("Staging settings stay in their writable runtime while Production retains its stable release-independent path", async () => {
+  const scenarios = [
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "staging" }, cwd: "/var/www/fanmind-staging", directory: "/var/www/fanmind-staging" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "test" }, cwd: "/synthetic/test-runtime", directory: "/synthetic/test-runtime" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production" }, cwd: "/var/www/fanmind-releases/synthetic-release", directory: "/var/www/fanmind" },
+    { env: { NODE_ENV: "production" }, cwd: "/var/www/fanmind-current", directory: "/var/www/fanmind" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "staging", FANMIND_RUNTIME_SETTINGS_FILE: "/synthetic/explicit/settings.json" }, cwd: "/var/www/fanmind-staging", directory: "/synthetic/explicit", configured: "settings.json" },
+  ];
+  for (const scenario of scenarios) {
+    const readPaths = [], writePaths = [], renamedPaths = [], modes = [];
+    const expected = path.join(scenario.directory, scenario.configured ?? ".fanmind-runtime-settings.json");
+    const runtime = load("src/lib/runtimeProductSettings.ts", {
+      "server-only": {}, "node:crypto": crypto, "node:path": path,
+      "@/lib/publicDailyOfferSettingsPolicy.mjs": policy,
+      "node:fs/promises": {
+        readFile: async file => { readPaths.push(file); return '{"publicDailyOfferEnabled":true}'; },
+        writeFile: async (file, payload, options) => { writePaths.push(file); modes.push(options.mode); assert.equal(JSON.parse(payload).publicDailyOfferEnabled, false); },
+        rename: async (from, to) => renamedPaths.push([from, to]),
+        chmod: async (file, mode) => { assert.equal(file, expected); assert.equal(mode, 0o600); },
+      },
+    }, scenario.env, scenario.cwd);
+    assert.equal(await runtime.getPublicDailyTestPlanEnabled(), true);
+    await runtime.setPublicDailyTestPlanEnabled(false, "synthetic-admin");
+    assert.deepEqual(readPaths, [expected, expected]);
+    assert.equal(writePaths.length, 1);
+    assert.equal(path.dirname(writePaths[0]), scenario.directory);
+    assert.deepEqual(renamedPaths, [[writePaths[0], expected]]);
+    assert.deepEqual(modes, [0o600]);
   }
+  // The existing rsync --delete release must not erase the Staging operator choice.
+  const deploy = readFileSync(".github/workflows/deploy-staging.yml", "utf8");
+  assert.match(deploy, /--exclude '\.fanmind-runtime-settings\.json'/u);
 });

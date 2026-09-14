@@ -1215,12 +1215,12 @@ forbidIn(
 );
 requireText(
   "src/app/register/page.tsx",
-  "getPublicDailyTestPlanEnabled",
+  "PUBLIC_DAILY_PLAN_ENABLED",
   "Die Registrierung muss das vom Owner freigegebene öffentliche Daily-Angebot anbieten.",
 );
 requireText(
   "src/lib/runtimeProductSettings.ts",
-  "publicDailyTestPlanEnabled",
+  "createPublicDailyOfferSettings",
   "Die Laufzeitkonfiguration muss den 1-€/Tag-Schalter persistent speichern.",
 );
 requireText(
