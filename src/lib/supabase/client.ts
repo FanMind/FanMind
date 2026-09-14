@@ -96,7 +96,10 @@ async function parseSupabaseError(response: Response): Promise<Error> {
   return new Error(message);
 }
 
-export async function syncSupabaseSessionForServer(session: SupabaseAuthSession | null): Promise<void> {
+export async function syncSupabaseSessionForServer(
+  session: SupabaseAuthSession | null,
+  options: { signal?: AbortSignal } = {},
+): Promise<void> {
   if (!session?.access_token) {
     throw new Error("Login fehlgeschlagen: Die Supabase-Sitzung enthält keinen Access Token.");
   }
@@ -105,6 +108,7 @@ export async function syncSupabaseSessionForServer(session: SupabaseAuthSession 
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
+    signal: options.signal,
     body: JSON.stringify({
       accessToken: session.access_token,
       refreshToken: session.refresh_token,
