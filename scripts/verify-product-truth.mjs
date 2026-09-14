@@ -171,6 +171,9 @@ const checkedFiles = [
   "tests/ai-prompt-integration-policy.test.mjs",
   "README.md",
   "AGENTS.md",
+  "docs/operations/WEB_REGISTRATION.md",
+  "docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md",
+  "docs/stripe-test-checklist.md",
   "docs/operations/AI_TIER_STRIPE_EVENT_LEDGER.md",
   "docs/operations/STRIPE_BILLING_EVENT_LEDGER.md",
   "apps/mobile/README.md",
@@ -1216,7 +1219,7 @@ forbidIn(
 requireText(
   "src/app/register/page.tsx",
   "PUBLIC_DAILY_PLAN_ENABLED",
-  "Die Registrierung muss das vom Owner freigegebene öffentliche Daily-Angebot anbieten.",
+  "Die Registrierung muss das bei Admin ON freigegebene Daily-Katalogmodell kennen.",
 );
 requireText(
   "src/lib/runtimeProductSettings.ts",
@@ -1236,18 +1239,24 @@ requireText(
 requireText(
   "src/lib/publicDailyTestPlanPolicy.mjs",
   "PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 * 60 * 60 * 1000",
-  "Die öffentliche 1-€/Tag-Beta-Ausnahme muss auf höchstens 24 Stunden begrenzt sein.",
+  "Die historische Beta-Hilfsfunktion behält ihre 24-Stunden-Grenze; sie steuert nicht die aktuelle FM-DEC-020-Sichtbarkeit.",
 );
 requireText(
   ".github/workflows/deploy-fanmind.yml",
   "publicDailyTestPlanEnabled",
-  "Der Production-Deploy muss den Beta-Zustand initial fail-closed anlegen, ohne spätere Admin-Entscheidungen zu überschreiben.",
+  "Der Production-Deploy behält den Legacy-Beta-Bootstrap; spätere FM-DEC-020-Admin-Entscheidungen dürfen nicht überschrieben werden.",
 );
 requireText(
   "README.md",
-  "Drei dauerhafte öffentliche Zahlungsmodelle",
+  "Drei Zahlungsmodelle im Katalog",
   "README muss die drei vom Owner freigegebenen Zahlungsmodelle nennen.",
 );
+for (const file of ["AGENTS.md", "README.md", "docs/SOURCE_OF_TRUTH.md", "docs/operations/WEB_REGISTRATION.md", "docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md", "docs/database/fanmind_current_schema.md", "docs/stripe-test-checklist.md"]) {
+  requireText(file, "FM-DEC-020", "Aktuelle Daily-Reader müssen den persistenten Admin-Schalter berücksichtigen.");
+  requireText(file, "Admin ON", "Öffentliche Daily-Auswahl muss an Admin ON gebunden sein.");
+  forbidIn(file, /Drei dauerhafte öffentliche Zahlungsmodelle|dauerhaft öffentlich auswählbar|dauerhaftes öffentliches Angebot|permanent public Daily choice|Kontoauswahl offen/u, "Veraltete unbedingte Daily-Sichtbarkeit widerspricht FM-DEC-020.");
+}
+
 requireText(
   "src/lib/stripeBilling.ts",
   'if (planId === "pilot" && commercialOption === "pilot_only") return null;',

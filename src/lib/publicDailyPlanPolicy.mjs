@@ -1,4 +1,4 @@
-// FM-DEC-014: the owner approved Daily as the third permanent public offer.
+// FM-DEC-014: the owner approved Daily as the third catalog payment option; FM-DEC-020 runtime settings control public visibility and new admission.
 // Catalog visibility is not payment, tax, consent or Workspace authorization.
 export const PUBLIC_DAILY_PLAN_ENABLED = true;
 export const PUBLIC_DAILY_PLAN_PRICE_CENTS = 100;
