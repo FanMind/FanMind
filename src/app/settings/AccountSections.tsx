@@ -1,3 +1,4 @@
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { BillingCheckoutButton } from "@/components/BillingCheckoutButton";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { AI_TIER_IDS, formatAiTierPrice, getAiTierConfig } from "@/config/aiTiers.mjs";
@@ -462,7 +463,7 @@ export function ProfileSettingsSection({
 }
 
 
-export function PackageSettingsSection({
+export async function PackageSettingsSection({
   workspace,
   cancelAction,
   revokeCancelAction,
@@ -475,7 +476,10 @@ export function PackageSettingsSection({
   cancelError?: string | null;
   cancelSaved?: string | null;
 }) {
-  const packageCards = getPackageCards(workspace);
+  const offerVisible = await getPublicDailyTestPlanEnabled();
+  const packageCards = getPackageCards(workspace).filter(card =>
+    card.commercialOption !== "internal_daily_test" || offerVisible || workspace.commercial_option === "internal_daily_test",
+  );
   const cancellation = resolveSubscriptionCancellation(workspace);
   const hasCancellation = Boolean(workspace.subscription_cancel_requested_at);
 
