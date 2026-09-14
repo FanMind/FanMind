@@ -1215,7 +1215,7 @@ forbidIn(
 );
 requireText(
   "src/app/register/page.tsx",
-  "PUBLIC_DAILY_PLAN_ENABLED",
+  "getPublicDailyTestPlanEnabled",
   "Die Registrierung muss das vom Owner freigegebene öffentliche Daily-Angebot anbieten.",
 );
 requireText(

@@ -1,3 +1,4 @@
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import buttonStyles from "@/components/BillingCheckoutButton.module.css";
@@ -109,8 +110,10 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   const checkoutReady = workspace?.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(stripe)
     : stripe.readyForCheckout;
+  const dailyOfferAvailable = workspace?.commercial_option !== "internal_daily_test" || await getPublicDailyTestPlanEnabled();
   const canStartCheckout = Boolean(
     workspace &&
+      dailyOfferAvailable &&
       !checkoutFrozen &&
       paymentTermsReady &&
       shouldShowBillingCheckoutAction(workspace) &&
@@ -203,7 +206,9 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
             <li>Rechnungs- und Zahlungsdaten werden von FanMind nicht gespeichert</li>
           </ul>
           <div className={styles.actions}>
-            {checkoutFrozen ? (
+            {!dailyOfferAvailable ? (
+              <div className={styles.infoBox}>Dieses Angebot ist für neue Buchungen derzeit nicht verfügbar. Bestehende Verträge bleiben unverändert.</div>
+            ) : checkoutFrozen ? (
               <div className={styles.infoBox}>{STRIPE_BILLING_WRITE_FREEZE_MESSAGE}</div>
             ) : paymentTermsBlocked ? (
               <div className={styles.infoBox}>Die verbindliche Version der Zahlungsbedingungen ist noch nicht serverseitig bestätigt. Bis dahin wird keine Stripe-Zahlungssitzung erzeugt.</div>

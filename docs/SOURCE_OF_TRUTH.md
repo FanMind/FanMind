@@ -1232,3 +1232,21 @@ Bei Änderungen an Preis, Paketen, Referral, aktivem Scope, Demo, Integrationen,
 - `docs/database/fanmind_current_schema.md`;
 - `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md` bei Mobile- oder Backend-Vertragsänderungen;
 - relevante Security-, KI-, Referral-, Landingpage- und Legal-Dateien.
+
+## Daily admin visibility — 14 September 2026
+
+The owner now controls Daily visibility in `/admin/settings`. This supersedes only
+the unconditional catalog visibility of FM-DEC-014: the existing EUR 0 setup +
+EUR 1/day offer stays in the catalog, but can be hidden on all public pages.
+The server-only deployment-persistent setting has no 24-hour expiry. Off removes
+Landing, registration, public legal catalog and new-package presentation and
+blocks new web admission/checkout attempts; stale direct registration links do
+not silently select a monthly package. Existing authorized Daily customers
+retain their contract text, account, invoices, cancellation and subscription.
+A catalog toggle never changes an existing Stripe object, expires an already
+issued Stripe session, grants a Workspace or bypasses consent/Tax/RLS/Billing.
+Paid Daily Production provisioning and actual payment/activation acceptance
+remain separately open under FM-BILL-003; the intended test cohort is not
+created or accepted by this source change. Missing legacy settings preserve the
+previously public catalog until an explicit admin choice; corrupt/read-failed
+settings fail closed. The stored explicit off survives normal release changes.

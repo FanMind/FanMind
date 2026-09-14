@@ -11,7 +11,6 @@ import {
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import {
   buildTrustedProvisioningUser,
@@ -118,7 +117,7 @@ export default async function WorkspaceSetupPage({
   const activationEnabled = isPaymentTermsActivationEnabled();
   const dailyTestAvailable = activationEnabled
     ? isInternalDailyTestAdmissionReady({
-        windowEnabled: PUBLIC_DAILY_PLAN_ENABLED || await getPublicDailyTestPlanEnabled(),
+        windowEnabled: await getPublicDailyTestPlanEnabled(),
         workspaceProvisioningReady:
           await isInternalDailyTestWorkspaceProvisioningReady(),
         stripeConfig: getStripeConfigStatus(),

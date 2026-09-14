@@ -1,3 +1,9 @@
+## LOCK-FM-DAILY-ADMIN-20260914
+- Task FM-BILL-003; holder ChatGPT; ACTIVE; Risk R3/R4 publication.
+- Scope: owner-requested persistent Daily visibility in admin, public views and new-admission boundaries. No SQL, Stripe mutation or existing-subscription change.
+- Evidence: runtime storage/authorization/negative tests, desktop/mobile browser CI, reviewed exact release and owner UI acceptance.
+- Recovery: bounded app revert preserving settings, accounts, consent and Stripe.
+
 ## LOCK-FM-CREATOR-META-FINISH-20260911
 - Task: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033
 - Status: RELEASED

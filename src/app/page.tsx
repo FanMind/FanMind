@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import LandingV2 from "./landing-v2/page";
 import { getFanMindLanguage } from "@/lib/fanmindCopy";

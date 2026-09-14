@@ -1,3 +1,9 @@
+## Daily admin visibility — 2026-09-14
+- FM-BILL-003 resumed explicitly for Daily test access and admin on/off control.
+- Catalog control is implemented separately from still-open Production provisioning/paid activation. Do not reopen the deployed #1124 callback.
+- Off must not suspend existing testers or mutate subscriptions; no 24-hour setting expiry.
+- Current branch fix/daily-admin-visibility-20260914; tests/review/deploy/owner acceptance pending.
+
 # FanMind Open Loops
 
 ## FM-LOOP-REBOOT-PUBLICATION-20260912

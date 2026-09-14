@@ -1,3 +1,4 @@
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { NextResponse } from "next/server";
 import { shouldShowBillingCheckoutAction, isWorkspaceBillingSuspended } from "@/lib/billing";
 import { isPlatformAdminEmail } from "@/lib/admin";
@@ -61,6 +62,8 @@ async function startCheckout() {
       `/billing/start?error=${encodeURIComponent(PAYMENT_TERMS_ACTIVATION_BLOCK_CODE)}`,
     );
   }
+
+  if (workspace.commercial_option === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) return redirectTo("/billing/start?error=offer_unavailable");
 
   const plan = resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option);
   if (!plan) return redirectTo("/billing/start?error=payment-option");

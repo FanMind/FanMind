@@ -1,3 +1,6 @@
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
+
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { roadmapNotes, roadmapPhases } from "@/config/roadmap";
@@ -938,7 +941,8 @@ export default async function LandingV2({ searchParams }: LandingV2Props) {
       href: link.href === LANDING_ROADMAP_HREF ? roadmapHref : link.href === "/login" ? loginHref : link.href === "/register" ? registerHref : link.href,
     })),
   }));
-  const localizedPricingPlans = localizeFanMindValue(pricingPlans, t).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
+  const dailyVisible = await getPublicDailyTestPlanEnabled();
+  const localizedPricingPlans = localizeFanMindValue(pricingPlans.filter(plan => dailyVisible || plan.name !== "Daily"), t).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
   const localizedPricingProofs = localizeFanMindValue(pricingProofs, t);
   const localizedRoadmapPhases = localizeFanMindValue(roadmapPhases, t);
   const localizedRoadmapNotes = localizeFanMindValue(roadmapNotes, t);

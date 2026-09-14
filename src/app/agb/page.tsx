@@ -1,3 +1,5 @@
+import { showDailyTerms } from "@/lib/dailyTermsVisibility";
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -14,7 +16,7 @@ type TermsSection = {
   content: React.ReactNode;
 };
 
-const sections: TermsSection[] = [
+const getSections = (showDaily: boolean): TermsSection[] => [
   {
     title: "Vertragspartner und Vertragsgegenstand",
     content: (
@@ -241,7 +243,7 @@ const sections: TermsSection[] = [
         <ul>
           <li><strong>Starter Flex:</strong> 990 € einmalige Einrichtung + 312 €/Monat; jederzeit zum Ende des laufenden, bereits bezahlten Abrechnungsmonats kündbar.</li>
           <li><strong>Starter 12 Monate:</strong> 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach Verlängerung um jeweils einen Monat.</li>
-          <li><strong>Daily:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.</li>
+          {showDaily && <li><strong>Daily:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.</li>}
           <li><strong>KI Standard:</strong> in der Starter-Grundgebühr enthalten.</li>
           <li><strong>KI Plus:</strong> zusätzlich 100 €/Monat.</li>
           <li><strong>KI Ultra:</strong> zusätzlich 200 €/Monat.</li>
@@ -422,7 +424,8 @@ function sectionId(index: number) {
   return `abschnitt-${index + 1}`;
 }
 
-export default function AgbPage() {
+export default async function AgbPage() {
+  const sections = getSections(await showDailyTerms());
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />

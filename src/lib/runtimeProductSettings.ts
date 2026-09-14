@@ -1,69 +1,26 @@
 import "server-only";
-
-import { randomUUID } from "node:crypto";
-import { chmod, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  createTemporaryPublicDailyTestPlanSettings,
-  getTemporaryPublicDailyTestPlanStatus,
-} from "@/lib/publicDailyTestPlanPolicy.mjs";
-
-type RuntimeProductSettings = {
-  publicDailyTestPlanEnabled: boolean;
-  publicDailyTestPlanEnabledUntil?: string | null;
-  updatedAt?: string;
-  updatedBy?: string;
-};
+import { readDailyPlanSettings, writeDailyPlanSettings } from "@/lib/dailyPlanSettings.mjs";
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
   if (configured) return configured;
   return process.env.NODE_ENV === "production"
     ? "/var/www/fanmind/.fanmind-runtime-settings.json"
-    : path.join(
-        /* turbopackIgnore: true */ process.cwd(),
-        ".fanmind-runtime-settings.json",
-      );
+    : path.join(/* turbopackIgnore: true */ process.cwd(), ".fanmind-runtime-settings.json");
 }
 
+// No process cache: every worker and every new request observes the same
+// atomic, deployment-persistent admin setting. Only the boolean is public.
+export async function getPublicDailyPlanState() {
+  return readDailyPlanSettings(/* turbopackIgnore: true */ getSettingsPath());
+}
+
+// Compatibility names retained for existing call sites; no 24-hour expiry.
 export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
-  try {
-    const payload = JSON.parse(
-      await readFile(
-        /* turbopackIgnore: true */ getSettingsPath(),
-        "utf8",
-      ),
-    ) as Partial<RuntimeProductSettings>;
-    return getTemporaryPublicDailyTestPlanStatus(payload).enabled;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-    return false;
-  }
+  return (await getPublicDailyPlanState()).enabled;
 }
 
-export async function setPublicDailyTestPlanEnabled(
-  enabled: boolean,
-  updatedBy: string,
-): Promise<void> {
-  const settingsPath = getSettingsPath();
-  const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  const payload: RuntimeProductSettings = createTemporaryPublicDailyTestPlanSettings(
-    enabled,
-    updatedBy,
-  );
-
-  await writeFile(temporaryPath, `${JSON.stringify(payload)}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-    flag: "wx",
-  });
-
-  try {
-    await rename(temporaryPath, settingsPath);
-    await chmod(settingsPath, 0o600);
-  } catch (error) {
-    const { unlink } = await import("node:fs/promises");
-    await unlink(temporaryPath).catch(() => undefined);
-    throw error;
-  }
+export async function setPublicDailyTestPlanEnabled(enabled: boolean, updatedBy: string): Promise<void> {
+  await writeDailyPlanSettings(/* turbopackIgnore: true */ getSettingsPath(), enabled, updatedBy);
 }

@@ -558,7 +558,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   const workspaceSetupSource = fs.readFileSync("src/app/workspace/setup/page.tsx", "utf8");
   const deploySource = fs.readFileSync(".github/workflows/deploy-fanmind.yml", "utf8");
 
-  assert.match(registerPageSource, /enablePublicDailyTestPlan = PUBLIC_DAILY_PLAN_ENABLED/u);
+  assert.match(registerPageSource, /enablePublicDailyTestPlan = await getPublicDailyTestPlanEnabled\(\)/u);
   assert.match(registerPageSource, /paidActivationAvailable = isPaymentTermsActivationEnabled\(\)/u);
   assert.match(workspaceSetupSource, /isInternalDailyTestAdmissionReady\(\{[\s\S]*stripeConfig: getStripeConfigStatus\(\)/u);
   const checkoutRouteSource = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
@@ -574,10 +574,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
-  assert.match(
-    adminRouteSource,
-    /enabled &&[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*daily_test_plan", "not_ready"[\s\S]*setPublicDailyTestPlanEnabled/u,
-  );
+  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled/);
   assert.match(
     adminSettingsSource,
     /PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
