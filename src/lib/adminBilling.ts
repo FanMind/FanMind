@@ -118,7 +118,7 @@ export async function listStripeInvoicesForWorkspace(workspace: Pick<AdminBillin
   }
 }
 
-export async function startInternalDailyTestCheckout(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null; url?: string; sessionId?: string }> {
+export async function startInternalDailyTestCheckout(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null; code?: string; url?: string; sessionId?: string }> {
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
   const { workspace, error } = await getAdminBillingWorkspace(workspaceId);
@@ -131,6 +131,9 @@ export async function startInternalDailyTestCheckout(workspaceId: string, admin:
   if (!plan) return { ok: false, status: 503, error: "STRIPE_PRICE_INTERNAL_DAILY_TEST ist nicht konfiguriert." };
   if (!workspace.owner_user_id || !workspace.owner_email) return { ok: false, status: 409, error: "Der Workspace-Owner und seine E-Mail müssen vor dem Stripe-Test eindeutig aufgelöst werden." };
   const session = await createStripeCheckoutSession({ plan, userId: workspace.owner_user_id, workspaceId, userEmail: workspace.owner_email });
+  if (session.code === "offer_unavailable") {
+    return { ok: false, status: 409, code: "offer_unavailable", error: "Daily ist derzeit ausgeschaltet. Bestehende Abos bleiben unverändert." };
+  }
   if (session.code === STRIPE_BILLING_WRITE_FREEZE_CODE) {
     return { ok: false, status: 503, error: session.error ?? "Zahlungen sind vorübergehend pausiert. Bitte versuche es gleich erneut." };
   }

@@ -42,7 +42,8 @@ export default defineConfig({
     : {
         command: "npm run start -- -H 127.0.0.1 -p 3100",
         url: `${baseURL}/api/version`,
-        reuseExistingServer: !process.env.CI,
+        // A pre-existing server cannot prove it uses this run's private settings file.
+        reuseExistingServer: false,
         timeout: 120_000,
         stdout: "pipe",
         stderr: "pipe",

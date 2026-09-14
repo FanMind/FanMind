@@ -30,6 +30,14 @@ test("persistent offer setting has no 24-hour or 14-day expiration and preserves
   for (const value of [null, [], "true", true, 1]) assert.equal(policy.readPublicDailyOfferEnabled(value), false);
   for (const value of ["true", 1, undefined, null]) assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyOfferEnabled: value }), false);
   assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyTestPlanEnabled: false }), true);
+  assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyTestPlanEnabled: true, publicDailyTestPlanEnabledUntil: "2026-01-01T00:00:00.000Z" }), true);
+  assert.equal(policy.readPublicDailyOfferEnabled({ publicDailyTestPlanEnabled: false, publicDailyTestPlanEnabledUntil: null }), true);
+  for (const settings of [{}, { unrelated: 42 }, { publicDailyTestPlanEnabled: "false" },
+    { publicDailyTestPlanEnabled: false, publicDailyTestPlanEnabledUntil: "invalid" },
+    { publicDailyTestPlanEnabled: false, publicDailyTestPlanEnabledUntil: "0" },
+    { publicDailyTestPlanEnabled: false, publicDailyOfferUpdatedAt: "2026-01-01T00:00:00.000Z" }]) {
+    assert.equal(policy.readPublicDailyOfferEnabled(settings), false);
+  }
   assert.throws(() => policy.createPublicDailyOfferSettings("true", "admin"));
 });
 
@@ -42,7 +50,12 @@ test("actual runtime file persists OFF across fresh module loads, uses private p
   }, { NODE_ENV: "test", FANMIND_RUNTIME_SETTINGS_FILE: file });
   try {
     assert.equal(await runtime().getPublicDailyTestPlanEnabled(), true);
+    for (const settings of [{}, { unrelated: 42 }, { publicDailyOfferEnabled: "true" }]) {
+      await fs.writeFile(file, JSON.stringify(settings));
+      assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
+    }
     await fs.writeFile(file, JSON.stringify({ publicDailyTestPlanEnabled: false, unrelated: 42 }));
+    assert.equal(await runtime().getPublicDailyTestPlanEnabled(), true);
     await runtime().setPublicDailyTestPlanEnabled(false, "synthetic-admin");
     assert.equal(await runtime().getPublicDailyTestPlanEnabled(), false);
     const stored = JSON.parse(await fs.readFile(file, "utf8"));
@@ -61,6 +74,16 @@ test("actual runtime file persists OFF across fresh module loads, uses private p
     await assert.rejects(runtime().setPublicDailyTestPlanEnabled(true, "synthetic-admin"));
     assert.deepEqual(await fs.readdir(dir), ["settings.json"]);
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("local browser launcher cannot reuse a server without its isolated settings path", () => {
+  const config = load("playwright.config.mts", {
+    "@playwright/test": { defineConfig: value => value, devices: { "Desktop Chrome": {}, "Pixel 7": {} } },
+    "node:fs": { mkdtempSync: () => { throw new Error("fixture path must be reused"); } },
+    "node:os": os, "node:path": path,
+  }, { FANMIND_DAILY_E2E_SETTINGS_FILE: "/synthetic/daily-settings.json" }).default;
+  assert.equal(config.webServer.reuseExistingServer, false);
+  assert.equal(config.webServer.env.FANMIND_RUNTIME_SETTINGS_FILE, "/synthetic/daily-settings.json");
 });
 
 function adminHarness({ admin = true, saveFails = false } = {}) {

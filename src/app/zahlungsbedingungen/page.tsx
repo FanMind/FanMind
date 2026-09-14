@@ -177,6 +177,7 @@ function sectionId(index: number) {
 
 export default async function ZahlungsbedingungenPage() {
   const showDaily = await showDailyOfferTerms();
+  const visibleSections = sections.filter(section => showDaily || section.title !== "Daily");
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />
@@ -206,7 +207,7 @@ export default async function ZahlungsbedingungenPage() {
         </section>
 
         <article className={styles.document} aria-label="Paket- und Zahlungsbedingungen für FanMind">
-          {sections.map((section, index) => !showDaily && section.title === "Daily" ? null : (
+          {visibleSections.map((section, index) => (
             <section className={styles.section} id={sectionId(index)} key={section.title}>
               <div className={styles.number} aria-hidden="true">{index + 1}</div>
               <div className={styles.sectionBody}>
