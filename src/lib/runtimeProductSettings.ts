@@ -8,7 +8,10 @@ import { createPublicDailyOfferSettings, readPublicDailyOfferEnabled } from "@/l
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
   if (configured) return configured;
-  return process.env.NODE_ENV === "production"
+  // Next production mode also serves Staging; never share its settings file.
+  const runtime = process.env.FANMIND_RUNTIME_ENVIRONMENT?.trim();
+  const isolatedRuntime = ["staging", "test", "development"].includes(runtime ?? "");
+  return process.env.NODE_ENV === "production" && !isolatedRuntime
     ? "/var/www/fanmind/.fanmind-runtime-settings.json"
     : path.join(
         /* turbopackIgnore: true */ process.cwd(),

@@ -10,12 +10,12 @@ import ts from "typescript";
 import * as policy from "../src/lib/publicDailyOfferSettingsPolicy.mjs";
 import * as http from "../src/lib/httpMutationPolicy.mjs";
 
-function load(file, dependencies, env = {}) {
+function load(file, dependencies, env = {}, cwd = process.cwd()) {
   const exports = {};
   const compiled = ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
-  runInNewContext(compiled, { exports, URL, process: { env, cwd: () => process.cwd() }, require(name) {
+  runInNewContext(compiled, { exports, URL, process: { env, cwd: () => cwd }, require(name) {
     assert.ok(Object.hasOwn(dependencies, name), `Unexpected dependency ${name}`);
     return dependencies[name];
   } });
@@ -101,4 +101,39 @@ test("only an authenticated same-origin admin can persist exact ON/OFF and inval
   assert.equal(failed.invalidations.length, 0);
   assert.equal((await response.text()).includes("private-storage-error"), false);
   assert.equal(h.writes.length, 2);
+});
+
+
+test("Staging settings stay in their writable runtime while Production retains its stable release-independent path", async () => {
+  const scenarios = [
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "staging" }, cwd: "/var/www/fanmind-staging", directory: "/var/www/fanmind-staging" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "test" }, cwd: "/synthetic/test-runtime", directory: "/synthetic/test-runtime" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production" }, cwd: "/var/www/fanmind-releases/synthetic-release", directory: "/var/www/fanmind" },
+    { env: { NODE_ENV: "production" }, cwd: "/var/www/fanmind-current", directory: "/var/www/fanmind" },
+    { env: { NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "staging", FANMIND_RUNTIME_SETTINGS_FILE: "/synthetic/explicit/settings.json" }, cwd: "/var/www/fanmind-staging", directory: "/synthetic/explicit", configured: "settings.json" },
+  ];
+  for (const scenario of scenarios) {
+    const readPaths = [], writePaths = [], renamedPaths = [], modes = [];
+    const expected = path.join(scenario.directory, scenario.configured ?? ".fanmind-runtime-settings.json");
+    const runtime = load("src/lib/runtimeProductSettings.ts", {
+      "server-only": {}, "node:crypto": crypto, "node:path": path,
+      "@/lib/publicDailyOfferSettingsPolicy.mjs": policy,
+      "node:fs/promises": {
+        readFile: async file => { readPaths.push(file); return '{"publicDailyOfferEnabled":true}'; },
+        writeFile: async (file, payload, options) => { writePaths.push(file); modes.push(options.mode); assert.equal(JSON.parse(payload).publicDailyOfferEnabled, false); },
+        rename: async (from, to) => renamedPaths.push([from, to]),
+        chmod: async (file, mode) => { assert.equal(file, expected); assert.equal(mode, 0o600); },
+      },
+    }, scenario.env, scenario.cwd);
+    assert.equal(await runtime.getPublicDailyTestPlanEnabled(), true);
+    await runtime.setPublicDailyTestPlanEnabled(false, "synthetic-admin");
+    assert.deepEqual(readPaths, [expected, expected]);
+    assert.equal(writePaths.length, 1);
+    assert.equal(path.dirname(writePaths[0]), scenario.directory);
+    assert.deepEqual(renamedPaths, [[writePaths[0], expected]]);
+    assert.deepEqual(modes, [0o600]);
+  }
+  // The existing rsync --delete release must not erase the Staging operator choice.
+  const deploy = readFileSync(".github/workflows/deploy-staging.yml", "utf8");
+  assert.match(deploy, /--exclude '\.fanmind-runtime-settings\.json'/u);
 });
