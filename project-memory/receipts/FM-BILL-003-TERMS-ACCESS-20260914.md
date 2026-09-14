@@ -1,24 +1,23 @@
-# FM-BILL-003 — Payment-terms setup access, 2026-09-14
+# FM-BILL-003 — Owner-requested payment-terms switch, 2026-09-14
 
-Status: IN_PROGRESS. Risk: R2 for read-only setup UI; paid activation remains R4 and is not enabled by this receipt.
-Branch: fix/payment-terms-setup-access-20260914.
-Scope lock: LOCK-FM-BILL-003-TERMS-ACCESS-20260914, limited to the setup page's read-only terms section and its regression test. Existing financial, callback, Social and Operations work is not taken over.
+Status: IMPLEMENTED; current-head CI/review and normal rollout pending. Risk: R4 for the requested production release. Existing branch/PR #1123 is reused.
+Scope lock: LOCK-FM-BILL-003-TERMS-ACCESS-20260914; holder ChatGPT. The earlier read-only document-access proposal is SUPERSEDED and removed from the final diff.
 
-## Owner instruction and boundary
-The owner explicitly asks to enable payment terms after the signed-in setup page displays only the account-ready message and demo entry. Make the existing terms directly accessible from this page. This bounded change is only access to read the document, NOT acceptance of the whole request to enable paid onboarding. Do not describe it as an activated checkout, a resolved contract-version gate, or a successful payment test.
+## Exact current owner instruction
+The owner explicitly requested "Zahlungsbedingungen einschalten jetzt", then clarified "du sollst nur den schalter umlegen" and reported Stripe already configured. This resumes the specific switch action and supersedes the older owner deferral for that bounded scope. It does not authorize unrelated Stripe, price, schema, account or contract-text changes. Do not substitute a new read-only link, create another branch, repeat Stripe setup, or ask for the same switch authorization again.
 
-## Preflight and current evidence
-Current GitHub main and root tree were re-read as 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b and 0e5ecbaf3212f8104cac35a8a9d1a87e2e8028dc. The current project-memory tree is 5c4245d5a94eb225ce7ca46a4767c5cc78c087bd: the already-read PROTOCOL, AUTO_HANDOFF, CURRENT_STATE, FINISHLINE_STATE, NEXT_BEST_ACTION, OWNER_ACTION_INBOX, SESSION_HANDOFF, STARTED_WORK, WORK_LOCKS, OPEN_LOOPS, TASK_LEDGER, DEPENDENCIES, DECISIONS and FAILED_ATTEMPTS remain bound to that unchanged main. Canonical Source of Truth, WEB_REGISTRATION, RELEASE_ACCEPTANCE_20260910, the actual setup page and payment-terms policy were inspected. Open PRs were checked; the separate registration investigation and speculative parser patch are not merged into this branch.
+## Preflight and reconciliation
+Current main was freshly verified as 4d6d0c4f0ba675f8b7d503ffa831264c54e4b61b, the same immutable revision to which the already-read mandatory Project Memory and canonical readers are bound (project-memory tree 5c4245d5a94eb225ce7ca46a4767c5cc78c087bd). Existing PR #1123 was read at dab3bcd before edits; no merge/deployment had occurred. The actual policy and relevant HTTP/consent/browser tests were read. Prior read-only Production and Stripe observations are retained as dated evidence, not used to invent missing credentials or redo configured providers. A zero Tax-registration list alone is not proof that Stripe as a whole is unconfigured.
 
-A fresh read-only Production catalog query returned zero ensure_current_user_workspace functions and zero ensure_internal_daily_test_workspace functions. The existing version policy remains unresolved; merely flipping its boolean would not create the required Workspace functions or prove the payment path. The connected Stripe session exposes the FanMind Live account, not a demonstrated test context. No provider write, SQL migration, payment, account deletion or email send is performed.
+## Bounded implementation
+The only runtime behavior change is PAYMENT_TERMS_ACTIVATION_ENABLED from false to true, with its comment identifying the explicit owner instruction. Preserve CURRENT_PAYMENT_TERMS_VERSION, the displayed legal document, every recorded consent, all prices and Stripe settings, the existing account/login/setup implementation, Workspace RPC readiness, browser direct-insert denial and server-owned Checkout checks. Remove the earlier extra setup section/test and restore the original setup page and consent-test entry point byte-for-byte. No email callback repair or complete payment acceptance is claimed.
 
-## Implementation and evidence plan
-Expose the existing localized payment-terms link independently of paid activation, in a separate read-only section. Preserve all existing authentication, existing-Workspace redirects, explicit package consent, version checks, provisioning and checkout gates. Open the document in another tab so the authenticated setup remains available. No acceptance timestamp or metadata is recorded by opening it.
+The owner requested the existing configured step, not a new contract revision. This change records an operational owner decision, NOT an external legal/tax review. Historical contract-version concerns and remaining Workspace/Billing rollout evidence are not silently marked accepted or rewritten by this switch. No SQL or provider mutation is performed.
 
-Compile and execute the actual TSX page in the existing style of isolated Node/TypeScript/JSX fixtures. Verify terms access with activation disabled, no paid form or provisioning from this read, preserved denial of a forged submission, unchanged active package forms and anonymous redirect. Require reviewed exact-head CI and normal deployment before any live-access claim.
+## Verification
+Locally executed the exact new policy blob 48106eeb7f92278b132ccb79a064797a2ea80fd2: enabled default, unchanged revision, explicit acceptance, stale-revision rejection, explicit disabled fallback, non-boolean denial, current and pre-window timestamp checks all passed without network or data writes. Existing tests now assert the requested enabled default and retain the disabled negative path, authentication, origin, version and service-owned evidence checks. The public browser expectation changes only the now-absent disabled-step notice; synthetic signup/email/payment guards remain unchanged.
 
-## Still open
-Full payment-terms-version alignment, protected Workspace/consent/Billing rollout, factual tax/provider readiness, complete email callback repair and end-to-end payment acceptance. The owner already authorized the requested work; do not ask the same general permission again or recreate prices/accounts to produce activity.
+Require green final-head CI, current-head review and normal deployed-release evidence before stating that the switch is live. Do not claim that turning on this step proves the later Workspace or real payment flow.
 
-## Recovery
-Revert only the read-only UI/test change. No financial or database state is changed. No live deployment or completion is claimed by this starting receipt.
+## Recovery and next step
+Revert only this boolean/comment change to disable new activation again; do not delete users or rewrite contracts or Stripe objects. Normal isolated-release rollback remains available. Finish this exact PR/release; preserve the separately reported email-callback defect and the full customer walkthrough as open work. No fresh permission is required for the already requested switch and normal reviewed publication.
