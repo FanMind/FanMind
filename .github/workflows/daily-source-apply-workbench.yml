@@ -1,0 +1,43 @@
+name: Daily source patch transport
+on:
+  push:
+    branches: [fix/daily-admin-rollout-20260914]
+    paths: [.github/workflows/daily-source-apply-workbench.yml]
+permissions:
+  contents: write
+jobs:
+  apply-public-source:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/fix/daily-admin-rollout-20260914'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Verify and apply exact public source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, lzma, pathlib, subprocess
+          base = '15a1f13808d0039ed3f319bb0b3e469b15919bd3'
+          subprocess.run(['git', 'merge-base', '--is-ancestor', base, 'HEAD'], check=True)
+          intervening = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD']).decode().splitlines()
+          assert all(p.startswith('.daily-source-transport/') or p == '.github/workflows/daily-source-apply-workbench.yml' for p in intervening), 'Source changed during transport'
+          encoded = ''.join(pathlib.Path(f'.daily-source-transport/part{i}.b64').read_text().strip() for i in range(4))
+          assert len(encoded) == 21144
+          patch = lzma.decompress(base64.b64decode(encoded, validate=True), memlimit=128*1024*1024)
+          assert len(patch) == 70859
+          assert hashlib.sha256(patch).hexdigest() == '9e3fe39311db0c8fea00d14f6ea38683864439dbb467714d120e134e4c8118df'
+          allowed = {'README.md','docs/SOURCE_OF_TRUTH.md','docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md','docs/operations/WEB_REGISTRATION.md','e2e/daily-offer-visibility.spec.ts','package.json','playwright.config.mts','project-memory/DECISIONS.md','project-memory/DRIFT_BASELINE.json','project-memory/OPEN_LOOPS.md','project-memory/STARTED_WORK.md','project-memory/WORK_LOCKS.md','project-memory/receipts/FM-BILL-003-DAILY-ADMIN-20260914.md','scripts/verify-product-truth.mjs','src/app/admin/settings/page.tsx','src/app/agb/page.tsx','src/app/api/admin/settings/daily-test-plan/route.ts','src/app/api/billing/checkout/route.ts','src/app/api/register/workspace/route.ts','src/app/landing-v2/page.tsx','src/app/page.tsx','src/app/register/RegisterClient.tsx','src/app/register/page.tsx','src/app/settings/AccountSections.tsx','src/app/workspace/setup/page.tsx','src/app/zahlungsbedingungen/page.tsx','src/lib/dailyOfferTermsVisibility.ts','src/lib/publicDailyOfferSettingsPolicy.d.mts','src/lib/publicDailyOfferSettingsPolicy.mjs','src/lib/runtimeProductSettings.ts','src/lib/supabase/server.ts','tests/customer-billing-policy.test.mjs','tests/daily-offer-admin.test.mjs','tests/payment-terms-submission.test.mjs'}
+          stats = subprocess.check_output(['git','apply','--numstat','--unidiff-zero','-'], input=patch).decode().splitlines()
+          assert {line.split('\t',2)[2] for line in stats} == allowed
+          subprocess.run(['git','apply','--check','--index','--unidiff-zero','-'], input=patch, check=True)
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'], input=patch, check=True)
+          subprocess.run(['git','diff','--cached','--check'], check=True)
+          print('DAILY_PUBLIC_PATCH_SHA256_VERIFIED=true')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Add persistent administrator Daily offer switch and site-wide admission boundaries'
+          git push origin HEAD:refs/heads/fix/daily-admin-rollout-20260914
