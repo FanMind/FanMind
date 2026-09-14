@@ -38,6 +38,7 @@ test.describe("Signup callback compatibility and automatic continuation", () => 
       let checks = 0;
       let sessionRequests = 0;
       let cleanBeforeCheck = false;
+      let setupHasSession = false;
       await page.route("**/auth/v1/user", async route => {
         if (route.request().method() === "GET") {
           checks++;
@@ -48,16 +49,25 @@ test.describe("Signup callback compatibility and automatic continuation", () => 
       page.on("request", request => {
         if (new URL(request.url()).pathname === "/api/auth/session") sessionRequests++;
       });
-      await page.route(`${BASE}${scenario.setup}`, route => route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Synthetic setup</h1>" }));
+      await page.route(`${BASE}${scenario.setup}`, async route => {
+        const headers = await route.request().allHeaders();
+        const cookieNames = (headers.cookie ?? "").split(";").map(item => item.trim().split("=", 1)[0]);
+        setupHasSession = cookieNames.includes("fanmind_sb_access_token") && cookieNames.includes("fanmind_sb_refresh_token");
+        await route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Synthetic setup</h1>" });
+      });
       await page.goto(`${scenario.path}${scenario.fragment}`);
       await expect(page).toHaveURL(`${BASE}${scenario.setup}`);
       expect(checks).toBeGreaterThan(0);
       expect(cleanBeforeCheck).toBe(true);
       expect(sessionRequests).toBe(1);
-      const cookies = await context.cookies(BASE);
-      // Assert metadata only so failures never print session credential values.
-      expect(cookies.some(cookie => cookie.name === "fanmind_sb_access_token" && cookie.httpOnly)).toBe(true);
-      expect(cookies.some(cookie => cookie.name === "fanmind_sb_refresh_token" && cookie.httpOnly)).toBe(true);
+      // Playwright's HTTP-URL filter omits Secure cookies for numeric loopback,
+      // although Chromium treats loopback as trustworthy. Read the inventory,
+      // enforce the exact host/flags, and separately prove browser transmission.
+      const cookies = await context.cookies();
+      for (const name of ["fanmind_sb_access_token", "fanmind_sb_refresh_token"]) {
+        expect(cookies.some(cookie => cookie.name === name && cookie.domain === "127.0.0.1" && cookie.path === "/" && cookie.httpOnly && cookie.secure && cookie.sameSite === "Lax")).toBe(true);
+      }
+      expect(setupHasSession).toBe(true);
     });
   }
 
@@ -103,7 +113,7 @@ test.describe("Signup callback compatibility and automatic continuation", () => 
     await page.route("**/workspace/setup", route => route.fulfill({ status: 200, body: "Synthetic setup" }));
     await page.goto(`/register/confirm${CURRENT}`);
     await expect(page.getByRole("heading", { name: "Deine E-Mail ist bestätigt" })).toBeVisible();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText("Bitte melde dich an, um fortzufahren.");
     await expect(page.getByRole("button", { name: "Neue Bestätigung anfordern" })).toHaveCount(0);
     expect(sessions).toBe(1);
     await page.getByRole("button", { name: "Mit diesem Konto fortfahren" }).click();
