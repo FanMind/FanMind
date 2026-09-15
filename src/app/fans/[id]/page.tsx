@@ -28,6 +28,7 @@ import {
 import {
   requireAuthorizedWorkspaceMember,
   requireContactInActiveAuthorizedWorkspace,
+  WorkspaceAuthorizationError,
 } from "@/lib/workspaceAuthorization";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 import { isOpenFollowupStatus } from "@/lib/followupStatus";
@@ -1774,6 +1775,12 @@ export default async function FanDetailPage({
   try {
     authorized = await requireAuthorizedWorkspaceMember();
   } catch (error) {
+    if (
+      error instanceof WorkspaceAuthorizationError &&
+      error.code === "workspace_inactive"
+    ) {
+      redirect("/workspace/access-paused");
+    }
     if (error instanceof Error && error.message === "TEMPORARY_DEMO_DELETED") {
       redirect("/login?demo_deleted=1");
     }

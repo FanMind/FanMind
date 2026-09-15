@@ -19,6 +19,15 @@ RPC-/RLS-Grundlage ist erst nach dem getrennt freigegebenen Datenbank-Rollout
 gemäß `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` produktiv nutzbar; ein
 normaler Web-Deploy wendet sie nicht an.
 
+Der interne Admin-CRM-Zugang wird trotz seines technischen 0-EUR-Status nicht
+als öffentliche Demo behandelt: reguläre CRM-, Kanal- und Mobile-Grundlagen
+bleiben nutzbar, während generische Billing- und Stripe-Übergänge weiterhin
+gesperrt sind. Nach Sperre oder Ablauf schützt die restriktive Grenze auch die
+Workspace-Stammdaten. Eine minimale RPC meldet der Anwendung ausschließlich
+den Zustand `inactive`, damit sie die Pausenseite statt Onboarding anzeigt.
+Die beiden bisherigen Creator-Schreib-RPCs bleiben für Browserrollen entzogen,
+bis sie dieselbe Zugangsprüfung selbst verbindlich durchsetzen.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-

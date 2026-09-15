@@ -191,6 +191,20 @@ export type WorkspaceMemberSafeDashboardRow = {
 
 const WORKSPACE_MEMBER_SAFE_DASHBOARD_RPC =
   "get_current_workspace_member_safe_dashboard";
+const CURRENT_ADMIN_CRM_ACCESS_STATE_RPC =
+  "current_admin_crm_access_state";
+export const ADMIN_CRM_ACCESS_INACTIVE = "ADMIN_CRM_ACCESS_INACTIVE";
+
+function isMissingCurrentAdminCrmAccessStateRpc(
+  error: Error | null,
+): boolean {
+  const message = error?.message.trim().toLowerCase() ?? "";
+  return (
+    message.includes(CURRENT_ADMIN_CRM_ACCESS_STATE_RPC) &&
+    message.includes("could not find the function") &&
+    message.includes("schema cache")
+  );
+}
 
 function isMissingWorkspaceMemberSafeDashboardRpc(
   error: Error | null,
@@ -1327,6 +1341,27 @@ export async function getUserWorkspaceDashboard(
 
     const workspace = { ...workspaceRow, role: "owner" };
     return { workspace, error: null };
+  }
+
+  const accessStateResult = await postgrestRequest<{
+    access_state: string;
+  }>(
+    `rpc/${CURRENT_ADMIN_CRM_ACCESS_STATE_RPC}`,
+    "POST",
+    {},
+    accessToken,
+    { select: "access_state", single: true },
+  );
+  if (accessStateResult.data?.access_state === "inactive") {
+    return workspaceDashboardError(ADMIN_CRM_ACCESS_INACTIVE);
+  }
+  if (
+    accessStateResult.error &&
+    !isMissingCurrentAdminCrmAccessStateRpc(accessStateResult.error)
+  ) {
+    return workspaceDashboardError(
+      "Workspace-Zugangsstatus konnte nicht sicher geprüft werden.",
+    );
   }
 
   return workspaceDashboardError(

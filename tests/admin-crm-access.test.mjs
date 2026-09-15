@@ -94,6 +94,11 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   const page = fs.readFileSync("src/app/admin/billing/page.tsx", "utf8");
   const preActivation = fs.readFileSync("src/lib/preActivation.ts", "utf8");
   const workspaceAuthorization = fs.readFileSync("src/lib/workspaceAuthorization.ts", "utf8");
+  const supabaseServer = fs.readFileSync("src/lib/supabase/server.ts", "utf8");
+  const demoMode = fs.readFileSync("src/lib/demoMode.ts", "utf8");
+  const inbox = fs.readFileSync("src/app/inbox/page.tsx", "utf8");
+  const fanDetail = fs.readFileSync("src/app/fans/[id]/page.tsx", "utf8");
+  const mobilePush = fs.readFileSync("src/app/api/mobile/push-registration/route.ts", "utf8");
   const dashboard = fs.readFileSync("src/app/dashboard/page.tsx", "utf8");
   const accountSections = fs.readFileSync("src/app/settings/AccountSections.tsx", "utf8");
   const workspaceDetail = fs.readFileSync(
@@ -144,6 +149,10 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(migration, /admin_crm_read_allowed/u);
   assert.match(migration, /as restrictive[\s\S]*for all[\s\S]*to authenticated/u);
   assert.match(migration, /information_schema\.columns/u);
+  assert.match(migration, /on public\.workspaces[\s\S]*as restrictive[\s\S]*admin_crm_read_allowed\(id\)/u);
+  assert.match(migration, /current_admin_crm_access_state/u);
+  assert.match(migration, /save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\)[\s\S]*from public, authenticated/u);
+  assert.match(migration, /record_creator_fan_review\(uuid,uuid,jsonb,jsonb\)[\s\S]*from public, authenticated/u);
 
   assert.match(route, /isTrustedFanMindMutationRequest/u);
   assert.match(route, /readBoundedFormDataRequest/u);
@@ -158,9 +167,20 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(page, /Dauerhaft kostenlos freigeben/u);
   assert.match(page, /Befristet kostenlos/u);
   assert.match(page, /Zugang sperren/u);
+  assert.match(page, /CRM-Zugang in „Registrierte Nutzer“ verwalten/u);
+  assert.match(page, /!workspace \? <>[\s\S]*mode" value="permanent"[\s\S]*mode" value="temporary"/u);
+  assert.match(page, /isAdminCrmAccessWorkspace\(selectedWorkspace\)/u);
   assert.match(preActivation, /isAdminCrmAccessWorkspace/u);
   assert.match(preActivation, /evaluateWorkspaceProcessingEntitlement/u);
   assert.match(workspaceAuthorization, /assertAdminCrmReadAccess/u);
+  assert.match(workspaceAuthorization, /ADMIN_CRM_ACCESS_INACTIVE/u);
+  assert.match(supabaseServer, /current_admin_crm_access_state/u);
+  assert.match(supabaseServer, /ADMIN_CRM_ACCESS_INACTIVE/u);
+  assert.match(inbox, /error\.code === "workspace_inactive"[\s\S]*workspace\/access-paused/u);
+  assert.match(fanDetail, /WorkspaceAuthorizationError/u);
+  assert.match(fanDetail, /error\.code === "workspace_inactive"[\s\S]*workspace\/access-paused/u);
+  assert.match(demoMode, /admin_crm_access !== true/u);
+  assert.match(mobilePush, /workspaceTestAccessFlags/u);
   assert.match(dashboard, /Starter CRM/u);
   assert.match(accountSections, /Starter CRM · kostenloser Adminzugang/u);
   assert.match(workspaceDetail, /isAdminCrmAccessWorkspace/u);

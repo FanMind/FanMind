@@ -11,7 +11,7 @@ export const ADMIN_CRM_ACCESS_MIGRATION_PATH = resolve(
   `supabase/migrations/${ADMIN_CRM_ACCESS_MIGRATION_ID}.sql`,
 );
 export const EXPECTED_ADMIN_CRM_ACCESS_SHA256 =
-  "166d4602f7416fe7d2f19cedd28898fff0acc49168b7d4da0f93e7a74b8b6543";
+  "636bdd096efe700aa36832071cc3f6e8aa9ecdf9ccc28f1aab154faf5bb9ba58";
 
 function fail(code) {
   throw new Error(`ADMIN_CRM_ACCESS_MIGRATION_ERROR=${code}`);
@@ -25,6 +25,10 @@ export function evaluateAdminCrmAccessMigration(sql) {
     /^begin;/iu,
     /create or replace function public\.admin_crm_read_allowed/u,
     /as restrictive for all to authenticated/u,
+    /on public\.workspaces[\s\S]*as restrictive/u,
+    /create or replace function public\.current_admin_crm_access_state/u,
+    /save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\)[\s\S]*from public, authenticated/u,
+    /record_creator_fan_review\(uuid,uuid,jsonb,jsonb\)[\s\S]*from public, authenticated/u,
     /create or replace function public\.admin_set_registered_user_crm_access/u,
     /pg_advisory_xact_lock/u,
     /insert into public\.operations_audit_log/u,

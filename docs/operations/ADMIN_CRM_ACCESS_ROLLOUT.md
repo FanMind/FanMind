@@ -34,10 +34,11 @@ Im eindeutig geprüften Supabase-Production-Projekt im SQL Editor ausführen:
 ```sql
 select
   to_regprocedure('public.admin_crm_read_allowed(uuid)') as read_boundary,
+  to_regprocedure('public.current_admin_crm_access_state()') as access_state_rpc,
   to_regprocedure('public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)') as access_rpc;
 ```
 
-Vor dem ersten Rollout müssen beide Werte `null` sein. Ein partieller Zustand
+Vor dem ersten Rollout müssen alle drei Werte `null` sein. Ein partieller Zustand
 wird nicht überschrieben, sondern separat untersucht.
 
 ## 3. Apply
@@ -52,6 +53,7 @@ Transaktion. Keine weiteren Migrationen und kein `supabase db push` ausführen.
 ```sql
 select
   to_regprocedure('public.admin_crm_read_allowed(uuid)') is not null as read_boundary_present,
+  to_regprocedure('public.current_admin_crm_access_state()') is not null as access_state_rpc_present,
   to_regprocedure('public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)') is not null as access_rpc_present,
   not has_function_privilege('anon', 'public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)', 'EXECUTE') as anon_denied,
   not has_function_privilege('authenticated', 'public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)', 'EXECUTE') as authenticated_denied,
@@ -63,9 +65,28 @@ where schemaname = 'public'
   and policyname = 'admin_crm_entitlement_boundary'
   and permissive = 'RESTRICTIVE'
   and roles = array['authenticated']::name[];
+
+select exists (
+  select 1 from pg_policies
+   where schemaname = 'public'
+     and tablename = 'workspaces'
+     and policyname = 'admin_crm_entitlement_boundary'
+     and permissive = 'RESTRICTIVE'
+     and roles = array['authenticated']::name[]
+) as workspace_boundary_present;
+
+select
+  case
+    when to_regprocedure('public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)') is null then true
+    else not has_function_privilege('authenticated', 'public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)', 'EXECUTE')
+  end as creator_bundle_browser_denied,
+  case
+    when to_regprocedure('public.record_creator_fan_review(uuid,uuid,jsonb,jsonb)') is null then true
+    else not has_function_privilege('authenticated', 'public.record_creator_fan_review(uuid,uuid,jsonb,jsonb)', 'EXECUTE')
+  end as creator_review_browser_denied;
 ```
 
-Alle sechs Werte müssen `true` sein. Danach zuerst mit einem synthetischen,
+Alle Werte müssen `true` sein. Danach zuerst mit einem synthetischen,
 bestätigten Nichtkunden testen: dauerhaft freigeben, auf ein zukünftiges Datum
 befristen, sperren und nach jeder Stufe Anmeldung sowie direkten
 authentifizierten Supabase-Read prüfen. Keine echte Zahlung auslösen.

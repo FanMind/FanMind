@@ -68,6 +68,49 @@ begin
 end
 $policies$;
 
+drop policy if exists admin_crm_entitlement_boundary on public.workspaces;
+create policy admin_crm_entitlement_boundary
+  on public.workspaces
+  as restrictive
+  for all
+  to authenticated
+  using (public.admin_crm_read_allowed(id))
+  with check (public.admin_crm_read_allowed(id));
+
+create or replace function public.current_admin_crm_access_state()
+returns table (access_state text)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public, pg_temp
+set row_security = off
+as $function$
+  select 'inactive'::text
+   where exists (
+    select 1
+      from public.workspaces as workspace
+     where workspace.owner_user_id = auth.uid()
+       and coalesce(workspace.test_access_flags ->> 'admin_crm_access', 'false') = 'true'
+       and not public.admin_crm_read_allowed(workspace.id)
+  )
+$function$;
+
+revoke all on function public.current_admin_crm_access_state()
+  from public, anon;
+grant execute on function public.current_admin_crm_access_state()
+  to authenticated, service_role;
+
+do $creator_rpc_boundary$
+begin
+  if to_regprocedure('public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)') is not null then
+    execute 'revoke execute on function public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) from public, authenticated';
+  end if;
+  if to_regprocedure('public.record_creator_fan_review(uuid,uuid,jsonb,jsonb)') is not null then
+    execute 'revoke execute on function public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) from public, authenticated';
+  end if;
+end
+$creator_rpc_boundary$;
+
 create or replace function public.admin_set_registered_user_crm_access(
   p_target_user_id uuid,
   p_admin_user_id uuid,
