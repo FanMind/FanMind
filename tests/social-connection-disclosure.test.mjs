@@ -238,7 +238,7 @@ for(const locale of ['de','en']) for(const stage of ['auth','workspace','contact
     assert.match(html,new RegExp(`<html lang="${locale}">`));
     assert.match(html,locale==='en'?/Try again/:/Erneut versuchen/);assert.match(html,locale==='en'?/Back to profile/:/Zurück zum Profil/);
     assert.match(html,new RegExp(`/settings/profile/data-export\\?lang=${locale}`));
-    assert.doesNotMatch(html,/PRIVATE_RAW_ERROR|content_sources|<script|owner@example|SYNTHETIC_TRANSPORT/);
+    assert.doesNotMatch(html,/PRIVATE_RAW_ERROR|content_sources|<script|owner@example|SYNTHETIC_TRANSPORT/iu);
     assert.equal(h.pdfCalls(),stage==='pdf'?1:0);
   });
 }
@@ -249,8 +249,13 @@ test('missing workspace has the same helpful non-cached page and anonymous acces
 });
 
 test('untrusted locale query is never reflected in error HTML or retry links',async()=>{
-  const h=routeFixture({failAt:'datasets'});const response=await h.run(encodeURIComponent('en"><script>ATTACK</script>'));
-  const html=await response.text();assert.match(html,/<html lang="de">/);assert.doesNotMatch(html,/ATTACK|<script>/);
+  for (const tag of ['script', 'SCRIPT', 'ScRiPt']) {
+    const h=routeFixture({failAt:'datasets'});
+    const response=await h.run(encodeURIComponent(`en"><${tag}>ATTACK</${tag}>`));
+    const html=await response.text();
+    assert.match(html,/<html lang="de">/);
+    assert.doesNotMatch(html,/ATTACK|<script/iu);
+  }
 });
 
 // These tests run with the repository's real PDF engine in normal CI. They are
