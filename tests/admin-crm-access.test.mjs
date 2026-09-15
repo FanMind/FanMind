@@ -46,6 +46,28 @@ test("temporary free CRM access requires a future expiry and removes permanent o
   );
 });
 
+test("date-only temporary expiry uses the Europe/Zurich end of day", () => {
+  const summer = resolveAdminCrmAccessTransition(
+    { mode: "temporary", expiresAt: "2026-10-01" },
+    now,
+  );
+  assert.equal(summer.ok, true);
+  assert.equal(
+    summer.values.test_access_flags.temporary_processing_access_expires_at,
+    "2026-10-01T21:59:59.999Z",
+  );
+
+  const winter = resolveAdminCrmAccessTransition(
+    { mode: "temporary", expiresAt: "2026-12-01" },
+    now,
+  );
+  assert.equal(winter.ok, true);
+  assert.equal(
+    winter.values.test_access_flags.temporary_processing_access_expires_at,
+    "2026-12-01T22:59:59.999Z",
+  );
+});
+
 test("blocked access clears every bypass without deleting the Workspace", () => {
   const result = resolveAdminCrmAccessTransition({ mode: "blocked" }, now);
   assert.equal(result.ok, true);
@@ -70,6 +92,14 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
     "utf8",
   );
   const page = fs.readFileSync("src/app/admin/billing/page.tsx", "utf8");
+  const preActivation = fs.readFileSync("src/lib/preActivation.ts", "utf8");
+  const workspaceAuthorization = fs.readFileSync("src/lib/workspaceAuthorization.ts", "utf8");
+  const dashboard = fs.readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const accountSections = fs.readFileSync("src/app/settings/AccountSections.tsx", "utf8");
+  const migration = fs.readFileSync(
+    "supabase/migrations/20260915221500_admin_crm_access.sql",
+    "utf8",
+  );
   const setterStart = service.indexOf("export async function setAdminRegisteredUserCrmAccess");
   const setterEnd = service.indexOf("export async function listAdminBillingWorkspaces", setterStart);
   const setter = service.slice(setterStart, setterEnd);
@@ -79,14 +109,25 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(service, /per_page=/u);
   assert.match(service, /email_confirmed_at|confirmed_at/u);
   assert.match(service, /registered_user_email_unconfirmed/u);
-  assert.match(service, /deterministicAdminCrmWorkspaceId/u);
-  assert.match(service, /resolution=ignore-duplicates,return=minimal/u);
-  assert.match(setter, /createAdminCrmWorkspace/u);
+  assert.match(service, /admin_set_registered_user_crm_access/u);
   assert.match(setter, /getAdminOwnedWorkspaces/u);
-  assert.match(service, /on_conflict", "workspace_id,user_id"/u);
-  assert.match(service, /operations_audit_log/u);
+  assert.doesNotMatch(setter, /getSupabaseRestUrl\("workspaces"\)/u);
+  assert.doesNotMatch(setter, /operations_audit_log/u);
   assert.doesNotMatch(setter, /Stripe|createStripeCheckoutSession|getStripeClient/u);
   assert.doesNotMatch(setter, /email_confirm\s*:/u);
+
+  assert.match(migration, /pg_advisory_xact_lock/u);
+  assert.match(migration, /from auth\.users/u);
+  assert.match(migration, /v_confirmed_at is null/u);
+  assert.match(migration, /'starter'/u);
+  assert.match(migration, /'starter_paid_setup'/u);
+  assert.doesNotMatch(migration, /'pilot_only'/u);
+  assert.match(migration, /stripe_customer_id is not null/u);
+  assert.match(migration, /stripe_subscription_id is not null/u);
+  assert.match(migration, /insert into public\.operations_audit_log/u);
+  assert.match(migration, /on conflict on constraint workspace_members_workspace_id_user_id_key/u);
+  assert.match(migration, /grant execute[\s\S]*service_role/u);
+  assert.match(migration, /revoke all[\s\S]*public, anon, authenticated/u);
 
   assert.match(route, /isTrustedFanMindMutationRequest/u);
   assert.match(route, /readBoundedFormDataRequest/u);
@@ -95,9 +136,14 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(route, /setAdminRegisteredUserCrmAccess/u);
   assert.match(page, /listAdminRegisteredUsers/u);
   assert.match(page, /users_page/u);
-  assert.match(page, /registeredUsers\.slice\(registeredUserStart, registeredUserEnd\)/u);
-  assert.doesNotMatch(page, /registeredUsers\.slice\(0, 50\)/u);
+  assert.doesNotMatch(page, /registeredUsers\.slice/u);
+  assert.match(page, /activeTab === "customers"/u);
   assert.match(page, /Dauerhaft kostenlos freigeben/u);
   assert.match(page, /Befristet kostenlos/u);
   assert.match(page, /Zugang sperren/u);
+  assert.match(preActivation, /isAdminCrmAccessWorkspace/u);
+  assert.match(preActivation, /evaluateWorkspaceProcessingEntitlement/u);
+  assert.match(workspaceAuthorization, /assertAdminCrmReadAccess/u);
+  assert.match(dashboard, /Starter CRM/u);
+  assert.match(accountSections, /Starter CRM · kostenloser Adminzugang/u);
 });

@@ -377,11 +377,12 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
 # FM-CR-041 — confirmed-user Admin CRM access
 - Date: 2026-09-15
-- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Status: REVIEW_FIXES_PENDING_CURRENT_HEAD_CI
 - Task: FM-REG-003
 - Risk: R3
 - Source: Bernd explicitly approved the complete design.
 - Decision: expose confirmed Supabase Auth registrations even before Workspace creation. A Platform Admin may provision exactly one permanent free CRM Workspace, later convert it to an explicit temporary expiry, or block it. Unconfirmed accounts remain visible but cannot be granted access.
-- Scope: source/UI/routes/tests and Project Memory only. No live user mutation, payment, Stripe/Tax activation or Production database migration.
+- Scope: source/UI/routes/tests, one unapplied transactional RPC migration and Project Memory only. No live user mutation, payment, Stripe/Tax activation or Production database apply. Applying the migration requires separate explicit authorization after reviewed source deployment.
 - Acceptance: server-only paginated Auth enumeration; sanitized fields; same-origin Platform-Admin mutations; one owner Workspace and membership under retries/concurrency; permanent, temporary and blocked fail-closed entitlement; durable audit entry; no Stripe call; focused regressions plus current-head review/CI.
-- Local result: red/green focused test complete; focused 5/5 and Operations 1376 pass/0 fail/4 environment skips; ESLint 0 errors/1 unrelated warning; Production build, Product Truth, Project Memory Quality and both drift checks PASS. Current-head PR CI/review, merge/deploy and Production version proof remain open.
+- Local result: red/green focused test complete; corrected-head focused 6/6, targeted cross-boundary regressions 58/58 and Operations 1376 pass/0 fail/4 environment skips; ESLint 0 errors/1 unrelated warning; Production build, Product Truth, Project Memory Quality, Memory V8 and both drift checks PASS. Corrected-head PR CI/review, merge/deploy and Production version proof remain open.
+- Review continuation: the six findings from the completed review of head `daaf88372a06f063f7be2b95f6bbebbb95eec6ab` are corrected locally through current Starter CRM representation, commercial/Stripe binding rejection, one atomic service-role RPC, requested-page-only Auth enumeration, application read gating and Europe/Zurich end-of-day expiry. All evidence must be rerun and the final head independently reviewed before merge.

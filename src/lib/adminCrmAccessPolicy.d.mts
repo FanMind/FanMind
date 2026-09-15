@@ -25,3 +25,7 @@ export function adminCrmAccessLabel(
   } | null | undefined,
   now?: Date,
 ): string;
+
+export function isAdminCrmAccessWorkspace(
+  workspace: { test_access_flags?: Record<string, unknown> | null } | null | undefined,
+): boolean;

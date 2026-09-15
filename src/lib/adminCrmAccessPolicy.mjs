@@ -15,14 +15,57 @@ function validNow(now) {
     : new Date();
 }
 
+function timeZoneOffsetMs(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const zonedAsUtc = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+  return zonedAsUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+function zurichEndOfDay(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+  if (!match) return null;
+  const naive = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 23, 59, 59, 999);
+  let candidate = new Date(naive - timeZoneOffsetMs(new Date(naive), "Europe/Zurich"));
+  candidate = new Date(naive - timeZoneOffsetMs(candidate, "Europe/Zurich"));
+  return candidate;
+}
+
 function parseExpiry(value) {
   if (typeof value !== "string" || !value.trim()) return null;
   const clean = value.trim();
-  const normalized = /^\d{4}-\d{2}-\d{2}$/u.test(clean)
-    ? `${clean}T23:59:59.999Z`
-    : clean;
-  const parsed = new Date(normalized);
+  const parsed = /^\d{4}-\d{2}-\d{2}$/u.test(clean)
+    ? zurichEndOfDay(clean)
+    : new Date(clean);
+  if (!parsed) return null;
   return Number.isFinite(parsed.getTime()) ? parsed : null;
+}
+
+export function isAdminCrmAccessWorkspace(workspace) {
+  return Boolean(
+    workspace &&
+    typeof workspace === "object" &&
+    workspace.test_access_flags &&
+    typeof workspace.test_access_flags === "object" &&
+    !Array.isArray(workspace.test_access_flags) &&
+    workspace.test_access_flags.admin_crm_access === true,
+  );
 }
 
 function activeValues(now, mode, expiresAt) {

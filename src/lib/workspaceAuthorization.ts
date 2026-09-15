@@ -13,6 +13,7 @@ import {
   WorkspaceAuthorizationError,
 } from "@/lib/workspaceAuthorizationPolicy.mjs";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 
 export {
   assertResourceInWorkspace,
@@ -48,6 +49,18 @@ function workspaceUnavailableMessage(error: Error | null | undefined): string {
     : "Kein autorisierter Workspace gefunden.";
 }
 
+function assertAdminCrmReadAccess(workspace: WorkspaceDashboardRow): void {
+  if (
+    isAdminCrmAccessWorkspace(workspace) &&
+    !evaluateWorkspaceProcessingEntitlement(workspace).allowed
+  ) {
+    throw new WorkspaceAuthorizationError(
+      "Der kostenlose CRM-Zugang ist abgelaufen oder wurde gesperrt.",
+      "workspace_inactive",
+    );
+  }
+}
+
 export async function getAuthorizedWorkspaceForCurrentUser(
   accessToken?: string,
 ): Promise<AuthorizedWorkspaceContext | null> {
@@ -59,6 +72,8 @@ export async function getAuthorizedWorkspaceForCurrentUser(
     accessToken,
   );
   if (!workspaceResult.workspace) return null;
+
+  assertAdminCrmReadAccess(workspaceResult.workspace);
 
   return { user: data.user, workspace: workspaceResult.workspace };
 }
@@ -83,6 +98,7 @@ export async function requireAuthorizedWorkspace(
   }
 
   assertWorkspaceId(workspaceResult.workspace.id);
+  assertAdminCrmReadAccess(workspaceResult.workspace);
   return { user: data.user, workspace: workspaceResult.workspace };
 }
 
@@ -103,6 +119,7 @@ export async function requireAuthorizedWorkspaceMember(
   );
   if (ownerWorkspaceResult.workspace) {
     assertWorkspaceId(ownerWorkspaceResult.workspace.id);
+    assertAdminCrmReadAccess(ownerWorkspaceResult.workspace);
     return { user: data.user, workspace: ownerWorkspaceResult.workspace };
   }
   if (ownerWorkspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") {

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   createStripeCheckoutSession,
   expireStripeCheckoutSession,
@@ -6,7 +5,6 @@ import {
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
 import {
-  adminCrmAccessLabel,
   resolveAdminCrmAccessTransition,
 } from "@/lib/adminCrmAccessPolicy.mjs";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
@@ -27,17 +25,17 @@ export type AdminBillingWorkspace = {
   billing_last_payment_failed_at: string | null; billing_last_payment_at: string | null; billing_retry_count: number | null; billing_next_retry_at: string | null; billing_grace_until: string | null; billing_admin_note: string | null; billing_updated_at: string | null; billing_updated_by_user_id: string | null;
   test_access_flags: InternalTestAccessFlags | null;
   workspace_access_mode: string | null;
-  stripe_customer_id: string | null; stripe_subscription_id: string | null; stripe_checkout_session_id: string | null;
+  billing_provider: string | null; payment_collection_method: string | null;
+  stripe_customer_id: string | null; stripe_subscription_id: string | null; stripe_checkout_session_id: string | null; stripe_payment_intent_id: string | null; stripe_mandate_id: string | null;
   last_invoice_id: string | null; last_invoice_status: string | null; last_invoice_amount_due_cents: number | null; last_invoice_amount_paid_cents: number | null; last_invoice_hosted_url: string | null; last_invoice_pdf_url: string | null;
 };
 
-const ADMIN_BILLING_COLUMNS = "id,name,created_at,owner_user_id,plan_id,commercial_option,setup_fee_cents,monthly_fee_cents,commitment_months,billing_status,billing_suspended_at,billing_suspended_reason,billing_manual_override,billing_last_payment_failed_at,billing_last_payment_at,billing_retry_count,billing_next_retry_at,billing_grace_until,billing_admin_note,billing_updated_at,billing_updated_by_user_id,stripe_customer_id,stripe_subscription_id,stripe_checkout_session_id,last_invoice_id,last_invoice_status,last_invoice_amount_due_cents,last_invoice_amount_paid_cents,last_invoice_hosted_url,last_invoice_pdf_url,test_access_flags,workspace_access_mode";
+const ADMIN_BILLING_COLUMNS = "id,name,created_at,owner_user_id,plan_id,commercial_option,setup_fee_cents,monthly_fee_cents,commitment_months,billing_status,billing_provider,payment_collection_method,billing_suspended_at,billing_suspended_reason,billing_manual_override,billing_last_payment_failed_at,billing_last_payment_at,billing_retry_count,billing_next_retry_at,billing_grace_until,billing_admin_note,billing_updated_at,billing_updated_by_user_id,stripe_customer_id,stripe_subscription_id,stripe_checkout_session_id,stripe_payment_intent_id,stripe_mandate_id,last_invoice_id,last_invoice_status,last_invoice_amount_due_cents,last_invoice_amount_paid_cents,last_invoice_hosted_url,last_invoice_pdf_url,test_access_flags,workspace_access_mode";
 
 function serviceKey() { return process.env.SUPABASE_SERVICE_ROLE_KEY; }
 function validUuid(id: string) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id); }
 
-const AUTH_USERS_PAGE_SIZE = 1000;
-const AUTH_USERS_MAX_PAGES = 100;
+const AUTH_USERS_PAGE_SIZE = 50;
 
 type SupabaseAdminAuthUser = {
   id?: unknown;
@@ -84,40 +82,32 @@ function sanitizeAdminRegisteredUser(user: SupabaseAdminAuthUser): AdminRegister
   };
 }
 
-export async function listAdminRegisteredUsers(): Promise<{ users: AdminRegisteredUser[]; error: string | null }> {
+export async function listAdminRegisteredUsers(page = 1): Promise<{ users: AdminRegisteredUser[]; page: number; hasNext: boolean; total: number | null; error: string | null }> {
   const key = serviceKey();
-  if (!key) return { users: [], error: "Supabase Service Role ist nicht konfiguriert." };
-  const users: AdminRegisteredUser[] = [];
+  const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+  if (!key) return { users: [], page: safePage, hasNext: false, total: null, error: "Supabase Service Role ist nicht konfiguriert." };
   try {
-    for (let page = 1; page <= AUTH_USERS_MAX_PAGES; page += 1) {
-      const response = await fetch(
-        getSupabaseAuthUrl(`/admin/users?page=${page}&per_page=${AUTH_USERS_PAGE_SIZE}`),
-        { headers: getSupabaseHeaders(key), cache: "no-store" },
-      );
-      if (!response.ok) return { users: [], error: `Registrierte Nutzer konnten nicht geladen werden (${response.status}).` };
-      const payload = await response.json() as { users?: SupabaseAdminAuthUser[] };
-      const pageUsers = Array.isArray(payload.users) ? payload.users : [];
-      for (const user of pageUsers) {
-        const sanitized = sanitizeAdminRegisteredUser(user);
-        if (sanitized) users.push(sanitized);
-      }
-      if (pageUsers.length < AUTH_USERS_PAGE_SIZE) {
-        return {
-          users: users.sort((left, right) => new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()),
-          error: null,
-        };
-      }
-    }
-    return { users: [], error: "Registrierte Nutzer konnten nicht vollständig geladen werden." };
+    const response = await fetch(
+      getSupabaseAuthUrl(`/admin/users?page=${safePage}&per_page=${AUTH_USERS_PAGE_SIZE}`),
+      { headers: getSupabaseHeaders(key), cache: "no-store" },
+    );
+    if (!response.ok) return { users: [], page: safePage, hasNext: false, total: null, error: `Registrierte Nutzer konnten nicht geladen werden (${response.status}).` };
+    const payload = await response.json() as { users?: SupabaseAdminAuthUser[]; total?: unknown };
+    const pageUsers = Array.isArray(payload.users) ? payload.users : [];
+    const users = pageUsers.map(sanitizeAdminRegisteredUser).filter((user): user is AdminRegisteredUser => Boolean(user));
+    const headerTotal = Number.parseInt(response.headers.get("x-total-count") ?? "", 10);
+    const payloadTotal = typeof payload.total === "number" && Number.isSafeInteger(payload.total) && payload.total >= 0 ? payload.total : null;
+    const total = Number.isSafeInteger(headerTotal) && headerTotal >= 0 ? headerTotal : payloadTotal;
+    return {
+      users,
+      page: safePage,
+      hasNext: total === null ? pageUsers.length === AUTH_USERS_PAGE_SIZE : safePage * AUTH_USERS_PAGE_SIZE < total,
+      total,
+      error: null,
+    };
   } catch {
-    return { users: [], error: "Registrierte Nutzer konnten nicht geladen werden." };
+    return { users: [], page: safePage, hasNext: false, total: null, error: "Registrierte Nutzer konnten nicht geladen werden." };
   }
-}
-
-function deterministicAdminCrmWorkspaceId(userId: string): string {
-  const digest = createHash("sha256").update(`fanmind:admin-crm-workspace:${userId}`).digest("hex");
-  const variant = ((Number.parseInt(digest[16] ?? "0", 16) & 0x3) | 0x8).toString(16);
-  return [digest.slice(0, 8), digest.slice(8, 12), `8${digest.slice(13, 16)}`, `${variant}${digest.slice(17, 20)}`, digest.slice(20, 32)].join("-");
 }
 
 async function getAdminAuthUser(userId: string, key: string): Promise<AdminRegisteredUser | null> {
@@ -139,88 +129,27 @@ async function getAdminOwnedWorkspaces(userId: string, key: string): Promise<Adm
   return response.ok ? await response.json() as AdminBillingWorkspace[] : null;
 }
 
-async function prepareAdminCrmProfile(user: AdminRegisteredUser, key: string): Promise<boolean> {
-  const url = new URL(getSupabaseRestUrl("profiles"));
-  url.searchParams.set("on_conflict", "id");
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { ...getSupabaseHeaders(key), Prefer: "resolution=ignore-duplicates,return=minimal" },
-    body: JSON.stringify({ id: user.id, email: user.email, display_name: user.display_name }),
-    cache: "no-store",
-  });
-  return response.ok;
+function adminCrmWorkspaceHasBillingBinding(workspace: AdminBillingWorkspace): boolean {
+  return workspace.plan_id !== "starter" ||
+    workspace.commercial_option !== "starter_paid_setup" ||
+    workspace.billing_provider !== "manual" ||
+    workspace.payment_collection_method !== "none" ||
+    Boolean(workspace.stripe_customer_id) ||
+    Boolean(workspace.stripe_subscription_id) ||
+    Boolean(workspace.stripe_checkout_session_id) ||
+    Boolean(workspace.stripe_payment_intent_id) ||
+    Boolean(workspace.stripe_mandate_id) ||
+    Boolean(workspace.last_invoice_id);
 }
 
-async function createAdminCrmWorkspace(
-  user: AdminRegisteredUser,
-  admin: SupabaseServerUser,
-  values: Record<string, unknown>,
-  key: string,
-): Promise<AdminBillingWorkspace | null> {
-  const displayName = user.display_name ?? user.email?.split("@")[0] ?? "FanMind";
-  const url = new URL(getSupabaseRestUrl("workspaces"));
-  url.searchParams.set("select", ADMIN_BILLING_COLUMNS);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { ...getSupabaseHeaders(key), Prefer: "return=representation" },
-    body: JSON.stringify({
-      id: deterministicAdminCrmWorkspaceId(user.id),
-      name: `${displayName.slice(0, 140)} Workspace`,
-      owner_user_id: user.id,
-      plan_id: "pilot",
-      commercial_option: "pilot_only",
-      ...values,
-      billing_updated_by_user_id: admin.id,
-    }),
-    cache: "no-store",
-  });
-  if (!response.ok) return null;
-  const rows = await response.json() as AdminBillingWorkspace[];
-  return rows[0] ?? null;
-}
-
-async function ensureAdminCrmOwnerMembership(workspaceId: string, userId: string, key: string): Promise<boolean> {
-  const url = new URL(getSupabaseRestUrl("workspace_members"));
-  url.searchParams.set("on_conflict", "workspace_id,user_id");
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { ...getSupabaseHeaders(key), Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify({ workspace_id: workspaceId, user_id: userId, role: "owner" }),
-    cache: "no-store",
-  });
-  return response.ok;
-}
-
-async function writeAdminCrmAccessAudit(input: {
-  admin: SupabaseServerUser;
-  workspaceId: string;
-  userId: string;
-  previousAccess: string;
-  nextAccess: string;
-  expiresAt?: string | null;
-}, key: string): Promise<boolean> {
-  const response = await fetch(getSupabaseRestUrl("operations_audit_log"), {
-    method: "POST",
-    headers: { ...getSupabaseHeaders(key), Prefer: "return=minimal" },
-    body: JSON.stringify({
-      actor_user_id: input.admin.id,
-      actor_email: input.admin.email ?? null,
-      action: "admin_crm_access_change",
-      target_table: "workspaces",
-      target_id: input.workspaceId,
-      severity: input.nextAccess === "Gesperrt" ? "warning" : "info",
-      outcome: "success",
-      metadata: {
-        target_user_id: input.userId,
-        previous_access: input.previousAccess,
-        next_access: input.nextAccess,
-        expires_at: input.expiresAt ?? null,
-      },
-    }),
-    cache: "no-store",
-  });
-  return response.ok;
-}
+const ADMIN_CRM_RPC_ERRORS: Record<string, { status: number; error: string }> = {
+  admin_crm_access_user_missing: { status: 404, error: "registered_user_missing" },
+  admin_crm_access_email_unconfirmed: { status: 409, error: "registered_user_email_unconfirmed" },
+  admin_crm_access_email_missing: { status: 409, error: "registered_user_email_missing" },
+  admin_crm_access_commercial_workspace: { status: 409, error: "registered_user_has_commercial_workspace" },
+  admin_crm_access_billing_bound: { status: 409, error: "registered_user_workspace_billing_bound" },
+  admin_crm_access_workspace_missing: { status: 409, error: "registered_user_workspace_missing" },
+};
 
 export async function setAdminRegisteredUserCrmAccess(
   userId: string,
@@ -241,56 +170,39 @@ export async function setAdminRegisteredUserCrmAccess(
   const rows = await getAdminOwnedWorkspaces(userId, key);
   if (!rows) return { ok: false, status: 503, error: "Workspace-Zuordnung konnte nicht geprüft werden." };
   if (rows.length > 1) return { ok: false, status: 409, error: "registered_user_workspace_ambiguous" };
-  let workspace = rows[0] ?? null;
+  const workspace = rows[0] ?? null;
   if (!workspace && input.mode === "blocked") return { ok: false, status: 409, error: "registered_user_workspace_missing" };
   if (workspace && workspace.test_access_flags?.admin_crm_access !== true) {
     return { ok: false, status: 409, error: "registered_user_has_commercial_workspace" };
   }
-
-  const previousAccess = adminCrmAccessLabel(workspace);
-  const nextValues = {
-    ...transition.values,
-    billing_admin_note: `${INTERNAL_TEST_ACCESS_NOTE} · Admin CRM · ${input.mode === "permanent" ? "Dauerhaft kostenlos" : input.mode === "temporary" ? "Befristet kostenlos" : "Gesperrt"} · ${new Date().toISOString()}`,
-  };
-
-  if (!workspace) {
-    if (!(await prepareAdminCrmProfile(user, key))) {
-      return { ok: false, status: 503, error: "Nutzerprofil konnte nicht vorbereitet werden." };
-    }
-    const createdWorkspace = await createAdminCrmWorkspace(user, admin, nextValues, key);
-    if (!createdWorkspace) {
-      const concurrentRows = await getAdminOwnedWorkspaces(userId, key);
-      if (!concurrentRows || concurrentRows.length !== 1 || concurrentRows[0].test_access_flags?.admin_crm_access !== true) {
-        return { ok: false, status: 409, error: "CRM-Workspace konnte nicht eindeutig angelegt werden." };
-      }
-      workspace = concurrentRows[0];
-      const updated = await updateAdminBillingWorkspace(workspace.id, admin, nextValues);
-      if (!updated.ok) return { ...updated, workspaceId: workspace.id };
-    } else {
-      workspace = createdWorkspace;
-    }
-  } else {
-    const updated = await updateAdminBillingWorkspace(workspace.id, admin, nextValues);
-    if (!updated.ok) return { ...updated, workspaceId: workspace.id };
-  }
-
-  if (!(await ensureAdminCrmOwnerMembership(workspace.id, user.id, key))) {
-    return { ok: false, status: 503, error: "Workspace-Mitgliedschaft konnte nicht vorbereitet werden.", workspaceId: workspace.id };
+  if (workspace && adminCrmWorkspaceHasBillingBinding(workspace)) {
+    return { ok: false, status: 409, error: "registered_user_workspace_billing_bound" };
   }
 
   const expiresAt = transition.values.test_access_flags.temporary_processing_access_expires_at;
-  if (!(await writeAdminCrmAccessAudit({
-    admin,
-    workspaceId: workspace.id,
-    userId: user.id,
-    previousAccess,
-    nextAccess: adminCrmAccessLabel(transition.values),
-    expiresAt: typeof expiresAt === "string" ? expiresAt : null,
-  }, key))) {
-    return { ok: false, status: 503, error: "CRM-Zugangsänderung wurde gespeichert, aber noch nicht vollständig protokolliert. Bitte dieselbe Aktion erneut ausführen.", workspaceId: workspace.id };
+  const response = await fetch(getSupabaseRestUrl("rpc/admin_set_registered_user_crm_access"), {
+    method: "POST",
+    headers: { ...getSupabaseHeaders(key), Prefer: "return=representation" },
+    body: JSON.stringify({
+      p_target_user_id: userId,
+      p_admin_user_id: admin.id,
+      p_admin_email: admin.email ?? null,
+      p_mode: input.mode,
+      p_expires_at: typeof expiresAt === "string" ? expiresAt : null,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { message?: unknown } | null;
+    const mapped = typeof payload?.message === "string" ? ADMIN_CRM_RPC_ERRORS[payload.message] : null;
+    return mapped
+      ? { ok: false, status: mapped.status, error: mapped.error }
+      : { ok: false, status: 503, error: "CRM-Zugangsänderung konnte nicht atomar gespeichert werden." };
   }
-
-  return { ok: true, status: 200, error: null, workspaceId: workspace.id };
+  const result = await response.json() as Array<{ workspace_id?: unknown }>;
+  const workspaceId = typeof result[0]?.workspace_id === "string" && validUuid(result[0].workspace_id) ? result[0].workspace_id : null;
+  if (!workspaceId) return { ok: false, status: 503, error: "CRM-Zugangsänderung lieferte keinen gültigen Workspace." };
+  return { ok: true, status: 200, error: null, workspaceId };
 }
 
 export async function listAdminBillingWorkspaces(): Promise<{ workspaces: AdminBillingWorkspace[]; error: string | null }> {
