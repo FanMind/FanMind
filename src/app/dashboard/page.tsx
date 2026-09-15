@@ -31,6 +31,7 @@ import { PlatformLogo } from "@/components/PlatformLogo";
 import styles from "./dashboard.module.css";
 import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getMessageSourceContext } from "@/lib/sourceContext";
+import { adminCrmAccessLabel, isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 
 type WorkspaceDetailsProps = {
   workspace: WorkspaceDashboardRow;
@@ -111,6 +112,19 @@ function getWorkspaceDisplay(
         "Teammitglieder sehen nur die für den CRM-Arbeitsfluss freigegebene Workspace-Projektion.",
       contractNote:
         "Vertrags-, Rechnungs-, Stripe-, Steuer-, Adress- und Testzugangsdaten bleiben dem Workspace-Owner vorbehalten.",
+    };
+  }
+  if (isAdminCrmAccessWorkspace(workspace)) {
+    const accessLabel = adminCrmAccessLabel(workspace);
+    return {
+      packageName: "Starter CRM",
+      commercialOptionName: accessLabel,
+      setupFeeLabel: "0 €",
+      monthlyFeeLabel: "0 €",
+      commitmentLabel: accessLabel === "Dauerhaft kostenlos" ? "unbefristet" : "administrativ befristet",
+      planHint: `Starter CRM · ${accessLabel}`,
+      packageSummary: "Produktiver CRM-Kern mit administrativ verwaltetem kostenlosem Zugang.",
+      contractNote: "Dieser Zugang ist nicht Stripe-gebunden. Eine spätere Zahlung oder Umstellung erfolgt ausschließlich über einen getrennten Billing-Ablauf.",
     };
   }
   if (resolvePublicWorkspacePlanId(workspace) === "daily") {

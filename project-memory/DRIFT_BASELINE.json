@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
-  "captured": "2026-09-14",
-  "last_source_of_truth_review": "2026-09-14 FM-DEC-019 / FM-CR-037: reviewed the bounded product-truth change from permanent-public Daily to a manually Platform-Admin-controlled internal beta without countdown. The existing internal_daily_test engine and Price remain compatible; disabled admission hides Daily publicly and blocks only new provisioning/checkout, while existing Daily customers remain unchanged. No Production SQL, runtime activation, payment, Tax/contract approval or Billing-ledger completion is inferred. All previously accepted Restore, Staging, Security, Billing and Social evidence remains unchanged.",
+  "baseline_commit": "a2ad07fa713c8f40db63254986ca0ceb15ed9b6b",
+  "captured": "2026-09-15",
+  "last_source_of_truth_review": "2026-09-15 FM-REG-003 / FM-CR-041: reviewed the bounded internal Admin-CRM contract after the third independent review of PR #1132 head a2ad07f. A confirmed registration may receive a non-public, non-Stripe Starter CRM Workspace at 0 EUR, permanent or immediately temporary, with later blocking and no data deletion. Generic Billing/Test/Daily actions remain forbidden. Restrictive RLS includes Workspace rows; a minimal inactive-state projection routes paused users without exposing data, Admin CRM is not treated as a public demo, and unguarded browser Creator mutation RPCs remain denied. The transactional RPC and RLS boundary remain source-only until a separately authorized exact-migration Production apply and independent postflight; no live account, payment, Tax or database state is inferred. All previously accepted Restore, Staging, Security, Billing and Social evidence remains unchanged.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "e250920d43ecd7389d6a2dc760cf5fab56d27fd1",
+    "docs/SOURCE_OF_TRUTH.md": "2fb2a9fad10f8d56fc59fdc25758aaf965a7e5f9",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

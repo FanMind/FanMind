@@ -761,7 +761,7 @@ test("fixed Sandra demo normalization is service-role-only and unconditional", a
   );
   assert.match(
     demoMode,
-    /export function isDemoWorkspace[\s\S]*return workspace\?\.billing_status === "demo_free"/u,
+    /export function isDemoWorkspace[\s\S]*workspace\?\.billing_status === "demo_free"[\s\S]*admin_crm_access !== true/u,
   );
   assert.doesNotMatch(
     demoMode.match(

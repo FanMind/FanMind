@@ -375,3 +375,15 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Task: FM-CR-037
 - Risk: R4
 - Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
+# FM-CR-041 — confirmed-user Admin CRM access
+- Date: 2026-09-15
+- Status: REVIEW_FIXES_PENDING_CURRENT_HEAD_CI
+- Task: FM-REG-003
+- Risk: R3
+- Source: Bernd explicitly approved the complete design.
+- Decision: expose confirmed Supabase Auth registrations even before Workspace creation. A Platform Admin may provision exactly one permanent free CRM Workspace, later convert it to an explicit temporary expiry, or block it. Unconfirmed accounts remain visible but cannot be granted access.
+- Scope: source/UI/routes/tests, one unapplied transactional RPC migration and Project Memory only. No live user mutation, payment, Stripe/Tax activation or Production database apply. Applying the migration requires separate explicit authorization after reviewed source deployment.
+- Acceptance: server-only paginated Auth enumeration; sanitized fields; same-origin Platform-Admin mutations; one owner Workspace and membership under retries/concurrency; permanent, temporary and blocked fail-closed entitlement; durable audit entry; no Stripe call; focused regressions plus current-head review/CI.
+- Local result: red/green focused test complete; corrected-head focused 6/6, targeted cross-boundary regressions 58/58 and Operations 1376 pass/0 fail/4 environment skips; ESLint 0 errors/1 unrelated warning; Production build, Product Truth, Project Memory Quality, Memory V8 and both drift checks PASS. Corrected-head PR CI/review, merge/deploy and Production version proof remain open.
+- Review continuation: the six findings from the completed review of head `daaf88372a06f063f7be2b95f6bbebbb95eec6ab` are corrected locally through current Starter CRM representation, commercial/Stripe binding rejection, one atomic service-role RPC, requested-page-only Auth enumeration, application read gating and Europe/Zurich end-of-day expiry. All evidence must be rerun and the final head independently reviewed before merge.
+- Second review continuation: the five findings from the completed review of head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` are corrected locally. Direct authenticated database reads/writes now receive a restrictive entitlement boundary on current RLS Workspace tables; generic lifecycle routes and UI are denied; current-page Auth owners receive an exact Workspace query; canonical docs describe the 0-EUR internal contract; and the exact migration has an offline checksum plus explicit Production preflight/apply/postflight runbook. No live apply is part of this correction.

@@ -21,6 +21,7 @@ export type { SettingsAccountPage } from "./AccountTabs";
 import { SettingsPreferenceForm } from "./SettingsPreferenceForm";
 import dashboardStyles from "../dashboard/dashboard.module.css";
 import profileStyles from "./profile/profile.module.css";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 export type ProfileField = {
   label: string;
   value: string;
@@ -166,7 +167,7 @@ function getPackageCards(workspace: WorkspaceDashboardRow): PackageCard[] {
   return BASE_PACKAGE_CARDS.map((card) => ({
     ...card,
     badge:
-      workspace.commercial_option === card.commercialOption
+      !isAdminCrmAccessWorkspace(workspace) && workspace.commercial_option === card.commercialOption
         ? "Aktuell"
         : card.badge,
   }));
@@ -239,6 +240,7 @@ export function getSettingsAccountPageHref(
 }
 
 export function getPlanLabel(workspace: WorkspaceDashboardRow): string {
+  if (isAdminCrmAccessWorkspace(workspace)) return "Starter CRM · kostenloser Adminzugang";
   if (resolvePublicWorkspacePlanId(workspace) === "daily") return getWorkspacePlanLabel(workspace);
   if (
     workspace.plan_id === "pilot" &&

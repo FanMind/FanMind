@@ -18,22 +18,34 @@ export function isExplicitDemoWorkspace(workspace: { name?: string | null } | nu
   );
 }
 
-export function isDemoWorkspace(workspace: { billing_status?: string | null; name?: string | null } | null | undefined): boolean {
-  return workspace?.billing_status === "demo_free";
+export function isDemoWorkspace(workspace: {
+  billing_status?: string | null;
+  name?: string | null;
+  test_access_flags?: Record<string, unknown> | null;
+} | null | undefined): boolean {
+  return (
+    workspace?.billing_status === "demo_free" &&
+    workspace.test_access_flags?.admin_crm_access !== true
+  );
 }
 
 export function isPublicDemoWorkspace({
   userEmail,
   workspaceBillingStatus,
+  workspaceTestAccessFlags,
   user,
 }: {
   userEmail?: string | null;
   workspaceBillingStatus?: string | null;
+  workspaceTestAccessFlags?: Record<string, unknown> | null;
   user?: Pick<SupabaseServerUser, "user_metadata"> | null;
 }): boolean {
   return (
     (userEmail ?? "").trim().toLowerCase() === DEMO_WORKSPACE_EMAIL ||
-    isDemoWorkspace({ billing_status: workspaceBillingStatus }) ||
+    isDemoWorkspace({
+      billing_status: workspaceBillingStatus,
+      test_access_flags: workspaceTestAccessFlags,
+    }) ||
     isTemporaryDemoUser(user)
   );
 }
@@ -41,13 +53,14 @@ export function isPublicDemoWorkspace({
 export function areDemoConnectionsDisabled(
   user: Pick<SupabaseServerUser, "email" | "user_metadata"> | null | undefined,
   workspace:
-    | Pick<WorkspaceDashboardRow, "name" | "billing_status">
+    | Pick<WorkspaceDashboardRow, "name" | "billing_status" | "test_access_flags">
     | null
     | undefined,
 ): boolean {
   return isPublicDemoWorkspace({
     userEmail: user?.email,
     workspaceBillingStatus: workspace?.billing_status,
+    workspaceTestAccessFlags: workspace?.test_access_flags,
     user,
   });
 }

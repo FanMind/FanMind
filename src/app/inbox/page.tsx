@@ -1146,6 +1146,9 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
   } catch (error) {
     if (error instanceof WorkspaceAuthorizationError) {
       if (error.code === "unauthenticated") redirect("/login");
+      if (error.code === "workspace_inactive") {
+        redirect("/workspace/access-paused");
+      }
       if (error.message === "TEMPORARY_DEMO_DELETED") {
         redirect("/login?demo_deleted=1");
       }
