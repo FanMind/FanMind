@@ -30,10 +30,15 @@ export type DisclosureMetaDataset = {
     | "fan_reports"
     | "contact_profiles"
     | "voice_profiles"
-    | "prompt_settings"
     | "ai_usage"
     | "connections"
-    | "meta_webhook_events";
+    | "meta_webhook_events"
+    | "pilot_inquiries"
+    | "referral_membership"
+    | "referrals_given"
+    | "referrals_received"
+    | "referral_discount_snapshots"
+    | "account_deletion_requests";
   rows: DisclosureMetaRow[];
 };
 
@@ -46,11 +51,12 @@ type DatasetDefinition = {
   scope: DatasetScope;
 };
 
-// Complete active Production data families that can hold data for the signed-in
-// Creator account or its Workspace. Staging-only/not-yet-installed feature
-// tables are added here in the same release that makes them Production storage.
-// A missing active table is always an export error; a successful PDF never
-// silently omits an active data family.
+// Complete browser-readable Production data families that can hold data for the
+// signed-in Creator account or its Workspace. Service-role-only account data is
+// collected separately by dataDisclosurePrivateExport.ts after a second owner
+// authorization check. Staging-only/not-yet-installed feature tables are added
+// only in the same release that makes them Production storage. A missing active
+// table is an export error; a successful PDF never silently omits a data family.
 const DATASETS: DatasetDefinition[] = [
   { key: "profile_record", table: "profiles", scope: "user", order: "id.asc" },
   { key: "membership_record", table: "workspace_members", scope: "membership", order: "created_at.asc.nullsfirst,id.asc" },
@@ -65,7 +71,6 @@ const DATASETS: DatasetDefinition[] = [
   { key: "fan_reports", table: "fan_analysis_reports", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "contact_profiles", table: "contact_ai_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "voice_profiles", table: "workspace_voice_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "prompt_settings", table: "workspace_ai_prompt_settings", scope: "workspace", order: "workspace_id.asc" },
   { key: "ai_usage", table: "ai_usage_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "connections", table: "social_connections", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "meta_webhook_events", table: "meta_webhook_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
