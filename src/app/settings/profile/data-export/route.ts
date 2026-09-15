@@ -27,6 +27,17 @@ function getUserDisplayName(
     : undefined;
 }
 
+function isSensitiveMetadataKey(key: string): boolean {
+  const normalized = key.toLowerCase();
+  return (
+    normalized.includes("password") ||
+    normalized.includes("secret") ||
+    normalized.includes("access_token") ||
+    normalized.includes("refresh_token") ||
+    normalized.includes("api_key")
+  );
+}
+
 export async function GET(request: Request) {
   const locale = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
   try {
@@ -41,11 +52,17 @@ export async function GET(request: Request) {
     const workspace = workspaceResult.workspace;
     if (!workspace) return disclosureFailure(locale, 404);
 
-    const [contacts, storedMetaData] = await Promise.all([
+    const [contacts, storedData] = await Promise.all([
       getAllWorkspaceContactsForDisclosure(workspace.id),
       getWorkspaceMetaDataForDisclosure(workspace.id),
     ]);
-    const partial = storedMetaData.some(dataset => dataset.unavailable);
+
+    const accountMetadataSection = buildAccountMetadataSection(
+      data.user.user_metadata,
+      workspace.role,
+      locale,
+    );
+
     const pdf = await createDataDisclosurePdf({
       generatedAt: new Date(),
       locale,
@@ -90,14 +107,16 @@ export async function GET(request: Request) {
         createdAt: contact.created_at,
         updatedAt: contact.updated_at,
       })),
-      storedDataSections: buildStoredDataSections(storedMetaData, locale),
+      storedDataSections: [
+        accountMetadataSection,
+        ...buildStoredDataSections(storedData, locale),
+      ],
     });
 
     const body = new ArrayBuffer(pdf.byteLength);
     new Uint8Array(body).set(pdf);
-    const filename = partial
-      ? (locale === "en" ? "fanmind-data-disclosure-partial.pdf" : "fanmind-datenauskunft-teilweise.pdf")
-      : (locale === "en" ? "fanmind-data-disclosure.pdf" : "fanmind-datenauskunft.pdf");
+    const filename =
+      locale === "en" ? "fanmind-data-disclosure.pdf" : "fanmind-datenauskunft.pdf";
 
     return new NextResponse(body, {
       headers: {
@@ -105,31 +124,55 @@ export async function GET(request: Request) {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
-        "X-FanMind-Disclosure-Status": partial ? "partial" : "available-data",
+        "X-FanMind-Disclosure-Status": "complete",
       },
     });
   } catch (error) {
-    // Never expose database diagnostics, personal content or PDF/font exceptions.
+    // A complete disclosure is fail-closed. Never return a successful PDF after
+    // an active data family, page, authorization check or PDF build has failed.
+    // Never expose database diagnostics, personal content or PDF/font errors.
     return disclosureFailure(locale, error instanceof DataDisclosureExportError ? 409 : 500);
   }
 }
 
+function buildAccountMetadataSection(
+  metadata: Record<string, unknown> | undefined,
+  workspaceRole: string,
+  locale: "de" | "en",
+) {
+  const fields = Object.entries(metadata ?? {})
+    .filter(([key]) => !isSensitiveMetadataKey(key))
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}: ${formatDisclosureValue(value, locale)}`);
+  fields.push(`workspace_role: ${formatDisclosureValue(workspaceRole, locale)}`);
+
+  return {
+    title: locale === "en" ? "Account profile and saved preferences" : "Kontoprofil und gespeicherte Präferenzen",
+    countLabel: locale === "en" ? "Account records" : "Kontodatensätze",
+    emptyMessage: locale === "en" ? "No additional account metadata is stored." : "Keine zusätzlichen Kontometadaten gespeichert.",
+    entries: [
+      {
+        title: locale === "en" ? "Signed-in Creator account" : "Angemeldetes Creator-Konto",
+        fields,
+      },
+    ],
+  };
+}
+
 function disclosureFailure(locale: "de" | "en", status: number): NextResponse {
   const text = locale === "en" ? {
-    title: "Data disclosure is currently unavailable",
+    title: "Complete data disclosure is currently unavailable",
     section: "Profile & account / Data disclosure",
-    body: "Not all required data could be loaded or the PDF could not be created. No PDF was downloaded. Your stored data has not been changed.",
+    body: "Not all data stored for your FanMind account and Workspace could be loaded or the PDF could not be created. No incomplete PDF was downloaded. Your stored data has not been changed.",
     retry: "Try again", back: "Back to profile",
-    help: "If the problem persists, please contact FanMind support to request your data disclosure.",
+    help: "If the problem persists, please contact FanMind support to request the complete data disclosure.",
   } : {
-    title: "Datenauskunft derzeit nicht verfügbar",
+    title: "Vollständige Datenauskunft derzeit nicht verfügbar",
     section: "Profil & Konto / Datenauskunft",
-    body: "Nicht alle erforderlichen Daten konnten geladen werden oder die PDF konnte nicht erstellt werden. Es wurde keine PDF heruntergeladen. Deine gespeicherten Daten wurden nicht verändert.",
+    body: "Nicht alle für dein FanMind-Konto und deinen Workspace gespeicherten Daten konnten geladen werden oder die PDF konnte nicht erstellt werden. Es wurde keine unvollständige PDF heruntergeladen. Deine gespeicherten Daten wurden nicht verändert.",
     retry: "Erneut versuchen", back: "Zurück zum Profil",
-    help: "Besteht das Problem weiterhin, wende dich bitte für deine Datenauskunft an den FanMind-Support.",
+    help: "Besteht das Problem weiterhin, wende dich bitte für die vollständige Datenauskunft an den FanMind-Support.",
   };
-  // All interpolations are fixed localized copy or an allowlisted locale.
-  // No request URL, query value, exception or account field is rendered here.
   return new NextResponse(`<!doctype html>
 <html lang="${locale}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -162,20 +205,21 @@ const SECTION_LABELS: Record<
   DisclosureMetaDataset["key"],
   { de: string; en: string }
 > = {
-  social_provider_connections: { de: "TikTok- und X-Kontoverbindungen (ohne Tokens)", en: "TikTok and X account connections (without tokens)" },
-  creators: { de: "Creator-Persona", en: "Creator persona" },
-  creator_voices: { de: "Creator-Schreibstil", en: "Creator writing style" },
-  creator_playbooks: { de: "Creator-Angebote und Grenzen", en: "Creator offers and boundaries" },
-  creator_commercial_events: { de: "Bestätigte Kauf- und Angebotsereignisse", en: "Confirmed purchase and offer events" },
-  connections: { de: "Meta-Verbindungen (ohne Tokens)", en: "Meta connections (without tokens)" },
-  messages: { de: "Gespeicherte Meta-Chats und Kommentare", en: "Stored Meta chats and comments" },
-  content: { de: "Eigener Post-/Medien-Cache", en: "Owned post and media cache" },
-  metrics: { de: "Reichweiten- und Metrik-Snapshots", en: "Reach and metric snapshots" },
+  workspace_record: { de: "Workspace-, Vertrags- und Abrechnungsdaten", en: "Workspace, contract and billing data" },
+  contacts_full: { de: "Kontakte – vollständige Datensätze", en: "Contacts - complete records" },
+  memories: { de: "Fan-Gedächtnis / Memories", en: "Fan memory / memories" },
+  followups: { de: "Follow-ups", en: "Follow-ups" },
+  conversations: { de: "Conversations", en: "Conversations" },
+  messages: { de: "Gespeicherte Nachrichten aller Kanäle", en: "Stored messages from all channels" },
+  conversation_summaries: { de: "Conversation Summaries", en: "Conversation summaries" },
+  reply_targets: { de: "Gespeicherte Originalkanal-/Antwortziele", en: "Stored original-channel and reply targets" },
   fan_reports: { de: "Fan-Analyseberichte", en: "Fan analysis reports" },
   contact_profiles: { de: "Abgeleitete Fanprofile", en: "Derived fan profiles" },
-  voice_profiles: { de: "Nutzer-Schreibstilprofile", en: "User voice profiles" },
-  conversation_reports: { de: "Gesprächsanalysen", en: "Conversation analyses" },
-  analysis_settings: { de: "Analyse- und Aufbewahrungssteuerung", en: "Analysis and retention controls" },
+  voice_profiles: { de: "Nutzer-/Creator-Schreibstilprofile", en: "User/Creator writing style profiles" },
+  prompt_settings: { de: "KI-/Prompt-Einstellungen und Antwortprofile", en: "AI/prompt settings and reply profiles" },
+  ai_usage: { de: "KI-Nutzungs- und Kostenereignisse", en: "AI usage and cost events" },
+  connections: { de: "Social-Verbindungen ohne Tokens", en: "Social connections without tokens" },
+  meta_webhook_events: { de: "Gespeicherte Meta-Webhook-Ereignisse", en: "Stored Meta webhook events" },
 };
 
 function buildStoredDataSections(
@@ -185,11 +229,6 @@ function buildStoredDataSections(
   return datasets.map((dataset) => ({
     title: SECTION_LABELS[dataset.key][locale],
     countLabel: locale === "en" ? "Stored records" : "Gespeicherte Datensätze",
-    unavailableMessage: dataset.unavailable
-      ? (locale === "en"
-        ? "Not included: this optional data category is currently unavailable. Whether it contains stored data could not be verified. This is not a zero-record result."
-        : "Nicht enthalten: Dieser optionale Datenbereich ist derzeit nicht abrufbar. Ob dort Daten gespeichert sind, konnte nicht geprüft werden. Dies ist kein Nachweis für null gespeicherte Datensätze.")
-      : undefined,
     emptyMessage:
       locale === "en"
         ? "No records are stored in this category."
@@ -209,13 +248,16 @@ function disclosureRowTitle(
   locale: "de" | "en",
 ): string {
   for (const key of [
+    "display_name",
     "external_account_name",
     "title",
     "author_label",
     "owner_label",
     "external_content_id",
     "contact_id",
+    "conversation_id",
     "id",
+    "workspace_id",
   ]) {
     const value = row[key];
     if (typeof value === "string" && value.trim()) return value.trim();
