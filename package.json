@@ -27,6 +27,7 @@
     "db:backup-verification:check": "node scripts/operations/backup-verification-migration-runner.mjs",
     "db:operations-monitor:check": "node scripts/operations/operations-monitor-migration-runner.mjs",
     "db:server-error-tracking:check": "node scripts/operations/server-error-migration-runner.mjs",
+    "db:admin-crm-access:check": "node scripts/operations/admin-crm-access-migration-check.mjs",
     "db:workspace-member-data-boundary:check": "node scripts/operations/workspace-member-data-boundary-runner.mjs --check",
     "db:workspace-member-data-boundary:verify": "node scripts/operations/workspace-member-data-boundary-runner.mjs --verify",
     "db:workspace-member-data-boundary:apply": "node scripts/operations/workspace-member-data-boundary-runner.mjs --apply",

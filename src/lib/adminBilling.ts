@@ -5,6 +5,7 @@ import {
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
 import {
+  isAdminCrmAccessWorkspace,
   resolveAdminCrmAccessTransition,
 } from "@/lib/adminCrmAccessPolicy.mjs";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
@@ -129,6 +130,24 @@ async function getAdminOwnedWorkspaces(userId: string, key: string): Promise<Adm
   return response.ok ? await response.json() as AdminBillingWorkspace[] : null;
 }
 
+export async function listAdminBillingWorkspacesForOwners(ownerUserIds: string[]): Promise<{ workspaces: AdminBillingWorkspace[]; error: string | null }> {
+  const key = serviceKey();
+  if (!key) return { workspaces: [], error: "Supabase Service Role ist nicht konfiguriert." };
+  const ownerIds = [...new Set(ownerUserIds.filter(validUuid))].slice(0, AUTH_USERS_PAGE_SIZE);
+  if (!ownerIds.length) return { workspaces: [], error: null };
+  try {
+    const url = new URL(getSupabaseRestUrl("workspaces"));
+    url.searchParams.set("select", ADMIN_BILLING_COLUMNS);
+    url.searchParams.set("owner_user_id", `in.(${ownerIds.join(",")})`);
+    url.searchParams.set("limit", String(AUTH_USERS_PAGE_SIZE));
+    const response = await fetch(url, { headers: getSupabaseHeaders(key), cache: "no-store" });
+    if (!response.ok) return { workspaces: [], error: `Workspace-Zuordnungen konnten nicht geladen werden (${response.status}).` };
+    return { workspaces: await response.json() as AdminBillingWorkspace[], error: null };
+  } catch {
+    return { workspaces: [], error: "Workspace-Zuordnungen konnten nicht geladen werden." };
+  }
+}
+
 function adminCrmWorkspaceHasBillingBinding(workspace: AdminBillingWorkspace): boolean {
   return workspace.plan_id !== "starter" ||
     workspace.commercial_option !== "starter_paid_setup" ||
@@ -222,6 +241,12 @@ export async function updateAdminBillingWorkspace(workspaceId: string, admin: Su
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
   if (!validUuid(workspaceId)) return { ok: false, status: 400, error: "Ungültige Workspace-ID." };
+  const current = await getAdminBillingWorkspace(workspaceId);
+  if (!current.workspace) return { ok: false, status: current.error ? 503 : 404, error: current.error ?? "Workspace wurde nicht gefunden." };
+  const changedKeys = Object.keys(values);
+  if (isAdminCrmAccessWorkspace(current.workspace) && changedKeys.some((keyName) => keyName !== "billing_admin_note")) {
+    return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
+  }
   const body = { ...values, billing_updated_at: new Date().toISOString(), billing_updated_by_user_id: admin.id };
   const url = new URL(getSupabaseRestUrl("workspaces"));
   url.searchParams.set("id", `eq.${workspaceId}`);
@@ -305,6 +330,7 @@ export async function startInternalDailyTestCheckout(workspaceId: string, admin:
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
   const { workspace, error } = await getAdminBillingWorkspace(workspaceId);
   if (!workspace) return { ok: false, status: 404, error: error ?? "Workspace wurde nicht gefunden." };
+  if (isAdminCrmAccessWorkspace(workspace)) return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
   if (!isInternalTestWorkspace(workspace)) return { ok: false, status: 403, error: "Das 1-€-Live-Testabo ist nur für klar markierte interne Test-Workspaces erlaubt." };
   if (!isInternalDailyTestStripeReady(getStripeConfigStatus())) {
     return { ok: false, status: 503, error: "Stripe Checkout und Webhook sind für das 1-€-Live-Testabo nicht vollständig konfiguriert." };
@@ -555,6 +581,9 @@ async function confirmInternalTestOwnerEmail(workspaceId: string, key: string): 
 export async function markWorkspaceAsInternalTestAccess(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null }> {
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
+  const current = await getAdminBillingWorkspace(workspaceId);
+  if (!current.workspace) return { ok: false, status: current.error ? 503 : 404, error: current.error ?? "Workspace wurde nicht gefunden." };
+  if (isAdminCrmAccessWorkspace(current.workspace)) return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
   await confirmInternalTestOwnerEmail(workspaceId, key);
   const note = `${INTERNAL_TEST_ACCESS_NOTE} · Admin/Demo/Internal/Test · Billing deaktiviert · Mail bestätigt · Keine Ablaufzeit · AI Maintenance · ${new Date().toISOString().slice(0, 10)}`;
   return updateAdminBillingWorkspace(workspaceId, admin, {

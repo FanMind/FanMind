@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin";
 import { adminCrmAccessLabel } from "@/lib/adminCrmAccessPolicy.mjs";
-import { isInternalTestMember, isInternalTestWorkspace, listAdminBillingMembers, listAdminBillingWorkspaces, listAdminRegisteredUsers, listWorkspaceContactCounts, type AdminBillingMember, type AdminBillingWorkspace, type AdminRegisteredUser } from "@/lib/adminBilling";
+import { isInternalTestMember, isInternalTestWorkspace, listAdminBillingMembers, listAdminBillingWorkspaces, listAdminBillingWorkspacesForOwners, listAdminRegisteredUsers, listWorkspaceContactCounts, type AdminBillingMember, type AdminBillingWorkspace, type AdminRegisteredUser } from "@/lib/adminBilling";
 import { PLANS, type FeatureKey, type FeatureStatus, type PlanId } from "@/config/plans";
 import { roadmapPhases } from "@/config/roadmap";
 import { getBillingStatusLabel } from "@/lib/billing";
@@ -307,7 +307,7 @@ function PaymentsContent({ workspaces, members, selectedWorkspaceId, error }: { 
   </>;
 }
 
-function CustomersContent({ workspaces, members, registeredUsers, registeredUsersPage, registeredUsersHasNext, registeredUsersTotal, contactCounts, selectedWorkspaceId, error, memberError, registeredUsersError }: { workspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; registeredUsers: AdminRegisteredUser[]; registeredUsersPage: number; registeredUsersHasNext: boolean; registeredUsersTotal: number | null; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null; registeredUsersError: string | null }) {
+function CustomersContent({ workspaces, registeredUserWorkspaces, members, registeredUsers, registeredUsersPage, registeredUsersHasNext, registeredUsersTotal, contactCounts, selectedWorkspaceId, error, memberError, registeredUsersError }: { workspaces: AdminBillingWorkspace[]; registeredUserWorkspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; registeredUsers: AdminRegisteredUser[]; registeredUsersPage: number; registeredUsersHasNext: boolean; registeredUsersTotal: number | null; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null; registeredUsersError: string | null }) {
   const selectedWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? workspaces[0] ?? null;
   const workspaceRows = [...workspaces].sort(sortByDateDesc).slice(0, 10);
   const selectedMembers = selectedWorkspace ? members.filter((member) => member.workspace_id === selectedWorkspace.id) : [];
@@ -342,7 +342,7 @@ function CustomersContent({ workspaces, members, registeredUsers, registeredUser
       {registeredUsers.length ? <div className={styles.teamTable}>
         <div className={styles.teamTableHead}><span>Name</span><span>E-Mail</span><span>Bestätigung</span><span>Workspace</span><span>CRM-Zugang</span><span>Registriert am</span><span>Aktion</span></div>
         {registeredUsers.map((registeredUser) => {
-          const workspace = workspaces.find((item) => item.owner_user_id === registeredUser.id) ?? null;
+          const workspace = registeredUserWorkspaces.find((item) => item.owner_user_id === registeredUser.id) ?? null;
           const confirmed = Boolean(registeredUser.email_confirmed_at);
           const controlledAccess = workspace?.test_access_flags?.admin_crm_access === true;
           return <div className={`${styles.teamTableRow} ${controlledAccess ? styles.internalTestRow : ""}`} key={registeredUser.id}>
@@ -380,17 +380,22 @@ export default async function AdminBillingPage({ searchParams }: AdminBillingPag
   const selectedWorkspaceId = getSingleParam(params.workspace);
   const registeredUsersPage = positivePage(getSingleParam(params.users_page));
   const crmAccessStatus = getSingleParam(params.crm_access);
-  const registeredUsersPromise = activeTab === "customers"
-    ? listAdminRegisteredUsers(registeredUsersPage)
-    : Promise.resolve({ users: [] as AdminRegisteredUser[], page: 1, hasNext: false, total: null, error: null });
-  const [{ workspaces, error }, { members, error: memberError }, registeredUserResult, { counts: contactCounts }] = await Promise.all([listAdminBillingWorkspaces(), listAdminBillingMembers(), registeredUsersPromise, listWorkspaceContactCounts()]);
+  const registeredUserResult = activeTab === "customers"
+    ? await listAdminRegisteredUsers(registeredUsersPage)
+    : { users: [] as AdminRegisteredUser[], page: 1, hasNext: false, total: null, error: null };
+  const [{ workspaces, error }, { workspaces: registeredUserWorkspaces, error: registeredUserWorkspaceError }, { members, error: memberError }, { counts: contactCounts }] = await Promise.all([
+    listAdminBillingWorkspaces(),
+    activeTab === "customers" ? listAdminBillingWorkspacesForOwners(registeredUserResult.users.map((item) => item.id)) : Promise.resolve({ workspaces: [], error: null }),
+    listAdminBillingMembers(),
+    listWorkspaceContactCounts(),
+  ]);
 
   return (
     <AdminBillingShell user={user} title="Adminbereich" subtitle="Verwalte Kunden, Workspaces, Pakete und Systemeinstellungen.">
       <div className={styles.adminStack}>
         <AdminTabs activeTab={activeTab} />
         {crmAccessStatus === "updated" ? <p className={styles.badgeOk}>CRM-Zugang wurde gespeichert und protokolliert.</p> : crmAccessStatus === "failed" ? <p className={styles.badgeBad}>CRM-Zugang konnte nicht vollständig gespeichert werden. Bitte prüfe den Nutzerstatus und versuche es erneut.</p> : null}
-        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} members={members} registeredUsers={registeredUserResult.users} registeredUsersPage={registeredUserResult.page} registeredUsersHasNext={registeredUserResult.hasNext} registeredUsersTotal={registeredUserResult.total} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} registeredUsersError={registeredUserResult.error} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
+        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} registeredUserWorkspaces={registeredUserWorkspaces} members={members} registeredUsers={registeredUserResult.users} registeredUsersPage={registeredUserResult.page} registeredUsersHasNext={registeredUserResult.hasNext} registeredUsersTotal={registeredUserResult.total} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} registeredUsersError={registeredUserResult.error ?? registeredUserWorkspaceError} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
       </div>
     </AdminBillingShell>
   );

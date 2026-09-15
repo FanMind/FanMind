@@ -96,6 +96,17 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   const workspaceAuthorization = fs.readFileSync("src/lib/workspaceAuthorization.ts", "utf8");
   const dashboard = fs.readFileSync("src/app/dashboard/page.tsx", "utf8");
   const accountSections = fs.readFileSync("src/app/settings/AccountSections.tsx", "utf8");
+  const workspaceDetail = fs.readFileSync(
+    "src/app/admin/billing/workspaces/[workspaceId]/page.tsx",
+    "utf8",
+  );
+  const sourceOfTruth = fs.readFileSync("docs/SOURCE_OF_TRUTH.md", "utf8");
+  const readme = fs.readFileSync("README.md", "utf8");
+  const rollout = fs.readFileSync("docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md", "utf8");
+  const rolloutCheck = fs.readFileSync(
+    "scripts/operations/admin-crm-access-migration-check.mjs",
+    "utf8",
+  );
   const migration = fs.readFileSync(
     "supabase/migrations/20260915221500_admin_crm_access.sql",
     "utf8",
@@ -110,6 +121,8 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(service, /email_confirmed_at|confirmed_at/u);
   assert.match(service, /registered_user_email_unconfirmed/u);
   assert.match(service, /admin_set_registered_user_crm_access/u);
+  assert.match(service, /listAdminBillingWorkspacesForOwners/u);
+  assert.match(service, /admin_crm_access_generic_billing_forbidden/u);
   assert.match(setter, /getAdminOwnedWorkspaces/u);
   assert.doesNotMatch(setter, /getSupabaseRestUrl\("workspaces"\)/u);
   assert.doesNotMatch(setter, /operations_audit_log/u);
@@ -128,6 +141,9 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(migration, /on conflict on constraint workspace_members_workspace_id_user_id_key/u);
   assert.match(migration, /grant execute[\s\S]*service_role/u);
   assert.match(migration, /revoke all[\s\S]*public, anon, authenticated/u);
+  assert.match(migration, /admin_crm_read_allowed/u);
+  assert.match(migration, /as restrictive[\s\S]*for all[\s\S]*to authenticated/u);
+  assert.match(migration, /information_schema\.columns/u);
 
   assert.match(route, /isTrustedFanMindMutationRequest/u);
   assert.match(route, /readBoundedFormDataRequest/u);
@@ -138,6 +154,7 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(page, /users_page/u);
   assert.doesNotMatch(page, /registeredUsers\.slice/u);
   assert.match(page, /activeTab === "customers"/u);
+  assert.match(page, /registeredUserWorkspaces/u);
   assert.match(page, /Dauerhaft kostenlos freigeben/u);
   assert.match(page, /Befristet kostenlos/u);
   assert.match(page, /Zugang sperren/u);
@@ -146,4 +163,11 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(workspaceAuthorization, /assertAdminCrmReadAccess/u);
   assert.match(dashboard, /Starter CRM/u);
   assert.match(accountSections, /Starter CRM · kostenloser Adminzugang/u);
+  assert.match(workspaceDetail, /isAdminCrmAccessWorkspace/u);
+  assert.match(workspaceDetail, /CRM-Zugang ausschließlich in der Kundenübersicht verwalten/u);
+  assert.match(sourceOfTruth, /Administrativ gewährter Starter-CRM-Zugang/u);
+  assert.match(readme, /Admin-CRM-Zugang/u);
+  assert.match(rollout, /20260915221500_admin_crm_access\.sql/u);
+  assert.match(rollout, /separate ausdrückliche\s+Production-Freigabe/u);
+  assert.match(rolloutCheck, /EXPECTED_ADMIN_CRM_ACCESS_SHA256/u);
 });

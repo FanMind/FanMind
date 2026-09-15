@@ -1,5 +1,24 @@
 # FanMind Source of Truth
 
+## Administrativ gewährter Starter-CRM-Zugang — 15. September 2026
+
+Ein bestätigtes Registrierungskonto kann durch einen Platform-Admin einen
+administrativ gewährten Starter-CRM-Zugang erhalten. Dieser interne Zugang ist
+kein öffentliches Angebot, kein Demo-Workspace und kein Stripe-Vertrag. Er hat
+0 EUR Setup und 0 EUR monatliche Gebühr und ist entweder dauerhaft kostenlos
+oder bis zum ausdrücklich gesetzten Ende des gewählten Kalendertags in
+`Europe/Zurich` aktiv. Der Admin kann ihn sofort sperren, ohne Workspace- oder
+CRM-Daten zu löschen.
+
+Nur die eigene CRM-Zugangssteuerung darf diesen Workspace umstellen. Generische
+Billing-, Test-, Daily- und Stripe-Aktionen sind gesperrt. Eine spätere
+kommerzielle Umstellung muss über einen getrennten Billing-Ablauf erfolgen.
+Nach Sperre oder Fristablauf werden Anwendung und direkte authentifizierte
+Supabase-Zugriffe durch dieselbe Datenbankberechtigung blockiert. Die atomare
+RPC-/RLS-Grundlage ist erst nach dem getrennt freigegebenen Datenbank-Rollout
+gemäß `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` produktiv nutzbar; ein
+normaler Web-Deploy wendet sie nicht an.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-

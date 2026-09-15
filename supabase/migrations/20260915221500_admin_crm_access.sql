@@ -1,5 +1,73 @@
 begin;
 
+create or replace function public.admin_crm_read_allowed(p_workspace_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public, pg_temp
+set row_security = off
+as $function$
+  select coalesce((
+    select case
+      when coalesce(workspace.test_access_flags ->> 'admin_crm_access', 'false') <> 'true'
+        then true
+      else
+        workspace.workspace_access_mode = 'active'
+        and workspace.billing_status not in ('manual_suspended', 'suspended')
+        and (
+          (
+            workspace.billing_manual_override is true
+            and coalesce(workspace.test_access_flags ->> 'no_expiry', 'false') = 'true'
+          )
+          or (
+            coalesce(workspace.test_access_flags ->> 'temporary_processing_access', 'false') = 'true'
+            and nullif(workspace.test_access_flags ->> 'temporary_processing_access_expires_at', '')::timestamptz > statement_timestamp()
+          )
+        )
+    end
+      from public.workspaces as workspace
+     where workspace.id = p_workspace_id
+  ), false)
+$function$;
+
+revoke all on function public.admin_crm_read_allowed(uuid)
+  from public, anon;
+grant execute on function public.admin_crm_read_allowed(uuid)
+  to authenticated, service_role;
+
+do $policies$
+declare
+  target record;
+begin
+  for target in
+    select columns.table_schema, columns.table_name
+      from information_schema.columns as columns
+      join pg_catalog.pg_namespace as table_namespace
+        on table_namespace.nspname = columns.table_schema
+      join pg_catalog.pg_class as table_definition
+        on table_definition.relnamespace = table_namespace.oid
+       and table_definition.relname = columns.table_name
+     where columns.table_schema = 'public'
+       and columns.column_name = 'workspace_id'
+       and table_definition.relkind in ('r', 'p')
+       and table_definition.relrowsecurity
+     group by columns.table_schema, columns.table_name
+  loop
+    execute format(
+      'drop policy if exists admin_crm_entitlement_boundary on %I.%I',
+      target.table_schema,
+      target.table_name
+    );
+    execute format(
+      'create policy admin_crm_entitlement_boundary on %I.%I as restrictive for all to authenticated using (public.admin_crm_read_allowed(workspace_id)) with check (public.admin_crm_read_allowed(workspace_id))',
+      target.table_schema,
+      target.table_name
+    );
+  end loop;
+end
+$policies$;
+
 create or replace function public.admin_set_registered_user_crm_access(
   p_target_user_id uuid,
   p_admin_user_id uuid,

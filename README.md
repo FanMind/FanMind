@@ -1,5 +1,14 @@
 # FanMind
 
+## Admin-CRM-Zugang
+
+Bestätigte Registrierungen können im Platform-Adminbereich einen dauerhaft
+kostenlosen oder ausdrücklich befristeten Starter-CRM-Zugang erhalten und
+später ohne Datenlöschung gesperrt werden. Dieser interne 0-EUR-Zugang ist kein
+öffentliches Angebot, keine Demo und kein Stripe-Vertrag. Seine atomare
+Workspace-/Membership-/Audit-Steuerung und die RLS-Sperre werden getrennt vom
+Web-Deploy nach `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` ausgerollt.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
