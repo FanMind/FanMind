@@ -29,9 +29,11 @@ import {
 import type { PlanId } from "@/config/plans";
 import type { FanMindLanguage } from "@/lib/fanmindCopy";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import {
+  isInternalDailyTestBillingRuntimeReady,
+  isInternalDailyTestStripeReady,
+} from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 import { isTemporaryDemoUser, TEMPORARY_DEMO_WORKSPACE_NAME } from "@/lib/demoMode";
 import {
@@ -7124,9 +7126,15 @@ export async function ensureUserWorkspace(
         );
       }
 
-      // FM-DEC-014 admits the permanent public Daily offer. Legacy beta windows
-      // remain compatible; RPC, Stripe/Tax and consent checks still apply.
-      if (!PUBLIC_DAILY_PLAN_ENABLED && !(await getPublicDailyTestPlanEnabled())) {
+      if (!isInternalDailyTestBillingRuntimeReady()) {
+        return workspaceBackfillError(
+          PUBLIC_DAILY_TEST_BILLING_UNAVAILABLE_ERROR,
+        );
+      }
+
+      // New Daily admission is controlled by the server-owned beta switch;
+      // existing Daily workspaces never pass through this creation branch.
+      if (!(await getPublicDailyTestPlanEnabled())) {
         return workspaceBackfillError(
           PUBLIC_DAILY_TEST_PLAN_UNAVAILABLE_ERROR,
         );

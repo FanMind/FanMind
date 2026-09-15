@@ -45,8 +45,8 @@ jobs:
               ;;
           esac
 
-          # Seed fail-closed runtime settings once. An admin may later open a
-          # bounded 24-hour beta window; deploys never overwrite that choice.
+          # Seed fail-closed runtime settings once. A Platform Admin may later
+          # enable the manual Daily beta; deploys never overwrite that choice.
           RUNTIME_SETTINGS_FILE="$SOURCE_DIR/.fanmind-runtime-settings.json"
           if [ ! -e "$RUNTIME_SETTINGS_FILE" ]; then
             RUNTIME_SETTINGS_TMP="$(mktemp "$SOURCE_DIR/.fanmind-runtime-settings.XXXXXX")"

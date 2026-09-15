@@ -1,19 +1,24 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { chmod, readFile, rename, writeFile } from "node:fs/promises";
+import { chmod, open, readFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import {
-  createTemporaryPublicDailyTestPlanSettings,
-  getTemporaryPublicDailyTestPlanStatus,
+  createPublicDailyBetaSettings,
+  getPublicDailyBetaStatus,
 } from "@/lib/publicDailyTestPlanPolicy.mjs";
 
 type RuntimeProductSettings = {
   publicDailyTestPlanEnabled: boolean;
-  publicDailyTestPlanEnabledUntil?: string | null;
+  publicDailyTestPlanEnabledUntil?: null;
   updatedAt?: string;
   updatedBy?: string;
 };
+
+// Production intentionally runs one PM2 worker. Request overlap therefore needs
+// only a process-local critical section; process exit also clears it without a
+// persistent lock file that could become stale or be replaced between checks.
+let settingsUpdateInProgress = false;
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
@@ -26,7 +31,7 @@ function getSettingsPath(): string {
       );
 }
 
-export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
+export async function getPublicDailyBetaStatusFromServer(): Promise<{ enabled: boolean; updatedAt: string | null }> {
   try {
     const payload = JSON.parse(
       await readFile(
@@ -34,11 +39,14 @@ export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
         "utf8",
       ),
     ) as Partial<RuntimeProductSettings>;
-    return getTemporaryPublicDailyTestPlanStatus(payload).enabled;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-    return false;
+    return getPublicDailyBetaStatus(payload);
+  } catch {
+    return { enabled: false, updatedAt: null };
   }
+}
+
+export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
+  return (await getPublicDailyBetaStatusFromServer()).enabled;
 }
 
 export async function setPublicDailyTestPlanEnabled(
@@ -47,23 +55,31 @@ export async function setPublicDailyTestPlanEnabled(
 ): Promise<void> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  const payload: RuntimeProductSettings = createTemporaryPublicDailyTestPlanSettings(
-    enabled,
-    updatedBy,
-  );
-
-  await writeFile(temporaryPath, `${JSON.stringify(payload)}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-    flag: "wx",
-  });
+  if (settingsUpdateInProgress) {
+    throw new Error("daily_beta_update_in_progress");
+  }
+  settingsUpdateInProgress = true;
 
   try {
+    const payload: RuntimeProductSettings = createPublicDailyBetaSettings(
+      enabled,
+      updatedBy,
+    );
+    await writeFileExclusive(temporaryPath, payload);
     await rename(temporaryPath, settingsPath);
     await chmod(settingsPath, 0o600);
-  } catch (error) {
-    const { unlink } = await import("node:fs/promises");
+  } finally {
     await unlink(temporaryPath).catch(() => undefined);
-    throw error;
+    settingsUpdateInProgress = false;
+  }
+}
+
+async function writeFileExclusive(pathname: string, payload: RuntimeProductSettings) {
+  const handle = await open(pathname, "wx", 0o600);
+  try {
+    await handle.writeFile(`${JSON.stringify(payload)}\n`, "utf8");
+    await handle.sync();
+  } finally {
+    await handle.close();
   }
 }

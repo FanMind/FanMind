@@ -12,6 +12,7 @@ import FaqAccordion from "./FaqAccordion";
 import FeatureStatusLabel, { type FeatureStatusLabelVariant } from "@/components/FeatureStatusLabel";
 import { FooterInquiryForm } from "@/components/landing/FooterInquiryForm";
 import styles from "./landing-v2.module.css";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 
 export const metadata: Metadata = {
   title: "FanMind | KI-CRM für Creator, Clubs und Events",
@@ -938,7 +939,11 @@ export default async function LandingV2({ searchParams }: LandingV2Props) {
       href: link.href === LANDING_ROADMAP_HREF ? roadmapHref : link.href === "/login" ? loginHref : link.href === "/register" ? registerHref : link.href,
     })),
   }));
-  const localizedPricingPlans = localizeFanMindValue(pricingPlans, t).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
+  const dailyBetaEnabled = await getPublicDailyTestPlanEnabled();
+  const localizedPricingPlans = localizeFanMindValue(
+    pricingPlans.filter((plan) => plan.name !== "Daily" || dailyBetaEnabled),
+    t,
+  ).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
   const localizedPricingProofs = localizeFanMindValue(pricingProofs, t);
   const localizedRoadmapPhases = localizeFanMindValue(roadmapPhases, t);
   const localizedRoadmapNotes = localizeFanMindValue(roadmapNotes, t);

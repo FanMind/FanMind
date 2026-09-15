@@ -60,6 +60,7 @@ function harness({
   locale = "de",
   workspaceProvisioningReady = true,
   stripeConfig = readyStripeConfig,
+  dailyEnabled = true,
   existingWorkspaceResult = { workspace: null },
   userMetadata = {
     plan: "ultra", commercial_option: "forged-option",
@@ -96,9 +97,8 @@ function harness({
     "@/lib/preActivation": { getBillingContinuationHref: () => "/billing/synthetic" },
     "@/lib/workspaceLocale": { resolveWorkspaceLocale: async () => locale },
     "@/lib/workspaceAuthorization": { getUserAuthorizedWorkspaceDashboard: async () => existingWorkspaceResult },
-    "@/lib/internalDailyTestReadinessPolicy.mjs": dailyReadinessPolicy,
-    "@/lib/runtimeProductSettings": { getPublicDailyTestPlanEnabled: async () => true },
-    "@/lib/publicDailyPlanPolicy.mjs": { PUBLIC_DAILY_PLAN_ENABLED: true },
+    "@/lib/internalDailyTestReadinessPolicy.mjs": { ...dailyReadinessPolicy, isInternalDailyTestBillingRuntimeReady: () => true },
+    "@/lib/runtimeProductSettings": { getPublicDailyTestPlanEnabled: async () => dailyEnabled },
     "@/lib/stripeBilling": { getStripeConfigStatus: () => stripeConfig },
     "@/lib/supabase/server": {
       getSupabaseServerUser: async () => ({ data: { user: authenticated ? user : null } }),
@@ -261,6 +261,23 @@ test("Daily stays visible in DE and EN while each existing activation prerequisi
       assert.match(textContent(status), locale === "en" ? /No subscription or payment has started/u : /Es wurde kein Abo und keine Zahlung gestartet/u, label);
       assert.equal(nodesMatching(tree, (node) => node.type === "a" && node.props.href?.includes("demo=1")).length, options.activationEnabled === false ? 1 : 0);
     }
+  }
+});
+
+test("admin-off hides Daily and its saved preference without changing Starter setup", async () => {
+  for (const locale of ["de", "en"]) {
+    const h = harness({
+      locale,
+      dailyEnabled: false,
+      userMetadata: { registration_option_preference: "internal_daily_test" },
+    });
+    const tree = await h.page.default({ searchParams: Promise.resolve({}) });
+    const forms = nodesMatching(tree, (node) => node.type === "form" && node.props.action === h.page.provisionWorkspace);
+    assert.equal(forms.length, 2);
+    assert.equal(textContent(tree).includes("Daily"), false);
+    assert.equal(textContent(tree).includes("vorgemerkte Auswahl"), false);
+    assert.equal(textContent(tree).includes("saved selection"), false);
+    assert.equal(h.calls.length, 0);
   }
 });
 

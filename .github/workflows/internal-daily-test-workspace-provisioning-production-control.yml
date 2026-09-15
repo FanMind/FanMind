@@ -1,0 +1,97 @@
+name: FanMind Daily Workspace Provisioning Production Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        required: true
+        type: choice
+        options: [verify]
+      confirmation:
+        description: "Exact action-specific confirmation"
+        required: true
+        type: string
+      reviewed_commit:
+        description: "Exact reviewed main commit"
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-daily-workspace-provisioning-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject invalid dispatch before protected access
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          DISPATCH_COMMIT: ${{ github.sha }}
+          DISPATCH_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          [[ "$DISPATCH_REF" == "refs/heads/main" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=main_required"; exit 1; }
+          [[ "$ACTION" == "verify" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=action_invalid"; exit 1; }
+          [[ "$CONFIRMATION" == "verify-daily-workspace-provisioning-production" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=confirmation_invalid"; exit 1; }
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ && "$REVIEWED_COMMIT" == "$DISPATCH_COMMIT" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=commit_invalid"; exit 1; }
+          echo "DAILY_PRODUCTION_VERIFY_INPUT=PASS"
+
+  control:
+    needs: validate
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 15
+    env:
+      FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET: production
+      FANMIND_INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_PRODUCTION_CONFIRM: ${{ inputs.confirmation }}
+      FANMIND_RUNTIME_ENVIRONMENT: production
+      FANMIND_TARGET_API_ORIGIN: https://fanmind.ch
+      NEXT_PUBLIC_APP_URL: https://fanmind.ch
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      PGHOST: ${{ vars.FANMIND_PRODUCTION_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ vars.FANMIND_PRODUCTION_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: postgres
+      PGUSER: postgres.${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /etc/ssl/certs/ca-certificates.crt
+      FANMIND_ENABLE_PRODUCTION_WRITES: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Prepare private Production passfile
+        env:
+          DB_PASSWORD: ${{ secrets.FANMIND_PRODUCTION_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$DB_PASSWORD" && "$DB_PASSWORD" != *$'\n'* && "$DB_PASSWORD" != *$'\r'* ]]
+          escaped="${DB_PASSWORD//\\/\\\\}"; escaped="${escaped//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$escaped" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+      - name: Verify checksum-pinned Daily provisioning read-only
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
+        run: node scripts/operations/internal-daily-test-provisioning-migration-runner.mjs --verify
+      - name: Remove private passfile
+        if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
+        run: rm -f "$PGPASSFILE"

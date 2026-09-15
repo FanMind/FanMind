@@ -18,6 +18,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { evaluateInternalDailyTestWorkspaceProvisioningStagingEnvironment } from "../../src/lib/internalDailyTestWorkspaceProvisioningStagingPolicy.mjs";
+import { evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment } from "../../src/lib/internalDailyTestWorkspaceProvisioningProductionPolicy.mjs";
 
 const CONTROL_ID = "20260808230102_internal_daily_test_workspace_provisioning";
 const CONTROLLED_SQL_PATH = resolve(
@@ -623,11 +624,18 @@ function ensurePsqlAvailable() {
 }
 
 function runDatabaseMode(mode, controlledSql, environment) {
+  if (
+    environment.FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET === "production" &&
+    mode === "--apply"
+  ) {
+    fail("production_apply_unavailable");
+  }
   const policyMode = mode === "--apply" ? "apply" : "verify";
-  const evaluation =
-    evaluateInternalDailyTestWorkspaceProvisioningStagingEnvironment(environment, {
-      mode: policyMode,
-    });
+  const evaluator =
+    environment.FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET === "production"
+      ? evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment
+      : evaluateInternalDailyTestWorkspaceProvisioningStagingEnvironment;
+  const evaluation = evaluator(environment, { mode: policyMode });
   if (!evaluation.ok) fail("environment_invalid");
   const postflightSql =
     materializeInternalDailyTestProvisioningPostflight(controlledSql);

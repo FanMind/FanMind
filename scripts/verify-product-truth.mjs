@@ -1215,8 +1215,8 @@ forbidIn(
 );
 requireText(
   "src/app/register/page.tsx",
-  "PUBLIC_DAILY_PLAN_ENABLED",
-  "Die Registrierung muss das vom Owner freigegebene öffentliche Daily-Angebot anbieten.",
+  "await getPublicDailyTestPlanEnabled()",
+  "Die Registrierung muss Daily ausschließlich aus dem serverseitigen Beta-Schalter ableiten.",
 );
 requireText(
   "src/lib/runtimeProductSettings.ts",
@@ -1231,12 +1231,12 @@ requireText(
 requireText(
   "src/app/admin/settings/page.tsx",
   "Daily · 0 € Setup + 1 €/Tag",
-  "Der Adminbereich muss den permanenten Daily-Tarif und seine Aktivierungsbereitschaft zeigen.",
+  "Der Adminbereich muss die manuelle Daily-Beta und ihre Aktivierungsbereitschaft zeigen.",
 );
 requireText(
   "src/lib/publicDailyTestPlanPolicy.mjs",
-  "PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 * 60 * 60 * 1000",
-  "Die öffentliche 1-€/Tag-Beta-Ausnahme muss auf höchstens 24 Stunden begrenzt sein.",
+  "publicDailyTestPlanEnabledUntil === undefined || settings.publicDailyTestPlanEnabledUntil === null",
+  "Die manuelle Daily-Beta darf keinen automatischen Countdown akzeptieren.",
 );
 requireText(
   ".github/workflows/deploy-fanmind.yml",
@@ -1245,8 +1245,8 @@ requireText(
 );
 requireText(
   "README.md",
-  "Drei dauerhafte öffentliche Zahlungsmodelle",
-  "README muss die drei vom Owner freigegebenen Zahlungsmodelle nennen.",
+  "manuell vom Platform-Admin gesteuerte interne Beta",
+  "README muss die manuell gesteuerte interne Daily-Beta nennen.",
 );
 requireText(
   "src/lib/stripeBilling.ts",

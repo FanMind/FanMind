@@ -13,7 +13,7 @@ Der veröffentlichte Katalog und die noch fehlende Aktivierung haben getrennte
 Statusangaben; eine weitere Preis- oder Veröffentlichungsfreigabe wird dafür
 nicht erneut verlangt.
 
-Bernd hat die Veröffentlichung und diese drei dauerhaften Angebote bestätigt:
+Bernd hat die Veröffentlichung und die damals drei dauerhaft beschriebenen Angebote; FM-DEC-019 ersetzt Daily später durch eine manuell gesteuerte interne Beta bestätigt:
 
 | Angebot | Setup | Laufender Preis | Bestehende Konditionen |
 | --- | ---: | ---: | --- |
@@ -24,8 +24,7 @@ Bernd hat die Veröffentlichung und diese drei dauerhaften Angebote bestätigt:
 Die bestehende Nettopreisbasis bleibt erhalten. Die Preise existieren bereits
 im verbundenen Stripe-Live-Konto; sie werden weder neu angelegt noch ersetzt.
 Daily verwendet aus Kompatibilitätsgründen weiterhin die bisherige interne
-Engine. Die frühere 24-Stunden-Freigabe beschränkt den öffentlichen Katalog
-nicht mehr. Die Auswahl wird im kostenlosen Konto nur als unverbindlicher
+Engine. FM-DEC-019 ersetzt diese historische Dauerfreigabe: Daily wird ohne Countdown manuell vom Platform-Admin ein- und ausgeschaltet. Die Auswahl wird im kostenlosen Konto nur als unverbindlicher
 Paketwunsch gespeichert; sie erteilt keine Zahlungs- oder Workspace-Rechte.
 
 ## Was erledigt ist und was tatsächlich noch fehlt

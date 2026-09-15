@@ -349,3 +349,22 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.
 - Scope: read-only installed boot-readiness collector/verifier and normal reviewed publication; then exact-target controlled reboot only after concrete start/recovery facts, with pre/post evidence. No generic remote command, migration, backup or restore repetition.
 - Acceptance: negative/redaction tests, current-head CI/security/review, installed target-bound readout and changed host boot ID plus exact release/nginx/PM2/process Node/eight health postchecks. Source-only proof cannot accept a reboot.
+# FM-CR-037 — manual Daily beta admission
+- Status: IN_PROGRESS
+- Decision: implement FM-DEC-019 as a server-owned, Platform-Admin-controlled manual Daily beta without countdown. Disabled means no public visibility or new admission/checkout; existing Daily subscriptions continue unchanged.
+- Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
+
+## FM-CR-038 — Daily PR merge and review closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: merge current `main` into the existing Daily branch; close the open-session, lock-ownership, workflow-validation, CI-ownership and Admin-explanation findings. No Production apply, activation, payment or account deletion.
+- Acceptance: current-main ancestry, focused Daily/security/workflow regression tests, Product Truth, lint, TypeScript and production build; GitHub Current-Head CI/review remain publication gates.
+
+## FM-CR-039 — Daily post-merge security closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: close the remaining CodeQL lock race, expose and retry incomplete open-Checkout cleanup, and make Production apply structurally unreachable below the verify-only workflow. No Production action or data mutation.

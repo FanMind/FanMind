@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getBillingContinuationHref } from "@/lib/preActivation";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
 import { getUserAuthorizedWorkspaceDashboard } from "@/lib/workspaceAuthorization";
-import { isInternalDailyTestAdmissionReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestAdmissionReady, isInternalDailyTestBillingRuntimeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import {
   isPaymentTermsActivationEnabled,
   CURRENT_PAYMENT_TERMS_VERSION,
@@ -11,7 +11,6 @@ import {
   PAYMENT_TERMS_ACTIVATION_BLOCK_CODE,
 } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
-import { PUBLIC_DAILY_PLAN_ENABLED } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import {
   buildTrustedProvisioningUser,
@@ -115,14 +114,16 @@ export default async function WorkspaceSetupPage({
   if (existingWorkspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") redirect("/login?demo_deleted=1");
   if (existingWorkspaceResult.workspace) redirect(getBillingContinuationHref(existingWorkspaceResult.workspace));
 
-  const dailyPreferred =
+  const dailyBetaEnabled = await getPublicDailyTestPlanEnabled();
+  const dailyPreferred = dailyBetaEnabled &&
     data.user.user_metadata?.registration_option_preference === "internal_daily_test";
   const activationEnabled = isPaymentTermsActivationEnabled();
   const dailyTestAvailable = activationEnabled
     ? isInternalDailyTestAdmissionReady({
-        windowEnabled: PUBLIC_DAILY_PLAN_ENABLED || await getPublicDailyTestPlanEnabled(),
+        windowEnabled: dailyBetaEnabled,
         workspaceProvisioningReady:
           await isInternalDailyTestWorkspaceProvisioningReady(),
+        billingRuntimeReady: isInternalDailyTestBillingRuntimeReady(),
         stripeConfig: getStripeConfigStatus(),
       })
     : false;
@@ -200,7 +201,7 @@ export default async function WorkspaceSetupPage({
           </div>
         )}
 
-        <div className={styles.emptyState}>
+        {dailyBetaEnabled ? <div className={styles.emptyState}>
           <form action={provisionWorkspace}>
             {dailyPreferred ? (
               <p>
@@ -247,7 +248,7 @@ export default async function WorkspaceSetupPage({
               </p>
             ) : null}
           </form>
-        </div>
+        </div> : null}
 
         {errorCode ? (
           <p className={styles.error} role="alert">

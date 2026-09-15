@@ -10,7 +10,8 @@ import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServe
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import {
   isStripeBillingWriteFrozen,
   STRIPE_BILLING_WRITE_FREEZE_CODE,
@@ -106,12 +107,15 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
 
   const hasUnclearPaymentOption = Boolean(workspace && !resolvedCheckoutPlan && !isDemo);
   let checkoutFrozen = isStripeBillingWriteFrozen();
+  const dailyAdmissionReady = workspace?.commercial_option !== "internal_daily_test" ||
+    ((await getPublicDailyTestPlanEnabled()) && isInternalDailyTestBillingRuntimeReady());
   const checkoutReady = workspace?.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(stripe)
     : stripe.readyForCheckout;
   const canStartCheckout = Boolean(
     workspace &&
       !checkoutFrozen &&
+      dailyAdmissionReady &&
       paymentTermsReady &&
       shouldShowBillingCheckoutAction(workspace) &&
       checkoutReady &&

@@ -2,8 +2,7 @@
 
 ## Aktuelle Produktentscheidung — 10. September 2026
 
-FM-DEC-014 macht Daily (0 € Setup + 1 €/Tag) zum dritten dauerhaften öffentlichen Angebot.
-Der bisherige 24-Stunden-Schalter steuert die öffentliche Tarifwahl nicht mehr. Die Anwendung
+FM-DEC-019 macht Daily (0 € Setup + 1 €/Tag) zu einer manuell vom Platform-Admin gesteuerten internen Beta. Es gibt keinen automatischen Countdown. Bei Aus bleibt Daily öffentlich unsichtbar und neue Aufnahme ist gesperrt; bestehende Daily-Abos laufen unverändert weiter. Die Anwendung
 verwendet weiterhin den bestehenden `internal_daily_test`-RPC-/Stripe-Vertrag; sichere
 Session, aktuelle Zahlungszustimmung, Browser-INSERT-Verbot, Provisioning-Readiness und
 Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die ehemalige Fenster-
@@ -15,7 +14,7 @@ Produktstand: 10. September 2026; gepinnter SQL-Stand: 9. August 2026
 
 ## Zweck und harte Grenze
 
-Daily ist dauerhaft öffentlich auswählbar. Die kostenlose Kontoerstellung
+Daily ist nur bei aktiver serverseitiger Admin-Freigabe öffentlich auswählbar. Die kostenlose Kontoerstellung
 speichert nur eine Präferenz. Die kostenpflichtige Workspace-Aktivierung
 verlangt weiterhin alle folgenden Grenzen gleichzeitig:
 
@@ -135,10 +134,28 @@ eine frühere generische Anwendung hin und muss als History-Drift separat
 geklärt werden; der kontrollierte Apply darf ihn nicht übergehen. Das gepinnte
 SQL wiederholt diese Prüfung innerhalb seiner Transaktion und hält den Ledger
 dabei im `SHARE`-Modus gesperrt, sodass ein paralleler generischer Push die
-Preflight-Entscheidung nicht überholen kann. Es existiert absichtlich kein
-Production-Apply-Workflow. Production benötigt nach einem dokumentierten
-Staging-Receipt einen eigenen, später freizugebenden und erneut geprüften
-Kontrollpfad.
+Preflight-Entscheidung nicht überholen kann. Der getrennte manuelle
+Production-Kontrollpfad liegt in
+`.github/workflows/internal-daily-test-workspace-provisioning-production-control.yml`.
+Er ist an `main`, den exakten geprüften Commit, das geschützte
+`production`-Environment, den Production-Runner, das exakte Production-Ziel
+und TLS `verify-full` gebunden. Der veröffentlichte Workflow ist derzeit
+absichtlich **verify-only**. Ein Production-Apply bleibt strukturell
+unerreichbar, bis ein eigener frischer, Commit-/Ziel-/Zeit-gebundener
+Readiness-Receipt-Vertrag implementiert und erneut geprüft wurde. Ein normaler
+Deploy ruft den Kontrollpfad nie auf.
+
+Vor jeder Apply-Freigabe muss ein frischer read-only Lauf die festen Zustände
+`absent`, `complete`, `partial` oder `unknown` für RPCs, Constraints, Indizes,
+RLS/Browserprivilegien, Consent, beide Billing-Ledger, Capture, kanonische
+Reconciliation, Write-Freeze und Stripe/Webhook/Tax liefern. `partial` oder
+`unknown` ergibt `BLOCK`, ein bereits vollständiger Daily-Vertrag `SKIP` und
+nur ein vollständig vorbereiteter Zielzustand mit fehlendem Daily-Vertrag
+`APPLY`. Ein unklarer Commit darf nicht automatisch wiederholt werden.
+Codex Cloud hatte für diesen Source-PR keinen frischen geschützten
+Production-Receipt; der aktuelle belegte Zustand ist daher `unknown` und die
+Entscheidung `BLOCK`. Weder Katalogschalter noch bestehende Daily-Abos werden
+durch diesen SQL-Pfad verändert.
 
 ## Verbindliche Reihenfolge
 

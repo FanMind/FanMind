@@ -118,6 +118,12 @@ function billingHarness(frozen) {
       ...freezePolicy,
       isStripeBillingWriteFrozen: () => freezePolicy.isStripeBillingWriteFrozen(environment),
     },
+    "@/lib/internalDailyTestReadinessPolicy.mjs": {
+      isInternalDailyTestBillingRuntimeReady: () => true,
+    },
+    "@/lib/runtimeProductSettings": {
+      getPublicDailyTestPlanEnabled: async () => true,
+    },
     "@/lib/stripeTaxPolicy.mjs": {
       evaluateStripeTaxConfiguration: () => taxPolicy.evaluateStripeTaxConfiguration(environment),
     },

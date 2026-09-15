@@ -6,7 +6,8 @@ import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivatio
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import { createStripeCheckoutSession, getAppUrl, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 
@@ -64,6 +65,11 @@ async function startCheckout() {
 
   const plan = resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option);
   if (!plan) return redirectTo("/billing/start?error=payment-option");
+
+  if (
+    workspace.commercial_option === "internal_daily_test" &&
+    (!(await getPublicDailyTestPlanEnabled()) || !isInternalDailyTestBillingRuntimeReady())
+  ) return redirectTo("/billing/start?error=payment-start");
 
   const config = getStripeConfigStatus();
   const checkoutReady = workspace.commercial_option === "internal_daily_test"

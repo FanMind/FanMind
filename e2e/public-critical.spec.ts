@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { writeFile, unlink } from "node:fs/promises";
 
 const E2E_BASE_URL = "http://127.0.0.1:3100";
 const META_PIXEL_ID = "2069553844439892";
@@ -499,7 +500,14 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Daily bleibt in DE/EN dauerhaft wählbar und erzeugt nur eine Kontopräferenz", async ({ page }) => {
+  test("manuell aktive Daily-Beta bleibt in DE/EN wählbar und erzeugt nur eine Kontopräferenz", async ({ page }) => {
+    const settingsPath = "/tmp/fanmind-browser-e2e-runtime-settings.json";
+    await writeFile(settingsPath, JSON.stringify({
+      publicDailyTestPlanEnabled: true,
+      publicDailyTestPlanEnabledUntil: null,
+      updatedAt: "2026-09-14T00:00:00.000Z",
+      updatedBy: "browser-e2e@example.invalid",
+    }), { mode: 0o600 });
     let signupBody: Record<string, unknown> | null = null;
     let workspaceWrites = 0;
     await page.route("**/api/register/workspace", async route => { workspaceWrites++; await route.abort(); });
@@ -507,25 +515,36 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
       if (route.request().method() === "POST") signupBody = route.request().postDataJSON();
       await fulfillCorsJson(route, 200, { id: "synthetic-daily-user", email: "daily@example.invalid" });
     });
+    try {
+      await page.goto("/register?plan=daily");
+      await expect(page.getByText("Daily · 0 € Setup + 1 €/Tag", { exact: true })).toBeVisible();
+      await page.getByRole("link", { name: "EN", exact: true }).click();
+      await expect(page).toHaveURL(/plan=daily&lang=en/u);
+      await expect(page.getByText("Daily · €0 setup + €1/day", { exact: true })).toBeVisible();
+      await page.locator('input[name="email"]').fill("daily@example.invalid");
+      await page.locator('input[name="password"]').fill("Synthetic-Only-2026!");
+      await page.locator('input[name="organisation"]').fill("Synthetic Daily Team");
+      await page.locator('select[name="rolle"]').selectOption("Creator");
+      await page.getByRole("button", { name: /^Create account/u }).click();
+      await expect(page.getByRole("status")).toBeVisible();
+      const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
+      expect(metadata.registration_option_preference).toBe("internal_daily_test");
+      expect(metadata).not.toHaveProperty("commercial_option");
+      expect(metadata).not.toHaveProperty("payment_terms_accepted");
+      expect(workspaceWrites).toBe(0);
+      await expectNoHorizontalOverflow(page);
+    } finally {
+      await unlink(settingsPath).catch(() => undefined);
+    }
+  });
+
+  test("ausgeschaltete Daily-Beta bleibt auf Landing und Direktlink unsichtbar", async ({ page }) => {
+    await unlink("/tmp/fanmind-browser-e2e-runtime-settings.json").catch(() => undefined);
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Daily", exact: true })).toHaveCount(0);
     await page.goto("/register?plan=daily");
-    await expect(page.getByText("Daily · 0 € Setup + 1 €/Tag", { exact: true })).toBeVisible();
-    await expect(page.getByText(/Unbekanntes Paket|frühere entgeltliche Pilotangebot/u)).toHaveCount(0);
-    await page.getByRole("link", { name: "EN", exact: true }).click();
-    await expect(page).toHaveURL(/plan=daily&lang=en/u);
-    await expect(page.getByText("Daily · €0 setup + €1/day", { exact: true })).toBeVisible();
-    await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
-    await page.locator('input[name="email"]').fill("daily@example.invalid");
-    await page.locator('input[name="password"]').fill("Synthetic-Only-2026!");
-    await page.locator('input[name="organisation"]').fill("Synthetic Daily Team");
-    await page.locator('select[name="rolle"]').selectOption("Creator");
-    await page.getByRole("button", { name: /^Create account/u }).click();
-    await expect(page.getByRole("status")).toBeVisible();
-    expect(signupBody).not.toBeNull();
-    const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
-    expect(metadata.registration_option_preference).toBe("internal_daily_test");
-    expect(metadata).not.toHaveProperty("commercial_option");
-    expect(metadata).not.toHaveProperty("payment_terms_accepted");
-    expect(workspaceWrites).toBe(0);
+    await expect(page.getByText("Daily · 0 € Setup + 1 €/Tag", { exact: true })).toHaveCount(0);
+    await expect(page.locator('input[value="internal_daily_test"]')).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
   });
 

@@ -126,3 +126,9 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Status: DONE
 - Decision: Bernd confirms all existing FanMind prices have already been created and configured. Treat price creation/configuration as complete; do not recreate products/prices, reprice or ask for the same setup again.
 - Boundary: This does not supply missing model/quality/quota/financial evidence, approve real payments or activate paid AI tiers. Those separate completion gates remain open.
+# FM-DEC-019
+- Date: 2026-09-14
+- Decision: Daily is a manually controlled internal beta, not a permanent public offer. It retains EUR 0 setup + EUR 1/day, daily cancellation, no referral discount and the compatible `internal_daily_test` engine/Price. There is no automatic countdown or expiry.
+- Admission boundary: only a Platform Admin may enable new Daily admission after complete server-side readiness. When disabled, Daily is absent from public surfaces and new provisioning/checkout; direct links and stored preferences cannot bypass the switch.
+- Existing-customer boundary: disabling admission never cancels, suspends or hides an existing Daily subscription/workspace. Existing customers retain billing, cancellation, invoices and product access under their individual lifecycle.
+- Supersedes: FM-DEC-014 only where it described Daily as the third permanent public offer. Starter Flex and Starter 12 Months remain permanent public offers and all existing consent, Tax, Workspace, Billing and Production gates remain.

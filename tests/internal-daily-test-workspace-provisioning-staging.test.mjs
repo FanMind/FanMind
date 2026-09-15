@@ -501,7 +501,7 @@ test("normal deploy and generic migration paths cannot apply the control", async
   assert.match(runbook, new RegExp(EXPECTED_CONTROLLED_SQL_SHA256, "u"));
   assert.match(
     runbook,
-    /kein(?:en)?\s+Production-(?:Apply|Workflow)/iu,
+    /Production-Kontrollpfad/iu,
   );
   for (const reader of [sourceOfTruth, schema]) {
     assert.match(reader, /supabase\/controlled/iu);

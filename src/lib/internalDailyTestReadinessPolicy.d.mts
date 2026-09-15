@@ -14,5 +14,7 @@ export function isInternalDailyTestStripeReady(
 export function isInternalDailyTestAdmissionReady(input: {
   windowEnabled?: boolean;
   workspaceProvisioningReady?: boolean;
+  billingRuntimeReady?: boolean;
   stripeConfig?: InternalDailyTestStripeConfig | null;
 } | null | undefined): boolean;
+export function isInternalDailyTestBillingRuntimeReady(environment?: NodeJS.ProcessEnv): boolean;

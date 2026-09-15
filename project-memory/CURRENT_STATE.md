@@ -416,3 +416,20 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 6. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
 7. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
 8. **FM-META-001:** real App Review/provider/legal evidence stays separate. Sales Handoff still requires the genuine remaining gate quorum and final Production demo. Creator development is not an added pre-sales gate.
+## Manual Daily beta admission — 2026-09-14
+- FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.
+- Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
+- Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
+
+## Daily PR conflict and review closeout — 2026-09-15
+- The Daily control branch now contains current `main` as a real merge parent, so GitHub can evaluate it without repeating the earlier stale-base conflict cycle.
+- Final review corrections keep every Daily checkout entry behind the current server switch and billing-readiness gate, expire still-open Daily Checkout sessions when admission is disabled, and replace the persistent lock file with a process-local critical section matching the single-worker Production contract; atomic settings-file replacement remains unchanged.
+- The Production provisioning workflow remains verify-only and now rejects invalid dispatches in an unconditional hosted validation job. Its private passfile path is step-scoped, and its policy test is owned by required CI.
+- The Admin page now explains visibly why enabling is unavailable. The observed Production screen correctly reports registration, Stripe/Webhook and Billing-Ledger readiness as incomplete; source changes do not authorize bypassing those gates.
+- No Production apply, runtime switch change, payment, checkout, subscription mutation or account deletion was performed.
+
+## Daily post-merge hardening — 2026-09-15
+- PR #1128 merged to `main` as `5114e9a`. A separate follow-up closes the remaining CodeQL filesystem-race finding by removing the persistent lock-file check/use sequence.
+- A failed open-Checkout cleanup is now an explicit warning with a dedicated retry action; it is never rendered as a successful disable.
+- Production `--apply` is structurally rejected by both the Production evaluator and the shared runner. The published control workflow remains verify-only.
+- No Production verify/apply, runtime activation, payment, checkout or data deletion was performed.
