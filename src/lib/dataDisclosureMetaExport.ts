@@ -11,11 +11,14 @@ const MAX_ROWS_PER_DATASET = 50_000;
 
 export type DisclosureMetaRow = Record<string, unknown> & {
   id?: string;
+  user_id?: string;
   workspace_id?: string;
 };
 
 export type DisclosureMetaDataset = {
   key:
+    | "profile_record"
+    | "membership_record"
     | "workspace_record"
     | "contacts_full"
     | "memories"
@@ -34,11 +37,13 @@ export type DisclosureMetaDataset = {
   rows: DisclosureMetaRow[];
 };
 
+type DatasetScope = "user" | "membership" | "workspace-row" | "workspace";
+
 type DatasetDefinition = {
   key: DisclosureMetaDataset["key"];
   table: string;
   order: string;
-  filterColumn?: "workspace_id" | "id";
+  scope: DatasetScope;
 };
 
 // Complete active Production data families that can hold data for the signed-in
@@ -47,21 +52,23 @@ type DatasetDefinition = {
 // A missing active table is always an export error; a successful PDF never
 // silently omits an active data family.
 const DATASETS: DatasetDefinition[] = [
-  { key: "workspace_record", table: "workspaces", filterColumn: "id", order: "id.asc" },
-  { key: "contacts_full", table: "contacts", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "memories", table: "memories", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "followups", table: "followups", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "conversations", table: "conversations", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "messages", table: "conversation_messages", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "conversation_summaries", table: "conversation_summaries", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "reply_targets", table: "contact_reply_targets", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "fan_reports", table: "fan_analysis_reports", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "contact_profiles", table: "contact_ai_profiles", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "voice_profiles", table: "workspace_voice_profiles", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "prompt_settings", table: "workspace_ai_prompt_settings", order: "workspace_id.asc" },
-  { key: "ai_usage", table: "ai_usage_events", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "connections", table: "social_connections", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "meta_webhook_events", table: "meta_webhook_events", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "profile_record", table: "profiles", scope: "user", order: "id.asc" },
+  { key: "membership_record", table: "workspace_members", scope: "membership", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "workspace_record", table: "workspaces", scope: "workspace-row", order: "id.asc" },
+  { key: "contacts_full", table: "contacts", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "memories", table: "memories", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "followups", table: "followups", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "conversations", table: "conversations", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "messages", table: "conversation_messages", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "conversation_summaries", table: "conversation_summaries", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "reply_targets", table: "contact_reply_targets", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "fan_reports", table: "fan_analysis_reports", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "contact_profiles", table: "contact_ai_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "voice_profiles", table: "workspace_voice_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "prompt_settings", table: "workspace_ai_prompt_settings", scope: "workspace", order: "workspace_id.asc" },
+  { key: "ai_usage", table: "ai_usage_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "connections", table: "social_connections", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "meta_webhook_events", table: "meta_webhook_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
 ];
 
 type PageResult =
@@ -89,17 +96,48 @@ function sanitizeRow(row: DisclosureMetaRow): DisclosureMetaRow {
   ) as DisclosureMetaRow;
 }
 
+function bindScope(url: URL, definition: DatasetDefinition, workspaceId: string, userId: string): void {
+  if (definition.scope === "user") {
+    url.searchParams.set("id", `eq.${userId}`);
+    return;
+  }
+  if (definition.scope === "membership") {
+    url.searchParams.set("workspace_id", `eq.${workspaceId}`);
+    url.searchParams.set("user_id", `eq.${userId}`);
+    return;
+  }
+  if (definition.scope === "workspace-row") {
+    url.searchParams.set("id", `eq.${workspaceId}`);
+    return;
+  }
+  url.searchParams.set("workspace_id", `eq.${workspaceId}`);
+}
+
+function rowMatchesScope(
+  row: DisclosureMetaRow,
+  definition: DatasetDefinition,
+  workspaceId: string,
+  userId: string,
+): boolean {
+  if (definition.scope === "user") return row.id === userId;
+  if (definition.scope === "membership") {
+    return row.workspace_id === workspaceId && row.user_id === userId;
+  }
+  if (definition.scope === "workspace-row") return row.id === workspaceId;
+  return row.workspace_id === workspaceId;
+}
+
 async function fetchPage(input: {
   definition: DatasetDefinition;
   workspaceId: string;
+  userId: string;
   accessToken: string;
   offset: number;
   fetchImpl: typeof fetch;
 }): Promise<PageResult> {
-  const filterColumn = input.definition.filterColumn ?? "workspace_id";
   const url = new URL(getSupabaseRestUrl(input.definition.table));
   url.searchParams.set("select", "*");
-  url.searchParams.set(filterColumn, `eq.${input.workspaceId}`);
+  bindScope(url, input.definition, input.workspaceId, input.userId);
   url.searchParams.set("order", input.definition.order);
   url.searchParams.set("limit", String(PAGE_SIZE));
   url.searchParams.set("offset", String(input.offset));
@@ -131,16 +169,17 @@ async function fetchPage(input: {
 
   const rows = payload as DisclosureMetaRow[];
   if (
-    rows.some((row) => {
-      if (!row || typeof row !== "object" || Array.isArray(row)) return true;
-      return filterColumn === "id"
-        ? row.id !== input.workspaceId
-        : row.workspace_id !== input.workspaceId;
-    })
+    rows.some(
+      (row) =>
+        !row ||
+        typeof row !== "object" ||
+        Array.isArray(row) ||
+        !rowMatchesScope(row, input.definition, input.workspaceId, input.userId),
+    )
   ) {
     return {
       ok: false,
-      message: `${input.definition.table}: fremder Workspace in Exportantwort`,
+      message: `${input.definition.table}: fremder Nutzer oder Workspace in Exportantwort`,
     };
   }
   return { ok: true, rows: rows.map(sanitizeRow) };
@@ -149,6 +188,7 @@ async function fetchPage(input: {
 async function fetchDataset(input: {
   definition: DatasetDefinition;
   workspaceId: string;
+  userId: string;
   accessToken: string;
   fetchImpl: typeof fetch;
 }): Promise<DisclosureMetaDataset> {
@@ -180,17 +220,19 @@ async function fetchDataset(input: {
 
 export async function getWorkspaceMetaDataForDisclosure(
   workspaceId: string,
+  userId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<DisclosureMetaDataset[]> {
   const normalizedWorkspaceId = workspaceId.trim();
+  const normalizedUserId = userId.trim();
   const cookieStore = await cookies();
   const accessToken = cookieStore
     .get(SUPABASE_ACCESS_TOKEN_COOKIE)
     ?.value?.trim();
 
-  if (!normalizedWorkspaceId || !accessToken) {
+  if (!normalizedWorkspaceId || !normalizedUserId || !accessToken) {
     throw new DataDisclosureExportError(
-      "Autorisierter Workspace oder Sitzung fehlt für die Datenauskunft.",
+      "Autorisierter Nutzer, Workspace oder Sitzung fehlt für die Datenauskunft.",
     );
   }
 
@@ -199,6 +241,7 @@ export async function getWorkspaceMetaDataForDisclosure(
       fetchDataset({
         definition,
         workspaceId: normalizedWorkspaceId,
+        userId: normalizedUserId,
         accessToken,
         fetchImpl,
       }),
