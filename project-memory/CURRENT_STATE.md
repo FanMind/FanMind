@@ -421,7 +421,9 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
 - Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
 
-## Daily Production control preparation — 2026-09-15
-- FM-CR-038 prepares a manual, checksum-pinned Production verify control bound to exact main/commit, protected Production environment/runner/target and TLS. No fresh protected Production receipt exists; rollout remains `BLOCK`.
-- Final review corrections expire open Daily Checkout Sessions after Admin-off, expire a concurrently created session before returning its URL, release runtime locks only for the owning token, and fail invalid verify dispatches in an unconditional validation job.
-- No Production Apply, runtime activation, real checkout, payment or existing Daily subscription was changed.
+## Daily PR conflict and review closeout — 2026-09-15
+- The Daily control branch now contains current `main` as a real merge parent, so GitHub can evaluate it without repeating the earlier stale-base conflict cycle.
+- Final review corrections keep every Daily checkout entry behind the current server switch and billing-readiness gate, expire still-open Daily Checkout sessions when admission is disabled, and use lock ownership tied to boot ID, PID and an immutable token so an older writer cannot release a successor's lock.
+- The Production provisioning workflow remains verify-only and now rejects invalid dispatches in an unconditional hosted validation job. Its private passfile path is step-scoped, and its policy test is owned by required CI.
+- The Admin page now explains visibly why enabling is unavailable. The observed Production screen correctly reports registration, Stripe/Webhook and Billing-Ledger readiness as incomplete; source changes do not authorize bypassing those gates.
+- No Production apply, runtime switch change, payment, checkout, subscription mutation or account deletion was performed.

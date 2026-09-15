@@ -64,7 +64,6 @@ jobs:
       PGUSER: postgres.${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
       PGSSLMODE: verify-full
       PGSSLROOTCERT: /etc/ssl/certs/ca-certificates.crt
-      PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
       FANMIND_ENABLE_PRODUCTION_WRITES: 'false'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -79,6 +78,7 @@ jobs:
       - name: Prepare private Production passfile
         env:
           DB_PASSWORD: ${{ secrets.FANMIND_PRODUCTION_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
         run: |
           set -euo pipefail
           umask 077
@@ -87,7 +87,11 @@ jobs:
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$escaped" > "$PGPASSFILE"
           chmod 600 "$PGPASSFILE"
       - name: Verify checksum-pinned Daily provisioning read-only
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
         run: node scripts/operations/internal-daily-test-provisioning-migration-runner.mjs --verify
       - name: Remove private passfile
         if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
         run: rm -f "$PGPASSFILE"

@@ -581,9 +581,9 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(publicDailyTestPolicySource, /publicDailyTestPlanEnabledUntil === undefined \|\| settings\.publicDailyTestPlanEnabledUntil === null/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
-  assert.match(runtimeSettingsSource, /DAILY_BETA_LOCK_LEASE_MS/);
-  assert.match(runtimeSettingsSource, /lstat\(lockPath\)[\s\S]*mtimeMs[\s\S]*rename\(lockPath, staleClaimPath\)/u);
-  assert.match(runtimeSettingsSource, /releaseSettingsLock[\s\S]*currentToken === `\$\{lock\.token\}\\n`/u);
+  assert.match(runtimeSettingsSource, /BOOT_ID_PATH/);
+  assert.match(runtimeSettingsSource, /lockOwnerAlive\(existingOwner, owner\.bootId\)[\s\S]*rename\(lockPath, staleClaimPath\)/u);
+  assert.match(runtimeSettingsSource, /releaseSettingsLock[\s\S]*currentToken === lock\.serializedOwner/u);
   assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*!enabled && !\(await expireOpenInternalDailyTestCheckoutSessions\(\)\)/u);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
