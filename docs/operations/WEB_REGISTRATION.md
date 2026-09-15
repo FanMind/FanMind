@@ -4,7 +4,7 @@ Task FM-REG-002 / FM-CR-026, 10 September 2026.
 
 ## Implemented account flow
 
-1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. FM-DEC-014 adds the permanent public Daily choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
+1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. FM-DEC-019 permits the manually enabled internal Daily beta choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
 2. Signup submits only bounded personal profile data and non-authoritative package/referral preferences. No `plan_id`, `commercial_option`, billing state, payment-terms version or acceptance timestamp is written. It creates no Workspace and invokes no Stripe operation.
 3. The custom Supabase Auth client supplies an explicit same-environment `emailRedirectTo`. Success explains email confirmation, existing-account login and recovery without claiming that an obfuscated existing-account response represents a new account. Resend uses the existing provider signup-resend endpoint with a 60-second UI cooldown; provider rate limits remain authoritative.
 4. `/register/confirm` requires one bounded `type=signup` implicit session, accepts and discards Supabase's optional single empty `sb` marker, rejects errors/mixed/query/duplicate credentials, scrubs callback material before async work and checks the confirmed email through authenticated Supabase `/user`. After verification it automatically synchronizes the existing server session and continues to localized `/workspace/setup`. A failed session handoff retains the verified identity and offers an explicit retry or login; it does not automatically resend. Invalid, expired or used links offer a direct confirmation resend form, login and password recovery.
@@ -23,8 +23,7 @@ Read-only Auth readiness on 10 September 2026 also confirms that the FanMind Pro
 
 ## Three-offer follow-up (FM-BILL-002 / PR #1096)
 
-FM-DEC-014 separately authorizes permanent Daily selection and publication.
-The former 24-hour admission window is superseded; existing server-side
+FM-DEC-019 supersedes permanent Daily publication with a server-owned manual beta switch. There is no automatic countdown. Disabled Daily is absent from public surfaces and new admission while existing Daily subscriptions continue unchanged; existing server-side
 provisioning, consent, Tax and Billing controls still apply. Current missing
 Production RPC/contract and ledger rollout, provider naming, tax and exact
 versioned-contract prerequisites are recorded individually in

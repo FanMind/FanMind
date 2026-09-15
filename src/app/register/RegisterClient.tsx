@@ -235,7 +235,11 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
   const language = getFanMindLanguage(params.lang);
   const rawPlan = firstParamValue(params.plan);
   const referralCodeFromUrl = firstParamValue(params.ref) ?? firstParamValue(params.referral_code) ?? "";
-  const dailyRequested = isPublicDailyRegistrationRequest({ planId: rawPlan, testPlan: firstParamValue(params.test_plan) });
+  const dailyRequested = isPublicDailyRegistrationRequest({
+    enabled: enablePublicDailyTestPlan,
+    planId: rawPlan,
+    testPlan: firstParamValue(params.test_plan),
+  });
   const requestedTestPlan = dailyRequested ? "daily" : firstParamValue(params.test_plan);
   const requestedStarterOption = normalizeStarterOfferOption(firstParamValue(params.option));
   const hasInvalidPlan = Boolean(rawPlan && rawPlan !== "daily" && !isPlanId(rawPlan));

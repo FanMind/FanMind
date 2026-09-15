@@ -40,6 +40,7 @@ export default defineConfig({
         env: {
           ...process.env,
           PORT: "3100",
+          FANMIND_RUNTIME_SETTINGS_FILE: process.env.FANMIND_RUNTIME_SETTINGS_FILE || "/tmp/fanmind-browser-e2e-runtime-settings.json",
         },
       },
   projects: [

@@ -558,7 +558,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   const workspaceSetupSource = fs.readFileSync("src/app/workspace/setup/page.tsx", "utf8");
   const deploySource = fs.readFileSync(".github/workflows/deploy-fanmind.yml", "utf8");
 
-  assert.match(registerPageSource, /enablePublicDailyTestPlan = PUBLIC_DAILY_PLAN_ENABLED/u);
+  assert.match(registerPageSource, /enablePublicDailyTestPlan = await getPublicDailyTestPlanEnabled\(\)/u);
   assert.match(registerPageSource, /paidActivationAvailable = isPaymentTermsActivationEnabled\(\)/u);
   assert.match(workspaceSetupSource, /isInternalDailyTestAdmissionReady\(\{[\s\S]*stripeConfig: getStripeConfigStatus\(\)/u);
   const checkoutRouteSource = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
@@ -568,19 +568,19 @@ test("public Daily selection preserves protected Workspace and payment admission
     /commercialOption === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(config\)/u,
   );
   assert.match(runtimeSettingsSource, /publicDailyTestPlanEnabled/);
-  assert.match(runtimeSettingsSource, /getTemporaryPublicDailyTestPlanStatus/);
-  assert.match(publicDailyTestPolicySource, /PUBLIC_DAILY_TEST_PLAN_WINDOW_MS = 24 \* 60 \* 60 \* 1000/);
-  assert.match(publicDailyTestPolicySource, /enabledUntilMs - updatedAtMs <= PUBLIC_DAILY_TEST_PLAN_WINDOW_MS/);
+  assert.match(runtimeSettingsSource, /getPublicDailyBetaStatus/);
+  assert.doesNotMatch(publicDailyTestPolicySource, /WINDOW_MS|enabledUntilMs|30 \* 24/);
+  assert.match(publicDailyTestPolicySource, /publicDailyTestPlanEnabledUntil === undefined \|\| settings\.publicDailyTestPlanEnabledUntil === null/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,
-    /enabled &&[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*daily_test_plan", "not_ready"[\s\S]*setPublicDailyTestPlanEnabled/u,
+    /enabled &&[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*isPaymentTermsActivationEnabled\(\)[\s\S]*daily_test_plan", "not_ready"[\s\S]*setPublicDailyTestPlanEnabled/u,
   );
   assert.match(
     adminSettingsSource,
-    /PUBLIC_DAILY_PLAN_ENABLED && termsReady && provisioningReady && stripeReady[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook/u,
+    /betaStatus\.enabled[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook[\s\S]*Bestehende Daily-Abos/u,
   );
   assert.match(deploySource, /if \[ ! -e "\$RUNTIME_SETTINGS_FILE" \]/);
   assert.doesNotMatch(deploySource, /sed -i.*FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
@@ -633,7 +633,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   );
   assert.match(
     workspaceSetupSource,
-    /dailyTestAvailable[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*getStripeConfigStatus\(\)[\s\S]*internal_daily_test[\s\S]*No workspace was created[\s\S]*Es wurde kein Workspace angelegt/u,
+    /dailyBetaEnabled = await getPublicDailyTestPlanEnabled\(\)[\s\S]*dailyTestAvailable[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*getStripeConfigStatus\(\)[\s\S]*internal_daily_test[\s\S]*No workspace was created[\s\S]*Es wurde kein Workspace angelegt/u,
   );
   assert.doesNotMatch(
     workspaceSetupSource,

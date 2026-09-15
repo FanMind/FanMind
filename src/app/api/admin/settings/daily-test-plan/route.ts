@@ -7,7 +7,8 @@ import {
 import { setPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
 
 const MAX_DAILY_TEST_PLAN_BODY_BYTES = 1_000;
 
@@ -33,7 +34,9 @@ export async function POST(request: NextRequest) {
     enabled &&
     (
       !(await isInternalDailyTestWorkspaceProvisioningReady()) ||
-      !isInternalDailyTestStripeReady(getStripeConfigStatus())
+      !isInternalDailyTestStripeReady(getStripeConfigStatus()) ||
+      !isInternalDailyTestBillingRuntimeReady() ||
+      !isPaymentTermsActivationEnabled()
     )
   ) {
     const destination = new URL("/admin/settings", request.url);
@@ -41,7 +44,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(destination, { status: 303 });
   }
 
-  await setPublicDailyTestPlanEnabled(enabled, admin.email ?? admin.id);
+  try {
+    await setPublicDailyTestPlanEnabled(enabled, admin.email ?? admin.id);
+  } catch {
+    const destination = new URL("/admin/settings", request.url);
+    destination.searchParams.set("daily_test_plan", "busy");
+    return NextResponse.redirect(destination, { status: 303 });
+  }
 
   const destination = new URL("/admin/settings", request.url);
   destination.searchParams.set("daily_test_plan", enabled ? "enabled" : "disabled");
