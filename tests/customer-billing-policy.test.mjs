@@ -24,7 +24,42 @@ import {
   stripeWebhookReferenceLookupValues,
   stripeSubscriptionWorkspaceBindingDecision,
 } from "../src/lib/stripeWorkspacePolicy.mjs";
+import { runPublicDailyTestPlanUpdate } from "../src/lib/publicDailyTestPlanUpdateGate.mjs";
 import fs from "node:fs";
+
+test("Daily settings updates remain serialized for the entire asynchronous cleanup", async () => {
+  let releaseFirstUpdate;
+  const firstUpdateBlocked = new Promise((resolve) => {
+    releaseFirstUpdate = resolve;
+  });
+  let firstUpdateStarted;
+  const firstUpdateIsRunning = new Promise((resolve) => {
+    firstUpdateStarted = resolve;
+  });
+  let overlappingUpdateStarted = false;
+
+  const firstUpdate = runPublicDailyTestPlanUpdate(async () => {
+    firstUpdateStarted();
+    await firstUpdateBlocked;
+    return "cleanup-complete";
+  });
+  await firstUpdateIsRunning;
+
+  await assert.rejects(
+    runPublicDailyTestPlanUpdate(async () => {
+      overlappingUpdateStarted = true;
+    }),
+    /daily_beta_update_in_progress/u,
+  );
+  assert.equal(overlappingUpdateStarted, false);
+
+  releaseFirstUpdate();
+  assert.equal(await firstUpdate, "cleanup-complete");
+  assert.equal(
+    await runPublicDailyTestPlanUpdate(async () => "next-update"),
+    "next-update",
+  );
+});
 
 function stripeSignature(body, secret, timestamp) {
   return createHmac("sha256", secret)
@@ -581,11 +616,10 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(publicDailyTestPolicySource, /publicDailyTestPlanEnabledUntil === undefined \|\| settings\.publicDailyTestPlanEnabledUntil === null/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
-  assert.match(runtimeSettingsSource, /let settingsUpdateInProgress = false/u);
-  assert.match(runtimeSettingsSource, /if \(settingsUpdateInProgress\)[\s\S]*settingsUpdateInProgress = true/u);
-  assert.match(runtimeSettingsSource, /finally[\s\S]*settingsUpdateInProgress = false/u);
   assert.doesNotMatch(runtimeSettingsSource, /\.lock|BOOT_ID_PATH|lockOwnerAlive/u);
-  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*expireOpenInternalDailyTestCheckoutSessions\(\)[\s\S]*markPublicDailyTestPlanCleanupComplete\(revision/u);
+  assert.match(adminRouteSource, /disablePublicDailyTestPlanAndRunCleanup\([\s\S]*expireOpenInternalDailyTestCheckoutSessions/u);
+  assert.doesNotMatch(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled/u);
+  assert.match(runtimeSettingsSource, /runPublicDailyTestPlanUpdate\(async \(\) => \{[\s\S]*writePublicDailyTestPlanState\(false[\s\S]*await cleanup\(\)[\s\S]*markPublicDailyTestPlanCleanupComplete\(revision/u);
   assert.match(runtimeSettingsSource, /publicDailyTestPlanCleanupRequired = !enabled/u);
   assert.match(runtimeSettingsSource, /publicDailyTestPlanRevision !== expectedRevision/u);
   assert.match(runtimeSettingsSource, /daily_beta_cleanup_required/u);

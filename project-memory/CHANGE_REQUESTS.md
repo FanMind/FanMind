@@ -374,4 +374,4 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Status: SOURCE_COMPLETE_PENDING_PR_CI
 - Task: FM-CR-037
 - Risk: R4
-- Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
+- Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, serialize overlapping cleanup sweeps across their external Stripe mutation, and reconcile PR #1131 with current main. No Production action.

@@ -5,7 +5,7 @@ import {
   readBoundedFormDataRequest,
 } from "@/lib/httpMutationPolicy.mjs";
 import {
-  markPublicDailyTestPlanCleanupComplete,
+  disablePublicDailyTestPlanAndRunCleanup,
   setPublicDailyTestPlanEnabled,
 } from "@/lib/runtimeProductSettings";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
@@ -48,9 +48,16 @@ export async function POST(request: NextRequest) {
   }
 
   const updatedBy = admin.email ?? admin.id;
-  let revision: string;
+  let cleanupComplete = true;
   try {
-    ({ revision } = await setPublicDailyTestPlanEnabled(enabled, updatedBy));
+    if (enabled) {
+      await setPublicDailyTestPlanEnabled(true, updatedBy);
+    } else {
+      ({ cleanupComplete } = await disablePublicDailyTestPlanAndRunCleanup(
+        updatedBy,
+        expireOpenInternalDailyTestCheckoutSessions,
+      ));
+    }
   } catch (error) {
     const destination = new URL("/admin/settings", request.url);
     destination.searchParams.set(
@@ -62,21 +69,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(destination, { status: 303 });
   }
 
-  if (!enabled) {
-    const cleanupComplete = await expireOpenInternalDailyTestCheckoutSessions();
-    if (cleanupComplete) {
-      try {
-        await markPublicDailyTestPlanCleanupComplete(revision, updatedBy);
-      } catch {
-        const destination = new URL("/admin/settings", request.url);
-        destination.searchParams.set("daily_test_plan", "disabled_cleanup_required");
-        return NextResponse.redirect(destination, { status: 303 });
-      }
-    } else {
-      const destination = new URL("/admin/settings", request.url);
-      destination.searchParams.set("daily_test_plan", "disabled_cleanup_required");
-      return NextResponse.redirect(destination, { status: 303 });
-    }
+  if (!cleanupComplete) {
+    const destination = new URL("/admin/settings", request.url);
+    destination.searchParams.set("daily_test_plan", "disabled_cleanup_required");
+    return NextResponse.redirect(destination, { status: 303 });
   }
 
   const destination = new URL("/admin/settings", request.url);

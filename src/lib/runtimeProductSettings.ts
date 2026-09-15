@@ -7,6 +7,7 @@ import {
   createPublicDailyBetaSettings,
   getPublicDailyBetaStatus,
 } from "@/lib/publicDailyTestPlanPolicy.mjs";
+import { runPublicDailyTestPlanUpdate } from "@/lib/publicDailyTestPlanUpdateGate.mjs";
 
 type RuntimeProductSettings = {
   publicDailyTestPlanEnabled: boolean;
@@ -16,11 +17,6 @@ type RuntimeProductSettings = {
   publicDailyTestPlanCleanupRequired?: boolean;
   publicDailyTestPlanRevision?: string;
 };
-
-// Production intentionally runs one PM2 worker. Request overlap therefore needs
-// only a process-local critical section; process exit also clears it without a
-// persistent lock file that could become stale or be replaced between checks.
-let settingsUpdateInProgress = false;
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
@@ -66,13 +62,15 @@ export async function setPublicDailyTestPlanEnabled(
   enabled: boolean,
   updatedBy: string,
 ): Promise<{ revision: string }> {
+  return runPublicDailyTestPlanUpdate(() => writePublicDailyTestPlanState(enabled, updatedBy));
+}
+
+async function writePublicDailyTestPlanState(
+  enabled: boolean,
+  updatedBy: string,
+): Promise<{ revision: string }> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  if (settingsUpdateInProgress) {
-    throw new Error("daily_beta_update_in_progress");
-  }
-  settingsUpdateInProgress = true;
-
   try {
     if (enabled) {
       const current = await readRuntimeSettings().catch(() => null);
@@ -93,18 +91,15 @@ export async function setPublicDailyTestPlanEnabled(
     return { revision };
   } finally {
     await unlink(temporaryPath).catch(() => undefined);
-    settingsUpdateInProgress = false;
   }
 }
 
-export async function markPublicDailyTestPlanCleanupComplete(
+async function markPublicDailyTestPlanCleanupComplete(
   expectedRevision: string,
   updatedBy: string,
 ): Promise<void> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  if (settingsUpdateInProgress) throw new Error("daily_beta_update_in_progress");
-  settingsUpdateInProgress = true;
   try {
     const current = await readRuntimeSettings();
     if (
@@ -124,8 +119,21 @@ export async function markPublicDailyTestPlanCleanupComplete(
     await chmod(settingsPath, 0o600);
   } finally {
     await unlink(temporaryPath).catch(() => undefined);
-    settingsUpdateInProgress = false;
   }
+}
+
+export async function disablePublicDailyTestPlanAndRunCleanup(
+  updatedBy: string,
+  cleanup: () => Promise<boolean>,
+): Promise<{ cleanupComplete: boolean; revision: string }> {
+  return runPublicDailyTestPlanUpdate(async () => {
+    const { revision } = await writePublicDailyTestPlanState(false, updatedBy);
+    const cleanupComplete = await cleanup().catch(() => false);
+    if (cleanupComplete) {
+      await markPublicDailyTestPlanCleanupComplete(revision, updatedBy);
+    }
+    return { cleanupComplete, revision };
+  });
 }
 
 async function writeFileExclusive(pathname: string, payload: RuntimeProductSettings) {
