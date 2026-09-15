@@ -5,174 +5,184 @@ import {
   SUPABASE_ACCESS_TOKEN_COOKIE,
 } from "@/lib/supabase/config";
 import { DataDisclosureExportError } from "@/lib/dataDisclosurePagination";
-import { getSocialConnectionMetadataForDisclosure } from "@/lib/socialConnectionDisclosure";
 
 const PAGE_SIZE = 500;
-const MAX_ROWS_PER_DATASET = 20_000;
+const MAX_ROWS_PER_DATASET = 50_000;
 
 export type DisclosureMetaRow = Record<string, unknown> & {
-  workspace_id: string;
+  workspace_id?: string;
 };
 
 export type DisclosureMetaDataset = {
   key:
-    | "connections"
-    | "social_provider_connections"
+    | "contacts_full"
+    | "memories"
+    | "followups"
+    | "conversations"
     | "messages"
-    | "content"
-    | "metrics"
+    | "conversation_summaries"
+    | "reply_targets"
     | "fan_reports"
     | "contact_profiles"
     | "voice_profiles"
-    | "conversation_reports"
-    | "analysis_settings"
-    | "creators"
-    | "creator_voices"
-    | "creator_playbooks"
-    | "creator_commercial_events";
+    | "prompt_settings"
+    | "ai_usage"
+    | "connections"
+    | "meta_webhook_events";
   rows: DisclosureMetaRow[];
-  // An unavailable API table is not proof of an empty or absent database table.
-  unavailable?: boolean;
 };
 
 type DatasetDefinition = {
   key: DisclosureMetaDataset["key"];
   table: string;
-  selectVariants: string[];
-  optional?: boolean;
+  select: string;
   order: string;
-  extraFilters?: Array<[string, string]>;
 };
 
+// This list intentionally contains the currently active Production data families
+// that can hold Creator/Workspace data. Staging-only or not-yet-installed
+// feature tables are added to the disclosure in the same release that deploys
+// those tables to Production; a missing active table is always an export error.
 const DATASETS: DatasetDefinition[] = [
-  { key: "creators", table: "creators", selectVariants: ["id,workspace_id,display_name,bio,public_age,location,languages,platforms,status,internal_notes,revision,created_at,updated_at"], optional: true, order: "id.asc" },
-  { key: "creator_voices", table: "creator_voice_profiles", selectVariants: ["workspace_id,creator_id,fingerprint,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
-  { key: "creator_playbooks", table: "creator_sales_playbooks", selectVariants: ["workspace_id,creator_id,rules,revision,approved_by,approved_at"], optional: true, order: "creator_id.asc" },
-  { key: "creator_commercial_events", table: "creator_commercial_events", selectVariants: ["id,workspace_id,creator_id,contact_id,conversation_id,kind,occurred_at,amount_minor,currency,category,evidence_reference,confirmed_by,confirmed_at"], optional: true, order: "occurred_at.asc,id.asc" },
   {
-    key: "connections",
-    table: "social_connections",
-    selectVariants: [
-      "id,workspace_id,platform,provider,status,external_account_id,external_account_name,page_id,page_name,scopes,webhook_subscribed,connected_at,disconnected_at,last_event_at,created_at,updated_at",
-    ],
+    key: "contacts_full",
+    table: "contacts",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "memories",
+    table: "memories",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "followups",
+    table: "followups",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "conversations",
+    table: "conversations",
+    select: "*",
     order: "created_at.asc.nullsfirst,id.asc",
   },
   {
     key: "messages",
     table: "conversation_messages",
-    selectVariants: [
-      "id,workspace_id,conversation_id,contact_id,direction,message_type,source_platform,source_type,source_url,reply_target_url,external_thread_id,external_message_id,external_post_id,external_comment_id,original_author_label,original_text_excerpt,author_label,content,attachments,message_kind,created_at",
-    ],
-    order: "created_at.asc.nullsfirst,id.asc",
-    extraFilters: [["source_platform", "in.(facebook,instagram)"]],
-  },
-  {
-    key: "content",
-    table: "content_sources",
-    optional: true,
-    selectVariants: [
-      "id,workspace_id,social_connection_id,source_platform,source_type,external_account_id,external_source_id,external_post_id,external_video_id,media_type,content_format,campaign_label,title,summary,caption_excerpt,permalink_url,published_at,metadata,created_at,updated_at",
-      "id,workspace_id,source_platform,source_type,external_source_id,external_post_id,external_video_id,title,summary,caption_excerpt,permalink_url,published_at,metadata,created_at,updated_at",
-    ],
+    select: "*",
     order: "created_at.asc.nullsfirst,id.asc",
   },
   {
-    key: "metrics",
-    table: "content_metric_snapshots",
-    selectVariants: ["*"],
-    optional: true,
-    order: "captured_at.asc.nullsfirst,id.asc",
+    key: "conversation_summaries",
+    table: "conversation_summaries",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "reply_targets",
+    table: "contact_reply_targets",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
   },
   {
     key: "fan_reports",
     table: "fan_analysis_reports",
-    selectVariants: [
-      "id,workspace_id,contact_id,report_json,summary,model,source_message_count,source_from_at,source_to_at,confidence_score,review_status,reviewed_at,generated_at,created_at,updated_at",
-      "id,workspace_id,contact_id,report_json,summary,model,source_message_count,generated_at,created_at,updated_at",
-    ],
+    select: "*",
     order: "created_at.asc.nullsfirst,id.asc",
   },
   {
     key: "contact_profiles",
     table: "contact_ai_profiles",
-    selectVariants: [
-      "id,workspace_id,contact_id,commercial_profile,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,source_from_at,source_to_at,review_status,reviewed_at,created_at,updated_at",
-      "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,source_from_at,source_to_at,review_status,reviewed_at,created_at,updated_at",
-      "id,workspace_id,contact_id,language,tone,sentiment,interests,buying_signals,no_gos,preferred_style,response_triggers,risk_notes,confidence_score,source_message_count,created_at,updated_at",
-    ],
+    select: "*",
     order: "created_at.asc.nullsfirst,id.asc",
   },
   {
     key: "voice_profiles",
     table: "workspace_voice_profiles",
-    selectVariants: [
-      "id,workspace_id,user_id,owner_label,language,tone,sentence_length,emoji_style,greeting_style,closing_style,common_phrases,avoided_phrases,sales_style,examples_count,confidence_score,source_from_at,source_to_at,source_scope,review_status,reviewed_at,created_at,updated_at",
-      "id,workspace_id,user_id,owner_label,language,tone,sentence_length,emoji_style,greeting_style,closing_style,common_phrases,avoided_phrases,sales_style,examples_count,confidence_score,created_at,updated_at",
-    ],
+    select: "*",
     order: "created_at.asc.nullsfirst,id.asc",
   },
   {
-    key: "conversation_reports",
-    table: "communication_analysis_reports",
-    selectVariants: ["*"],
-    optional: true,
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "analysis_settings",
-    table: "workspace_analysis_settings",
-    selectVariants: [
-      "workspace_id,fan_analysis_enabled,conversation_analysis_enabled,user_voice_analysis_enabled,content_insights_enabled,meta_sync_mode,personal_content_retention_days,legal_basis_status,transparency_status,data_processing_agreement_status,retention_status,data_subject_rights_status,message_retention_days,content_cache_retention_days,analysis_retention_days,confirmed_at,created_at,updated_at",
-    ],
-    optional: true,
+    key: "prompt_settings",
+    table: "workspace_ai_prompt_settings",
+    select: "*",
     order: "workspace_id.asc",
+  },
+  {
+    key: "ai_usage",
+    table: "ai_usage_events",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "connections",
+    table: "social_connections",
+    select: [
+      "id",
+      "workspace_id",
+      "platform",
+      "provider",
+      "status",
+      "external_account_id",
+      "external_account_name",
+      "page_id",
+      "page_name",
+      "scopes",
+      "webhook_subscribed",
+      "connected_by",
+      "connected_at",
+      "disconnected_at",
+      "last_event_at",
+      "last_comment_fetch_at",
+      "last_comment_fetch_count",
+      "last_comment_fetch_error",
+      "last_messenger_sync_at",
+      "last_messenger_sync_checked_count",
+      "last_messenger_sync_imported_inbound_count",
+      "last_messenger_sync_imported_outbound_count",
+      "last_messenger_sync_imported_media_count",
+      "last_messenger_sync_skipped_count",
+      "last_messenger_sync_error",
+      "last_messenger_sync_outbound_at",
+      "messenger_sync_continuation_after",
+      "messenger_sync_continuation_started_at",
+      "oauth_login_type",
+      "external_account_type",
+      "token_expires_at",
+      "permissions_verified_at",
+      "analytics_enabled",
+      "created_at",
+      "updated_at",
+    ].join(","),
+    order: "created_at.asc.nullsfirst,id.asc",
+  },
+  {
+    key: "meta_webhook_events",
+    table: "meta_webhook_events",
+    select: "*",
+    order: "created_at.asc.nullsfirst,id.asc",
   },
 ];
 
 type PageResult =
   | { ok: true; rows: DisclosureMetaRow[] }
-  | { ok: false; kind: "table_unavailable" | "column_unavailable" | "error"; message: string };
-
-function classifyReadFailure(
-  status: number,
-  body: unknown,
-  table: string,
-): "table_unavailable" | "column_unavailable" | "error" {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return "error";
-  const { code, message } = body as { code?: unknown; message?: unknown };
-  if (status === 404 && typeof message === "string") {
-    if (
-      (code === "PGRST205" &&
-        message === `Could not find the table 'public.${table}' in the schema cache`) ||
-      (code === "42P01" &&
-        (message === `relation "public.${table}" does not exist` ||
-          message === `relation "${table}" does not exist`))
-    ) return "table_unavailable";
-  }
-  // A legacy projection may succeed. Exhausted projections still fail; a
-  // missing column must never turn an entire optional dataset into zero rows.
-  if (status === 400 && (code === "42703" || code === "PGRST204"))
-    return "column_unavailable";
-  return "error";
-}
+  | { ok: false; message: string };
 
 async function fetchPage(input: {
   definition: DatasetDefinition;
-  select: string;
   workspaceId: string;
   accessToken: string;
   offset: number;
   fetchImpl: typeof fetch;
 }): Promise<PageResult> {
   const url = new URL(getSupabaseRestUrl(input.definition.table));
-  url.searchParams.set("select", input.select);
+  url.searchParams.set("select", input.definition.select);
   url.searchParams.set("workspace_id", `eq.${input.workspaceId}`);
   url.searchParams.set("order", input.definition.order);
   url.searchParams.set("limit", String(PAGE_SIZE));
   url.searchParams.set("offset", String(input.offset));
-  for (const [key, value] of input.definition.extraFilters ?? []) {
-    url.searchParams.set(key, value);
-  }
 
   const response = await input.fetchImpl(url, {
     headers: getSupabaseHeaders(input.accessToken),
@@ -180,35 +190,37 @@ async function fetchPage(input: {
     redirect: "error",
     signal: AbortSignal.timeout(15_000),
   }).catch(() => null);
+
   if (!response) {
-    return {
-      ok: false,
-      kind: "error",
-      message: `${input.definition.table}: Netzwerkfehler`,
-    };
+    return { ok: false, message: `${input.definition.table}: Netzwerkfehler` };
   }
   if (!response.ok) {
-    const body: unknown = await response.json().catch(() => null);
     return {
       ok: false,
-      kind: classifyReadFailure(response.status, body, input.definition.table),
       message: `${input.definition.table}: HTTP ${response.status}`,
     };
   }
+
   const payload = (await response.json().catch(() => null)) as unknown;
   if (!Array.isArray(payload)) {
     return {
       ok: false,
-      kind: "error",
       message: `${input.definition.table}: ungültige Serverantwort`,
     };
   }
+
   const rows = payload as DisclosureMetaRow[];
-  if (rows.some((row) => !row || typeof row !== "object" ||
-    Array.isArray(row) || row.workspace_id !== input.workspaceId)) {
+  if (
+    rows.some(
+      (row) =>
+        !row ||
+        typeof row !== "object" ||
+        Array.isArray(row) ||
+        row.workspace_id !== input.workspaceId,
+    )
+  ) {
     return {
       ok: false,
-      kind: "error",
       message: `${input.definition.table}: fremder Workspace in Exportantwort`,
     };
   }
@@ -221,53 +233,25 @@ async function fetchDataset(input: {
   accessToken: string;
   fetchImpl: typeof fetch;
 }): Promise<DisclosureMetaDataset> {
-  let firstPage: DisclosureMetaRow[] | null = null;
-  let selectedColumns: string | null = null;
-  let lastError = "unbekannter Exportfehler";
+  const rows: DisclosureMetaRow[] = [];
 
-  for (const select of input.definition.selectVariants) {
-    const result = await fetchPage({
-      ...input,
-      select,
-      offset: 0,
-    });
-    if (result.ok) {
-      firstPage = result.rows;
-      selectedColumns = select;
-      break;
-    }
-    lastError = result.message;
-    if (result.kind === "table_unavailable" && input.definition.optional) {
-      // No records have been read. Preserve the unavailable status in the PDF
-      // rather than hiding a missing deployment or a stale API schema cache.
-      return { key: input.definition.key, rows: [], unavailable: true };
-    }
-    if (result.kind !== "column_unavailable") break;
-  }
-
-  if (!firstPage || !selectedColumns) {
-    throw new DataDisclosureExportError(
-      `Gespeicherte Meta-Daten konnten nicht vollständig exportiert werden (${lastError}).`,
-    );
-  }
-
-  const rows = [...firstPage];
-  while (rows.length && rows.length % PAGE_SIZE === 0) {
+  for (;;) {
     if (rows.length >= MAX_ROWS_PER_DATASET) {
       throw new DataDisclosureExportError(
         `${input.definition.table} enthält mehr als ${MAX_ROWS_PER_DATASET} Zeilen; Export ohne Abschneidung wurde abgebrochen.`,
       );
     }
+
     const result = await fetchPage({
       ...input,
-      select: selectedColumns,
       offset: rows.length,
     });
     if (!result.ok) {
       throw new DataDisclosureExportError(
-        `Gespeicherte Meta-Daten konnten nicht vollständig exportiert werden (${result.message}).`,
+        `Gespeicherte FanMind-Daten konnten nicht vollständig exportiert werden (${result.message}).`,
       );
     }
+
     rows.push(...result.rows);
     if (result.rows.length < PAGE_SIZE) break;
   }
@@ -284,28 +268,21 @@ export async function getWorkspaceMetaDataForDisclosure(
   const accessToken = cookieStore
     .get(SUPABASE_ACCESS_TOKEN_COOKIE)
     ?.value?.trim();
+
   if (!normalizedWorkspaceId || !accessToken) {
     throw new DataDisclosureExportError(
-      "Autorisierter Workspace oder Sitzung fehlt für die Meta-Datenauskunft.",
+      "Autorisierter Workspace oder Sitzung fehlt für die Datenauskunft.",
     );
   }
-  let socialUnavailable = false;
+
   return Promise.all(
-    [getSocialConnectionMetadataForDisclosure(
-      normalizedWorkspaceId, accessToken, fetchImpl,
-      () => { socialUnavailable = true; },
-    ).then(rows => ({
-      key: "social_provider_connections" as const,
-      rows,
-      ...(socialUnavailable ? { unavailable: true } : {}),
-    })),
-    ...DATASETS.map((definition) =>
+    DATASETS.map((definition) =>
       fetchDataset({
         definition,
         workspaceId: normalizedWorkspaceId,
         accessToken,
         fetchImpl,
       }),
-    )],
+    ),
   );
 }
