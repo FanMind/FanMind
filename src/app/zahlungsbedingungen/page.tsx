@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { getCommercialTerms } from "@/lib/plans";
 import { PUBLIC_DAILY_PLAN_PRICE_CENTS, PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS } from "@/lib/publicDailyPlanPolicy.mjs";
 import styles from "./zahlungsbedingungen.module.css";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 
 export const metadata: Metadata = {
   title: "Zahlungsbedingungen / Paket- und Vertragskonditionen | FanMind",
@@ -35,7 +36,7 @@ const trustItems = [
   "Nettopreise · Steuer im Checkout",
   "Keine Bankdaten in FanMind",
   "SEPA über Zahlungsdienstleister",
-  "Drei Zahlungsmodelle",
+  "Transparente Zahlungsmodelle",
 ];
 
 const packageCards: PackageCard[] = [
@@ -117,7 +118,7 @@ const sections: PaymentSection[] = [
   },
   {
     title: "Registrierung und Zahlungsstart",
-    content: <p>Die Registrierung erstellt ein kostenloses Anmeldekonto und löst keine Zahlung aus. Nach der E-Mail-Bestätigung werden das gewählte Paket und die aktuellen Zahlungsbedingungen gesondert bestätigt. Erst danach kann der Workspace eingerichtet und der freigegebene Zahlungsprozess aktiv fortgesetzt werden. Dies gilt für Starter Flex, Starter 12 Monate und Daily. Demo-User und temporäre Demo-Workspaces können keinen Checkout starten.</p>,
+    content: <p>Die Registrierung erstellt ein kostenloses Anmeldekonto und löst keine Zahlung aus. Nach der E-Mail-Bestätigung werden das gewählte öffentlich verfügbare Paket und die aktuellen Zahlungsbedingungen gesondert bestätigt. Erst danach kann der Workspace eingerichtet und der freigegebene Zahlungsprozess aktiv fortgesetzt werden. Demo-User und temporäre Demo-Workspaces können keinen Checkout starten.</p>,
   },
   {
     title: "Zahlungsabwicklung über Stripe",
@@ -172,7 +173,14 @@ function sectionId(index: number) {
   return `abschnitt-${index + 1}`;
 }
 
-export default function ZahlungsbedingungenPage() {
+export default async function ZahlungsbedingungenPage() {
+  const dailyAdmissionEnabled = await getPublicDailyTestPlanEnabled();
+  const visiblePackageCards = packageCards.filter(
+    (card) => dailyAdmissionEnabled || card.title !== "Daily",
+  );
+  const visibleSections = sections.filter(
+    (section) => dailyAdmissionEnabled || section.title !== "Daily",
+  );
   return (
     <main id="top" className={styles.page}>
       <div className={styles.shapeOne} aria-hidden="true" />
@@ -183,7 +191,7 @@ export default function ZahlungsbedingungenPage() {
         <header className={styles.hero}>
           <h1>ZAHLUNGSBEDINGUNGEN</h1>
           <p className={styles.subtitle}>Preise, Laufzeiten, Zahlungsprozess und Freischaltung bei FanMind</p>
-          <p className={styles.stand}>Stand: 10. September 2026 · Drei Zahlungsmodelle</p>
+          <p className={styles.stand}>Stand: 10. September 2026 · Transparente Zahlungsmodelle</p>
           <p className={styles.intro}>Diese Zahlungsbedingungen ergänzen die AGB / Vertragsbedingungen und beschreiben Preise, Pakete, Laufzeiten, Zahlungsabläufe, Freischaltung und Zahlungsstatus bei FanMind. Abweichende individuelle Angebote, Auftragsbestätigungen oder Vereinbarungen gehen diesen Zahlungsbedingungen vor.</p>
           <div className={styles.trustBox} aria-label="Wichtige Zahlungs-Hinweise">
             {trustItems.map((item) => <span key={item}>✓ {item}</span>)}
@@ -191,7 +199,7 @@ export default function ZahlungsbedingungenPage() {
         </header>
 
         <section className={styles.packageGrid} aria-label="Paketübersicht">
-          {packageCards.map((card) => (
+          {visiblePackageCards.map((card) => (
             <article className={styles.packageCard} key={card.title}>
               <span className={styles.cardBadge}>{card.badge}</span>
               <h2>{card.title}</h2>
@@ -202,7 +210,7 @@ export default function ZahlungsbedingungenPage() {
         </section>
 
         <article className={styles.document} aria-label="Paket- und Zahlungsbedingungen für FanMind">
-          {sections.map((section, index) => (
+          {visibleSections.map((section, index) => (
             <section className={styles.section} id={sectionId(index)} key={section.title}>
               <div className={styles.number} aria-hidden="true">{index + 1}</div>
               <div className={styles.sectionBody}>

@@ -139,8 +139,11 @@ Production-Kontrollpfad liegt in
 `.github/workflows/internal-daily-test-workspace-provisioning-production-control.yml`.
 Er ist an `main`, den exakten geprüften Commit, das geschützte
 `production`-Environment, den Production-Runner, das exakte Production-Ziel
-und TLS `verify-full` gebunden. Verify und Apply verwenden verschiedene
-Bestätigungstexte; ein normaler Deploy ruft den Kontrollpfad nie auf.
+und TLS `verify-full` gebunden. Der veröffentlichte Workflow ist derzeit
+absichtlich **verify-only**. Ein Production-Apply bleibt strukturell
+unerreichbar, bis ein eigener frischer, Commit-/Ziel-/Zeit-gebundener
+Readiness-Receipt-Vertrag implementiert und erneut geprüft wurde. Ein normaler
+Deploy ruft den Kontrollpfad nie auf.
 
 Vor jeder Apply-Freigabe muss ein frischer read-only Lauf die festen Zustände
 `absent`, `complete`, `partial` oder `unknown` für RPCs, Constraints, Indizes,

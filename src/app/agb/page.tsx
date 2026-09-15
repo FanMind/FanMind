@@ -221,7 +221,7 @@ const sections: TermsSection[] = [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für einen kostenpflichtigen Zugang stehen Starter Flex, Starter 12 Monate und Daily zur Auswahl. Eine Kontoerstellung startet noch kein Abo.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Öffentlich stehen Starter Flex und Starter 12 Monate zur Auswahl. Eine Kontoerstellung startet noch kein Abo. Bedingungen bestehender oder ausdrücklich intern zugelassener Daily-Verträge bleiben davon unberührt.</p>
       </>
     ),
   },
@@ -241,7 +241,7 @@ const sections: TermsSection[] = [
         <ul>
           <li><strong>Starter Flex:</strong> 990 € einmalige Einrichtung + 312 €/Monat; jederzeit zum Ende des laufenden, bereits bezahlten Abrechnungsmonats kündbar.</li>
           <li><strong>Starter 12 Monate:</strong> 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach Verlängerung um jeweils einen Monat.</li>
-          <li><strong>Daily:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt.</li>
+          <li><strong>Bestehende Daily-Verträge:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt. Dies ist kein öffentliches Angebot.</li>
           <li><strong>KI Standard:</strong> in der Starter-Grundgebühr enthalten.</li>
           <li><strong>KI Plus:</strong> zusätzlich 100 €/Monat.</li>
           <li><strong>KI Ultra:</strong> zusätzlich 200 €/Monat.</li>

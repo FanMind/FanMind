@@ -355,6 +355,6 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
 
 # FM-CR-038 — controlled Daily Production provisioning path
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: IN_PROGRESS
 - Decision: prepare a separate checksum-pinned, exact-main, protected-Production and TLS-bound Verify/Apply/Postflight control for the Staging-proven Daily provisioning SQL.
-- Boundary: no fresh protected Production receipt was available in Codex Cloud; mutable Production components are `unknown` and the rollout decision is `BLOCK`. No Apply, runtime flag change, Admin enable, checkout or payment was performed.
+- Boundary: review follow-up makes the published Production workflow verify-only until a fresh commit-/target-/time-bound readiness receipt exists. Daily provisioning and every checkout entry recheck the complete billing runtime gate; stale runtime locks recover under a bounded lease; disabled Daily is not advertised on public legal surfaces. Production remains `BLOCK`; no Apply, runtime flag change, Admin enable, checkout or payment was performed.

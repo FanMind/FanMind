@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { chmod, open, readFile, rename, unlink } from "node:fs/promises";
+import { chmod, lstat, open, readFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import {
   createPublicDailyBetaSettings,
@@ -14,6 +14,34 @@ type RuntimeProductSettings = {
   updatedAt?: string;
   updatedBy?: string;
 };
+
+const DAILY_BETA_LOCK_LEASE_MS = 60_000;
+
+async function acquireSettingsLock(lockPath: string) {
+  try {
+    return await open(lockPath, "wx", 0o600);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+  }
+
+  try {
+    const existing = await lstat(lockPath);
+    if (
+      !existing.isFile() ||
+      existing.isSymbolicLink() ||
+      Date.now() - existing.mtimeMs <= DAILY_BETA_LOCK_LEASE_MS
+    ) {
+      throw new Error("daily_beta_update_in_progress");
+    }
+    const staleClaimPath = `${lockPath}.${randomUUID()}.stale`;
+    await rename(lockPath, staleClaimPath);
+    await unlink(staleClaimPath).catch(() => undefined);
+    return await open(lockPath, "wx", 0o600);
+  } catch (error) {
+    if ((error as Error).message === "daily_beta_update_in_progress") throw error;
+    throw new Error("daily_beta_update_in_progress");
+  }
+}
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
@@ -53,7 +81,7 @@ export async function setPublicDailyTestPlanEnabled(
   const lockPath = `${settingsPath}.lock`;
   let lockHandle;
   try {
-    lockHandle = await open(lockPath, "wx", 0o600);
+    lockHandle = await acquireSettingsLock(lockPath);
   } catch {
     throw new Error("daily_beta_update_in_progress");
   }

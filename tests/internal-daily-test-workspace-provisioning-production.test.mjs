@@ -46,5 +46,8 @@ test("Production workflow is manual, protected, pinned and has no automatic trig
   assert.match(workflow,/environment: production/u); assert.match(workflow,/fanmind-prod/u);
   assert.match(workflow,/inputs\.reviewed_commit == github\.sha/u);
   assert.match(workflow,/PGSSLMODE: verify-full/u); assert.match(workflow,/chmod 600/u);
-  assert.match(workflow,/--\$\{\{ inputs\.action \}\}/u);
+  assert.match(workflow,/options: \[verify\]/u);
+  assert.match(workflow,/--verify/u);
+  assert.doesNotMatch(workflow,/FANMIND_PRODUCTION_WRITE_ACK/u);
+  assert.doesNotMatch(workflow,/--apply/u);
 });

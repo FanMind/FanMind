@@ -6,7 +6,7 @@ on:
       action:
         required: true
         type: choice
-        options: [verify, apply]
+        options: [verify]
       confirmation:
         description: "Exact action-specific confirmation"
         required: true
@@ -27,8 +27,7 @@ jobs:
   control:
     if: >-
       ${{ github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha &&
-      ((inputs.action == 'verify' && inputs.confirmation == 'verify-daily-workspace-provisioning-production') ||
-      (inputs.action == 'apply' && inputs.confirmation == 'apply-daily-workspace-provisioning-production')) }}
+      inputs.action == 'verify' && inputs.confirmation == 'verify-daily-workspace-provisioning-production' }}
     runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
     environment: production
     timeout-minutes: 15
@@ -50,11 +49,7 @@ jobs:
       PGSSLMODE: verify-full
       PGSSLROOTCERT: /etc/ssl/certs/ca-certificates.crt
       PGPASSFILE: ${{ runner.temp }}/fanmind-daily-production.pgpass
-      FANMIND_ENABLE_PRODUCTION_WRITES: ${{ inputs.action == 'apply' && 'true' || 'false' }}
-      FANMIND_PRODUCTION_WRITE_ACK: ${{ inputs.action == 'apply' && 'I_UNDERSTAND_THIS_MUTATES_PRODUCTION' || '' }}
-      # Set only from a separately reviewed, fresh read-only Production receipt.
-      # Missing, SKIP, BLOCK or any unknown value keeps Apply fail-closed.
-      FANMIND_DAILY_PRODUCTION_READINESS_DECISION: ${{ vars.FANMIND_DAILY_PRODUCTION_READINESS_DECISION }}
+      FANMIND_ENABLE_PRODUCTION_WRITES: 'false'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -75,8 +70,8 @@ jobs:
           escaped="${DB_PASSWORD//\\/\\\\}"; escaped="${escaped//:/\\:}"
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$escaped" > "$PGPASSFILE"
           chmod 600 "$PGPASSFILE"
-      - name: Verify or explicitly apply checksum-pinned Daily provisioning
-        run: node scripts/operations/internal-daily-test-provisioning-migration-runner.mjs --${{ inputs.action }}
+      - name: Verify checksum-pinned Daily provisioning read-only
+        run: node scripts/operations/internal-daily-test-provisioning-migration-runner.mjs --verify
       - name: Remove private passfile
         if: ${{ always() }}
         run: rm -f "$PGPASSFILE"

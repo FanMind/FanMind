@@ -18,6 +18,8 @@ import {
   STRIPE_BILLING_WRITE_FREEZE_CODE,
   STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
 } from "@/lib/stripeBillingWriteFreeze.mjs";
+import { isInternalDailyTestBillingRuntimeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import {
   STRIPE_BILLING_ALLOWED,
   STRIPE_BILLING_BLOCKED,
@@ -222,6 +224,13 @@ export async function createStripeCheckoutSession(input: {
   workspaceId: string;
   userEmail?: string;
 }): Promise<{ url?: string; id?: string; error?: string; code?: string }> {
+  if (
+    input.plan.commercialOption === "internal_daily_test" &&
+    (!(await getPublicDailyTestPlanEnabled()) ||
+      !isInternalDailyTestBillingRuntimeReady())
+  ) {
+    return { error: "Die Daily-Beta ist für neue Checkouts nicht freigegeben.", code: "daily_admission_closed" };
+  }
   // All API, page and admin entry points share this provider boundary.
   if (isStripeBillingWriteFrozen()) {
     return {

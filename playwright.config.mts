@@ -2,6 +2,16 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL?.trim() || "http://127.0.0.1:3100";
 const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+const dailySettingsPath = "/tmp/fanmind-browser-e2e-runtime-settings.json";
+
+if (
+  skipWebServer &&
+  process.env.FANMIND_RUNTIME_SETTINGS_FILE !== dailySettingsPath
+) {
+  throw new Error(
+    `External Playwright servers must use FANMIND_RUNTIME_SETTINGS_FILE=${dailySettingsPath}`,
+  );
+}
 
 export default defineConfig({
   testDir: "./e2e",
@@ -40,7 +50,7 @@ export default defineConfig({
         env: {
           ...process.env,
           PORT: "3100",
-          FANMIND_RUNTIME_SETTINGS_FILE: process.env.FANMIND_RUNTIME_SETTINGS_FILE || "/tmp/fanmind-browser-e2e-runtime-settings.json",
+          FANMIND_RUNTIME_SETTINGS_FILE: process.env.FANMIND_RUNTIME_SETTINGS_FILE || dailySettingsPath,
         },
       },
   projects: [

@@ -533,6 +533,10 @@ test("internal 1 EUR daily Stripe subscription plan remains available", () => {
     billingStartSource,
     /commercial_option === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(stripe\)/u,
   );
+  assert.match(
+    billingStartSource,
+    /dailyAdmissionReady[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*isInternalDailyTestBillingRuntimeReady\(\)[\s\S]*canStartCheckout/u,
+  );
   assert.equal(
     billingStartSource.match(/<dd>\{checkoutPaymentMethodText\}<\/dd>/gu)?.length,
     1,
@@ -563,6 +567,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(workspaceSetupSource, /isInternalDailyTestAdmissionReady\(\{[\s\S]*stripeConfig: getStripeConfigStatus\(\)/u);
   const checkoutRouteSource = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
   assert.match(checkoutRouteSource, /await getPublicDailyTestPlanEnabled\(\)/);
+  assert.match(checkoutRouteSource, /isInternalDailyTestBillingRuntimeReady\(\)/u);
   assert.match(
     checkoutRouteSource,
     /commercialOption === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(config\)/u,
@@ -573,6 +578,8 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(publicDailyTestPolicySource, /publicDailyTestPlanEnabledUntil === undefined \|\| settings\.publicDailyTestPlanEnabledUntil === null/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
+  assert.match(runtimeSettingsSource, /DAILY_BETA_LOCK_LEASE_MS/);
+  assert.match(runtimeSettingsSource, /lstat\(lockPath\)[\s\S]*mtimeMs[\s\S]*rename\(lockPath, staleClaimPath\)/u);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,
@@ -620,7 +627,7 @@ test("public Daily selection preserves protected Workspace and payment admission
   const provisioningRpcIndex = supabaseServerSource.indexOf("INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_RPC", dailyGateIndex);
   const legacyBridgeIndex = supabaseServerSource.indexOf("// Compatibility bridge for the deploy-before-migrate rollout.", dailyGateIndex);
   assert.ok(dailyGateIndex >= 0 && provisioningRpcIndex > dailyGateIndex && legacyBridgeIndex > provisioningRpcIndex);
-  assert.match(supabaseServerSource, /isInternalDailyTest[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*getServiceAccessToken\(\)/u);
+  assert.match(supabaseServerSource, /isInternalDailyTest[\s\S]*isInternalDailyTestWorkspaceProvisioningReady\(\)[\s\S]*isInternalDailyTestStripeReady\(getStripeConfigStatus\(\)\)[\s\S]*isInternalDailyTestBillingRuntimeReady\(\)[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*getServiceAccessToken\(\)/u);
   assert.match(supabaseServerSource, /if \(!workspace && !isInternalDailyTest\)/u);
   assert.match(supabaseServerSource, /planId === "pilot" && commercialOption === "internal_daily_test"[\s\S]*getRegistrationCommercialTerms\("pilot", "internal_daily_test"\)/u);
   assert.match(
