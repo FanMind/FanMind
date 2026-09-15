@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { buildSupabaseApiKeyHeaders } from '../src/lib/supabase/apiKeyPolicy.mjs';
 
 const workspace='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const userId='synthetic-owner';
 const row={workspace_id:workspace,provider:'x',external_account_id:'synthetic-account',display_name:'Synthetic Creator',expires_at:'2026-09-12T12:00:00Z',connected_at:'2026-09-11T12:00:00Z'};
 
 function load(path,deps,env={}) {
@@ -16,7 +17,7 @@ function load(path,deps,env={}) {
 }
 
 function protectedConnectionHarness({denied=false,foreign=false,member=false,revoked=false,status=200,data=[row],key='sb_secret_synthetic',network=false}={}) {
-  const calls=[];let authorizations=0;let unavailableCount=0;
+  const calls=[];let authorizations=0;
   const deps={
     'server-only':{},
     '@/lib/workspaceAuthorization':{requireAuthorizedWorkspace:async token=>{assert.equal(token,'synthetic-user-jwt');authorizations++;if(denied||(revoked&&authorizations>1))throw Error('unauthorized');return{user:{id:'owner'},workspace:{id:foreign?'other':workspace,owner_user_id:member?'different':'owner'}};}},
@@ -25,7 +26,7 @@ function protectedConnectionHarness({denied=false,foreign=false,member=false,rev
   };
   const run=load('src/lib/socialConnectionDisclosure.ts',deps,{SUPABASE_SERVICE_ROLE_KEY:key}).getSocialConnectionMetadataForDisclosure;
   const fetchImpl=async(url,options)=>{calls.push({url,options});if(network)throw Error('private backend text');return new Response(JSON.stringify(data),{status})};
-  return{calls,run:(capture=true)=>run(workspace,'synthetic-user-jwt',fetchImpl,capture?()=>{unavailableCount++;}:undefined),authorizations:()=>authorizations,unavailableCount:()=>unavailableCount};
+  return{calls,run:()=>run(workspace,'synthetic-user-jwt',fetchImpl),authorizations:()=>authorizations};
 }
 
 test('protected provider metadata never exposes connection credentials',async()=>{
@@ -50,9 +51,10 @@ class DisclosureFailure extends Error {}
 const jsonResponse=(data,status=200)=>new Response(JSON.stringify(data),{status});
 
 const expectedTables=[
-  'workspaces','contacts','memories','followups','conversations','conversation_messages',
-  'conversation_summaries','contact_reply_targets','fan_analysis_reports','contact_ai_profiles',
-  'workspace_voice_profiles','workspace_ai_prompt_settings','ai_usage_events','social_connections','meta_webhook_events',
+  'profiles','workspace_members','workspaces','contacts','memories','followups','conversations',
+  'conversation_messages','conversation_summaries','contact_reply_targets','fan_analysis_reports',
+  'contact_ai_profiles','workspace_voice_profiles','workspace_ai_prompt_settings','ai_usage_events',
+  'social_connections','meta_webhook_events',
 ];
 
 function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
@@ -73,14 +75,24 @@ function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
     calls.push({table,offset,url,options});
     assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');
     assert.equal(options.headers.Authorization,'Bearer synthetic-user-jwt');
-    const filter=table==='workspaces'?'id':'workspace_id';
-    assert.equal(url.searchParams.get(filter),`eq.${workspace}`);
+    if(table==='profiles') {
+      assert.equal(url.searchParams.get('id'),`eq.${userId}`);
+      assert.equal(url.searchParams.get('workspace_id'),null);
+    } else if(table==='workspace_members') {
+      assert.equal(url.searchParams.get('workspace_id'),`eq.${workspace}`);
+      assert.equal(url.searchParams.get('user_id'),`eq.${userId}`);
+    } else if(table==='workspaces') {
+      assert.equal(url.searchParams.get('id'),`eq.${workspace}`);
+      assert.equal(url.searchParams.get('workspace_id'),null);
+    } else {
+      assert.equal(url.searchParams.get('workspace_id'),`eq.${workspace}`);
+    }
     return (await override({table,offset,url,options,calls})) ?? jsonResponse([]);
   };
-  return{calls,run:(id=workspace)=>collector(id,fetchImpl)};
+  return{calls,run:(id=workspace,uid=userId)=>collector(id,uid,fetchImpl)};
 }
 
-test('complete disclosure enumerates every active Creator/Workspace data family',async()=>{
+test('complete disclosure enumerates account, membership and every active Creator/Workspace data family',async()=>{
   const h=collectorFixture();
   const result=await h.run();
   assert.deepEqual(h.calls.map(x=>x.table).sort(),[...expectedTables].sort());
@@ -90,12 +102,16 @@ test('complete disclosure enumerates every active Creator/Workspace data family'
   assert.ok(messages);assert.equal(messages.url.searchParams.get('source_platform'),null,'all channels must be exported');
 });
 
-test('workspace and social rows keep user data but strip credentials and Stripe provider identifiers',async()=>{
+test('profile, membership, workspace and social rows stay bound to the signed-in Creator and strip credentials',async()=>{
   const h=collectorFixture(({table})=>{
-    if(table==='workspaces') return jsonResponse([{id:workspace,name:'Creator workspace',workspace_id:'SHOULD_NOT_MATTER',billing_status:'active',stripe_customer_id:'cus_secret',stripe_subscription_id:'sub_secret',api_key:'NEVER'}]);
+    if(table==='profiles') return jsonResponse([{id:userId,email:'creator@example.invalid',display_name:'Creator',phone:'+43 1 234'}]);
+    if(table==='workspace_members') return jsonResponse([{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner',created_at:'2026-09-01T00:00:00Z'}]);
+    if(table==='workspaces') return jsonResponse([{id:workspace,name:'Creator workspace',billing_status:'active',stripe_customer_id:'cus_secret',stripe_subscription_id:'sub_secret',api_key:'NEVER'}]);
     if(table==='social_connections') return jsonResponse([{id:'connection-1',workspace_id:workspace,platform:'instagram',page_name:'Creator page',page_access_token_encrypted:'NEVER',token_last_four:'1234',refresh_token:'NEVER'}]);
   });
   const result=await h.run();
+  assert.equal(result.find(x=>x.key==='profile_record').rows[0].phone,'+43 1 234');
+  assert.equal(result.find(x=>x.key==='membership_record').rows[0].role,'owner');
   const workspaceRow=result.find(x=>x.key==='workspace_record').rows[0];
   assert.equal(workspaceRow.name,'Creator workspace');assert.equal(workspaceRow.billing_status,'active');
   assert.equal(workspaceRow.stripe_customer_id,undefined);assert.equal(workspaceRow.stripe_subscription_id,undefined);assert.equal(workspaceRow.api_key,undefined);
@@ -103,20 +119,32 @@ test('workspace and social rows keep user data but strip credentials and Stripe 
   assert.equal(social.page_name,'Creator page');assert.equal(social.page_access_token_encrypted,undefined);assert.equal(social.token_last_four,undefined);assert.equal(social.refresh_token,undefined);
 });
 
-test('all stored fields of active CRM rows are preserved instead of using narrow projections',async()=>{
+test('all safe stored fields of active CRM rows are preserved instead of using narrow projections',async()=>{
   const h=collectorFixture(({table})=>table==='memories'?jsonResponse([{id:'memory-1',workspace_id:workspace,contact_id:'fan-1',content:'PRESERVE_MEMORY',importance:'high',future_safe_field:'PRESERVE_FUTURE'}]):undefined);
   const data=(await h.run()).find(x=>x.key==='memories').rows[0];
   assert.equal(data.content,'PRESERVE_MEMORY');assert.equal(data.future_safe_field,'PRESERVE_FUTURE');
   assert.equal(h.calls.find(x=>x.table==='memories').url.searchParams.get('select'),'*');
 });
 
-test('missing, denied, malformed or foreign active data aborts the complete export',async()=>{
+test('foreign user, foreign membership, foreign workspace or foreign CRM rows abort the export',async()=>{
+  const cases=[
+    ['profiles',()=>jsonResponse([{id:'foreign-user'}])],
+    ['workspace_members',()=>jsonResponse([{id:'membership-1',workspace_id:workspace,user_id:'foreign-user'}])],
+    ['workspaces',()=>jsonResponse([{id:'foreign-workspace'}])],
+    ['memories',()=>jsonResponse([{id:'memory-1',workspace_id:'foreign-workspace'}])],
+  ];
+  for(const [target,response] of cases) {
+    const h=collectorFixture(({table})=>table===target?response():undefined);
+    await assert.rejects(h.run(),DisclosureFailure);
+  }
+});
+
+test('missing, denied, malformed or network-failed active data aborts the complete export',async()=>{
   for(const response of [
     ()=>jsonResponse({code:'PGRST205'},404),
     ()=>jsonResponse({code:'42501'},403),
     ()=>new Response('invalid-json',{status:200}),
     ()=>jsonResponse({}),
-    ()=>jsonResponse([{id:'x',workspace_id:'foreign'}]),
     ()=>{throw Error('PRIVATE_NETWORK_DETAIL')},
   ]) {
     const h=collectorFixture(({table})=>table==='memories'?response():undefined);
@@ -133,14 +161,14 @@ test('pagination preserves every active record and a later-page failure aborts i
   await assert.rejects(broken.run(),DisclosureFailure);
 });
 
-test('missing session or workspace never reaches a data endpoint',async()=>{
-  for(const [id,token] of [[workspace,''],['','synthetic-user-jwt']]) {
-    const h=collectorFixture(undefined,token);await assert.rejects(h.run(id),DisclosureFailure);assert.equal(h.calls.length,0);
+test('missing session, workspace or user identity never reaches a data endpoint',async()=>{
+  for(const [id,uid,token] of [[workspace,userId,''],['',userId,'synthetic-user-jwt'],[workspace,'','synthetic-user-jwt']]) {
+    const h=collectorFixture(undefined,token);await assert.rejects(h.run(id,uid),DisclosureFailure);assert.equal(h.calls.length,0);
   }
 });
 
 function routeFixture({datasets=[],failAt,anonymous=false,noWorkspace=false,knownFailure=false}={}) {
-  let input,pdfCalls=0;
+  let input,pdfCalls=0,collectorArgs;
   const maybeFail=stage=>{if(failAt===stage)throw(knownFailure?new DisclosureFailure('PRIVATE_RAW_ERROR content_sources <script>'):Error('PRIVATE_RAW_ERROR font token'));};
   class TestNextResponse extends Response {static redirect(url){return new TestNextResponse(null,{status:307,headers:{Location:String(url)}})}}
   const pdf=load('src/lib/dataDisclosurePdf.ts',{'pdfnative':{}});
@@ -148,28 +176,32 @@ function routeFixture({datasets=[],failAt,anonymous=false,noWorkspace=false,know
     'next/server':{NextResponse:TestNextResponse},
     '@/lib/dashboardFeatures':{getCommercialOptionLabel:()=> 'Existing plan'},
     '@/lib/dataDisclosureExport':{DataDisclosureExportError:DisclosureFailure,getAllWorkspaceContactsForDisclosure:async()=>{maybeFail('contacts');return[{display_name:'Synthetic contact',summary:'PRESERVE_CONTACT'}]}},
-    '@/lib/dataDisclosureMetaExport':{getWorkspaceMetaDataForDisclosure:async()=>{maybeFail('datasets');return datasets;}},
+    '@/lib/dataDisclosureMetaExport':{getWorkspaceMetaDataForDisclosure:async(...args)=>{collectorArgs=args;maybeFail('datasets');return datasets;}},
     '@/lib/supabase/server':{
-      getSupabaseServerUser:async()=>{maybeFail('auth');return{data:{user:anonymous?null:{id:'synthetic-owner',email:'owner@example.invalid',user_metadata:{display_name:'Synthetic Creator',phone:'+43 1 234',role_audience:'Creator',preferred_plan:'starter'}}}}},
+      getSupabaseServerUser:async()=>{maybeFail('auth');return{data:{user:anonymous?null:{id:userId,email:'owner@example.invalid',user_metadata:{display_name:'Synthetic Creator',phone:'+43 1 234',role_audience:'Creator',preferred_plan:'starter'}}}}},
       getUserWorkspaceDashboard:async()=>{maybeFail('workspace');return{workspace:noWorkspace?null:{id:workspace,name:'Synthetic workspace',role:'owner',plan_id:'starter',commercial_option:'starter_no_setup_commitment',setup_fee_cents:0,monthly_fee_cents:31200,commitment_months:12}}},
     },
     '@/lib/dataDisclosurePdf':{createDataDisclosurePdf:async value=>{input=value;pdfCalls++;maybeFail('pdf');return Buffer.from('%PDF-1.7\nSYNTHETIC_TRANSPORT_ONLY')}},
   });
-  return{run:(lang='de')=>route.GET(new Request(`https://fanmind.invalid/settings/profile/data-export?lang=${lang}`)),input:()=>input,pdfCalls:()=>pdfCalls,lines:()=>pdf.buildDataDisclosurePdfLines(input)};
+  return{run:(lang='de')=>route.GET(new Request(`https://fanmind.invalid/settings/profile/data-export?lang=${lang}`)),input:()=>input,pdfCalls:()=>pdfCalls,collectorArgs:()=>collectorArgs,lines:()=>pdf.buildDataDisclosurePdfLines(input)};
 }
 
-test('successful disclosure is explicitly complete and includes account metadata plus every collected data section',async()=>{
+test('successful disclosure binds collector to signed-in Creator and is explicitly complete',async()=>{
   const datasets=[
+    {key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},
+    {key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},
     {key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},
     {key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},
     {key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]},
   ];
   const h=routeFixture({datasets});const response=await h.run('de');
+  assert.deepEqual(h.collectorArgs(),[workspace,userId]);
   assert.equal(response.status,200);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');
   assert.match(response.headers.get('Content-Disposition'),/fanmind-datenauskunft\.pdf/);
   assert.doesNotMatch(response.headers.get('Content-Disposition'),/teilweise|partial/i);
   const lines=h.lines().join('\n');
   assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/workspace_role: owner/);
+  assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/Eigene Workspace-Mitgliedschaft/);
   assert.match(lines,/Workspace-, Vertrags- und Abrechnungsdaten/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);
   assert.doesNotMatch(lines,/Vollständigkeit nicht bestätigt|Teilauskunft/);
 });
@@ -212,11 +244,16 @@ for(const locale of ['de','en']) {
     try {
       const output=ts.transpileModule(readFileSync('src/lib/dataDisclosurePdf.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText;
       const file=join(temp,'pdf.mjs');await writeFile(file,output);const engine=await import(pathToFileURL(file).href);
-      const h=routeFixture({datasets:[{key:'memories',rows:[{workspace_id:workspace,id:'memory-1',content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{workspace_id:workspace,id:'msg-1',content:'PRESERVE_MESSAGE'}]}]});
+      const h=routeFixture({datasets:[
+        {key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},
+        {key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},
+        {key:'memories',rows:[{workspace_id:workspace,id:'memory-1',content:'PRESERVE_MEMORY'}]},
+        {key:'messages',rows:[{workspace_id:workspace,id:'msg-1',content:'PRESERVE_MESSAGE'}]},
+      ]});
       await h.run(locale);const input=h.input();input.contacts=Array.from({length:60},(_,i)=>({displayName:`Synthetic contact ${i+1}`,summary:`PRESERVED-${i+1}`}));
       const pdf=await engine.createDataDisclosurePdf(input);assert.equal(Buffer.from(pdf).subarray(0,5).toString(),'%PDF-');
       const pages=extractText(pdf),text=pages.map(p=>p.text).join('\n');
-      assert.match(text,/PRESERVED-60/);assert.match(text,/PRESERVE_MEMORY/);assert.match(text,/PRESERVE_MESSAGE/);
+      assert.match(text,/PRESERVED-60/);assert.match(text,/PRESERVE_MEMORY/);assert.match(text,/PRESERVE_MESSAGE/);assert.match(text,/Synthetic Creator/);
       assert.doesNotMatch(text,/Completeness not confirmed|Vollständigkeit nicht bestätigt|Partial export|Teilauskunft/);
       assert.ok(pages.length>1);
     } finally {await rm(temp,{recursive:true,force:true})}
