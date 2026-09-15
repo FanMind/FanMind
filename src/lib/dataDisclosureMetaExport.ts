@@ -31,6 +31,8 @@ export type DisclosureMetaDataset = {
     | "creator_playbooks"
     | "creator_commercial_events";
   rows: DisclosureMetaRow[];
+  // An unavailable API table is not proof of an empty or absent database table.
+  unavailable?: boolean;
 };
 
 type DatasetDefinition = {
@@ -67,6 +69,7 @@ const DATASETS: DatasetDefinition[] = [
   {
     key: "content",
     table: "content_sources",
+    optional: true,
     selectVariants: [
       "id,workspace_id,social_connection_id,source_platform,source_type,external_account_id,external_source_id,external_post_id,external_video_id,media_type,content_format,campaign_label,title,summary,caption_excerpt,permalink_url,published_at,metadata,created_at,updated_at",
       "id,workspace_id,source_platform,source_type,external_source_id,external_post_id,external_video_id,title,summary,caption_excerpt,permalink_url,published_at,metadata,created_at,updated_at",
@@ -128,7 +131,30 @@ const DATASETS: DatasetDefinition[] = [
 
 type PageResult =
   | { ok: true; rows: DisclosureMetaRow[] }
-  | { ok: false; missingSchema: boolean; message: string };
+  | { ok: false; kind: "table_unavailable" | "column_unavailable" | "error"; message: string };
+
+function classifyReadFailure(
+  status: number,
+  body: unknown,
+  table: string,
+): "table_unavailable" | "column_unavailable" | "error" {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return "error";
+  const { code, message } = body as { code?: unknown; message?: unknown };
+  if (status === 404 && typeof message === "string") {
+    if (
+      (code === "PGRST205" &&
+        message === `Could not find the table 'public.${table}' in the schema cache`) ||
+      (code === "42P01" &&
+        (message === `relation "public.${table}" does not exist` ||
+          message === `relation "${table}" does not exist`))
+    ) return "table_unavailable";
+  }
+  // A legacy projection may succeed. Exhausted projections still fail; a
+  // missing column must never turn an entire optional dataset into zero rows.
+  if (status === 400 && (code === "42703" || code === "PGRST204"))
+    return "column_unavailable";
+  return "error";
+}
 
 async function fetchPage(input: {
   definition: DatasetDefinition;
@@ -151,25 +177,21 @@ async function fetchPage(input: {
   const response = await input.fetchImpl(url, {
     headers: getSupabaseHeaders(input.accessToken),
     cache: "no-store",
+    redirect: "error",
     signal: AbortSignal.timeout(15_000),
   }).catch(() => null);
   if (!response) {
     return {
       ok: false,
-      missingSchema: false,
+      kind: "error",
       message: `${input.definition.table}: Netzwerkfehler`,
     };
   }
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    const normalized = body.toLowerCase();
+    const body: unknown = await response.json().catch(() => null);
     return {
       ok: false,
-      missingSchema:
-        response.status === 404 ||
-        normalized.includes("schema cache") ||
-        normalized.includes("does not exist") ||
-        normalized.includes("could not find"),
+      kind: classifyReadFailure(response.status, body, input.definition.table),
       message: `${input.definition.table}: HTTP ${response.status}`,
     };
   }
@@ -177,15 +199,16 @@ async function fetchPage(input: {
   if (!Array.isArray(payload)) {
     return {
       ok: false,
-      missingSchema: false,
+      kind: "error",
       message: `${input.definition.table}: ungültige Serverantwort`,
     };
   }
   const rows = payload as DisclosureMetaRow[];
-  if (rows.some((row) => row.workspace_id !== input.workspaceId)) {
+  if (rows.some((row) => !row || typeof row !== "object" ||
+    Array.isArray(row) || row.workspace_id !== input.workspaceId)) {
     return {
       ok: false,
-      missingSchema: false,
+      kind: "error",
       message: `${input.definition.table}: fremder Workspace in Exportantwort`,
     };
   }
@@ -214,20 +237,15 @@ async function fetchDataset(input: {
       break;
     }
     lastError = result.message;
-    if (!result.missingSchema) break;
+    if (result.kind === "table_unavailable" && input.definition.optional) {
+      // No records have been read. Preserve the unavailable status in the PDF
+      // rather than hiding a missing deployment or a stale API schema cache.
+      return { key: input.definition.key, rows: [], unavailable: true };
+    }
+    if (result.kind !== "column_unavailable") break;
   }
 
   if (!firstPage || !selectedColumns) {
-    if (input.definition.optional && lastError) {
-      const optionalProbe = await fetchPage({
-        ...input,
-        select: input.definition.selectVariants[0],
-        offset: 0,
-      });
-      if (!optionalProbe.ok && optionalProbe.missingSchema) {
-        return { key: input.definition.key, rows: [] };
-      }
-    }
     throw new DataDisclosureExportError(
       `Gespeicherte Meta-Daten konnten nicht vollständig exportiert werden (${lastError}).`,
     );
@@ -271,9 +289,16 @@ export async function getWorkspaceMetaDataForDisclosure(
       "Autorisierter Workspace oder Sitzung fehlt für die Meta-Datenauskunft.",
     );
   }
+  let socialUnavailable = false;
   return Promise.all(
-    [getSocialConnectionMetadataForDisclosure(normalizedWorkspaceId, accessToken, fetchImpl)
-      .then(rows => ({ key: "social_provider_connections" as const, rows })),
+    [getSocialConnectionMetadataForDisclosure(
+      normalizedWorkspaceId, accessToken, fetchImpl,
+      () => { socialUnavailable = true; },
+    ).then(rows => ({
+      key: "social_provider_connections" as const,
+      rows,
+      ...(socialUnavailable ? { unavailable: true } : {}),
+    })),
     ...DATASETS.map((definition) =>
       fetchDataset({
         definition,

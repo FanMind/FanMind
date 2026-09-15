@@ -55,6 +55,7 @@ export type DataDisclosurePdfInput = {
     title: string;
     countLabel: string;
     emptyMessage: string;
+    unavailableMessage?: string;
     entries: Array<{
       title: string;
       fields: string[];
@@ -65,6 +66,10 @@ export type DataDisclosurePdfInput = {
 const copy = {
   de: {
     title: "FanMind PDF-Datenauskunft",
+    partialTitle: "FanMind PDF-Datenauskunft - Teilauskunft",
+    partialHeading: "Vollständigkeit nicht bestätigt",
+    partialNotice: "Diese PDF enthält die erfolgreich abgerufenen Daten. Mindestens ein optionaler Datenbereich ist derzeit nicht abrufbar und ausdrücklich als nicht enthalten gekennzeichnet. Daraus folgt nicht, dass dort keine Daten gespeichert sind. Für eine vollständige Auskunft bitte den Export nach Behebung erneut anfordern oder den FanMind-Support kontaktieren.",
+    partialNote: "Hinweis: Nicht abrufbare Bereiche sind in dieser Teilauskunft ausgewiesen. Es werden nur autorisierte Daten exportiert; Secrets, Tokens, Sitzungsdaten, Stripe-IDs und Daten anderer Workspaces sind ausgeschlossen.",
     generated: "Erstellt",
     account: "Konto",
     userId: "Nutzer-ID",
@@ -108,6 +113,10 @@ const copy = {
   },
   en: {
     title: "FanMind PDF data disclosure",
+    partialTitle: "FanMind PDF data disclosure - Partial export",
+    partialHeading: "Completeness not confirmed",
+    partialNotice: "This PDF contains the data successfully retrieved. At least one optional data category is currently unavailable and is explicitly marked as not included. This does not mean that no data is stored there. For a complete disclosure, request the export again after the issue is resolved or contact FanMind support.",
+    partialNote: "Note: Unavailable categories are identified in this partial export. Only authorized data is exported; secrets, tokens, session data, Stripe IDs and data from other workspaces are excluded.",
     generated: "Generated",
     account: "Account",
     userId: "User ID",
@@ -153,6 +162,11 @@ const copy = {
 
 type DisclosureCopy = (typeof copy)[DataDisclosureLocale];
 type DisclosureContact = DataDisclosurePdfInput["contacts"][number];
+
+function isPartialDisclosure(input: DataDisclosurePdfInput): boolean {
+  return (input.storedDataSections ?? []).some(section => Boolean(section.unavailableMessage));
+}
+
 
 function normalizeLine(value: string | null | undefined, fallback = "-"): string {
   const normalized = (value ?? "")
@@ -308,8 +322,9 @@ export function buildDataDisclosurePdfLines(
   const locale: DataDisclosureLocale = input.locale === "en" ? "en" : "de";
   const text = copy[locale];
   const lines = [
-    text.title,
+    isPartialDisclosure(input) ? text.partialTitle : text.title,
     `${text.generated}: ${formatDate(input.generatedAt, locale)}`,
+    ...(isPartialDisclosure(input) ? [text.partialHeading, text.partialNotice] : []),
     "",
     text.account,
     ...buildAccountFieldLines(input, text),
@@ -333,6 +348,11 @@ export function buildDataDisclosurePdfLines(
 
   for (const section of input.storedDataSections ?? []) {
     lines.push("", normalizeLine(section.title));
+    if (section.unavailableMessage) {
+      if (section.entries.length) throw new Error("Conflicting disclosure section status");
+      lines.push(normalizeLine(section.unavailableMessage));
+      continue;
+    }
     lines.push(`${normalizeLine(section.countLabel)}: ${section.entries.length}`);
     if (!section.entries.length) lines.push(normalizeLine(section.emptyMessage));
     section.entries.forEach((entry, index) => {
@@ -344,7 +364,7 @@ export function buildDataDisclosurePdfLines(
     });
   }
 
-  lines.push("", text.note);
+  lines.push("", isPartialDisclosure(input) ? text.partialNote : text.note);
   return lines;
 }
 
@@ -353,7 +373,15 @@ function buildDataDisclosureBlocks(
   locale: DataDisclosureLocale,
   text: DisclosureCopy,
 ): DocumentBlock[] {
-  const blocks: DocumentBlock[] = [
+  const blocks: DocumentBlock[] = [];
+  if (isPartialDisclosure(input)) {
+    blocks.push(
+      { type: "heading", text: text.partialHeading, level: 2 },
+      { type: "paragraph", text: text.partialNotice, fontSize: 10, lineHeight: 14 },
+      { type: "spacer", height: 8 },
+    );
+  }
+  blocks.push(
     {
       type: "paragraph",
       text: `${text.generated}: ${formatDate(input.generatedAt, locale)}`,
@@ -384,7 +412,7 @@ function buildDataDisclosureBlocks(
       fontSize: 9,
       lineHeight: 12,
     },
-  ];
+  );
 
   if (!input.contacts.length) {
     blocks.push({
@@ -416,7 +444,16 @@ function buildDataDisclosureBlocks(
     blocks.push(
       { type: "spacer", height: 6 },
       { type: "heading", text: normalizeLine(section.title), level: 2 },
-      {
+    );
+    if (section.unavailableMessage) {
+      if (section.entries.length) throw new Error("Conflicting disclosure section status");
+      blocks.push({
+        type: "paragraph", text: normalizeLine(section.unavailableMessage),
+        fontSize: 9, lineHeight: 12,
+      });
+      continue;
+    }
+    blocks.push({
         type: "paragraph",
         text: `${normalizeLine(section.countLabel)}: ${section.entries.length}`,
         fontSize: 9,
@@ -452,7 +489,7 @@ function buildDataDisclosureBlocks(
     { type: "spacer", height: 8 },
     {
       type: "paragraph",
-      text: text.note,
+      text: isPartialDisclosure(input) ? text.partialNote : text.note,
       fontSize: 8,
       lineHeight: 11,
     },
@@ -612,7 +649,7 @@ export async function createDataDisclosurePdf(
 
   return buildDocumentPDFBytes(
     {
-      title: text.title,
+      title: isPartialDisclosure(input) ? text.partialTitle : text.title,
       blocks,
       fontEntries,
       metadata: {

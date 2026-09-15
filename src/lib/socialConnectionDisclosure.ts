@@ -32,6 +32,7 @@ export async function getSocialConnectionMetadataForDisclosure(
   workspaceId: string,
   accessToken: string,
   fetchImpl: typeof fetch = fetch,
+  onUnavailable?: () => void,
 ): Promise<ConnectionMetadata[]> {
   async function assertOwner() {
     const context = await requireAuthorizedWorkspace(accessToken);
@@ -52,9 +53,20 @@ export async function getSocialConnectionMetadataForDisclosure(
   if (!response) unavailable();
   const data: unknown = await readMetadata(response).catch(() => null);
   if (!response.ok) {
-    // Missing optional schema is different from denied access or a failed read.
+    // API schema unavailability is not evidence of zero stored connections.
+    // Only the disclosure collector that records an explicit notice may proceed.
     if (response.status === 404 && typeof data === "object" && data !== null &&
-      "code" in data && ["42P01", "PGRST205"].includes(String(data.code))) return [];
+      "code" in data && "message" in data &&
+      ((data.code === "PGRST205" && data.message ===
+        "Could not find the table 'public.social_provider_connections' in the schema cache") ||
+       (data.code === "42P01" && (data.message ===
+        'relation "public.social_provider_connections" does not exist' || data.message ===
+        'relation "social_provider_connections" does not exist')))) {
+      await assertOwner();
+      if (!onUnavailable) unavailable();
+      onUnavailable();
+      return [];
+    }
     unavailable();
   }
   if (!Array.isArray(data) || data.length > 2) unavailable();

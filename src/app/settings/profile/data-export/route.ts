@@ -28,95 +28,132 @@ function getUserDisplayName(
 }
 
 export async function GET(request: Request) {
-  const { data } = await getSupabaseServerUser();
-  if (!data.user) return NextResponse.redirect(new URL("/login", request.url));
-
-  const workspaceResult = await getUserWorkspaceDashboard(data.user);
-  const workspace = workspaceResult.workspace;
-  if (!workspace) {
-    return new NextResponse("Workspace nicht gefunden.", { status: 404 });
-  }
-
-  let contacts: Awaited<ReturnType<typeof getAllWorkspaceContactsForDisclosure>>;
-  let storedMetaData: DisclosureMetaDataset[];
+  const locale = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
   try {
-    [contacts, storedMetaData] = await Promise.all([
+    const { data } = await getSupabaseServerUser();
+    if (!data.user) {
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.headers.set("Cache-Control", "private, no-store");
+      return response;
+    }
+
+    const workspaceResult = await getUserWorkspaceDashboard(data.user);
+    const workspace = workspaceResult.workspace;
+    if (!workspace) return disclosureFailure(locale, 404);
+
+    const [contacts, storedMetaData] = await Promise.all([
       getAllWorkspaceContactsForDisclosure(workspace.id),
       getWorkspaceMetaDataForDisclosure(workspace.id),
     ]);
-  } catch (error) {
-    const message =
-      error instanceof DataDisclosureExportError
-        ? error.message
-        : "Datenauskunft konnte nicht vollständig erstellt werden.";
-    return new NextResponse(message, {
-      status: error instanceof DataDisclosureExportError ? 409 : 500,
+    const partial = storedMetaData.some(dataset => dataset.unavailable);
+    const pdf = await createDataDisclosurePdf({
+      generatedAt: new Date(),
+      locale,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        displayName: getUserDisplayName(data.user.user_metadata),
+      },
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        planId: workspace.plan_id,
+        commercialOption: getCommercialOptionLabel(workspace.commercial_option),
+        billingStatus: workspace.billing_status,
+        setupFeeCents: workspace.setup_fee_cents,
+        monthlyFeeCents: workspace.monthly_fee_cents,
+        commitmentMonths: workspace.commitment_months,
+        organizationName: workspace.organization_name,
+        streetAddress: workspace.street_address,
+        postalCode: workspace.postal_code,
+        city: workspace.city,
+        country: workspace.country,
+        vatId: workspace.vat_id,
+        taxNumber: workspace.tax_number,
+        companyRegisterNumber: workspace.company_register_number,
+        companyRegisterCourt: workspace.company_register_court,
+        billingCurrentPeriodEndAt: workspace.billing_current_period_end_at,
+        billingMinimumTermEndsAt: workspace.billing_minimum_term_ends_at,
+        subscriptionCancelRequestedAt: workspace.subscription_cancel_requested_at,
+        subscriptionEffectiveEndAt: workspace.subscription_effective_end_at,
+        workspaceAccessMode: workspace.workspace_access_mode,
+      },
+      contacts: contacts.map((contact) => ({
+        displayName: contact.display_name,
+        handle: contact.handle,
+        sourcePlatform: contact.source_platform,
+        language: contact.language,
+        status: contact.status,
+        tags: contact.tags,
+        summary: contact.summary,
+        internalNotes: contact.internal_notes,
+        createdAt: contact.created_at,
+        updatedAt: contact.updated_at,
+      })),
+      storedDataSections: buildStoredDataSections(storedMetaData, locale),
+    });
+
+    const body = new ArrayBuffer(pdf.byteLength);
+    new Uint8Array(body).set(pdf);
+    const filename = partial
+      ? (locale === "en" ? "fanmind-data-disclosure-partial.pdf" : "fanmind-datenauskunft-teilweise.pdf")
+      : (locale === "en" ? "fanmind-data-disclosure.pdf" : "fanmind-datenauskunft.pdf");
+
+    return new NextResponse(body, {
       headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
+        "X-FanMind-Disclosure-Status": partial ? "partial" : "available-data",
       },
     });
+  } catch (error) {
+    // Never expose database diagnostics, personal content or PDF/font exceptions.
+    return disclosureFailure(locale, error instanceof DataDisclosureExportError ? 409 : 500);
   }
+}
 
-  const locale = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
-  const pdf = await createDataDisclosurePdf({
-    generatedAt: new Date(),
-    locale,
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      displayName: getUserDisplayName(data.user.user_metadata),
-    },
-    workspace: {
-      id: workspace.id,
-      name: workspace.name,
-      planId: workspace.plan_id,
-      commercialOption: getCommercialOptionLabel(workspace.commercial_option),
-      billingStatus: workspace.billing_status,
-      setupFeeCents: workspace.setup_fee_cents,
-      monthlyFeeCents: workspace.monthly_fee_cents,
-      commitmentMonths: workspace.commitment_months,
-      organizationName: workspace.organization_name,
-      streetAddress: workspace.street_address,
-      postalCode: workspace.postal_code,
-      city: workspace.city,
-      country: workspace.country,
-      vatId: workspace.vat_id,
-      taxNumber: workspace.tax_number,
-      companyRegisterNumber: workspace.company_register_number,
-      companyRegisterCourt: workspace.company_register_court,
-      billingCurrentPeriodEndAt: workspace.billing_current_period_end_at,
-      billingMinimumTermEndsAt: workspace.billing_minimum_term_ends_at,
-      subscriptionCancelRequestedAt: workspace.subscription_cancel_requested_at,
-      subscriptionEffectiveEndAt: workspace.subscription_effective_end_at,
-      workspaceAccessMode: workspace.workspace_access_mode,
-    },
-    contacts: contacts.map((contact) => ({
-      displayName: contact.display_name,
-      handle: contact.handle,
-      sourcePlatform: contact.source_platform,
-      language: contact.language,
-      status: contact.status,
-      tags: contact.tags,
-      summary: contact.summary,
-      internalNotes: contact.internal_notes,
-      createdAt: contact.created_at,
-      updatedAt: contact.updated_at,
-    })),
-    storedDataSections: buildStoredDataSections(storedMetaData, locale),
-  });
-
-  const body = new ArrayBuffer(pdf.byteLength);
-  new Uint8Array(body).set(pdf);
-  const filename =
-    locale === "en" ? "fanmind-data-disclosure.pdf" : "fanmind-datenauskunft.pdf";
-
-  return new NextResponse(body, {
+function disclosureFailure(locale: "de" | "en", status: number): NextResponse {
+  const text = locale === "en" ? {
+    title: "Data disclosure is currently unavailable",
+    section: "Profile & account / Data disclosure",
+    body: "Not all required data could be loaded or the PDF could not be created. No PDF was downloaded. Your stored data has not been changed.",
+    retry: "Try again", back: "Back to profile",
+    help: "If the problem persists, please contact FanMind support to request your data disclosure.",
+  } : {
+    title: "Datenauskunft derzeit nicht verfügbar",
+    section: "Profil & Konto / Datenauskunft",
+    body: "Nicht alle erforderlichen Daten konnten geladen werden oder die PDF konnte nicht erstellt werden. Es wurde keine PDF heruntergeladen. Deine gespeicherten Daten wurden nicht verändert.",
+    retry: "Erneut versuchen", back: "Zurück zum Profil",
+    help: "Besteht das Problem weiterhin, wende dich bitte für deine Datenauskunft an den FanMind-Support.",
+  };
+  // All interpolations are fixed localized copy or an allowlisted locale.
+  // No request URL, query value, exception or account field is rendered here.
+  return new NextResponse(`<!doctype html>
+<html lang="${locale}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${text.title} | FanMind</title>
+<link rel="stylesheet" href="/data-disclosure-error.css"></head>
+<body><main>
+<a class="brand" href="/settings/profile" aria-label="FanMind">Fan<span>Mind</span></a>
+<p class="breadcrumb">${text.section}</p>
+<section aria-labelledby="export-heading">
+<p class="eyebrow">${locale === "en" ? "DATA EXPORT" : "DATENEXPORT"}</p>
+<h1 id="export-heading">${text.title}</h1>
+<p class="message">${text.body}</p>
+<nav aria-label="${locale === "en" ? "Next steps" : "Nächste Schritte"}">
+<a class="primary" href="/settings/profile/data-export?lang=${locale}">${text.retry}</a>
+<a class="secondary" href="/settings/profile?lang=${locale}">${text.back}</a>
+</nav><p class="help">${text.help}</p>
+</section></main></body></html>`, {
+    status,
     headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "no-referrer",
+      "Content-Security-Policy": "default-src 'none'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
     },
   });
 }
@@ -148,6 +185,11 @@ function buildStoredDataSections(
   return datasets.map((dataset) => ({
     title: SECTION_LABELS[dataset.key][locale],
     countLabel: locale === "en" ? "Stored records" : "Gespeicherte Datensätze",
+    unavailableMessage: dataset.unavailable
+      ? (locale === "en"
+        ? "Not included: this optional data category is currently unavailable. Whether it contains stored data could not be verified. This is not a zero-record result."
+        : "Nicht enthalten: Dieser optionale Datenbereich ist derzeit nicht abrufbar. Ob dort Daten gespeichert sind, konnte nicht geprüft werden. Dies ist kein Nachweis für null gespeicherte Datensätze.")
+      : undefined,
     emptyMessage:
       locale === "en"
         ? "No records are stored in this category."
