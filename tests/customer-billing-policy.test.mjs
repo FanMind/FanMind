@@ -585,7 +585,10 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(runtimeSettingsSource, /if \(settingsUpdateInProgress\)[\s\S]*settingsUpdateInProgress = true/u);
   assert.match(runtimeSettingsSource, /finally[\s\S]*settingsUpdateInProgress = false/u);
   assert.doesNotMatch(runtimeSettingsSource, /\.lock|BOOT_ID_PATH|lockOwnerAlive/u);
-  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*!enabled && !\(await expireOpenInternalDailyTestCheckoutSessions\(\)\)/u);
+  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*expireOpenInternalDailyTestCheckoutSessions\(\)[\s\S]*markPublicDailyTestPlanCleanupComplete\(revision/u);
+  assert.match(runtimeSettingsSource, /publicDailyTestPlanCleanupRequired = !enabled/u);
+  assert.match(runtimeSettingsSource, /publicDailyTestPlanRevision !== expectedRevision/u);
+  assert.match(runtimeSettingsSource, /daily_beta_cleanup_required/u);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,

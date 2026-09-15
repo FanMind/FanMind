@@ -33,9 +33,11 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
     >
       <main className={styles.adminStack}>
         <AdminTabs activeTab="settings" />
-        {result ? (
+        {result || betaStatus.cleanupRequired ? (
           <p className={result === "enabled" ? styles.badgeOk : styles.badgeWarn}>
-            {result === "not_ready"
+            {betaStatus.cleanupRequired && result !== "enabled"
+              ? "Daily ist ausgeschaltet, aber offene Zahlungslinks müssen noch vollständig gesperrt werden. Bitte führe die Sperrung erneut aus."
+              : result === "not_ready"
               ? "Freigabe blockiert: Daily-Provisioning oder Stripe-/Webhook-Konfiguration ist noch nicht vollständig bereit."
               : result === "busy"
                 ? "Daily wurde parallel geändert. Bitte lade den aktuellen Status neu."
@@ -95,7 +97,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               {betaStatus.enabled ? "Daily-Beta für neue Anmeldungen ausschalten" : "Daily-Beta für neue Anmeldungen einschalten"}
             </button>
           </form>
-          {result === "disabled_cleanup_required" && !betaStatus.enabled ? (
+          {betaStatus.cleanupRequired && !betaStatus.enabled ? (
             <form action="/api/admin/settings/daily-test-plan" method="post">
               <input type="hidden" name="enabled" value="false" />
               <button className={styles.buttonDanger} type="submit">

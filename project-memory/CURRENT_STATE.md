@@ -436,3 +436,8 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## PR #1131 publication blocker — 2026-09-15
 - Local merge commit `2a0a01e` contains current `main` `5114e9a` as a parent and keeps the PR source tree unchanged, but this checkout cannot authenticate to GitHub to update the existing PR branch. PR #1131 therefore remains remotely conflicted until a GitHub-authenticated Codex Cloud task pushes the merge commit to that exact branch.
+
+## Daily cleanup durability and PR #1131 reconciliation — 2026-09-15
+- PR #1131 remote head `fcaac3a` still lacked current `main` ancestry; merge commit `4583b73` now reconciles `main` `5114e9a` locally while retaining the narrow Daily repair tree.
+- Daily disable now persists `cleanup_required` before Stripe cleanup. Enable is blocked while it remains set, and cleanup completion is compare-and-set against the exact disable revision, preventing a stale cleanup from clearing a newer state.
+- No Production action, payment, checkout or account mutation was performed.

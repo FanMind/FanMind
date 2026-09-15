@@ -13,6 +13,8 @@ type RuntimeProductSettings = {
   publicDailyTestPlanEnabledUntil?: null;
   updatedAt?: string;
   updatedBy?: string;
+  publicDailyTestPlanCleanupRequired?: boolean;
+  publicDailyTestPlanRevision?: string;
 };
 
 // Production intentionally runs one PM2 worker. Request overlap therefore needs
@@ -31,17 +33,28 @@ function getSettingsPath(): string {
       );
 }
 
-export async function getPublicDailyBetaStatusFromServer(): Promise<{ enabled: boolean; updatedAt: string | null }> {
+async function readRuntimeSettings(): Promise<Partial<RuntimeProductSettings>> {
+  return JSON.parse(
+    await readFile(
+      /* turbopackIgnore: true */ getSettingsPath(),
+      "utf8",
+    ),
+  ) as Partial<RuntimeProductSettings>;
+}
+
+export async function getPublicDailyBetaStatusFromServer(): Promise<{
+  enabled: boolean;
+  updatedAt: string | null;
+  cleanupRequired: boolean;
+}> {
   try {
-    const payload = JSON.parse(
-      await readFile(
-        /* turbopackIgnore: true */ getSettingsPath(),
-        "utf8",
-      ),
-    ) as Partial<RuntimeProductSettings>;
-    return getPublicDailyBetaStatus(payload);
+    const payload = await readRuntimeSettings();
+    return {
+      ...getPublicDailyBetaStatus(payload),
+      cleanupRequired: payload.publicDailyTestPlanCleanupRequired === true,
+    };
   } catch {
-    return { enabled: false, updatedAt: null };
+    return { enabled: false, updatedAt: null, cleanupRequired: true };
   }
 }
 
@@ -52,7 +65,7 @@ export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
 export async function setPublicDailyTestPlanEnabled(
   enabled: boolean,
   updatedBy: string,
-): Promise<void> {
+): Promise<{ revision: string }> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
   if (settingsUpdateInProgress) {
@@ -61,10 +74,51 @@ export async function setPublicDailyTestPlanEnabled(
   settingsUpdateInProgress = true;
 
   try {
+    if (enabled) {
+      const current = await readRuntimeSettings().catch(() => null);
+      if (!current || current.publicDailyTestPlanCleanupRequired === true) {
+        throw new Error("daily_beta_cleanup_required");
+      }
+    }
+    const revision = randomUUID();
     const payload: RuntimeProductSettings = createPublicDailyBetaSettings(
       enabled,
       updatedBy,
     );
+    payload.publicDailyTestPlanCleanupRequired = !enabled;
+    payload.publicDailyTestPlanRevision = revision;
+    await writeFileExclusive(temporaryPath, payload);
+    await rename(temporaryPath, settingsPath);
+    await chmod(settingsPath, 0o600);
+    return { revision };
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
+    settingsUpdateInProgress = false;
+  }
+}
+
+export async function markPublicDailyTestPlanCleanupComplete(
+  expectedRevision: string,
+  updatedBy: string,
+): Promise<void> {
+  const settingsPath = getSettingsPath();
+  const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
+  if (settingsUpdateInProgress) throw new Error("daily_beta_update_in_progress");
+  settingsUpdateInProgress = true;
+  try {
+    const current = await readRuntimeSettings();
+    if (
+      current.publicDailyTestPlanEnabled !== false ||
+      current.publicDailyTestPlanCleanupRequired !== true ||
+      current.publicDailyTestPlanRevision !== expectedRevision
+    ) {
+      throw new Error("daily_beta_revision_changed");
+    }
+    const payload: RuntimeProductSettings = {
+      ...createPublicDailyBetaSettings(false, updatedBy),
+      publicDailyTestPlanCleanupRequired: false,
+      publicDailyTestPlanRevision: randomUUID(),
+    };
     await writeFileExclusive(temporaryPath, payload);
     await rename(temporaryPath, settingsPath);
     await chmod(settingsPath, 0o600);
