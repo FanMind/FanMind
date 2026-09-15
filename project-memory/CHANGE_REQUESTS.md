@@ -353,6 +353,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Status: IN_PROGRESS
 - Decision: implement FM-DEC-019 as a server-owned, Platform-Admin-controlled manual Daily beta without countdown. Disabled means no public visibility or new admission/checkout; existing Daily subscriptions continue unchanged.
 - Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
+
 # FM-CR-038 — controlled Daily Production provisioning path
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Decision: prepare a separate checksum-pinned, exact-main, protected-Production and TLS-bound Verify/Apply/Postflight control for the Staging-proven Daily provisioning SQL.

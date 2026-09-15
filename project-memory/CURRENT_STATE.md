@@ -420,6 +420,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.
 - Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
 - Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
+
 ## Daily Production control preparation — 2026-09-14
 - FM-CR-038 prepares a distinct manual Production control for the checksum-pinned Daily provisioning SQL, bound to exact main/commit, protected Production environment/runner/target and TLS.
 - No fresh protected Production receipt was available. RPCs, constraints, indexes, RLS/browser privileges, Consent, both Billing ledgers, Capture, canonical reconciliation, Write Freeze and Stripe/Webhook/Tax are `unknown`; the rollout decision is `BLOCK`.
