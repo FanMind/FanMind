@@ -422,7 +422,6 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
 
 ## Daily Production control preparation — 2026-09-15
-- FM-CR-038 prepares a distinct manual Production verify control for the checksum-pinned Daily provisioning SQL, bound to exact main/commit, protected Production environment/runner/target and TLS.
-- No fresh protected Production receipt was available. RPCs, constraints, indexes, RLS/browser privileges, Consent, both Billing ledgers, Capture, canonical reconciliation, Write Freeze and Stripe/Webhook/Tax are `unknown`; rollout decision is `BLOCK`.
-- Review corrections recheck every new Daily mutation boundary, recover abandoned runtime locks through a bounded lease, omit disabled Daily from public offer surfaces, and keep Production verify-only pending a fresh receipt contract. No Production mutation occurred.
-- Final review correction: disabling admission first persists `off`, then expires every still-open Stripe Checkout whose server metadata identifies `internal_daily_test`; a concurrently created session is rechecked and expired before its URL is returned. Lock release is ownership-token-bound so an expired writer cannot delete a successor lock. Invalid Production verify dispatches now fail in an unconditional unprotected validation job rather than skipping the protected job as apparent success.
+- FM-CR-038 prepares a manual, checksum-pinned Production verify control bound to exact main/commit, protected Production environment/runner/target and TLS. No fresh protected Production receipt exists; rollout remains `BLOCK`.
+- Final review corrections expire open Daily Checkout Sessions after Admin-off, expire a concurrently created session before returning its URL, release runtime locks only for the owning token, and fail invalid verify dispatches in an unconditional validation job.
+- No Production Apply, runtime activation, real checkout, payment or existing Daily subscription was changed.
