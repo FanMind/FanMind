@@ -12,7 +12,7 @@ import {
   STRIPE_BILLING_WRITE_FREEZE_CODE,
   STRIPE_BILLING_WRITE_FREEZE_MESSAGE,
 } from "@/lib/stripeBillingWriteFreeze.mjs";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 
@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
   const payload = parsedBody.value as { planId?: string; commercialOption?: string } | null;
   if (!payload?.planId || !payload.commercialOption) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
-  if (payload.commercialOption === "internal_daily_test" && !(await getPublicDailyTestPlanEnabled())) {
+  if (payload.commercialOption === "internal_daily_test" &&
+      (!(await getPublicDailyTestPlanEnabled()) || !isInternalDailyTestBillingRuntimeReady())) {
     return NextResponse.json({ error: "Das interne Live-Testabo kann nur im Adminbereich gestartet werden." }, { status: 403 });
   }
 

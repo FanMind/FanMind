@@ -30,7 +30,10 @@ import type { PlanId } from "@/config/plans";
 import type { FanMindLanguage } from "@/lib/fanmindCopy";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import {
+  isInternalDailyTestBillingRuntimeReady,
+  isInternalDailyTestStripeReady,
+} from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 import { isTemporaryDemoUser, TEMPORARY_DEMO_WORKSPACE_NAME } from "@/lib/demoMode";
 import {
@@ -7118,6 +7121,12 @@ export async function ensureUserWorkspace(
       }
 
       if (!isInternalDailyTestStripeReady(getStripeConfigStatus())) {
+        return workspaceBackfillError(
+          PUBLIC_DAILY_TEST_BILLING_UNAVAILABLE_ERROR,
+        );
+      }
+
+      if (!isInternalDailyTestBillingRuntimeReady()) {
         return workspaceBackfillError(
           PUBLIC_DAILY_TEST_BILLING_UNAVAILABLE_ERROR,
         );

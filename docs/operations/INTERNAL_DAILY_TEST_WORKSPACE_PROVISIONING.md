@@ -134,10 +134,28 @@ eine frühere generische Anwendung hin und muss als History-Drift separat
 geklärt werden; der kontrollierte Apply darf ihn nicht übergehen. Das gepinnte
 SQL wiederholt diese Prüfung innerhalb seiner Transaktion und hält den Ledger
 dabei im `SHARE`-Modus gesperrt, sodass ein paralleler generischer Push die
-Preflight-Entscheidung nicht überholen kann. Es existiert absichtlich kein
-Production-Apply-Workflow. Production benötigt nach einem dokumentierten
-Staging-Receipt einen eigenen, später freizugebenden und erneut geprüften
-Kontrollpfad.
+Preflight-Entscheidung nicht überholen kann. Der getrennte manuelle
+Production-Kontrollpfad liegt in
+`.github/workflows/internal-daily-test-workspace-provisioning-production-control.yml`.
+Er ist an `main`, den exakten geprüften Commit, das geschützte
+`production`-Environment, den Production-Runner, das exakte Production-Ziel
+und TLS `verify-full` gebunden. Der veröffentlichte Workflow ist derzeit
+absichtlich **verify-only**. Ein Production-Apply bleibt strukturell
+unerreichbar, bis ein eigener frischer, Commit-/Ziel-/Zeit-gebundener
+Readiness-Receipt-Vertrag implementiert und erneut geprüft wurde. Ein normaler
+Deploy ruft den Kontrollpfad nie auf.
+
+Vor jeder Apply-Freigabe muss ein frischer read-only Lauf die festen Zustände
+`absent`, `complete`, `partial` oder `unknown` für RPCs, Constraints, Indizes,
+RLS/Browserprivilegien, Consent, beide Billing-Ledger, Capture, kanonische
+Reconciliation, Write-Freeze und Stripe/Webhook/Tax liefern. `partial` oder
+`unknown` ergibt `BLOCK`, ein bereits vollständiger Daily-Vertrag `SKIP` und
+nur ein vollständig vorbereiteter Zielzustand mit fehlendem Daily-Vertrag
+`APPLY`. Ein unklarer Commit darf nicht automatisch wiederholt werden.
+Codex Cloud hatte für diesen Source-PR keinen frischen geschützten
+Production-Receipt; der aktuelle belegte Zustand ist daher `unknown` und die
+Entscheidung `BLOCK`. Weder Katalogschalter noch bestehende Daily-Abos werden
+durch diesen SQL-Pfad verändert.
 
 ## Verbindliche Reihenfolge
 

@@ -4,7 +4,7 @@ import {
   getStripeConfigStatus,
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
-import { isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
+import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { getStripeClient } from "@/lib/stripeClient";
 import { getSupabaseAuthUrl, getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
@@ -122,6 +122,9 @@ export async function listStripeInvoicesForWorkspace(workspace: Pick<AdminBillin
 export async function startInternalDailyTestCheckout(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null; url?: string; sessionId?: string }> {
   if (!(await getPublicDailyTestPlanEnabled())) {
     return { ok: false, status: 403, error: "Die Daily-Beta ist für neue Aufnahmen ausgeschaltet." };
+  }
+  if (!isInternalDailyTestBillingRuntimeReady()) {
+    return { ok: false, status: 503, error: "Die Daily-Billing-Laufzeit ist nicht vollständig freigegeben." };
   }
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };

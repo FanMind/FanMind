@@ -86,10 +86,18 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               className={betaStatus.enabled ? styles.buttonDanger : styles.buttonPrimary}
               type="submit"
               disabled={!betaStatus.enabled && !admissionReady}
+              title={!betaStatus.enabled && !admissionReady
+                ? "Daily kann erst eingeschaltet werden, wenn Registrierung, Stripe/Webhook, Billing-Ledger und Zahlungsbedingungen bereit sind."
+                : undefined}
             >
               {betaStatus.enabled ? "Daily-Beta für neue Anmeldungen ausschalten" : "Daily-Beta für neue Anmeldungen einschalten"}
             </button>
           </form>
+          {!betaStatus.enabled && !admissionReady ? (
+            <p className={styles.badgeWarn} role="status">
+              Einschalten ist noch gesperrt. Schließe zuerst alle oben als ausstehend oder unvollständig markierten Readiness-Schritte ab.
+            </p>
+          ) : null}
           <p className={styles.muted}>
             Bei „Aus“ verschwindet Daily aus Landingpage, Registrierung und Workspace-Einrichtung und neue Daily-Checkouts bleiben gesperrt. Bestehende Daily-Abos und Workspaces werden nicht verändert oder gekündigt.
           </p>

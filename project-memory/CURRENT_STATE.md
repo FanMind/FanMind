@@ -420,3 +420,10 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.
 - Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
 - Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
+
+## Daily PR conflict and review closeout — 2026-09-15
+- The Daily control branch now contains current `main` as a real merge parent, so GitHub can evaluate it without repeating the earlier stale-base conflict cycle.
+- Final review corrections keep every Daily checkout entry behind the current server switch and billing-readiness gate, expire still-open Daily Checkout sessions when admission is disabled, and use lock ownership tied to boot ID, PID and an immutable token so an older writer cannot release a successor's lock.
+- The Production provisioning workflow remains verify-only and now rejects invalid dispatches in an unconditional hosted validation job. Its private passfile path is step-scoped, and its policy test is owned by required CI.
+- The Admin page now explains visibly why enabling is unavailable. The observed Production screen correctly reports registration, Stripe/Webhook and Billing-Ledger readiness as incomplete; source changes do not authorize bypassing those gates.
+- No Production apply, runtime switch change, payment, checkout, subscription mutation or account deletion was performed.

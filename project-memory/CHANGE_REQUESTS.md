@@ -353,3 +353,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Status: IN_PROGRESS
 - Decision: implement FM-DEC-019 as a server-owned, Platform-Admin-controlled manual Daily beta without countdown. Disabled means no public visibility or new admission/checkout; existing Daily subscriptions continue unchanged.
 - Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
+
+## FM-CR-038 — Daily PR merge and review closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: merge current `main` into the existing Daily branch; close the open-session, lock-ownership, workflow-validation, CI-ownership and Admin-explanation findings. No Production apply, activation, payment or account deletion.
+- Acceptance: current-main ancestry, focused Daily/security/workflow regression tests, Product Truth, lint, TypeScript and production build; GitHub Current-Head CI/review remain publication gates.

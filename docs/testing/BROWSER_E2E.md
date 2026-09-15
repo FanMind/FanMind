@@ -80,10 +80,13 @@ Alternativer lokaler Port:
 ```bash
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3200 \
 PLAYWRIGHT_SKIP_WEBSERVER=1 \
+FANMIND_RUNTIME_SETTINGS_FILE=/tmp/fanmind-browser-e2e-runtime-settings.json \
 npm run test:e2e
 ```
 
-In diesem Fall muss der gebaute FanMind-Server bereits selbst auf dem angegebenen Port laufen.
+In diesem Fall muss der gebaute FanMind-Server bereits selbst auf dem angegebenen Port
+und mit demselben `FANMIND_RUNTIME_SETTINGS_FILE` gestartet worden sein. Andernfalls
+darf der zustandsverändernde Daily-Test nicht als gültiger Lauf gewertet werden.
 
 ## Deterministischer lokaler Gerhard-Kernablauf
 
