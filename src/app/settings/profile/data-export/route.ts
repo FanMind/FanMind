@@ -54,7 +54,7 @@ export async function GET(request: Request) {
 
     const [contacts, storedData] = await Promise.all([
       getAllWorkspaceContactsForDisclosure(workspace.id),
-      getWorkspaceMetaDataForDisclosure(workspace.id),
+      getWorkspaceMetaDataForDisclosure(workspace.id, data.user.id),
     ]);
 
     const accountMetadataSection = buildAccountMetadataSection(
@@ -205,6 +205,8 @@ const SECTION_LABELS: Record<
   DisclosureMetaDataset["key"],
   { de: string; en: string }
 > = {
+  profile_record: { de: "Gespeichertes Nutzerprofil", en: "Stored user profile" },
+  membership_record: { de: "Eigene Workspace-Mitgliedschaft", en: "Own Workspace membership" },
   workspace_record: { de: "Workspace-, Vertrags- und Abrechnungsdaten", en: "Workspace, contract and billing data" },
   contacts_full: { de: "Kontakte – vollständige Datensätze", en: "Contacts - complete records" },
   memories: { de: "Fan-Gedächtnis / Memories", en: "Fan memory / memories" },
