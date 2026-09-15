@@ -356,5 +356,5 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 # FM-CR-038 — controlled Daily Production provisioning path
 - Status: IN_PROGRESS
-- Decision: prepare a separate checksum-pinned, exact-main, protected-Production and TLS-bound Verify/Apply/Postflight control for the Staging-proven Daily provisioning SQL.
+- Decision: prepare a separate checksum-pinned, exact-main, protected-Production and TLS-bound Verify/Postflight control for the Staging-proven Daily provisioning SQL.
 - Boundary: review follow-up makes the published Production workflow verify-only until a fresh commit-/target-/time-bound readiness receipt exists. Daily provisioning and every checkout entry recheck the complete billing runtime gate; stale runtime locks recover under a bounded lease; disabled Daily is not advertised on public legal surfaces. Production remains `BLOCK`; no Apply, runtime flag change, Admin enable, checkout or payment was performed.

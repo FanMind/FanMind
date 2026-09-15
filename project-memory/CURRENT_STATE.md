@@ -421,8 +421,8 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
 - Current source task FM-CR-037 changes source/readers/tests only. No Production database migration, payment, Price, account mutation or unrelated work is authorized by this package.
 
-## Daily Production control preparation — 2026-09-14
-- FM-CR-038 prepares a distinct manual Production control for the checksum-pinned Daily provisioning SQL, bound to exact main/commit, protected Production environment/runner/target and TLS.
+## Daily Production control preparation — 2026-09-15
+- FM-CR-038 prepares a distinct manual Production verify control for the checksum-pinned Daily provisioning SQL, bound to exact main/commit, protected Production environment/runner/target and TLS.
 - No fresh protected Production receipt was available. RPCs, constraints, indexes, RLS/browser privileges, Consent, both Billing ledgers, Capture, canonical reconciliation, Write Freeze and Stripe/Webhook/Tax are `unknown`; the rollout decision is `BLOCK`.
 - No Production Apply, runtime setting, Admin activation, checkout, payment or existing Daily subscription was changed.
-- Review correction: every new Daily mutation boundary now rechecks billing-ledger/reconciliation readiness and the manual switch; abandoned runtime locks recover after a bounded lease; public payment terms omit the Daily offer while disabled. The Production workflow is verify-only until a fresh bound receipt contract is implemented, eliminating the stale long-lived `APPLY` variable path.
+- Review correction: every new Daily mutation boundary rechecks billing-ledger/reconciliation readiness and the manual switch; abandoned runtime locks recover after a bounded lease; public payment terms omit the Daily offer while disabled. The Production workflow is verify-only until a fresh bound receipt contract is implemented.
