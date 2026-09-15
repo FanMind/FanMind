@@ -284,6 +284,6 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Status: BLOCKED_EXTERNAL_PUBLISH
 - Area: PR #1128 conflict-resolution publication
 - Attempt: force-update the PR branch after rebasing its single Production-control commit onto current `main` `e7208cd1abcde8a881cc23ae4b546cbcd6278c7f` and resolving the three Project Memory conflicts additively.
-- Result: local rebase and all prescribed checks passed at `144ea41`, but HTTPS push stopped before remote mutation because this Codex Cloud checkout has no GitHub credentials or configured remote.
+- Result: the conflict resolution was reproduced on the current task checkout and now exists as the clean rebased commit `033883c`; the earlier HTTPS push stopped before remote mutation because this Codex Cloud checkout exposes no GitHub credentials or configured remote.
 - Decision: retain the clean rebased commit and PR metadata; publication requires an authenticated branch update. No Production workflow, database, runtime flag, checkout or payment was touched.
 - Do not repeat: do not recreate or manually resolve the same conflicts from the obsolete `8694986` base. Publish the existing rebased commit, or reproduce exactly by rebasing the Production-only delta onto `e7208cd` while retaining both upstream FM-CR-037 entries and the additive FM-CR-038 entries.
