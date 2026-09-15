@@ -24,10 +24,26 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject invalid dispatch before protected access
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          DISPATCH_COMMIT: ${{ github.sha }}
+          DISPATCH_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          [[ "$DISPATCH_REF" == "refs/heads/main" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=main_required"; exit 1; }
+          [[ "$ACTION" == "verify" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=action_invalid"; exit 1; }
+          [[ "$CONFIRMATION" == "verify-daily-workspace-provisioning-production" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=confirmation_invalid"; exit 1; }
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ && "$REVIEWED_COMMIT" == "$DISPATCH_COMMIT" ]] || { echo "DAILY_PRODUCTION_VERIFY_INPUT=commit_invalid"; exit 1; }
+          echo "DAILY_PRODUCTION_VERIFY_INPUT=PASS"
+
   control:
-    if: >-
-      ${{ github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha &&
-      inputs.action == 'verify' && inputs.confirmation == 'verify-daily-workspace-provisioning-production' }}
+    needs: validate
     runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
     environment: production
     timeout-minutes: 15

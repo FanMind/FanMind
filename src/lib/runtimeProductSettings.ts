@@ -18,8 +18,12 @@ type RuntimeProductSettings = {
 const DAILY_BETA_LOCK_LEASE_MS = 60_000;
 
 async function acquireSettingsLock(lockPath: string) {
+  const token = randomUUID();
   try {
-    return await open(lockPath, "wx", 0o600);
+    const handle = await open(lockPath, "wx", 0o600);
+    await handle.writeFile(`${token}\n`, "utf8");
+    await handle.sync();
+    return { handle, token };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
   }
@@ -36,10 +40,24 @@ async function acquireSettingsLock(lockPath: string) {
     const staleClaimPath = `${lockPath}.${randomUUID()}.stale`;
     await rename(lockPath, staleClaimPath);
     await unlink(staleClaimPath).catch(() => undefined);
-    return await open(lockPath, "wx", 0o600);
+    const handle = await open(lockPath, "wx", 0o600);
+    await handle.writeFile(`${token}\n`, "utf8");
+    await handle.sync();
+    return { handle, token };
   } catch (error) {
     if ((error as Error).message === "daily_beta_update_in_progress") throw error;
     throw new Error("daily_beta_update_in_progress");
+  }
+}
+
+async function releaseSettingsLock(
+  lockPath: string,
+  lock: { handle: Awaited<ReturnType<typeof open>>; token: string },
+) {
+  await lock.handle.close().catch(() => undefined);
+  const currentToken = await readFile(lockPath, "utf8").catch(() => "");
+  if (currentToken === `${lock.token}\n`) {
+    await unlink(lockPath).catch(() => undefined);
   }
 }
 
@@ -79,9 +97,9 @@ export async function setPublicDailyTestPlanEnabled(
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
   const lockPath = `${settingsPath}.lock`;
-  let lockHandle;
+  let lock;
   try {
-    lockHandle = await acquireSettingsLock(lockPath);
+    lock = await acquireSettingsLock(lockPath);
   } catch {
     throw new Error("daily_beta_update_in_progress");
   }
@@ -96,8 +114,7 @@ export async function setPublicDailyTestPlanEnabled(
     await chmod(settingsPath, 0o600);
   } finally {
     await unlink(temporaryPath).catch(() => undefined);
-    await lockHandle.close().catch(() => undefined);
-    await unlink(lockPath).catch(() => undefined);
+    await releaseSettingsLock(lockPath, lock);
   }
 }
 

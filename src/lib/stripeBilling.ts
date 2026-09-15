@@ -286,9 +286,42 @@ export async function createStripeCheckoutSession(input: {
     if (!session.id || !session.url) {
       return { error: "Stripe Checkout konnte nicht gestartet werden." };
     }
+    if (
+      input.plan.commercialOption === "internal_daily_test" &&
+      (!(await getPublicDailyTestPlanEnabled()) ||
+        !isInternalDailyTestBillingRuntimeReady())
+    ) {
+      await expireStripeCheckoutSession(session.id);
+      return { error: "Die Daily-Beta wurde während des Checkouts geschlossen.", code: "daily_admission_closed" };
+    }
     return { id: session.id, url: session.url };
   } catch {
     return { error: "Stripe Checkout konnte nicht gestartet werden." };
+  }
+}
+
+export async function expireOpenInternalDailyTestCheckoutSessions(): Promise<boolean> {
+  const stripe = getStripeClient();
+  if (!stripe) return false;
+  let startingAfter: string | undefined;
+  try {
+    do {
+      const page = await stripe.checkout.sessions.list({
+        status: "open",
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      for (const session of page.data) {
+        if (session.metadata?.commercial_option === "internal_daily_test") {
+          if (!(await expireStripeCheckoutSession(session.id))) return false;
+        }
+      }
+      startingAfter = page.has_more ? page.data.at(-1)?.id : undefined;
+      if (page.has_more && !startingAfter) return false;
+    } while (startingAfter);
+    return true;
+  } catch {
+    return false;
   }
 }
 

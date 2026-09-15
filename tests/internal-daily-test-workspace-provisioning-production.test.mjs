@@ -44,10 +44,15 @@ test("Production workflow is manual, protected, pinned and has no automatic trig
   const workflow = await readFile(".github/workflows/internal-daily-test-workspace-provisioning-production-control.yml","utf8");
   assert.match(workflow,/workflow_dispatch:/u); assert.doesNotMatch(workflow,/\bschedule:/u);
   assert.match(workflow,/environment: production/u); assert.match(workflow,/fanmind-prod/u);
-  assert.match(workflow,/inputs\.reviewed_commit == github\.sha/u);
+  assert.match(workflow,/REVIEWED_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}[\s\S]*DISPATCH_COMMIT: \$\{\{ github\.sha \}\}/u);
+  assert.match(workflow,/"\$REVIEWED_COMMIT" == "\$DISPATCH_COMMIT"/u);
   assert.match(workflow,/PGSSLMODE: verify-full/u); assert.match(workflow,/chmod 600/u);
   assert.match(workflow,/options: \[verify\]/u);
   assert.match(workflow,/--verify/u);
+  assert.match(workflow,/DAILY_PRODUCTION_VERIFY_INPUT=confirmation_invalid/u);
+  assert.match(workflow,/DAILY_PRODUCTION_VERIFY_INPUT=commit_invalid/u);
+  assert.match(workflow,/needs: validate/u);
+  assert.doesNotMatch(workflow,/control:\n\s+if:/u);
   assert.doesNotMatch(workflow,/FANMIND_PRODUCTION_WRITE_ACK/u);
   assert.doesNotMatch(workflow,/--apply/u);
 });

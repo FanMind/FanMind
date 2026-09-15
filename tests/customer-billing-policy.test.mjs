@@ -568,6 +568,9 @@ test("public Daily selection preserves protected Workspace and payment admission
   const checkoutRouteSource = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
   assert.match(checkoutRouteSource, /await getPublicDailyTestPlanEnabled\(\)/);
   assert.match(checkoutRouteSource, /isInternalDailyTestBillingRuntimeReady\(\)/u);
+  const stripeBillingSource = fs.readFileSync("src/lib/stripeBilling.ts", "utf8");
+  assert.match(stripeBillingSource, /checkout\.sessions\.create[\s\S]*getPublicDailyTestPlanEnabled\(\)[\s\S]*expireStripeCheckoutSession\(session\.id\)/u);
+  assert.match(stripeBillingSource, /expireOpenInternalDailyTestCheckoutSessions[\s\S]*status: "open"[\s\S]*commercial_option === "internal_daily_test"/u);
   assert.match(
     checkoutRouteSource,
     /commercialOption === "internal_daily_test"[\s\S]*isInternalDailyTestStripeReady\(config\)/u,
@@ -580,6 +583,8 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
   assert.match(runtimeSettingsSource, /DAILY_BETA_LOCK_LEASE_MS/);
   assert.match(runtimeSettingsSource, /lstat\(lockPath\)[\s\S]*mtimeMs[\s\S]*rename\(lockPath, staleClaimPath\)/u);
+  assert.match(runtimeSettingsSource, /releaseSettingsLock[\s\S]*currentToken === `\$\{lock\.token\}\\n`/u);
+  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*!enabled && !\(await expireOpenInternalDailyTestCheckoutSessions\(\)\)/u);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,

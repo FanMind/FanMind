@@ -6,7 +6,7 @@ import {
 } from "@/lib/httpMutationPolicy.mjs";
 import { setPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
-import { getStripeConfigStatus } from "@/lib/stripeBilling";
+import { expireOpenInternalDailyTestCheckoutSessions, getStripeConfigStatus } from "@/lib/stripeBilling";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
 
@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
   } catch {
     const destination = new URL("/admin/settings", request.url);
     destination.searchParams.set("daily_test_plan", "busy");
+    return NextResponse.redirect(destination, { status: 303 });
+  }
+
+  if (!enabled && !(await expireOpenInternalDailyTestCheckoutSessions())) {
+    const destination = new URL("/admin/settings", request.url);
+    destination.searchParams.set("daily_test_plan", "disabled_cleanup_required");
     return NextResponse.redirect(destination, { status: 303 });
   }
 
