@@ -278,3 +278,9 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Cause/correction: the positive fixture included /usr/local/bin, which is not a portable protected path on a hosted build image. Use only the already-proven /usr/bin:/bin fixture paths. Keep all Production ownership, write protection and missing-path checks unchanged.
 - Next evidence: current-head native CI must pass all 26 focused tests and full review must complete before merge.
 - Do not repeat: do not weaken the Production PATH contract, rerun the unchanged failing revision or merge red CI.
+
+## FM-FAIL-026 — PR #1131 merge commit could not be published from this Codex Cloud checkout
+- Date: 2026-09-15
+- Attempt: push merge commit `2a0a01e` to existing PR branch `codex/analysiere-den-stand-von-fanmind-jx59qz` after proving current `main` (`5114e9a`) is an ancestor and the source tree is unchanged from PR head `27ea3bc`.
+- Result: GitHub HTTPS authentication was unavailable (`could not read Username`), so the remote PR remains on its stale one-parent head and still reports conflicts.
+- Do not repeat: creating another PR from the old snapshot or another local-only merge commit does not repair #1131. The existing remote branch must receive a normal merge of current `main` from a GitHub-authenticated Codex Cloud task.

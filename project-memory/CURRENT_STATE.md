@@ -433,3 +433,6 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - A failed open-Checkout cleanup is now an explicit warning with a dedicated retry action; it is never rendered as a successful disable.
 - Production `--apply` is structurally rejected by both the Production evaluator and the shared runner. The published control workflow remains verify-only.
 - No Production verify/apply, runtime activation, payment, checkout or data deletion was performed.
+
+## PR #1131 publication blocker — 2026-09-15
+- Local merge commit `2a0a01e` contains current `main` `5114e9a` as a parent and keeps the PR source tree unchanged, but this checkout cannot authenticate to GitHub to update the existing PR branch. PR #1131 therefore remains remotely conflicted until a GitHub-authenticated Codex Cloud task pushes the merge commit to that exact branch.
