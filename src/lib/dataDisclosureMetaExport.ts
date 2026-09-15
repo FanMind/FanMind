@@ -37,7 +37,6 @@ export type DisclosureMetaDataset = {
 type DatasetDefinition = {
   key: DisclosureMetaDataset["key"];
   table: string;
-  select: string;
   order: string;
   filterColumn?: "workspace_id" | "id";
 };
@@ -45,190 +44,50 @@ type DatasetDefinition = {
 // Complete active Production data families that can hold data for the signed-in
 // Creator account or its Workspace. Staging-only/not-yet-installed feature
 // tables are added here in the same release that makes them Production storage.
-// A missing table in this active list is an export error; data is never silently
-// omitted or reported as a successful partial disclosure.
+// A missing active table is always an export error; a successful PDF never
+// silently omits an active data family.
 const DATASETS: DatasetDefinition[] = [
-  {
-    key: "workspace_record",
-    table: "workspaces",
-    filterColumn: "id",
-    select: [
-      "id",
-      "name",
-      "owner_user_id",
-      "plan_id",
-      "commercial_option",
-      "setup_fee_cents",
-      "monthly_fee_cents",
-      "commitment_months",
-      "billing_status",
-      "billing_provider",
-      "payment_collection_method",
-      "payment_terms_version",
-      "payment_terms_accepted_at",
-      "payment_terms_accepted_by_user_id",
-      "billing_suspended_at",
-      "billing_suspended_reason",
-      "billing_manual_override",
-      "billing_last_payment_failed_at",
-      "billing_last_payment_at",
-      "billing_retry_count",
-      "billing_next_retry_at",
-      "billing_grace_until",
-      "billing_admin_note",
-      "billing_contract_started_at",
-      "billing_current_period_end_at",
-      "billing_next_invoice_at",
-      "billing_minimum_term_ends_at",
-      "subscription_cancel_requested_at",
-      "subscription_cancel_requested_by_user_id",
-      "subscription_cancel_at_period_end",
-      "subscription_effective_end_at",
-      "subscription_cancellation_revoked_at",
-      "workspace_access_mode",
-      "billing_updated_at",
-      "billing_updated_by_user_id",
-      "billing_note",
-      "last_invoice_status",
-      "last_invoice_amount_due_cents",
-      "last_invoice_amount_paid_cents",
-      "organization_name",
-      "street_address",
-      "postal_code",
-      "city",
-      "country",
-      "vat_id",
-      "tax_number",
-      "company_register_number",
-      "company_register_court",
-    ].join(","),
-    order: "id.asc",
-  },
-  {
-    key: "contacts_full",
-    table: "contacts",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "memories",
-    table: "memories",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "followups",
-    table: "followups",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "conversations",
-    table: "conversations",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "messages",
-    table: "conversation_messages",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "conversation_summaries",
-    table: "conversation_summaries",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "reply_targets",
-    table: "contact_reply_targets",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "fan_reports",
-    table: "fan_analysis_reports",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "contact_profiles",
-    table: "contact_ai_profiles",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "voice_profiles",
-    table: "workspace_voice_profiles",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "prompt_settings",
-    table: "workspace_ai_prompt_settings",
-    select: "*",
-    order: "workspace_id.asc",
-  },
-  {
-    key: "ai_usage",
-    table: "ai_usage_events",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "connections",
-    table: "social_connections",
-    select: [
-      "id",
-      "workspace_id",
-      "platform",
-      "provider",
-      "status",
-      "external_account_id",
-      "external_account_name",
-      "page_id",
-      "page_name",
-      "scopes",
-      "webhook_subscribed",
-      "connected_by",
-      "connected_at",
-      "disconnected_at",
-      "last_event_at",
-      "last_comment_fetch_at",
-      "last_comment_fetch_count",
-      "last_comment_fetch_error",
-      "last_messenger_sync_at",
-      "last_messenger_sync_checked_count",
-      "last_messenger_sync_imported_inbound_count",
-      "last_messenger_sync_imported_outbound_count",
-      "last_messenger_sync_imported_media_count",
-      "last_messenger_sync_skipped_count",
-      "last_messenger_sync_error",
-      "last_messenger_sync_outbound_at",
-      "messenger_sync_continuation_after",
-      "messenger_sync_continuation_started_at",
-      "oauth_login_type",
-      "external_account_type",
-      "token_expires_at",
-      "permissions_verified_at",
-      "analytics_enabled",
-      "created_at",
-      "updated_at",
-    ].join(","),
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
-  {
-    key: "meta_webhook_events",
-    table: "meta_webhook_events",
-    select: "*",
-    order: "created_at.asc.nullsfirst,id.asc",
-  },
+  { key: "workspace_record", table: "workspaces", filterColumn: "id", order: "id.asc" },
+  { key: "contacts_full", table: "contacts", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "memories", table: "memories", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "followups", table: "followups", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "conversations", table: "conversations", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "messages", table: "conversation_messages", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "conversation_summaries", table: "conversation_summaries", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "reply_targets", table: "contact_reply_targets", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "fan_reports", table: "fan_analysis_reports", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "contact_profiles", table: "contact_ai_profiles", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "voice_profiles", table: "workspace_voice_profiles", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "prompt_settings", table: "workspace_ai_prompt_settings", order: "workspace_id.asc" },
+  { key: "ai_usage", table: "ai_usage_events", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "connections", table: "social_connections", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "meta_webhook_events", table: "meta_webhook_events", order: "created_at.asc.nullsfirst,id.asc" },
 ];
 
 type PageResult =
   | { ok: true; rows: DisclosureMetaRow[] }
   | { ok: false; message: string };
+
+function isSecretOrProviderCredentialField(key: string): boolean {
+  const normalized = key.toLowerCase();
+  return (
+    normalized.startsWith("stripe_") ||
+    normalized.includes("password") ||
+    normalized.includes("secret") ||
+    normalized.includes("ciphertext") ||
+    normalized.includes("encrypted_token") ||
+    normalized.includes("access_token") ||
+    normalized.includes("refresh_token") ||
+    normalized.includes("api_key") ||
+    /(^|_)token($|_)/u.test(normalized)
+  );
+}
+
+function sanitizeRow(row: DisclosureMetaRow): DisclosureMetaRow {
+  return Object.fromEntries(
+    Object.entries(row).filter(([key]) => !isSecretOrProviderCredentialField(key)),
+  ) as DisclosureMetaRow;
+}
 
 async function fetchPage(input: {
   definition: DatasetDefinition;
@@ -239,7 +98,7 @@ async function fetchPage(input: {
 }): Promise<PageResult> {
   const filterColumn = input.definition.filterColumn ?? "workspace_id";
   const url = new URL(getSupabaseRestUrl(input.definition.table));
-  url.searchParams.set("select", input.definition.select);
+  url.searchParams.set("select", "*");
   url.searchParams.set(filterColumn, `eq.${input.workspaceId}`);
   url.searchParams.set("order", input.definition.order);
   url.searchParams.set("limit", String(PAGE_SIZE));
@@ -284,7 +143,7 @@ async function fetchPage(input: {
       message: `${input.definition.table}: fremder Workspace in Exportantwort`,
     };
   }
-  return { ok: true, rows };
+  return { ok: true, rows: rows.map(sanitizeRow) };
 }
 
 async function fetchDataset(input: {
