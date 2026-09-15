@@ -9,6 +9,7 @@ import {
   type DisclosureMetaDataset,
   type DisclosureMetaRow,
 } from "@/lib/dataDisclosureMetaExport";
+import { getPrivateAccountDataForDisclosure } from "@/lib/dataDisclosurePrivateExport";
 import {
   getSupabaseServerUser,
   getUserWorkspaceDashboard,
@@ -51,10 +52,22 @@ export async function GET(request: Request) {
     const workspaceResult = await getUserWorkspaceDashboard(data.user);
     const workspace = workspaceResult.workspace;
     if (!workspace) return disclosureFailure(locale, 404);
+    if (
+      workspace.role !== "owner" ||
+      workspace.owner_user_id !== data.user.id ||
+      !data.user.email?.trim()
+    ) {
+      return disclosureFailure(locale, 403);
+    }
 
-    const [contacts, storedData] = await Promise.all([
+    const [contacts, storedData, privateData] = await Promise.all([
       getAllWorkspaceContactsForDisclosure(workspace.id),
       getWorkspaceMetaDataForDisclosure(workspace.id, data.user.id),
+      getPrivateAccountDataForDisclosure(
+        workspace.id,
+        data.user.id,
+        data.user.email,
+      ),
     ]);
 
     const accountMetadataSection = buildAccountMetadataSection(
@@ -109,7 +122,7 @@ export async function GET(request: Request) {
       })),
       storedDataSections: [
         accountMetadataSection,
-        ...buildStoredDataSections(storedData, locale),
+        ...buildStoredDataSections([...storedData, ...privateData], locale),
       ],
     });
 
@@ -218,10 +231,15 @@ const SECTION_LABELS: Record<
   fan_reports: { de: "Fan-Analyseberichte", en: "Fan analysis reports" },
   contact_profiles: { de: "Abgeleitete Fanprofile", en: "Derived fan profiles" },
   voice_profiles: { de: "Nutzer-/Creator-Schreibstilprofile", en: "User/Creator writing style profiles" },
-  prompt_settings: { de: "KI-/Prompt-Einstellungen und Antwortprofile", en: "AI/prompt settings and reply profiles" },
   ai_usage: { de: "KI-Nutzungs- und Kostenereignisse", en: "AI usage and cost events" },
   connections: { de: "Social-Verbindungen ohne Tokens", en: "Social connections without tokens" },
   meta_webhook_events: { de: "Gespeicherte Meta-Webhook-Ereignisse", en: "Stored Meta webhook events" },
+  pilot_inquiries: { de: "Eigene frühere Pilot-/Kontaktanfragen", en: "Own earlier pilot/contact inquiries" },
+  referral_membership: { de: "Eigenes Referral-Programmprofil", en: "Own referral program profile" },
+  referrals_given: { de: "Eigene Referral-Empfehlungen", en: "Own referral recommendations" },
+  referrals_received: { de: "Eigene Referral-Zuordnung", en: "Own referral attribution" },
+  referral_discount_snapshots: { de: "Referral-Rabattberechnungen", en: "Referral discount calculations" },
+  account_deletion_requests: { de: "Eigene Konto-Löschanfragen", en: "Own account deletion requests" },
 };
 
 function buildStoredDataSections(
@@ -251,10 +269,12 @@ function disclosureRowTitle(
 ): string {
   for (const key of [
     "display_name",
+    "name",
     "external_account_name",
     "title",
     "author_label",
     "owner_label",
+    "referral_code",
     "external_content_id",
     "contact_id",
     "conversation_id",
