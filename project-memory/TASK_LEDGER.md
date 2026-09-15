@@ -489,3 +489,13 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Evidence: FM-EV-037; focused 15/15 tests; full Operations/build/focused ESLint; Product Truth and immutable Actions checks.
 - Open follow-up: after exact-head merge, obtain separate exact R4 authorization for a distinct isolated non-Production Storage target and dedicated fail-closed write/postcheck/rollback/cleanup controller. Accepted progression remains `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
 - Work lock released: yes; repository-only local countercheck complete.
+## FM-REG-003
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R3
+- Goal: make confirmed registrations without a Workspace visible to Platform Admins and provide controlled permanent-free, temporary-free and blocked CRM access states.
+- Root cause: the existing Admin list starts at `workspace_members`, so an Auth registration disappears until Workspace provisioning has already happened.
+- Dependencies: server-only Supabase Service Role; existing unique `workspaces.owner_user_id` and owner membership constraint; Workspace processing policy; operations audit log; Platform-Admin and same-origin mutation guards.
+- Exclusions: no automatic email confirmation, Stripe/payment/Tax action, schema rollout, Social/Mobile/Restore changes or data deletion.
+- Acceptance: FM-CR-041 and LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915.
+- Local evidence: focused 5/5; Operations 1376 pass/0 fail/4 environment skips; build, Product Truth, Project Memory Quality and accepted/truth drift PASS; ESLint 0 errors with one unrelated pre-existing warning. Remote current-head CI/review and Production version proof remain pending.

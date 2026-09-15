@@ -695,3 +695,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: accept only the independently pinned nginx unit plus its exact typed D-Bus condition and a fresh protected executable check; retain all unknown/additional-condition, drop-in, assertion, reference and runner gates.
 - Evidence plan: official package/source, exact owner readout, executable positive/negative/redaction tests, current-head review/CI, normal deploy and installed audit. Production and Staging runners share this host; both need fresh idle evidence before reboot.
 - Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.
+## FM-REG-003 — Admin access for confirmed registrations — 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R3
+- Change: FM-CR-041
+- Lock: LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915
+- Owner decision: Daily is 1 EUR gross per day for future paying customers. The currently confirmed user is to receive immediate permanent free CRM access; the Admin must later be able to convert that same Workspace to a temporary end date or block access.
+- Root cause: the Admin customer screen reads only `workspace_members`; a confirmed Auth user without a provisioned Workspace is therefore invisible. The registration flow intentionally separates free confirmed accounts from paid Workspace provisioning.
+- Scope: server-only paginated Auth listing joined to existing profiles/memberships, idempotent free Workspace provisioning, permanent/temporary/blocked access transitions and admin audit. No automatic email confirmation, Stripe mutation, Tax activation, Production SQL or unrelated product work.
+- Completed so far: the initial focused test failed before implementation and now passes. The bounded source adds paginated sanitized Auth visibility, the confirmation gate, idempotent owner Workspace/membership provisioning, permanent/temporary/blocked entitlement transitions, durable audit logging and no Stripe coupling. Fresh local evidence: focused 5/5, Operations 1376 pass/0 fail/4 environment skips, ESLint 0 errors/1 unrelated existing warning, Production build PASS, Product Truth PASS, Project Memory Quality PASS and both drift checks PASS.
+- Exact next step: publish the bounded branch to one PR, obtain current-head CI and independent review, merge only with no open P1/P2 findings, then verify the normal Production deployment/version before the owner performs the explicit browser grant.
+- Owner action needed: none for source implementation. A real Production user mutation remains a later explicit browser action by the Platform Admin.

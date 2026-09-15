@@ -132,3 +132,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Admission boundary: only a Platform Admin may enable new Daily admission after complete server-side readiness. When disabled, Daily is absent from public surfaces and new provisioning/checkout; direct links and stored preferences cannot bypass the switch.
 - Existing-customer boundary: disabling admission never cancels, suspends or hides an existing Daily subscription/workspace. Existing customers retain billing, cancellation, invoices and product access under their individual lifecycle.
 - Supersedes: FM-DEC-014 only where it described Daily as the third permanent public offer. Starter Flex and Starter 12 Months remain permanent public offers and all existing consent, Tax, Workspace, Billing and Production gates remain.
+
+# FM-DEC-020
+- Date: 2026-09-15
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: Daily costs exactly EUR 1 gross per day for the customer. VAT, where applicable, is included in that EUR 1 customer-facing total and is not added on top.
+- Boundary: this price basis is an owner decision, not Tax or Billing readiness. The current Stripe Price/Tax configuration, registrations, invoice behavior and cross-border treatment must be reconciled and accepted before a real Daily checkout can open. No existing Price is silently relabeled and no Production payment is authorized by this decision.
+- Related work: FM-CR-037 and the retained AI/Billing/Legal/Tax acceptance gates.

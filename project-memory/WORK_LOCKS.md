@@ -688,3 +688,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, Production audit 34648286758 / 103525002411; exact Exoscale Production instance verified in authenticated portal/console.
 - Scope: reviewed read-only boot-readiness evidence and owner-requested controlled Ubuntu restart, contingent on real start/recovery preflight. Preserve accepted Backup/DB Restore/Creator evidence.
 - Evidence/recovery: meaningful negative/redaction tests and current-head CI/review, installed current-release readout, exact before/after host and service receipts. Readout performs no service/data mutation; normal release revert retained; host-login recovery still unverified.
+## LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915
+- Task: FM-REG-003 / FM-CR-041
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex
+- Baseline: main `afcd6f53b2f3bf8c93b70b74076bac1c14df5306`; branch `fix/admin-registered-user-crm-access-20260915`.
+- Scope: show confirmed Supabase Auth registrations even without a Workspace; let a Platform Admin idempotently provision one owner Workspace with permanent free CRM access, later change it to an explicit temporary expiry, or block it. Preserve one-Workspace-per-owner, server-only Auth access, same-origin admin mutation, audit evidence and all existing Stripe/Tax gates.
+- Evidence plan: focused policy/source regressions, unauthorized/unconfirmed/invalid-expiry/duplicate-Workspace negatives, TypeScript/lint/build/Operations checks, final diff and independent review. No Stripe call, payment, Tax activation, Production database migration or live account mutation in this repository change.
+- Recovery: reviewed source revert. Existing Workspace/customer data is never deleted; blocking or expiry changes entitlement only.
+- Current source state: SOURCE_COMPLETE_PENDING_PR_CI. Local focused/Operations/build/truth/memory/drift checks pass; keep this lock ACTIVE through exact-head PR review/CI, merge, normal deploy and Production version verification. The live user remains unchanged until the owner explicitly clicks the Admin action.
