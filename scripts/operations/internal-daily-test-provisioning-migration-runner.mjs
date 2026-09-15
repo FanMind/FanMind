@@ -624,6 +624,12 @@ function ensurePsqlAvailable() {
 }
 
 function runDatabaseMode(mode, controlledSql, environment) {
+  if (
+    environment.FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET === "production" &&
+    mode === "--apply"
+  ) {
+    fail("production_apply_unavailable");
+  }
   const policyMode = mode === "--apply" ? "apply" : "verify";
   const evaluator =
     environment.FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET === "production"

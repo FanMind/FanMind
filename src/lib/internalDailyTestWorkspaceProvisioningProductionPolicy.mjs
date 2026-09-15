@@ -1,7 +1,5 @@
 export const DAILY_PRODUCTION_VERIFY_CONFIRMATION =
   "verify-daily-workspace-provisioning-production";
-export const DAILY_PRODUCTION_APPLY_CONFIRMATION =
-  "apply-daily-workspace-provisioning-production";
 
 const SHA = /^[0-9a-f]{40}$/u;
 const REF = /^[a-z0-9]{20}$/u;
@@ -25,12 +23,9 @@ export function evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironm
   const targetHost = clean(environment.FANMIND_PRODUCTION_DB_HOST)
     .toLowerCase()
     .replace(/\.$/u, "");
-  const expectedConfirmation =
-    mode === "apply"
-      ? DAILY_PRODUCTION_APPLY_CONFIRMATION
-      : DAILY_PRODUCTION_VERIFY_CONFIRMATION;
+  const expectedConfirmation = DAILY_PRODUCTION_VERIFY_CONFIRMATION;
 
-  if (!new Set(["verify", "apply"]).has(mode)) errors.push("mode");
+  if (mode !== "verify") errors.push("production_apply_unavailable");
   if (clean(environment.GITHUB_REF) !== "refs/heads/main") errors.push("main_ref");
   if (!SHA.test(sha) || sha !== reviewed) errors.push("reviewed_commit");
   if (clean(environment.FANMIND_RUNTIME_ENVIRONMENT) !== "production")
@@ -61,19 +56,10 @@ export function evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironm
     clean(environment.FANMIND_INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_PRODUCTION_CONFIRM) !==
     expectedConfirmation
   ) errors.push("confirmation");
-  if (
-    mode === "apply" &&
-    (clean(environment.FANMIND_ENABLE_PRODUCTION_WRITES) !== "true" ||
-      clean(environment.FANMIND_PRODUCTION_WRITE_ACK) !==
-        "I_UNDERSTAND_THIS_MUTATES_PRODUCTION" ||
-      clean(environment.FANMIND_DAILY_PRODUCTION_READINESS_DECISION) !==
-        "APPLY")
-  ) errors.push("production_write_gate");
-
   return Object.freeze({
     ok: errors.length === 0,
     mode,
-    writeEnabled: mode === "apply" && errors.length === 0,
+    writeEnabled: false,
     errors: Object.freeze([...new Set(errors)]),
   });
 }

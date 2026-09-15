@@ -157,6 +157,13 @@ Production-Receipt; der aktuelle belegte Zustand ist daher `unknown` und die
 Entscheidung `BLOCK`. Weder Katalogschalter noch bestehende Daily-Abos werden
 durch diesen SQL-Pfad verändert.
 
+Beim manuellen Ausschalten wird vor der externen Stripe-Bereinigung zuerst
+dauerhaft `publicDailyTestPlanCleanupRequired=true` zusammen mit einer neuen
+Revision gespeichert. Solange dieser Zustand besteht, ist ein erneutes
+Einschalten serverseitig gesperrt. Erst eine erfolgreiche Bereinigung darf den
+Zustand mit exakt derselben Revision zurücksetzen; ein Fehler bleibt damit über
+Redirects, Requests und Prozessneustarts hinweg sichtbar und wiederholbar.
+
 ## Verbindliche Reihenfolge
 
 1. Den kompatiblen App-Stand zuerst deployen. Ohne vollständig abgenommenen
