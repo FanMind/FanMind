@@ -94,6 +94,9 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(route, /requirePlatformAdmin/u);
   assert.match(route, /setAdminRegisteredUserCrmAccess/u);
   assert.match(page, /listAdminRegisteredUsers/u);
+  assert.match(page, /users_page/u);
+  assert.match(page, /registeredUsers\.slice\(registeredUserStart, registeredUserEnd\)/u);
+  assert.doesNotMatch(page, /registeredUsers\.slice\(0, 50\)/u);
   assert.match(page, /Dauerhaft kostenlos freigeben/u);
   assert.match(page, /Befristet kostenlos/u);
   assert.match(page, /Zugang sperren/u);

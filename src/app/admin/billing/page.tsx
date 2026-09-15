@@ -13,6 +13,7 @@ import styles from "./adminBilling.module.css";
 import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 
 const suspendedStatuses = new Set(["suspended", "manual_suspended"]);
+const REGISTERED_USERS_PAGE_SIZE = 50;
 
 type AdminBillingPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -95,6 +96,11 @@ function initials(value?: string | null) {
 
 function getSingleParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function positivePage(value: string | undefined) {
+  const parsed = Number.parseInt(value ?? "1", 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
 function StatCard({ icon, label, value, hint, trend, tone }: { icon: string; label: string; value: string | number; hint: string; trend: string; tone: string }) {
@@ -302,13 +308,17 @@ function PaymentsContent({ workspaces, members, selectedWorkspaceId, error }: { 
   </>;
 }
 
-function CustomersContent({ workspaces, members, registeredUsers, contactCounts, selectedWorkspaceId, error, memberError, registeredUsersError }: { workspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; registeredUsers: AdminRegisteredUser[]; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null; registeredUsersError: string | null }) {
+function CustomersContent({ workspaces, members, registeredUsers, registeredUsersPage, contactCounts, selectedWorkspaceId, error, memberError, registeredUsersError }: { workspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; registeredUsers: AdminRegisteredUser[]; registeredUsersPage: number; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null; registeredUsersError: string | null }) {
   const selectedWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? workspaces[0] ?? null;
   const workspaceRows = [...workspaces].sort(sortByDateDesc).slice(0, 10);
   const selectedMembers = selectedWorkspace ? members.filter((member) => member.workspace_id === selectedWorkspace.id) : [];
   const newRegistrations = registeredUsers.length;
   const suspended = workspaces.filter((workspace) => suspendedStatuses.has(workspace.billing_status ?? "")).length;
   const internalTestMembers = members.filter((member) => isInternalTestMember(member, workspaces.find((workspace) => workspace.id === member.workspace_id))).length;
+  const registeredUserPages = Math.max(1, Math.ceil(registeredUsers.length / REGISTERED_USERS_PAGE_SIZE));
+  const registeredUserPage = Math.min(registeredUsersPage, registeredUserPages);
+  const registeredUserStart = (registeredUserPage - 1) * REGISTERED_USERS_PAGE_SIZE;
+  const registeredUserEnd = registeredUserStart + REGISTERED_USERS_PAGE_SIZE;
 
   return <>
     <section className={styles.crmKpiGrid} aria-label="Kunden- und Nutzer-Kennzahlen">
@@ -336,7 +346,7 @@ function CustomersContent({ workspaces, members, registeredUsers, contactCounts,
       <div className={styles.cardHeader}><div><span className={styles.eyebrow}>Registrierungen</span><h2>Registrierte Nutzer</h2></div><span className={styles.badge}>{registeredUsers.length} Konten</span></div>
       {registeredUsers.length ? <div className={styles.teamTable}>
         <div className={styles.teamTableHead}><span>Name</span><span>E-Mail</span><span>Bestätigung</span><span>Workspace</span><span>CRM-Zugang</span><span>Registriert am</span><span>Aktion</span></div>
-        {registeredUsers.slice(0, 50).map((registeredUser) => {
+        {registeredUsers.slice(registeredUserStart, registeredUserEnd).map((registeredUser) => {
           const workspace = workspaces.find((item) => item.owner_user_id === registeredUser.id) ?? null;
           const confirmed = Boolean(registeredUser.email_confirmed_at);
           const controlledAccess = workspace?.test_access_flags?.admin_crm_access === true;
@@ -357,6 +367,11 @@ function CustomersContent({ workspaces, members, registeredUsers, contactCounts,
           </div>;
         })}
       </div> : <div className={styles.emptyState}>Noch keine Auth-Registrierungen vorhanden.</div>}
+      {registeredUserPages > 1 ? <div className={styles.footerActions} aria-label="Seitennavigation für registrierte Nutzer">
+        {registeredUserPage > 1 ? <Link className={styles.buttonSecondary} href={`/admin/billing?tab=customers&users_page=${registeredUserPage - 1}`}>Vorherige Seite</Link> : <button className={styles.buttonSecondary} disabled>Vorherige Seite</button>}
+        <span className={styles.muted}>Seite {registeredUserPage} von {registeredUserPages}</span>
+        {registeredUserPage < registeredUserPages ? <Link className={styles.buttonSecondary} href={`/admin/billing?tab=customers&users_page=${registeredUserPage + 1}`}>Nächste Seite</Link> : <button className={styles.buttonSecondary} disabled>Nächste Seite</button>}
+      </div> : null}
     </article>
     <article className={`${styles.card} ${styles.teamCard}`}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Nutzerverwaltung</span><h2>Eingeladene Nutzer / Teammitglieder</h2></div><span className={styles.badge}>{members.length} aktive Mitglieder</span></div><div className={styles.filterBar}><input className={styles.input} placeholder="Namen oder E-Mail suchen..." disabled /><select className={styles.select} disabled><option>Alle Rollen</option></select><select className={styles.select} disabled><option>Alle Status</option></select></div>{members.length ? <div className={styles.teamTable}><div className={styles.teamTableHead}><span>Name</span><span>E-Mail</span><span>Rolle</span><span>Kunde / Workspace</span><span>Status</span><span>Eingeladen am</span><span>Aktion</span></div>{members.slice(0, 10).map((member) => { const workspace = workspaces.find((item) => item.id === member.workspace_id); const isInternalTest = isInternalTestMember(member, workspace); return <div className={`${styles.teamTableRow} ${isInternalTest ? styles.internalTestRow : ""}`} key={member.id}><span>{member.display_name ?? "—"}</span><span className={isInternalTest ? styles.internalTestUser : undefined}>{member.email ?? "—"}{isInternalTest ? <small>Interner Testzugang</small> : null}</span><span>{member.role ?? "Mitglied"}</span><span>{workspace?.name ?? member.workspace_id}</span><span><span className={isInternalTest ? styles.badgeInternalTest : styles.badgeOk}>{isInternalTest ? "Interner Testzugang" : "Aktiv"}</span></span><span>{date(member.created_at)}</span><span className={styles.actions}>{workspace ? <Link className={styles.buttonSecondary} href={`/admin/billing/workspaces/${workspace.id}`}>Workspace</Link> : "—"}<form action={`/api/admin/billing/users/${member.user_id}/confirm-email`} method="post"><button className={styles.buttonSecondary}>E-Mail serverseitig bestätigen</button></form></span></div>; })}</div> : <div className={styles.emptyState}>Noch keine offenen Einladungen vorhanden.</div>}<div className={styles.footerActions}><button className={styles.buttonSecondary} disabled>Alle Einladungen anzeigen · in Vorbereitung</button><button className={styles.buttonSecondary} disabled>Nutzerverwaltung öffnen · in Vorbereitung</button></div></article>
   </>;
@@ -368,6 +383,7 @@ export default async function AdminBillingPage({ searchParams }: AdminBillingPag
   const tabParam = getSingleParam(params.tab);
   const activeTab = tabParam === "customers" ? "customers" : tabParam === "packages" ? "packages" : tabParam === "payments" ? "payments" : "overview";
   const selectedWorkspaceId = getSingleParam(params.workspace);
+  const registeredUsersPage = positivePage(getSingleParam(params.users_page));
   const crmAccessStatus = getSingleParam(params.crm_access);
   const [{ workspaces, error }, { members, error: memberError }, { users: registeredUsers, error: registeredUsersError }, { counts: contactCounts }] = await Promise.all([listAdminBillingWorkspaces(), listAdminBillingMembers(), listAdminRegisteredUsers(), listWorkspaceContactCounts()]);
 
@@ -376,7 +392,7 @@ export default async function AdminBillingPage({ searchParams }: AdminBillingPag
       <div className={styles.adminStack}>
         <AdminTabs activeTab={activeTab} />
         {crmAccessStatus === "updated" ? <p className={styles.badgeOk}>CRM-Zugang wurde gespeichert und protokolliert.</p> : crmAccessStatus === "failed" ? <p className={styles.badgeBad}>CRM-Zugang konnte nicht vollständig gespeichert werden. Bitte prüfe den Nutzerstatus und versuche es erneut.</p> : null}
-        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} members={members} registeredUsers={registeredUsers} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} registeredUsersError={registeredUsersError} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
+        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} members={members} registeredUsers={registeredUsers} registeredUsersPage={registeredUsersPage} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} registeredUsersError={registeredUsersError} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
       </div>
     </AdminBillingShell>
   );
