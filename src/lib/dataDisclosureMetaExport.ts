@@ -10,11 +10,13 @@ const PAGE_SIZE = 500;
 const MAX_ROWS_PER_DATASET = 50_000;
 
 export type DisclosureMetaRow = Record<string, unknown> & {
+  id?: string;
   workspace_id?: string;
 };
 
 export type DisclosureMetaDataset = {
   key:
+    | "workspace_record"
     | "contacts_full"
     | "memories"
     | "followups"
@@ -37,13 +39,71 @@ type DatasetDefinition = {
   table: string;
   select: string;
   order: string;
+  filterColumn?: "workspace_id" | "id";
 };
 
-// This list intentionally contains the currently active Production data families
-// that can hold Creator/Workspace data. Staging-only or not-yet-installed
-// feature tables are added to the disclosure in the same release that deploys
-// those tables to Production; a missing active table is always an export error.
+// Complete active Production data families that can hold data for the signed-in
+// Creator account or its Workspace. Staging-only/not-yet-installed feature
+// tables are added here in the same release that makes them Production storage.
+// A missing table in this active list is an export error; data is never silently
+// omitted or reported as a successful partial disclosure.
 const DATASETS: DatasetDefinition[] = [
+  {
+    key: "workspace_record",
+    table: "workspaces",
+    filterColumn: "id",
+    select: [
+      "id",
+      "name",
+      "owner_user_id",
+      "plan_id",
+      "commercial_option",
+      "setup_fee_cents",
+      "monthly_fee_cents",
+      "commitment_months",
+      "billing_status",
+      "billing_provider",
+      "payment_collection_method",
+      "payment_terms_version",
+      "payment_terms_accepted_at",
+      "payment_terms_accepted_by_user_id",
+      "billing_suspended_at",
+      "billing_suspended_reason",
+      "billing_manual_override",
+      "billing_last_payment_failed_at",
+      "billing_last_payment_at",
+      "billing_retry_count",
+      "billing_next_retry_at",
+      "billing_grace_until",
+      "billing_admin_note",
+      "billing_contract_started_at",
+      "billing_current_period_end_at",
+      "billing_next_invoice_at",
+      "billing_minimum_term_ends_at",
+      "subscription_cancel_requested_at",
+      "subscription_cancel_requested_by_user_id",
+      "subscription_cancel_at_period_end",
+      "subscription_effective_end_at",
+      "subscription_cancellation_revoked_at",
+      "workspace_access_mode",
+      "billing_updated_at",
+      "billing_updated_by_user_id",
+      "billing_note",
+      "last_invoice_status",
+      "last_invoice_amount_due_cents",
+      "last_invoice_amount_paid_cents",
+      "organization_name",
+      "street_address",
+      "postal_code",
+      "city",
+      "country",
+      "vat_id",
+      "tax_number",
+      "company_register_number",
+      "company_register_court",
+    ].join(","),
+    order: "id.asc",
+  },
   {
     key: "contacts_full",
     table: "contacts",
@@ -177,9 +237,10 @@ async function fetchPage(input: {
   offset: number;
   fetchImpl: typeof fetch;
 }): Promise<PageResult> {
+  const filterColumn = input.definition.filterColumn ?? "workspace_id";
   const url = new URL(getSupabaseRestUrl(input.definition.table));
   url.searchParams.set("select", input.definition.select);
-  url.searchParams.set("workspace_id", `eq.${input.workspaceId}`);
+  url.searchParams.set(filterColumn, `eq.${input.workspaceId}`);
   url.searchParams.set("order", input.definition.order);
   url.searchParams.set("limit", String(PAGE_SIZE));
   url.searchParams.set("offset", String(input.offset));
@@ -211,13 +272,12 @@ async function fetchPage(input: {
 
   const rows = payload as DisclosureMetaRow[];
   if (
-    rows.some(
-      (row) =>
-        !row ||
-        typeof row !== "object" ||
-        Array.isArray(row) ||
-        row.workspace_id !== input.workspaceId,
-    )
+    rows.some((row) => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return true;
+      return filterColumn === "id"
+        ? row.id !== input.workspaceId
+        : row.workspace_id !== input.workspaceId;
+    })
   ) {
     return {
       ok: false,
