@@ -695,3 +695,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: accept only the independently pinned nginx unit plus its exact typed D-Bus condition and a fresh protected executable check; retain all unknown/additional-condition, drop-in, assertion, reference and runner gates.
 - Evidence plan: official package/source, exact owner readout, executable positive/negative/redaction tests, current-head review/CI, normal deploy and installed audit. Production and Staging runners share this host; both need fresh idle evidence before reboot.
 - Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.
+
+## FM-MOB-001 / FM-CR-042 — Expo patch CI correction
+- Date: 2026-09-16
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Work lock: `LOCK-FM-MOB-001-EXPO-PATCH-CI-20260916`
+- Baseline: current main `afcd6f53b2f3bf8c93b70b74076bac1c14df5306`; PR #1132 Mobile CI run `35034370024`, job `104599960180` proves Expo Doctor requires `expo ~57.0.23` and `expo-notifications ~57.0.19` while the remaining Mobile checks pass.
+- Scope: compatible dependency and lockfile correction only. No Mobile behavior change, Production mutation, provider action, signing, artifact publication or Store submission.
+- Completed so far: deterministic install resolves `expo@57.0.23` and `expo-notifications@57.0.19`; the complete local Mobile check, Android/iOS JavaScript exports, bounded dependency-audit policy and Project Memory controls pass.
+- Exact next step: publish one separate PR and require fresh current-head Mobile CI plus independent review.
+- Acceptance boundary: source/CI can close this bounded correction; a newer signed artifact and real-device/Store acceptance remain open under FM-MOB-001.
