@@ -11,7 +11,7 @@ export const ADMIN_CRM_ACCESS_MIGRATION_PATH = resolve(
   `supabase/migrations/${ADMIN_CRM_ACCESS_MIGRATION_ID}.sql`,
 );
 export const EXPECTED_ADMIN_CRM_ACCESS_SHA256 =
-  "b9c80d9bef5a16fdc4970bc3aac687682f8e95ef94a26ae911b1be54034fc60c";
+  "7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd";
 
 function fail(code) {
   throw new Error(`ADMIN_CRM_ACCESS_MIGRATION_ERROR=${code}`);

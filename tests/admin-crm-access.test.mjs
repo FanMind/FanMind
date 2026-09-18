@@ -68,6 +68,16 @@ test("date-only temporary expiry uses the Europe/Zurich end of day", () => {
   );
 });
 
+test("date-only expiry rejects nonexistent calendar dates", () => {
+  assert.deepEqual(
+    resolveAdminCrmAccessTransition(
+      { mode: "temporary", expiresAt: "2026-02-31" },
+      now,
+    ),
+    { ok: false, error: "temporary_access_expiry_required" },
+  );
+});
+
 test("blocked access clears every bypass without deleting the Workspace", () => {
   const result = resolveAdminCrmAccessTransition({ mode: "blocked" }, now);
   assert.equal(result.ok, true);
@@ -143,6 +153,7 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.doesNotMatch(setter, /email_confirm\s*:/u);
 
   assert.match(migration, /pg_advisory_xact_lock/u);
+  assert.match(migration, /p_mode is null or p_mode not in/u);
   assert.match(migration, /from auth\.users/u);
   assert.match(migration, /v_confirmed_at is null/u);
   assert.match(migration, /'starter'/u);
@@ -163,6 +174,7 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(migration, /membership\.workspace_id <> v_workspace_id/u);
   assert.doesNotMatch(migration, /revoke execute on function public\.save_creator_bundle/u);
   assert.match(creatorFoundation, /creator_workspace_access_allowed/u);
+  assert.match(creatorFoundation, /using \(\(exists[\s\S]*\) and public\.creator_workspace_access_allowed\(%I\.workspace_id\)\)'/u);
   assert.match(creatorFoundation, /to_regprocedure\('public\.admin_crm_read_allowed\(uuid\)'\)/u);
   assert.match(creatorFoundation, /if not public\.creator_workspace_access_allowed\(p_workspace_id\)[\s\S]*workspace_inactive/u);
   assert.match(creatorRevisionFix, /creator_workspace_access_allowed\(p_workspace_id\)/u);

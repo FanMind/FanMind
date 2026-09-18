@@ -132,7 +132,7 @@ begin
     execute format('revoke all on public.%I from public, anon, authenticated, service_role', tab);
     execute format('grant select on public.%I to authenticated', tab);
     execute format('grant all on public.%I to service_role', tab);
-    execute format('create policy %I on public.%I for select to authenticated using (exists (select 1 from public.workspace_members m where m.workspace_id = %I.workspace_id and m.user_id = (select auth.uid())) or exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid()))) and public.creator_workspace_access_allowed(%I.workspace_id)', tab || '_member_read', tab, tab, tab, tab);
+    execute format('create policy %I on public.%I for select to authenticated using ((exists (select 1 from public.workspace_members m where m.workspace_id = %I.workspace_id and m.user_id = (select auth.uid())) or exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid()))) and public.creator_workspace_access_allowed(%I.workspace_id))', tab || '_member_read', tab, tab, tab, tab);
   end loop;
 end $$;
 

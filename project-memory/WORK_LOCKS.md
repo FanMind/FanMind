@@ -710,3 +710,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence plan: deterministic install, exact dependency tree, full local Mobile checks, GitHub current-head Mobile CI and independent final review.
 - Recovery: ordinary bounded source revert; no external state or user data is changed.
 - Continuation 2026-09-18: current main/#1133 is merged. Four current review findings are addressed locally under the existing lock; controlled Admin-CRM and Creator SQL remain unapplied. Final local suites, publication to the existing PR branch, exact-head CI and one fresh independent review remain required.
+- PR #1134 continuation 2026-09-18: retained LOCK-FM-REG-003 for the three deterministic CI closeout causes and two current inline security findings only. Fresh dependency evidence is root 0 and Mobile 18 (4 high/14 moderate/0 critical); no audit count or package-name widening beyond the observed graph. No Production apply or external mutation.

@@ -41,8 +41,19 @@ function timeZoneOffsetMs(date, timeZone) {
 function zurichEndOfDay(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
   if (!match) return null;
-  const naive = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 23, 59, 59, 999);
-  let candidate = new Date(naive - timeZoneOffsetMs(new Date(naive), "Europe/Zurich"));
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const naiveDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  if (
+    naiveDate.getUTCFullYear() !== year ||
+    naiveDate.getUTCMonth() !== month - 1 ||
+    naiveDate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  const naive = naiveDate.getTime();
+  let candidate = new Date(naive - timeZoneOffsetMs(naiveDate, "Europe/Zurich"));
   candidate = new Date(naive - timeZoneOffsetMs(candidate, "Europe/Zurich"));
   return candidate;
 }

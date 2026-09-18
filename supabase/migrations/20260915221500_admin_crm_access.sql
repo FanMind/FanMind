@@ -148,7 +148,7 @@ begin
   if p_target_user_id is null or p_admin_user_id is null then
     raise exception using errcode = '22023', message = 'admin_crm_access_identity_invalid';
   end if;
-  if p_mode not in ('permanent', 'temporary', 'blocked') then
+  if p_mode is null or p_mode not in ('permanent', 'temporary', 'blocked') then
     raise exception using errcode = '22023', message = 'admin_crm_access_mode_invalid';
   end if;
   if p_mode = 'temporary' and (p_expires_at is null or p_expires_at <= v_now) then

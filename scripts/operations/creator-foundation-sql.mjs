@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const CREATOR_FOUNDATION_SHA256 = "b2fa4162530706b8d5c5512dd4c1480d995309600b085ecfefe74d7f91c2658f";
+export const CREATOR_FOUNDATION_SHA256 = "d892c74c0285487f1e786dddea90cbc5cb3102f794de0b5037e48295d2a61f4b";
 export const CREATOR_CONFLICT_FIX_SHA256 = "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f";
 export const CREATOR_TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
 const FUNCTIONS = [
