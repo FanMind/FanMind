@@ -688,3 +688,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, Production audit 34648286758 / 103525002411; exact Exoscale Production instance verified in authenticated portal/console.
 - Scope: reviewed read-only boot-readiness evidence and owner-requested controlled Ubuntu restart, contingent on real start/recovery preflight. Preserve accepted Backup/DB Restore/Creator evidence.
 - Evidence/recovery: meaningful negative/redaction tests and current-head CI/review, installed current-release readout, exact before/after host and service receipts. Readout performs no service/data mutation; normal release revert retained; host-login recovery still unverified.
+
+## LOCK-FM-MOB-001-EXPO-PATCH-CI-20260916
+- Task: FM-MOB-001 / FM-CR-042
+- Status: ACTIVE
+- Risk: R2
+- Holder: Codex
+- Baseline: current main `afcd6f53b2f3bf8c93b70b74076bac1c14df5306`; failing Expo Doctor evidence is PR #1132 run `35034370024`, job `104599960180`.
+- Scope: only the Expo SDK 57 compatible patch versions, Mobile lockfile and bounded Project Memory reconciliation. No app feature, schema, external target, signed build or Store action.
+- Evidence plan: deterministic install, exact dependency tree, full local Mobile checks, GitHub current-head Mobile CI and independent final review.
+- Recovery: ordinary bounded source revert; no external state or user data is changed.

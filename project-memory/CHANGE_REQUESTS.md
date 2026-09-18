@@ -375,3 +375,12 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Task: FM-CR-037
 - Risk: R4
 - Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
+
+## FM-CR-042 — Expo SDK 57 patch compatibility
+- Date: 2026-09-16
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-MOB-001
+- Risk: R2
+- Source: Bernd explicitly requested a separate Mobile PR after PR #1132 Mobile CI proved Expo Doctor requires newer compatible SDK 57 patches.
+- Scope: update only `expo` from `~57.0.22` to `~57.0.23` and `expo-notifications` from `~57.0.18` to `~57.0.19`, refresh the Mobile lockfile and publish the bounded source/CI correction. No feature behavior, database/provider mutation, signing, build submission or Store publication.
+- Acceptance: deterministic Mobile install, exact installed versions, complete local Mobile check, current-head GitHub Mobile CI and independent review. Existing signed artifacts remain historical and do not prove this patch.
