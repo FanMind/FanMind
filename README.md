@@ -1,5 +1,14 @@
 # FanMind
 
+## Admin-CRM-Zugang
+
+Bestätigte Registrierungen können im Platform-Adminbereich einen dauerhaft
+kostenlosen oder ausdrücklich befristeten Starter-CRM-Zugang erhalten und
+später ohne Datenlöschung gesperrt werden. Dieser interne 0-EUR-Zugang ist kein
+öffentliches Angebot, keine Demo und kein Stripe-Vertrag. Seine atomare
+Workspace-/Membership-/Audit-Steuerung und die RLS-Sperre werden getrennt vom
+Web-Deploy nach `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` ausgerollt.
+
 ## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
 
 Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
@@ -472,7 +481,7 @@ Bereits vorhanden:
 - gespeicherte Fan-Analysen nur mit vollständig datiertem Nachrichtenkontext
   und gültiger Provenienz anzeigen; menschlich verworfene Berichte zeigen nur
   den Ablehnungsstatus, niemals ihre Schlussfolgerungen;
-- verschlüsselte, höchstens 24 Stunden alte Offline-Übersicht mit maximal 50 Kontakten; nur Name, Handle, Plattform, Status und Änderungszeit, ausschließlich lesbar;
+- verschlüsselte Offline-Übersicht mit maximal 50 Kontakten, gültig höchstens 24 Stunden und bei befristetem Admin-CRM-Zugang niemals über dessen Ablauf hinaus; nur Name, Handle, Plattform, Status und Änderungszeit, ausschließlich lesbar;
 - sicherer lokaler Logout mit Purge aller registrierten FanMind-SecureStore-Schlüssel und des Workspace-Zustands;
 - native Push-Grundlage mit validierter Follow-up-Navigation, sicherem
   Login-Handoff, ausdrücklichem Nutzer-Opt-in und vorbereiteter verschlüsselter

@@ -1,9 +1,26 @@
+create or replace function public.creator_workspace_access_allowed(p_workspace_id uuid)
+returns boolean language plpgsql stable security definer set search_path = '' as $$
+declare allowed boolean;
+begin
+  if to_regprocedure('public.admin_crm_read_allowed(uuid)') is null then
+    return true;
+  end if;
+  execute 'select public.admin_crm_read_allowed($1)' into allowed using p_workspace_id;
+  return coalesce(allowed, false);
+end $$;
+revoke all on function public.creator_workspace_access_allowed(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.creator_workspace_access_allowed(uuid) to authenticated, service_role;
+
+
 -- Controlled forward correction: an optimistic application conflict is HTTP 409.
 -- Preserve the function identity, owner, ACLs and every other statement.
 create or replace function public.save_creator_bundle(p_workspace_id uuid, p_creator_id uuid, p_expected_revision integer, p_persona jsonb, p_voice jsonb, p_playbook jsonb, p_approve boolean)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare target uuid; next_revision integer; approver uuid;
 begin
+  if not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'workspace_inactive' using errcode='42501';
+  end if;
   if (select auth.uid()) is null or not exists (select 1 from public.workspaces w where w.id = p_workspace_id and w.owner_user_id = (select auth.uid())) then
     raise exception 'creator_owner_required' using errcode = '42501';
   end if;
@@ -34,4 +51,31 @@ begin
     values(p_workspace_id,target,p_playbook,next_revision,approver,case when p_approve then now() else null end)
     on conflict(workspace_id,creator_id) do update set rules=excluded.rules,revision=excluded.revision,approved_by=excluded.approved_by,approved_at=excluded.approved_at;
   return target;
+end $$;
+
+create or replace function public.record_creator_fan_review(p_workspace_id uuid, p_contact_id uuid, p_commercial jsonb, p_event jsonb)
+returns void language plpgsql security definer set search_path = '' as $$
+declare creator uuid;
+begin
+  if not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'workspace_inactive' using errcode='42501';
+  end if;
+  if (select auth.uid()) is null or not exists(select 1 from public.workspaces where id=p_workspace_id and owner_user_id=(select auth.uid())) then
+    raise exception 'creator_owner_required' using errcode='42501';
+  end if;
+  if not exists(select 1 from public.contacts where id=p_contact_id and workspace_id=p_workspace_id) then
+    raise exception 'creator_contact_mismatch' using errcode='23514';
+  end if;
+  select id into strict creator from public.creators where workspace_id=p_workspace_id;
+  if p_commercial is null or jsonb_typeof(p_commercial) <> 'object' or coalesce(length(btrim(p_commercial->>'sourceReference')),0)=0 then
+    raise exception 'creator_source_required' using errcode='23514';
+  end if;
+  insert into public.contact_ai_profiles(workspace_id,contact_id,commercial_profile)
+    values(p_workspace_id,p_contact_id,p_commercial || jsonb_build_object('reviewStatus','confirmed','reviewedAt',now(),'reviewedBy',(select auth.uid())))
+    on conflict(workspace_id,contact_id) do update set commercial_profile=excluded.commercial_profile;
+  if p_event is not null and p_event <> 'null'::jsonb then
+    insert into public.creator_commercial_events(workspace_id,creator_id,contact_id,kind,occurred_at,amount_minor,currency,category,evidence_reference,confirmed_by)
+      values(p_workspace_id,creator,p_contact_id,p_event->>'kind',(p_event->>'occurredAt')::timestamptz,
+        (p_event->>'amountMinor')::bigint,p_event->>'currency',p_event->>'category',p_event->>'evidenceReference',(select auth.uid()));
+  end if;
 end $$;

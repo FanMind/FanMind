@@ -79,7 +79,7 @@ export async function loadWorkspace(userId: string): Promise<{
 }> {
   const ownerResult = await supabase
     .from("workspaces")
-    .select("id,name,owner_user_id,billing_status")
+    .select("id,name,owner_user_id,billing_status,workspace_access_mode,test_access_flags")
     .eq("owner_user_id", userId)
     .limit(1)
     .maybeSingle();

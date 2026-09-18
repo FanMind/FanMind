@@ -9,6 +9,7 @@ export const OFFLINE_READ_CACHE_VERSION: number;
 export type OfflineReadCache = {
   version: number;
   cachedAt: number;
+  cacheValidUntil: number;
   userId: string;
   workspaceId: string;
   workspaceName: string;
@@ -21,6 +22,7 @@ export function createOfflineReadCache(input: {
   workspaceName: string;
   contacts: ContactListItem[];
   cachedAt?: number;
+  accessExpiresAt?: string | null;
 }): OfflineReadCache;
 export function normalizeOfflineReadCache(
   raw: unknown,

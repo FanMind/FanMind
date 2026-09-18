@@ -210,6 +210,10 @@ export default function ContactsScreen() {
             workspaceId: activeWorkspace.id,
             workspaceName: activeWorkspace.name,
             contacts: result.contacts,
+            accessExpiresAt:
+              activeWorkspace.test_access_flags?.temporary_processing_access === true
+                ? String(activeWorkspace.test_access_flags.temporary_processing_access_expires_at ?? "")
+                : null,
           });
         }
       } else if (result.offlineEligible) {

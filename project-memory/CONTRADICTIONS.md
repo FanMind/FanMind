@@ -335,3 +335,10 @@ Never resolve a contradiction by deleting the older record. Document which sourc
 - Resolution: the shared provider-boundary guard and caller handling were accepted and deployed; later ledger/capture/canonical evidence supersedes the old `IMPLEMENTED_NOT_VERIFIED` state. The bounded canonical Billing Staging sub-gate is closed by deploy `34058028839` and rollback-only acceptance `34058118450` / job `101553652111`, while Production projection and Plus/Ultra remain disabled.
 - Status: RESOLVED
 - Remaining: overall FM-AI-001 stays `PARTIAL` for product/private/provider-side current lifecycle/Legal/Production evidence; do not repeat the completed freeze/ledger/canonical acceptance work.
+## CTR-FM-DAILY-GROSS-PRICE-20260915
+- Status: OPEN_RECONCILIATION_REQUIRED
+- Area: Daily / Stripe Tax / customer price
+- Owner truth: FM-DEC-020 fixes Daily at EUR 1 gross per day.
+- Current technical conflict: existing repository and provider assumptions were built around a previously configured Daily Price and incomplete Tax registration/readiness; they cannot prove that the charged total remains exactly EUR 1 gross across applicable cases.
+- Required resolution: create or select a technically immutable inclusive-tax-compatible Price only through the reviewed Billing path, confirm registration and invoice/cross-border behavior, complete webhook/ledger acceptance and then reconcile canonical product copy. Until then checkout stays fail closed.
+- This CRM-access change performs no Stripe, Tax, Price or Production payment mutation.

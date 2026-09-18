@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin";
-import { isInternalTestMember, isInternalTestWorkspace, listAdminBillingMembers, listAdminBillingWorkspaces, listWorkspaceContactCounts, type AdminBillingMember, type AdminBillingWorkspace } from "@/lib/adminBilling";
+import { adminCrmAccessLabel, isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
+import { isInternalTestMember, isInternalTestWorkspace, listAdminBillingMembers, listAdminBillingWorkspaces, listAdminBillingWorkspacesForOwners, listAdminRegisteredUsers, listWorkspaceContactCounts, type AdminBillingMember, type AdminBillingWorkspace, type AdminRegisteredUser } from "@/lib/adminBilling";
 import { PLANS, type FeatureKey, type FeatureStatus, type PlanId } from "@/config/plans";
 import { roadmapPhases } from "@/config/roadmap";
 import { getBillingStatusLabel } from "@/lib/billing";
@@ -94,6 +95,11 @@ function initials(value?: string | null) {
 
 function getSingleParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function positivePage(value: string | undefined) {
+  const parsed = Number.parseInt(value ?? "1", 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
 function StatCard({ icon, label, value, hint, trend, tone }: { icon: string; label: string; value: string | number; hint: string; trend: string; tone: string }) {
@@ -301,16 +307,11 @@ function PaymentsContent({ workspaces, members, selectedWorkspaceId, error }: { 
   </>;
 }
 
-function CustomersContent({ workspaces, members, contactCounts, selectedWorkspaceId, error, memberError }: { workspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null }) {
+function CustomersContent({ workspaces, registeredUserWorkspaces, members, registeredUsers, registeredUsersPage, registeredUsersHasNext, registeredUsersTotal, contactCounts, selectedWorkspaceId, error, memberError, registeredUsersError }: { workspaces: AdminBillingWorkspace[]; registeredUserWorkspaces: AdminBillingWorkspace[]; members: AdminBillingMember[]; registeredUsers: AdminRegisteredUser[]; registeredUsersPage: number; registeredUsersHasNext: boolean; registeredUsersTotal: number | null; contactCounts: Map<string, number>; selectedWorkspaceId?: string; error: string | null; memberError: string | null; registeredUsersError: string | null }) {
   const selectedWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? workspaces[0] ?? null;
   const workspaceRows = [...workspaces].sort(sortByDateDesc).slice(0, 10);
   const selectedMembers = selectedWorkspace ? members.filter((member) => member.workspace_id === selectedWorkspace.id) : [];
-  const newestCreatedAt = Math.max(0, ...workspaces.map((workspace) => new Date(workspace.created_at ?? 0).getTime()).filter(Number.isFinite));
-  const newRegistrations = workspaces.filter((workspace) => {
-    if (!workspace.created_at || !newestCreatedAt) return false;
-    const createdAt = new Date(workspace.created_at).getTime();
-    return Number.isFinite(createdAt) && newestCreatedAt - createdAt <= 30 * 24 * 60 * 60 * 1000;
-  }).length;
+  const newRegistrations = registeredUsersTotal ?? (registeredUsersPage === 1 && !registeredUsersHasNext ? registeredUsers.length : `≥ ${(registeredUsersPage - 1) * 50 + registeredUsers.length}`);
   const suspended = workspaces.filter((workspace) => suspendedStatuses.has(workspace.billing_status ?? "")).length;
   const internalTestMembers = members.filter((member) => isInternalTestMember(member, workspaces.find((workspace) => workspace.id === member.workspace_id))).length;
 
@@ -318,12 +319,13 @@ function CustomersContent({ workspaces, members, contactCounts, selectedWorkspac
     <section className={styles.crmKpiGrid} aria-label="Kunden- und Nutzer-Kennzahlen">
       <StatCard icon="◎" label="Kunden gesamt" value={workspaces.length} hint={workspaces.length ? "Echte Workspaces" : "Noch keine Daten"} trend="Aus Admin-Billing" tone={styles.toneBlue} />
       <StatCard icon="👤" label="Aktive Nutzer" value={members.length} hint={members.length ? "Workspace-Mitglieder" : "Keine Mitglieder geladen"} trend="Echte Mitgliedschaften" tone={styles.toneGreen} />
-      <StatCard icon="↗" label="Neue Registrierungen" value={newRegistrations} hint="Workspaces der letzten 30 Tage" trend="Nach created_at" tone={styles.toneCyan} />
+      <StatCard icon="↗" label="Registrierte Konten" value={newRegistrations} hint="Alle Auth-Registrierungen" trend="Mit und ohne Workspace" tone={styles.toneCyan} />
       <StatCard icon="⛔" label="Gesperrte Zugänge" value={suspended} hint="Suspended oder manuell gesperrt" trend="Billing-Status" tone={styles.toneRed} />
       <StatCard icon="T" label="Interne Testzugänge" value={internalTestMembers} hint="Markierte Testnutzer" trend="Admin-only Erkennung" tone={styles.toneRed} />
     </section>
     {error ? <p className={styles.badgeWarn}>{error}</p> : null}
     {memberError ? <p className={styles.badgeWarn}>{memberError}</p> : null}
+    {registeredUsersError ? <p className={styles.badgeWarn}>{registeredUsersError}</p> : null}
     <section className={styles.customerWorkspaceGrid}>
       <article className={`${styles.card} ${styles.customerTableCard}`}>
         <div className={styles.cardHeader}><div><span className={styles.eyebrow}>CRM-Verzeichnis</span><h2>Kunden / Workspaces</h2></div><span className={styles.badge}>{workspaces.length} Einträge</span></div>
@@ -332,9 +334,43 @@ function CustomersContent({ workspaces, members, contactCounts, selectedWorkspac
       </article>
       <aside className={`${styles.card} ${styles.customerDetailPanel}`}>
         <div className={styles.cardHeader}><div><span className={styles.eyebrow}>Auswahl</span><h2>Kundendetails</h2></div>{selectedWorkspace ? <span className={isInternalTestWorkspace(selectedWorkspace) ? styles.badgeInternalTest : statusClass(selectedWorkspace.billing_status)}>{isInternalTestWorkspace(selectedWorkspace) ? "Interner Testzugang" : customerStatusLabel(selectedWorkspace.billing_status)}</span> : null}</div>
-        {selectedWorkspace ? <><div className={styles.detailHero}><span className={styles.avatarLarge}>{initials(selectedWorkspace.name)}</span><div><strong>{selectedWorkspace.name}</strong><small>{selectedWorkspace.id}</small></div></div><dl className={styles.customerDetailList}><div><dt>Owner</dt><dd>{selectedWorkspace.owner_user_id ?? "Nicht hinterlegt"}</dd></div><div><dt>Paket</dt><dd>{readablePlan(selectedWorkspace)} · {selectedWorkspace.commitment_months ? `${selectedWorkspace.commitment_months} Monate` : "Laufzeit offen"}</dd></div><div><dt>Kontakte/Fans</dt><dd>{contactCounts.get(selectedWorkspace.id) ?? "—"}</dd></div><div><dt>Testzugang</dt><dd>{isInternalTestWorkspace(selectedWorkspace) ? "Interner Testzugang" : "Nein"}</dd></div><div><dt>Notizen</dt><dd>{selectedWorkspace.billing_admin_note || "Noch keine Notiz."}</dd></div><div><dt>Zuletzt bearbeitet</dt><dd>{date(selectedWorkspace.billing_updated_at ?? selectedWorkspace.created_at)}</dd></div></dl><div className={styles.panelActions}><Link className={styles.buttonPrimary} href={`/admin/billing/workspaces/${selectedWorkspace.id}`}>Workspace öffnen</Link><form action={`/api/admin/billing/workspaces/${selectedWorkspace.id}/internal-test`} method="post"><button className={styles.buttonSecondary}>Als internen Testzugang freischalten</button></form><button className={styles.buttonSecondary} disabled>Paket ändern · in Vorbereitung</button><form action={`/api/admin/billing/workspaces/${selectedWorkspace.id}/suspend`} method="post"><button className={styles.buttonDanger}>Zugang sperren</button></form><button className={styles.buttonSecondary} disabled>Einladung senden · in Vorbereitung</button></div>{selectedMembers.length ? <div className={styles.memberMiniList}><strong>Teammitglieder</strong>{selectedMembers.slice(0, 4).map((member) => <span key={member.id}>{member.display_name ?? member.email ?? member.user_id}<small>{member.role ?? "Mitglied"}</small></span>)}</div> : <p className={styles.muted}>Keine Teammitglieder für diesen Workspace geladen.</p>}</> : <div className={styles.emptyState}>Wähle einen Workspace aus, sobald echte Daten vorhanden sind.</div>}
+        {selectedWorkspace ? <><div className={styles.detailHero}><span className={styles.avatarLarge}>{initials(selectedWorkspace.name)}</span><div><strong>{selectedWorkspace.name}</strong><small>{selectedWorkspace.id}</small></div></div><dl className={styles.customerDetailList}><div><dt>Owner</dt><dd>{selectedWorkspace.owner_user_id ?? "Nicht hinterlegt"}</dd></div><div><dt>Paket</dt><dd>{readablePlan(selectedWorkspace)} · {selectedWorkspace.commitment_months ? `${selectedWorkspace.commitment_months} Monate` : "Laufzeit offen"}</dd></div><div><dt>Kontakte/Fans</dt><dd>{contactCounts.get(selectedWorkspace.id) ?? "—"}</dd></div><div><dt>Testzugang</dt><dd>{isInternalTestWorkspace(selectedWorkspace) ? "Interner Testzugang" : "Nein"}</dd></div><div><dt>Notizen</dt><dd>{selectedWorkspace.billing_admin_note || "Noch keine Notiz."}</dd></div><div><dt>Zuletzt bearbeitet</dt><dd>{date(selectedWorkspace.billing_updated_at ?? selectedWorkspace.created_at)}</dd></div></dl><div className={styles.panelActions}><Link className={styles.buttonPrimary} href={`/admin/billing/workspaces/${selectedWorkspace.id}`}>Workspace öffnen</Link>{isAdminCrmAccessWorkspace(selectedWorkspace) ? <span className={styles.muted}>CRM-Zugang in „Registrierte Nutzer“ verwalten.</span> : <><form action={`/api/admin/billing/workspaces/${selectedWorkspace.id}/internal-test`} method="post"><button className={styles.buttonSecondary}>Als internen Testzugang freischalten</button></form><button className={styles.buttonSecondary} disabled>Paket ändern · in Vorbereitung</button><form action={`/api/admin/billing/workspaces/${selectedWorkspace.id}/suspend`} method="post"><button className={styles.buttonDanger}>Zugang sperren</button></form></>}<button className={styles.buttonSecondary} disabled>Einladung senden · in Vorbereitung</button></div>{selectedMembers.length ? <div className={styles.memberMiniList}><strong>Teammitglieder</strong>{selectedMembers.slice(0, 4).map((member) => <span key={member.id}>{member.display_name ?? member.email ?? member.user_id}<small>{member.role ?? "Mitglied"}</small></span>)}</div> : <p className={styles.muted}>Keine Teammitglieder für diesen Workspace geladen.</p>}</> : <div className={styles.emptyState}>Wähle einen Workspace aus, sobald echte Daten vorhanden sind.</div>}
       </aside>
     </section>
+    <article className={`${styles.card} ${styles.teamCard}`}>
+      <div className={styles.cardHeader}><div><span className={styles.eyebrow}>Registrierungen</span><h2>Registrierte Nutzer</h2></div><span className={styles.badge}>{registeredUsersTotal ?? registeredUsers.length} Konten</span></div>
+      {registeredUsers.length ? <div className={styles.teamTable}>
+        <div className={styles.teamTableHead}><span>Name</span><span>E-Mail</span><span>Bestätigung</span><span>Workspace</span><span>CRM-Zugang</span><span>Registriert am</span><span>Aktion</span></div>
+        {registeredUsers.map((registeredUser) => {
+          const workspace = registeredUserWorkspaces.find((item) => item.owner_user_id === registeredUser.id) ?? null;
+          const confirmed = Boolean(registeredUser.email_confirmed_at);
+          const controlledAccess = workspace?.test_access_flags?.admin_crm_access === true;
+          return <div className={`${styles.teamTableRow} ${controlledAccess ? styles.internalTestRow : ""}`} key={registeredUser.id}>
+            <span>{registeredUser.display_name ?? "—"}</span>
+            <span>{registeredUser.email ?? "—"}</span>
+            <span><span className={confirmed ? styles.badgeOk : styles.badgeWarn}>{confirmed ? "Bestätigt" : "Nicht bestätigt"}</span></span>
+            <span>{workspace ? <Link className={styles.workspaceLink} href={`/admin/billing/workspaces/${workspace.id}`}>{workspace.name}</Link> : "Noch keiner"}</span>
+            <span><span className={controlledAccess ? styles.badgeInternalTest : workspace ? styles.badge : styles.badgeWarn}>{workspace ? adminCrmAccessLabel(workspace) : "Nicht freigeschaltet"}</span></span>
+            <span>{date(registeredUser.created_at)}</span>
+            <span className={styles.actions}>
+              {!confirmed ? <span className={styles.muted}>Bestätigung erforderlich</span> : !workspace ? <>
+                <form action={`/api/admin/billing/users/${registeredUser.id}/crm-access`} method="post"><input type="hidden" name="mode" value="permanent" /><button className={styles.buttonPrimary}>Dauerhaft kostenlos freigeben</button></form>
+                <form action={`/api/admin/billing/users/${registeredUser.id}/crm-access`} method="post" className={styles.inlineForm}><input type="hidden" name="mode" value="temporary" /><input className={styles.input} aria-label="Enddatum des ersten befristeten CRM-Zugangs" name="expires_at" type="date" required /><button className={styles.buttonSecondary}>Befristet kostenlos freigeben</button></form>
+              </> : controlledAccess ? <>
+                <form action={`/api/admin/billing/users/${registeredUser.id}/crm-access`} method="post"><input type="hidden" name="mode" value="permanent" /><button className={styles.buttonSecondary}>Dauerhaft kostenlos</button></form>
+                <form action={`/api/admin/billing/users/${registeredUser.id}/crm-access`} method="post" className={styles.inlineForm}><input type="hidden" name="mode" value="temporary" /><input className={styles.input} aria-label="Enddatum des befristeten CRM-Zugangs" name="expires_at" type="date" required /><button className={styles.buttonSecondary}>Befristet kostenlos</button></form>
+                <form action={`/api/admin/billing/users/${registeredUser.id}/crm-access`} method="post"><input type="hidden" name="mode" value="blocked" /><button className={styles.buttonDanger}>Zugang sperren</button></form>
+              </> : <Link className={styles.buttonSecondary} href={`/admin/billing/workspaces/${workspace.id}`}>Bestehenden Workspace öffnen</Link>}
+            </span>
+          </div>;
+        })}
+      </div> : <div className={styles.emptyState}>Noch keine Auth-Registrierungen vorhanden.</div>}
+      {registeredUsersPage > 1 || registeredUsersHasNext ? <div className={styles.footerActions} aria-label="Seitennavigation für registrierte Nutzer">
+        {registeredUsersPage > 1 ? <Link className={styles.buttonSecondary} href={`/admin/billing?tab=customers&users_page=${registeredUsersPage - 1}`}>Vorherige Seite</Link> : <button className={styles.buttonSecondary} disabled>Vorherige Seite</button>}
+        <span className={styles.muted}>Seite {registeredUsersPage}</span>
+        {registeredUsersHasNext ? <Link className={styles.buttonSecondary} href={`/admin/billing?tab=customers&users_page=${registeredUsersPage + 1}`}>Nächste Seite</Link> : <button className={styles.buttonSecondary} disabled>Nächste Seite</button>}
+      </div> : null}
+    </article>
     <article className={`${styles.card} ${styles.teamCard}`}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Nutzerverwaltung</span><h2>Eingeladene Nutzer / Teammitglieder</h2></div><span className={styles.badge}>{members.length} aktive Mitglieder</span></div><div className={styles.filterBar}><input className={styles.input} placeholder="Namen oder E-Mail suchen..." disabled /><select className={styles.select} disabled><option>Alle Rollen</option></select><select className={styles.select} disabled><option>Alle Status</option></select></div>{members.length ? <div className={styles.teamTable}><div className={styles.teamTableHead}><span>Name</span><span>E-Mail</span><span>Rolle</span><span>Kunde / Workspace</span><span>Status</span><span>Eingeladen am</span><span>Aktion</span></div>{members.slice(0, 10).map((member) => { const workspace = workspaces.find((item) => item.id === member.workspace_id); const isInternalTest = isInternalTestMember(member, workspace); return <div className={`${styles.teamTableRow} ${isInternalTest ? styles.internalTestRow : ""}`} key={member.id}><span>{member.display_name ?? "—"}</span><span className={isInternalTest ? styles.internalTestUser : undefined}>{member.email ?? "—"}{isInternalTest ? <small>Interner Testzugang</small> : null}</span><span>{member.role ?? "Mitglied"}</span><span>{workspace?.name ?? member.workspace_id}</span><span><span className={isInternalTest ? styles.badgeInternalTest : styles.badgeOk}>{isInternalTest ? "Interner Testzugang" : "Aktiv"}</span></span><span>{date(member.created_at)}</span><span className={styles.actions}>{workspace ? <Link className={styles.buttonSecondary} href={`/admin/billing/workspaces/${workspace.id}`}>Workspace</Link> : "—"}<form action={`/api/admin/billing/users/${member.user_id}/confirm-email`} method="post"><button className={styles.buttonSecondary}>E-Mail serverseitig bestätigen</button></form></span></div>; })}</div> : <div className={styles.emptyState}>Noch keine offenen Einladungen vorhanden.</div>}<div className={styles.footerActions}><button className={styles.buttonSecondary} disabled>Alle Einladungen anzeigen · in Vorbereitung</button><button className={styles.buttonSecondary} disabled>Nutzerverwaltung öffnen · in Vorbereitung</button></div></article>
   </>;
 }
@@ -345,13 +381,24 @@ export default async function AdminBillingPage({ searchParams }: AdminBillingPag
   const tabParam = getSingleParam(params.tab);
   const activeTab = tabParam === "customers" ? "customers" : tabParam === "packages" ? "packages" : tabParam === "payments" ? "payments" : "overview";
   const selectedWorkspaceId = getSingleParam(params.workspace);
-  const [{ workspaces, error }, { members, error: memberError }, { counts: contactCounts }] = await Promise.all([listAdminBillingWorkspaces(), listAdminBillingMembers(), listWorkspaceContactCounts()]);
+  const registeredUsersPage = positivePage(getSingleParam(params.users_page));
+  const crmAccessStatus = getSingleParam(params.crm_access);
+  const registeredUserResult = activeTab === "customers"
+    ? await listAdminRegisteredUsers(registeredUsersPage)
+    : { users: [] as AdminRegisteredUser[], page: 1, hasNext: false, total: null, error: null };
+  const [{ workspaces, error }, { workspaces: registeredUserWorkspaces, error: registeredUserWorkspaceError }, { members, error: memberError }, { counts: contactCounts }] = await Promise.all([
+    listAdminBillingWorkspaces(),
+    activeTab === "customers" ? listAdminBillingWorkspacesForOwners(registeredUserResult.users.map((item) => item.id)) : Promise.resolve({ workspaces: [], error: null }),
+    listAdminBillingMembers(),
+    listWorkspaceContactCounts(),
+  ]);
 
   return (
     <AdminBillingShell user={user} title="Adminbereich" subtitle="Verwalte Kunden, Workspaces, Pakete und Systemeinstellungen.">
       <div className={styles.adminStack}>
         <AdminTabs activeTab={activeTab} />
-        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} members={members} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
+        {crmAccessStatus === "updated" ? <p className={styles.badgeOk}>CRM-Zugang wurde gespeichert und protokolliert.</p> : crmAccessStatus === "failed" ? <p className={styles.badgeBad}>CRM-Zugang konnte nicht vollständig gespeichert werden. Bitte prüfe den Nutzerstatus und versuche es erneut.</p> : null}
+        {activeTab === "customers" ? <CustomersContent workspaces={workspaces} registeredUserWorkspaces={registeredUserWorkspaces} members={members} registeredUsers={registeredUserResult.users} registeredUsersPage={registeredUserResult.page} registeredUsersHasNext={registeredUserResult.hasNext} registeredUsersTotal={registeredUserResult.total} contactCounts={contactCounts} selectedWorkspaceId={selectedWorkspaceId} error={error} memberError={memberError} registeredUsersError={registeredUserResult.error ?? registeredUserWorkspaceError} /> : activeTab === "packages" ? <PackagesContent /> : activeTab === "payments" ? <PaymentsContent workspaces={workspaces} members={members} selectedWorkspaceId={selectedWorkspaceId} error={error} /> : <OverviewContent workspaces={workspaces} error={error} />}
       </div>
     </AdminBillingShell>
   );

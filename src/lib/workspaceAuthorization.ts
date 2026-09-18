@@ -3,6 +3,7 @@ import {
   getUserWorkspaceDashboard,
   getUserWorkspaceMembershipDashboard,
   getWorkspaceContact,
+  ADMIN_CRM_ACCESS_INACTIVE,
   type ContactRow,
   type SupabaseServerUser,
   type WorkspaceDashboardRow,
@@ -13,6 +14,7 @@ import {
   WorkspaceAuthorizationError,
 } from "@/lib/workspaceAuthorizationPolicy.mjs";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 
 export {
   assertResourceInWorkspace,
@@ -39,13 +41,41 @@ export async function getUserAuthorizedWorkspaceDashboard(
   ) {
     return ownerWorkspaceResult;
   }
+  if (ownerWorkspaceResult.error?.message === ADMIN_CRM_ACCESS_INACTIVE) {
+    return ownerWorkspaceResult;
+  }
   return getUserWorkspaceMembershipDashboard(user, accessToken);
 }
 
 function workspaceUnavailableMessage(error: Error | null | undefined): string {
-  return error?.message === "TEMPORARY_DEMO_DELETED"
-    ? "TEMPORARY_DEMO_DELETED"
-    : "Kein autorisierter Workspace gefunden.";
+  if (error?.message === "TEMPORARY_DEMO_DELETED") {
+    return "TEMPORARY_DEMO_DELETED";
+  }
+  if (error?.message === ADMIN_CRM_ACCESS_INACTIVE) {
+    return ADMIN_CRM_ACCESS_INACTIVE;
+  }
+  return "Kein autorisierter Workspace gefunden.";
+}
+
+function throwIfAdminCrmAccessInactive(error: Error | null | undefined): void {
+  if (error?.message === ADMIN_CRM_ACCESS_INACTIVE) {
+    throw new WorkspaceAuthorizationError(
+      "Der kostenlose CRM-Zugang ist abgelaufen oder wurde gesperrt.",
+      "workspace_inactive",
+    );
+  }
+}
+
+function assertAdminCrmReadAccess(workspace: WorkspaceDashboardRow): void {
+  if (
+    isAdminCrmAccessWorkspace(workspace) &&
+    !evaluateWorkspaceProcessingEntitlement(workspace).allowed
+  ) {
+    throw new WorkspaceAuthorizationError(
+      "Der kostenlose CRM-Zugang ist abgelaufen oder wurde gesperrt.",
+      "workspace_inactive",
+    );
+  }
 }
 
 export async function getAuthorizedWorkspaceForCurrentUser(
@@ -58,7 +88,10 @@ export async function getAuthorizedWorkspaceForCurrentUser(
     data.user,
     accessToken,
   );
+  throwIfAdminCrmAccessInactive(workspaceResult.error);
   if (!workspaceResult.workspace) return null;
+
+  assertAdminCrmReadAccess(workspaceResult.workspace);
 
   return { user: data.user, workspace: workspaceResult.workspace };
 }
@@ -75,6 +108,7 @@ export async function requireAuthorizedWorkspace(
   }
 
   const workspaceResult = await getUserWorkspaceDashboard(data.user, accessToken);
+  throwIfAdminCrmAccessInactive(workspaceResult.error);
   if (!workspaceResult.workspace) {
     throw new WorkspaceAuthorizationError(
       workspaceUnavailableMessage(workspaceResult.error),
@@ -83,6 +117,7 @@ export async function requireAuthorizedWorkspace(
   }
 
   assertWorkspaceId(workspaceResult.workspace.id);
+  assertAdminCrmReadAccess(workspaceResult.workspace);
   return { user: data.user, workspace: workspaceResult.workspace };
 }
 
@@ -103,6 +138,7 @@ export async function requireAuthorizedWorkspaceMember(
   );
   if (ownerWorkspaceResult.workspace) {
     assertWorkspaceId(ownerWorkspaceResult.workspace.id);
+    assertAdminCrmReadAccess(ownerWorkspaceResult.workspace);
     return { user: data.user, workspace: ownerWorkspaceResult.workspace };
   }
   if (ownerWorkspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") {
@@ -111,6 +147,7 @@ export async function requireAuthorizedWorkspaceMember(
       "workspace_missing",
     );
   }
+  throwIfAdminCrmAccessInactive(ownerWorkspaceResult.error);
 
   const memberWorkspaceResult = await getUserWorkspaceMembershipDashboard(
     data.user,
