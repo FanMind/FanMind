@@ -844,7 +844,9 @@ export function ChannelsGrid({
                       />
                     ) : (
                       <span
-                        className={`${styles.statusBadge} ${styles.statusConnected}`}
+                        className={`${styles.statusBadge} ${
+                          activeChannel.live ? styles.statusConnected : styles.statusPreview
+                        }`}
                       >
                         {activeChannel.status}
                       </span>
