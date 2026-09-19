@@ -396,3 +396,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Source: Bernd explicitly requested a separate Mobile PR after PR #1132 Mobile CI proved Expo Doctor requires newer compatible SDK 57 patches.
 - Scope: update only `expo` from `~57.0.22` to `~57.0.23` and `expo-notifications` from `~57.0.18` to `~57.0.19`, refresh the Mobile lockfile and publish the bounded source/CI correction. No feature behavior, database/provider mutation, signing, build submission or Store publication.
 - Acceptance: deterministic Mobile install, exact installed versions, complete local Mobile check, current-head GitHub Mobile CI and independent review. Existing signed artifacts remain historical and do not prove this patch.
+
+## FM-CR-043 — Admin-CRM active login must bypass paid Billing
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-REG-003
+- Risk: R2
+- Source: real Production owner browser acceptance after the separately authorized Admin-CRM rollout.
+- Observation: registration, email confirmation and permanent Admin grant succeed; exact Production Workspace is `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and has no Stripe binding, but login renders `/billing/start`.
+- Root cause: `getPreActivationRedirect()` handles only the denied Admin-CRM case and then lets an allowed Admin-CRM Workspace fall through to the generic `plan_id=starter` paid pre-activation branch.
+- Scope: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; direct Billing start/checkout/pending/success/cancel/suspended surfaces redirect Admin-CRM before any payment path.
+- Acceptance: focused Admin-CRM routing regression, full current-head CI/build/security, independent review, normal Production deploy/version, and owner re-login with the same already-granted account. No DB/user/payment/Stripe/Tax/provider/Mobile mutation.
