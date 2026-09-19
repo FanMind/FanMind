@@ -24,10 +24,75 @@ import {
   evaluateMetaDataUse,
 } from "../src/lib/metaDataHandlingPolicy.mjs";
 import { sanitizeMetaProviderError } from "../src/lib/metaProviderErrorPolicy.mjs";
+import {
+  isUsableMetaAppId,
+  isUsableMetaAppSecret,
+  normalizeMetaCallbackUrl,
+  normalizeMetaRuntimeValue,
+} from "../src/lib/metaRuntimeConfigPolicy.mjs";
 
 async function source(path) {
   return readFile(path, "utf8");
 }
+
+test("Meta runtime configuration rejects deploy placeholders before provider navigation", () => {
+  assert.equal(normalizeMetaRuntimeValue("replace_with_facebook_app_id"), null);
+  assert.equal(normalizeMetaRuntimeValue(" replace_with_meta_app_secret "), null);
+  assert.equal(isUsableMetaAppId("replace_with_facebook_app_id"), false);
+  assert.equal(isUsableMetaAppId("123456789012345"), true);
+  assert.equal(isUsableMetaAppSecret("replace_with_meta_app_secret"), false);
+  assert.equal(isUsableMetaAppSecret("0123456789abcdef0123456789abcdef"), true);
+  assert.equal(
+    normalizeMetaCallbackUrl(
+      "https://your-domain.example/api/integrations/facebook/callback",
+      "/api/integrations/facebook/callback",
+    ),
+    null,
+  );
+  assert.equal(
+    normalizeMetaCallbackUrl(
+      "https://fanmind.ch/api/integrations/facebook/callback",
+      "/api/integrations/facebook/callback",
+    ),
+    "https://fanmind.ch/api/integrations/facebook/callback",
+  );
+  assert.equal(
+    normalizeMetaCallbackUrl(
+      "https://fanmind.ch/api/integrations/instagram/callback",
+      "/api/integrations/facebook/callback",
+    ),
+    null,
+  );
+});
+
+test("Meta channel UI fails closed on incomplete config and exposes real Facebook sync controls", async () => {
+  const [facebook, instagram, channels, page, syncActions] = await Promise.all([
+    source("src/lib/facebookIntegration.ts"),
+    source("src/lib/instagramIntegration.ts"),
+    source("src/app/channels/ChannelsGrid.tsx"),
+    source("src/app/channels/page.tsx"),
+    source("src/app/channels/metaSyncActions.ts"),
+  ]);
+
+  assert.match(facebook, /requireFacebookAppId/u);
+  assert.match(facebook, /requireFacebookRedirectUri/u);
+  assert.match(facebook, /getFacebookRuntimeConfigurationStatus/u);
+  assert.match(instagram, /normalizeMetaCallbackUrl/u);
+  assert.match(page, /redirectUriConfigured/u);
+  assert.match(page, /tokenEncryptionConfigured/u);
+  assert.match(
+    channels,
+    /facebookLiveSetupStatus\.redirectUriConfigured[\s\S]*facebookLiveSetupStatus\.tokenEncryptionConfigured/u,
+  );
+  assert.match(
+    channels,
+    /facebookError === "config"[\s\S]*Facebook-Serverkonfiguration ist noch nicht vollständig/u,
+  );
+  assert.match(channels, /Facebook-Kommentare jetzt synchronisieren/u);
+  assert.match(channels, /facebookCommentsAuthorized/u);
+  assert.match(syncActions, /fetchFacebookCommentsNow/u);
+  assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
+});
 
 test("Meta connections use the supported stable Graph API and owner/admin control", () => {
   assert.equal(META_GRAPH_API_VERSION, "v25.0");
