@@ -9,6 +9,7 @@
 - Safety: no DB migration, real user grant, Stripe/Tax/payment, Meta provider mutation, automatic send, OnlyFans bypass or Mobile work in this repository lock.
 - Recovery: bounded source/docs revert. Existing provider/data state is untouched.
 - FM-CR-045 placeholder follow-through: Production owner test proved the current runtime carries example Meta OAuth values; source may only add fail-closed validation/UI/sync controls. Real App ID/secret/callback/provider permission changes stay outside this repository lock and require secure owner action.
+- Canonical PR: #1138 only. #1139 is duplicate/superseded and carries no separate lock; its review findings are acceptance inputs for this same lock.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043
