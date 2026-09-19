@@ -73,6 +73,51 @@ export type FacebookTokenDiagnostics = {
   error?: { message?: string; code?: number; type?: string };
 };
 
+function resolveValidatedFacebookValue(
+  names: readonly string[],
+  validator: (value: string) => boolean,
+): string | null {
+  for (const name of names) {
+    const value = normalizeMetaRuntimeValue(process.env[name]);
+    if (value && validator(value)) return value;
+  }
+  return null;
+}
+
+function resolveFacebookAppId(): string | null {
+  return resolveValidatedFacebookValue(
+    ["FACEBOOK_APP_ID", "META_APP_ID"],
+    isUsableMetaAppId,
+  );
+}
+
+function resolveFacebookAppSecret(): string | null {
+  return resolveValidatedFacebookValue(
+    ["FACEBOOK_APP_SECRET", "META_APP_SECRET"],
+    isUsableMetaAppSecret,
+  );
+}
+
+function resolveFacebookRedirectUri(): string | null {
+  for (const name of ["FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"] as const) {
+    const value = normalizeMetaCallbackUrl(
+      process.env[name],
+      "/api/integrations/facebook/callback",
+    );
+    if (value) return value;
+  }
+  return null;
+}
+
+export function isFacebookOAuthRuntimeReady(): boolean {
+  return Boolean(
+    resolveFacebookAppId() &&
+      resolveFacebookAppSecret() &&
+      resolveFacebookRedirectUri() &&
+      isTokenEncryptionConfigured(),
+  );
+}
+
 export function getFacebookOAuthUrl(
   state: string,
   scopes: readonly string[] = FACEBOOK_MESSAGES_OAUTH_SCOPES,
@@ -1575,7 +1620,7 @@ export async function fetchFacebookPageWebhookStatus(
     };
   }
 
-  const appId = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
+  const appId = resolveFacebookAppId();
   const appSubscription =
     (payload?.data ?? []).find((entry) => !appId || entry.id === appId) ?? null;
   const subscribedFields = appSubscription?.subscribed_fields ?? [];
@@ -1682,13 +1727,9 @@ export type FacebookRuntimeConfigurationStatus = {
 };
 
 export function getFacebookRuntimeConfigurationStatus(): FacebookRuntimeConfigurationStatus {
-  const appId = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  const appSecret = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET");
-  const redirectCandidate = getOptionalEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
-  const redirectUri = normalizeMetaCallbackUrl(
-    redirectCandidate,
-    "/api/integrations/facebook/callback",
-  );
+  const appId = resolveFacebookAppId();
+  const appSecret = resolveFacebookAppSecret();
+  const redirectUri = resolveFacebookRedirectUri();
   const publicBaseUrl = getOptionalEnv("NEXT_PUBLIC_APP_URL", "FANMIND_APP_URL");
 
   return {
@@ -1795,26 +1836,23 @@ function getOptionalEnv(...names: string[]): string | undefined {
 }
 
 function requireFacebookAppId(): string {
-  const value = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  if (!value || !isUsableMetaAppId(value)) {
+  const value = resolveFacebookAppId();
+  if (!value) {
     throw new Error("FACEBOOK_APP_ID ist nicht gültig konfiguriert.");
   }
   return value;
 }
 
 function requireFacebookAppSecret(): string {
-  const value = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET");
-  if (!value || !isUsableMetaAppSecret(value)) {
+  const value = resolveFacebookAppSecret();
+  if (!value) {
     throw new Error("FACEBOOK_APP_SECRET ist nicht gültig konfiguriert.");
   }
   return value;
 }
 
 function requireFacebookRedirectUri(): string {
-  const value = normalizeMetaCallbackUrl(
-    getOptionalEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"),
-    "/api/integrations/facebook/callback",
-  );
+  const value = resolveFacebookRedirectUri();
   if (!value) {
     throw new Error("FACEBOOK_REDIRECT_URI ist nicht gültig konfiguriert.");
   }
