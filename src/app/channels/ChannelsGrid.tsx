@@ -859,7 +859,9 @@ export function ChannelsGrid({
                         <p className={styles.modalNotice} role="alert">
                           {facebookError === "page_selection_required"
                             ? "Dieses Meta-Konto verwaltet mehrere Seiten. FanMind hat bewusst keine Seite automatisch gewählt. Die ausdrückliche Seitenauswahl wird vor dieser Verbindung benötigt."
-                            : "Die Facebook-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten übernommen."}
+                            : facebookError === "workspace_inactive"
+                              ? "Die Freigabe deines Workspaces konnte nicht bestätigt werden. Bitte lass deinen Zugang im FanMind-Adminbereich prüfen und versuche die Verbindung danach erneut."
+                              : "Die Facebook-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten übernommen."}
                         </p>
                       ) : null}
                       {facebookConnection ? (
@@ -943,7 +945,9 @@ export function ChannelsGrid({
                       <ChannelConnectionSteps name="Instagram" />
                       {instagramError ? (
                         <p className={styles.modalNotice} role="alert">
-                          Die Instagram-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten oder Meta-Rohinhalte gespeichert.
+                          {instagramError === "workspace_inactive"
+                            ? "Die Freigabe deines Workspaces konnte nicht bestätigt werden. Bitte lass deinen Zugang im FanMind-Adminbereich prüfen und versuche die Verbindung danach erneut."
+                            : "Die Instagram-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten oder Meta-Rohinhalte gespeichert."}
                         </p>
                       ) : null}
                       {instagramConnection ? (
