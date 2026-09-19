@@ -311,20 +311,20 @@ const channelGroups: ChannelGroup[] = [
         "facebook",
         "Facebook",
         "Inbox",
-        "Messenger und Page-Kommentare bleiben getrennte vorbereitete Verbindungen.",
-        "2 vorbereitete Eingänge",
+        "Messenger und Page-Kommentare werden über dieselbe Facebook-Seite getrennt autorisiert und in FanMind eingelesen.",
+        "Nachrichten + Kommentare",
         [
           makeInput(
             "facebook-messages",
             "Nachrichten",
             "Nachrichten",
-            "Messenger-Inbox bleibt bis zur produktiven Freigabe geplant.",
+            "Messenger-Nachrichten werden nach erfolgreicher Seitenverbindung in FanMind importiert.",
           ),
           makeInput(
             "facebook-comments",
             "Kommentare",
             "Kommentare",
-            "Page-Kommentare bleiben bis zur produktiven Freigabe geplant.",
+            "Page-Kommentare werden nach separater Kommentar-Freigabe in FanMind eingelesen.",
           ),
         ],
       ),
@@ -932,8 +932,6 @@ export function ChannelsGrid({
                                 FanMind startet keine Facebook-Anmeldung, solange App-ID, App-Secret, Callback und Token-Verschlüsselung nicht gültig gesetzt sind.
                               </li>
                             ) : null}
-                            <li>
-                            </li>
                           </ul>
                           <div className={styles.connectionCardActions}>
                             <button
