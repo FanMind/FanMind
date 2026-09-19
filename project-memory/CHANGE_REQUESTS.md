@@ -421,3 +421,16 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Current source change: show a specific `workspace_inactive` explanation for Facebook/Instagram without weakening authorization or provider checks.
 - External boundary: no provider login/consent/App Review/permission/webhook activation is inferred from repository work. No passwords or tokens in chat. No DB, Stripe/Tax/payment, user-grant or Mobile mutation in this change.
 - Acceptance: current-head Social/Meta/core-flow tests, TypeScript/lint/build, Project Memory/Truth/Drift, Browser E2E, CodeQL and independent review. After publication, owner uses the already granted account in `/channels` for the real Facebook connection first, then Instagram.
+
+
+## FM-CR-045 — Production Meta OAuth placeholder configuration must fail closed
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R2
+- Source: real Production owner test after PR #1137. FanMind displayed Facebook “Serverkonfiguration: bereit”, but the generated Meta OAuth URL visibly contained the deploy placeholders `client_id=replace_with_facebook_app_id` and callback host `your-domain.example`; Meta therefore returned “Ungültige App-ID”.
+- Root cause: readiness and OAuth helpers treated any non-empty ENV string as configured, so example placeholders were accepted as live Production configuration.
+- Scope: reject placeholder App IDs/secrets/callbacks before provider navigation; show fail-closed configuration status in `/channels`; suppress misleading Coming-Soon/reservation UI for the actual Facebook/Instagram Beta controls; expose the existing Facebook comment-sync action after the separate comment permission is granted.
+- Expected real flow after external configuration: existing FanMind account -> Facebook connect -> official Meta consent -> explicit Page selection when needed -> callback back to FanMind -> saved connection -> bounded automatic initial Messenger import; comments remain a separate Meta permission and can then be synchronized into FanMind.
+- External boundary: repository code cannot invent the real central Meta App ID/secret or change the owner-controlled Meta Developer configuration. Production ENV must later receive the real server-side values securely, and the exact `https://fanmind.ch/api/integrations/facebook/callback` URI must be allowed in Meta. No secret may enter chat, Git, screenshots or logs.
+- No DB migration, user grant, Stripe/Tax/payment, automatic send or Mobile work.
