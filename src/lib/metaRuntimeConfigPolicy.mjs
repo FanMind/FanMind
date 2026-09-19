@@ -1,5 +1,8 @@
 const PLACEHOLDER_PREFIX = /^(?:replace_with_|your_)/iu;
-const PLACEHOLDER_HOST = /(?:^|\.)example(?:\.|$)|(?:^|\.)fanmind\.example$/iu;
+const RESERVED_HOST_SUFFIX = /(?:^|\.)(?:example|test|invalid)$/iu;
+const CORE_FLOW_ACK = "fanmind-local-synthetic-core-flow";
+const CORE_FLOW_APP_URL = "http://localhost:3100";
+const CORE_FLOW_SUPABASE_URL = "http://127.0.0.1:54321";
 
 export function normalizeMetaRuntimeValue(value) {
   if (typeof value !== "string") return null;
@@ -23,16 +26,36 @@ export function isUsableMetaAppSecret(value) {
   return Boolean(normalized && normalized.length >= 16);
 }
 
+function isLoopbackHostname(hostname) {
+  const normalized = hostname.toLowerCase();
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized === "[::1]" ||
+    /^127\./u.test(normalized)
+  );
+}
+
+function coreFlowLoopbackAllowed(url) {
+  return (
+    isLoopbackHostname(url.hostname) &&
+    process.env.FANMIND_CORE_FLOW_FIXTURE_ACK === CORE_FLOW_ACK &&
+    process.env.NEXT_PUBLIC_APP_URL === CORE_FLOW_APP_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL === CORE_FLOW_SUPABASE_URL
+  );
+}
+
 export function normalizeMetaCallbackUrl(value, expectedPath) {
   const normalized = normalizeMetaRuntimeValue(value);
   if (!normalized) return null;
   try {
     const url = new URL(normalized);
-    const loopbackHttp =
-      url.protocol === "http:" &&
-      ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
-    if (url.protocol !== "https:" && !loopbackHttp) return null;
-    if (PLACEHOLDER_HOST.test(url.hostname)) return null;
+    const loopback = isLoopbackHostname(url.hostname);
+    const loopbackAllowed = loopback && coreFlowLoopbackAllowed(url);
+    if (loopback && !loopbackAllowed) return null;
+    if (url.protocol !== "https:" && !loopbackAllowed) return null;
+    if (RESERVED_HOST_SUFFIX.test(url.hostname)) return null;
     if (url.pathname !== expectedPath) return null;
     if (url.username || url.password || url.search || url.hash) return null;
     return url.toString();
