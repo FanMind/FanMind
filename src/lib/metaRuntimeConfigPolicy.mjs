@@ -28,7 +28,10 @@ export function normalizeMetaCallbackUrl(value, expectedPath) {
   if (!normalized) return null;
   try {
     const url = new URL(normalized);
-    if (url.protocol !== "https:") return null;
+    const loopbackHttp =
+      url.protocol === "http:" &&
+      ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
+    if (url.protocol !== "https:" && !loopbackHttp) return null;
     if (PLACEHOLDER_HOST.test(url.hostname)) return null;
     if (url.pathname !== expectedPath) return null;
     if (url.username || url.password || url.search || url.hash) return null;
