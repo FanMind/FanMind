@@ -63,7 +63,7 @@
 - Risk: R4
 - Scope: FM-CR-025 roadmap recording and synchronized dependency/truth/translation controls only.
 - Publication: PR #1090 merged as 7dbd7a3a; deployment 34483135613, audit 34483304635 and readiness 34483304720 passed. Independent live DE/EN browser verification confirms the visible roadmap.
-- Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-DEC-015 resumes FM-CREATOR-001 now, with Android following the selected Creator/Social increments.
+- Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-DEC-015 resumes FM-CREATOR-001 now; FM-DEC-021 supersedes the old Android timing and defers all remaining Mobile until company registration plus explicit owner resume.
 
 ## FM-CREATOR-001
 - Status: IN_PROGRESS
