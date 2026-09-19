@@ -221,6 +221,30 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   );
   assert.match(
     facebookActions,
+    /leftValid !== rightValid\) return leftValid \? -1 : 1/u,
+  );
+  assert.match(
+    facebookActions,
+    /FACEBOOK_COMMENT_SYNC_MAX_PERSISTED_PER_RUN = 100/u,
+  );
+  assert.match(
+    facebookActions,
+    /FACEBOOK_COMMENT_SYNC_EXECUTION_BUDGET_MS = 8_000/u,
+  );
+  assert.match(
+    facebookActions,
+    /decodeFacebookCommentContinuation\([\s\S]*connection\.last_comment_fetch_error/u,
+  );
+  assert.match(
+    facebookActions,
+    /encodeFacebookCommentContinuation\(lastProcessedCursor\)/u,
+  );
+  assert.match(
+    channels,
+    /__fanmind_comment_cursor_v1__:[\s\S]*weitere Kommentare warten auf Fortsetzung/u,
+  );
+  assert.match(
+    facebookActions,
     /left\.created_time \? Date\.parse\(left\.created_time\)[\s\S]*right\.created_time \? Date\.parse\(right\.created_time\)/u,
   );
   assert.match(runtimePolicy, /url\.origin !== appOrigin/u);
