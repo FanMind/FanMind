@@ -8,7 +8,7 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Completed owner evidence: new account registration, email confirmation and Platform-Admin “Dauerhaft kostenlos” grant all succeeded. Read-only Production DB proves the Workspace is permanent 0-EUR Admin-CRM with no Stripe binding.
 - Current blocker: real login incorrectly lands on `/billing/start` because active Admin-CRM falls through generic Starter paid routing. Do not repeat registration or grant.
 - Resume trigger: reviewed/deployed FM-CR-043. Then log in with the same account and verify Dashboard/Fans/Inbox/Follow-ups.
-- Boundary: no Checkout/Subscription/Tax state. After acceptance, proceed to Facebook/Instagram account connection and permitted message import. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
+- Boundary: no Checkout/Subscription/Tax state. The existing granted account may only be re-login/read-only tested after the hotfix; no additional real Admin-CRM grants until the missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle is accepted. After Web acceptance, proceed to Facebook/Instagram account connection and permitted message import. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
 
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
