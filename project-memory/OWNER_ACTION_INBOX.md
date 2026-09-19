@@ -3,20 +3,29 @@
 This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
-- Status: WAITING_SOURCE_FIX
+- Status: COMPLETED
 - Task: FM-REG-003 / FM-CR-043.
-- Completed owner evidence: new account registration, email confirmation and Platform-Admin “Dauerhaft kostenlos” grant all succeeded. Read-only Production DB proves the Workspace is permanent 0-EUR Admin-CRM with no Stripe binding.
-- Current blocker: real login incorrectly lands on `/billing/start` because active Admin-CRM falls through generic Starter paid routing. Do not repeat registration or grant.
-- Resume trigger: reviewed/deployed FM-CR-043. Then log in with the same account and verify Dashboard/Fans/Inbox/Follow-ups.
-- Boundary: no Checkout/Subscription/Tax state. The existing granted account may only be re-login/read-only tested after the hotfix; no additional real Admin-CRM grants until the missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle is accepted. After Web acceptance, proceed to Facebook/Instagram account connection and permitted message import. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
+- Result: registration, email confirmation, Platform-Admin “Dauerhaft kostenlos” grant and same-account Web login all succeeded. The reviewed/deployed #1136 hotfix removed the erroneous paid Billing redirect and the owner confirmed normal CRM access.
+- Do not repeat: no re-registration, re-grant or Production Admin-CRM database rollout for this account.
+- Remaining separate boundary: no additional real Admin-CRM grants until the missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle is accepted under its own protected scope.
+- Next product step: use the existing granted account for Facebook first, then Instagram, through FanMind `/channels`. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
+
+## FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919 — Fehlende synthetische Admin-CRM-Lifecycle-Abnahme
+- Status: OWNER_ACTION_REQUIRED
+- Task: FM-REG-003.
+- Reason: the first real permanent Admin-CRM grant happened before the runbook-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was recorded.
+- Current safety rule: the existing real 0-EUR account remains usable and must not be re-granted/deleted. No additional real Admin-CRM grants until this synthetic acceptance is completed.
+- Required future scope: separately authorize a protected synthetic confirmed-noncustomer fixture and prove permanent, future temporary, blocked, login/direct authenticated read boundaries and cleanup. Do not repeat the Production migration.
+- Parallel-safe work: Facebook/Instagram repository continuation and the existing real account's Social use are allowed while this is open.
 
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
 - NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external controls EXT-META-CREATOR-APP-20260911 and EXT-WHATSAPP.
-- Needed: missing personal Meta developer access, actual central FanMind Facebook/Instagram app and permissions, each Creator's own consent and real provider acceptance. Phase 3 additionally requires separately approved WhatsApp Business credentials/permissions and real Staging/E2E/revocation/reconnect/tenant/idempotency proof for its dormant foundation. Reuse the owner's existing authorization; no renewed general permission request.
-- Current access: secure login connection interrupted; fresh Meta target still shows login methods. App/permission state remains unknown; no provider mutation occurred.
-- Where: secure provider sign-in/console, never passwords or tokens in chat.
-- Boundary: no payment, auto-send, WhatsApp or Production activation implied. TikTok/X are separate below, with their own Phase 7 completion state. Existing OnlyFans/Discord external controls remain open; this selected-channel queue does not accept the whole Phase 7 gate.
+- Current priority: the existing granted FanMind account now works. Open `/channels`, try Facebook first through the official Meta login/consent and explicit Page selection, then verify returned connection/scopes/token-present state and bounded initial DM sync; repeat for Instagram afterwards. Never put passwords, MFA codes or tokens in chat.
+- Provider checkpoint retained from 2026-09-14: the central FanMind Meta app was authenticated; Facebook server configuration was observed as ready then, while its connection attempt stopped at the now-resolved `workspace_inactive` boundary. The Instagram Messaging/Content use case was later successfully saved in the central Meta app after explicit owner consent. These are setup observations, not current live-connection acceptance.
+- Still required/revalidate before reliance: actual Facebook/Instagram account consent, current permissions/App Review/Advanced Access, authorized Instagram test/account role, Business Login/callback configuration, matching protected server configuration, webhook verification/publication requirements and real inbound/isolation/duplicate/revocation/reconnect evidence.
+- Phase 3 additionally retains separately approved WhatsApp Business credentials/permissions and real Staging/E2E/revocation/reconnect/tenant/idempotency proof for its dormant foundation.
+- Boundary: no payment, automatic sending or WhatsApp activation implied. TikTok/X remain separate; OnlyFans keeps manual handoff unless an official/contractual path is proven.
 
 ## FM-SOC7-OWNER-EXTERNAL-20260911 — Externe Phase-7-Abnahme
 - Status: OWNER_ACTION_REQUIRED

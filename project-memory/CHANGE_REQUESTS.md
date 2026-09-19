@@ -400,11 +400,24 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-043 — Admin-CRM active login must bypass paid Billing
 - Date: 2026-09-19
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Task: FM-REG-003
 - Risk: R2
 - Source: real Production owner browser acceptance after the separately authorized Admin-CRM rollout.
 - Observation: registration, email confirmation and permanent Admin grant succeed; exact Production Workspace is `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and has no Stripe binding, but login renders `/billing/start`.
 - Root cause: `getPreActivationRedirect()` handles only the denied Admin-CRM case and then lets an allowed Admin-CRM Workspace fall through to the generic `plan_id=starter` paid pre-activation branch.
 - Scope: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; direct Billing start/checkout/pending/success/cancel/suspended surfaces redirect Admin-CRM before any payment path.
-- Acceptance: focused Admin-CRM routing regression, full current-head CI/build/security, independent review, normal Production deploy/version, and owner re-login with the same already-granted account. No DB/user/payment/Stripe/Tax/provider/Mobile mutation.
+- Acceptance/result: PR #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed all current-head checks and independent/security review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed exact `/api/version` plus 7-component health. Owner then re-used the same already-granted account and confirmed normal CRM access instead of `/billing/start`. No DB/user/payment/Stripe/Tax/provider/Mobile mutation was part of this hotfix.
+
+
+## FM-CR-044 — Facebook/Instagram inbound continuation after Admin-CRM login acceptance
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R3
+- Source: Bernd confirmed the same permanently free Admin-CRM account now reaches FanMind CRM successfully and explicitly requested continuing with Facebook/Instagram connection and permitted message import.
+- Baseline: current Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Production read-only countercheck shows zero Facebook/Instagram `social_connections` for Admin-CRM workspaces.
+- Scope: preserve the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server token handling, bounded initial DM import, incremental sync/webhook, tenant isolation and no-auto-send boundaries; port only still-valid current-main clarification/evidence from stale PR #1121.
+- Current source change: show a specific `workspace_inactive` explanation for Facebook/Instagram without weakening authorization or provider checks.
+- External boundary: no provider login/consent/App Review/permission/webhook activation is inferred from repository work. No passwords or tokens in chat. No DB, Stripe/Tax/payment, user-grant or Mobile mutation in this change.
+- Acceptance: current-head Social/Meta/core-flow tests, TypeScript/lint/build, Project Memory/Truth/Drift, Browser E2E, CodeQL and independent review. After publication, owner uses the already granted account in `/channels` for the real Facebook connection first, then Instagram.

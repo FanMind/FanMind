@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-ADMIN-CRM-LOGIN-HOTFIX`
-- Next action title: Admin-CRM Login vom bezahlten Billing trennen
+- Next action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
+- Next action title: Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen
 
 ## Finishline gates
 

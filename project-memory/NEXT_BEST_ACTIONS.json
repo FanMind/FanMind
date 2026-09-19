@@ -4,13 +4,14 @@
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
-      "id": "NBA-ADMIN-CRM-LOGIN-HOTFIX",
+      "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
       "priority": 1,
       "task": "FM-REG-003",
       "gate": "registration_admin_crm",
-      "title": "Admin-CRM Login vom bezahlten Billing trennen",
-      "requires_owner": false,
-      "parallel_safe": true,
+      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919",
       "prerequisite_gates": [
         "memory_v6",
         "staging"
@@ -19,7 +20,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "FM-CR-043 is the current executable priority. Preserve the already granted 0-EUR Admin-CRM Workspace and fix only the routing/billing isolation: active Admin-CRM must reach Web CRM without any paid Billing path; blocked/expired must reach /workspace/access-paused; all direct Billing/checkout surfaces including POST /api/billing/checkout must reject or redirect Admin-CRM before Stripe. Do not repeat registration, the real Admin grant, the Production migration, payment, Stripe/Tax, provider or Mobile work. After reviewed green merge and normal Production deploy/version proof, the owner retests the same already-granted account read-only through Dashboard/Fans/Inbox/Follow-ups. No further real Admin-CRM grants are permitted until the runbook's missing synthetic lifecycle acceptance is completed and recorded."
+      "instruction": "The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration."
     },
     {
       "id": "NBA-RESTORE-STORAGE-R4-AUTH",
@@ -200,6 +201,24 @@
         "EXT-DISCORD",
         "EXT-ONLYFANS"
       ]
+    },
+    {
+      "id": "NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT",
+      "priority": 2,
+      "task": "FM-SOC3-001",
+      "gate": "phase3_social",
+      "title": "Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen",
+      "requires_owner": false,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "FM-CR-044 is the current executable repository priority after the owner-confirmed Admin-CRM login. Reuse the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server tokens, bounded first DM import, incremental sync/webhook, tenant isolation and no-auto-send foundations. Reconcile only still-valid #1121 evidence/copy on current main and prepare the exact /channels owner handoff: Facebook first, then Instagram. Do not perform provider login/consent/App Review, DB mutation, payment, automatic send or deferred Mobile work from repository automation. Real provider acceptance remains under FM-SOC3-OWNER-APP-20260911."
     }
   ],
   "retired_actions": [

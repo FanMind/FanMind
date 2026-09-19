@@ -1,9 +1,11 @@
 ## EXT-META-CREATOR-APP-20260911
 - Related: FM-SOC3-001 / phase3_social; Status: OPEN; Risk R4.
-- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; missing personal Meta access and individual Creator consent remain factual requirements.
-- Needed: actual central Facebook/Instagram app, callbacks/scopes, App Review, per-Creator consent and real positive/negative provider acceptance. The same Phase 3 owner queue also retains the separate dormant WhatsApp credentials/permissions and Staging/E2E control under EXT-WHATSAPP. Code/schema/feature flags cannot close this control.
-- Current access observation: the secure login request ended with a connection error; a fresh canonical Meta developer tab still shows the sign-in methods. No signed-in app state, credentials or successful login is claimed. No app configuration was changed.
-- TikTok/X are independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-PHASE7-EXTERNAL / phase7_social; Meta completion cannot close them.
+- Owner queue: FM-SOC3-OWNER-APP-20260911 / NBA-CREATOR-SOCIAL-EXTERNAL. Existing authorization is retained; concrete provider permission/account consent and actual E2E remain factual requirements.
+- Current checkpoint: the Admin-CRM Workspace admission issue that blocked the 2026-09-14 Facebook attempt is resolved for the existing granted account and its Web login is owner-confirmed. No new real Facebook OAuth/connection has yet been performed.
+- Retained 2026-09-14 provider setup evidence from stale PR #1121: authenticated central FanMind Meta app inspection; Facebook server configuration observed as ready at that time; Instagram Messaging/Content use case later successfully saved after explicit owner consent and visible in the central app. This is provider setup evidence only, not live connectivity or permission acceptance.
+- Still needed/revalidate now: current Facebook/Instagram app/callback/server configuration, required scopes/permissions/App Review/Advanced Access, authorized Instagram test/account role and Business Login configuration, each Creator/account's own consent, webhook verification/publication prerequisites and real positive/negative inbound acceptance with tenant isolation, duplicate handling, disconnect/reconnect and no-auto-send proof.
+- FanMind's current messaging source requests bounded messaging scopes; no content-publishing automation is authorized or implied by the saved Meta use case.
+- TikTok/X remain independently tracked by EXT-TIKTOK-X-PILOT-20260911 / NBA-PHASE7-EXTERNAL. WhatsApp is separately gated under EXT-WHATSAPP.
 
 ## Provider resources / Creator continuation — 2026-09-11
 - Protected Staging inventory read through the existing GitHub environment: DB and synthetic owner/secondary credentials present; no TikTok/X/Meta app secret names among its 16 secrets. This does not prove host or provider app state. No consent or real platform test can be inferred; central app setup and per-Creator authorization remain distinct.

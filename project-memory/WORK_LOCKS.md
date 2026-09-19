@@ -1,6 +1,17 @@
+## LOCK-FM-SOCIAL-INBOUND-20260919
+- Task: FM-SOC3-001 / FM-CR-044
+- Status: ACTIVE
+- Risk: R3
+- Holder: ChatGPT/Codex
+- Baseline: Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Admin-CRM login is owner-confirmed working; current Production read-only count is zero Facebook/Instagram connections for Admin-CRM workspaces.
+- Scope: current-main Facebook/Instagram inbound continuation only. Reuse existing OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server tokens, bounded initial DM import, incremental sync/webhooks, tenant isolation and no-auto-send. Port only still-valid evidence/copy from stale #1121.
+- Evidence plan: current-head focused Social/Meta/core-flow tests, build/lint/truth/memory/drift, Browser E2E, CodeQL and independent review. Provider account/consent/App Review/permissions remain external.
+- Safety: no DB migration, real user grant, Stripe/Tax/payment, Meta provider mutation, automatic send, OnlyFans bypass or Mobile work in this repository lock.
+- Recovery: bounded source/docs revert. Existing provider/data state is untouched.
+
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R2
 - Holder: ChatGPT
 - Baseline: Production/main `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; real owner browser evidence after successful permanent Admin-CRM grant.
@@ -8,6 +19,7 @@
 - Evidence: exact Production row is already correct and payment-free; focused regression, full CI/build/security, independent review, normal Production deploy/version, then owner re-login using the same already-granted account.
 - Safety: no database migration, regrant, payment, Stripe/Tax, Social provider, Mobile or account mutation. Do not repeat registration or the Admin grant.
 - Recovery: ordinary source revert; Production Admin-CRM data remains unchanged.
+- Released: PR #1136 merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Production deploy `35434847795` passed and the owner confirmed the same already-granted account reaches CRM. Do not repeat registration/grant/database rollout.
 
 ## LOCK-FM-DAILY-SETUP-UI-20260914
 - Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
