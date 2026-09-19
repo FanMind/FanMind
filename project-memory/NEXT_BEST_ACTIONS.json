@@ -207,8 +207,8 @@
       "priority": 2,
       "task": "FM-SOC3-001",
       "gate": "phase3_social",
-      "title": "Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen",
-      "requires_owner": false,
+      "title": "Reale Meta-Konfiguration und Facebook-Inbound abnehmen",
+      "requires_owner": true,
       "parallel_safe": true,
       "prerequisite_gates": [
         "memory_v6",
@@ -218,7 +218,8 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "FM-CR-045 is the current executable repository priority after the real Production Facebook test exposed placeholder Meta OAuth configuration. Preserve the existing Facebook/Instagram OAuth, explicit Page/account binding, encrypted-token and bounded first-import/sync foundations, but reject example App IDs/secrets/callbacks before provider navigation, show true configuration readiness, remove misleading reservation/Coming-Soon UI for the Meta Beta controls, and expose the existing Facebook comment sync after separate comment permission. After reviewed green deploy, provider/server configuration is owner-required: real central Meta App ID/secret, exact FanMind callback, valid token-encryption key and matching Meta callback/permissions, all handled securely outside chat/Git. Then retry Facebook only; successful Messenger authorization should return to FanMind and run the bounded initial DM import. Payment, automatic send and Mobile stay deferred."
+      "instruction": "FM-CR-045 is PRODUCTION_CONFIRMED by canonical PR #1138 (final head cea0d43108187a4dcd2510f17798f250d4a3c429, merge ccfe0ccef743e889d4ea16d454282cf66e465ed9), Production Deploy 35450031498, Production Audit 35450097882 and Public Go-Live Readiness 35450097892. Do not repeat its placeholder/OAuth fail-closed source work. The remaining step is owner/provider-controlled secure configuration of the real central Meta App ID/secret, exact FanMind callback, token-encryption key and matching permissions, followed by the bounded Facebook connection/inbound proof. No secrets in chat/Git; Instagram follows only after Facebook acceptance. Payment, automatic send and Mobile stay deferred.",
+      "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
     }
   ],
   "retired_actions": [

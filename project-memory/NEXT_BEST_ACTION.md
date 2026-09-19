@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
-- Task: `FM-SOC3-001`
-- Gate: `phase3_social` (`PARTIAL`)
+- Selected action: `NBA-CREATOR-INTELLIGENCE`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_intelligence` (`IN_PROGRESS`)
 - Selection status: `EXECUTABLE`
-- Title: Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen
+- Title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Instruction
 
-FM-CR-045 is the current executable repository priority after the real Production Facebook test exposed placeholder Meta OAuth configuration. Preserve the existing Facebook/Instagram OAuth, explicit Page/account binding, encrypted-token and bounded first-import/sync foundations, but reject example App IDs/secrets/callbacks before provider navigation, show true configuration readiness, remove misleading reservation/Coming-Soon UI for the Meta Beta controls, and expose the existing Facebook comment sync after separate comment permission. After reviewed green deploy, provider/server configuration is owner-required: real central Meta App ID/secret, exact FanMind callback, valid token-encryption key and matching Meta callback/permissions, all handled securely outside chat/Git. Then retry Facebook only; successful Messenger authorization should return to FanMind and run the bounded initial DM import. Payment, automatic send and Mobile stay deferred.
+Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging.
 
 ## Why this action
 
@@ -21,7 +21,7 @@ standing-authorized safe work
 ## Candidate evaluation
 
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **EXECUTABLE** — standing-authorized safe work
+- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required

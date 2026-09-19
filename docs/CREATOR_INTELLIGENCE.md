@@ -187,3 +187,19 @@ Lernstatistiken dürfen nur explizit verknüpfte, belegte Ereignisse verwenden u
 keinen kausalen Verkaufserfolg aus zeitlicher Nähe behaupten. Preise/Grenzen
 ändern sich nicht automatisch. Voice-Onboarding aus 30–100 freigegebenen echten
 Creator-Nachrichten und die verblindete Stimmenbewertung sind noch offen.
+
+Der repository-seitige, nebenwirkungsfreie Lernvertrag ist inzwischen in
+`src/lib/creatorConfirmedChatLearning.mjs` vorbereitet. Er bindet Vorschlags-
+und Generierungs-ID an die exakte Creator- und Prompt-Revision und erzwingt für
+Vorschlag, bestätigten Ausgang, Reaktion und Kaufbeleg identische Workspace-,
+Creator-, Fan- und Conversation-Schlüssel. Eine bloße Auswahl bleibt ohne
+bestätigte Outbound-Message ausdrücklich ohne Messwert. Änderungen am Entwurf
+werden reproduzierbar als Edit-Distanz/-Quote gemessen; unbekannte Reaktion und
+unbekannter Kauf bleiben getrennt unbekannt. Zusammenfassungen zählen nur
+explizite Verknüpfungen und nennen sie nie Conversion oder kausalen Erfolg.
+
+Diese Vorbereitung persistiert noch nichts, sendet keine Nachricht, ruft kein
+Modell auf und ändert weder Stil noch Preise/Playbook automatisch. Vor realer
+Nutzung fehlen weiterhin der kontrollierte Datenbankvertrag, autorisierte
+Server-Routen, Disclosure/Deletion/Export-Integration und reale verblindete
+Qualitätsabnahme mit privaten, freigegebenen Beispielen.

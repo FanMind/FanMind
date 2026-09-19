@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
-- Next action title: Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen
+- Next action: `NBA-CREATOR-INTELLIGENCE`
+- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Finishline gates
 
