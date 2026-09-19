@@ -924,7 +924,11 @@ export function ChannelsGrid({
                               Letzter Kommentar-Lauf: {facebookConnection.last_comment_fetch_count ?? 0} importiert
                             </li>
                             {facebookConnection.last_comment_fetch_error ? (
-                              <li>Letzter Kommentar-Fehler: {facebookConnection.last_comment_fetch_error}</li>
+                              <li>
+                                {facebookConnection.last_comment_fetch_error.startsWith("__fanmind_comment_cursor_v1__:")
+                                  ? "Kommentar-Sync: weitere Kommentare warten auf Fortsetzung."
+                                  : `Letzter Kommentar-Fehler: ${facebookConnection.last_comment_fetch_error}`}
+                              </li>
                             ) : null}
                           </ul>
                           <div className={styles.connectionCardActions}>
