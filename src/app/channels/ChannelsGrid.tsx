@@ -647,7 +647,6 @@ export function ChannelsGrid({
     facebookLiveSetupStatus.facebookAppIdConfigured &&
     facebookLiveSetupStatus.facebookAppSecretConfigured &&
     facebookLiveSetupStatus.redirectUriConfigured &&
-    facebookLiveSetupStatus.publicBaseUrlConfigured &&
     facebookLiveSetupStatus.tokenEncryptionConfigured;
   const facebookCommentsAuthorized = Boolean(
     facebookConnection?.scopes?.includes("pages_read_engagement") &&
