@@ -1,8 +1,9 @@
-## Admin-CRM ready for owner browser acceptance — 2026-09-19
-- Exact Production release `630aef3ccb53fed9b46284cb1d4bf1825a57687e` is deployed; Admin-CRM migration `20260919081945 admin_crm_access` is applied on Production Supabase `drqkpdvtbbrrdwmtrodz` after explicit owner authorization.
-- Postflight PASS: required functions present; mutation RPC service-role-only; 19 restrictive entitlement policies including Workspaces; no real account/payment/provider mutation. One confirmed user is ready for Admin grant.
-- Next owner action: in FanMind Platform Admin, locate the confirmed registration and grant “Dauerhaft kostenlos”; then verify normal Web CRM access. Do not activate Stripe/Tax/payment.
-- Owner reprioritization: all Mobile work is deferred until company registration; preserve existing Mobile evidence. After successful Web login/CRM acceptance, resume Facebook/Instagram account connection and permitted message import.
+## Admin-CRM login hotfix pending — 2026-09-19
+- Real owner acceptance reached the intended account state: registration, e-mail confirmation and “Dauerhaft kostenlos” grant succeeded. Production DB is correct and contains no Stripe binding.
+- Defect: the granted account logs into `/billing/start` because active Admin-CRM falls through the generic Starter paid-routing rule.
+- FM-CR-043 fixes central pre-activation and all direct Billing entry surfaces without DB/payment/provider mutation. Do not repeat registration or Admin grant.
+- Next owner action only after reviewed Production hotfix: log in with the same already-granted account and verify Dashboard/Fans/Inbox/Follow-ups.
+- Mobile remains deferred until company registration. After this Web acceptance, continue Facebook/Instagram connection and permitted message import.
 
 ## Daily UI only — owner closeout boundary, 2026-09-14
 - Finish only PR #1125 against main 1e011edd: visible Daily at /workspace/setup, saved selection, unavailable-state explanation, disabled unavailable activation and unchanged registration/confirmation/actions. The earlier broader Admin offer switch is excluded; #1126 is superseded for this release.
