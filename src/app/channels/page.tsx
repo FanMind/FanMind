@@ -26,7 +26,7 @@ import { ChannelsGrid } from "./ChannelsGrid";
 import { getTelegramWebhookStatus, type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import { isInstagramOAuthConfigured } from "@/lib/instagramIntegration";
-import { isTokenEncryptionConfigured } from "@/lib/facebookIntegration";
+import { getFacebookOAuthConfigurationStatus, isTokenEncryptionConfigured } from "@/lib/facebookIntegration";
 
 type SafeFacebookConnection = Pick<
   SocialConnectionRow,
@@ -51,6 +51,8 @@ type SafeInstagramConnection = {
 type FacebookLiveSetupStatus = {
   facebookAppIdConfigured: boolean;
   facebookAppSecretConfigured: boolean;
+  facebookRedirectUriConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
   webhookVerifyTokenConfigured: boolean;
   publicBaseUrlConfigured: boolean;
   metaBusinessIdConfigured: boolean;
@@ -349,16 +351,17 @@ export default async function ChannelsPage({
 
 function getFacebookLiveSetupStatus(): FacebookLiveSetupStatus {
   const publicBaseUrl = firstConfiguredEnv("NEXT_PUBLIC_APP_URL", "FANMIND_APP_URL");
-  const explicitCallbackUrl = firstConfiguredEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
-  const oauthCallbackUrl = explicitCallbackUrl ?? (publicBaseUrl ? `${publicBaseUrl.replace(/\/$/, "")}/api/integrations/facebook/callback` : null);
+  const oauth = getFacebookOAuthConfigurationStatus();
 
   return {
-    facebookAppIdConfigured: Boolean(firstConfiguredEnv("FACEBOOK_APP_ID", "META_APP_ID")),
-    facebookAppSecretConfigured: Boolean(firstConfiguredEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET")),
+    facebookAppIdConfigured: oauth.appIdConfigured,
+    facebookAppSecretConfigured: oauth.appSecretConfigured,
+    facebookRedirectUriConfigured: oauth.redirectUriConfigured,
+    tokenEncryptionConfigured: isTokenEncryptionConfigured(),
     webhookVerifyTokenConfigured: Boolean(firstConfiguredEnv("FACEBOOK_WEBHOOK_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN")),
     publicBaseUrlConfigured: Boolean(publicBaseUrl),
     metaBusinessIdConfigured: Boolean(firstConfiguredEnv("META_BUSINESS_ID", "NEXT_PUBLIC_META_BUSINESS_ID")),
-    oauthCallbackUrl,
+    oauthCallbackUrl: oauth.callbackUrl,
   };
 }
 
