@@ -1,3 +1,10 @@
+## Admin-CRM real-login routing defect — 2026-09-19
+- Owner completed the real Production path: new registration, email confirmation, Platform-Admin “Dauerhaft kostenlos” grant, then login as that new account.
+- Read-only Production DB evidence proves the granted Workspace is correct: `admin_crm_access=true`, `billing_status=demo_free`, manual/no-payment, 0 EUR setup/monthly, permanent override active, no Stripe customer/subscription.
+- Real browser failure: login lands on `/billing/start` and renders Starter Flex payment copy. Root cause is source routing, not the Admin grant: `getPreActivationRedirect()` checks only the denied Admin-CRM case, then an allowed Admin-CRM Workspace falls through to the generic `plan_id=starter` paid pre-activation rule.
+- Hotfix scope FM-CR-043: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; every direct Billing start/checkout/pending/success/cancel/suspended surface redirects Admin-CRM to Dashboard or access-paused before any Stripe path. No DB, user, Stripe, Tax or provider mutation.
+- Do not repeat registration or Admin grant. Next owner check is only after the reviewed/deployed hotfix: sign in with the already granted account and verify Dashboard/Fans/Inbox/Follow-ups.
+
 ## Admin-CRM Production rollout — 2026-09-19
 - PR #1134 is merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e` and the normal Production deploy `35431328695` passed with exact `/api/version` and healthy `/api/health` smoke.
 - Owner explicitly authorized the Admin-CRM Production DB rollout. Exact migration `supabase/migrations/20260915221500_admin_crm_access.sql`, SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`, was applied once to exact Production Supabase `drqkpdvtbbrrdwmtrodz` as migration `20260919081945 admin_crm_access`.
