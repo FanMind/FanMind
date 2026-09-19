@@ -10,6 +10,14 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Remaining separate boundary: no additional real Admin-CRM grants until the missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle is accepted under its own protected scope.
 - Next product step: use the existing granted account for Facebook first, then Instagram, through FanMind `/channels`. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
 
+## FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919 — Fehlende synthetische Admin-CRM-Lifecycle-Abnahme
+- Status: OWNER_ACTION_REQUIRED
+- Task: FM-REG-003.
+- Reason: the first real permanent Admin-CRM grant happened before the runbook-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was recorded.
+- Current safety rule: the existing real 0-EUR account remains usable and must not be re-granted/deleted. No additional real Admin-CRM grants until this synthetic acceptance is completed.
+- Required future scope: separately authorize a protected synthetic confirmed-noncustomer fixture and prove permanent, future temporary, blocked, login/direct authenticated read boundaries and cleanup. Do not repeat the Production migration.
+- Parallel-safe work: Facebook/Instagram repository continuation and the existing real account's Social use are allowed while this is open.
+
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
 - NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external controls EXT-META-CREATOR-APP-20260911 and EXT-WHATSAPP.
