@@ -1941,12 +1941,15 @@ async function upsertMetaSocialConnection(
       input.pageAccessTokenEncrypted,
     ),
     token_last_four: normalizeOptionalText(input.tokenLastFour),
-    scopes: [
-      ...new Set([
-        ...(existingResult.data?.scopes ?? []),
-        ...(input.scopes ?? []),
-      ]),
-    ].sort(),
+    scopes:
+      platform === "facebook"
+        ? [...new Set(input.scopes ?? [])].sort()
+        : [
+            ...new Set([
+              ...(existingResult.data?.scopes ?? []),
+              ...(input.scopes ?? []),
+            ]),
+          ].sort(),
     webhook_subscribed: Boolean(
       existingResult.data?.webhook_subscribed || input.webhookSubscribed,
     ),
