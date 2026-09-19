@@ -3,7 +3,7 @@
 ## FM-MOB-OWNER-CREATOR-SOCIAL-20260910 — Mobile after company registration
 - Related task: FM-MOB-001.
 - Status: DEFERRED_BY_OWNER.
-- Decision: superseded timing on 2026-09-19 by FM-DEC-020. Bernd explicitly defers every remaining Mobile/Handy step until after company registration. Retain all existing builds, closed-Alpha evidence and open device/push/cohort/store gaps; do not start a new build, device acceptance, Push completion, Play cohort, Store action or TestFlight during this interval.
+- Decision: superseded timing on 2026-09-19 by FM-DEC-021. Bernd explicitly defers every remaining Mobile/Handy step until after company registration. Retain all existing builds, closed-Alpha evidence and open device/push/cohort/store gaps; do not start a new build, device acceptance, Push completion, Play cohort, Store action or TestFlight during this interval.
 - Resume when: company registration is complete and the owner explicitly resumes Mobile.
 
 ## FM-BILL-OWNER-TAX-20260910 — paid activation pause
