@@ -1,3 +1,16 @@
+## FM-EV-ADMIN-CRM-PRODUCTION-20260919
+- Task: FM-REG-003 / FM-CR-041
+- Status: VERIFIED
+- Risk: R4
+- Target: Production Supabase `drqkpdvtbbrrdwmtrodz`, PostgreSQL 17.
+- Release: `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; deploy `35431328695` PASS.
+- Migration: `20260919081945 admin_crm_access`; source SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`.
+- Preflight: all three Admin-CRM functions absent.
+- Postflight: all three present; mutation RPC service-role-only; 19 restrictive Admin-CRM policies including workspaces.
+- Read-only grant evidence after rollout: first real Workspace is permanent 0-EUR Admin-CRM, manual/no-payment, no Stripe customer/subscription.
+- Limitation: synthetic lifecycle acceptance missing before first real grant; therefore no further real grants until that acceptance is completed.
+- Receipt: `project-memory/receipts/FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919.md`.
+
 ## FM-EV-CREATOR-FOUNDATION-20260911
 - Status: COUNTERCHECKED; bounded source/schema/JWT/revision/PDF foundation accepted, overall Creator/Social gates remain open.
 - Source: #1105-#1108, executable main f0c7a84e, tree 2e01ad99, 13 green exact-head checks and independent review; Staging Deploy 34628740980, Verify 34628681395, PT409 Upgrade 34628886294 and real acceptance 34629009649 passed.
