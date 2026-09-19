@@ -32,6 +32,78 @@ const OAUTH_VERSION = META_GRAPH_API_VERSION;
 export const FACEBOOK_GRAPH_API_VERSION = OAUTH_VERSION;
 const STATE_MAX_AGE_SECONDS = 10 * 60;
 
+const FACEBOOK_APP_ID_PATTERN = /^\d{5,32}$/u;
+const FACEBOOK_PLACEHOLDER_PATTERNS = [
+  /^replace_with_/iu,
+  /^your[-_.]/iu,
+  /(?:^|[./_-])example(?:\.|[_-])/iu,
+];
+
+export function isUsableFacebookAppId(value: string | null | undefined): boolean {
+  const normalized = value?.trim() ?? "";
+  return FACEBOOK_APP_ID_PATTERN.test(normalized) && !looksLikePlaceholder(normalized);
+}
+
+export function isUsableFacebookSecret(value: string | null | undefined): boolean {
+  const normalized = value?.trim() ?? "";
+  return normalized.length >= 16 && !looksLikePlaceholder(normalized);
+}
+
+export function isUsableFacebookRedirectUri(value: string | null | undefined): boolean {
+  const normalized = value?.trim() ?? "";
+  if (!normalized || looksLikePlaceholder(normalized)) return false;
+  try {
+    const url = new URL(normalized);
+    return (
+      url.protocol === "https:" &&
+      url.pathname === "/api/integrations/facebook/callback" &&
+      !looksLikePlaceholder(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function looksLikePlaceholder(value: string): boolean {
+  return FACEBOOK_PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+export function getFacebookOAuthConfigurationStatus(
+  env: NodeJS.ProcessEnv = process.env,
+): {
+  appIdConfigured: boolean;
+  appSecretConfigured: boolean;
+  redirectUriConfigured: boolean;
+  callbackUrl: string | null;
+} {
+  const appId = firstUsableEnv(env, isUsableFacebookAppId, "FACEBOOK_APP_ID", "META_APP_ID");
+  const appSecret = firstUsableEnv(env, isUsableFacebookSecret, "FACEBOOK_APP_SECRET", "META_APP_SECRET");
+  const redirectUri = firstUsableEnv(
+    env,
+    isUsableFacebookRedirectUri,
+    "FACEBOOK_REDIRECT_URI",
+    "META_REDIRECT_URI",
+  );
+  return {
+    appIdConfigured: Boolean(appId),
+    appSecretConfigured: Boolean(appSecret),
+    redirectUriConfigured: Boolean(redirectUri),
+    callbackUrl: redirectUri ?? null,
+  };
+}
+
+function firstUsableEnv(
+  env: NodeJS.ProcessEnv,
+  validator: (value: string | null | undefined) => boolean,
+  ...names: string[]
+): string | undefined {
+  for (const name of names) {
+    const value = env[name]?.trim();
+    if (value && validator(value)) return value;
+  }
+  return undefined;
+}
+
 export const REQUIRED_FACEBOOK_PAGE_PERMISSIONS =
   FACEBOOK_MESSAGES_OAUTH_SCOPES;
 
@@ -71,8 +143,13 @@ export function getFacebookOAuthUrl(
   state: string,
   scopes: readonly string[] = FACEBOOK_MESSAGES_OAUTH_SCOPES,
 ): string {
-  const appId = requireEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  const redirectUri = requireEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
+  const status = getFacebookOAuthConfigurationStatus();
+  if (!status.appIdConfigured || !status.appSecretConfigured || !status.redirectUriConfigured || !status.callbackUrl) {
+    throw new Error("Facebook OAuth ist nicht produktionsbereit konfiguriert.");
+  }
+  const appId = firstUsableEnv(process.env, isUsableFacebookAppId, "FACEBOOK_APP_ID", "META_APP_ID");
+  const redirectUri = status.callbackUrl;
+  if (!appId) throw new Error("Facebook OAuth ist nicht produktionsbereit konfiguriert.");
   const url = new URL(`https://www.facebook.com/${OAUTH_VERSION}/dialog/oauth`);
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -1702,9 +1779,16 @@ export function tokenLastFour(token: string | null): string | null {
 }
 
 function signState(encodedPayload: string): string {
+  const appSecret = firstUsableEnv(
+    process.env,
+    isUsableFacebookSecret,
+    "FACEBOOK_APP_SECRET",
+    "META_APP_SECRET",
+  );
+  if (!appSecret) throw new Error("Facebook OAuth ist nicht produktionsbereit konfiguriert.");
   return createHmac(
     "sha256",
-    requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET"),
+    appSecret,
   )
     .update(encodedPayload)
     .digest("base64url");
