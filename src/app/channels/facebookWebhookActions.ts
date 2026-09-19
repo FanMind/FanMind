@@ -327,15 +327,23 @@ async function fetchFacebookCommentsForConnection(
     const continuationCursor = decodeFacebookCommentContinuation(
       connection.last_comment_fetch_error,
     );
+    const completedHighWaterAt = normalizeFacebookCommentHighWater(
+      connection.last_comment_fetch_at,
+    );
     const remainingComments = continuationCursor
       ? orderedComments.filter((comment) =>
           compareFacebookCommentToCursor(comment, continuationCursor) > 0,
         )
-      : orderedComments;
+      : completedHighWaterAt
+        ? orderedComments.filter((comment) =>
+            isFacebookCommentAtOrAfterHighWater(comment, completedHighWaterAt),
+          )
+        : orderedComments;
     const persistenceStartedAt = Date.now();
     let importedCount = 0;
     let processedCount = 0;
     let lastProcessedCursor = continuationCursor;
+    let latestValidHighWaterAt = completedHighWaterAt;
     let continuationPending = false;
 
     for (const comment of remainingComments) {
@@ -354,6 +362,13 @@ async function fetchFacebookCommentsForConnection(
         comment.message?.trim() ||
         buildAttachmentFallbackText(attachments, "inbound");
       const senderId = comment.from?.id ?? null;
+
+      if (commentCursor.createdTime) {
+        latestValidHighWaterAt = laterFacebookCommentHighWater(
+          latestValidHighWaterAt,
+          commentCursor.createdTime,
+        );
+      }
 
       if (!content || (senderId && senderId === connection.page_id)) {
         processedCount += 1;
@@ -408,6 +423,7 @@ async function fetchFacebookCommentsForConnection(
     await updateFacebookCommentFetchStatus(connection.id, {
       fetchedAt,
       importedCount,
+      highWaterAt: latestValidHighWaterAt,
       error:
         continuationPending && lastProcessedCursor
           ? encodeFacebookCommentContinuation(lastProcessedCursor)
@@ -483,6 +499,31 @@ function compareFacebookCommentToCursor(
   cursor: FacebookCommentContinuationCursor,
 ): number {
   return compareFacebookCommentCursors(facebookCommentCursor(comment), cursor);
+}
+
+function normalizeFacebookCommentHighWater(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+}
+
+function isFacebookCommentAtOrAfterHighWater(
+  comment: FacebookPageComment,
+  highWaterAt: string,
+): boolean {
+  const cursor = facebookCommentCursor(comment);
+  if (!cursor.createdTime) return true;
+  return Date.parse(cursor.createdTime) >= Date.parse(highWaterAt);
+}
+
+function laterFacebookCommentHighWater(
+  current: string | null,
+  candidate: string,
+): string {
+  if (!current) return candidate;
+  return Date.parse(candidate) > Date.parse(current) ? candidate : current;
 }
 
 function compareFacebookCommentCursors(
