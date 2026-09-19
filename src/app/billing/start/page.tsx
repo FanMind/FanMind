@@ -4,6 +4,7 @@ import buttonStyles from "@/components/BillingCheckoutButton.module.css";
 import { FanMindLogo } from "@/components/FanMindLogo";
 import { shouldShowBillingCheckoutAction } from "@/lib/billing";
 import { isPlatformAdminEmail } from "@/lib/admin";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { isDemoWorkspace, isTemporaryDemoUser } from "@/lib/demoMode";
 import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
@@ -93,6 +94,9 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   if (isDemo) redirect("/dashboard");
 
   const redirectTarget = getPreActivationRedirect(workspace, data.user.email);
+  if (isAdminCrmAccessWorkspace(workspace)) {
+    redirect(redirectTarget ?? "/dashboard");
+  }
   if (redirectTarget === "/workspace/setup") redirect("/workspace/setup");
   if (workspace?.billing_status === "active" || redirectTarget === "/dashboard") redirect("/dashboard");
   if (redirectTarget === "/billing/pending") redirect("/billing/pending");
