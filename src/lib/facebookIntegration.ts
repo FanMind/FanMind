@@ -1928,8 +1928,11 @@ export class FacebookCommentFetchError extends Error {
 type FacebookPagePostWithInlineComments = FacebookPagePost & {
   comments?: {
     data?: Array<Omit<FacebookPageComment, "postId" | "postPermalinkUrl">>;
+    paging?: { next?: string };
   };
 };
+
+const FACEBOOK_COMMENT_MAX_PER_POST = 2_000;
 
 export async function fetchFacebookPagePostsWithComments(
   pageId: string,
@@ -1961,15 +1964,46 @@ export async function fetchFacebookPagePostsWithComments(
       created_time: post.created_time,
       permalink_url: post.permalink_url,
     }));
-    const comments = feedPosts.flatMap((post) =>
-      (post.comments?.data ?? [])
+    const comments: FacebookPageComment[] = [];
+    for (const post of feedPosts) {
+      const inlineComments = (post.comments?.data ?? [])
         .filter((comment) => Boolean(comment.id))
         .map((comment) => ({
           ...comment,
           postId: post.id,
           postPermalinkUrl: post.permalink_url,
-        })),
-    );
+        }));
+      comments.push(...inlineComments);
+
+      const nestedNext = validateFacebookGraphPagingUrl(
+        post.comments?.paging?.next ?? null,
+      );
+      if (nestedNext) {
+        const remaining = Math.max(
+          0,
+          FACEBOOK_COMMENT_MAX_PER_POST - inlineComments.length,
+        );
+        if (!remaining) {
+          throw new GraphApiError(
+            "Facebook-Kommentar-Paginierung überschreitet das sichere Limit.",
+          );
+        }
+        const additionalComments = await fetchGraphCollection<
+          Omit<FacebookPageComment, "postId" | "postPermalinkUrl">
+        >(
+          new URL(nestedNext),
+          "Facebook-Kommentare konnten nicht vollständig paginiert werden.",
+          remaining,
+        );
+        comments.push(
+          ...additionalComments.map((comment) => ({
+            ...comment,
+            postId: post.id,
+            postPermalinkUrl: post.permalink_url,
+          })),
+        );
+      }
+    }
     return {
       posts,
       comments,
@@ -2014,6 +2048,7 @@ export async function fetchFacebookPagePostsWithComments(
     >(
       commentsUrl,
       "Facebook-Kommentare konnten nicht geladen werden.",
+      FACEBOOK_COMMENT_MAX_PER_POST,
     ).catch((error) => {
       throw withCommentFetchEndpoint(error, "post-comments-fallback");
     });
@@ -2077,11 +2112,12 @@ class GraphApiError extends Error {
 async function fetchGraphCollection<T extends { id?: string }>(
   url: URL,
   errorFallback: string,
+  maxItems = 500,
 ): Promise<T[]> {
   const items: T[] = [];
   let nextUrl: string | null = url.toString();
 
-  while (nextUrl && items.length < 500) {
+  while (nextUrl) {
     const response = await fetch(nextUrl, { cache: "no-store" });
     const payload = (await response.json().catch(() => null)) as {
       data?: T[];
@@ -2097,8 +2133,23 @@ async function fetchGraphCollection<T extends { id?: string }>(
       );
     }
 
-    items.push(...(payload?.data ?? []).filter((item) => Boolean(item.id)));
-    nextUrl = validateFacebookGraphPagingUrl(payload?.paging?.next ?? null);
+    const pageItems = (payload?.data ?? []).filter((item) => Boolean(item.id));
+    if (items.length + pageItems.length > maxItems) {
+      throw new GraphApiError(
+        `${errorFallback} Das sichere Paginierungslimit wurde überschritten.`,
+      );
+    }
+    items.push(...pageItems);
+
+    const validatedNext = validateFacebookGraphPagingUrl(
+      payload?.paging?.next ?? null,
+    );
+    if (validatedNext && items.length >= maxItems) {
+      throw new GraphApiError(
+        `${errorFallback} Das sichere Paginierungslimit wurde erreicht, bevor alle Daten geladen waren.`,
+      );
+    }
+    nextUrl = validatedNext;
   }
 
   return items;
