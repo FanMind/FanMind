@@ -63,20 +63,76 @@ test("Meta runtime configuration rejects deploy placeholders before provider nav
     ),
     null,
   );
+
+  const previous = {
+    ack: process.env.FANMIND_CORE_FLOW_FIXTURE_ACK,
+    app: process.env.NEXT_PUBLIC_APP_URL,
+    supabase: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  };
+  try {
+    delete process.env.FANMIND_CORE_FLOW_FIXTURE_ACK;
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    for (const host of ["fanmind.example", "fanmind.test", "fanmind.invalid"]) {
+      assert.equal(
+        normalizeMetaCallbackUrl(
+          `https://${host}/api/integrations/facebook/callback`,
+          "/api/integrations/facebook/callback",
+        ),
+        null,
+      );
+    }
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "http://localhost:3100/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+
+    process.env.FANMIND_CORE_FLOW_FIXTURE_ACK =
+      "fanmind-local-synthetic-core-flow";
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3100";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "http://localhost:3100/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      "http://localhost:3100/api/integrations/facebook/callback",
+    );
+  } finally {
+    if (previous.ack === undefined) delete process.env.FANMIND_CORE_FLOW_FIXTURE_ACK;
+    else process.env.FANMIND_CORE_FLOW_FIXTURE_ACK = previous.ack;
+    if (previous.app === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous.app;
+    if (previous.supabase === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = previous.supabase;
+  }
 });
 
 test("Meta channel UI fails closed on incomplete config and exposes real Facebook sync controls", async () => {
-  const [facebook, instagram, channels, page, syncActions] = await Promise.all([
+  const [facebook, instagram, channels, page, syncActions, startRoute] = await Promise.all([
     source("src/lib/facebookIntegration.ts"),
     source("src/lib/instagramIntegration.ts"),
     source("src/app/channels/ChannelsGrid.tsx"),
     source("src/app/channels/page.tsx"),
     source("src/app/channels/metaSyncActions.ts"),
+    source("src/app/api/integrations/facebook/start/route.ts"),
   ]);
 
   assert.match(facebook, /requireFacebookAppId/u);
   assert.match(facebook, /requireFacebookRedirectUri/u);
   assert.match(facebook, /getFacebookRuntimeConfigurationStatus/u);
+  assert.match(facebook, /resolveValidatedFacebookValue/u);
+  assert.match(facebook, /\["FACEBOOK_APP_ID", "META_APP_ID"\]/u);
+  assert.match(facebook, /\["FACEBOOK_APP_SECRET", "META_APP_SECRET"\]/u);
+  assert.match(facebook, /resolveFacebookRedirectUri/u);
+  assert.match(facebook, /isFacebookOAuthRuntimeReady/u);
+  assert.match(
+    startRoute,
+    /if \(!isFacebookOAuthRuntimeReady\(\)\)[\s\S]*facebook_error=config/u,
+  );
   assert.match(instagram, /normalizeMetaCallbackUrl/u);
   assert.match(page, /redirectUriConfigured/u);
   assert.match(page, /tokenEncryptionConfigured/u);
