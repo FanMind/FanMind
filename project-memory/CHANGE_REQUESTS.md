@@ -408,3 +408,16 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Root cause: `getPreActivationRedirect()` handles only the denied Admin-CRM case and then lets an allowed Admin-CRM Workspace fall through to the generic `plan_id=starter` paid pre-activation branch.
 - Scope: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; direct Billing start/checkout/pending/success/cancel/suspended surfaces redirect Admin-CRM before any payment path.
 - Acceptance: focused Admin-CRM routing regression, full current-head CI/build/security, independent review, normal Production deploy/version, and owner re-login with the same already-granted account. No DB/user/payment/Stripe/Tax/provider/Mobile mutation.
+
+
+## FM-CR-044 — Facebook/Instagram inbound continuation after Admin-CRM login acceptance
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R3
+- Source: Bernd confirmed the same permanently free Admin-CRM account now reaches FanMind CRM successfully and explicitly requested continuing with Facebook/Instagram connection and permitted message import.
+- Baseline: current Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Production read-only countercheck shows zero Facebook/Instagram `social_connections` for Admin-CRM workspaces.
+- Scope: preserve the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server token handling, bounded initial DM import, incremental sync/webhook, tenant isolation and no-auto-send boundaries; port only still-valid current-main clarification/evidence from stale PR #1121.
+- Current source change: show a specific `workspace_inactive` explanation for Facebook/Instagram without weakening authorization or provider checks.
+- External boundary: no provider login/consent/App Review/permission/webhook activation is inferred from repository work. No passwords or tokens in chat. No DB, Stripe/Tax/payment, user-grant or Mobile mutation in this change.
+- Acceptance: current-head Social/Meta/core-flow tests, TypeScript/lint/build, Project Memory/Truth/Drift, Browser E2E, CodeQL and independent review. After publication, owner uses the already granted account in `/channels` for the real Facebook connection first, then Instagram.
