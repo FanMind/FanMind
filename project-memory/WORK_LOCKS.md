@@ -11,6 +11,7 @@
 - FM-CR-045 placeholder follow-through: Production owner test proved the current runtime carries example Meta OAuth values; source may only add fail-closed validation/UI/sync controls. Real App ID/secret/callback/provider permission changes stay outside this repository lock and require secure owner action.
 - Canonical PR: #1138 only. #1139 is duplicate/superseded and carries no separate lock; its review findings are acceptance inputs for this same lock.
 - Review follow-through requires current-token comment scopes, per-commenter thread identity, provider timestamps, Page-self-comment exclusion and validated callback return origin before release. Keep the lock active until exact-head CI and independent review are clean.
+- Second review follow-through additionally requires complete nested-comment pagination (no silent 50-comment truncation) and preserved media attachments/media-only context before release.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043
