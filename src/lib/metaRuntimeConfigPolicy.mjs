@@ -46,6 +46,24 @@ function coreFlowLoopbackAllowed(url) {
   );
 }
 
+function configuredAppOrigin() {
+  const candidate =
+    normalizeMetaRuntimeValue(process.env.NEXT_PUBLIC_APP_URL) ??
+    normalizeMetaRuntimeValue(process.env.FANMIND_APP_URL);
+  if (!candidate) return null;
+
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:") return null;
+    if (isLoopbackHostname(url.hostname)) return null;
+    if (RESERVED_HOST_SUFFIX.test(url.hostname)) return null;
+    if (url.username || url.password || url.search || url.hash) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeMetaCallbackUrl(value, expectedPath) {
   const normalized = normalizeMetaRuntimeValue(value);
   if (!normalized) return null;
@@ -58,6 +76,10 @@ export function normalizeMetaCallbackUrl(value, expectedPath) {
     if (RESERVED_HOST_SUFFIX.test(url.hostname)) return null;
     if (url.pathname !== expectedPath) return null;
     if (url.username || url.password || url.search || url.hash) return null;
+    if (!loopbackAllowed) {
+      const appOrigin = configuredAppOrigin();
+      if (!appOrigin || url.origin !== appOrigin) return null;
+    }
     return url.toString();
   } catch {
     return null;
