@@ -1683,7 +1683,7 @@ export type FacebookRuntimeConfigurationStatus = {
 
 export function getFacebookRuntimeConfigurationStatus(): FacebookRuntimeConfigurationStatus {
   const appId = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  const appSecret = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET");
+  const appSecret = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET");
   const redirectCandidate = getOptionalEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
   const redirectUri = normalizeMetaCallbackUrl(
     redirectCandidate,
