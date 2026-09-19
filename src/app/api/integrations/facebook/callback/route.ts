@@ -5,6 +5,7 @@ import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import {
   createPendingFacebookPageSelection,
   exchangeFacebookCode,
+  getFacebookRuntimeConfigurationStatus,
   verifyFacebookOAuthState,
 } from "@/lib/facebookIntegration";
 import {
@@ -119,7 +120,9 @@ function getCanonicalAppOrigin(requestUrl: URL): string {
   const configuredAppUrl = parseOrigin(process.env.NEXT_PUBLIC_APP_URL ?? process.env.FANMIND_APP_URL);
   if (configuredAppUrl) return configuredAppUrl;
 
-  const metaRedirectOrigin = parseOrigin(process.env.FACEBOOK_REDIRECT_URI ?? process.env.META_REDIRECT_URI);
+  const metaRedirectOrigin = parseOrigin(
+    getFacebookRuntimeConfigurationStatus().oauthCallbackUrl ?? undefined,
+  );
   if (metaRedirectOrigin) return metaRedirectOrigin;
 
   return requestUrl.origin;
