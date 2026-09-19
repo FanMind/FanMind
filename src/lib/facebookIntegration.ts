@@ -21,6 +21,12 @@ import {
 } from "@/lib/facebookPageSelectionPolicy.mjs";
 import { sanitizeMetaProviderError } from "@/lib/metaProviderErrorPolicy.mjs";
 import {
+  isUsableMetaAppId,
+  isUsableMetaAppSecret,
+  normalizeMetaCallbackUrl,
+  normalizeMetaRuntimeValue,
+} from "@/lib/metaRuntimeConfigPolicy.mjs";
+import {
   createCipheriv,
   createDecipheriv,
   createHmac,
@@ -71,8 +77,8 @@ export function getFacebookOAuthUrl(
   state: string,
   scopes: readonly string[] = FACEBOOK_MESSAGES_OAUTH_SCOPES,
 ): string {
-  const appId = requireEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  const redirectUri = requireEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
+  const appId = requireFacebookAppId();
+  const redirectUri = requireFacebookRedirectUri();
   const url = new URL(`https://www.facebook.com/${OAUTH_VERSION}/dialog/oauth`);
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -158,15 +164,15 @@ export async function exchangeFacebookCode(code: string): Promise<string> {
   );
   url.searchParams.set(
     "client_id",
-    requireEnv("FACEBOOK_APP_ID", "META_APP_ID"),
+    requireFacebookAppId(),
   );
   url.searchParams.set(
     "client_secret",
-    requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET"),
+    requireFacebookAppSecret(),
   );
   url.searchParams.set(
     "redirect_uri",
-    requireEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"),
+    requireFacebookRedirectUri(),
   );
   url.searchParams.set("code", code);
 
@@ -1221,7 +1227,7 @@ export async function fetchFacebookTokenDiagnostics(
   url.searchParams.set("input_token", userAccessToken);
   url.searchParams.set(
     "access_token",
-    `${requireEnv("FACEBOOK_APP_ID", "META_APP_ID")}|${requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET")}`,
+    `${requireFacebookAppId()}|${requireFacebookAppSecret()}`,
   );
 
   const response = await fetch(url, { cache: "no-store" });
@@ -1664,6 +1670,45 @@ function buildWebhookStatus(
   };
 }
 
+export type FacebookRuntimeConfigurationStatus = {
+  appIdConfigured: boolean;
+  appSecretConfigured: boolean;
+  redirectUriConfigured: boolean;
+  webhookVerifyTokenConfigured: boolean;
+  publicBaseUrlConfigured: boolean;
+  metaBusinessIdConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
+  oauthCallbackUrl: string | null;
+};
+
+export function getFacebookRuntimeConfigurationStatus(): FacebookRuntimeConfigurationStatus {
+  const appId = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
+  const appSecret = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET");
+  const redirectCandidate = getOptionalEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
+  const redirectUri = normalizeMetaCallbackUrl(
+    redirectCandidate,
+    "/api/integrations/facebook/callback",
+  );
+  const publicBaseUrl = getOptionalEnv("NEXT_PUBLIC_APP_URL", "FANMIND_APP_URL");
+
+  return {
+    appIdConfigured: isUsableMetaAppId(appId),
+    appSecretConfigured: isUsableMetaAppSecret(appSecret),
+    redirectUriConfigured: Boolean(redirectUri),
+    webhookVerifyTokenConfigured: Boolean(
+      getOptionalEnv("FACEBOOK_WEBHOOK_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
+    ),
+    publicBaseUrlConfigured: Boolean(
+      normalizeHttpsRuntimeUrl(publicBaseUrl),
+    ),
+    metaBusinessIdConfigured: Boolean(
+      getOptionalEnv("META_BUSINESS_ID", "NEXT_PUBLIC_META_BUSINESS_ID"),
+    ),
+    tokenEncryptionConfigured: isTokenEncryptionConfigured(),
+    oauthCallbackUrl: redirectUri,
+  };
+}
+
 export function isTokenEncryptionConfigured(): boolean {
   return Boolean(getEncryptionKey());
 }
@@ -1704,7 +1749,7 @@ export function tokenLastFour(token: string | null): string | null {
 function signState(encodedPayload: string): string {
   return createHmac(
     "sha256",
-    requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET"),
+    requireFacebookAppSecret(),
   )
     .update(encodedPayload)
     .digest("base64url");
@@ -1743,22 +1788,47 @@ function logFacebookApiError(
 
 function getOptionalEnv(...names: string[]): string | undefined {
   for (const name of names) {
-    const value = process.env[name];
+    const value = normalizeMetaRuntimeValue(process.env[name]);
     if (value) return value;
   }
   return undefined;
 }
 
-function requireEnv(name: string, fallbackName?: string): string {
-  const value = getOptionalEnv(name, ...(fallbackName ? [fallbackName] : []));
-  if (!value) {
-    throw new Error(
-      fallbackName
-        ? `${name} ist nicht konfiguriert (Fallback ${fallbackName} fehlt ebenfalls).`
-        : `${name} ist nicht konfiguriert.`,
-    );
+function requireFacebookAppId(): string {
+  const value = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
+  if (!isUsableMetaAppId(value)) {
+    throw new Error("FACEBOOK_APP_ID ist nicht gültig konfiguriert.");
   }
   return value;
+}
+
+function requireFacebookAppSecret(): string {
+  const value = getOptionalEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET");
+  if (!isUsableMetaAppSecret(value)) {
+    throw new Error("FACEBOOK_APP_SECRET ist nicht gültig konfiguriert.");
+  }
+  return value;
+}
+
+function requireFacebookRedirectUri(): string {
+  const value = normalizeMetaCallbackUrl(
+    getOptionalEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"),
+    "/api/integrations/facebook/callback",
+  );
+  if (!value) {
+    throw new Error("FACEBOOK_REDIRECT_URI ist nicht gültig konfiguriert.");
+  }
+  return value;
+}
+
+function normalizeHttpsRuntimeUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 export type FacebookPagePost = {
