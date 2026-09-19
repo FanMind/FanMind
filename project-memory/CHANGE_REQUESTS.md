@@ -400,14 +400,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-043 — Admin-CRM active login must bypass paid Billing
 - Date: 2026-09-19
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Task: FM-REG-003
 - Risk: R2
 - Source: real Production owner browser acceptance after the separately authorized Admin-CRM rollout.
 - Observation: registration, email confirmation and permanent Admin grant succeed; exact Production Workspace is `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and has no Stripe binding, but login renders `/billing/start`.
 - Root cause: `getPreActivationRedirect()` handles only the denied Admin-CRM case and then lets an allowed Admin-CRM Workspace fall through to the generic `plan_id=starter` paid pre-activation branch.
 - Scope: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; direct Billing start/checkout/pending/success/cancel/suspended surfaces redirect Admin-CRM before any payment path.
-- Acceptance: focused Admin-CRM routing regression, full current-head CI/build/security, independent review, normal Production deploy/version, and owner re-login with the same already-granted account. No DB/user/payment/Stripe/Tax/provider/Mobile mutation.
+- Acceptance/result: PR #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed all current-head checks and independent/security review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed exact `/api/version` plus 7-component health. Owner then re-used the same already-granted account and confirmed normal CRM access instead of `/billing/start`. No DB/user/payment/Stripe/Tax/provider/Mobile mutation was part of this hotfix.
 
 
 ## FM-CR-044 — Facebook/Instagram inbound continuation after Admin-CRM login acceptance
