@@ -2038,19 +2038,28 @@ async function updateMetaWebhookSubscribed(
 }
 export async function updateFacebookCommentFetchStatus(
   connectionId: string,
-  input: { fetchedAt: string; importedCount: number; error?: string | null },
+  input: {
+    fetchedAt: string;
+    importedCount: number;
+    error?: string | null;
+    highWaterAt?: string | null;
+  },
 ): Promise<SocialConnectionResult> {
   const accessToken = getServiceAccessToken();
   if (!accessToken)
     return socialConnectionError("Serverberechtigungen für den Kommentarabruf fehlen.");
 
+  const values: Record<string, unknown> = {
+    last_comment_fetch_count: input.importedCount,
+    last_comment_fetch_error: normalizeOptionalText(input.error),
+  };
+  if (input.highWaterAt !== undefined) {
+    values.last_comment_fetch_at = normalizeIsoTimestamp(input.highWaterAt);
+  }
+
   const result = await postgrestUpdate<SocialConnectionRow>(
     "social_connections",
-    {
-      last_comment_fetch_at: input.fetchedAt,
-      last_comment_fetch_count: input.importedCount,
-      last_comment_fetch_error: normalizeOptionalText(input.error),
-    },
+    values,
     accessToken,
     [
       ["id", connectionId],
