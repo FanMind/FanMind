@@ -1957,6 +1957,8 @@ export async function fetchFacebookPagePostsWithComments(
       await fetchGraphCollection<FacebookPagePostWithInlineComments>(
         feedUrl,
         "Facebook Page-Feed mit Kommentaren konnte nicht geladen werden.",
+        25,
+        true,
       );
     const posts = feedPosts.map((post) => ({
       id: post.id,
@@ -2027,6 +2029,8 @@ export async function fetchFacebookPagePostsWithComments(
   const posts = await fetchGraphCollection<FacebookPagePost>(
     postsUrl,
     "Facebook Page-Feed konnte nicht geladen werden.",
+    25,
+    true,
   ).catch((error) => {
     throw withCommentFetchEndpoint(error, "post-comments-fallback");
   });
@@ -2113,6 +2117,7 @@ async function fetchGraphCollection<T extends { id?: string }>(
   url: URL,
   errorFallback: string,
   maxItems = 500,
+  stopAtLimit = false,
 ): Promise<T[]> {
   const items: T[] = [];
   let nextUrl: string | null = url.toString();
@@ -2135,9 +2140,13 @@ async function fetchGraphCollection<T extends { id?: string }>(
 
     const pageItems = (payload?.data ?? []).filter((item) => Boolean(item.id));
     if (items.length + pageItems.length > maxItems) {
-      throw new GraphApiError(
-        `${errorFallback} Das sichere Paginierungslimit wurde überschritten.`,
-      );
+      if (!stopAtLimit) {
+        throw new GraphApiError(
+          `${errorFallback} Das sichere Paginierungslimit wurde überschritten.`,
+        );
+      }
+      items.push(...pageItems.slice(0, Math.max(0, maxItems - items.length)));
+      return items;
     }
     items.push(...pageItems);
 
@@ -2145,6 +2154,7 @@ async function fetchGraphCollection<T extends { id?: string }>(
       payload?.paging?.next ?? null,
     );
     if (validatedNext && items.length >= maxItems) {
+      if (stopAtLimit) return items;
       throw new GraphApiError(
         `${errorFallback} Das sichere Paginierungslimit wurde erreicht, bevor alle Daten geladen waren.`,
       );
