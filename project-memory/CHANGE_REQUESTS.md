@@ -377,25 +377,26 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
 # FM-CR-041 — confirmed-user Admin CRM access
 - Date: 2026-09-15
-- Status: REVIEW_FIXES_PENDING_CURRENT_HEAD_CI
+- Status: PRODUCTION_CONFIRMED
 - Task: FM-REG-003
-- Risk: R3
-- Source: Bernd explicitly approved the complete design.
-- Decision: expose confirmed Supabase Auth registrations even before Workspace creation. A Platform Admin may provision exactly one permanent free CRM Workspace, later convert it to an explicit temporary expiry, or block it. Unconfirmed accounts remain visible but cannot be granted access.
-- Scope: source/UI/routes/tests, one unapplied transactional RPC migration and Project Memory only. No live user mutation, payment, Stripe/Tax activation or Production database apply. Applying the migration requires separate explicit authorization after reviewed source deployment.
-- Acceptance: server-only paginated Auth enumeration; sanitized fields; same-origin Platform-Admin mutations; one owner Workspace and membership under retries/concurrency; permanent, temporary and blocked fail-closed entitlement; durable audit entry; no Stripe call; focused regressions plus current-head review/CI.
-- Local result: red/green focused test complete; corrected-head focused 6/6, targeted cross-boundary regressions 58/58 and Operations 1376 pass/0 fail/4 environment skips; ESLint 0 errors/1 unrelated warning; Production build, Product Truth, Project Memory Quality, Memory V8 and both drift checks PASS. Corrected-head PR CI/review, merge/deploy and Production version proof remain open.
-- Review continuation: the six findings from the completed review of head `daaf88372a06f063f7be2b95f6bbebbb95eec6ab` are corrected locally through current Starter CRM representation, commercial/Stripe binding rejection, one atomic service-role RPC, requested-page-only Auth enumeration, application read gating and Europe/Zurich end-of-day expiry. All evidence must be rerun and the final head independently reviewed before merge.
-- Second review continuation: the five findings from the completed review of head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` are corrected locally. Direct authenticated database reads/writes now receive a restrictive entitlement boundary on current RLS Workspace tables; generic lifecycle routes and UI are denied; current-page Auth owners receive an exact Workspace query; canonical docs describe the 0-EUR internal contract; and the exact migration has an offline checksum plus explicit Production preflight/apply/postflight runbook. No live apply is part of this correction.
+- Risk: R4
+- Source: Bernd approved the Admin-CRM design and later explicitly authorized the exact Production DB rollout.
+- Decision/result: confirmed Supabase Auth registrations can be listed before Workspace creation; Platform Admin can provision exactly one 0-EUR Admin-CRM Workspace, later temporary or blocked, with atomic membership/audit and no Stripe coupling.
+- Source acceptance: PR #1134 passed current-head CI/review and merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` passed exact release/version/health smoke.
+- Production apply: exact migration `supabase/migrations/20260915221500_admin_crm_access.sql`, SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`, applied once to exact Production Supabase `drqkpdvtbbrrdwmtrodz` as `20260919081945 admin_crm_access` after explicit owner authorization. Independent postflight proves the three functions, service-role-only mutation RPC, 19 restrictive entitlement policies and Workspace boundary.
+- Safety: no Stripe/Tax/Checkout/payment/provider/Mobile mutation was part of the rollout. The first real permanent grant later succeeded and created a correct 0-EUR/no-Stripe Workspace.
+- Acceptance gap: the runbook-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was not completed before the first real grant. This sequencing deviation is recorded separately; no further real Admin-CRM grants are permitted until that synthetic lifecycle is accepted. The existing real Workspace is retained and must not be regranted or deleted.
+- Follow-up: FM-CR-043 is a separate Web routing defect found by the first real login; it does not reopen or repeat the completed R4 database rollout.
 
 ## FM-CR-042 — Expo SDK 57 patch compatibility
 - Date: 2026-09-16
-- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Status: ACCEPTED
 - Task: FM-MOB-001
 - Risk: R2
-- Source: Bernd explicitly requested a separate Mobile PR after PR #1132 Mobile CI proved Expo Doctor requires newer compatible SDK 57 patches.
-- Scope: update only `expo` from `~57.0.22` to `~57.0.23` and `expo-notifications` from `~57.0.18` to `~57.0.19`, refresh the Mobile lockfile and publish the bounded source/CI correction. No feature behavior, database/provider mutation, signing, build submission or Store publication.
-- Acceptance: deterministic Mobile install, exact installed versions, complete local Mobile check, current-head GitHub Mobile CI and independent review. Existing signed artifacts remain historical and do not prove this patch.
+- Source: PR #1132 exposed compatible Expo SDK 57 patch drift; the bounded correction was later incorporated into PR #1134.
+- Result: Expo/Constants/Notifications/Router were aligned to the then-current SDK-57 Doctor contract with deterministic lockfile and renewed bounded Mobile dependency review; PR #1134 current-head checks/review passed and merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`.
+- Boundary: this accepts only the repository source/CI compatibility patch. It does not prove a newer signed binary, device acceptance, Push, Store, cohort or TestFlight.
+- Current owner timing: FM-DEC-021 defers all remaining Mobile/Handy work until company registration is complete and the owner explicitly resumes Mobile. Do not create another Expo patch PR for the already accepted #1134 correction.
 
 ## FM-CR-043 — Admin-CRM active login must bypass paid Billing
 - Date: 2026-09-19
