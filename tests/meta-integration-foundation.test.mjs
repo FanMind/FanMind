@@ -112,13 +112,15 @@ test("Meta runtime configuration rejects deploy placeholders before provider nav
 });
 
 test("Meta channel UI fails closed on incomplete config and exposes real Facebook sync controls", async () => {
-  const [facebook, instagram, channels, page, syncActions, startRoute] = await Promise.all([
+  const [facebook, instagram, channels, page, syncActions, startRoute, callbackRoute, server] = await Promise.all([
     source("src/lib/facebookIntegration.ts"),
     source("src/lib/instagramIntegration.ts"),
     source("src/app/channels/ChannelsGrid.tsx"),
     source("src/app/channels/page.tsx"),
     source("src/app/channels/metaSyncActions.ts"),
     source("src/app/api/integrations/facebook/start/route.ts"),
+    source("src/app/api/integrations/facebook/callback/route.ts"),
+    source("src/lib/supabase/server.ts"),
   ]);
 
   assert.match(facebook, /requireFacebookAppId/u);
@@ -132,6 +134,18 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   assert.match(
     startRoute,
     /if \(!isFacebookOAuthRuntimeReady\(\)\)[\s\S]*facebook_error=config/u,
+  );
+  assert.match(
+    callbackRoute,
+    /getFacebookRuntimeConfigurationStatus\(\)\.oauthCallbackUrl/u,
+  );
+  assert.doesNotMatch(
+    callbackRoute,
+    /FACEBOOK_REDIRECT_URI \?\? process\.env\.META_REDIRECT_URI/u,
+  );
+  assert.match(
+    server,
+    /platform === "facebook"[\s\S]*new Set\(input\.scopes \?\? \[\]\)/u,
   );
   assert.match(instagram, /normalizeMetaCallbackUrl/u);
   assert.match(page, /redirectUriConfigured/u);
@@ -147,6 +161,20 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   assert.match(channels, /Facebook-Kommentare jetzt synchronisieren/u);
   assert.match(channels, /facebookCommentsAuthorized/u);
   assert.match(syncActions, /fetchFacebookCommentsNow/u);
+  assert.match(
+    facebook,
+    /hasFacebookCommentFeedScopes\(tokenScopes\)[\s\S]*keine gültige Kommentar-Berechtigung/u,
+  );
+  assert.match(
+    facebook,
+    /senderId === connection\.page_id\) continue/u,
+  );
+  assert.match(
+    facebook,
+    /externalThreadId = `\$\{comment\.postId\}:\$\{senderId \?\? comment\.id\}`/u,
+  );
+  assert.match(facebook, /receivedAt: comment\.created_time \?\? null/u);
+  assert.match(facebook, /direction: "inbound"/u);
   assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
 });
 
