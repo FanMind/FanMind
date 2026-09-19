@@ -491,7 +491,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Work lock released: yes; repository-only local countercheck complete.
 ## FM-REG-003
 - Date: 2026-09-15
-- Status: VERIFIED
+- Status: IN_PROGRESS
 - Risk: R3
 - Goal: make confirmed registrations without a Workspace visible to Platform Admins and provide controlled permanent-free, temporary-free and blocked CRM access states.
 - Root cause: the existing Admin list starts at `workspace_members`, so an Auth registration disappears until Workspace provisioning has already happened.
@@ -503,3 +503,4 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Second review continuation: five findings on corrected head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` are addressed locally through a database-level restrictive entitlement boundary, generic Billing/Test/Daily rejection, exact page-scoped owner resolution, canonical reader documentation and a checksum-pinned explicit rollout/postflight runbook. The migration remains unapplied. A separate unrelated Expo patch drift leaves Mobile CI red and is outside this lock.
 - 2026-09-18 current review correction: merged main/#1133 and implemented rollout-order-independent Creator entitlement enforcement, canonical inactive-route projection, temporary-expiry-bounded Mobile offline cache and atomic foreign-membership rejection. State remains IMPLEMENTED_NOT_VERIFIED until complete current-head checks and independent review; no Production apply or live-user action is authorized or performed.
 - 2026-09-19 Production closeout: PR #1134 merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` passed. Explicit owner authorization consumed for exact Admin-CRM migration SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`, recorded as Supabase migration `20260919081945 admin_crm_access`. Postflight proves required RPCs, service-role-only mutation, 19 restrictive entitlement policies and Workspace boundary. No real user/payment/provider mutation. Remaining acceptance is the owner's real browser grant/login check.
+- 2026-09-19 real browser result: grant succeeded and Production row is correct, but login redirects the active free Admin-CRM Workspace to `/billing/start`. FM-CR-043 fixes the central Starter-billing fallthrough and direct Billing surfaces. Task remains IN_PROGRESS until reviewed hotfix deployment and owner re-login pass.
