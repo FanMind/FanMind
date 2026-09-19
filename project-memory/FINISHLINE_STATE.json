@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-10",
+  "updated": "2026-09-19",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -77,6 +77,12 @@
       "risk": "R4",
       "state": "IN_PROGRESS",
       "required_for_sales": false
+    },
+    "registration_admin_crm": {
+      "task": "FM-REG-003",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false
     }
   },
   "sales_required_states": [
@@ -85,7 +91,7 @@
   ],
   "notes": {
     "phase4": "Production/Billing base only; never sales handoff.",
-    "phase6": "Existing Android artifacts and acceptance remain valid; further Android completion follows the current Creator/Social increments (FM-DEC-015). iOS/TestFlight remains Phase 8.",
+    "phase6": "Existing Android artifacts and acceptance remain valid; FM-DEC-021 defers every remaining Mobile/Handy step until company registration is complete and the owner explicitly resumes Mobile. Creator/Social completion alone must not restart builds, device work, Push, Play cohort, Store or TestFlight.",
     "phase3": "Facebook, Instagram, WhatsApp.",
     "phase7": "FM-DEC-015 resumes Phase 7b Creator and selected Social engineering now before Android. One Creator per independent account/Workspace. Actual Phase 3/7a acceptance still precedes technical Sales Handoff; Creator is not required_for_sales. Further unrelated Phase 8 and Team/multi-workspace work stay deferred.",
     "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus dormant consent-bound email handoff are retained. FM-DEC-015 resumes selected AI-draft/human-handoff engineering now; target acceptance, visitor dialog, uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and other later platforms remain separate."
