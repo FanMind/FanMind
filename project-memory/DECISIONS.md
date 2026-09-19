@@ -1,4 +1,4 @@
-## FM-DEC-020 — Mobile only after company registration
+## FM-DEC-021 — Mobile only after company registration
 - Date: 2026-09-19
 - Status: ACCEPTED
 - Source: Bernd explicitly states “Das handy kommt ganz am schluss wenn die firma angemeldet ist.”
