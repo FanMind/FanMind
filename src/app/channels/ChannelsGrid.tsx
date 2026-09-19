@@ -918,7 +918,7 @@ export function ChannelsGrid({
                               Kommentar-Berechtigung: {facebookCommentsAuthorized ? "bereit" : "noch nicht freigegeben"}
                             </li>
                             <li>
-                              Kommentar-Abgleich: {formatSyncTimestamp(facebookConnection.last_comment_fetch_at)}
+                              Kommentare verarbeitet bis: {formatSyncTimestamp(facebookConnection.last_comment_fetch_at)}
                             </li>
                             <li>
                               Letzter Kommentar-Lauf: {facebookConnection.last_comment_fetch_count ?? 0} importiert
