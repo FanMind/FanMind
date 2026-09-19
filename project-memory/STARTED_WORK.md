@@ -510,7 +510,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Current source: #1137 ports only the still-valid `workspace_inactive` user guidance from stale #1121 onto current main and reconciles current evidence/hand-off.
 - Retained provider evidence from #1121: authenticated central FanMind Meta app inspection on 2026-09-14; Facebook server configuration was then observed as ready but the connection was blocked by the now-resolved Workspace admission issue; Instagram Messaging/Content use case was later saved after explicit owner consent. These do not prove current account connection or live inbound messaging.
 - Still open: current Facebook/Instagram consent, scopes/permissions/App Review/Advanced Access as applicable, Instagram test/account role and Business Login/callback/server configuration, webhook publication/verification requirements, real inbound/import/isolation/duplicate/revocation/reconnect proof.
-- Exact next owner sequence after reviewed/deployed #1137: existing granted account -> `/channels` -> Facebook first -> official Meta consent/Page selection -> return/status -> bounded initial DM sync -> Instagram analog. No passwords, MFA codes or tokens in chat.
+- Exact next step: finish current-head #1137 CI/review and normal deploy; then use the existing granted account in `/channels`: Facebook first -> official Meta consent/Page selection -> return/status -> bounded initial DM sync -> Instagram analog. No passwords, MFA codes or tokens in chat.
 - Boundary: Payment and Mobile stay deferred; no OnlyFans reverse-engineering/credential-storage connector.
 
 ## FM-SOC3-001
