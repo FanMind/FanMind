@@ -1,10 +1,10 @@
 # Deferred Owner Actions
 
-## FM-MOB-OWNER-CREATOR-SOCIAL-20260910 — Android after Creator/Social
+## FM-MOB-OWNER-CREATOR-SOCIAL-20260910 — Mobile after company registration
 - Related task: FM-MOB-001.
 - Status: DEFERRED_BY_OWNER.
-- Decision: Bernd explicitly wants Creator Intelligence and selected Social/AI handoff built now, then Android completed. Retain existing builds, closed-Alpha evidence and every real device/push/cohort acceptance gap; no new build/cohort during this interval.
-- Resume when: the current Creator/Social increments are ready or the owner explicitly changes priority.
+- Decision: superseded timing on 2026-09-19 by FM-DEC-020. Bernd explicitly defers every remaining Mobile/Handy step until after company registration. Retain all existing builds, closed-Alpha evidence and open device/push/cohort/store gaps; do not start a new build, device acceptance, Push completion, Play cohort, Store action or TestFlight during this interval.
+- Resume when: company registration is complete and the owner explicitly resumes Mobile.
 
 ## FM-BILL-OWNER-TAX-20260910 — paid activation pause
 - Related task: FM-BILL-003.
