@@ -702,14 +702,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915
 - Task: FM-REG-003 / FM-CR-041
 - Status: RELEASED
-- Risk: R3
+- Risk: R4
 - Holder: Codex
 - Baseline: main `afcd6f53b2f3bf8c93b70b74076bac1c14df5306`; branch `fix/admin-registered-user-crm-access-20260915`.
 - Scope: show confirmed Supabase Auth registrations even without a Workspace; let a Platform Admin idempotently provision one owner Workspace with permanent free CRM access, later change it to an explicit temporary expiry, or block it. Preserve one-Workspace-per-owner, server-only Auth access, same-origin admin mutation, audit evidence and all existing Stripe/Tax gates.
-- Evidence plan: focused policy/source regressions, unauthorized/unconfirmed/invalid-expiry/duplicate-Workspace negatives, TypeScript/lint/build/Operations checks, final diff and independent review. No Stripe call, payment, Tax activation, live Production database apply or live account mutation in this repository change. The reviewed source now includes one service-role-only transactional RPC migration required for atomic Workspace/membership/audit persistence; it remains unapplied until separately authorized.
+- Evidence plan: focused policy/source regressions, unauthorized/unconfirmed/invalid-expiry/duplicate-Workspace negatives, TypeScript/lint/build/Operations checks, final diff and independent review. No Stripe call, payment, Tax activation, live Production database apply or live account mutation in this repository change. The reviewed source included one service-role-only transactional RPC migration required for atomic Workspace/membership/audit persistence; that exact migration was later separately authorized, applied once to Production and independently postflight-verified.
 - Recovery: reviewed source revert. Existing Workspace/customer data is never deleted; blocking or expiry changes entitlement only.
 - Released 2026-09-19 after PR #1134 merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`, Production deploy `35431328695` passed, and the separately owner-authorized exact Admin-CRM migration applied once with green independent postflight. The live user remains unchanged until the owner's explicit Admin browser action.
-- Second-review state: head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` produced five additional findings after the first correction. Local follow-up extends the same migration with a restrictive RLS entitlement boundary, guards generic lifecycle mutations, completes page-scoped owner lookup, canonical docs and checksum-pinned rollout instructions. The unchanged Mobile baseline separately fails Expo Doctor on newly expected patch versions; do not mix a Mobile dependency upgrade into this lock. Renewed exact-head evidence/review is required.
+- Second-review state: head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` produced five additional findings after the first correction. Local follow-up extends the same migration with a restrictive RLS entitlement boundary, guards generic lifecycle mutations, completes page-scoped owner lookup, canonical docs and checksum-pinned rollout instructions. The unchanged Mobile baseline separately fails Expo Doctor on newly expected patch versions; do not mix a Mobile dependency upgrade into this lock. Historical review state only; superseded by #1134 current-head acceptance and the separately authorized Production rollout.
 
 ## LOCK-FM-MOB-001-EXPO-PATCH-CI-20260916
 - Task: FM-MOB-001 / FM-CR-042
