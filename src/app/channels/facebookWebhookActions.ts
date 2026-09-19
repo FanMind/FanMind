@@ -80,6 +80,11 @@ export type FacebookCommentFetchResult = {
 const FACEBOOK_MESSENGER_INCREMENTAL_CONVERSATION_LIMIT = 10;
 const FACEBOOK_MESSENGER_INITIAL_CONVERSATION_LIMIT = 25;
 
+const facebookCommentSyncInFlight = new Map<
+  string,
+  Promise<FacebookCommentFetchResult>
+>();
+
 export type FacebookMessengerSyncResult = SocialSyncResult & {
   syncedAt: string;
   conversationsChecked: number;
@@ -243,6 +248,24 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
     };
   }
 
+  const existingSync = facebookCommentSyncInFlight.get(connection.id);
+  if (existingSync) return existingSync;
+
+  const sync = fetchFacebookCommentsForConnection(connection, fetchedAt);
+  facebookCommentSyncInFlight.set(connection.id, sync);
+  try {
+    return await sync;
+  } finally {
+    if (facebookCommentSyncInFlight.get(connection.id) === sync) {
+      facebookCommentSyncInFlight.delete(connection.id);
+    }
+  }
+}
+
+async function fetchFacebookCommentsForConnection(
+  connection: SocialConnectionRow,
+  fetchedAt: string,
+): Promise<FacebookCommentFetchResult> {
   const token = connection.page_access_token_encrypted
     ? decryptToken(connection.page_access_token_encrypted)
     : null;
@@ -290,9 +313,10 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
 
     const { posts, comments, diagnostics } =
       await fetchFacebookPagePostsWithComments(connection.page_id, token);
+    const orderedComments = [...comments].sort(compareFacebookCommentsByTime);
     let importedCount = 0;
 
-    for (const comment of comments) {
+    for (const comment of orderedComments) {
       const attachments = normalizeFacebookCommentAttachments(comment);
       const content =
         comment.message?.trim() ||
@@ -383,6 +407,19 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
       tokenScopes,
     };
   }
+}
+
+function compareFacebookCommentsByTime(
+  left: FacebookPageComment,
+  right: FacebookPageComment,
+): number {
+  const leftTime = left.created_time ? Date.parse(left.created_time) : Number.NaN;
+  const rightTime = right.created_time ? Date.parse(right.created_time) : Number.NaN;
+  const leftValid = Number.isFinite(leftTime);
+  const rightValid = Number.isFinite(rightTime);
+  if (leftValid && rightValid && leftTime !== rightTime) return leftTime - rightTime;
+  if (leftValid !== rightValid) return leftValid ? 1 : -1;
+  return left.id.localeCompare(right.id);
 }
 
 function normalizeFacebookCommentAttachments(
