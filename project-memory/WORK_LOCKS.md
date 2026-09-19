@@ -12,6 +12,7 @@
 - Canonical PR: #1138 only. #1139 is duplicate/superseded and carries no separate lock; its review findings are acceptance inputs for this same lock.
 - Review follow-through requires current-token comment scopes, per-commenter thread identity, provider timestamps, Page-self-comment exclusion and validated callback return origin before release. Keep the lock active until exact-head CI and independent review are clean.
 - Second review follow-through additionally requires complete nested-comment pagination (no silent 50-comment truncation) and preserved media attachments/media-only context before release.
+- Final review follow-through additionally requires active-app-origin callback binding, per-connection single-flight manual comment sync and oldest-first provider-time persistence. Keep release blocked until the new exact head is green and independently reviewed with no P1/P2.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043
