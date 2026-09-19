@@ -190,7 +190,7 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   );
   assert.match(
     facebookActions,
-    /senderId === connection\.page_id\) continue/u,
+    /!content \|\| \(senderId && senderId === connection\.page_id\)/u,
   );
   assert.match(
     facebookActions,
