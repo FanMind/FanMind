@@ -1,3 +1,14 @@
+## FM-FAIL-META-PROD-PLACEHOLDER-20260919
+- Date: 2026-09-19
+- Status: RECORDED_NOT_REPEATED
+- Task: FM-SOC3-001 / FM-CR-045
+- Attempt: real Production Facebook connect from the existing granted FanMind account.
+- Expected: FanMind redirects to the real FanMind Meta app, Meta authorizes the managed Page, then the callback returns to FanMind and saves/imports the connection.
+- Actual: the external OAuth URL exposed only non-secret example placeholders for App ID and callback host; Meta returned “Ungültige App-ID”. No FanMind social connection was created.
+- Cause: non-empty placeholder ENV values were misclassified as “configured”.
+- Recovery: source must reject placeholders before external navigation; then owner securely configures the real Meta app/callback/server values and repeats only the Facebook connect. Do not repeat login with the placeholder URL or weaken provider checks.
+- Safety: Facebook credentials entered on facebook.com were not supplied to FanMind or chat; no DB/payment/Mobile mutation occurred.
+
 ## FM-FAIL-ADMIN-CRM-SYNTHETIC-SEQUENCE-20260919
 - Date: 2026-09-19
 - Status: RECORDED_NOT_REPEATED
