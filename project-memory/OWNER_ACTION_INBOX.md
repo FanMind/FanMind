@@ -111,8 +111,8 @@ This is the single compact queue for actions that genuinely require the owner, a
 ## FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
 - Status: DEFERRED_BY_OWNER
 - Where: exact existing FanMind closed Google Play Alpha track.
-- Current evidence: on 2026-09-03 the verified Android `1.0.0` Production AAB from run `33316172583` was published in the closed Alpha track for Germany, Austria and Switzerland. This is test distribution, not public Production access. The portal requires at least 12 opted-in testers for at least 14 days; the owner will start that period when FanMind is ready for the Gerhard handoff.
-- Resume trigger: the owner declares FanMind ready for the handoff cohort and has at least 12 approved tester addresses available.
+- Current evidence: on 2026-09-03 the verified Android `1.0.0` Production AAB from run `33316172583` was published in the closed Alpha track for Germany, Austria and Switzerland. This is test distribution, not public Production access. The portal requires at least 12 opted-in testers for at least 14 days; FM-DEC-021 now defers starting that period until company registration is complete and the owner explicitly resumes Mobile.
+- Resume trigger: company registration is complete, the owner explicitly resumes Mobile, and at least 12 approved tester addresses are available.
 - Required next sequence: enroll the approved testers, verify their opt-in state, keep the test active for at least 14 days, complete the private Play-installed 19-check/Recovery evidence and only then request Production access with separate action-time confirmation.
 - Forbidden: another baseline AAB build, fabricated tester enrollment/duration/device evidence, public Production submission without the completed gates, or starting iOS/TestFlight before Phase 8.
 - Risk: R3
