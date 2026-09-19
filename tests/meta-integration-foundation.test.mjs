@@ -570,3 +570,41 @@ test("Meta reader docs distinguish base migration state from observed continuati
     /`facebook_messages`: live/u,
   );
 });
+
+
+test("Facebook OAuth rejects placeholder Production configuration before Meta navigation", async () => {
+  const [integration, channelsPage, channelsGrid, startRoute] = await Promise.all([
+    source("src/lib/facebookIntegration.ts"),
+    source("src/app/channels/page.tsx"),
+    source("src/app/channels/ChannelsGrid.tsx"),
+    source("src/app/api/integrations/facebook/start/route.ts"),
+  ]);
+
+  assert.match(integration, /FACEBOOK_APP_ID_PATTERN/);
+  assert.match(integration, /\^replace_with_/);
+  assert.match(integration, /your\[-_.\]/);
+  assert.match(integration, /isUsableFacebookAppId/);
+  assert.match(integration, /isUsableFacebookSecret/);
+  assert.match(integration, /isUsableFacebookRedirectUri/);
+  assert.match(integration, /Facebook OAuth ist nicht produktionsbereit konfiguriert/);
+  assert.match(integration, /FACEBOOK_APP_ID", "META_APP_ID"/);
+  assert.match(integration, /FACEBOOK_REDIRECT_URI",\s*"META_REDIRECT_URI"/);
+
+  assert.match(channelsPage, /getFacebookOAuthConfigurationStatus/);
+  assert.match(channelsPage, /facebookRedirectUriConfigured/);
+  assert.match(channelsPage, /tokenEncryptionConfigured/);
+
+  assert.match(
+    channelsGrid,
+    /facebookAppIdConfigured[\s\S]*facebookAppSecretConfigured[\s\S]*facebookRedirectUriConfigured[\s\S]*tokenEncryptionConfigured[\s\S]*publicBaseUrlConfigured/u,
+  );
+  assert.match(
+    channelsGrid,
+    /FanMind startet keine Facebook-Anmeldung, solange App-ID, App-Secret, Callback und Token-Verschlüsselung nicht gültig gesetzt sind/u,
+  );
+  assert.match(
+    channelsGrid,
+    /disabled=\{demoConnectionsDisabled \|\| !facebookOAuthConfigured\}/u,
+  );
+  assert.match(startRoute, /facebook_error=config/);
+});
