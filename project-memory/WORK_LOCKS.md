@@ -1,3 +1,14 @@
+## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
+- Task: FM-REG-003 / FM-CR-043
+- Status: ACTIVE
+- Risk: R2
+- Holder: ChatGPT
+- Baseline: Production/main `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; real owner browser evidence after successful permanent Admin-CRM grant.
+- Scope: correct active Admin-CRM routing so it never falls through to generic Starter billing; guard direct Billing start/checkout/pending/success/cancel/suspended surfaces. Blocked/expired Admin-CRM stays on `/workspace/access-paused`.
+- Evidence: exact Production row is already correct and payment-free; focused regression, full CI/build/security, independent review, normal Production deploy/version, then owner re-login using the same already-granted account.
+- Safety: no database migration, regrant, payment, Stripe/Tax, Social provider, Mobile or account mutation. Do not repeat registration or the Admin grant.
+- Recovery: ordinary source revert; Production Admin-CRM data remains unchanged.
+
 ## LOCK-FM-DAILY-SETUP-UI-20260914
 - Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
 - Scope: current owner-narrowed Daily setup UI only, existing branch fix/daily-admin-visibility-20260914 and single PR #1125. Broader Admin control and duplicate #1126 are superseded for this release.
