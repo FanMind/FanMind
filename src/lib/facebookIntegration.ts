@@ -21,6 +21,12 @@ import {
 } from "@/lib/facebookPageSelectionPolicy.mjs";
 import { sanitizeMetaProviderError } from "@/lib/metaProviderErrorPolicy.mjs";
 import {
+  isUsableMetaAppId,
+  isUsableMetaAppSecret,
+  normalizeMetaCallbackUrl,
+  normalizeMetaRuntimeValue,
+} from "@/lib/metaRuntimeConfigPolicy.mjs";
+import {
   createCipheriv,
   createDecipheriv,
   createHmac,
@@ -67,12 +73,57 @@ export type FacebookTokenDiagnostics = {
   error?: { message?: string; code?: number; type?: string };
 };
 
+function resolveValidatedFacebookValue(
+  names: readonly string[],
+  validator: (value: string) => boolean,
+): string | null {
+  for (const name of names) {
+    const value = normalizeMetaRuntimeValue(process.env[name]);
+    if (value && validator(value)) return value;
+  }
+  return null;
+}
+
+function resolveFacebookAppId(): string | null {
+  return resolveValidatedFacebookValue(
+    ["FACEBOOK_APP_ID", "META_APP_ID"],
+    isUsableMetaAppId,
+  );
+}
+
+function resolveFacebookAppSecret(): string | null {
+  return resolveValidatedFacebookValue(
+    ["FACEBOOK_APP_SECRET", "META_APP_SECRET"],
+    isUsableMetaAppSecret,
+  );
+}
+
+function resolveFacebookRedirectUri(): string | null {
+  for (const name of ["FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"] as const) {
+    const value = normalizeMetaCallbackUrl(
+      process.env[name],
+      "/api/integrations/facebook/callback",
+    );
+    if (value) return value;
+  }
+  return null;
+}
+
+export function isFacebookOAuthRuntimeReady(): boolean {
+  return Boolean(
+    resolveFacebookAppId() &&
+      resolveFacebookAppSecret() &&
+      resolveFacebookRedirectUri() &&
+      isTokenEncryptionConfigured(),
+  );
+}
+
 export function getFacebookOAuthUrl(
   state: string,
   scopes: readonly string[] = FACEBOOK_MESSAGES_OAUTH_SCOPES,
 ): string {
-  const appId = requireEnv("FACEBOOK_APP_ID", "META_APP_ID");
-  const redirectUri = requireEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
+  const appId = requireFacebookAppId();
+  const redirectUri = requireFacebookRedirectUri();
   const url = new URL(`https://www.facebook.com/${OAUTH_VERSION}/dialog/oauth`);
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -158,15 +209,15 @@ export async function exchangeFacebookCode(code: string): Promise<string> {
   );
   url.searchParams.set(
     "client_id",
-    requireEnv("FACEBOOK_APP_ID", "META_APP_ID"),
+    requireFacebookAppId(),
   );
   url.searchParams.set(
     "client_secret",
-    requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET"),
+    requireFacebookAppSecret(),
   );
   url.searchParams.set(
     "redirect_uri",
-    requireEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI"),
+    requireFacebookRedirectUri(),
   );
   url.searchParams.set("code", code);
 
@@ -1221,7 +1272,7 @@ export async function fetchFacebookTokenDiagnostics(
   url.searchParams.set("input_token", userAccessToken);
   url.searchParams.set(
     "access_token",
-    `${requireEnv("FACEBOOK_APP_ID", "META_APP_ID")}|${requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET")}`,
+    `${requireFacebookAppId()}|${requireFacebookAppSecret()}`,
   );
 
   const response = await fetch(url, { cache: "no-store" });
@@ -1569,7 +1620,7 @@ export async function fetchFacebookPageWebhookStatus(
     };
   }
 
-  const appId = getOptionalEnv("FACEBOOK_APP_ID", "META_APP_ID");
+  const appId = resolveFacebookAppId();
   const appSubscription =
     (payload?.data ?? []).find((entry) => !appId || entry.id === appId) ?? null;
   const subscribedFields = appSubscription?.subscribed_fields ?? [];
@@ -1664,6 +1715,41 @@ function buildWebhookStatus(
   };
 }
 
+export type FacebookRuntimeConfigurationStatus = {
+  appIdConfigured: boolean;
+  appSecretConfigured: boolean;
+  redirectUriConfigured: boolean;
+  webhookVerifyTokenConfigured: boolean;
+  publicBaseUrlConfigured: boolean;
+  metaBusinessIdConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
+  oauthCallbackUrl: string | null;
+};
+
+export function getFacebookRuntimeConfigurationStatus(): FacebookRuntimeConfigurationStatus {
+  const appId = resolveFacebookAppId();
+  const appSecret = resolveFacebookAppSecret();
+  const redirectUri = resolveFacebookRedirectUri();
+  const publicBaseUrl = getOptionalEnv("NEXT_PUBLIC_APP_URL", "FANMIND_APP_URL");
+
+  return {
+    appIdConfigured: isUsableMetaAppId(appId),
+    appSecretConfigured: isUsableMetaAppSecret(appSecret),
+    redirectUriConfigured: Boolean(redirectUri),
+    webhookVerifyTokenConfigured: Boolean(
+      getOptionalEnv("FACEBOOK_WEBHOOK_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
+    ),
+    publicBaseUrlConfigured: Boolean(
+      normalizeHttpsRuntimeUrl(publicBaseUrl),
+    ),
+    metaBusinessIdConfigured: Boolean(
+      getOptionalEnv("META_BUSINESS_ID", "NEXT_PUBLIC_META_BUSINESS_ID"),
+    ),
+    tokenEncryptionConfigured: isTokenEncryptionConfigured(),
+    oauthCallbackUrl: redirectUri,
+  };
+}
+
 export function isTokenEncryptionConfigured(): boolean {
   return Boolean(getEncryptionKey());
 }
@@ -1704,7 +1790,7 @@ export function tokenLastFour(token: string | null): string | null {
 function signState(encodedPayload: string): string {
   return createHmac(
     "sha256",
-    requireEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET"),
+    requireFacebookAppSecret(),
   )
     .update(encodedPayload)
     .digest("base64url");
@@ -1743,22 +1829,44 @@ function logFacebookApiError(
 
 function getOptionalEnv(...names: string[]): string | undefined {
   for (const name of names) {
-    const value = process.env[name];
+    const value = normalizeMetaRuntimeValue(process.env[name]);
     if (value) return value;
   }
   return undefined;
 }
 
-function requireEnv(name: string, fallbackName?: string): string {
-  const value = getOptionalEnv(name, ...(fallbackName ? [fallbackName] : []));
+function requireFacebookAppId(): string {
+  const value = resolveFacebookAppId();
   if (!value) {
-    throw new Error(
-      fallbackName
-        ? `${name} ist nicht konfiguriert (Fallback ${fallbackName} fehlt ebenfalls).`
-        : `${name} ist nicht konfiguriert.`,
-    );
+    throw new Error("FACEBOOK_APP_ID ist nicht gültig konfiguriert.");
   }
   return value;
+}
+
+function requireFacebookAppSecret(): string {
+  const value = resolveFacebookAppSecret();
+  if (!value) {
+    throw new Error("FACEBOOK_APP_SECRET ist nicht gültig konfiguriert.");
+  }
+  return value;
+}
+
+function requireFacebookRedirectUri(): string {
+  const value = resolveFacebookRedirectUri();
+  if (!value) {
+    throw new Error("FACEBOOK_REDIRECT_URI ist nicht gültig konfiguriert.");
+  }
+  return value;
+}
+
+function normalizeHttpsRuntimeUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 export type FacebookPagePost = {
@@ -1820,8 +1928,11 @@ export class FacebookCommentFetchError extends Error {
 type FacebookPagePostWithInlineComments = FacebookPagePost & {
   comments?: {
     data?: Array<Omit<FacebookPageComment, "postId" | "postPermalinkUrl">>;
+    paging?: { next?: string };
   };
 };
+
+const FACEBOOK_COMMENT_MAX_PER_POST = 2_000;
 
 export async function fetchFacebookPagePostsWithComments(
   pageId: string,
@@ -1846,6 +1957,8 @@ export async function fetchFacebookPagePostsWithComments(
       await fetchGraphCollection<FacebookPagePostWithInlineComments>(
         feedUrl,
         "Facebook Page-Feed mit Kommentaren konnte nicht geladen werden.",
+        25,
+        true,
       );
     const posts = feedPosts.map((post) => ({
       id: post.id,
@@ -1853,15 +1966,46 @@ export async function fetchFacebookPagePostsWithComments(
       created_time: post.created_time,
       permalink_url: post.permalink_url,
     }));
-    const comments = feedPosts.flatMap((post) =>
-      (post.comments?.data ?? [])
+    const comments: FacebookPageComment[] = [];
+    for (const post of feedPosts) {
+      const inlineComments = (post.comments?.data ?? [])
         .filter((comment) => Boolean(comment.id))
         .map((comment) => ({
           ...comment,
           postId: post.id,
           postPermalinkUrl: post.permalink_url,
-        })),
-    );
+        }));
+      comments.push(...inlineComments);
+
+      const nestedNext = validateFacebookGraphPagingUrl(
+        post.comments?.paging?.next ?? null,
+      );
+      if (nestedNext) {
+        const remaining = Math.max(
+          0,
+          FACEBOOK_COMMENT_MAX_PER_POST - inlineComments.length,
+        );
+        if (!remaining) {
+          throw new GraphApiError(
+            "Facebook-Kommentar-Paginierung überschreitet das sichere Limit.",
+          );
+        }
+        const additionalComments = await fetchGraphCollection<
+          Omit<FacebookPageComment, "postId" | "postPermalinkUrl">
+        >(
+          new URL(nestedNext),
+          "Facebook-Kommentare konnten nicht vollständig paginiert werden.",
+          remaining,
+        );
+        comments.push(
+          ...additionalComments.map((comment) => ({
+            ...comment,
+            postId: post.id,
+            postPermalinkUrl: post.permalink_url,
+          })),
+        );
+      }
+    }
     return {
       posts,
       comments,
@@ -1885,6 +2029,8 @@ export async function fetchFacebookPagePostsWithComments(
   const posts = await fetchGraphCollection<FacebookPagePost>(
     postsUrl,
     "Facebook Page-Feed konnte nicht geladen werden.",
+    25,
+    true,
   ).catch((error) => {
     throw withCommentFetchEndpoint(error, "post-comments-fallback");
   });
@@ -1906,6 +2052,7 @@ export async function fetchFacebookPagePostsWithComments(
     >(
       commentsUrl,
       "Facebook-Kommentare konnten nicht geladen werden.",
+      FACEBOOK_COMMENT_MAX_PER_POST,
     ).catch((error) => {
       throw withCommentFetchEndpoint(error, "post-comments-fallback");
     });
@@ -1969,11 +2116,13 @@ class GraphApiError extends Error {
 async function fetchGraphCollection<T extends { id?: string }>(
   url: URL,
   errorFallback: string,
+  maxItems = 500,
+  stopAtLimit = false,
 ): Promise<T[]> {
   const items: T[] = [];
   let nextUrl: string | null = url.toString();
 
-  while (nextUrl && items.length < 500) {
+  while (nextUrl) {
     const response = await fetch(nextUrl, { cache: "no-store" });
     const payload = (await response.json().catch(() => null)) as {
       data?: T[];
@@ -1989,8 +2138,28 @@ async function fetchGraphCollection<T extends { id?: string }>(
       );
     }
 
-    items.push(...(payload?.data ?? []).filter((item) => Boolean(item.id)));
-    nextUrl = validateFacebookGraphPagingUrl(payload?.paging?.next ?? null);
+    const pageItems = (payload?.data ?? []).filter((item) => Boolean(item.id));
+    if (items.length + pageItems.length > maxItems) {
+      if (!stopAtLimit) {
+        throw new GraphApiError(
+          `${errorFallback} Das sichere Paginierungslimit wurde überschritten.`,
+        );
+      }
+      items.push(...pageItems.slice(0, Math.max(0, maxItems - items.length)));
+      return items;
+    }
+    items.push(...pageItems);
+
+    const validatedNext = validateFacebookGraphPagingUrl(
+      payload?.paging?.next ?? null,
+    );
+    if (validatedNext && items.length >= maxItems) {
+      if (stopAtLimit) return items;
+      throw new GraphApiError(
+        `${errorFallback} Das sichere Paginierungslimit wurde erreicht, bevor alle Daten geladen waren.`,
+      );
+    }
+    nextUrl = validatedNext;
   }
 
   return items;

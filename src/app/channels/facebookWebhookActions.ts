@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   buildAttachmentFallbackText,
   getMessageKindFromAttachments,
+  normalizeMessageAttachments,
 } from "@/lib/messageAttachments";
 import {
   createEmptySocialSyncResult,
@@ -16,6 +17,7 @@ import {
   type FacebookMessengerMessage,
   type FacebookMessageFieldProbe,
   type FacebookMessengerConversation,
+  type FacebookPageComment,
   getFacebookGrantedScopeNames,
   fetchFacebookPagePostsWithComments,
   fetchFacebookMessengerConversationMessages,
@@ -73,10 +75,25 @@ export type FacebookCommentFetchResult = {
   endpointType?: string | null;
   usedPageAccessToken?: boolean;
   tokenScopes?: string[];
+  continuationPending?: boolean;
 };
 
 const FACEBOOK_MESSENGER_INCREMENTAL_CONVERSATION_LIMIT = 10;
 const FACEBOOK_MESSENGER_INITIAL_CONVERSATION_LIMIT = 25;
+
+const FACEBOOK_COMMENT_SYNC_MAX_PERSISTED_PER_RUN = 100;
+const FACEBOOK_COMMENT_SYNC_EXECUTION_BUDGET_MS = 8_000;
+const FACEBOOK_COMMENT_CONTINUATION_PREFIX = "__fanmind_comment_cursor_v1__:";
+
+type FacebookCommentContinuationCursor = {
+  createdTime: string | null;
+  id: string;
+};
+
+const facebookCommentSyncInFlight = new Map<
+  string,
+  Promise<FacebookCommentFetchResult>
+>();
 
 export type FacebookMessengerSyncResult = SocialSyncResult & {
   syncedAt: string;
@@ -241,6 +258,24 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
     };
   }
 
+  const existingSync = facebookCommentSyncInFlight.get(connection.id);
+  if (existingSync) return existingSync;
+
+  const sync = fetchFacebookCommentsForConnection(connection, fetchedAt);
+  facebookCommentSyncInFlight.set(connection.id, sync);
+  try {
+    return await sync;
+  } finally {
+    if (facebookCommentSyncInFlight.get(connection.id) === sync) {
+      facebookCommentSyncInFlight.delete(connection.id);
+    }
+  }
+}
+
+async function fetchFacebookCommentsForConnection(
+  connection: SocialConnectionRow,
+  fetchedAt: string,
+): Promise<FacebookCommentFetchResult> {
   const token = connection.page_access_token_encrypted
     ? decryptToken(connection.page_access_token_encrypted)
     : null;
@@ -266,18 +301,88 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
 
   try {
     const tokenScopes = await getSafeTokenScopeNames(token);
+    if (!hasFacebookCommentFeedScopes(tokenScopes)) {
+      const message =
+        "Die aktuelle Facebook-Verbindung besitzt keine gültige Kommentar-Berechtigung.";
+      await updateFacebookCommentFetchStatus(connection.id, {
+        fetchedAt,
+        importedCount: 0,
+        error: message,
+      });
+      revalidatePath("/channels");
+      return {
+        ok: false,
+        fetchedAt,
+        postsChecked: 0,
+        commentsChecked: 0,
+        importedCount: 0,
+        error: message,
+        tokenScopes,
+      };
+    }
+
     const { posts, comments, diagnostics } =
       await fetchFacebookPagePostsWithComments(connection.page_id, token);
+    const orderedComments = [...comments].sort(compareFacebookCommentsByTime);
+    const continuationCursor = decodeFacebookCommentContinuation(
+      connection.last_comment_fetch_error,
+    );
+    const completedHighWaterAt = normalizeFacebookCommentHighWater(
+      connection.last_comment_fetch_at,
+    );
+    const remainingComments = continuationCursor
+      ? orderedComments.filter((comment) =>
+          compareFacebookCommentToCursor(comment, continuationCursor) > 0,
+        )
+      : completedHighWaterAt
+        ? orderedComments.filter((comment) =>
+            isFacebookCommentAtOrAfterHighWater(comment, completedHighWaterAt),
+          )
+        : orderedComments;
+    const persistenceStartedAt = Date.now();
     let importedCount = 0;
+    let processedCount = 0;
+    let lastProcessedCursor = continuationCursor;
+    let latestValidHighWaterAt = completedHighWaterAt;
+    let continuationPending = false;
 
-    for (const comment of comments) {
-      if (!comment.message?.trim()) continue;
+    for (const comment of remainingComments) {
+      if (
+        processedCount >= FACEBOOK_COMMENT_SYNC_MAX_PERSISTED_PER_RUN ||
+        Date.now() - persistenceStartedAt >=
+          FACEBOOK_COMMENT_SYNC_EXECUTION_BUDGET_MS
+      ) {
+        continuationPending = true;
+        break;
+      }
+
+      const commentCursor = facebookCommentCursor(comment);
+      const attachments = normalizeFacebookCommentAttachments(comment);
+      const content =
+        comment.message?.trim() ||
+        buildAttachmentFallbackText(attachments, "inbound");
+      const senderId = comment.from?.id ?? null;
+
+      if (commentCursor.createdTime) {
+        latestValidHighWaterAt = laterFacebookCommentHighWater(
+          latestValidHighWaterAt,
+          commentCursor.createdTime,
+        );
+      }
+
+      if (!content || (senderId && senderId === connection.page_id)) {
+        processedCount += 1;
+        lastProcessedCursor = commentCursor;
+        continue;
+      }
+
+      const externalThreadId = `${comment.postId}:${senderId ?? comment.id}`;
       const result = await createMetaWebhookConversationMessage({
         workspaceId: connection.workspace_id,
         sourcePlatform: "facebook",
-        senderId: comment.from?.id ?? null,
+        senderId,
         authorLabel: comment.from?.name ?? "Facebook Nutzer",
-        content: comment.message,
+        content,
         messageType: "comment",
         sourceType: "facebook_comments",
         sourceUrl:
@@ -289,16 +394,40 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
           comment.postPermalinkUrl ??
           `https://www.facebook.com/${comment.postId}`,
         externalMessageId: comment.id,
-        externalThreadId: comment.postId,
+        externalThreadId,
+        sourceConversationId: externalThreadId,
+        externalPostId: comment.postId,
+        externalCommentId: comment.id,
+        attachments,
+        messageKind: getMessageKindFromAttachments(
+          comment.message,
+          attachments,
+        ),
+        receivedAt: comment.created_time ?? null,
+        direction: "inbound",
       });
       if (result.error) throw result.error;
       if (result.conversation) importedCount += 1;
+      processedCount += 1;
+      lastProcessedCursor = commentCursor;
+    }
+
+    if (
+      !continuationPending &&
+      lastProcessedCursor &&
+      remainingComments.length > processedCount
+    ) {
+      continuationPending = true;
     }
 
     await updateFacebookCommentFetchStatus(connection.id, {
       fetchedAt,
       importedCount,
-      error: null,
+      highWaterAt: latestValidHighWaterAt,
+      error:
+        continuationPending && lastProcessedCursor
+          ? encodeFacebookCommentContinuation(lastProcessedCursor)
+          : null,
     });
     revalidatePath("/channels");
     revalidatePath("/inbox");
@@ -312,6 +441,7 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
       endpointType: diagnostics.endpointType,
       usedPageAccessToken: diagnostics.usedPageAccessToken,
       tokenScopes,
+      continuationPending,
     };
   } catch (fetchError) {
     const tokenScopes = await getSafeTokenScopeNames(token);
@@ -340,6 +470,159 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
       tokenScopes,
     };
   }
+}
+
+function compareFacebookCommentsByTime(
+  left: FacebookPageComment,
+  right: FacebookPageComment,
+): number {
+  return compareFacebookCommentCursors(
+    facebookCommentCursor(left),
+    facebookCommentCursor(right),
+  );
+}
+
+function facebookCommentCursor(
+  comment: FacebookPageComment,
+): FacebookCommentContinuationCursor {
+  const parsed = comment.created_time ? Date.parse(comment.created_time) : Number.NaN;
+  return {
+    createdTime: Number.isFinite(parsed)
+      ? new Date(parsed).toISOString()
+      : null,
+    id: comment.id,
+  };
+}
+
+function compareFacebookCommentToCursor(
+  comment: FacebookPageComment,
+  cursor: FacebookCommentContinuationCursor,
+): number {
+  return compareFacebookCommentCursors(facebookCommentCursor(comment), cursor);
+}
+
+function normalizeFacebookCommentHighWater(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+}
+
+function isFacebookCommentAtOrAfterHighWater(
+  comment: FacebookPageComment,
+  highWaterAt: string,
+): boolean {
+  const cursor = facebookCommentCursor(comment);
+  if (!cursor.createdTime) return true;
+  return Date.parse(cursor.createdTime) >= Date.parse(highWaterAt);
+}
+
+function laterFacebookCommentHighWater(
+  current: string | null,
+  candidate: string,
+): string {
+  if (!current) return candidate;
+  return Date.parse(candidate) > Date.parse(current) ? candidate : current;
+}
+
+function compareFacebookCommentCursors(
+  left: FacebookCommentContinuationCursor,
+  right: FacebookCommentContinuationCursor,
+): number {
+  const leftTime = left.createdTime ? Date.parse(left.createdTime) : Number.NaN;
+  const rightTime = right.createdTime ? Date.parse(right.createdTime) : Number.NaN;
+  const leftValid = Number.isFinite(leftTime);
+  const rightValid = Number.isFinite(rightTime);
+  if (leftValid && rightValid && leftTime !== rightTime) return leftTime - rightTime;
+  // Missing/malformed provider timestamps are processed after all historical
+  // comments so their persistence-time fallback cannot be overwritten later
+  // by older provider timestamps in the same fan thread.
+  if (leftValid !== rightValid) return leftValid ? -1 : 1;
+  return left.id.localeCompare(right.id);
+}
+
+function encodeFacebookCommentContinuation(
+  cursor: FacebookCommentContinuationCursor,
+): string {
+  return `${FACEBOOK_COMMENT_CONTINUATION_PREFIX}${encodeURIComponent(
+    JSON.stringify(cursor),
+  )}`;
+}
+
+function decodeFacebookCommentContinuation(
+  value: string | null | undefined,
+): FacebookCommentContinuationCursor | null {
+  if (!value?.startsWith(FACEBOOK_COMMENT_CONTINUATION_PREFIX)) return null;
+  try {
+    const parsed = JSON.parse(
+      decodeURIComponent(value.slice(FACEBOOK_COMMENT_CONTINUATION_PREFIX.length)),
+    ) as Partial<FacebookCommentContinuationCursor>;
+    if (typeof parsed.id !== "string" || !parsed.id.trim()) return null;
+    if (
+      parsed.createdTime !== null &&
+      (typeof parsed.createdTime !== "string" ||
+        !Number.isFinite(Date.parse(parsed.createdTime)))
+    ) {
+      return null;
+    }
+    return {
+      createdTime:
+        typeof parsed.createdTime === "string"
+          ? new Date(parsed.createdTime).toISOString()
+          : null,
+      id: parsed.id,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function normalizeFacebookCommentAttachments(
+  comment: FacebookPageComment,
+) {
+  const rawAttachments = [
+    ...(comment.attachment ? [comment.attachment] : []),
+    ...(comment.attachments?.data ?? []),
+  ];
+  const normalized = normalizeMessageAttachments(
+    rawAttachments.map((attachment) => ({
+      type: normalizeFacebookCommentAttachmentType(attachment.type),
+      url:
+        attachment.url ??
+        attachment.media?.image?.src ??
+        attachment.target?.url ??
+        null,
+    })),
+  );
+  if (!normalized?.length) return null;
+
+  const unique = new Map(
+    normalized.map((attachment) => [
+      `${attachment.type}|${attachment.url ?? ""}|${attachment.sticker_id ?? ""}`,
+      attachment,
+    ]),
+  );
+  return [...unique.values()];
+}
+
+function normalizeFacebookCommentAttachmentType(
+  type: string | undefined,
+): "image" | "video" | "audio" | "file" | "unknown" {
+  const normalized = type?.toLowerCase() ?? "";
+  if (
+    normalized.includes("image") ||
+    normalized.includes("photo") ||
+    normalized.includes("sticker")
+  ) {
+    return "image";
+  }
+  if (normalized.includes("video")) return "video";
+  if (normalized.includes("audio")) return "audio";
+  if (normalized.includes("file") || normalized.includes("document")) {
+    return "file";
+  }
+  return "unknown";
 }
 
 export async function syncFacebookMessengerHistory(input?: {

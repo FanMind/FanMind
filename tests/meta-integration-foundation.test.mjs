@@ -24,10 +24,264 @@ import {
   evaluateMetaDataUse,
 } from "../src/lib/metaDataHandlingPolicy.mjs";
 import { sanitizeMetaProviderError } from "../src/lib/metaProviderErrorPolicy.mjs";
+import {
+  isUsableMetaAppId,
+  isUsableMetaAppSecret,
+  normalizeMetaCallbackUrl,
+  normalizeMetaRuntimeValue,
+} from "../src/lib/metaRuntimeConfigPolicy.mjs";
 
 async function source(path) {
   return readFile(path, "utf8");
 }
+
+test("Meta runtime configuration rejects deploy placeholders and binds callbacks to the active app", () => {
+  const previous = {
+    ack: process.env.FANMIND_CORE_FLOW_FIXTURE_ACK,
+    app: process.env.NEXT_PUBLIC_APP_URL,
+    fanmindApp: process.env.FANMIND_APP_URL,
+    supabase: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  };
+  try {
+    process.env.NEXT_PUBLIC_APP_URL = "https://fanmind.ch";
+    delete process.env.FANMIND_APP_URL;
+    delete process.env.FANMIND_CORE_FLOW_FIXTURE_ACK;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    assert.equal(normalizeMetaRuntimeValue("replace_with_facebook_app_id"), null);
+    assert.equal(normalizeMetaRuntimeValue(" replace_with_meta_app_secret "), null);
+    assert.equal(isUsableMetaAppId("replace_with_facebook_app_id"), false);
+    assert.equal(isUsableMetaAppId("123456789012345"), true);
+    assert.equal(isUsableMetaAppSecret("replace_with_meta_app_secret"), false);
+    assert.equal(isUsableMetaAppSecret("0123456789abcdef0123456789abcdef"), true);
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://your-domain.example/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      "https://fanmind.ch/api/integrations/facebook/callback",
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://other.fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/instagram/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.FANMIND_APP_URL;
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+    for (const host of ["fanmind.example", "fanmind.test", "fanmind.invalid"]) {
+      assert.equal(
+        normalizeMetaCallbackUrl(
+          `https://${host}/api/integrations/facebook/callback`,
+          "/api/integrations/facebook/callback",
+        ),
+        null,
+      );
+    }
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "http://localhost:3100/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+
+    process.env.FANMIND_CORE_FLOW_FIXTURE_ACK =
+      "fanmind-local-synthetic-core-flow";
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3100";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "http://localhost:3100/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      "http://localhost:3100/api/integrations/facebook/callback",
+    );
+  } finally {
+    if (previous.ack === undefined) delete process.env.FANMIND_CORE_FLOW_FIXTURE_ACK;
+    else process.env.FANMIND_CORE_FLOW_FIXTURE_ACK = previous.ack;
+    if (previous.app === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous.app;
+    if (previous.fanmindApp === undefined) delete process.env.FANMIND_APP_URL;
+    else process.env.FANMIND_APP_URL = previous.fanmindApp;
+    if (previous.supabase === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = previous.supabase;
+  }
+});
+
+test("Meta channel UI fails closed on incomplete config and exposes real Facebook sync controls", async () => {
+  const [facebook, instagram, channels, page, syncActions, facebookActions, startRoute, callbackRoute, server, runtimePolicy] = await Promise.all([
+    source("src/lib/facebookIntegration.ts"),
+    source("src/lib/instagramIntegration.ts"),
+    source("src/app/channels/ChannelsGrid.tsx"),
+    source("src/app/channels/page.tsx"),
+    source("src/app/channels/metaSyncActions.ts"),
+    source("src/app/channels/facebookWebhookActions.ts"),
+    source("src/app/api/integrations/facebook/start/route.ts"),
+    source("src/app/api/integrations/facebook/callback/route.ts"),
+    source("src/lib/supabase/server.ts"),
+    source("src/lib/metaRuntimeConfigPolicy.mjs"),
+  ]);
+
+  assert.match(facebook, /requireFacebookAppId/u);
+  assert.match(facebook, /requireFacebookRedirectUri/u);
+  assert.match(facebook, /getFacebookRuntimeConfigurationStatus/u);
+  assert.match(facebook, /resolveValidatedFacebookValue/u);
+  assert.match(facebook, /\["FACEBOOK_APP_ID", "META_APP_ID"\]/u);
+  assert.match(facebook, /\["FACEBOOK_APP_SECRET", "META_APP_SECRET"\]/u);
+  assert.match(facebook, /resolveFacebookRedirectUri/u);
+  assert.match(facebook, /isFacebookOAuthRuntimeReady/u);
+  assert.match(
+    startRoute,
+    /if \(!isFacebookOAuthRuntimeReady\(\)\)[\s\S]*facebook_error=config/u,
+  );
+  assert.match(
+    callbackRoute,
+    /getFacebookRuntimeConfigurationStatus\(\)\.oauthCallbackUrl/u,
+  );
+  assert.doesNotMatch(
+    callbackRoute,
+    /FACEBOOK_REDIRECT_URI \?\? process\.env\.META_REDIRECT_URI/u,
+  );
+  assert.match(
+    server,
+    /platform === "facebook"[\s\S]*new Set\(input\.scopes \?\? \[\]\)/u,
+  );
+  assert.match(instagram, /normalizeMetaCallbackUrl/u);
+  assert.match(page, /redirectUriConfigured/u);
+  assert.match(page, /tokenEncryptionConfigured/u);
+  assert.match(
+    channels,
+    /facebookLiveSetupStatus\.redirectUriConfigured[\s\S]*facebookLiveSetupStatus\.tokenEncryptionConfigured/u,
+  );
+  assert.match(
+    channels,
+    /facebookError === "config"[\s\S]*Facebook-Serverkonfiguration ist noch nicht vollständig/u,
+  );
+  assert.match(channels, /Facebook-Kommentare jetzt synchronisieren/u);
+  assert.match(channels, /facebookCommentsAuthorized/u);
+  assert.match(syncActions, /fetchFacebookCommentsNow/u);
+  assert.match(
+    facebookActions,
+    /hasFacebookCommentFeedScopes\(tokenScopes\)[\s\S]*keine gültige Kommentar-Berechtigung/u,
+  );
+  assert.match(
+    facebookActions,
+    /!content \|\| \(senderId && senderId === connection\.page_id\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /externalThreadId = `\$\{comment\.postId\}:\$\{senderId \?\? comment\.id\}`/u,
+  );
+  assert.match(facebookActions, /receivedAt: comment\.created_time \?\? null/u);
+  assert.match(facebookActions, /direction: "inbound"/u);
+  assert.match(
+    facebook,
+    /post\.comments\?\.paging\?\.next[\s\S]*fetchGraphCollection/u,
+  );
+  assert.match(
+    facebook,
+    /validatedNext && items\.length >= maxItems[\s\S]*Paginierungslimit/u,
+  );
+  assert.match(
+    facebook,
+    /fetchGraphCollection<FacebookPagePostWithInlineComments>\([\s\S]*feedUrl[\s\S]*25,[\s\S]*true/u,
+  );
+  assert.match(
+    facebook,
+    /fetchGraphCollection<FacebookPagePost>\([\s\S]*postsUrl[\s\S]*25,[\s\S]*true/u,
+  );
+  assert.match(
+    facebook,
+    /if \(stopAtLimit\) return items/u,
+  );
+  assert.match(
+    facebookActions,
+    /normalizeFacebookCommentAttachments\(comment\)[\s\S]*buildAttachmentFallbackText\(attachments, "inbound"\)/u,
+  );
+  assert.match(facebookActions, /attachments,[\s\S]*messageKind:/u);
+  assert.match(
+    facebookActions,
+    /facebookCommentSyncInFlight\.get\(connection\.id\)[\s\S]*facebookCommentSyncInFlight\.set\(connection\.id, sync\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /orderedComments = \[\.\.\.comments\]\.sort\(compareFacebookCommentsByTime\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /leftValid !== rightValid\) return leftValid \? -1 : 1/u,
+  );
+  assert.match(
+    facebookActions,
+    /FACEBOOK_COMMENT_SYNC_MAX_PERSISTED_PER_RUN = 100/u,
+  );
+  assert.match(
+    facebookActions,
+    /FACEBOOK_COMMENT_SYNC_EXECUTION_BUDGET_MS = 8_000/u,
+  );
+  assert.match(
+    facebookActions,
+    /decodeFacebookCommentContinuation\([\s\S]*connection\.last_comment_fetch_error/u,
+  );
+  assert.match(
+    facebookActions,
+    /encodeFacebookCommentContinuation\(lastProcessedCursor\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /completedHighWaterAt = normalizeFacebookCommentHighWater\([\s\S]*connection\.last_comment_fetch_at/u,
+  );
+  assert.match(
+    facebookActions,
+    /isFacebookCommentAtOrAfterHighWater\(comment, completedHighWaterAt\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /highWaterAt: latestValidHighWaterAt/u,
+  );
+  assert.match(
+    server,
+    /if \(input\.highWaterAt !== undefined\)[\s\S]*last_comment_fetch_at = normalizeIsoTimestamp\(input\.highWaterAt\)/u,
+  );
+  assert.match(
+    channels,
+    /__fanmind_comment_cursor_v1__:[\s\S]*weitere Kommentare warten auf Fortsetzung/u,
+  );
+  assert.match(
+    channels,
+    /Kommentare verarbeitet bis:[\s\S]*last_comment_fetch_at/u,
+  );
+  assert.match(
+    facebookActions,
+    /left\.createdTime \? Date\.parse\(left\.createdTime\)[\s\S]*right\.createdTime \? Date\.parse\(right\.createdTime\)/u,
+  );
+  assert.match(runtimePolicy, /url\.origin !== appOrigin/u);
+  assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
+});
 
 test("Meta connections use the supported stable Graph API and owner/admin control", () => {
   assert.equal(META_GRAPH_API_VERSION, "v25.0");

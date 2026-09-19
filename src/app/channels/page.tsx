@@ -26,7 +26,10 @@ import { ChannelsGrid } from "./ChannelsGrid";
 import { getTelegramWebhookStatus, type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import { isInstagramOAuthConfigured } from "@/lib/instagramIntegration";
-import { isTokenEncryptionConfigured } from "@/lib/facebookIntegration";
+import {
+  getFacebookRuntimeConfigurationStatus,
+  isTokenEncryptionConfigured,
+} from "@/lib/facebookIntegration";
 
 type SafeFacebookConnection = Pick<
   SocialConnectionRow,
@@ -51,9 +54,11 @@ type SafeInstagramConnection = {
 type FacebookLiveSetupStatus = {
   facebookAppIdConfigured: boolean;
   facebookAppSecretConfigured: boolean;
+  redirectUriConfigured: boolean;
   webhookVerifyTokenConfigured: boolean;
   publicBaseUrlConfigured: boolean;
   metaBusinessIdConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
   oauthCallbackUrl: string | null;
 };
 
@@ -348,24 +353,18 @@ export default async function ChannelsPage({
 }
 
 function getFacebookLiveSetupStatus(): FacebookLiveSetupStatus {
-  const publicBaseUrl = firstConfiguredEnv("NEXT_PUBLIC_APP_URL", "FANMIND_APP_URL");
-  const explicitCallbackUrl = firstConfiguredEnv("FACEBOOK_REDIRECT_URI", "META_REDIRECT_URI");
-  const oauthCallbackUrl = explicitCallbackUrl ?? (publicBaseUrl ? `${publicBaseUrl.replace(/\/$/, "")}/api/integrations/facebook/callback` : null);
+  const status = getFacebookRuntimeConfigurationStatus();
 
   return {
-    facebookAppIdConfigured: Boolean(firstConfiguredEnv("FACEBOOK_APP_ID", "META_APP_ID")),
-    facebookAppSecretConfigured: Boolean(firstConfiguredEnv("FACEBOOK_APP_SECRET", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET")),
-    webhookVerifyTokenConfigured: Boolean(firstConfiguredEnv("FACEBOOK_WEBHOOK_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN")),
-    publicBaseUrlConfigured: Boolean(publicBaseUrl),
-    metaBusinessIdConfigured: Boolean(firstConfiguredEnv("META_BUSINESS_ID", "NEXT_PUBLIC_META_BUSINESS_ID")),
-    oauthCallbackUrl,
+    facebookAppIdConfigured: status.appIdConfigured,
+    facebookAppSecretConfigured: status.appSecretConfigured,
+    redirectUriConfigured: status.redirectUriConfigured,
+    webhookVerifyTokenConfigured: status.webhookVerifyTokenConfigured,
+    publicBaseUrlConfigured: status.publicBaseUrlConfigured,
+    metaBusinessIdConfigured: status.metaBusinessIdConfigured,
+    tokenEncryptionConfigured: status.tokenEncryptionConfigured,
+    oauthCallbackUrl: status.oauthCallbackUrl,
   };
 }
 
-function firstConfiguredEnv(...names: string[]): string | null {
-  for (const name of names) {
-    const value = process.env[name];
-    if (value?.trim()) return value.trim();
-  }
-  return null;
-}
+

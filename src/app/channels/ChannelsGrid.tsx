@@ -10,6 +10,7 @@ import { ChannelConnectionSteps } from "./ChannelConnectionSteps";
 import styles from "./channels.module.css";
 import { type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import {
+  syncFacebookCommentsFromChannelPage,
   syncFacebookMessengerHistoryFromChannelPage,
   syncInstagramMessengerHistoryFromChannelPage,
 } from "./metaSyncActions";
@@ -76,9 +77,11 @@ type MetaWebhookStorageHealth = {
 type FacebookLiveSetupStatus = {
   facebookAppIdConfigured: boolean;
   facebookAppSecretConfigured: boolean;
+  redirectUriConfigured: boolean;
   webhookVerifyTokenConfigured: boolean;
   publicBaseUrlConfigured: boolean;
   metaBusinessIdConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
   oauthCallbackUrl: string | null;
 };
 
@@ -141,6 +144,10 @@ const phase3ChannelKeys = new Set(["facebook", "instagram", "whatsapp"]);
 const phase7ChannelKeys = new Set(["tiktok", "twitter", "discord", "discord-server", "onlyfans"]);
 const currentChannelKeys = new Set(["email", "website-chat", "webform", "manual"]);
 const preparedPhase8ChannelKeys = new Set(["telegram"]);
+
+function isMetaPilotChannel(key: string) {
+  return key === "facebook" || key === "instagram";
+}
 
 function beginMetaAuthorization(provider: "facebook" | "instagram", scope: "messages" | "comments" | "insights") {
   // OAuth needs a document navigation: an SPA fetch cannot follow the external login.
@@ -309,20 +316,22 @@ const channelGroups: ChannelGroup[] = [
         "facebook",
         "Facebook",
         "Inbox",
-        "Messenger und Page-Kommentare bleiben getrennte vorbereitete Verbindungen.",
-        "2 vorbereitete Eingänge",
+        "Messenger und Page-Kommentare sind getrennte Beta-Eingänge mit eigener Meta-Berechtigung.",
+        "2 Meta-Beta-Eingänge",
         [
           makeInput(
             "facebook-messages",
             "Nachrichten",
             "Nachrichten",
-            "Messenger-Inbox bleibt bis zur produktiven Freigabe geplant.",
+            "Messenger-Nachrichten werden nach erfolgreicher Verbindung beim Erstabgleich in FanMind eingelesen.",
+            "Meta OAuth · DM-Import",
           ),
           makeInput(
             "facebook-comments",
             "Kommentare",
             "Kommentare",
-            "Page-Kommentare bleiben bis zur produktiven Freigabe geplant.",
+            "Page-Kommentare benötigen eine separate Meta-Berechtigung und können danach in FanMind synchronisiert werden.",
+            "Meta OAuth · Kommentar-Import",
           ),
         ],
       ),
@@ -637,7 +646,12 @@ export function ChannelsGrid({
   const facebookOAuthConfigured =
     facebookLiveSetupStatus.facebookAppIdConfigured &&
     facebookLiveSetupStatus.facebookAppSecretConfigured &&
-    facebookLiveSetupStatus.publicBaseUrlConfigured;
+    facebookLiveSetupStatus.redirectUriConfigured &&
+    facebookLiveSetupStatus.tokenEncryptionConfigured;
+  const facebookCommentsAuthorized = Boolean(
+    facebookConnection?.scopes?.includes("pages_read_engagement") &&
+      facebookConnection?.scopes?.includes("pages_read_user_content"),
+  );
 
   useEffect(() => {
     const openReturnedChannel = () => {
@@ -767,9 +781,11 @@ export function ChannelsGrid({
                 <span className={styles.inputCountBadge}>
                   {channel.status === "Phase 8 / noch nicht begonnen"
                     ? "Noch keine Eingänge umgesetzt"
-                    : channel.inputs.length === 1
-                      ? "1 Eingang vorbereitet"
-                      : `${channel.inputs.length} Eingänge vorbereitet`}
+                    : isMetaPilotChannel(channel.key)
+                      ? `${channel.inputs.length} Beta-Eingänge`
+                      : channel.inputs.length === 1
+                        ? "1 Eingang vorbereitet"
+                        : `${channel.inputs.length} Eingänge vorbereitet`}
                 </span>
                 <span className={styles.inputTypeHint}>
                   {channel.inputs.map((input) => input.purpose).join(" · ")}
@@ -780,7 +796,7 @@ export function ChannelsGrid({
               <span className={styles.cardActions}>
                 <span className={styles.primaryCardAction}>Details</span>
               </span>
-              {!channel.live ? (
+              {!channel.live && !isMetaPilotChannel(channel.key) ? (
                 <ComingSoonMark
                   className={styles.soonCornerBadge}
                   size="overlay"
@@ -814,10 +830,12 @@ export function ChannelsGrid({
                   size="lg"
                 />
                 <div>
-                  <p className={styles.modalEyebrow}>Kanal-Roadmap</p>
+                  <p className={styles.modalEyebrow}>
+                    {isMetaPilotChannel(activeChannel.key) ? "Kanal-Beta" : "Kanal-Roadmap"}
+                  </p>
                   <h2 id="channel-modal-title">{activeChannel.name}</h2>
                   <div className={styles.metaRow}>
-                    {!activeChannel.live ? (
+                    {!activeChannel.live && !isMetaPilotChannel(activeChannel.key) ? (
                       <ComingSoonMark
                         className={styles.soonBadgeImage}
                         size="small"
@@ -825,7 +843,9 @@ export function ChannelsGrid({
                       />
                     ) : (
                       <span
-                        className={`${styles.statusBadge} ${styles.statusConnected}`}
+                        className={`${styles.statusBadge} ${
+                          activeChannel.live ? styles.statusConnected : styles.statusPreview
+                        }`}
                       >
                         {activeChannel.status}
                       </span>
@@ -861,7 +881,13 @@ export function ChannelsGrid({
                             ? "Dieses Meta-Konto verwaltet mehrere Seiten. FanMind hat bewusst keine Seite automatisch gewählt. Die ausdrückliche Seitenauswahl wird vor dieser Verbindung benötigt."
                             : facebookError === "workspace_inactive"
                               ? "Die Freigabe deines Workspaces konnte nicht bestätigt werden. Bitte lass deinen Zugang im FanMind-Adminbereich prüfen und versuche die Verbindung danach erneut."
-                              : "Die Facebook-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten übernommen."}
+                              : facebookError === "config"
+                                ? "Die Facebook-Serverkonfiguration ist noch nicht vollständig. Es wurde keine Meta-Verbindung gestartet."
+                                : facebookError === "page_permissions"
+                                  ? "Meta hat die benötigten Messenger-Berechtigungen nicht bestätigt. Die Verbindung wurde nicht gespeichert."
+                                  : facebookError === "comment_review"
+                                    ? "Meta hat die benötigten Kommentar-Berechtigungen noch nicht freigegeben."
+                                    : "Die Facebook-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten übernommen."}
                         </p>
                       ) : null}
                       {facebookConnection ? (
@@ -888,6 +914,22 @@ export function ChannelsGrid({
                             {facebookConnection.last_messenger_sync_error ? (
                               <li>Letzter Sync-Fehler: {facebookConnection.last_messenger_sync_error}</li>
                             ) : null}
+                            <li>
+                              Kommentar-Berechtigung: {facebookCommentsAuthorized ? "bereit" : "noch nicht freigegeben"}
+                            </li>
+                            <li>
+                              Kommentare verarbeitet bis: {formatSyncTimestamp(facebookConnection.last_comment_fetch_at)}
+                            </li>
+                            <li>
+                              Letzter Kommentar-Lauf: {facebookConnection.last_comment_fetch_count ?? 0} importiert
+                            </li>
+                            {facebookConnection.last_comment_fetch_error ? (
+                              <li>
+                                {facebookConnection.last_comment_fetch_error.startsWith("__fanmind_comment_cursor_v1__:")
+                                  ? "Kommentar-Sync: weitere Kommentare warten auf Fortsetzung."
+                                  : `Letzter Kommentar-Fehler: ${facebookConnection.last_comment_fetch_error}`}
+                              </li>
+                            ) : null}
                           </ul>
                           <div className={styles.connectionCardActions}>
                             <form action={syncFacebookMessengerHistoryFromChannelPage}>
@@ -901,6 +943,15 @@ export function ChannelsGrid({
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "comments")}>
                                 Kommentare freigeben
                               </button>
+                            <form action={syncFacebookCommentsFromChannelPage}>
+                              <button
+                                type="submit"
+                                disabled={demoConnectionsDisabled || !facebookCommentsAuthorized}
+                                title={facebookCommentsAuthorized ? undefined : "Zuerst die Kommentar-Berechtigung bei Meta freigeben"}
+                              >
+                                Facebook-Kommentare jetzt synchronisieren
+                              </button>
+                            </form>
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "insights")}>
                                 Insights freigeben
                               </button>
@@ -922,6 +973,15 @@ export function ChannelsGrid({
                             <li>Persönliche fremde Profile und Posts werden nicht gespiegelt oder gescrapt.</li>
                             <li>
                               Serverkonfiguration: {facebookOAuthConfigured ? "bereit" : "noch unvollständig"}
+                            </li>
+                            <li>
+                              Facebook App-ID: {facebookLiveSetupStatus.facebookAppIdConfigured ? "bereit" : "fehlt/ungültig"}
+                            </li>
+                            <li>
+                              OAuth-Callback: {facebookLiveSetupStatus.redirectUriConfigured ? "bereit" : "fehlt/ungültig"}
+                            </li>
+                            <li>
+                              Token-Verschlüsselung: {facebookLiveSetupStatus.tokenEncryptionConfigured ? "bereit" : "fehlt/ungültig"}
                             </li>
                           </ul>
                           <div className={styles.connectionCardActions}>
@@ -1028,9 +1088,9 @@ export function ChannelsGrid({
                       </li>
                       {activeChannel.key === "facebook" || activeChannel.key === "instagram" ? (
                         <>
-                          <li>Workspace-gebundener Meta-OAuth-Pilot vorhanden</li>
-                          <li>Cache und Chat-Sync bleiben bis Staging-/Rechtsabnahme gesperrt</li>
-                          <li>Automatisches Senden bleibt deaktiviert</li>
+                          <li>Workspace-gebundener Meta-OAuth-Beta-Pfad vorhanden</li>
+                          <li>Nachrichten werden erst nach erfolgreicher Kontoautorisierung importiert; Kommentare benötigen eine separate Berechtigung.</li>
+                          <li>Automatisches Senden bleibt deaktiviert.</li>
                         </>
                       ) : activeChannel.key === "tiktok" || activeChannel.key === "twitter" ? (
                         <li>Offizielle Kontoanbindung in Vorbereitung; Nutzung erst nach Testfreigabe.</li>
@@ -1043,6 +1103,7 @@ export function ChannelsGrid({
                     </ul>
                   </div>
 
+                  {!isMetaPilotChannel(activeChannel.key) ? (
                   <div
                     className={`${styles.releaseBox} ${styles.fullWidthBlock}`}
                   >
@@ -1098,6 +1159,7 @@ export function ChannelsGrid({
                       ))}
                     </div>
                   </div>
+                  ) : null}
                   <div className={styles.releaseBox}>
                     <strong>Sicherheit</strong>
                     <ul>
@@ -1115,22 +1177,24 @@ export function ChannelsGrid({
                   </p>
                 ) : null}
                 <div className={styles.modalActions}>
-                  <button
-                    type="button"
-                    className={styles.secondaryModalButton}
-                    disabled={demoConnectionsDisabled}
-                    onClick={() =>
-                      setNotice(
-                        demoConnectionsDisabled
-                          ? demoNotice
-                          : `${activeChannel.name} wurde lokal vorgemerkt. Es wurde keine API-Aktion gestartet.`,
-                      )
-                    }
-                  >
-                    {demoConnectionsDisabled
-                      ? "Demo-Modus aktiv"
-                      : "Details vormerken"}
-                  </button>
+                  {!isMetaPilotChannel(activeChannel.key) ? (
+                    <button
+                      type="button"
+                      className={styles.secondaryModalButton}
+                      disabled={demoConnectionsDisabled}
+                      onClick={() =>
+                        setNotice(
+                          demoConnectionsDisabled
+                            ? demoNotice
+                            : `${activeChannel.name} wurde lokal vorgemerkt. Es wurde keine API-Aktion gestartet.`,
+                        )
+                      }
+                    >
+                      {demoConnectionsDisabled
+                        ? "Demo-Modus aktiv"
+                        : "Details vormerken"}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className={styles.secondaryModalButton}

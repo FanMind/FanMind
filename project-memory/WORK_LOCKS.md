@@ -8,6 +8,13 @@
 - Evidence plan: current-head focused Social/Meta/core-flow tests, build/lint/truth/memory/drift, Browser E2E, CodeQL and independent review. Provider account/consent/App Review/permissions remain external.
 - Safety: no DB migration, real user grant, Stripe/Tax/payment, Meta provider mutation, automatic send, OnlyFans bypass or Mobile work in this repository lock.
 - Recovery: bounded source/docs revert. Existing provider/data state is untouched.
+- FM-CR-045 placeholder follow-through: Production owner test proved the current runtime carries example Meta OAuth values; source may only add fail-closed validation/UI/sync controls. Real App ID/secret/callback/provider permission changes stay outside this repository lock and require secure owner action.
+- Canonical PR: #1138 only. #1139 is duplicate/superseded and carries no separate lock; its review findings are acceptance inputs for this same lock.
+- Review follow-through requires current-token comment scopes, per-commenter thread identity, provider timestamps, Page-self-comment exclusion and validated callback return origin before release. Keep the lock active until exact-head CI and independent review are clean.
+- Second review follow-through additionally requires complete nested-comment pagination (no silent 50-comment truncation) and preserved media attachments/media-only context before release.
+- Third review follow-through additionally requires unknown timestamps last plus bounded per-request comment persistence with durable continuation using only the existing comment-status columns; no DB/schema mutation is authorized.
+- Fourth review follow-through additionally requires a durable completed provider high-water separate from pending/error state and a bounded recent 25-post feed window that does not fail on older feed pages. Comment pagination remains strict; no schema change is allowed.
+- Final review follow-through additionally requires active-app-origin callback binding, per-connection single-flight manual comment sync and oldest-first provider-time persistence. Keep release blocked until the new exact head is green and independently reviewed with no P1/P2.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043

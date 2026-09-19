@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import {
   createFacebookOAuthState,
   getFacebookOAuthUrl,
+  isFacebookOAuthRuntimeReady,
 } from "@/lib/facebookIntegration";
 import {
   FACEBOOK_COMMENT_FEED_SCOPES,
@@ -41,6 +42,9 @@ export async function GET(request: Request) {
     redirect("/channels?facebook_error=role");
   if (areDemoConnectionsDisabled(data.user, workspace))
     redirect("/channels?facebook_error=demo_disabled");
+
+  if (!isFacebookOAuthRuntimeReady())
+    redirect("/channels?facebook_error=config");
 
   try {
     const state = createFacebookOAuthState({

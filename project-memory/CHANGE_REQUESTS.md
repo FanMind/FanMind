@@ -421,3 +421,22 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Current source change: show a specific `workspace_inactive` explanation for Facebook/Instagram without weakening authorization or provider checks.
 - External boundary: no provider login/consent/App Review/permission/webhook activation is inferred from repository work. No passwords or tokens in chat. No DB, Stripe/Tax/payment, user-grant or Mobile mutation in this change.
 - Acceptance: current-head Social/Meta/core-flow tests, TypeScript/lint/build, Project Memory/Truth/Drift, Browser E2E, CodeQL and independent review. After publication, owner uses the already granted account in `/channels` for the real Facebook connection first, then Instagram.
+
+
+## FM-CR-045 — Production Meta OAuth placeholder configuration must fail closed
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R2
+- Source: real Production owner test after PR #1137. FanMind displayed Facebook “Serverkonfiguration: bereit”, but the generated Meta OAuth URL visibly contained the deploy placeholders `client_id=replace_with_facebook_app_id` and callback host `your-domain.example`; Meta therefore returned “Ungültige App-ID”.
+- Root cause: readiness and OAuth helpers treated any non-empty ENV string as configured, so example placeholders were accepted as live Production configuration.
+- Scope: reject placeholder App IDs/secrets/callbacks before provider navigation; show fail-closed configuration status in `/channels`; suppress misleading Coming-Soon/reservation UI for the actual Facebook/Instagram Beta controls; expose the existing Facebook comment-sync action after the separate comment permission is granted.
+- Expected real flow after external configuration: existing FanMind account -> Facebook connect -> official Meta consent -> explicit Page selection when needed -> callback back to FanMind -> saved connection -> bounded automatic initial Messenger import; comments remain a separate Meta permission and can then be synchronized into FanMind.
+- External boundary: repository code cannot invent the real central Meta App ID/secret or change the owner-controlled Meta Developer configuration. Production ENV must later receive the real server-side values securely, and the exact `https://fanmind.ch/api/integrations/facebook/callback` URI must be allowed in Meta. No secret may enter chat, Git, screenshots or logs.
+- No DB migration, user grant, Stripe/Tax/payment, automatic send or Mobile work.
+- Consolidation: PR #1138 is the sole canonical FM-CR-045 implementation. PR #1139 is closed as duplicate/superseded; its P1/P2 findings are folded into #1138 and must not create a second lock or merge path.
+- Final-review follow-through: the reviewed current-token scope, validated callback-origin fallback, comment-contact isolation, provider timestamp preservation and Page-authored-comment filtering are part of the same #1138 scope. No provider/DB schema/payment/Mobile mutation is added.
+- Second review follow-through: nested Facebook comment pagination is completed (or fails closed at an explicit safety cap) instead of silently truncating after 50; comment attachments are normalized and media-only comments receive bounded fallback text/message-kind metadata. These remain repository-only corrections under #1138.
+- Third review follow-through: timestamp-less comments sort after provider-timestamped history, and each manual comment-sync request is bounded to 100 processed comments / 8 seconds of persistence work. Partial progress stores an opaque, non-secret continuation marker in the existing server-written comment-status field and the UI renders only a friendly continuation state; no schema/DB migration is introduced.
+- Fourth review follow-through: completed comment sync retains a provider-timestamp high-water in existing `last_comment_fetch_at` while pending/error state remains separate in `last_comment_fetch_error`; later syncs start at the high-water (inclusive for same-timestamp dedupe safety) instead of replaying the full history. Top-level Page feed reads are bounded to the 25 most recent posts without failing merely because older feed pages exist; comment-edge pagination remains strict and separately capped.
+- Final current-head review follow-through: Facebook callback origin must match the configured active FanMind app outside the explicit local fixture; manual comment syncs are connection-scoped single-flight; imported comments are ordered oldest-first so provider timestamps cannot regress conversation recency.

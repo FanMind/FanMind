@@ -1,6 +1,6 @@
 # Meta-Kanäle und Content Intelligence
 
-Stand: 26. August 2026
+Stand: 19. September 2026
 
 Dieses Dokument ist die technische und rechtliche Arbeitsgrundlage für
 Facebook-/Instagram-Verbindungen, Nachrichtenimport, Post-Reichweitenanalyse,
@@ -43,6 +43,7 @@ Freigabe und aktiviert keine externe Verbindung.
   erforderlich. FanMind darf niemals automatisch die erste Seite wählen.
 - FanMind erstellt Antwortvorschläge. Der Mensch prüft und sendet selbst; es
   gibt keine automatische Nachrichtenversendung.
+- Facebook Messenger und Facebook Page-Kommentare sind getrennte Berechtigungswege. Nach erfolgreicher Messenger-Verbindung läuft der bestehende begrenzte DM-Erstimport; Kommentare werden erst nach der separaten Kommentar-Berechtigung eingelesen und können danach über den FanMind-Kommentar-Sync aktualisiert werden.
 - Es gibt kein Scraping, keinen Import fremder Followerlisten und keine
   Anreicherung aus privaten Profilen oder Drittquellen.
 
@@ -50,7 +51,7 @@ Freigabe und aktiviert keine externe Verbindung.
 
 | Bereich | Stand |
 | --- | --- |
-| Facebook OAuth, verschlüsselte Seitentokens, Webhook- und Nachrichten-Grundlage | implementiert/Beta; Meta-Kontotest und Freigaben offen |
+| Facebook OAuth, verschlüsselte Seitentokens, Webhook- und Nachrichten-Grundlage | implementiert/Beta; realer Production-Test am 19.09.2026 erreichte Meta, wurde aber wegen noch gesetzter Beispiel-App-ID/Callback-ENV als `Ungültige App-ID` abgewiesen. FM-CR-045 lässt Beispielwerte fail-closed als nicht konfiguriert gelten; reale Meta-App-/Callback-/Permission-Bindung bleibt extern offen |
 | Facebook Graph API | auf stabile `v25.0` festgelegt |
 | Instagram Webhook-Parser, begrenzter DM-Erstabgleich und inkrementelle Chat-/Kommentargrundlage | implementiert; echter Staging-/Meta-Kontotest offen |
 | Instagram Business Login/OAuth und Professional-Kontobindung | implementiert; echter Staging-/Meta-Kontotest noch offen |
