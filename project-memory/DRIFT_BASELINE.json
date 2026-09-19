@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-09-18",
-  "last_source_of_truth_review": "2026-09-18 FM-REG-003 / FM-CR-041: reconciled the four current PR #1132 findings after integrating main/#1133. Creator browser RPCs now enforce the canonical Admin-CRM entitlement in either rollout order while preserving normal Workspaces; inactive owners retain only the minimal paused-route projection; Mobile cache validity is capped by temporary access expiry; and transactional provisioning rejects any other Workspace membership. Controlled SQL remains source-only and unapplied; no Production database, live user, payment, Tax or provider state changed.",
+  "captured": "2026-09-19",
+  "last_source_of_truth_review": "2026-09-19 FM-SOC3-001 / FM-CR-045: real Production Facebook connect was rejected by Meta because example App-ID/callback ENV values were still present. Source of Truth now records that exact external blocker and the fail-closed contract: placeholder Meta runtime values are not configured, real central Meta App/redirect/permission binding remains owner-controlled, Messenger first import remains bounded after successful connection, and Facebook comments require separate permission before synchronization. No DB, payment, user-grant, automatic-send or Mobile mutation.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "06fe7d434349d640c607c83a996237438ee5a041",
+    "docs/SOURCE_OF_TRUTH.md": "140c8fa7f05e3fb8436e29b924ab5f2ce69565aa",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
