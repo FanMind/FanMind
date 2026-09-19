@@ -1,3 +1,8 @@
+## LOCK-FM-DAILY-GROSS-20260915
+- Task: FM-BILL-003; Risk: R2; Holder: Codex; Status: RELEASED after the bounded decision record.
+- Scope: FM-DEC-020 reader/memory synchronization only. No checkout activation, Stripe/Tax configuration, Production SQL, Workspace creation or payment.
+- Evidence: exact diff plus truth, drift and memory validation. Recovery is a documentation-only revert.
+
 ## LOCK-FM-DAILY-SETUP-UI-20260914
 - Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
 - Scope: current owner-narrowed Daily setup UI only, existing branch fix/daily-admin-visibility-20260914 and single PR #1125. Broader Admin control and duplicate #1126 are superseded for this release.

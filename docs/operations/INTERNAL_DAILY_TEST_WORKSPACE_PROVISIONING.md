@@ -9,6 +9,13 @@ Stripe-/Webhook-/Tax-/Billing-Voraussetzungen gelten weiterhin. Die ehemalige Fe
 und Admin-Öffnung ist durch diese Produktentscheidung ersetzt. SQL, Checksum und isolierte Staging-Abnahme
 bleiben gültig; Production benötigt weiterhin seinen kontrollierten Datenbank-Rollout.
 
+FM-DEC-020 präzisiert den Preis: Der vom Kunden bezahlte Daily-Gesamtpreis
+beträgt 1,00 € brutto pro Tag einschließlich der jeweils anwendbaren
+Umsatzsteuer. Der Owner nennt Rumänien als Verkaufsland; dies ist noch kein
+Nachweis der tatsächlichen Verkäufergesellschaft, Steuerregistrierung oder
+Stripe-Tax-Konfiguration. Diese Entscheidung hebt keine Readiness-Sperre auf,
+ändert keinen Stripe-Preis und löst keine Zahlung aus.
+
 
 Produktstand: 10. September 2026; gepinnter SQL-Stand: 9. August 2026
 
@@ -156,6 +163,13 @@ Codex Cloud hatte für diesen Source-PR keinen frischen geschützten
 Production-Receipt; der aktuelle belegte Zustand ist daher `unknown` und die
 Entscheidung `BLOCK`. Weder Katalogschalter noch bestehende Daily-Abos werden
 durch diesen SQL-Pfad verändert.
+
+Beim manuellen Ausschalten wird vor der externen Stripe-Bereinigung zuerst
+dauerhaft `publicDailyTestPlanCleanupRequired=true` zusammen mit einer neuen
+Revision gespeichert. Solange dieser Zustand besteht, ist ein erneutes
+Einschalten serverseitig gesperrt. Erst eine erfolgreiche Bereinigung darf den
+Zustand mit exakt derselben Revision zurücksetzen; ein Fehler bleibt damit über
+Redirects, Requests und Prozessneustarts hinweg sichtbar und wiederholbar.
 
 ## Verbindliche Reihenfolge
 

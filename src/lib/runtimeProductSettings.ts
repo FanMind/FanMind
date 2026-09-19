@@ -13,84 +13,14 @@ type RuntimeProductSettings = {
   publicDailyTestPlanEnabledUntil?: null;
   updatedAt?: string;
   updatedBy?: string;
+  publicDailyTestPlanCleanupRequired?: boolean;
+  publicDailyTestPlanRevision?: string;
 };
 
-const BOOT_ID_PATH = "/proc/sys/kernel/random/boot_id";
-
-async function readProcessStartId(pid: number): Promise<string | null> {
-  try {
-    const stat = await readFile(`/proc/${pid}/stat`, "utf8");
-    const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
-    return fields[19] && /^\d+$/u.test(fields[19]) ? fields[19] : null;
-  } catch {
-    return null;
-  }
-}
-
-async function currentLockOwner(token = randomUUID()) {
-  const bootId = (await readFile(BOOT_ID_PATH, "utf8")).trim();
-  if (!/^[0-9a-f-]{36}$/u.test(bootId)) throw new Error("daily_beta_update_in_progress");
-  const processStartId = await readProcessStartId(process.pid);
-  if (!processStartId) throw new Error("daily_beta_update_in_progress");
-  return { token, pid: process.pid, bootId, processStartId };
-}
-
-async function lockOwnerAlive(
-  owner: { pid: number; bootId: string; processStartId: string },
-  bootId: string,
-) {
-  if (owner.bootId !== bootId || !Number.isSafeInteger(owner.pid) || owner.pid < 1) return false;
-  return owner.processStartId === await readProcessStartId(owner.pid);
-}
-
-async function acquireSettingsLock(lockPath: string) {
-  const owner = await currentLockOwner();
-  const serializedOwner = `${JSON.stringify(owner)}\n`;
-  try {
-    const handle = await open(lockPath, "wx", 0o600);
-    await handle.writeFile(serializedOwner, "utf8");
-    await handle.sync();
-    return { handle, serializedOwner };
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-  }
-
-  try {
-    const existingPayload = await readFile(lockPath, "utf8");
-    const existingOwner = JSON.parse(existingPayload) as {
-      pid: number;
-      bootId: string;
-      processStartId: string;
-    };
-    if (await lockOwnerAlive(existingOwner, owner.bootId)) {
-      throw new Error("daily_beta_update_in_progress");
-    }
-    const staleClaimPath = `${lockPath}.${randomUUID()}.stale`;
-    await rename(lockPath, staleClaimPath);
-    if (await readFile(staleClaimPath, "utf8") !== existingPayload) {
-      throw new Error("daily_beta_update_in_progress");
-    }
-    await unlink(staleClaimPath).catch(() => undefined);
-    const handle = await open(lockPath, "wx", 0o600);
-    await handle.writeFile(serializedOwner, "utf8");
-    await handle.sync();
-    return { handle, serializedOwner };
-  } catch (error) {
-    if ((error as Error).message === "daily_beta_update_in_progress") throw error;
-    throw new Error("daily_beta_update_in_progress");
-  }
-}
-
-async function releaseSettingsLock(
-  lockPath: string,
-  lock: { handle: Awaited<ReturnType<typeof open>>; serializedOwner: string },
-) {
-  await lock.handle.close().catch(() => undefined);
-  const currentToken = await readFile(lockPath, "utf8").catch(() => "");
-  if (currentToken === lock.serializedOwner) {
-    await unlink(lockPath).catch(() => undefined);
-  }
-}
+// Production intentionally runs one PM2 worker. Request overlap therefore needs
+// only a process-local critical section; process exit also clears it without a
+// persistent lock file that could become stale or be replaced between checks.
+let settingsUpdateInProgress = false;
 
 function getSettingsPath(): string {
   const configured = process.env.FANMIND_RUNTIME_SETTINGS_FILE?.trim();
@@ -103,17 +33,28 @@ function getSettingsPath(): string {
       );
 }
 
-export async function getPublicDailyBetaStatusFromServer(): Promise<{ enabled: boolean; updatedAt: string | null }> {
+async function readRuntimeSettings(): Promise<Partial<RuntimeProductSettings>> {
+  return JSON.parse(
+    await readFile(
+      /* turbopackIgnore: true */ getSettingsPath(),
+      "utf8",
+    ),
+  ) as Partial<RuntimeProductSettings>;
+}
+
+export async function getPublicDailyBetaStatusFromServer(): Promise<{
+  enabled: boolean;
+  updatedAt: string | null;
+  cleanupRequired: boolean;
+}> {
   try {
-    const payload = JSON.parse(
-      await readFile(
-        /* turbopackIgnore: true */ getSettingsPath(),
-        "utf8",
-      ),
-    ) as Partial<RuntimeProductSettings>;
-    return getPublicDailyBetaStatus(payload);
+    const payload = await readRuntimeSettings();
+    return {
+      ...getPublicDailyBetaStatus(payload),
+      cleanupRequired: payload.publicDailyTestPlanCleanupRequired === true,
+    };
   } catch {
-    return { enabled: false, updatedAt: null };
+    return { enabled: false, updatedAt: null, cleanupRequired: true };
   }
 }
 
@@ -124,28 +65,66 @@ export async function getPublicDailyTestPlanEnabled(): Promise<boolean> {
 export async function setPublicDailyTestPlanEnabled(
   enabled: boolean,
   updatedBy: string,
-): Promise<void> {
+): Promise<{ revision: string }> {
   const settingsPath = getSettingsPath();
   const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
-  const lockPath = `${settingsPath}.lock`;
-  let lock;
-  try {
-    lock = await acquireSettingsLock(lockPath);
-  } catch {
+  if (settingsUpdateInProgress) {
     throw new Error("daily_beta_update_in_progress");
   }
+  settingsUpdateInProgress = true;
 
   try {
+    if (enabled) {
+      const current = await readRuntimeSettings().catch(() => null);
+      if (!current || current.publicDailyTestPlanCleanupRequired === true) {
+        throw new Error("daily_beta_cleanup_required");
+      }
+    }
+    const revision = randomUUID();
     const payload: RuntimeProductSettings = createPublicDailyBetaSettings(
       enabled,
       updatedBy,
     );
+    payload.publicDailyTestPlanCleanupRequired = !enabled;
+    payload.publicDailyTestPlanRevision = revision;
+    await writeFileExclusive(temporaryPath, payload);
+    await rename(temporaryPath, settingsPath);
+    await chmod(settingsPath, 0o600);
+    return { revision };
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
+    settingsUpdateInProgress = false;
+  }
+}
+
+export async function markPublicDailyTestPlanCleanupComplete(
+  expectedRevision: string,
+  updatedBy: string,
+): Promise<void> {
+  const settingsPath = getSettingsPath();
+  const temporaryPath = `${settingsPath}.${randomUUID()}.tmp`;
+  if (settingsUpdateInProgress) throw new Error("daily_beta_update_in_progress");
+  settingsUpdateInProgress = true;
+  try {
+    const current = await readRuntimeSettings();
+    if (
+      current.publicDailyTestPlanEnabled !== false ||
+      current.publicDailyTestPlanCleanupRequired !== true ||
+      current.publicDailyTestPlanRevision !== expectedRevision
+    ) {
+      throw new Error("daily_beta_revision_changed");
+    }
+    const payload: RuntimeProductSettings = {
+      ...createPublicDailyBetaSettings(false, updatedBy),
+      publicDailyTestPlanCleanupRequired: false,
+      publicDailyTestPlanRevision: randomUUID(),
+    };
     await writeFileExclusive(temporaryPath, payload);
     await rename(temporaryPath, settingsPath);
     await chmod(settingsPath, 0o600);
   } finally {
     await unlink(temporaryPath).catch(() => undefined);
-    await releaseSettingsLock(lockPath, lock);
+    settingsUpdateInProgress = false;
   }
 }
 

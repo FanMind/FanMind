@@ -361,3 +361,17 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Risk: R4
 - Scope: merge current `main` into the existing Daily branch; close the open-session, lock-ownership, workflow-validation, CI-ownership and Admin-explanation findings. No Production apply, activation, payment or account deletion.
 - Acceptance: current-main ancestry, focused Daily/security/workflow regression tests, Product Truth, lint, TypeScript and production build; GitHub Current-Head CI/review remain publication gates.
+
+## FM-CR-039 — Daily post-merge security closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: close the remaining CodeQL lock race, expose and retry incomplete open-Checkout cleanup, and make Production apply structurally unreachable below the verify-only workflow. No Production action or data mutation.
+
+## FM-CR-040 — durable Daily disable cleanup
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.

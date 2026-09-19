@@ -21,7 +21,9 @@ Bernd hat die Veröffentlichung und die damals drei dauerhaft beschriebenen Ange
 | Starter 12 Monate | 0 € | 312 €/Monat | 12 Monate Mindestlaufzeit, danach monatlich |
 | Daily | 0 € | 1 €/Tag | Täglich kündbar, kein Referral-Rabatt |
 
-Die bestehende Nettopreisbasis bleibt erhalten. Die Preise existieren bereits
+Die bestehende Nettopreisbasis bleibt für Starter erhalten. FM-DEC-020 legt
+Daily abweichend als 1,00 € brutto pro Tag einschließlich der jeweils
+anwendbaren Umsatzsteuer fest. Die Preise existieren bereits
 im verbundenen Stripe-Live-Konto; sie werden weder neu angelegt noch ersetzt.
 Daily verwendet aus Kompatibilitätsgründen weiterhin die bisherige interne
 Engine. FM-DEC-019 ersetzt diese historische Dauerfreigabe: Daily wird ohne Countdown manuell vom Platform-Admin ein- und ausgeschaltet. Die Auswahl wird im kostenlosen Konto nur als unverbindlicher
@@ -45,7 +47,9 @@ fehlenden Teilstücke. Die getrennte Produktions-/Testumgebung bleibt ACCEPTED.
 1. Der Live-Katalog enthält die drei passenden EUR-Preise. Die aktuelle
    Stripe-Abfrage liefert jedoch **null Tax-Registrierungen** (`has_more=false`).
    Aktive Tax-Einstellungen allein ersetzen diese nicht. Die tatsächliche
-   steuerliche Einordnung und Registrierungen sind vom Betreiber zu belegen;
+   steuerliche Einordnung und Registrierungen sind vom Betreiber zu belegen.
+   Die Owner-Angabe Rumänien als Verkaufsland und die Daily-Bruttopreisentscheidung
+   belegen weder Verkäufergesellschaft noch Steuerregistrierung;
    keine erfundene UID, Registrierung oder automatische Kleinunternehmerwahl.
 2. Im Produktionskatalog fehlen sowohl `ensure_current_user_workspace(...)`
    als auch `ensure_internal_daily_test_workspace(...)`. Direkte Browser-

@@ -1,3 +1,8 @@
+## Daily gross-price decision — 2026-09-15
+- FM-DEC-020 records EUR 1.00 gross per day as the Daily customer-paid total, including respectively applicable VAT. The owner states Romania as the selling country, but the actual seller entity, tax registration and Stripe Tax configuration remain unverified.
+- This documentation-only decision does not enable Daily, change Stripe, apply Production SQL, create a Workspace or trigger a payment. The Admin/readiness gate remains fail-closed until seller/tax, Stripe Tax, Billing ledger, webhook and Workspace provisioning evidence are complete.
+- The owner's observed Starter attempt reached the setup action and returned the generic Workspace setup failure; it is not evidence of a Workspace, Checkout or order. Starter and Daily paid activation remain PARTIAL.
+
 ## Daily setup UI closeout — 2026-09-14
 - Owner scope for PR #1125 is only the Daily setup display: always show 0 EUR setup + 1 EUR/day, show the saved registration preference, and explain unavailable activation with disabled consent/submit. Existing admission, consent, registration and confirmation behavior remain unchanged; #1124 is already deployed at 1e011edd422d3cc7165ac3a4be221af8b8c57f56.
 - The owner's real account test confirms registration email and confirmation/login arrival at setup. It exposed the missing Daily display; paid onboarding is not accepted by that evidence.
@@ -423,7 +428,21 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Daily PR conflict and review closeout — 2026-09-15
 - The Daily control branch now contains current `main` as a real merge parent, so GitHub can evaluate it without repeating the earlier stale-base conflict cycle.
-- Final review corrections keep every Daily checkout entry behind the current server switch and billing-readiness gate, expire still-open Daily Checkout sessions when admission is disabled, and use lock ownership tied to boot ID, PID and an immutable token so an older writer cannot release a successor's lock.
+- Final review corrections keep every Daily checkout entry behind the current server switch and billing-readiness gate, expire still-open Daily Checkout sessions when admission is disabled, and replace the persistent lock file with a process-local critical section matching the single-worker Production contract; atomic settings-file replacement remains unchanged.
 - The Production provisioning workflow remains verify-only and now rejects invalid dispatches in an unconditional hosted validation job. Its private passfile path is step-scoped, and its policy test is owned by required CI.
 - The Admin page now explains visibly why enabling is unavailable. The observed Production screen correctly reports registration, Stripe/Webhook and Billing-Ledger readiness as incomplete; source changes do not authorize bypassing those gates.
 - No Production apply, runtime switch change, payment, checkout, subscription mutation or account deletion was performed.
+
+## Daily post-merge hardening — 2026-09-15
+- PR #1128 merged to `main` as `5114e9a`. A separate follow-up closes the remaining CodeQL filesystem-race finding by removing the persistent lock-file check/use sequence.
+- A failed open-Checkout cleanup is now an explicit warning with a dedicated retry action; it is never rendered as a successful disable.
+- Production `--apply` is structurally rejected by both the Production evaluator and the shared runner. The published control workflow remains verify-only.
+- No Production verify/apply, runtime activation, payment, checkout or data deletion was performed.
+
+## PR #1131 publication blocker — 2026-09-15
+- Local merge commit `2a0a01e` contains current `main` `5114e9a` as a parent and keeps the PR source tree unchanged, but this checkout cannot authenticate to GitHub to update the existing PR branch. PR #1131 therefore remains remotely conflicted until a GitHub-authenticated Codex Cloud task pushes the merge commit to that exact branch.
+
+## Daily cleanup durability and PR #1131 reconciliation — 2026-09-15
+- PR #1131 remote head `fcaac3a` still lacked current `main` ancestry; merge commit `4583b73` now reconciles `main` `5114e9a` locally while retaining the narrow Daily repair tree.
+- Daily disable now persists `cleanup_required` before Stripe cleanup. Enable is blocked while it remains set, and cleanup completion is compare-and-set against the exact disable revision, preventing a stale cleanup from clearing a newer state.
+- No Production action, payment, checkout or account mutation was performed.

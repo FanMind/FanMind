@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  DAILY_PRODUCTION_APPLY_CONFIRMATION,
   DAILY_PRODUCTION_VERIFY_CONFIRMATION,
   evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment,
 } from "../src/lib/internalDailyTestWorkspaceProvisioningProductionPolicy.mjs";
@@ -30,14 +29,15 @@ test("Production verify is exact-main, target and TLS bound", () => {
   }
 });
 
-test("Production apply requires independent explicit write gates", () => {
+test("Production apply remains structurally unavailable", () => {
   const apply = {...base,
-    FANMIND_INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_PRODUCTION_CONFIRM: DAILY_PRODUCTION_APPLY_CONFIRMATION,
+    FANMIND_INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING_PRODUCTION_CONFIRM: "apply-daily-workspace-provisioning-production",
     FANMIND_ENABLE_PRODUCTION_WRITES:"true", FANMIND_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_THIS_MUTATES_PRODUCTION",
     FANMIND_DAILY_PRODUCTION_READINESS_DECISION:"APPLY"};
-  assert.equal(evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment(apply,{mode:"apply"}).ok,true);
-  assert.equal(evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment({...apply,FANMIND_ENABLE_PRODUCTION_WRITES:"false"},{mode:"apply"}).ok,false);
-  assert.equal(evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment({...apply,FANMIND_DAILY_PRODUCTION_READINESS_DECISION:"BLOCK"},{mode:"apply"}).ok,false);
+  const result = evaluateInternalDailyTestWorkspaceProvisioningProductionEnvironment(apply,{mode:"apply"});
+  assert.equal(result.ok,false);
+  assert.equal(result.writeEnabled,false);
+  assert.ok(result.errors.includes("production_apply_unavailable"));
 });
 
 test("Production workflow is manual, protected, pinned and has no automatic trigger", async () => {
@@ -55,4 +55,6 @@ test("Production workflow is manual, protected, pinned and has no automatic trig
   assert.doesNotMatch(workflow,/control:\n\s+if:/u);
   assert.doesNotMatch(workflow,/FANMIND_PRODUCTION_WRITE_ACK/u);
   assert.doesNotMatch(workflow,/--apply/u);
+  const runner = await readFile("scripts/operations/internal-daily-test-provisioning-migration-runner.mjs","utf8");
+  assert.match(runner,/FANMIND_INTERNAL_DAILY_TEST_CONTROL_TARGET === "production"[\s\S]*mode === "--apply"[\s\S]*fail\("production_apply_unavailable"\)/u);
 });

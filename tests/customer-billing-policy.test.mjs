@@ -581,10 +581,14 @@ test("public Daily selection preserves protected Workspace and payment admission
   assert.match(publicDailyTestPolicySource, /publicDailyTestPlanEnabledUntil === undefined \|\| settings\.publicDailyTestPlanEnabledUntil === null/);
   assert.doesNotMatch(runtimeSettingsSource, /FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.match(runtimeSettingsSource, /rename\(temporaryPath, settingsPath\)/);
-  assert.match(runtimeSettingsSource, /BOOT_ID_PATH/);
-  assert.match(runtimeSettingsSource, /lockOwnerAlive\(existingOwner, owner\.bootId\)[\s\S]*rename\(lockPath, staleClaimPath\)/u);
-  assert.match(runtimeSettingsSource, /releaseSettingsLock[\s\S]*currentToken === lock\.serializedOwner/u);
-  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*!enabled && !\(await expireOpenInternalDailyTestCheckoutSessions\(\)\)/u);
+  assert.match(runtimeSettingsSource, /let settingsUpdateInProgress = false/u);
+  assert.match(runtimeSettingsSource, /if \(settingsUpdateInProgress\)[\s\S]*settingsUpdateInProgress = true/u);
+  assert.match(runtimeSettingsSource, /finally[\s\S]*settingsUpdateInProgress = false/u);
+  assert.doesNotMatch(runtimeSettingsSource, /\.lock|BOOT_ID_PATH|lockOwnerAlive/u);
+  assert.match(adminRouteSource, /setPublicDailyTestPlanEnabled\(enabled[\s\S]*expireOpenInternalDailyTestCheckoutSessions\(\)[\s\S]*markPublicDailyTestPlanCleanupComplete\(revision/u);
+  assert.match(runtimeSettingsSource, /publicDailyTestPlanCleanupRequired = !enabled/u);
+  assert.match(runtimeSettingsSource, /publicDailyTestPlanRevision !== expectedRevision/u);
+  assert.match(runtimeSettingsSource, /daily_beta_cleanup_required/u);
   assert.match(adminRouteSource, /requirePlatformAdmin/);
   assert.match(
     adminRouteSource,
@@ -594,6 +598,8 @@ test("public Daily selection preserves protected Workspace and payment admission
     adminSettingsSource,
     /betaStatus\.enabled[\s\S]*Sichere Registrierung[\s\S]*Stripe &amp; Webhook[\s\S]*Bestehende Daily-Abos/u,
   );
+  assert.match(adminSettingsSource, /disabled_cleanup_required[\s\S]*konnten nicht vollständig gesperrt werden/u);
+  assert.match(adminSettingsSource, /Offene Daily-Zahlungslinks erneut sperren/u);
   assert.match(deploySource, /if \[ ! -e "\$RUNTIME_SETTINGS_FILE" \]/);
   assert.doesNotMatch(deploySource, /sed -i.*FANMIND_ENABLE_PUBLIC_DAILY_TEST_PLAN/);
   assert.doesNotMatch(registerPageSource, /enablePublicDailyTestPlan=\{false\}/);

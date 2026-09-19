@@ -33,15 +33,19 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
     >
       <main className={styles.adminStack}>
         <AdminTabs activeTab="settings" />
-        {result ? (
+        {result || betaStatus.cleanupRequired ? (
           <p className={result === "enabled" ? styles.badgeOk : styles.badgeWarn}>
-            {result === "not_ready"
+            {betaStatus.cleanupRequired && result !== "enabled"
+              ? "Daily ist ausgeschaltet, aber offene Zahlungslinks müssen noch vollständig gesperrt werden. Bitte führe die Sperrung erneut aus."
+              : result === "not_ready"
               ? "Freigabe blockiert: Daily-Provisioning oder Stripe-/Webhook-Konfiguration ist noch nicht vollständig bereit."
               : result === "busy"
                 ? "Daily wurde parallel geändert. Bitte lade den aktuellen Status neu."
                 : result === "enabled"
                   ? "Daily-Beta ist für neue Anmeldungen eingeschaltet."
-                  : "Daily-Beta ist für neue Anmeldungen ausgeschaltet. Bestehende Daily-Abos laufen weiter."}
+                  : result === "disabled_cleanup_required"
+                    ? "Daily ist ausgeschaltet, aber offene Zahlungslinks konnten nicht vollständig gesperrt werden. Bitte führe die Sperrung erneut aus."
+                    : "Daily-Beta ist für neue Anmeldungen ausgeschaltet. Bestehende Daily-Abos laufen weiter."}
           </p>
         ) : null}
         <section className={styles.card}>
@@ -93,6 +97,14 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               {betaStatus.enabled ? "Daily-Beta für neue Anmeldungen ausschalten" : "Daily-Beta für neue Anmeldungen einschalten"}
             </button>
           </form>
+          {betaStatus.cleanupRequired && !betaStatus.enabled ? (
+            <form action="/api/admin/settings/daily-test-plan" method="post">
+              <input type="hidden" name="enabled" value="false" />
+              <button className={styles.buttonDanger} type="submit">
+                Offene Daily-Zahlungslinks erneut sperren
+              </button>
+            </form>
+          ) : null}
           {!betaStatus.enabled && !admissionReady ? (
             <p className={styles.badgeWarn} role="status">
               Einschalten ist noch gesperrt. Schließe zuerst alle oben als ausstehend oder unvollständig markierten Readiness-Schritte ab.

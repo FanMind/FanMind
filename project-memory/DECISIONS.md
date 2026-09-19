@@ -132,3 +132,11 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Admission boundary: only a Platform Admin may enable new Daily admission after complete server-side readiness. When disabled, Daily is absent from public surfaces and new provisioning/checkout; direct links and stored preferences cannot bypass the switch.
 - Existing-customer boundary: disabling admission never cancels, suspends or hides an existing Daily subscription/workspace. Existing customers retain billing, cancellation, invoices and product access under their individual lifecycle.
 - Supersedes: FM-DEC-014 only where it described Daily as the third permanent public offer. Starter Flex and Starter 12 Months remain permanent public offers and all existing consent, Tax, Workspace, Billing and Production gates remain.
+
+# FM-DEC-020
+- Date: 2026-09-15
+- Status: DONE
+- Decision: Daily costs EUR 1.00 gross per day. The displayed and customer-paid total includes the respectively applicable VAT.
+- Operator fact: the owner states that FanMind sells from Romania. This statement does not identify or prove the actual seller legal entity, tax registration or Stripe Tax configuration.
+- Activation boundary: retain the fail-closed gate until seller entity, tax registration, Stripe Tax, Billing ledger, webhook and Workspace provisioning evidence are all confirmed. Do not infer a registration and do not trigger a real payment from this decision.
+- Scope: Daily price-basis documentation only; Starter price basis and all existing activation gates remain unchanged.

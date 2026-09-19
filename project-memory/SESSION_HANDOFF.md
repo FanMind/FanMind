@@ -1,3 +1,8 @@
+## Daily gross-price decision — 2026-09-15
+- FM-DEC-020: Daily customer total is EUR 1.00 gross/day including applicable VAT. Owner states sales originate from Romania; actual seller entity, tax registration and Stripe Tax configuration remain unverified.
+- Fail-closed remains mandatory until seller/tax, Stripe Tax, Billing ledger, webhook and Workspace provisioning evidence are complete. This bounded reader change performs no activation, provider/database mutation, Workspace creation or payment.
+- The observed Starter setup failure confirms neither order nor checkout. Continue only the existing controlled paid-activation loop; do not bypass readiness or repeat a charge attempt.
+
 ## Daily UI only — owner closeout boundary, 2026-09-14
 - Finish only PR #1125 against main 1e011edd: visible Daily at /workspace/setup, saved selection, unavailable-state explanation, disabled unavailable activation and unchanged registration/confirmation/actions. The earlier broader Admin offer switch is excluded; #1126 is superseded for this release.
 - Required closeout: final committed head, all current-head checks green, independent review, one merged PR, successful normal Production deployment, exact /api/version commit, and browser test with the existing account. The final #1125 conversation receipt binds those results; pending source notes must not be mistaken for deployed evidence.

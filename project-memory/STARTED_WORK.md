@@ -1,3 +1,9 @@
+## FM-BILL-003 — Daily gross-price decision
+- Status: VERIFIED; Risk: R2; lock: LOCK-FM-DAILY-GROSS-20260915 RELEASED; owner: Codex.
+- Scope: record FM-DEC-020 consistently in canonical/readers and operational memory. No application, Stripe, database, runtime, Workspace or payment mutation.
+- Result: Daily is EUR 1.00 gross/day including applicable VAT; Romania is an owner-stated selling country, not evidence of the seller entity or registration. All activation gates remain fail-closed.
+- Verification: truth/memory controls and final diff; publication remains the enclosing PR's responsibility.
+
 ## FM-REG-001 — Daily setup display closeout
 - Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
 - Baseline: main 1e011edd422d3cc7165ac3a4be221af8b8c57f56, already deployed #1124; final source continues the existing branch fix/daily-admin-visibility-20260914 and single PR #1125.
