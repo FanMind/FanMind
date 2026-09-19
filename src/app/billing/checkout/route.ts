@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { shouldShowBillingCheckoutAction, isWorkspaceBillingSuspended } from "@/lib/billing";
 import { isPlatformAdminEmail } from "@/lib/admin";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { isDemoWorkspace, isTemporaryDemoUser } from "@/lib/demoMode";
 import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
@@ -48,6 +49,9 @@ async function startCheckout() {
   if (!workspace) return redirectTo("/workspace/setup");
 
   const redirectTarget = getPreActivationRedirect(workspace, data.user.email);
+  if (isAdminCrmAccessWorkspace(workspace)) {
+    return redirectTo(redirectTarget ?? "/dashboard");
+  }
   if (workspace.billing_status === "active" || redirectTarget === "/dashboard") return redirectTo("/dashboard");
   if (redirectTarget === "/billing/pending") return redirectTo("/billing/pending");
   if (isWorkspaceBillingSuspended(workspace) || redirectTarget === "/billing/suspended") return redirectTo("/billing/suspended");
