@@ -1,9 +1,9 @@
-## Admin-CRM real-login routing defect — 2026-09-19
-- Owner completed the real Production path: new registration, email confirmation, Platform-Admin “Dauerhaft kostenlos” grant, then login as that new account.
-- Read-only Production DB evidence proves the granted Workspace is correct: `admin_crm_access=true`, `billing_status=demo_free`, manual/no-payment, 0 EUR setup/monthly, permanent override active, no Stripe customer/subscription.
-- Real browser failure: login lands on `/billing/start` and renders Starter Flex payment copy. Root cause is source routing, not the Admin grant: `getPreActivationRedirect()` checks only the denied Admin-CRM case, then an allowed Admin-CRM Workspace falls through to the generic `plan_id=starter` paid pre-activation rule.
-- Hotfix scope FM-CR-043: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; every direct Billing start/checkout/pending/success/cancel/suspended surface redirects Admin-CRM to Dashboard or access-paused before any Stripe path. No DB, user, Stripe, Tax or provider mutation.
-- Do not repeat registration or Admin grant. Next owner check is only after the reviewed/deployed hotfix: sign in with the already granted account and verify Dashboard/Fans/Inbox/Follow-ups.
+## Admin-CRM login accepted; Social inbound is next — 2026-09-19
+- The real Production path now works end-to-end for the existing account: registration, email confirmation, Platform-Admin “Dauerhaft kostenlos” grant and subsequent login to FanMind CRM. PR #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed current-head checks/review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed exact version/health.
+- The granted Workspace remains correct and payment-free: `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and no Stripe binding. Do not repeat registration, grant or Admin-CRM DB rollout.
+- FM-CR-043 is PRODUCTION_CONFIRMED. FM-REG-003 remains IN_PROGRESS only because the required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was skipped before the first real grant; no additional real Admin-CRM grants until that separate acceptance exists.
+- Current product priority is FM-CR-044: Facebook first, then Instagram through the existing `/channels` OAuth/consent flow and bounded initial DM import. Existing Meta foundations are reused; real provider consent/App Review/permissions/webhook/inbound evidence remains external.
+- Production read-only countercheck before this work found zero Facebook/Instagram social connections for Admin-CRM workspaces. Payment and Mobile remain deferred.
 
 ## Admin-CRM Production rollout — 2026-09-19
 - PR #1134 is merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e` and the normal Production deploy `35431328695` passed with exact `/api/version` and healthy `/api/health` smoke.
