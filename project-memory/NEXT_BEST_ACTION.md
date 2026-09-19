@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-ADMIN-CRM-LOGIN-HOTFIX`
-- Task: `FM-REG-003`
-- Gate: `registration_admin_crm` (`IN_PROGRESS`)
+- Selected action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
+- Task: `FM-SOC3-001`
+- Gate: `phase3_social` (`PARTIAL`)
 - Selection status: `EXECUTABLE`
-- Title: Admin-CRM Login vom bezahlten Billing trennen
+- Title: Facebook/Instagram Verbindung und Inbound-Pfad auf aktuellem Account fortsetzen
 
 ## Instruction
 
-FM-CR-043 is the current executable priority. Preserve the already granted 0-EUR Admin-CRM Workspace and fix only the routing/billing isolation: active Admin-CRM must reach Web CRM without any paid Billing path; blocked/expired must reach /workspace/access-paused; all direct Billing/checkout surfaces including POST /api/billing/checkout must reject or redirect Admin-CRM before Stripe. Do not repeat registration, the real Admin grant, the Production migration, payment, Stripe/Tax, provider or Mobile work. After reviewed green merge and normal Production deploy/version proof, the owner retests the same already-granted account read-only through Dashboard/Fans/Inbox/Follow-ups. No further real Admin-CRM grants are permitted until the runbook's missing synthetic lifecycle acceptance is completed and recorded.
+FM-CR-044 is the current executable repository priority after the owner-confirmed Admin-CRM login. Reuse the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server tokens, bounded first DM import, incremental sync/webhook, tenant isolation and no-auto-send foundations. Reconcile only still-valid #1121 evidence/copy on current main and prepare the exact /channels owner handoff: Facebook first, then Instagram. Do not perform provider login/consent/App Review, DB mutation, payment, automatic send or deferred Mobile work from repository automation. Real provider acceptance remains under FM-SOC3-OWNER-APP-20260911.
 
 ## Why this action
 
@@ -20,7 +20,8 @@ standing-authorized safe work
 
 ## Candidate evaluation
 
-- `NBA-ADMIN-CRM-LOGIN-HOTFIX` priority 1: **EXECUTABLE** — standing-authorized safe work
+- `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
