@@ -1,3 +1,10 @@
+## Facebook Production OAuth placeholder blocker — 2026-09-19
+- Real owner test on Production release `67773a794936ba48100d811e21358239d72e26b3`: `/channels` correctly reaches the Facebook Beta control, but clicking “Eigene Facebook-Seite verbinden” generated an OAuth URL with example placeholder App ID and callback host. Meta returned “Ungültige App-ID”; therefore no real connection or message/comment import occurred.
+- This is a Production runtime configuration/readiness defect, not an Admin-CRM/login defect. The existing free account and Workspace remain correct.
+- FM-CR-045 source correction rejects example placeholders before provider navigation, makes `/channels` report the configuration as incomplete, removes misleading reservation/Coming-Soon UI for Facebook/Instagram Beta controls, and exposes the existing Facebook comment-sync action after separate comment authorization.
+- After reviewed deploy, the external owner step is secure Production/Meta configuration: real Facebook App ID/secret, exact FanMind callback, token encryption key, and the matching Meta Developer callback/permissions. No secret may enter chat/Git/logs. Then repeat only the Facebook connect.
+- Successful Facebook message authorization should return to FanMind and run the existing bounded first Messenger import automatically. Facebook comments require their separate permission before comment synchronization. Payment and Mobile remain deferred.
+
 ## Admin-CRM login accepted; Social inbound is next — 2026-09-19
 - The real Production path now works end-to-end for the existing account: registration, email confirmation, Platform-Admin “Dauerhaft kostenlos” grant and subsequent login to FanMind CRM. PR #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed current-head checks/review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed exact version/health.
 - The granted Workspace remains correct and payment-free: `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and no Stripe binding. Do not repeat registration, grant or Admin-CRM DB rollout.
