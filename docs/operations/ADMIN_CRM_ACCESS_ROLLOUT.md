@@ -88,9 +88,23 @@ bestätigten Nichtkunden testen: dauerhaft freigeben, auf ein zukünftiges Datum
 befristen, sperren und nach jeder Stufe Anmeldung sowie direkten
 authentifizierten Supabase-Read prüfen. Keine echte Zahlung auslösen.
 
+## 4a. Tatsächliche Sequenzabweichung vom 19. September 2026
+
+Der erste reale dauerhafte Admin-CRM-Grant wurde nach grünem Production-Postflight,
+aber **vor** der hier geforderten synthetischen Lifecycle-Abnahme durchgeführt.
+Der reale Workspace ist read-only gegengeprüft: 0 EUR, `admin_crm_access=true`,
+manual/no-payment und ohne Stripe-Bindung. Er wird nicht gelöscht, zurückgesetzt oder
+erneut gegrantet.
+
+Bis die fehlende synthetische Abnahme permanent -> zukünftige Befristung -> Sperre
+-> Login + direkter authentifizierter Read vollständig protokolliert ist, gilt
+fail-closed: **keine weiteren realen Admin-CRM-Grants**. Der bereits gewährte Account
+darf nach dem separaten FM-CR-043 Routing-Hotfix nur denselben bestehenden Zugang
+erneut einloggen und read-only funktional prüfen.
+
 ## 5. Production-Nutzerfreigabe
 
-Erst nach grünem Postflight darf der Platform-Admin unter
+Erst nach grünem Postflight **und** der dokumentierten synthetischen Lifecycle-Abnahme darf der Platform-Admin für weitere reale Nutzer unter
 `/admin/billing?tab=customers` den bereits bestätigten Nutzer dauerhaft
 kostenlos freigeben. Eine spätere Befristung oder Sperre erfolgt ausschließlich
 in derselben Kundenübersicht; generische Workspace-Billing-Aktionen bleiben
