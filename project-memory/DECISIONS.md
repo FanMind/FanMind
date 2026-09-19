@@ -1,3 +1,11 @@
+## FM-DEC-020 — Mobile only after company registration
+- Date: 2026-09-19
+- Status: ACCEPTED
+- Source: Bernd explicitly states “Das handy kommt ganz am schluss wenn die firma angemeldet ist.”
+- Decision: defer every remaining Mobile/Handy activity until after company registration: no new signed build, device acceptance, Push completion/provider delivery, Play tester cohort, Store production request, iOS signing or TestFlight. Preserve all existing artifacts and accepted evidence.
+- Current priority: finish Web registration/login with Platform-Admin free CRM grant, then Facebook/Instagram and other approved Social connection/message-ingestion work. Payment remains deferred until the company is registered.
+- Supersedes: only FM-DEC-015 / FM-MOB-OWNER-CREATOR-SOCIAL-20260910 timing for resuming Android; it does not erase existing Mobile implementation/evidence or close the Mobile gate.
+
 ## FM-DEC-018 — Creator connects through the platform and returns to FanMind
 - Date: 2026-09-11
 - Status: CONFIRMED
