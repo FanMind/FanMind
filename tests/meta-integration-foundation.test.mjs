@@ -245,7 +245,7 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   );
   assert.match(
     facebookActions,
-    /left\.created_time \? Date\.parse\(left\.created_time\)[\s\S]*right\.created_time \? Date\.parse\(right\.created_time\)/u,
+    /left\.createdTime \? Date\.parse\(left\.createdTime\)[\s\S]*right\.createdTime \? Date\.parse\(right\.createdTime\)/u,
   );
   assert.match(runtimePolicy, /url\.origin !== appOrigin/u);
   assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
