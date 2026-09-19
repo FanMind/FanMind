@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   buildAttachmentFallbackText,
   getMessageKindFromAttachments,
+  normalizeMessageAttachments,
 } from "@/lib/messageAttachments";
 import {
   createEmptySocialSyncResult,
@@ -16,6 +17,7 @@ import {
   type FacebookMessengerMessage,
   type FacebookMessageFieldProbe,
   type FacebookMessengerConversation,
+  type FacebookPageComment,
   getFacebookGrantedScopeNames,
   fetchFacebookPagePostsWithComments,
   fetchFacebookMessengerConversationMessages,
@@ -291,7 +293,11 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
     let importedCount = 0;
 
     for (const comment of comments) {
-      if (!comment.message?.trim()) continue;
+      const attachments = normalizeFacebookCommentAttachments(comment);
+      const content =
+        comment.message?.trim() ||
+        buildAttachmentFallbackText(attachments, "inbound");
+      if (!content) continue;
       const senderId = comment.from?.id ?? null;
       // Creator/Page-authored replies are outbound context. The manual comment
       // intake intentionally imports fan comments only, so it never creates a
@@ -304,7 +310,7 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
         sourcePlatform: "facebook",
         senderId,
         authorLabel: comment.from?.name ?? "Facebook Nutzer",
-        content: comment.message,
+        content,
         messageType: "comment",
         sourceType: "facebook_comments",
         sourceUrl:
@@ -320,6 +326,11 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
         sourceConversationId: externalThreadId,
         externalPostId: comment.postId,
         externalCommentId: comment.id,
+        attachments,
+        messageKind: getMessageKindFromAttachments(
+          comment.message,
+          attachments,
+        ),
         receivedAt: comment.created_time ?? null,
         direction: "inbound",
       });
@@ -372,6 +383,53 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
       tokenScopes,
     };
   }
+}
+
+function normalizeFacebookCommentAttachments(
+  comment: FacebookPageComment,
+) {
+  const rawAttachments = [
+    ...(comment.attachment ? [comment.attachment] : []),
+    ...(comment.attachments?.data ?? []),
+  ];
+  const normalized = normalizeMessageAttachments(
+    rawAttachments.map((attachment) => ({
+      type: normalizeFacebookCommentAttachmentType(attachment.type),
+      url:
+        attachment.url ??
+        attachment.media?.image?.src ??
+        attachment.target?.url ??
+        null,
+    })),
+  );
+  if (!normalized?.length) return null;
+
+  const unique = new Map(
+    normalized.map((attachment) => [
+      `${attachment.type}|${attachment.url ?? ""}|${attachment.sticker_id ?? ""}`,
+      attachment,
+    ]),
+  );
+  return [...unique.values()];
+}
+
+function normalizeFacebookCommentAttachmentType(
+  type: string | undefined,
+): "image" | "video" | "audio" | "file" | "unknown" {
+  const normalized = type?.toLowerCase() ?? "";
+  if (
+    normalized.includes("image") ||
+    normalized.includes("photo") ||
+    normalized.includes("sticker")
+  ) {
+    return "image";
+  }
+  if (normalized.includes("video")) return "video";
+  if (normalized.includes("audio")) return "audio";
+  if (normalized.includes("file") || normalized.includes("document")) {
+    return "file";
+  }
+  return "unknown";
 }
 
 export async function syncFacebookMessengerHistory(input?: {
