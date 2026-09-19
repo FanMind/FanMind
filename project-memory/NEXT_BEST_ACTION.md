@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-FM-CR-044 is the current executable repository priority after the owner-confirmed Admin-CRM login. Reuse the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server tokens, bounded first DM import, incremental sync/webhook, tenant isolation and no-auto-send foundations. Reconcile only still-valid #1121 evidence/copy on current main and prepare the exact /channels owner handoff: Facebook first, then Instagram. Do not perform provider login/consent/App Review, DB mutation, payment, automatic send or deferred Mobile work from repository automation. Real provider acceptance remains under FM-SOC3-OWNER-APP-20260911.
+FM-CR-045 is the current executable repository priority after the real Production Facebook test exposed placeholder Meta OAuth configuration. Preserve the existing Facebook/Instagram OAuth, explicit Page/account binding, encrypted-token and bounded first-import/sync foundations, but reject example App IDs/secrets/callbacks before provider navigation, show true configuration readiness, remove misleading reservation/Coming-Soon UI for the Meta Beta controls, and expose the existing Facebook comment sync after separate comment permission. After reviewed green deploy, provider/server configuration is owner-required: real central Meta App ID/secret, exact FanMind callback, valid token-encryption key and matching Meta callback/permissions, all handled securely outside chat/Git. Then retry Facebook only; successful Messenger authorization should return to FanMind and run the bounded initial DM import. Payment, automatic send and Mobile stay deferred.
 
 ## Why this action
 
