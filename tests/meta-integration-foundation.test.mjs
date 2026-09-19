@@ -207,6 +207,18 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
     /validatedNext && items\.length >= maxItems[\s\S]*Paginierungslimit/u,
   );
   assert.match(
+    facebook,
+    /fetchGraphCollection<FacebookPagePostWithInlineComments>\([\s\S]*feedUrl[\s\S]*25,[\s\S]*true/u,
+  );
+  assert.match(
+    facebook,
+    /fetchGraphCollection<FacebookPagePost>\([\s\S]*postsUrl[\s\S]*25,[\s\S]*true/u,
+  );
+  assert.match(
+    facebook,
+    /if \(stopAtLimit\) return items/u,
+  );
+  assert.match(
     facebookActions,
     /normalizeFacebookCommentAttachments\(comment\)[\s\S]*buildAttachmentFallbackText\(attachments, "inbound"\)/u,
   );
@@ -240,8 +252,28 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
     /encodeFacebookCommentContinuation\(lastProcessedCursor\)/u,
   );
   assert.match(
+    facebookActions,
+    /completedHighWaterAt = normalizeFacebookCommentHighWater\([\s\S]*connection\.last_comment_fetch_at/u,
+  );
+  assert.match(
+    facebookActions,
+    /isFacebookCommentAtOrAfterHighWater\(comment, completedHighWaterAt\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /highWaterAt: latestValidHighWaterAt/u,
+  );
+  assert.match(
+    server,
+    /if \(input\.highWaterAt !== undefined\)[\s\S]*last_comment_fetch_at = normalizeIsoTimestamp\(input\.highWaterAt\)/u,
+  );
+  assert.match(
     channels,
     /__fanmind_comment_cursor_v1__:[\s\S]*weitere Kommentare warten auf Fortsetzung/u,
+  );
+  assert.match(
+    channels,
+    /Kommentare verarbeitet bis:[\s\S]*last_comment_fetch_at/u,
   );
   assert.match(
     facebookActions,
