@@ -266,16 +266,43 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
 
   try {
     const tokenScopes = await getSafeTokenScopeNames(token);
+    if (!hasFacebookCommentFeedScopes(tokenScopes)) {
+      const message =
+        "Die aktuelle Facebook-Verbindung besitzt keine gültige Kommentar-Berechtigung.";
+      await updateFacebookCommentFetchStatus(connection.id, {
+        fetchedAt,
+        importedCount: 0,
+        error: message,
+      });
+      revalidatePath("/channels");
+      return {
+        ok: false,
+        fetchedAt,
+        postsChecked: 0,
+        commentsChecked: 0,
+        importedCount: 0,
+        error: message,
+        tokenScopes,
+      };
+    }
+
     const { posts, comments, diagnostics } =
       await fetchFacebookPagePostsWithComments(connection.page_id, token);
     let importedCount = 0;
 
     for (const comment of comments) {
       if (!comment.message?.trim()) continue;
+      const senderId = comment.from?.id ?? null;
+      // Creator/Page-authored replies are outbound context. The manual comment
+      // intake intentionally imports fan comments only, so it never creates a
+      // self-contact or reopens a fan conversation from the Page's own reply.
+      if (senderId && senderId === connection.page_id) continue;
+
+      const externalThreadId = `${comment.postId}:${senderId ?? comment.id}`;
       const result = await createMetaWebhookConversationMessage({
         workspaceId: connection.workspace_id,
         sourcePlatform: "facebook",
-        senderId: comment.from?.id ?? null,
+        senderId,
         authorLabel: comment.from?.name ?? "Facebook Nutzer",
         content: comment.message,
         messageType: "comment",
@@ -289,7 +316,12 @@ export async function fetchFacebookCommentsNow(): Promise<FacebookCommentFetchRe
           comment.postPermalinkUrl ??
           `https://www.facebook.com/${comment.postId}`,
         externalMessageId: comment.id,
-        externalThreadId: comment.postId,
+        externalThreadId,
+        sourceConversationId: externalThreadId,
+        externalPostId: comment.postId,
+        externalCommentId: comment.id,
+        receivedAt: comment.created_time ?? null,
+        direction: "inbound",
       });
       if (result.error) throw result.error;
       if (result.conversation) importedCount += 1;
