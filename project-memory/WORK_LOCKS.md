@@ -720,5 +720,5 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: only the Expo SDK 57 compatible patch versions, Mobile lockfile and bounded Project Memory reconciliation. No app feature, schema, external target, signed build or Store action.
 - Evidence plan: deterministic install, exact dependency tree, full local Mobile checks, GitHub current-head Mobile CI and independent final review.
 - Recovery: ordinary bounded source revert; no external state or user data is changed.
-- Continuation 2026-09-18: current main/#1133 is merged. Four current review findings are addressed locally under the existing lock; controlled Admin-CRM and Creator SQL remain unapplied. Final local suites, publication to the existing PR branch, exact-head CI and one fresh independent review remain required.
+- Historical continuation 2026-09-18: four review findings were addressed while controlled Admin-CRM SQL was still unapplied. This state was superseded by #1134 acceptance and the separately authorized Production apply; do not revive the old pending steps.
 - Closed by PR #1134 / merge `630aef3ccb53fed9b46284cb1d4bf1825a57687e`. Owner decision 2026-09-19 defers every remaining Mobile/Handy step until after company registration; preserve existing artifacts and do not start new builds/cohort/device/Push/Store/TestFlight work until explicit resume.
