@@ -35,44 +35,63 @@ async function source(path) {
   return readFile(path, "utf8");
 }
 
-test("Meta runtime configuration rejects deploy placeholders before provider navigation", () => {
-  assert.equal(normalizeMetaRuntimeValue("replace_with_facebook_app_id"), null);
-  assert.equal(normalizeMetaRuntimeValue(" replace_with_meta_app_secret "), null);
-  assert.equal(isUsableMetaAppId("replace_with_facebook_app_id"), false);
-  assert.equal(isUsableMetaAppId("123456789012345"), true);
-  assert.equal(isUsableMetaAppSecret("replace_with_meta_app_secret"), false);
-  assert.equal(isUsableMetaAppSecret("0123456789abcdef0123456789abcdef"), true);
-  assert.equal(
-    normalizeMetaCallbackUrl(
-      "https://your-domain.example/api/integrations/facebook/callback",
-      "/api/integrations/facebook/callback",
-    ),
-    null,
-  );
-  assert.equal(
-    normalizeMetaCallbackUrl(
-      "https://fanmind.ch/api/integrations/facebook/callback",
-      "/api/integrations/facebook/callback",
-    ),
-    "https://fanmind.ch/api/integrations/facebook/callback",
-  );
-  assert.equal(
-    normalizeMetaCallbackUrl(
-      "https://fanmind.ch/api/integrations/instagram/callback",
-      "/api/integrations/facebook/callback",
-    ),
-    null,
-  );
-
+test("Meta runtime configuration rejects deploy placeholders and binds callbacks to the active app", () => {
   const previous = {
     ack: process.env.FANMIND_CORE_FLOW_FIXTURE_ACK,
     app: process.env.NEXT_PUBLIC_APP_URL,
+    fanmindApp: process.env.FANMIND_APP_URL,
     supabase: process.env.NEXT_PUBLIC_SUPABASE_URL,
   };
   try {
+    process.env.NEXT_PUBLIC_APP_URL = "https://fanmind.ch";
+    delete process.env.FANMIND_APP_URL;
     delete process.env.FANMIND_CORE_FLOW_FIXTURE_ACK;
-    delete process.env.NEXT_PUBLIC_APP_URL;
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    assert.equal(normalizeMetaRuntimeValue("replace_with_facebook_app_id"), null);
+    assert.equal(normalizeMetaRuntimeValue(" replace_with_meta_app_secret "), null);
+    assert.equal(isUsableMetaAppId("replace_with_facebook_app_id"), false);
+    assert.equal(isUsableMetaAppId("123456789012345"), true);
+    assert.equal(isUsableMetaAppSecret("replace_with_meta_app_secret"), false);
+    assert.equal(isUsableMetaAppSecret("0123456789abcdef0123456789abcdef"), true);
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://your-domain.example/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      "https://fanmind.ch/api/integrations/facebook/callback",
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://other.fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/instagram/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
+
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.FANMIND_APP_URL;
+    assert.equal(
+      normalizeMetaCallbackUrl(
+        "https://fanmind.ch/api/integrations/facebook/callback",
+        "/api/integrations/facebook/callback",
+      ),
+      null,
+    );
     for (const host of ["fanmind.example", "fanmind.test", "fanmind.invalid"]) {
       assert.equal(
         normalizeMetaCallbackUrl(
@@ -106,13 +125,15 @@ test("Meta runtime configuration rejects deploy placeholders before provider nav
     else process.env.FANMIND_CORE_FLOW_FIXTURE_ACK = previous.ack;
     if (previous.app === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
     else process.env.NEXT_PUBLIC_APP_URL = previous.app;
+    if (previous.fanmindApp === undefined) delete process.env.FANMIND_APP_URL;
+    else process.env.FANMIND_APP_URL = previous.fanmindApp;
     if (previous.supabase === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     else process.env.NEXT_PUBLIC_SUPABASE_URL = previous.supabase;
   }
 });
 
 test("Meta channel UI fails closed on incomplete config and exposes real Facebook sync controls", async () => {
-  const [facebook, instagram, channels, page, syncActions, facebookActions, startRoute, callbackRoute, server] = await Promise.all([
+  const [facebook, instagram, channels, page, syncActions, facebookActions, startRoute, callbackRoute, server, runtimePolicy] = await Promise.all([
     source("src/lib/facebookIntegration.ts"),
     source("src/lib/instagramIntegration.ts"),
     source("src/app/channels/ChannelsGrid.tsx"),
@@ -122,6 +143,7 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
     source("src/app/api/integrations/facebook/start/route.ts"),
     source("src/app/api/integrations/facebook/callback/route.ts"),
     source("src/lib/supabase/server.ts"),
+    source("src/lib/metaRuntimeConfigPolicy.mjs"),
   ]);
 
   assert.match(facebook, /requireFacebookAppId/u);
@@ -189,6 +211,19 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
     /normalizeFacebookCommentAttachments\(comment\)[\s\S]*buildAttachmentFallbackText\(attachments, "inbound"\)/u,
   );
   assert.match(facebookActions, /attachments,[\s\S]*messageKind:/u);
+  assert.match(
+    facebookActions,
+    /facebookCommentSyncInFlight\.get\(connection\.id\)[\s\S]*facebookCommentSyncInFlight\.set\(connection\.id, sync\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /orderedComments = \[\.\.\.comments\]\.sort\(compareFacebookCommentsByTime\)/u,
+  );
+  assert.match(
+    facebookActions,
+    /left\.created_time \? Date\.parse\(left\.created_time\)[\s\S]*right\.created_time \? Date\.parse\(right\.created_time\)/u,
+  );
+  assert.match(runtimePolicy, /url\.origin !== appOrigin/u);
   assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
 });
 
