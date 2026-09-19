@@ -1,3 +1,11 @@
+## RECEIPT-FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919
+- Status: PRODUCTION_CONFIRMED for exact DB rollout; Task FM-REG-003 / FM-CR-041; Risk R4.
+- Receipt: `project-memory/receipts/FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919.md`.
+- Exact release `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` PASS; exact Production Supabase `drqkpdvtbbrrdwmtrodz`.
+- Exact migration SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`; apply recorded as `20260919081945 admin_crm_access`; independent RPC/ACL/RLS postflight PASS.
+- Owner authorization consumed by this one exact apply. No generic DB push, Stripe/Tax/payment/provider/Mobile mutation.
+- Acceptance limitation: synthetic lifecycle should have preceded the first real grant but did not. No further real grants until synthetic acceptance; existing real Workspace remains intact. FM-CR-043 is a separate routing fix.
+
 ## RECEIPT-FM-OPS-RUNNER-LAYOUT-20260913
 - Status: IN_PROGRESS; Task FM-OPS-001 / FM-CR-036; Risk R4; retain LOCK-FM-OPS-REBOOT-20260912.
 - Prior source closure: #1116 final receipt 5653464231; reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0. Backup/database Restore/Creator foundation remain closed within their accepted scope.

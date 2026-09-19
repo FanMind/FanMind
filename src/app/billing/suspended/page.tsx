@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BillingCheckoutButton } from "@/components/BillingCheckoutButton";
 import { isWorkspaceBillingSuspended } from "@/lib/billing";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
+import { getBillingContinuationHref } from "@/lib/preActivation";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 
 export default async function BillingSuspendedPage() {
@@ -9,6 +11,9 @@ export default async function BillingSuspendedPage() {
   if (!data.user) redirect("/login");
   const { workspace } = await getUserWorkspaceDashboard(data.user);
   if (!workspace) redirect("/dashboard");
+  if (isAdminCrmAccessWorkspace(workspace)) {
+    redirect(getBillingContinuationHref(workspace, data.user.email));
+  }
   if (!isWorkspaceBillingSuspended(workspace)) redirect("/dashboard");
   return <main style={{ maxWidth: 720, margin: "0 auto", padding: "64px 20px", fontFamily: "var(--font-geist-sans)" }}>
     <p style={{ color: "#b45309", fontWeight: 700 }}>Billing gesperrt</p>

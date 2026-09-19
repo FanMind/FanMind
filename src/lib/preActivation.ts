@@ -33,8 +33,10 @@ export function getPreActivationRedirect(
       ? null
       : "/workspace/access-paused";
   }
-  if (isAdminCrmAccessWorkspace(workspace) && !evaluateWorkspaceProcessingEntitlement(workspace).allowed) {
-    return "/workspace/access-paused";
+  if (isAdminCrmAccessWorkspace(workspace)) {
+    return evaluateWorkspaceProcessingEntitlement(workspace).allowed
+      ? null
+      : "/workspace/access-paused";
   }
   if (isDemoWorkspace(workspace)) return null;
   if (isWorkspaceBillingSuspended(workspace)) return "/billing/suspended";

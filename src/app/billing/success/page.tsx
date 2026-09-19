@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getBillingStatusLabel } from "@/lib/billing";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { getBillingContinuationHref } from "@/lib/preActivation";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
 import styles from "../../dashboard/dashboard.module.css";
@@ -44,6 +45,7 @@ export default async function BillingSuccessPage({ searchParams }: { searchParam
   const workspace = workspaceResult.workspace;
   const isActive = workspace?.billing_status === "active";
   const continuationHref = getBillingContinuationHref(workspace, data.user.email);
+  if (isAdminCrmAccessWorkspace(workspace)) redirect(continuationHref);
 
   return (
     <main className={styles.page}>

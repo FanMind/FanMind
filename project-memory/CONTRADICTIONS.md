@@ -1,3 +1,11 @@
+## CTR-FM-REG-ADMIN-CRM-SYNTHETIC-SEQUENCE-20260919
+- Status: OPEN_RECONCILIATION_REQUIRED
+- Area: FM-REG-003 / Admin-CRM rollout acceptance
+- Intended order: `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` required a synthetic confirmed noncustomer lifecycle (permanent -> future temporary -> blocked -> login/direct authenticated read) before any real Production user grant.
+- Actual order: exact Production migration/postflight completed, then the owner performed the first real permanent grant and discovered the separate FM-CR-043 paid-routing defect before a synthetic lifecycle receipt existed.
+- Current truth: the real Workspace is correctly 0-EUR/no-Stripe and must be preserved. Do not regrant/delete it. No additional real Admin-CRM grants are permitted until the missing synthetic lifecycle acceptance is completed and recorded.
+- Resolution path: deploy FM-CR-043, allow only same-account read-only retest for the already granted Workspace, then separately create/identify a safe synthetic confirmed noncustomer under exact authorization and complete the runbook lifecycle before opening new real grants.
+
 ## CTR-FM-CREATOR-FOUNDATION-CLOSEOUT-20260911
 - Related: FM-CREATOR-001 / FM-CR-033 / #1109; Risk R4; Status: RESOLVED for reader scope.
 - Source A: older started-work, dependency/loop/external fields still instructed completed source/schema work; reader draft also treated a job-local false flag as deployed-process evidence and mixed external consent into an executable next action.

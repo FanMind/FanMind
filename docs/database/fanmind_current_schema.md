@@ -1,6 +1,6 @@
 # FanMind aktueller Datenbank- und RLS-Stand
 
-Stand: August 2026
+Stand: 19. September 2026
 
 Dieses Dokument ersetzt die alte Lesart von `docs/database/fanmind_mvp_schema.sql` als vollständiges Schema. Die Datei `fanmind_mvp_schema.sql` bleibt nur als historischer Auth-/Workspace-Basisstand erhalten.
 
@@ -11,6 +11,30 @@ Die aktuelle Datenbankwahrheit ergibt sich aus:
    `supabase/controlled/`,
 3. den tatsächlich verwendeten Queries und Typen in `src/lib/supabase/server.ts`,
 4. dieser Dokumentation.
+
+## Admin-CRM Production boundary — 19. September 2026
+
+Production Supabase `drqkpdvtbbrrdwmtrodz` has the exact Admin-CRM boundary from
+`supabase/migrations/20260915221500_admin_crm_access.sql` installed as migration
+`20260919081945 admin_crm_access`, bound to Web release
+`630aef3ccb53fed9b46284cb1d4bf1825a57687e`.
+
+Independent postflight confirms:
+- `public.admin_crm_read_allowed(uuid)` present;
+- `public.current_admin_crm_access_state()` present;
+- `public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)` present;
+- the mutation RPC is denied to `anon` and `authenticated` and executable by `service_role`;
+- 19 restrictive `admin_crm_entitlement_boundary` policies exist on current RLS Workspace-scoped tables, including `public.workspaces`.
+
+The exact source SHA-256 is
+`7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`.
+Receipt: `project-memory/receipts/FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919.md`.
+
+Acceptance limitation: the runbook-required synthetic permanent -> future temporary ->
+blocked -> login/direct authenticated-read lifecycle was not completed before the first
+real grant. Therefore this installed boundary is real Production truth, but no further
+real Admin-CRM grants are permitted until that synthetic lifecycle acceptance is
+completed and recorded. The existing real 0-EUR/no-Stripe Workspace is preserved.
 
 ## Creator-Grundlage, 11. September 2026 — auf Staging installiert
 

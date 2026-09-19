@@ -1,3 +1,13 @@
+## FM-FAIL-ADMIN-CRM-SYNTHETIC-SEQUENCE-20260919
+- Date: 2026-09-19
+- Status: RECORDED_NOT_REPEATED
+- Task: FM-REG-003
+- Failure class: acceptance sequencing deviation, not migration failure.
+- Expected: synthetic confirmed-noncustomer permanent/temporary/blocked/login/direct-read lifecycle before first real grant.
+- Actual: first real permanent grant occurred after green Production DB postflight but before that synthetic lifecycle was recorded; subsequent login exposed FM-CR-043 routing to paid Billing.
+- Safety/result: the real Workspace is correct, 0-EUR and has no Stripe binding. Preserve it; no rollback/delete/regrant. Block any additional real Admin-CRM grants until synthetic acceptance exists.
+- Recovery: source-only FM-CR-043 hotfix, then same-account read-only retest; synthetic lifecycle is a separate later authorized acceptance action.
+
 ## FM-FAIL-025
 - Date: 2026-09-13
 - Status: BLOCKED

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getBillingStatusLabel } from "@/lib/billing";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { getBillingContinuationHref } from "@/lib/preActivation";
 import { getCommercialOptionLabel } from "@/lib/dashboardFeatures";
 import { getSupabaseServerUser, getUserWorkspaceDashboard, signOutSupabaseServerSession } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ export default async function BillingPendingPage() {
   if (workspaceResult.error?.message === "TEMPORARY_DEMO_DELETED") redirect("/login?demo_deleted=1");
   const workspace = workspaceResult.workspace;
   const continuationHref = getBillingContinuationHref(workspace, data.user.email);
+  if (isAdminCrmAccessWorkspace(workspace)) redirect(continuationHref);
 
   return (
     <main className={styles.page}>

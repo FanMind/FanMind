@@ -2,6 +2,14 @@
 
 This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
 
+## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
+- Status: WAITING_SOURCE_FIX
+- Task: FM-REG-003 / FM-CR-043.
+- Completed owner evidence: new account registration, email confirmation and Platform-Admin “Dauerhaft kostenlos” grant all succeeded. Read-only Production DB proves the Workspace is permanent 0-EUR Admin-CRM with no Stripe binding.
+- Current blocker: real login incorrectly lands on `/billing/start` because active Admin-CRM falls through generic Starter paid routing. Do not repeat registration or grant.
+- Resume trigger: reviewed/deployed FM-CR-043. Then log in with the same account and verify Dashboard/Fans/Inbox/Follow-ups.
+- Boundary: no Checkout/Subscription/Tax state. The existing granted account may only be re-login/read-only tested after the hotfix; no additional real Admin-CRM grants until the missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle is accepted. After Web acceptance, proceed to Facebook/Instagram account connection and permitted message import. Mobile remains deferred by FM-DEC-021 until company registration and explicit owner resume.
+
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
 - NBA: NBA-CREATOR-SOCIAL-EXTERNAL; Task FM-SOC3-001; Gate phase3_social; external controls EXT-META-CREATOR-APP-20260911 and EXT-WHATSAPP.
@@ -103,8 +111,8 @@ This is the single compact queue for actions that genuinely require the owner, a
 ## FM-MOB-OWNER-002 — Complete the closed Google Play test cohort
 - Status: DEFERRED_BY_OWNER
 - Where: exact existing FanMind closed Google Play Alpha track.
-- Current evidence: on 2026-09-03 the verified Android `1.0.0` Production AAB from run `33316172583` was published in the closed Alpha track for Germany, Austria and Switzerland. This is test distribution, not public Production access. The portal requires at least 12 opted-in testers for at least 14 days; the owner will start that period when FanMind is ready for the Gerhard handoff.
-- Resume trigger: the owner declares FanMind ready for the handoff cohort and has at least 12 approved tester addresses available.
+- Current evidence: on 2026-09-03 the verified Android `1.0.0` Production AAB from run `33316172583` was published in the closed Alpha track for Germany, Austria and Switzerland. This is test distribution, not public Production access. The portal requires at least 12 opted-in testers for at least 14 days; FM-DEC-021 now defers starting that period until company registration is complete and the owner explicitly resumes Mobile.
+- Resume trigger: company registration is complete, the owner explicitly resumes Mobile, and at least 12 approved tester addresses are available.
 - Required next sequence: enroll the approved testers, verify their opt-in state, keep the test active for at least 14 days, complete the private Play-installed 19-check/Recovery evidence and only then request Production access with separate action-time confirmation.
 - Forbidden: another baseline AAB build, fabricated tester enrollment/duration/device evidence, public Production submission without the completed gates, or starting iOS/TestFlight before Phase 8.
 - Risk: R3

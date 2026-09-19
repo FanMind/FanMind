@@ -1,3 +1,12 @@
+## FM-AUTH-ADMIN-CRM-PRODUCTION-APPLY-20260919
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly authorized: “Production-DB-Rollout für Admin-CRM freigegeben”.
+- Exact scope consumed: one application of `supabase/migrations/20260915221500_admin_crm_access.sql` SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd` to exact Production Supabase `drqkpdvtbbrrdwmtrodz` bound to deployed release `630aef3ccb53fed9b46284cb1d4bf1825a57687e`.
+- Result: migration `20260919081945 admin_crm_access` applied once; independent postflight PASS.
+- Not authorized by this receipt: additional migration, rollback/drop, generic db push, user grant, Stripe/Tax/payment/provider/Mobile mutation.
+- Reuse: forbidden. Any later Production DB mutation requires new exact action-time authorization.
+
 # Project Authorizations
 
 ## FM-AUTH-CREATOR-SOCIAL-20260910

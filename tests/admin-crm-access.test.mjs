@@ -103,6 +103,13 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   );
   const page = fs.readFileSync("src/app/admin/billing/page.tsx", "utf8");
   const preActivation = fs.readFileSync("src/lib/preActivation.ts", "utf8");
+  const billingStart = fs.readFileSync("src/app/billing/start/page.tsx", "utf8");
+  const billingCheckout = fs.readFileSync("src/app/billing/checkout/route.ts", "utf8");
+  const billingCheckoutApi = fs.readFileSync("src/app/api/billing/checkout/route.ts", "utf8");
+  const billingPending = fs.readFileSync("src/app/billing/pending/page.tsx", "utf8");
+  const billingSuccess = fs.readFileSync("src/app/billing/success/page.tsx", "utf8");
+  const billingCancel = fs.readFileSync("src/app/billing/cancel/page.tsx", "utf8");
+  const billingSuspended = fs.readFileSync("src/app/billing/suspended/page.tsx", "utf8");
   const workspaceAuthorization = fs.readFileSync("src/lib/workspaceAuthorization.ts", "utf8");
   const supabaseServer = fs.readFileSync("src/lib/supabase/server.ts", "utf8");
   const demoMode = fs.readFileSync("src/lib/demoMode.ts", "utf8");
@@ -196,7 +203,18 @@ test("Admin service lists Auth registrations and protects provisioning", () => {
   assert.match(page, /!workspace \? <>[\s\S]*mode" value="permanent"[\s\S]*mode" value="temporary"/u);
   assert.match(page, /isAdminCrmAccessWorkspace\(selectedWorkspace\)/u);
   assert.match(preActivation, /isAdminCrmAccessWorkspace/u);
-  assert.match(preActivation, /evaluateWorkspaceProcessingEntitlement/u);
+  assert.match(preActivation, /if \(isAdminCrmAccessWorkspace\(workspace\)\)[\s\S]*evaluateWorkspaceProcessingEntitlement\(workspace\)\.allowed[\s\S]*\? null[\s\S]*workspace\/access-paused/u);
+  assert.match(billingStart, /isAdminCrmAccessWorkspace\(workspace\)[\s\S]*redirect\(redirectTarget \?\? "\/dashboard"\)/u);
+  assert.match(billingCheckout, /isAdminCrmAccessWorkspace\(workspace\)[\s\S]*redirectTo\(redirectTarget \?\? "\/dashboard"\)/u);
+  assert.match(billingCheckoutApi, /isAdminCrmAccessWorkspace\(workspaceResult\.workspace\)[\s\S]*admin_crm_access_billing_disabled/u);
+  assert.ok(
+    billingCheckoutApi.indexOf("isAdminCrmAccessWorkspace(workspaceResult.workspace)") <
+      billingCheckoutApi.indexOf("getStripeConfigStatus()"),
+  );
+  for (const billingPage of [billingPending, billingSuccess, billingCancel, billingSuspended]) {
+    assert.match(billingPage, /isAdminCrmAccessWorkspace\(workspace\)/u);
+    assert.match(billingPage, /getBillingContinuationHref/u);
+  }
   assert.match(workspaceAuthorization, /assertAdminCrmReadAccess/u);
   assert.match(workspaceAuthorization, /ADMIN_CRM_ACCESS_INACTIVE/u);
   assert.match(supabaseServer, /current_admin_crm_access_state/u);
