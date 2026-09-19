@@ -1,3 +1,9 @@
+## Admin-CRM ready for owner browser acceptance — 2026-09-19
+- Exact Production release `630aef3ccb53fed9b46284cb1d4bf1825a57687e` is deployed; Admin-CRM migration `20260919081945 admin_crm_access` is applied on Production Supabase `drqkpdvtbbrrdwmtrodz` after explicit owner authorization.
+- Postflight PASS: required functions present; mutation RPC service-role-only; 19 restrictive entitlement policies including Workspaces; no real account/payment/provider mutation. One confirmed user is ready for Admin grant.
+- Next owner action: in FanMind Platform Admin, locate the confirmed registration and grant “Dauerhaft kostenlos”; then verify normal Web CRM access. Do not activate Stripe/Tax/payment.
+- Owner reprioritization: all Mobile work is deferred until company registration; preserve existing Mobile evidence. After successful Web login/CRM acceptance, resume Facebook/Instagram account connection and permitted message import.
+
 ## Daily UI only — owner closeout boundary, 2026-09-14
 - Finish only PR #1125 against main 1e011edd: visible Daily at /workspace/setup, saved selection, unavailable-state explanation, disabled unavailable activation and unchanged registration/confirmation/actions. The earlier broader Admin offer switch is excluded; #1126 is superseded for this release.
 - Required closeout: final committed head, all current-head checks green, independent review, one merged PR, successful normal Production deployment, exact /api/version commit, and browser test with the existing account. The final #1125 conversation receipt binds those results; pending source notes must not be mistaken for deployed evidence.
