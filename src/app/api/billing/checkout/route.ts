@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isDemoWorkspace, isTemporaryDemoUser } from "@/lib/demoMode";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import {
   isTrustedMutationRequest,
   readBoundedJsonRequest,
@@ -60,6 +61,16 @@ export async function POST(request: NextRequest) {
   const payload = parsedBody.value as { planId?: string; commercialOption?: string } | null;
   if (!payload?.planId || !payload.commercialOption) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
+  const workspaceResult = await getUserWorkspaceDashboard(data.user);
+  if (!workspaceResult.workspace) return NextResponse.json({ error: "Workspace konnte nicht geladen werden.", code: "workspace_unavailable" }, { status: 400 });
+  if (isAdminCrmAccessWorkspace(workspaceResult.workspace)) {
+    return NextResponse.json(
+      { error: "Dieser kostenlose CRM-Zugang benötigt keine Zahlung.", code: "admin_crm_access_billing_disabled" },
+      { status: 403 },
+    );
+  }
+  if (isDemoWorkspace(workspaceResult.workspace)) return NextResponse.json({ error: "Demo-Workspaces können keinen Checkout starten." }, { status: 403 });
+
   if (payload.commercialOption === "internal_daily_test" &&
       (!(await getPublicDailyTestPlanEnabled()) || !isInternalDailyTestBillingRuntimeReady())) {
     return NextResponse.json({ error: "Das interne Live-Testabo kann nur im Adminbereich gestartet werden." }, { status: 403 });
@@ -74,9 +85,6 @@ export async function POST(request: NextRequest) {
 
   if (!plan) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
-  const workspaceResult = await getUserWorkspaceDashboard(data.user);
-  if (!workspaceResult.workspace) return NextResponse.json({ error: "Workspace konnte nicht geladen werden.", code: "workspace_unavailable" }, { status: 400 });
-  if (isDemoWorkspace(workspaceResult.workspace)) return NextResponse.json({ error: "Demo-Workspaces können keinen Checkout starten." }, { status: 403 });
   if (workspaceResult.workspace.plan_id !== plan.planId || workspaceResult.workspace.commercial_option !== plan.commercialOption) {
     return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
   }
