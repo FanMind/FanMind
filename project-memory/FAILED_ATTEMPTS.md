@@ -1,3 +1,14 @@
+## FM-FAIL-FACEBOOK-PROD-PLACEHOLDER-20260919
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001 / FM-CR-044
+- Failure class: Production provider configuration false-positive.
+- Owner browser evidence: FanMind displayed “Serverkonfiguration: bereit” and allowed “Eigene Facebook-Seite verbinden”, but the generated Meta OAuth URL visibly used literal placeholder values `client_id=replace_with_facebook_app_id` and `redirect_uri=https://your-domain.example/...`. Meta therefore returned “Ungültige App-ID” before a valid FanMind OAuth callback could occur.
+- Root cause: readiness treated any non-empty ENV value as configured, and OAuth resolution preferred the dedicated FACEBOOK_* value even when it was only the repository placeholder, instead of rejecting it or using a valid legacy META_* fallback.
+- Correction: reject placeholder/example values, validate numeric App-ID + HTTPS callback path + usable secret, allow only a valid fallback, include token-encryption/callback readiness in the UI gate, and disable the connect button when the effective Production OAuth configuration is not usable.
+- Boundary: no provider password/token, App Secret or MFA may enter chat or GitHub. This source correction does not itself install real Meta credentials or prove App Review/permissions.
+- Expected next result: FanMind must fail closed locally until a real central Meta App ID/secret/callback are present; with valid provider configuration it should navigate to Meta, obtain consent, return to FanMind, save the selected Page and run the bounded initial DM import. Comments remain separately permissioned and then ingested.
+
 ## FM-FAIL-ADMIN-CRM-SYNTHETIC-SEQUENCE-20260919
 - Date: 2026-09-19
 - Status: RECORDED_NOT_REPEATED
