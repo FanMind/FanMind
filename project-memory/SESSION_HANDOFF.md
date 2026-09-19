@@ -1,3 +1,10 @@
+## Facebook OAuth Production configuration blocker — 2026-09-19
+- #1137 is merged/deployed as `67773a794936ba48100d811e21358239d72e26b3`. Owner tested the existing free account at `/channels`.
+- Facebook button was enabled and FanMind claimed “Serverkonfiguration: bereit”, but the actual external OAuth URL contained only example placeholder App ID/callback values. Meta rejected it as “Ungültige App-ID”; no social connection exists.
+- FM-CR-045 is the current repository fix: placeholder values must count as unconfigured, provider navigation must fail closed, Meta Beta UI must show real status rather than reservation/Coming-Soon cards, and the existing Facebook comment sync becomes visible after comment permission.
+- Next after reviewed deploy: owner securely configures the real central Meta app/server values; then retry only Facebook connect. Successful Messenger connection returns to FanMind and triggers the bounded first DM import. Comments are authorized separately and then synchronized. Instagram follows after Facebook acceptance.
+- Existing Admin-CRM account stays unchanged. Payment and Mobile remain deferred. No secrets in chat.
+
 ## Facebook/Instagram inbound is next — 2026-09-19
 - Admin-CRM real path is now successful on Production: #1136 merged/deployed as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and the owner confirmed the same already-granted account reaches FanMind CRM instead of Billing. Do not repeat registration, grant or database rollout.
 - FM-REG-003 remains incomplete only for the separately missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle; this blocks additional real Admin-CRM grants, not the existing account's normal use or Social continuation.
