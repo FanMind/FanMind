@@ -176,6 +176,19 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
   );
   assert.match(facebookActions, /receivedAt: comment\.created_time \?\? null/u);
   assert.match(facebookActions, /direction: "inbound"/u);
+  assert.match(
+    facebook,
+    /post\.comments\?\.paging\?\.next[\s\S]*fetchGraphCollection/u,
+  );
+  assert.match(
+    facebook,
+    /validatedNext && items\.length >= maxItems[\s\S]*Paginierungslimit/u,
+  );
+  assert.match(
+    facebookActions,
+    /normalizeFacebookCommentAttachments\(comment\)[\s\S]*buildAttachmentFallbackText\(attachments, "inbound"\)/u,
+  );
+  assert.match(facebookActions, /attachments,[\s\S]*messageKind:/u);
   assert.match(channels, /!isMetaPilotChannel\(activeChannel\.key\) \? \(/u);
 });
 
