@@ -76,6 +76,8 @@ type MetaWebhookStorageHealth = {
 type FacebookLiveSetupStatus = {
   facebookAppIdConfigured: boolean;
   facebookAppSecretConfigured: boolean;
+  facebookRedirectUriConfigured: boolean;
+  tokenEncryptionConfigured: boolean;
   webhookVerifyTokenConfigured: boolean;
   publicBaseUrlConfigured: boolean;
   metaBusinessIdConfigured: boolean;
@@ -637,6 +639,8 @@ export function ChannelsGrid({
   const facebookOAuthConfigured =
     facebookLiveSetupStatus.facebookAppIdConfigured &&
     facebookLiveSetupStatus.facebookAppSecretConfigured &&
+    facebookLiveSetupStatus.facebookRedirectUriConfigured &&
+    facebookLiveSetupStatus.tokenEncryptionConfigured &&
     facebookLiveSetupStatus.publicBaseUrlConfigured;
 
   useEffect(() => {
@@ -922,6 +926,13 @@ export function ChannelsGrid({
                             <li>Persönliche fremde Profile und Posts werden nicht gespiegelt oder gescrapt.</li>
                             <li>
                               Serverkonfiguration: {facebookOAuthConfigured ? "bereit" : "noch unvollständig"}
+                            </li>
+                            {!facebookOAuthConfigured ? (
+                              <li>
+                                FanMind startet keine Facebook-Anmeldung, solange App-ID, App-Secret, Callback und Token-Verschlüsselung nicht gültig gesetzt sind.
+                              </li>
+                            ) : null}
+                            <li>
                             </li>
                           </ul>
                           <div className={styles.connectionCardActions}>
