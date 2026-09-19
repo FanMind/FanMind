@@ -18,6 +18,12 @@ import {
   INSTAGRAM_MESSAGES_OAUTH_SCOPES,
 } from "@/lib/instagramScopes";
 import { sanitizeMetaProviderError } from "@/lib/metaProviderErrorPolicy.mjs";
+import {
+  isUsableMetaAppId,
+  isUsableMetaAppSecret,
+  normalizeMetaCallbackUrl,
+  normalizeMetaRuntimeValue,
+} from "@/lib/metaRuntimeConfigPolicy.mjs";
 
 const STATE_MAX_AGE_SECONDS = 10 * 60;
 
@@ -415,9 +421,12 @@ async function fetchInstagramSubscribedFields(
 
 export function isInstagramOAuthConfigured(): boolean {
   return Boolean(
-    optionalEnv("INSTAGRAM_APP_ID", "META_APP_ID") &&
-      optionalEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET") &&
-      optionalEnv("INSTAGRAM_REDIRECT_URI"),
+    isUsableMetaAppId(optionalEnv("INSTAGRAM_APP_ID", "META_APP_ID")) &&
+      isUsableMetaAppSecret(optionalEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET")) &&
+      normalizeMetaCallbackUrl(
+        optionalEnv("INSTAGRAM_REDIRECT_URI"),
+        "/api/integrations/instagram/callback",
+      ),
   );
 }
 
@@ -444,29 +453,38 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 function requireInstagramAppId(): string {
-  return requireEnv("INSTAGRAM_APP_ID", "META_APP_ID");
+  const value = optionalEnv("INSTAGRAM_APP_ID", "META_APP_ID");
+  if (!isUsableMetaAppId(value)) {
+    throw new Error("INSTAGRAM_APP_ID ist nicht gültig konfiguriert.");
+  }
+  return value;
 }
 
 function requireInstagramAppSecret(): string {
-  return requireEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET");
+  const value = optionalEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET");
+  if (!isUsableMetaAppSecret(value)) {
+    throw new Error("INSTAGRAM_APP_SECRET ist nicht gültig konfiguriert.");
+  }
+  return value;
 }
 
 function requireInstagramRedirectUri(): string {
-  return requireEnv("INSTAGRAM_REDIRECT_URI");
+  const value = normalizeMetaCallbackUrl(
+    optionalEnv("INSTAGRAM_REDIRECT_URI"),
+    "/api/integrations/instagram/callback",
+  );
+  if (!value) {
+    throw new Error("INSTAGRAM_REDIRECT_URI ist nicht gültig konfiguriert.");
+  }
+  return value;
 }
 
 function optionalEnv(...names: string[]): string | undefined {
   for (const name of names) {
-    const value = process.env[name]?.trim();
+    const value = normalizeMetaRuntimeValue(process.env[name]);
     if (value) return value;
   }
   return undefined;
-}
-
-function requireEnv(name: string, fallbackName?: string): string {
-  const value = optionalEnv(name, ...(fallbackName ? [fallbackName] : []));
-  if (!value) throw new Error(`${name} ist nicht konfiguriert.`);
-  return value;
 }
 
 function validIdentifier(value: unknown): boolean {
