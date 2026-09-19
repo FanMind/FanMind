@@ -13,6 +13,7 @@
 - Review follow-through requires current-token comment scopes, per-commenter thread identity, provider timestamps, Page-self-comment exclusion and validated callback return origin before release. Keep the lock active until exact-head CI and independent review are clean.
 - Second review follow-through additionally requires complete nested-comment pagination (no silent 50-comment truncation) and preserved media attachments/media-only context before release.
 - Third review follow-through additionally requires unknown timestamps last plus bounded per-request comment persistence with durable continuation using only the existing comment-status columns; no DB/schema mutation is authorized.
+- Fourth review follow-through additionally requires a durable completed provider high-water separate from pending/error state and a bounded recent 25-post feed window that does not fail on older feed pages. Comment pagination remains strict; no schema change is allowed.
 - Final review follow-through additionally requires active-app-origin callback binding, per-connection single-flight manual comment sync and oldest-first provider-time persistence. Keep release blocked until the new exact head is green and independently reviewed with no P1/P2.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
