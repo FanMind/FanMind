@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-INTELLIGENCE`
-- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Next action: `NBA-ADMIN-CRM-LOGIN-HOTFIX`
+- Next action title: Admin-CRM Login vom bezahlten Billing trennen
 
 ## Finishline gates
 
@@ -22,6 +22,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `sales_handoff`: `BLOCKED`
 - `legal_tax_avv`: `BLOCKED`
 - `creator_intelligence`: `IN_PROGRESS`
+- `registration_admin_crm`: `IN_PROGRESS`
 
 ## Deferred owner actions
 
