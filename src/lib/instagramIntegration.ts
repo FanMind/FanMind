@@ -454,7 +454,7 @@ function safeEqual(a: string, b: string): boolean {
 
 function requireInstagramAppId(): string {
   const value = optionalEnv("INSTAGRAM_APP_ID", "META_APP_ID");
-  if (!isUsableMetaAppId(value)) {
+  if (!value || !isUsableMetaAppId(value)) {
     throw new Error("INSTAGRAM_APP_ID ist nicht gültig konfiguriert.");
   }
   return value;
@@ -462,7 +462,7 @@ function requireInstagramAppId(): string {
 
 function requireInstagramAppSecret(): string {
   const value = optionalEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET");
-  if (!isUsableMetaAppSecret(value)) {
+  if (!value || !isUsableMetaAppSecret(value)) {
     throw new Error("INSTAGRAM_APP_SECRET ist nicht gültig konfiguriert.");
   }
   return value;
