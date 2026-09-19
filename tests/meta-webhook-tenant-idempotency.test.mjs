@@ -135,18 +135,22 @@ test("Facebook pagination accepts only HTTPS Graph v25.0 URLs", () => {
   }
 });
 
-test("both Facebook paging loops apply the strict validator", async () => {
+test("Facebook top-level and nested comment paging apply the strict validator", async () => {
   const integration = await readFile("src/lib/facebookIntegration.ts", "utf8");
-  assert.equal(
-    (
-      integration.match(
-        /validateFacebookGraphPagingUrl\(payload\?\.paging\?\.next \?\? null\)/gu,
-      ) ?? []
-    ).length,
-    2,
+  assert.match(
+    integration,
+    /validateFacebookGraphPagingUrl\(\s*payload\?\.paging\?\.next \?\? null,?\s*\)/u,
+  );
+  assert.match(
+    integration,
+    /validateFacebookGraphPagingUrl\(\s*post\.comments\?\.paging\?\.next \?\? null,?\s*\)/u,
   );
   assert.doesNotMatch(
     integration,
     /nextUrl\s*=\s*payload\?\.paging\?\.next\s*\?\?/u,
+  );
+  assert.doesNotMatch(
+    integration,
+    /nextUrl\s*=\s*post\.comments\?\.paging\?\.next\s*\?\?/u,
   );
 });
