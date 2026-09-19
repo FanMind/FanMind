@@ -3,12 +3,12 @@
 This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
-- Status: OWNER_ACTION_REQUIRED
-- Task: FM-REG-003.
-- Proven foundation: PR #1134 merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` PASS; exact Admin-CRM migration `20260919081945 admin_crm_access` applied with independent RPC/ACL/RLS postflight PASS. One confirmed user is read-only verified as ready for grant.
-- Needed: Platform Admin opens the registered-user customer view, grants that confirmed user “Dauerhaft kostenlos”, then the user signs in and verifies Web Dashboard/Fans/Inbox/Follow-ups. Optionally exercise block/re-enable after the first positive pass.
-- Boundary: this is a real account mutation, but not a payment. Do not create Checkout/Subscription/Tax state. After acceptance, proceed to Facebook/Instagram account connection and permitted message import.
-- Mobile remains deferred by FM-DEC-020 until company registration.
+- Status: WAITING_SOURCE_FIX
+- Task: FM-REG-003 / FM-CR-043.
+- Completed owner evidence: new account registration, email confirmation and Platform-Admin “Dauerhaft kostenlos” grant all succeeded. Read-only Production DB proves the Workspace is permanent 0-EUR Admin-CRM with no Stripe binding.
+- Current blocker: real login incorrectly lands on `/billing/start` because active Admin-CRM falls through generic Starter paid routing. Do not repeat registration or grant.
+- Resume trigger: reviewed/deployed FM-CR-043. Then log in with the same account and verify Dashboard/Fans/Inbox/Follow-ups.
+- Boundary: no Checkout/Subscription/Tax state. After acceptance, proceed to Facebook/Instagram account connection and permitted message import. Mobile remains deferred by FM-DEC-020 until company registration.
 
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED
