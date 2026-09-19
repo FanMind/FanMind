@@ -52,7 +52,7 @@ Dieses Runbook trennt den im Repository fertigstellbaren Mobile-Code von den ein
   Zugangsdaten, und FanMind führt keinen Versand aus;
 - Owner-Rolle, Workspace-Filter plus Supabase RLS bei jeder Kontaktmutation; Member bleiben read-only;
 - minimale Duplikatprüfung für Handle plus Quelle;
-- verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit 24-Stunden-Ablauf, maximal 50 Kontakten und Nur-Lesen-Oberfläche;
+- verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit Ablauf nach spätestens 24 Stunden beziehungsweise am früheren Ende eines befristeten Admin-CRM-Zugangs, maximal 50 Kontakten und Nur-Lesen-Oberfläche;
 - lokaler Logout-Purge für registrierte FanMind-SecureStore-Schlüssel;
 - Expo-konforme SecureStore-Schlüssel ohne Doppelpunkte sowie serialisierte Speicherzugriffe;
 - einmalige, fail-closed Migration beziehungsweise Bereinigung der früheren v1-SecureStore-Schlüssel beim App-Upgrade;
@@ -192,7 +192,7 @@ Zusätzliche Speichergrenzen:
 - nicht vollständig löschbare Schlüssel bleiben registriert und werden beim nächsten Purge erneut versucht;
 - ein Registry-Eintrag wird lieber zu lange behalten, als Sitzungsdaten unregistriert zurückzulassen.
 
-Der Offline-Cache verwendet exakt einen registrierten SecureStore-Schlüssel und wird nur nach einem erfolgreichen, ungefilterten Online-Abruf geschrieben. Er enthält höchstens 50 Kontakte, ist maximal 24 Stunden gültig und speichert nur Workspace-Name sowie Kontakt-ID, Workspace-ID, Name, Handle, Plattform, Status und Änderungszeit. Kontaktwissen, Zusammenfassungen, Nachrichten, KI-Inhalte, interne Notizen, Follow-ups und Zugangsdaten werden nicht übernommen. Nur ein Transportstatus `0` darf den Nur-Lesen-Fallback aktivieren; Auth-, RLS- und Serverfehler löschen beziehungsweise verwerfen den Cache fail-closed.
+Der Offline-Cache verwendet exakt einen registrierten SecureStore-Schlüssel und wird nur nach einem erfolgreichen, ungefilterten Online-Abruf geschrieben. Er enthält höchstens 50 Kontakte, ist maximal 24 Stunden und bei befristetem Admin-CRM-Zugang höchstens bis zu dessen Ablauf gültig und speichert nur Workspace-Name sowie Kontakt-ID, Workspace-ID, Name, Handle, Plattform, Status und Änderungszeit. Kontaktwissen, Zusammenfassungen, Nachrichten, KI-Inhalte, interne Notizen, Follow-ups und Zugangsdaten werden nicht übernommen. Nur ein Transportstatus `0` darf den Nur-Lesen-Fallback aktivieren; Auth-, RLS- und Serverfehler löschen beziehungsweise verwerfen den Cache fail-closed.
 
 ## KI-Unternehmens-Prompt und Antwortprofile
 

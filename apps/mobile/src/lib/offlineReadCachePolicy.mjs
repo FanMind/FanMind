@@ -1,11 +1,11 @@
 import { utf8ByteLength } from "./utf8StoragePolicy.mjs";
 
-const OFFLINE_READ_CACHE_VERSION = 1;
+const OFFLINE_READ_CACHE_VERSION = 2;
 const OFFLINE_READ_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const OFFLINE_READ_CACHE_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 const OFFLINE_READ_CACHE_MAX_CONTACTS = 50;
 const OFFLINE_READ_CACHE_MAX_SERIALIZED_LENGTH = 80_000;
-const OFFLINE_READ_CACHE_KEY = "fanmind.offline-read-cache.v1";
+const OFFLINE_READ_CACHE_KEY = "fanmind.offline-read-cache.v2";
 
 function safeIdentifier(value) {
   return (
@@ -33,12 +33,13 @@ function boundedTimestamp(value) {
   return Number.isFinite(Date.parse(value)) ? value : null;
 }
 
-function validCacheAge(cachedAt, now) {
-  if (!Number.isFinite(cachedAt) || !Number.isFinite(now)) return false;
+function validCacheAge(cachedAt, cacheValidUntil, now) {
+  if (!Number.isFinite(cachedAt) || !Number.isFinite(cacheValidUntil) || !Number.isFinite(now)) return false;
   const age = now - cachedAt;
   return (
     age >= -OFFLINE_READ_CACHE_MAX_FUTURE_SKEW_MS &&
-    age <= OFFLINE_READ_CACHE_MAX_AGE_MS
+    now < cacheValidUntil &&
+    cacheValidUntil <= cachedAt + OFFLINE_READ_CACHE_MAX_AGE_MS
   );
 }
 
@@ -73,6 +74,7 @@ function createOfflineReadCache({
   workspaceName,
   contacts,
   cachedAt = Date.now(),
+  accessExpiresAt = null,
 }) {
   if (
     !safeIdentifier(userId) ||
@@ -81,6 +83,19 @@ function createOfflineReadCache({
     !Number.isFinite(cachedAt)
   ) {
     throw new Error("Ungültiger Offline-Kontaktcache.");
+  }
+  const parsedAccessExpiry = accessExpiresAt === null
+    ? null
+    : Date.parse(accessExpiresAt);
+  if (accessExpiresAt !== null && !Number.isFinite(parsedAccessExpiry)) {
+    throw new Error("Ungültiger Offline-Kontaktcache.");
+  }
+  const cacheValidUntil = Math.min(
+    cachedAt + OFFLINE_READ_CACHE_MAX_AGE_MS,
+    parsedAccessExpiry ?? Number.POSITIVE_INFINITY,
+  );
+  if (cacheValidUntil <= cachedAt) {
+    throw new Error("Der Workspace-Zugang ist nicht mehr aktiv.");
   }
   const normalizedWorkspaceName = boundedText(workspaceName, 160, true);
   if (!normalizedWorkspaceName) {
@@ -96,6 +111,7 @@ function createOfflineReadCache({
   const cache = {
     version: OFFLINE_READ_CACHE_VERSION,
     cachedAt,
+    cacheValidUntil,
     userId,
     workspaceId,
     workspaceName: normalizedWorkspaceName,
@@ -142,7 +158,7 @@ function normalizeOfflineReadCache(
     parsed.userId !== userId ||
     (workspaceId !== null && parsed.workspaceId !== workspaceId) ||
     !safeIdentifier(parsed.workspaceId) ||
-    !validCacheAge(parsed.cachedAt, now) ||
+    !validCacheAge(parsed.cachedAt, parsed.cacheValidUntil, now) ||
     !Array.isArray(parsed.contacts) ||
     parsed.contacts.length > OFFLINE_READ_CACHE_MAX_CONTACTS
   ) {
@@ -157,6 +173,7 @@ function normalizeOfflineReadCache(
   return {
     version: OFFLINE_READ_CACHE_VERSION,
     cachedAt: parsed.cachedAt,
+    cacheValidUntil: parsed.cacheValidUntil,
     userId,
     workspaceId: parsed.workspaceId,
     workspaceName,

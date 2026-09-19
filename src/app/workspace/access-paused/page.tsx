@@ -10,7 +10,7 @@ export default async function WorkspaceMemberAccessPausedPage() {
   if (!data.user) redirect("/login?returnTo=/workspace/access-paused");
 
   const { workspace } = await getUserAuthorizedWorkspaceDashboard(data.user);
-  if (!workspace) redirect("/login");
+  if (!workspace) redirect("/workspace/setup");
 
   const target = getPreActivationRedirect(workspace, data.user.email);
   if (target !== "/workspace/access-paused") {
@@ -27,11 +27,11 @@ export default async function WorkspaceMemberAccessPausedPage() {
       }}
     >
       <p style={{ color: "#0369a1", fontWeight: 700 }}>Workspace-Zugang</p>
-      <h1>Der Workspace ist für Mitglieder derzeit pausiert.</h1>
+      <h1>Der CRM-Zugang ist derzeit pausiert.</h1>
       <p>
-        Nur der Workspace-Owner kann Paket- und Zahlungsfragen klären. Sobald
-        der Workspace wieder aktiv ist, steht dir der CRM-Bereich automatisch
-        wieder zur Verfügung.
+        Deine Workspace- und CRM-Daten bleiben erhalten. Nur der Workspace-Owner beziehungsweise ein Platform Admin kann den Zugang klären. Sobald ein Platform Admin
+        den kostenlosen Zugang wieder freigibt oder verlängert, steht dir der
+        CRM-Bereich automatisch wieder zur Verfügung.
       </p>
       <p>
         <Link href="/logout">Abmelden</Link>

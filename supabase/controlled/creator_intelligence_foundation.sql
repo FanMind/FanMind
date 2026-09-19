@@ -106,6 +106,22 @@ create trigger creator_voice_identity_guard before insert or update on public.cr
 create trigger creator_playbook_identity_guard before insert or update on public.creator_sales_playbooks for each row execute function public.guard_creator_identity();
 create trigger creator_event_actor_guard before insert on public.creator_commercial_events for each row execute function public.guard_creator_identity();
 
+-- This rollout-order-independent gate preserves normal Workspaces when the
+-- Admin-CRM contract is absent and delegates to its canonical entitlement
+-- boundary whenever that contract is installed (before or after this file).
+create function public.creator_workspace_access_allowed(p_workspace_id uuid)
+returns boolean language plpgsql stable security definer set search_path = '' as $$
+declare allowed boolean;
+begin
+  if to_regprocedure('public.admin_crm_read_allowed(uuid)') is null then
+    return true;
+  end if;
+  execute 'select public.admin_crm_read_allowed($1)' into allowed using p_workspace_id;
+  return coalesce(allowed, false);
+end $$;
+revoke all on function public.creator_workspace_access_allowed(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.creator_workspace_access_allowed(uuid) to authenticated, service_role;
+
 -- RLS reads retain Workspace isolation. Browsers cannot bypass revision and
 -- approval checks with direct table writes; owner mutations use only the RPCs.
 do $$
@@ -116,7 +132,7 @@ begin
     execute format('revoke all on public.%I from public, anon, authenticated, service_role', tab);
     execute format('grant select on public.%I to authenticated', tab);
     execute format('grant all on public.%I to service_role', tab);
-    execute format('create policy %I on public.%I for select to authenticated using (exists (select 1 from public.workspace_members m where m.workspace_id = %I.workspace_id and m.user_id = (select auth.uid())) or exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid())))', tab || '_member_read', tab, tab, tab);
+    execute format('create policy %I on public.%I for select to authenticated using ((exists (select 1 from public.workspace_members m where m.workspace_id = %I.workspace_id and m.user_id = (select auth.uid())) or exists (select 1 from public.workspaces w where w.id = %I.workspace_id and w.owner_user_id = (select auth.uid()))) and public.creator_workspace_access_allowed(%I.workspace_id))', tab || '_member_read', tab, tab, tab, tab);
   end loop;
 end $$;
 
@@ -126,6 +142,9 @@ create function public.save_creator_bundle(p_workspace_id uuid, p_creator_id uui
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare target uuid; next_revision integer; approver uuid;
 begin
+  if not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'workspace_inactive' using errcode='42501';
+  end if;
   if (select auth.uid()) is null or not exists (select 1 from public.workspaces w where w.id = p_workspace_id and w.owner_user_id = (select auth.uid())) then
     raise exception 'creator_owner_required' using errcode = '42501';
   end if;
@@ -167,6 +186,9 @@ create function public.record_creator_fan_review(p_workspace_id uuid, p_contact_
 returns void language plpgsql security definer set search_path = '' as $$
 declare creator uuid;
 begin
+  if not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'workspace_inactive' using errcode='42501';
+  end if;
   if (select auth.uid()) is null or not exists(select 1 from public.workspaces where id=p_workspace_id and owner_user_id=(select auth.uid())) then
     raise exception 'creator_owner_required' using errcode='42501';
   end if;

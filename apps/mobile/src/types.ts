@@ -7,6 +7,8 @@ export type Workspace = {
   plan_id?: string;
   member_safe_projection?: true;
   member_processing_allowed?: boolean;
+  workspace_access_mode?: string | null;
+  test_access_flags?: Record<string, boolean | string> | null;
 };
 
 export type Contact = {

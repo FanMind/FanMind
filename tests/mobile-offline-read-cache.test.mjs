@@ -215,6 +215,45 @@ test("offline cache rejects stale, future, corrupt and cross-account data", () =
   );
 });
 
+test("temporary Admin CRM cache expires no later than its entitlement", () => {
+  const expiresAt = NOW + 60 * 60 * 1000;
+  const cache = createOfflineReadCache({
+    userId: USER_ID,
+    workspaceId: WORKSPACE_ID,
+    workspaceName: "Temporary CRM",
+    contacts: [contact()],
+    cachedAt: NOW,
+    accessExpiresAt: new Date(expiresAt).toISOString(),
+  });
+  assert.equal(cache.cacheValidUntil, expiresAt);
+  assert.equal(normalizeOfflineReadCache(JSON.stringify(cache), {
+    userId: USER_ID, now: expiresAt - 1,
+  })?.contacts.length, 1);
+  assert.equal(normalizeOfflineReadCache(JSON.stringify(cache), {
+    userId: USER_ID, now: expiresAt,
+  }), null);
+  assert.equal(normalizeOfflineReadCache(JSON.stringify(cache), {
+    userId: USER_ID, now: expiresAt + 1,
+  }), null);
+  assert.throws(() => createOfflineReadCache({
+    userId: USER_ID,
+    workspaceId: WORKSPACE_ID,
+    workspaceName: "Blocked CRM",
+    contacts: [contact()],
+    cachedAt: NOW,
+    accessExpiresAt: new Date(NOW).toISOString(),
+  }));
+
+  const permanent = createOfflineReadCache({
+    userId: USER_ID,
+    workspaceId: WORKSPACE_ID,
+    workspaceName: "Permanent CRM",
+    contacts: [contact()],
+    cachedAt: NOW,
+  });
+  assert.equal(permanent.cacheValidUntil, NOW + OFFLINE_READ_CACHE_MAX_AGE_MS);
+});
+
 test("offline search is local and fallback eligibility is status-zero only", () => {
   const cached = createOfflineReadCache({
     userId: USER_ID,

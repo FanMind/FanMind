@@ -4,6 +4,10 @@ import {
   getStripeConfigStatus,
   resolveCheckoutPlan,
 } from "@/lib/stripeBilling";
+import {
+  isAdminCrmAccessWorkspace,
+  resolveAdminCrmAccessTransition,
+} from "@/lib/adminCrmAccessPolicy.mjs";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
 import { getStripeClient } from "@/lib/stripeClient";
@@ -21,14 +25,204 @@ export type AdminBillingWorkspace = {
   billing_status: string | null; billing_suspended_at: string | null; billing_suspended_reason: string | null; billing_manual_override: boolean | null;
   billing_last_payment_failed_at: string | null; billing_last_payment_at: string | null; billing_retry_count: number | null; billing_next_retry_at: string | null; billing_grace_until: string | null; billing_admin_note: string | null; billing_updated_at: string | null; billing_updated_by_user_id: string | null;
   test_access_flags: InternalTestAccessFlags | null;
-  stripe_customer_id: string | null; stripe_subscription_id: string | null; stripe_checkout_session_id: string | null;
+  workspace_access_mode: string | null;
+  billing_provider: string | null; payment_collection_method: string | null;
+  stripe_customer_id: string | null; stripe_subscription_id: string | null; stripe_checkout_session_id: string | null; stripe_payment_intent_id: string | null; stripe_mandate_id: string | null;
   last_invoice_id: string | null; last_invoice_status: string | null; last_invoice_amount_due_cents: number | null; last_invoice_amount_paid_cents: number | null; last_invoice_hosted_url: string | null; last_invoice_pdf_url: string | null;
 };
 
-const ADMIN_BILLING_COLUMNS = "id,name,created_at,owner_user_id,plan_id,commercial_option,setup_fee_cents,monthly_fee_cents,commitment_months,billing_status,billing_suspended_at,billing_suspended_reason,billing_manual_override,billing_last_payment_failed_at,billing_last_payment_at,billing_retry_count,billing_next_retry_at,billing_grace_until,billing_admin_note,billing_updated_at,billing_updated_by_user_id,stripe_customer_id,stripe_subscription_id,stripe_checkout_session_id,last_invoice_id,last_invoice_status,last_invoice_amount_due_cents,last_invoice_amount_paid_cents,last_invoice_hosted_url,last_invoice_pdf_url,test_access_flags";
+const ADMIN_BILLING_COLUMNS = "id,name,created_at,owner_user_id,plan_id,commercial_option,setup_fee_cents,monthly_fee_cents,commitment_months,billing_status,billing_provider,payment_collection_method,billing_suspended_at,billing_suspended_reason,billing_manual_override,billing_last_payment_failed_at,billing_last_payment_at,billing_retry_count,billing_next_retry_at,billing_grace_until,billing_admin_note,billing_updated_at,billing_updated_by_user_id,stripe_customer_id,stripe_subscription_id,stripe_checkout_session_id,stripe_payment_intent_id,stripe_mandate_id,last_invoice_id,last_invoice_status,last_invoice_amount_due_cents,last_invoice_amount_paid_cents,last_invoice_hosted_url,last_invoice_pdf_url,test_access_flags,workspace_access_mode";
 
 function serviceKey() { return process.env.SUPABASE_SERVICE_ROLE_KEY; }
 function validUuid(id: string) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id); }
+
+const AUTH_USERS_PAGE_SIZE = 50;
+
+type SupabaseAdminAuthUser = {
+  id?: unknown;
+  email?: unknown;
+  created_at?: unknown;
+  confirmed_at?: unknown;
+  email_confirmed_at?: unknown;
+  last_sign_in_at?: unknown;
+  user_metadata?: unknown;
+};
+
+export type AdminRegisteredUser = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  created_at: string | null;
+  email_confirmed_at: string | null;
+  last_sign_in_at: string | null;
+};
+
+function cleanString(value: unknown, maxLength = 320): string | null {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : null;
+}
+
+function authUserDisplayName(user: SupabaseAdminAuthUser): string | null {
+  const metadata = user.user_metadata && typeof user.user_metadata === "object" && !Array.isArray(user.user_metadata)
+    ? user.user_metadata as Record<string, unknown>
+    : {};
+  return cleanString(metadata.display_name, 160) ?? cleanString(metadata.full_name, 160) ?? cleanString(metadata.organization, 160);
+}
+
+function sanitizeAdminRegisteredUser(user: SupabaseAdminAuthUser): AdminRegisteredUser | null {
+  const id = cleanString(user.id, 64);
+  if (!id || !validUuid(id)) return null;
+  return {
+    id,
+    email: cleanString(user.email),
+    display_name: authUserDisplayName(user),
+    created_at: cleanString(user.created_at, 64),
+    email_confirmed_at: cleanString(user.email_confirmed_at, 64) ?? cleanString(user.confirmed_at, 64),
+    last_sign_in_at: cleanString(user.last_sign_in_at, 64),
+  };
+}
+
+export async function listAdminRegisteredUsers(page = 1): Promise<{ users: AdminRegisteredUser[]; page: number; hasNext: boolean; total: number | null; error: string | null }> {
+  const key = serviceKey();
+  const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+  if (!key) return { users: [], page: safePage, hasNext: false, total: null, error: "Supabase Service Role ist nicht konfiguriert." };
+  try {
+    const response = await fetch(
+      getSupabaseAuthUrl(`/admin/users?page=${safePage}&per_page=${AUTH_USERS_PAGE_SIZE}`),
+      { headers: getSupabaseHeaders(key), cache: "no-store" },
+    );
+    if (!response.ok) return { users: [], page: safePage, hasNext: false, total: null, error: `Registrierte Nutzer konnten nicht geladen werden (${response.status}).` };
+    const payload = await response.json() as { users?: SupabaseAdminAuthUser[]; total?: unknown };
+    const pageUsers = Array.isArray(payload.users) ? payload.users : [];
+    const users = pageUsers.map(sanitizeAdminRegisteredUser).filter((user): user is AdminRegisteredUser => Boolean(user));
+    const headerTotal = Number.parseInt(response.headers.get("x-total-count") ?? "", 10);
+    const payloadTotal = typeof payload.total === "number" && Number.isSafeInteger(payload.total) && payload.total >= 0 ? payload.total : null;
+    const total = Number.isSafeInteger(headerTotal) && headerTotal >= 0 ? headerTotal : payloadTotal;
+    return {
+      users,
+      page: safePage,
+      hasNext: total === null ? pageUsers.length === AUTH_USERS_PAGE_SIZE : safePage * AUTH_USERS_PAGE_SIZE < total,
+      total,
+      error: null,
+    };
+  } catch {
+    return { users: [], page: safePage, hasNext: false, total: null, error: "Registrierte Nutzer konnten nicht geladen werden." };
+  }
+}
+
+async function getAdminAuthUser(userId: string, key: string): Promise<AdminRegisteredUser | null> {
+  const response = await fetch(getSupabaseAuthUrl(`/admin/users/${encodeURIComponent(userId)}`), {
+    headers: getSupabaseHeaders(key),
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+  const payload = await response.json() as SupabaseAdminAuthUser & { user?: SupabaseAdminAuthUser };
+  return sanitizeAdminRegisteredUser(payload.user ?? payload);
+}
+
+async function getAdminOwnedWorkspaces(userId: string, key: string): Promise<AdminBillingWorkspace[] | null> {
+  const url = new URL(getSupabaseRestUrl("workspaces"));
+  url.searchParams.set("select", ADMIN_BILLING_COLUMNS);
+  url.searchParams.set("owner_user_id", `eq.${userId}`);
+  url.searchParams.set("limit", "2");
+  const response = await fetch(url, { headers: getSupabaseHeaders(key), cache: "no-store" });
+  return response.ok ? await response.json() as AdminBillingWorkspace[] : null;
+}
+
+export async function listAdminBillingWorkspacesForOwners(ownerUserIds: string[]): Promise<{ workspaces: AdminBillingWorkspace[]; error: string | null }> {
+  const key = serviceKey();
+  if (!key) return { workspaces: [], error: "Supabase Service Role ist nicht konfiguriert." };
+  const ownerIds = [...new Set(ownerUserIds.filter(validUuid))].slice(0, AUTH_USERS_PAGE_SIZE);
+  if (!ownerIds.length) return { workspaces: [], error: null };
+  try {
+    const url = new URL(getSupabaseRestUrl("workspaces"));
+    url.searchParams.set("select", ADMIN_BILLING_COLUMNS);
+    url.searchParams.set("owner_user_id", `in.(${ownerIds.join(",")})`);
+    url.searchParams.set("limit", String(AUTH_USERS_PAGE_SIZE));
+    const response = await fetch(url, { headers: getSupabaseHeaders(key), cache: "no-store" });
+    if (!response.ok) return { workspaces: [], error: `Workspace-Zuordnungen konnten nicht geladen werden (${response.status}).` };
+    return { workspaces: await response.json() as AdminBillingWorkspace[], error: null };
+  } catch {
+    return { workspaces: [], error: "Workspace-Zuordnungen konnten nicht geladen werden." };
+  }
+}
+
+function adminCrmWorkspaceHasBillingBinding(workspace: AdminBillingWorkspace): boolean {
+  return workspace.plan_id !== "starter" ||
+    workspace.commercial_option !== "starter_paid_setup" ||
+    workspace.billing_provider !== "manual" ||
+    workspace.payment_collection_method !== "none" ||
+    Boolean(workspace.stripe_customer_id) ||
+    Boolean(workspace.stripe_subscription_id) ||
+    Boolean(workspace.stripe_checkout_session_id) ||
+    Boolean(workspace.stripe_payment_intent_id) ||
+    Boolean(workspace.stripe_mandate_id) ||
+    Boolean(workspace.last_invoice_id);
+}
+
+const ADMIN_CRM_RPC_ERRORS: Record<string, { status: number; error: string }> = {
+  admin_crm_access_user_missing: { status: 404, error: "registered_user_missing" },
+  admin_crm_access_email_unconfirmed: { status: 409, error: "registered_user_email_unconfirmed" },
+  admin_crm_access_email_missing: { status: 409, error: "registered_user_email_missing" },
+  admin_crm_access_commercial_workspace: { status: 409, error: "registered_user_has_commercial_workspace" },
+  admin_crm_access_billing_bound: { status: 409, error: "registered_user_workspace_billing_bound" },
+  admin_crm_access_workspace_missing: { status: 409, error: "registered_user_workspace_missing" },
+};
+
+export async function setAdminRegisteredUserCrmAccess(
+  userId: string,
+  admin: SupabaseServerUser,
+  input: { mode?: unknown; expiresAt?: unknown },
+): Promise<{ ok: boolean; status: number; error: string | null; workspaceId?: string }> {
+  const key = serviceKey();
+  if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
+  if (!validUuid(userId)) return { ok: false, status: 400, error: "Ungültige User-ID." };
+  const transition = resolveAdminCrmAccessTransition(input);
+  if (!transition.ok) return { ok: false, status: 400, error: transition.error };
+
+  const user = await getAdminAuthUser(userId, key);
+  if (!user) return { ok: false, status: 404, error: "Registrierter Nutzer wurde nicht gefunden." };
+  if (!user.email_confirmed_at) return { ok: false, status: 409, error: "registered_user_email_unconfirmed" };
+  if (!user.email) return { ok: false, status: 409, error: "registered_user_email_missing" };
+
+  const rows = await getAdminOwnedWorkspaces(userId, key);
+  if (!rows) return { ok: false, status: 503, error: "Workspace-Zuordnung konnte nicht geprüft werden." };
+  if (rows.length > 1) return { ok: false, status: 409, error: "registered_user_workspace_ambiguous" };
+  const workspace = rows[0] ?? null;
+  if (!workspace && input.mode === "blocked") return { ok: false, status: 409, error: "registered_user_workspace_missing" };
+  if (workspace && workspace.test_access_flags?.admin_crm_access !== true) {
+    return { ok: false, status: 409, error: "registered_user_has_commercial_workspace" };
+  }
+  if (workspace && adminCrmWorkspaceHasBillingBinding(workspace)) {
+    return { ok: false, status: 409, error: "registered_user_workspace_billing_bound" };
+  }
+
+  const expiresAt = transition.values.test_access_flags.temporary_processing_access_expires_at;
+  const response = await fetch(getSupabaseRestUrl("rpc/admin_set_registered_user_crm_access"), {
+    method: "POST",
+    headers: { ...getSupabaseHeaders(key), Prefer: "return=representation" },
+    body: JSON.stringify({
+      p_target_user_id: userId,
+      p_admin_user_id: admin.id,
+      p_admin_email: admin.email ?? null,
+      p_mode: input.mode,
+      p_expires_at: typeof expiresAt === "string" ? expiresAt : null,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { message?: unknown } | null;
+    const mapped = typeof payload?.message === "string" ? ADMIN_CRM_RPC_ERRORS[payload.message] : null;
+    return mapped
+      ? { ok: false, status: mapped.status, error: mapped.error }
+      : { ok: false, status: 503, error: "CRM-Zugangsänderung konnte nicht atomar gespeichert werden." };
+  }
+  const result = await response.json() as Array<{ workspace_id?: unknown }>;
+  const workspaceId = typeof result[0]?.workspace_id === "string" && validUuid(result[0].workspace_id) ? result[0].workspace_id : null;
+  if (!workspaceId) return { ok: false, status: 503, error: "CRM-Zugangsänderung lieferte keinen gültigen Workspace." };
+  return { ok: true, status: 200, error: null, workspaceId };
+}
 
 export async function listAdminBillingWorkspaces(): Promise<{ workspaces: AdminBillingWorkspace[]; error: string | null }> {
   const key = serviceKey();
@@ -47,6 +241,12 @@ export async function updateAdminBillingWorkspace(workspaceId: string, admin: Su
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
   if (!validUuid(workspaceId)) return { ok: false, status: 400, error: "Ungültige Workspace-ID." };
+  const current = await getAdminBillingWorkspace(workspaceId);
+  if (!current.workspace) return { ok: false, status: current.error ? 503 : 404, error: current.error ?? "Workspace wurde nicht gefunden." };
+  const changedKeys = Object.keys(values);
+  if (isAdminCrmAccessWorkspace(current.workspace) && changedKeys.some((keyName) => keyName !== "billing_admin_note")) {
+    return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
+  }
   const body = { ...values, billing_updated_at: new Date().toISOString(), billing_updated_by_user_id: admin.id };
   const url = new URL(getSupabaseRestUrl("workspaces"));
   url.searchParams.set("id", `eq.${workspaceId}`);
@@ -130,6 +330,7 @@ export async function startInternalDailyTestCheckout(workspaceId: string, admin:
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
   const { workspace, error } = await getAdminBillingWorkspace(workspaceId);
   if (!workspace) return { ok: false, status: 404, error: error ?? "Workspace wurde nicht gefunden." };
+  if (isAdminCrmAccessWorkspace(workspace)) return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
   if (!isInternalTestWorkspace(workspace)) return { ok: false, status: 403, error: "Das 1-€-Live-Testabo ist nur für klar markierte interne Test-Workspaces erlaubt." };
   if (!isInternalDailyTestStripeReady(getStripeConfigStatus())) {
     return { ok: false, status: 503, error: "Stripe Checkout und Webhook sind für das 1-€-Live-Testabo nicht vollständig konfiguriert." };
@@ -241,6 +442,9 @@ export type InternalTestAccessFlags = {
   no_expiry: boolean;
   ai_maintenance: boolean;
   stripe_live_daily_test?: boolean;
+  admin_crm_access?: boolean;
+  temporary_processing_access?: boolean;
+  temporary_processing_access_expires_at?: string;
 };
 
 export const INTERNAL_TEST_ACCESS_FLAGS: InternalTestAccessFlags = {
@@ -265,6 +469,9 @@ export function normalizeInternalTestAccessFlags(flags: Partial<Record<keyof Int
     no_expiry: flags?.no_expiry === true,
     ai_maintenance: flags?.ai_maintenance === true,
     stripe_live_daily_test: flags?.stripe_live_daily_test === true,
+    admin_crm_access: flags?.admin_crm_access === true,
+    temporary_processing_access: flags?.temporary_processing_access === true,
+    temporary_processing_access_expires_at: typeof flags?.temporary_processing_access_expires_at === "string" ? flags.temporary_processing_access_expires_at : undefined,
   };
 }
 
@@ -374,6 +581,9 @@ async function confirmInternalTestOwnerEmail(workspaceId: string, key: string): 
 export async function markWorkspaceAsInternalTestAccess(workspaceId: string, admin: SupabaseServerUser): Promise<{ ok: boolean; status: number; error: string | null }> {
   const key = serviceKey();
   if (!key) return { ok: false, status: 503, error: "Supabase Service Role ist nicht konfiguriert." };
+  const current = await getAdminBillingWorkspace(workspaceId);
+  if (!current.workspace) return { ok: false, status: current.error ? 503 : 404, error: current.error ?? "Workspace wurde nicht gefunden." };
+  if (isAdminCrmAccessWorkspace(current.workspace)) return { ok: false, status: 409, error: "admin_crm_access_generic_billing_forbidden" };
   await confirmInternalTestOwnerEmail(workspaceId, key);
   const note = `${INTERNAL_TEST_ACCESS_NOTE} · Admin/Demo/Internal/Test · Billing deaktiviert · Mail bestätigt · Keine Ablaufzeit · AI Maintenance · ${new Date().toISOString().slice(0, 10)}`;
   return updateAdminBillingWorkspace(workspaceId, admin, {

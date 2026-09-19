@@ -77,6 +77,7 @@ async function authenticateMobile(request: Request) {
     isPublicDemoWorkspace({
       userEmail: context.user.email,
       workspaceBillingStatus: context.workspace.billing_status,
+      workspaceTestAccessFlags: context.workspace.test_access_flags,
       user: context.user,
     })
   ) {

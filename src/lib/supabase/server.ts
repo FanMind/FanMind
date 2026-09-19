@@ -191,6 +191,50 @@ export type WorkspaceMemberSafeDashboardRow = {
 
 const WORKSPACE_MEMBER_SAFE_DASHBOARD_RPC =
   "get_current_workspace_member_safe_dashboard";
+const CURRENT_ADMIN_CRM_ACCESS_STATE_RPC =
+  "current_admin_crm_access_state";
+export const ADMIN_CRM_ACCESS_INACTIVE = "ADMIN_CRM_ACCESS_INACTIVE";
+
+type InactiveAdminCrmAccessStateRow = {
+  access_state: string;
+  workspace_id: string;
+  workspace_name: string;
+  plan_id: PlanId;
+  billing_status: string;
+  workspace_access_mode: string;
+  test_access_flags: Record<string, boolean | string>;
+};
+
+function inactiveAdminCrmWorkspaceEnvelope(
+  state: InactiveAdminCrmAccessStateRow,
+): WorkspaceDashboardRow {
+  return {
+    id: state.workspace_id,
+    name: state.workspace_name,
+    owner_user_id: "",
+    plan_id: state.plan_id,
+    commercial_option: "starter_paid_setup",
+    setup_fee_cents: 0,
+    monthly_fee_cents: 0,
+    commitment_months: 0,
+    billing_status: state.billing_status,
+    workspace_access_mode: state.workspace_access_mode,
+    billing_manual_override: false,
+    test_access_flags: state.test_access_flags,
+    role: "owner",
+  } as WorkspaceDashboardRow;
+}
+
+function isMissingCurrentAdminCrmAccessStateRpc(
+  error: Error | null,
+): boolean {
+  const message = error?.message.trim().toLowerCase() ?? "";
+  return (
+    message.includes(CURRENT_ADMIN_CRM_ACCESS_STATE_RPC) &&
+    message.includes("could not find the function") &&
+    message.includes("schema cache")
+  );
+}
 
 function isMissingWorkspaceMemberSafeDashboardRpc(
   error: Error | null,
@@ -1327,6 +1371,35 @@ export async function getUserWorkspaceDashboard(
 
     const workspace = { ...workspaceRow, role: "owner" };
     return { workspace, error: null };
+  }
+
+  const accessStateResult = await postgrestRequest<InactiveAdminCrmAccessStateRow>(
+    `rpc/${CURRENT_ADMIN_CRM_ACCESS_STATE_RPC}`,
+    "POST",
+    {},
+    accessToken,
+    {
+      select:
+        "access_state,workspace_id,workspace_name,plan_id,billing_status,workspace_access_mode,test_access_flags",
+      single: true,
+    },
+  );
+  if (
+    accessStateResult.data?.access_state === "inactive" &&
+    accessStateResult.data.workspace_id
+  ) {
+    return {
+      workspace: inactiveAdminCrmWorkspaceEnvelope(accessStateResult.data),
+      error: new Error(ADMIN_CRM_ACCESS_INACTIVE),
+    };
+  }
+  if (
+    accessStateResult.error &&
+    !isMissingCurrentAdminCrmAccessStateRpc(accessStateResult.error)
+  ) {
+    return workspaceDashboardError(
+      "Workspace-Zugangsstatus konnte nicht sicher geprüft werden.",
+    );
   }
 
   return workspaceDashboardError(

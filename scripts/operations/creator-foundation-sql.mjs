@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const CREATOR_FOUNDATION_SHA256 = "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f";
-export const CREATOR_CONFLICT_FIX_SHA256 = "7e1111357bf1b210023fe43913d11247f3fe6eea32d1a7440b8079d988e671ee";
+export const CREATOR_FOUNDATION_SHA256 = "d892c74c0285487f1e786dddea90cbc5cb3102f794de0b5037e48295d2a61f4b";
+export const CREATOR_CONFLICT_FIX_SHA256 = "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f";
 export const CREATOR_TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
 const FUNCTIONS = [
   ["guard_creator_identity()", false, "trigger"],
@@ -99,6 +99,7 @@ create temporary table pg_temp.contacts(id uuid primary key,workspace_id uuid);
 create temporary table pg_temp.conversations(id uuid primary key,workspace_id uuid,contact_id uuid);
 create temporary table pg_temp.contact_ai_profiles(workspace_id uuid,contact_id uuid);
 ${ddl}
+create function pg_temp.creator_workspace_access_allowed(uuid) returns boolean language sql stable as 'select true';
 ${policies}
 create function pg_temp.creator_normalize(def text) returns text language sql immutable as $norm$
  select replace(regexp_replace(def,'(public|pg_temp(_[0-9]+)?)\\.','','g'),'auth.users','users')
@@ -109,7 +110,7 @@ $norm$;
 function functionChecks(sql, conflictFixSql) {
   return FUNCTIONS.map(([signature,definer,returns]) => {
     const name=signature.split("(")[0];
-    const source=name === "save_creator_bundle" && conflictFixSql ? conflictFixSql.replace("create or replace function", "create function") : sql;
+    const source=name === "save_creator_bundle" && conflictFixSql ? conflictFixSql.replace("create or replace function public.save_creator_bundle", "create function public.save_creator_bundle") : sql;
     const match=source.match(new RegExp(`create function public\\.${name}\\([\\s\\S]*?as \\$\\$([\\s\\S]*?)\\$\\$;`,"u"));
     if (!match) throw new Error("CREATOR_FOUNDATION_ERROR=function_contract");
     const body=Buffer.from(match[1],"utf8").toString("hex");

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "baseline_commit": "44179146926c691476364f668624ac24aab34ac9",
-  "captured": "2026-09-14",
-  "last_source_of_truth_review": "2026-09-14 FM-DEC-019 / FM-CR-037: reviewed the bounded product-truth change from permanent-public Daily to a manually Platform-Admin-controlled internal beta without countdown. The existing internal_daily_test engine and Price remain compatible; disabled admission hides Daily publicly and blocks only new provisioning/checkout, while existing Daily customers remain unchanged. No Production SQL, runtime activation, payment, Tax/contract approval or Billing-ledger completion is inferred. All previously accepted Restore, Staging, Security, Billing and Social evidence remains unchanged.",
+  "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
+  "captured": "2026-09-18",
+  "last_source_of_truth_review": "2026-09-18 FM-REG-003 / FM-CR-041: reconciled the four current PR #1132 findings after integrating main/#1133. Creator browser RPCs now enforce the canonical Admin-CRM entitlement in either rollout order while preserving normal Workspaces; inactive owners retain only the minimal paused-route projection; Mobile cache validity is capped by temporary access expiry; and transactional provisioning rejects any other Workspace membership. Controlled SQL remains source-only and unapplied; no Production database, live user, payment, Tax or provider state changed.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "e250920d43ecd7389d6a2dc760cf5fab56d27fd1",
+    "docs/SOURCE_OF_TRUTH.md": "06fe7d434349d640c607c83a996237438ee5a041",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

@@ -2,21 +2,27 @@ import type { WorkspaceDashboardRow } from "@/lib/supabase/server";
 import { isWorkspaceBillingSuspended } from "@/lib/billing";
 import { isPlatformAdminEmail } from "@/lib/admin";
 import { isDemoWorkspace } from "@/lib/demoMode";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
+import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
 
 const ASYNC_BILLING_STATUSES = new Set(["pending_sepa_mandate"]);
 const PRE_ACTIVATION_BILLING_STATUSES = new Set(["pending_payment_setup", "past_due", "payment_failed"]);
 
+type PreActivationWorkspace = Pick<WorkspaceDashboardRow, "billing_status" | "plan_id" | "name"> &
+  Partial<Pick<WorkspaceDashboardRow,
+    "role" |
+    "member_safe_projection" |
+    "member_processing_allowed" |
+    "workspace_access_mode" |
+    "subscription_effective_end_at" |
+    "billing_manual_override" |
+    "billing_grace_until" |
+    "billing_suspended_at" |
+    "test_access_flags"
+  >>;
+
 export function getPreActivationRedirect(
-  workspace:
-    | (Pick<WorkspaceDashboardRow, "billing_status" | "plan_id" | "name"> &
-        Partial<
-          Pick<
-            WorkspaceDashboardRow,
-            "role" | "member_safe_projection" | "member_processing_allowed"
-          >
-        >)
-    | null
-    | undefined,
+  workspace: PreActivationWorkspace | null | undefined,
   userEmail?: string | null,
 ): string | null {
   if (!workspace) return "/workspace/setup";
@@ -26,6 +32,9 @@ export function getPreActivationRedirect(
       workspace.member_processing_allowed === true
       ? null
       : "/workspace/access-paused";
+  }
+  if (isAdminCrmAccessWorkspace(workspace) && !evaluateWorkspaceProcessingEntitlement(workspace).allowed) {
+    return "/workspace/access-paused";
   }
   if (isDemoWorkspace(workspace)) return null;
   if (isWorkspaceBillingSuspended(workspace)) return "/billing/suspended";
@@ -38,7 +47,7 @@ export function getPreActivationRedirect(
 }
 
 export function getBillingContinuationHref(
-  workspace: Pick<WorkspaceDashboardRow, "billing_status" | "plan_id" | "name"> | null | undefined,
+  workspace: PreActivationWorkspace | null | undefined,
   userEmail?: string | null,
 ): string {
   return getPreActivationRedirect(workspace, userEmail) ?? "/dashboard";

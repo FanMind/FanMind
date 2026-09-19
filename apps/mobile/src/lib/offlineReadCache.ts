@@ -56,6 +56,7 @@ export function writeOfflineReadCache(input: {
   workspaceId: string;
   workspaceName: string;
   contacts: ContactListItem[];
+  accessExpiresAt?: string | null;
 }): Promise<boolean> {
   if (!ownerCanUseCache(input.userId)) return Promise.resolve(false);
   return cacheOperations.run(async () => {

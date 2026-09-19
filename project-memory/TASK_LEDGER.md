@@ -489,3 +489,17 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Evidence: FM-EV-037; focused 15/15 tests; full Operations/build/focused ESLint; Product Truth and immutable Actions checks.
 - Open follow-up: after exact-head merge, obtain separate exact R4 authorization for a distinct isolated non-Production Storage target and dedicated fail-closed write/postcheck/rollback/cleanup controller. Accepted progression remains `DB_POSTCHECKED`; overall `FM-RST-001=PARTIAL`.
 - Work lock released: yes; repository-only local countercheck complete.
+## FM-REG-003
+- Date: 2026-09-15
+- Status: REVIEW_FIXES_PENDING_CURRENT_HEAD_CI
+- Risk: R3
+- Goal: make confirmed registrations without a Workspace visible to Platform Admins and provide controlled permanent-free, temporary-free and blocked CRM access states.
+- Root cause: the existing Admin list starts at `workspace_members`, so an Auth registration disappears until Workspace provisioning has already happened.
+- Dependencies: server-only Supabase Service Role; existing unique `workspaces.owner_user_id` and owner membership constraint; Workspace processing policy; operations audit log; Platform-Admin and same-origin mutation guards.
+- Exclusions: no automatic email confirmation, Stripe/payment/Tax action, live schema rollout, Social/Mobile/Restore changes or data deletion.
+- Acceptance: FM-CR-041 and LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915.
+- Local evidence: corrected-head focused 6/6; targeted cross-boundary regressions 58/58; Operations 1376 pass/0 fail/4 environment skips; build, Product Truth, Project Memory Quality, Memory V8 and accepted/truth drift PASS; ESLint 0 errors with one unrelated pre-existing warning. Remote corrected-head CI/review and Production version proof remain pending.
+- Review continuation: six findings on PR #1132 head `daaf88372a06f063f7be2b95f6bbebbb95eec6ab` are addressed locally. Atomicity now requires one unapplied, service-role-only transactional RPC migration; no Production database action is authorized by the source change. Renewed local evidence, exact-head CI/review and deployment/version proof remain pending.
+- Second review continuation: five findings on corrected head `a023ec3b33f91268daea4e3b3e4c4dc732c5aae6` are addressed locally through a database-level restrictive entitlement boundary, generic Billing/Test/Daily rejection, exact page-scoped owner resolution, canonical reader documentation and a checksum-pinned explicit rollout/postflight runbook. The migration remains unapplied. A separate unrelated Expo patch drift leaves Mobile CI red and is outside this lock.
+- 2026-09-18 current review correction: merged main/#1133 and implemented rollout-order-independent Creator entitlement enforcement, canonical inactive-route projection, temporary-expiry-bounded Mobile offline cache and atomic foreign-membership rejection. State remains IMPLEMENTED_NOT_VERIFIED until complete current-head checks and independent review; no Production apply or live-user action is authorized or performed.
+- 2026-09-18 PR #1134 CI closeout: Creator RLS policy syntax corrected without ACL/write-boundary relaxation; Expo SDK 57 package quartet aligned to the current Doctor contract; fresh bounded Mobile dependency assessment recorded through 2026-10-02 with exact observed packages and unchanged high/critical fail-closed boundaries. Also corrected nonexistent Zurich dates and NULL database modes from current review. Pending exact-head CI/review; no Production or live mutation.

@@ -284,3 +284,9 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Attempt: push merge commit `2a0a01e` to existing PR branch `codex/analysiere-den-stand-von-fanmind-jx59qz` after proving current `main` (`5114e9a`) is an ancestor and the source tree is unchanged from PR head `27ea3bc`.
 - Result: GitHub HTTPS authentication was unavailable (`could not read Username`), so the remote PR remains on its stale one-parent head and still reports conflicts.
 - Do not repeat: creating another PR from the old snapshot or another local-only merge commit does not repair #1131. The existing remote branch must receive a normal merge of current `main` from a GitHub-authenticated Codex Cloud task.
+
+## 2026-09-18 — Local Expo Doctor external metadata lookup unavailable
+- Area: PR #1134 Mobile CI closeout.
+- Attempt: run the pinned Expo Doctor after installing the exact current SDK 57 patch quartet.
+- Result: local Doctor completed 18/20 and failed only its two remote metadata checks because the execution environment could not reach the Expo API (`ENETUNREACH`). TypeScript, store/boundary/native prebuild and Android/iOS exports completed separately.
+- Do not repeat: do not add Doctor excludes, ignore rules or package downgrades. Require the normal connected GitHub Mobile CI to prove 20/20 on the exact published head.
