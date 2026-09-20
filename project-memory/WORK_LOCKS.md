@@ -760,3 +760,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence plan: focused exact-arithmetic/version/boundary tests, lint/type/build/full test suite, Project Memory controls and exact-head remote CI/CodeQL/independent review after publication.
 - Review correction: all three P2 findings are addressed in the bounded cost/usage modules with explicit malformed-value and missing-service-tier regression coverage. Full local checks, same-PR push, exact-head CI, thread replies/resolution and one renewed `@codex review` remain required before the lock can be released; never merge from this task.
 - Resume from: add an atomic, idempotent, tenant-bound monthly reservation/ledger as a separate controlled package; do not wire enforcement before its schema/RLS/concurrency acceptance exists.
+## LOCK-FM-CREATOR-PRIVACY-20260920
+- Task: FM-CREATOR-001
+- Status: RELEASED_FOR_PR
+- Risk: R3
+- Holder: Codex
+- Baseline: main `32223a6f0fef1c000c1d64ef3fad13f8f6e8be08`; #1141 superseded by merged #1142; valid #1130 disclosure work reconciled rather than blindly merged.
+- Scope: Contact/Account delete completeness, Creator disclosure, tenant/error/secret negatives and Project Memory only. No protected mutation or runtime activation.
+- Evidence: focused deletion/disclosure/Creator regressions, full Operations/lint/build, browser-relevant static UI regression, CodeQL/current-head CI and independent review before merge.
+- Recovery: source revert only. No SQL or real record deletion occurred.

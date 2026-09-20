@@ -264,3 +264,43 @@ export async function deleteManualFollowup(formData: FormData) {
   revalidatePath("/followups");
   redirect(contactPath(contactId, locale, "followup_deleted", "followups"));
 }
+
+export async function deleteContactAndCreatorData(formData: FormData) {
+  const contactId = formValue(formData, "contact_id");
+  const locale = localeFromForm(formData);
+  if (!contactId) redirect(`/fans?notice=contact_delete_invalid${locale === "en" ? "&lang=en" : ""}`);
+
+  const { workspace } =
+    await requireContactInActiveAuthorizedWorkspace(contactId);
+  const key = serviceRoleKey();
+  if (!key) redirect(contactPath(contactId, locale, "contact_delete_failed"));
+
+  const url = new URL(getSupabaseRestUrl("contacts"));
+  url.searchParams.set("id", `eq.${contactId}`);
+  url.searchParams.set("workspace_id", `eq.${workspace.id}`);
+  url.searchParams.set("select", "id,workspace_id");
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      ...getSupabaseHeaders(key),
+      Prefer: "return=representation",
+    },
+    cache: "no-store",
+  }).catch(() => null);
+  const rows = response?.ok
+    ? await response.json().catch(() => null)
+    : null;
+  if (
+    !Array.isArray(rows) ||
+    rows.length !== 1 ||
+    rows[0]?.id !== contactId ||
+    rows[0]?.workspace_id !== workspace.id
+  ) {
+    redirect(contactPath(contactId, locale, "contact_delete_failed"));
+  }
+
+  revalidatePath("/fans");
+  revalidatePath("/dashboard");
+  revalidatePath("/followups");
+  redirect(`/fans?notice=contact_deleted${locale === "en" ? "&lang=en" : ""}`);
+}

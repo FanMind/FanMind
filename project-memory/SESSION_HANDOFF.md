@@ -336,3 +336,9 @@ Update this file at the end of a substantial work session or whenever work is pa
 - Failed approaches/do-not-repeat references
 - Relevant PR/commit/workflow/evidence references
 - User input still required, if any
+## FM-CREATOR-001 privacy/delete handoff — 2026-09-20
+- Baseline is verified main `32223a6f0fef1c000c1d64ef3fad13f8f6e8be08`; #1142 supersedes every #1141 AI-cost change. This workspace cannot close #1141 because GitHub authentication is absent. Do not rebuild AI cost foundation.
+- PR #1130 was reviewed commit-by-commit. Its complete PDF/owner-private disclosure and fail-closed error path were retained, but its older dataset inventory was reconciled with current-main Creator/Social tables. Active reads fail closed; only explicitly optional not-yet-installed tables map to an honest empty section; tokens/secrets are stripped.
+- Contact delete requires active owner/contact authorization, exact `id + workspace_id`, one returned row and DB cascades for related CRM/Creator evidence. Account deletion rejects a mismatched request Workspace and verifies no remaining rows across the captured Workspace IDs and active/optional Creator families before completion.
+- No SQL, Staging/Production/customer/provider/payment/Mobile mutation occurred. Before merge require all current-head CI/CodeQL and one independent Codex review; do not self-merge.
+- Remaining Creator work: runtime/UI activation acceptance, confirmed-chat persistence/API/database contract, real blinded style quality/onboarding and provider/legal acceptance. Exact next safe implementation is repository-only confirmed-chat persistence/API design.

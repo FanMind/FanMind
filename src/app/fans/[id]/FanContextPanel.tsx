@@ -19,6 +19,7 @@ import {
 import {
   deleteManualFollowup,
   deleteManualMemory,
+  deleteContactAndCreatorData,
   updateManualMemory,
 } from "./contextActions";
 import { FollowupStatusForm } from "@/app/followups/FollowupStatusForm";
@@ -169,6 +170,25 @@ export function FanContextPanel({
           ) : null}
         </div>
       </div>
+      {readOnly ? null : (
+        <form
+          action={deleteContactAndCreatorData}
+          onSubmit={(event) => {
+            const confirmed = window.confirm(
+              locale === "en"
+                ? "Permanently delete this contact and all related conversations, messages, knowledge, follow-ups, analyses and confirmed commercial evidence?"
+                : "Diesen Kontakt und alle zugehörigen Conversations, Nachrichten, Wissenseinträge, Follow-ups, Analysen und bestätigten Commercial-Belege endgültig löschen?",
+            );
+            if (!confirmed) event.preventDefault();
+          }}
+        >
+          <input name="contact_id" type="hidden" value={contact.id} />
+          <input name="lang" type="hidden" value={locale} />
+          <button type="submit">
+            {locale === "en" ? "Delete contact and data" : "Kontakt und Daten löschen"}
+          </button>
+        </form>
+      )}
     </section>
   );
 }
