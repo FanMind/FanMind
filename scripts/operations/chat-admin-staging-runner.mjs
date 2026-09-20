@@ -108,7 +108,8 @@ begin
         policyname = 'chat_admin_characters_owner_all'
         and tablename = 'chat_characters'
         and cmd = 'ALL'
-        and q = 'is_current_chat_admin_workspace(workspace_id)'
+        and q like '%is_current_chat_admin_workspace(workspace_id)%'
+        and q not in ('true', '(true)')
         and wc like '%is_current_chat_admin_workspace(workspace_id)%'
         and wc like '%created_by_user_id=auth.uid()%'
       )
@@ -116,31 +117,47 @@ begin
         policyname = 'chat_admin_conversations_owner_all'
         and tablename = 'chat_character_conversations'
         and cmd = 'ALL'
-        and q = 'is_current_chat_admin_workspace(workspace_id)'
-        and wc = 'is_current_chat_admin_workspace(workspace_id)'
+        and q like '%is_current_chat_admin_workspace(workspace_id)%'
+        and q not in ('true', '(true)')
+        and wc like '%is_current_chat_admin_workspace(workspace_id)%'
+        and wc not in ('true', '(true)')
       )
       or (
         policyname = 'chat_admin_messages_owner_all'
         and tablename = 'chat_character_messages'
         and cmd = 'ALL'
-        and q = 'is_current_chat_admin_workspace(workspace_id)'
-        and wc = 'is_current_chat_admin_workspace(workspace_id)'
+        and q like '%is_current_chat_admin_workspace(workspace_id)%'
+        and q not in ('true', '(true)')
+        and wc like '%is_current_chat_admin_workspace(workspace_id)%'
+        and wc not in ('true', '(true)')
       )
     );
 
   select count(*) into constraint_valid
-  from pg_constraint c
+  from (
+    select
+      conrelid,
+      contype,
+      replace(
+        regexp_replace(lower(pg_get_constraintdef(oid, true)), '[[:space:]]+', '', 'g'),
+        'public.',
+        ''
+      ) as definition
+    from pg_constraint
+    where conrelid in (
+      to_regclass('public.chat_character_conversations'),
+      to_regclass('public.chat_character_messages')
+    )
+  ) c
   where (
       c.conrelid = to_regclass('public.chat_character_conversations')
       and c.contype = 'f'
-      and regexp_replace(pg_get_constraintdef(c.oid, true), '[[:space:]]+', '', 'g')
-        = 'FOREIGNKEY(workspace_id,character_id)REFERENCESchat_characters(workspace_id,id)ONDELETECASCADE'
+      and c.definition = 'foreignkey(workspace_id,character_id)referenceschat_characters(workspace_id,id)ondeletecascade'
     )
     or (
       c.conrelid = to_regclass('public.chat_character_messages')
       and c.contype = 'f'
-      and regexp_replace(pg_get_constraintdef(c.oid, true), '[[:space:]]+', '', 'g')
-        = 'FOREIGNKEY(workspace_id,character_id,conversation_id)REFERENCESchat_character_conversations(workspace_id,character_id,id)ONDELETECASCADE'
+      and c.definition = 'foreignkey(workspace_id,character_id,conversation_id)referenceschat_character_conversations(workspace_id,character_id,id)ondeletecascade'
     );
 
   select count(*) into index_valid
