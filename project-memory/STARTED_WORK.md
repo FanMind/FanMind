@@ -748,8 +748,11 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Completed so far: stale FM-CR-045 selection reconciled to the supplied immutable #1138 release receipt; selector now chooses Creator Intelligence. Pure validator and synthetic tests cover proposal/generation/revision binding, confirmed human outbound, cross-tenant/fan/conversation rejection, evidence-bound later reaction/purchase, nullable unknowns and deterministic edit metrics. Focused Creator tests, lint, generated-type-aware typecheck and Production build pass; Project Memory checks pass. Remote GitHub CI and independent Codex review remain unavailable until this branch is published through an authenticated repository connection.
 - Exact next step: publish one canonical PR, obtain current-head CI/independent review, then merge/deploy only through the normal source workflow. After this bounded package, the next safe implementation is Creator deletion/privacy integration; no schema apply is implied.
 ## FM-AI-001-COST-GUARD-FOUNDATION-20260920
-- Status: IMPLEMENTED_NOT_VERIFIED; Risk: R3; lock: LOCK-FM-AI-001-COST-GUARD-20260920; owner: Codex Cloud.
-- Branch: `feat/ai-cost-guard-20260920` from merged #1140 `56aa4af7735a647266943a10fddfb0d7c97d9562`.
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Lock: LOCK-FM-AI-001-COST-GUARD-20260920
+- Owner: Codex Cloud
+- Branch: `codex/fortfahren-mit-merge-pr-#1140` from merged #1140 `56aa4af7735a647266943a10fddfb0d7c97d9562`.
 - Scope: bounded repository-only provider-usage normalization, versioned server-price calculation and unconfigured monthly budget-decision foundation. No schema/RLS, provider, Stripe, Production or runtime-enforcement activation.
 - Completed so far: exact cached/uncached/cache-write/output cost arithmetic, model/service-tier/time price selection, 79/80/99/100 boundary decisions and unconfigured-limit behavior tests.
 - Still open: atomic idempotent Workspace-month reservation/ledger schema and controlled rollout, productive pre/post-call wiring, category persistence/admin projections, concurrency/provider-error/fallback integration tests, owner-approved tier limits and independent current-head CI/CodeQL/review.
