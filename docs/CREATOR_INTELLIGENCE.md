@@ -189,14 +189,20 @@ keinen kausalen Verkaufserfolg aus zeitlicher Nähe behaupten. Preise/Grenzen
 Creator-Nachrichten und die verblindete Stimmenbewertung sind noch offen.
 
 Der repository-seitige, nebenwirkungsfreie Lernvertrag ist inzwischen in
-`src/lib/creatorConfirmedChatLearning.mjs` vorbereitet. Er bindet Vorschlags-
-und Generierungs-ID an die exakte Creator- und Prompt-Revision und erzwingt für
-Vorschlag, bestätigten Ausgang, Reaktion und Kaufbeleg identische Workspace-,
-Creator-, Fan- und Conversation-Schlüssel. Eine bloße Auswahl bleibt ohne
-bestätigte Outbound-Message ausdrücklich ohne Messwert. Änderungen am Entwurf
-werden reproduzierbar als Edit-Distanz/-Quote gemessen; unbekannte Reaktion und
-unbekannter Kauf bleiben getrennt unbekannt. Zusammenfassungen zählen nur
-explizite Verknüpfungen und nennen sie nie Conversion oder kausalen Erfolg.
+`src/lib/creatorConfirmedChatLearning.mjs` vorbereitet. Der bestätigte Outbound
+muss Vorschlags- und Generierungs-ID sowie die exakte Creator- und Prompt-
+Revision unverändert wiederholen. Vorschlag, Ausgang, Reaktion und Kaufbeleg
+tragen identische Workspace-, Creator-, Fan- und Conversation-Schlüssel. Ein
+Kauf zählt nur mit einer expliziten, belegten Verknüpfung zurück zu genau diesem
+Proposal, dieser Generation und Outbound-Message; bloße zeitliche Nähe bleibt
+unbekannt. Eine bloße Auswahl bleibt ebenfalls ohne Messwert.
+
+Änderungen am Entwurf werden nach NFC-Normalisierung auf Grapheme-Clustern als
+Edit-Distanz/-Quote gemessen. Text- und Batch-Grenzen brechen ohne Trunkierung
+fail-closed ab; Zeitwerte dürfen nur innerhalb einer maximal 30-sekündigen
+Toleranz in der Zukunft liegen. Eine Zusammenfassung verlangt einen erwarteten
+Workspace und Creator, lehnt gemischte Mandanten sowie doppelte stabile
+Evidence-IDs ab und nennt verknüpfte Belege nie Conversion oder kausalen Erfolg.
 
 Diese Vorbereitung persistiert noch nichts, sendet keine Nachricht, ruft kein
 Modell auf und ändert weder Stil noch Preise/Playbook automatisch. Vor realer
