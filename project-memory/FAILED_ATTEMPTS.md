@@ -311,3 +311,6 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Attempt: run the pinned Expo Doctor after installing the exact current SDK 57 patch quartet.
 - Result: local Doctor completed 18/20 and failed only its two remote metadata checks because the execution environment could not reach the Expo API (`ENETUNREACH`). TypeScript, store/boundary/native prebuild and Android/iOS exports completed separately.
 - Do not repeat: do not add Doctor excludes, ignore rules or package downgrades. Require the normal connected GitHub Mobile CI to prove 20/20 on the exact published head.
+# Superseded/open-PR reconciliation — 2026-09-20
+- PR #1141's AI-cost implementation is fully superseded by corrected merged #1142 on main `32223a6f`; none of #1141 was reimplemented. Closing/labeling #1141 was not attempted through an unauthenticated `gh` client; a maintainer with repository write access must close it as superseded.
+- PR #1130 was not blindly merged: its older disclosure inventory omitted newer Creator/Social datasets. The still-valid route/PDF/private-reader/error work was integrated and the dataset inventory was explicitly reconciled with current main.

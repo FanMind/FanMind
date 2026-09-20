@@ -71,7 +71,7 @@ nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
 und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
 Grundlage. Der Lauf hat keine Creator-Aktivierung vorgenommen. Der tatsächliche
 Creator-Schalter im laufenden Staging-Prozess wurde nicht unabhängig geprüft.
-Aktivierte Oberfläche, Kontakt-/Kontolöschung, echte Schreibqualität, Lernen und
+Aktivierte Creator-Runtime, reale Zielabnahme der repository-seitig vorbereiteten Kontakt-/Kontolöschung, echte Schreibqualität, persistentes Lernen und
 Plattformfreigaben bleiben offen; eine Production-Aktivierung ist nicht belegt.
 
 

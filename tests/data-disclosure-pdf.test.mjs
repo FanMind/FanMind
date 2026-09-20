@@ -125,8 +125,8 @@ test("profile offers one localized protected PDF download without legacy mail or
   assert.match(route, /getSupabaseServerUser\(\)/u);
   assert.match(route, /getUserWorkspaceDashboard\(data\.user\)/u);
   assert.match(route, /getAllWorkspaceContactsForDisclosure\(workspace\.id\)/u);
-  assert.match(route, /getWorkspaceMetaDataForDisclosure\(workspace\.id\)/u);
-  assert.match(route, /storedDataSections:\s*buildStoredDataSections/u);
+  assert.match(route, /getWorkspaceMetaDataForDisclosure\(workspace\.id, data\.user\.id\)/u);
+  assert.match(route, /buildStoredDataSections\(\[\.\.\.storedData, \.\.\.privateData\], locale\)/u);
   assert.match(route, /await createDataDisclosurePdf\(/u);
   assert.match(route, /Content-Type": "application\/pdf"/u);
   assert.match(route, /Cache-Control": "private, no-store"/u);

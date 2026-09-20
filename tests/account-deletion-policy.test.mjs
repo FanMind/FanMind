@@ -27,6 +27,7 @@ import {
 
 const REQUEST_ID = "11111111-1111-4111-8111-111111111111";
 const USER_ID = "22222222-2222-4222-8222-222222222222";
+const WORKSPACE_ID = "33333333-3333-4333-8333-333333333333";
 const ACCOUNT_EMAIL = "owner@example.com";
 const SERVICE_KEY = "service-role-test-key-that-must-never-be-logged";
 const HASH_SECRET = "account-deletion-hash-secret-at-least-32-bytes";
@@ -36,7 +37,7 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
   const deletionRequest = {
     id: REQUEST_ID,
     user_id: USER_ID,
-    workspace_id: null,
+    workspace_id: WORKSPACE_ID,
     notification_email: ACCOUNT_EMAIL,
     request_source: "mobile",
     status: "pending",
@@ -82,10 +83,19 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
         headers: { "Content-Type": "application/json" },
       });
     }
+    if (value.includes("/rest/v1/workspaces") && value.includes("owner_user_id=eq")) {
+      return new Response(JSON.stringify(method === "GET" && !calls.some(
+        (call) => call.method === "DELETE" && call.url.includes("/auth/v1/admin/users/"),
+      ) ? [{ id: WORKSPACE_ID, owner_user_id: USER_ID, billing_status: "demo_free" }] : []), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     if (
       value.includes("/rest/v1/workspaces") ||
       value.includes("/rest/v1/workspace_members") ||
-      value.includes("/rest/v1/profiles")
+      value.includes("/rest/v1/profiles") ||
+      value.includes("/rest/v1/")
     ) {
       return new Response(JSON.stringify([]), {
         status: 200,
@@ -391,6 +401,26 @@ test("explicit eligible execution deletes only through Supabase Admin and retain
       call.method === "DELETE" && call.url.includes("/auth/v1/admin/users/"),
   );
   assert.equal(authDeletes.length, 1);
+  for (const table of [
+    "contacts",
+    "conversations",
+    "conversation_messages",
+    "contact_ai_profiles",
+    "creators",
+    "creator_voice_profiles",
+    "creator_sales_playbooks",
+    "creator_commercial_events",
+  ]) {
+    assert.ok(
+      calls.some(
+        (call) =>
+          call.method === "GET" &&
+          call.url.includes(`/rest/v1/${table}?`) &&
+          call.url.includes(`workspace_id=eq.${WORKSPACE_ID}`),
+      ),
+      `post-delete verification must cover ${table}`,
+    );
+  }
   const completionPatch = calls
     .filter(
       (call) =>

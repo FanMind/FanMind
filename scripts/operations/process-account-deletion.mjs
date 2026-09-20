@@ -232,6 +232,12 @@ export async function evaluateAccountDeletionEligibility({
   ) {
     throw new AccountDeletionProcessorError("request_email_mismatch");
   }
+  if (
+    request.workspace_id &&
+    !workspaces.some((workspace) => workspace.id === request.workspace_id)
+  ) {
+    throw new AccountDeletionProcessorError("request_workspace_mismatch");
+  }
 
   let otherMemberCount = 0;
   let requiresSubscriptionResolution = false;
@@ -272,7 +278,67 @@ async function deleteAuthUser(fetchImpl, config, userId) {
   }
 }
 
-async function verifyDeletion(fetchImpl, config, userId) {
+const WORKSPACE_DELETION_TABLES = [
+  "contacts",
+  "memories",
+  "followups",
+  "conversations",
+  "conversation_messages",
+  "conversation_summaries",
+  "contact_ai_profiles",
+  "fan_analysis_reports",
+  "communication_analysis_reports",
+  "contact_reply_targets",
+  "workspace_voice_profiles",
+  "social_connections",
+  "content_sources",
+  "content_metric_snapshots",
+  "creators",
+  "creator_voice_profiles",
+  "creator_sales_playbooks",
+  "creator_commercial_events",
+];
+
+const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
+  "communication_analysis_reports",
+  "content_metric_snapshots",
+  "creators",
+  "creator_voice_profiles",
+  "creator_sales_playbooks",
+  "creator_commercial_events",
+]);
+
+async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {
+  for (const workspaceId of workspaceIds) {
+    for (const table of WORKSPACE_DELETION_TABLES) {
+      const { response, payload } = await requestJson(
+        fetchImpl,
+        `${config.supabaseUrl}/rest/v1/${table}?${new URLSearchParams({
+          select: "workspace_id",
+          workspace_id: `eq.${workspaceId}`,
+          limit: "1",
+        })}`,
+        { headers: serviceHeaders(config.serviceKey) },
+        "deletion_verification_failed",
+      );
+      if (!response.ok) {
+        const errorText = JSON.stringify(payload ?? "").toLowerCase();
+        const missingSchema =
+          response.status === 404 ||
+          errorText.includes("schema cache") ||
+          errorText.includes("does not exist") ||
+          errorText.includes("could not find");
+        if (OPTIONAL_WORKSPACE_DELETION_TABLES.has(table) && missingSchema) continue;
+        throw new AccountDeletionProcessorError("deletion_verification_failed");
+      }
+      if (!Array.isArray(payload) || payload.length > 0) {
+        throw new AccountDeletionProcessorError("deletion_verification_failed");
+      }
+    }
+  }
+}
+
+async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
   const checks = await Promise.all([
     restSelect(
       fetchImpl,
@@ -302,6 +368,7 @@ async function verifyDeletion(fetchImpl, config, userId) {
   if (checks.some((rows) => rows.length > 0)) {
     throw new AccountDeletionProcessorError("deletion_verification_failed");
   }
+  await verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds);
 }
 
 async function sendCompletionEmail(fetchImpl, env, email, requestId) {
@@ -404,9 +471,10 @@ async function finalizeDeletedAccount({
   request,
   userId,
   hashSecret,
+  workspaceIds,
   log,
 }) {
-  await verifyDeletion(fetchImpl, config, userId);
+  await verifyDeletion(fetchImpl, config, userId, workspaceIds);
   const notificationEmail = String(request.notification_email ?? "")
     .trim()
     .toLowerCase();
@@ -523,6 +591,7 @@ export async function processAccountDeletion({
       request,
       userId: request.user_id,
       hashSecret,
+      workspaceIds: request.workspace_id ? [request.workspace_id] : [],
       log,
     });
     return { executed: true, resumed: true, eligibility: null, finalStatus };
@@ -592,6 +661,7 @@ export async function processAccountDeletion({
     request: { ...request, status: "processing" },
     userId: request.user_id,
     hashSecret,
+    workspaceIds: workspaces.map((workspace) => workspace.id),
     log,
   });
   return { executed: true, resumed: resuming, eligibility, finalStatus };

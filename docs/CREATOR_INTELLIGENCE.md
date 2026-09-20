@@ -94,8 +94,16 @@ Creator sind unterschiedliche Identitäten.
 Das Datenmodell und seine Autorisierungs-/Migrationsverträge wurden vor der
 Pipeline-Änderung definiert. Die geschützte Staging-Grundlagenabnahme 34629009649
 auf f0c7a84e belegt echte JWT-Kontentrennung, einen Stil, atomare Freigaben/
-Revisionen, PDF-Auskunft und Testbereinigung. Aktivierte Oberfläche, vollständige
-Kontakt-/Kontolöschung, reale Qualität/Lernen und Provider-Freigaben bleiben offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code erweitert. Der Server
+Revisionen, PDF-Auskunft und Testbereinigung. Die repository-seitige
+Kontakt-/Kontolöschung und vollständige Creator-Datenauskunft sind im bounded
+Privacy-Paket vorbereitet: Kontaktlöschung ist Owner-/Workspace-gebunden und
+nutzt die vorhandenen Cascades; Kontolöschung prüft nach dem Workspace-Cascade
+die aktiven und optional installierten Creator-Datenfamilien; autorisierte
+Exportfehler brechen die Auskunft ab und Provider-Secrets werden nicht
+ausgegeben. Merge/Deployment und reale Zielabnahme bleiben davon getrennt.
+Aktivierte Oberfläche, reale Qualität/Lernen und Provider-Freigaben bleiben
+offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code
+erweitert. Der Server
 lädt automatisch Agenturregeln, richtigen Creator, freigegebene Voice und
 Playbook, Fanwissen, Gesprächskontext und aktuelles Ziel. Keine Prompt-Auswahl
 pro Nachricht. Missing-/Mismatch-Kontext darf nicht auf eine fremde Stimme fallen.
@@ -207,5 +215,5 @@ Evidence-IDs ab und nennt verknüpfte Belege nie Conversion oder kausalen Erfolg
 Diese Vorbereitung persistiert noch nichts, sendet keine Nachricht, ruft kein
 Modell auf und ändert weder Stil noch Preise/Playbook automatisch. Vor realer
 Nutzung fehlen weiterhin der kontrollierte Datenbankvertrag, autorisierte
-Server-Routen, Disclosure/Deletion/Export-Integration und reale verblindete
+Server-Routen und ein kontrollierter Persistenzvertrag sowie reale verblindete
 Qualitätsabnahme mit privaten, freigegebenen Beispielen.
