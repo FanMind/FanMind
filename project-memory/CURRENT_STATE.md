@@ -1,4 +1,9 @@
-## Facebook Production OAuth placeholder blocker — 2026-09-19
+## #1138 Production-confirmed; Creator learning is next — 2026-09-19
+- FM-CR-045 is Source/Runtime `PRODUCTION_CONFIRMED`: canonical PR #1138 final head `cea0d43108187a4dcd2510f17798f250d4a3c429`, merge `ccfe0ccef743e889d4ea16d454282cf66e465ed9`, Production Deploy `35450031498`, Production Audit `35450097882` and Public Go-Live Readiness `35450097892` succeeded. Do not repeat the placeholder/OAuth fail-closed work.
+- The remaining Facebook step is owner/provider-controlled real Meta app/server configuration and bounded connection/inbound evidence. It is not executable repository work and must not expose credentials.
+- The safe selected repository action is now `NBA-CREATOR-INTELLIGENCE`; the current bounded package prepares confirmed-chat validation and synthetic metrics without persistence, provider calls, automatic sending or protected target changes.
+
+## Facebook Production OAuth placeholder blocker — 2026-09-19 (historical pre-#1138 state)
 - Real owner test on Production release `67773a794936ba48100d811e21358239d72e26b3`: `/channels` correctly reaches the Facebook Beta control, but clicking “Eigene Facebook-Seite verbinden” generated an OAuth URL with example placeholder App ID and callback host. Meta returned “Ungültige App-ID”; therefore no real connection or message/comment import occurred.
 - This is a Production runtime configuration/readiness defect, not an Admin-CRM/login defect. The existing free account and Workspace remain correct.
 - FM-CR-045 source correction rejects example placeholders before provider navigation, makes `/channels` report the configuration as incomplete, removes misleading reservation/Coming-Soon UI for Facebook/Instagram Beta controls, and exposes the existing Facebook comment-sync action after separate comment authorization.
@@ -430,9 +435,9 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-SOC3-001:** FM-CR-045 is the current executable repository priority after the real Facebook test exposed placeholder Production OAuth configuration. Make placeholder App IDs/secrets/callbacks fail closed, show the true Meta Beta readiness, expose Facebook comment sync after separate permission, and complete current-head CI/review/deploy. Then the owner securely binds the real central Meta app/server values and retries Facebook only. Real provider consent/App Review/permissions/webhook/inbound evidence remains external.
+1. **FM-CREATOR-001:** source #1099-#1108 and the bounded schema/JWT/revision/PDF foundation 34629009649 are complete. Continue the parallel-safe confirmed-chat/quality and deletion/privacy work without repeating installed SQL or completed publication; protected target changes remain separate.
 2. **FM-REG-003:** FM-CR-043 is PRODUCTION_CONFIRMED and the existing real 0-EUR account works. Do not repeat registration, grant or Production DB apply. The only open Admin-CRM boundary is the separately owner-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle; no additional real grants until it is accepted.
-3. **FM-CREATOR-001:** source #1099-#1108 and the bounded schema/JWT/revision/PDF foundation 34629009649 are complete. Continue only later parallel-safe deployed-flag/UI/delete/quality/learning work without repeating installed SQL or completed publication.
+3. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
 4. **FM-SOC7-001:** TikTok/X connection/preview source and dated Social schema installation #1104 / 34591339718 / 34591566257 remain complete; actual apps/consent/budget/provider and full CRM ingestion remain open. Discord stays later; OnlyFans retains the implemented manual handoff and separate direct-access feasibility.
 5. **FM-MOB-001:** FM-DEC-021 defers every remaining Mobile/Handy step until company registration is complete and the owner explicitly resumes Mobile. Creator/Social completion alone never restarts Mobile.
 6. **FM-RST-001:** DB_POSTCHECKED and private Storage controller preparation remain accepted. Real Storage target/upload/cost and final acceptance remain owner-deferred; no repeated database Restore.

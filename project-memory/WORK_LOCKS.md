@@ -1,6 +1,17 @@
+## LOCK-FM-CREATOR-CONFIRMED-CHAT-20260919
+- Task: FM-CREATOR-001
+- Status: RELEASED_FOR_PR
+- Risk: R2
+- Holder: Codex
+- Baseline: local main snapshot `ccfe0ccef743e889d4ea16d454282cf66e465ed9`; remote/GitHub refresh unavailable because this workspace has neither an `origin` remote nor authenticated `gh`.
+- Scope: #1138 memory reconciliation plus repository-only confirmed-chat learning contract and deterministic synthetic quality harness. No schema Apply, provider/model call, Production/Staging write, payment, real account mutation or Mobile work.
+- Evidence: strict boundary and nullable-outcome negatives, edit-distance metrics, Creator regressions, lint/type/build and Project Memory checks.
+- Recovery: bounded source/docs revert; no external rollback.
+- Local closeout: implementation and negative tests are verified; Project Memory selection is reconciled. The lock is released for the single canonical PR, but the work is not remotely reviewed, merged, deployed or runtime-accepted. Do not create a duplicate PR or infer persistence/activation.
+
 ## LOCK-FM-SOCIAL-INBOUND-20260919
 - Task: FM-SOC3-001 / FM-CR-044
-- Status: ACTIVE
+- Status: RELEASED
 - Risk: R3
 - Holder: ChatGPT/Codex
 - Baseline: Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Admin-CRM login is owner-confirmed working; current Production read-only count is zero Facebook/Instagram connections for Admin-CRM workspaces.
@@ -15,6 +26,7 @@
 - Third review follow-through additionally requires unknown timestamps last plus bounded per-request comment persistence with durable continuation using only the existing comment-status columns; no DB/schema mutation is authorized.
 - Fourth review follow-through additionally requires a durable completed provider high-water separate from pending/error state and a bounded recent 25-post feed window that does not fail on older feed pages. Comment pagination remains strict; no schema change is allowed.
 - Final review follow-through additionally requires active-app-origin callback binding, per-connection single-flight manual comment sync and oldest-first provider-time persistence. Keep release blocked until the new exact head is green and independently reviewed with no P1/P2.
+- Released by the canonical #1138 receipt: final head `cea0d43108187a4dcd2510f17798f250d4a3c429`, merge `ccfe0ccef743e889d4ea16d454282cf66e465ed9`, Production Deploy `35450031498`, Production Audit `35450097882`, Public Go-Live Readiness `35450097892`. Remaining real Meta configuration/acceptance is owner/provider action, not a continuation of this repository lock.
 
 ## LOCK-FM-REG-003-LOGIN-BILLING-REDIRECT-20260919
 - Task: FM-REG-003 / FM-CR-043

@@ -73,8 +73,8 @@
 - Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
 - Required for sales: false.
 - Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
-- Completed so far: source #1099-#1108 published. Own-account/single-style schema installed and upgraded on isolated Staging; real JWT/revision/approval/PDF acceptance 34629009649 and independent cleanup/member revocation/post-read passed (FM-EV-CREATOR-FOUNDATION-20260911). Deployed flag, enabled UI, full contact/account deletion, actual quality/learning/provider acceptance remain open.
-- Exact next step: repository and controlled synthetic-Staging UI/delete/learning engineering plus independent deployed-flag verification; external account/consent/provider/quality steps remain separate. Follow mutable freshness triggers/TTL; no repeated foundation Apply/Upgrade, Android or paid activation.
+- Completed so far: source #1099-#1108 published. Own-account/single-style schema installed and upgraded on isolated Staging; real JWT/revision/approval/PDF acceptance 34629009649 and independent cleanup/member revocation/post-read passed (FM-EV-CREATOR-FOUNDATION-20260911). The repository-only confirmed-chat validator now binds proposal/generation and revisions to a human-confirmed outbound, enforces identical Workspace/Creator/fan/conversation scope, preserves unknown reaction/purchase and measures edits deterministically without claiming causality. Deployed flag, enabled UI, persistence/API integration, full contact/account deletion and actual blinded quality/provider acceptance remain open.
+- Exact next step: review and publish the bounded confirmed-chat contract, then continue repository-only Creator deletion/privacy integration or controlled UI work. Any persistence schema/target rollout remains a separate reviewed scope; follow mutable freshness triggers/TTL and do not repeat foundation Apply/Upgrade, Android or paid activation.
 
 ## FM-SEC-002
 - Date: 2026-09-10

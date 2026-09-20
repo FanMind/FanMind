@@ -1,4 +1,9 @@
-## Facebook OAuth Production configuration blocker — 2026-09-19
+## #1138 reconciled; Creator confirmed-chat work selected — 2026-09-19
+- FM-CR-045 is `PRODUCTION_CONFIRMED` from #1138 final head `cea0d43108187a4dcd2510f17798f250d4a3c429`, merge `ccfe0ccef743e889d4ea16d454282cf66e465ed9`, deploy `35450031498`, audit `35450097882` and readiness `35450097892`. Never rebuild that source scope.
+- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` now represents only owner/provider-controlled real Meta configuration and acceptance, so selection advances to repository-safe `NBA-CREATOR-INTELLIGENCE`.
+- The current R2 package implements only a pure confirmed-chat validator/metric harness: exact proposal/generation and revision binding, same tenant/Creator/fan/conversation, confirmed outbound before outcomes, nullable unknown reaction/purchase and deterministic edit metrics. Persistence, runtime API, real quality acceptance, provider calls and automatic sends remain absent.
+
+## Facebook OAuth Production configuration blocker — 2026-09-19 (historical pre-#1138 state)
 - #1137 is merged/deployed as `67773a794936ba48100d811e21358239d72e26b3`. Owner tested the existing free account at `/channels`.
 - Facebook button was enabled and FanMind claimed “Serverkonfiguration: bereit”, but the actual external OAuth URL contained only example placeholder App ID/callback values. Meta rejected it as “Ungültige App-ID”; no social connection exists.
 - FM-CR-045 is the current repository fix: placeholder values must count as unconfigured, provider navigation must fail closed, Meta Beta UI must show real status rather than reservation/Coming-Soon cards, and the existing Facebook comment sync becomes visible after comment permission.
