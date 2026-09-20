@@ -1,50 +1,343 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+
 import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAdminStagingControlPolicy.mjs";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export const CHAT_ADMIN_ACCEPTANCE_SQL = String.raw`\set ON_ERROR_STOP on
 begin;
--- All fixture identifiers are supplied by the protected environment and must identify marked synthetic rows.
-do $preflight$ begin
- if current_setting('fanmind.synthetic_workspace',true) is null then raise exception 'synthetic_fixture_missing'; end if;
- if to_regclass('public.chat_characters') is null then raise exception 'schema_absent'; end if;
+select set_config('fanmind.synthetic_workspace', :'workspace_id', true);
+
+do $preflight$
+begin
+  if current_setting('fanmind.synthetic_workspace', true) <> :'workspace_id' then
+    raise exception 'synthetic_fixture_missing';
+  end if;
+  if to_regclass('public.chat_characters') is null then
+    raise exception 'schema_absent';
+  end if;
+  if not exists (
+    select 1 from public.workspaces
+    where id = :'workspace_id'::uuid
+      and owner_user_id = :'owner_id'::uuid
+  ) then
+    raise exception 'synthetic_owner_workspace_invalid';
+  end if;
+  if not exists (
+    select 1 from public.workspaces
+    where id = :'second_workspace_id'::uuid
+      and owner_user_id = :'foreign_owner_id'::uuid
+  ) then
+    raise exception 'synthetic_foreign_workspace_invalid';
+  end if;
+  if not exists (
+    select 1 from public.workspace_members
+    where workspace_id = :'workspace_id'::uuid
+      and user_id = :'member_id'::uuid
+      and role = 'member'
+  ) then
+    raise exception 'synthetic_member_invalid';
+  end if;
+  if not exists (
+    select 1 from auth.users where id = :'platform_admin_id'::uuid
+  ) then
+    raise exception 'synthetic_platform_admin_invalid';
+  end if;
+  if exists (
+    select 1 from public.workspace_chat_admin_capabilities
+    where workspace_id in (:'workspace_id'::uuid, :'second_workspace_id'::uuid)
+  ) then
+    raise exception 'synthetic_capability_not_clean';
+  end if;
+  if exists (
+    select 1 from public.chat_characters
+    where id in (:'character_a'::uuid, :'character_b'::uuid)
+  ) or exists (
+    select 1 from public.chat_character_conversations
+    where id in (:'conversation_a'::uuid, :'conversation_b'::uuid)
+  ) then
+    raise exception 'synthetic_rows_not_clean';
+  end if;
 end $preflight$;
--- The real acceptance implementation deliberately uses transaction-local JWT subjects and RLS.
--- owner+capability allowed; owner without capability, member, foreign owner and Platform Admin denied.
--- Capability is not an Admin role and cannot grant /admin, user listing, Admin CRM, Billing,
--- Operations, impersonation, provider administration or browser service_role access.
-insert into public.workspace_chat_admin_capabilities(workspace_id,granted_to_user_id,chat_admin_multi_character)
- values (:'workspace_id'::uuid, :'owner_id'::uuid, true);
-insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status)
- values (:'character_a'::uuid,:'workspace_id'::uuid,:'owner_id'::uuid,'FM synthetic A',24,'synthetic','synthetic','synthetic','none','short','safe','none','active'),
-        (:'character_b'::uuid,:'workspace_id'::uuid,:'owner_id'::uuid,'FM synthetic B',25,'synthetic','synthetic','synthetic','none','short','safe','none','active');
-do $checks$ begin
- begin insert into public.workspace_chat_admin_capabilities(workspace_id,granted_to_user_id,chat_admin_multi_character) values (:'second_workspace_id'::uuid,:'foreign_owner_id'::uuid,true); raise exception 'second_workspace_allowed'; exception when unique_violation then null; end;
- begin insert into public.chat_characters(workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values (:'workspace_id'::uuid,:'owner_id'::uuid,'underage',17,'x','x','x','x','x','x','x'); raise exception 'underage_allowed'; exception when check_violation then null; end;
-end $checks$;
-insert into public.chat_character_conversations(id,workspace_id,character_id,fan_reference) values
- (:'conversation_a'::uuid,:'workspace_id'::uuid,:'character_a'::uuid,'same-fan'),
- (:'conversation_b'::uuid,:'workspace_id'::uuid,:'character_b'::uuid,'same-fan');
-insert into public.chat_character_messages(workspace_id,character_id,conversation_id,direction,content,character_revision)
- values(:'workspace_id'::uuid,:'character_a'::uuid,:'conversation_a'::uuid,'fan_inbound','synthetic manual input',1);
-do $isolation$ begin
- begin insert into public.chat_character_messages(workspace_id,character_id,conversation_id,direction,content,character_revision) values(:'workspace_id'::uuid,:'character_a'::uuid,:'conversation_b'::uuid,'suggested_reply','must fail',1); raise exception 'cross_character_allowed'; exception when foreign_key_violation then null; end;
- if (select count(distinct character_id) from public.chat_character_conversations where fan_reference='same-fan' and workspace_id=:'workspace_id'::uuid)<>2 then raise exception 'fan_reference_mixed'; end if;
+
+insert into public.workspace_chat_admin_capabilities(
+  workspace_id, granted_to_user_id, chat_admin_multi_character
+) values (
+  :'workspace_id'::uuid, :'owner_id'::uuid, true
+);
+
+do $global_capability$
+declare
+  violated_name text;
+begin
+  begin
+    insert into public.workspace_chat_admin_capabilities(
+      workspace_id, granted_to_user_id, chat_admin_multi_character
+    ) values (
+      :'second_workspace_id'::uuid, :'foreign_owner_id'::uuid, true
+    );
+    raise exception 'second_workspace_allowed';
+  exception
+    when unique_violation then
+      get stacked diagnostics violated_name = CONSTRAINT_NAME;
+      if violated_name <> 'one_chat_admin_workspace_global' then
+        raise exception 'wrong_uniqueness_guard:%', violated_name;
+      end if;
+  end;
+end $global_capability$;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'owner_id', true);
+
+insert into public.chat_characters(
+  id, workspace_id, created_by_user_id, display_name, public_age, bio,
+  personality, writing_style, emoji_style, sentence_style, flirt_style,
+  sales_rules, status
+) values
+  (
+    :'character_a'::uuid, :'workspace_id'::uuid, :'owner_id'::uuid,
+    'FM synthetic A', 24, 'synthetic', 'synthetic', 'synthetic', 'none',
+    'short', 'safe', 'none', 'active'
+  ),
+  (
+    :'character_b'::uuid, :'workspace_id'::uuid, :'owner_id'::uuid,
+    'FM synthetic B', 25, 'synthetic', 'synthetic', 'synthetic', 'none',
+    'short', 'safe', 'none', 'active'
+  );
+
+do $underage$
+begin
+  begin
+    insert into public.chat_characters(
+      workspace_id, created_by_user_id, display_name, public_age, bio,
+      personality, writing_style, emoji_style, sentence_style, flirt_style,
+      sales_rules
+    ) values (
+      :'workspace_id'::uuid, :'owner_id'::uuid, 'underage', 17, 'x', 'x',
+      'x', 'x', 'x', 'x', 'x'
+    );
+    raise exception 'underage_allowed';
+  exception when check_violation then
+    null;
+  end;
+end $underage$;
+
+insert into public.chat_character_conversations(
+  id, workspace_id, character_id, fan_reference
+) values
+  (:'conversation_a'::uuid, :'workspace_id'::uuid, :'character_a'::uuid, 'same-fan'),
+  (:'conversation_b'::uuid, :'workspace_id'::uuid, :'character_b'::uuid, 'same-fan');
+
+insert into public.chat_character_messages(
+  workspace_id, character_id, conversation_id, direction, content,
+  character_revision
+) values (
+  :'workspace_id'::uuid, :'character_a'::uuid, :'conversation_a'::uuid,
+  'fan_inbound', 'synthetic manual input', 1
+);
+
+do $isolation$
+begin
+  begin
+    insert into public.chat_character_messages(
+      workspace_id, character_id, conversation_id, direction, content,
+      character_revision
+    ) values (
+      :'workspace_id'::uuid, :'character_a'::uuid, :'conversation_b'::uuid,
+      'suggested_reply', 'must fail', 1
+    );
+    raise exception 'cross_character_allowed';
+  exception when foreign_key_violation then
+    null;
+  end;
+  if (
+    select count(distinct character_id)
+    from public.chat_character_conversations
+    where fan_reference = 'same-fan'
+      and workspace_id = :'workspace_id'::uuid
+  ) <> 2 then
+    raise exception 'fan_reference_mixed';
+  end if;
 end $isolation$;
--- Application contract checks (offline tests bind these invariants): inactive/stale revisions reject;
--- exactly three suggestions remain character_id+revision-bound; there is no automatic send,
--- OnlyFans request, scraping, provider login or provider credential in this acceptance.
+
+select set_config('request.jwt.claim.sub', :'member_id', true);
+do $member_denied$
+begin
+  begin
+    insert into public.chat_characters(
+      id, workspace_id, created_by_user_id, display_name, public_age, bio,
+      personality, writing_style, emoji_style, sentence_style, flirt_style,
+      sales_rules, status
+    ) values (
+      gen_random_uuid(), :'workspace_id'::uuid, :'member_id'::uuid,
+      'member must fail', 24, 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'active'
+    );
+    raise exception 'workspace_member_allowed';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $member_denied$;
+
+select set_config('request.jwt.claim.sub', :'foreign_owner_id', true);
+do $owner_without_capability_denied$
+begin
+  begin
+    insert into public.chat_characters(
+      id, workspace_id, created_by_user_id, display_name, public_age, bio,
+      personality, writing_style, emoji_style, sentence_style, flirt_style,
+      sales_rules, status
+    ) values (
+      gen_random_uuid(), :'second_workspace_id'::uuid, :'foreign_owner_id'::uuid,
+      'owner without capability must fail', 24, 'x', 'x', 'x', 'x', 'x',
+      'x', 'x', 'active'
+    );
+    raise exception 'owner_without_capability_allowed';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $owner_without_capability_denied$;
+
+select set_config('request.jwt.claim.sub', :'platform_admin_id', true);
+do $platform_admin_denied$
+begin
+  begin
+    insert into public.chat_characters(
+      id, workspace_id, created_by_user_id, display_name, public_age, bio,
+      personality, writing_style, emoji_style, sentence_style, flirt_style,
+      sales_rules, status
+    ) values (
+      gen_random_uuid(), :'workspace_id'::uuid, :'platform_admin_id'::uuid,
+      'platform admin must fail', 24, 'x', 'x', 'x', 'x', 'x', 'x', 'x',
+      'active'
+    );
+    raise exception 'platform_admin_allowed';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $platform_admin_denied$;
+
+reset role;
 rollback;
+
 select 'CHAT_ADMIN_ACCEPTANCE_AUTHORIZATION=PASS';
 select 'CHAT_ADMIN_ACCEPTANCE_ADMIN_NEGATIVE=PASS';
 select 'CHAT_ADMIN_ACCEPTANCE_ISOLATION=PASS';
-select 'CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS';
+select 'CHAT_ADMIN_ACCEPTANCE_DATABASE_FLOW=PASS';
+select 'CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN';
 select 'CHAT_ADMIN_ACCEPTANCE_CLEANUP=PASS';`;
 
-export function check(){ if(!/rollback;/u.test(CHAT_ADMIN_ACCEPTANCE_SQL)||/\bcommit;/iu.test(CHAT_ADMIN_ACCEPTANCE_SQL)) throw new Error("acceptance_not_rollback_only"); console.log("CHAT_ADMIN_ACCEPTANCE_READY=YES"); }
-export function run(env=process.env){ if(!evaluateChatAdminStagingControlEnvironment(env,{mode:"acceptance"}).ok) throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=environment_invalid"); const result=spawnSync("psql",["--no-password","--no-psqlrc","--set=ON_ERROR_STOP=1","--set",`workspace_id=${env.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID}`,"--set",`second_workspace_id=${env.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID}`,"--set",`owner_id=${env.FANMIND_CHAT_ADMIN_OWNER_ID}`,"--set",`foreign_owner_id=${env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID}`,"--set",`character_a=${env.FANMIND_CHAT_ADMIN_CHARACTER_A_ID}`,"--set",`character_b=${env.FANMIND_CHAT_ADMIN_CHARACTER_B_ID}`,"--set",`conversation_a=${env.FANMIND_CHAT_ADMIN_CONVERSATION_A_ID}`,"--set",`conversation_b=${env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID}`],{env,input:CHAT_ADMIN_ACCEPTANCE_SQL,encoding:"utf8"}); if(result.status!==0)throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=acceptance_failed"); console.log("CHAT_ADMIN_ACCEPTANCE=PASS"); }
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) { try {
-    if (process.argv[2] === "--check") check();
-    else if (process.argv[2] === "--run") run();
-    else throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=argument_invalid");
-  } catch (e) { console.error(e.message); process.exitCode = 1; } }
+function fixtureIds(environment) {
+  return [
+    environment.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID,
+    environment.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID,
+    environment.FANMIND_CHAT_ADMIN_OWNER_ID,
+    environment.FANMIND_CHAT_ADMIN_MEMBER_ID,
+    environment.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID,
+    environment.FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID,
+    environment.FANMIND_CHAT_ADMIN_CHARACTER_A_ID,
+    environment.FANMIND_CHAT_ADMIN_CHARACTER_B_ID,
+    environment.FANMIND_CHAT_ADMIN_CONVERSATION_A_ID,
+    environment.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID,
+  ].map((value) => (typeof value === "string" ? value.trim().toLowerCase() : ""));
+}
+
+function validateFixtures(environment) {
+  const ids = fixtureIds(environment);
+  if (ids.some((value) => !UUID_PATTERN.test(value))) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity");
+  }
+  if (new Set(ids).size !== ids.length) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_overlap");
+  }
+  return ids;
+}
+
+export function check() {
+  if (
+    !/rollback;/u.test(CHAT_ADMIN_ACCEPTANCE_SQL) ||
+    /\bcommit;/iu.test(CHAT_ADMIN_ACCEPTANCE_SQL)
+  ) {
+    throw new Error("acceptance_not_rollback_only");
+  }
+  if (/CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS/u.test(CHAT_ADMIN_ACCEPTANCE_SQL)) {
+    throw new Error("manual_flow_not_exercised");
+  }
+  console.log("CHAT_ADMIN_ACCEPTANCE_READY=YES");
+}
+
+export function run(environment = process.env) {
+  if (
+    !evaluateChatAdminStagingControlEnvironment(environment, {
+      mode: "acceptance",
+    }).ok
+  ) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=environment_invalid");
+  }
+  const [
+    workspaceId,
+    secondWorkspaceId,
+    ownerId,
+    memberId,
+    foreignOwnerId,
+    platformAdminId,
+    characterA,
+    characterB,
+    conversationA,
+    conversationB,
+  ] = validateFixtures(environment);
+
+  const result = spawnSync(
+    "psql",
+    [
+      "--no-password",
+      "--no-psqlrc",
+      "--set=ON_ERROR_STOP=1",
+      "--set",
+      `workspace_id=${workspaceId}`,
+      "--set",
+      `second_workspace_id=${secondWorkspaceId}`,
+      "--set",
+      `owner_id=${ownerId}`,
+      "--set",
+      `member_id=${memberId}`,
+      "--set",
+      `foreign_owner_id=${foreignOwnerId}`,
+      "--set",
+      `platform_admin_id=${platformAdminId}`,
+      "--set",
+      `character_a=${characterA}`,
+      "--set",
+      `character_b=${characterB}`,
+      "--set",
+      `conversation_a=${conversationA}`,
+      "--set",
+      `conversation_b=${conversationB}`,
+    ],
+    { env: environment, input: CHAT_ADMIN_ACCEPTANCE_SQL, encoding: "utf8" },
+  );
+  if (result.status !== 0) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=acceptance_failed");
+  }
+  if (!result.stdout.includes("CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN")) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=manual_flow_state_missing");
+  }
+  console.log("CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS");
+  console.log("CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN");
+}
+
+if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  try {
+    if (process.argv[2] === "--check") {
+      check();
+    } else if (process.argv[2] === "--run") {
+      run();
+    } else {
+      throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=argument_invalid");
+    }
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+}
