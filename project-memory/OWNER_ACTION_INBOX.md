@@ -98,8 +98,8 @@ This is the single compact queue for actions that genuinely require the owner, a
 ## FM-SEC-OWNER-002 — Staging RPC exception decision
 - Status: OWNER_ACTION_REQUIRED
 - Completed sub-scope: leaked-password protection is already enabled and independently rechecked on exact Production and isolated FanMind Staging. Advisor scans at 16:11:50Z and 16:19:32Z on 2026-09-10 no longer report `auth_leaked_password_protection`. Do not request that provider setting again.
-- Remaining owner decision only: explicitly accept or reject the documented constrained authenticated RPC exceptions, including `ensure_current_user_workspace(...)` and `get_current_workspace_member_safe_dashboard()`, after reviewing their pinned `search_path`, `row_security=on`, role/identity boundaries and intentionally limited return data.
-- Evidence: FM-EV-040 and the corresponding `EVIDENCE.md`, `EXTERNAL_ACCEPTANCE.md`, `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md` and `EXECUTION_RECEIPTS.md` close the leaked-password sub-scope; the bounded RPC exception review remains open.
+- Remaining owner decision only: explicitly accept or reject the documented constrained authenticated RPC exceptions after reviewing their actual protections. `ensure_current_user_workspace(...)` is authenticated-only with pinned `search_path`, explicit identity/role checks, server-derived prices and no `PUBLIC`/`anon` execution. `get_current_workspace_member_safe_dashboard()` is authenticated-only with pinned `search_path`, `row_security=on`, and returns only five safe membership fields.
+- Evidence: FM-EV-041 and the corresponding `EVIDENCE.md`, `EXTERNAL_ACCEPTANCE.md`, `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md` and `EXECUTION_RECEIPTS.md` close the leaked-password sub-scope; the bounded RPC exception review remains open.
 - Risk: R3
 - Forbidden: blind RPC revoke/grant, invented browser RLS policy, or repeating the completed Auth setting change.
 - Do not ask before: the owner is ready to make the bounded RPC-exception decision; it is independent from the completed password-protection change.
