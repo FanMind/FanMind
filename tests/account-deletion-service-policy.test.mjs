@@ -59,19 +59,26 @@ test("manual deletion processing is read-only by default and explicitly resumabl
   );
 });
 
-test("contact deletion is owner-bound, workspace-filtered and relies on complete cascading Creator cleanup", async () => {
-  const [action, creatorSql, conversationSql, profileSql] = await Promise.all([
+test("contact deletion is owner-bound and atomically removes only its exact unlocked Meta queue", async () => {
+  const [action, atomicSql, creatorSql, conversationSql, profileSql] = await Promise.all([
     readFile("src/app/fans/[id]/contextActions.ts", "utf8"),
+    readFile("supabase/controlled/20260920200000_contact_delete_with_meta_queue.sql", "utf8"),
     readFile("supabase/controlled/creator_intelligence_foundation.sql", "utf8"),
     readFile("supabase/migrations/20260613120000_create_conversations_messages.sql", "utf8"),
     readFile("supabase/migrations/20260614143000_create_memory_profile_tables.sql", "utf8"),
   ]);
   const section = action.slice(action.indexOf("export async function deleteContactAndCreatorData"));
   assert.match(section, /requireContactInActiveAuthorizedWorkspace\(contactId\)/u);
-  assert.match(section, /url\.searchParams\.set\("id", `eq\.\$\{contactId\}`\)/u);
-  assert.match(section, /url\.searchParams\.set\("workspace_id", `eq\.\$\{workspace\.id\}`\)/u);
+  assert.match(section, /rpc\/delete_contact_with_meta_catchup/u);
+  assert.match(section, /p_workspace_id: workspace\.id/u);
+  assert.match(section, /p_contact_id: contactId/u);
   assert.match(section, /rows\.length !== 1/u);
-  assert.match(section, /rows\[0\]\?\.workspace_id !== workspace\.id/u);
+  assert.match(section, /rows\[0\]\?\.deleted_workspace_id !== workspace\.id/u);
+  assert.match(atomicSql, /auth\.role\(\) is distinct from 'service_role'/u);
+  assert.match(atomicSql, /job\.workspace_id = p_workspace_id[\s\S]*job\.contact_id = p_contact_id/u);
+  assert.match(atomicSql, /status = 'claimed'[\s\S]*lease_until >= now\(\)/u);
+  assert.match(atomicSql, /delete from public\.meta_conversation_catchup_jobs[\s\S]*delete from public\.contacts/u);
+  assert.match(atomicSql, /revoke all on function[\s\S]*from public, anon, authenticated/u);
   assert.match(creatorSql, /creator_commercial_events[\s\S]*foreign key \(workspace_id,contact_id\) references public\.contacts\(workspace_id,id\) on delete cascade/u);
   assert.match(conversationSql, /contact_id uuid not null references public\.contacts\(id\) on delete cascade/u);
   assert.match(profileSql, /contact_ai_profiles[\s\S]*contact_id uuid not null references public\.contacts\(id\) on delete cascade/u);

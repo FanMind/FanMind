@@ -196,6 +196,44 @@ async function countOtherWorkspaceMembers(
   return rows.length;
 }
 
+async function validateHistoricalRequestWorkspace(
+  fetchImpl,
+  config,
+  request,
+  ownedWorkspaces,
+) {
+  if (!request.workspace_id) {
+    throw new AccountDeletionProcessorError("request_workspace_mismatch");
+  }
+  if (ownedWorkspaces.some((workspace) => workspace.id === request.workspace_id)) {
+    return;
+  }
+
+  // workspace_id records where the request was created. After the intended
+  // ownership transfer the requester is no longer its owner, but must still
+  // be associated with that exact Workspace. This prevents a forged request
+  // from being used to inspect or delete another tenant's Workspace.
+  const memberships = await restSelect(
+    fetchImpl,
+    config,
+    "workspace_members",
+    new URLSearchParams({
+      select: "id,workspace_id,user_id",
+      workspace_id: `eq.${request.workspace_id}`,
+      user_id: `eq.${request.user_id}`,
+      limit: "2",
+    }).toString(),
+    "request_workspace_lookup_failed",
+  );
+  if (
+    memberships.length !== 1 ||
+    memberships[0]?.workspace_id !== request.workspace_id ||
+    memberships[0]?.user_id !== request.user_id
+  ) {
+    throw new AccountDeletionProcessorError("request_workspace_mismatch");
+  }
+}
+
 export function workspaceSubscriptionRequiresResolution(workspace, now = new Date()) {
   if (!workspace?.stripe_subscription_id) return false;
   if (workspace.subscription_effective_end_at) {
@@ -232,12 +270,12 @@ export async function evaluateAccountDeletionEligibility({
   ) {
     throw new AccountDeletionProcessorError("request_email_mismatch");
   }
-  if (
-    request.workspace_id &&
-    !workspaces.some((workspace) => workspace.id === request.workspace_id)
-  ) {
-    throw new AccountDeletionProcessorError("request_workspace_mismatch");
-  }
+  await validateHistoricalRequestWorkspace(
+    fetchImpl,
+    config,
+    request,
+    workspaces,
+  );
 
   let otherMemberCount = 0;
   let requiresSubscriptionResolution = false;
@@ -591,7 +629,9 @@ export async function processAccountDeletion({
       request,
       userId: request.user_id,
       hashSecret,
-      workspaceIds: request.workspace_id ? [request.workspace_id] : [],
+      // The request Workspace is historical context and may now belong to a
+      // different owner. Never verify (or otherwise traverse) its tenant data.
+      workspaceIds: [],
       log,
     });
     return { executed: true, resumed: true, eligibility: null, finalStatus };

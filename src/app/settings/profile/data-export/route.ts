@@ -15,6 +15,7 @@ import {
   getUserWorkspaceDashboard,
 } from "@/lib/supabase/server";
 import { createDataDisclosurePdf } from "@/lib/dataDisclosurePdf";
+import { projectAuthAccountForDisclosure } from "@/lib/dataDisclosureAuthProjection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,16 +34,35 @@ function isSensitiveMetadataKey(key: string): boolean {
   return (
     normalized.includes("password") ||
     normalized.includes("secret") ||
-    normalized.includes("access_token") ||
-    normalized.includes("refresh_token") ||
-    normalized.includes("api_key")
+    normalized.includes("token") ||
+    normalized.includes("credential") ||
+    normalized.includes("authorization") ||
+    normalized.includes("api_key") ||
+    normalized === "code"
   );
+}
+
+function sanitizeAccountMetadata(value: unknown, depth = 0): unknown {
+  if (depth > 3) return "[bounded]";
+  if (Array.isArray(value)) {
+    return value.slice(0, 50).map((entry) => sanitizeAccountMetadata(entry, depth + 1));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([key]) => !isSensitiveMetadataKey(key))
+        .slice(0, 50)
+        .map(([key, entry]) => [key, sanitizeAccountMetadata(entry, depth + 1)]),
+    );
+  }
+  return typeof value === "string" ? value.slice(0, 2_000) : value;
 }
 
 export async function GET(request: Request) {
   const locale = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
   try {
-    const { data } = await getSupabaseServerUser();
+    const { data, error: authError } = await getSupabaseServerUser();
+    if (authError) return disclosureFailure(locale, 500);
     if (!data.user) {
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.headers.set("Cache-Control", "private, no-store");
@@ -71,6 +91,7 @@ export async function GET(request: Request) {
     ]);
 
     const accountMetadataSection = buildAccountMetadataSection(
+      data.user,
       data.user.user_metadata,
       workspace.role,
       locale,
@@ -149,14 +170,21 @@ export async function GET(request: Request) {
 }
 
 function buildAccountMetadataSection(
+  authUser: unknown,
   metadata: Record<string, unknown> | undefined,
   workspaceRole: string,
   locale: "de" | "en",
 ) {
+  const authProjection = projectAuthAccountForDisclosure(authUser);
   const fields = Object.entries(metadata ?? {})
     .filter(([key]) => !isSensitiveMetadataKey(key))
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, value]) => `${key}: ${formatDisclosureValue(value, locale)}`);
+    .map(([key, value]) =>
+      `${key}: ${formatDisclosureValue(sanitizeAccountMetadata(value), locale)}`,
+    );
+  for (const [key, value] of Object.entries(authProjection)) {
+    fields.push(`auth_${key}: ${formatDisclosureValue(value, locale)}`);
+  }
   fields.push(`workspace_role: ${formatDisclosureValue(workspaceRole, locale)}`);
 
   return {

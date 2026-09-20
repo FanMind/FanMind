@@ -769,3 +769,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: Contact/Account delete completeness, Creator disclosure, tenant/error/secret negatives and Project Memory only. No protected mutation or runtime activation.
 - Evidence: focused deletion/disclosure/Creator regressions, full Operations/lint/build, browser-relevant static UI regression, CodeQL/current-head CI and independent review before merge.
 - Recovery: source revert only. No SQL or real record deletion occurred.
+## LOCK-FM-CREATOR-PRIVACY-HOTFIX-20260920
+- Task: FM-CREATOR-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
+- Baseline: merged PR #1143 / `027d5a21ac41daae0331a0af2f9685d3729b2039`.
+- Scope: only the three post-merge review findings: ownership-transfer Account Delete, bounded Auth disclosure and atomic exact-tenant Meta queue + Contact deletion. No database Apply or activation. Local commit and PR metadata are prepared; remote PR number/CI/review remain unavailable from this environment, so the lock stays active.
+- Evidence: focused regressions/cross-tenant negatives, Operations, lint, build, Project Memory controls, CodeQL/current-head CI and independent review without P1/P2.
+- Recovery: source revert only; the controlled RPC remains unapplied in this Hotfix.
