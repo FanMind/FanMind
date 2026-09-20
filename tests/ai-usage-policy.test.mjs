@@ -84,7 +84,10 @@ test("normalizes complete OpenAI Responses token usage", () => {
     }),
     {
       inputTokens: 123,
+      cachedInputTokens: 20,
+      cacheWriteTokens: 0,
       outputTokens: 45,
+      reasoningOutputTokens: 0,
       totalTokens: 168,
     },
   );
@@ -97,7 +100,10 @@ test("normalizes complete OpenAI Responses token usage", () => {
     }),
     {
       inputTokens: 0,
+      cachedInputTokens: 0,
+      cacheWriteTokens: 0,
       outputTokens: 0,
+      reasoningOutputTokens: 0,
       totalTokens: 0,
     },
   );

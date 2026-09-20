@@ -753,3 +753,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: ordinary bounded source revert; no external state or user data is changed.
 - Historical continuation 2026-09-18: four review findings were addressed while controlled Admin-CRM SQL was still unapplied. This state was superseded by #1134 acceptance and the separately authorized Production apply; do not revive the old pending steps.
 - Closed by PR #1134 / merge `630aef3ccb53fed9b46284cb1d4bf1825a57687e`. Owner decision 2026-09-19 defers every remaining Mobile/Handy step until after company registration; preserve existing artifacts and do not start new builds/cohort/device/Push/Store/TestFlight work until explicit resume.
+## LOCK-FM-AI-001-COST-GUARD-20260920
+- Task: FM-AI-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
+- Branch: `feat/ai-cost-guard-20260920` from merged #1140 `56aa4af7735a647266943a10fddfb0d7c97d9562`.
+- Scope: repository-only usage normalization, versioned provider-cost arithmetic and unconfigured monthly budget decision. No Creator overlap, schema Apply, provider call, Stripe mutation, Production mutation or final limit values.
+- Evidence plan: focused exact-arithmetic/version/boundary tests, lint/type/build/full test suite, Project Memory controls and exact-head remote CI/CodeQL/independent review after publication.
+- Resume from: add an atomic, idempotent, tenant-bound monthly reservation/ledger as a separate controlled package; do not wire enforcement before its schema/RLS/concurrency acceptance exists.

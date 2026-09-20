@@ -177,6 +177,26 @@ Admin-Anzeigen konservativ gekennzeichnet:
 - `basierend auf Zeichenlänge`
 - `nicht abrechnungsgenau`
 
+Die repository-seitige Kosten-Engine trennt zusätzlich `cachedInputTokens`,
+`cacheWriteTokens` und `reasoningOutputTokens`, soweit die Providerantwort diese
+Werte als konsistente nichtnegative Ganzzahlen liefert. Preise werden nach
+Modell, Service-Tier und Gültigkeitszeitraum ausschließlich serverseitig
+aufgelöst; fehlt genau ein passender Preiseintrag, darf keine Kostenfreigabe
+abgeleitet werden. Der bestehende Tabellenvertrag speichert diese zusätzlichen
+Kategorien noch nicht separat. Deshalb ist diese Engine Vorbereitung und noch
+kein vollständiges Monatsledger.
+
+Die Budgetentscheidung ist ebenfalls als reine Server-Policy vorbereitet. Sie
+kann Token-, Providerkosten- und optional Request-Grenzen gemeinsam prüfen und
+verwendet technisch 80 Prozent als Warnschwelle sowie 100 Prozent als harte
+Grenze. Solange der Owner keine tierbezogenen Werte freigegeben hat, bleiben
+alle drei Limits unkonfiguriert; daraus entsteht weder ein erfundenes
+Kontingent noch eine Overage-Abrechnung. Vor produktiver Aktivierung fehlen
+insbesondere ein atomarer Workspace-/Monats-Reserve-RPC, die idempotente
+Verbuchung, die Schema-/RLS-Abnahme und die Verdrahtung vor jedem
+Provideraufruf. Ohne diese Atomizität wäre ein Schutz gegen paralleles
+Überziehen nicht belegt.
+
 ## 8. Wo Usage geloggt werden soll
 
 Aktiv instrumentiert:
