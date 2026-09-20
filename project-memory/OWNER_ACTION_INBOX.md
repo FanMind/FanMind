@@ -89,25 +89,20 @@ This is the single compact queue for actions that genuinely require the owner, a
 - Do not ask before: owner explicitly reopens the real external Storage drill.
 
 ## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
-- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
-- Status: OWNER_ACTION_REQUIRED
-- Where: protected GitHub `production` environment through `trigger-function-hardening-production-control.yml` only.
-- Proven pre-state: read-only run `32997946812` job `98271985321` on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; preflight/postflight Production audits passed.
-- Required scope: one exact `apply`, bound to the then-current reviewed/deployed commit and checksum-pinned controlled SQL, followed by the built-in postflight and fresh Production advisor scan.
-- Risk: R3
-- Forbidden: inferred authorization from the verify, unrelated SQL/Auth/RLS/provider changes, Restore or Supabase-Staging mutation.
-- Do not ask before: explicit owner resume.
+- Status: COMPLETED
+- Result: Production Apply `34496892707` / job `102937525772` returned `applied`; independent Verify `34497099991` / job `102938240926` returned `verified` on exact release `9a6e9d016cb0928e58b89c6c2d5b6183379c50ed`. Full before/after Production audits passed and fresh Supabase advisors removed the related trigger warnings.
+- Recorded in: FM-EV-040, `EXTERNAL_ACCEPTANCE.md`, `DEPENDENCIES.md`, `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `EXECUTION_RECEIPTS.md` and the 2026-09-10 release acceptance record.
+- Do not repeat: no second hardening Apply or owner authorization is required unless later verified drift creates a new separately reviewed change.
+- Risk: R4 completion evidence retained.
 
-## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
-- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+## FM-SEC-OWNER-002 — Staging RPC exception decision
 - Status: OWNER_ACTION_REQUIRED
-- Where: exact Production/Staging Supabase Auth settings and the documented Staging RPC security exception record.
-- Required decision: enable leaked-password protection per exact target under a separate provider authorization; explicitly accept or reject the constrained authenticated `ensure_current_user_workspace(...)` exposure.
-- Evidence: FM-EV-020; current advisor scans; 24/24 focused provisioning tests; pinned search path, identity/role checks, server-derived prices and no `PUBLIC`/`anon` execution.
+- Completed sub-scope: leaked-password protection is already enabled and independently rechecked on exact Production and isolated FanMind Staging. Advisor scans at 16:11:50Z and 16:19:32Z on 2026-09-10 no longer report `auth_leaked_password_protection`. Do not request that provider setting again.
+- Remaining owner decision only: explicitly accept or reject the documented constrained authenticated RPC exceptions, including `ensure_current_user_workspace(...)` and `get_current_workspace_member_safe_dashboard()`, after reviewing their pinned `search_path`, `row_security=on`, role/identity boundaries and intentionally limited return data.
+- Evidence: FM-EV-040 and the corresponding `EVIDENCE.md`, `EXTERNAL_ACCEPTANCE.md`, `TASK_LEDGER.md`, `STARTED_WORK.md`, `WORK_LOCKS.md` and `EXECUTION_RECEIPTS.md` close the leaked-password sub-scope; the bounded RPC exception review remains open.
 - Risk: R3
-- Forbidden: automatic provider change, blind RPC revoke/grant or artificial browser RLS policy.
-- Do not ask before: explicit owner resume.
-- Current additional RPC: get_current_workspace_member_safe_dashboard() is authenticated-only, has pinned search_path and row_security=on, and returns only five safe membership fields. Full schema rollout verify passed; current body MD5 9b7e87c856d33d3ab3b97e2941faa519 matches the canonical SQL. Both RPC exceptions remain decision-required; no blind revoke.
+- Forbidden: blind RPC revoke/grant, invented browser RLS policy, or repeating the completed Auth setting change.
+- Do not ask before: the owner is ready to make the bounded RPC-exception decision; it is independent from the completed password-protection change.
 
 ## FM-MOB-OWNER-001 — Configure protected Mobile preview resources
 - Status: COMPLETED
