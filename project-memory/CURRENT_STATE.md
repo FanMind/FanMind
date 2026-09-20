@@ -469,3 +469,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - PR #1131 remote head `fcaac3a` still lacked current `main` ancestry; merge commit `4583b73` now reconciles `main` `5114e9a` locally while retaining the narrow Daily repair tree.
 - Daily disable now persists `cleanup_required` before Stripe cleanup. Enable is blocked while it remains set, and cleanup completion is compare-and-set against the exact disable revision, preventing a stale cleanup from clearing a newer state.
 - No Production action, payment, checkout or account mutation was performed.
+## PR #1143 post-merge privacy hotfix — 2026-09-20
+- PR #1143 wurde als `027d5a21ac41daae0331a0af2f9685d3729b2039` gemergt. Seine Codex-Review enthielt danach noch ein P1 (Account Delete nach Ownership-Transfer) und zwei P2 (Auth-Felder im vollständigen Disclosure; Meta-Catch-up-Queue vor Contact Delete).
+- Der neue kleine Hotfix ist die einzige kanonische Follow-up-Korrektur. Er behandelt `request.workspace_id` als historischen, weiterhin exakt an den Nutzer gebundenen Kontext, exportiert nur eine bounded credential-freie Auth-Projektion und bereitet die atomare service-role-only Queue-/Contact-Delete-RPC checksum-gebunden vor. Kein Staging-/Production-Apply.
+- Creator Delete/Privacy/Disclosure bleibt bis zu Hotfix-Review, grünen Current-Head-Checks und Merge nicht vollständig akzeptiert/geschlossen. `FM-CREATOR-001` bleibt `IN_PROGRESS`.

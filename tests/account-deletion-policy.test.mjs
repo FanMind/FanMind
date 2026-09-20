@@ -21,6 +21,7 @@ import {
 } from "../apps/mobile/src/lib/accountDeletionPolicy.mjs";
 import {
   AccountDeletionProcessorError,
+  evaluateAccountDeletionEligibility,
   processAccountDeletion,
   workspaceSubscriptionRequiresResolution,
 } from "../scripts/operations/process-account-deletion.mjs";
@@ -243,6 +244,98 @@ test("active or unresolved subscriptions block destructive processing", () => {
       new Date("2026-07-24T00:00:00.000Z"),
     ),
     false,
+  );
+});
+
+test("historical request Workspace permits transfer retry but never bypasses remaining owned-Workspace safety", async () => {
+  const request = {
+    user_id: USER_ID,
+    workspace_id: WORKSPACE_ID,
+    notification_email: ACCOUNT_EMAIL,
+  };
+  const authUser = { id: USER_ID, email: ACCOUNT_EMAIL };
+  const calls = [];
+  const fetchImpl = async (input) => {
+    const url = new URL(String(input));
+    calls.push(url);
+    if (url.pathname.endsWith("/workspace_members")) {
+      if (url.searchParams.get("workspace_id") === `eq.${WORKSPACE_ID}`) {
+        return new Response(JSON.stringify([{
+          id: "membership-after-transfer",
+          workspace_id: WORKSPACE_ID,
+          user_id: USER_ID,
+        }]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    throw new Error(`unexpected ${url}`);
+  };
+  const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
+
+  const transferred = await evaluateAccountDeletionEligibility({
+    request, authUser, workspaces: [], fetchImpl, config,
+  });
+  assert.equal(transferred.eligible, true);
+  assert.equal(transferred.ownedWorkspaceCount, 0);
+
+  const remainingOwned = await evaluateAccountDeletionEligibility({
+    request,
+    authUser,
+    workspaces: [{
+      id: "44444444-4444-4444-8444-444444444444",
+      owner_user_id: USER_ID,
+      billing_status: "active",
+      stripe_subscription_id: "sub_remaining",
+    }],
+    fetchImpl,
+    config,
+  });
+  assert.equal(remainingOwned.eligible, false);
+  assert.equal(remainingOwned.requiresSubscriptionResolution, true);
+  assert.ok(calls.some((url) =>
+    url.searchParams.get("workspace_id") === `eq.${WORKSPACE_ID}` &&
+    url.searchParams.get("user_id") === `eq.${USER_ID}`,
+  ));
+});
+
+test("an owned Workspace with another member remains blocked before transfer", async () => {
+  const eligibility = await evaluateAccountDeletionEligibility({
+    request: {
+      user_id: USER_ID,
+      workspace_id: WORKSPACE_ID,
+      notification_email: ACCOUNT_EMAIL,
+    },
+    authUser: { id: USER_ID, email: ACCOUNT_EMAIL },
+    workspaces: [{ id: WORKSPACE_ID, owner_user_id: USER_ID, billing_status: "demo_free" }],
+    config: { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY },
+    fetchImpl: async () => new Response(JSON.stringify([{ id: "other-member" }]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+  });
+  assert.equal(eligibility.eligible, false);
+  assert.equal(eligibility.requiresOwnershipTransfer, true);
+  assert.equal(eligibility.otherMemberCount, 1);
+});
+
+test("foreign or manipulated historical request Workspace fails closed", async () => {
+  await assert.rejects(
+    evaluateAccountDeletionEligibility({
+      request: {
+        user_id: USER_ID,
+        workspace_id: "55555555-5555-4555-8555-555555555555",
+        notification_email: ACCOUNT_EMAIL,
+      },
+      authUser: { id: USER_ID, email: ACCOUNT_EMAIL },
+      workspaces: [],
+      config: { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY },
+      fetchImpl: async () => new Response("[]", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    }),
+    (error) => error instanceof AccountDeletionProcessorError &&
+      error.code === "request_workspace_mismatch",
   );
 });
 

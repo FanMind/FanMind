@@ -767,3 +767,12 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: publish exactly one bounded PR and obtain all current-head checks plus independent review; do not merge automatically. After merge, the next safe Creator task is repository-only confirmed-chat persistence/API design, with any schema target action separately authorized.
 - Recovery: revert this bounded source/UI/test/memory patch; no external data or target was mutated.
 - Owner action needed: none for source review. A maintainer with GitHub write access may close #1141 as superseded by #1142.
+## FM-CREATOR-001 — PR #1143 Review-Hotfix
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-CREATOR-PRIVACY-HOTFIX-20260920
+- Owner: Codex Cloud
+- Baseline: merged main `027d5a21ac41daae0331a0af2f9685d3729b2039` / PR #1143. Exactly one P1 and two P2 review findings remain; #1143 is not edited or reverted.
+- Scope: ownership-transfer Account Delete retry, bounded secret-free Auth disclosure, and atomic exact-tenant Meta queue + Contact deletion contract. No Apply, runtime activation, provider, Mobile, Billing or unrelated Creator work.
+- Completed so far: bounded source/tests and checksum-pinned offline SQL check prepared and committed on the single Hotfix branch. Focused deletion/disclosure/cross-tenant tests, 1,425 Operations policy tests (three documented PG/environment skips), lint, Production build and all local Project-Memory/drift/freshness/next-action controls pass. Browser E2E was attempted but the local Chromium binary is absent; remote Current-Head Browser E2E remains required. PR title/body were prepared through the required PR tool; this environment returned no remote PR number or remote CI state. Still open: actual remote PR publication/number, Current-Head CI/CodeQL and independent Codex review without P1/P2. No Staging/Production Apply.
+- Exact next step: publish the prepared single Hotfix PR, obtain Current-Head checks and independent review, and do not merge until there are no P1/P2 findings. Creator Delete/Privacy/Disclosure remains unaccepted until the Hotfix is merged.

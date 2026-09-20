@@ -96,11 +96,16 @@ Pipeline-Änderung definiert. Die geschützte Staging-Grundlagenabnahme 34629009
 auf f0c7a84e belegt echte JWT-Kontentrennung, einen Stil, atomare Freigaben/
 Revisionen, PDF-Auskunft und Testbereinigung. Die repository-seitige
 Kontakt-/Kontolöschung und vollständige Creator-Datenauskunft sind im bounded
-Privacy-Paket vorbereitet: Kontaktlöschung ist Owner-/Workspace-gebunden und
-nutzt die vorhandenen Cascades; Kontolöschung prüft nach dem Workspace-Cascade
+Privacy-Paket durch PR #1143 (`027d5a21`) vorbereitet, aber wegen drei erst
+nach dem Merge verbliebener P1/P2-Review-Findings noch nicht vollständig
+akzeptiert: Kontaktlöschung benötigt einen atomaren Queue-/Contact-Vertrag;
+Kontolöschung muss den Request-Workspace nach einem Ownership-Transfer als
+historischen Kontext behandeln; und die Auskunft benötigt die begrenzte,
+credential-freie Auth-Projektion. Der kanonische Hotfix behebt ausschließlich
+diese Punkte. Kontolöschung prüft nach dem Workspace-Cascade
 die aktiven und optional installierten Creator-Datenfamilien; autorisierte
 Exportfehler brechen die Auskunft ab und Provider-Secrets werden nicht
-ausgegeben. Merge/Deployment und reale Zielabnahme bleiben davon getrennt.
+ausgegeben. Hotfix-Merge/Deployment und reale Zielabnahme bleiben davon getrennt.
 Aktivierte Oberfläche, reale Qualität/Lernen und Provider-Freigaben bleiben
 offen. Die bestehende `/api/ai/reply-suggestions`-Pipeline ist im Code
 erweitert. Der Server

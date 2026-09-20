@@ -275,16 +275,17 @@ export async function deleteContactAndCreatorData(formData: FormData) {
   const key = serviceRoleKey();
   if (!key) redirect(contactPath(contactId, locale, "contact_delete_failed"));
 
-  const url = new URL(getSupabaseRestUrl("contacts"));
-  url.searchParams.set("id", `eq.${contactId}`);
-  url.searchParams.set("workspace_id", `eq.${workspace.id}`);
-  url.searchParams.set("select", "id,workspace_id");
+  const url = new URL(getSupabaseRestUrl("rpc/delete_contact_with_meta_catchup"));
   const response = await fetch(url, {
-    method: "DELETE",
+    method: "POST",
     headers: {
       ...getSupabaseHeaders(key),
-      Prefer: "return=representation",
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      p_workspace_id: workspace.id,
+      p_contact_id: contactId,
+    }),
     cache: "no-store",
   }).catch(() => null);
   const rows = response?.ok
@@ -293,8 +294,8 @@ export async function deleteContactAndCreatorData(formData: FormData) {
   if (
     !Array.isArray(rows) ||
     rows.length !== 1 ||
-    rows[0]?.id !== contactId ||
-    rows[0]?.workspace_id !== workspace.id
+    rows[0]?.deleted_contact_id !== contactId ||
+    rows[0]?.deleted_workspace_id !== workspace.id
   ) {
     redirect(contactPath(contactId, locale, "contact_delete_failed"));
   }

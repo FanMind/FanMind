@@ -73,8 +73,8 @@
 - Scope: Creator Intelligence & Sales Assistance on the existing CRM/reply engine; docs/CREATOR_INTELLIGENCE.md.
 - Required for sales: false.
 - Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
-- Completed so far: source #1099-#1108 published. Own-account/single-style schema installed and upgraded on isolated Staging; real JWT/revision/approval/PDF acceptance 34629009649 and independent cleanup/member revocation/post-read passed. The repository-only confirmed-chat validator is published through #1140. The bounded deletion/privacy package adds owner- and Workspace-bound Contact deletion, post-cascade Account deletion verification across Creator data families, and complete fail-closed Creator/CRM/Social disclosure without credentials; #1130's valid work is reconciled with newer main rather than duplicated.
-- Exact next step: finish the single deletion/privacy PR's current-head CI and independent review without self-merge. Afterwards continue repository-only confirmed-chat persistence/API design; any new schema/apply, runtime activation, real quality/provider work or protected target action remains separate.
+- Completed so far: source #1099-#1108 published. Own-account/single-style schema installed and upgraded on isolated Staging; real JWT/revision/approval/PDF acceptance 34629009649 and independent cleanup/member revocation/post-read passed. The repository-only confirmed-chat validator is published through #1140. PR #1143 merged as `027d5a21ac41daae0331a0af2f9685d3729b2039`, but its post-merge review retained one P1 and two P2 findings; therefore its deletion/privacy/disclosure result is not yet accepted/closed.
+- Exact next step: merge only the canonical three-finding Hotfix after current-head CI/CodeQL and independent review without P1/P2. Afterwards continue repository-only confirmed-chat persistence/API design; any new schema/apply, runtime activation, real quality/provider work or protected target action remains separate.
 
 ## FM-SEC-002
 - Date: 2026-09-10

@@ -175,7 +175,7 @@ test('private service reader rejects member/foreign identity, missing service ke
   await assert.rejects(foreignRow.run(),DisclosureFailure);
 });
 
-function routeFixture({datasets=[],privateDatasets=[],failAt,anonymous=false,noWorkspace=false,member=false,knownFailure=false}={}) {
+function routeFixture({datasets=[],privateDatasets=[],failAt,authReadError=false,anonymous=false,noWorkspace=false,member=false,knownFailure=false}={}) {
   let input,pdfCalls=0,collectorArgs,privateArgs;
   const maybeFail=stage=>{if(failAt===stage)throw(knownFailure?new DisclosureFailure('PRIVATE_RAW_ERROR content_sources <script>'):Error('PRIVATE_RAW_ERROR font token'));};
   class TestNextResponse extends Response {static redirect(url){return new TestNextResponse(null,{status:307,headers:{Location:String(url)}})}}
@@ -186,8 +186,9 @@ function routeFixture({datasets=[],privateDatasets=[],failAt,anonymous=false,noW
     '@/lib/dataDisclosureExport':{DataDisclosureExportError:DisclosureFailure,getAllWorkspaceContactsForDisclosure:async()=>{maybeFail('contacts');return[{display_name:'Synthetic contact',summary:'PRESERVE_CONTACT'}]}},
     '@/lib/dataDisclosureMetaExport':{getWorkspaceMetaDataForDisclosure:async(...args)=>{collectorArgs=args;maybeFail('datasets');return datasets;}},
     '@/lib/dataDisclosurePrivateExport':{getPrivateAccountDataForDisclosure:async(...args)=>{privateArgs=args;maybeFail('private');return privateDatasets;}},
+    '@/lib/dataDisclosureAuthProjection':{projectAuthAccountForDisclosure:()=>({created_at:'2026-01-01T00:00:00Z',providers:['email'],identities:[]})},
     '@/lib/supabase/server':{
-      getSupabaseServerUser:async()=>{maybeFail('auth');return{data:{user:anonymous?null:{id:userId,email,user_metadata:{display_name:'Synthetic Creator',phone:'+43 1 234',role_audience:'Creator',preferred_plan:'starter'}}}}},
+      getSupabaseServerUser:async()=>{maybeFail('auth');return{data:{user:anonymous?null:{id:userId,email,user_metadata:{display_name:'Synthetic Creator',phone:'+43 1 234',role_audience:'Creator',preferred_plan:'starter',provider_token:'NEVER_EXPORT_PROVIDER',nested:{refresh_token:'NEVER_EXPORT_REFRESH',safe:'PRESERVE_SAFE'}}}},error:authReadError?{message:'PRIVATE_AUTH_ERROR'}:null}},
       getUserWorkspaceDashboard:async()=>{maybeFail('workspace');return{workspace:noWorkspace?null:{id:workspace,name:'Synthetic workspace',owner_user_id:member?'different':userId,role:member?'member':'owner',plan_id:'starter',commercial_option:'starter_no_setup_commitment',setup_fee_cents:0,monthly_fee_cents:31200,commitment_months:12}}},
     },
     '@/lib/dataDisclosurePdf':{createDataDisclosurePdf:async value=>{input=value;pdfCalls++;maybeFail('pdf');return Buffer.from('%PDF-1.7\nSYNTHETIC_TRANSPORT_ONLY')}},
@@ -201,11 +202,16 @@ test('successful disclosure binds both readers to the signed-in Creator and is e
   const h=routeFixture({datasets,privateDatasets});const response=await h.run('de');
   assert.deepEqual(h.collectorArgs(),[workspace,userId]);assert.deepEqual(h.privateArgs(),[workspace,userId,email]);
   assert.equal(response.status,200);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');assert.match(response.headers.get('Content-Disposition'),/fanmind-datenauskunft\.pdf/);assert.doesNotMatch(response.headers.get('Content-Disposition'),/teilweise|partial/i);
-  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/Vollständigkeit nicht bestätigt|Teilauskunft/);
+  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
 });
 
 test('workspace members cannot export the Creator Workspace disclosure',async()=>{
   const h=routeFixture({member:true});const response=await h.run();assert.equal(response.status,403);assert.equal(h.pdfCalls(),0);assert.equal(h.collectorArgs(),undefined);assert.equal(h.privateArgs(),undefined);
+});
+
+test('an Auth read error cannot produce a PDF marked complete',async()=>{
+  const h=routeFixture({authReadError:true});const response=await h.run();const html=await response.text();
+  assert.equal(response.status,500);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),null);assert.equal(h.pdfCalls(),0);assert.doesNotMatch(html,/PRIVATE_AUTH_ERROR/u);
 });
 
 for(const locale of ['de','en']) for(const stage of ['auth','workspace','contacts','datasets','private','pdf']) {
