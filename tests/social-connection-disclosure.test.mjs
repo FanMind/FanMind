@@ -56,6 +56,7 @@ const expectedTables=[
   'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','social_connections','meta_webhook_events',
   'content_sources','content_metric_snapshots','communication_analysis_reports','workspace_analysis_settings',
   'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events',
+  'workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages',
 ];
 
 function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {

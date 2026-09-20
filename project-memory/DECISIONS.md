@@ -147,3 +147,11 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: Daily costs exactly EUR 1 gross per day for the customer. VAT, where applicable, is included in that EUR 1 customer-facing total and is not added on top.
 - Boundary: this price basis is an owner decision, not Tax or Billing readiness. The current Stripe Price/Tax configuration, registrations, invoice behavior and cross-border treatment must be reconciled and accepted before a real Daily checkout can open. No existing Price is silently relabeled and no Production payment is authorized by this decision.
 - Related work: FM-CR-037 and the retained AI/Billing/Legal/Tax acceptance gates.
+
+## FM-DEC-022
+- Date: 2026-09-20
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: exactly one stable Owner/User-bound Workspace may later receive the default-off `chat_admin_multi_character=true` capability. ChatAdmin is a feature name, not Platform Admin, and grants only own-Workspace Character CRUD/image/manual-message/reply access.
+- Invariants: every normal account remains one Workspace/Creator/writing style; `creators.workspace_id UNIQUE`, normal replies, CRM, Admin, Billing, Operations, Social and Mobile semantics remain unchanged. Platform Admin does not imply ChatAdmin and ChatAdmin never implies Admin/service-role/RLS bypass.
+- V1: manual OnlyFans copy/paste only, server-loaded exact Character revision and isolated Workspace/Character/fan/conversation context, measured AI suggestions and manual copy/send. No provider login/API/scraping/auto-send or automatic learning.
+- Rollout: controlled unapplied schema and repository UI/API/tests only. Staging/Production apply, exact stable Workspace/User grant, private Storage policy acceptance and any real provider integration remain separate reviewed work.

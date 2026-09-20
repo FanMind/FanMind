@@ -335,6 +335,10 @@ const WORKSPACE_DELETION_TABLES = [
   "creator_voice_profiles",
   "creator_sales_playbooks",
   "creator_commercial_events",
+  "workspace_chat_admin_capabilities",
+  "chat_characters",
+  "chat_character_conversations",
+  "chat_character_messages",
 ];
 
 const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
@@ -344,6 +348,10 @@ const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
   "creator_voice_profiles",
   "creator_sales_playbooks",
   "creator_commercial_events",
+  "workspace_chat_admin_capabilities",
+  "chat_characters",
+  "chat_character_conversations",
+  "chat_character_messages",
 ]);
 
 async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {

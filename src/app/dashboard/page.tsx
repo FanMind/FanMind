@@ -32,6 +32,7 @@ import styles from "./dashboard.module.css";
 import { resolvePublicWorkspacePlanId } from "@/lib/publicDailyPlanPolicy.mjs";
 import { getMessageSourceContext } from "@/lib/sourceContext";
 import { adminCrmAccessLabel, isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
+import { hasChatAdminCapability } from "@/lib/chatAdmin";
 
 type WorkspaceDetailsProps = {
   workspace: WorkspaceDashboardRow;
@@ -45,6 +46,7 @@ type WorkspaceDetailsProps = {
   openFollowupCount: number;
   followupCompletionRate: FollowupCompletionRate | null;
   showAdminArea: boolean;
+  showChatAdmin: boolean;
 };
 
 type WorkspaceDisplay = {
@@ -410,6 +412,7 @@ function WorkspaceDetails({
   followupCompletionRate,
   locale,
   showAdminArea,
+  showChatAdmin,
 }: WorkspaceDetailsProps & { locale: FanMindLanguage }) {
   const display = getWorkspaceDisplay(workspace);
   const pageTitle = "Dashboard";
@@ -459,6 +462,12 @@ function WorkspaceDetails({
       logoutAction={logout}
       locale={locale}
     >
+      {showChatAdmin ? (
+        <section className={styles.fallbackCard} aria-label="ChatAdmin Sonderfunktion">
+          <div><p className={styles.eyebrow}>Owner-Exception</p><h2>ChatAdmin</h2><p>Getrennte Characters verwalten und manuell eingefügte OnlyFans-Nachrichten als Antwortentwürfe bearbeiten. Keine Provider-Verbindung und kein Auto-Send.</p></div>
+          <Link href="/chatadmin">ChatAdmin öffnen</Link>
+        </section>
+      ) : null}
       <section
         className={styles.crmGrid}
         aria-label={wt(locale, "Arbeits-Eingang")}
@@ -639,6 +648,7 @@ export default async function DashboardPage({
   const unseenMessagesResult = workspace
     ? await getWorkspaceUnseenInboundMessages(workspace.id)
     : null;
+  const showChatAdmin = workspace ? await hasChatAdminCapability() : false;
 
   return (
     <main className={styles.page}>
@@ -672,6 +682,7 @@ export default async function DashboardPage({
           }
           locale={locale}
           showAdminArea={isPlatformAdminEmail(data.user.email)}
+          showChatAdmin={showChatAdmin}
         />
       ) : (
         <section className={styles.fallbackCard} aria-label="FanMind Workspace">

@@ -1,7 +1,7 @@
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import { normalizeOpenAiResponseUsage } from "@/lib/aiUsageProviderMetrics.mjs";
 
-export type AiUsageFeature = "reply_suggestions" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
+export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
 export type AiUsageStatus = "ok" | "error" | "skipped";
 
 export type RecordAiUsageEventInput = {

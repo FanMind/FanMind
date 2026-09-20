@@ -1261,3 +1261,18 @@ Bei Änderungen an Preis, Paketen, Referral, aktivem Scope, Demo, Integrationen,
 - `docs/database/fanmind_current_schema.md`;
 - `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md` bei Mobile- oder Backend-Vertragsänderungen;
 - relevante Security-, KI-, Referral-, Landingpage- und Legal-Dateien.
+
+## 15. ChatAdmin-Sonderfeature (FM-DEC-022, vorbereitet/nicht aktiviert)
+
+Für genau einen explizit gebundenen normalen Owner/Workspace ist eine getrennte,
+standardmäßig deaktivierte Capability `chat_admin_multi_character` als
+Repository-/Controlled-Schema-Vertrag vorbereitet. ChatAdmin ist kein Platform
+Admin und erteilt keinerlei Admin-, Billing-, Operations-, Provider-,
+Impersonation- oder service-role-Rechte. Normale Accounts bleiben bei genau einem
+Creator und einem Schreibstil; `creators.workspace_id UNIQUE` wird nicht geändert.
+V1 verarbeitet ausschließlich manuell eingefügte OnlyFans-Nachrichten und liefert
+kopierbare Entwürfe aus einer serverseitig autorisierten, revisionsgebundenen
+Character-Persona. Keine OnlyFans-Verbindung, kein Scraping und kein Auto-Send.
+Production/Staging-Apply, Freischaltung und Providerintegration sind nicht Teil
+dieses Source-Pakets. Der bestehende rote Backup-Freshness-Audit bleibt als
+getrennter Operations-Punkt offen und wurde nicht verändert.
