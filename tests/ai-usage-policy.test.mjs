@@ -84,7 +84,10 @@ test("normalizes complete OpenAI Responses token usage", () => {
     }),
     {
       inputTokens: 123,
+      cachedInputTokens: 20,
+      cacheWriteTokens: 0,
       outputTokens: 45,
+      reasoningOutputTokens: 0,
       totalTokens: 168,
     },
   );
@@ -97,7 +100,10 @@ test("normalizes complete OpenAI Responses token usage", () => {
     }),
     {
       inputTokens: 0,
+      cachedInputTokens: 0,
+      cacheWriteTokens: 0,
       outputTokens: 0,
+      reasoningOutputTokens: 0,
       totalTokens: 0,
     },
   );
@@ -123,6 +129,43 @@ test("rejects missing, malformed or inconsistent provider usage", () => {
   for (const value of invalidValues) {
     assert.equal(normalizeOpenAiResponseUsage(value), null);
   }
+});
+
+test("rejects malformed supplied provider detail counters instead of defaulting them", () => {
+  const validUsage = { input_tokens: 10, output_tokens: 2, total_tokens: 12 };
+  const invalidCounters = [-1, 1.5, "1", Number.MAX_SAFE_INTEGER + 1];
+
+  for (const counter of invalidCounters) {
+    assert.equal(normalizeOpenAiResponseUsage({
+      ...validUsage,
+      input_tokens_details: { cached_tokens: counter },
+    }), null);
+    assert.equal(normalizeOpenAiResponseUsage({
+      ...validUsage,
+      input_tokens_details: { cache_creation_tokens: counter },
+    }), null);
+    assert.equal(normalizeOpenAiResponseUsage({
+      ...validUsage,
+      input_tokens_details: { cache_write_tokens: 1, cache_creation_tokens: counter },
+    }), null);
+    assert.equal(normalizeOpenAiResponseUsage({
+      ...validUsage,
+      output_tokens_details: { reasoning_tokens: counter },
+    }), null);
+  }
+
+  assert.deepEqual(normalizeOpenAiResponseUsage({
+    ...validUsage,
+    input_tokens_details: { cached_tokens: null, cache_creation_tokens: null },
+    output_tokens_details: { reasoning_tokens: null },
+  }), {
+    inputTokens: 10,
+    cachedInputTokens: 0,
+    cacheWriteTokens: 0,
+    outputTokens: 2,
+    reasoningOutputTokens: 0,
+    totalTokens: 12,
+  });
 });
 
 test("productive Responses paths forward provider usage and retain the estimate fallback", async () => {
