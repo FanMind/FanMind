@@ -314,3 +314,9 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 # Superseded/open-PR reconciliation — 2026-09-20
 - PR #1141's AI-cost implementation is fully superseded by corrected merged #1142 on main `32223a6f`; none of #1141 was reimplemented. Closing/labeling #1141 was not attempted through an unauthenticated `gh` client; a maintainer with repository write access must close it as superseded.
 - PR #1130 was not blindly merged: its older disclosure inventory omitted newer Creator/Social datasets. The still-valid route/PDF/private-reader/error work was integrated and the dataset inventory was explicitly reconciled with current main.
+
+## 2026-09-20 — FM-CHATADMIN-001 local Browser E2E browser download blocked
+- Attempt: run the exact local synthetic core-flow Browser E2E after a successful fixture-bound build.
+- Result: app and loopback fixture started, but Playwright Chromium v1234 was absent. `npx playwright install chromium` retried the official CDN and received HTTP 403 `Domain forbidden` from the Codex Cloud network boundary.
+- Safety: no Production/Staging/provider/customer mutation occurred; no gate was weakened and no screenshot/result was invented.
+- Next: use required remote Current-Head Browser E2E/CI, where the workflow installs the pinned browser. Do not replace it with an unpinned system browser.

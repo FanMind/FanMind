@@ -775,3 +775,10 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: only the three post-merge review findings: ownership-transfer Account Delete, bounded Auth disclosure and atomic exact-tenant Meta queue + Contact deletion. No database Apply or activation. Local commit and PR metadata are prepared; remote PR number/CI/review remain unavailable from this environment, so the lock stays active.
 - Evidence: focused regressions/cross-tenant negatives, Operations, lint, build, Project Memory controls, CodeQL/current-head CI and independent review without P1/P2.
 - Recovery: source revert only; the controlled RPC remains unapplied in this Hotfix.
+
+## LOCK-FM-CHATADMIN-20260920
+- Task: FM-CHATADMIN-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
+- Baseline: main `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`; branch `feat/chatadmin-multi-character`.
+- Scope: repository-only isolated ChatAdmin capability/controlled schema/UI/manual measured reply/tests/docs. No target apply, capability grant, provider, Admin, Billing, Mobile, Meta, Backup or Restore work.
+- Separate known issue: `production_audit_backup_latest_stale_or_empty` remains open and unmodified; it does not establish a globally green Production Audit.
+- Recovery: revert this single source commit; no external state was mutated.

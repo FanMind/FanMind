@@ -1165,3 +1165,14 @@ Aktivierung:
 
 - Code bleibt ohne `FANMIND_SERVER_ERROR_TRACKING_ENABLED=true` inaktiv.
 - Kritische E-Mails bleiben zusätzlich über `FANMIND_SERVER_ERROR_EMAIL_ENABLED=false` gesperrt, bis ein kontrollierter Test abgeschlossen ist.
+
+## Controlled, not applied: ChatAdmin multi-character contract (2026-09-20)
+
+`supabase/controlled/20260920230000_chat_admin_multi_character.sql` prepares
+`workspace_chat_admin_capabilities`, `chat_characters`,
+`chat_character_conversations` and `chat_character_messages`. It is not part of
+the current applied schema. The contract permits at most one enabled Workspace,
+requires its exact Owner/User binding, enforces adult public persona age and uses
+RLS plus composite Workspace/Character foreign keys. It does not alter
+`creators.workspace_id UNIQUE` and grants no Platform-Admin or service-role
+capability to the user. Normal deploys must not apply it.
