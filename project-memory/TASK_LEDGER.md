@@ -509,3 +509,8 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Status: IMPLEMENTED_FOR_PR; Risk: R3; Decision: FM-DEC-022.
 - Exact one-Workspace default-off capability, controlled unapplied Character data contract, capability-hidden UI, manual measured Copy-&-Open reply path, disclosure/deletion coverage and security negatives prepared without changing normal Creator/Admin/CRM behavior.
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
+
+## FM-CHATADMIN-002 — controlled Staging rollout
+- Status: IMPLEMENTED_PENDING_PR_CI; Risk: R3; Decision: FM-DEC-022.
+- #1145 source is merged. Schema, Storage policy, Staging acceptance, real capability and Production activation remain unapplied/unaccepted until their separate protected evidence.
+- `FM-CREATOR-001` remains IN_PROGRESS and the normal next-best-action path is unchanged.

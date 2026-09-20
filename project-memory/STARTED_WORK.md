@@ -782,3 +782,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Baseline: exact main `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334` after merged #1144; Deploy, Browser E2E, CodeQL, Supply Chain, Final Go-Live and runtime release were owner-confirmed successful. Read-only Production Audit remains separately red only for `production_audit_backup_latest_stale_or_empty`; no global green-audit claim and no Backup/Restore action in this task.
 - Scope/result: isolated default-off one-Workspace capability, Character/Conversation/Message controlled schema, Owner/RLS/revision authorization, capability-hidden Web UI, manual OnlyFans copy/paste measured reply route, disclosure/deletion inventory and synthetic negatives. No apply, activation, provider login/API, Mobile, Billing, Meta, Admin or normal Creator semantic change.
 - Still open: exact-head local verification, one PR, Current-Head CI/CodeQL/Browser E2E and independent Codex review without P1/P2. Do not merge automatically.
+
+## FM-CHATADMIN-002 — controlled Staging rollout
+- Date: 2026-09-20; Status: IMPLEMENTED_PENDING_PR_CI; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud.
+- Baseline: merged #1145 / main `360c0dbe818258ae0001eef005a3dff67a54cefe`; source exists, schema and real capability remain unapplied.
+- Scope: exact-main/checksum-bound VERIFY/APPLY/ACCEPT source, rollback-only synthetic acceptance, smallest unapplied private-image policy and memory/runbook. No workflow dispatch, DB apply, real grant, Production/Backup/provider/Billing/Mobile mutation.
+- Next: PR current-head CI and independent review; after merge owner may separately authorize only workflow `FanMind ChatAdmin Staging Rollout`, mode `APPLY`, confirmation `apply-chat-admin-migration`, and only if read-only VERIFY reports ABSENT.
