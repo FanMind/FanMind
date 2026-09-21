@@ -9,6 +9,8 @@
   "evaluated_commit": null,
   "evaluated_target": null,
   "evidence_bindings": [],
+  "implementation_evidence_id": null,
+  "countercheck_evidence_id": null,
   "negative_evidence_id": null,
   "rollback_recovery_evidence_id": null,
   "current_head_bound": false,
