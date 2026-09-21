@@ -11,8 +11,8 @@ This file is an execution receipt only. It does not create a second task, depend
 - PR_NUMMER: `N/A` for the selected task — no implementation/reconciliation PR may start before the protected VERIFY result exists. This receipt is published separately and does not replace the selected task.
 - HEAD_VOR_LAUF: `408e35a45e05d7b7bd7719df15e16838d5753a20` — exact `main` re-read from GitHub before action.
 - HEAD_NACH_LAUF: `408e35a45e05d7b7bd7719df15e16838d5753a20` for the selected task — unchanged because the required protected workflow cannot be dispatched through the connected GitHub action surface.
-- GEPUSHTE_COMMITS: `none for FM-CHATADMIN-002`; a Project-Memory-only receipt publication may have its own branch commit and is not implementation progress on the blocked task.
-- OFFENE_P1: `0` known for the closed #1146 source package; no new ChatAdmin implementation PR exists.
+- GEPUSHTE_COMMITS: `none for FM-CHATADMIN-002`; a Project-Memory-only receipt publication may have its own branch commits and is not implementation progress on the blocked task.
+- OFFENE_P1: `0` for the closed #1146 source package. The receipt PR's initial stale dispatch-SHA P1 was corrected on its current head and requires current-head rereview before merge.
 - OFFENE_P2: `0` known for the closed #1146 source package; no new ChatAdmin implementation PR exists.
 - CI_STATUS_DES_CURRENT_HEADS: exact current `main` `408e35a45e05d7b7bd7719df15e16838d5753a20` remains the release under observation. Fresh GitHub check-run evidence shows Project Memory Status/Quality, scan and supply-chain checks successful. The read-only Production audit reports `PRODUCTION_RUNTIME_VERIFIED=true` for this exact release but remains red with the pre-existing Operations failure code `production_audit_backup_latest_stale_or_empty`; application, Supabase config/database/storage, Stripe/OpenAI/email configuration, PM2, nginx and local/public login health were reported healthy. This known Operations finding is not the ChatAdmin Staging VERIFY result.
 - CONTRACTS_IMPACTED: `none`.
@@ -31,17 +31,17 @@ This file is an execution receipt only. It does not create a second task, depend
 - BLOCKER_ID: `FM-CHATADMIN-OWNER-VERIFY-20260921`
 - BLOCKER_ART: `PROTECTED_WORKFLOW_DISPATCH_UNAVAILABLE`
 - OBSERVED_EVIDENCE:
-  - exact current `main` is `408e35a45e05d7b7bd7719df15e16838d5753a20`;
-  - source merge `648912cc2e9958cc8bc2e39c11b7977dabff862b` remains an ancestor of current main;
+  - exact `main` observed during this run is `408e35a45e05d7b7bd7719df15e16838d5753a20`;
+  - source merge `648912cc2e9958cc8bc2e39c11b7977dabff862b` remains an ancestor of that observed main;
   - `.github/workflows/chat-admin-staging-rollout.yml` is the protected manual ChatAdmin rollout path and requires `VERIFY` + `verify-chat-admin-schema` for the read-only observation;
   - a fresh read of the latest 100 GitHub Actions runs found no `chat-admin-staging-rollout.yml` run, so no ABSENT/PARTIAL/VERIFIED result exists to reconcile;
   - the connected GitHub action surface exposes workflow/run reads plus rerun operations, but no action to create a new `workflow_dispatch` run. GitHub app permission is not the blocker; the missing dispatch action is the technical capability boundary.
 - SINCE: persists from the prior 2026-09-21 run and was freshly revalidated in this run.
 - ACTION_MADE_IMPOSSIBLE: start the required protected READ-ONLY ChatAdmin Staging VERIFY from this builder.
-- REQUIRED_ACTION: an authorized GitHub/protected-environment operator must run `FanMind ChatAdmin Staging Rollout` on `main` with `reviewed_commit=408e35a45e05d7b7bd7719df15e16838d5753a20`, `mode=VERIFY`, `confirmation=verify-chat-admin-schema`, and no write acknowledgement.
+- REQUIRED_ACTION: an authorized GitHub/protected-environment operator must first re-read the exact current `main` SHA at dispatch time, verify it still contains source merge `648912cc2e9958cc8bc2e39c11b7977dabff862b` as an ancestor, then run `FanMind ChatAdmin Staging Rollout` on that same `main` with `reviewed_commit=<that exact dispatch-time main SHA>`, `mode=VERIFY`, `confirmation=verify-chat-admin-schema`, and no write acknowledgement. Never reuse the earlier observed `408e35a...` value after `main` advances.
 - REQUIRED_ACTOR: repository owner or another actor with access to the protected `staging` workflow dispatch UI/API.
 - IMMEDIATE_CONTINUATION_AFTER_UNBLOCK: read the exact workflow run/jobs/logs, classify only `ABSENT`, `PARTIAL`/drift, or `VERIFIED`, reconcile exact scope into canonical Project Memory, then begin `FM-GOV-GODMODE-001` only if that reconciliation permits it.
 
 ## Next concrete step
 
-`NÄCHSTER_KONKRETER_SCHRITT`: dispatch the protected read-only ChatAdmin Staging VERIFY against exact current `main` `408e35a45e05d7b7bd7719df15e16838d5753a20`; then reconcile the exact result before God Mode or any ChatAdmin APPLY/ACCEPT request.
+`NÄCHSTER_KONKRETER_SCHRITT`: re-read exact `main` immediately before dispatch, then execute the protected read-only ChatAdmin Staging VERIFY with `reviewed_commit` equal to that dispatch-time `main` SHA; reconcile the exact result before God Mode or any ChatAdmin APPLY/ACCEPT request.
