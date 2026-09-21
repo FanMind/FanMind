@@ -1,3 +1,9 @@
+## ChatAdmin #1146 merged; protected READ-ONLY VERIFY is next — 2026-09-21
+- FM-CHATADMIN-002 source package is closed: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head checks and independent review with no remaining P1/P2, then merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
+- This proves repository source only. Current Staging ChatAdmin schema state is still unknown; no VERIFY/APPLY/ACCEPT dispatch, DB write, real capability grant or Production activation is claimed.
+- Immediate next step is the protected GitHub Actions `FanMind ChatAdmin Staging Rollout` in mode `VERIFY` with `verify-chat-admin-schema`, read-only only. Exact result must be reconciled as ABSENT, PARTIAL or VERIFIED.
+- Per owner sequence, `FM-GOV-GODMODE-001` follows the reconciled VERIFY result before any ChatAdmin APPLY/ACCEPT or broader new feature work. APPLY remains a later separate owner-gated action and is not authorized by the merge.
+
 ## #1138 Production-confirmed; Creator learning is next — 2026-09-19
 - FM-CR-045 is Source/Runtime `PRODUCTION_CONFIRMED`: canonical PR #1138 final head `cea0d43108187a4dcd2510f17798f250d4a3c429`, merge `ccfe0ccef743e889d4ea16d454282cf66e465ed9`, Production Deploy `35450031498`, Production Audit `35450097882` and Public Go-Live Readiness `35450097892` succeeded. Do not repeat the placeholder/OAuth fail-closed work.
 - The remaining Facebook step is owner/provider-controlled real Meta app/server configuration and bounded connection/inbound evidence. It is not executable repository work and must not expose credentials.
