@@ -1,16 +1,18 @@
 # FanMind Owner Action Inbox
 
 ## FM-CHATADMIN-OWNER-VERIFY-20260921 — Read-only Staging VERIFY starten
-- Status: READY_NOW
+- Status: COMPLETED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921; Risk: R3 read-only.
-- Why now: PR #1146 is fully reviewed and merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`; source is no longer the blocker. The current Staging schema state is still unobserved.
-- Exact owner step: GitHub Actions -> `FanMind ChatAdmin Staging Rollout` -> Run workflow on `main`; set `reviewed_commit` to the exact current `main` SHA shown by GitHub at dispatch time; `mode=VERIFY`; `confirmation=verify-chat-admin-schema`. The current `main` must contain source merge `648912cc2e9958cc8bc2e39c11b7977dabff862b` as an ancestor. This run is read-only and must not set write acknowledgement.
-- Expected result: one of `ABSENT`, `PARTIAL` or `VERIFIED`. Return only the run/result; do not trigger APPLY or ACCEPT.
-- After result: exact-scope reconciliation, then FM-GOV-GODMODE-001. If ABSENT, later prepare a separate APPLY request only after God Mode v1 merge; PARTIAL means fix/reconcile first; VERIFIED means do not apply again.
-- Boundary: no Staging/Production write, no capability grant, Billing/Stripe/Tax/provider/Restore mutation.
+- Result: protected run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded and returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
+- Safety proof: `APPLY` and `ACCEPT` were skipped; the private passfile was removed; no write acknowledgement or protected mutation occurred.
+- Consumed outcome: do not repeat this VERIFY only because `main` advances. The next repository step is `FM-GOV-GODMODE-001`.
 
-
-This is the single compact queue for actions that genuinely require the owner, an external provider, protected UI access, payment authorization, legal/tax evidence or another capability unavailable to the assistant.
+## FM-CHATADMIN-OWNER-APPLY-20260921 — ChatAdmin Staging APPLY nach God Mode
+- Status: NOT_READY
+- Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921; Risk: R4 protected Staging write.
+- Why not ready: VERIFY proved the schema is `ABSENT`, but the owner sequence requires a cleanly merged/reconciled `FM-GOV-GODMODE-001` before any APPLY request.
+- Future exact scope: only after God Mode v1 merge, re-read the then-current main/target and prepare a separate protected `FanMind ChatAdmin Staging Rollout` dispatch with mode `APPLY` and exact confirmation `apply-chat-admin-migration`.
+- Boundary: this entry is not authorization to run APPLY now. ACCEPT remains a later separate step after a successful apply/postflight.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
 - Status: COMPLETED
