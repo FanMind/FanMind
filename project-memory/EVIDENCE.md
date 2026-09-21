@@ -545,3 +545,17 @@ Never store secrets, private credentials, plaintext sensitive payloads, or unsaf
 - Restore access: authenticated Exoscale FanMind and exact running fanmind-restore-01 observed. The encrypted console is connected but requires a separate Linux login; no host/artifact/Storage acceptance is inferred.
 - Limitations: no new SQL apply, price/provider change, actual payment, paid-tier activation, new build, database Restore or Storage target. Android real-device, AI private/product/Legal/Production and Meta/security external evidence remain open.
 - Acceptance: COUNTERCHECKED for the bounded workflow correction and release only. The observed Staging rollback result is RECONCILIATION_REQUIRED for its unverified separate authorization under CTR-FM-AI-AUTH-20260910; no protected-gate acceptance is claimed. Overall gates remain partial and sales_ready=false.
+
+
+## FM-EV-043
+- Related: FM-CHATADMIN-002 / FM-GOV-GODMODE-001.
+- Date: 2026-09-21.
+- Target: protected FanMind Staging / Supabase project `vshyhvgcmrlagvfnvomc`; exact reviewed main `973e70f6d243984d95ec1420a79701faad04a39a`.
+- Type: protected read-only target-bound schema verification.
+- Reference: GitHub Actions run `35652258052`, job `106507223598`, workflow `FanMind ChatAdmin Staging Rollout`.
+- Input: `mode=VERIFY`, `confirmation=verify-chat-admin-schema`, reviewed commit exactly equal to dispatched main.
+- Result: workflow/job PASS; offline ChatAdmin migration contract PASS with SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; target verifier returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
+- Negative/safety evidence: APPLY skipped, pre-ACCEPT verify skipped, ACCEPT skipped, non-production writes disabled, no write acknowledgement, private database password file removed.
+- Interpretation: the schema is absent on Staging. This proves observation only, not apply/accept/runtime/capability/Production acceptance.
+- Downstream: FM-GOV-GODMODE-001 repository-only, then a distinct owner-gated APPLY request may be prepared.
+- Freshness: mutable Staging observation; revalidate after target/schema binding changes or immediately before a later protected ChatAdmin Staging write.
