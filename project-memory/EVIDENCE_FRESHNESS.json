@@ -382,6 +382,22 @@
         "staging_target_or_environment_change",
         "before_protected_chatadmin_verify_or_apply"
       ]
+    },
+    {
+      "id": "EV-CHATADMIN-STAGING-VERIFY-20260921",
+      "gate": "chatadmin_staging_verify",
+      "class": "staging_smoke",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-21T20:37:53Z",
+      "source": "FM-EV-043 / run 35652258052 / job 106507223598 / exact main 973e70f6d243984d95ec1420a79701faad04a39a / CHAT_ADMIN_SCHEMA_STATE=ABSENT / APPLY+ACCEPT skipped",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "chatadmin_schema_or_acl_change",
+        "target_binding_change",
+        "before_chatadmin_staging_apply"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
