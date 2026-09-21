@@ -163,6 +163,10 @@
     "referral:lifecycle:staging:run": "node scripts/operations/referral-lifecycle-staging-acceptance.mjs --run",
     "db:creator-foundation:check": "node scripts/operations/creator-foundation-staging-runner.mjs --check"
     ,"db:chat-admin:check": "node scripts/operations/chat-admin-migration-check.mjs"
+    ,"db:chat-admin:verify": "node scripts/operations/chat-admin-staging-runner.mjs --verify"
+    ,"db:chat-admin:apply": "node scripts/operations/chat-admin-staging-runner.mjs --apply"
+    ,"chat-admin:staging:check": "node scripts/operations/chat-admin-staging-acceptance.mjs --check"
+    ,"chat-admin:staging:accept": "node scripts/operations/chat-admin-staging-acceptance.mjs --run"
     ,"test:chat-admin": "node --test tests/chat-admin-policy.test.mjs"
   },
   "dependencies": {

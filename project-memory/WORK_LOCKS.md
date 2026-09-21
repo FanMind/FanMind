@@ -782,3 +782,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: repository-only isolated ChatAdmin capability/controlled schema/UI/manual measured reply/tests/docs. No target apply, capability grant, provider, Admin, Billing, Mobile, Meta, Backup or Restore work.
 - Separate known issue: `production_audit_backup_latest_stale_or_empty` remains open and unmodified; it does not establish a globally green Production Audit.
 - Recovery: revert this single source commit; no external state was mutated.
+
+## LOCK-FM-CHATADMIN-STAGING-20260920
+- Task: FM-CHATADMIN-002; holder: Codex Cloud; risk: R3; status: ACTIVE_PENDING_PR_CI.
+- Exact scope is repository-only protected Staging rollout preparation. No dispatch/apply/real capability/Production action is authorized.

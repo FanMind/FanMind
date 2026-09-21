@@ -353,3 +353,8 @@ Update this file at the end of a substantial work session or whenever work is pa
 - ChatAdmin is not Admin. The controlled unapplied contract permits at most one exact Owner/User-bound Workspace and keeps Character data under composite Workspace/Character boundaries. Normal one-Creator/one-style semantics are untouched.
 - V1 UI/API is manual copy/paste only and reuses AI usage measurement. Before merge require Current-Head CI, Browser E2E, CodeQL and independent review with no P1/P2; never self-merge or apply the SQL from normal deploy.
 - Local verification: focused ChatAdmin/security/disclosure tests, controlled SQL offline check, lint (one pre-existing Mobile warning), production build, Product Truth and Project Memory quality/drift/freshness/next-action checks passed. Full Operations was rerun after updating its disclosure/CI inventory. Browser E2E configuration and app startup succeeded, but Chromium was absent; installation was attempted and blocked by the environment proxy with HTTP 403. Remote Current-Head Browser E2E remains required. No screenshot could be produced for the capability-hidden/unapplied UI for the same browser limitation.
+
+## FM-CHATADMIN-002 — 2026-09-20
+- Reconciled merged #1145 as canonical source. ChatAdmin remains a non-Admin Owner capability; schema, private-image policy and real capability are unapplied, Staging rollout and Production activation are open.
+- Prepared one exact-main/checksum/target-bound workflow with separated read-only VERIFY, separately confirmed APPLY and synthetic rollback-only ACCEPT. No workflow was dispatched.
+- FM-CREATOR-001 remains IN_PROGRESS; `production_audit_backup_latest_stale_or_empty` remains separately open; next-best-action selection is unchanged.

@@ -162,3 +162,7 @@ This register contains started, partially completed or follow-up work that could
 - Status: IMPLEMENTED_FOR_PR; task FM-CHATADMIN-001. Repository-only Owner exception; controlled schema remains unapplied and capability default-off.
 - Separate unaffected issue: `production_audit_backup_latest_stale_or_empty` remains open under Operations. This task did not run Backup/Restore or claim the complete Production audit is green.
 - Next: local/full verification, publish exactly one bounded PR, then wait for Current-Head CI/CodeQL/Browser E2E and one independent Codex review without P1/P2. Do not merge.
+
+## FM-LOOP-CHATADMIN-STAGING-20260920
+- Status: IMPLEMENTED_PENDING_PR_CI; task FM-CHATADMIN-002. Protected VERIFY/APPLY/ACCEPT source prepared; no mode dispatched and current Staging state not externally observed.
+- Separate Operations loop remains `production_audit_backup_latest_stale_or_empty`; do not conflate it with ChatAdmin.
