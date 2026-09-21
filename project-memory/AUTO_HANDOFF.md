@@ -8,12 +8,6 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Next action: `NBA-CHATADMIN-STAGING-VERIFY`
 - Next action title: Gemergten ChatAdmin-Stand read-only auf Staging verifizieren
 
-## Immediate handoff — 2026-09-21
-- PR #1146 is merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed.
-- Source merge is not Staging acceptance. No VERIFY/APPLY/ACCEPT dispatch or capability activation is recorded.
-- Immediate owner-required action: protected `FanMind ChatAdmin Staging Rollout` -> `VERIFY` only on that exact main, confirmation `verify-chat-admin-schema`.
-- Reconcile ABSENT/PARTIAL/VERIFIED exactly; then execute `FM-GOV-GODMODE-001` before any ChatAdmin APPLY/ACCEPT or broader feature work.
-
 ## Finishline gates
 
 - `memory_v6`: `ACCEPTED`
@@ -29,6 +23,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `legal_tax_avv`: `BLOCKED`
 - `creator_intelligence`: `IN_PROGRESS`
 - `registration_admin_crm`: `IN_PROGRESS`
+- `chatadmin_staging_verify`: `IMPLEMENTED_NOT_VERIFIED`
 
 ## Deferred owner actions
 
