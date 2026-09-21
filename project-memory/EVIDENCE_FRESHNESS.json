@@ -369,6 +369,19 @@
         "credential_rotation",
         "before_new_social_target_or_provider_acceptance"
       ]
+    },
+    {
+      "id": "EV-CHATADMIN-1146-SOURCE-MERGE-20260921",
+      "gate": "chatadmin_staging_source",
+      "class": "immutable_commit",
+      "status": "COUNTERCHECKED",
+      "observed_at": "2026-09-21T06:51:33Z",
+      "source": "PR #1146 final head cb6249b9fbcf15bcb0507fa61d0c97033229ab44; all current-head CI/CodeQL/Browser/Supply-Chain/Project-Memory gates green; independent Codex review reported no major issues; squash merge main 648912cc2e9958cc8bc2e39c11b7977dabff862b",
+      "revalidate_on": [
+        "chatadmin_rollout_contract_change",
+        "staging_target_or_environment_change",
+        "before_protected_chatadmin_verify_or_apply"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
