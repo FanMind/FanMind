@@ -129,6 +129,11 @@ with check (
   )
 );
 
+-- DELETE deliberately does not require the character row to still exist: an
+-- owner must be able to clean up an object after character deletion. The
+-- workspace path component remains UUID-validated and capability-bound, so
+-- this does not permit cross-workspace deletion. INSERT/UPDATE destinations
+-- above still require an existing character row.
 create policy chat_admin_character_images_owner_delete
 on storage.objects
 for delete
@@ -142,20 +147,6 @@ using (
         then (storage.foldername(name))[1]::uuid
       else null
     end
-  )
-  and exists (
-    select 1
-    from public.chat_characters c
-    where c.workspace_id = case
-      when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        then (storage.foldername(name))[1]::uuid
-      else null
-    end
-      and c.id = case
-        when (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-          then (storage.foldername(name))[2]::uuid
-        else null
-      end
   )
 );
 
