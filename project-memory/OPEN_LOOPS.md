@@ -147,11 +147,19 @@ This register contains started, partially completed or follow-up work that could
 
 ## FM-LOOP-013
 - Related: FM-SEC-001 / issue #982
+- Status: CLOSED
+- Updated: 2026-09-20
+- Historical gap: Production trigger hardening, explicit Staging RPC exception acceptance and leaked-password protection were previously all open.
+- Closed by: Production trigger hardening Apply `34496892707` / job `102937525772` and independent Verify `34497099991` / job `102938240926` passed on exact release `9a6e9d016cb0928e58b89c6c2d5b6183379c50ed`; leaked-password protection was separately enabled and independently rechecked on Production and isolated Staging under FM-EV-041. Do not repeat either completed action.
+- Follow-up: only the bounded authenticated RPC exception decision remains open under `FM-SEC-OWNER-002`; it is tracked below as a separate narrowed loop and authorizes no mutation.
+
+## FM-LOOP-SEC-RPC-EXCEPTION-20260920
+- Related: FM-SEC-001 / FM-SEC-OWNER-002 / issue #982
 - Status: OPEN
-- Updated: 2026-08-26
-- Gap: protected read-only run `32997946812` now proves the exact Production pre-hardening state, and the Staging RPC is classified as technically constrained intentional exposure. Production remediation, explicit Staging exception acceptance and leaked-password protection on both targets remain unaccepted/unapplied.
-- Close when: exact-target read-only catalog/ACL/advisor evidence classifies every warning as remediated or explicitly accepted by policy; any approved state-changing action follows the existing R3 protected path with rollback/postflight; fresh advisor scans are bound to exact targets.
-- Next check: only after explicit owner resume, run one exact protected Production Apply and post-advisor scan under `FM-SEC-OWNER-001`; decide the separate Staging exception/Auth setting path under `FM-SEC-OWNER-002`. No mutation is standing-authorized.
+- Updated: 2026-09-20
+- Gap: explicit policy acceptance/rejection of the constrained authenticated RPC exceptions is still missing. `ensure_current_user_workspace(...)` and `get_current_workspace_member_safe_dashboard()` have different verified protection details and must not be conflated.
+- Close when: the owner explicitly accepts or rejects the documented RPC exception after reviewing the exact role/identity/search-path/row-security/return-shape evidence; record that decision without inventing browser policies or changing grants merely to close the loop.
+- Next check: owner decision only when ready. No Production Apply, leaked-password setting change, blind RPC revoke/grant or other protected mutation is standing-authorized.
 
 ## Rules
 - Every `PARTIAL`, `BLOCKED`, `IMPLEMENTED_NOT_VERIFIED` or `RECONCILIATION_REQUIRED` task must have either an open-loop entry or an explicit reason why no follow-up is required.
