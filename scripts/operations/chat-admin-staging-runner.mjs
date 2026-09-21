@@ -30,6 +30,7 @@ declare
   constraint_valid integer;
   index_valid integer;
   function_valid integer;
+  schema_mismatch integer;
   privilege_mismatch integer;
 begin
   select count(*) into present
@@ -82,8 +83,18 @@ begin
       tablename,
       cmd,
       roles,
-      regexp_replace(coalesce(qual, ''), '[[:space:]]+', '', 'g') as q,
-      regexp_replace(coalesce(with_check, ''), '[[:space:]]+', '', 'g') as wc
+      regexp_replace(
+        replace(lower(coalesce(qual, '')), 'public.', ''),
+        '[[:space:]()]',
+        '',
+        'g'
+      ) as q,
+      regexp_replace(
+        replace(lower(coalesce(with_check, '')), 'public.', ''),
+        '[[:space:]()]',
+        '',
+        'g'
+      ) as wc
     from pg_policies
     where schemaname = 'public'
       and tablename in (
@@ -100,39 +111,111 @@ begin
         and tablename = 'workspace_chat_admin_capabilities'
         and cmd = 'SELECT'
         and wc = ''
-        and q like '%chat_admin_multi_character%'
-        and q like '%granted_to_user_id=auth.uid()%'
-        and q like '%w.owner_user_id=auth.uid()%'
-        and q like '%w.id=workspace_id%'
+        and q in (
+          'chat_admin_multi_characterandgranted_to_user_id=auth.uidandexistsselect1fromworkspaceswwherew.id=workspace_idandw.owner_user_id=auth.uid',
+          'chat_admin_multi_characterandgranted_to_user_id=auth.uidandexistsselect1fromworkspaceswwherew.id=workspace_chat_admin_capabilities.workspace_idandw.owner_user_id=auth.uid'
+        )
       )
       or (
         policyname = 'chat_admin_characters_owner_all'
         and tablename = 'chat_characters'
         and cmd = 'ALL'
-        and q like '%is_current_chat_admin_workspace(workspace_id)%'
-        and q not in ('true', '(true)')
-        and wc like '%is_current_chat_admin_workspace(workspace_id)%'
-        and wc like '%created_by_user_id=auth.uid()%'
+        and q = 'is_current_chat_admin_workspaceworkspace_id'
+        and wc = 'is_current_chat_admin_workspaceworkspace_idandcreated_by_user_id=auth.uid'
       )
       or (
         policyname = 'chat_admin_conversations_owner_all'
         and tablename = 'chat_character_conversations'
         and cmd = 'ALL'
-        and q like '%is_current_chat_admin_workspace(workspace_id)%'
-        and q not in ('true', '(true)')
-        and wc like '%is_current_chat_admin_workspace(workspace_id)%'
-        and wc not in ('true', '(true)')
+        and q = 'is_current_chat_admin_workspaceworkspace_id'
+        and wc = 'is_current_chat_admin_workspaceworkspace_id'
       )
       or (
         policyname = 'chat_admin_messages_owner_all'
         and tablename = 'chat_character_messages'
         and cmd = 'ALL'
-        and q like '%is_current_chat_admin_workspace(workspace_id)%'
-        and q not in ('true', '(true)')
-        and wc like '%is_current_chat_admin_workspace(workspace_id)%'
-        and wc not in ('true', '(true)')
+        and q = 'is_current_chat_admin_workspaceworkspace_id'
+        and wc = 'is_current_chat_admin_workspaceworkspace_id'
       )
     );
+
+  with expected(table_name, column_name, type_name, not_null, default_norm) as (
+    values
+      ('workspace_chat_admin_capabilities','workspace_id','uuid',true,''),
+      ('workspace_chat_admin_capabilities','chat_admin_multi_character','boolean',true,'false'),
+      ('workspace_chat_admin_capabilities','granted_to_user_id','uuid',true,''),
+      ('workspace_chat_admin_capabilities','created_at','timestamp with time zone',true,'now()'),
+      ('workspace_chat_admin_capabilities','updated_at','timestamp with time zone',true,'now()'),
+
+      ('chat_characters','id','uuid',true,'gen_random_uuid()'),
+      ('chat_characters','workspace_id','uuid',true,''),
+      ('chat_characters','created_by_user_id','uuid',true,''),
+      ('chat_characters','display_name','text',true,''),
+      ('chat_characters','profile_image_path','text',false,''),
+      ('chat_characters','public_age','smallint',true,''),
+      ('chat_characters','bio','text',true,''),
+      ('chat_characters','location','text',false,''),
+      ('chat_characters','languages','text[]',true,'''{}''::text[]'),
+      ('chat_characters','personality','text',true,''),
+      ('chat_characters','writing_style','text',true,''),
+      ('chat_characters','emoji_style','text',true,''),
+      ('chat_characters','sentence_style','text',true,''),
+      ('chat_characters','typical_phrases','text[]',true,'''{}''::text[]'),
+      ('chat_characters','forbidden_phrases','text[]',true,'''{}''::text[]'),
+      ('chat_characters','flirt_style','text',true,''),
+      ('chat_characters','sales_rules','text',true,''),
+      ('chat_characters','example_messages','text[]',true,'''{}''::text[]'),
+      ('chat_characters','status','text',true,'''active''::text'),
+      ('chat_characters','revision','integer',true,'1'),
+      ('chat_characters','created_at','timestamp with time zone',true,'now()'),
+      ('chat_characters','updated_at','timestamp with time zone',true,'now()'),
+
+      ('chat_character_conversations','id','uuid',true,'gen_random_uuid()'),
+      ('chat_character_conversations','workspace_id','uuid',true,''),
+      ('chat_character_conversations','character_id','uuid',true,''),
+      ('chat_character_conversations','fan_reference','text',true,''),
+      ('chat_character_conversations','created_at','timestamp with time zone',true,'now()'),
+      ('chat_character_conversations','updated_at','timestamp with time zone',true,'now()'),
+
+      ('chat_character_messages','id','uuid',true,'gen_random_uuid()'),
+      ('chat_character_messages','workspace_id','uuid',true,''),
+      ('chat_character_messages','character_id','uuid',true,''),
+      ('chat_character_messages','conversation_id','uuid',true,''),
+      ('chat_character_messages','direction','text',true,''),
+      ('chat_character_messages','content','text',true,''),
+      ('chat_character_messages','character_revision','integer',true,''),
+      ('chat_character_messages','created_at','timestamp with time zone',true,'now()')
+  ), actual as (
+    select
+      c.relname::text as table_name,
+      a.attname::text as column_name,
+      format_type(a.atttypid, a.atttypmod)::text as type_name,
+      a.attnotnull as not_null,
+      regexp_replace(
+        lower(coalesce(pg_get_expr(ad.adbin, ad.adrelid), '')),
+        '[[:space:]]+',
+        '',
+        'g'
+      ) as default_norm
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    join pg_attribute a on a.attrelid = c.oid
+    left join pg_attrdef ad on ad.adrelid = c.oid and ad.adnum = a.attnum
+    where n.nspname = 'public'
+      and c.relname in (
+        'workspace_chat_admin_capabilities',
+        'chat_characters',
+        'chat_character_conversations',
+        'chat_character_messages'
+      )
+      and a.attnum > 0
+      and not a.attisdropped
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all
+    (select * from actual except select * from expected)
+  )
+  select count(*) into schema_mismatch from mismatch;
 
   select count(*) into constraint_valid
   from (
@@ -240,6 +323,7 @@ begin
     or constraint_valid <> 2
     or index_valid <> 1
     or function_valid <> 1
+    or schema_mismatch <> 0
     or privilege_mismatch <> 0
     or has_function_privilege(
       'anon',
