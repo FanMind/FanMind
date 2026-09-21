@@ -165,7 +165,7 @@
       "gate": "creator_intelligence",
       "title": "Creator-Profil pro Account und Social-Handoff ausbauen",
       "requires_owner": false,
-      "parallel_safe": true,
+      "parallel_safe": false,
       "prerequisite_gates": [
         "memory_v6",
         "staging"
@@ -174,7 +174,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging."
+      "instruction": "Temporarily held by the owner-ordered ChatAdmin sequence: first reconcile the protected read-only ChatAdmin Staging VERIFY result, then merge FM-GOV-GODMODE-001. After those gates, resume the existing Creator Intelligence instruction without rebuilding accepted source or Staging foundation evidence."
     },
     {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
