@@ -114,3 +114,13 @@ Track ordering and prerequisites here. Do not mark dependent work accepted while
 `ACTIVE`, `SATISFIED`, `BLOCKED`, `SUPERSEDED`.
 
 Cross-domain dependencies must be linked to the same FanMind task IDs and #874. Do not create a parallel finishline tracker unless #874 is explicitly superseded.
+
+
+## FM-DEP-CHATADMIN-STAGING-VERIFY-20260921
+- From: FM-CHATADMIN-002
+- Requires: merged reviewed source PR #1146 on exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`; protected `staging` environment; exact reviewed main commit; read-only mode `VERIFY`; confirmation `verify-chat-admin-schema`; no write acknowledgement.
+- Type: protected read-only external observation
+- Status: READY_OWNER_ACTION
+- Updated: 2026-09-21
+- Result contract: record exactly one of ABSENT, PARTIAL or VERIFIED from the merged workflow. VERIFY never authorizes APPLY/ACCEPT, capability grants or Production activation.
+- Downstream: reconcile the exact result first; only then proceed to FM-GOV-GODMODE-001. If ABSENT, prepare a separate later APPLY owner action after God Mode v1 merge; if PARTIAL, bounded reconciliation/fix before any apply request; if VERIFIED, never re-apply and continue after God Mode to the actually missing acceptance/runtime step.
