@@ -251,8 +251,7 @@
       "parallel_safe": true,
       "prerequisite_gates": [
         "memory_v6",
-        "staging",
-        "chatadmin_staging_verify"
+        "staging"
       ],
       "done_states": [
         "VERIFIED",
@@ -260,7 +259,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Implement the bounded repository-only God Mode v1 governance package: invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. Current ChatAdmin VERIFY result is ABSENT; after God Mode is cleanly merged, prepare the separate protected owner APPLY request without executing it automatically."
+      "instruction": "Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically."
     }
   ],
   "retired_actions": [
