@@ -784,7 +784,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Still open: exact-head local verification, one PR, Current-Head CI/CodeQL/Browser E2E and independent Codex review without P1/P2. Do not merge automatically.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Date: 2026-09-20; Status: SOURCE_MERGED_VERIFY_PENDING; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud; Updated: 2026-09-21.
+- Date: 2026-09-20; Status: VERIFIED; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud; Updated: 2026-09-21.
 - Source closeout: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed current-head CI/CodeQL/Browser E2E/Supply Chain/Project Memory and independent review with no remaining P1/P2, then merged as `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
-- Scope remains repository-only: exact-main/checksum-bound VERIFY/APPLY/ACCEPT source, rollback-only synthetic acceptance, private-image policy and fail-closed schema/RLS/constraint/privilege checks. No workflow dispatch, DB apply, real grant, Production/Backup/provider/Billing/Mobile mutation.
-- Next: run only the protected READ-ONLY `VERIFY` on merged main and record ABSENT/PARTIAL/VERIFIED. APPLY remains separately owner-gated and is not authorized by this merge.
+- Protected read-only VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY and ACCEPT were skipped.
+- No protected write, capability grant or Production/Backup/provider/Billing/Mobile mutation occurred.
+- Exact next step: God Mode v1 repository-only, then a separately owner-gated APPLY request if the governance gate is clean.
+
+
+## FM-GOV-GODMODE-001 — God Mode v1
+- Date: 2026-09-21
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-GOV-GODMODE-001-20260921
+- Owner: ChatGPT / connected GitHub
+- Branch/PR: `governance/god-mode-v1-20260921` / PR pending.
+- Scope: bounded repository-only governance package: invariants, contracts, integration gates, impact map, release decision, adversarial tests, synthetic golden flows, Post-Merge Guardian contract and CI integration.
+- Evidence plan: structural preflight, fail-closed release decision tests including deliberately broken invariant/integration/head cases, current-head GitHub CI/CodeQL/Project Memory and independent review.
+- Recovery: ordinary source revert; no external state changes exist to roll back.
+- Exact next step: finish Project Memory integration, open one bounded PR, obtain current-head CI/independent review and merge only when green with no P1/P2.
