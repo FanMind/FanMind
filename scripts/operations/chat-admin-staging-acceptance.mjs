@@ -9,10 +9,21 @@ const UUID_PATTERN =
 export const CHAT_ADMIN_ACCEPTANCE_SQL = String.raw`\set ON_ERROR_STOP on
 begin;
 select set_config('fanmind.synthetic_workspace', :'workspace_id', true);
+select set_config('fanmind.fixture.workspace_id', :'workspace_id', true);
+select set_config('fanmind.fixture.second_workspace_id', :'second_workspace_id', true);
+select set_config('fanmind.fixture.owner_id', :'owner_id', true);
+select set_config('fanmind.fixture.member_id', :'member_id', true);
+select set_config('fanmind.fixture.foreign_owner_id', :'foreign_owner_id', true);
+select set_config('fanmind.fixture.platform_admin_id', :'platform_admin_id', true);
+select set_config('fanmind.fixture.character_a', :'character_a', true);
+select set_config('fanmind.fixture.character_b', :'character_b', true);
+select set_config('fanmind.fixture.conversation_a', :'conversation_a', true);
+select set_config('fanmind.fixture.conversation_b', :'conversation_b', true);
 
 do $preflight$
 begin
-  if current_setting('fanmind.synthetic_workspace', true) <> :'workspace_id' then
+  if current_setting('fanmind.synthetic_workspace', true) <>
+    current_setting('fanmind.fixture.workspace_id', true) then
     raise exception 'synthetic_fixture_missing';
   end if;
   if to_regclass('public.chat_characters') is null then
@@ -20,43 +31,53 @@ begin
   end if;
   if not exists (
     select 1 from public.workspaces
-    where id = :'workspace_id'::uuid
-      and owner_user_id = :'owner_id'::uuid
+    where id = current_setting('fanmind.fixture.workspace_id', true)::uuid
+      and owner_user_id = current_setting('fanmind.fixture.owner_id', true)::uuid
   ) then
     raise exception 'synthetic_owner_workspace_invalid';
   end if;
   if not exists (
     select 1 from public.workspaces
-    where id = :'second_workspace_id'::uuid
-      and owner_user_id = :'foreign_owner_id'::uuid
+    where id = current_setting('fanmind.fixture.second_workspace_id', true)::uuid
+      and owner_user_id = current_setting('fanmind.fixture.foreign_owner_id', true)::uuid
   ) then
     raise exception 'synthetic_foreign_workspace_invalid';
   end if;
   if not exists (
     select 1 from public.workspace_members
-    where workspace_id = :'workspace_id'::uuid
-      and user_id = :'member_id'::uuid
+    where workspace_id = current_setting('fanmind.fixture.workspace_id', true)::uuid
+      and user_id = current_setting('fanmind.fixture.member_id', true)::uuid
       and role = 'member'
   ) then
     raise exception 'synthetic_member_invalid';
   end if;
   if not exists (
-    select 1 from auth.users where id = :'platform_admin_id'::uuid
+    select 1 from auth.users
+    where id = current_setting('fanmind.fixture.platform_admin_id', true)::uuid
   ) then
     raise exception 'synthetic_platform_admin_invalid';
   end if;
   if exists (
     select 1 from public.workspace_chat_admin_capabilities
-    where workspace_id in (:'workspace_id'::uuid, :'second_workspace_id'::uuid)
+    where workspace_id in (
+      current_setting('fanmind.fixture.workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.second_workspace_id', true)::uuid
+    )
   ) then
     raise exception 'synthetic_capability_not_clean';
   end if;
   if exists (
     select 1 from public.chat_characters
-    where id in (:'character_a'::uuid, :'character_b'::uuid)
+    where id in (
+      current_setting('fanmind.fixture.character_a', true)::uuid,
+      current_setting('fanmind.fixture.character_b', true)::uuid
+    )
   ) or exists (
     select 1 from public.chat_character_conversations
-    where id in (:'conversation_a'::uuid, :'conversation_b'::uuid)
+    where id in (
+      current_setting('fanmind.fixture.conversation_a', true)::uuid,
+      current_setting('fanmind.fixture.conversation_b', true)::uuid
+    )
   ) then
     raise exception 'synthetic_rows_not_clean';
   end if;
@@ -65,7 +86,9 @@ end $preflight$;
 insert into public.workspace_chat_admin_capabilities(
   workspace_id, granted_to_user_id, chat_admin_multi_character
 ) values (
-  :'workspace_id'::uuid, :'owner_id'::uuid, true
+  current_setting('fanmind.fixture.workspace_id', true)::uuid,
+  current_setting('fanmind.fixture.owner_id', true)::uuid,
+  true
 );
 
 do $global_capability$
@@ -76,7 +99,9 @@ begin
     insert into public.workspace_chat_admin_capabilities(
       workspace_id, granted_to_user_id, chat_admin_multi_character
     ) values (
-      :'second_workspace_id'::uuid, :'foreign_owner_id'::uuid, true
+      current_setting('fanmind.fixture.second_workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.foreign_owner_id', true)::uuid,
+      true
     );
     raise exception 'second_workspace_allowed';
   exception
@@ -89,7 +114,11 @@ begin
 end $global_capability$;
 
 set local role authenticated;
-select set_config('request.jwt.claim.sub', :'owner_id', true);
+select set_config(
+  'request.jwt.claim.sub',
+  current_setting('fanmind.fixture.owner_id', true),
+  true
+);
 
 insert into public.chat_characters(
   id, workspace_id, created_by_user_id, display_name, public_age, bio,
@@ -97,12 +126,16 @@ insert into public.chat_characters(
   sales_rules, status
 ) values
   (
-    :'character_a'::uuid, :'workspace_id'::uuid, :'owner_id'::uuid,
+    current_setting('fanmind.fixture.character_a', true)::uuid,
+    current_setting('fanmind.fixture.workspace_id', true)::uuid,
+    current_setting('fanmind.fixture.owner_id', true)::uuid,
     'FM synthetic A', 24, 'synthetic', 'synthetic', 'synthetic', 'none',
     'short', 'safe', 'none', 'active'
   ),
   (
-    :'character_b'::uuid, :'workspace_id'::uuid, :'owner_id'::uuid,
+    current_setting('fanmind.fixture.character_b', true)::uuid,
+    current_setting('fanmind.fixture.workspace_id', true)::uuid,
+    current_setting('fanmind.fixture.owner_id', true)::uuid,
     'FM synthetic B', 25, 'synthetic', 'synthetic', 'synthetic', 'none',
     'short', 'safe', 'none', 'active'
   );
@@ -115,8 +148,9 @@ begin
       personality, writing_style, emoji_style, sentence_style, flirt_style,
       sales_rules
     ) values (
-      :'workspace_id'::uuid, :'owner_id'::uuid, 'underage', 17, 'x', 'x',
-      'x', 'x', 'x', 'x', 'x'
+      current_setting('fanmind.fixture.workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.owner_id', true)::uuid,
+      'underage', 17, 'x', 'x', 'x', 'x', 'x', 'x', 'x'
     );
     raise exception 'underage_allowed';
   exception when check_violation then
@@ -127,14 +161,26 @@ end $underage$;
 insert into public.chat_character_conversations(
   id, workspace_id, character_id, fan_reference
 ) values
-  (:'conversation_a'::uuid, :'workspace_id'::uuid, :'character_a'::uuid, 'same-fan'),
-  (:'conversation_b'::uuid, :'workspace_id'::uuid, :'character_b'::uuid, 'same-fan');
+  (
+    current_setting('fanmind.fixture.conversation_a', true)::uuid,
+    current_setting('fanmind.fixture.workspace_id', true)::uuid,
+    current_setting('fanmind.fixture.character_a', true)::uuid,
+    'same-fan'
+  ),
+  (
+    current_setting('fanmind.fixture.conversation_b', true)::uuid,
+    current_setting('fanmind.fixture.workspace_id', true)::uuid,
+    current_setting('fanmind.fixture.character_b', true)::uuid,
+    'same-fan'
+  );
 
 insert into public.chat_character_messages(
   workspace_id, character_id, conversation_id, direction, content,
   character_revision
 ) values (
-  :'workspace_id'::uuid, :'character_a'::uuid, :'conversation_a'::uuid,
+  current_setting('fanmind.fixture.workspace_id', true)::uuid,
+  current_setting('fanmind.fixture.character_a', true)::uuid,
+  current_setting('fanmind.fixture.conversation_a', true)::uuid,
   'fan_inbound', 'synthetic manual input', 1
 );
 
@@ -145,7 +191,9 @@ begin
       workspace_id, character_id, conversation_id, direction, content,
       character_revision
     ) values (
-      :'workspace_id'::uuid, :'character_a'::uuid, :'conversation_b'::uuid,
+      current_setting('fanmind.fixture.workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.character_a', true)::uuid,
+      current_setting('fanmind.fixture.conversation_b', true)::uuid,
       'suggested_reply', 'must fail', 1
     );
     raise exception 'cross_character_allowed';
@@ -156,13 +204,17 @@ begin
     select count(distinct character_id)
     from public.chat_character_conversations
     where fan_reference = 'same-fan'
-      and workspace_id = :'workspace_id'::uuid
+      and workspace_id = current_setting('fanmind.fixture.workspace_id', true)::uuid
   ) <> 2 then
     raise exception 'fan_reference_mixed';
   end if;
 end $isolation$;
 
-select set_config('request.jwt.claim.sub', :'member_id', true);
+select set_config(
+  'request.jwt.claim.sub',
+  current_setting('fanmind.fixture.member_id', true),
+  true
+);
 do $member_denied$
 begin
   begin
@@ -171,7 +223,9 @@ begin
       personality, writing_style, emoji_style, sentence_style, flirt_style,
       sales_rules, status
     ) values (
-      gen_random_uuid(), :'workspace_id'::uuid, :'member_id'::uuid,
+      gen_random_uuid(),
+      current_setting('fanmind.fixture.workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.member_id', true)::uuid,
       'member must fail', 24, 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'active'
     );
     raise exception 'workspace_member_allowed';
@@ -180,7 +234,11 @@ begin
   end;
 end $member_denied$;
 
-select set_config('request.jwt.claim.sub', :'foreign_owner_id', true);
+select set_config(
+  'request.jwt.claim.sub',
+  current_setting('fanmind.fixture.foreign_owner_id', true),
+  true
+);
 do $owner_without_capability_denied$
 begin
   begin
@@ -189,7 +247,9 @@ begin
       personality, writing_style, emoji_style, sentence_style, flirt_style,
       sales_rules, status
     ) values (
-      gen_random_uuid(), :'second_workspace_id'::uuid, :'foreign_owner_id'::uuid,
+      gen_random_uuid(),
+      current_setting('fanmind.fixture.second_workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.foreign_owner_id', true)::uuid,
       'owner without capability must fail', 24, 'x', 'x', 'x', 'x', 'x',
       'x', 'x', 'active'
     );
@@ -199,7 +259,11 @@ begin
   end;
 end $owner_without_capability_denied$;
 
-select set_config('request.jwt.claim.sub', :'platform_admin_id', true);
+select set_config(
+  'request.jwt.claim.sub',
+  current_setting('fanmind.fixture.platform_admin_id', true),
+  true
+);
 do $platform_admin_denied$
 begin
   begin
@@ -208,7 +272,9 @@ begin
       personality, writing_style, emoji_style, sentence_style, flirt_style,
       sales_rules, status
     ) values (
-      gen_random_uuid(), :'workspace_id'::uuid, :'platform_admin_id'::uuid,
+      gen_random_uuid(),
+      current_setting('fanmind.fixture.workspace_id', true)::uuid,
+      current_setting('fanmind.fixture.platform_admin_id', true)::uuid,
       'platform admin must fail', 24, 'x', 'x', 'x', 'x', 'x', 'x', 'x',
       'active'
     );
@@ -263,6 +329,12 @@ export function check() {
   }
   if (/CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS/u.test(CHAT_ADMIN_ACCEPTANCE_SQL)) {
     throw new Error("manual_flow_not_exercised");
+  }
+  const dollarQuotedBodies = [
+    ...CHAT_ADMIN_ACCEPTANCE_SQL.matchAll(/\$[A-Za-z0-9_]+\$([\s\S]*?)\$[A-Za-z0-9_]+\$/gu),
+  ].map((match) => match[1]);
+  if (dollarQuotedBodies.some((body) => /:'[A-Za-z0-9_]+'/u.test(body))) {
+    throw new Error("acceptance_quoted_psql_variable");
   }
   console.log("CHAT_ADMIN_ACCEPTANCE_READY=YES");
 }
