@@ -217,32 +217,63 @@ begin
   )
   select count(*) into schema_mismatch from mismatch;
 
-  select count(*) into constraint_valid
-  from (
+  with expected(table_name, contype, definition) as (
+    values
+      ('workspace_chat_admin_capabilities','p','primarykeyworkspace_id'),
+      ('workspace_chat_admin_capabilities','f','foreignkeyworkspace_idreferencesworkspacesidondeletecascade'),
+      ('workspace_chat_admin_capabilities','f','foreignkeygranted_to_user_idreferencesauth.usersidondeleterestrict'),
+      ('workspace_chat_admin_capabilities','c','checkchat_admin_multi_character=true'),
+
+      ('chat_characters','p','primarykeyid'),
+      ('chat_characters','f','foreignkeyworkspace_idreferencesworkspacesidondeletecascade'),
+      ('chat_characters','f','foreignkeycreated_by_user_idreferencesauth.usersidondeleterestrict'),
+      ('chat_characters','c','checkchar_lengthbtrimdisplay_name>=1andchar_lengthbtrimdisplay_name<=120'),
+      ('chat_characters','c','checkpublic_age>=18andpublic_age<=99'),
+      ('chat_characters','c','checkstatus=anyarray[''active'',''inactive'']'),
+      ('chat_characters','c','checkrevision>0'),
+      ('chat_characters','u','uniqueworkspace_id,id'),
+      ('chat_characters','c','checkprofile_image_pathisnullorprofile_image_path~''^chat-characters/[0-9a-f-]+/[0-9a-f-]+/[a-za-z0-9._-]+$'''),
+
+      ('chat_character_conversations','p','primarykeyid'),
+      ('chat_character_conversations','c','checkchar_lengthbtrimfan_reference>=1andchar_lengthbtrimfan_reference<=120'),
+      ('chat_character_conversations','u','uniqueworkspace_id,character_id,id'),
+      ('chat_character_conversations','f','foreignkeyworkspace_id,character_idreferenceschat_charactersworkspace_id,idondeletecascade'),
+
+      ('chat_character_messages','p','primarykeyid'),
+      ('chat_character_messages','c','checkdirection=anyarray[''fan_inbound'',''suggested_reply'',''confirmed_reply'']'),
+      ('chat_character_messages','c','checkchar_lengthcontent>=1andchar_lengthcontent<=4000'),
+      ('chat_character_messages','c','checkcharacter_revision>0'),
+      ('chat_character_messages','f','foreignkeyworkspace_id,character_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,idondeletecascade')
+  ), actual as (
     select
-      conrelid,
-      contype,
-      replace(
-        regexp_replace(lower(pg_get_constraintdef(oid, true)), '[[:space:]]+', '', 'g'),
-        'public.',
-        ''
+      c.relname::text as table_name,
+      con.contype::text as contype,
+      regexp_replace(
+        replace(
+          replace(lower(pg_get_constraintdef(con.oid, true)), 'public.', ''),
+          '::text',
+          ''
+        ),
+        '[[:space:]()]',
+        '',
+        'g'
       ) as definition
-    from pg_constraint
-    where conrelid in (
-      to_regclass('public.chat_character_conversations'),
-      to_regclass('public.chat_character_messages')
-    )
-  ) c
-  where (
-      c.conrelid = to_regclass('public.chat_character_conversations')
-      and c.contype = 'f'
-      and c.definition = 'foreignkey(workspace_id,character_id)referenceschat_characters(workspace_id,id)ondeletecascade'
-    )
-    or (
-      c.conrelid = to_regclass('public.chat_character_messages')
-      and c.contype = 'f'
-      and c.definition = 'foreignkey(workspace_id,character_id,conversation_id)referenceschat_character_conversations(workspace_id,character_id,id)ondeletecascade'
-    );
+    from pg_constraint con
+    join pg_class c on c.oid = con.conrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname in (
+        'workspace_chat_admin_capabilities',
+        'chat_characters',
+        'chat_character_conversations',
+        'chat_character_messages'
+      )
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all
+    (select * from actual except select * from expected)
+  )
+  select count(*) into constraint_valid from mismatch;
 
   select count(*) into index_valid
   from pg_indexes
@@ -320,7 +351,7 @@ begin
     or rls_enabled <> 4
     or policy_count <> 4
     or policy_valid <> 4
-    or constraint_valid <> 2
+    or constraint_valid <> 0
     or index_valid <> 1
     or function_valid <> 1
     or schema_mismatch <> 0
