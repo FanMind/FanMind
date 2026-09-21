@@ -4,38 +4,31 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-INTELLIGENCE`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_intelligence` (`IN_PROGRESS`)
-- Selection status: `EXECUTABLE`
-- Title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Selected action: `NBA-CHATADMIN-STAGING-VERIFY`
+- Task: `FM-CHATADMIN-002`
+- Gate: `chatadmin_staging_verify` (source merged; target state unknown)
+- Selection status: `OWNER_ACTION_REQUIRED`
+- Title: Gemergten ChatAdmin-Stand read-only auf Staging verifizieren
 
 ## Instruction
 
-Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging.
+PR #1146 is merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`. Run only the protected `FanMind ChatAdmin Staging Rollout` workflow on `main` with `reviewed_commit=648912cc2e9958cc8bc2e39c11b7977dabff862b`, `mode=VERIFY`, and `confirmation=verify-chat-admin-schema`. This is read-only. Record exactly ABSENT, PARTIAL or VERIFIED; do not trigger APPLY or ACCEPT. Reconcile that result before starting `FM-GOV-GODMODE-001`. God Mode v1 must merge before any later ChatAdmin APPLY/ACCEPT or broader new feature work. Mobile remains deferred by FM-DEC-021.
 
 ## Why this action
 
-standing-authorized safe work
+PR #1146 source is fully reviewed and merged; the next required evidence is external target observation and cannot be inferred from green CI or merge.
 
 ## Candidate evaluation
 
-- `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
-- `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
-- `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL
+- `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **OWNER_ACTION_REQUIRED** — protected GitHub Actions dispatch required
+- `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED**
+- `NBA-CREATOR-INTELLIGENCE` priority 5: **WAITING_SEQUENCE** — explicitly held until ChatAdmin VERIFY reconciliation and FM-GOV-GODMODE-001
+- Other prior actions remain tracked in `NEXT_BEST_ACTIONS.json`; none supersede this owner-ordered sequence.
 
 ## Selection safety rules
 
-- A `DEFERRED_BY_OWNER` action remains open but is skipped for current assistant execution.
-- Skipping a deferred action never marks its gate accepted or lowers its priority permanently.
-- If an earlier unresolved action is owner-required/deferred, only later `parallel_safe=true` actions may be selected.
-- Provider, payment, destructive, legal and protected Production boundaries still require their existing approvals.
-- Phase 8 remains outside the current finishline.
+- VERIFY is not APPLY authorization.
+- ABSENT -> record and prepare a later separate APPLY owner action only after God Mode v1 merge.
+- PARTIAL -> bounded reconciliation/fix first; do not request APPLY.
+- VERIFIED -> do not repeat APPLY; after God Mode choose the actually missing acceptance/runtime step.
+- A green source merge is not Staging or Production acceptance.
