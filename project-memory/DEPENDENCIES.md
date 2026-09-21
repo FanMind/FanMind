@@ -118,7 +118,7 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 
 ## FM-DEP-CHATADMIN-STAGING-VERIFY-20260921
 - From: FM-CHATADMIN-002
-- Requires: merged reviewed source PR #1146 on exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`; protected `staging` environment; exact reviewed main commit; read-only mode `VERIFY`; confirmation `verify-chat-admin-schema`; no write acknowledgement.
+- Requires: merged reviewed source PR #1146 source commit `648912cc2e9958cc8bc2e39c11b7977dabff862b` present in current `main`; protected `staging` environment; `reviewed_commit` equal to the exact current `main` SHA at dispatch time; read-only mode `VERIFY`; confirmation `verify-chat-admin-schema`; no write acknowledgement.
 - Type: protected read-only external observation
 - Status: READY_OWNER_ACTION
 - Updated: 2026-09-21
