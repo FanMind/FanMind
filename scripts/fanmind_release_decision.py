@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -18,6 +19,23 @@ REQUIRED_EVIDENCE_ROLES = {
     "R3": {"implementation", "countercheck", "negative", "recovery"},
     "R4": {"implementation", "countercheck", "negative", "recovery"},
 }
+ROLE_SNAPSHOT_FIELDS = {
+    "implementation": "implementation_evidence_id",
+    "countercheck": "countercheck_evidence_id",
+    "negative": "negative_evidence_id",
+    "recovery": "rollback_recovery_evidence_id",
+}
+CONTROL_PLANE_FILES = (
+    ".github/workflows/fanmind-god-mode-gate.yml",
+    "scripts/fanmind_god_mode_preflight.py",
+    "scripts/fanmind_release_decision.py",
+    "project-memory/GOD_MODE_POLICY.md",
+    "project-memory/SYSTEM_INVARIANTS.json",
+    "project-memory/CONTRACT_REGISTRY.json",
+    "project-memory/INTEGRATION_GATES.json",
+    "project-memory/IMPACT_MAP.json",
+    "project-memory/EVIDENCE_TTL_POLICY.json",
+)
 
 
 def load(name: str):
@@ -31,6 +49,39 @@ def current_git_head() -> str | None:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return None
+
+
+def _git_show(path: str) -> bytes | None:
+    try:
+        return subprocess.check_output(
+            ["git", "show", f"HEAD:{path}"], cwd=ROOT, stderr=subprocess.DEVNULL
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _tracked_file_matches_head(path: str) -> bool:
+    expected = _git_show(path)
+    if expected is None:
+        return False
+    try:
+        actual = (ROOT / path).read_bytes()
+    except OSError:
+        return False
+    return actual == expected
+
+
+def control_plane_fingerprint() -> str | None:
+    digest = hashlib.sha256()
+    for rel in CONTROL_PLANE_FILES:
+        expected = _git_show(rel)
+        if expected is None:
+            return None
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(expected)
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 def _exact_bool(value) -> bool:
@@ -138,7 +189,7 @@ def _scope_risk_floor(
     return floor, blockers
 
 
-def _ttl_hours_for_class(evidence_class: str, ttl_policy: dict) -> tuple[float | None, str | None]:
+def _class_policy(evidence_class: str, ttl_policy: dict) -> tuple[dict | None, str | None]:
     policy = ttl_policy.get("policy")
     if not isinstance(policy, dict):
         return None, "ttl_policy:policy_invalid"
@@ -146,11 +197,18 @@ def _ttl_hours_for_class(evidence_class: str, ttl_policy: dict) -> tuple[float |
     if not isinstance(entry, dict):
         return None, f"ttl_policy:unknown_class:{evidence_class}"
     ttl_hours = entry.get("ttl_hours")
-    if ttl_hours is None:
-        return None, None
-    if isinstance(ttl_hours, bool) or not isinstance(ttl_hours, (int, float)) or ttl_hours < 0:
+    if ttl_hours is not None and (
+        isinstance(ttl_hours, bool)
+        or not isinstance(ttl_hours, (int, float))
+        or ttl_hours < 0
+    ):
         return None, f"ttl_policy:ttl_invalid:{evidence_class}"
-    return float(ttl_hours), None
+    revalidate_on = entry.get("revalidate_on")
+    if not isinstance(revalidate_on, list) or not revalidate_on or any(
+        not isinstance(trigger, str) or not trigger for trigger in revalidate_on
+    ):
+        return None, f"ttl_policy:revalidate_invalid:{evidence_class}"
+    return entry, None
 
 
 def _entry_roles(entry: dict) -> set[str]:
@@ -174,6 +232,44 @@ def _entry_gates(entry: dict) -> set[str]:
     return result
 
 
+def _entry_provenance(entry: dict) -> tuple[str, str, str] | None:
+    provenance = entry.get("provenance")
+    if not isinstance(provenance, dict):
+        return None
+    source = provenance.get("source")
+    execution_id = provenance.get("execution_id")
+    independence_key = provenance.get("independence_key")
+    if not all(isinstance(value, str) and value for value in (source, execution_id, independence_key)):
+        return None
+    return source, execution_id, independence_key
+
+
+def _independent(left: dict, right: dict) -> bool:
+    left_p = _entry_provenance(left)
+    right_p = _entry_provenance(right)
+    if left_p is None or right_p is None:
+        return False
+    return all(a != b for a, b in zip(left_p, right_p))
+
+
+def _required_roles_for_gate(gate: dict, effective_risk: str) -> tuple[set[str], str | None]:
+    configured = gate.get("required_roles")
+    if configured is None:
+        return set(REQUIRED_EVIDENCE_ROLES[effective_risk]), None
+    if not isinstance(configured, list) or not configured:
+        return set(), "required_roles_invalid"
+    configured_roles = {role for role in configured if isinstance(role, str) and role}
+    if len(configured_roles) != len(configured):
+        return set(), "required_roles_invalid"
+    unknown = configured_roles - {"evidence", "implementation", "countercheck", "negative", "recovery"}
+    if unknown:
+        return set(), "required_roles_invalid"
+    required = REQUIRED_EVIDENCE_ROLES[effective_risk]
+    if not required.issubset(configured_roles):
+        return set(), "required_roles_weaker_than_risk"
+    return set(required), None
+
+
 def _validate_bound_evidence(
     snapshot: dict,
     freshness: dict,
@@ -183,7 +279,9 @@ def _validate_bound_evidence(
     effective_risk: str | None,
     mandatory_gate_ids: set[str],
     contract_gates: dict[str, set[str]],
+    gate_by_id: dict[str, dict],
     *,
+    current_control_plane_fingerprint: str | None,
     now: datetime | None = None,
 ) -> list[str]:
     blockers: list[str] = []
@@ -198,6 +296,9 @@ def _validate_bound_evidence(
     if snapshot.get("evaluated_target") != actual_target:
         blockers.append("release_evidence:evaluated_target_mismatch")
 
+    if not isinstance(current_control_plane_fingerprint, str) or len(current_control_plane_fingerprint) != 64:
+        blockers.append("release_evidence:control_plane_fingerprint_unavailable")
+
     bindings = snapshot.get("evidence_bindings")
     if not isinstance(bindings, list):
         blockers.append("release_evidence:bindings_invalid")
@@ -206,7 +307,6 @@ def _validate_bound_evidence(
     fresh_by_id, registry_blockers = _registry_by_id(freshness.get("entries"), "release_evidence")
     blockers.extend(registry_blockers)
     valid_entries: dict[str, dict] = {}
-    classes: set[str] = set()
     now_utc = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
 
     binding_ids: set[str] = set()
@@ -246,38 +346,44 @@ def _validate_bound_evidence(
         if not isinstance(evidence_class, str) or not evidence_class:
             blockers.append(f"release_evidence:class_missing:{evidence_id}")
             entry_blocked = True
+            class_policy = None
         else:
-            ttl_hours, ttl_error = _ttl_hours_for_class(evidence_class, ttl_policy)
-            if ttl_error:
-                blockers.append(f"{ttl_error}:{evidence_id}")
+            class_policy, policy_error = _class_policy(evidence_class, ttl_policy)
+            if policy_error:
+                blockers.append(f"{policy_error}:{evidence_id}")
                 entry_blocked = True
-            elif ttl_hours is not None:
-                observed_at = _parse_observed_at(entry.get("observed_at"))
-                if observed_at is None:
-                    blockers.append(f"release_evidence:observed_at_invalid:{evidence_id}")
-                    entry_blocked = True
-                elif observed_at > now_utc + timedelta(minutes=5):
-                    blockers.append(f"release_evidence:observed_at_future:{evidence_id}")
-                    entry_blocked = True
-                elif now_utc - observed_at > timedelta(hours=ttl_hours):
-                    blockers.append(f"release_evidence:expired:{evidence_id}")
-                    entry_blocked = True
+                class_policy = None
+
+        if class_policy is not None:
+            ttl_hours = class_policy.get("ttl_hours")
+            observed_at = _parse_observed_at(entry.get("observed_at"))
+            if observed_at is None:
+                blockers.append(f"release_evidence:observed_at_invalid:{evidence_id}")
+                entry_blocked = True
+            elif observed_at > now_utc + timedelta(minutes=5):
+                blockers.append(f"release_evidence:observed_at_future:{evidence_id}")
+                entry_blocked = True
+            elif ttl_hours is not None and now_utc - observed_at > timedelta(hours=float(ttl_hours)):
+                blockers.append(f"release_evidence:expired:{evidence_id}")
+                entry_blocked = True
+
+            if entry.get("control_plane_fingerprint") != current_control_plane_fingerprint:
+                blockers.append(f"release_evidence:control_plane_drift:{evidence_id}")
+                entry_blocked = True
 
         roles = _entry_roles(entry)
         if not roles:
             blockers.append(f"release_evidence:roles_missing:{evidence_id}")
             entry_blocked = True
+        if _entry_provenance(entry) is None:
+            blockers.append(f"release_evidence:provenance_missing:{evidence_id}")
+            entry_blocked = True
 
         if not entry_blocked:
             valid_entries[evidence_id] = entry
-            classes.add(evidence_class)
 
     if effective_risk is None:
         return blockers
-
-    minimum_classes = 2 if effective_risk in {"R3", "R4"} else 1
-    if len(classes) < minimum_classes:
-        blockers.append(f"release_evidence:quorum_classes:{len(classes)}<{minimum_classes}")
 
     required_roles = REQUIRED_EVIDENCE_ROLES[effective_risk]
     role_ids: dict[str, set[str]] = {role: set() for role in required_roles}
@@ -290,44 +396,84 @@ def _validate_bound_evidence(
         if not role_ids[role]:
             blockers.append(f"release_evidence:role_missing:{role}")
 
+    selected_role_ids: dict[str, str] = {}
+    for role in required_roles:
+        field = ROLE_SNAPSHOT_FIELDS.get(role)
+        if field is None:
+            continue
+        evidence_id = snapshot.get(field)
+        if not isinstance(evidence_id, str) or evidence_id not in role_ids.get(role, set()):
+            blockers.append(f"release_evidence:{role}_missing_or_unbound")
+        else:
+            selected_role_ids[role] = evidence_id
+
     if effective_risk in {"R2", "R3", "R4"}:
-        implementation_id = snapshot.get("implementation_evidence_id")
-        countercheck_id = snapshot.get("countercheck_evidence_id")
-        negative_id = snapshot.get("negative_evidence_id")
-        if implementation_id not in role_ids.get("implementation", set()):
-            blockers.append("release_evidence:implementation_missing_or_unbound")
-        if countercheck_id not in role_ids.get("countercheck", set()):
-            blockers.append("release_evidence:countercheck_missing_or_unbound")
-        if negative_id not in role_ids.get("negative", set()):
-            blockers.append("release_evidence:negative_missing_or_unbound")
-        if (
-            isinstance(implementation_id, str)
-            and isinstance(countercheck_id, str)
-            and implementation_id == countercheck_id
-        ):
-            blockers.append("release_evidence:implementation_countercheck_not_independent")
+        implementation_id = selected_role_ids.get("implementation")
+        countercheck_id = selected_role_ids.get("countercheck")
+        if implementation_id and countercheck_id:
+            if not _independent(valid_entries[implementation_id], valid_entries[countercheck_id]):
+                blockers.append("release_evidence:implementation_countercheck_not_independent")
 
     if effective_risk in {"R3", "R4"}:
-        negative_id = snapshot.get("negative_evidence_id")
-        recovery_id = snapshot.get("rollback_recovery_evidence_id")
-        if recovery_id not in role_ids.get("recovery", set()):
-            blockers.append("release_evidence:rollback_recovery_missing_or_unbound")
-        if isinstance(negative_id, str) and isinstance(recovery_id, str) and negative_id == recovery_id:
+        raw_negative_id = snapshot.get("negative_evidence_id")
+        raw_recovery_id = snapshot.get("rollback_recovery_evidence_id")
+        if (
+            isinstance(raw_negative_id, str)
+            and isinstance(raw_recovery_id, str)
+            and raw_negative_id == raw_recovery_id
+        ):
             blockers.append("release_evidence:negative_recovery_not_distinct")
 
-    covered_gates: set[str] = set()
-    for entry in valid_entries.values():
-        covered_gates.update(_entry_gates(entry))
+    participating_ids: set[str] = set(selected_role_ids.values())
+
     for gate_id in sorted(mandatory_gate_ids):
-        if gate_id not in covered_gates:
-            blockers.append(f"release_evidence:gate_evidence_missing:{gate_id}")
+        gate = gate_by_id.get(gate_id)
+        if gate is None:
+            continue
+        gate_roles, gate_role_error = _required_roles_for_gate(gate, effective_risk)
+        if gate_role_error:
+            blockers.append(f"integration_gate:{gate_id}:{gate_role_error}")
+            continue
+
+        gate_role_ids: dict[str, set[str]] = {}
+        for role in gate_roles:
+            ids = {
+                evidence_id
+                for evidence_id, entry in valid_entries.items()
+                if role in _entry_roles(entry) and gate_id in _entry_gates(entry)
+            }
+            gate_role_ids[role] = ids
+            participating_ids.update(ids)
+            if not ids:
+                blockers.append(f"release_evidence:gate_role_missing:{gate_id}:{role}")
+
+        if "implementation" in gate_roles and "countercheck" in gate_roles:
+            implementation_candidates = gate_role_ids.get("implementation", set())
+            countercheck_candidates = gate_role_ids.get("countercheck", set())
+            independent_pair = any(
+                _independent(valid_entries[impl_id], valid_entries[counter_id])
+                for impl_id in implementation_candidates
+                for counter_id in countercheck_candidates
+            )
+            if implementation_candidates and countercheck_candidates and not independent_pair:
+                blockers.append(f"release_evidence:gate_countercheck_not_independent:{gate_id}")
 
     for contract_id, gates in contract_gates.items():
-        for gate_id in gates:
-            if gate_id not in covered_gates:
-                reason = f"release_evidence:contract_gate_evidence_missing:{contract_id}:{gate_id}"
-                if reason not in blockers:
-                    blockers.append(reason)
+        for gate_id in sorted(gates):
+            if gate_id not in mandatory_gate_ids:
+                blockers.append(f"release_evidence:contract_gate_not_mandatory:{contract_id}:{gate_id}")
+
+    participating_classes = {
+        valid_entries[evidence_id].get("class")
+        for evidence_id in participating_ids
+        if evidence_id in valid_entries
+    }
+    participating_classes.discard(None)
+    minimum_classes = 2 if effective_risk in {"R3", "R4"} else 1
+    if len(participating_classes) < minimum_classes:
+        blockers.append(
+            f"release_evidence:quorum_classes:{len(participating_classes)}<{minimum_classes}"
+        )
 
     return blockers
 
@@ -343,6 +489,7 @@ def evaluate_release_decision(
     *,
     actual_head: str | None = None,
     actual_target: str | None = None,
+    current_control_plane_fingerprint: str | None = None,
     now: datetime | None = None,
 ) -> tuple[str, list[str]]:
     blockers: list[str] = []
@@ -389,6 +536,14 @@ def evaluate_release_decision(
             blockers.append(f"contract:unknown:{contract_id}")
         elif item.get("status") != "ACTIVE":
             blockers.append(f"contract:{contract_id}:{item.get('status')}")
+
+    scope_contracts = {
+        contract_id
+        for contract_id, item in contract_by_id.items()
+        if item.get("status") in {"REGISTERED", "ACTIVE"}
+    }
+    if set(affected_contracts) != scope_contracts:
+        blockers.append("release_scope:registered_contract_set_incomplete")
 
     required_gate_ids, contract_gates, impact_blockers = _required_gate_ids(
         affected_contracts, impact
@@ -467,6 +622,8 @@ def evaluate_release_decision(
             effective_risk=effective_risk,
             mandatory_gate_ids=mandatory_gate_ids,
             contract_gates=contract_gates,
+            gate_by_id=gate_by_id,
+            current_control_plane_fingerprint=current_control_plane_fingerprint,
             now=now,
         )
     )
@@ -480,15 +637,21 @@ def evaluate_release_decision(
     return "BLOCK", ["release_input:protected_action_required"]
 
 
+def _canonical_inputs_authenticated() -> list[str]:
+    reasons: list[str] = []
+    for rel in (
+        "project-memory/RELEASE_DECISION.json",
+        "project-memory/EVIDENCE_FRESHNESS.json",
+        *CONTROL_PLANE_FILES,
+    ):
+        if not _tracked_file_matches_head(rel):
+            reasons.append(f"canonical_input:not_head_tracked:{rel}")
+    return reasons
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
-    ap.add_argument("--snapshot-file", type=Path)
-    ap.add_argument(
-        "--evidence-file",
-        type=Path,
-        help="Authenticated/runtime evidence snapshot; defaults to checked-in EVIDENCE_FRESHNESS.json.",
-    )
     ap.add_argument(
         "--release-sha",
         help="Exact evaluated release SHA. Distinct from the control-plane checkout SHA when needed.",
@@ -500,17 +663,9 @@ def main() -> int:
     integration = load("INTEGRATION_GATES.json")
     contracts = load("CONTRACT_REGISTRY.json")
     impact = load("IMPACT_MAP.json")
-    freshness = (
-        json.loads(args.evidence_file.read_text(encoding="utf-8"))
-        if args.evidence_file
-        else load("EVIDENCE_FRESHNESS.json")
-    )
+    freshness = load("EVIDENCE_FRESHNESS.json")
     ttl_policy = load("EVIDENCE_TTL_POLICY.json")
-    snapshot = (
-        json.loads(args.snapshot_file.read_text(encoding="utf-8"))
-        if args.snapshot_file
-        else load("RELEASE_DECISION.json")
-    )
+    snapshot = load("RELEASE_DECISION.json")
     actual_head = (
         args.release_sha
         or os.environ.get("FANMIND_RELEASE_SHA")
@@ -518,17 +673,25 @@ def main() -> int:
         or current_git_head()
     )
     actual_target = args.target or os.environ.get("FANMIND_RELEASE_TARGET")
-    decision, reasons = evaluate_release_decision(
-        invariants,
-        integration,
-        contracts,
-        impact,
-        freshness,
-        snapshot,
-        ttl_policy,
-        actual_head=actual_head,
-        actual_target=actual_target,
-    )
+    cp_fingerprint = control_plane_fingerprint()
+
+    canonical_auth_errors = _canonical_inputs_authenticated()
+    if canonical_auth_errors:
+        decision = "BLOCK"
+        reasons = canonical_auth_errors
+    else:
+        decision, reasons = evaluate_release_decision(
+            invariants,
+            integration,
+            contracts,
+            impact,
+            freshness,
+            snapshot,
+            ttl_policy,
+            actual_head=actual_head,
+            actual_target=actual_target,
+            current_control_plane_fingerprint=cp_fingerprint,
+        )
 
     print(f"FANMIND_RELEASE_DECISION={decision}")
     for reason in reasons:
