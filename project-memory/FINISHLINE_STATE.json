@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-19",
+  "updated": "2026-09-21",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -82,6 +82,12 @@
       "task": "FM-REG-003",
       "risk": "R4",
       "state": "IN_PROGRESS",
+      "required_for_sales": false
+    },
+    "chatadmin_staging_verify": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R3",
+      "state": "IMPLEMENTED_NOT_VERIFIED",
       "required_for_sales": false
     }
   },
