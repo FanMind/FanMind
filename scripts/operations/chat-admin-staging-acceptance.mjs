@@ -8,17 +8,27 @@ const UUID_PATTERN =
 
 export const CHAT_ADMIN_ACCEPTANCE_SQL = String.raw`\set ON_ERROR_STOP on
 begin;
+select set_config('fanmind.accept.workspace_id', :'workspace_id', true);
+select set_config('fanmind.accept.second_workspace_id', :'second_workspace_id', true);
+select set_config('fanmind.accept.owner_id', :'owner_id', true);
+select set_config('fanmind.accept.member_id', :'member_id', true);
+select set_config('fanmind.accept.foreign_owner_id', :'foreign_owner_id', true);
+select set_config('fanmind.accept.platform_admin_id', :'platform_admin_id', true);
+select set_config('fanmind.accept.character_a', :'character_a', true);
+select set_config('fanmind.accept.character_b', :'character_b', true);
+select set_config('fanmind.accept.conversation_a', :'conversation_a', true);
+select set_config('fanmind.accept.conversation_b', :'conversation_b', true);
 select set_config('fanmind.synthetic_workspace', :'workspace_id', true);
-select set_config('fanmind.fixture.workspace_id', :'workspace_id', true);
-select set_config('fanmind.fixture.second_workspace_id', :'second_workspace_id', true);
-select set_config('fanmind.fixture.owner_id', :'owner_id', true);
-select set_config('fanmind.fixture.member_id', :'member_id', true);
-select set_config('fanmind.fixture.foreign_owner_id', :'foreign_owner_id', true);
-select set_config('fanmind.fixture.platform_admin_id', :'platform_admin_id', true);
-select set_config('fanmind.fixture.character_a', :'character_a', true);
-select set_config('fanmind.fixture.character_b', :'character_b', true);
-select set_config('fanmind.fixture.conversation_a', :'conversation_a', true);
-select set_config('fanmind.fixture.conversation_b', :'conversation_b', true);
+select set_config('fanmind.fixture.workspace_id', current_setting('fanmind.accept.workspace_id'), true);
+select set_config('fanmind.fixture.second_workspace_id', current_setting('fanmind.accept.second_workspace_id'), true);
+select set_config('fanmind.fixture.owner_id', current_setting('fanmind.accept.owner_id'), true);
+select set_config('fanmind.fixture.member_id', current_setting('fanmind.accept.member_id'), true);
+select set_config('fanmind.fixture.foreign_owner_id', current_setting('fanmind.accept.foreign_owner_id'), true);
+select set_config('fanmind.fixture.platform_admin_id', current_setting('fanmind.accept.platform_admin_id'), true);
+select set_config('fanmind.fixture.character_a', current_setting('fanmind.accept.character_a'), true);
+select set_config('fanmind.fixture.character_b', current_setting('fanmind.accept.character_b'), true);
+select set_config('fanmind.fixture.conversation_a', current_setting('fanmind.accept.conversation_a'), true);
+select set_config('fanmind.fixture.conversation_b', current_setting('fanmind.accept.conversation_b'), true);
 
 do $preflight$
 begin
