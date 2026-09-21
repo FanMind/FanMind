@@ -1292,3 +1292,13 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Owner readout confirms full official nginx and runner unit matches, PM2 template match, nginx's standard executable condition, root-owned modes 0644/0644/0664, no drop-ins/asserts and no reload needed for all three. Separate PATH probe false and registration unavailable are retained without guessing their causes.
 - External basis: official Ubuntu nginx-common 1.24.0-2ubuntu7.17 package, Unitech/pm2 v7.0.3 systemd template, actions/runner v2.337.0 systemd template, systemd v255 condition_test_file_is_executable. No private configuration/registration values are published.
 - Current work: bounded nginx predicate correction and regression evidence. Current-head CI/review, installed rollout, host corrections and independent reference remain required.
+
+
+## RECEIPT-FM-CHATADMIN-002-SOURCE-MERGE-20260921
+- Status: SOURCE_MERGED_VERIFY_PENDING; Task: FM-CHATADMIN-002; Risk: R3; Decision: FM-DEC-022.
+- PR #1146 final reviewed head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed FanMind CI, Browser E2E, CodeQL, Supply Chain and Project Memory gates. Independent Codex review on that exact head reported no major issues and all review threads were resolved.
+- PR #1146 was squash-merged through the normal PR path as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
+- Proven scope: repository source for protected ChatAdmin Staging VERIFY/APPLY/ACCEPT controls, exact RLS/schema/constraint/privilege verification, SQL-visible synthetic acceptance fixtures, private-image storage contract and fail-closed target/TLS/timeout controls.
+- Not proven by this receipt: Staging schema state, Staging APPLY, Staging ACCEPT, real capability grant, Production activation, provider access or runtime ChatAdmin acceptance.
+- Next gate: protected GitHub Actions `FanMind ChatAdmin Staging Rollout` in mode `VERIFY` with confirmation `verify-chat-admin-schema`, read-only only. Record exact result as ABSENT, PARTIAL or VERIFIED before God Mode v1 or any APPLY/ACCEPT request.
+- No Staging/Production write, Billing/Stripe/Tax, provider, Restore or Mobile mutation occurred in this source closeout.

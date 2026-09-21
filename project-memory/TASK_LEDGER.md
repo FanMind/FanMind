@@ -511,6 +511,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Status: IMPLEMENTED_PENDING_PR_CI; Risk: R3; Decision: FM-DEC-022.
-- #1145 source is merged. Schema, Storage policy, Staging acceptance, real capability and Production activation remain unapplied/unaccepted until their separate protected evidence.
-- `FM-CREATOR-001` remains IN_PROGRESS and the normal next-best-action path is unchanged.
+- Status: SOURCE_MERGED_VERIFY_PENDING; Risk: R3; Decision: FM-DEC-022; Updated: 2026-09-21.
+- PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head gates and independent review, then merged as main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
+- Repository source is closed for this bounded package. Schema state is still externally unobserved; Storage policy, APPLY/ACCEPT, real capability and Production activation remain unapplied/unaccepted.
+- Exact next step: protected READ-ONLY ChatAdmin Staging `VERIFY` only. Reconcile ABSENT/PARTIAL/VERIFIED before God Mode v1 or any later APPLY/ACCEPT path.

@@ -784,7 +784,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Still open: exact-head local verification, one PR, Current-Head CI/CodeQL/Browser E2E and independent Codex review without P1/P2. Do not merge automatically.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Date: 2026-09-20; Status: IMPLEMENTED_PENDING_PR_CI; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud.
-- Baseline: merged #1145 / main `360c0dbe818258ae0001eef005a3dff67a54cefe`; source exists, schema and real capability remain unapplied.
-- Scope: exact-main/checksum-bound VERIFY/APPLY/ACCEPT source, rollback-only synthetic acceptance, smallest unapplied private-image policy and memory/runbook. No workflow dispatch, DB apply, real grant, Production/Backup/provider/Billing/Mobile mutation.
-- Next: PR current-head CI and independent review; after merge owner may separately authorize only workflow `FanMind ChatAdmin Staging Rollout`, mode `APPLY`, confirmation `apply-chat-admin-migration`, and only if read-only VERIFY reports ABSENT.
+- Date: 2026-09-20; Status: SOURCE_MERGED_VERIFY_PENDING; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud; Updated: 2026-09-21.
+- Source closeout: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed current-head CI/CodeQL/Browser E2E/Supply Chain/Project Memory and independent review with no remaining P1/P2, then merged as `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
+- Scope remains repository-only: exact-main/checksum-bound VERIFY/APPLY/ACCEPT source, rollback-only synthetic acceptance, private-image policy and fail-closed schema/RLS/constraint/privilege checks. No workflow dispatch, DB apply, real grant, Production/Backup/provider/Billing/Mobile mutation.
+- Next: run only the protected READ-ONLY `VERIFY` on merged main and record ABSENT/PARTIAL/VERIFIED. APPLY remains separately owner-gated and is not authorized by this merge.

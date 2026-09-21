@@ -164,5 +164,7 @@ This register contains started, partially completed or follow-up work that could
 - Next: local/full verification, publish exactly one bounded PR, then wait for Current-Head CI/CodeQL/Browser E2E and one independent Codex review without P1/P2. Do not merge.
 
 ## FM-LOOP-CHATADMIN-STAGING-20260920
-- Status: IMPLEMENTED_PENDING_PR_CI; task FM-CHATADMIN-002. Protected VERIFY/APPLY/ACCEPT source prepared; no mode dispatched and current Staging state not externally observed.
+- Status: SOURCE_MERGED_VERIFY_PENDING; task FM-CHATADMIN-002; Updated: 2026-09-21.
+- PR #1146 merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed. Source work is closed.
+- Current open loop is only the protected READ-ONLY Staging VERIFY. Record exact result as ABSENT, PARTIAL or VERIFIED; do not infer APPLY/ACCEPT/activation from source merge.
 - Separate Operations loop remains `production_audit_backup_latest_stale_or_empty`; do not conflate it with ChatAdmin.

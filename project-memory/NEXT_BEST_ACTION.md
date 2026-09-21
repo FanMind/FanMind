@@ -4,25 +4,26 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-INTELLIGENCE`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_intelligence` (`IN_PROGRESS`)
-- Selection status: `EXECUTABLE`
-- Title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Selected action: `NBA-CHATADMIN-STAGING-VERIFY`
+- Task: `FM-CHATADMIN-002`
+- Gate: `chatadmin_staging_verify` (`IMPLEMENTED_NOT_VERIFIED`)
+- Selection status: `OWNER_ACTION_REQUIRED`
+- Title: Gemergten ChatAdmin-Stand read-only auf Staging verifizieren
 
 ## Instruction
 
-Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging.
+PR #1146 is merged as exact main 648912cc2e9958cc8bc2e39c11b7977dabff862b. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema and reviewed_commit equal to that exact main. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work.
 
 ## Why this action
 
-standing-authorized safe work
+owner/platform action required
 
 ## Candidate evaluation
 
+- `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
+- `NBA-CREATOR-INTELLIGENCE` priority 5: **DEFERRED_BY_OWNER** — FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required

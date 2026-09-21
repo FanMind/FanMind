@@ -784,5 +784,6 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: revert this single source commit; no external state was mutated.
 
 ## LOCK-FM-CHATADMIN-STAGING-20260920
-- Task: FM-CHATADMIN-002; holder: Codex Cloud; risk: R3; status: ACTIVE_PENDING_PR_CI.
-- Exact scope is repository-only protected Staging rollout preparation. No dispatch/apply/real capability/Production action is authorized.
+- Task: FM-CHATADMIN-002; holder: Codex Cloud; risk: R3; status: RELEASED_SOURCE_MERGED_VERIFY_PENDING; Updated: 2026-09-21.
+- Repository source scope closed by PR #1146 -> main `648912cc2e9958cc8bc2e39c11b7977dabff862b`. No source-build lock remains.
+- Protected READ-ONLY Staging VERIFY is the next separate gate. No APPLY/ACCEPT/real capability/Production action is authorized by this released source lock.

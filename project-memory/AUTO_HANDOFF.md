@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-INTELLIGENCE`
-- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Next action: `NBA-CHATADMIN-STAGING-VERIFY`
+- Next action title: Gemergten ChatAdmin-Stand read-only auf Staging verifizieren
 
 ## Finishline gates
 
@@ -23,6 +23,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `legal_tax_avv`: `BLOCKED`
 - `creator_intelligence`: `IN_PROGRESS`
 - `registration_admin_crm`: `IN_PROGRESS`
+- `chatadmin_staging_verify`: `IMPLEMENTED_NOT_VERIFIED`
 
 ## Deferred owner actions
 

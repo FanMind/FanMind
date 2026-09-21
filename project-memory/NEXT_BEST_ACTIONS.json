@@ -1,8 +1,27 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-19",
+  "updated": "2026-09-21",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
+    {
+      "id": "NBA-CHATADMIN-STAGING-VERIFY",
+      "priority": 0,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_verify",
+      "title": "Gemergten ChatAdmin-Stand read-only auf Staging verifizieren",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-VERIFY-20260921",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "RECONCILED"
+      ],
+      "instruction": "PR #1146 is merged as exact main 648912cc2e9958cc8bc2e39c11b7977dabff862b. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema and reviewed_commit equal to that exact main. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work."
+    },
     {
       "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
       "priority": 1,
@@ -155,7 +174,8 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Preserve published #1105-#1108 and historical foundation evidence on executable main f0c7a84e6105752d34b489520fb92d2bb7e5b61a: Upgrade 34628886294 and real JWT/revision/PDF acceptance 34629009649 passed with independent cleanup/member rejection. Do not repeat Apply, Upgrade or accepted tests merely for a reader commit. EV-CREATOR-STAGING-FOUNDATION-20260911 requires revalidation of current target claims after its listed triggers or 24-hour TTL. Continue repository and controlled synthetic-Staging engineering: independent deployed-flag verification, enabled-UI and full contact/account deletion acceptance, and preparation of writing-quality/confirmed-chat learning. This entry does not authorize real model/provider calls, central app mutation or another Creator's consent; those external steps are separately owner-required under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). FM-DEC-016: one user/Creator account, one text writing style across variants and channels; no audio; managers later. No generic DB push, paid activation, deferred Android work or renewed Backup debugging."
+      "instruction": "Preserve all accepted Creator Intelligence source and Staging foundation evidence. Owner sequence on 2026-09-21 temporarily defers new Creator feature work until the merged ChatAdmin source is read-only VERIFIED/reconciled and FM-GOV-GODMODE-001 is merged. After that sequence, resume the prior bounded Creator continuation without rebuilding accepted source or Staging foundation evidence.",
+      "deferred_owner_id": "FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921"
     },
     {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
