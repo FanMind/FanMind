@@ -282,10 +282,12 @@ test("schema verifier checks definitions, composite tenant constraints and globa
     "chat_admin_messages_owner_all",
     "roles = '{authenticated}'::name[]",
     "pg_get_constraintdef",
-    "FOREIGNKEY(workspace_id,character_id)",
-    "FOREIGNKEY(workspace_id,character_id,conversation_id)",
+    "foreignkey(workspace_id,character_id)",
+    "foreignkey(workspace_id,character_id,conversation_id)",
     "one_chat_admin_workspace_global",
-    "has_table_privilege",
+    "information_schema.table_privileges",
+    "schema_mismatch",
+    "format_type",
     "has_function_privilege",
   ]) {
     assert.match(CHAT_ADMIN_POSTFLIGHT_SQL, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
