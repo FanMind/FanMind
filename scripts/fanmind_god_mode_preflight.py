@@ -37,6 +37,7 @@ REQUIRED_GATES = {
 }
 VALID_RELEASE = {"ALLOW", "BLOCK", "OWNER_REQUIRED"}
 VALID_STATUS = {"REGISTERED", "ENFORCED", "VERIFIED", "NEEDS_REVALIDATION", "BLOCKED", "ACTIVE"}
+VALID_RISK = {"R1", "R2", "R3", "R4"}
 
 
 def load(name: str):
@@ -105,17 +106,40 @@ def validate() -> list[str]:
     decision = load("RELEASE_DECISION.json")
     if decision.get("decision") not in VALID_RELEASE:
         errors.append("release-decision-value-invalid")
+    if decision.get("risk") not in VALID_RISK:
+        errors.append("release-decision-risk-invalid")
+    affected = decision.get("affected_contracts")
+    if not isinstance(affected, list):
+        errors.append("release-decision-affected-contracts-invalid")
+        affected = []
+    unknown_affected = set(affected) - set(contract_ids)
+    if unknown_affected:
+        errors.append("release-decision-affected-contracts-unknown")
+
     if decision.get("decision") == "ALLOW":
         strict = (
             decision.get("current_head_bound") is True
             and decision.get("evidence_quorum_complete") is True
+            and decision.get("evidence_freshness_current") is True
+            and decision.get("dependencies_satisfied") is True
+            and decision.get("consumer_impact_revalidated") is True
             and decision.get("open_p1") == 0
             and decision.get("open_p2") == 0
             and decision.get("pending_checks") is False
             and decision.get("unresolved_review_threads") is False
             and decision.get("reconciliation_required") is False
             and decision.get("protected_action_required") is False
+            and all(
+                next((c for c in contracts if c.get("id") == cid), {}).get("status") == "ACTIVE"
+                for cid in affected
+            )
         )
+        if decision.get("risk") in {"R3", "R4"}:
+            strict = (
+                strict
+                and decision.get("negative_evidence_complete") is True
+                and decision.get("rollback_recovery_evidence_complete") is True
+            )
         if not strict:
             errors.append("release-decision-allow-not-fail-closed")
 
