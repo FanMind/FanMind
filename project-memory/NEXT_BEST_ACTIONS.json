@@ -165,7 +165,7 @@
       "gate": "creator_intelligence",
       "title": "Creator-Profil pro Account und Social-Handoff ausbauen",
       "requires_owner": false,
-      "parallel_safe": false,
+      "parallel_safe": true,
       "prerequisite_gates": [
         "memory_v6",
         "staging"
@@ -174,7 +174,8 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Temporarily held by the owner-ordered ChatAdmin sequence: first reconcile the protected read-only ChatAdmin Staging VERIFY result, then merge FM-GOV-GODMODE-001. After those gates, resume the existing Creator Intelligence instruction without rebuilding accepted source or Staging foundation evidence."
+      "instruction": "Preserve all accepted Creator Intelligence source and Staging foundation evidence. Owner sequence on 2026-09-21 temporarily defers new Creator feature work until the merged ChatAdmin source is read-only VERIFIED/reconciled and FM-GOV-GODMODE-001 is merged. After that sequence, resume the prior bounded Creator continuation without rebuilding accepted source or Staging foundation evidence.",
+      "deferred_owner_id": "FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921"
     },
     {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
