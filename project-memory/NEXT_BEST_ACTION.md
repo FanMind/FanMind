@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-PR #1146 is merged as exact main 648912cc2e9958cc8bc2e39c11b7977dabff862b. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema and reviewed_commit equal to that exact main. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work.
+PR #1146 source is merged and preserved in current main. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema. Set reviewed_commit to the exact current main SHA at dispatch time; that main must contain source merge 648912cc2e9958cc8bc2e39c11b7977dabff862b as an ancestor. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work.
 
 ## Why this action
 

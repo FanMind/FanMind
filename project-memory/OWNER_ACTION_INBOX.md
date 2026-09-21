@@ -4,7 +4,7 @@
 - Status: READY_NOW
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921; Risk: R3 read-only.
 - Why now: PR #1146 is fully reviewed and merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`; source is no longer the blocker. The current Staging schema state is still unobserved.
-- Exact owner step: GitHub Actions -> `FanMind ChatAdmin Staging Rollout` -> Run workflow on `main`; `reviewed_commit=648912cc2e9958cc8bc2e39c11b7977dabff862b`; `mode=VERIFY`; `confirmation=verify-chat-admin-schema`. This run is read-only and must not set write acknowledgement.
+- Exact owner step: GitHub Actions -> `FanMind ChatAdmin Staging Rollout` -> Run workflow on `main`; set `reviewed_commit` to the exact current `main` SHA shown by GitHub at dispatch time; `mode=VERIFY`; `confirmation=verify-chat-admin-schema`. The current `main` must contain source merge `648912cc2e9958cc8bc2e39c11b7977dabff862b` as an ancestor. This run is read-only and must not set write acknowledgement.
 - Expected result: one of `ABSENT`, `PARTIAL` or `VERIFIED`. Return only the run/result; do not trigger APPLY or ACCEPT.
 - After result: exact-scope reconciliation, then FM-GOV-GODMODE-001. If ABSENT, later prepare a separate APPLY request only after God Mode v1 merge; PARTIAL means fix/reconcile first; VERIFIED means do not apply again.
 - Boundary: no Staging/Production write, no capability grant, Billing/Stripe/Tax/provider/Restore mutation.
