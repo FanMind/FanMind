@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-21",
+  "task": "FM-GOV-GODMODE-001",
+  "gates": [
+    {
+      "id": "FM-IGATE-CREATOR-AI-001",
+      "boundary": "Creator <-> AI",
+      "contracts": [
+        "FM-CONTRACT-CREATOR-AI-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "tenant-isolated context proof",
+        "reply generation regression",
+        "negative cross-workspace proof"
+      ]
+    },
+    {
+      "id": "FM-IGATE-CHATADMIN-AI-001",
+      "boundary": "ChatAdmin <-> AI",
+      "contracts": [
+        "FM-CONTRACT-CHATADMIN-AI-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "authorized character context",
+        "exactly three suggestions",
+        "negative cross-character/workspace proof"
+      ]
+    },
+    {
+      "id": "FM-IGATE-CHATADMIN-STORAGE-001",
+      "boundary": "ChatAdmin <-> Storage",
+      "contracts": [
+        "FM-CONTRACT-CHATADMIN-STORAGE-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "private bucket/path contract",
+        "RLS/privilege proof",
+        "wrong-workspace/path negative"
+      ]
+    },
+    {
+      "id": "FM-IGATE-SOCIAL-CRM-001",
+      "boundary": "Social <-> CRM",
+      "contracts": [
+        "FM-CONTRACT-SOCIAL-CRM-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "bounded inbound persistence",
+        "identity/idempotency proof",
+        "revocation/delete negative"
+      ]
+    },
+    {
+      "id": "FM-IGATE-REG-ENTITLEMENT-001",
+      "boundary": "Registration <-> Entitlement",
+      "contracts": [
+        "FM-CONTRACT-REG-ENTITLEMENT-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "permanent/future-temporary/blocked lifecycle",
+        "login/direct-read authorization",
+        "cleanup proof"
+      ]
+    },
+    {
+      "id": "FM-IGATE-AI-BILLING-001",
+      "boundary": "AI <-> Billing",
+      "contracts": [
+        "FM-CONTRACT-AI-BILLING-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "usage/cost exactness",
+        "ledger idempotency",
+        "entitlement fail-closed",
+        "negative malformed-provider proof"
+      ]
+    },
+    {
+      "id": "FM-IGATE-DISCLOSURE-DELETE-001",
+      "boundary": "Disclosure/Delete <-> Creator/ChatAdmin",
+      "contracts": [
+        "FM-CONTRACT-DISCLOSURE-DELETE-001"
+      ],
+      "status": "REGISTERED",
+      "applicable": true,
+      "evidence_required": [
+        "complete disclosure inventory",
+        "exact-tenant delete",
+        "provider cleanup/queue semantics",
+        "cross-tenant negative"
+      ]
+    }
+  ],
+  "synthetic_golden_flows": [
+    {
+      "id": "FM-GOLDEN-CRM-001",
+      "name": "CRM core",
+      "steps": [
+        "Login",
+        "Contact",
+        "Conversation",
+        "AI Reply",
+        "Copy",
+        "Follow-up",
+        "Disclosure"
+      ],
+      "status": "REGISTERED"
+    },
+    {
+      "id": "FM-GOLDEN-CHATADMIN-001",
+      "name": "ChatAdmin manual v1",
+      "steps": [
+        "authorized owner",
+        "character",
+        "pasted fan message",
+        "exactly three suggestions",
+        "copy",
+        "manual-send handoff"
+      ],
+      "status": "REGISTERED"
+    }
+  ]
+}
