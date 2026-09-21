@@ -1,3 +1,9 @@
+## ChatAdmin Staging VERIFY completed: ABSENT; God Mode v1 is next — 2026-09-21
+- Protected GitHub Actions run `35652258052` / job `106507223598` executed exact reviewed `main` `973e70f6d243984d95ec1420a79701faad04a39a` in `VERIFY` mode with `verify-chat-admin-schema`.
+- The read-only verifier completed successfully and reported exactly `CHAT_ADMIN_SCHEMA_STATE=ABSENT`. `APPLY` and `ACCEPT` were skipped; no Staging/Production write, capability grant or provider/Billing/Restore/Mobile mutation occurred.
+- This closes the protected observation dependency without claiming the schema exists. Per the recorded sequence, `FM-GOV-GODMODE-001` is now the next bounded repository-only task.
+- After God Mode v1 is cleanly merged and reconciled, a separate protected owner action may be prepared for ChatAdmin Staging `APPLY` because the observed state is `ABSENT`. Do not run APPLY or ACCEPT before that gate.
+
 ## ChatAdmin #1146 merged; protected READ-ONLY VERIFY is next — 2026-09-21
 - FM-CHATADMIN-002 source package is closed: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head checks and independent review with no remaining P1/P2, then merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
 - This proves repository source only. Current Staging ChatAdmin schema state is still unknown; no VERIFY/APPLY/ACCEPT dispatch, DB write, real capability grant or Production activation is claimed.
@@ -441,7 +447,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-CHATADMIN-002:** source PR #1146 is fully reviewed and merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`. Run only the protected READ-ONLY ChatAdmin Staging VERIFY, reconcile exact ABSENT/PARTIAL/VERIFIED, then execute `FM-GOV-GODMODE-001` before any ChatAdmin APPLY/ACCEPT or broader feature work.
+1. **FM-GOV-GODMODE-001:** ChatAdmin read-only VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT were skipped. Implement and independently countercheck God Mode v1 repository-only. Only after its clean merge/reconciliation may a separate protected ChatAdmin Staging APPLY owner action become READY_NOW.
 2. **FM-CREATOR-001:** source #1099-#1108, #1140 confirmed-chat validator and the bounded schema/JWT/revision/PDF foundation are complete. Hold new feature work until the ChatAdmin VERIFY -> God Mode sequence above is reconciled; then resume the current bounded Creator continuation.
 3. **FM-REG-003:** FM-CR-043 is PRODUCTION_CONFIRMED and the existing real 0-EUR account works. Do not repeat registration, grant or Production DB apply. The only open Admin-CRM boundary is the separately owner-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle; no additional real grants until it is accepted.
 4. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
