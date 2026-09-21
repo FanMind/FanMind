@@ -15,6 +15,9 @@ HEAD = "a" * 40
 OTHER_HEAD = "b" * 40
 TARGET = "synthetic-staging"
 NOW = datetime(2026, 9, 21, 22, 0, 0, tzinfo=timezone.utc)
+CONTROL = "c" * 64
+OTHER_CONTROL = "d" * 64
+ALL_ROLES = ["implementation", "countercheck", "negative", "recovery"]
 
 
 def enforced_invariants():
@@ -34,12 +37,14 @@ def verified_gates():
                 "applicable": True,
                 "status": "VERIFIED",
                 "contracts": ["FM-CONTRACT-A"],
+                "required_roles": list(ALL_ROLES),
             },
             {
                 "id": "FM-IGATE-B",
                 "applicable": True,
                 "status": "VERIFIED",
                 "contracts": ["FM-CONTRACT-B"],
+                "required_roles": list(ALL_ROLES),
             },
         ]
     }
@@ -66,13 +71,28 @@ def impact_map():
 def ttl_policy():
     return {
         "policy": {
-            "ci_exact_head": {"ttl_hours": None, "revalidate_on": ["head_changed"]},
-            "staging_smoke": {"ttl_hours": 24, "revalidate_on": ["staging_deploy"]},
+            "ci_exact_head": {
+                "ttl_hours": None,
+                "revalidate_on": ["head_changed", "workflow_contract_changed"],
+            },
+            "staging_smoke": {
+                "ttl_hours": 24,
+                "revalidate_on": ["staging_deploy", "runtime_config_change"],
+            },
         }
     }
 
 
-def evidence_entry(evidence_id, evidence_class, roles, gates):
+def evidence_entry(
+    evidence_id,
+    evidence_class,
+    roles,
+    gates,
+    *,
+    source,
+    execution_id,
+    independence_key,
+):
     return {
         "id": evidence_id,
         "status": "COUNTERCHECKED",
@@ -82,29 +102,54 @@ def evidence_entry(evidence_id, evidence_class, roles, gates):
         "bound_commit": HEAD,
         "target": TARGET,
         "observed_at": "2026-09-21T21:30:00Z",
+        "control_plane_fingerprint": CONTROL,
+        "provenance": {
+            "source": source,
+            "execution_id": execution_id,
+            "independence_key": independence_key,
+        },
     }
 
 
 def current_freshness():
+    both = ["FM-IGATE-A", "FM-IGATE-B"]
     return {
         "entries": [
             evidence_entry(
-                "EV-IMPLEMENTATION", "ci_exact_head", ["implementation"], ["FM-IGATE-A"]
+                "EV-IMPLEMENTATION",
+                "ci_exact_head",
+                ["implementation"],
+                both,
+                source="github-actions:implementation",
+                execution_id="run-impl-1",
+                independence_key="impl-quorum-1",
             ),
             evidence_entry(
-                "EV-COUNTERCHECK", "staging_smoke", ["countercheck"], ["FM-IGATE-B"]
+                "EV-COUNTERCHECK",
+                "staging_smoke",
+                ["countercheck"],
+                both,
+                source="protected-staging:countercheck",
+                execution_id="run-counter-2",
+                independence_key="counter-quorum-2",
             ),
             evidence_entry(
                 "EV-NEGATIVE",
                 "ci_exact_head",
                 ["negative"],
-                ["FM-IGATE-A", "FM-IGATE-B"],
+                both,
+                source="github-actions:negative",
+                execution_id="run-negative-3",
+                independence_key="negative-quorum-3",
             ),
             evidence_entry(
                 "EV-RECOVERY",
                 "staging_smoke",
                 ["recovery"],
-                ["FM-IGATE-A", "FM-IGATE-B"],
+                both,
+                source="protected-staging:recovery",
+                execution_id="run-recovery-4",
+                independence_key="recovery-quorum-4",
             ),
         ]
     }
@@ -152,6 +197,7 @@ def evaluate(
     policy=None,
     actual_head=HEAD,
     actual_target=TARGET,
+    control=CONTROL,
     now=NOW,
 ):
     return MODULE.evaluate_release_decision(
@@ -164,6 +210,7 @@ def evaluate(
         policy or ttl_policy(),
         actual_head=actual_head,
         actual_target=actual_target,
+        current_control_plane_fingerprint=control,
         now=now,
     )
 
@@ -205,6 +252,12 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         decision, reasons = evaluate(clean_snapshot(affected_contracts=[]))
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:affected_contracts_empty", reasons)
+        self.assertIn("release_scope:registered_contract_set_incomplete", reasons)
+
+    def test_incomplete_registered_contract_scope_forces_block(self):
+        decision, reasons = evaluate(clean_snapshot(affected_contracts=["FM-CONTRACT-A"]))
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_scope:registered_contract_set_incomplete", reasons)
 
     def test_duplicate_affected_contract_forces_block(self):
         decision, reasons = evaluate(
@@ -286,11 +339,47 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:observed_at_invalid:EV-COUNTERCHECK", reasons)
 
-    def test_r3_requires_two_independent_evidence_classes(self):
+    def test_immutable_evidence_is_invalidated_by_control_plane_drift(self):
+        freshness = current_freshness()
+        freshness["entries"][0]["control_plane_fingerprint"] = OTHER_CONTROL
+        decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:control_plane_drift:EV-IMPLEMENTATION", reasons)
+
+    def test_missing_control_plane_fingerprint_forces_block(self):
+        freshness = current_freshness()
+        del freshness["entries"][0]["control_plane_fingerprint"]
+        decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:control_plane_drift:EV-IMPLEMENTATION", reasons)
+
+    def test_r3_requires_two_participating_evidence_classes(self):
         freshness = current_freshness()
         for entry in freshness["entries"]:
             entry["class"] = "ci_exact_head"
         decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:quorum_classes:1<2", reasons)
+
+    def test_unrelated_second_class_does_not_satisfy_quorum(self):
+        freshness = current_freshness()
+        for entry in freshness["entries"]:
+            entry["class"] = "ci_exact_head"
+        unrelated = evidence_entry(
+            "EV-UNRELATED",
+            "staging_smoke",
+            ["unrelated"],
+            [],
+            source="other:unrelated",
+            execution_id="run-unrelated-9",
+            independence_key="unrelated-quorum-9",
+        )
+        freshness["entries"].append(unrelated)
+        snapshot = clean_snapshot()
+        snapshot["evidence_bindings"].append(
+            {"id": "EV-UNRELATED", "commit": HEAD, "target": TARGET}
+        )
+        decision, reasons = evaluate(snapshot=snapshot, freshness=freshness)
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:quorum_classes:1<2", reasons)
 
@@ -301,16 +390,72 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         decision, reasons = evaluate(snapshot=snapshot, freshness=freshness)
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:role_missing:recovery", reasons)
-        self.assertIn("release_evidence:rollback_recovery_missing_or_unbound", reasons)
+        self.assertIn("release_evidence:recovery_missing_or_unbound", reasons)
         self.assertIn("release_evidence:negative_recovery_not_distinct", reasons)
 
-    def test_required_gate_needs_current_gate_specific_evidence(self):
+    def test_required_gate_needs_each_risk_role_not_union_coverage(self):
         freshness = current_freshness()
-        for entry in freshness["entries"]:
-            entry["gates"] = [gate for gate in entry["gates"] if gate != "FM-IGATE-B"]
+        freshness["entries"][2]["gates"] = ["FM-IGATE-A"]
+        freshness["entries"][3]["gates"] = ["FM-IGATE-A"]
         decision, reasons = evaluate(freshness=freshness)
         self.assertEqual("BLOCK", decision)
-        self.assertIn("release_evidence:gate_evidence_missing:FM-IGATE-B", reasons)
+        self.assertIn(
+            "release_evidence:gate_role_missing:FM-IGATE-B:negative", reasons
+        )
+        self.assertIn(
+            "release_evidence:gate_role_missing:FM-IGATE-B:recovery", reasons
+        )
+
+    def test_gate_without_explicit_roles_defaults_to_full_risk_quorum(self):
+        gates = verified_gates()
+        del gates["gates"][0]["required_roles"]
+        decision, reasons = evaluate(gates=gates)
+        self.assertEqual("ALLOW", decision)
+        self.assertEqual([], reasons)
+
+    def test_gate_cannot_configure_weaker_roles_than_release_risk(self):
+        gates = verified_gates()
+        gates["gates"][0]["required_roles"] = ["implementation", "countercheck"]
+        decision, reasons = evaluate(gates=gates)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            "integration_gate:FM-IGATE-A:required_roles_weaker_than_risk", reasons
+        )
+
+    def test_countercheck_requires_distinct_provenance_not_just_distinct_id(self):
+        freshness = current_freshness()
+        impl = freshness["entries"][0]["provenance"]
+        freshness["entries"][1]["provenance"] = {
+            "source": impl["source"],
+            "execution_id": impl["execution_id"],
+            "independence_key": "different-id-but-same-execution",
+        }
+        decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            "release_evidence:implementation_countercheck_not_independent", reasons
+        )
+
+    def test_gate_countercheck_requires_independent_provenance(self):
+        freshness = current_freshness()
+        impl = freshness["entries"][0]["provenance"]
+        freshness["entries"][1]["provenance"] = {
+            "source": impl["source"],
+            "execution_id": "different-execution",
+            "independence_key": "different-key",
+        }
+        decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            "release_evidence:gate_countercheck_not_independent:FM-IGATE-A", reasons
+        )
+
+    def test_missing_provenance_forces_block(self):
+        freshness = current_freshness()
+        del freshness["entries"][1]["provenance"]
+        decision, reasons = evaluate(freshness=freshness)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:provenance_missing:EV-COUNTERCHECK", reasons)
 
     def test_risk_cannot_be_downgraded_below_contract_floor(self):
         decision, reasons = evaluate(clean_snapshot(risk="R1"))
@@ -366,7 +511,7 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
             clean_snapshot(rollback_recovery_evidence_id="EV-MISSING")
         )
         self.assertEqual("BLOCK", decision)
-        self.assertIn("release_evidence:rollback_recovery_missing_or_unbound", reasons)
+        self.assertIn("release_evidence:recovery_missing_or_unbound", reasons)
 
     def test_omitted_protected_action_state_forces_block(self):
         snapshot = clean_snapshot()
@@ -391,7 +536,6 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         decision, reasons = evaluate(snapshot=snapshot, contracts=contracts)
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:countercheck_missing_or_unbound", reasons)
-        self.assertIn("release_evidence:implementation_countercheck_not_independent", reasons)
 
     def test_unknown_evidence_class_fails_closed(self):
         freshness = current_freshness()
@@ -400,6 +544,15 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         self.assertEqual("BLOCK", decision)
         self.assertIn(
             "ttl_policy:unknown_class:unknown_runtime_class:EV-IMPLEMENTATION", reasons
+        )
+
+    def test_invalid_revalidation_policy_fails_closed(self):
+        policy = ttl_policy()
+        policy["policy"]["ci_exact_head"]["revalidate_on"] = []
+        decision, reasons = evaluate(policy=policy)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            "ttl_policy:revalidate_invalid:ci_exact_head:EV-IMPLEMENTATION", reasons
         )
 
 
