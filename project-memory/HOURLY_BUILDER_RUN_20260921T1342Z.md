@@ -8,10 +8,10 @@ This is an execution receipt only. It does not create a second task, dependency,
 - SELECTED_ACTION: `NBA-CHATADMIN-STAGING-VERIFY`
 - TASK: `FM-CHATADMIN-002`
 - RISK: `R3` read-only observation
-- PR_NUMMER: `PENDING_RECEIPT_PR`; no implementation/reconciliation PR for the selected task is allowed before the protected VERIFY result exists.
+- PR_NUMMER: `#1155` — receipt-only publication; no implementation/reconciliation PR for the selected task is allowed before the protected VERIFY result exists.
 - HEAD_VOR_LAUF: `a8a7b5eb09e42eead52fb4e177edbc67eb34026e` — exact `main` freshly read from GitHub before action.
-- HEAD_NACH_LAUF: selected task remains blocked on the same observed `main`; the receipt publication branch is separate and is not ChatAdmin implementation progress.
-- GEPUSHTE_COMMITS: receipt-only publication commit(s) on `reconcile/hourly-chatadmin-verify-blocker-20260921-1342z`; exact SHAs are recorded after GitHub assigns the PR and current head.
+- HEAD_NACH_LAUF: selected task remains blocked on the dispatch-time `main`; receipt PR #1155 has an independently verifiable GitHub head and is not ChatAdmin implementation progress.
+- GEPUSHTE_COMMITS: `982debad1ae34aef44ef2cebd0d174868f0c0020` — initial fresh blocker/post-merge evidence receipt; the final metadata reconciliation commit is the current #1155 head and is externally re-read in the run report after publication.
 - OFFENE_P1: `0` known for the closed #1146 source package; #1154's prior P1 is resolved and outdated.
 - OFFENE_P2: `0` known for the closed #1146 source package.
 - CONTRACTS_IMPACTED: `none`.
