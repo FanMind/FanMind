@@ -30,6 +30,7 @@ declare
   constraint_valid integer;
   index_valid integer;
   function_valid integer;
+  privilege_mismatch integer;
 begin
   select count(*) into present
   from (values
@@ -172,11 +173,65 @@ begin
   select count(*) into function_valid
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
+  join pg_language l on l.oid = p.prolang
   where n.nspname = 'public'
     and p.proname = 'is_current_chat_admin_workspace'
     and pg_get_function_identity_arguments(p.oid) = 'target_workspace_id uuid'
+    and l.lanname = 'sql'
+    and p.provolatile = 's'
     and not p.prosecdef
-    and array_to_string(coalesce(p.proconfig, '{}'::text[]), ',') like '%search_path=%';
+    and array_to_string(coalesce(p.proconfig, '{}'::text[]), ',') like '%search_path=%'
+    and regexp_replace(lower(btrim(p.prosrc)), '[[:space:]]+', '', 'g') =
+      'selectexists(select1frompublic.workspace_chat_admin_capabilitiescjoinpublic.workspaceswonw.id=c.workspace_idwherec.workspace_id=target_workspace_idandc.chat_admin_multi_characterandc.granted_to_user_id=auth.uid()andw.owner_user_id=auth.uid());';
+
+  with expected(grantee, table_name, privilege_type) as (
+    values
+      ('authenticated', 'workspace_chat_admin_capabilities', 'SELECT'),
+      ('authenticated', 'chat_characters', 'SELECT'),
+      ('authenticated', 'chat_characters', 'INSERT'),
+      ('authenticated', 'chat_characters', 'UPDATE'),
+      ('authenticated', 'chat_characters', 'DELETE'),
+      ('authenticated', 'chat_character_conversations', 'SELECT'),
+      ('authenticated', 'chat_character_conversations', 'INSERT'),
+      ('authenticated', 'chat_character_conversations', 'UPDATE'),
+      ('authenticated', 'chat_character_conversations', 'DELETE'),
+      ('authenticated', 'chat_character_messages', 'SELECT'),
+      ('authenticated', 'chat_character_messages', 'INSERT'),
+      ('authenticated', 'chat_character_messages', 'UPDATE'),
+      ('authenticated', 'chat_character_messages', 'DELETE'),
+      ('service_role', 'workspace_chat_admin_capabilities', 'SELECT'),
+      ('service_role', 'workspace_chat_admin_capabilities', 'INSERT'),
+      ('service_role', 'workspace_chat_admin_capabilities', 'UPDATE'),
+      ('service_role', 'workspace_chat_admin_capabilities', 'DELETE'),
+      ('service_role', 'chat_characters', 'SELECT'),
+      ('service_role', 'chat_characters', 'INSERT'),
+      ('service_role', 'chat_characters', 'UPDATE'),
+      ('service_role', 'chat_characters', 'DELETE'),
+      ('service_role', 'chat_character_conversations', 'SELECT'),
+      ('service_role', 'chat_character_conversations', 'INSERT'),
+      ('service_role', 'chat_character_conversations', 'UPDATE'),
+      ('service_role', 'chat_character_conversations', 'DELETE'),
+      ('service_role', 'chat_character_messages', 'SELECT'),
+      ('service_role', 'chat_character_messages', 'INSERT'),
+      ('service_role', 'chat_character_messages', 'UPDATE'),
+      ('service_role', 'chat_character_messages', 'DELETE')
+  ), actual as (
+    select grantee, table_name, privilege_type
+    from information_schema.table_privileges
+    where table_schema = 'public'
+      and table_name in (
+        'workspace_chat_admin_capabilities',
+        'chat_characters',
+        'chat_character_conversations',
+        'chat_character_messages'
+      )
+      and grantee in ('PUBLIC', 'anon', 'authenticated', 'service_role')
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all
+    (select * from actual except select * from expected)
+  )
+  select count(*) into privilege_mismatch from mismatch;
 
   if present <> 6
     or rls_enabled <> 4
@@ -185,18 +240,14 @@ begin
     or constraint_valid <> 2
     or index_valid <> 1
     or function_valid <> 1
-    or has_table_privilege(
-      'anon',
-      'public.chat_characters',
-      'select,insert,update,delete'
-    )
-    or not has_table_privilege(
-      'authenticated',
-      'public.chat_characters',
-      'select,insert,update,delete'
-    )
+    or privilege_mismatch <> 0
     or has_function_privilege(
       'anon',
+      'public.is_current_chat_admin_workspace(uuid)',
+      'execute'
+    )
+    or has_function_privilege(
+      'service_role',
       'public.is_current_chat_admin_workspace(uuid)',
       'execute'
     )
@@ -223,6 +274,16 @@ function run(sql, env) {
     ["--no-password", "--no-psqlrc", "--quiet", "--set=ON_ERROR_STOP=1"],
     { env, input: sql, encoding: "utf8" },
   );
+}
+
+function readSchemaState(result) {
+  const output = `${result.stderr ?? ""}${result.stdout ?? ""}`;
+  if (result.status !== 0) {
+    fail(output.includes("PARTIAL") ? "schema_partial" : "verify_failed");
+  }
+  if (output.includes("VERIFIED")) return "VERIFIED";
+  if (output.includes("ABSENT")) return "ABSENT";
+  fail("schema_state_unknown");
 }
 
 export function execute(mode, env = process.env) {
@@ -252,22 +313,30 @@ export function execute(mode, env = process.env) {
     chmodSync(passfile, 0o600);
     const safeEnvironment = { ...env, PGPASSFILE: passfile };
 
-    if (mode === "apply" && run(source, safeEnvironment).status !== 0) {
+    const preflightState = readSchemaState(
+      run(CHAT_ADMIN_POSTFLIGHT_SQL, safeEnvironment),
+    );
+    if (mode === "verify") {
+      console.log(`CHAT_ADMIN_SCHEMA_STATE=${preflightState}`);
+      return;
+    }
+    if (preflightState !== "ABSENT") {
+      fail(
+        preflightState === "VERIFIED"
+          ? "apply_requires_absent_schema"
+          : "schema_partial",
+      );
+    }
+
+    if (run(source, safeEnvironment).status !== 0) {
       fail("apply_failed");
     }
 
-    const result = run(CHAT_ADMIN_POSTFLIGHT_SQL, safeEnvironment);
-    if (result.status !== 0) {
-      fail(result.stderr.includes("PARTIAL") ? "schema_partial" : "verify_failed");
-    }
-    const output = result.stderr + result.stdout;
-    const state = output.includes("VERIFIED")
-      ? "VERIFIED"
-      : output.includes("ABSENT")
-        ? "ABSENT"
-        : "PARTIAL";
-    console.log(`CHAT_ADMIN_SCHEMA_STATE=${state}`);
-    if (mode === "apply" && state !== "VERIFIED") {
+    const postflightState = readSchemaState(
+      run(CHAT_ADMIN_POSTFLIGHT_SQL, safeEnvironment),
+    );
+    console.log(`CHAT_ADMIN_SCHEMA_STATE=${postflightState}`);
+    if (postflightState !== "VERIFIED") {
       fail("postflight_failed");
     }
   } finally {
