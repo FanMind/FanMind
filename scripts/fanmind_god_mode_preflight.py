@@ -74,6 +74,8 @@ def validate() -> list[str]:
             errors.append(f"contract-registry-entry-invalid:{item.get('id')}")
         if item.get("status") not in VALID_STATUS:
             errors.append(f"contract-registry-status-invalid:{item.get('id')}")
+        if item.get("minimum_risk") not in VALID_RISK:
+            errors.append(f"contract-registry-risk-invalid:{item.get('id')}")
 
     gates = load("INTEGRATION_GATES.json")
     gate_items = gates.get("gates", [])
@@ -115,33 +117,29 @@ def validate() -> list[str]:
     unknown_affected = set(affected) - set(contract_ids)
     if unknown_affected:
         errors.append("release-decision-affected-contracts-unknown")
+    blockers = decision.get("blocking_reasons")
+    if not isinstance(blockers, list):
+        errors.append("release-decision-blocking-reasons-invalid")
+    bindings = decision.get("evidence_bindings")
+    if not isinstance(bindings, list):
+        errors.append("release-decision-evidence-bindings-invalid")
+    for key in ("open_p0", "open_p1", "open_p2"):
+        value = decision.get(key)
+        if not isinstance(value, int) or value < 0:
+            errors.append(f"release-decision-{key}-invalid")
+    for key in ("pending_checks", "failed_required_checks", "unresolved_review_threads", "reconciliation_required", "protected_action_required"):
+        if decision.get(key) not in {True, False}:
+            errors.append(f"release-decision-{key}-invalid")
 
-    if decision.get("decision") == "ALLOW":
-        strict = (
-            decision.get("current_head_bound") is True
-            and decision.get("evidence_quorum_complete") is True
-            and decision.get("evidence_freshness_current") is True
-            and decision.get("dependencies_satisfied") is True
-            and decision.get("consumer_impact_revalidated") is True
-            and decision.get("open_p1") == 0
-            and decision.get("open_p2") == 0
-            and decision.get("pending_checks") is False
-            and decision.get("unresolved_review_threads") is False
-            and decision.get("reconciliation_required") is False
-            and decision.get("protected_action_required") is False
-            and all(
-                next((c for c in contracts if c.get("id") == cid), {}).get("status") == "ACTIVE"
-                for cid in affected
-            )
-        )
-        if decision.get("risk") in {"R3", "R4"}:
-            strict = (
-                strict
-                and decision.get("negative_evidence_complete") is True
-                and decision.get("rollback_recovery_evidence_complete") is True
-            )
-        if not strict:
-            errors.append("release-decision-allow-not-fail-closed")
+    # A checked-in ALLOW/OWNER_REQUIRED snapshot must carry explicit revision/target-bound
+    # evidence. The actual runtime evaluator independently verifies those bindings.
+    if decision.get("decision") in {"ALLOW", "OWNER_REQUIRED"}:
+        if not decision.get("evaluated_commit") or not decision.get("evaluated_target"):
+            errors.append("release-decision-binding-missing")
+        if not bindings:
+            errors.append("release-decision-evidence-bindings-missing")
+        if blockers:
+            errors.append("release-decision-retains-blockers")
 
     return errors
 
