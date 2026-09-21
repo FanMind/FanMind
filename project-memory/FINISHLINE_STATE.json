@@ -87,7 +87,15 @@
     "chatadmin_staging_verify": {
       "task": "FM-CHATADMIN-002",
       "risk": "R3",
-      "state": "IMPLEMENTED_NOT_VERIFIED",
+      "state": "VERIFIED",
+      "required_for_sales": false,
+      "observed_result": "ABSENT",
+      "evidence": "GitHub Actions run 35652258052 / job 106507223598 on 973e70f6d243984d95ec1420a79701faad04a39a; read-only VERIFY succeeded, APPLY/ACCEPT skipped"
+    },
+    "governance_god_mode": {
+      "task": "FM-GOV-GODMODE-001",
+      "risk": "R3",
+      "state": "IN_PROGRESS",
       "required_for_sales": false
     }
   },
