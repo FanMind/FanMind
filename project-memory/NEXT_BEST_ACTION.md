@@ -23,7 +23,7 @@ owner/platform action required
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
+- `NBA-CREATOR-INTELLIGENCE` priority 5: **DEFERRED_BY_OWNER** — FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
