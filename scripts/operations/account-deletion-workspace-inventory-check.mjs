@@ -3,9 +3,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 const SQL_PATH = "supabase/controlled/20260922213000_account_deletion_workspace_inventory.sql";
-// Superseded pre-review checksum retained as a historical regression marker:
+// Superseded pre-review checksums retained as historical regression markers:
 // 0138a2a8484b526f8064abb45f6f0026174c38717e3bf04fc484f9dcb3a2624c
-const EXPECTED_SHA256 = "498f6fc91c46023fe0d38b38e05c8db452f41aca0f9939ff8a86b9a334e7add9";
+// 498f6fc91c46023fe0d38b38e05c8db452f41aca0f9939ff8a86b9a334e7add9
+const EXPECTED_SHA256 = "ff59c2b6fe81277eb3c3faad0084ff0f27d9cf81b390d81e737c7d2997aa8fe6";
 
 const sql = await readFile(SQL_PATH, "utf8");
 const hash = createHash("sha256").update(sql).digest("hex");
@@ -19,15 +20,25 @@ for (const pattern of [
   /where r\.user_id = new\.owner_user_id[\s\S]*r\.status = 'processing'/u,
   /old\.owner_user_id is distinct from new\.owner_user_id[\s\S]*r\.user_id in \(old\.owner_user_id, new\.owner_user_id\)/u,
   /create trigger guard_processing_account_deletion_workspace_ownership[\s\S]*before insert or update of owner_user_id on public\.workspaces/u,
+  /create or replace function public\.guard_processing_account_deletion_workspace_billing/u,
+  /old\.stripe_subscription_id is distinct from new\.stripe_subscription_id[\s\S]*old\.subscription_effective_end_at is distinct from new\.subscription_effective_end_at[\s\S]*old\.billing_status is distinct from new\.billing_status/u,
+  /new\.id = any\(r\.owned_workspace_ids\)/u,
+  /create trigger guard_processing_account_deletion_workspace_billing[\s\S]*before update of stripe_subscription_id, subscription_effective_end_at, billing_status[\s\S]*on public\.workspaces/u,
+  /create or replace function public\.guard_processing_account_deletion_workspace_members/u,
+  /tg_op = 'INSERT'[\s\S]*new\.workspace_id = any\(r\.owned_workspace_ids\)[\s\S]*new\.user_id is distinct from r\.user_id/u,
+  /tg_op = 'DELETE'[\s\S]*old\.workspace_id = any\(r\.owned_workspace_ids\)[\s\S]*old\.user_id is distinct from r\.user_id/u,
+  /create trigger guard_processing_account_deletion_workspace_members[\s\S]*before insert or delete or update of workspace_id, user_id on public\.workspace_members/u,
   /create or replace function public\.begin_account_deletion_processing/u,
   /select r\.\*[\s\S]*from public\.account_deletion_requests r[\s\S]*r\.status in \('pending', 'blocked', 'processing'\)/u,
-  /if v_request\.status = 'processing'[\s\S]*v_request\.owned_workspace_ids is null[\s\S]*lock table public\.workspaces in share mode[\s\S]*v_owned_workspace_ids is distinct from v_request\.owned_workspace_ids[\s\S]*message = 'workspace_inventory_drift'[\s\S]*owned_workspace_ids := v_request\.owned_workspace_ids[\s\S]*return next/u,
+  /if v_request\.status = 'processing'[\s\S]*v_request\.owned_workspace_ids is null[\s\S]*lock table public\.workspaces in share mode[\s\S]*lock table public\.workspace_members in share mode[\s\S]*v_owned_workspace_ids is distinct from v_request\.owned_workspace_ids[\s\S]*message = 'workspace_inventory_drift'[\s\S]*wm\.workspace_id = any\(v_request\.owned_workspace_ids\)[\s\S]*w\.id = any\(v_request\.owned_workspace_ids\)[\s\S]*message = 'processing_blocker_drift'[\s\S]*owned_workspace_ids := v_request\.owned_workspace_ids[\s\S]*return next/u,
   /lock table public\.workspaces in share mode/u,
   /lock table public\.workspace_members in share mode/u,
   /array_agg\(w\.id order by w\.id\)/u,
   /if v_requires_ownership_transfer or v_requires_subscription_resolution then[\s\S]*status = 'blocked'[\s\S]*requires_ownership_transfer = v_requires_ownership_transfer[\s\S]*requires_subscription_resolution = v_requires_subscription_resolution[\s\S]*return next/u,
   /status = 'processing'[\s\S]*owned_workspace_ids = v_owned_workspace_ids/u,
   /revoke all on function public\.guard_processing_account_deletion_workspace_ownership\(\)[\s\S]*from public, anon, authenticated/u,
+  /revoke all on function public\.guard_processing_account_deletion_workspace_billing\(\)[\s\S]*from public, anon, authenticated/u,
+  /revoke all on function public\.guard_processing_account_deletion_workspace_members\(\)[\s\S]*from public, anon, authenticated/u,
   /revoke all on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*from public, anon, authenticated/u,
   /grant execute on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*to service_role/u,
   /atomic destructive-start transition/u,
