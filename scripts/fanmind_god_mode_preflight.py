@@ -75,6 +75,13 @@ def _round8_preflight_input_errors() -> list[str]:
             required = gate.get("evidence_required")
             role_map = gate.get("evidence_required_roles")
             if not isinstance(required, list) or not required:
+                errors.append(f"integration-gate-evidence-required-invalid:{gate_id}")
+                continue
+            if (
+                any(not isinstance(requirement, str) or not requirement.strip() for requirement in required)
+                or len(set(required)) != len(required)
+            ):
+                errors.append(f"integration-gate-evidence-required-invalid:{gate_id}")
                 continue
             if not isinstance(role_map, dict) or set(role_map) != set(required):
                 errors.append(f"integration-gate-evidence-role-map-invalid:{gate_id}")
@@ -123,6 +130,8 @@ def _round8_preflight_input_errors() -> list[str]:
     # UNPROVISIONED while God Mode itself is reviewed/merged, but only an ACTIVE
     # anchor with an exact 64-hex key digest can ever authorize a non-BLOCK
     # protected evidence decision. The secret key itself is never stored in Git.
+    # Runtime additionally requires the same digest from an independently
+    # protected host identity outside the checkout.
     try:
         anchor = load("GOD_MODE_TRUST_ANCHOR.json")
     except Exception as exc:
