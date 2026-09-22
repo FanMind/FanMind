@@ -792,9 +792,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Lock: LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Owner: ChatGPT / connected GitHub
 - Baseline: exact current main `3ec6115612f1e2b9cf58d2d2064fbb7a561b2f6b`; #1160 remains closed/owner-accepted.
-- Scope: persist the complete currently-owned Workspace-ID set before destructive Auth deletion, require that exact persisted set for crash/resume verification, clear it after completion, and add the controlled unapplied schema contract/checker. Preserve null-Workspace requests and transferred historical Workspaces.
+- Scope: add the controlled/unapplied `owned_workspace_ids` column and service-role-only `begin_account_deletion_processing` RPC so request lock, current ownership selection, member/subscription blocker recheck, inventory persistence and `processing` transition are one DB transaction; consume only the RPC-returned inventory before Auth deletion, require the stored set for resume, and clear it after completion. Preserve null-Workspace requests and transferred historical Workspaces.
 - Boundaries: repository-only code/tests/docs/memory; no controlled SQL Apply, no real account/customer deletion, no Staging/Production/provider/Billing/Restore/Mobile mutation.
-- Evidence plan: controlled-contract checksum/static negatives, dynamic multi-Workspace persistence, missing-contract fail-before-delete, missing-inventory resume failure, full Current-Head CI/CodeQL/Browser and one required independent review cycle.
+- Evidence plan: controlled-contract checksum/static negatives, atomic SQL request/Workspace/member locks, authoritative `array_agg` snapshot, dynamic multi-Workspace RPC return, missing-contract fail-before-delete, missing-inventory resume failure, full Current-Head CI/CodeQL/Browser and one required independent review cycle.
 - Exact next step: publish/review this single bounded inventory PR, fix only current-head findings, and merge under convergence when all checks/review are clean. Do not apply the controlled SQL in this task.
 - Recovery: source/docs revert only; target schema remains unchanged until a separately protected authorized rollout.
 
