@@ -107,7 +107,7 @@ def _enum_shape_errors() -> list[str]:
             if not exact_text(item.get("status")):
                 errors.append(f"contract-status-invalid:{item_id}")
             if not exact_text(item.get("minimum_risk")):
-                errors.append(f"contract-risk-invalid:{item_id}")
+                errors.append(f"contract-registry-risk-invalid:{item_id}")
     except Exception:
         pass
 
