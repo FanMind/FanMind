@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const SQL_PATH = "supabase/controlled/20260922213000_account_deletion_workspace_inventory.sql";
 // Superseded pre-review checksum retained as a historical regression marker:
 // 0138a2a8484b526f8064abb45f6f0026174c38717e3bf04fc484f9dcb3a2624c
-const EXPECTED_SHA256 = "cae7d0a6d59c1185dd751f8e28bb1f026bb1f2022bff6006994cbf33ea131a6b";
+const EXPECTED_SHA256 = "e20783f6ba284a37fd99c06ef18bda348b66ea9365c88c5bf7ceb416123e8e63";
 
 const sql = await readFile(SQL_PATH, "utf8");
 const hash = createHash("sha256").update(sql).digest("hex");
@@ -16,6 +16,7 @@ for (const pattern of [
   /cardinality\(owned_workspace_ids\) <= 100/u,
   /array_position\(owned_workspace_ids, null\) is null/u,
   /create or replace function public\.begin_account_deletion_processing/u,
+  /select r\.\*[\s\S]*from public\.account_deletion_requests r[\s\S]*r\.status in \('pending', 'blocked', 'processing'\)/u,
   /if v_request\.status = 'processing'[\s\S]*v_request\.owned_workspace_ids is null[\s\S]*owned_workspace_ids := v_request\.owned_workspace_ids[\s\S]*return next/u,
   /lock table public\.workspaces in share mode/u,
   /lock table public\.workspace_members in share mode/u,
