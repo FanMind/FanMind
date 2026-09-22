@@ -31,9 +31,9 @@ TRIGGERS = {
 
 def enforced_invariants():
     return {"invariants": [
-        {"id": "FM-INV-001", "required": True, "status": "ENFORCED",
+        {"id": "FM-INV-001", "required": True, "status": "ENFORCED", "risk": "R3",
          "revalidate_on": ["schema_or_authority_change"]},
-        {"id": "FM-INV-002", "required": True, "status": "ENFORCED",
+        {"id": "FM-INV-002", "required": True, "status": "ENFORCED", "risk": "R3",
          "revalidate_on": ["schema_or_authority_change"]},
     ]}
 
@@ -210,6 +210,11 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         self.assertIn("release_evidence:invariant_missing:FM-INV-002",
                       evaluate(attestation=signed_attestation(entries))[1])
 
+    def test_required_invariant_missing_risk_fails_closed(self):
+        inv = enforced_invariants()
+        del inv["invariants"][0]["risk"]
+        self.assertIn("invariant:risk_invalid:FM-INV-001", evaluate(invariants=inv)[1])
+
     def test_mapped_gate_cannot_hide_behind_applicable_false(self):
         gates = verified_gates()
         gates["gates"][0]["applicable"] = False
@@ -343,6 +348,21 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         self.assertIn("release_input:protected_action_mismatch",
                       evaluate(snapshot=snapshot, actual_target=target,
                                attestation=signed_attestation(entries, target=target))[1])
+
+    def test_protected_operation_cannot_cross_target_namespace(self):
+        target = "production:synthetic"
+        entries = current_evidence(target)
+        snapshot = clean_snapshot(
+            target=target,
+            operation="staging_apply",
+            protected_action_required=True,
+        )
+        reasons = evaluate(
+            snapshot=snapshot,
+            actual_target=target,
+            attestation=signed_attestation(entries, target=target),
+        )[1]
+        self.assertIn("release_input:protected_operation_target_mismatch:staging_apply", reasons)
 
     def test_repository_operation_cannot_target_staging_and_unknown_operation_blocks(self):
         target = STAGING_TARGET
