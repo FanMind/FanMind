@@ -792,11 +792,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-GOV-GODMODE-001-20260921
 - Task: FM-GOV-GODMODE-001
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: ChatGPT / connected GitHub
-- Baseline: exact main `973e70f6d243984d95ec1420a79701faad04a39a`; ChatAdmin VERIFY run `35652258052` result `ABSENT`.
-- Branch: `governance/god-mode-v1-20260921`.
-- Scope: repository-only governance/integration control plane and Project Memory reconciliation. No external mutation.
-- Evidence plan: God Mode preflight, release-decision fail-closed tests, Project Memory checks, current-head CI/CodeQL and independent review.
-- Recovery: source revert only.
+- Final head/merge: `79510c8bc35371aa657cf42ca7cded5810341d88` -> exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
+- Scope completed: repository-only governance/integration control plane and post-merge reconciliation. No protected external mutation.
+- Do not reacquire for later optional hardening; create a new bounded task/lock if new scope is discovered.
