@@ -127,13 +127,7 @@ _legacy.CANONICAL_SECURITY_SEMANTICS_SHA256 = CANONICAL_SECURITY_SEMANTICS_SHA25
 
 
 def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> list[str]:
-    """Reject malformed/unauthoritative attested evidence before legacy normalization.
-
-    This outer boundary intentionally runs before the retained evaluator so
-    unhashable statuses or invented roles cannot reach set-membership checks,
-    and so signed evidence cannot smuggle additional unbound records beside the
-    snapshot's exact evidence binding set.
-    """
+    """Validate signed-evidence authority without normalizing unsafe input away."""
     if not isinstance(attestation, dict):
         return []
     evidence = attestation.get("evidence")
@@ -152,7 +146,10 @@ def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> 
 
         status = entry.get("status")
         if not isinstance(status, str):
-            blockers.append(f"release_evidence:status_invalid:{label}")
+            # Keep the established not_current prefix so existing consumers and
+            # regressions see the same fail-closed class without ever performing
+            # set membership on an unhashable status value.
+            blockers.append(f"release_evidence:not_current:{label}:invalid_status_type")
 
         roles = entry.get("roles")
         if roles is not None:
@@ -186,6 +183,16 @@ def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> 
     return list(dict.fromkeys(blockers))
 
 
+def _fatal_attestation_shape_blockers(blockers: list[str]) -> list[str]:
+    """Return only defects that could make the retained evaluator throw."""
+    prefixes = (
+        "release_evidence:not_current:",
+        "release_evidence:roles_invalid:",
+        "release_evidence:role_invalid:",
+    )
+    return [reason for reason in blockers if reason.startswith(prefixes)]
+
+
 def evaluate_release_decision(
     invariants: dict,
     integration: dict,
@@ -204,10 +211,11 @@ def evaluate_release_decision(
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     boundary_blockers = _attestation_boundary_blockers(attestation, snapshot)
-    requirement_blockers = _evidence_requirement_claim_blockers(attestation, integration)
-    if boundary_blockers or requirement_blockers:
-        return "BLOCK", list(dict.fromkeys([*boundary_blockers, *requirement_blockers]))
+    fatal_shape_blockers = _fatal_attestation_shape_blockers(boundary_blockers)
+    if fatal_shape_blockers:
+        return "BLOCK", list(dict.fromkeys(fatal_shape_blockers))
 
+    requirement_blockers = _evidence_requirement_claim_blockers(attestation, integration)
     canonical = _current._canonical_runtime_mode(integration, contracts, impact, snapshot)
     canonical_shape_valid = not _current._canonical_registry_blockers(contracts, integration)
     if canonical and canonical_shape_valid:
@@ -234,7 +242,7 @@ def evaluate_release_decision(
     previous_legacy_loader = _legacy.load_trust_anchor
     _legacy.load_trust_anchor = globals()["load_trust_anchor"]
     try:
-        return _legacy_evaluate_release_decision(
+        decision, reasons = _legacy_evaluate_release_decision(
             invariants,
             integration,
             contracts,
@@ -250,6 +258,10 @@ def evaluate_release_decision(
             attestation_key=attestation_key,
             current_trigger_state=current_trigger_state,
         )
+        extra_blockers = [*boundary_blockers, *requirement_blockers]
+        if extra_blockers:
+            return "BLOCK", list(dict.fromkeys([*reasons, *extra_blockers]))
+        return decision, reasons
     finally:
         _legacy.load_trust_anchor = previous_legacy_loader
 
