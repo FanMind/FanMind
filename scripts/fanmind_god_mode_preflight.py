@@ -10,6 +10,14 @@ from fanmind_god_mode_preflight_legacy import *  # noqa: F401,F403
 
 _legacy_validate = _legacy.validate
 
+REQUIRED_COMPLETENESS_FLAGS = (
+    "current_head_bound",
+    "evidence_quorum_complete",
+    "evidence_freshness_current",
+    "negative_evidence_complete",
+    "rollback_recovery_evidence_complete",
+)
+
 
 def _round8_preflight_input_errors() -> list[str]:
     """Fail closed before legacy validation can consume malformed metadata."""
@@ -73,6 +81,43 @@ def _round8_preflight_input_errors() -> list[str]:
                 continue
             if any(not isinstance(role, str) or role not in allowed_roles for role in role_map.values()):
                 errors.append(f"integration-gate-evidence-role-map-invalid:{gate_id}")
+
+    # Reject duplicate gate identities inside a single impact mapping before
+    # legacy validation can normalize the list into a set.
+    try:
+        impact = load("IMPACT_MAP.json")
+    except Exception as exc:
+        return list(dict.fromkeys([*errors, f"impact-map-load-invalid:{type(exc).__name__}"]))
+    mappings = impact.get("mappings") if isinstance(impact, dict) else None
+    if isinstance(mappings, list):
+        for mapping in mappings:
+            if not isinstance(mapping, dict):
+                continue
+            contract_id = mapping.get("contract")
+            mapped_gates = mapping.get("gates")
+            if isinstance(mapped_gates, list) and all(
+                isinstance(gate_id, str) and gate_id.strip() for gate_id in mapped_gates
+            ):
+                if len(set(mapped_gates)) != len(mapped_gates):
+                    marker = contract_id if isinstance(contract_id, str) and contract_id else "unknown"
+                    errors.append(f"impact-map-gates-duplicate:{marker}")
+
+    # The persisted release snapshot must be a JSON object before legacy `.get`
+    # access. Completeness flags must always have exact boolean types, and any
+    # candidate non-BLOCK state may only exist when every flag is exactly true.
+    try:
+        release = load("RELEASE_DECISION.json")
+    except Exception as exc:
+        return list(dict.fromkeys([*errors, f"release-decision-load-invalid:{type(exc).__name__}"]))
+    if not isinstance(release, dict):
+        errors.append("release-decision-document-invalid")
+    else:
+        for key in REQUIRED_COMPLETENESS_FLAGS:
+            value = release.get(key)
+            if type(value) is not bool:
+                errors.append(f"release-decision-{key}-invalid")
+            elif release.get("decision") in {"ALLOW", "OWNER_REQUIRED"} and value is not True:
+                errors.append(f"release-decision-{key}-required")
 
     # The producer trust anchor is intentionally fail-closed. It may remain
     # UNPROVISIONED while God Mode itself is reviewed/merged, but only an ACTIVE
