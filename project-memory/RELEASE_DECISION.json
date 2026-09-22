@@ -8,11 +8,7 @@
   "affected_contracts": [],
   "evaluated_commit": "1c5e1232f0893b0730a985c6e717b5c27c535f35",
   "evaluated_target": "repository-governance",
-  "evidence_bindings": [
-    "PR #1157 final head 79510c8bc35371aa657cf42ca7cded5810341d88",
-    "merge commit 1c5e1232f0893b0730a985c6e717b5c27c535f35",
-    "ChatAdmin VERIFY run 35652258052 / job 106507223598 on 973e70f6d243984d95ec1420a79701faad04a39a"
-  ],
+  "evidence_bindings": [],
   "implementation_evidence_id": "PR-1157",
   "countercheck_evidence_id": "PR-1157-CURRENT-HEAD-CI",
   "negative_evidence_id": "GOD-MODE-ADVERSARIAL-SUITE-1157",
