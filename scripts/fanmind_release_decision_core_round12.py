@@ -252,12 +252,6 @@ def evaluate_release_decision(
         _base.os.environ.get("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC") == "1"
         and actual_target == "repository:synthetic"
     )
-    if not synthetic_test_bypass:
-        checked_out_head = _base.current_git_head()
-        if not isinstance(actual_head, str) or not _current._round8.git_commit_resolves(actual_head):
-            return "BLOCK", ["release_evidence:actual_head_unresolvable"]
-        if not isinstance(checked_out_head, str) or actual_head != checked_out_head:
-            return "BLOCK", ["release_evidence:actual_head_not_checked_out_head"]
 
     boundary_blockers = _attestation_boundary_blockers(attestation, snapshot)
     fatal_shape_blockers = _fatal_attestation_shape_blockers(boundary_blockers)
@@ -310,6 +304,12 @@ def evaluate_release_decision(
         extra_blockers = [*boundary_blockers, *requirement_blockers]
         if extra_blockers:
             return "BLOCK", list(dict.fromkeys([*reasons, *extra_blockers]))
+        if decision == "ALLOW" and not synthetic_test_bypass:
+            checked_out_head = _base.current_git_head()
+            if not isinstance(actual_head, str) or not _current._round8.git_commit_resolves(actual_head):
+                return "BLOCK", ["release_evidence:actual_head_unresolvable"]
+            if not isinstance(checked_out_head, str) or actual_head != checked_out_head:
+                return "BLOCK", ["release_evidence:actual_head_not_checked_out_head"]
         return decision, reasons
     finally:
         _legacy.load_trust_anchor = previous_legacy_loader
