@@ -203,6 +203,7 @@ async function validateHistoricalRequestWorkspace(
   ownedWorkspaces,
 ) {
   if (!request.workspace_id) {
+    if (ownedWorkspaces.length === 0) return;
     throw new AccountDeletionProcessorError("request_workspace_mismatch");
   }
   if (ownedWorkspaces.some((workspace) => workspace.id === request.workspace_id)) {
@@ -382,6 +383,26 @@ async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {
       }
     }
   }
+}
+
+async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
+  if (!request.workspace_id) return [];
+  const rows = await restSelect(
+    fetchImpl,
+    config,
+    "workspaces",
+    new URLSearchParams({
+      select: "id",
+      id: `eq.${request.workspace_id}`,
+      limit: "1",
+    }).toString(),
+    "workspace_resume_lookup_failed",
+  );
+  // Existing means the historical Workspace survived (for example after
+  // ownership transfer) and must never be traversed as deleted tenant data.
+  // Absence after Auth deletion means it was the owned Workspace deleted by
+  // cascade and its captured ID must still drive the completeness postcheck.
+  return rows.length === 0 ? [request.workspace_id] : [];
 }
 
 async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
@@ -620,8 +641,18 @@ export async function processAccountDeletion({
 
   if (!authUser) {
     log("ACCOUNT_DELETION_RECOVERY_STATE=auth_user_already_absent");
+    const resumeWorkspaceIds = await recoverWorkspaceIdsForResume(
+      fetchImpl,
+      config,
+      request,
+    );
     if (!execute) {
-      await verifyDeletion(fetchImpl, config, request.user_id);
+      await verifyDeletion(
+        fetchImpl,
+        config,
+        request.user_id,
+        resumeWorkspaceIds,
+      );
       log("ACCOUNT_DELETION_RESULT=dry_run_resume_ready");
       return {
         executed: false,
@@ -637,9 +668,7 @@ export async function processAccountDeletion({
       request,
       userId: request.user_id,
       hashSecret,
-      // The request Workspace is historical context and may now belong to a
-      // different owner. Never verify (or otherwise traverse) its tenant data.
-      workspaceIds: [],
+      workspaceIds: resumeWorkspaceIds,
       log,
     });
     return { executed: true, resumed: true, eligibility: null, finalStatus };
