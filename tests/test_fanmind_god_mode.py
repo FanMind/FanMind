@@ -30,7 +30,7 @@ TRIGGERS = {
 
 
 def enforced_invariants():
-    return {"invariants": [
+    return {"schema_version": 1, "invariants": [
         {"id": "FM-INV-001", "required": True, "status": "ENFORCED", "risk": "R3",
          "revalidate_on": ["schema_or_authority_change"]},
         {"id": "FM-INV-002", "required": True, "status": "ENFORCED", "risk": "R3",
@@ -39,7 +39,7 @@ def enforced_invariants():
 
 
 def verified_gates():
-    return {"gates": [
+    return {"schema_version": 1, "gates": [
         {"id": "FM-IGATE-A", "applicable": True, "status": "VERIFIED",
          "contracts": ["FM-CONTRACT-A"], "required_roles": list(ALL_ROLES),
          "evidence_required": ["synthetic semantic proof"]},
@@ -50,21 +50,21 @@ def verified_gates():
 
 
 def active_contracts(minimum_risk="R3"):
-    return {"contracts": [
+    return {"schema_version": 1, "contracts": [
         {"id": "FM-CONTRACT-A", "status": "ACTIVE", "minimum_risk": minimum_risk},
         {"id": "FM-CONTRACT-B", "status": "ACTIVE", "minimum_risk": minimum_risk},
     ]}
 
 
 def impact_map():
-    return {"mappings": [
+    return {"schema_version": 1, "mappings": [
         {"contract": "FM-CONTRACT-A", "gates": ["FM-IGATE-A"]},
         {"contract": "FM-CONTRACT-B", "gates": ["FM-IGATE-B"]},
     ]}
 
 
 def ttl_policy():
-    return {"policy": {
+    return {"schema_version": 1, "policy": {
         "ci_exact_head": {"ttl_hours": None, "revalidate_on": ["head_changed", "workflow_contract_changed"]},
         "staging_smoke": {"ttl_hours": 24, "revalidate_on": ["staging_deploy", "runtime_config_change"]},
     }}
@@ -113,6 +113,7 @@ def current_evidence(target=TARGET, head=HEAD):
 
 def clean_snapshot(target=TARGET, **overrides):
     data = {
+        "schema_version": 1,
         "operation": "repository_merge",
         "risk": "R3",
         "affected_contracts": ["FM-CONTRACT-A", "FM-CONTRACT-B"],
