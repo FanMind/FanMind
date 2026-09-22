@@ -192,9 +192,13 @@ def _authenticate_current_trigger_state(
     if not isinstance(signature, str) or not signature.startswith("hmac-sha256:"):
         blockers.append("trigger_state:signature_invalid")
     elif isinstance(key_bytes, bytes) and len(key_bytes) >= 32:
-        expected = sign_attestation(document, key_bytes)
-        if not hmac.compare_digest(signature, expected):
-            blockers.append("trigger_state:signature_mismatch")
+        try:
+            expected = sign_attestation(document, key_bytes)
+        except (UnicodeError, TypeError, ValueError):
+            blockers.append("trigger_state:canonicalization_invalid")
+        else:
+            if not hmac.compare_digest(signature, expected):
+                blockers.append("trigger_state:signature_mismatch")
     return state, blockers
 
 
@@ -244,9 +248,13 @@ def _authenticate_attestation(
     if not isinstance(signature, str) or not signature.startswith("hmac-sha256:"):
         blockers.append("attestation:signature_invalid")
     elif isinstance(key_bytes, bytes) and len(key_bytes) >= 32:
-        expected = sign_attestation(attestation, key_bytes)
-        if not hmac.compare_digest(signature, expected):
-            blockers.append("attestation:signature_mismatch")
+        try:
+            expected = sign_attestation(attestation, key_bytes)
+        except (UnicodeError, TypeError, ValueError):
+            blockers.append("attestation:canonicalization_invalid")
+        else:
+            if not hmac.compare_digest(signature, expected):
+                blockers.append("attestation:signature_mismatch")
 
     trigger_state = attestation.get("trigger_state")
     if not isinstance(trigger_state, dict) or any(
@@ -388,7 +396,13 @@ def _entry_provenance(entry: dict) -> tuple[str, str, str] | None:
     if not isinstance(provenance, dict):
         return None
     values = tuple(provenance.get(k) for k in ("source", "execution_id", "independence_key"))
-    if not all(isinstance(value, str) and value for value in values):
+    if not all(
+        isinstance(value, str)
+        and bool(value.strip())
+        and value == value.strip()
+        and all(ord(ch) >= 0x20 and ch != "\x7f" for ch in value)
+        for value in values
+    ):
         return None
     return values  # type: ignore[return-value]
 
