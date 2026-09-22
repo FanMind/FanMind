@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import math
 import os
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -13,6 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PM = ROOT / "project-memory"
 RISK_ORDER = {"R1": 1, "R2": 2, "R3": 3, "R4": 4}
+REQUIRED_INVARIANT_IDS = {f"FM-INV-{i:03d}" for i in range(1, 13)}
+MAX_TTL_HOURS = 24 * 365 * 100
 CURRENT_EVIDENCE_STATES = {"VERIFIED", "COUNTERCHECKED", "ACCEPTED", "PRODUCTION_CONFIRMED"}
 REQUIRED_EVIDENCE_ROLES = {
     "R1": {"evidence"},
@@ -40,6 +43,8 @@ CONTROL_PLANE_FILES = (
 )
 ATTESTATION_ISSUER = "fanmind-protected-evidence-producer-v1"
 ATTESTATION_MAX_LIFETIME = timedelta(hours=2)
+TRIGGER_STATE_ISSUER = "fanmind-protected-trigger-state-v1"
+TRIGGER_STATE_MAX_LIFETIME = timedelta(minutes=5)
 REPOSITORY_OPERATIONS = {
     "repository_review",
     "repository_merge",
@@ -132,12 +137,65 @@ def _canonical_json(value: dict) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
+def _valid_ttl_hours(value) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    if isinstance(value, float) and not math.isfinite(value):
+        return False
+    return 0 <= value <= MAX_TTL_HOURS
+
+
 def sign_attestation(attestation: dict, key: str | bytes) -> str:
     """Test/producer helper. The key must come from a protected producer, never Git."""
     key_bytes = key.encode("utf-8") if isinstance(key, str) else key
     payload = dict(attestation)
     payload.pop("signature", None)
     return "hmac-sha256:" + hmac.new(key_bytes, _canonical_json(payload), hashlib.sha256).hexdigest()
+
+
+def _authenticate_current_trigger_state(
+    document: dict | None,
+    key: str | bytes | None,
+    now: datetime,
+) -> tuple[dict[str, str], list[str]]:
+    blockers: list[str] = []
+    if not isinstance(document, dict):
+        return {}, ["trigger_state:missing"]
+    key_bytes = key.encode("utf-8") if isinstance(key, str) else key
+    if not isinstance(key_bytes, bytes) or len(key_bytes) < 32:
+        blockers.append("trigger_state:protected_key_unavailable")
+    if document.get("schema_version") != 1:
+        blockers.append("trigger_state:schema_invalid")
+    if document.get("issuer") != TRIGGER_STATE_ISSUER:
+        blockers.append("trigger_state:issuer_invalid")
+    issued = _parse_time(document.get("issued_at"))
+    expires = _parse_time(document.get("expires_at"))
+    if issued is None or expires is None:
+        blockers.append("trigger_state:time_invalid")
+    else:
+        if issued > now + timedelta(minutes=1):
+            blockers.append("trigger_state:issued_at_future")
+        if expires <= now:
+            blockers.append("trigger_state:expired")
+        if expires <= issued or expires - issued > TRIGGER_STATE_MAX_LIFETIME:
+            blockers.append("trigger_state:lifetime_invalid")
+    state = document.get("state")
+    if not isinstance(state, dict) or any(
+        not isinstance(k, str) or not k or not isinstance(v, str) or not v
+        for k, v in (state.items() if isinstance(state, dict) else [])
+    ):
+        blockers.append("trigger_state:state_invalid")
+        state = {}
+    signature = document.get("signature")
+    if not isinstance(signature, str) or not signature.startswith("hmac-sha256:"):
+        blockers.append("trigger_state:signature_invalid")
+    elif isinstance(key_bytes, bytes) and len(key_bytes) >= 32:
+        expected = sign_attestation(document, key_bytes)
+        if not hmac.compare_digest(signature, expected):
+            blockers.append("trigger_state:signature_mismatch")
+    return state, blockers
 
 
 def _authenticate_attestation(
@@ -296,9 +354,7 @@ def _class_policy(evidence_class: str, ttl_policy: dict) -> tuple[dict | None, s
     if not isinstance(entry, dict):
         return None, f"ttl_policy:unknown_class:{evidence_class}"
     ttl_hours = entry.get("ttl_hours")
-    if ttl_hours is not None and (
-        isinstance(ttl_hours, bool) or not isinstance(ttl_hours, (int, float)) or ttl_hours < 0
-    ):
+    if not _valid_ttl_hours(ttl_hours):
         return None, f"ttl_policy:ttl_invalid:{evidence_class}"
     triggers = entry.get("revalidate_on")
     if not isinstance(triggers, list) or not triggers or any(
@@ -431,8 +487,12 @@ def _validate_bound_evidence(
             continue
         bad = False
         status = entry.get("status")
+        roles = _entry_roles(entry)
         if not isinstance(status, str) or status not in CURRENT_EVIDENCE_STATES:
             blockers.append(f"release_evidence:not_current:{evidence_id}:{status}")
+            bad = True
+        if roles == {"implementation"} and status in {"ACCEPTED", "PRODUCTION_CONFIRMED"}:
+            blockers.append(f"release_evidence:implementation_only_acceptance:{evidence_id}:{status}")
             bad = True
         if entry.get("bound_commit") != actual_head or binding.get("commit") != actual_head:
             blockers.append(f"release_evidence:commit_mismatch:{evidence_id}")
@@ -462,7 +522,7 @@ def _validate_bound_evidence(
             elif observed > now + timedelta(minutes=5):
                 blockers.append(f"release_evidence:observed_at_future:{evidence_id}")
                 bad = True
-            elif ttl_hours is not None and now - observed > timedelta(hours=float(ttl_hours)):
+            elif ttl_hours is not None and now - observed > timedelta(hours=ttl_hours):
                 blockers.append(f"release_evidence:expired:{evidence_id}")
                 bad = True
             fingerprints = entry.get("trigger_fingerprints")
@@ -599,6 +659,7 @@ def evaluate_release_decision(
     now: datetime | None = None,
     attestation: dict | None = None,
     attestation_key: str | bytes | None = None,
+    current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     del freshness  # repository evidence is historical input; release evidence must be protected-attested
     blockers: list[str] = []
@@ -612,11 +673,18 @@ def evaluate_release_decision(
     invariant_by_id, registry_errors = _registry_by_id(invariant_items, "invariant")
     blockers.extend(registry_errors)
     required_invariants: set[str] = set()
-    for invariant_id, item in invariant_by_id.items():
-        if item.get("required") is True:
-            required_invariants.add(invariant_id)
-            if item.get("status") != "ENFORCED":
-                blockers.append(f"invariant:{invariant_id}:{item.get('status')}")
+    if set(invariant_by_id) != REQUIRED_INVARIANT_IDS:
+        blockers.append("invariant:canonical_set_invalid")
+    for invariant_id in sorted(REQUIRED_INVARIANT_IDS):
+        item = invariant_by_id.get(invariant_id)
+        if item is None:
+            continue
+        if item.get("required") is not True:
+            blockers.append(f"invariant:required_not_true:{invariant_id}")
+            continue
+        required_invariants.add(invariant_id)
+        if item.get("status") != "ENFORCED":
+            blockers.append(f"invariant:{invariant_id}:{item.get('status')}")
 
     contract_by_id, registry_errors = _registry_by_id(contracts.get("contracts"), "contract")
     blockers.extend(registry_errors)
@@ -709,7 +777,7 @@ def evaluate_release_decision(
             else:
                 blockers.append(f"declared_blocker:{reason}")
 
-    evidence_entries, trigger_state, attestation_errors = _authenticate_attestation(
+    evidence_entries, attested_trigger_state, attestation_errors = _authenticate_attestation(
         attestation,
         attestation_key,
         actual_head,
@@ -718,11 +786,19 @@ def evaluate_release_decision(
         now_utc,
     )
     blockers.extend(attestation_errors)
+    trusted_trigger_state, trigger_state_errors = _authenticate_current_trigger_state(
+        current_trigger_state,
+        attestation_key,
+        now_utc,
+    )
+    blockers.extend(trigger_state_errors)
+    if attested_trigger_state and trusted_trigger_state and attested_trigger_state != trusted_trigger_state:
+        blockers.append("attestation:trigger_state_stale")
     blockers.extend(
         _validate_bound_evidence(
             snapshot,
             evidence_entries,
-            trigger_state,
+            trusted_trigger_state,
             ttl_policy,
             actual_head,
             actual_target,
@@ -767,12 +843,17 @@ def _load_attestation(path_value: str | None) -> dict | None:
     return value if isinstance(value, dict) else {"_load_error": True}
 
 
+def _load_current_trigger_state(path_value: str | None) -> dict | None:
+    return _load_attestation(path_value)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--release-sha")
     ap.add_argument("--target")
     ap.add_argument("--attestation-file")
+    ap.add_argument("--trigger-state-file")
     args = ap.parse_args()
 
     invariants = load("SYSTEM_INVARIANTS.json")
@@ -787,6 +868,8 @@ def main() -> int:
     cp_fingerprint = control_plane_fingerprint()
     attestation_path = args.attestation_file or os.environ.get("FANMIND_GOD_MODE_ATTESTATION_FILE")
     attestation = _load_attestation(attestation_path)
+    trigger_state_path = args.trigger_state_file or os.environ.get("FANMIND_GOD_MODE_TRIGGER_STATE_FILE")
+    current_trigger_state = _load_current_trigger_state(trigger_state_path)
     key = os.environ.get("FANMIND_GOD_MODE_ATTESTATION_KEY")
 
     canonical_errors = _canonical_inputs_authenticated()
@@ -806,6 +889,7 @@ def main() -> int:
             current_control_plane_fingerprint=cp_fingerprint,
             attestation=attestation,
             attestation_key=key,
+            current_trigger_state=current_trigger_state,
         )
 
     print(f"FANMIND_RELEASE_DECISION={decision}")
@@ -815,3 +899,9 @@ def main() -> int:
         print(f"FANMIND_RELEASE_DECISION_MISMATCH=declared:{snapshot.get('decision')}:computed:{decision}")
         return 1
     return 0
+
+
+if __name__ == "__main__":
+    print("FANMIND_RELEASE_DECISION=BLOCK")
+    print("FANMIND_RELEASE_REASON=base_cli_disabled_use_canonical_entrypoint")
+    raise SystemExit(2)
