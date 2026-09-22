@@ -19,6 +19,14 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 10. Search existing task/change IDs before creating new work.
 11. Assign Risk `R1`–`R4`, record critical assumptions, define expected scope and define the evidence/quorum that will prove success before implementation.
 
+## Owner-declared merge evidence
+- If Bernd explicitly states that he personally merged a specific FanMind pull request, that statement is authoritative Owner evidence for the actor, intent and deliberate acceptance of that manual merge.
+- When GitHub independently confirms the PR is merged, record the state as `OWNER_ACCEPTED_MERGE` with the exact PR/head/merge SHA when available.
+- A supervisor/builder must not later classify that same owner-accepted merge as a Builder merge violation, missing merge authorization, or repeatedly reopen a missing pre-merge independent-review requirement solely because the Owner consciously overrode/accepted the merge boundary.
+- Owner merge evidence closes the provenance/merge-acceptance question for that exact merged source/governance scope. It does not fabricate facts the Owner did not attest: runtime health, Staging/Production/provider state, schema application, payment, external acceptance, or protected action execution still require their own evidence.
+- If GitHub cannot currently be read, record the Owner statement as `OWNER_ATTESTED_MERGE`; reconcile exact GitHub metadata later without treating the Owner statement as absent evidence.
+- If the Owner explicitly says a merge was accidental, provisional, or should not count as acceptance, that later statement supersedes this default.
+
 ## V7 hardening contract
 
 ### Branch protection
