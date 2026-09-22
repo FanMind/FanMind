@@ -308,4 +308,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    print("FANMIND_GOD_MODE_PREFLIGHT=failed")
+    print("FANMIND_GOD_MODE_ERROR=legacy_preflight_cli_disabled_use_canonical_entrypoint")
+    raise SystemExit(2)
