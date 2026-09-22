@@ -795,6 +795,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: persist the complete currently-owned Workspace-ID set before destructive Auth deletion, require that exact persisted set for crash/resume verification, clear it after completion, and add the controlled unapplied schema contract/checker. Preserve null-Workspace requests and transferred historical Workspaces.
 - Boundaries: repository-only code/tests/docs/memory; no controlled SQL Apply, no real account/customer deletion, no Staging/Production/provider/Billing/Restore/Mobile mutation.
 - Evidence plan: controlled-contract checksum/static negatives, dynamic multi-Workspace persistence, missing-contract fail-before-delete, missing-inventory resume failure, full Current-Head CI/CodeQL/Browser and one required independent review cycle.
+- Exact next step: publish/review this single bounded inventory PR, fix only current-head findings, and merge under convergence when all checks/review are clean. Do not apply the controlled SQL in this task.
 - Recovery: source/docs revert only; target schema remains unchanged until a separately protected authorized rollout.
 
 ## FM-CHATADMIN-001 — isolated multi-character Owner exception
