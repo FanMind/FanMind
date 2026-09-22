@@ -95,7 +95,7 @@
     "governance_god_mode": {
       "task": "FM-GOV-GODMODE-001",
       "risk": "R3",
-      "state": "VERIFIED",
+      "state": "ACCEPTED",
       "required_for_sales": false
     },
     "chatadmin_staging_apply": {
