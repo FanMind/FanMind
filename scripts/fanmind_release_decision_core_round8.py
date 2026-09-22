@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import math
+import subprocess
 
 import fanmind_release_decision_core_legacy as _legacy
 from fanmind_release_decision_core_legacy import *  # noqa: F401,F403
@@ -12,15 +14,17 @@ from fanmind_release_decision_core_legacy import *  # noqa: F401,F403
 _base = _legacy._base
 _legacy_evaluate_release_decision = _legacy.evaluate_release_decision
 
-# The split implementation is itself security relevant.  Bind both internal
-# implementation files into the signed control-plane fingerprint so moving the
-# previous implementation behind this wrapper cannot create an unsigned path.
+# The split implementation is itself security relevant. Bind every internal
+# evaluator layer into the signed control-plane fingerprint. In particular,
+# round8 must bind itself even when imported directly rather than relying on the
+# outer canonical wrapper to add it later.
 _base.CONTROL_PLANE_FILES = tuple(
     dict.fromkeys(
         (
             *_base.CONTROL_PLANE_FILES,
             "scripts/fanmind_release_decision_core_legacy.py",
             "scripts/fanmind_god_mode_preflight_legacy.py",
+            "scripts/fanmind_release_decision_core_round8.py",
         )
     )
 )
@@ -35,10 +39,39 @@ _entry_matches_triggers = _legacy._entry_matches_triggers
 _higher_risk = _legacy._higher_risk
 
 
-def _round8_input_blockers(invariants, contracts) -> list[str]:
-    """Reject malformed risk/required metadata before any hash membership use."""
+def _looks_like_git_sha(value) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 40
+        and all(ch in "0123456789abcdefABCDEF" for ch in value)
+    )
+
+
+def git_commit_resolves(value) -> bool:
+    """Resolve an externally supplied release identifier at the CLI trust boundary."""
+
+    if not _looks_like_git_sha(value):
+        return False
+    try:
+        completed = subprocess.run(
+            ["git", "cat-file", "-e", f"{value}^{{commit}}"],
+            cwd=_base.ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return False
+    return completed.returncode == 0
+
+
+def _round8_input_blockers(invariants, contracts, ttl_policy=None, *, actual_head=None) -> list[str]:
+    """Reject malformed release/control metadata before weaker helpers consume it."""
 
     blockers: list[str] = []
+
+    if actual_head is not None and not _looks_like_git_sha(actual_head):
+        blockers.append("release_evidence:actual_head_invalid")
 
     if isinstance(invariants, dict):
         invariant_items = invariants.get("invariants")
@@ -53,7 +86,7 @@ def _round8_input_blockers(invariants, contracts) -> list[str]:
                     continue
 
                 # Validate risk for every registry entry before deciding whether
-                # the invariant is required.  A false/non-required neighbor may
+                # the invariant is required. A false/non-required neighbor may
                 # not hide malformed, unhashable risk metadata from the runtime
                 # evaluator.
                 invariant_risk = invariant.get("risk")
@@ -77,6 +110,24 @@ def _round8_input_blockers(invariants, contracts) -> list[str]:
                 if not isinstance(minimum_risk, str) or minimum_risk not in RISK_ORDER:
                     blockers.append(f"contract:risk_floor_invalid:{contract_id}")
 
+    # Python's JSON loader accepts NaN/Infinity by default. Reject those values
+    # before the legacy TTL path reaches timedelta(), where they would otherwise
+    # raise instead of returning the required fail-closed BLOCK decision.
+    if isinstance(ttl_policy, dict):
+        policy = ttl_policy.get("policy")
+        if isinstance(policy, dict):
+            for evidence_class, item in policy.items():
+                if not isinstance(evidence_class, str) or not evidence_class or not isinstance(item, dict):
+                    continue
+                ttl_hours = item.get("ttl_hours")
+                if ttl_hours is not None and (
+                    isinstance(ttl_hours, bool)
+                    or not isinstance(ttl_hours, (int, float))
+                    or not math.isfinite(float(ttl_hours))
+                    or ttl_hours < 0
+                ):
+                    blockers.append(f"ttl_policy:ttl_invalid:{evidence_class}")
+
     return list(dict.fromkeys(blockers))
 
 
@@ -99,8 +150,8 @@ def _round8_revalidated_quorum_blockers(
     contract/invariant revalidation, role quorum and provenance independence.
     This final layer recomputes the *class* quorum using only entries that are
     still eligible after the applicable contract and invariant trigger
-    contracts are applied.  A stale or unbound second-class record therefore
-    cannot keep an otherwise one-class release at ALLOW.
+    contracts are applied. A stale, unbound, or non-qualifying second-class
+    record therefore cannot keep an otherwise one-class release at ALLOW.
     """
 
     if not isinstance(attestation, dict):
@@ -190,6 +241,7 @@ def _round8_revalidated_quorum_blockers(
 
     eligible: list[dict] = []
     required_invariant_ids = set(invariant_triggers)
+    qualifying_invariant_roles = _base.REQUIRED_EVIDENCE_ROLES[effective_risk]
     for evidence_id, entry in current_entries.items():
         entry_gate_ids = _base._entry_set(entry, "gates", "gate") & mandatory_gate_ids
         entry_invariant_ids = (
@@ -221,12 +273,13 @@ def _round8_revalidated_quorum_blockers(
             ):
                 invariant_revalidated = False
 
-        # The final class quorum is evidence for the affected system boundary,
-        # not a count of globally selected IDs.  Selected implementation/
-        # countercheck/negative/recovery records that bind to no mandatory gate
-        # or required invariant cannot contribute a second class merely because
-        # they appear in RELEASE_DECISION.json.
-        participates = qualifying_gate or bool(entry_invariant_ids)
+        # Evidence bound only to an invariant is a class-quorum participant only
+        # when it also carries a release role eligible for the effective risk.
+        # An observer/auxiliary record must never manufacture the second class.
+        qualifying_invariant = bool(entry_invariant_ids) and bool(
+            _base._entry_roles(entry) & qualifying_invariant_roles
+        )
+        participates = qualifying_gate or qualifying_invariant
         if participates and gate_revalidated and invariant_revalidated:
             eligible.append(entry)
 
@@ -266,7 +319,12 @@ def evaluate_release_decision(
     attestation: dict | None = None,
     attestation_key: str | bytes | None = None,
 ) -> tuple[str, list[str]]:
-    early = _round8_input_blockers(invariants, contracts)
+    early = _round8_input_blockers(
+        invariants,
+        contracts,
+        ttl_policy,
+        actual_head=actual_head,
+    )
     if early:
         return "BLOCK", early
 
@@ -307,10 +365,12 @@ def evaluate_release_decision(
 
 
 # The CLI main function is defined in the internal base module and resolves its
-# evaluator through _base at runtime.  Point that path at the canonical wrapper
-# so direct CLI execution cannot bypass these current-head checks.
+# evaluator through _base at runtime. The outer canonical module replaces that
+# hook with the canonical wrapper; this assignment keeps direct imports safe.
 _base.evaluate_release_decision = evaluate_release_decision
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    print("FANMIND_RELEASE_DECISION=BLOCK")
+    print("FANMIND_RELEASE_REASON=round8_cli_disabled_use_canonical_entrypoint")
+    raise SystemExit(2)
