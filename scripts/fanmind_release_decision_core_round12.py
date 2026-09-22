@@ -122,22 +122,31 @@ def evaluate_release_decision(
         if target_blockers:
             return "BLOCK", target_blockers
 
-    return _legacy_evaluate_release_decision(
-        invariants,
-        integration,
-        contracts,
-        impact,
-        freshness,
-        snapshot,
-        ttl_policy,
-        actual_head=actual_head,
-        actual_target=actual_target,
-        current_control_plane_fingerprint=current_control_plane_fingerprint,
-        now=now,
-        attestation=attestation,
-        attestation_key=attestation_key,
-        current_trigger_state=current_trigger_state,
-    )
+    # Preserve the established monkeypatch seam used to prove that verification
+    # key identity comes from an independently pinned anchor. The retained
+    # evaluator forwards its own module-global loader through older layers, so
+    # mirror the canonical wrapper's loader there for this call only.
+    previous_legacy_loader = _legacy.load_trust_anchor
+    _legacy.load_trust_anchor = globals()["load_trust_anchor"]
+    try:
+        return _legacy_evaluate_release_decision(
+            invariants,
+            integration,
+            contracts,
+            impact,
+            freshness,
+            snapshot,
+            ttl_policy,
+            actual_head=actual_head,
+            actual_target=actual_target,
+            current_control_plane_fingerprint=current_control_plane_fingerprint,
+            now=now,
+            attestation=attestation,
+            attestation_key=attestation_key,
+            current_trigger_state=current_trigger_state,
+        )
+    finally:
+        _legacy.load_trust_anchor = previous_legacy_loader
 
 
 # Keep every historical import seam on the newest evaluator. The legacy
@@ -151,7 +160,14 @@ _base.evaluate_release_decision = evaluate_release_decision
 
 
 def main() -> int:
-    return _legacy.main()
+    # Preserve the exact-HEAD loader seam used by the CLI negative tests. The
+    # retained main resolves this helper from its own module globals.
+    previous_loader = _legacy._load_head_project_memory
+    _legacy._load_head_project_memory = globals()["_load_head_project_memory"]
+    try:
+        return _legacy.main()
+    finally:
+        _legacy._load_head_project_memory = previous_loader
 
 
 if __name__ == "__main__":
