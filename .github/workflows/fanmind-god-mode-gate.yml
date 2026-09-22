@@ -20,7 +20,20 @@ jobs:
       - name: Prove fail-closed release decision
         run: python3 scripts/fanmind_release_decision.py --check
       - name: Run God Mode adversarial tests
-        run: python3 -m unittest tests/test_fanmind_god_mode.py
+        run: |
+          set +e
+          python3 -m unittest -v tests/test_fanmind_god_mode.py > /tmp/fanmind-god-mode-tests.log 2>&1
+          rc=$?
+          cat /tmp/fanmind-god-mode-tests.log
+          exit "$rc"
+      - name: Upload adversarial test diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-god-mode-tests-${{ github.sha }}
+          path: /tmp/fanmind-god-mode-tests.log
+          if-no-files-found: error
+          retention-days: 1
       - name: Revalidate Project Memory
         run: |
           python3 scripts/project_memory_quality_check.py
