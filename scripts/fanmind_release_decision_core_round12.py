@@ -292,9 +292,8 @@ def evaluate_release_decision(
     attestation_key: str | bytes | None = None,
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
-    synthetic_test_bypass = (
+    synthetic_test_requested = (
         _base.os.environ.get("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC") == "1"
-        and actual_target == "repository:synthetic"
     )
 
     boundary_blockers = _attestation_boundary_blockers(attestation, snapshot)
@@ -304,6 +303,7 @@ def evaluate_release_decision(
 
     requirement_blockers = _evidence_requirement_claim_blockers(attestation, integration)
     canonical = _current._canonical_runtime_mode(integration, contracts, impact, snapshot)
+    synthetic_test_bypass = synthetic_test_requested and not canonical
     canonical_shape_valid = not _current._canonical_registry_blockers(contracts, integration)
     if canonical and canonical_shape_valid:
         semantic_blockers = _canonical_semantics_blockers(
