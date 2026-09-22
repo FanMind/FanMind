@@ -140,14 +140,13 @@ def _round8_revalidated_quorum_blockers(
     attestation: dict | None,
     current_trigger_state: dict | None,
 ) -> list[str]:
-    """Require the R3/R4 two-class quorum to be fully revalidated.
+    """Require the R3/R4 two-class quorum to be fully and semantically revalidated.
 
-    The legacy/current-head evaluator already validates class TTL/triggers,
-    contract/invariant revalidation, role quorum and provenance independence.
-    This final layer recomputes the *class* quorum using only entries that are
-    still eligible after the applicable contract and invariant trigger
-    contracts are applied. A stale, unbound, or non-qualifying second-class
-    record therefore cannot keep an otherwise one-class release at ALLOW.
+    A class participant must do real release work: contribute a correctly
+    role-bound semantic gate requirement, satisfy a selected global proof role,
+    or prove a required invariant. Merely naming a gate and carrying a role is
+    not enough. Countercheck-specific semantic claims must themselves come from
+    a countercheck record independent of implementation proof.
     """
 
     if not isinstance(attestation, dict):
@@ -239,16 +238,27 @@ def _round8_revalidated_quorum_blockers(
         ):
             current_entries[evidence_id] = entry
 
+    selected_role_ids: dict[str, str] = {}
+    for role, field in _base.ROLE_SNAPSHOT_FIELDS.items():
+        selected = snapshot.get(field) if isinstance(snapshot, dict) else None
+        if isinstance(selected, str) and selected:
+            selected_role_ids[role] = selected
+
     eligible: list[dict] = []
+    fully_revalidated_by_gate: dict[str, list[dict]] = {
+        gate_id: [] for gate_id in mandatory_gate_ids
+    }
     required_invariant_ids = set(invariant_triggers)
     qualifying_invariant_roles = _base.REQUIRED_EVIDENCE_ROLES[effective_risk]
+
     for evidence_id, entry in current_entries.items():
+        entry_roles = _base._entry_roles(entry)
         entry_gate_ids = _base._entry_set(entry, "gates", "gate") & mandatory_gate_ids
         entry_invariant_ids = (
             _base._entry_set(entry, "invariants", "invariant") & required_invariant_ids
         )
 
-        qualifying_gate = False
+        qualifying_gate_requirement = False
         gate_revalidated = True
         for gate_id in entry_gate_ids:
             gate = gate_by_id.get(gate_id)
@@ -259,12 +269,34 @@ def _round8_revalidated_quorum_blockers(
             if role_error:
                 gate_revalidated = False
                 continue
-            if _base._entry_roles(entry) & gate_roles:
-                qualifying_gate = True
+
+            this_gate_revalidated = bool(entry_roles & gate_roles)
             for contract_id in gate_contracts.get(gate_id, set()) & affected_set:
                 triggers = contract_triggers.get(contract_id)
                 if triggers is None or not _entry_matches_triggers(entry, triggers, trigger_state):
+                    this_gate_revalidated = False
                     gate_revalidated = False
+            if this_gate_revalidated:
+                fully_revalidated_by_gate.setdefault(gate_id, []).append(entry)
+
+                requirements = _configured_requirement_list(gate.get("evidence_required")) or []
+                role_map = gate.get("evidence_required_roles")
+                claimed_map = entry.get("requirements")
+                claimed = (
+                    _configured_requirement_list(claimed_map.get(gate_id))
+                    if isinstance(claimed_map, dict)
+                    else None
+                )
+                if isinstance(role_map, dict) and claimed is not None:
+                    for requirement in requirements:
+                        expected_role = role_map.get(requirement)
+                        if (
+                            isinstance(expected_role, str)
+                            and expected_role in entry_roles
+                            and requirement in claimed
+                        ):
+                            qualifying_gate_requirement = True
+                            break
 
         invariant_revalidated = True
         for invariant_id in entry_invariant_ids:
@@ -273,25 +305,72 @@ def _round8_revalidated_quorum_blockers(
             ):
                 invariant_revalidated = False
 
-        # Evidence bound only to an invariant is a class-quorum participant only
-        # when it also carries a release role eligible for the effective risk.
-        # An observer/auxiliary record must never manufacture the second class.
         qualifying_invariant = bool(entry_invariant_ids) and bool(
-            _base._entry_roles(entry) & qualifying_invariant_roles
+            entry_roles & qualifying_invariant_roles
         )
-        participates = qualifying_gate or qualifying_invariant
+        qualifying_selected = any(
+            selected_id == evidence_id and role in entry_roles
+            for role, selected_id in selected_role_ids.items()
+        )
+
+        # A class can count only if this record actually contributes to the
+        # semantic release quorum, a selected global proof role, or a required
+        # invariant. A gate-bound but semantically empty role record is inert.
+        participates = qualifying_gate_requirement or qualifying_selected or qualifying_invariant
         if participates and gate_revalidated and invariant_revalidated:
             eligible.append(entry)
+
+    blockers: list[str] = []
+
+    # Countercheck-specific semantic claims must be carried by the independent
+    # countercheck itself. A combined implementation+countercheck record cannot
+    # own the claim while a separate empty countercheck exists only to satisfy
+    # provenance independence.
+    for gate_id in sorted(mandatory_gate_ids):
+        gate = gate_by_id.get(gate_id)
+        if not isinstance(gate, dict):
+            continue
+        requirements = _configured_requirement_list(gate.get("evidence_required")) or []
+        role_map = gate.get("evidence_required_roles")
+        if not isinstance(role_map, dict):
+            continue
+        current_gate_entries = fully_revalidated_by_gate.get(gate_id, [])
+        implementations = [
+            entry for entry in current_gate_entries
+            if "implementation" in _base._entry_roles(entry)
+        ]
+        for requirement in requirements:
+            if role_map.get(requirement) != "countercheck":
+                continue
+            claimers: list[dict] = []
+            for entry in current_gate_entries:
+                if "countercheck" not in _base._entry_roles(entry):
+                    continue
+                requirement_map = entry.get("requirements")
+                values = (
+                    _configured_requirement_list(requirement_map.get(gate_id))
+                    if isinstance(requirement_map, dict)
+                    else None
+                )
+                if values is not None and requirement in values:
+                    claimers.append(entry)
+            if claimers and implementations and not any(
+                _base._independent(implementation, claimer)
+                for implementation in implementations
+                for claimer in claimers
+            ):
+                blockers.append(
+                    f"release_evidence:gate_countercheck_requirement_not_independent:{gate_id}:{requirement}"
+                )
 
     classes = {
         entry.get("class")
         for entry in eligible
         if isinstance(entry.get("class"), str) and entry.get("class")
     }
-    blockers: list[str] = []
     if len(classes) < 2:
         blockers.append(f"release_evidence:revalidated_quorum_classes:{len(classes)}<2")
-        return blockers
+        return list(dict.fromkeys(blockers))
 
     independent_pair = any(
         left.get("class") != right.get("class") and _base._independent(left, right)
@@ -300,7 +379,7 @@ def _round8_revalidated_quorum_blockers(
     )
     if not independent_pair:
         blockers.append("release_evidence:revalidated_quorum_classes_not_independent")
-    return blockers
+    return list(dict.fromkeys(blockers))
 
 
 def evaluate_release_decision(
