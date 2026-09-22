@@ -14,6 +14,8 @@ BASE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(BASE)
 
+import fanmind_release_decision_core_round12 as ROUND12  # noqa: E402
+
 
 class CurrentHeadRound12RegressionTests(unittest.TestCase):
     def test_round12_wrapper_is_part_of_signed_control_plane(self):
@@ -55,6 +57,26 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
         self.assertEqual("BLOCK", decision)
         self.assertIn(f"release_evidence:gates_duplicate:{entry['id']}", reasons)
 
+    def test_unknown_gate_boundary_claim_fails_closed(self):
+        entry = BASE.evidence()
+        entry["gates"] = [BASE.GATE, "FM-IGATE-UNKNOWN"]
+        decision, reasons = BASE.evaluate_case(entry)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            f"release_evidence:gate_unknown:{entry['id']}:FM-IGATE-UNKNOWN",
+            reasons,
+        )
+
+    def test_unknown_invariant_boundary_claim_fails_closed(self):
+        entry = BASE.evidence()
+        entry["invariants"].append("FM-INV-999")
+        decision, reasons = BASE.evaluate_case(entry)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            f"release_evidence:invariant_unknown:{entry['id']}:FM-INV-999",
+            reasons,
+        )
+
     def test_duplicate_impact_mapping_gate_ids_fail_closed_at_runtime(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         impact = deepcopy(impact)
@@ -91,6 +113,28 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
             errors,
         )
 
+    def test_malformed_gate_requirements_fail_structural_preflight(self):
+        original_load = BASE.PREFLIGHT.load
+
+        def load_with_nonlist_requirement(name):
+            document = deepcopy(original_load(name))
+            if name == "INTEGRATION_GATES.json":
+                document["gates"][0]["evidence_required"] = 1
+            return document
+
+        BASE.PREFLIGHT.load = load_with_nonlist_requirement
+        try:
+            errors = BASE.PREFLIGHT.validate()
+        finally:
+            BASE.PREFLIGHT.load = original_load
+        self.assertTrue(
+            any(
+                error.startswith("integration-gate-evidence-required-invalid:")
+                for error in errors
+            ),
+            errors,
+        )
+
     def test_non_object_release_snapshot_blocks_before_get_dereference(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         entry = BASE.evidence()
@@ -112,6 +156,26 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:snapshot_invalid", reasons)
+
+    def test_missing_decision_cannot_select_synthetic_mode_by_omission(self):
+        snap = BASE.snapshot()
+        exact_fixture = ROUND12._persisted_completeness_blockers(
+            snap,
+            actual_head=BASE.HEAD,
+            actual_target=BASE.TARGET,
+            current_control_plane_fingerprint=BASE.CONTROL,
+        )
+        self.assertEqual([], exact_fixture)
+
+        nonfixture = ROUND12._persisted_completeness_blockers(
+            snap,
+            actual_head="b" * 40,
+            actual_target=BASE.TARGET,
+            current_control_plane_fingerprint=BASE.CONTROL,
+        )
+        self.assertIn("release_input:decision_missing_or_invalid", nonfixture)
+        for key in ROUND12.REQUIRED_COMPLETENESS_FLAGS:
+            self.assertIn(f"release_input:{key}", nonfixture)
 
     def test_persisted_completeness_flags_are_exact_true_or_block(self):
         snap = BASE.snapshot()
@@ -205,6 +269,67 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("impact_map:unknown_contract:FM-CONTRACT-ORPHAN", reasons)
+
+    def test_current_canonical_security_semantics_match_pinned_digest(self):
+        invariants = BASE.PREFLIGHT.load("SYSTEM_INVARIANTS.json")
+        integration = BASE.PREFLIGHT.load("INTEGRATION_GATES.json")
+        contracts = BASE.PREFLIGHT.load("CONTRACT_REGISTRY.json")
+        self.assertEqual(
+            [],
+            ROUND12._canonical_semantics_blockers(
+                invariants, integration, contracts
+            ),
+        )
+
+    def test_risk_and_role_semantic_downgrade_cannot_self_authorize(self):
+        invariants = deepcopy(BASE.PREFLIGHT.load("SYSTEM_INVARIANTS.json"))
+        integration = deepcopy(BASE.PREFLIGHT.load("INTEGRATION_GATES.json"))
+        contracts = deepcopy(BASE.PREFLIGHT.load("CONTRACT_REGISTRY.json"))
+        for invariant in invariants["invariants"]:
+            invariant["risk"] = "R1"
+        for contract in contracts["contracts"]:
+            contract["minimum_risk"] = "R1"
+        for gate in integration["gates"]:
+            gate["evidence_required_roles"] = {
+                requirement: "evidence"
+                for requirement in gate["evidence_required"]
+            }
+        self.assertIn(
+            "canonical_semantics:digest_mismatch",
+            ROUND12._canonical_semantics_blockers(
+                invariants, integration, contracts
+            ),
+        )
+
+    def test_checkout_trust_anchor_is_not_independent_authority(self):
+        original = ROUND12._secure_external_trust_digest
+        ROUND12._secure_external_trust_digest = lambda: None
+        try:
+            reasons = ROUND12._protected_trust_identity_blockers(
+                {"evidence": []}, BASE.KEY
+            )
+        finally:
+            ROUND12._secure_external_trust_digest = original
+        self.assertIn("trust_anchor:protected_identity_unavailable", reasons)
+
+    def test_cli_project_memory_loader_reads_exact_head_blob(self):
+        original = ROUND12._base._git_show
+        seen = []
+
+        def fake_git_show(path):
+            seen.append(path)
+            return b'{"from":"HEAD"}'
+
+        ROUND12._base._git_show = fake_git_show
+        try:
+            value = ROUND12._load_head_project_memory("RELEASE_DECISION.json")
+        finally:
+            ROUND12._base._git_show = original
+        self.assertEqual({"from": "HEAD"}, value)
+        self.assertEqual(
+            ["project-memory/RELEASE_DECISION.json"],
+            seen,
+        )
 
 
 if __name__ == "__main__":
