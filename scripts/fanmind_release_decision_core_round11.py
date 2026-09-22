@@ -267,22 +267,31 @@ def evaluate_release_decision(
     attestation_key: str | bytes | None = None,
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
-    decision, reasons = _current_evaluate_release_decision(
-        invariants,
-        integration,
-        contracts,
-        impact,
-        freshness,
-        snapshot,
-        ttl_policy,
-        actual_head=actual_head,
-        actual_target=actual_target,
-        current_control_plane_fingerprint=current_control_plane_fingerprint,
-        now=now,
-        attestation=attestation,
-        attestation_key=attestation_key,
-        current_trigger_state=current_trigger_state,
-    )
+    # Preserve the canonical trust-anchor hook across the hardening wrapper.
+    # Focused tests replace this module's loader to prove that an attacker-
+    # supplied producer key is rejected; production uses the same imported
+    # canonical loader. The underlying evaluator must see the identical hook.
+    previous_trust_anchor_loader = _current.load_trust_anchor
+    _current.load_trust_anchor = load_trust_anchor
+    try:
+        decision, reasons = _current_evaluate_release_decision(
+            invariants,
+            integration,
+            contracts,
+            impact,
+            freshness,
+            snapshot,
+            ttl_policy,
+            actual_head=actual_head,
+            actual_target=actual_target,
+            current_control_plane_fingerprint=current_control_plane_fingerprint,
+            now=now,
+            attestation=attestation,
+            attestation_key=attestation_key,
+            current_trigger_state=current_trigger_state,
+        )
+    finally:
+        _current.load_trust_anchor = previous_trust_anchor_loader
     if decision == "BLOCK":
         return decision, reasons
 
