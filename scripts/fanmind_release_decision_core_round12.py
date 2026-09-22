@@ -174,10 +174,12 @@ def evaluate_release_decision(
     if early:
         return "BLOCK", early
 
-    # Preserve the canonical evaluator's trust-anchor injection seam through the
-    # wrapper. This is used by the independent-anchor regression and ensures the
-    # wrapper cannot accidentally read a different trust source than its caller.
-    previous_loader = _current.load_trust_anchor
+    # Preserve the canonical evaluator's trust-anchor injection seam through all
+    # wrapper layers. Round 11 intentionally forwards its own loader into the
+    # core, so the outer loader must be mirrored there for the duration too.
+    previous_round11_loader = _round11.load_trust_anchor
+    previous_current_loader = _current.load_trust_anchor
+    _round11.load_trust_anchor = load_trust_anchor
     _current.load_trust_anchor = load_trust_anchor
     try:
         return _round11_evaluate_release_decision(
@@ -197,7 +199,8 @@ def evaluate_release_decision(
             current_trigger_state=current_trigger_state,
         )
     finally:
-        _current.load_trust_anchor = previous_loader
+        _round11.load_trust_anchor = previous_round11_loader
+        _current.load_trust_anchor = previous_current_loader
 
 
 def _round12_cli_evaluate_release_decision(*args, **kwargs):
