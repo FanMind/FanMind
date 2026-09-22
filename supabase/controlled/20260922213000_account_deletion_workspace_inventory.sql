@@ -70,6 +70,123 @@ before insert or update of owner_user_id on public.workspaces
 for each row
 execute function public.guard_processing_account_deletion_workspace_ownership();
 
+create or replace function public.guard_processing_account_deletion_workspace_billing()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if (
+    old.stripe_subscription_id is distinct from new.stripe_subscription_id
+    or old.subscription_effective_end_at is distinct from new.subscription_effective_end_at
+    or old.billing_status is distinct from new.billing_status
+  )
+    and exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.status = 'processing'
+        and new.id = any(r.owned_workspace_ids)
+    )
+  then
+    raise exception using
+      errcode = 'P0001',
+      message = 'account_deletion_processing';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_processing_account_deletion_workspace_billing()
+  from public, anon, authenticated;
+
+drop trigger if exists guard_processing_account_deletion_workspace_billing
+  on public.workspaces;
+
+create trigger guard_processing_account_deletion_workspace_billing
+before update of stripe_subscription_id, subscription_effective_end_at, billing_status
+on public.workspaces
+for each row
+execute function public.guard_processing_account_deletion_workspace_billing();
+
+create or replace function public.guard_processing_account_deletion_workspace_members()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.status = 'processing'
+        and new.workspace_id = any(r.owned_workspace_ids)
+        and new.user_id is distinct from r.user_id
+    ) then
+      raise exception using
+        errcode = 'P0001',
+        message = 'account_deletion_processing';
+    end if;
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    if exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.status = 'processing'
+        and old.workspace_id = any(r.owned_workspace_ids)
+        and old.user_id is distinct from r.user_id
+    ) then
+      raise exception using
+        errcode = 'P0001',
+        message = 'account_deletion_processing';
+    end if;
+    return old;
+  end if;
+
+  if (
+    old.workspace_id is distinct from new.workspace_id
+    or old.user_id is distinct from new.user_id
+  )
+    and exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.status = 'processing'
+        and (
+          (
+            old.workspace_id = any(r.owned_workspace_ids)
+            and old.user_id is distinct from r.user_id
+          )
+          or (
+            new.workspace_id = any(r.owned_workspace_ids)
+            and new.user_id is distinct from r.user_id
+          )
+        )
+    )
+  then
+    raise exception using
+      errcode = 'P0001',
+      message = 'account_deletion_processing';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_processing_account_deletion_workspace_members()
+  from public, anon, authenticated;
+
+drop trigger if exists guard_processing_account_deletion_workspace_members
+  on public.workspace_members;
+
+create trigger guard_processing_account_deletion_workspace_members
+before insert or delete or update of workspace_id, user_id on public.workspace_members
+for each row
+execute function public.guard_processing_account_deletion_workspace_members();
+
 create or replace function public.begin_account_deletion_processing(
   p_request_id uuid,
   p_user_id uuid
@@ -113,8 +230,9 @@ begin
   end if;
 
   -- A processing request has already crossed the destructive-start boundary.
-  -- Never recapture ownership for it. Re-read the exact owner set under the
-  -- same table lock and require it to match the first frozen inventory.
+  -- Never recapture ownership for it. Re-read ownership and all dynamic
+  -- blockers under the same table locks and require the original safe state
+  -- before allowing destructive resume work to continue.
   if v_request.status = 'processing' then
     if v_request.owned_workspace_ids is null then
       raise exception using
@@ -130,6 +248,7 @@ begin
     end if;
 
     lock table public.workspaces in share mode;
+    lock table public.workspace_members in share mode;
 
     select coalesce(array_agg(w.id order by w.id), array[]::uuid[])
     into v_owned_workspace_ids
@@ -140,6 +259,44 @@ begin
       raise exception using
         errcode = 'P0001',
         message = 'workspace_inventory_drift';
+    end if;
+
+    select exists (
+      select 1
+      from public.workspace_members wm
+      where wm.workspace_id = any(v_request.owned_workspace_ids)
+        and wm.user_id <> p_user_id
+    )
+    into v_requires_ownership_transfer;
+
+    select exists (
+      select 1
+      from public.workspaces w
+      where w.id = any(v_request.owned_workspace_ids)
+        and w.stripe_subscription_id is not null
+        and (
+          (
+            w.subscription_effective_end_at is not null
+            and w.subscription_effective_end_at > now()
+          )
+          or (
+            w.subscription_effective_end_at is null
+            and lower(coalesce(w.billing_status, '')) not in (
+              'cancelled',
+              'canceled',
+              'ended',
+              'expired',
+              'demo_free'
+            )
+          )
+        )
+    )
+    into v_requires_subscription_resolution;
+
+    if v_requires_ownership_transfer or v_requires_subscription_resolution then
+      raise exception using
+        errcode = 'P0001',
+        message = 'processing_blocker_drift';
     end if;
 
     request_id := v_request.id;
@@ -155,8 +312,8 @@ begin
   -- Account deletion is rare. A brief SHARE lock makes the ownership,
   -- membership and billing snapshot authoritative for this transition instead
   -- of racing separate REST reads against the state change. Once status moves
-  -- to processing, the ownership trigger above prevents later acquisitions or
-  -- transfers until the account is deleted/finalized.
+  -- to processing, the triggers above freeze ownership plus blocker-relevant
+  -- billing/member mutations until deletion is finalized.
   lock table public.workspaces in share mode;
   lock table public.workspace_members in share mode;
 
