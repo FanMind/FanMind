@@ -102,7 +102,7 @@ test("account deletion resume inventory is controlled, unapplied and required be
   );
   assert.match(sql, /add column if not exists owned_workspace_ids uuid\[\]/u);
   assert.match(sql, /cardinality\(owned_workspace_ids\) <= 100/u);
-  assert.doesNotMatch(sql, /grant\s+.+(?:authenticated|anon|public)/iu);
+  assert.doesNotMatch(sql, /\bgrant\b[^;]*\bto\s+(?:authenticated|anon|public)\b/isu);
   assert.match(checker, /0138a2a8484b526f8064abb45f6f0026174c38717e3bf04fc484f9dcb3a2624c/u);
   assert.match(packageJson, /db:account-deletion-workspace-inventory:check/u);
   assert.match(processor, /workspace_inventory_contract_unavailable/u);
