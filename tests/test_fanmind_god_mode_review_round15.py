@@ -1,5 +1,6 @@
 from copy import deepcopy
 import importlib.util
+import os
 import pathlib
 import tempfile
 import unittest
@@ -126,6 +127,129 @@ class CurrentHeadRound15RegressionTests(unittest.TestCase):
             any(error.startswith("contract-id-duplicate:") for error in errors),
             errors,
         )
+
+
+    def test_public_evaluator_rejects_non_checkout_head_outside_synthetic_test_bypass(self):
+        original_head = ROUND12._base.current_git_head
+        original_resolves = ROUND12._current._round8.git_commit_resolves
+        previous = os.environ.pop("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC", None)
+        ROUND12._base.current_git_head = lambda: "b" * 40
+        ROUND12._current._round8.git_commit_resolves = lambda _value: True
+        try:
+            invariants, gates, contracts, impact, ttl = FIX.structures()
+            decision, reasons = ROUND12.evaluate_release_decision(
+                invariants,
+                gates,
+                contracts,
+                impact,
+                {},
+                FIX.snapshot(),
+                ttl,
+                actual_head=FIX.HEAD,
+                actual_target=FIX.TARGET,
+                current_control_plane_fingerprint=FIX.CONTROL,
+                now=FIX.NOW,
+                attestation=FIX.signed_attestation(FIX.evidence()),
+                attestation_key=FIX.KEY,
+                current_trigger_state=FIX.signed_trigger_state(),
+            )
+        finally:
+            if previous is not None:
+                os.environ["FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"] = previous
+            ROUND12._current._round8.git_commit_resolves = original_resolves
+            ROUND12._base.current_git_head = original_head
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:actual_head_not_checked_out_head", reasons)
+
+    def test_canonical_invariant_meaning_is_pinned(self):
+        invariants = PREFLIGHT.load("SYSTEM_INVARIANTS.json")
+        gates = PREFLIGHT.load("INTEGRATION_GATES.json")
+        contracts = PREFLIGHT.load("CONTRACT_REGISTRY.json")
+        impact = PREFLIGHT.load("IMPACT_MAP.json")
+        ttl = PREFLIGHT.load("EVIDENCE_TTL_POLICY.json")
+        weakened = deepcopy(invariants)
+        weakened["invariants"][0]["description"] = "always true"
+        reasons = ROUND12._canonical_semantics_blockers(
+            weakened, gates, contracts, impact, ttl
+        )
+        self.assertIn(
+            "canonical_semantics:invariant_meaning_mismatch:FM-INV-001",
+            reasons,
+        )
+
+    def test_preflight_rejects_unhashable_enum_shapes(self):
+        original = PREFLIGHT.load
+
+        def loader(name):
+            document = deepcopy(original(name))
+            if name == "SYSTEM_INVARIANTS.json":
+                document["invariants"][0]["status"] = []
+            if name == "RELEASE_DECISION.json":
+                document["decision"] = {}
+            return document
+
+        PREFLIGHT.load = loader
+        try:
+            errors = PREFLIGHT.validate()
+        finally:
+            PREFLIGHT.load = original
+        self.assertIn("system-invariant-status-invalid:FM-INV-001", errors)
+        self.assertIn("release-decision-decision-invalid", errors)
+
+    def test_blank_provenance_cannot_form_independent_quorum(self):
+        entry = FIX.evidence()
+        entry["provenance"] = {
+            "source": " ",
+            "execution_id": "  ",
+            "independence_key": "   ",
+        }
+        decision, _reasons = FIX.evaluate_case(entry)
+        self.assertEqual("BLOCK", decision)
+
+    def test_blank_or_padded_evidence_identity_is_rejected(self):
+        entry = FIX.evidence()
+        entry["id"] = " EV-HARDENING"
+        decision, reasons = FIX.evaluate_case(entry)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:id_invalid", reasons)
+
+    def test_cli_head_guard_includes_evidence_freshness_document(self):
+        original = ROUND12._load_head_project_memory
+
+        def loader(name):
+            if name == "EVIDENCE_FRESHNESS.json":
+                raise ValueError("freshness malformed")
+            return original(name)
+
+        ROUND12._load_head_project_memory = loader
+        try:
+            self.assertEqual(1, ROUND12.main())
+        finally:
+            ROUND12._load_head_project_memory = original
+
+    def test_signed_document_canonicalization_errors_fail_closed(self):
+        attestation = FIX.signed_attestation(FIX.evidence())
+        attestation["issuer"] = "\udcff"
+        attestation["signature"] = "hmac-sha256:" + ("0" * 64)
+        _evidence, _trigger, blockers = ROUND12._base._authenticate_attestation(
+            attestation,
+            FIX.KEY,
+            FIX.HEAD,
+            FIX.TARGET,
+            FIX.CONTROL,
+            FIX.NOW,
+        )
+        self.assertIn("attestation:canonicalization_invalid", blockers)
+
+        trigger = FIX.signed_trigger_state()
+        trigger["issuer"] = "\udcff"
+        trigger["signature"] = "hmac-sha256:" + ("0" * 64)
+        _state, trigger_blockers = ROUND12._base._authenticate_current_trigger_state(
+            trigger,
+            FIX.KEY,
+            FIX.NOW,
+        )
+        self.assertIn("trigger_state:canonicalization_invalid", trigger_blockers)
 
 
 if __name__ == "__main__":
