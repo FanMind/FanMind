@@ -133,8 +133,8 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - Type: repository governance + integration control
 - Status: SATISFIED
 - Updated: 2026-09-22
-- Evidence: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge God Mode Gate, Deploy, Browser E2E, CodeQL, Supply Chain and Go-Live Readiness passed. Read-only Production Audit verifies the exact runtime and remains red only for the pre-existing backup-freshness Operations loop.
-- Rule: repository God Mode scope is complete and non-repeatable. This completion does not authorize any protected action.
+- Evidence: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge God Mode Gate, Deploy, Browser E2E, CodeQL, Supply Chain and Go-Live Readiness passed. Read-only Production Audit verifies the exact runtime and remains red only for the pre-existing backup-freshness Operations loop. The repository-only governance scope is accepted.
+- Rule: repository God Mode scope is complete and non-repeatable. This completion satisfies repository prerequisites but does not authorize any protected action.
 
 ## FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921
 - From: FM-CHATADMIN-002
