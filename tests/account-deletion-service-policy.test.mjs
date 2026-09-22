@@ -88,3 +88,30 @@ test("contact deletion is owner-bound and atomically removes only its exact unlo
   assert.match(conversationSql, /contact_id uuid not null references public\.contacts\(id\) on delete cascade/u);
   assert.match(profileSql, /contact_ai_profiles[\s\S]*contact_id uuid not null references public\.contacts\(id\) on delete cascade/u);
 });
+
+test("account deletion resume inventory is controlled, unapplied and required before Auth deletion", async () => {
+  const [processor, sql, checker, packageJson] = await Promise.all([
+    readFile("scripts/operations/process-account-deletion.mjs", "utf8"),
+    readFile("supabase/controlled/20260922213000_account_deletion_workspace_inventory.sql", "utf8"),
+    readFile("scripts/operations/account-deletion-workspace-inventory-check.mjs", "utf8"),
+    readFile("package.json", "utf8"),
+  ]);
+  const processSection = processor.slice(
+    processor.indexOf("export async function processAccountDeletion"),
+    processor.indexOf("async function main()"),
+  );
+  assert.match(sql, /add column if not exists owned_workspace_ids uuid\[\]/u);
+  assert.match(sql, /cardinality\(owned_workspace_ids\) <= 100/u);
+  assert.doesNotMatch(sql, /grant\s+.+(?:authenticated|anon|public)/iu);
+  assert.match(checker, /a37ee42baa5a2e8ec6e0ffe42eecc92142f014319d0a50abc8de32de85bb4202/u);
+  assert.match(packageJson, /db:account-deletion-workspace-inventory:check/u);
+  assert.match(processor, /workspace_inventory_contract_unavailable/u);
+  assert.match(processor, /workspace_inventory_missing/u);
+  assert.match(processor, /owned_workspace_ids: null/u);
+  assert.ok(
+    processSection.indexOf("persistOwnedWorkspaceInventory") <
+      processSection.indexOf("deleteAuthUser"),
+    "owned Workspace inventory must persist before Auth deletion",
+  );
+});
+
