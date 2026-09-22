@@ -76,6 +76,93 @@ def _nested_registry_id_errors() -> list[str]:
     return list(dict.fromkeys(errors))
 
 
+
+def _enum_shape_errors() -> list[str]:
+    """Reject unhashable/malformed enum identities before legacy membership checks."""
+    errors: list[str] = []
+    loader = globals()["load"]
+
+    def exact_text(value) -> bool:
+        return isinstance(value, str) and bool(value.strip()) and value == value.strip()
+
+    try:
+        invariants = loader("SYSTEM_INVARIANTS.json")
+        for item in invariants.get("invariants", []) if isinstance(invariants, dict) else []:
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not exact_text(item.get("status")):
+                errors.append(f"system-invariant-status-invalid:{item_id}")
+            if not exact_text(item.get("risk")):
+                errors.append(f"system-invariant-risk-invalid:{item_id}")
+    except Exception:
+        pass
+
+    try:
+        contracts = loader("CONTRACT_REGISTRY.json")
+        for item in contracts.get("contracts", []) if isinstance(contracts, dict) else []:
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not exact_text(item.get("status")):
+                errors.append(f"contract-status-invalid:{item_id}")
+            if not exact_text(item.get("minimum_risk")):
+                errors.append(f"contract-risk-invalid:{item_id}")
+    except Exception:
+        pass
+
+    try:
+        integration = loader("INTEGRATION_GATES.json")
+        gates = integration.get("gates", []) if isinstance(integration, dict) else []
+        for item in gates if isinstance(gates, list) else []:
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not exact_text(item.get("status")):
+                errors.append(f"integration-gate-status-invalid:{item_id}")
+        golden = integration.get("synthetic_golden_flows", []) if isinstance(integration, dict) else []
+        seen: set[str] = set()
+        for item in golden if isinstance(golden, list) else []:
+            if not isinstance(item, dict):
+                errors.append("golden-flow-entry-invalid")
+                continue
+            flow_id = item.get("id")
+            if not exact_text(flow_id):
+                errors.append("golden-flow-id-invalid")
+                continue
+            if flow_id in seen:
+                errors.append(f"golden-flow-id-duplicate:{flow_id}")
+            seen.add(flow_id)
+            if not exact_text(item.get("name")):
+                errors.append(f"golden-flow-name-invalid:{flow_id}")
+            if not exact_text(item.get("status")):
+                errors.append(f"golden-flow-status-invalid:{flow_id}")
+    except Exception:
+        pass
+
+    try:
+        release = loader("RELEASE_DECISION.json")
+        if isinstance(release, dict):
+            if not exact_text(release.get("decision")):
+                errors.append("release-decision-decision-invalid")
+            if not exact_text(release.get("risk")):
+                errors.append("release-decision-risk-invalid")
+    except Exception:
+        pass
+
+    try:
+        anchor = loader("GOD_MODE_TRUST_ANCHOR.json")
+        if isinstance(anchor, dict):
+            if not exact_text(anchor.get("status")):
+                errors.append("trust-anchor-status-invalid")
+            if not exact_text(anchor.get("algorithm")):
+                errors.append("trust-anchor-algorithm-invalid")
+    except Exception:
+        pass
+
+    return list(dict.fromkeys(errors))
+
+
 def validate() -> list[str]:
     early = _canonical_document_load_errors()
     if early:
@@ -83,6 +170,9 @@ def validate() -> list[str]:
     id_errors = _nested_registry_id_errors()
     if id_errors:
         return id_errors
+    enum_errors = _enum_shape_errors()
+    if enum_errors:
+        return enum_errors
 
     # Retain the documented monkeypatch seam used by the adversarial tests while
     # delegating every already-reviewed structural rule to the prior validator.
