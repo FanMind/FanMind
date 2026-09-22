@@ -360,4 +360,8 @@ _base.evaluate_release_decision = evaluate_release_decision
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # Historical direct execution must traverse the newest hardened wrapper.
+    # Import lazily to avoid a circular import during normal module loading.
+    from fanmind_release_decision_core_round12 import main as _round12_main
+
+    raise SystemExit(_round12_main())
