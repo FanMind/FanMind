@@ -109,7 +109,7 @@ def _canonical_runtime_input_blockers(
                 if not isinstance(entry, dict):
                     continue
                 status = entry.get("status")
-                if status not in {"ACCEPTED", "PRODUCTION_CONFIRMED"}:
+                if not isinstance(status, str) or status not in {"ACCEPTED", "PRODUCTION_CONFIRMED"}:
                     continue
                 effective_roles = _base._entry_roles(entry) & qualifying_roles
                 if effective_roles == {"implementation"}:
