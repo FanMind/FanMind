@@ -58,9 +58,18 @@ def _round8_preflight_input_errors() -> list[str]:
         for item in contracts:
             if not isinstance(item, dict):
                 continue
+            contract_id = item.get("id")
             minimum_risk = item.get("minimum_risk")
             if not isinstance(minimum_risk, str) or minimum_risk not in VALID_RISK:
-                errors.append(f"contract-registry-risk-invalid:{item.get('id')}")
+                errors.append(f"contract-registry-risk-invalid:{contract_id}")
+            triggers = item.get("revalidate_on")
+            if (
+                not isinstance(triggers, list)
+                or not triggers
+                or any(not isinstance(trigger, str) or not trigger.strip() for trigger in triggers)
+                or len(set(triggers)) != len(triggers)
+            ):
+                errors.append(f"contract-registry-revalidation-invalid:{contract_id}")
 
     try:
         ttl_policy = load("EVIDENCE_TTL_POLICY.json")
@@ -97,6 +106,18 @@ def _round8_preflight_input_errors() -> list[str]:
             if not isinstance(gate, dict):
                 continue
             gate_id = gate.get("id")
+            gate_contracts = gate.get("contracts")
+            if (
+                not isinstance(gate_contracts, list)
+                or not gate_contracts
+                or any(
+                    not isinstance(contract_id, str) or not contract_id.strip()
+                    for contract_id in gate_contracts
+                )
+                or len(set(gate_contracts)) != len(gate_contracts)
+            ):
+                errors.append(f"integration-gate-contracts-invalid:{gate_id}")
+                continue
             required = gate.get("evidence_required")
             role_map = gate.get("evidence_required_roles")
             if not isinstance(required, list) or not required:
