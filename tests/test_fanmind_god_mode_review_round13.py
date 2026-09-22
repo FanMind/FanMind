@@ -1,5 +1,6 @@
 from copy import deepcopy
 import importlib.util
+import json
 import os
 import pathlib
 import unittest
@@ -14,6 +15,7 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(BASE)
 
 CORE = BASE.CORE
+ROUND12 = BASE.ROUND12
 PREFLIGHT = BASE.BASE.PREFLIGHT
 
 
@@ -58,6 +60,22 @@ class CurrentHeadRound13RegressionTests(unittest.TestCase):
         self.assertIn(
             "canonical_semantics:contract_revalidation_mismatch",
             CORE._canonical_contract_semantics_blockers(weakened),
+        )
+
+    def test_invariant_revalidation_semantics_are_in_signed_digest(self):
+        invariants = PREFLIGHT.load("SYSTEM_INVARIANTS.json")
+        gates = PREFLIGHT.load("INTEGRATION_GATES.json")
+        contracts = PREFLIGHT.load("CONTRACT_REGISTRY.json")
+        self.assertEqual(
+            [],
+            ROUND12._canonical_semantics_blockers(invariants, gates, contracts),
+        )
+
+        weakened = deepcopy(invariants)
+        weakened["invariants"][0]["revalidate_on"] = ["before_protected_release"]
+        self.assertIn(
+            "canonical_semantics:digest_mismatch",
+            ROUND12._canonical_semantics_blockers(weakened, gates, contracts),
         )
 
     def test_direct_canonical_inputs_must_match_current_head_objects(self):
@@ -126,6 +144,31 @@ class CurrentHeadRound13RegressionTests(unittest.TestCase):
         self.assertTrue(
             any(error.startswith("integration-gate-contracts-invalid:") for error in errors),
             errors,
+        )
+
+    def test_malformed_system_invariants_load_fails_closed_without_legacy_traceback(self):
+        original_load = PREFLIGHT.load
+
+        def malformed(name):
+            if name == "SYSTEM_INVARIANTS.json":
+                raise json.JSONDecodeError("malformed invariant registry", "{", 0)
+            return deepcopy(original_load(name))
+
+        PREFLIGHT.load = malformed
+        try:
+            errors = PREFLIGHT.validate()
+        finally:
+            PREFLIGHT.load = original_load
+        self.assertIn("system-invariants-load-invalid:JSONDecodeError", errors)
+
+    def test_compatibility_sources_are_in_signed_control_plane(self):
+        self.assertIn(
+            "scripts/fanmind_release_decision_core_round12_legacy.py",
+            ROUND12.CONTROL_PLANE_FILES,
+        )
+        self.assertIn(
+            "scripts/fanmind_god_mode_preflight_legacy_current.py",
+            ROUND12.CONTROL_PLANE_FILES,
         )
 
 
