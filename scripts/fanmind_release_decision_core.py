@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 
 import fanmind_release_decision_core_round8 as _round8
@@ -26,7 +27,8 @@ CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
 CANONICAL_GOD_MODE_TASK = "FM-GOV-GODMODE-001"
 TRUST_ANCHOR_FILE = "GOD_MODE_TRUST_ANCHOR.json"
 TEST_ONLY_SYNTHETIC_ENV = "FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"
-TEST_ONLY_SYNTHETIC_TARGET = "repository:synthetic"
+TEST_ONLY_SYNTHETIC_CONTRACT_IDS = {"FM-CONTRACT-A", "FM-CONTRACT-B"}
+TEST_ONLY_SYNTHETIC_GATE_IDS = {"FM-IGATE-A", "FM-IGATE-B"}
 REQUIRED_CONTRACT_IDS = {
     "FM-CONTRACT-CREATOR-AI-001",
     "FM-CONTRACT-CHATADMIN-AI-001",
@@ -45,6 +47,48 @@ REQUIRED_GATE_IDS = {
     "FM-IGATE-AI-BILLING-001",
     "FM-IGATE-DISCLOSURE-DELETE-001",
 }
+CANONICAL_CONTRACT_REVALIDATION = {
+    "FM-CONTRACT-CREATOR-AI-001": (
+        "creator_schema_change",
+        "ai_context_change",
+        "reply_profile_change",
+        "entitlement_change",
+    ),
+    "FM-CONTRACT-CHATADMIN-AI-001": (
+        "character_schema_change",
+        "chatadmin_authority_change",
+        "ai_context_change",
+    ),
+    "FM-CONTRACT-CHATADMIN-STORAGE-001": (
+        "storage_policy_change",
+        "path_contract_change",
+        "workspace_or_character_schema_change",
+    ),
+    "FM-CONTRACT-SOCIAL-CRM-001": (
+        "provider_payload_change",
+        "crm_schema_change",
+        "identity_mapping_change",
+        "delete_disclosure_change",
+    ),
+    "FM-CONTRACT-REG-ENTITLEMENT-001": (
+        "registration_change",
+        "workspace_change",
+        "entitlement_change",
+        "billing_route_change",
+    ),
+    "FM-CONTRACT-AI-BILLING-001": (
+        "price_catalog_change",
+        "usage_schema_change",
+        "entitlement_change",
+        "stripe_lifecycle_change",
+    ),
+    "FM-CONTRACT-DISCLOSURE-DELETE-001": (
+        "schema_change",
+        "new_personal_data_field",
+        "new_provider_payload",
+        "delete_flow_change",
+    ),
+}
 _CANONICAL_CLI_ACTIVE = False
 
 
@@ -61,25 +105,45 @@ def load_trust_anchor() -> dict:
     return value if isinstance(value, dict) else {"_load_error": True}
 
 
+def _ids(document: dict, key: str) -> set[str]:
+    items = document.get(key) if isinstance(document, dict) else None
+    if not isinstance(items, list):
+        return set()
+    return {
+        item.get("id")
+        for item in items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+
+
 def _canonical_runtime_mode(*documents: dict) -> bool:
-    """Return True unless an explicit, synthetic-repository-only test opt-out exists.
+    """Return True except for an explicit, structurally synthetic test fixture.
 
     Canonical trust is the default for every direct evaluator call. Contributor-
-    controlled document markers (including a removable `task` field) never
-    select a weaker mode. The only opt-out is an explicit test-only environment
-    marker *and* an exact synthetic repository target carried by the snapshot;
-    inherited target binding still prevents that fixture mode from authorizing a
-    staging, production, database, provider, billing or other protected target.
+    controlled task/target markers never select a weaker mode. The sole opt-out
+    requires the dedicated test environment marker plus the exact synthetic
+    contract and gate identities used by the adversarial fixture suite. Real
+    FanMind registries therefore remain canonical even if that environment
+    variable is accidentally present.
     """
     if _CANONICAL_CLI_ACTIVE:
         return True
     if os.environ.get(TEST_ONLY_SYNTHETIC_ENV) != "1":
         return True
-    return not any(
-        isinstance(document, dict)
-        and document.get("operation") in _base.REPOSITORY_OPERATIONS
-        and document.get("evaluated_target") == TEST_ONLY_SYNTHETIC_TARGET
-        for document in documents
+
+    contract_documents = [
+        document for document in documents
+        if isinstance(document, dict) and "contracts" in document
+    ]
+    gate_documents = [
+        document for document in documents
+        if isinstance(document, dict) and "gates" in document
+    ]
+    if not contract_documents or not gate_documents:
+        return True
+    return not (
+        any(_ids(document, "contracts") == TEST_ONLY_SYNTHETIC_CONTRACT_IDS for document in contract_documents)
+        and any(_ids(document, "gates") == TEST_ONLY_SYNTHETIC_GATE_IDS for document in gate_documents)
     )
 
 
@@ -104,6 +168,28 @@ def _canonical_registry_blockers(contracts: dict, integration: dict) -> list[str
     if gate_ids != REQUIRED_GATE_IDS:
         blockers.append("integration_gate:canonical_set_mismatch")
     return blockers
+
+
+def _canonical_contract_semantics_blockers(contracts: dict) -> list[str]:
+    """Pin external-state invalidation semantics independently of JSON policy."""
+    contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
+    if not isinstance(contract_items, list):
+        return ["canonical_semantics:contract_revalidation_invalid"]
+    actual: dict[str, tuple[str, ...]] = {}
+    for item in contract_items:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+            continue
+        triggers = item.get("revalidate_on")
+        if (
+            not isinstance(triggers, list)
+            or any(not isinstance(trigger, str) or not trigger for trigger in triggers)
+            or len(set(triggers)) != len(triggers)
+        ):
+            return ["canonical_semantics:contract_revalidation_invalid"]
+        actual[item["id"]] = tuple(triggers)
+    if actual != CANONICAL_CONTRACT_REVALIDATION:
+        return ["canonical_semantics:contract_revalidation_mismatch"]
+    return []
 
 
 def _trusted_key_blockers(attestation_key: str | bytes | None) -> list[str]:
@@ -133,6 +219,57 @@ def _trusted_key_blockers(attestation_key: str | bytes | None) -> list[str]:
         actual_digest = hashlib.sha256(key_bytes).hexdigest()
         if not _base.hmac.compare_digest(actual_digest.lower(), digest.lower()):
             blockers.append("trust_anchor:key_identity_mismatch")
+    return blockers
+
+
+def _load_head_json(path: str):
+    raw = _base._git_show(path)
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+
+
+def _canonical_head_input_blockers(
+    invariants: dict,
+    integration: dict,
+    contracts: dict,
+    impact: dict,
+    snapshot: dict,
+    ttl_policy: dict | None,
+    current_control_plane_fingerprint: str | None,
+) -> list[str]:
+    """Authenticate direct evaluator inputs against the immutable current HEAD.
+
+    A canonical direct caller may not replay an old control plane by supplying
+    old documents plus an old fingerprint. The exact documents and fingerprint
+    must equal the current repository Git objects, just as the CLI path does.
+    """
+    blockers: list[str] = []
+    expected_fingerprint = _base.control_plane_fingerprint()
+    if (
+        not isinstance(current_control_plane_fingerprint, str)
+        or expected_fingerprint is None
+        or not _base.hmac.compare_digest(current_control_plane_fingerprint, expected_fingerprint)
+    ):
+        blockers.append("canonical_control_plane:fingerprint_mismatch")
+
+    expected = {
+        "SYSTEM_INVARIANTS.json": invariants,
+        "INTEGRATION_GATES.json": integration,
+        "CONTRACT_REGISTRY.json": contracts,
+        "IMPACT_MAP.json": impact,
+        "RELEASE_DECISION.json": snapshot,
+        "EVIDENCE_TTL_POLICY.json": ttl_policy,
+    }
+    for name, supplied in expected.items():
+        head_value = _load_head_json(f"project-memory/{name}")
+        if head_value is None:
+            blockers.append(f"canonical_control_plane:head_document_unavailable:{name}")
+        elif supplied != head_value:
+            blockers.append(f"canonical_control_plane:document_mismatch:{name}")
     return blockers
 
 
@@ -197,6 +334,7 @@ def _canonical_runtime_input_blockers(
     contracts: dict,
     impact: dict,
     snapshot: dict,
+    ttl_policy: dict | None,
     *,
     actual_head: str | None,
     actual_target: str | None,
@@ -205,14 +343,7 @@ def _canonical_runtime_input_blockers(
     attestation_key: str | bytes | None,
     current_trigger_state: dict | None,
 ) -> list[str]:
-    """Close canonical runtime gaps that structural preflight cannot be trusted to cover.
-
-    The release evaluator is itself a trust boundary. Missing contract
-    revalidation metadata, malformed trigger-state schema versions, and
-    implementation-only acceptance hidden by inert role padding must therefore
-    fail closed even when callers invoke the canonical evaluator without first
-    running the structural preflight.
-    """
+    """Close canonical runtime gaps that structural preflight cannot be trusted to cover."""
 
     blockers: list[str] = []
 
@@ -222,13 +353,23 @@ def _canonical_runtime_input_blockers(
     canonical_mode = _canonical_runtime_mode(integration, contracts, impact, snapshot)
     if canonical_mode:
         blockers.extend(_canonical_registry_blockers(contracts, integration))
+        blockers.extend(_canonical_contract_semantics_blockers(contracts))
+        blockers.extend(
+            _canonical_head_input_blockers(
+                invariants,
+                integration,
+                contracts,
+                impact,
+                snapshot,
+                ttl_policy,
+                current_control_plane_fingerprint,
+            )
+        )
         if attestation is not None:
             blockers.extend(_trusted_key_blockers(attestation_key))
 
         # The separately protected current-trigger-state producer must be bound
-        # to the same exact release context as the evidence attestation. A
-        # still-live document from another environment/control-plane revision
-        # must never be replayable into this decision.
+        # to the same exact release context as the evidence attestation.
         if isinstance(current_trigger_state, dict):
             if current_trigger_state.get("release_sha") != actual_head:
                 blockers.append("trigger_state:release_sha_mismatch")
@@ -245,10 +386,8 @@ def _canonical_runtime_input_blockers(
         if type(schema_version) is not int or schema_version != 1:
             blockers.append("trigger_state:schema_invalid")
 
-    # Contract revalidation metadata is security-relevant runtime input, not a
-    # test-fixture compatibility hint. Every affected contract must carry a
-    # non-empty list of concrete trigger names. Missing metadata may never mean
-    # "no revalidation required".
+    # Contract revalidation metadata is security-relevant runtime input. Every
+    # affected contract must carry a non-empty list of concrete trigger names.
     affected = snapshot.get("affected_contracts") if isinstance(snapshot, dict) else None
     affected_ids = {value for value in affected if isinstance(value, str) and value} if isinstance(affected, list) else set()
     contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
@@ -293,8 +432,7 @@ def _canonical_runtime_input_blockers(
                 effective_risk = _higher_risk(effective_risk, invariant_risk)
 
     # ACCEPTED / PRODUCTION_CONFIRMED evidence may not masquerade as more than
-    # implementation proof by padding its role list with an inert role such as
-    # `evidence` on R2-R4. Consider only roles that qualify at effective risk.
+    # implementation proof by padding its role list with an inert role.
     if isinstance(attestation, dict):
         evidence_entries = attestation.get("evidence")
         if isinstance(evidence_entries, list):
@@ -317,19 +455,21 @@ def _canonical_runtime_input_blockers(
 
 def evaluate_release_decision(*args, **kwargs):
     """Evaluator with canonical trust enforcement by default for direct callers."""
-    if len(args) < 6:
+    if len(args) < 7:
         return "BLOCK", ["release_input:canonical_arguments_missing"]
     invariants = args[0]
     integration = args[1]
     contracts = args[2]
     impact = args[3]
     snapshot = args[5]
+    ttl_policy = args[6]
     early = _canonical_runtime_input_blockers(
         invariants,
         integration,
         contracts,
         impact,
         snapshot,
+        ttl_policy,
         actual_head=kwargs.get("actual_head"),
         actual_target=kwargs.get("actual_target"),
         current_control_plane_fingerprint=kwargs.get("current_control_plane_fingerprint"),
