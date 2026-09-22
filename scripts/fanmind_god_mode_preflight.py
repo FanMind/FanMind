@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+import math
 
 import fanmind_god_mode_preflight_legacy as _legacy
 from fanmind_god_mode_preflight_legacy import *  # noqa: F401,F403
@@ -11,7 +12,7 @@ _legacy_validate = _legacy.validate
 
 
 def _round8_preflight_input_errors() -> list[str]:
-    """Fail closed before legacy validation can hash malformed risk metadata."""
+    """Fail closed before legacy validation can consume malformed metadata."""
 
     errors: list[str] = []
     try:
@@ -27,6 +28,30 @@ def _round8_preflight_input_errors() -> list[str]:
             minimum_risk = item.get("minimum_risk")
             if not isinstance(minimum_risk, str) or minimum_risk not in VALID_RISK:
                 errors.append(f"contract-registry-risk-invalid:{item.get('id')}")
+
+    try:
+        ttl_policy = load("EVIDENCE_TTL_POLICY.json")
+    except Exception as exc:  # malformed/unreadable input is never success
+        return list(
+            dict.fromkeys(
+                [*errors, f"ttl-policy-load-invalid:{type(exc).__name__}"]
+            )
+        )
+
+    policy = ttl_policy.get("policy") if isinstance(ttl_policy, dict) else None
+    if isinstance(policy, dict):
+        for evidence_class, item in policy.items():
+            if not isinstance(item, dict):
+                continue
+            ttl_hours = item.get("ttl_hours")
+            if ttl_hours is not None and (
+                isinstance(ttl_hours, bool)
+                or not isinstance(ttl_hours, (int, float))
+                or not math.isfinite(float(ttl_hours))
+                or ttl_hours < 0
+            ):
+                errors.append(f"ttl-policy-ttl-invalid:{evidence_class}")
+
     return list(dict.fromkeys(errors))
 
 
