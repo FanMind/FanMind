@@ -52,6 +52,37 @@ SUPPORTED_EVIDENCE_ROLES = frozenset(
     role for roles in _base.REQUIRED_EVIDENCE_ROLES.values() for role in roles
 )
 
+CANONICAL_IMPACT_SCOPE = {
+    "FM-CONTRACT-CREATOR-AI-001": {
+        "consumers": ["Creator API/routes", "AI context loaders", "reply generation", "confirmed-chat learning"],
+        "tests": ["Creator tenant/context tests", "AI reply tests"],
+    },
+    "FM-CONTRACT-CHATADMIN-AI-001": {
+        "consumers": ["ChatAdmin APIs", "character context", "suggestion generation", "manual handoff UI"],
+        "tests": ["ChatAdmin authorization tests", "suggestion count/context tests"],
+    },
+    "FM-CONTRACT-CHATADMIN-STORAGE-001": {
+        "consumers": ["storage.objects policies", "character profile images", "ChatAdmin storage helpers"],
+        "tests": ["storage policy/path tests", "cross-workspace negatives"],
+    },
+    "FM-CONTRACT-SOCIAL-CRM-001": {
+        "consumers": ["provider callbacks", "inbound workers", "contacts", "conversations", "messages"],
+        "tests": ["inbound idempotency", "tenant mapping", "revocation/delete"],
+    },
+    "FM-CONTRACT-REG-ENTITLEMENT-001": {
+        "consumers": ["registration", "workspace provisioning", "login routing", "Admin CRM"],
+        "tests": ["permanent/temp/blocked lifecycle", "direct read/login negatives"],
+    },
+    "FM-CONTRACT-AI-BILLING-001": {
+        "consumers": ["AI cost engine", "usage provider metrics", "tier entitlements", "Stripe bridge", "referral/billing projection"],
+        "tests": ["cost arithmetic", "malformed usage", "ledger ordering/idempotency"],
+    },
+    "FM-CONTRACT-DISCLOSURE-DELETE-001": {
+        "consumers": ["Creator disclosure", "ChatAdmin disclosure", "contact/account delete", "provider cleanup"],
+        "tests": ["disclosure completeness", "exact-tenant delete", "cross-tenant negatives"],
+    },
+}
+
 CANONICAL_INVARIANT_MEANINGS = {
     "FM-INV-001": ("workspace_tenant_isolation", "Workspace/tenant data must never cross an authorized workspace boundary."),
     "FM-INV-002": ("chatadmin_authority_boundary", "ChatAdmin is never Platform Admin, Admin CRM, Billing, Operations or service_role."),
@@ -126,6 +157,19 @@ def _canonical_semantics_blockers(
     impact = impact if impact is not None else _base.load("IMPACT_MAP.json")
     ttl_policy = ttl_policy if ttl_policy is not None else _base.load("EVIDENCE_TTL_POLICY.json")
     invariant_items = invariants.get("invariants") if isinstance(invariants, dict) else None
+    mappings = impact.get("mappings") if isinstance(impact, dict) else None
+    if isinstance(mappings, list):
+        by_contract = {
+            item.get("contract"): item
+            for item in mappings
+            if isinstance(item, dict) and isinstance(item.get("contract"), str)
+        }
+        for contract_id, expected in CANONICAL_IMPACT_SCOPE.items():
+            item = by_contract.get(contract_id)
+            if not isinstance(item, dict):
+                return [f"canonical_semantics:impact_missing:{contract_id}"]
+            if item.get("consumers") != expected["consumers"] or item.get("tests") != expected["tests"]:
+                return [f"canonical_semantics:impact_scope_mismatch:{contract_id}"]
     if isinstance(invariant_items, list):
         by_id = {
             item.get("id"): item
@@ -304,7 +348,7 @@ def evaluate_release_decision(
         extra_blockers = [*boundary_blockers, *requirement_blockers]
         if extra_blockers:
             return "BLOCK", list(dict.fromkeys([*reasons, *extra_blockers]))
-        if decision == "ALLOW" and not synthetic_test_bypass:
+        if decision != "BLOCK" and not synthetic_test_bypass:
             checked_out_head = _base.current_git_head()
             if not isinstance(actual_head, str) or not _current._round8.git_commit_resolves(actual_head):
                 return "BLOCK", ["release_evidence:actual_head_unresolvable"]
@@ -319,15 +363,22 @@ def _evidence_requirement_claim_blockers(attestation: dict | None, integration: 
     if not isinstance(attestation, dict):
         return []
     gates = integration.get("gates") if isinstance(integration, dict) else None
-    configured = {
-        gate.get("id"): set(gate.get("evidence_required", []))
-        for gate in (gates if isinstance(gates, list) else [])
-        if isinstance(gate, dict)
-        and isinstance(gate.get("id"), str)
-        and isinstance(gate.get("evidence_required"), list)
-    }
-    evidence = attestation.get("evidence")
+    configured: dict[str, set[str]] = {}
     blockers: list[str] = []
+    for gate in gates if isinstance(gates, list) else []:
+        if not isinstance(gate, dict) or not isinstance(gate.get("id"), str):
+            continue
+        gate_id = gate["id"]
+        required = gate.get("evidence_required")
+        if (
+            not isinstance(required, list)
+            or any(not _strict_identity(value) for value in required)
+            or len(set(required)) != len(required)
+        ):
+            blockers.append(f"release_evidence:configured_requirements_invalid:{gate_id}")
+            continue
+        configured[gate_id] = set(required)
+    evidence = attestation.get("evidence")
     for entry in evidence if isinstance(evidence, list) else []:
         if not isinstance(entry, dict) or "requirements" not in entry:
             continue
@@ -357,6 +408,15 @@ def _exact_head_cli_evaluate_release_decision(*args, **kwargs):
     if not isinstance(checked_out_head, str) or actual_head != checked_out_head:
         return "BLOCK", ["release_evidence:actual_head_not_checked_out_head"]
     return evaluate_release_decision(*args, **kwargs)
+
+
+def load_trust_anchor() -> dict:
+    """Load reviewed trust-anchor bytes from immutable HEAD, never mutable worktree."""
+    try:
+        value = globals()["_load_head_project_memory"]("GOD_MODE_TRUST_ANCHOR.json")
+    except Exception:
+        return {"_load_error": True}
+    return value if isinstance(value, dict) else {"_load_error": True}
 
 
 def _safe_external_json(path_value: str | None) -> dict | None:
