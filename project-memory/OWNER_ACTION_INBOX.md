@@ -8,11 +8,11 @@
 - Consumed outcome: do not repeat this VERIFY only because `main` advances. The next repository step is `FM-GOV-GODMODE-001`.
 
 ## FM-CHATADMIN-OWNER-APPLY-20260921 — ChatAdmin Staging APPLY nach God Mode
-- Status: NOT_READY
+- Status: OWNER_ACTION_REQUIRED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921; Risk: R4 protected Staging write.
-- Why not ready: VERIFY proved the schema is `ABSENT`, but the owner sequence requires a cleanly merged/reconciled `FM-GOV-GODMODE-001` before any APPLY request.
-- Future exact scope: only after God Mode v1 merge, re-read the then-current main/target and prepare a separate protected `FanMind ChatAdmin Staging Rollout` dispatch with mode `APPLY` and exact confirmation `apply-chat-admin-migration`.
-- Boundary: this entry is not authorization to run APPLY now. ACCEPT remains a later separate step after a successful apply/postflight.
+- Why now: read-only VERIFY run `35652258052` proved exact Staging state `ABSENT`; God Mode v1 PR #1157 is merged and post-merge repository/runtime verification is reconciled on exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
+- Required protected scope: re-read the current main/target immediately before action, then separately authorize only `FanMind ChatAdmin Staging Rollout` mode `APPLY` with confirmation `apply-chat-admin-migration` and the workflow's exact write acknowledgement. Never infer authorization from this Project-Memory entry.
+- Boundary: the builder must not dispatch APPLY autonomously. ACCEPT remains a later separate protected step after successful APPLY/postflight. No Production/capability/provider/Billing/Restore/Mobile mutation is bundled.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
 - Status: COMPLETED
