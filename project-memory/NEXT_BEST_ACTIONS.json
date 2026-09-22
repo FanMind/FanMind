@@ -275,6 +275,7 @@
         "governance_god_mode"
       ],
       "done_states": [
+        "VERIFIED",
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
