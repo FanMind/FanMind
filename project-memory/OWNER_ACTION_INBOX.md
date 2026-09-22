@@ -5,14 +5,14 @@
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921; Risk: R3 read-only.
 - Result: protected run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded and returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
 - Safety proof: `APPLY` and `ACCEPT` were skipped; the private passfile was removed; no write acknowledgement or protected mutation occurred.
-- Consumed outcome: do not repeat this VERIFY only because `main` advances. The next repository step is `FM-GOV-GODMODE-001`.
+- Consumed outcome: do not repeat this VERIFY only because `main` advances. God Mode v1 is now merged/reconciled through PR #1157; the VERIFY result remains the consumed observation for the separate APPLY gate.
 
 ## FM-CHATADMIN-OWNER-APPLY-20260921 — ChatAdmin Staging APPLY nach God Mode
-- Status: NOT_READY
+- Status: OWNER_ACTION_REQUIRED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921; Risk: R4 protected Staging write.
-- Why not ready: VERIFY proved the schema is `ABSENT`, but the owner sequence requires a cleanly merged/reconciled `FM-GOV-GODMODE-001` before any APPLY request.
-- Future exact scope: only after God Mode v1 merge, re-read the then-current main/target and prepare a separate protected `FanMind ChatAdmin Staging Rollout` dispatch with mode `APPLY` and exact confirmation `apply-chat-admin-migration`.
-- Boundary: this entry is not authorization to run APPLY now. ACCEPT remains a later separate step after a successful apply/postflight.
+- Ready condition met: VERIFY proved the schema is `ABSENT`, and PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as `1c5e1232f0893b0730a985c6e717b5c27c535f35`; the repository-only God Mode gate is reconciled as VERIFIED.
+- Exact owner step when explicitly authorized: re-read the then-current main and Staging target binding, then dispatch only `FanMind ChatAdmin Staging Rollout` with mode `APPLY` and confirmation `apply-chat-admin-migration` under the protected environment. Do not reuse a stale main SHA or target observation.
+- Boundary: this inbox state is readiness to request a separate owner/protected action, not authorization for the autonomous builder to run APPLY. `ACCEPT` remains a later separate protected step only after successful apply/postflight evidence.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
 - Status: COMPLETED
