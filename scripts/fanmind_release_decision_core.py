@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
+
 import fanmind_release_decision_core_round8 as _round8
 from fanmind_release_decision_core_round8 import *  # noqa: F401,F403
 
@@ -14,22 +16,181 @@ _base.CONTROL_PLANE_FILES = tuple(
         (
             *_base.CONTROL_PLANE_FILES,
             "scripts/fanmind_release_decision_core_round8.py",
+            "project-memory/GOD_MODE_TRUST_ANCHOR.json",
         )
     )
 )
 CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
+
+CANONICAL_GOD_MODE_TASK = "FM-GOV-GODMODE-001"
+TRUST_ANCHOR_FILE = "GOD_MODE_TRUST_ANCHOR.json"
+REQUIRED_CONTRACT_IDS = {
+    "FM-CONTRACT-CREATOR-AI-001",
+    "FM-CONTRACT-CHATADMIN-AI-001",
+    "FM-CONTRACT-CHATADMIN-STORAGE-001",
+    "FM-CONTRACT-SOCIAL-CRM-001",
+    "FM-CONTRACT-REG-ENTITLEMENT-001",
+    "FM-CONTRACT-AI-BILLING-001",
+    "FM-CONTRACT-DISCLOSURE-DELETE-001",
+}
+REQUIRED_GATE_IDS = {
+    "FM-IGATE-CREATOR-AI-001",
+    "FM-IGATE-CHATADMIN-AI-001",
+    "FM-IGATE-CHATADMIN-STORAGE-001",
+    "FM-IGATE-SOCIAL-CRM-001",
+    "FM-IGATE-REG-ENTITLEMENT-001",
+    "FM-IGATE-AI-BILLING-001",
+    "FM-IGATE-DISCLOSURE-DELETE-001",
+}
+_CANONICAL_CLI_ACTIVE = False
 
 
 def _higher_risk(left: str, right: str) -> str:
     return right if _base.RISK_ORDER[right] > _base.RISK_ORDER[left] else left
 
 
+def load_trust_anchor() -> dict:
+    """Load the independently pinned producer-key identity from canonical memory."""
+    try:
+        value = _base.load(TRUST_ANCHOR_FILE)
+    except Exception:
+        return {"_load_error": True}
+    return value if isinstance(value, dict) else {"_load_error": True}
+
+
+def _canonical_runtime_mode(*documents: dict) -> bool:
+    # The canonical CLI always enables this flag before it delegates to the
+    # evaluator. The task marker additionally keeps direct evaluation of the
+    # checked-in Project-Memory documents fail-closed. Synthetic unit fixtures
+    # are deliberately not mistaken for the canonical runtime trust boundary.
+    if _CANONICAL_CLI_ACTIVE:
+        return True
+    return any(
+        isinstance(document, dict) and document.get("task") == CANONICAL_GOD_MODE_TASK
+        for document in documents
+    )
+
+
+def _canonical_registry_blockers(contracts: dict, integration: dict) -> list[str]:
+    blockers: list[str] = []
+    contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
+    gate_items = integration.get("gates") if isinstance(integration, dict) else None
+
+    contract_ids = {
+        item.get("id")
+        for item in contract_items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    } if isinstance(contract_items, list) else set()
+    gate_ids = {
+        item.get("id")
+        for item in gate_items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    } if isinstance(gate_items, list) else set()
+
+    if contract_ids != REQUIRED_CONTRACT_IDS:
+        blockers.append("contract_registry:canonical_set_mismatch")
+    if gate_ids != REQUIRED_GATE_IDS:
+        blockers.append("integration_gate:canonical_set_mismatch")
+    return blockers
+
+
+def _trusted_key_blockers(attestation_key: str | bytes | None) -> list[str]:
+    anchor = load_trust_anchor()
+    blockers: list[str] = []
+    if anchor.get("_load_error") is True:
+        return ["trust_anchor:load_error"]
+    if type(anchor.get("schema_version")) is not int or anchor.get("schema_version") != 1:
+        blockers.append("trust_anchor:schema_invalid")
+    if anchor.get("algorithm") != "HMAC-SHA256":
+        blockers.append("trust_anchor:algorithm_invalid")
+    if anchor.get("status") != "ACTIVE":
+        blockers.append("trust_anchor:not_active")
+
+    digest = anchor.get("key_sha256")
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(ch not in "0123456789abcdefABCDEF" for ch in digest)
+    ):
+        blockers.append("trust_anchor:key_digest_invalid")
+
+    key_bytes = attestation_key.encode("utf-8") if isinstance(attestation_key, str) else attestation_key
+    if not isinstance(key_bytes, bytes) or len(key_bytes) < 32:
+        blockers.append("trust_anchor:verification_key_unavailable")
+    elif isinstance(digest, str) and len(digest) == 64:
+        actual_digest = hashlib.sha256(key_bytes).hexdigest()
+        if not _base.hmac.compare_digest(actual_digest.lower(), digest.lower()):
+            blockers.append("trust_anchor:key_identity_mismatch")
+    return blockers
+
+
+def _target_identifier_blockers(operation, target) -> list[str]:
+    if not isinstance(operation, str) or not isinstance(target, str):
+        return []  # the inherited evaluator owns missing/type errors
+
+    prefixes: tuple[str, ...] | None = None
+    if operation in _base.REPOSITORY_OPERATIONS:
+        prefixes = ("repository:",)
+    elif operation in _base.PROTECTED_OPERATIONS:
+        prefixes = _base.PROTECTED_OPERATION_TARGET_PREFIXES[operation]
+    if prefixes is None:
+        return []
+
+    matching = next((prefix for prefix in prefixes if target.startswith(prefix)), None)
+    if matching is None:
+        return []  # namespace mismatch is reported by the inherited evaluator
+    identifier = target[len(matching) :]
+    if (
+        not identifier
+        or identifier != identifier.strip()
+        or any(ch.isspace() or ord(ch) < 32 for ch in identifier)
+        or len(identifier) > 512
+    ):
+        return ["release_input:target_identifier_invalid"]
+    return []
+
+
+def _evidence_role_shape_blockers(attestation: dict | None) -> list[str]:
+    if not isinstance(attestation, dict):
+        return []
+    evidence = attestation.get("evidence")
+    if not isinstance(evidence, list):
+        return []
+    blockers: list[str] = []
+    for entry in evidence:
+        if not isinstance(entry, dict):
+            continue
+        evidence_id = entry.get("id")
+        marker = evidence_id if isinstance(evidence_id, str) and evidence_id else "unknown"
+        roles = entry.get("roles")
+        singular = entry.get("role")
+        if roles is not None:
+            if (
+                not isinstance(roles, list)
+                or not roles
+                or any(not isinstance(role, str) or not role for role in roles)
+                or len(set(roles)) != len(roles)
+            ):
+                blockers.append(f"release_evidence:roles_invalid:{marker}")
+            if singular is not None:
+                blockers.append(f"release_evidence:roles_ambiguous:{marker}")
+        elif singular is not None and (not isinstance(singular, str) or not singular):
+            blockers.append(f"release_evidence:roles_invalid:{marker}")
+    return blockers
+
+
 def _canonical_runtime_input_blockers(
     invariants: dict,
+    integration: dict,
     contracts: dict,
+    impact: dict,
     snapshot: dict,
     *,
+    actual_head: str | None,
+    actual_target: str | None,
+    current_control_plane_fingerprint: str | None,
     attestation: dict | None,
+    attestation_key: str | bytes | None,
     current_trigger_state: dict | None,
 ) -> list[str]:
     """Close canonical runtime gaps that structural preflight cannot be trusted to cover.
@@ -42,6 +203,27 @@ def _canonical_runtime_input_blockers(
     """
 
     blockers: list[str] = []
+
+    blockers.extend(_target_identifier_blockers(snapshot.get("operation"), actual_target))
+    blockers.extend(_evidence_role_shape_blockers(attestation))
+
+    canonical_mode = _canonical_runtime_mode(integration, contracts, impact, snapshot)
+    if canonical_mode:
+        blockers.extend(_canonical_registry_blockers(contracts, integration))
+        if attestation is not None:
+            blockers.extend(_trusted_key_blockers(attestation_key))
+
+        # The separately protected current-trigger-state producer must be bound
+        # to the same exact release context as the evidence attestation. A
+        # still-live document from another environment/control-plane revision
+        # must never be replayable into this decision.
+        if isinstance(current_trigger_state, dict):
+            if current_trigger_state.get("release_sha") != actual_head:
+                blockers.append("trigger_state:release_sha_mismatch")
+            if current_trigger_state.get("target") != actual_target:
+                blockers.append("trigger_state:target_mismatch")
+            if current_trigger_state.get("control_plane_fingerprint") != current_control_plane_fingerprint:
+                blockers.append("trigger_state:control_plane_mismatch")
 
     # The separately protected current-trigger-state producer uses the same exact
     # schema-version rule as the evidence attestation and checked-in control
@@ -126,13 +308,21 @@ def evaluate_release_decision(*args, **kwargs):
     if len(args) < 6:
         return "BLOCK", ["release_input:canonical_arguments_missing"]
     invariants = args[0]
+    integration = args[1]
     contracts = args[2]
+    impact = args[3]
     snapshot = args[5]
     early = _canonical_runtime_input_blockers(
         invariants,
+        integration,
         contracts,
+        impact,
         snapshot,
+        actual_head=kwargs.get("actual_head"),
+        actual_target=kwargs.get("actual_target"),
+        current_control_plane_fingerprint=kwargs.get("current_control_plane_fingerprint"),
         attestation=kwargs.get("attestation"),
+        attestation_key=kwargs.get("attestation_key"),
         current_trigger_state=kwargs.get("current_trigger_state"),
     )
     if early:
@@ -152,12 +342,16 @@ def main() -> int:
     # The inherited base CLI resolves its evaluator through this module-level
     # hook. Apply the Git-object check only at the CLI boundary so pure evaluator
     # tests can continue to use synthetic but syntactically valid 40-hex SHAs.
+    global _CANONICAL_CLI_ACTIVE
     previous = _base.evaluate_release_decision
+    previous_cli_mode = _CANONICAL_CLI_ACTIVE
+    _CANONICAL_CLI_ACTIVE = True
     _base.evaluate_release_decision = _cli_evaluate_release_decision
     try:
         return _base.main()
     finally:
         _base.evaluate_release_decision = previous
+        _CANONICAL_CLI_ACTIVE = previous_cli_mode
 
 
 # Direct imports use the fully hardened evaluator; canonical CLI execution swaps
