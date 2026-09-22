@@ -4,9 +4,9 @@ Updated: 2026-09-22. This file is the compact human-readable current-state view;
 
 ## God Mode v1 post-merge reconciliation
 - Current verified baseline before this reconciliation branch is `main` `1c5e1232f0893b0730a985c6e717b5c27c535f35`, the merge of PR #1157.
-- PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` passed all required current-head workflows before merge. `FM-GOV-GODMODE-001` is therefore `VERIFIED` for its repository-only governance scope and must not enter another review/hardening loop merely because later work exists.
+- PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` passed all required current-head workflows and independent review before merge; post-merge `FanMind God Mode Gate` push run `35769547419` then passed on exact merge `1c5e1232f0893b0730a985c6e717b5c27c535f35`. `FM-GOV-GODMODE-001` is therefore `ACCEPTED` for its bounded repository-governance scope and must not enter another review/hardening loop merely because later work exists.
 - `RELEASE_DECISION.json` remains fail-closed `BLOCK`: the repository control plane is merged, but registered invariants/integration gates are not thereby runtime-enforced/verified, and no protected target activation follows from a merge.
-- The God Mode merge is not Staging, Production, provider, Billing, Restore or customer acceptance and is not an activation receipt.
+- The God Mode acceptance is not Staging, Production, provider, Billing, Restore or customer acceptance and is not an activation receipt.
 
 ## ChatAdmin state
 - The protected read-only ChatAdmin Staging VERIFY `35652258052` / job `106507223598` on exact `973e70f6d243984d95ec1420a79701faad04a39a` returned exactly `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
