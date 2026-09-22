@@ -520,7 +520,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-GOV-GODMODE-001 — FanMind God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
-- Status: VERIFIED
+- Status: ACCEPTED
 - Risk: R3
 - Goal/result: one fail-closed governance/integration control plane extending existing Project Memory without a parallel task system.
 - Publication: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
