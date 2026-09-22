@@ -25,22 +25,27 @@ TRIGGERS = {
     "workflow_contract_changed": "workflow:v1",
     "staging_deploy": "staging:deploy-1",
     "runtime_config_change": "runtime:config-1",
+    "schema_or_authority_change": "authority:v1",
 }
 
 
 def enforced_invariants():
     return {"invariants": [
-        {"id": "FM-INV-001", "required": True, "status": "ENFORCED"},
-        {"id": "FM-INV-002", "required": True, "status": "ENFORCED"},
+        {"id": "FM-INV-001", "required": True, "status": "ENFORCED",
+         "revalidate_on": ["schema_or_authority_change"]},
+        {"id": "FM-INV-002", "required": True, "status": "ENFORCED",
+         "revalidate_on": ["schema_or_authority_change"]},
     ]}
 
 
 def verified_gates():
     return {"gates": [
         {"id": "FM-IGATE-A", "applicable": True, "status": "VERIFIED",
-         "contracts": ["FM-CONTRACT-A"], "required_roles": list(ALL_ROLES)},
+         "contracts": ["FM-CONTRACT-A"], "required_roles": list(ALL_ROLES),
+         "evidence_required": ["synthetic semantic proof"]},
         {"id": "FM-IGATE-B", "applicable": True, "status": "VERIFIED",
-         "contracts": ["FM-CONTRACT-B"], "required_roles": list(ALL_ROLES)},
+         "contracts": ["FM-CONTRACT-B"], "required_roles": list(ALL_ROLES),
+         "evidence_required": ["synthetic semantic proof"]},
     ]}
 
 
@@ -75,11 +80,15 @@ def evidence_entry(evidence_id, evidence_class, roles, gates, *, target=TARGET, 
         "roles": roles,
         "gates": gates,
         "invariants": invariants if invariants is not None else ["FM-INV-001", "FM-INV-002"],
+        "requirements": {gate: ["synthetic semantic proof"] for gate in gates},
         "bound_commit": head,
         "target": target,
         "observed_at": "2026-09-21T21:30:00Z",
         "control_plane_fingerprint": CONTROL,
-        "trigger_fingerprints": {trigger: TRIGGERS[trigger] for trigger in triggers},
+        "trigger_fingerprints": {
+            **{trigger: TRIGGERS[trigger] for trigger in triggers},
+            "schema_or_authority_change": TRIGGERS["schema_or_authority_change"],
+        },
         "provenance": {"source": source, "execution_id": execution_id, "independence_key": independence_key},
     }
 
