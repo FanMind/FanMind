@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-21",
+  "task": "FM-GOV-GODMODE-001",
+  "mappings": [
+    {
+      "contract": "FM-CONTRACT-CREATOR-AI-001",
+      "consumers": [
+        "Creator API/routes",
+        "AI context loaders",
+        "reply generation",
+        "confirmed-chat learning"
+      ],
+      "tests": [
+        "Creator tenant/context tests",
+        "AI reply tests"
+      ],
+      "docs": [
+        "docs/CREATOR_INTELLIGENCE.md",
+        "docs/AI_PROMPT_PROFILES.md"
+      ],
+      "gates": [
+        "FM-IGATE-CREATOR-AI-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-CHATADMIN-AI-001",
+      "consumers": [
+        "ChatAdmin APIs",
+        "character context",
+        "suggestion generation",
+        "manual handoff UI"
+      ],
+      "tests": [
+        "ChatAdmin authorization tests",
+        "suggestion count/context tests"
+      ],
+      "docs": [
+        "docs/operations/CHAT_ADMIN_STAGING_ROLLOUT.md"
+      ],
+      "gates": [
+        "FM-IGATE-CHATADMIN-AI-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-CHATADMIN-STORAGE-001",
+      "consumers": [
+        "storage.objects policies",
+        "character profile images",
+        "ChatAdmin storage helpers"
+      ],
+      "tests": [
+        "storage policy/path tests",
+        "cross-workspace negatives"
+      ],
+      "docs": [
+        "docs/operations/CHAT_ADMIN_STAGING_ROLLOUT.md"
+      ],
+      "gates": [
+        "FM-IGATE-CHATADMIN-STORAGE-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-SOCIAL-CRM-001",
+      "consumers": [
+        "provider callbacks",
+        "inbound workers",
+        "contacts",
+        "conversations",
+        "messages"
+      ],
+      "tests": [
+        "inbound idempotency",
+        "tenant mapping",
+        "revocation/delete"
+      ],
+      "docs": [
+        "docs/SOURCE_OF_TRUTH.md"
+      ],
+      "gates": [
+        "FM-IGATE-SOCIAL-CRM-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-REG-ENTITLEMENT-001",
+      "consumers": [
+        "registration",
+        "workspace provisioning",
+        "login routing",
+        "Admin CRM"
+      ],
+      "tests": [
+        "permanent/temp/blocked lifecycle",
+        "direct read/login negatives"
+      ],
+      "docs": [
+        "docs/SOURCE_OF_TRUTH.md"
+      ],
+      "gates": [
+        "FM-IGATE-REG-ENTITLEMENT-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-AI-BILLING-001",
+      "consumers": [
+        "AI cost engine",
+        "usage provider metrics",
+        "tier entitlements",
+        "Stripe bridge",
+        "referral/billing projection"
+      ],
+      "tests": [
+        "cost arithmetic",
+        "malformed usage",
+        "ledger ordering/idempotency"
+      ],
+      "docs": [
+        "docs/AI_COST_MONITORING.md"
+      ],
+      "gates": [
+        "FM-IGATE-AI-BILLING-001"
+      ]
+    },
+    {
+      "contract": "FM-CONTRACT-DISCLOSURE-DELETE-001",
+      "consumers": [
+        "Creator disclosure",
+        "ChatAdmin disclosure",
+        "contact/account delete",
+        "provider cleanup"
+      ],
+      "tests": [
+        "disclosure completeness",
+        "exact-tenant delete",
+        "cross-tenant negatives"
+      ],
+      "docs": [
+        "docs/legal/RETENTION_REGISTER.md"
+      ],
+      "gates": [
+        "FM-IGATE-DISCLOSURE-DELETE-001"
+      ]
+    }
+  ]
+}

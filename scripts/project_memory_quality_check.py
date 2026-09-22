@@ -35,6 +35,12 @@ required = [
     "FANMIND_DEEP_AUDIT_2026-08-19.md",
     "LEGACY_ISSUE_RECONCILIATION.json",
     "LEGACY_ISSUE_RECONCILIATION.md",
+    "GOD_MODE_POLICY.md",
+    "SYSTEM_INVARIANTS.json",
+    "CONTRACT_REGISTRY.json",
+    "INTEGRATION_GATES.json",
+    "IMPACT_MAP.json",
+    "RELEASE_DECISION.json",
 ]
 errors = []
 for name in required:
@@ -212,6 +218,8 @@ for script_name in [
     "fanmind_drift_preflight.py",
     "fanmind_milestone_snapshot_check.py",
     "fanmind_legacy_issue_reconciliation.py",
+    "fanmind_god_mode_preflight.py",
+    "fanmind_release_decision.py",
 ]:
     if not (ROOT / "scripts" / script_name).exists():
         errors.append(f"memory-script-missing:{script_name}")

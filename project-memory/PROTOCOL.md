@@ -126,3 +126,15 @@ Reuse permissions documented in `AUTHORIZATIONS.md` without asking again where t
 **Project memory -> canonical/live truth -> finishline/external/deferred state -> evidence freshness/drift -> next-best-action selection -> previous attempts -> risk/assumptions -> started-work/lock -> dependencies/evidence plan -> action -> independent countercheck -> reconciliation -> execution receipt -> milestone snapshot/memory update.**
 
 Never store passwords, API keys, private tokens, plaintext backup material, secret values or private credentials here.
+
+
+## God Mode v1 mandatory readers
+When `FM-GOV-GODMODE-001` exists, every substantive project-state/release/integration decision must also read:
+- `GOD_MODE_POLICY.md`
+- `SYSTEM_INVARIANTS.json`
+- `CONTRACT_REGISTRY.json`
+- `INTEGRATION_GATES.json`
+- `IMPACT_MAP.json`
+- `RELEASE_DECISION.json`
+
+Contract/schema/API/AI-context/Billing/disclosure/Social changes require consumer-impact and integration-gate revalidation. `ALLOW` is never inferred from green CI or a merge. Protected owner/environment actions remain separately gated.

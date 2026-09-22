@@ -1,0 +1,43 @@
+name: FanMind God Mode Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  god-mode:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate God Mode registries
+        run: python3 scripts/fanmind_god_mode_preflight.py --check
+      - name: Prove fail-closed release decision
+        run: python3 scripts/fanmind_release_decision.py --check
+      - name: Run God Mode adversarial tests
+        env:
+          FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC: "1"
+        run: |
+          set +e
+          python3 -m unittest -v tests/test_fanmind_god_mode.py tests/test_fanmind_god_mode_review_hardening.py tests/test_fanmind_god_mode_review_round8.py tests/test_fanmind_god_mode_review_round9.py tests/test_fanmind_god_mode_review_round10.py tests/test_fanmind_god_mode_review_round12.py tests/test_fanmind_god_mode_review_round13.py tests/test_fanmind_god_mode_review_round14.py tests/test_fanmind_god_mode_review_round15.py > /tmp/fanmind-god-mode-tests.log 2>&1
+          rc=$?
+          cat /tmp/fanmind-god-mode-tests.log
+          exit "$rc"
+      - name: Upload adversarial test diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-god-mode-tests-${{ github.sha }}
+          path: /tmp/fanmind-god-mode-tests.log
+          if-no-files-found: error
+          retention-days: 1
+      - name: Revalidate Project Memory
+        run: |
+          python3 scripts/project_memory_quality_check.py
+          python3 scripts/fanmind_next_best_action.py --check
+          python3 scripts/fanmind_memory_v8.py --check

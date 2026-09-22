@@ -46,3 +46,16 @@ Before COUNTERCHECKED answer: `What observation would prove our conclusion wrong
 
 ## Milestone closeout
 Before declaring a FanMind milestone/phase complete, reconcile all related tasks, STARTED_WORK, OPEN_LOOPS, dependencies, failed attempts, change requests, PRs, CI/security/operations gates, assumptions, contradictions and evidence. Any unresolved item is explicitly carried forward; it may never disappear because a phase label changed.
+
+
+## God Mode v1 overlay
+For substantive R2+ work, current Project Memory must also identify affected `FM-CONTRACT-*` and `FM-IGATE-*` records when applicable. A local/module success does not close an integration gate.
+
+Before a release or protected activation can be treated as technically clear:
+- all required applicable `SYSTEM_INVARIANTS.json` entries must be `ENFORCED`;
+- all affected `INTEGRATION_GATES.json` entries must be `VERIFIED`;
+- `IMPACT_MAP.json` consumers/tests/docs/rollouts must be reconciled after contract/schema/API/AI-context/Billing/disclosure/Social changes;
+- `RELEASE_DECISION.json` may contain only `ALLOW`, `BLOCK` or `OWNER_REQUIRED`;
+- `ALLOW` is forbidden with missing/stale evidence, P1/P2, pending/red required checks, unresolved review threads, reconciliation flags, unmet dependencies or a protected action still requiring owner/environment approval.
+
+For R3/R4, the countercheck must include at least one relevant fail-closed/adversarial proof when bounded and technically meaningful. Passing the God Mode CI validates the control plane, not Production/Staging acceptance.

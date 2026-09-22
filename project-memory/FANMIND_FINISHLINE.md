@@ -40,3 +40,10 @@ Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Pha
 7. Final Production demo and technical Sales Handoff.
 8. Phase 7b Creator Intelligence development has resumed now under FM-DEC-015, before Android. It is not an additional Sales Handoff gate.
 9. After accepted Phase 7b: further Phase 8 work, preserving the historically started disabled Website-AI foundation.
+
+
+## 2026-09-21 ChatAdmin VERIFY / God Mode checkpoint
+- Protected read-only ChatAdmin Staging VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
+- APPLY and ACCEPT were skipped. The observation dependency is satisfied; schema installation/runtime acceptance remain open.
+- Next bounded repository step: `FM-GOV-GODMODE-001` God Mode v1. This gate is not required_for_sales by itself but must complete before the separately protected ChatAdmin APPLY path.
+- A later APPLY owner action remains NOT_READY until God Mode v1 is cleanly merged/reconciled.

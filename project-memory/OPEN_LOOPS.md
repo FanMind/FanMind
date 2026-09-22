@@ -172,7 +172,15 @@ This register contains started, partially completed or follow-up work that could
 - Next: local/full verification, publish exactly one bounded PR, then wait for Current-Head CI/CodeQL/Browser E2E and one independent Codex review without P1/P2. Do not merge.
 
 ## FM-LOOP-CHATADMIN-STAGING-20260920
-- Status: SOURCE_MERGED_VERIFY_PENDING; task FM-CHATADMIN-002; Updated: 2026-09-21.
-- PR #1146 merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed. Source work is closed.
-- Current open loop is only the protected READ-ONLY Staging VERIFY. Record exact result as ABSENT, PARTIAL or VERIFIED; do not infer APPLY/ACCEPT/activation from source merge.
+- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-21.
+- PR #1146 merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed.
+- Protected read-only Staging VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT skipped.
+- This closes the observation loop only. The distinct later APPLY path is blocked behind God Mode v1 and separate owner authorization.
 - Separate Operations loop remains `production_audit_backup_latest_stale_or_empty`; do not conflate it with ChatAdmin.
+
+
+## FM-LOOP-GODMODE-20260921
+- Status: OPEN; task FM-GOV-GODMODE-001; Updated: 2026-09-21.
+- Goal: merge the bounded repository-only God Mode v1 control plane with fail-closed release decision, system invariants, contract/integration registries, impact mapping, adversarial proof and Post-Merge Guardian policy.
+- Current branch: `governance/god-mode-v1-20260921`.
+- Next: complete current-head CI/CodeQL/Project Memory and independent review without P1/P2, then merge/reconcile. No protected Staging/Production action is part of this loop.

@@ -784,6 +784,19 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: revert this single source commit; no external state was mutated.
 
 ## LOCK-FM-CHATADMIN-STAGING-20260920
-- Task: FM-CHATADMIN-002; holder: Codex Cloud; risk: R3; status: RELEASED_SOURCE_MERGED_VERIFY_PENDING; Updated: 2026-09-21.
-- Repository source scope closed by PR #1146 -> main `648912cc2e9958cc8bc2e39c11b7977dabff862b`. No source-build lock remains.
-- Protected READ-ONLY Staging VERIFY is the next separate gate. No APPLY/ACCEPT/real capability/Production action is authorized by this released source lock.
+- Task: FM-CHATADMIN-002; holder: Codex Cloud; risk: R3; status: RELEASED_VERIFY_COMPLETE; Updated: 2026-09-21.
+- Repository source scope closed by PR #1146 -> main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
+- Protected read-only run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` returned `ABSENT`; APPLY/ACCEPT skipped.
+- No ChatAdmin source/VERIFY lock remains. A later APPLY requires a distinct R4 protected owner action after God Mode v1.
+
+
+## LOCK-FM-GOV-GODMODE-001-20260921
+- Task: FM-GOV-GODMODE-001
+- Status: ACTIVE
+- Risk: R3
+- Holder: ChatGPT / connected GitHub
+- Baseline: exact main `973e70f6d243984d95ec1420a79701faad04a39a`; ChatAdmin VERIFY run `35652258052` result `ABSENT`.
+- Branch: `governance/god-mode-v1-20260921`.
+- Scope: repository-only governance/integration control plane and Project Memory reconciliation. No external mutation.
+- Evidence plan: God Mode preflight, release-decision fail-closed tests, Project Memory checks, current-head CI/CodeQL and independent review.
+- Recovery: source revert only.

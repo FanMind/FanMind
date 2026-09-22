@@ -441,3 +441,17 @@ After changing code:
 2. Mention affected files.
 3. Call out any migration, environment, security, RLS, AI-cost or production-deploy impact.
 4. Update reader/source-of-truth documentation if product truth, pricing, referral logic, demo path, integrations, billing or AI behavior changed.
+
+
+## FanMind God Mode v1 guardrails
+
+The canonical God Mode v1 control plane is under `project-memory/GOD_MODE_POLICY.md`, `SYSTEM_INVARIANTS.json`, `CONTRACT_REGISTRY.json`, `INTEGRATION_GATES.json`, `IMPACT_MAP.json` and `RELEASE_DECISION.json`.
+
+For substantive R2+ work:
+- identify affected `FM-CONTRACT-*` consumers and `FM-IGATE-*` boundaries;
+- treat missing/stale/contradictory evidence as blocking;
+- never infer integration success from a local/module green result;
+- preserve the registered invariants, especially tenant isolation, ChatAdmin authority separation, no browser service_role, no Social/OnlyFans auto-send V1, Creator/Character isolation, payment gates, controlled migration separation, evidence quorum, auto-merge blockers and secret handling;
+- run the God Mode preflight/release-decision/adversarial tests before merge when the gate applies.
+
+`RELEASE_DECISION` is limited to `ALLOW`, `BLOCK`, `OWNER_REQUIRED`. A passing God Mode CI gate does not authorize Staging/Production mutation. Owner/environment-protected actions remain distinct even when technical evidence is otherwise clean.

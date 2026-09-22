@@ -4,25 +4,26 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CHATADMIN-STAGING-VERIFY`
-- Task: `FM-CHATADMIN-002`
-- Gate: `chatadmin_staging_verify` (`IMPLEMENTED_NOT_VERIFIED`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Gemergten ChatAdmin-Stand read-only auf Staging verifizieren
+- Selected action: `NBA-GOV-GODMODE-001`
+- Task: `FM-GOV-GODMODE-001`
+- Gate: `governance_god_mode` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: FanMind God Mode v1 fail-closed integrieren
 
 ## Instruction
 
-PR #1146 source is merged and preserved in current main. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema. Set reviewed_commit to the exact current main SHA at dispatch time; that main must contain source merge 648912cc2e9958cc8bc2e39c11b7977dabff862b as an ancestor. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work.
+Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Candidate evaluation
 
-- `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-GOV-GODMODE-001` priority 3: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-INTELLIGENCE` priority 5: **DEFERRED_BY_OWNER** — FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required

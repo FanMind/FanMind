@@ -20,7 +20,7 @@
         "VERIFIED",
         "RECONCILED"
       ],
-      "instruction": "PR #1146 source is merged and preserved in current main. Run only protected FanMind ChatAdmin Staging Rollout mode VERIFY with confirmation verify-chat-admin-schema. Set reviewed_commit to the exact current main SHA at dispatch time; that main must contain source merge 648912cc2e9958cc8bc2e39c11b7977dabff862b as an ancestor. Record exact ABSENT/PARTIAL/VERIFIED. VERIFY never authorizes APPLY/ACCEPT. Reconcile the result, then execute FM-GOV-GODMODE-001 before any ChatAdmin APPLY/ACCEPT or broader new feature work."
+      "instruction": "Completed read-only VERIFY run 35652258052 / job 106507223598 on exact main 973e70f6d243984d95ec1420a79701faad04a39a returned ABSENT; APPLY and ACCEPT were skipped. This action is complete. Do not repeat VERIFY merely because main advances. Proceed through FM-GOV-GODMODE-001 before any separate ChatAdmin APPLY request."
     },
     {
       "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
@@ -240,6 +240,26 @@
       ],
       "instruction": "FM-CR-045 is PRODUCTION_CONFIRMED by canonical PR #1138 (final head cea0d43108187a4dcd2510f17798f250d4a3c429, merge ccfe0ccef743e889d4ea16d454282cf66e465ed9), Production Deploy 35450031498, Production Audit 35450097882 and Public Go-Live Readiness 35450097892. Do not repeat its placeholder/OAuth fail-closed source work. The remaining step is owner/provider-controlled secure configuration of the real central Meta App ID/secret, exact FanMind callback, token-encryption key and matching permissions, followed by the bounded Facebook connection/inbound proof. No secrets in chat/Git; Instagram follows only after Facebook acceptance. Payment, automatic send and Mobile stay deferred.",
       "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
+    },
+    {
+      "id": "NBA-GOV-GODMODE-001",
+      "priority": 3,
+      "task": "FM-GOV-GODMODE-001",
+      "gate": "governance_god_mode",
+      "title": "FanMind God Mode v1 fail-closed integrieren",
+      "requires_owner": false,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "COUNTERCHECKED",
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically."
     }
   ],
   "retired_actions": [

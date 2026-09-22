@@ -511,7 +511,19 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Status: SOURCE_MERGED_VERIFY_PENDING; Risk: R3; Decision: FM-DEC-022; Updated: 2026-09-21.
+- Status: VERIFIED; Risk: R3; Decision: FM-DEC-022; Updated: 2026-09-21.
 - PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head gates and independent review, then merged as main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
-- Repository source is closed for this bounded package. Schema state is still externally unobserved; Storage policy, APPLY/ACCEPT, real capability and Production activation remain unapplied/unaccepted.
-- Exact next step: protected READ-ONLY ChatAdmin Staging `VERIFY` only. Reconcile ABSENT/PARTIAL/VERIFIED before God Mode v1 or any later APPLY/ACCEPT path.
+- Protected read-only run `35652258052` / job `106507223598` executed exact main `973e70f6d243984d95ec1420a79701faad04a39a` and returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT were skipped.
+- The observation gate is closed without claiming schema installation or runtime acceptance. A later Staging APPLY remains a separate R4 owner/environment action.
+- Exact next step: complete and merge `FM-GOV-GODMODE-001`; only then prepare the separate protected ChatAdmin APPLY request for the observed ABSENT state.
+
+
+## FM-GOV-GODMODE-001 — FanMind God Mode v1
+- Date: 2026-09-21
+- Status: IN_PROGRESS
+- Risk: R3
+- Goal: add one fail-closed governance/integration control plane that extends existing Project Memory without creating a parallel task system.
+- Scope: repository-only policy, system invariants, stable FM-CONTRACT registry, FM-IGATE integration gates, impact map, release decision engine, adversarial/negative proof, synthetic golden-flow registry, Post-Merge Guardian policy and CI gate.
+- Dependencies: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921 SATISFIED by run `35652258052`; FM-DEP-GODMODE-001 ACTIVE.
+- Prohibited: no Staging/Production APPLY/ACCEPT/write, DB/provider/Billing/Stripe/Tax/Restore/Mobile mutation, capability grant or secret handling.
+- Acceptance: current-head God Mode gate + Project Memory controls + independent review without P1/P2; release decision remains fail-closed unless exact evidence quorum is satisfied.

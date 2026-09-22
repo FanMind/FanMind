@@ -120,7 +120,26 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - From: FM-CHATADMIN-002
 - Requires: merged reviewed source PR #1146 source commit `648912cc2e9958cc8bc2e39c11b7977dabff862b` present in current `main`; protected `staging` environment; `reviewed_commit` equal to the exact current `main` SHA at dispatch time; read-only mode `VERIFY`; confirmation `verify-chat-admin-schema`; no write acknowledgement.
 - Type: protected read-only external observation
-- Status: READY_OWNER_ACTION
+- Status: SATISFIED
 - Updated: 2026-09-21
-- Result contract: record exactly one of ABSENT, PARTIAL or VERIFIED from the merged workflow. VERIFY never authorizes APPLY/ACCEPT, capability grants or Production activation.
+- Evidence: protected run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` completed read-only VERIFY and returned `ABSENT`; APPLY/ACCEPT skipped.
+- Result contract: observed result is exactly ABSENT. VERIFY never authorizes APPLY/ACCEPT, capability grants or Production activation.
 - Downstream: reconcile the exact result first; only then proceed to FM-GOV-GODMODE-001. If ABSENT, prepare a separate later APPLY owner action after God Mode v1 merge; if PARTIAL, bounded reconciliation/fix before any apply request; if VERIFIED, never re-apply and continue after God Mode to the actually missing acceptance/runtime step.
+
+
+## FM-DEP-GODMODE-001
+- From: FM-GOV-GODMODE-001
+- Requires: satisfied ChatAdmin read-only observation dependency; current Project Memory; repository-only implementation of system invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests and CI gate.
+- Type: repository governance + integration control
+- Status: ACTIVE
+- Updated: 2026-09-21
+- Evidence baseline: ChatAdmin VERIFY run `35652258052` / job `106507223598` returned `ABSENT` on exact main `973e70f6d243984d95ec1420a79701faad04a39a`.
+- Rule: God Mode must not perform Staging/Production mutation. Its merge is required before a separate ChatAdmin APPLY owner action may become READY_NOW.
+
+## FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921
+- From: FM-CHATADMIN-002
+- Requires: exact observed Staging state `ABSENT`; cleanly merged and reconciled `FM-GOV-GODMODE-001`; fresh current-main/target binding; separate protected owner authorization.
+- Type: protected Staging write
+- Status: BLOCKED
+- Updated: 2026-09-21
+- Rule: God Mode merge does not itself authorize APPLY. The owner action becomes READY_NOW only after the governance gate is verified/reconciled.
