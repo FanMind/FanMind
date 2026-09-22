@@ -158,7 +158,8 @@ def _authenticate_attestation(
     )
     if not isinstance(key_bytes, bytes) or len(key_bytes) < 32:
         blockers.append("attestation:protected_key_unavailable")
-    if attestation.get("schema_version") != 1:
+    schema_version = attestation.get("schema_version")
+    if type(schema_version) is not int or schema_version != 1:
         blockers.append("attestation:schema_invalid")
     if attestation.get("issuer") != ATTESTATION_ISSUER:
         blockers.append("attestation:issuer_invalid")
@@ -279,7 +280,7 @@ def _scope_risk_floor(affected: list[str], contracts: dict[str, dict]) -> tuple[
         if contract is None:
             continue
         minimum = contract.get("minimum_risk")
-        if minimum not in RISK_ORDER:
+        if not isinstance(minimum, str) or minimum not in RISK_ORDER:
             blockers.append(f"contract:risk_floor_invalid:{contract_id}")
             continue
         if RISK_ORDER[minimum] > RISK_ORDER[floor]:
@@ -429,8 +430,9 @@ def _validate_bound_evidence(
             blockers.append(f"release_evidence:unknown:{evidence_id}")
             continue
         bad = False
-        if entry.get("status") not in CURRENT_EVIDENCE_STATES:
-            blockers.append(f"release_evidence:not_current:{evidence_id}:{entry.get('status')}")
+        status = entry.get("status")
+        if not isinstance(status, str) or status not in CURRENT_EVIDENCE_STATES:
+            blockers.append(f"release_evidence:not_current:{evidence_id}:{status}")
             bad = True
         if entry.get("bound_commit") != actual_head or binding.get("commit") != actual_head:
             blockers.append(f"release_evidence:commit_mismatch:{evidence_id}")
@@ -560,6 +562,7 @@ def _validate_bound_evidence(
             evidence_id
             for evidence_id, entry in valid.items()
             if invariant_id in _entry_set(entry, "invariants", "invariant")
+            and bool(_entry_roles(entry) & required_roles)
         }
         participating.update(ids)
         if not ids:
@@ -662,7 +665,7 @@ def evaluate_release_decision(
     risk_floor, risk_errors = _scope_risk_floor(affected, contract_by_id)
     blockers.extend(risk_errors)
     effective_risk: str | None = None
-    if declared_risk not in RISK_ORDER:
+    if not isinstance(declared_risk, str) or declared_risk not in RISK_ORDER:
         blockers.append("release_input:risk")
     elif RISK_ORDER[declared_risk] < RISK_ORDER[risk_floor]:
         blockers.append(f"release_input:risk_below_scope_floor:{declared_risk}<{risk_floor}")
