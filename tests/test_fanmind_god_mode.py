@@ -63,8 +63,10 @@ def verified_gates():
 
 def active_contracts(minimum_risk="R3"):
     return {"schema_version": 1, "contracts": [
-        {"id": "FM-CONTRACT-A", "status": "ACTIVE", "minimum_risk": minimum_risk},
-        {"id": "FM-CONTRACT-B", "status": "ACTIVE", "minimum_risk": minimum_risk},
+        {"id": "FM-CONTRACT-A", "status": "ACTIVE", "minimum_risk": minimum_risk,
+         "revalidate_on": ["schema_or_authority_change"]},
+        {"id": "FM-CONTRACT-B", "status": "ACTIVE", "minimum_risk": minimum_risk,
+         "revalidate_on": ["schema_or_authority_change"]},
     ]}
 
 
