@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import stat
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -171,6 +172,35 @@ def _evidence_boundary_shape_blockers(
     return blockers
 
 
+def _invalidation_marker_blockers(attestation: dict | None) -> list[str]:
+    """Reject malformed present invalidation markers before truthiness checks.
+
+    The absence of a marker means current evidence. A present marker must be a
+    concrete, non-empty string; falsey containers/booleans/empty strings are not
+    a second representation of "not invalidated" and may never normalize into
+    current evidence. Valid non-empty markers continue to be rejected by the
+    inherited evaluator as invalidated/superseded evidence.
+    """
+    if not isinstance(attestation, dict):
+        return []
+    evidence = attestation.get("evidence")
+    if not isinstance(evidence, list):
+        return []
+    blockers: list[str] = []
+    for entry in evidence:
+        if not isinstance(entry, dict):
+            continue
+        evidence_id = entry.get("id")
+        marker = evidence_id if isinstance(evidence_id, str) and evidence_id else "unknown"
+        for field in ("invalidated_by", "superseded_by"):
+            if field not in entry:
+                continue
+            value = entry.get(field)
+            if not isinstance(value, str) or not value.strip():
+                blockers.append(f"release_evidence:{field}_invalid:{marker}")
+    return blockers
+
+
 def _invariant_registry_blockers(invariants: dict) -> list[str]:
     items = invariants.get("invariants") if isinstance(invariants, dict) else None
     if not isinstance(items, list):
@@ -228,13 +258,13 @@ def _persisted_completeness_blockers(snapshot: dict) -> list[str]:
     """A persisted non-BLOCK decision must prove all completeness flags.
 
     Synthetic pure-evaluator fixtures historically omit the persisted decision
-    field. That is safe only outside canonical runtime mode. The canonical CLI
-    and the canonical Project-Memory snapshot are identified independently by
-    the runtime flag/task marker, so deleting `decision` cannot select a weaker
-    test path. A declared BLOCK remains allowed to record incomplete evidence.
+    field. That remains safe only under the explicit test-only synthetic mode.
+    Canonical direct evaluation is now the default and no contributor-controlled
+    task marker can select a weaker path. A declared BLOCK remains allowed to
+    record incomplete evidence.
     """
     decision = snapshot.get("decision")
-    canonical = _current._CANONICAL_CLI_ACTIVE or snapshot.get("task") == _current.CANONICAL_GOD_MODE_TASK
+    canonical = _current._canonical_runtime_mode(snapshot)
 
     if decision in {"ALLOW", "OWNER_REQUIRED"}:
         return [
@@ -386,6 +416,7 @@ def _round12_input_blockers(
         *_snapshot_shape_blockers(snapshot),
         *_timestamp_shape_blockers(attestation, current_trigger_state),
         *_evidence_boundary_shape_blockers(attestation, invariants, integration),
+        *_invalidation_marker_blockers(attestation),
         *_invariant_registry_blockers(invariants),
         *_impact_registry_blockers(contracts, impact),
     ]
@@ -493,6 +524,23 @@ _base.evaluate_release_decision = evaluate_release_decision
 
 
 def main() -> int:
+    # Reject a malformed persisted release document before the inherited CLI can
+    # dereference `.get()` after evaluation. This produces a controlled BLOCK and
+    # non-zero result instead of a traceback for valid JSON scalars/lists or a
+    # malformed/unreadable exact-HEAD blob.
+    try:
+        release_snapshot = _load_head_project_memory("RELEASE_DECISION.json")
+    except Exception as exc:
+        print("FANMIND_RELEASE_DECISION=BLOCK")
+        print(f"FANMIND_RELEASE_REASON=release_input:snapshot_load_invalid:{type(exc).__name__}")
+        return 1
+    if not isinstance(release_snapshot, dict):
+        print("FANMIND_RELEASE_DECISION=BLOCK")
+        print("FANMIND_RELEASE_REASON=release_input:snapshot_invalid")
+        if "--check" in sys.argv:
+            print("FANMIND_RELEASE_DECISION_MISMATCH=declared:invalid:computed:BLOCK")
+        return 1
+
     previous_cli_evaluator = _current._cli_evaluate_release_decision
     previous_load = _base.load
     _current._cli_evaluate_release_decision = _round12_cli_evaluate_release_decision
