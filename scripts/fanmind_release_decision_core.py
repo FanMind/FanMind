@@ -123,21 +123,16 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
     Canonical trust is the default for every direct evaluator call. Contributor-
     controlled task markers never select a weaker mode. The sole opt-out requires
     the dedicated test environment marker plus either the harmless exact
-    `repository:synthetic` target used by review fixtures, or the exact A/B
-    synthetic contract/gate fixture identities used for namespace-negative
-    tests. Real FanMind registries remain canonical even if the test variable is
-    accidentally present.
+    `repository:synthetic` target used by noncanonical review fixtures, or the
+    exact A/B synthetic registry identities used for namespace-negative tests.
+    Presence of any real canonical registry identity forces canonical mode even
+    when the test variable or synthetic-looking snapshot fields are supplied.
     """
     if _CANONICAL_CLI_ACTIVE:
         return True
     if os.environ.get(TEST_ONLY_SYNTHETIC_ENV) != "1":
         return True
 
-    synthetic_repository_target = any(
-        isinstance(document, dict)
-        and document.get("evaluated_target") == TEST_ONLY_SYNTHETIC_TARGET
-        for document in documents
-    )
     contract_documents = [
         document for document in documents
         if isinstance(document, dict) and "contracts" in document
@@ -146,11 +141,22 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
         document for document in documents
         if isinstance(document, dict) and "gates" in document
     ]
+    if any(_ids(document, "contracts") == REQUIRED_CONTRACT_IDS for document in contract_documents):
+        return True
+    if any(_ids(document, "gates") == REQUIRED_GATE_IDS for document in gate_documents):
+        return True
+
+    synthetic_repository_target = any(
+        isinstance(document, dict)
+        and document.get("evaluated_target") == TEST_ONLY_SYNTHETIC_TARGET
+        for document in documents
+    )
     synthetic_registry_pair = (
         any(_ids(document, "contracts") == TEST_ONLY_SYNTHETIC_CONTRACT_IDS for document in contract_documents)
         and any(_ids(document, "gates") == TEST_ONLY_SYNTHETIC_GATE_IDS for document in gate_documents)
     )
-    synthetic_snapshot = any(
+    no_registry_documents = not contract_documents and not gate_documents
+    synthetic_snapshot = no_registry_documents and any(
         isinstance(document, dict)
         and isinstance(document.get("affected_contracts"), list)
         and set(document.get("affected_contracts", [])) == TEST_ONLY_SYNTHETIC_CONTRACT_IDS
