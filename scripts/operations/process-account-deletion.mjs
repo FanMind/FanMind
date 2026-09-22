@@ -147,7 +147,7 @@ function normalizeOwnedWorkspaceIds(values) {
   return normalized;
 }
 
-async function persistOwnedWorkspaceInventory(
+export async function persistOwnedWorkspaceInventory(
   fetchImpl,
   config,
   request,
