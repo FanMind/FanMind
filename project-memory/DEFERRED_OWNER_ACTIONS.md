@@ -1,9 +1,10 @@
 ## FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 — Creator Feature-Arbeit nach ChatAdmin VERIFY/God Mode fortsetzen
-- Status: DEFERRED_BY_OWNER
+- Status: RESOLVED
 - Task: FM-CREATOR-001
-- Reason: Owner sequence on 2026-09-21 requires the merged ChatAdmin source to receive its protected READ-ONLY Staging VERIFY, exact result reconciliation, and then `FM-GOV-GODMODE-001` before broader new feature work.
+- Reason: Owner sequence on 2026-09-21 required the merged ChatAdmin source to receive its protected READ-ONLY Staging VERIFY, exact result reconciliation, and then `FM-GOV-GODMODE-001` before broader new feature work.
 - Resume trigger: exact ChatAdmin VERIFY result reconciled and God Mode v1 merged cleanly.
-- Preserve: all accepted Creator source/Staging evidence; do not rebuild accepted work during the deferral.
+- Resolution 2026-09-22: VERIFY run `35652258052` / job `106507223598` is consumed as `ABSENT`; PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as `1c5e1232f0893b0730a985c6e717b5c27c535f35`. The deferral is lifted for bounded repository-only Creator continuation. No ChatAdmin APPLY/ACCEPT or runtime/provider activation is authorized by this resolution.
+- Preserve: all accepted Creator source/Staging evidence; do not rebuild accepted work.
 
 # Deferred Owner Actions
 
@@ -99,7 +100,7 @@ Updated: 2026-09-07 Europe/Vienna
 - Related task: `FM-MOB-001`.
 - Status: RESOLVED.
 - Prior blocker: exact read-only run `33000433320`, job `98280538304`, failed closed when the protected Preview binding was still blank.
-- Resolution evidence: protected exact-merge run `33298699290`, job `99222705186`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, redacted receipt and cleanup. The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation on that build. Submit, Update and Production remained disabled.
+- Resolution evidence: protected exact-merge run `33298699290`, job `99222705186`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, redacted receipt and cleanup. Submit, Update and Production remained disabled.
 - Remaining owner action: the complete receipt-bound 19-check Android runbook/private validator and the separate Supabase Auth redirect/recovery proof remain open under their existing external controls; iOS is Phase 8 and Store/push are separate. Never expose credential or artifact values in Project Memory.
 - Safety: successful Preview configuration does not authorize EAS project reinitialization, another automatic build, Submit, Update, Store action, Supabase/Auth/DB mutation or Production-target crossover.
 
