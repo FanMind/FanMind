@@ -782,7 +782,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: ACTIVE.
 - Baseline: exact main `3ec6115612f1e2b9cf58d2d2064fbb7a561b2f6b`.
-- Scope: repository-only controlled `owned_workspace_ids` contract/checker and fail-closed Operations persistence/resume proof. No target Apply or real deletion.
+- Scope: repository-only controlled `owned_workspace_ids` + service-role-only atomic transition RPC contract/checker and fail-closed Operations persistence/resume proof. The RPC owns the destructive-start snapshot/transition boundary; no target Apply or real deletion.
 - Evidence plan: checksum/contract negatives, multi-Workspace persistence, missing contract/inventory failures before destructive completion, current-head CI/CodeQL/Browser and one independent review.
 - Recovery: source/docs revert; the controlled schema contract remains unapplied.
 
