@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 import importlib.util
 import pathlib
+import subprocess
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -20,6 +22,7 @@ CONTROL = "c" * 64
 OTHER_CONTROL = "d" * 64
 KEY = "test-only-protected-attestation-key-000000000000"
 ALL_ROLES = ["implementation", "countercheck", "negative", "recovery"]
+ALL_INVARIANTS = [f"FM-INV-{i:03d}" for i in range(1, 13)]
 TRIGGERS = {
     "head_changed": "head:a",
     "workflow_contract_changed": "workflow:v1",
@@ -30,22 +33,31 @@ TRIGGERS = {
 
 
 def enforced_invariants():
-    return {"schema_version": 1, "invariants": [
-        {"id": "FM-INV-001", "required": True, "status": "ENFORCED", "risk": "R3",
-         "revalidate_on": ["schema_or_authority_change"]},
-        {"id": "FM-INV-002", "required": True, "status": "ENFORCED", "risk": "R3",
-         "revalidate_on": ["schema_or_authority_change"]},
-    ]}
+    return {
+        "schema_version": 1,
+        "invariants": [
+            {
+                "id": invariant_id,
+                "required": True,
+                "status": "ENFORCED",
+                "risk": "R3",
+                "revalidate_on": ["schema_or_authority_change"],
+            }
+            for invariant_id in ALL_INVARIANTS
+        ],
+    }
 
 
 def verified_gates():
     return {"schema_version": 1, "gates": [
         {"id": "FM-IGATE-A", "applicable": True, "status": "VERIFIED",
          "contracts": ["FM-CONTRACT-A"], "required_roles": list(ALL_ROLES),
-         "evidence_required": ["synthetic semantic proof"]},
+         "evidence_required": ["synthetic semantic proof"],
+         "evidence_required_roles": {"synthetic semantic proof": "negative"}},
         {"id": "FM-IGATE-B", "applicable": True, "status": "VERIFIED",
          "contracts": ["FM-CONTRACT-B"], "required_roles": list(ALL_ROLES),
-         "evidence_required": ["synthetic semantic proof"]},
+         "evidence_required": ["synthetic semantic proof"],
+         "evidence_required_roles": {"synthetic semantic proof": "negative"}},
     ]}
 
 
@@ -79,7 +91,7 @@ def evidence_entry(evidence_id, evidence_class, roles, gates, *, target=TARGET, 
         "class": evidence_class,
         "roles": roles,
         "gates": gates,
-        "invariants": invariants if invariants is not None else ["FM-INV-001", "FM-INV-002"],
+        "invariants": invariants if invariants is not None else list(ALL_INVARIANTS),
         "requirements": {gate: ["synthetic semantic proof"] for gate in gates},
         "bound_commit": head,
         "target": target,
@@ -91,6 +103,18 @@ def evidence_entry(evidence_id, evidence_class, roles, gates, *, target=TARGET, 
         },
         "provenance": {"source": source, "execution_id": execution_id, "independence_key": independence_key},
     }
+
+
+def signed_trigger_state(state=None):
+    value = {
+        "schema_version": 1,
+        "issuer": MODULE.TRIGGER_STATE_ISSUER,
+        "issued_at": "2026-09-21T21:59:00Z",
+        "expires_at": "2026-09-21T22:04:00Z",
+        "state": dict(TRIGGERS if state is None else state),
+    }
+    value["signature"] = MODULE.sign_attestation(value, KEY)
+    return value
 
 
 def current_evidence(target=TARGET, head=HEAD):
@@ -175,6 +199,7 @@ def evaluate(snapshot=None, invariants=None, gates=None, contracts=None, impact=
         now=NOW,
         attestation=attestation if attestation is not None else signed_attestation(target=actual_target, head=actual_head, control=control),
         attestation_key=key,
+        current_trigger_state=signed_trigger_state(),
     )
 
 
@@ -386,6 +411,75 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         snapshot = clean_snapshot()
         snapshot["evidence_bindings"].append(dict(snapshot["evidence_bindings"][0]))
         self.assertIn("release_evidence:duplicate_binding:EV-IMPLEMENTATION", evaluate(snapshot=snapshot)[1])
+
+    def test_truncated_or_optionalized_canonical_invariants_fail_closed(self):
+        inv = enforced_invariants()
+        inv["invariants"].pop()
+        self.assertIn("invariant:canonical_set_invalid", evaluate(invariants=inv)[1])
+        inv = enforced_invariants()
+        inv["invariants"][0]["required"] = False
+        self.assertIn("invariant:required_not_true:FM-INV-001", evaluate(invariants=inv)[1])
+
+    def test_implementation_only_accepted_evidence_fails_closed(self):
+        entries = current_evidence()
+        entries[0]["status"] = "ACCEPTED"
+        reasons = evaluate(attestation=signed_attestation(entries))[1]
+        self.assertIn(
+            "release_evidence:implementation_only_acceptance:EV-IMPLEMENTATION:ACCEPTED",
+            reasons,
+        )
+
+    def test_semantic_requirement_must_be_claimed_by_expected_role(self):
+        entries = current_evidence()
+        negative = next(entry for entry in entries if entry["id"] == "EV-NEGATIVE")
+        negative["requirements"] = {
+            "FM-IGATE-A": ["other negative proof"],
+            "FM-IGATE-B": ["other negative proof"],
+        }
+        reasons = evaluate(attestation=signed_attestation(entries))[1]
+        self.assertIn(
+            "release_evidence:gate_requirement_role_missing:FM-IGATE-A:negative:synthetic semantic proof",
+            reasons,
+        )
+
+    def test_oversized_integer_ttl_fails_closed_without_overflow(self):
+        policy = ttl_policy()
+        policy["policy"]["staging_smoke"]["ttl_hours"] = 10**10000
+        decision, reasons = evaluate(policy=policy)
+        self.assertEqual("BLOCK", decision)
+        self.assertTrue(any("ttl_invalid:staging_smoke" in reason for reason in reasons))
+
+    def test_attestation_trigger_state_must_match_separate_current_state(self):
+        current = dict(TRIGGERS)
+        current["runtime_config_change"] = "runtime:config-2"
+        decision, reasons = MODULE.evaluate_release_decision(
+            enforced_invariants(),
+            verified_gates(),
+            active_contracts(),
+            impact_map(),
+            {},
+            clean_snapshot(),
+            ttl_policy(),
+            actual_head=HEAD,
+            actual_target=TARGET,
+            current_control_plane_fingerprint=CONTROL,
+            now=NOW,
+            attestation=signed_attestation(),
+            attestation_key=KEY,
+            current_trigger_state=signed_trigger_state(current),
+        )
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("attestation:trigger_state_stale", reasons)
+
+    def test_internal_base_cli_is_fail_closed(self):
+        completed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "_fanmind_release_decision_base.py"), "--check"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertNotEqual(0, completed.returncode)
+        self.assertIn("base_cli_disabled_use_canonical_entrypoint", completed.stdout)
 
 
 if __name__ == "__main__":
