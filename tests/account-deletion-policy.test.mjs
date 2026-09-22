@@ -76,6 +76,16 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
         headers: { "Content-Type": "application/json" },
       });
     }
+    if (value.includes("/rest/v1/rpc/begin_account_deletion_processing")) {
+      return new Response(JSON.stringify([{
+        request_id: REQUEST_ID,
+        processing_started_at: "2026-07-24T12:00:00.000Z",
+        owned_workspace_ids: [WORKSPACE_ID],
+      }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     if (value.includes("/rest/v1/account_deletion_requests")) {
       if (method === "PATCH") {
         const body = JSON.parse(String(init.body ?? "{}"));
@@ -288,18 +298,16 @@ test("null historical Workspace stays valid only when the account owns no Worksp
   );
 });
 
-test("workspace inventory persists every owned Workspace before destructive execution", async () => {
+test("atomic processing RPC returns the authoritative owned Workspace inventory", async () => {
   const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
   const secondWorkspace = "44444444-4444-4444-8444-444444444444";
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     calls.push({ url: String(url), method: String(init.method ?? "GET"), body: init.body });
-    const body = JSON.parse(String(init.body ?? "{}"));
     return new Response(JSON.stringify([{
-      id: REQUEST_ID,
-      status: body.status,
-      processing_started_at: body.processing_started_at,
-      owned_workspace_ids: body.owned_workspace_ids,
+      request_id: REQUEST_ID,
+      processing_started_at: "2026-09-22T20:00:00.000Z",
+      owned_workspace_ids: [WORKSPACE_ID, secondWorkspace],
     }]), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -309,15 +317,18 @@ test("workspace inventory persists every owned Workspace before destructive exec
   const persisted = await persistOwnedWorkspaceInventory(
     fetchImpl,
     config,
-    { id: REQUEST_ID, user_id: USER_ID, processing_started_at: null },
-    [WORKSPACE_ID, secondWorkspace],
-    new Date("2026-09-22T20:00:00.000Z"),
+    { id: REQUEST_ID, user_id: USER_ID },
   );
   assert.deepEqual(persisted.owned_workspace_ids, [WORKSPACE_ID, secondWorkspace]);
-  const patch = JSON.parse(String(calls[0].body));
-  assert.deepEqual(patch.owned_workspace_ids, [WORKSPACE_ID, secondWorkspace]);
-  assert.equal(patch.status, "processing");
+  assert.match(calls[0].url, /\/rest\/v1\/rpc\/begin_account_deletion_processing$/u);
+  const body = JSON.parse(String(calls[0].body));
+  assert.deepEqual(body, {
+    p_request_id: REQUEST_ID,
+    p_user_id: USER_ID,
+  });
+  assert.doesNotMatch(String(calls[0].body), new RegExp(WORKSPACE_ID, "u"));
 });
+
 
 test("workspace inventory contract absence fails before destructive account deletion", async () => {
   const { fetchImpl: baseFetch, calls } = makeProcessorFetch();
@@ -325,16 +336,15 @@ test("workspace inventory contract absence fails before destructive account dele
     const value = String(url);
     const method = String(init.method ?? "GET").toUpperCase();
     if (
-      method === "PATCH" &&
-      value.includes("/rest/v1/account_deletion_requests") &&
-      String(init.body ?? "").includes("owned_workspace_ids")
+      method === "POST" &&
+      value.includes("/rest/v1/rpc/begin_account_deletion_processing")
     ) {
       calls.push({ url: value, method, body: init.body });
       return new Response(JSON.stringify({
-        code: "PGRST204",
-        message: "Could not find the 'owned_workspace_ids' column of 'account_deletion_requests' in the schema cache",
+        code: "PGRST202",
+        message: "Could not find the function public.begin_account_deletion_processing in the schema cache",
       }), {
-        status: 400,
+        status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
