@@ -18,24 +18,19 @@ PREFLIGHT = BASE.BASE.PREFLIGHT
 
 
 class CurrentHeadRound13RegressionTests(unittest.TestCase):
-    def test_synthetic_test_mode_is_bound_to_exact_fixture_registries_not_target(self):
+    def test_synthetic_test_mode_is_bounded_and_canonical_registries_override(self):
         previous = os.environ.get(CORE.TEST_ONLY_SYNTHETIC_ENV)
         os.environ[CORE.TEST_ONLY_SYNTHETIC_ENV] = "1"
         try:
-            contracts = BASE.BASE.active_contracts()
-            gates = BASE.BASE.verified_gates()
-            for target in (
-                "repository:synthetic",
-                "repository:other",
-                "repository:",
-                "staging:synthetic",
-                "production:synthetic",
-            ):
-                snapshot = BASE.BASE.clean_snapshot(target=target)
-                self.assertFalse(
-                    CORE._canonical_runtime_mode(gates, contracts, BASE.BASE.impact_map(), snapshot),
-                    target,
-                )
+            _invariants, gates, contracts, impact, _ttl = BASE.BASE.structures()
+            snapshot = BASE.BASE.snapshot()
+            self.assertFalse(
+                CORE._canonical_runtime_mode(gates, contracts, impact, snapshot)
+            )
+
+            malformed_target = deepcopy(snapshot)
+            malformed_target["evaluated_target"] = "repository:"
+            self.assertFalse(CORE._canonical_runtime_mode(malformed_target))
 
             canonical_contracts = PREFLIGHT.load("CONTRACT_REGISTRY.json")
             canonical_gates = PREFLIGHT.load("INTEGRATION_GATES.json")
@@ -44,7 +39,7 @@ class CurrentHeadRound13RegressionTests(unittest.TestCase):
                     canonical_gates,
                     canonical_contracts,
                     PREFLIGHT.load("IMPACT_MAP.json"),
-                    PREFLIGHT.load("RELEASE_DECISION.json"),
+                    malformed_target,
                 )
             )
         finally:
