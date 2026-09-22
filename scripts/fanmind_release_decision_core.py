@@ -197,7 +197,7 @@ def _hardening_blockers(
             invariant_risk = invariant.get("risk")
             if invariant_risk in RISK_ORDER:
                 invariant_risk_floor = _higher_risk(invariant_risk_floor, invariant_risk)
-            elif invariant_risk is not None:
+            else:
                 blockers.append(f"invariant:risk_invalid:{invariant_id}")
 
             triggers = _configured_trigger_list(invariant.get("revalidate_on"))
@@ -369,6 +369,26 @@ def _hardening_blockers(
             if not any(role in _base._entry_roles(entry) for entry in fully_revalidated):
                 blockers.append(
                     f"release_evidence:gate_role_revalidation_missing:{gate_id}:{role}"
+                )
+
+        if effective_risk in {"R2", "R3", "R4"}:
+            implementations = [
+                entry
+                for entry in fully_revalidated
+                if "implementation" in _base._entry_roles(entry)
+            ]
+            counterchecks = [
+                entry
+                for entry in fully_revalidated
+                if "countercheck" in _base._entry_roles(entry)
+            ]
+            if implementations and counterchecks and not any(
+                _base._independent(implementation, countercheck)
+                for implementation in implementations
+                for countercheck in counterchecks
+            ):
+                blockers.append(
+                    f"release_evidence:gate_countercheck_revalidation_not_independent:{gate_id}"
                 )
 
         semantic_entries = [
