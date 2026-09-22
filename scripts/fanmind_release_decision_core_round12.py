@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import stat
 from datetime import datetime, timezone
+from pathlib import Path
 
 import fanmind_release_decision_core_round11 as _round11
 from fanmind_release_decision_core_round11 import *  # noqa: F401,F403
@@ -12,8 +17,9 @@ _round11_evaluate_release_decision = _round11.evaluate_release_decision
 
 # Round 12 closes exact-current-head review findings around direct CLI routing,
 # malformed evidence boundary arrays, extreme timestamps, orphan impact-map
-# contracts, malformed release snapshots and persisted evidence-completeness
-# claims. Bind this wrapper into the signed control plane before evaluation.
+# contracts, malformed release snapshots, persisted evidence-completeness claims,
+# independently protected producer-key identity, canonical risk/role semantics,
+# and authenticated exact-byte loading at the CLI trust boundary.
 _base.CONTROL_PLANE_FILES = tuple(
     dict.fromkeys(
         (
@@ -33,6 +39,31 @@ REQUIRED_COMPLETENESS_FLAGS = (
     "negative_evidence_complete",
     "rollback_recovery_evidence_complete",
 )
+
+# The key identity used to authenticate protected evidence must not come from the
+# contributor-controlled checkout. A future protected producer may provision
+# this fixed host path on a dedicated environment where the checkout user cannot
+# alter it. Ordinary PR CI intentionally has no such file, so any attempted
+# canonical non-BLOCK decision with an attestation fails closed.
+PROTECTED_TRUST_IDENTITY_PATH = Path("/etc/fanmind/god-mode/trust-anchor.sha256")
+
+# Canonical security semantics are independently pinned in evaluator code so a
+# PR cannot lower every JSON risk floor or remap every evidence requirement to a
+# weaker role while retaining a mutually self-consistent registry. The digest is
+# over exactly: contract minimum-risk by ID, required invariant risk by ID, and
+# gate evidence_required_roles by gate/requirement. Any intentional semantic
+# change therefore requires an explicit reviewed evaluator update too.
+CANONICAL_SECURITY_SEMANTICS_SHA256 = (
+    "bf1db42720bcd4a4e8c18146a16352e79655e1fd74135c3e717741bc44331019"
+)
+
+# Existing adversarial unit fixtures explicitly identify themselves with a
+# non-resolving synthetic SHA/target/fingerprint triple. This is the only
+# compatibility path that may omit persisted RELEASE_DECISION fields, and the
+# canonical CLI can never use it because its Git-object check rejects the SHA.
+SYNTHETIC_TEST_HEAD = "a" * 40
+SYNTHETIC_TEST_TARGET = "repository:synthetic"
+SYNTHETIC_TEST_CONTROL_FINGERPRINT = "c" * 64
 
 
 def _safe_timestamp(value) -> bool:
@@ -80,20 +111,40 @@ def _timestamp_shape_blockers(
     return blockers
 
 
-def _evidence_boundary_shape_blockers(attestation: dict | None) -> list[str]:
+def _registry_ids(document: dict, key: str) -> set[str]:
+    items = document.get(key) if isinstance(document, dict) else None
+    if not isinstance(items, list):
+        return set()
+    return {
+        item.get("id")
+        for item in items
+        if isinstance(item, dict) and isinstance(item.get("id"), str) and item.get("id")
+    }
+
+
+def _evidence_boundary_shape_blockers(
+    attestation: dict | None,
+    invariants: dict,
+    integration: dict,
+) -> list[str]:
     if not isinstance(attestation, dict):
         return []
     evidence = attestation.get("evidence")
     if not isinstance(evidence, list):
         return []
 
+    known_gates = _registry_ids(integration, "gates")
+    known_invariants = _registry_ids(invariants, "invariants")
     blockers: list[str] = []
     for entry in evidence:
         if not isinstance(entry, dict):
             continue
         evidence_id = entry.get("id")
         marker = evidence_id if isinstance(evidence_id, str) and evidence_id else "unknown"
-        for plural, singular in (("gates", "gate"), ("invariants", "invariant")):
+        for plural, singular, known in (
+            ("gates", "gate", known_gates),
+            ("invariants", "invariant", known_invariants),
+        ):
             plural_present = plural in entry
             singular_present = singular in entry
             if plural_present and singular_present:
@@ -110,11 +161,21 @@ def _evidence_boundary_shape_blockers(attestation: dict | None) -> list[str]:
                     blockers.append(f"release_evidence:{plural}_invalid:{marker}")
                 elif len(set(values)) != len(values):
                     blockers.append(f"release_evidence:{plural}_duplicate:{marker}")
+                else:
+                    for value in values:
+                        if value not in known:
+                            blockers.append(
+                                f"release_evidence:{singular}_unknown:{marker}:{value}"
+                            )
 
             if singular_present:
                 value = entry.get(singular)
                 if not isinstance(value, str) or not value.strip():
                     blockers.append(f"release_evidence:{singular}_invalid:{marker}")
+                elif value not in known:
+                    blockers.append(
+                        f"release_evidence:{singular}_unknown:{marker}:{value}"
+                    )
     return blockers
 
 
@@ -157,33 +218,180 @@ def _snapshot_shape_blockers(snapshot) -> list[str]:
     return []
 
 
-def _persisted_completeness_blockers(snapshot: dict) -> list[str]:
-    """Require exact persisted completeness before returning non-BLOCK."""
-    # Synthetic evaluator callers used by adversarial unit tests do not carry a
-    # persisted `decision` field. The canonical RELEASE_DECISION snapshot does.
-    if "decision" not in snapshot:
+def _is_explicit_synthetic_fixture(
+    snapshot: dict,
+    *,
+    actual_head: str | None,
+    actual_target: str | None,
+    current_control_plane_fingerprint: str | None,
+) -> bool:
+    return (
+        isinstance(snapshot, dict)
+        and snapshot.get("task") is None
+        and actual_head == SYNTHETIC_TEST_HEAD
+        and actual_target == SYNTHETIC_TEST_TARGET
+        and current_control_plane_fingerprint == SYNTHETIC_TEST_CONTROL_FINGERPRINT
+        and not _current._CANONICAL_CLI_ACTIVE
+    )
+
+
+def _persisted_completeness_blockers(
+    snapshot: dict,
+    *,
+    actual_head: str | None,
+    actual_target: str | None,
+    current_control_plane_fingerprint: str | None,
+) -> list[str]:
+    """Missing persisted protected input is never success outside explicit tests."""
+    if _is_explicit_synthetic_fixture(
+        snapshot,
+        actual_head=actual_head,
+        actual_target=actual_target,
+        current_control_plane_fingerprint=current_control_plane_fingerprint,
+    ):
         return []
-    return [
+
+    blockers: list[str] = []
+    if snapshot.get("decision") not in {"ALLOW", "BLOCK", "OWNER_REQUIRED"}:
+        blockers.append("release_input:decision_missing_or_invalid")
+    blockers.extend(
         f"release_input:{key}"
         for key in REQUIRED_COMPLETENESS_FLAGS
         if snapshot.get(key) is not True
-    ]
+    )
+    return blockers
+
+
+def _semantic_projection(
+    invariants: dict,
+    integration: dict,
+    contracts: dict,
+) -> dict:
+    contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
+    invariant_items = invariants.get("invariants") if isinstance(invariants, dict) else None
+    gate_items = integration.get("gates") if isinstance(integration, dict) else None
+    return {
+        "contracts": {
+            item.get("id"): item.get("minimum_risk")
+            for item in (contract_items if isinstance(contract_items, list) else [])
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        },
+        "invariants": {
+            item.get("id"): item.get("risk")
+            for item in (invariant_items if isinstance(invariant_items, list) else [])
+            if isinstance(item, dict)
+            and item.get("required") is True
+            and isinstance(item.get("id"), str)
+        },
+        "gate_evidence_roles": {
+            item.get("id"): item.get("evidence_required_roles")
+            for item in (gate_items if isinstance(gate_items, list) else [])
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        },
+    }
+
+
+def _canonical_semantics_blockers(
+    invariants: dict,
+    integration: dict,
+    contracts: dict,
+) -> list[str]:
+    try:
+        encoded = json.dumps(
+            _semantic_projection(invariants, integration, contracts),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError):
+        return ["canonical_semantics:invalid"]
+    actual = hashlib.sha256(encoded).hexdigest()
+    if not _base.hmac.compare_digest(actual, CANONICAL_SECURITY_SEMANTICS_SHA256):
+        return ["canonical_semantics:digest_mismatch"]
+    return []
+
+
+def _secure_external_trust_digest() -> str | None:
+    path = PROTECTED_TRUST_IDENTITY_PATH
+    try:
+        # The identity itself and each non-system parent must be root-owned and
+        # not group/world writable; symlinks are never accepted.
+        for candidate in (path.parent.parent, path.parent, path):
+            info = candidate.lstat()
+            if stat.S_ISLNK(info.st_mode) or info.st_uid != 0 or (info.st_mode & 0o022):
+                return None
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode):
+            return None
+        value = path.read_text(encoding="ascii").strip().lower()
+    except (OSError, UnicodeError):
+        return None
+    if len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value):
+        return None
+    return value
+
+
+def _protected_trust_identity_blockers(attestation: dict | None, attestation_key) -> list[str]:
+    if attestation is None:
+        return []
+    expected = _secure_external_trust_digest()
+    if expected is None:
+        return ["trust_anchor:protected_identity_unavailable"]
+
+    try:
+        anchor = load_trust_anchor()
+    except Exception:
+        return ["trust_anchor:load_error"]
+    if not isinstance(anchor, dict) or anchor.get("status") != "ACTIVE":
+        return ["trust_anchor:not_active"]
+    checked_in = anchor.get("key_sha256")
+    if not isinstance(checked_in, str) or not _base.hmac.compare_digest(
+        checked_in.lower(), expected
+    ):
+        return ["trust_anchor:protected_identity_mismatch"]
+
+    key_bytes = attestation_key.encode("utf-8") if isinstance(attestation_key, str) else attestation_key
+    if not isinstance(key_bytes, bytes) or len(key_bytes) < 32:
+        return ["trust_anchor:verification_key_unavailable"]
+    actual = hashlib.sha256(key_bytes).hexdigest()
+    if not _base.hmac.compare_digest(actual, expected):
+        return ["trust_anchor:key_identity_mismatch"]
+    return []
 
 
 def _round12_input_blockers(
+    invariants: dict,
+    integration: dict,
     contracts: dict,
     impact: dict,
     snapshot,
     *,
+    actual_head: str | None,
+    actual_target: str | None,
+    current_control_plane_fingerprint: str | None,
     attestation: dict | None,
+    attestation_key,
     current_trigger_state: dict | None,
 ) -> list[str]:
     blockers = [
         *_snapshot_shape_blockers(snapshot),
         *_timestamp_shape_blockers(attestation, current_trigger_state),
-        *_evidence_boundary_shape_blockers(attestation),
+        *_evidence_boundary_shape_blockers(attestation, invariants, integration),
         *_impact_registry_blockers(contracts, impact),
     ]
+    if isinstance(snapshot, dict):
+        blockers.extend(
+            _persisted_completeness_blockers(
+                snapshot,
+                actual_head=actual_head,
+                actual_target=actual_target,
+                current_control_plane_fingerprint=current_control_plane_fingerprint,
+            )
+        )
+
+    if _current._canonical_runtime_mode(integration, contracts, impact, snapshot):
+        blockers.extend(_canonical_semantics_blockers(invariants, integration, contracts))
+        blockers.extend(_protected_trust_identity_blockers(attestation, attestation_key))
     return list(dict.fromkeys(blockers))
 
 
@@ -204,14 +412,21 @@ def evaluate_release_decision(
     attestation_key: str | bytes | None = None,
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
-    # Validate adversarial input shapes before the inherited evaluator performs
-    # normalization, dictionary access or timezone conversion. Invalid input
-    # must BLOCK, never crash or normalize to success.
+    # Validate adversarial input shapes and protected semantics before the
+    # inherited evaluator performs normalization, dictionary access, trust
+    # decisions or timezone conversion. Invalid/unknown input must BLOCK, never
+    # crash, normalize away, or become success.
     early = _round12_input_blockers(
+        invariants,
+        integration,
         contracts,
         impact,
         snapshot,
+        actual_head=actual_head,
+        actual_target=actual_target,
+        current_control_plane_fingerprint=current_control_plane_fingerprint,
         attestation=attestation,
+        attestation_key=attestation_key,
         current_trigger_state=current_trigger_state,
     )
     if early:
@@ -225,7 +440,7 @@ def evaluate_release_decision(
     _round11.load_trust_anchor = load_trust_anchor
     _current.load_trust_anchor = load_trust_anchor
     try:
-        decision, reasons = _round11_evaluate_release_decision(
+        return _round11_evaluate_release_decision(
             invariants,
             integration,
             contracts,
@@ -245,16 +460,6 @@ def evaluate_release_decision(
         _round11.load_trust_anchor = previous_round11_loader
         _current.load_trust_anchor = previous_current_loader
 
-    # Preserve any stronger fail-closed reason produced by the inherited
-    # evaluator. Completeness flags are an additional gate specifically before
-    # a result would otherwise become ALLOW or OWNER_REQUIRED.
-    if decision == "BLOCK":
-        return decision, reasons
-    completeness = _persisted_completeness_blockers(snapshot)
-    if completeness:
-        return "BLOCK", list(dict.fromkeys([*reasons, *completeness]))
-    return decision, reasons
-
 
 def _round12_cli_evaluate_release_decision(*args, **kwargs):
     """CLI boundary preserving the exact Git-object check plus round-12 rules."""
@@ -262,6 +467,17 @@ def _round12_cli_evaluate_release_decision(*args, **kwargs):
     if not _current._round8.git_commit_resolves(actual_head):
         return "BLOCK", ["release_evidence:actual_head_unresolvable"]
     return evaluate_release_decision(*args, **kwargs)
+
+
+def _load_head_project_memory(name: str):
+    """Parse the exact HEAD blob, never mutable working-tree bytes, for CLI input."""
+    raw = _base._git_show(f"project-memory/{name}")
+    if raw is None:
+        raise FileNotFoundError(name)
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid HEAD project-memory JSON: {name}") from exc
 
 
 # Direct imports of the newest wrapper and canonical consumers share the same
@@ -274,12 +490,17 @@ _base.evaluate_release_decision = evaluate_release_decision
 
 def main() -> int:
     previous_cli_evaluator = _current._cli_evaluate_release_decision
+    previous_load = _base.load
     _current._cli_evaluate_release_decision = _round12_cli_evaluate_release_decision
+    # Close the worktree TOCTOU window: the same immutable HEAD blobs that feed
+    # the control-plane fingerprint are now the JSON bytes actually evaluated.
+    _base.load = _load_head_project_memory
     try:
         # Round 11's executable is intentionally disabled. Enter the canonical
         # core CLI directly while its evaluation hook is bound to round 12.
         return _current.main()
     finally:
+        _base.load = previous_load
         _current._cli_evaluate_release_decision = previous_cli_evaluator
 
 
