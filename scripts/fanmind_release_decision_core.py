@@ -1,195 +1,89 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-import _fanmind_release_decision_base as _base
-from _fanmind_release_decision_base import *  # noqa: F401,F403
+import fanmind_release_decision_core_legacy as _legacy
+from fanmind_release_decision_core_legacy import *  # noqa: F401,F403
 
-# Preserve the reviewed v1 evaluator as an internal implementation detail while
-# keeping this module as the only canonical evaluator entry point.  The files
-# below are security-relevant inputs and therefore participate in the signed
-# control-plane fingerprint.  In particular, RELEASE_DECISION.json must be
-# bound into the protected attestation so a decision-only commit cannot reuse
-# an attestation issued for an older snapshot.
-_base_evaluate_release_decision = _base.evaluate_release_decision
+# Keep the previously reviewed evaluator as an internal implementation layer and
+# add the current-head fail-closed corrections here.  This module remains the
+# only canonical evaluator import used by scripts/fanmind_release_decision.py.
+_base = _legacy._base
+_legacy_evaluate_release_decision = _legacy.evaluate_release_decision
+
+# The split implementation is itself security relevant.  Bind both internal
+# implementation files into the signed control-plane fingerprint so moving the
+# previous implementation behind this wrapper cannot create an unsigned path.
 _base.CONTROL_PLANE_FILES = tuple(
     dict.fromkeys(
         (
             *_base.CONTROL_PLANE_FILES,
-            "scripts/_fanmind_release_decision_base.py",
-            "project-memory/RELEASE_DECISION.json",
+            "scripts/fanmind_release_decision_core_legacy.py",
+            "scripts/fanmind_god_mode_preflight_legacy.py",
         )
     )
 )
 CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
-SUPPORTED_CONTROL_PLANE_SCHEMA_VERSION = 1
+
+# Preserve private helper compatibility for focused tests and future hardening.
+_binding_map = _legacy._binding_map
+_entry_is_current_for_hardening = _legacy._entry_is_current_for_hardening
+_configured_trigger_list = _legacy._configured_trigger_list
+_configured_requirement_list = _legacy._configured_requirement_list
+_entry_matches_triggers = _legacy._entry_matches_triggers
+_higher_risk = _legacy._higher_risk
 
 
-def _binding_map(snapshot: dict) -> dict[str, dict]:
-    bindings = snapshot.get("evidence_bindings")
-    if not isinstance(bindings, list):
-        return {}
-    result: dict[str, dict] = {}
-    for binding in bindings:
-        if not isinstance(binding, dict):
-            continue
-        evidence_id = binding.get("id")
-        if isinstance(evidence_id, str) and evidence_id and evidence_id not in result:
-            result[evidence_id] = binding
-    return result
-
-
-def _control_plane_input_blockers(
-    invariants,
-    integration,
-    contracts,
-    impact,
-    snapshot,
-    ttl_policy,
-) -> list[str]:
-    """Reject malformed or unsupported control-plane inputs before base evaluation.
-
-    All six canonical JSON control-plane documents are versioned.  Schema
-    versions are an executable contract, not descriptive metadata: an unknown,
-    missing, boolean or otherwise malformed version must never be interpreted
-    using v1 semantics.  This guard also validates unhashable risk inputs before
-    either the base evaluator or the hardening layer performs dictionary/set
-    membership tests.
-    """
+def _round8_input_blockers(invariants, contracts) -> list[str]:
+    """Reject malformed risk/required metadata before any hash membership use."""
 
     blockers: list[str] = []
-    documents = (
-        ("SYSTEM_INVARIANTS.json", invariants),
-        ("INTEGRATION_GATES.json", integration),
-        ("CONTRACT_REGISTRY.json", contracts),
-        ("IMPACT_MAP.json", impact),
-        ("RELEASE_DECISION.json", snapshot),
-        ("EVIDENCE_TTL_POLICY.json", ttl_policy),
-    )
-    for name, document in documents:
-        if not isinstance(document, dict):
-            blockers.append(f"control_plane:document_invalid:{name}")
-            continue
-        schema_version = document.get("schema_version")
-        if type(schema_version) is not int or schema_version != SUPPORTED_CONTROL_PLANE_SCHEMA_VERSION:
-            blockers.append(f"control_plane:schema_version_unsupported:{name}")
 
     if isinstance(invariants, dict):
         invariant_items = invariants.get("invariants")
         if isinstance(invariant_items, list):
             for invariant in invariant_items:
-                if not isinstance(invariant, dict) or invariant.get("required") is not True:
+                if not isinstance(invariant, dict):
+                    blockers.append("invariant:entry_invalid")
                     continue
                 invariant_id = invariant.get("id")
                 if not isinstance(invariant_id, str) or not invariant_id:
+                    blockers.append("invariant:id_invalid")
                     continue
+
+                # Validate risk for every registry entry before deciding whether
+                # the invariant is required.  A false/non-required neighbor may
+                # not hide malformed, unhashable risk metadata from the runtime
+                # evaluator.
                 invariant_risk = invariant.get("risk")
                 if not isinstance(invariant_risk, str) or invariant_risk not in RISK_ORDER:
                     blockers.append(f"invariant:risk_invalid:{invariant_id}")
 
-    if isinstance(snapshot, dict):
-        declared_risk = snapshot.get("risk")
-        if not isinstance(declared_risk, str):
-            blockers.append("release_input:risk")
+                required = invariant.get("required")
+                if type(required) is not bool:
+                    blockers.append(f"invariant:required_invalid:{invariant_id}")
+
+    if isinstance(contracts, dict):
+        contract_items = contracts.get("contracts")
+        if isinstance(contract_items, list):
+            for contract in contract_items:
+                if not isinstance(contract, dict):
+                    continue
+                contract_id = contract.get("id")
+                if not isinstance(contract_id, str) or not contract_id:
+                    continue
+                minimum_risk = contract.get("minimum_risk")
+                if not isinstance(minimum_risk, str) or minimum_risk not in RISK_ORDER:
+                    blockers.append(f"contract:risk_floor_invalid:{contract_id}")
 
     return list(dict.fromkeys(blockers))
 
 
-def _entry_is_current_for_hardening(
-    entry: dict,
-    binding: dict | None,
-    trigger_state: dict[str, str],
-    ttl_policy: dict,
-    actual_head: str | None,
-    actual_target: str | None,
-    control_fingerprint: str | None,
-    now: datetime,
-) -> bool:
-    if not isinstance(binding, dict):
-        return False
-    if entry.get("status") not in CURRENT_EVIDENCE_STATES:
-        return False
-    if entry.get("bound_commit") != actual_head or binding.get("commit") != actual_head:
-        return False
-    if entry.get("target") != actual_target or binding.get("target") != actual_target:
-        return False
-    if entry.get("invalidated_by") or entry.get("superseded_by"):
-        return False
-    if entry.get("control_plane_fingerprint") != control_fingerprint:
-        return False
-    if _base._entry_provenance(entry) is None:
-        return False
-
-    evidence_class = entry.get("class")
-    if not isinstance(evidence_class, str) or not evidence_class:
-        return False
-    class_policy, error = _base._class_policy(evidence_class, ttl_policy)
-    if error or class_policy is None:
-        return False
-
-    observed = _base._parse_time(entry.get("observed_at"))
-    if observed is None or observed > now + timedelta(minutes=5):
-        return False
-    ttl_hours = class_policy.get("ttl_hours")
-    if ttl_hours is not None and now - observed > timedelta(hours=float(ttl_hours)):
-        return False
-
-    fingerprints = entry.get("trigger_fingerprints")
-    if not isinstance(fingerprints, dict):
-        return False
-    for trigger in class_policy.get("revalidate_on", []):
-        current = trigger_state.get(trigger)
-        if not isinstance(current, str) or not current or fingerprints.get(trigger) != current:
-            return False
-    return True
-
-
-def _configured_trigger_list(value) -> list[str] | None:
-    if not isinstance(value, list) or not value:
-        return None
-    if any(not isinstance(item, str) or not item for item in value):
-        return None
-    if len(set(value)) != len(value):
-        return None
-    return value
-
-
-def _configured_requirement_list(value) -> list[str] | None:
-    if not isinstance(value, list) or not value:
-        return None
-    if any(not isinstance(item, str) or not item for item in value):
-        return None
-    if len(set(value)) != len(value):
-        return None
-    return value
-
-
-def _entry_matches_triggers(
-    entry: dict, triggers: list[str], trigger_state: dict[str, str]
-) -> bool:
-    fingerprints = entry.get("trigger_fingerprints")
-    if not isinstance(fingerprints, dict):
-        return False
-    return all(
-        isinstance(trigger_state.get(trigger), str)
-        and bool(trigger_state.get(trigger))
-        and fingerprints.get(trigger) == trigger_state.get(trigger)
-        for trigger in triggers
-    )
-
-
-def _higher_risk(left: str, right: str) -> str:
-    if RISK_ORDER.get(right, 0) > RISK_ORDER.get(left, 0):
-        return right
-    return left
-
-
-def _hardening_blockers(
+def _round8_revalidated_quorum_blockers(
     invariants: dict,
     integration: dict,
     contracts: dict,
-    impact: dict,
     snapshot: dict,
     ttl_policy: dict,
     *,
@@ -199,22 +93,80 @@ def _hardening_blockers(
     now: datetime,
     attestation: dict | None,
 ) -> list[str]:
-    """Additional fail-closed proof contracts found by current-head review.
+    """Require the R3/R4 two-class quorum to be fully revalidated.
 
-    The base evaluator still owns the full release decision.  These checks only
-    make acceptance stricter; they can never turn a base BLOCK into success.
+    The legacy/current-head evaluator already validates class TTL/triggers,
+    contract/invariant revalidation, role quorum and provenance independence.
+    This final layer recomputes the *class* quorum using only entries that are
+    still eligible after the applicable contract and invariant trigger
+    contracts are applied.  A stale second-class gate record therefore cannot
+    keep an otherwise one-class release at ALLOW.
     """
 
-    blockers: list[str] = []
     if not isinstance(attestation, dict):
-        return blockers
-
+        return []
     trigger_state = attestation.get("trigger_state")
-    if not isinstance(trigger_state, dict):
-        return blockers
     evidence = attestation.get("evidence")
-    if not isinstance(evidence, list):
-        return blockers
+    if not isinstance(trigger_state, dict) or not isinstance(evidence, list):
+        return []
+
+    contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
+    contract_by_id, _ = _base._registry_by_id(contract_items, "contract")
+    affected = snapshot.get("affected_contracts") if isinstance(snapshot, dict) else None
+    affected_list = [item for item in affected if isinstance(item, str)] if isinstance(affected, list) else []
+    affected_set = set(affected_list)
+
+    contract_risk_floor, _ = _base._scope_risk_floor(affected_list, contract_by_id)
+    invariant_risk_floor = "R1"
+    invariant_triggers: dict[str, list[str]] = {}
+    invariant_items = invariants.get("invariants") if isinstance(invariants, dict) else None
+    if isinstance(invariant_items, list):
+        for invariant in invariant_items:
+            if not isinstance(invariant, dict) or invariant.get("required") is not True:
+                continue
+            invariant_id = invariant.get("id")
+            invariant_risk = invariant.get("risk")
+            if not isinstance(invariant_id, str) or not invariant_id:
+                continue
+            if isinstance(invariant_risk, str) and invariant_risk in RISK_ORDER:
+                invariant_risk_floor = _higher_risk(invariant_risk_floor, invariant_risk)
+            triggers = _configured_trigger_list(invariant.get("revalidate_on"))
+            if triggers is not None:
+                invariant_triggers[invariant_id] = triggers
+
+    effective_risk = _higher_risk(contract_risk_floor, invariant_risk_floor)
+    declared_risk = snapshot.get("risk") if isinstance(snapshot, dict) else None
+    if isinstance(declared_risk, str) and declared_risk in RISK_ORDER:
+        effective_risk = _higher_risk(effective_risk, declared_risk)
+    if effective_risk not in {"R3", "R4"}:
+        return []
+
+    contract_triggers: dict[str, list[str]] = {}
+    for contract_id in affected_list:
+        contract = contract_by_id.get(contract_id)
+        if not isinstance(contract, dict):
+            continue
+        triggers = _configured_trigger_list(contract.get("revalidate_on"))
+        if triggers is not None:
+            contract_triggers[contract_id] = triggers
+
+    gate_items = integration.get("gates") if isinstance(integration, dict) else None
+    gate_by_id: dict[str, dict] = {}
+    gate_contracts: dict[str, set[str]] = {}
+    mandatory_gate_ids: set[str] = set()
+    if isinstance(gate_items, list):
+        for gate in gate_items:
+            if not isinstance(gate, dict):
+                continue
+            gate_id = gate.get("id")
+            if not isinstance(gate_id, str) or not gate_id:
+                continue
+            gate_by_id[gate_id] = gate
+            configured_contracts = _configured_requirement_list(gate.get("contracts"))
+            current_contracts = set(configured_contracts or [])
+            gate_contracts[gate_id] = current_contracts
+            if gate.get("applicable") is True or bool(current_contracts & affected_set):
+                mandatory_gate_ids.add(gate_id)
 
     bindings = _binding_map(snapshot)
     current_entries: dict[str, dict] = {}
@@ -236,239 +188,76 @@ def _hardening_blockers(
         ):
             current_entries[evidence_id] = entry
 
-    # Required invariants carry their own revalidation contract.  Evidence that
-    # names an invariant qualifies only when one current record also proves all
-    # of that invariant's trigger fingerprints against the protected producer's
-    # current trigger state.  Their declared risk also contributes to the
-    # effective release risk floor; a high-risk invariant cannot be downgraded
-    # by lowering only contract risk metadata.
-    invariant_items = invariants.get("invariants")
-    invariant_risk_floor = "R1"
-    if isinstance(invariant_items, list):
-        for invariant in invariant_items:
-            if not isinstance(invariant, dict) or invariant.get("required") is not True:
-                continue
-            invariant_id = invariant.get("id")
-            if not isinstance(invariant_id, str) or not invariant_id:
-                continue
-            invariant_risk = invariant.get("risk")
-            if isinstance(invariant_risk, str) and invariant_risk in RISK_ORDER:
-                invariant_risk_floor = _higher_risk(invariant_risk_floor, invariant_risk)
-            else:
-                blockers.append(f"invariant:risk_invalid:{invariant_id}")
-
-            triggers = _configured_trigger_list(invariant.get("revalidate_on"))
-            if triggers is None:
-                blockers.append(f"invariant:revalidate_contract_invalid:{invariant_id}")
-                continue
-
-            candidates = [
-                entry
-                for entry in current_entries.values()
-                if invariant_id in _base._entry_set(entry, "invariants", "invariant")
-            ]
-            if not candidates:
-                # The base evaluator emits invariant_missing; avoid duplicating
-                # that message here.
-                continue
-            if not any(
-                _entry_matches_triggers(entry, triggers, trigger_state)
-                for entry in candidates
-            ):
-                blockers.append(f"release_evidence:invariant_revalidation_unsatisfied:{invariant_id}")
-
-    contract_by_id, _ = _base._registry_by_id(contracts.get("contracts"), "contract")
-    affected = snapshot.get("affected_contracts")
-    affected_list = [item for item in affected if isinstance(item, str)] if isinstance(affected, list) else []
-    affected_set = set(affected_list)
-
-    # Contract-specific revalidation triggers are a second semantic boundary.
-    # The canonical preflight already requires them for registered contracts;
-    # the evaluator consumes them whenever present so declared triggers cannot
-    # be ignored by otherwise current gate evidence.
-    contract_triggers: dict[str, list[str] | None] = {}
-    for contract_id in affected_list:
-        contract = contract_by_id.get(contract_id)
-        if contract is None:
-            continue
-        raw_triggers = contract.get("revalidate_on")
-        if raw_triggers is None:
-            # Synthetic unit fixtures predating the registry contract remain
-            # compatible; canonical Project Memory cannot omit this field
-            # because fanmind_god_mode_preflight rejects it.
-            contract_triggers[contract_id] = []
-            continue
-        configured = _configured_trigger_list(raw_triggers)
-        if configured is None:
-            blockers.append(f"contract:revalidate_contract_invalid:{contract_id}")
-            contract_triggers[contract_id] = None
-        else:
-            contract_triggers[contract_id] = configured
-
-    gate_items = integration.get("gates")
-    gate_by_id: dict[str, dict] = {}
-    gate_contracts: dict[str, set[str]] = {}
-    authoritative_contract_gates: dict[str, set[str]] = {}
-    if isinstance(gate_items, list):
-        for gate in gate_items:
-            if not isinstance(gate, dict) or not isinstance(gate.get("id"), str):
-                continue
-            gate_id = gate["id"]
-            gate_by_id[gate_id] = gate
-            configured_contracts = _configured_requirement_list(gate.get("contracts"))
-            if configured_contracts is None:
-                blockers.append(f"integration_gate:contracts_invalid:{gate_id}")
-                gate_contracts[gate_id] = set()
-                continue
-            current_contracts = set(configured_contracts)
-            gate_contracts[gate_id] = current_contracts
-            for contract_id in current_contracts:
-                if contract_id not in contract_by_id:
-                    blockers.append(f"integration_gate:unknown_contract:{gate_id}:{contract_id}")
-                    continue
-                authoritative_contract_gates.setdefault(contract_id, set()).add(gate_id)
-
-    # IMPACT_MAP and INTEGRATION_GATES describe the same boundary from opposite
-    # directions.  They must agree exactly for affected contracts.  This blocks
-    # a tampered map from rerouting a contract to an easier gate or omitting an
-    # authoritative gate entirely.
-    impact_by_contract, _ = _base._validate_impact_map(impact)
-    for contract_id in affected_list:
-        mapping = impact_by_contract.get(contract_id)
-        if mapping is None:
-            continue  # base evaluator already emits impact_map:missing
-        mapped = mapping.get("gates")
-        if not isinstance(mapped, list) or not mapped or any(
-            not isinstance(gate_id, str) or not gate_id for gate_id in mapped
-        ):
-            continue  # base evaluator owns shape errors
-        mapped_set = set(mapped)
-        authoritative = authoritative_contract_gates.get(contract_id, set())
-        for gate_id in sorted(mapped_set - authoritative):
-            blockers.append(f"impact_map:gate_contract_mismatch:{contract_id}:{gate_id}")
-        for gate_id in sorted(authoritative - mapped_set):
-            blockers.append(f"impact_map:authoritative_gate_missing:{contract_id}:{gate_id}")
-
-    explicit_gate_ids = {
-        gate_id for gate_id, gate in gate_by_id.items() if gate.get("applicable") is True
+    selected_ids = {
+        value
+        for key in (
+            "implementation_evidence_id",
+            "countercheck_evidence_id",
+            "negative_evidence_id",
+            "rollback_recovery_evidence_id",
+        )
+        for value in [snapshot.get(key)]
+        if isinstance(value, str) and value
     }
-    authoritative_gate_ids = {
-        gate_id
-        for contract_id in affected_set
-        for gate_id in authoritative_contract_gates.get(contract_id, set())
-    }
-    mandatory_gate_ids = explicit_gate_ids | authoritative_gate_ids
 
-    contract_risk_floor, _ = _base._scope_risk_floor(affected_list, contract_by_id)
-    combined_risk_floor = _higher_risk(contract_risk_floor, invariant_risk_floor)
-    declared_risk = snapshot.get("risk")
-    effective_risk = combined_risk_floor
-    if isinstance(declared_risk, str) and declared_risk in RISK_ORDER:
-        if RISK_ORDER[declared_risk] < RISK_ORDER[invariant_risk_floor]:
-            blockers.append(
-                f"release_input:risk_below_invariant_floor:{declared_risk}<{invariant_risk_floor}"
-            )
-        effective_risk = _higher_risk(combined_risk_floor, declared_risk)
+    eligible: list[dict] = []
+    required_invariant_ids = set(invariant_triggers)
+    for evidence_id, entry in current_entries.items():
+        entry_gate_ids = _base._entry_set(entry, "gates", "gate") & mandatory_gate_ids
+        entry_invariant_ids = (
+            _base._entry_set(entry, "invariants", "invariant") & required_invariant_ids
+        )
 
-    # Every mandatory integration gate has a semantic proof contract in
-    # evidence_required.  Roles (implementation/countercheck/negative/recovery)
-    # are necessary but not sufficient.  Requirement claims count only from
-    # current evidence carrying a role required for this gate and satisfying
-    # every affected contract trigger behind that gate.
-    for gate_id in sorted(mandatory_gate_ids):
-        gate = gate_by_id.get(gate_id)
-        if gate is None:
-            continue
-        requirements = _configured_requirement_list(gate.get("evidence_required"))
-        if requirements is None:
-            blockers.append(f"integration_gate:evidence_contract_invalid:{gate_id}")
-            continue
-
-        gate_roles, role_error = _base._required_roles_for_gate(gate, effective_risk)
-        if role_error:
-            blockers.append(f"integration_gate:{gate_id}:{role_error}")
-            continue
-
-        candidates = [
-            entry
-            for entry in current_entries.values()
-            if gate_id in _base._entry_set(entry, "gates", "gate")
-        ]
-        relevant_contracts = gate_contracts.get(gate_id, set()) & affected_set
-
-        for contract_id in sorted(relevant_contracts):
-            triggers = contract_triggers.get(contract_id)
-            if triggers is None:
+        qualifying_gate = False
+        gate_revalidated = True
+        for gate_id in entry_gate_ids:
+            gate = gate_by_id.get(gate_id)
+            if gate is None:
+                gate_revalidated = False
                 continue
-            if triggers and not any(
-                _entry_matches_triggers(entry, triggers, trigger_state)
-                for entry in candidates
-            ):
-                blockers.append(
-                    f"release_evidence:contract_revalidation_unsatisfied:{contract_id}:{gate_id}"
-                )
-
-        fully_revalidated: list[dict] = []
-        for entry in candidates:
-            qualifies = True
-            for contract_id in relevant_contracts:
+            gate_roles, role_error = _base._required_roles_for_gate(gate, effective_risk)
+            if role_error:
+                gate_revalidated = False
+                continue
+            if _base._entry_roles(entry) & gate_roles:
+                qualifying_gate = True
+            for contract_id in gate_contracts.get(gate_id, set()) & affected_set:
                 triggers = contract_triggers.get(contract_id)
-                if triggers is None:
-                    qualifies = False
-                    break
-                if triggers and not _entry_matches_triggers(entry, triggers, trigger_state):
-                    qualifies = False
-                    break
-            if qualifies:
-                fully_revalidated.append(entry)
+                if triggers is None or not _entry_matches_triggers(entry, triggers, trigger_state):
+                    gate_revalidated = False
 
-        for role in sorted(gate_roles):
-            if not any(role in _base._entry_roles(entry) for entry in fully_revalidated):
-                blockers.append(
-                    f"release_evidence:gate_role_revalidation_missing:{gate_id}:{role}"
-                )
-
-        if effective_risk in {"R2", "R3", "R4"}:
-            implementations = [
-                entry
-                for entry in fully_revalidated
-                if "implementation" in _base._entry_roles(entry)
-            ]
-            counterchecks = [
-                entry
-                for entry in fully_revalidated
-                if "countercheck" in _base._entry_roles(entry)
-            ]
-            if implementations and counterchecks and not any(
-                _base._independent(implementation, countercheck)
-                for implementation in implementations
-                for countercheck in counterchecks
+        invariant_revalidated = True
+        for invariant_id in entry_invariant_ids:
+            if not _entry_matches_triggers(
+                entry, invariant_triggers[invariant_id], trigger_state
             ):
-                blockers.append(
-                    f"release_evidence:gate_countercheck_revalidation_not_independent:{gate_id}"
-                )
+                invariant_revalidated = False
 
-        semantic_entries = [
-            entry
-            for entry in fully_revalidated
-            if _base._entry_roles(entry) & gate_roles
-        ]
-        covered: set[str] = set()
-        for entry in semantic_entries:
-            requirement_map = entry.get("requirements")
-            if not isinstance(requirement_map, dict):
-                continue
-            values = requirement_map.get(gate_id)
-            configured = _configured_requirement_list(values)
-            if configured is not None:
-                covered.update(configured)
+        participates = (
+            evidence_id in selected_ids
+            or qualifying_gate
+            or bool(entry_invariant_ids)
+        )
+        if participates and gate_revalidated and invariant_revalidated:
+            eligible.append(entry)
 
-        for requirement in requirements:
-            if requirement not in covered:
-                blockers.append(
-                    f"release_evidence:gate_requirement_missing:{gate_id}:{requirement}"
-                )
+    classes = {
+        entry.get("class")
+        for entry in eligible
+        if isinstance(entry.get("class"), str) and entry.get("class")
+    }
+    blockers: list[str] = []
+    if len(classes) < 2:
+        blockers.append(f"release_evidence:revalidated_quorum_classes:{len(classes)}<2")
+        return blockers
 
+    independent_pair = any(
+        left.get("class") != right.get("class") and _base._independent(left, right)
+        for index, left in enumerate(eligible)
+        for right in eligible[index + 1 :]
+    )
+    if not independent_pair:
+        blockers.append("release_evidence:revalidated_quorum_classes_not_independent")
     return blockers
 
 
@@ -488,28 +277,19 @@ def evaluate_release_decision(
     attestation: dict | None = None,
     attestation_key: str | bytes | None = None,
 ) -> tuple[str, list[str]]:
-    policy = ttl_policy or {"policy": {}}
+    early = _round8_input_blockers(invariants, contracts)
+    if early:
+        return "BLOCK", early
+
     now_utc = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-
-    input_blockers = _control_plane_input_blockers(
-        invariants,
-        integration,
-        contracts,
-        impact,
-        snapshot,
-        policy,
-    )
-    if input_blockers:
-        return "BLOCK", input_blockers
-
-    decision, reasons = _base_evaluate_release_decision(
+    decision, reasons = _legacy_evaluate_release_decision(
         invariants,
         integration,
         contracts,
         impact,
         freshness,
         snapshot,
-        policy,
+        ttl_policy,
         actual_head=actual_head,
         actual_target=actual_target,
         current_control_plane_fingerprint=current_control_plane_fingerprint,
@@ -517,14 +297,15 @@ def evaluate_release_decision(
         attestation=attestation,
         attestation_key=attestation_key,
     )
+    if decision == "BLOCK":
+        return decision, reasons
 
-    extra = _hardening_blockers(
+    extra = _round8_revalidated_quorum_blockers(
         invariants,
         integration,
         contracts,
-        impact,
         snapshot,
-        policy,
+        ttl_policy or {"policy": {}},
         actual_head=actual_head,
         actual_target=actual_target,
         control_fingerprint=current_control_plane_fingerprint,
@@ -536,9 +317,9 @@ def evaluate_release_decision(
     return decision, reasons
 
 
-# The legacy main() resolves globals from its defining module at runtime.  Point
-# that module to the hardened evaluator so the CLI and GitHub Actions path cannot
-# bypass these checks.
+# The CLI main function is defined in the internal base module and resolves its
+# evaluator through _base at runtime.  Point that path at the canonical wrapper
+# so direct CLI execution cannot bypass these current-head checks.
 _base.evaluate_release_decision = evaluate_release_decision
 
 
