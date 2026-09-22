@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-GOV-GODMODE-001`
-- Next action title: FanMind God Mode v1 fail-closed integrieren
+- Next action: `NBA-CREATOR-INTELLIGENCE`
+- Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Finishline gates
 
@@ -24,7 +24,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `creator_intelligence`: `IN_PROGRESS`
 - `registration_admin_crm`: `IN_PROGRESS`
 - `chatadmin_staging_verify`: `VERIFIED`
-- `governance_god_mode`: `IN_PROGRESS`
+- `governance_god_mode`: `VERIFIED`
+- `chatadmin_staging_apply`: `OWNER_ACTION_REQUIRED`
 
 ## Deferred owner actions
 
