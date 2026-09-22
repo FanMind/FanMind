@@ -103,15 +103,24 @@ test("account deletion resume inventory is controlled, unapplied and required be
   assert.match(sql, /add column if not exists owned_workspace_ids uuid\[\]/u);
   assert.match(sql, /cardinality\(owned_workspace_ids\) <= 100/u);
   assert.doesNotMatch(sql, /grant\s+.+(?:authenticated|anon|public)/iu);
-  assert.match(checker, /a37ee42baa5a2e8ec6e0ffe42eecc92142f014319d0a50abc8de32de85bb4202/u);
+  assert.match(checker, /0138a2a8484b526f8064abb45f6f0026174c38717e3bf04fc484f9dcb3a2624c/u);
   assert.match(packageJson, /db:account-deletion-workspace-inventory:check/u);
   assert.match(processor, /workspace_inventory_contract_unavailable/u);
   assert.match(processor, /workspace_inventory_missing/u);
   assert.match(processor, /owned_workspace_ids: null/u);
+  assert.match(sql, /create or replace function public\.begin_account_deletion_processing/u);
+  assert.match(sql, /from public\.account_deletion_requests[\s\S]*for update/u);
+  assert.match(sql, /lock table public\.workspaces in share mode/u);
+  assert.match(sql, /lock table public\.workspace_members in share mode/u);
+  assert.match(sql, /array_agg\(w\.id order by w\.id\)/u);
+  assert.match(sql, /owned_workspace_ids = v_owned_workspace_ids/u);
+  assert.match(sql, /revoke all on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*from public, anon, authenticated/u);
+  assert.match(sql, /grant execute on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*to service_role/u);
+  assert.match(processor, /rpc\/begin_account_deletion_processing/u);
   assert.ok(
     processSection.indexOf("persistOwnedWorkspaceInventory") <
       processSection.indexOf("deleteAuthUser"),
-    "owned Workspace inventory must persist before Auth deletion",
+    "atomic ownership snapshot must complete before Auth deletion",
   );
 });
 
