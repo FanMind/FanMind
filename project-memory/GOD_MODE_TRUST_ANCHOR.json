@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-22",
+  "task": "FM-GOV-GODMODE-001",
+  "algorithm": "HMAC-SHA256",
+  "status": "UNPROVISIONED",
+  "key_sha256": null,
+  "provisioning_boundary": "protected environment / owner-controlled producer",
+  "policy": "Non-BLOCK release evaluation requires ACTIVE status and a verification key whose SHA-256 identity exactly matches this independently reviewed anchor. The secret key is never stored in Git."
+}
