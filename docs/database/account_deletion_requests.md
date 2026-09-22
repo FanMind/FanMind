@@ -116,6 +116,17 @@ gelöschtem Auth-User darf Resume ausschließlich den gespeicherten Snapshot fü
 die Workspace-Daten-Nachprüfung verwenden. Ein fehlender/alter Request ohne
 Snapshot wird fail-closed nicht als vollständig gelöscht markiert.
 
+Der Übergang auf `processing` friert außerdem die für die Löschfreigabe
+relevanten dynamischen Blocker ein. Solange der Request `processing` ist, dürfen
+für die gespeicherten Workspaces weder Abo-/Billing-Felder verändert noch fremde
+Workspace-Mitgliedschaften hinzugefügt, entfernt oder auf einen anderen
+Workspace/User verschoben werden. Die eigene Mitgliedschaft des zu löschenden
+Users bleibt für die spätere Löschbereinigung veränderbar. Ein Resume sperrt
+`workspaces` und `workspace_members` erneut read-stabil, verifiziert den exakten
+Workspace-Snapshot und berechnet Mitgliedschafts- und Abo-Blocker nochmals.
+Jeder nachträglich festgestellte Blocker-Drift stoppt fail-closed vor weiterer
+destruktiver Fortsetzung.
+
 Damit werden übertragene historische Workspaces nicht fremd traversiert,
 während alle beim destruktiven Start tatsächlich eigenen Workspaces auch nach
 Auth-Cascade noch vollständig nachgeprüft werden können.
