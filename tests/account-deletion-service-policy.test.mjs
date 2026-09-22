@@ -73,7 +73,7 @@ test("contact deletion is owner-bound and atomically removes only its exact unlo
   assert.match(section, /p_workspace_id: workspace\.id/u);
   assert.match(section, /p_contact_id: contactId/u);
   assert.match(section, /rows\.length === 1/u);
-  assert.match(section, /rows\[0\]\?\.deleted_workspace_id !== workspace\.id/u);
+  assert.match(section, /rows\[0\]\?\.deleted_workspace_id === workspace\.id/u);
   assert.match(section, /isMissingPostgrestResource/u);
   assert.match(section, /legacyDeleteContactIfNoMetaQueueDependency/u);
   assert.match(action, /meta_conversation_catchup_jobs/u);
