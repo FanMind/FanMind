@@ -46,20 +46,21 @@ REPOSITORY_OPERATIONS = {
     "repository_governance",
     "repository_release",
 }
-PROTECTED_OPERATIONS = {
-    "staging_verify",
-    "staging_apply",
-    "staging_accept",
-    "production_deploy",
-    "production_apply",
-    "production_accept",
-    "database_write",
-    "provider_change",
-    "billing_change",
-    "restore_write",
-    "capability_grant",
-    "destructive_action",
+PROTECTED_OPERATION_TARGET_PREFIXES = {
+    "staging_verify": ("staging:",),
+    "staging_apply": ("staging:",),
+    "staging_accept": ("staging:",),
+    "production_deploy": ("production:",),
+    "production_apply": ("production:",),
+    "production_accept": ("production:",),
+    "database_write": ("database:", "staging:", "production:"),
+    "provider_change": ("provider:", "staging:", "production:"),
+    "billing_change": ("billing:", "staging:", "production:"),
+    "restore_write": ("restore:",),
+    "capability_grant": ("capability:", "staging:", "production:"),
+    "destructive_action": ("destructive:", "staging:", "production:"),
 }
+PROTECTED_OPERATIONS = set(PROTECTED_OPERATION_TARGET_PREFIXES)
 
 
 def load(name: str):
@@ -369,7 +370,10 @@ def _derive_protected_action(operation, target) -> tuple[bool | None, str | None
             return False, None
         return None, "release_input:repository_operation_target_mismatch"
     if operation in PROTECTED_OPERATIONS:
-        return True, None
+        allowed_prefixes = PROTECTED_OPERATION_TARGET_PREFIXES[operation]
+        if target.startswith(allowed_prefixes):
+            return True, None
+        return None, f"release_input:protected_operation_target_mismatch:{operation}"
     return None, f"release_input:unknown_operation:{operation}"
 
 
