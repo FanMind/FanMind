@@ -286,7 +286,7 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         trigger_state = dict(TRIGGERS)
         trigger_state.pop("runtime_config_change")
         reasons = evaluate(attestation=signed_attestation(trigger_state=trigger_state))[1]
-        self.assertTrue(any("runtime_config_change" in reason for reason in reasons))
+        self.assertIn("attestation:trigger_state_stale", reasons)
 
     def test_mutable_expiry_unknown_class_and_invalidation_fail_closed(self):
         entries = current_evidence()
