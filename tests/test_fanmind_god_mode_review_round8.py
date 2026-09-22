@@ -58,6 +58,9 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
     def test_stale_second_class_does_not_satisfy_revalidated_r3_quorum(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         contracts["contracts"][0]["minimum_risk"] = "R3"
+        gates["gates"][0]["evidence_required_roles"] = {
+            requirement: "negative" for requirement in gates["gates"][0]["evidence_required"]
+        }
         ttl["policy"]["staging_smoke"] = {
             "ttl_hours": None,
             "revalidate_on": ["head_changed"],
@@ -116,6 +119,9 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
     def test_unbound_selected_second_class_does_not_satisfy_r3_quorum(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         contracts["contracts"][0]["minimum_risk"] = "R3"
+        gates["gates"][0]["evidence_required_roles"] = {
+            requirement: "negative" for requirement in gates["gates"][0]["evidence_required"]
+        }
         ttl["policy"]["staging_smoke"] = {
             "ttl_hours": None,
             "revalidate_on": ["head_changed"],
@@ -177,6 +183,9 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         contracts["contracts"][0]["minimum_risk"] = "R3"
         invariants["invariants"][0]["risk"] = "R3"
+        gates["gates"][0]["evidence_required_roles"] = {
+            requirement: "negative" for requirement in gates["gates"][0]["evidence_required"]
+        }
         ttl["policy"]["staging_smoke"] = {
             "ttl_hours": None,
             "revalidate_on": ["head_changed"],
@@ -283,7 +292,7 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
             BASE.PREFLIGHT.load = original_load
         self.assertIn(f"ttl-policy-ttl-invalid:{evidence_class}", errors)
 
-        canonical_ttl[evidence_class]["ttl_hours"] = 10**10000
+        canonical_ttl["policy"][evidence_class]["ttl_hours"] = 10**10000
         BASE.PREFLIGHT.load = load_with_nonfinite_ttl
         try:
             errors = BASE.PREFLIGHT.validate()
