@@ -45,8 +45,12 @@ def _timestamp_shape_blockers(
 ) -> list[str]:
     blockers: list[str] = []
     if isinstance(attestation, dict):
-        if not _safe_timestamp(attestation.get("issued_at")) or not _safe_timestamp(
-            attestation.get("expires_at")
+        # Only intercept supplied timestamps whose timezone normalization could
+        # otherwise raise. Missing fields remain owned by the inherited
+        # authenticator so all existing fail-closed reasons are preserved.
+        if (
+            ("issued_at" in attestation and not _safe_timestamp(attestation.get("issued_at")))
+            or ("expires_at" in attestation and not _safe_timestamp(attestation.get("expires_at")))
         ):
             blockers.append("attestation:time_invalid")
         evidence = attestation.get("evidence")
@@ -56,11 +60,12 @@ def _timestamp_shape_blockers(
                     continue
                 evidence_id = entry.get("id")
                 marker = evidence_id if isinstance(evidence_id, str) and evidence_id else "unknown"
-                if not _safe_timestamp(entry.get("observed_at")):
+                if "observed_at" in entry and not _safe_timestamp(entry.get("observed_at")):
                     blockers.append(f"release_evidence:observed_at_invalid:{marker}")
     if isinstance(current_trigger_state, dict):
-        if not _safe_timestamp(current_trigger_state.get("issued_at")) or not _safe_timestamp(
-            current_trigger_state.get("expires_at")
+        if (
+            ("issued_at" in current_trigger_state and not _safe_timestamp(current_trigger_state.get("issued_at")))
+            or ("expires_at" in current_trigger_state and not _safe_timestamp(current_trigger_state.get("expires_at")))
         ):
             blockers.append("trigger_state:time_invalid")
     return blockers
