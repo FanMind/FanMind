@@ -157,25 +157,17 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:snapshot_invalid", reasons)
 
-    def test_missing_decision_cannot_select_synthetic_mode_by_omission(self):
-        snap = BASE.snapshot()
-        exact_fixture = ROUND12._persisted_completeness_blockers(
-            snap,
-            actual_head=BASE.HEAD,
-            actual_target=BASE.TARGET,
-            current_control_plane_fingerprint=BASE.CONTROL,
+    def test_missing_decision_cannot_select_canonical_runtime_by_omission(self):
+        synthetic = BASE.snapshot()
+        self.assertEqual(
+            [],
+            ROUND12._persisted_completeness_blockers(synthetic),
         )
-        self.assertEqual([], exact_fixture)
 
-        nonfixture = ROUND12._persisted_completeness_blockers(
-            snap,
-            actual_head="b" * 40,
-            actual_target=BASE.TARGET,
-            current_control_plane_fingerprint=BASE.CONTROL,
-        )
-        self.assertIn("release_input:decision_missing_or_invalid", nonfixture)
-        for key in ROUND12.REQUIRED_COMPLETENESS_FLAGS:
-            self.assertIn(f"release_input:{key}", nonfixture)
+        canonical = deepcopy(synthetic)
+        canonical["task"] = ROUND12._current.CANONICAL_GOD_MODE_TASK
+        reasons = ROUND12._persisted_completeness_blockers(canonical)
+        self.assertIn("release_input:decision_missing_or_invalid", reasons)
 
     def test_persisted_completeness_flags_are_exact_true_or_block(self):
         snap = BASE.snapshot()
