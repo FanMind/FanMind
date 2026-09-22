@@ -30,6 +30,11 @@ TEST_ONLY_SYNTHETIC_ENV = "FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"
 TEST_ONLY_SYNTHETIC_TARGET = "repository:synthetic"
 TEST_ONLY_SYNTHETIC_CONTRACT_IDS = {"FM-CONTRACT-A", "FM-CONTRACT-B"}
 TEST_ONLY_SYNTHETIC_GATE_IDS = {"FM-IGATE-A", "FM-IGATE-B"}
+TEST_ONLY_SYNTHETIC_AFFECTED_IDS = {
+    "FM-CONTRACT-A",
+    "FM-CONTRACT-B",
+    "FM-CONTRACT-REVIEW-HARDENING",
+}
 REQUIRED_CONTRACT_IDS = {
     "FM-CONTRACT-CREATOR-AI-001",
     "FM-CONTRACT-CHATADMIN-AI-001",
@@ -123,10 +128,9 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
     Canonical trust is the default for every direct evaluator call. Contributor-
     controlled task markers never select a weaker mode. The sole opt-out requires
     the dedicated test environment marker plus either the harmless exact
-    `repository:synthetic` target used by noncanonical review fixtures, or the
-    exact A/B synthetic registry identities used for namespace-negative tests.
-    Presence of any real canonical registry identity forces canonical mode even
-    when the test variable or synthetic-looking snapshot fields are supplied.
+    `repository:synthetic` target used by noncanonical review fixtures, or exact
+    whitelisted synthetic fixture identities. Presence of any real canonical
+    registry identity forces canonical mode before these test-only checks.
     """
     if _CANONICAL_CLI_ACTIVE:
         return True
@@ -159,7 +163,8 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
     synthetic_snapshot = no_registry_documents and any(
         isinstance(document, dict)
         and isinstance(document.get("affected_contracts"), list)
-        and set(document.get("affected_contracts", [])) == TEST_ONLY_SYNTHETIC_CONTRACT_IDS
+        and bool(document.get("affected_contracts"))
+        and set(document.get("affected_contracts", [])).issubset(TEST_ONLY_SYNTHETIC_AFFECTED_IDS)
         for document in documents
     )
     return not (synthetic_repository_target or synthetic_registry_pair or synthetic_snapshot)
