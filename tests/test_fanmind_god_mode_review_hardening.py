@@ -267,7 +267,7 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
         decision, reasons = evaluate_case([legitimate, unrelated])
         self.assertEqual("BLOCK", decision)
         self.assertIn(
-            f"release_evidence:gate_requirement_missing:{GATE}:negative authority proof",
+            f"release_evidence:gate_requirement_role_missing:{GATE}:evidence:negative authority proof",
             reasons,
         )
 
