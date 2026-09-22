@@ -770,9 +770,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence: focused deletion/disclosure/Creator regressions, full Operations/lint/build, browser-relevant static UI regression, CodeQL/current-head CI and independent review before merge.
 - Recovery: source revert only. No SQL or real record deletion occurred.
 ## LOCK-FM-CREATOR-PRIVACY-HOTFIX-20260920
-- Task: FM-CREATOR-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
-- Baseline: merged PR #1143 / `027d5a21ac41daae0331a0af2f9685d3729b2039`.
-- Scope: only the three post-merge review findings: ownership-transfer Account Delete, bounded Auth disclosure and atomic exact-tenant Meta queue + Contact deletion. No database Apply or activation. Local commit and PR metadata are prepared; remote PR number/CI/review remain unavailable from this environment, so the lock stays active.
+- Task: FM-CREATOR-001; holder: Codex Cloud; risk: R3; status: RELEASED_MERGED.
+- Result: the #1143 three-finding hotfix was published and merged as PR #1144 / `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`. Do not rebuild that original scope.
+- Follow-up: #1144 independent post-merge review exposed a separate new bounded set of one P1 and two P2 findings; those belong to the new lock below.
+
+## LOCK-FM-CREATOR-PRIVACY-POSTMERGE-20260922
+- Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: ACTIVE.
+- Baseline: current main `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`; merged PR #1144 / `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`.
+- Scope: only #1144 post-merge findings: rollout-order-safe Contact deletion before the controlled RPC is installed, valid null-Workspace account deletion, and resume-safe verification of a deleted historical request Workspace. No SQL Apply, Staging/Production mutation, provider, Billing, Mobile or unrelated Creator work.
+- Evidence plan: focused dynamic/static regressions, Operations/CI/CodeQL/Browser current-head checks and exactly one required independent review cycle.
+- Recovery: source/reconciliation revert only; controlled SQL remains unapplied.
 - Evidence: focused regressions/cross-tenant negatives, Operations, lint, build, Project Memory controls, CodeQL/current-head CI and independent review without P1/P2.
 - Recovery: source revert only; the controlled RPC remains unapplied in this Hotfix.
 

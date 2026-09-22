@@ -23,6 +23,7 @@ import {
   AccountDeletionProcessorError,
   evaluateAccountDeletionEligibility,
   processAccountDeletion,
+  recoverWorkspaceIdsForResume,
   workspaceSubscriptionRequiresResolution,
 } from "../scripts/operations/process-account-deletion.mjs";
 
@@ -244,6 +245,70 @@ test("active or unresolved subscriptions block destructive processing", () => {
       new Date("2026-07-24T00:00:00.000Z"),
     ),
     false,
+  );
+});
+
+test("null historical Workspace stays valid only when the account owns no Workspace", async () => {
+  const base = {
+    request: {
+      user_id: USER_ID,
+      workspace_id: null,
+      notification_email: ACCOUNT_EMAIL,
+    },
+    authUser: { id: USER_ID, email: ACCOUNT_EMAIL },
+    config: { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY },
+    fetchImpl: async () => new Response("[]", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+  };
+  const noWorkspace = await evaluateAccountDeletionEligibility({
+    ...base,
+    workspaces: [],
+  });
+  assert.equal(noWorkspace.eligible, true);
+
+  await assert.rejects(
+    evaluateAccountDeletionEligibility({
+      ...base,
+      workspaces: [{ id: WORKSPACE_ID, owner_user_id: USER_ID, billing_status: "demo_free" }],
+    }),
+    (error) => error instanceof AccountDeletionProcessorError &&
+      error.code === "request_workspace_mismatch",
+  );
+});
+
+test("resume reconstructs a deleted request Workspace but excludes a surviving transferred Workspace", async () => {
+  const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
+  const request = { workspace_id: WORKSPACE_ID };
+
+  const deleted = await recoverWorkspaceIdsForResume(
+    async () => new Response("[]", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+    config,
+    request,
+  );
+  assert.deepEqual(deleted, [WORKSPACE_ID]);
+
+  const transferred = await recoverWorkspaceIdsForResume(
+    async () => new Response(JSON.stringify([{ id: WORKSPACE_ID }]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+    config,
+    request,
+  );
+  assert.deepEqual(transferred, []);
+
+  assert.deepEqual(
+    await recoverWorkspaceIdsForResume(
+      async () => { throw new Error("should not fetch"); },
+      config,
+      { workspace_id: null },
+    ),
+    [],
   );
 });
 
