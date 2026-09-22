@@ -385,7 +385,7 @@ async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {
   }
 }
 
-async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
+export async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
   if (!request.workspace_id) return [];
   const rows = await restSelect(
     fetchImpl,
