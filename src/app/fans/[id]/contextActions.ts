@@ -47,6 +47,66 @@ function serviceRoleKey(): string | null {
   return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
 }
 
+
+function isMissingPostgrestResource(status: number, payload: unknown): boolean {
+  if (status !== 404 || !payload || typeof payload !== "object") return false;
+  const code = String((payload as { code?: unknown }).code ?? "");
+  const message = String((payload as { message?: unknown }).message ?? "").toLowerCase();
+  return (
+    code === "PGRST202" ||
+    code === "PGRST205" ||
+    message.includes("schema cache") ||
+    message.includes("could not find")
+  );
+}
+
+async function legacyDeleteContactIfNoMetaQueueDependency(
+  workspaceId: string,
+  contactId: string,
+  key: string,
+): Promise<boolean> {
+  const queueUrl = new URL(getSupabaseRestUrl("meta_conversation_catchup_jobs"));
+  queueUrl.searchParams.set("workspace_id", `eq.${workspaceId}`);
+  queueUrl.searchParams.set("contact_id", `eq.${contactId}`);
+  queueUrl.searchParams.set("select", "id");
+  queueUrl.searchParams.set("limit", "1");
+
+  const queueResponse = await fetch(queueUrl, {
+    headers: getSupabaseHeaders(key),
+    cache: "no-store",
+  }).catch(() => null);
+  if (!queueResponse) return false;
+
+  if (queueResponse.ok) {
+    const rows = await queueResponse.json().catch(() => null);
+    if (!Array.isArray(rows) || rows.length > 0) return false;
+  } else {
+    const payload = await queueResponse.json().catch(() => null);
+    if (!isMissingPostgrestResource(queueResponse.status, payload)) return false;
+  }
+
+  const contactUrl = new URL(getSupabaseRestUrl("contacts"));
+  contactUrl.searchParams.set("id", `eq.${contactId}`);
+  contactUrl.searchParams.set("workspace_id", `eq.${workspaceId}`);
+  contactUrl.searchParams.set("select", "id,workspace_id");
+  const response = await fetch(contactUrl, {
+    method: "DELETE",
+    headers: {
+      ...getSupabaseHeaders(key),
+      Prefer: "return=representation",
+    },
+    cache: "no-store",
+  }).catch(() => null);
+  if (!response?.ok) return false;
+  const rows = await response.json().catch(() => null);
+  return (
+    Array.isArray(rows) &&
+    rows.length === 1 &&
+    rows[0]?.id === contactId &&
+    rows[0]?.workspace_id === workspaceId
+  );
+}
+
 async function mutateWorkspaceScopedEntry(input: {
   workspaceId: string;
   contactId: string;
@@ -288,15 +348,31 @@ export async function deleteContactAndCreatorData(formData: FormData) {
     }),
     cache: "no-store",
   }).catch(() => null);
-  const rows = response?.ok
-    ? await response.json().catch(() => null)
-    : null;
-  if (
-    !Array.isArray(rows) ||
-    rows.length !== 1 ||
-    rows[0]?.deleted_contact_id !== contactId ||
-    rows[0]?.deleted_workspace_id !== workspace.id
-  ) {
+
+  let deleted = false;
+  if (response?.ok) {
+    const rows = await response.json().catch(() => null);
+    deleted =
+      Array.isArray(rows) &&
+      rows.length === 1 &&
+      rows[0]?.deleted_contact_id === contactId &&
+      rows[0]?.deleted_workspace_id === workspace.id;
+  } else if (response) {
+    const payload = await response.json().catch(() => null);
+    if (isMissingPostgrestResource(response.status, payload)) {
+      // Rollout-order compatibility only: if the atomic RPC has not been
+      // installed yet, preserve the historical exact-tenant delete path only
+      // when the Meta catch-up table is absent or proves there is no dependent
+      // row. If the queue exists with any row, fail closed until the reviewed
+      // RPC contract is installed; never delete around that FK.
+      deleted = await legacyDeleteContactIfNoMetaQueueDependency(
+        workspace.id,
+        contactId,
+        key,
+      );
+    }
+  }
+  if (!deleted) {
     redirect(contactPath(contactId, locale, "contact_delete_failed"));
   }
 
