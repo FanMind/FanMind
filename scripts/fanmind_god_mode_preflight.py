@@ -41,10 +41,48 @@ def _canonical_document_load_errors() -> list[str]:
     return list(dict.fromkeys(errors))
 
 
+def _nested_registry_id_errors() -> list[str]:
+    """Validate IDs before retained validators normalize them into sets/maps."""
+    errors: list[str] = []
+    loader = globals()["load"]
+    registries = (
+        ("SYSTEM_INVARIANTS.json", "invariants", "system-invariant"),
+        ("CONTRACT_REGISTRY.json", "contracts", "contract"),
+        ("INTEGRATION_GATES.json", "gates", "integration-gate"),
+    )
+    for name, key, marker in registries:
+        try:
+            document = loader(name)
+        except Exception:
+            # The earlier load guard owns the canonical load-error marker.
+            continue
+        if not isinstance(document, dict):
+            continue
+        items = document.get(key)
+        if not isinstance(items, list):
+            continue
+        seen: set[str] = set()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not isinstance(item_id, str) or not item_id.strip():
+                errors.append(f"{marker}-id-invalid")
+                continue
+            if item_id in seen:
+                errors.append(f"{marker}-id-duplicate:{item_id}")
+                continue
+            seen.add(item_id)
+    return list(dict.fromkeys(errors))
+
+
 def validate() -> list[str]:
     early = _canonical_document_load_errors()
     if early:
         return early
+    id_errors = _nested_registry_id_errors()
+    if id_errors:
+        return id_errors
 
     # Retain the documented monkeypatch seam used by the adversarial tests while
     # delegating every already-reviewed structural rule to the prior validator.
