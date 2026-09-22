@@ -1330,3 +1330,13 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - ChatAdmin downstream: consumed read-only VERIFY `35652258052` / `106507223598` remains `ABSENT`; do not repeat it because main advanced. FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921 is now READY_OWNER_ACTION, not authorized.
 - Scope closeout: God Mode v1 repository work is complete, lock released, loop closed. Later hardening ideas require a new bounded task/PR and must not reopen #1157.
 - Dependency unblock: FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 resolved; bounded Creator continuation is eligible again while protected ChatAdmin APPLY remains owner/environment-gated.
+
+## RECEIPT-OWNER-MANUAL-MERGES-1158-1160-20260922
+- Status: RECORDED_OWNER_ACTION; Risk: documentation-only reconciliation.
+- Owner confirmation: Bernd explicitly confirmed that he personally took over and merged PR #1158 and PR #1160.
+- PR #1158: `Reconcile God Mode post-merge state`; final head `e04e97e763dcb02f3c39cdfd12756476f9d175ac`; merged by `Bernds-tech` at 2026-09-22T19:36:08Z as `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`.
+- PR #1160: `Fix Creator privacy post-merge review findings`; final head `d354b200f4be6f81ce4a51616eb2f77e8e4b30d5`; merged by `Bernds-tech` at 2026-09-22T19:57:44Z as `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`.
+- Exact #1160 post-merge GitHub evidence: Deploy FanMind `35777147018` PASS; Browser E2E `35777146982` PASS; CodeQL `35777146947` PASS; God Mode Gate `35777146832` PASS; Final Go-Live Readiness `35777327881` PASS.
+- Exact #1160 read-only runtime evidence: Production Audit `35777327823` reports `PRODUCTION_RUNTIME_VERIFIED=true`, `PRODUCTION_RELEASE=ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`, 8 healthy components, PM2 online, nginx active, local/public login HTTP 200. The complete audit remains red only for the already-open `production_audit_backup_latest_stale_or_empty` finding.
+- Interpretation: these facts prove the two manual Owner merges and, for #1160, the listed post-merge deploy/runtime observations. They do not manufacture a missing independent-review/acceptance quorum or authorize any protected action.
+- Reconciliation boundary: downstream canonical files must consume the actual merge/acceptance status without reopening or duplicating the merged source work. ChatAdmin APPLY remains separately owner/action-time gated; Creator privacy/delete/disclosure closure must remain evidence-driven.
