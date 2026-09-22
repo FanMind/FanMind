@@ -1,3 +1,10 @@
+## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922
+- Status: IN_PROGRESS; Task: FM-CREATOR-001; Risk: R3.
+- Trigger: owner-accepted PR #1160 is closed; its completed exact-head review surfaced one later P2 requiring every Workspace owned immediately before Auth deletion to survive a crash/resume for deletion-completeness verification.
+- Scope: new controlled/unapplied `owned_workspace_ids uuid[]` request contract, checksum checker, fail-before-delete persistence/readback, resume from stored inventory only, final clearing, tests/docs/memory. No database Apply or real deletion.
+- Negative contract: missing schema column, missing/malformed/duplicate inventory, failed persistence or missing resume snapshot must stop before destructive completion. Historical transferred Workspace IDs are not added unless actually owned at destructive start.
+- Exact next: publish one bounded PR, complete current-head checks + one required independent review, fix findings on that PR, merge under convergence rule. A later target rollout needs a distinct protected authorization.
+
 # FanMind Open Loops
 
 ## FM-LOOP-REBOOT-PUBLICATION-20260912
