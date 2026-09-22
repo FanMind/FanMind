@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -260,6 +260,26 @@
         "PRODUCTION_CONFIRMED"
       ],
       "instruction": "Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically."
+    },
+    {
+      "id": "NBA-CHATADMIN-STAGING-APPLY",
+      "priority": 4,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_apply",
+      "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "owner_action_id": "FM-CHATADMIN-OWNER-APPLY-20260921",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "governance_god_mode"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "The prior protected read-only VERIFY is already consumed as ABSENT and must not be repeated merely because main advanced. God Mode v1 is merged and repository-verified. The next ChatAdmin runtime step is a separate protected Staging APPLY bound at dispatch time to fresh current main, exact target and required owner/environment authorization, followed by separate VERIFY/ACCEPT evidence. Do not dispatch APPLY autonomously and do not infer activation from repository state."
     }
   ],
   "retired_actions": [
