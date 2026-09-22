@@ -777,6 +777,17 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Completed so far: bounded source/tests and checksum-pinned offline SQL check prepared and committed on the single Hotfix branch. Focused deletion/disclosure/cross-tenant tests, 1,425 Operations policy tests (three documented PG/environment skips), lint, Production build and all local Project-Memory/drift/freshness/next-action controls pass. Browser E2E was attempted but the local Chromium binary is absent; remote Current-Head Browser E2E remains required. PR title/body were prepared through the required PR tool; this environment returned no remote PR number or remote CI state. Still open: actual remote PR publication/number, Current-Head CI/CodeQL and independent Codex review without P1/P2. No Staging/Production Apply.
 - Exact next step: publish the prepared single Hotfix PR, obtain Current-Head checks and independent review, and do not merge until there are no P1/P2 findings. Creator Delete/Privacy/Disclosure remains unaccepted until the Hotfix is merged.
 
+## FM-CREATOR-001 — PR #1144 post-merge review hotfix
+- Date: 2026-09-22
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-CREATOR-PRIVACY-POSTMERGE-20260922
+- Owner: ChatGPT / connected GitHub
+- Baseline: current main `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`; PR #1144 is already merged and its original #1143 review scope must not be rebuilt.
+- Scope: exactly three #1144 post-merge findings: preserve Contact deletion while `delete_contact_with_meta_catchup` is not installed, preserve genuine null-Workspace account deletion, and make interrupted post-Auth-delete resume verify the historical request Workspace only when that Workspace itself no longer exists.
+- Boundaries: repository-only code/tests/memory. The controlled Contact-delete SQL remains unapplied; no Staging/Production APPLY/ACCEPT/write, provider, Billing, Restore or Mobile action.
+- Exact next step: implement focused fail-closed compatibility and regressions on one branch, publish one PR, repair any current-head findings, and merge only under the convergence rule.
+
 ## FM-CHATADMIN-001 — isolated multi-character Owner exception
 - Date: 2026-09-20; Status: IMPLEMENTED_FOR_PR; Risk: R3; Lock: LOCK-FM-CHATADMIN-20260920; Owner: Codex Cloud.
 - Baseline: exact main `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334` after merged #1144; Deploy, Browser E2E, CodeQL, Supply Chain, Final Go-Live and runtime release were owner-confirmed successful. Read-only Production Audit remains separately red only for `production_audit_backup_latest_stale_or_empty`; no global green-audit claim and no Backup/Restore action in this task.
