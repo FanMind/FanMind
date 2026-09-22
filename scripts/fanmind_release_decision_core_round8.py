@@ -99,8 +99,8 @@ def _round8_revalidated_quorum_blockers(
     contract/invariant revalidation, role quorum and provenance independence.
     This final layer recomputes the *class* quorum using only entries that are
     still eligible after the applicable contract and invariant trigger
-    contracts are applied.  A stale second-class gate record therefore cannot
-    keep an otherwise one-class release at ALLOW.
+    contracts are applied.  A stale or unbound second-class record therefore
+    cannot keep an otherwise one-class release at ALLOW.
     """
 
     if not isinstance(attestation, dict):
@@ -188,18 +188,6 @@ def _round8_revalidated_quorum_blockers(
         ):
             current_entries[evidence_id] = entry
 
-    selected_ids = {
-        value
-        for key in (
-            "implementation_evidence_id",
-            "countercheck_evidence_id",
-            "negative_evidence_id",
-            "rollback_recovery_evidence_id",
-        )
-        for value in [snapshot.get(key)]
-        if isinstance(value, str) and value
-    }
-
     eligible: list[dict] = []
     required_invariant_ids = set(invariant_triggers)
     for evidence_id, entry in current_entries.items():
@@ -233,11 +221,12 @@ def _round8_revalidated_quorum_blockers(
             ):
                 invariant_revalidated = False
 
-        participates = (
-            evidence_id in selected_ids
-            or qualifying_gate
-            or bool(entry_invariant_ids)
-        )
+        # The final class quorum is evidence for the affected system boundary,
+        # not a count of globally selected IDs.  Selected implementation/
+        # countercheck/negative/recovery records that bind to no mandatory gate
+        # or required invariant cannot contribute a second class merely because
+        # they appear in RELEASE_DECISION.json.
+        participates = qualifying_gate or bool(entry_invariant_ids)
         if participates and gate_revalidated and invariant_revalidated:
             eligible.append(entry)
 
