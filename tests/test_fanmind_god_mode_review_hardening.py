@@ -31,6 +31,7 @@ CONTRACT = "FM-CONTRACT-REVIEW-HARDENING"
 
 def structures():
     invariants = {
+        "schema_version": 1,
         "invariants": [
             {
                 "id": INVARIANT,
@@ -39,9 +40,10 @@ def structures():
                 "risk": "R1",
                 "revalidate_on": ["schema_or_authority_change"],
             }
-        ]
+        ],
     }
     gates = {
+        "schema_version": 1,
         "gates": [
             {
                 "id": GATE,
@@ -50,9 +52,10 @@ def structures():
                 "contracts": [CONTRACT],
                 "evidence_required": ["exact tenant proof", "negative authority proof"],
             }
-        ]
+        ],
     }
     contracts = {
+        "schema_version": 1,
         "contracts": [
             {
                 "id": CONTRACT,
@@ -60,22 +63,27 @@ def structures():
                 "minimum_risk": "R1",
                 "revalidate_on": ["price_catalog_change"],
             }
-        ]
+        ],
     }
-    impact = {"mappings": [{"contract": CONTRACT, "gates": [GATE]}]}
+    impact = {
+        "schema_version": 1,
+        "mappings": [{"contract": CONTRACT, "gates": [GATE]}],
+    }
     ttl = {
+        "schema_version": 1,
         "policy": {
             "ci_exact_head": {
                 "ttl_hours": None,
                 "revalidate_on": ["head_changed"],
             }
-        }
+        },
     }
     return invariants, gates, contracts, impact, ttl
 
 
 def snapshot():
     return {
+        "schema_version": 1,
         "operation": "repository_merge",
         "risk": "R1",
         "affected_contracts": [CONTRACT],
@@ -154,8 +162,9 @@ def evaluate_case(
     contracts=None,
     impact=None,
     snapshot_value=None,
+    ttl=None,
 ):
-    base_invariants, base_gates, base_contracts, base_impact, ttl = structures()
+    base_invariants, base_gates, base_contracts, base_impact, base_ttl = structures()
     entries = [entries] if isinstance(entries, dict) else list(entries)
     snap = deepcopy(snapshot_value if snapshot_value is not None else snapshot())
     snap["evidence_bindings"] = [
@@ -168,7 +177,7 @@ def evaluate_case(
         impact if impact is not None else base_impact,
         {},
         snap,
-        ttl,
+        ttl if ttl is not None else base_ttl,
         actual_head=HEAD,
         actual_target=TARGET,
         current_control_plane_fingerprint=CONTROL,
@@ -317,6 +326,80 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:risk_below_invariant_floor:R1<R4", reasons)
+
+    def test_malformed_invariant_risk_fails_closed_without_exception(self):
+        invariants, _, _, _, _ = structures()
+        invariants["invariants"][0]["risk"] = ["R4"]
+        decision, reasons = evaluate_case(evidence(), invariants=invariants)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(f"invariant:risk_invalid:{INVARIANT}", reasons)
+
+        original_load = PREFLIGHT.load
+        canonical_invariants = deepcopy(original_load("SYSTEM_INVARIANTS.json"))
+        invariant_id = canonical_invariants["invariants"][0]["id"]
+        canonical_invariants["invariants"][0]["risk"] = {"value": "R4"}
+
+        def load_with_bad_risk(name):
+            if name == "SYSTEM_INVARIANTS.json":
+                return deepcopy(canonical_invariants)
+            return original_load(name)
+
+        PREFLIGHT.load = load_with_bad_risk
+        try:
+            errors = PREFLIGHT.validate()
+        finally:
+            PREFLIGHT.load = original_load
+        self.assertIn(f"system-invariant-risk-invalid:{invariant_id}", errors)
+
+    def test_unsupported_schema_version_fails_closed_for_every_control_plane_document(self):
+        names = (
+            "SYSTEM_INVARIANTS.json",
+            "INTEGRATION_GATES.json",
+            "CONTRACT_REGISTRY.json",
+            "IMPACT_MAP.json",
+            "RELEASE_DECISION.json",
+            "EVIDENCE_TTL_POLICY.json",
+        )
+        for name in names:
+            with self.subTest(evaluator_document=name):
+                invariants, gates, contracts, impact, ttl = structures()
+                snap = snapshot()
+                documents = {
+                    "SYSTEM_INVARIANTS.json": invariants,
+                    "INTEGRATION_GATES.json": gates,
+                    "CONTRACT_REGISTRY.json": contracts,
+                    "IMPACT_MAP.json": impact,
+                    "RELEASE_DECISION.json": snap,
+                    "EVIDENCE_TTL_POLICY.json": ttl,
+                }
+                documents[name]["schema_version"] = 2
+                decision, reasons = evaluate_case(
+                    evidence(),
+                    invariants=invariants,
+                    gates=gates,
+                    contracts=contracts,
+                    impact=impact,
+                    snapshot_value=snap,
+                    ttl=ttl,
+                )
+                self.assertEqual("BLOCK", decision)
+                self.assertIn(f"control_plane:schema_version_unsupported:{name}", reasons)
+
+        original_load = PREFLIGHT.load
+        for name in PREFLIGHT.CONTROL_PLANE_JSON:
+            with self.subTest(preflight_document=name):
+                def load_with_new_schema(requested, target=name):
+                    document = deepcopy(original_load(requested))
+                    if requested == target:
+                        document["schema_version"] = 2
+                    return document
+
+                PREFLIGHT.load = load_with_new_schema
+                try:
+                    errors = PREFLIGHT.validate()
+                finally:
+                    PREFLIGHT.load = original_load
+                self.assertIn(f"control-plane-schema-version-unsupported:{name}", errors)
 
     def test_missing_invariant_risk_is_rejected_by_preflight(self):
         original_load = PREFLIGHT.load
