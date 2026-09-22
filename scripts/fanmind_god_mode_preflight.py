@@ -94,6 +94,8 @@ def validate() -> list[str]:
             continue
         if item.get("required") is not True or item.get("status") not in VALID_STATUS:
             errors.append(f"system-invariant-invalid:{item.get('id')}")
+        if item.get("risk") not in VALID_RISK:
+            errors.append(f"system-invariant-risk-invalid:{item.get('id')}")
         if not item.get("revalidate_on"):
             errors.append(f"system-invariant-revalidation-missing:{item.get('id')}")
 
