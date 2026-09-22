@@ -314,15 +314,13 @@ def evaluate_release_decision(
     return decision, reasons
 
 
-# The existing canonical CLI performs the Git-object and protected-key checks.
-# Point its module/global hook at this stricter evaluator while preserving the
-# already-reviewed CLI entrypoint and fail-closed behavior.
-_current.evaluate_release_decision = evaluate_release_decision
-_base.evaluate_release_decision = evaluate_release_decision
-
-
+# The newest wrapper is the only supported executable CLI. Keeping this module
+# importable preserves the reviewed evaluator chain, but direct execution must
+# fail closed so it cannot bypass round-12 hardening.
 def main() -> int:
-    return _current.main()
+    print("FANMIND_RELEASE_DECISION=BLOCK")
+    print("FANMIND_RELEASE_REASON=round11_cli_disabled_use_round12")
+    return 2
 
 
 if __name__ == "__main__":
