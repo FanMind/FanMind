@@ -25,7 +25,8 @@ CONTROL = "c" * 64
 KEY = "test-only-protected-attestation-key-000000000000"
 NOW = datetime(2026, 9, 21, 22, 0, 0, tzinfo=timezone.utc)
 GATE = "FM-IGATE-REVIEW-HARDENING"
-INVARIANT = "FM-INV-REVIEW-HARDENING"
+INVARIANT = "FM-INV-001"
+CANONICAL_INVARIANTS = [f"FM-INV-{i:03d}" for i in range(1, 13)]
 CONTRACT = "FM-CONTRACT-REVIEW-HARDENING"
 
 
@@ -34,12 +35,13 @@ def structures():
         "schema_version": 1,
         "invariants": [
             {
-                "id": INVARIANT,
+                "id": invariant_id,
                 "required": True,
                 "status": "ENFORCED",
                 "risk": "R1",
                 "revalidate_on": ["schema_or_authority_change"],
             }
+            for invariant_id in CANONICAL_INVARIANTS
         ],
     }
     gates = {
@@ -51,6 +53,10 @@ def structures():
                 "status": "VERIFIED",
                 "contracts": [CONTRACT],
                 "evidence_required": ["exact tenant proof", "negative authority proof"],
+                "evidence_required_roles": {
+                    "exact tenant proof": "evidence",
+                    "negative authority proof": "evidence",
+                },
             }
         ],
     }
@@ -111,7 +117,7 @@ def evidence():
         "class": "ci_exact_head",
         "roles": ["evidence"],
         "gates": [GATE],
-        "invariants": [INVARIANT],
+        "invariants": list(CANONICAL_INVARIANTS),
         "requirements": {
             GATE: ["exact tenant proof", "negative authority proof"],
         },
@@ -130,6 +136,23 @@ def evidence():
             "independence_key": "review-proof-key-1",
         },
     }
+
+
+def signed_trigger_state(state=None):
+    value = {
+        "schema_version": 1,
+        "issuer": MODULE.TRIGGER_STATE_ISSUER,
+        "issued_at": "2026-09-21T21:59:00Z",
+        "expires_at": "2026-09-21T22:04:00Z",
+        "state": {
+            "head_changed": "head:a",
+            "schema_or_authority_change": "authority:v1",
+            "price_catalog_change": "price:v1",
+            **({} if state is None else state),
+        },
+    }
+    value["signature"] = MODULE.sign_attestation(value, KEY)
+    return value
 
 
 def signed_attestation(entries):
@@ -184,6 +207,7 @@ def evaluate_case(
         now=NOW,
         attestation=signed_attestation(entries),
         attestation_key=KEY,
+        current_trigger_state=signed_trigger_state(),
     )
 
 
@@ -214,7 +238,7 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
         decision, reasons = evaluate(entry)
         self.assertEqual("BLOCK", decision)
         self.assertIn(
-            f"release_evidence:gate_requirement_missing:{GATE}:negative authority proof",
+            f"release_evidence:gate_requirement_role_missing:{GATE}:evidence:negative authority proof",
             reasons,
         )
 
@@ -224,7 +248,7 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
         decision, reasons = evaluate(entry)
         self.assertEqual("BLOCK", decision)
         self.assertIn(
-            f"release_evidence:gate_requirement_missing:{GATE}:exact tenant proof",
+            f"release_evidence:gate_requirement_role_missing:{GATE}:evidence:exact tenant proof",
             reasons,
         )
 
