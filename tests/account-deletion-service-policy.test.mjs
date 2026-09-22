@@ -107,13 +107,22 @@ test("account deletion resume inventory is controlled, unapplied and required be
   assert.match(packageJson, /db:account-deletion-workspace-inventory:check/u);
   assert.match(processor, /workspace_inventory_contract_unavailable/u);
   assert.match(processor, /workspace_inventory_missing/u);
+  assert.match(processor, /workspace_inventory_drift/u);
+  assert.match(processor, /persistedRow\.status === "blocked"/u);
+  assert.match(processor, /hasDurableBlocker/u);
   assert.match(processor, /owned_workspace_ids: null/u);
+  assert.match(sql, /create or replace function public\.guard_processing_account_deletion_workspace_ownership/u);
+  assert.match(sql, /create trigger guard_processing_account_deletion_workspace_ownership[\s\S]*before insert or update of owner_user_id on public\.workspaces/u);
+  assert.match(sql, /old\.owner_user_id is distinct from new\.owner_user_id/u);
   assert.match(sql, /create or replace function public\.begin_account_deletion_processing/u);
   assert.match(sql, /from public\.account_deletion_requests[\s\S]*for update/u);
   assert.match(sql, /lock table public\.workspaces in share mode/u);
   assert.match(sql, /lock table public\.workspace_members in share mode/u);
   assert.match(sql, /array_agg\(w\.id order by w\.id\)/u);
+  assert.match(sql, /v_owned_workspace_ids is distinct from v_request\.owned_workspace_ids/u);
+  assert.match(sql, /message = 'workspace_inventory_drift'/u);
   assert.match(sql, /owned_workspace_ids = v_owned_workspace_ids/u);
+  assert.match(sql, /revoke all on function public\.guard_processing_account_deletion_workspace_ownership\(\)[\s\S]*from public, anon, authenticated/u);
   assert.match(sql, /revoke all on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*from public, anon, authenticated/u);
   assert.match(sql, /grant execute on function public\.begin_account_deletion_processing\(uuid, uuid\)[\s\S]*to service_role/u);
   assert.match(processor, /rpc\/begin_account_deletion_processing/u);
@@ -123,4 +132,3 @@ test("account deletion resume inventory is controlled, unapplied and required be
     "atomic ownership snapshot must complete before Auth deletion",
   );
 });
-

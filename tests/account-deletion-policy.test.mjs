@@ -79,8 +79,11 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
     if (value.includes("/rest/v1/rpc/begin_account_deletion_processing")) {
       return new Response(JSON.stringify([{
         request_id: REQUEST_ID,
+        status: "processing",
         processing_started_at: "2026-07-24T12:00:00.000Z",
         owned_workspace_ids: [WORKSPACE_ID],
+        requires_ownership_transfer: false,
+        requires_subscription_resolution: false,
       }]), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -306,8 +309,11 @@ test("atomic processing RPC returns the authoritative owned Workspace inventory"
     calls.push({ url: String(url), method: String(init.method ?? "GET"), body: init.body });
     return new Response(JSON.stringify([{
       request_id: REQUEST_ID,
+      status: "processing",
       processing_started_at: "2026-09-22T20:00:00.000Z",
       owned_workspace_ids: [WORKSPACE_ID, secondWorkspace],
+      requires_ownership_transfer: false,
+      requires_subscription_resolution: false,
     }]), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -329,6 +335,50 @@ test("atomic processing RPC returns the authoritative owned Workspace inventory"
   assert.doesNotMatch(String(calls[0].body), new RegExp(WORKSPACE_ID, "u"));
 });
 
+test("durable blocked RPC result stays blocked and never becomes an inventory-shape error", async () => {
+  const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
+  await assert.rejects(
+    persistOwnedWorkspaceInventory(
+      async () => new Response(JSON.stringify([{
+        request_id: REQUEST_ID,
+        status: "blocked",
+        processing_started_at: null,
+        owned_workspace_ids: null,
+        requires_ownership_transfer: true,
+        requires_subscription_resolution: false,
+      }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+      config,
+      { id: REQUEST_ID, user_id: USER_ID },
+    ),
+    (error) =>
+      error instanceof AccountDeletionProcessorError &&
+      error.code === "request_blocked",
+  );
+
+  await assert.rejects(
+    persistOwnedWorkspaceInventory(
+      async () => new Response(JSON.stringify([{
+        request_id: REQUEST_ID,
+        status: "blocked",
+        processing_started_at: null,
+        owned_workspace_ids: null,
+        requires_ownership_transfer: false,
+        requires_subscription_resolution: false,
+      }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+      config,
+      { id: REQUEST_ID, user_id: USER_ID },
+    ),
+    (error) =>
+      error instanceof AccountDeletionProcessorError &&
+      error.code === "workspace_inventory_persist_failed",
+  );
+});
 
 test("workspace inventory contract absence fails before destructive account deletion", async () => {
   const { fetchImpl: baseFetch, calls } = makeProcessorFetch();
@@ -409,7 +459,6 @@ test("resume uses only persisted owned Workspace inventory and preserves all IDs
       error.code === "workspace_inventory_missing",
   );
 });
-
 
 test("historical request Workspace permits transfer retry but never bypasses remaining owned-Workspace safety", async () => {
   const request = {

@@ -21,6 +21,55 @@ alter table public.account_deletion_requests
 comment on column public.account_deletion_requests.owned_workspace_ids is
   'Service-role-only snapshot of Workspace IDs owned at the atomic destructive-start transition; used only for crash-safe deletion completeness verification and cleared on completion.';
 
+create or replace function public.guard_processing_account_deletion_workspace_ownership()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.user_id = new.owner_user_id
+        and r.status = 'processing'
+    ) then
+      raise exception using
+        errcode = 'P0001',
+        message = 'account_deletion_processing';
+    end if;
+    return new;
+  end if;
+
+  if old.owner_user_id is distinct from new.owner_user_id
+    and exists (
+      select 1
+      from public.account_deletion_requests r
+      where r.status = 'processing'
+        and r.user_id in (old.owner_user_id, new.owner_user_id)
+    )
+  then
+    raise exception using
+      errcode = 'P0001',
+      message = 'account_deletion_processing';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_processing_account_deletion_workspace_ownership()
+  from public, anon, authenticated;
+
+drop trigger if exists guard_processing_account_deletion_workspace_ownership
+  on public.workspaces;
+
+create trigger guard_processing_account_deletion_workspace_ownership
+before insert or update of owner_user_id on public.workspaces
+for each row
+execute function public.guard_processing_account_deletion_workspace_ownership();
+
 create or replace function public.begin_account_deletion_processing(
   p_request_id uuid,
   p_user_id uuid
@@ -64,8 +113,8 @@ begin
   end if;
 
   -- A processing request has already crossed the destructive-start boundary.
-  -- Never recapture ownership for it: a concurrent invocation may have observed
-  -- Auth before the first worker deleted it, then arrive here after cascades.
+  -- Never recapture ownership for it. Re-read the exact owner set under the
+  -- same table lock and require it to match the first frozen inventory.
   if v_request.status = 'processing' then
     if v_request.owned_workspace_ids is null then
       raise exception using
@@ -80,6 +129,19 @@ begin
         message = 'processing_blocker_state_invalid';
     end if;
 
+    lock table public.workspaces in share mode;
+
+    select coalesce(array_agg(w.id order by w.id), array[]::uuid[])
+    into v_owned_workspace_ids
+    from public.workspaces w
+    where w.owner_user_id = p_user_id;
+
+    if v_owned_workspace_ids is distinct from v_request.owned_workspace_ids then
+      raise exception using
+        errcode = 'P0001',
+        message = 'workspace_inventory_drift';
+    end if;
+
     request_id := v_request.id;
     status := v_request.status;
     processing_started_at := v_request.processing_started_at;
@@ -92,7 +154,9 @@ begin
 
   -- Account deletion is rare. A brief SHARE lock makes the ownership,
   -- membership and billing snapshot authoritative for this transition instead
-  -- of racing separate REST reads against the state change.
+  -- of racing separate REST reads against the state change. Once status moves
+  -- to processing, the ownership trigger above prevents later acquisitions or
+  -- transfers until the account is deleted/finalized.
   lock table public.workspaces in share mode;
   lock table public.workspace_members in share mode;
 

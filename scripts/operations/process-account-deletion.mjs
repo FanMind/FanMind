@@ -184,6 +184,13 @@ export async function persistOwnedWorkspaceInventory(
     if (message === "request_not_processable") {
       throw new AccountDeletionProcessorError("request_not_processable");
     }
+    if (
+      message === "workspace_inventory_missing" ||
+      message === "workspace_inventory_drift" ||
+      message === "processing_blocker_state_invalid"
+    ) {
+      throw new AccountDeletionProcessorError(message);
+    }
     throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
   }
   if (
@@ -193,9 +200,28 @@ export async function persistOwnedWorkspaceInventory(
   ) {
     throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
   }
-  const persisted = normalizeOwnedWorkspaceIds(payload[0]?.owned_workspace_ids);
+
+  const persistedRow = payload[0];
+  if (persistedRow.status === "blocked") {
+    const hasDurableBlocker =
+      persistedRow.requires_ownership_transfer === true ||
+      persistedRow.requires_subscription_resolution === true;
+    if (persistedRow.owned_workspace_ids != null || !hasDurableBlocker) {
+      throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+    }
+    throw new AccountDeletionProcessorError("request_blocked");
+  }
+  if (
+    persistedRow.status !== "processing" ||
+    persistedRow.requires_ownership_transfer !== false ||
+    persistedRow.requires_subscription_resolution !== false
+  ) {
+    throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+  }
+
+  const persisted = normalizeOwnedWorkspaceIds(persistedRow.owned_workspace_ids);
   return {
-    ...payload[0],
+    ...persistedRow,
     owned_workspace_ids: persisted,
   };
 }
