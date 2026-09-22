@@ -52,6 +52,30 @@ SUPPORTED_EVIDENCE_ROLES = frozenset(
     role for roles in _base.REQUIRED_EVIDENCE_ROLES.values() for role in roles
 )
 
+CANONICAL_INVARIANT_MEANINGS = {
+    "FM-INV-001": ("workspace_tenant_isolation", "Workspace/tenant data must never cross an authorized workspace boundary."),
+    "FM-INV-002": ("chatadmin_authority_boundary", "ChatAdmin is never Platform Admin, Admin CRM, Billing, Operations or service_role."),
+    "FM-INV-003": ("no_browser_service_role", "Browser/client code must never receive or exercise service_role authority."),
+    "FM-INV-004": ("no_social_or_onlyfans_auto_send_v1", "Social and OnlyFans V1 remain human-send/manual-handoff only unless a separately approved contract supersedes this invariant."),
+    "FM-INV-005": ("creator_workspace_uniqueness", "Normal Creator semantics require creators.workspace_id uniqueness for the ordinary Creator path."),
+    "FM-INV-006": ("character_context_isolation", "Character context must never cross character or workspace boundaries."),
+    "FM-INV-007": ("payment_activation_gate", "No payment or paid-tier activation without satisfied Tax, Billing and Entitlement gates."),
+    "FM-INV-008": ("no_normal_web_deploy_db_migration", "Controlled database migrations must never be applied by the normal Web deploy path."),
+    "FM-INV-009": ("no_implementation_only_acceptance", "Implementation-only evidence can never produce ACCEPTED or PRODUCTION_CONFIRMED."),
+    "FM-INV-010": ("no_automerge_with_blockers", "Auto-merge is forbidden with P1/P2, unresolved review threads, pending required checks or red required checks."),
+    "FM-INV-011": ("no_rebuild_closed_scope", "ACCEPTED, VERIFIED, PRODUCTION_CONFIRMED, SUPERSEDED, FAILED or owner-deferred scope must not be rebuilt without a recorded revalidation/reopen reason."),
+    "FM-INV-012": ("no_secrets_in_repo_logs_chat", "Secrets, passwords, tokens, private keys and raw protected credentials must never enter Git, logs or chat."),
+}
+
+
+def _strict_identity(value) -> bool:
+    return (
+        isinstance(value, str)
+        and bool(value)
+        and value == value.strip()
+        and all(ord(ch) >= 0x20 and ch != "\x7f" for ch in value)
+    )
+
 
 def _semantic_projection(
     invariants: dict,
@@ -101,6 +125,19 @@ def _canonical_semantics_blockers(
 ) -> list[str]:
     impact = impact if impact is not None else _base.load("IMPACT_MAP.json")
     ttl_policy = ttl_policy if ttl_policy is not None else _base.load("EVIDENCE_TTL_POLICY.json")
+    invariant_items = invariants.get("invariants") if isinstance(invariants, dict) else None
+    if isinstance(invariant_items, list):
+        by_id = {
+            item.get("id"): item
+            for item in invariant_items
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        for invariant_id, (expected_name, expected_description) in CANONICAL_INVARIANT_MEANINGS.items():
+            item = by_id.get(invariant_id)
+            if not isinstance(item, dict):
+                return [f"canonical_semantics:invariant_missing:{invariant_id}"]
+            if item.get("name") != expected_name or item.get("description") != expected_description:
+                return [f"canonical_semantics:invariant_meaning_mismatch:{invariant_id}"]
     try:
         encoded = json.dumps(
             _semantic_projection(invariants, integration, contracts, impact, ttl_policy),
@@ -140,9 +177,11 @@ def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> 
         if not isinstance(entry, dict):
             continue
         evidence_id = entry.get("id")
-        label = evidence_id if isinstance(evidence_id, str) and evidence_id else "<invalid>"
-        if isinstance(evidence_id, str) and evidence_id:
+        label = evidence_id if _strict_identity(evidence_id) else "<invalid>"
+        if _strict_identity(evidence_id):
             attested_ids.add(evidence_id)
+        else:
+            blockers.append("release_evidence:id_invalid")
 
         status = entry.get("status")
         if not isinstance(status, str):
@@ -174,8 +213,7 @@ def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> 
             binding.get("id")
             for binding in bindings
             if isinstance(binding, dict)
-            and isinstance(binding.get("id"), str)
-            and binding.get("id")
+            and _strict_identity(binding.get("id"))
         }
         if attested_ids != binding_ids:
             blockers.append("attestation:evidence_binding_set_mismatch")
@@ -210,6 +248,17 @@ def evaluate_release_decision(
     attestation_key: str | bytes | None = None,
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
+    synthetic_test_bypass = (
+        _base.os.environ.get("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC") == "1"
+        and actual_target == "repository:synthetic"
+    )
+    if not synthetic_test_bypass:
+        checked_out_head = _base.current_git_head()
+        if not isinstance(actual_head, str) or not _current._round8.git_commit_resolves(actual_head):
+            return "BLOCK", ["release_evidence:actual_head_unresolvable"]
+        if not isinstance(checked_out_head, str) or actual_head != checked_out_head:
+            return "BLOCK", ["release_evidence:actual_head_not_checked_out_head"]
+
     boundary_blockers = _attestation_boundary_blockers(attestation, snapshot)
     fatal_shape_blockers = _fatal_attestation_shape_blockers(boundary_blockers)
     if fatal_shape_blockers:
@@ -348,6 +397,7 @@ def main() -> int:
     required = (
         "SYSTEM_INVARIANTS.json", "INTEGRATION_GATES.json", "CONTRACT_REGISTRY.json",
         "IMPACT_MAP.json", "RELEASE_DECISION.json", "EVIDENCE_TTL_POLICY.json",
+        "EVIDENCE_FRESHNESS.json",
     )
     try:
         for name in required:
