@@ -151,23 +151,23 @@ def _impact_registry_blockers(contracts: dict, impact: dict) -> list[str]:
 
 
 def _snapshot_shape_blockers(snapshot) -> list[str]:
-    """Validate persisted release-decision prerequisites before any `.get` use."""
+    """Reject malformed release snapshots before inherited `.get` access."""
     if not isinstance(snapshot, dict):
         return ["release_input:snapshot_invalid"]
+    return []
 
+
+def _persisted_completeness_blockers(snapshot: dict) -> list[str]:
+    """Require exact persisted completeness before returning non-BLOCK."""
     # Synthetic evaluator callers used by adversarial unit tests do not carry a
-    # persisted `decision` field. The canonical RELEASE_DECISION snapshot does,
-    # and only that persisted record can contradict its own completeness flags.
-    # Once persistence is declared, false *or omitted* flags must block any
-    # computed ALLOW/OWNER_REQUIRED result.
+    # persisted `decision` field. The canonical RELEASE_DECISION snapshot does.
     if "decision" not in snapshot:
         return []
-
-    blockers: list[str] = []
-    for key in REQUIRED_COMPLETENESS_FLAGS:
-        if snapshot.get(key) is not True:
-            blockers.append(f"release_input:{key}")
-    return blockers
+    return [
+        f"release_input:{key}"
+        for key in REQUIRED_COMPLETENESS_FLAGS
+        if snapshot.get(key) is not True
+    ]
 
 
 def _round12_input_blockers(
@@ -205,8 +205,8 @@ def evaluate_release_decision(
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     # Validate adversarial input shapes before the inherited evaluator performs
-    # normalization, dictionary access or timezone conversion. Invalid or
-    # incomplete persisted input must BLOCK, never crash or normalize to success.
+    # normalization, dictionary access or timezone conversion. Invalid input
+    # must BLOCK, never crash or normalize to success.
     early = _round12_input_blockers(
         contracts,
         impact,
@@ -225,7 +225,7 @@ def evaluate_release_decision(
     _round11.load_trust_anchor = load_trust_anchor
     _current.load_trust_anchor = load_trust_anchor
     try:
-        return _round11_evaluate_release_decision(
+        decision, reasons = _round11_evaluate_release_decision(
             invariants,
             integration,
             contracts,
@@ -244,6 +244,16 @@ def evaluate_release_decision(
     finally:
         _round11.load_trust_anchor = previous_round11_loader
         _current.load_trust_anchor = previous_current_loader
+
+    # Preserve any stronger fail-closed reason produced by the inherited
+    # evaluator. Completeness flags are an additional gate specifically before
+    # a result would otherwise become ALLOW or OWNER_REQUIRED.
+    if decision == "BLOCK":
+        return decision, reasons
+    completeness = _persisted_completeness_blockers(snapshot)
+    if completeness:
+        return "BLOCK", list(dict.fromkeys([*reasons, *completeness]))
+    return decision, reasons
 
 
 def _round12_cli_evaluate_release_decision(*args, **kwargs):
