@@ -155,3 +155,14 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Invariants: every normal account remains one Workspace/Creator/writing style; `creators.workspace_id UNIQUE`, normal replies, CRM, Admin, Billing, Operations, Social and Mobile semantics remain unchanged. Platform Admin does not imply ChatAdmin and ChatAdmin never implies Admin/service-role/RLS bypass.
 - V1: manual OnlyFans copy/paste only, server-loaded exact Character revision and isolated Workspace/Character/fan/conversation context, measured AI suggestions and manual copy/send. No provider login/API/scraping/auto-send or automatic learning.
 - Rollout: controlled unapplied schema and repository UI/API/tests only. Staging/Production apply, exact stable Workspace/User grant, private Storage policy acceptance and any real provider integration remain separate reviewed work.
+
+## FM-DEC-023 — Owner-manual merges #1158 and #1160
+- Date: 2026-09-22
+- Status: CONFIRMED
+- Source: Bernd explicitly confirmed in chat that he manually took over and merged both PR #1158 and PR #1160.
+- Classification: both merges are deliberate OWNER_ACTION merges by `Bernds-tech`; do not attribute the merge action to the autonomous Builder.
+- PR #1158 `Reconcile God Mode post-merge state`: final head `e04e97e763dcb02f3c39cdfd12756476f9d175ac`; owner merge at 2026-09-22T19:36:08Z; merge commit `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`.
+- PR #1160 `Fix Creator privacy post-merge review findings`: final head `d354b200f4be6f81ce4a51616eb2f77e8e4b30d5`; owner merge at 2026-09-22T19:57:44Z; merge commit/current main `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`.
+- #1160 post-merge evidence currently observed on exact merge: Deploy `35777147018`, Browser E2E `35777146982`, CodeQL `35777146947`, God Mode Gate `35777146832` and Final Go-Live Readiness `35777327881` succeeded. Read-only Production Audit `35777327823` reports `PRODUCTION_RUNTIME_VERIFIED=true` on exact release `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6` and is red only for the pre-existing `production_audit_backup_latest_stale_or_empty` Operations finding.
+- Boundary: an Owner manual merge is immutable source/governance evidence only. It does not by itself waive required independent review, freshness, runtime/provider/staging acceptance, or authorize ChatAdmin APPLY/ACCEPT, Production mutation, payment/provider action, capability grants, or unrelated scope.
+- Anti-loop rule: do not recreate either merged source scope merely because a later reconciliation is required. Any missing evidence is handled as bounded reconciliation/countercheck, not a rebuild of #1158 or #1160.
