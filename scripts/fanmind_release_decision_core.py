@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 
 import fanmind_release_decision_core_round8 as _round8
 from fanmind_release_decision_core_round8 import *  # noqa: F401,F403
@@ -24,6 +25,8 @@ CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
 
 CANONICAL_GOD_MODE_TASK = "FM-GOV-GODMODE-001"
 TRUST_ANCHOR_FILE = "GOD_MODE_TRUST_ANCHOR.json"
+TEST_ONLY_SYNTHETIC_ENV = "FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"
+TEST_ONLY_SYNTHETIC_TARGET = "repository:synthetic"
 REQUIRED_CONTRACT_IDS = {
     "FM-CONTRACT-CREATOR-AI-001",
     "FM-CONTRACT-CHATADMIN-AI-001",
@@ -59,14 +62,23 @@ def load_trust_anchor() -> dict:
 
 
 def _canonical_runtime_mode(*documents: dict) -> bool:
-    # The canonical CLI always enables this flag before it delegates to the
-    # evaluator. The task marker additionally keeps direct evaluation of the
-    # checked-in Project-Memory documents fail-closed. Synthetic unit fixtures
-    # are deliberately not mistaken for the canonical runtime trust boundary.
+    """Return True unless an explicit, synthetic-repository-only test opt-out exists.
+
+    Canonical trust is the default for every direct evaluator call. Contributor-
+    controlled document markers (including a removable `task` field) never
+    select a weaker mode. The only opt-out is an explicit test-only environment
+    marker *and* an exact synthetic repository target carried by the snapshot;
+    inherited target binding still prevents that fixture mode from authorizing a
+    staging, production, database, provider, billing or other protected target.
+    """
     if _CANONICAL_CLI_ACTIVE:
         return True
-    return any(
-        isinstance(document, dict) and document.get("task") == CANONICAL_GOD_MODE_TASK
+    if os.environ.get(TEST_ONLY_SYNTHETIC_ENV) != "1":
+        return True
+    return not any(
+        isinstance(document, dict)
+        and document.get("operation") in _base.REPOSITORY_OPERATIONS
+        and document.get("evaluated_target") == TEST_ONLY_SYNTHETIC_TARGET
         for document in documents
     )
 
@@ -304,7 +316,7 @@ def _canonical_runtime_input_blockers(
 
 
 def evaluate_release_decision(*args, **kwargs):
-    """Pure evaluator used by focused tests and protected producer consumers."""
+    """Evaluator with canonical trust enforcement by default for direct callers."""
     if len(args) < 6:
         return "BLOCK", ["release_input:canonical_arguments_missing"]
     invariants = args[0]
