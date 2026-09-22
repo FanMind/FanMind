@@ -1,3 +1,10 @@
+## God Mode v1 merged and post-merge verified; ChatAdmin APPLY is now owner-gated — 2026-09-22
+- PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` was merged through the normal PR path as exact `main` `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
+- Post-merge evidence on that exact release: Deploy `35769547208`, God Mode Gate `35769547419`, Browser E2E `35769547288`, CodeQL `35769547313`, Supply Chain `35769547382` and Final Go-Live Readiness `35769694386` succeeded. Read-only Production Audit `35769694374` independently reports `PRODUCTION_RUNTIME_VERIFIED=true` for the exact release and fails only on the pre-existing Operations loop `production_audit_backup_latest_stale_or_empty`.
+- FM-GOV-GODMODE-001 repository scope is complete and must not be rebuilt. The checked-in RELEASE_DECISION remains deliberately fail-closed; green CI/merge does not activate any protected action.
+- The prior ChatAdmin read-only VERIFY result remains consumed as `ABSENT`; do not repeat it because main advanced. The next ChatAdmin step is a separate protected Staging APPLY owner action. It is not authorized by this reconciliation and ACCEPT remains later.
+- Creator deferral FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 is resolved by the consumed VERIFY plus merged God Mode. Previously accepted Creator work may resume under its existing bounded scope without rebuilding accepted foundations.
+
 ## ChatAdmin Staging VERIFY completed: ABSENT; God Mode v1 is next — 2026-09-21
 - Protected GitHub Actions run `35652258052` / job `106507223598` executed exact reviewed `main` `973e70f6d243984d95ec1420a79701faad04a39a` in `VERIFY` mode with `verify-chat-admin-schema`.
 - The read-only verifier completed successfully and reported exactly `CHAT_ADMIN_SCHEMA_STATE=ABSENT`. `APPLY` and `ACCEPT` were skipped; no Staging/Production write, capability grant or provider/Billing/Restore/Mobile mutation occurred.
