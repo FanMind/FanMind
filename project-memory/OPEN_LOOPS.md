@@ -180,7 +180,12 @@ This register contains started, partially completed or follow-up work that could
 
 
 ## FM-LOOP-GODMODE-20260921
-- Status: OPEN; task FM-GOV-GODMODE-001; Updated: 2026-09-21.
-- Goal: merge the bounded repository-only God Mode v1 control plane with fail-closed release decision, system invariants, contract/integration registries, impact mapping, adversarial proof and Post-Merge Guardian policy.
-- Current branch: `governance/god-mode-v1-20260921`.
-- Next: complete current-head CI/CodeQL/Project Memory and independent review without P1/P2, then merge/reconcile. No protected Staging/Production action is part of this loop.
+- Status: CLOSED; task FM-GOV-GODMODE-001; Updated: 2026-09-22.
+- Result: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge repository/runtime counterchecks completed.
+- Boundary: later hardening ideas are new bounded scope. The distinct ChatAdmin Staging APPLY owner action is ready for separate authorization; this loop never authorizes it.
+
+## FM-LOOP-CHATADMIN-APPLY-AFTER-GODMODE-20260922
+- Status: OWNER_ACTION_REQUIRED; task FM-CHATADMIN-002.
+- Preconditions satisfied: Staging VERIFY = ABSENT; God Mode v1 merged/reconciled.
+- Remaining boundary: fresh current-main/target binding and separate protected owner/environment authorization for APPLY. ACCEPT remains later.
+- Builder must not execute or simulate the protected write.

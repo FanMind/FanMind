@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -174,8 +174,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Preserve all accepted Creator Intelligence source and Staging foundation evidence. Owner sequence on 2026-09-21 temporarily defers new Creator feature work until the merged ChatAdmin source is read-only VERIFIED/reconciled and FM-GOV-GODMODE-001 is merged. After that sequence, resume the prior bounded Creator continuation without rebuilding accepted source or Staging foundation evidence.",
-      "deferred_owner_id": "FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921"
+      "instruction": "The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve all accepted Creator Intelligence source and Staging foundation evidence and resume only the prior bounded Creator continuation; do not rebuild accepted foundations, activate providers, auto-send, touch Mobile, or cross protected environment boundaries."
     },
     {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
@@ -259,7 +258,28 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically."
+      "instruction": "God Mode v1 PR #1157 is merged and post-merge verified as exact main 1c5e1232f0893b0730a985c6e717b5c27c535f35. This repository scope is complete; do not rebuild or start another hardening loop. Later hardening ideas require a new bounded task/PR."
+    },
+    {
+      "id": "NBA-CHATADMIN-STAGING-APPLY",
+      "priority": 4,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_apply",
+      "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-APPLY-20260921",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "governance_god_mode"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "The read-only ChatAdmin VERIFY is consumed as ABSENT and God Mode v1 is merged/reconciled. Before any write, freshly re-read current main and the protected Staging target, then obtain separate owner/environment authorization for exactly FanMind ChatAdmin Staging Rollout mode APPLY with confirmation apply-chat-admin-migration and the workflow's required write acknowledgement. The builder must not dispatch this protected write autonomously. ACCEPT remains a later separate protected action after successful APPLY/postflight."
     }
   ],
   "retired_actions": [

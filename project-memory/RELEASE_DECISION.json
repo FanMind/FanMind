@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "task": "FM-GOV-GODMODE-001",
   "scope": "fanmind-governance-baseline-after-chatadmin-verify",
   "risk": "R3",
@@ -23,19 +23,20 @@
   "open_p0": 0,
   "open_p1": 0,
   "open_p2": 0,
-  "pending_checks": true,
+  "pending_checks": false,
   "failed_required_checks": false,
   "unresolved_review_threads": false,
-  "reconciliation_required": true,
+  "reconciliation_required": false,
   "protected_action_required": true,
   "blocking_reasons": [
-    "GOD_MODE_V1_NOT_MERGED",
     "INVARIANTS_REGISTERED_NOT_ENFORCED",
     "INTEGRATION_GATES_REGISTERED_NOT_VERIFIED",
     "CHATADMIN_STAGING_SCHEMA_ABSENT"
   ],
   "evidence": [
     "ChatAdmin VERIFY run 35652258052 / job 106507223598 on 973e70f6d243984d95ec1420a79701faad04a39a returned CHAT_ADMIN_SCHEMA_STATE=ABSENT",
-    "APPLY and ACCEPT steps were skipped"
+    "APPLY and ACCEPT steps were skipped",
+    "God Mode v1 PR #1157 merged as exact main 1c5e1232f0893b0730a985c6e717b5c27c535f35 after required current-head review/CI reconciliation",
+    "Post-merge runtime audit 35769694374 reports PRODUCTION_RUNTIME_VERIFIED=true on exact release; complete audit remains red only for pre-existing production_audit_backup_latest_stale_or_empty"
   ]
 }

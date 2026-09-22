@@ -131,15 +131,16 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - From: FM-GOV-GODMODE-001
 - Requires: satisfied ChatAdmin read-only observation dependency; current Project Memory; repository-only implementation of system invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests and CI gate.
 - Type: repository governance + integration control
-- Status: ACTIVE
-- Updated: 2026-09-21
-- Evidence baseline: ChatAdmin VERIFY run `35652258052` / job `106507223598` returned `ABSENT` on exact main `973e70f6d243984d95ec1420a79701faad04a39a`.
-- Rule: God Mode must not perform Staging/Production mutation. Its merge is required before a separate ChatAdmin APPLY owner action may become READY_NOW.
+- Status: SATISFIED
+- Updated: 2026-09-22
+- Evidence: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge God Mode Gate, Deploy, Browser E2E, CodeQL, Supply Chain and Go-Live Readiness passed. Read-only Production Audit verifies the exact runtime and remains red only for the pre-existing backup-freshness Operations loop. The repository-only governance scope is accepted.
+- Rule: repository God Mode scope is complete and non-repeatable. This completion satisfies repository prerequisites but does not authorize any protected action.
 
 ## FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921
 - From: FM-CHATADMIN-002
 - Requires: exact observed Staging state `ABSENT`; cleanly merged and reconciled `FM-GOV-GODMODE-001`; fresh current-main/target binding; separate protected owner authorization.
 - Type: protected Staging write
-- Status: BLOCKED
-- Updated: 2026-09-21
-- Rule: God Mode merge does not itself authorize APPLY. The owner action becomes READY_NOW only after the governance gate is verified/reconciled.
+- Status: READY_OWNER_ACTION
+- Updated: 2026-09-22
+- Evidence: VERIFY `35652258052` / `106507223598` = `ABSENT`; God Mode v1 merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35` and post-merge repository/runtime counterchecks completed.
+- Rule: this readiness is not authorization. APPLY requires a fresh current-main/target re-read plus separate protected owner/environment authorization; ACCEPT remains a distinct later gate.

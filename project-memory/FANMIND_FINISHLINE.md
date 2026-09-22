@@ -7,6 +7,9 @@ Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Pha
 | Project Memory V6 | FM-MEM-005 | ACCEPTED | exact PR #975 head passed Memory Guard/Quality V6/Status, FanMind CI, Landing, Supply Chain, CodeQL and Browser E2E; merged as `b4bef882a55e8c0dd1dd33d0ad1c1664c3078d0d` | maintain V6; no parallel memory system |
 | Production/Ops | FM-OPS-001 | VERIFIED | production deploy, health/version, audit, monitoring, encrypted backups and checksum verification | maintain; optional/destructive follow-ups remain separate |
 | Isolated Staging | FM-STG-001 | ACCEPTED | separate Supabase/Web Staging, DNS/TLS, synthetic workspaces, test resources and primary acceptance | reuse; feature-specific acceptance stays in its own gate |
+| ChatAdmin Staging VERIFY | FM-CHATADMIN-002 | VERIFIED | protected read-only run `35652258052` / job `106507223598` returned `ABSENT`; APPLY/ACCEPT skipped | observation is consumed; do not repeat because main advances |
+| God Mode governance | FM-GOV-GODMODE-001 | ACCEPTED | PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge control/runtime checks reconciled | maintain; later hardening is new bounded scope |
+| ChatAdmin Staging APPLY | FM-CHATADMIN-002 | OWNER_ACTION_REQUIRED | prerequisites VERIFY=ABSENT + accepted God Mode are satisfied | fresh current-main/target binding plus separate protected owner/environment authorization; ACCEPT remains later |
 | Restore | FM-RST-001 | PARTIAL | isolated database Restore and full database postcheck accepted through DB_POSTCHECKED; bounded Storage controller prepared | protected-host access, distinct disposable Storage target and exact action scope, real Storage/config verification, cleanup and final evidence; never repeat database Restore |
 | Mobile | FM-MOB-001 | IMPLEMENTED_NOT_VERIFIED | native app, signed Android AAB and FCM Preview, documented closed Play test release; recovery redirect configured | complete build-bound Android/Recovery/device evidence, real opt-in/registration/Push delivery, Play cohort and later public Store acceptance; iOS/TestFlight remains Phase 8 |
 | AI/Billing | FM-AI-001 | PARTIAL | Standard active; Plus/Ultra fail-closed policy, test/storage/lifecycle foundations | written tier decisions, quality/cost, complete Staging lifecycle, legal/tax, explicit activation |
@@ -42,8 +45,9 @@ Machine source: `FINISHLINE_STATE.json`. Current sales finishline ends after Pha
 9. After accepted Phase 7b: further Phase 8 work, preserving the historically started disabled Website-AI foundation.
 
 
-## 2026-09-21 ChatAdmin VERIFY / God Mode checkpoint
-- Protected read-only ChatAdmin Staging VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`.
-- APPLY and ACCEPT were skipped. The observation dependency is satisfied; schema installation/runtime acceptance remain open.
-- Next bounded repository step: `FM-GOV-GODMODE-001` God Mode v1. This gate is not required_for_sales by itself but must complete before the separately protected ChatAdmin APPLY path.
-- A later APPLY owner action remains NOT_READY until God Mode v1 is cleanly merged/reconciled.
+## 2026-09-22 God Mode post-merge / ChatAdmin transition
+- Protected read-only ChatAdmin Staging VERIFY run `35652258052` / job `106507223598` remains consumed as `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY and ACCEPT were skipped and VERIFY must not repeat merely because `main` advances.
+- God Mode v1 PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35` and its bounded repository-governance scope is ACCEPTED.
+- Post-merge Deploy, God Mode Gate, Browser E2E, CodeQL, Supply Chain and Go-Live Readiness succeeded. The read-only Production Audit independently verifies the exact runtime/release and remains red only for the pre-existing `production_audit_backup_latest_stale_or_empty` Operations loop.
+- ChatAdmin Staging APPLY is now a separate `OWNER_ACTION_REQUIRED` gate. Readiness does not authorize the write; fresh current-main/target binding plus separate protected owner/environment authorization are mandatory, and ACCEPT remains a later distinct gate.
+- The temporary Creator sequencing deferral is resolved; bounded Creator continuation may proceed in parallel without rebuilding accepted foundations.
