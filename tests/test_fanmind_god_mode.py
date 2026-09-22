@@ -312,7 +312,7 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
         entries[1]["provenance"] = {"source": "source-b", "execution_id": "exec-2", "independence_key": "key-y"}
         entries[2]["provenance"] = {"source": "source-a", "execution_id": "exec-2", "independence_key": "key-z"}
         entries[3]["provenance"] = {"source": "source-b", "execution_id": "exec-1", "independence_key": "key-w"}
-        supplemental = evidence_entry("EV-SUPPLEMENTAL", "staging_smoke", ["evidence"], [],
+        supplemental = evidence_entry("EV-SUPPLEMENTAL", "staging_smoke", ["recovery"], [],
                                       source="source-a", execution_id="exec-2", independence_key="key-w")
         entries.append(supplemental)
         snapshot = clean_snapshot()
