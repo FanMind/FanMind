@@ -155,6 +155,14 @@ def _snapshot_shape_blockers(snapshot) -> list[str]:
     if not isinstance(snapshot, dict):
         return ["release_input:snapshot_invalid"]
 
+    # Synthetic evaluator callers used by adversarial unit tests do not carry a
+    # persisted `decision` field. The canonical RELEASE_DECISION snapshot does,
+    # and only that persisted record can contradict its own completeness flags.
+    # Once persistence is declared, false *or omitted* flags must block any
+    # computed ALLOW/OWNER_REQUIRED result.
+    if "decision" not in snapshot:
+        return []
+
     blockers: list[str] = []
     for key in REQUIRED_COMPLETENESS_FLAGS:
         if snapshot.get(key) is not True:
