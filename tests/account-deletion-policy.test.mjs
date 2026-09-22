@@ -23,6 +23,7 @@ import {
   AccountDeletionProcessorError,
   evaluateAccountDeletionEligibility,
   processAccountDeletion,
+  persistOwnedWorkspaceInventory,
   recoverWorkspaceIdsForResume,
   workspaceSubscriptionRequiresResolution,
 } from "../scripts/operations/process-account-deletion.mjs";
@@ -47,7 +48,10 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
     requires_subscription_resolution: false,
     requested_at: "2026-07-24T00:00:00.000Z",
     processing_deadline_at: "2026-08-23T00:00:00.000Z",
+    processing_started_at: null,
+    owned_workspace_ids: null,
   };
+  let requestState = { ...deletionRequest };
 
   const fetchImpl = async (url, init = {}) => {
     const value = String(url);
@@ -75,12 +79,18 @@ function makeProcessorFetch({ completionMailOk = true } = {}) {
     if (value.includes("/rest/v1/account_deletion_requests")) {
       if (method === "PATCH") {
         const body = JSON.parse(String(init.body ?? "{}"));
+        requestState = { ...requestState, ...body };
         return new Response(
-          JSON.stringify([{ id: REQUEST_ID, status: body.status ?? "pending" }]),
+          JSON.stringify([{
+            id: REQUEST_ID,
+            status: requestState.status ?? "pending",
+            processing_started_at: requestState.processing_started_at ?? null,
+            owned_workspace_ids: requestState.owned_workspace_ids ?? null,
+          }]),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
-      return new Response(JSON.stringify([deletionRequest]), {
+      return new Response(JSON.stringify([requestState]), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -278,39 +288,118 @@ test("null historical Workspace stays valid only when the account owns no Worksp
   );
 });
 
-test("resume reconstructs a deleted request Workspace but excludes a surviving transferred Workspace", async () => {
+test("workspace inventory persists every owned Workspace before destructive execution", async () => {
   const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
-  const request = { workspace_id: WORKSPACE_ID };
-
-  const deleted = await recoverWorkspaceIdsForResume(
-    async () => new Response("[]", {
+  const secondWorkspace = "44444444-4444-4444-8444-444444444444";
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), method: String(init.method ?? "GET"), body: init.body });
+    const body = JSON.parse(String(init.body ?? "{}"));
+    return new Response(JSON.stringify([{
+      id: REQUEST_ID,
+      status: body.status,
+      processing_started_at: body.processing_started_at,
+      owned_workspace_ids: body.owned_workspace_ids,
+    }]), {
       status: 200,
       headers: { "Content-Type": "application/json" },
-    }),
-    config,
-    request,
-  );
-  assert.deepEqual(deleted, [WORKSPACE_ID]);
+    });
+  };
 
-  const transferred = await recoverWorkspaceIdsForResume(
-    async () => new Response(JSON.stringify([{ id: WORKSPACE_ID }]), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }),
+  const persisted = await persistOwnedWorkspaceInventory(
+    fetchImpl,
     config,
-    request,
+    { id: REQUEST_ID, user_id: USER_ID, processing_started_at: null },
+    [WORKSPACE_ID, secondWorkspace],
+    new Date("2026-09-22T20:00:00.000Z"),
   );
-  assert.deepEqual(transferred, []);
+  assert.deepEqual(persisted.owned_workspace_ids, [WORKSPACE_ID, secondWorkspace]);
+  const patch = JSON.parse(String(calls[0].body));
+  assert.deepEqual(patch.owned_workspace_ids, [WORKSPACE_ID, secondWorkspace]);
+  assert.equal(patch.status, "processing");
+});
 
-  assert.deepEqual(
-    await recoverWorkspaceIdsForResume(
-      async () => { throw new Error("should not fetch"); },
-      config,
-      { workspace_id: null },
+test("workspace inventory contract absence fails before destructive account deletion", async () => {
+  const { fetchImpl: baseFetch, calls } = makeProcessorFetch();
+  const fetchImpl = async (url, init = {}) => {
+    const value = String(url);
+    const method = String(init.method ?? "GET").toUpperCase();
+    if (
+      method === "PATCH" &&
+      value.includes("/rest/v1/account_deletion_requests") &&
+      String(init.body ?? "").includes("owned_workspace_ids")
+    ) {
+      calls.push({ url: value, method, body: init.body });
+      return new Response(JSON.stringify({
+        code: "PGRST204",
+        message: "Could not find the 'owned_workspace_ids' column of 'account_deletion_requests' in the schema cache",
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return baseFetch(url, init);
+  };
+
+  await assert.rejects(
+    processAccountDeletion({
+      env: {
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
+        FANMIND_ACCOUNT_DELETION_EXECUTION_ENABLED: "true",
+        FANMIND_ACCOUNT_DELETION_HASH_SECRET: HASH_SECRET,
+      },
+      requestId: REQUEST_ID,
+      execute: true,
+      confirmation: REQUEST_ID,
+      fetchImpl,
+      log: () => undefined,
+      now: new Date("2026-07-24T12:00:00.000Z"),
+    }),
+    (error) => error instanceof AccountDeletionProcessorError &&
+      error.code === "workspace_inventory_contract_unavailable",
+  );
+  assert.equal(
+    calls.some((call) =>
+      call.method === "DELETE" && call.url.includes("/auth/v1/admin/users/"),
     ),
-    [],
+    false,
   );
 });
+
+test("resume uses only persisted owned Workspace inventory and preserves all IDs", async () => {
+  const config = { supabaseUrl: "https://example.supabase.co", serviceKey: SERVICE_KEY };
+  const secondWorkspace = "44444444-4444-4444-8444-444444444444";
+  const ids = await recoverWorkspaceIdsForResume(
+    async () => new Response(JSON.stringify([{
+      id: REQUEST_ID,
+      owned_workspace_ids: [WORKSPACE_ID, secondWorkspace],
+    }]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+    config,
+    { id: REQUEST_ID },
+  );
+  assert.deepEqual(ids, [WORKSPACE_ID, secondWorkspace]);
+
+  await assert.rejects(
+    recoverWorkspaceIdsForResume(
+      async () => new Response(JSON.stringify([{
+        id: REQUEST_ID,
+        owned_workspace_ids: null,
+      }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+      config,
+      { id: REQUEST_ID },
+    ),
+    (error) => error instanceof AccountDeletionProcessorError &&
+      error.code === "workspace_inventory_missing",
+  );
+});
+
 
 test("historical request Workspace permits transfer retry but never bypasses remaining owned-Workspace safety", async () => {
   const request = {
@@ -590,6 +679,7 @@ test("explicit eligible execution deletes only through Supabase Admin and retain
   assert.ok(completionPatch);
   assert.equal(completionPatch.user_id, null);
   assert.equal(completionPatch.workspace_id, null);
+  assert.equal(completionPatch.owned_workspace_ids, null);
   assert.equal(completionPatch.notification_email, null);
   assert.match(completionPatch.user_reference_hash, /^[0-9a-f]{64}$/u);
   const output = lines.join("\n");
