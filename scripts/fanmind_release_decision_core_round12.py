@@ -18,6 +18,7 @@ _round11 = _legacy._round11
 _current = _legacy._current
 _base = _legacy._base
 _legacy_evaluate_release_decision = _legacy.evaluate_release_decision
+_legacy_semantic_projection = _legacy._semantic_projection
 
 # Both compatibility sources contain security-relevant executable logic and are
 # therefore authenticated by the same control-plane fingerprint as this shim.
@@ -47,7 +48,7 @@ def _semantic_projection(
     integration: dict,
     contracts: dict,
 ) -> dict:
-    projection = _legacy._semantic_projection(invariants, integration, contracts)
+    projection = _legacy_semantic_projection(invariants, integration, contracts)
     contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
     invariant_items = invariants.get("invariants") if isinstance(invariants, dict) else None
     projection["contract_revalidation"] = {
