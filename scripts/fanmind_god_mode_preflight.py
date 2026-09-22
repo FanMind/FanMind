@@ -17,6 +17,15 @@ REQUIRED = [
     "RELEASE_DECISION.json",
     "EVIDENCE_TTL_POLICY.json",
 ]
+CONTROL_PLANE_JSON = [
+    "SYSTEM_INVARIANTS.json",
+    "CONTRACT_REGISTRY.json",
+    "INTEGRATION_GATES.json",
+    "IMPACT_MAP.json",
+    "RELEASE_DECISION.json",
+    "EVIDENCE_TTL_POLICY.json",
+]
+SUPPORTED_SCHEMA_VERSION = 1
 REQUIRED_INVARIANTS = {f"FM-INV-{i:03d}" for i in range(1, 13)}
 REQUIRED_CONTRACTS = {
     "FM-CONTRACT-CREATOR-AI-001",
@@ -80,6 +89,18 @@ def validate() -> list[str]:
     if errors:
         return errors
 
+    # Every JSON document interpreted by the God Mode control plane has an
+    # explicit version contract.  Reject missing, boolean, malformed and future
+    # versions before any v1 semantic validation is attempted.
+    for name in CONTROL_PLANE_JSON:
+        document = load(name)
+        if not isinstance(document, dict):
+            errors.append(f"control-plane-document-invalid:{name}")
+            continue
+        schema_version = document.get("schema_version")
+        if type(schema_version) is not int or schema_version != SUPPORTED_SCHEMA_VERSION:
+            errors.append(f"control-plane-schema-version-unsupported:{name}")
+
     invariants = load("SYSTEM_INVARIANTS.json")
     inv = invariants.get("invariants", [])
     if not isinstance(inv, list):
@@ -94,7 +115,8 @@ def validate() -> list[str]:
             continue
         if item.get("required") is not True or item.get("status") not in VALID_STATUS:
             errors.append(f"system-invariant-invalid:{item.get('id')}")
-        if item.get("risk") not in VALID_RISK:
+        risk = item.get("risk")
+        if not isinstance(risk, str) or risk not in VALID_RISK:
             errors.append(f"system-invariant-risk-invalid:{item.get('id')}")
         if not item.get("revalidate_on"):
             errors.append(f"system-invariant-revalidation-missing:{item.get('id')}")
