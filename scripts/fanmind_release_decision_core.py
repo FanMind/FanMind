@@ -108,9 +108,30 @@ def _configured_requirement_list(value) -> list[str] | None:
     return value
 
 
+def _entry_matches_triggers(
+    entry: dict, triggers: list[str], trigger_state: dict[str, str]
+) -> bool:
+    fingerprints = entry.get("trigger_fingerprints")
+    if not isinstance(fingerprints, dict):
+        return False
+    return all(
+        isinstance(trigger_state.get(trigger), str)
+        and bool(trigger_state.get(trigger))
+        and fingerprints.get(trigger) == trigger_state.get(trigger)
+        for trigger in triggers
+    )
+
+
+def _higher_risk(left: str, right: str) -> str:
+    if RISK_ORDER.get(right, 0) > RISK_ORDER.get(left, 0):
+        return right
+    return left
+
+
 def _hardening_blockers(
     invariants: dict,
     integration: dict,
+    contracts: dict,
     impact: dict,
     snapshot: dict,
     ttl_policy: dict,
@@ -161,8 +182,11 @@ def _hardening_blockers(
     # Required invariants carry their own revalidation contract.  Evidence that
     # names an invariant qualifies only when one current record also proves all
     # of that invariant's trigger fingerprints against the protected producer's
-    # current trigger state.
+    # current trigger state.  Their declared risk also contributes to the
+    # effective release risk floor; a high-risk invariant cannot be downgraded
+    # by lowering only contract risk metadata.
     invariant_items = invariants.get("invariants")
+    invariant_risk_floor = "R1"
     if isinstance(invariant_items, list):
         for invariant in invariant_items:
             if not isinstance(invariant, dict) or invariant.get("required") is not True:
@@ -170,10 +194,14 @@ def _hardening_blockers(
             invariant_id = invariant.get("id")
             if not isinstance(invariant_id, str) or not invariant_id:
                 continue
+            invariant_risk = invariant.get("risk")
+            if invariant_risk in RISK_ORDER:
+                invariant_risk_floor = _higher_risk(invariant_risk_floor, invariant_risk)
+            elif invariant_risk is not None:
+                blockers.append(f"invariant:risk_invalid:{invariant_id}")
+
             triggers = _configured_trigger_list(invariant.get("revalidate_on"))
             if triggers is None:
-                # Canonical preflight already rejects this shape.  Keep runtime
-                # evaluation fail-closed as a second independent boundary.
                 blockers.append(f"invariant:revalidate_contract_invalid:{invariant_id}")
                 continue
 
@@ -187,36 +215,109 @@ def _hardening_blockers(
                 # that message here.
                 continue
             if not any(
-                isinstance(entry.get("trigger_fingerprints"), dict)
-                and all(
-                    isinstance(trigger_state.get(trigger), str)
-                    and bool(trigger_state.get(trigger))
-                    and entry["trigger_fingerprints"].get(trigger) == trigger_state.get(trigger)
-                    for trigger in triggers
-                )
+                _entry_matches_triggers(entry, triggers, trigger_state)
                 for entry in candidates
             ):
                 blockers.append(f"release_evidence:invariant_revalidation_unsatisfied:{invariant_id}")
 
-    # Every mandatory integration gate has a semantic proof contract in
-    # evidence_required.  Roles (implementation/countercheck/negative/recovery)
-    # are necessary but not sufficient: current, bound evidence must explicitly
-    # attest every configured requirement for that exact gate.
-    gate_items = integration.get("gates")
-    gate_by_id: dict[str, dict] = {}
-    if isinstance(gate_items, list):
-        for gate in gate_items:
-            if isinstance(gate, dict) and isinstance(gate.get("id"), str):
-                gate_by_id[gate["id"]] = gate
-
+    contract_by_id, _ = _base._registry_by_id(contracts.get("contracts"), "contract")
     affected = snapshot.get("affected_contracts")
     affected_list = [item for item in affected if isinstance(item, str)] if isinstance(affected, list) else []
-    required_gate_ids, _, _ = _base._required_gate_ids(affected_list, impact)
+    affected_set = set(affected_list)
+
+    # Contract-specific revalidation triggers are a second semantic boundary.
+    # The canonical preflight already requires them for registered contracts;
+    # the evaluator consumes them whenever present so declared triggers cannot
+    # be ignored by otherwise current gate evidence.
+    contract_triggers: dict[str, list[str] | None] = {}
+    for contract_id in affected_list:
+        contract = contract_by_id.get(contract_id)
+        if contract is None:
+            continue
+        raw_triggers = contract.get("revalidate_on")
+        if raw_triggers is None:
+            # Synthetic unit fixtures predating the registry contract remain
+            # compatible; canonical Project Memory cannot omit this field
+            # because fanmind_god_mode_preflight rejects it.
+            contract_triggers[contract_id] = []
+            continue
+        configured = _configured_trigger_list(raw_triggers)
+        if configured is None:
+            blockers.append(f"contract:revalidate_contract_invalid:{contract_id}")
+            contract_triggers[contract_id] = None
+        else:
+            contract_triggers[contract_id] = configured
+
+    gate_items = integration.get("gates")
+    gate_by_id: dict[str, dict] = {}
+    gate_contracts: dict[str, set[str]] = {}
+    authoritative_contract_gates: dict[str, set[str]] = {}
+    if isinstance(gate_items, list):
+        for gate in gate_items:
+            if not isinstance(gate, dict) or not isinstance(gate.get("id"), str):
+                continue
+            gate_id = gate["id"]
+            gate_by_id[gate_id] = gate
+            configured_contracts = _configured_requirement_list(gate.get("contracts"))
+            if configured_contracts is None:
+                blockers.append(f"integration_gate:contracts_invalid:{gate_id}")
+                gate_contracts[gate_id] = set()
+                continue
+            current_contracts = set(configured_contracts)
+            gate_contracts[gate_id] = current_contracts
+            for contract_id in current_contracts:
+                if contract_id not in contract_by_id:
+                    blockers.append(f"integration_gate:unknown_contract:{gate_id}:{contract_id}")
+                    continue
+                authoritative_contract_gates.setdefault(contract_id, set()).add(gate_id)
+
+    # IMPACT_MAP and INTEGRATION_GATES describe the same boundary from opposite
+    # directions.  They must agree exactly for affected contracts.  This blocks
+    # a tampered map from rerouting a contract to an easier gate or omitting an
+    # authoritative gate entirely.
+    impact_by_contract, _ = _base._validate_impact_map(impact)
+    for contract_id in affected_list:
+        mapping = impact_by_contract.get(contract_id)
+        if mapping is None:
+            continue  # base evaluator already emits impact_map:missing
+        mapped = mapping.get("gates")
+        if not isinstance(mapped, list) or not mapped or any(
+            not isinstance(gate_id, str) or not gate_id for gate_id in mapped
+        ):
+            continue  # base evaluator owns shape errors
+        mapped_set = set(mapped)
+        authoritative = authoritative_contract_gates.get(contract_id, set())
+        for gate_id in sorted(mapped_set - authoritative):
+            blockers.append(f"impact_map:gate_contract_mismatch:{contract_id}:{gate_id}")
+        for gate_id in sorted(authoritative - mapped_set):
+            blockers.append(f"impact_map:authoritative_gate_missing:{contract_id}:{gate_id}")
+
     explicit_gate_ids = {
         gate_id for gate_id, gate in gate_by_id.items() if gate.get("applicable") is True
     }
-    mandatory_gate_ids = required_gate_ids | explicit_gate_ids
+    authoritative_gate_ids = {
+        gate_id
+        for contract_id in affected_set
+        for gate_id in authoritative_contract_gates.get(contract_id, set())
+    }
+    mandatory_gate_ids = explicit_gate_ids | authoritative_gate_ids
 
+    contract_risk_floor, _ = _base._scope_risk_floor(affected_list, contract_by_id)
+    combined_risk_floor = _higher_risk(contract_risk_floor, invariant_risk_floor)
+    declared_risk = snapshot.get("risk")
+    effective_risk = combined_risk_floor
+    if declared_risk in RISK_ORDER:
+        if RISK_ORDER[declared_risk] < RISK_ORDER[invariant_risk_floor]:
+            blockers.append(
+                f"release_input:risk_below_invariant_floor:{declared_risk}<{invariant_risk_floor}"
+            )
+        effective_risk = _higher_risk(combined_risk_floor, declared_risk)
+
+    # Every mandatory integration gate has a semantic proof contract in
+    # evidence_required.  Roles (implementation/countercheck/negative/recovery)
+    # are necessary but not sufficient.  Requirement claims count only from
+    # current evidence carrying a role required for this gate and satisfying
+    # every affected contract trigger behind that gate.
     for gate_id in sorted(mandatory_gate_ids):
         gate = gate_by_id.get(gate_id)
         if gate is None:
@@ -226,10 +327,57 @@ def _hardening_blockers(
             blockers.append(f"integration_gate:evidence_contract_invalid:{gate_id}")
             continue
 
-        covered: set[str] = set()
-        for entry in current_entries.values():
-            if gate_id not in _base._entry_set(entry, "gates", "gate"):
+        gate_roles, role_error = _base._required_roles_for_gate(gate, effective_risk)
+        if role_error:
+            blockers.append(f"integration_gate:{gate_id}:{role_error}")
+            continue
+
+        candidates = [
+            entry
+            for entry in current_entries.values()
+            if gate_id in _base._entry_set(entry, "gates", "gate")
+        ]
+        relevant_contracts = gate_contracts.get(gate_id, set()) & affected_set
+
+        for contract_id in sorted(relevant_contracts):
+            triggers = contract_triggers.get(contract_id)
+            if triggers is None:
                 continue
+            if triggers and not any(
+                _entry_matches_triggers(entry, triggers, trigger_state)
+                for entry in candidates
+            ):
+                blockers.append(
+                    f"release_evidence:contract_revalidation_unsatisfied:{contract_id}:{gate_id}"
+                )
+
+        fully_revalidated: list[dict] = []
+        for entry in candidates:
+            qualifies = True
+            for contract_id in relevant_contracts:
+                triggers = contract_triggers.get(contract_id)
+                if triggers is None:
+                    qualifies = False
+                    break
+                if triggers and not _entry_matches_triggers(entry, triggers, trigger_state):
+                    qualifies = False
+                    break
+            if qualifies:
+                fully_revalidated.append(entry)
+
+        for role in sorted(gate_roles):
+            if not any(role in _base._entry_roles(entry) for entry in fully_revalidated):
+                blockers.append(
+                    f"release_evidence:gate_role_revalidation_missing:{gate_id}:{role}"
+                )
+
+        semantic_entries = [
+            entry
+            for entry in fully_revalidated
+            if _base._entry_roles(entry) & gate_roles
+        ]
+        covered: set[str] = set()
+        for entry in semantic_entries:
             requirement_map = entry.get("requirements")
             if not isinstance(requirement_map, dict):
                 continue
@@ -285,6 +433,7 @@ def evaluate_release_decision(
     extra = _hardening_blockers(
         invariants,
         integration,
+        contracts,
         impact,
         snapshot,
         policy,
