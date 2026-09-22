@@ -27,6 +27,7 @@ CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
 CANONICAL_GOD_MODE_TASK = "FM-GOV-GODMODE-001"
 TRUST_ANCHOR_FILE = "GOD_MODE_TRUST_ANCHOR.json"
 TEST_ONLY_SYNTHETIC_ENV = "FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"
+TEST_ONLY_SYNTHETIC_TARGET = "repository:synthetic"
 TEST_ONLY_SYNTHETIC_CONTRACT_IDS = {"FM-CONTRACT-A", "FM-CONTRACT-B"}
 TEST_ONLY_SYNTHETIC_GATE_IDS = {"FM-IGATE-A", "FM-IGATE-B"}
 REQUIRED_CONTRACT_IDS = {
@@ -120,17 +121,23 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
     """Return True except for an explicit, structurally synthetic test fixture.
 
     Canonical trust is the default for every direct evaluator call. Contributor-
-    controlled task/target markers never select a weaker mode. The sole opt-out
-    requires the dedicated test environment marker plus the exact synthetic
-    contract/gate identities or the exact synthetic affected-contract scope used
-    by the adversarial fixture suite. Real FanMind registries/snapshots therefore
-    remain canonical even if that environment variable is accidentally present.
+    controlled task markers never select a weaker mode. The sole opt-out requires
+    the dedicated test environment marker plus either the harmless exact
+    `repository:synthetic` target used by review fixtures, or the exact A/B
+    synthetic contract/gate fixture identities used for namespace-negative
+    tests. Real FanMind registries remain canonical even if the test variable is
+    accidentally present.
     """
     if _CANONICAL_CLI_ACTIVE:
         return True
     if os.environ.get(TEST_ONLY_SYNTHETIC_ENV) != "1":
         return True
 
+    synthetic_repository_target = any(
+        isinstance(document, dict)
+        and document.get("evaluated_target") == TEST_ONLY_SYNTHETIC_TARGET
+        for document in documents
+    )
     contract_documents = [
         document for document in documents
         if isinstance(document, dict) and "contracts" in document
@@ -149,7 +156,7 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
         and set(document.get("affected_contracts", [])) == TEST_ONLY_SYNTHETIC_CONTRACT_IDS
         for document in documents
     )
-    return not (synthetic_registry_pair or synthetic_snapshot)
+    return not (synthetic_repository_target or synthetic_registry_pair or synthetic_snapshot)
 
 
 def _canonical_registry_blockers(contracts: dict, integration: dict) -> list[str]:
