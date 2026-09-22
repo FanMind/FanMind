@@ -38,7 +38,10 @@ class CurrentHeadRound15RegressionTests(unittest.TestCase):
         entry["status"] = []
         decision, reasons = FIX.evaluate_case(entry)
         self.assertEqual("BLOCK", decision)
-        self.assertIn(f"release_evidence:status_invalid:{entry['id']}", reasons)
+        self.assertIn(
+            f"release_evidence:not_current:{entry['id']}:invalid_status_type",
+            reasons,
+        )
 
     def test_unknown_authenticated_evidence_role_fails_closed(self):
         entry = FIX.evidence()
