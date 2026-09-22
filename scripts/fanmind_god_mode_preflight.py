@@ -74,6 +74,36 @@ def _round8_preflight_input_errors() -> list[str]:
             if any(not isinstance(role, str) or role not in allowed_roles for role in role_map.values()):
                 errors.append(f"integration-gate-evidence-role-map-invalid:{gate_id}")
 
+    # The producer trust anchor is intentionally fail-closed. It may remain
+    # UNPROVISIONED while God Mode itself is reviewed/merged, but only an ACTIVE
+    # anchor with an exact 64-hex key digest can ever authorize a non-BLOCK
+    # protected evidence decision. The secret key itself is never stored in Git.
+    try:
+        anchor = load("GOD_MODE_TRUST_ANCHOR.json")
+    except Exception as exc:
+        return list(dict.fromkeys([*errors, f"trust-anchor-load-invalid:{type(exc).__name__}"]))
+    if not isinstance(anchor, dict):
+        errors.append("trust-anchor-document-invalid")
+    else:
+        if type(anchor.get("schema_version")) is not int or anchor.get("schema_version") != 1:
+            errors.append("trust-anchor-schema-invalid")
+        if anchor.get("algorithm") != "HMAC-SHA256":
+            errors.append("trust-anchor-algorithm-invalid")
+        status = anchor.get("status")
+        if status not in {"UNPROVISIONED", "ACTIVE"}:
+            errors.append("trust-anchor-status-invalid")
+        digest = anchor.get("key_sha256")
+        if status == "UNPROVISIONED":
+            if digest is not None:
+                errors.append("trust-anchor-unprovisioned-digest-must-be-null")
+        elif status == "ACTIVE":
+            if (
+                not isinstance(digest, str)
+                or len(digest) != 64
+                or any(ch not in "0123456789abcdefABCDEF" for ch in digest)
+            ):
+                errors.append("trust-anchor-key-digest-invalid")
+
     return list(dict.fromkeys(errors))
 
 
@@ -82,7 +112,7 @@ def validate() -> list[str]:
     if early:
         return early
 
-    # Existing focused tests monkeypatch the public `load` function.  Preserve
+    # Existing focused tests monkeypatch the public `load` function. Preserve
     # that supported test seam while delegating the unchanged structural rules
     # to the previously reviewed implementation.
     original_load = _legacy.load
