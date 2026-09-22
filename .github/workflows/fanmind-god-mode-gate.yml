@@ -24,7 +24,7 @@ jobs:
           FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC: "1"
         run: |
           set +e
-          python3 -m unittest -v tests/test_fanmind_god_mode.py tests/test_fanmind_god_mode_review_hardening.py tests/test_fanmind_god_mode_review_round8.py tests/test_fanmind_god_mode_review_round9.py tests/test_fanmind_god_mode_review_round10.py tests/test_fanmind_god_mode_review_round12.py > /tmp/fanmind-god-mode-tests.log 2>&1
+          python3 -m unittest -v tests/test_fanmind_god_mode.py tests/test_fanmind_god_mode_review_hardening.py tests/test_fanmind_god_mode_review_round8.py tests/test_fanmind_god_mode_review_round9.py tests/test_fanmind_god_mode_review_round10.py tests/test_fanmind_god_mode_review_round12.py tests/test_fanmind_god_mode_review_round13.py > /tmp/fanmind-god-mode-tests.log 2>&1
           rc=$?
           cat /tmp/fanmind-god-mode-tests.log
           exit "$rc"
