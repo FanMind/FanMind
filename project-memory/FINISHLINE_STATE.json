@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -95,7 +95,13 @@
     "governance_god_mode": {
       "task": "FM-GOV-GODMODE-001",
       "risk": "R3",
-      "state": "IN_PROGRESS",
+      "state": "VERIFIED",
+      "required_for_sales": false
+    },
+    "chatadmin_staging_apply": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
+      "state": "OWNER_ACTION_REQUIRED",
       "required_for_sales": false
     }
   },
