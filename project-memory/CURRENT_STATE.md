@@ -5,11 +5,11 @@
 - The prior ChatAdmin read-only VERIFY result remains consumed as `ABSENT`; do not repeat it because main advanced. The next ChatAdmin step is a separate protected Staging APPLY owner action. It is not authorized by this reconciliation and ACCEPT remains later.
 - Creator deferral FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 is resolved by the consumed VERIFY plus merged God Mode. Previously accepted Creator work may resume under its existing bounded scope without rebuilding accepted foundations.
 
-## ChatAdmin Staging VERIFY completed: ABSENT; God Mode v1 is next — 2026-09-21
+## ChatAdmin Staging VERIFY completed: ABSENT — historical prerequisite closed — 2026-09-21
 - Protected GitHub Actions run `35652258052` / job `106507223598` executed exact reviewed `main` `973e70f6d243984d95ec1420a79701faad04a39a` in `VERIFY` mode with `verify-chat-admin-schema`.
 - The read-only verifier completed successfully and reported exactly `CHAT_ADMIN_SCHEMA_STATE=ABSENT`. `APPLY` and `ACCEPT` were skipped; no Staging/Production write, capability grant or provider/Billing/Restore/Mobile mutation occurred.
-- This closes the protected observation dependency without claiming the schema exists. Per the recorded sequence, `FM-GOV-GODMODE-001` is now the next bounded repository-only task.
-- After God Mode v1 is cleanly merged and reconciled, a separate protected owner action may be prepared for ChatAdmin Staging `APPLY` because the observed state is `ABSENT`. Do not run APPLY or ACCEPT before that gate.
+- This closed the protected observation prerequisite. God Mode v1 subsequently merged under PR #1157; do not rerun VERIFY merely because `main` advances.
+- The current downstream ChatAdmin APPLY is a separate owner/environment-gated action and remains unauthorized until explicitly approved at action time.
 
 ## ChatAdmin #1146 merged; protected READ-ONLY VERIFY is next — 2026-09-21
 - FM-CHATADMIN-002 source package is closed: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head checks and independent review with no remaining P1/P2, then merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
@@ -454,8 +454,8 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-GOV-GODMODE-001:** ChatAdmin read-only VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT were skipped. Implement and independently countercheck God Mode v1 repository-only. Only after its clean merge/reconciliation may a separate protected ChatAdmin Staging APPLY owner action become READY_NOW.
-2. **FM-CREATOR-001:** source #1099-#1108, #1140 confirmed-chat validator and the bounded schema/JWT/revision/PDF foundation are complete. Hold new feature work until the ChatAdmin VERIFY -> God Mode sequence above is reconciled; then resume the current bounded Creator continuation.
+1. **FM-CREATOR-001:** the temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve accepted #1099-#1108/#1140 and Staging foundation evidence; resume only the prior bounded Creator continuation without rebuilding accepted foundations, provider activation, auto-send or protected target mutation.
+2. **FM-CHATADMIN-002:** read-only VERIFY is consumed as `ABSENT` and God Mode v1 is merged/reconciled. The next ChatAdmin step is separately protected Staging APPLY under `FM-CHATADMIN-OWNER-APPLY-20260921`; it is OWNER_ACTION_REQUIRED and must not be dispatched autonomously. ACCEPT remains later.
 3. **FM-REG-003:** FM-CR-043 is PRODUCTION_CONFIRMED and the existing real 0-EUR account works. Do not repeat registration, grant or Production DB apply. The only open Admin-CRM boundary is the separately owner-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle; no additional real grants until it is accepted.
 4. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
 5. **FM-SOC7-001:** TikTok/X connection/preview source and dated Social schema installation #1104 / 34591339718 / 34591566257 remain complete; actual apps/consent/budget/provider and full CRM ingestion remain open. Discord stays later; OnlyFans retains the implemented manual handoff and separate direct-access feasibility.
@@ -463,7 +463,8 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 7. **FM-RST-001:** DB_POSTCHECKED and private Storage controller preparation remain accepted. Real Storage target/upload/cost and final acceptance remain owner-deferred; no repeated database Restore.
 8. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
 9. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
-10. **FM-META-001:** real App Review/provider/legal evidence stays separate. Sales Handoff still requires the genuine remaining gate quorum and final Production demo.
+10. **FM-META-001:** real App Review/provider/legal acceptance remains external; do not infer it from repository evidence.
+
 ## Manual Daily beta admission — 2026-09-14
 - FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.
 - Required behavior: Admin enable is readiness-gated; Admin disable immediately hides Daily from Landing, registration and setup and blocks new provisioning/checkout. Direct links and stored preferences cannot bypass it. Existing Daily subscriptions/workspaces continue unchanged.
