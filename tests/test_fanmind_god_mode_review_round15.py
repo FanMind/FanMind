@@ -258,5 +258,108 @@ class CurrentHeadRound15RegressionTests(unittest.TestCase):
         self.assertIn("trigger_state:canonicalization_invalid", trigger_blockers)
 
 
+    def test_owner_required_also_requires_checked_out_head(self):
+        original_head = ROUND12._base.current_git_head
+        original_resolves = ROUND12._current._round8.git_commit_resolves
+        original_mode = ROUND12._current._canonical_runtime_mode
+        original_eval = ROUND12._legacy_evaluate_release_decision
+        previous = os.environ.pop("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC", None)
+        ROUND12._base.current_git_head = lambda: "b" * 40
+        ROUND12._current._round8.git_commit_resolves = lambda _value: True
+        ROUND12._current._canonical_runtime_mode = lambda *_args, **_kwargs: False
+        ROUND12._legacy_evaluate_release_decision = lambda *_args, **_kwargs: ("OWNER_REQUIRED", [])
+        try:
+            invariants, gates, contracts, impact, ttl = FIX.structures()
+            decision, reasons = ROUND12.evaluate_release_decision(
+                invariants, gates, contracts, impact, {}, FIX.snapshot(), ttl,
+                actual_head=FIX.HEAD,
+                actual_target=FIX.TARGET,
+                current_control_plane_fingerprint=FIX.CONTROL,
+                now=FIX.NOW,
+                attestation=FIX.signed_attestation(FIX.evidence()),
+                attestation_key=FIX.KEY,
+                current_trigger_state=FIX.signed_trigger_state(),
+            )
+        finally:
+            if previous is not None:
+                os.environ["FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"] = previous
+            ROUND12._legacy_evaluate_release_decision = original_eval
+            ROUND12._current._canonical_runtime_mode = original_mode
+            ROUND12._current._round8.git_commit_resolves = original_resolves
+            ROUND12._base.current_git_head = original_head
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:actual_head_not_checked_out_head", reasons)
+
+    def test_malformed_gate_requirement_members_fail_closed_before_set(self):
+        _invariants, gates, _contracts, _impact, _ttl = FIX.structures()
+        gates["gates"][0]["evidence_required"] = [[]]
+        blockers = ROUND12._evidence_requirement_claim_blockers(
+            FIX.signed_attestation(FIX.evidence()), gates
+        )
+        self.assertIn(
+            f"release_evidence:configured_requirements_invalid:{FIX.GATE}",
+            blockers,
+        )
+
+    def test_preflight_rejects_nonlist_golden_flow_registry(self):
+        original = PREFLIGHT.load
+        for malformed in (False, None, 1):
+            with self.subTest(value=malformed):
+                def loader(name, malformed=malformed):
+                    document = deepcopy(original(name))
+                    if name == "INTEGRATION_GATES.json":
+                        document["synthetic_golden_flows"] = malformed
+                    return document
+                PREFLIGHT.load = loader
+                try:
+                    errors = PREFLIGHT.validate()
+                finally:
+                    PREFLIGHT.load = original
+                self.assertIn("golden-flow-registry-invalid", errors)
+
+    def test_canonical_impact_consumers_and_tests_are_pinned(self):
+        invariants = PREFLIGHT.load("SYSTEM_INVARIANTS.json")
+        gates = PREFLIGHT.load("INTEGRATION_GATES.json")
+        contracts = PREFLIGHT.load("CONTRACT_REGISTRY.json")
+        impact = PREFLIGHT.load("IMPACT_MAP.json")
+        ttl = PREFLIGHT.load("EVIDENCE_TTL_POLICY.json")
+        weakened = deepcopy(impact)
+        weakened["mappings"][0]["consumers"] = ["noop"]
+        weakened["mappings"][0]["tests"] = ["noop"]
+        reasons = ROUND12._canonical_semantics_blockers(
+            invariants, gates, contracts, weakened, ttl
+        )
+        self.assertIn(
+            "canonical_semantics:impact_scope_mismatch:FM-CONTRACT-CREATOR-AI-001",
+            reasons,
+        )
+
+    def test_trust_anchor_loader_uses_immutable_head_document(self):
+        original_head_loader = ROUND12._load_head_project_memory
+        original_mutable_loader = ROUND12._base.load
+        head_anchor = {
+            "schema_version": 1,
+            "algorithm": "HMAC-SHA256",
+            "status": "UNPROVISIONED",
+            "key_sha256": None,
+        }
+        ROUND12._load_head_project_memory = (
+            lambda name: deepcopy(head_anchor)
+            if name == "GOD_MODE_TRUST_ANCHOR.json"
+            else original_head_loader(name)
+        )
+        ROUND12._base.load = lambda _name: {
+            "schema_version": 1,
+            "algorithm": "HMAC-SHA256",
+            "status": "ACTIVE",
+            "key_sha256": "0" * 64,
+        }
+        try:
+            self.assertEqual(head_anchor, ROUND12.load_trust_anchor())
+        finally:
+            ROUND12._base.load = original_mutable_loader
+            ROUND12._load_head_project_memory = original_head_loader
+
+
 if __name__ == "__main__":
     unittest.main()
