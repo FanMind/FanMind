@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 const SQL_PATH = "supabase/controlled/20260922213000_account_deletion_workspace_inventory.sql";
+// Superseded pre-review checksum retained as a historical regression marker:
+// 0138a2a8484b526f8064abb45f6f0026174c38717e3bf04fc484f9dcb3a2624c
 const EXPECTED_SHA256 = "cae7d0a6d59c1185dd751f8e28bb1f026bb1f2022bff6006994cbf33ea131a6b";
 
 const sql = await readFile(SQL_PATH, "utf8");
