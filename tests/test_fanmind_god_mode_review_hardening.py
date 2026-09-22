@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timezone
 import importlib.util
 import pathlib
@@ -28,6 +29,7 @@ def structures():
                 "id": INVARIANT,
                 "required": True,
                 "status": "ENFORCED",
+                "risk": "R1",
                 "revalidate_on": ["schema_or_authority_change"],
             }
         ]
@@ -45,7 +47,12 @@ def structures():
     }
     contracts = {
         "contracts": [
-            {"id": CONTRACT, "status": "ACTIVE", "minimum_risk": "R1"}
+            {
+                "id": CONTRACT,
+                "status": "ACTIVE",
+                "minimum_risk": "R1",
+                "revalidate_on": ["price_catalog_change"],
+            }
         ]
     }
     impact = {"mappings": [{"contract": CONTRACT, "gates": [GATE]}]}
@@ -100,6 +107,7 @@ def evidence():
         "trigger_fingerprints": {
             "head_changed": "head:a",
             "schema_or_authority_change": "authority:v1",
+            "price_catalog_change": "price:v1",
         },
         "provenance": {
             "source": "protected-review-proof",
@@ -109,7 +117,9 @@ def evidence():
     }
 
 
-def signed_attestation(entry):
+def signed_attestation(entries):
+    if isinstance(entries, dict):
+        entries = [entries]
     value = {
         "schema_version": 1,
         "issuer": MODULE.ATTESTATION_ISSUER,
@@ -121,30 +131,48 @@ def signed_attestation(entry):
         "trigger_state": {
             "head_changed": "head:a",
             "schema_or_authority_change": "authority:v1",
+            "price_catalog_change": "price:v1",
         },
-        "evidence": [entry],
+        "evidence": entries,
     }
     value["signature"] = MODULE.sign_attestation(value, KEY)
     return value
 
 
-def evaluate(entry):
-    invariants, gates, contracts, impact, ttl = structures()
+def evaluate_case(
+    entries,
+    *,
+    invariants=None,
+    gates=None,
+    contracts=None,
+    impact=None,
+    snapshot_value=None,
+):
+    base_invariants, base_gates, base_contracts, base_impact, ttl = structures()
+    entries = [entries] if isinstance(entries, dict) else list(entries)
+    snap = deepcopy(snapshot_value if snapshot_value is not None else snapshot())
+    snap["evidence_bindings"] = [
+        {"id": entry["id"], "commit": HEAD, "target": TARGET} for entry in entries
+    ]
     return MODULE.evaluate_release_decision(
-        invariants,
-        gates,
-        contracts,
-        impact,
+        invariants if invariants is not None else base_invariants,
+        gates if gates is not None else base_gates,
+        contracts if contracts is not None else base_contracts,
+        impact if impact is not None else base_impact,
         {},
-        snapshot(),
+        snap,
         ttl,
         actual_head=HEAD,
         actual_target=TARGET,
         current_control_plane_fingerprint=CONTROL,
         now=NOW,
-        attestation=signed_attestation(entry),
+        attestation=signed_attestation(entries),
         attestation_key=KEY,
     )
+
+
+def evaluate(entry):
+    return evaluate_case(entry)
 
 
 class CurrentHeadReviewHardeningTests(unittest.TestCase):
@@ -183,6 +211,61 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
             f"release_evidence:gate_requirement_missing:{GATE}:exact tenant proof",
             reasons,
         )
+
+    def test_unrelated_role_cannot_claim_gate_requirement(self):
+        legitimate = evidence()
+        legitimate["requirements"][GATE] = ["exact tenant proof"]
+        unrelated = deepcopy(evidence())
+        unrelated["id"] = "EV-UNRELATED-ROLE"
+        unrelated["roles"] = ["observer"]
+        unrelated["requirements"][GATE] = ["negative authority proof"]
+        unrelated["provenance"] = {
+            "source": "unrelated-proof",
+            "execution_id": "unrelated-run-2",
+            "independence_key": "unrelated-key-2",
+        }
+        decision, reasons = evaluate_case([legitimate, unrelated])
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            f"release_evidence:gate_requirement_missing:{GATE}:negative authority proof",
+            reasons,
+        )
+
+    def test_contract_revalidation_trigger_must_match_current_state(self):
+        entry = evidence()
+        entry["trigger_fingerprints"]["price_catalog_change"] = "price:old"
+        decision, reasons = evaluate(entry)
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            f"release_evidence:contract_revalidation_unsatisfied:{CONTRACT}:{GATE}",
+            reasons,
+        )
+
+    def test_impact_map_must_match_gate_contract_registry_bidirectionally(self):
+        invariants, gates, contracts, impact, _ = structures()
+        gates["gates"][0]["contracts"] = ["FM-CONTRACT-OTHER"]
+        decision, reasons = evaluate_case(
+            evidence(),
+            invariants=invariants,
+            gates=gates,
+            contracts=contracts,
+            impact=impact,
+        )
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(f"impact_map:gate_contract_mismatch:{CONTRACT}:{GATE}", reasons)
+
+    def test_required_invariant_risk_cannot_be_downgraded_by_contract_floor(self):
+        invariants, gates, contracts, impact, _ = structures()
+        invariants["invariants"][0]["risk"] = "R4"
+        decision, reasons = evaluate_case(
+            evidence(),
+            invariants=invariants,
+            gates=gates,
+            contracts=contracts,
+            impact=impact,
+        )
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_input:risk_below_invariant_floor:R1<R4", reasons)
 
 
 if __name__ == "__main__":
