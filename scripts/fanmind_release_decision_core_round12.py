@@ -11,8 +11,9 @@ _current = _round11._current
 _round11_evaluate_release_decision = _round11.evaluate_release_decision
 
 # Round 12 closes exact-current-head review findings around direct CLI routing,
-# malformed evidence boundary arrays, extreme timestamps, and orphan impact-map
-# contracts. Bind this wrapper into the signed control plane before evaluation.
+# malformed evidence boundary arrays, extreme timestamps, orphan impact-map
+# contracts, malformed release snapshots and persisted evidence-completeness
+# claims. Bind this wrapper into the signed control plane before evaluation.
 _base.CONTROL_PLANE_FILES = tuple(
     dict.fromkeys(
         (
@@ -24,6 +25,14 @@ _base.CONTROL_PLANE_FILES = tuple(
 _current.CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
 _round11.CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
 CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
+
+REQUIRED_COMPLETENESS_FLAGS = (
+    "current_head_bound",
+    "evidence_quorum_complete",
+    "evidence_freshness_current",
+    "negative_evidence_complete",
+    "rollback_recovery_evidence_complete",
+)
 
 
 def _safe_timestamp(value) -> bool:
@@ -127,17 +136,42 @@ def _impact_registry_blockers(contracts: dict, impact: dict) -> list[str]:
         contract_id = mapping.get("contract")
         if isinstance(contract_id, str) and contract_id and contract_id not in known_contract_ids:
             blockers.append(f"impact_map:unknown_contract:{contract_id}")
+
+        # Do not allow duplicate gate IDs to disappear when the inherited
+        # evaluator normalizes the mapping to a set. Ambiguous boundaries are
+        # a fail-closed input error even if they point to the same gate.
+        mapped_gates = mapping.get("gates")
+        if isinstance(mapped_gates, list) and all(
+            isinstance(gate_id, str) and gate_id.strip() for gate_id in mapped_gates
+        ):
+            if len(set(mapped_gates)) != len(mapped_gates):
+                marker = contract_id if isinstance(contract_id, str) and contract_id else "unknown"
+                blockers.append(f"impact_map:duplicate_gate:{marker}")
+    return blockers
+
+
+def _snapshot_shape_blockers(snapshot) -> list[str]:
+    """Validate persisted release-decision prerequisites before any `.get` use."""
+    if not isinstance(snapshot, dict):
+        return ["release_input:snapshot_invalid"]
+
+    blockers: list[str] = []
+    for key in REQUIRED_COMPLETENESS_FLAGS:
+        if snapshot.get(key) is not True:
+            blockers.append(f"release_input:{key}")
     return blockers
 
 
 def _round12_input_blockers(
     contracts: dict,
     impact: dict,
+    snapshot,
     *,
     attestation: dict | None,
     current_trigger_state: dict | None,
 ) -> list[str]:
     blockers = [
+        *_snapshot_shape_blockers(snapshot),
         *_timestamp_shape_blockers(attestation, current_trigger_state),
         *_evidence_boundary_shape_blockers(attestation),
         *_impact_registry_blockers(contracts, impact),
@@ -163,11 +197,12 @@ def evaluate_release_decision(
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     # Validate adversarial input shapes before the inherited evaluator performs
-    # normalization or timezone conversion. Invalid/uncertain input must BLOCK,
-    # never crash or be silently normalized into success.
+    # normalization, dictionary access or timezone conversion. Invalid or
+    # incomplete persisted input must BLOCK, never crash or normalize to success.
     early = _round12_input_blockers(
         contracts,
         impact,
+        snapshot,
         attestation=attestation,
         current_trigger_state=current_trigger_state,
     )
@@ -223,7 +258,9 @@ def main() -> int:
     previous_cli_evaluator = _current._cli_evaluate_release_decision
     _current._cli_evaluate_release_decision = _round12_cli_evaluate_release_decision
     try:
-        return _round11.main()
+        # Round 11's executable is intentionally disabled. Enter the canonical
+        # core CLI directly while its evaluation hook is bound to round 12.
+        return _current.main()
     finally:
         _current._cli_evaluate_release_decision = previous_cli_evaluator
 
