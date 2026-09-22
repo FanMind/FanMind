@@ -12,6 +12,13 @@ MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
+PREFLIGHT_SPEC = importlib.util.spec_from_file_location(
+    "fanmind_god_mode_preflight_hardening", ROOT / "scripts" / "fanmind_god_mode_preflight.py"
+)
+PREFLIGHT = importlib.util.module_from_spec(PREFLIGHT_SPEC)
+assert PREFLIGHT_SPEC.loader is not None
+PREFLIGHT_SPEC.loader.exec_module(PREFLIGHT)
+
 HEAD = "a" * 40
 TARGET = "repository:synthetic"
 CONTROL = "c" * 64
@@ -241,6 +248,50 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
             reasons,
         )
 
+    def test_contract_current_countercheck_must_be_independent(self):
+        combo = evidence()
+        combo["id"] = "EV-CURRENT-COMBO"
+        combo["roles"] = ["implementation", "countercheck"]
+        combo["provenance"] = {
+            "source": "current-combo",
+            "execution_id": "current-combo-1",
+            "independence_key": "current-combo-key-1",
+        }
+
+        stale_countercheck = deepcopy(evidence())
+        stale_countercheck["id"] = "EV-STALE-COUNTERCHECK"
+        stale_countercheck["roles"] = ["countercheck"]
+        stale_countercheck["trigger_fingerprints"]["price_catalog_change"] = "price:old"
+        stale_countercheck["provenance"] = {
+            "source": "stale-countercheck",
+            "execution_id": "stale-countercheck-2",
+            "independence_key": "stale-countercheck-key-2",
+        }
+
+        negative = deepcopy(evidence())
+        negative["id"] = "EV-CURRENT-NEGATIVE"
+        negative["roles"] = ["negative"]
+        negative["provenance"] = {
+            "source": "current-negative",
+            "execution_id": "current-negative-3",
+            "independence_key": "current-negative-key-3",
+        }
+
+        snap = snapshot()
+        snap["risk"] = "R2"
+        snap["implementation_evidence_id"] = combo["id"]
+        snap["countercheck_evidence_id"] = stale_countercheck["id"]
+        snap["negative_evidence_id"] = negative["id"]
+
+        decision, reasons = evaluate_case(
+            [combo, stale_countercheck, negative], snapshot_value=snap
+        )
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(
+            f"release_evidence:gate_countercheck_revalidation_not_independent:{GATE}",
+            reasons,
+        )
+
     def test_impact_map_must_match_gate_contract_registry_bidirectionally(self):
         invariants, gates, contracts, impact, _ = structures()
         gates["gates"][0]["contracts"] = ["FM-CONTRACT-OTHER"]
@@ -266,6 +317,25 @@ class CurrentHeadReviewHardeningTests(unittest.TestCase):
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:risk_below_invariant_floor:R1<R4", reasons)
+
+    def test_missing_invariant_risk_is_rejected_by_preflight(self):
+        original_load = PREFLIGHT.load
+        canonical_invariants = deepcopy(original_load("SYSTEM_INVARIANTS.json"))
+        invariant_id = canonical_invariants["invariants"][0]["id"]
+        canonical_invariants["invariants"][0].pop("risk", None)
+
+        def load_with_missing_risk(name):
+            if name == "SYSTEM_INVARIANTS.json":
+                return deepcopy(canonical_invariants)
+            return original_load(name)
+
+        PREFLIGHT.load = load_with_missing_risk
+        try:
+            errors = PREFLIGHT.validate()
+        finally:
+            PREFLIGHT.load = original_load
+
+        self.assertIn(f"system-invariant-risk-invalid:{invariant_id}", errors)
 
 
 if __name__ == "__main__":
