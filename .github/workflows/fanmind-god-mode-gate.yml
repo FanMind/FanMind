@@ -22,7 +22,7 @@ jobs:
       - name: Run God Mode adversarial tests
         run: |
           set +e
-          python3 -m unittest -v tests/test_fanmind_god_mode.py tests/test_fanmind_god_mode_review_hardening.py > /tmp/fanmind-god-mode-tests.log 2>&1
+          python3 -m unittest -v tests/test_fanmind_god_mode.py tests/test_fanmind_god_mode_review_hardening.py tests/test_fanmind_god_mode_review_round8.py > /tmp/fanmind-god-mode-tests.log 2>&1
           rc=$?
           cat /tmp/fanmind-god-mode-tests.log
           exit "$rc"
