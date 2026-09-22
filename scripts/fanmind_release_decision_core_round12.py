@@ -174,22 +174,30 @@ def evaluate_release_decision(
     if early:
         return "BLOCK", early
 
-    return _round11_evaluate_release_decision(
-        invariants,
-        integration,
-        contracts,
-        impact,
-        freshness,
-        snapshot,
-        ttl_policy,
-        actual_head=actual_head,
-        actual_target=actual_target,
-        current_control_plane_fingerprint=current_control_plane_fingerprint,
-        now=now,
-        attestation=attestation,
-        attestation_key=attestation_key,
-        current_trigger_state=current_trigger_state,
-    )
+    # Preserve the canonical evaluator's trust-anchor injection seam through the
+    # wrapper. This is used by the independent-anchor regression and ensures the
+    # wrapper cannot accidentally read a different trust source than its caller.
+    previous_loader = _current.load_trust_anchor
+    _current.load_trust_anchor = load_trust_anchor
+    try:
+        return _round11_evaluate_release_decision(
+            invariants,
+            integration,
+            contracts,
+            impact,
+            freshness,
+            snapshot,
+            ttl_policy,
+            actual_head=actual_head,
+            actual_target=actual_target,
+            current_control_plane_fingerprint=current_control_plane_fingerprint,
+            now=now,
+            attestation=attestation,
+            attestation_key=attestation_key,
+            current_trigger_state=current_trigger_state,
+        )
+    finally:
+        _current.load_trust_anchor = previous_loader
 
 
 def _round12_cli_evaluate_release_decision(*args, **kwargs):
