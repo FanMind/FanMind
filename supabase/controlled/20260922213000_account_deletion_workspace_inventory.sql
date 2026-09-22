@@ -27,8 +27,11 @@ create or replace function public.begin_account_deletion_processing(
 )
 returns table (
   request_id uuid,
+  status text,
   processing_started_at timestamptz,
-  owned_workspace_ids uuid[]
+  owned_workspace_ids uuid[],
+  requires_ownership_transfer boolean,
+  requires_subscription_resolution boolean
 )
 language plpgsql
 security definer
@@ -37,6 +40,8 @@ as $$
 declare
   v_request public.account_deletion_requests%rowtype;
   v_owned_workspace_ids uuid[];
+  v_requires_ownership_transfer boolean;
+  v_requires_subscription_resolution boolean;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using
@@ -58,6 +63,33 @@ begin
       message = 'request_not_processable';
   end if;
 
+  -- A processing request has already crossed the destructive-start boundary.
+  -- Never recapture ownership for it: a concurrent invocation may have observed
+  -- Auth before the first worker deleted it, then arrive here after cascades.
+  if v_request.status = 'processing' then
+    if v_request.owned_workspace_ids is null then
+      raise exception using
+        errcode = 'P0001',
+        message = 'workspace_inventory_missing';
+    end if;
+    if v_request.requires_ownership_transfer
+      or v_request.requires_subscription_resolution
+    then
+      raise exception using
+        errcode = 'P0001',
+        message = 'processing_blocker_state_invalid';
+    end if;
+
+    request_id := v_request.id;
+    status := v_request.status;
+    processing_started_at := v_request.processing_started_at;
+    owned_workspace_ids := v_request.owned_workspace_ids;
+    requires_ownership_transfer := false;
+    requires_subscription_resolution := false;
+    return next;
+    return;
+  end if;
+
   -- Account deletion is rare. A brief SHARE lock makes the ownership,
   -- membership and billing snapshot authoritative for this transition instead
   -- of racing separate REST reads against the state change.
@@ -75,18 +107,15 @@ begin
       message = 'workspace_inventory_too_large';
   end if;
 
-  if exists (
+  select exists (
     select 1
     from public.workspace_members wm
     where wm.workspace_id = any(v_owned_workspace_ids)
       and wm.user_id <> p_user_id
-  ) then
-    raise exception using
-      errcode = 'P0001',
-      message = 'ownership_transfer_required';
-  end if;
+  )
+  into v_requires_ownership_transfer;
 
-  if exists (
+  select exists (
     select 1
     from public.workspaces w
     where w.id = any(v_owned_workspace_ids)
@@ -107,10 +136,36 @@ begin
           )
         )
       )
-  ) then
-    raise exception using
-      errcode = 'P0001',
-      message = 'subscription_resolution_required';
+  )
+  into v_requires_subscription_resolution;
+
+  -- Blockers discovered by this authoritative transaction are durable public
+  -- request state. Do not raise here: an exception would roll the flags back.
+  if v_requires_ownership_transfer or v_requires_subscription_resolution then
+    update public.account_deletion_requests r
+    set status = 'blocked',
+        requires_ownership_transfer = v_requires_ownership_transfer,
+        requires_subscription_resolution = v_requires_subscription_resolution,
+        last_error_code = null
+    where r.id = p_request_id
+      and r.user_id = p_user_id
+    returning
+      r.id,
+      r.status,
+      r.processing_started_at,
+      r.owned_workspace_ids,
+      r.requires_ownership_transfer,
+      r.requires_subscription_resolution
+    into
+      request_id,
+      status,
+      processing_started_at,
+      owned_workspace_ids,
+      requires_ownership_transfer,
+      requires_subscription_resolution;
+
+    return next;
+    return;
   end if;
 
   update public.account_deletion_requests r
@@ -124,12 +179,18 @@ begin
     and r.user_id = p_user_id
   returning
     r.id,
+    r.status,
     r.processing_started_at,
-    r.owned_workspace_ids
+    r.owned_workspace_ids,
+    r.requires_ownership_transfer,
+    r.requires_subscription_resolution
   into
     request_id,
+    status,
     processing_started_at,
-    owned_workspace_ids;
+    owned_workspace_ids,
+    requires_ownership_transfer,
+    requires_subscription_resolution;
 
   return next;
 end;
