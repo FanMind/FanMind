@@ -283,6 +283,14 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
             BASE.PREFLIGHT.load = original_load
         self.assertIn(f"ttl-policy-ttl-invalid:{evidence_class}", errors)
 
+        canonical_ttl[evidence_class]["ttl_hours"] = 10**10000
+        BASE.PREFLIGHT.load = load_with_nonfinite_ttl
+        try:
+            errors = BASE.PREFLIGHT.validate()
+        finally:
+            BASE.PREFLIGHT.load = original_load
+        self.assertIn(f"ttl-policy-ttl-invalid:{evidence_class}", errors)
+
     def test_nonhex_release_sha_fails_closed(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         entry = BASE.evidence()
@@ -300,6 +308,7 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
             now=BASE.NOW,
             attestation=BASE.signed_attestation(entry),
             attestation_key=BASE.KEY,
+            current_trigger_state=BASE.signed_trigger_state(),
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:actual_head_invalid", reasons)
