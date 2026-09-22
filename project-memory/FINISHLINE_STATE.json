@@ -92,6 +92,14 @@
       "observed_result": "ABSENT",
       "evidence": "GitHub Actions run 35652258052 / job 106507223598 on 973e70f6d243984d95ec1420a79701faad04a39a; read-only VERIFY succeeded, APPLY/ACCEPT skipped"
     },
+    "chatadmin_staging_apply": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
+      "state": "OWNER_ACTION_REQUIRED",
+      "required_for_sales": false,
+      "observed_prestate": "ABSENT",
+      "evidence": "The prior read-only VERIFY is consumed. God Mode v1 merged as 1c5e1232f0893b0730a985c6e717b5c27c535f35; any APPLY remains a separate protected Staging write requiring fresh exact-main/target binding plus owner/environment authorization."
+    },
     "governance_god_mode": {
       "task": "FM-GOV-GODMODE-001",
       "risk": "R3",
