@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-GOV-GODMODE-001`
-- Task: `FM-GOV-GODMODE-001`
-- Gate: `governance_god_mode` (`IN_PROGRESS`)
+- Selected action: `NBA-CREATOR-INTELLIGENCE`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_intelligence` (`IN_PROGRESS`)
 - Selection status: `EXECUTABLE`
-- Title: FanMind God Mode v1 fail-closed integrieren
+- Title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Instruction
 
-Implement the bounded repository-only God Mode v1 governance package now that the protected ChatAdmin VERIFY result is reconciled as ABSENT by run 35652258052 / job 106507223598. Build invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests, synthetic golden-flow registry and post-merge guardian policy. No Staging/Production APPLY/ACCEPT/write. After God Mode is cleanly merged/reconciled, prepare the separate protected owner APPLY request without executing it automatically.
+Preserve all accepted Creator Intelligence source and Staging foundation evidence. Owner sequence on 2026-09-21 temporarily defers new Creator feature work until the merged ChatAdmin source is read-only VERIFIED/reconciled and FM-GOV-GODMODE-001 is merged. After that sequence, resume the prior bounded Creator continuation without rebuilding accepted source or Staging foundation evidence.
 
 ## Why this action
 
@@ -23,8 +23,8 @@ standing-authorized safe work
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-GOV-GODMODE-001` priority 3: **EXECUTABLE** — standing-authorized safe work
-- `NBA-CREATOR-INTELLIGENCE` priority 5: **DEFERRED_BY_OWNER** — FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921
+- `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is VERIFIED
+- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
