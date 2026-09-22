@@ -24,7 +24,7 @@ for (const pattern of [
 ]) {
   if (!pattern.test(sql)) throw new Error("account_deletion_workspace_inventory_contract_invalid");
 }
-if (/grant\s+.+authenticated|grant\s+.+anon|grant\s+.+public/iu.test(sql)) {
+if (/\bgrant\b[^;]*\bto\s+(?:authenticated|anon|public)\b/isu.test(sql)) {
   throw new Error("account_deletion_workspace_inventory_client_grant_forbidden");
 }
 console.log("ACCOUNT_DELETION_WORKSPACE_INVENTORY_CHECK=verified");
