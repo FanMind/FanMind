@@ -238,6 +238,14 @@ def _impact_registry_blockers(contracts: dict, impact: dict) -> list[str]:
         # evaluator normalizes the mapping to a set. Ambiguous boundaries are
         # a fail-closed input error even if they point to the same gate.
         mapped_gates = mapping.get("gates")
+        if (
+            not isinstance(mapped_gates, list)
+            or not mapped_gates
+            or any(not isinstance(gate_id, str) or not gate_id.strip() for gate_id in mapped_gates)
+        ):
+            marker = contract_id if isinstance(contract_id, str) and contract_id else "unknown"
+            blockers.append(f"impact_map:gates_invalid:{marker}")
+            continue
         if isinstance(mapped_gates, list) and all(
             isinstance(gate_id, str) and gate_id.strip() for gate_id in mapped_gates
         ):

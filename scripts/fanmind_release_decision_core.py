@@ -471,7 +471,7 @@ def _canonical_runtime_input_blockers(
     return list(dict.fromkeys(blockers))
 
 
-def evaluate_release_decision(*args, **kwargs):
+def _pre_round12_evaluate_release_decision(*args, **kwargs):
     """Evaluator with canonical trust enforcement by default for direct callers."""
     if len(args) < 6:
         return "BLOCK", ["release_input:canonical_arguments_missing"]
@@ -498,6 +498,13 @@ def evaluate_release_decision(*args, **kwargs):
     if early:
         return "BLOCK", early
     return _round8.evaluate_release_decision(*args, **kwargs)
+
+
+def evaluate_release_decision(*args, **kwargs):
+    """Route imported callers through the newest hardened evaluator."""
+    from fanmind_release_decision_core_round12 import evaluate_release_decision as latest
+
+    return latest(*args, **kwargs)
 
 
 def _cli_evaluate_release_decision(*args, **kwargs):

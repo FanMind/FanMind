@@ -148,6 +148,14 @@ def _round8_preflight_input_errors() -> list[str]:
                 continue
             contract_id = mapping.get("contract")
             mapped_gates = mapping.get("gates")
+            if (
+                not isinstance(mapped_gates, list)
+                or not mapped_gates
+                or any(not isinstance(gate_id, str) or not gate_id.strip() for gate_id in mapped_gates)
+            ):
+                marker = contract_id if isinstance(contract_id, str) and contract_id else "unknown"
+                errors.append(f"impact-map-gates-invalid:{marker}")
+                continue
             if isinstance(mapped_gates, list) and all(
                 isinstance(gate_id, str) and gate_id.strip() for gate_id in mapped_gates
             ):
