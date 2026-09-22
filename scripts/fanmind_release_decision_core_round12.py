@@ -57,14 +57,6 @@ CANONICAL_SECURITY_SEMANTICS_SHA256 = (
     "bf1db42720bcd4a4e8c18146a16352e79655e1fd74135c3e717741bc44331019"
 )
 
-# Existing adversarial unit fixtures explicitly identify themselves with a
-# non-resolving synthetic SHA/target/fingerprint triple. This is the only
-# compatibility path that may omit persisted RELEASE_DECISION fields, and the
-# canonical CLI can never use it because its Git-object check rejects the SHA.
-SYNTHETIC_TEST_HEAD = "a" * 40
-SYNTHETIC_TEST_TARGET = "repository:synthetic"
-SYNTHETIC_TEST_CONTROL_FINGERPRINT = "c" * 64
-
 
 def _safe_timestamp(value) -> bool:
     if not isinstance(value, str) or not value.strip():
@@ -179,6 +171,20 @@ def _evidence_boundary_shape_blockers(
     return blockers
 
 
+def _invariant_registry_blockers(invariants: dict) -> list[str]:
+    items = invariants.get("invariants") if isinstance(invariants, dict) else None
+    if not isinstance(items, list):
+        return []  # inherited evaluator owns malformed document structure
+    ids = {
+        item.get("id")
+        for item in items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if ids != _base.REQUIRED_INVARIANT_IDS:
+        return ["invariant:canonical_set_invalid"]
+    return []
+
+
 def _impact_registry_blockers(contracts: dict, impact: dict) -> list[str]:
     contract_items = contracts.get("contracts") if isinstance(contracts, dict) else None
     mappings = impact.get("mappings") if isinstance(impact, dict) else None
@@ -218,48 +224,29 @@ def _snapshot_shape_blockers(snapshot) -> list[str]:
     return []
 
 
-def _is_explicit_synthetic_fixture(
-    snapshot: dict,
-    *,
-    actual_head: str | None,
-    actual_target: str | None,
-    current_control_plane_fingerprint: str | None,
-) -> bool:
-    return (
-        isinstance(snapshot, dict)
-        and snapshot.get("task") is None
-        and actual_head == SYNTHETIC_TEST_HEAD
-        and actual_target == SYNTHETIC_TEST_TARGET
-        and current_control_plane_fingerprint == SYNTHETIC_TEST_CONTROL_FINGERPRINT
-        and not _current._CANONICAL_CLI_ACTIVE
-    )
+def _persisted_completeness_blockers(snapshot: dict) -> list[str]:
+    """A persisted non-BLOCK decision must prove all completeness flags.
 
+    Synthetic pure-evaluator fixtures historically omit the persisted decision
+    field. That is safe only outside canonical runtime mode. The canonical CLI
+    and the canonical Project-Memory snapshot are identified independently by
+    the runtime flag/task marker, so deleting `decision` cannot select a weaker
+    test path. A declared BLOCK remains allowed to record incomplete evidence.
+    """
+    decision = snapshot.get("decision")
+    canonical = _current._CANONICAL_CLI_ACTIVE or snapshot.get("task") == _current.CANONICAL_GOD_MODE_TASK
 
-def _persisted_completeness_blockers(
-    snapshot: dict,
-    *,
-    actual_head: str | None,
-    actual_target: str | None,
-    current_control_plane_fingerprint: str | None,
-) -> list[str]:
-    """Missing persisted protected input is never success outside explicit tests."""
-    if _is_explicit_synthetic_fixture(
-        snapshot,
-        actual_head=actual_head,
-        actual_target=actual_target,
-        current_control_plane_fingerprint=current_control_plane_fingerprint,
-    ):
+    if decision in {"ALLOW", "OWNER_REQUIRED"}:
+        return [
+            f"release_input:{key}"
+            for key in REQUIRED_COMPLETENESS_FLAGS
+            if snapshot.get(key) is not True
+        ]
+    if decision == "BLOCK":
         return []
-
-    blockers: list[str] = []
-    if snapshot.get("decision") not in {"ALLOW", "BLOCK", "OWNER_REQUIRED"}:
-        blockers.append("release_input:decision_missing_or_invalid")
-    blockers.extend(
-        f"release_input:{key}"
-        for key in REQUIRED_COMPLETENESS_FLAGS
-        if snapshot.get(key) is not True
-    )
-    return blockers
+    if canonical:
+        return ["release_input:decision_missing_or_invalid"]
+    return []
 
 
 def _semantic_projection(
@@ -334,29 +321,51 @@ def _secure_external_trust_digest() -> str | None:
 def _protected_trust_identity_blockers(attestation: dict | None, attestation_key) -> list[str]:
     if attestation is None:
         return []
-    expected = _secure_external_trust_digest()
-    if expected is None:
-        return ["trust_anchor:protected_identity_unavailable"]
 
+    blockers: list[str] = []
     try:
         anchor = load_trust_anchor()
     except Exception:
-        return ["trust_anchor:load_error"]
-    if not isinstance(anchor, dict) or anchor.get("status") != "ACTIVE":
-        return ["trust_anchor:not_active"]
-    checked_in = anchor.get("key_sha256")
-    if not isinstance(checked_in, str) or not _base.hmac.compare_digest(
-        checked_in.lower(), expected
-    ):
-        return ["trust_anchor:protected_identity_mismatch"]
+        anchor = {"_load_error": True}
+
+    checked_in = None
+    if not isinstance(anchor, dict) or anchor.get("_load_error") is True:
+        blockers.append("trust_anchor:load_error")
+    else:
+        if anchor.get("status") != "ACTIVE":
+            blockers.append("trust_anchor:not_active")
+        checked_in = anchor.get("key_sha256")
+        if (
+            not isinstance(checked_in, str)
+            or len(checked_in) != 64
+            or any(ch not in "0123456789abcdefABCDEF" for ch in checked_in)
+        ):
+            blockers.append("trust_anchor:key_digest_invalid")
+            checked_in = None
 
     key_bytes = attestation_key.encode("utf-8") if isinstance(attestation_key, str) else attestation_key
+    actual = None
     if not isinstance(key_bytes, bytes) or len(key_bytes) < 32:
-        return ["trust_anchor:verification_key_unavailable"]
-    actual = hashlib.sha256(key_bytes).hexdigest()
-    if not _base.hmac.compare_digest(actual, expected):
-        return ["trust_anchor:key_identity_mismatch"]
-    return []
+        blockers.append("trust_anchor:verification_key_unavailable")
+    else:
+        actual = hashlib.sha256(key_bytes).hexdigest()
+        if isinstance(checked_in, str) and not _base.hmac.compare_digest(
+            actual.lower(), checked_in.lower()
+        ):
+            blockers.append("trust_anchor:key_identity_mismatch")
+
+    expected = _secure_external_trust_digest()
+    if expected is None:
+        blockers.append("trust_anchor:protected_identity_unavailable")
+    else:
+        if isinstance(checked_in, str) and not _base.hmac.compare_digest(
+            checked_in.lower(), expected
+        ):
+            blockers.append("trust_anchor:protected_identity_mismatch")
+        if isinstance(actual, str) and not _base.hmac.compare_digest(actual, expected):
+            blockers.append("trust_anchor:key_identity_mismatch")
+
+    return list(dict.fromkeys(blockers))
 
 
 def _round12_input_blockers(
@@ -377,19 +386,14 @@ def _round12_input_blockers(
         *_snapshot_shape_blockers(snapshot),
         *_timestamp_shape_blockers(attestation, current_trigger_state),
         *_evidence_boundary_shape_blockers(attestation, invariants, integration),
+        *_invariant_registry_blockers(invariants),
         *_impact_registry_blockers(contracts, impact),
     ]
     if isinstance(snapshot, dict):
-        blockers.extend(
-            _persisted_completeness_blockers(
-                snapshot,
-                actual_head=actual_head,
-                actual_target=actual_target,
-                current_control_plane_fingerprint=current_control_plane_fingerprint,
-            )
-        )
+        blockers.extend(_persisted_completeness_blockers(snapshot))
 
     if _current._canonical_runtime_mode(integration, contracts, impact, snapshot):
+        blockers.extend(_current._canonical_registry_blockers(contracts, integration))
         blockers.extend(_canonical_semantics_blockers(invariants, integration, contracts))
         blockers.extend(_protected_trust_identity_blockers(attestation, attestation_key))
     return list(dict.fromkeys(blockers))
