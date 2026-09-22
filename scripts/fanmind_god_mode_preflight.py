@@ -120,9 +120,12 @@ def _enum_shape_errors() -> list[str]:
             item_id = item.get("id")
             if not exact_text(item.get("status")):
                 errors.append(f"integration-gate-status-invalid:{item_id}")
-        golden = integration.get("synthetic_golden_flows", []) if isinstance(integration, dict) else []
+        golden = integration.get("synthetic_golden_flows") if isinstance(integration, dict) else None
+        if not isinstance(golden, list):
+            errors.append("golden-flow-registry-invalid")
+            golden = []
         seen: set[str] = set()
-        for item in golden if isinstance(golden, list) else []:
+        for item in golden:
             if not isinstance(item, dict):
                 errors.append("golden-flow-entry-invalid")
                 continue
