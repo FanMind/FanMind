@@ -293,10 +293,12 @@ class GodModeReleaseDecisionTests(unittest.TestCase):
             entry["class"] = "ci_exact_head"
             entry["trigger_fingerprints"] = {trigger: TRIGGERS[trigger]
                 for trigger in ttl_policy()["policy"]["ci_exact_head"]["revalidate_on"]}
+        entries[0]["provenance"] = {"source": "source-a", "execution_id": "exec-1", "independence_key": "key-x"}
+        entries[1]["provenance"] = {"source": "source-b", "execution_id": "exec-2", "independence_key": "key-y"}
+        entries[2]["provenance"] = {"source": "source-a", "execution_id": "exec-2", "independence_key": "key-z"}
+        entries[3]["provenance"] = {"source": "source-b", "execution_id": "exec-1", "independence_key": "key-w"}
         supplemental = evidence_entry("EV-SUPPLEMENTAL", "staging_smoke", ["evidence"], [],
-                                      source=entries[0]["provenance"]["source"],
-                                      execution_id=entries[1]["provenance"]["execution_id"],
-                                      independence_key="supplemental")
+                                      source="source-a", execution_id="exec-2", independence_key="key-w")
         entries.append(supplemental)
         snapshot = clean_snapshot()
         snapshot["evidence_bindings"].append({"id": "EV-SUPPLEMENTAL", "commit": HEAD, "target": TARGET})
