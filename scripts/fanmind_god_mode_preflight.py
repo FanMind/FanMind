@@ -18,11 +18,36 @@ REQUIRED_COMPLETENESS_FLAGS = (
     "rollback_recovery_evidence_complete",
 )
 
+CONTROL_PLANE_DOCUMENT_ERRORS = {
+    "SYSTEM_INVARIANTS.json": "system-invariants-document-invalid",
+    "CONTRACT_REGISTRY.json": "contract-registry-document-invalid",
+    "INTEGRATION_GATES.json": "integration-gates-document-invalid",
+    "IMPACT_MAP.json": "impact-map-document-invalid",
+    "RELEASE_DECISION.json": "release-decision-document-invalid",
+    "EVIDENCE_TTL_POLICY.json": "ttl-policy-document-invalid",
+}
+
 
 def _round8_preflight_input_errors() -> list[str]:
     """Fail closed before legacy validation can consume malformed metadata."""
 
     errors: list[str] = []
+
+    # Legacy validation assumes every control-plane JSON document is an object
+    # and dereferences `.get()` directly. A syntactically valid JSON scalar/list
+    # must therefore be rejected here before the legacy validator is entered.
+    # Load exceptions intentionally fall through to the existing per-document
+    # checks below so their established diagnostic markers remain stable.
+    for name, marker in CONTROL_PLANE_DOCUMENT_ERRORS.items():
+        try:
+            document = load(name)
+        except Exception:
+            continue
+        if not isinstance(document, dict):
+            errors.append(marker)
+    if errors:
+        return list(dict.fromkeys(errors))
+
     try:
         registry = load("CONTRACT_REGISTRY.json")
     except Exception as exc:  # malformed/unreadable input is never success
