@@ -108,7 +108,8 @@ def _entry_is_current_for_hardening(
 ) -> bool:
     if not isinstance(binding, dict):
         return False
-    if entry.get("status") not in CURRENT_EVIDENCE_STATES:
+    status = entry.get("status")
+    if not isinstance(status, str) or status not in CURRENT_EVIDENCE_STATES:
         return False
     if entry.get("bound_commit") != actual_head or binding.get("commit") != actual_head:
         return False
@@ -370,6 +371,35 @@ def _hardening_blockers(
             )
         effective_risk = _higher_risk(combined_risk_floor, declared_risk)
 
+    # Revalidate every required invariant using only evidence roles that are
+    # actually eligible for the effective release risk.  An auxiliary observer
+    # record may not clear a tenant/authority/payment/secret invariant merely by
+    # naming it and carrying fresh trigger fingerprints.
+    if isinstance(invariant_items, list):
+        qualifying_invariant_roles = _base.REQUIRED_EVIDENCE_ROLES.get(effective_risk, set())
+        for invariant in invariant_items:
+            if not isinstance(invariant, dict) or invariant.get("required") is not True:
+                continue
+            invariant_id = invariant.get("id")
+            if not isinstance(invariant_id, str) or not invariant_id:
+                continue
+            triggers = _configured_trigger_list(invariant.get("revalidate_on"))
+            if triggers is None:
+                continue
+            candidates = [
+                entry
+                for entry in current_entries.values()
+                if invariant_id in _base._entry_set(entry, "invariants", "invariant")
+                and bool(_base._entry_roles(entry) & qualifying_invariant_roles)
+            ]
+            if not any(
+                _entry_matches_triggers(entry, triggers, trigger_state)
+                for entry in candidates
+            ):
+                blockers.append(
+                    f"release_evidence:invariant_role_revalidation_unsatisfied:{invariant_id}"
+                )
+
     # Every mandatory integration gate has a semantic proof contract in
     # evidence_required.  Roles (implementation/countercheck/negative/recovery)
     # are necessary but not sufficient.  Requirement claims count only from
@@ -536,11 +566,13 @@ def evaluate_release_decision(
     return decision, reasons
 
 
-# The legacy main() resolves globals from its defining module at runtime.  Point
-# that module to the hardened evaluator so the CLI and GitHub Actions path cannot
-# bypass these checks.
+# The legacy module is an internal implementation layer only.  Canonical CLI
+# execution is scripts/fanmind_release_decision.py / fanmind_release_decision_core.py.
+# Keeping a weaker standalone CLI here would bypass later hardening wrappers.
 _base.evaluate_release_decision = evaluate_release_decision
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    print("FANMIND_RELEASE_DECISION=BLOCK")
+    print("FANMIND_RELEASE_REASON=legacy_cli_disabled_use_canonical_entrypoint")
+    raise SystemExit(2)
