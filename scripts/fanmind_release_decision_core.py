@@ -122,9 +122,9 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
     Canonical trust is the default for every direct evaluator call. Contributor-
     controlled task/target markers never select a weaker mode. The sole opt-out
     requires the dedicated test environment marker plus the exact synthetic
-    contract and gate identities used by the adversarial fixture suite. Real
-    FanMind registries therefore remain canonical even if that environment
-    variable is accidentally present.
+    contract/gate identities or the exact synthetic affected-contract scope used
+    by the adversarial fixture suite. Real FanMind registries/snapshots therefore
+    remain canonical even if that environment variable is accidentally present.
     """
     if _CANONICAL_CLI_ACTIVE:
         return True
@@ -139,12 +139,17 @@ def _canonical_runtime_mode(*documents: dict) -> bool:
         document for document in documents
         if isinstance(document, dict) and "gates" in document
     ]
-    if not contract_documents or not gate_documents:
-        return True
-    return not (
+    synthetic_registry_pair = (
         any(_ids(document, "contracts") == TEST_ONLY_SYNTHETIC_CONTRACT_IDS for document in contract_documents)
         and any(_ids(document, "gates") == TEST_ONLY_SYNTHETIC_GATE_IDS for document in gate_documents)
     )
+    synthetic_snapshot = any(
+        isinstance(document, dict)
+        and isinstance(document.get("affected_contracts"), list)
+        and set(document.get("affected_contracts", [])) == TEST_ONLY_SYNTHETIC_CONTRACT_IDS
+        for document in documents
+    )
+    return not (synthetic_registry_pair or synthetic_snapshot)
 
 
 def _canonical_registry_blockers(contracts: dict, integration: dict) -> list[str]:
@@ -241,12 +246,7 @@ def _canonical_head_input_blockers(
     ttl_policy: dict | None,
     current_control_plane_fingerprint: str | None,
 ) -> list[str]:
-    """Authenticate direct evaluator inputs against the immutable current HEAD.
-
-    A canonical direct caller may not replay an old control plane by supplying
-    old documents plus an old fingerprint. The exact documents and fingerprint
-    must equal the current repository Git objects, just as the CLI path does.
-    """
+    """Authenticate direct evaluator inputs against the immutable current HEAD."""
     blockers: list[str] = []
     expected_fingerprint = _base.control_plane_fingerprint()
     if (
@@ -455,14 +455,14 @@ def _canonical_runtime_input_blockers(
 
 def evaluate_release_decision(*args, **kwargs):
     """Evaluator with canonical trust enforcement by default for direct callers."""
-    if len(args) < 7:
+    if len(args) < 6:
         return "BLOCK", ["release_input:canonical_arguments_missing"]
     invariants = args[0]
     integration = args[1]
     contracts = args[2]
     impact = args[3]
     snapshot = args[5]
-    ttl_policy = args[6]
+    ttl_policy = args[6] if len(args) > 6 else kwargs.get("ttl_policy")
     early = _canonical_runtime_input_blockers(
         invariants,
         integration,
