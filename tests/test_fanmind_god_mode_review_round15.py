@@ -132,9 +132,13 @@ class CurrentHeadRound15RegressionTests(unittest.TestCase):
     def test_public_evaluator_rejects_non_checkout_head_outside_synthetic_test_bypass(self):
         original_head = ROUND12._base.current_git_head
         original_resolves = ROUND12._current._round8.git_commit_resolves
+        original_mode = ROUND12._current._canonical_runtime_mode
+        original_eval = ROUND12._legacy_evaluate_release_decision
         previous = os.environ.pop("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC", None)
         ROUND12._base.current_git_head = lambda: "b" * 40
         ROUND12._current._round8.git_commit_resolves = lambda _value: True
+        ROUND12._current._canonical_runtime_mode = lambda *_args, **_kwargs: False
+        ROUND12._legacy_evaluate_release_decision = lambda *_args, **_kwargs: ("ALLOW", [])
         try:
             invariants, gates, contracts, impact, ttl = FIX.structures()
             decision, reasons = ROUND12.evaluate_release_decision(
@@ -156,6 +160,8 @@ class CurrentHeadRound15RegressionTests(unittest.TestCase):
         finally:
             if previous is not None:
                 os.environ["FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC"] = previous
+            ROUND12._legacy_evaluate_release_decision = original_eval
+            ROUND12._current._canonical_runtime_mode = original_mode
             ROUND12._current._round8.git_commit_resolves = original_resolves
             ROUND12._base.current_git_head = original_head
         self.assertEqual("BLOCK", decision)
