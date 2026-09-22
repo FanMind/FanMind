@@ -199,6 +199,7 @@ def _hardening_blockers(
     control_fingerprint: str | None,
     now: datetime,
     attestation: dict | None,
+    current_trigger_state: dict | None,
 ) -> list[str]:
     """Additional fail-closed proof contracts found by current-head review.
 
@@ -210,7 +211,11 @@ def _hardening_blockers(
     if not isinstance(attestation, dict):
         return blockers
 
-    trigger_state = attestation.get("trigger_state")
+    trigger_state = (
+        current_trigger_state.get("state")
+        if isinstance(current_trigger_state, dict)
+        else None
+    )
     if not isinstance(trigger_state, dict):
         return blockers
     evidence = attestation.get("evidence")
@@ -478,25 +483,34 @@ def _hardening_blockers(
                     f"release_evidence:gate_countercheck_revalidation_not_independent:{gate_id}"
                 )
 
-        semantic_entries = [
-            entry
-            for entry in fully_revalidated
-            if _base._entry_roles(entry) & gate_roles
-        ]
-        covered: set[str] = set()
-        for entry in semantic_entries:
-            requirement_map = entry.get("requirements")
-            if not isinstance(requirement_map, dict):
-                continue
-            values = requirement_map.get(gate_id)
-            configured = _configured_requirement_list(values)
-            if configured is not None:
-                covered.update(configured)
+        requirement_roles = gate.get("evidence_required_roles")
+        if not isinstance(requirement_roles, dict) or set(requirement_roles) != set(requirements):
+            blockers.append(f"integration_gate:evidence_requirement_roles_invalid:{gate_id}")
+            continue
+        invalid_role_map = any(
+            not isinstance(role, str) or role not in gate_roles
+            for role in requirement_roles.values()
+        )
+        if invalid_role_map:
+            blockers.append(f"integration_gate:evidence_requirement_roles_invalid:{gate_id}")
+            continue
 
         for requirement in requirements:
-            if requirement not in covered:
+            expected_role = requirement_roles[requirement]
+            covered = False
+            for entry in fully_revalidated:
+                if expected_role not in _base._entry_roles(entry):
+                    continue
+                requirement_map = entry.get("requirements")
+                if not isinstance(requirement_map, dict):
+                    continue
+                values = _configured_requirement_list(requirement_map.get(gate_id))
+                if values is not None and requirement in values:
+                    covered = True
+                    break
+            if not covered:
                 blockers.append(
-                    f"release_evidence:gate_requirement_missing:{gate_id}:{requirement}"
+                    f"release_evidence:gate_requirement_role_missing:{gate_id}:{expected_role}:{requirement}"
                 )
 
     return blockers
@@ -517,6 +531,7 @@ def evaluate_release_decision(
     now: datetime | None = None,
     attestation: dict | None = None,
     attestation_key: str | bytes | None = None,
+    current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     policy = ttl_policy or {"policy": {}}
     now_utc = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
@@ -546,6 +561,7 @@ def evaluate_release_decision(
         now=now_utc,
         attestation=attestation,
         attestation_key=attestation_key,
+        current_trigger_state=current_trigger_state,
     )
 
     extra = _hardening_blockers(
@@ -560,6 +576,7 @@ def evaluate_release_decision(
         control_fingerprint=current_control_plane_fingerprint,
         now=now_utc,
         attestation=attestation,
+        current_trigger_state=current_trigger_state,
     )
     if extra:
         return "BLOCK", list(dict.fromkeys([*reasons, *extra]))
