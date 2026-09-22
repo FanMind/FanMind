@@ -1,6 +1,8 @@
 from copy import deepcopy
 import importlib.util
 import pathlib
+import subprocess
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -110,6 +112,138 @@ class CurrentHeadRound8RegressionTests(unittest.TestCase):
         )
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_evidence:revalidated_quorum_classes:1<2", reasons)
+
+    def test_unbound_selected_second_class_does_not_satisfy_r3_quorum(self):
+        invariants, gates, contracts, impact, ttl = BASE.structures()
+        contracts["contracts"][0]["minimum_risk"] = "R3"
+        ttl["policy"]["staging_smoke"] = {
+            "ttl_hours": None,
+            "revalidate_on": ["head_changed"],
+        }
+
+        def role_entry(evidence_id, role, sequence):
+            entry = deepcopy(BASE.evidence())
+            entry["id"] = evidence_id
+            entry["roles"] = [role]
+            entry["provenance"] = {
+                "source": f"round8-unbound-source-{sequence}",
+                "execution_id": f"round8-unbound-execution-{sequence}",
+                "independence_key": f"round8-unbound-key-{sequence}",
+            }
+            return entry
+
+        implementation = role_entry("EV-R8-U-IMPLEMENTATION", "implementation", 1)
+        countercheck = role_entry("EV-R8-U-COUNTERCHECK", "countercheck", 2)
+        negative = role_entry("EV-R8-U-NEGATIVE", "negative", 3)
+        gate_recovery = role_entry("EV-R8-U-GATE-RECOVERY", "recovery", 4)
+        unbound_selected_recovery = role_entry("EV-R8-U-SELECTED-RECOVERY", "recovery", 5)
+        unbound_selected_recovery["class"] = "staging_smoke"
+        unbound_selected_recovery.pop("gates", None)
+        unbound_selected_recovery.pop("invariants", None)
+        unbound_selected_recovery.pop("requirements", None)
+        # Deliberately stale for the affected contract.  Because this evidence
+        # is unbound to any affected gate/invariant, the old round-8 loop never
+        # evaluated that contract fingerprint and counted its class solely from
+        # the global selected recovery field.
+        unbound_selected_recovery["trigger_fingerprints"]["price_catalog_change"] = "price:old"
+
+        entries = [
+            implementation,
+            countercheck,
+            negative,
+            gate_recovery,
+            unbound_selected_recovery,
+        ]
+        snap = BASE.snapshot()
+        snap["risk"] = "R3"
+        snap["implementation_evidence_id"] = implementation["id"]
+        snap["countercheck_evidence_id"] = countercheck["id"]
+        snap["negative_evidence_id"] = negative["id"]
+        snap["rollback_recovery_evidence_id"] = unbound_selected_recovery["id"]
+
+        decision, reasons = BASE.evaluate_case(
+            entries,
+            invariants=invariants,
+            gates=gates,
+            contracts=contracts,
+            impact=impact,
+            snapshot_value=snap,
+            ttl=ttl,
+        )
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("release_evidence:revalidated_quorum_classes:1<2", reasons)
+
+    def test_invariant_observer_cannot_substitute_for_qualifying_release_role(self):
+        qualifying = deepcopy(BASE.evidence())
+        qualifying.pop("invariants", None)
+
+        observer = deepcopy(BASE.evidence())
+        observer["id"] = "EV-R8-INVARIANT-OBSERVER"
+        observer["roles"] = ["observer"]
+        observer.pop("gates", None)
+        observer.pop("requirements", None)
+        observer["provenance"] = {
+            "source": "round8-invariant-observer",
+            "execution_id": "round8-invariant-observer-1",
+            "independence_key": "round8-invariant-observer-key-1",
+        }
+
+        decision, reasons = BASE.evaluate_case([qualifying, observer])
+        self.assertEqual("BLOCK", decision)
+        self.assertIn(f"release_evidence:invariant_missing:{BASE.INVARIANT}", reasons)
+
+    def test_attestation_schema_version_requires_exact_integer(self):
+        original = BASE.signed_attestation
+
+        def malformed(entries):
+            value = original(entries)
+            value["schema_version"] = True
+            value["signature"] = BASE.MODULE.sign_attestation(value, BASE.KEY)
+            return value
+
+        BASE.signed_attestation = malformed
+        try:
+            decision, reasons = BASE.evaluate_case(BASE.evidence())
+        finally:
+            BASE.signed_attestation = original
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("attestation:schema_invalid", reasons)
+
+    def test_malformed_evidence_status_fails_closed_without_type_error(self):
+        original = BASE.signed_attestation
+
+        def malformed(entries):
+            value = original(entries)
+            value["evidence"][0]["status"] = ["COUNTERCHECKED"]
+            value["signature"] = BASE.MODULE.sign_attestation(value, BASE.KEY)
+            return value
+
+        BASE.signed_attestation = malformed
+        try:
+            decision, reasons = BASE.evaluate_case(BASE.evidence())
+        finally:
+            BASE.signed_attestation = original
+        self.assertEqual("BLOCK", decision)
+        self.assertTrue(
+            any(reason.startswith("release_evidence:not_current:EV-HARDENING") for reason in reasons),
+            reasons,
+        )
+
+    def test_legacy_cli_is_fail_closed_and_not_an_alternate_evaluator(self):
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "fanmind_release_decision_core_legacy.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertNotEqual(0, completed.returncode)
+        self.assertIn("FANMIND_RELEASE_DECISION=BLOCK", completed.stdout)
+        self.assertIn("legacy_cli_disabled_use_canonical_entrypoint", completed.stdout)
 
 
 if __name__ == "__main__":
