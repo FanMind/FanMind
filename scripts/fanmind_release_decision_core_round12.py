@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
 import fanmind_release_decision_core_round12_legacy as _legacy
 
@@ -45,6 +46,10 @@ for _module in (_base, _current, _round11, _legacy):
 # lowered risk floor or weakened evidence-role requirement.
 CANONICAL_SECURITY_SEMANTICS_SHA256 = (
     "65f9c6a1e6b73ba6c2095507b65ff3c51186f6bccdd815e42d5b3acfd59cbf1b"
+)
+
+SUPPORTED_EVIDENCE_ROLES = frozenset(
+    role for roles in _base.REQUIRED_EVIDENCE_ROLES.values() for role in roles
 )
 
 
@@ -121,6 +126,66 @@ _legacy._canonical_semantics_blockers = lambda _i, _g, _c: []
 _legacy.CANONICAL_SECURITY_SEMANTICS_SHA256 = CANONICAL_SECURITY_SEMANTICS_SHA256
 
 
+def _attestation_boundary_blockers(attestation: dict | None, snapshot: dict) -> list[str]:
+    """Reject malformed/unauthoritative attested evidence before legacy normalization.
+
+    This outer boundary intentionally runs before the retained evaluator so
+    unhashable statuses or invented roles cannot reach set-membership checks,
+    and so signed evidence cannot smuggle additional unbound records beside the
+    snapshot's exact evidence binding set.
+    """
+    if not isinstance(attestation, dict):
+        return []
+    evidence = attestation.get("evidence")
+    if not isinstance(evidence, list):
+        return []
+
+    blockers: list[str] = []
+    attested_ids: set[str] = set()
+    for entry in evidence:
+        if not isinstance(entry, dict):
+            continue
+        evidence_id = entry.get("id")
+        label = evidence_id if isinstance(evidence_id, str) and evidence_id else "<invalid>"
+        if isinstance(evidence_id, str) and evidence_id:
+            attested_ids.add(evidence_id)
+
+        status = entry.get("status")
+        if not isinstance(status, str):
+            blockers.append(f"release_evidence:status_invalid:{label}")
+
+        roles = entry.get("roles")
+        if roles is not None:
+            if not isinstance(roles, list) or any(
+                not isinstance(role, str) or not role for role in roles
+            ):
+                blockers.append(f"release_evidence:roles_invalid:{label}")
+            else:
+                for role in roles:
+                    if role not in SUPPORTED_EVIDENCE_ROLES:
+                        blockers.append(f"release_evidence:role_unknown:{label}:{role}")
+        role = entry.get("role")
+        if role is not None:
+            if not isinstance(role, str) or not role:
+                blockers.append(f"release_evidence:role_invalid:{label}")
+            elif role not in SUPPORTED_EVIDENCE_ROLES:
+                blockers.append(f"release_evidence:role_unknown:{label}:{role}")
+
+    bindings = snapshot.get("evidence_bindings") if isinstance(snapshot, dict) else None
+    if isinstance(bindings, list):
+        binding_ids = {
+            binding.get("id")
+            for binding in bindings
+            if isinstance(binding, dict)
+            and isinstance(binding.get("id"), str)
+            and binding.get("id")
+        }
+        if attested_ids != binding_ids:
+            blockers.append("attestation:evidence_binding_set_mismatch")
+
+    return list(dict.fromkeys(blockers))
+
+
 def evaluate_release_decision(
     invariants: dict,
     integration: dict,
@@ -138,7 +203,11 @@ def evaluate_release_decision(
     attestation_key: str | bytes | None = None,
     current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
+    boundary_blockers = _attestation_boundary_blockers(attestation, snapshot)
     requirement_blockers = _evidence_requirement_claim_blockers(attestation, integration)
+    if boundary_blockers or requirement_blockers:
+        return "BLOCK", list(dict.fromkeys([*boundary_blockers, *requirement_blockers]))
+
     canonical = _current._canonical_runtime_mode(integration, contracts, impact, snapshot)
     canonical_shape_valid = not _current._canonical_registry_blockers(contracts, integration)
     if canonical and canonical_shape_valid:
@@ -165,7 +234,7 @@ def evaluate_release_decision(
     previous_legacy_loader = _legacy.load_trust_anchor
     _legacy.load_trust_anchor = globals()["load_trust_anchor"]
     try:
-        decision, reasons = _legacy_evaluate_release_decision(
+        return _legacy_evaluate_release_decision(
             invariants,
             integration,
             contracts,
@@ -181,9 +250,6 @@ def evaluate_release_decision(
             attestation_key=attestation_key,
             current_trigger_state=current_trigger_state,
         )
-        if requirement_blockers:
-            return "BLOCK", list(dict.fromkeys([*reasons, *requirement_blockers]))
-        return decision, reasons
     finally:
         _legacy.load_trust_anchor = previous_legacy_loader
 
@@ -208,7 +274,6 @@ def _evidence_requirement_claim_blockers(attestation: dict | None, integration: 
         if not isinstance(claims, dict):
             blockers.append("release_evidence:requirements_invalid")
             continue
-        entry_gates = set(entry.get("gates", [])) if isinstance(entry.get("gates"), list) else set()
         for gate_id, values in claims.items():
             if gate_id not in configured:
                 blockers.append(f"release_evidence:requirement_gate_unknown:{gate_id}")
@@ -220,6 +285,28 @@ def _evidence_requirement_claim_blockers(attestation: dict | None, integration: 
             ):
                 blockers.append(f"release_evidence:requirement_unknown:{gate_id}")
     return list(dict.fromkeys(blockers))
+
+
+def _exact_head_cli_evaluate_release_decision(*args, **kwargs):
+    """Canonical CLI boundary: supplied release SHA must be this checkout's HEAD."""
+    actual_head = kwargs.get("actual_head")
+    checked_out_head = _base.current_git_head()
+    if not _current._round8.git_commit_resolves(actual_head):
+        return "BLOCK", ["release_evidence:actual_head_unresolvable"]
+    if not isinstance(checked_out_head, str) or actual_head != checked_out_head:
+        return "BLOCK", ["release_evidence:actual_head_not_checked_out_head"]
+    return evaluate_release_decision(*args, **kwargs)
+
+
+def _safe_external_json(path_value: str | None) -> dict | None:
+    """Load external signed JSON fail-closed, including invalid UTF-8."""
+    if not path_value:
+        return None
+    try:
+        value = json.loads(Path(path_value).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return {"_load_error": True}
+    return value if isinstance(value, dict) else {"_load_error": True}
 
 
 # Keep every historical import seam on the newest evaluator. The legacy
@@ -261,10 +348,19 @@ def main() -> int:
         return 1
 
     previous_loader = _legacy._load_head_project_memory
+    previous_cli = _legacy._round12_cli_evaluate_release_decision
+    previous_attestation_loader = _base._load_attestation
+    previous_trigger_loader = _base._load_current_trigger_state
     _legacy._load_head_project_memory = globals()["_load_head_project_memory"]
+    _legacy._round12_cli_evaluate_release_decision = _exact_head_cli_evaluate_release_decision
+    _base._load_attestation = _safe_external_json
+    _base._load_current_trigger_state = _safe_external_json
     try:
         return _legacy.main()
     finally:
+        _base._load_current_trigger_state = previous_trigger_loader
+        _base._load_attestation = previous_attestation_loader
+        _legacy._round12_cli_evaluate_release_decision = previous_cli
         _legacy._load_head_project_memory = previous_loader
 
 
