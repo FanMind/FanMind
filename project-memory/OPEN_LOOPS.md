@@ -21,8 +21,8 @@
 - Status: IN_PROGRESS; current priority per FM-DEC-015.
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
-- Source #1099-#1108 and #1140 are published. PR #1143 merged as `027d5a21ac41daae0331a0af2f9685d3729b2039`, but its post-merge review retained one P1 and two P2 findings. The single canonical Hotfix corrects ownership-transfer Account Delete, bounded Auth disclosure and atomic Meta-queue/Contact deletion; Delete/Privacy/Disclosure is not accepted/closed before that Hotfix passes review/checks and merges. Actual deployed flag, enabled runtime UI, confirmed-chat persistence and real quality/provider acceptance remain open.
-- Exact next: controlled repository/synthetic-Staging UI/delete/learning engineering under NBA-CREATOR-INTELLIGENCE; external app/account/provider acceptance is separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL. FM-DEC-021 supersedes the old Android timing: all remaining Mobile/Handy work waits for completed company registration plus explicit owner resume.
+- Source #1099-#1108 and #1140 are published. PR #1143 merged as `027d5a21ac41daae0331a0af2f9685d3729b2039`; its one P1/two P2 post-merge findings were then corrected by the single canonical Hotfix PR #1144, merged as `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`. Ownership-transfer Account Delete, bounded credential-free Auth disclosure and atomic Meta-queue/Contact deletion are therefore consumed accepted source scope and must not be rebuilt. Actual deployed flag, enabled runtime UI, confirmed-chat persistence and real quality/provider acceptance remain open.
+- Exact next: controlled repository/synthetic-Staging confirmed-chat persistence/API continuation under NBA-CREATOR-INTELLIGENCE; external app/account/provider acceptance is separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL. FM-DEC-021 supersedes the old Android timing: all remaining Mobile/Handy work waits for completed company registration plus explicit owner resume.
 - Paid activation deferral: PR #1098 already published the consent correction. FM-BILL-003 is PARTIAL and owner-deferred until actual tax/UID facts arrive. Earlier activation-first instructions below are historical and must not restart questions/actions during this deferral.
 
 
@@ -175,12 +175,12 @@ This register contains started, partially completed or follow-up work that could
 - Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-21.
 - PR #1146 merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed.
 - Protected read-only Staging VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT skipped.
-- This closes the observation loop only. The distinct later APPLY path is blocked behind God Mode v1 and separate owner authorization.
+- This closes the observation loop only. The distinct later APPLY path is now separately `OWNER_ACTION_REQUIRED` after the God Mode merge; it is not part of this closed observation loop.
 - Separate Operations loop remains `production_audit_backup_latest_stale_or_empty`; do not conflate it with ChatAdmin.
 
 
 ## FM-LOOP-GODMODE-20260921
-- Status: OPEN; task FM-GOV-GODMODE-001; Updated: 2026-09-21.
-- Goal: merge the bounded repository-only God Mode v1 control plane with fail-closed release decision, system invariants, contract/integration registries, impact mapping, adversarial proof and Post-Merge Guardian policy.
-- Current branch: `governance/god-mode-v1-20260921`.
-- Next: complete current-head CI/CodeQL/Project Memory and independent review without P1/P2, then merge/reconcile. No protected Staging/Production action is part of this loop.
+- Status: CLOSED; task FM-GOV-GODMODE-001; Updated: 2026-09-22.
+- Goal completed: bounded repository-only God Mode v1 control plane with fail-closed release decision, system invariants, contract/integration registries, impact mapping, adversarial proof and Post-Merge Guardian policy.
+- Closed by: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` passed required current-head workflows and independent review, merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35` on 2026-09-22, and the post-merge `FanMind God Mode Gate` push run `35769547419` succeeded on that merge commit.
+- Follow-up: consume this as repository-governance success only. Do not reopen #1157 for further hardening. ChatAdmin Staging APPLY is a distinct protected owner/environment gate; Creator repository work may resume from its accepted #1144 baseline.
