@@ -120,12 +120,7 @@ def _round8_input_blockers(invariants, contracts, ttl_policy=None, *, actual_hea
                 if not isinstance(evidence_class, str) or not evidence_class or not isinstance(item, dict):
                     continue
                 ttl_hours = item.get("ttl_hours")
-                if ttl_hours is not None and (
-                    isinstance(ttl_hours, bool)
-                    or not isinstance(ttl_hours, (int, float))
-                    or not math.isfinite(float(ttl_hours))
-                    or ttl_hours < 0
-                ):
+                if not _base._valid_ttl_hours(ttl_hours):
                     blockers.append(f"ttl_policy:ttl_invalid:{evidence_class}")
 
     return list(dict.fromkeys(blockers))
@@ -143,6 +138,7 @@ def _round8_revalidated_quorum_blockers(
     control_fingerprint: str | None,
     now: datetime,
     attestation: dict | None,
+    current_trigger_state: dict | None,
 ) -> list[str]:
     """Require the R3/R4 two-class quorum to be fully revalidated.
 
@@ -156,7 +152,11 @@ def _round8_revalidated_quorum_blockers(
 
     if not isinstance(attestation, dict):
         return []
-    trigger_state = attestation.get("trigger_state")
+    trigger_state = (
+        current_trigger_state.get("state")
+        if isinstance(current_trigger_state, dict)
+        else None
+    )
     evidence = attestation.get("evidence")
     if not isinstance(trigger_state, dict) or not isinstance(evidence, list):
         return []
@@ -318,6 +318,7 @@ def evaluate_release_decision(
     now: datetime | None = None,
     attestation: dict | None = None,
     attestation_key: str | bytes | None = None,
+    current_trigger_state: dict | None = None,
 ) -> tuple[str, list[str]]:
     early = _round8_input_blockers(
         invariants,
@@ -343,6 +344,7 @@ def evaluate_release_decision(
         now=now_utc,
         attestation=attestation,
         attestation_key=attestation_key,
+        current_trigger_state=current_trigger_state,
     )
     if decision == "BLOCK":
         return decision, reasons
@@ -358,6 +360,7 @@ def evaluate_release_decision(
         control_fingerprint=current_control_plane_fingerprint,
         now=now_utc,
         attestation=attestation,
+        current_trigger_state=current_trigger_state,
     )
     if extra:
         return "BLOCK", list(dict.fromkeys([*reasons, *extra]))
