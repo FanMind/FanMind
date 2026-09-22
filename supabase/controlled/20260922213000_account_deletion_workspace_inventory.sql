@@ -49,12 +49,12 @@ begin
       message = 'service_role_required';
   end if;
 
-  select *
+  select r.*
   into v_request
-  from public.account_deletion_requests
-  where id = p_request_id
-    and user_id = p_user_id
-    and status in ('pending', 'blocked', 'processing')
+  from public.account_deletion_requests r
+  where r.id = p_request_id
+    and r.user_id = p_user_id
+    and r.status in ('pending', 'blocked', 'processing')
   for update;
 
   if not found then
