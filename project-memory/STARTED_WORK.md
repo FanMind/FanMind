@@ -793,7 +793,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-GOV-GODMODE-001 — God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
-- Status: VERIFIED
+- Status: ACCEPTED
 - Risk: R3
 - Lock: LOCK-FM-GOV-GODMODE-001-20260921 RELEASED
 - Owner: ChatGPT / connected GitHub
