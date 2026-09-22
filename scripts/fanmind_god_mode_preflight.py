@@ -47,10 +47,32 @@ def _round8_preflight_input_errors() -> list[str]:
             if ttl_hours is not None and (
                 isinstance(ttl_hours, bool)
                 or not isinstance(ttl_hours, (int, float))
-                or not math.isfinite(float(ttl_hours))
+                or (isinstance(ttl_hours, float) and not math.isfinite(ttl_hours))
                 or ttl_hours < 0
+                or ttl_hours > 24 * 365 * 100
             ):
                 errors.append(f"ttl-policy-ttl-invalid:{evidence_class}")
+
+    try:
+        integration = load("INTEGRATION_GATES.json")
+    except Exception as exc:
+        return list(dict.fromkeys([*errors, f"integration-gates-load-invalid:{type(exc).__name__}"]))
+    gates = integration.get("gates", []) if isinstance(integration, dict) else []
+    allowed_roles = {"evidence", "implementation", "countercheck", "negative", "recovery"}
+    if isinstance(gates, list):
+        for gate in gates:
+            if not isinstance(gate, dict):
+                continue
+            gate_id = gate.get("id")
+            required = gate.get("evidence_required")
+            role_map = gate.get("evidence_required_roles")
+            if not isinstance(required, list) or not required:
+                continue
+            if not isinstance(role_map, dict) or set(role_map) != set(required):
+                errors.append(f"integration-gate-evidence-role-map-invalid:{gate_id}")
+                continue
+            if any(not isinstance(role, str) or role not in allowed_roles for role in role_map.values()):
+                errors.append(f"integration-gate-evidence-role-map-invalid:{gate_id}")
 
     return list(dict.fromkeys(errors))
 
