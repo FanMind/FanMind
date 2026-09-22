@@ -123,13 +123,15 @@ async function restPatch(fetchImpl, config, table, query, body, errorCode) {
   return payload[0];
 }
 
-function missingWorkspaceInventoryColumn(response, payload) {
-  if (response?.status !== 400) return false;
+function missingWorkspaceInventoryContract(response, payload) {
   const code = String(payload?.code ?? "");
   const message = JSON.stringify(payload ?? "").toLowerCase();
   return (
-    code === "PGRST204" &&
-    message.includes("owned_workspace_ids")
+    (response?.status === 400 &&
+      code === "PGRST204" &&
+      message.includes("owned_workspace_ids")) ||
+    (response?.status === 404 &&
+      (code === "PGRST202" || message.includes("begin_account_deletion_processing")))
   );
 }
 
@@ -151,46 +153,51 @@ export async function persistOwnedWorkspaceInventory(
   fetchImpl,
   config,
   request,
-  workspaceIds,
-  now,
 ) {
-  const normalized = normalizeOwnedWorkspaceIds(workspaceIds);
   const { response, payload } = await requestJson(
     fetchImpl,
-    `${config.supabaseUrl}/rest/v1/account_deletion_requests?${new URLSearchParams({
-      id: `eq.${request.id}`,
-      user_id: `eq.${request.user_id}`,
-      status: "in.(pending,blocked,processing)",
-      select: "id,status,processing_started_at,owned_workspace_ids",
-    })}`,
+    `${config.supabaseUrl}/rest/v1/rpc/begin_account_deletion_processing`,
     {
-      method: "PATCH",
-      headers: serviceHeaders(config.serviceKey, "return=representation"),
+      method: "POST",
+      headers: serviceHeaders(config.serviceKey),
       body: JSON.stringify({
-        status: "processing",
-        processing_started_at: request.processing_started_at || now.toISOString(),
-        owned_workspace_ids: normalized,
-        requires_ownership_transfer: false,
-        requires_subscription_resolution: false,
-        last_error_code: null,
+        p_request_id: request.id,
+        p_user_id: request.user_id,
       }),
     },
     "workspace_inventory_persist_failed",
   );
-  if (missingWorkspaceInventoryColumn(response, payload)) {
+  if (missingWorkspaceInventoryContract(response, payload)) {
     throw new AccountDeletionProcessorError("workspace_inventory_contract_unavailable");
   }
-  if (!response.ok || !Array.isArray(payload) || payload.length !== 1) {
+  if (!response.ok) {
+    const message = String(payload?.message ?? "");
+    if (
+      message === "ownership_transfer_required" ||
+      message === "subscription_resolution_required"
+    ) {
+      throw new AccountDeletionProcessorError("request_blocked");
+    }
+    if (message === "workspace_inventory_too_large") {
+      throw new AccountDeletionProcessorError("workspace_inventory_too_large");
+    }
+    if (message === "request_not_processable") {
+      throw new AccountDeletionProcessorError("request_not_processable");
+    }
     throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
   }
-  const persisted = normalizeOwnedWorkspaceIds(payload[0]?.owned_workspace_ids);
   if (
-    persisted.length !== normalized.length ||
-    persisted.some((value, index) => value !== normalized[index])
+    !Array.isArray(payload) ||
+    payload.length !== 1 ||
+    payload[0]?.request_id !== request.id
   ) {
     throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
   }
-  return payload[0];
+  const persisted = normalizeOwnedWorkspaceIds(payload[0]?.owned_workspace_ids);
+  return {
+    ...payload[0],
+    owned_workspace_ids: persisted,
+  };
 }
 
 export async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
@@ -204,7 +211,7 @@ export async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
     { headers: serviceHeaders(config.serviceKey) },
     "workspace_inventory_lookup_failed",
   );
-  if (missingWorkspaceInventoryColumn(response, payload)) {
+  if (missingWorkspaceInventoryContract(response, payload)) {
     throw new AccountDeletionProcessorError("workspace_inventory_contract_unavailable");
   }
   if (!response.ok || !Array.isArray(payload) || payload.length !== 1) {
@@ -784,14 +791,13 @@ export async function processAccountDeletion({
     throw new AccountDeletionProcessorError("request_blocked");
   }
 
-  const workspaceIds = workspaces.map((workspace) => workspace.id);
   const processingRequest = await persistOwnedWorkspaceInventory(
     fetchImpl,
     config,
     request,
-    workspaceIds,
-    now,
   );
+  const workspaceIds = processingRequest.owned_workspace_ids;
+  log(`ACCOUNT_DELETION_ATOMIC_WORKSPACE_COUNT=${workspaceIds.length}`);
 
   await deleteAuthUser(fetchImpl, config, request.user_id);
   const finalStatus = await finalizeDeletedAccount({
