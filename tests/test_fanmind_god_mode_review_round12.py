@@ -1,9 +1,17 @@
 from copy import deepcopy
+import contextlib
 import importlib.util
+import io
+import os
 import pathlib
 import subprocess
 import sys
 import unittest
+
+# Synthetic fixtures are an explicit test-only mode. Runtime/direct evaluator
+# calls remain canonical by default and this opt-out is valid only for the exact
+# repository:synthetic target enforced by the evaluator.
+os.environ.setdefault("FANMIND_GOD_MODE_TEST_ONLY_SYNTHETIC", "1")
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -14,6 +22,7 @@ BASE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(BASE)
 
+import fanmind_release_decision_core as CORE  # noqa: E402
 import fanmind_release_decision_core_round12 as ROUND12  # noqa: E402
 
 
@@ -135,6 +144,22 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
             errors,
         )
 
+    def test_non_object_control_plane_documents_fail_before_legacy_get(self):
+        original_load = BASE.PREFLIGHT.load
+        try:
+            for target, marker in BASE.PREFLIGHT.CONTROL_PLANE_DOCUMENT_ERRORS.items():
+                with self.subTest(document=target):
+                    def load_with_non_object(name, selected=target):
+                        if name == selected:
+                            return []
+                        return deepcopy(original_load(name))
+
+                    BASE.PREFLIGHT.load = load_with_non_object
+                    errors = BASE.PREFLIGHT.validate()
+                    self.assertIn(marker, errors)
+        finally:
+            BASE.PREFLIGHT.load = original_load
+
     def test_non_object_release_snapshot_blocks_before_get_dereference(self):
         invariants, gates, contracts, impact, ttl = BASE.structures()
         entry = BASE.evidence()
@@ -157,17 +182,68 @@ class CurrentHeadRound12RegressionTests(unittest.TestCase):
         self.assertEqual("BLOCK", decision)
         self.assertIn("release_input:snapshot_invalid", reasons)
 
-    def test_missing_decision_cannot_select_canonical_runtime_by_omission(self):
-        synthetic = BASE.snapshot()
-        self.assertEqual(
-            [],
-            ROUND12._persisted_completeness_blockers(synthetic),
-        )
+    def test_cli_non_object_snapshot_returns_controlled_block(self):
+        original = ROUND12._load_head_project_memory
+        ROUND12._load_head_project_memory = lambda name: []
+        output = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(output):
+                rc = ROUND12.main()
+        finally:
+            ROUND12._load_head_project_memory = original
+        self.assertEqual(1, rc)
+        self.assertIn("FANMIND_RELEASE_DECISION=BLOCK", output.getvalue())
+        self.assertIn("release_input:snapshot_invalid", output.getvalue())
 
-        canonical = deepcopy(synthetic)
-        canonical["task"] = ROUND12._current.CANONICAL_GOD_MODE_TASK
-        reasons = ROUND12._persisted_completeness_blockers(canonical)
-        self.assertIn("release_input:decision_missing_or_invalid", reasons)
+    def test_explicit_test_mode_not_task_marker_controls_synthetic_fixtures(self):
+        synthetic = BASE.snapshot()
+        self.assertEqual([], ROUND12._persisted_completeness_blockers(synthetic))
+
+        marked = deepcopy(synthetic)
+        marked["task"] = ROUND12._current.CANONICAL_GOD_MODE_TASK
+        self.assertEqual([], ROUND12._persisted_completeness_blockers(marked))
+
+    def test_direct_core_defaults_to_canonical_when_test_opt_out_is_absent(self):
+        previous = os.environ.pop(CORE.TEST_ONLY_SYNTHETIC_ENV, None)
+        try:
+            snapshot = BASE.snapshot()
+            self.assertTrue(CORE._canonical_runtime_mode(snapshot))
+            invariants, gates, contracts, impact, ttl = BASE.structures()
+            decision, reasons = CORE.evaluate_release_decision(
+                invariants,
+                gates,
+                contracts,
+                impact,
+                {},
+                snapshot,
+                ttl,
+                actual_head=BASE.HEAD,
+                actual_target=BASE.TARGET,
+                current_control_plane_fingerprint=BASE.CONTROL,
+                now=BASE.NOW,
+                attestation=BASE.signed_attestation(BASE.evidence()),
+                attestation_key=BASE.KEY,
+                current_trigger_state=BASE.signed_trigger_state(),
+            )
+        finally:
+            if previous is not None:
+                os.environ[CORE.TEST_ONLY_SYNTHETIC_ENV] = previous
+            else:
+                os.environ[CORE.TEST_ONLY_SYNTHETIC_ENV] = "1"
+        self.assertEqual("BLOCK", decision)
+        self.assertIn("contract_registry:canonical_set_mismatch", reasons)
+
+    def test_falsey_invalidation_markers_are_malformed_not_current(self):
+        for field in ("invalidated_by", "superseded_by"):
+            for value in ([], False, {}, ""):
+                with self.subTest(field=field, value=value):
+                    entry = BASE.evidence()
+                    entry[field] = value
+                    decision, reasons = BASE.evaluate_case(entry)
+                    self.assertEqual("BLOCK", decision)
+                    self.assertIn(
+                        f"release_evidence:{field}_invalid:{entry['id']}", reasons
+                    )
 
     def test_persisted_completeness_flags_are_exact_true_or_block(self):
         snap = BASE.snapshot()
