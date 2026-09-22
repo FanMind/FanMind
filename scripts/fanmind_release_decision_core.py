@@ -23,6 +23,7 @@ _base.CONTROL_PLANE_FILES = tuple(
     )
 )
 CONTROL_PLANE_FILES = _base.CONTROL_PLANE_FILES
+SUPPORTED_CONTROL_PLANE_SCHEMA_VERSION = 1
 
 
 def _binding_map(snapshot: dict) -> dict[str, dict]:
@@ -37,6 +38,62 @@ def _binding_map(snapshot: dict) -> dict[str, dict]:
         if isinstance(evidence_id, str) and evidence_id and evidence_id not in result:
             result[evidence_id] = binding
     return result
+
+
+def _control_plane_input_blockers(
+    invariants,
+    integration,
+    contracts,
+    impact,
+    snapshot,
+    ttl_policy,
+) -> list[str]:
+    """Reject malformed or unsupported control-plane inputs before base evaluation.
+
+    All six canonical JSON control-plane documents are versioned.  Schema
+    versions are an executable contract, not descriptive metadata: an unknown,
+    missing, boolean or otherwise malformed version must never be interpreted
+    using v1 semantics.  This guard also validates unhashable risk inputs before
+    either the base evaluator or the hardening layer performs dictionary/set
+    membership tests.
+    """
+
+    blockers: list[str] = []
+    documents = (
+        ("SYSTEM_INVARIANTS.json", invariants),
+        ("INTEGRATION_GATES.json", integration),
+        ("CONTRACT_REGISTRY.json", contracts),
+        ("IMPACT_MAP.json", impact),
+        ("RELEASE_DECISION.json", snapshot),
+        ("EVIDENCE_TTL_POLICY.json", ttl_policy),
+    )
+    for name, document in documents:
+        if not isinstance(document, dict):
+            blockers.append(f"control_plane:document_invalid:{name}")
+            continue
+        schema_version = document.get("schema_version")
+        if type(schema_version) is not int or schema_version != SUPPORTED_CONTROL_PLANE_SCHEMA_VERSION:
+            blockers.append(f"control_plane:schema_version_unsupported:{name}")
+
+    if isinstance(invariants, dict):
+        invariant_items = invariants.get("invariants")
+        if isinstance(invariant_items, list):
+            for invariant in invariant_items:
+                if not isinstance(invariant, dict) or invariant.get("required") is not True:
+                    continue
+                invariant_id = invariant.get("id")
+                if not isinstance(invariant_id, str) or not invariant_id:
+                    continue
+                invariant_risk = invariant.get("risk")
+                if not isinstance(invariant_risk, str) or invariant_risk not in RISK_ORDER:
+                    blockers.append(f"invariant:risk_invalid:{invariant_id}")
+
+    if isinstance(snapshot, dict):
+        declared_risk = snapshot.get("risk")
+        if not isinstance(declared_risk, str):
+            blockers.append("release_input:risk")
+
+    return list(dict.fromkeys(blockers))
 
 
 def _entry_is_current_for_hardening(
@@ -195,7 +252,7 @@ def _hardening_blockers(
             if not isinstance(invariant_id, str) or not invariant_id:
                 continue
             invariant_risk = invariant.get("risk")
-            if invariant_risk in RISK_ORDER:
+            if isinstance(invariant_risk, str) and invariant_risk in RISK_ORDER:
                 invariant_risk_floor = _higher_risk(invariant_risk_floor, invariant_risk)
             else:
                 blockers.append(f"invariant:risk_invalid:{invariant_id}")
@@ -306,7 +363,7 @@ def _hardening_blockers(
     combined_risk_floor = _higher_risk(contract_risk_floor, invariant_risk_floor)
     declared_risk = snapshot.get("risk")
     effective_risk = combined_risk_floor
-    if declared_risk in RISK_ORDER:
+    if isinstance(declared_risk, str) and declared_risk in RISK_ORDER:
         if RISK_ORDER[declared_risk] < RISK_ORDER[invariant_risk_floor]:
             blockers.append(
                 f"release_input:risk_below_invariant_floor:{declared_risk}<{invariant_risk_floor}"
@@ -433,6 +490,17 @@ def evaluate_release_decision(
 ) -> tuple[str, list[str]]:
     policy = ttl_policy or {"policy": {}}
     now_utc = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+
+    input_blockers = _control_plane_input_blockers(
+        invariants,
+        integration,
+        contracts,
+        impact,
+        snapshot,
+        policy,
+    )
+    if input_blockers:
+        return "BLOCK", input_blockers
 
     decision, reasons = _base_evaluate_release_decision(
         invariants,
