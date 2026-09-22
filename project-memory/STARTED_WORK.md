@@ -779,14 +779,23 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CREATOR-001 — PR #1144 post-merge review hotfix
 - Date: 2026-09-22
+- Status: OWNER_ACCEPTED_MERGE
+- Risk: R3
+- Lock: LOCK-FM-CREATOR-PRIVACY-POSTMERGE-20260922 RELEASED
+- Result: bounded follow-up merged through PR #1160, final head `d354b200f4be6f81ce4a51616eb2f77e8e4b30d5`, owner-accepted merge `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`; #1161 records the manual merge evidence.
+- Boundary: do not reopen #1160. Its later P2 review observation is a new bounded scope below.
+
+## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
+- Date: 2026-09-22
 - Status: IN_PROGRESS
 - Risk: R3
-- Lock: LOCK-FM-CREATOR-PRIVACY-POSTMERGE-20260922
+- Lock: LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Owner: ChatGPT / connected GitHub
-- Baseline: current main `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`; PR #1144 is already merged and its original #1143 review scope must not be rebuilt.
-- Scope: exactly three #1144 post-merge findings: preserve Contact deletion while `delete_contact_with_meta_catchup` is not installed, preserve genuine null-Workspace account deletion, and make interrupted post-Auth-delete resume verify the historical request Workspace only when that Workspace itself no longer exists.
-- Boundaries: repository-only code/tests/memory. The controlled Contact-delete SQL remains unapplied; no Staging/Production APPLY/ACCEPT/write, provider, Billing, Restore or Mobile action.
-- Exact next step: implement focused fail-closed compatibility and regressions on one branch, publish one PR, repair any current-head findings, and merge only under the convergence rule.
+- Baseline: exact current main `3ec6115612f1e2b9cf58d2d2064fbb7a561b2f6b`; #1160 remains closed/owner-accepted.
+- Scope: persist the complete currently-owned Workspace-ID set before destructive Auth deletion, require that exact persisted set for crash/resume verification, clear it after completion, and add the controlled unapplied schema contract/checker. Preserve null-Workspace requests and transferred historical Workspaces.
+- Boundaries: repository-only code/tests/docs/memory; no controlled SQL Apply, no real account/customer deletion, no Staging/Production/provider/Billing/Restore/Mobile mutation.
+- Evidence plan: controlled-contract checksum/static negatives, dynamic multi-Workspace persistence, missing-contract fail-before-delete, missing-inventory resume failure, full Current-Head CI/CodeQL/Browser and one required independent review cycle.
+- Recovery: source/docs revert only; target schema remains unchanged until a separately protected authorized rollout.
 
 ## FM-CHATADMIN-001 — isolated multi-character Owner exception
 - Date: 2026-09-20; Status: IMPLEMENTED_FOR_PR; Risk: R3; Lock: LOCK-FM-CHATADMIN-20260920; Owner: Codex Cloud.
