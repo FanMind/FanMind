@@ -797,8 +797,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Risk: R3
 - Lock: LOCK-FM-GOV-GODMODE-001-20260921
 - Owner: ChatGPT / connected GitHub
-- Branch/PR: `governance/god-mode-v1-20260921` / PR pending.
+- Branch/PR: `governance/god-mode-v1-20260921` / PR #1157.
+- Baseline: exact main `973e70f6d243984d95ec1420a79701faad04a39a`; protected ChatAdmin VERIFY run `35652258052` / job `106507223598` returned `ABSENT` with APPLY/ACCEPT skipped.
 - Scope: bounded repository-only governance package: invariants, contracts, integration gates, impact map, release decision, adversarial tests, synthetic golden flows, Post-Merge Guardian contract and CI integration.
-- Evidence plan: structural preflight, fail-closed release decision tests including deliberately broken invariant/integration/head cases, current-head GitHub CI/CodeQL/Project Memory and independent review.
-- Recovery: ordinary source revert; no external state changes exist to roll back.
-- Exact next step: finish Project Memory integration, open one bounded PR, obtain current-head CI/independent review and merge only when green with no P1/P2.
+- Current state: implementation and adversarial hardening are published on PR #1157. The prior current head passed all required CI/security/Project Memory gates and an independent exact-head review with no unresolved P1/P2; this final bounded Project-Memory reconciliation creates the last head that must be rechecked before merge.
+- Evidence plan: structural preflight, fail-closed release decision/adversarial tests, current-head GitHub CI/CodeQL/Browser/Supply Chain/Project Memory and independent review.
+- Recovery: ordinary source revert; no Staging/Production/database/provider/Billing/Restore/Mobile state was mutated.
+- Exact next step: require all gates and independent review on the final #1157 head; merge only when green with no P1/P2/open threads, then perform post-merge guardian/reconciliation before preparing any separately owner-gated ChatAdmin APPLY request.
