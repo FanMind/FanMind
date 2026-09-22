@@ -262,7 +262,7 @@
     },
     {
       "id": "NBA-CHATADMIN-STAGING-APPLY",
-      "priority": 0,
+      "priority": 4,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_apply",
       "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
