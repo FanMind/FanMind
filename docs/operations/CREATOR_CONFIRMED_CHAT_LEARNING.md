@@ -21,9 +21,13 @@ worked":
    validated Creator reply texts (`recommended`, `softer`, `stronger`). The RPC
    creates proposal/generation identifiers and is executable only by
    `service_role`; the browser cannot mint proposal identities. Proposal text is
-   bounded to the same 512-grapheme workload ceiling as the authoritative
-   validator; the database also applies a conservative <=512 Unicode-code-point
-   ceiling so persistence can never exceed that learning workload bound.
+   bounded by the authoritative server validator to at most 4,000 JavaScript
+   code units and 512 NFC extended grapheme clusters. PostgreSQL `length()` counts
+   Unicode code points rather than grapheme clusters, so the controlled table
+   deliberately uses only a 4,000-code-point storage envelope. This envelope
+   cannot reject a value accepted by the authoritative 4,000-code-unit validator;
+   the exact 512-grapheme rule remains server-owned instead of being approximated
+   incorrectly by SQL.
 2. A human confirmation may bind one proposal only to an **already stored
    outbound** `conversation_messages` row in the same
    Workspace/Fan/Conversation carrying the server-owned
@@ -31,7 +35,14 @@ worked":
    marker only for a new authenticated human outbound write, excludes
    `manual_note`, refuses provider/service-role imports, and preserves the marker
    unchanged on later updates. Existing historical rows are deliberately not
-   backfilled. Rebinding to a different outbound fails closed.
+   backfilled. Before confirmation, the FanMind server reads that exact
+   owner-visible message with the authenticated session, applies the same
+   4,000-code-unit / 512-NFC-grapheme validator, then invokes the confirmation RPC
+   with `service_role`. The RPC independently rechecks the actor's Workspace
+   ownership and processing entitlement and requires the persisted message text to
+   equal the exact text the server measured. The confirmation RPC is not granted
+   to `authenticated`, so a browser cannot bypass the grapheme validator by
+   calling Supabase directly. Rebinding to a different outbound fails closed.
 3. A reaction may only be an independently stored **inbound** message in the
    same Workspace/Fan/Conversation after that outbound.
 4. A purchase may only be an independently confirmed
@@ -43,9 +54,13 @@ worked":
    conversation association. `getCreatorFanData()` exposes each event's opaque
    `id`, so the current application read flow can supply the required
    `purchaseEventId`. A purchase event can be linked to only one learning row.
-5. `confirmed_by` is audit metadata. If the confirming account is later deleted,
-   its FK becomes null by design while `confirmed_at` plus the immutable outbound
-   binding keep the already-valid historical evidence usable in anonymized form.
+   `creator_commercial_events.confirmed_at` is the durable confirmation fact;
+   `confirmed_by` is deletable audit metadata and may become null after the
+   original confirmer account is removed.
+5. The learning row's own `confirmed_by` is likewise audit metadata. If the
+   confirming account is later deleted, its FK becomes null by design while
+   `confirmed_at` plus the immutable outbound binding keep the already-valid
+   historical evidence usable in anonymized form.
 6. Missing reaction or purchase evidence remains unknown. The persistence
    contract does not infer outcome, intent, attribution, causality, or revenue
    from text.
@@ -60,18 +75,25 @@ it does not weaken the validator.
   Authenticated users have only tenant-scoped `SELECT` through RLS.
 - Proposal registration is server-only (`service_role`) and independently
   checks Creator revision plus Workspace/Fan/Conversation scope.
-- Outbound confirmation and outcome linking enforce the canonical
+- Outbound confirmation is also server-only. The application first authenticates
+  and authorizes the current owner, measures the exact persisted outbound, then
+  the service-role RPC independently binds `p_actor_user_id` to the Workspace
+  owner and re-evaluates the canonical processing predicate before accepting the
+  exact measured text. No service-role credential is exposed to the browser.
+- Outcome linking remains browser-callable but enforces the canonical
   `workspace_owner_active_mutation_allowed(workspace_id)` contract **inside the
   database RPC**, plus the Creator Workspace gate. A non-owner member or a
   read-only/expired/archived Workspace cannot bypass the application route by
-  calling Supabase RPC directly.
+  calling that RPC directly.
 - Human-send provenance is created by a database trigger from authenticated
   insertion context and cannot be manufactured or erased by later row updates.
   Provider/service-role imports and manual-note rows are not eligible.
 - Purchase linking requires an independently confirmed purchase event for the
   same Workspace/Creator/Fan. A non-null foreign conversation is rejected; an
   unbound event is associated only by the explicit owner link and cannot be
-  reused by another learning record.
+  reused by another learning record. Deletion of the historical confirmer does
+  not invalidate the event because `confirmed_at` remains non-null and immutable
+  for that retained row while `confirmed_by` is anonymized to null.
 - The application API additionally requires the normal trusted mutation/session
   boundary, active processing entitlement, Creator Intelligence availability and
   the dedicated rollout flag.
@@ -85,7 +107,8 @@ The route does **not** create proposals. It supports only evidence enrichment fo
 an existing server-originated proposal:
 
 - `action=confirm_outbound`: requires `contactId`, `proposalId`,
-  `outboundMessageId`.
+  `outboundMessageId`. The server resolves the exact persisted outbound through
+  the authenticated session; callers do not supply or attest its text.
 - `action=link_outcomes`: requires `contactId`, `proposalId` and at least one of
   `reactionMessageId` or `purchaseEventId`. Purchase IDs are exposed by the
   existing Creator fan-data read result, not invented by the client.
