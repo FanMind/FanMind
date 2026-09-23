@@ -109,5 +109,24 @@ test("contact delete wires verification after both RPC and legacy success paths 
   assert.match(section, /workspaceId: workspace\.id/u);
   assert.match(section, /contactId/u);
   assert.match(section, /schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE/u);
-  assert.match(section, /if \(!learningVerification\.ok\)[\s\S]*contact_delete_failed/u);
+
+  const verificationFailureSection = section.slice(
+    section.indexOf("if (!learningVerification.ok)"),
+    section.indexOf('revalidatePath("/fans")'),
+  );
+  assert.match(
+    verificationFailureSection,
+    /redirect\([\s\S]*\/fans\?notice=contact_delete_verification_failed/u,
+  );
+  assert.doesNotMatch(verificationFailureSection, /contactPath\(/u);
+});
+
+test("Fans list renders a dedicated error after contact deletion succeeds but learning verification fails", async () => {
+  const source = await readFile("src/app/fans/page.tsx", "utf8");
+  assert.match(source, /contact_delete_verification_failed:/u);
+  assert.match(
+    source,
+    /Der Kontakt wurde gelöscht, aber die vollständige Löschung der bestätigten Chat-Lerndaten konnte danach nicht verifiziert werden\./u,
+  );
+  assert.match(source, /function isErrorNotice[\s\S]*notice\.endsWith\("_failed"\)/u);
 });
