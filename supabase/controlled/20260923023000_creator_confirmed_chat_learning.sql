@@ -192,8 +192,9 @@ grant execute on function public.record_creator_confirmed_chat_proposals(uuid,uu
   to service_role;
 
 -- Confirmation is evidence binding, not message sending. Only an already stored
--- outbound message in the same Workspace/Fan/Conversation can become the human-
--- confirmed outbound for one server-originated proposal. Replays are idempotent;
+-- outbound message in the same Workspace/Fan/Conversation with durable manual-send
+-- provenance can become learning evidence. Imported provider outbounds are not
+-- accepted merely because their direction is outbound. Replays are idempotent;
 -- a different second message fails closed.
 create function public.confirm_creator_confirmed_chat_outbound(
   p_workspace_id uuid,
@@ -242,7 +243,9 @@ begin
     and m.workspace_id=target.workspace_id
     and m.contact_id=target.contact_id
     and m.conversation_id=target.conversation_id
-    and m.direction='outbound';
+    and m.direction='outbound'
+    and m.message_type='manual'
+    and m.source_type='manual';
   if not found
      or length(btrim(coalesce(message_text,''))) not between 1 and 4000
      or message_time < target.generated_at then
@@ -265,8 +268,12 @@ grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uu
   to authenticated;
 
 -- Outcomes may only enrich an already confirmed outbound. "Reaction" means an
--- independently stored inbound Fan message; a purchase must be an independently
--- confirmed creator_commercial_events purchase in the exact same conversation.
+-- independently stored inbound Fan message. A purchase must be an independently
+-- confirmed creator_commercial_events purchase in the same tenant/Creator/Fan and
+-- either already carry the exact conversation_id or be an unbound legacy/current
+-- record_creator_fan_review event. For an unbound event, this explicit authenticated
+-- link is the durable conversation association; the learning row stores both IDs and
+-- the unique purchase_event_id prevents reuse by another learned proposal.
 -- IDs are append-only: conflicting re-attribution is rejected.
 create function public.link_creator_confirmed_chat_outcomes(
   p_workspace_id uuid,
@@ -338,8 +345,9 @@ begin
         and e.workspace_id=target.workspace_id
         and e.creator_id=target.creator_id
         and e.contact_id=target.contact_id
-        and e.conversation_id=target.conversation_id
-        and e.kind='purchase';
+        and (e.conversation_id is null or e.conversation_id=target.conversation_id)
+        and e.kind='purchase'
+        and e.confirmed_by is not null;
       if not found or purchase_time < target.confirmed_at then
         raise exception 'creator_learning_purchase_evidence_mismatch' using errcode = '23514';
       end if;
