@@ -15,7 +15,8 @@ begin
      or to_regclass('public.creator_commercial_events') is null
      or to_regclass('public.conversation_messages') is null
      or to_regprocedure('public.creator_workspace_access_allowed(uuid)') is null
-     or to_regprocedure('public.workspace_owner_active_mutation_allowed(uuid)') is null then
+     or to_regprocedure('public.workspace_owner_active_mutation_allowed(uuid)') is null
+     or to_regprocedure('public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)') is null then
     raise exception 'creator_learning_foundation_missing' using errcode = '55000';
   end if;
 end $$;
@@ -65,10 +66,12 @@ create table public.creator_confirmed_chat_learning (
   creator_revision integer not null check (creator_revision > 0),
   prompt_revision text not null check (length(btrim(prompt_revision)) between 1 and 120),
   selected_variant text not null check (selected_variant in ('recommended','softer','stronger')),
-  -- PostgreSQL length() counts Unicode code points. The <=512 database ceiling is
-  -- deliberately conservative relative to the authoritative <=512 grapheme validator:
-  -- persisted evidence can never exceed the learning validator's workload bound.
-  proposed_text text not null check (length(btrim(proposed_text)) between 1 and 512),
+  -- PostgreSQL length() counts Unicode code points, not extended grapheme clusters.
+  -- The database therefore keeps only the authoritative validator's 4,000-code-unit
+  -- storage envelope. Exact <=512 NFC grapheme validation happens server-side before
+  -- either service-role persistence call, so multi-code-point emoji are never rejected
+  -- merely because PostgreSQL counts their component code points separately.
+  proposed_text text not null check (length(btrim(proposed_text)) between 1 and 4000),
   generated_at timestamptz not null,
   outbound_message_id uuid,
   actual_text text,
@@ -97,7 +100,7 @@ create table public.creator_confirmed_chat_learning (
       and purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null)
     or
     (outbound_message_id is not null and actual_text is not null
-      and length(btrim(actual_text)) between 1 and 512
+      and length(btrim(actual_text)) between 1 and 4000
       and confirmed_at is not null)
   ),
   check ((reaction_message_id is null) = (reaction_at is null)),
@@ -203,7 +206,7 @@ begin
     proposal_text := btrim(coalesce(item->>'proposedText',''));
     if variant not in ('recommended','softer','stronger')
        or variant = any(seen_variants)
-       or length(proposal_text) not between 1 and 512 then
+       or length(proposal_text) not between 1 and 4000 then
       raise exception 'creator_learning_proposal_invalid' using errcode = '23514';
     end if;
     seen_variants := array_append(seen_variants, variant);
@@ -233,16 +236,20 @@ revoke all on function public.record_creator_confirmed_chat_proposals(uuid,uuid,
 grant execute on function public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)
   to service_role;
 
--- Confirmation is evidence binding, not message sending. Only an already stored
--- outbound message in the same Workspace/Fan/Conversation carrying the immutable
--- server-stamped human-send marker can become learning evidence. Provider/service
--- imports and manual-note rows are never stamped. Replays are idempotent; a
--- different second message fails closed.
+-- Confirmation is evidence binding, not message sending. Only the server route may
+-- call this RPC after reading the exact owner-visible message and applying the
+-- authoritative <=512 NFC-grapheme validator. The RPC independently rechecks the
+-- actor's owner/processing entitlement and requires the exact message text observed
+-- by that validator, closing the read/confirm race. Browser callers cannot bypass
+-- measurement with a direct RPC. Provider/service imports and manual-note rows are
+-- never eligible; replays are idempotent and a different second message fails closed.
 create function public.confirm_creator_confirmed_chat_outbound(
   p_workspace_id uuid,
   p_contact_id uuid,
   p_proposal_id uuid,
-  p_outbound_message_id uuid
+  p_outbound_message_id uuid,
+  p_actor_user_id uuid,
+  p_expected_actual_text text
 ) returns jsonb
 language plpgsql
 security definer
@@ -253,9 +260,25 @@ declare
   message_text text;
   message_time timestamptz;
 begin
-  if (select auth.uid()) is null
-     or not public.workspace_owner_active_mutation_allowed(p_workspace_id)
-     or not public.creator_workspace_access_allowed(p_workspace_id) then
+  if (select auth.role()) is distinct from 'service_role'
+     or p_actor_user_id is null
+     or not public.creator_workspace_access_allowed(p_workspace_id)
+     or not exists (
+       select 1
+       from public.workspaces w
+       where w.id = p_workspace_id
+         and w.owner_user_id = p_actor_user_id
+         and public.workspace_processing_allowed_contract(
+           w.workspace_access_mode,
+           w.subscription_effective_end_at::text,
+           w.billing_status,
+           w.billing_manual_override,
+           w.billing_grace_until::text,
+           w.billing_suspended_at::text,
+           w.test_access_flags,
+           statement_timestamp()
+         )
+     ) then
     raise exception 'creator_learning_owner_processing_required' using errcode = '42501';
   end if;
 
@@ -285,7 +308,8 @@ begin
     and m.direction='outbound'
     and m.creator_learning_manual_send is true;
   if not found
-     or length(btrim(coalesce(message_text,''))) not between 1 and 512
+     or message_text is distinct from p_expected_actual_text
+     or length(btrim(coalesce(message_text,''))) not between 1 and 4000
      or message_time < target.generated_at then
     raise exception 'creator_learning_outbound_evidence_mismatch' using errcode = '23514';
   end if;
@@ -294,16 +318,16 @@ begin
   set outbound_message_id=p_outbound_message_id,
       actual_text=message_text,
       confirmed_at=message_time,
-      confirmed_by=(select auth.uid()),
+      confirmed_by=p_actor_user_id,
       updated_at=now()
   where proposal_id=target.proposal_id;
 
   return jsonb_build_object('proposalId',target.proposal_id,'outboundMessageId',p_outbound_message_id,'confirmed',true);
 end $$;
-revoke all on function public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid)
+revoke all on function public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)
   from public, anon, authenticated, service_role;
-grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid)
-  to authenticated;
+grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)
+  to service_role;
 
 -- Outcomes may only enrich an already confirmed outbound. "Reaction" means an
 -- independently stored inbound Fan message. A purchase must be an independently
@@ -311,7 +335,9 @@ grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uu
 -- either already carry the exact conversation_id or be an unbound legacy/current
 -- record_creator_fan_review event. For an unbound event, this explicit owner action
 -- is the durable conversation association; the learning row stores both IDs and the
--- unique purchase_event_id prevents reuse by another learned proposal.
+-- unique purchase_event_id prevents reuse by another learned proposal. The purchase
+-- confirmer is audit metadata: ON DELETE SET NULL anonymizes it, while confirmed_at
+-- remains the durable confirmation fact.
 -- IDs are append-only: conflicting re-attribution is rejected.
 create function public.link_creator_confirmed_chat_outcomes(
   p_workspace_id uuid,
@@ -382,7 +408,7 @@ begin
         and e.contact_id=target.contact_id
         and (e.conversation_id is null or e.conversation_id=target.conversation_id)
         and e.kind='purchase'
-        and e.confirmed_by is not null;
+        and e.confirmed_at is not null;
       if not found or purchase_time < target.confirmed_at then
         raise exception 'creator_learning_purchase_evidence_mismatch' using errcode = '23514';
       end if;
