@@ -217,11 +217,18 @@ Toleranz in der Zukunft liegen. Eine Zusammenfassung verlangt einen erwarteten
 Workspace und Creator, lehnt gemischte Mandanten sowie doppelte stabile
 Evidence-IDs ab und nennt verknüpfte Belege nie Conversion oder kausalen Erfolg.
 
-Diese Vorbereitung persistiert noch nichts, sendet keine Nachricht, ruft kein
-Modell auf und ändert weder Stil noch Preise/Playbook automatisch. Vor realer
-Nutzung fehlen weiterhin der kontrollierte Datenbankvertrag, autorisierte
-Server-Routen und ein kontrollierter Persistenzvertrag sowie reale verblindete
-Qualitätsabnahme mit privaten, freigegebenen Beispielen.
+Der bounded Repository-Scope enthält inzwischen auch den kontrollierten,
+weiterhin **unapplied** Datenbankvertrag für Confirmed-Chat-Evidence, die
+serverseitige Proposal-Persistenz sowie die autorisierte API-/Persistenzschicht
+zum Bestätigen realer manuell gesendeter Outbounds und zum expliziten Verknüpfen
+belegter Reaktionen/Käufe. Diese Quellenänderungen führen weder in Staging noch
+Production selbstständig eine Migration aus und der Rollout-Schalter bleibt
+fail-closed deaktiviert. Vor realer Nutzung fehlen weiterhin der explizit
+autorisierte target-bound Schema-Apply/Verify/Accept, unabhängige Prüfung des
+tatsächlich aktivierten Runtime-Schalters, die vollständige Disclosure/Delete-
+Integration für die neue Datenfamilie sowie die reale verblindete Qualitätsabnahme
+mit privaten, freigegebenen Beispielen. Der Vertrag sendet keine Nachricht und
+ändert weder Stil noch Preise/Playbook automatisch.
 
 ## Isolierte ChatAdmin-Owner-Exception (FM-DEC-022)
 
