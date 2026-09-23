@@ -7,6 +7,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Phase 8 started: `true`
 - Next action: `NBA-CREATOR-INTELLIGENCE`
 - Next action title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Consumed closeout: PR #1162 merged as current-main baseline `3532bd4b9a19400284443f35b9b94b2849393aeb`; do not rebuild its crash-safe account-deletion inventory scope.
+- Active bounded continuation: repository-only confirmed-chat persistence/API preparation. Controlled SQL remains unapplied; runtime flag remains off unless separately activated after target acceptance.
 
 ## Finishline gates
 
