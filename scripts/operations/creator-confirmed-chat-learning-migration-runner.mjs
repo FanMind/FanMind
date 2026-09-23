@@ -47,6 +47,7 @@ declare
   function_config text;
   index_def text;
   constraint_defs text[];
+  check_constraint_defs text[];
 begin
   if to_regclass('public.creators') is null
      or to_regclass('public.creator_commercial_events') is null
@@ -81,6 +82,25 @@ begin
        and relrowsecurity
   ) then
     raise exception 'creator_learning_rls_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_trigger
+     where tgrelid = learning_table
+       and not tgisinternal
+  ) then
+    raise exception 'creator_learning_trigger_set_invalid';
+  end if;
+
+  if not exists (
+    select 1 from pg_attribute
+     where attrelid = learning_table
+       and attname = 'confirmed_by'
+       and format_type(atttypid, atttypmod) = 'uuid'
+       and not attnotnull
+       and attnum > 0 and not attisdropped
+  ) then
+    raise exception 'creator_learning_confirmed_by_column_invalid';
   end if;
 
   if not exists (
@@ -201,6 +221,18 @@ begin
      or lower(function_def) not like '%for update%' then
     raise exception 'creator_learning_outcome_function_invalid';
   end if;
+  normalized_function_def := regexp_replace(
+    replace(lower(function_def), 'public.', ''),
+    '[[:space:]]+',
+    '',
+    'g'
+  );
+  if position(
+    'if(selectauth.uid())isnullornotworkspace_owner_active_mutation_allowed(p_workspace_id)ornotcreator_workspace_access_allowed(p_workspace_id)thenraiseexception''creator_learning_owner_processing_required''usingerrcode=''42501'';endif;'
+    in normalized_function_def
+  ) = 0 then
+    raise exception 'creator_learning_outcome_authorization_guard_invalid';
+  end if;
 
   select count(*)::integer into policy_count
     from pg_policies
@@ -290,14 +322,32 @@ begin
   select pg_get_indexdef(i.indexrelid) into index_def
     from pg_index i
     join pg_class c on c.oid = i.indexrelid
+    join pg_am am on am.oid = c.relam
    where i.indrelid = learning_table
-     and i.indisvalid and i.indisready and not i.indisunique
-     and i.indnkeyatts = 4
+     and i.indisvalid and i.indisready and i.indislive
+     and not i.indisunique
+     and i.indpred is null and i.indexprs is null
+     and i.indnkeyatts = 4 and i.indnatts = 4
+     and am.amname = 'btree'
      and c.relname = 'creator_confirmed_chat_learning_contact_idx';
-  if index_def is null
-     or regexp_replace(lower(index_def), '\s+', '', 'g') not like
-       '%(workspace_id,creator_id,contact_id,generated_atdesc)%' then
+  index_def := regexp_replace(
+    replace(lower(coalesce(index_def, '')), 'public.', ''),
+    '[[:space:]]+',
+    '',
+    'g'
+  );
+  if index_def <>
+     'createindexcreator_confirmed_chat_learning_contact_idxoncreator_confirmed_chat_learningusingbtree(workspace_id,creator_id,contact_id,generated_atdesc)' then
     raise exception 'creator_learning_index_invalid';
+  end if;
+
+  if (select count(*) from pg_constraint where conrelid = learning_table) <> 18
+     or exists (
+       select 1 from pg_constraint
+        where conrelid = learning_table
+          and (not convalidated or condeferrable or condeferred)
+     ) then
+    raise exception 'creator_learning_constraint_invalid';
   end if;
 
   select array_agg(regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g'))
@@ -305,7 +355,34 @@ begin
     from pg_constraint
    where conrelid = learning_table;
 
+  select array_agg(
+           replace(
+             replace(
+               replace(
+                 replace(
+                   regexp_replace(lower(pg_get_constraintdef(oid, true)), '[[:space:]]+', '', 'g'),
+                   '::text',
+                   ''
+                 ),
+                 'public.',
+                 ''
+               ),
+               '(',
+               ''
+             ),
+             ')',
+             ''
+           )
+           order by oid
+         )
+    into check_constraint_defs
+    from pg_constraint
+   where conrelid = learning_table
+     and contype = 'c'
+     and convalidated;
+
   if constraint_defs is null
+     or array_length(check_constraint_defs, 1) <> 10
      or not ('primarykey(proposal_id)' = any(constraint_defs))
      or not ('foreignkey(workspace_id,creator_id)referencescreators(workspace_id,id)ondeletecascade' = any(constraint_defs))
      or not ('foreignkey(workspace_id,contact_id,conversation_id)referencesconversations(workspace_id,contact_id,id)ondeletecascade' = any(constraint_defs))
@@ -314,16 +391,16 @@ begin
      or not ('unique(workspace_id,outbound_message_id)' = any(constraint_defs))
      or not ('unique(workspace_id,reaction_message_id)' = any(constraint_defs))
      or not ('unique(workspace_id,purchase_event_id)' = any(constraint_defs))
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%creator_revision%>0%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%prompt_revision%120%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%selected_variant%recommended%softer%stronger%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%proposed_text%4000%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%outbound_message_id%actual_text%confirmed_at%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%reaction_message_id%reaction_at%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%purchase_event_id%purchase_evidence_reference%purchase_at%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%confirmed_at%generated_at%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%reaction_at%confirmed_at%)')
-     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%purchase_at%confirmed_at%)') then
+     or not ('checkcreator_revision>0' = any(check_constraint_defs))
+     or not ('checklengthbtrimprompt_revision>=1andlengthbtrimprompt_revision<=120' = any(check_constraint_defs))
+     or not ('checkselected_variant=anyarray[''recommended'',''softer'',''stronger'']' = any(check_constraint_defs))
+     or not ('checklengthbtrimproposed_text>=1andlengthbtrimproposed_text<=4000' = any(check_constraint_defs))
+     or not ('checkoutbound_message_idisnullandactual_textisnullandconfirmed_atisnullandconfirmed_byisnullandreaction_message_idisnullandreaction_atisnullandpurchase_event_idisnullandpurchase_evidence_referenceisnullandpurchase_atisnulloroutbound_message_idisnotnullandactual_textisnotnullandlengthbtrimactual_text>=1andlengthbtrimactual_text<=4000andconfirmed_atisnotnull' = any(check_constraint_defs))
+     or not ('checkreaction_message_idisnull=reaction_atisnull' = any(check_constraint_defs))
+     or not ('checkpurchase_event_idisnullandpurchase_evidence_referenceisnullandpurchase_atisnullorpurchase_event_idisnotnullandpurchase_evidence_referenceisnotnullandlengthbtrimpurchase_evidence_reference>=1andlengthbtrimpurchase_evidence_reference<=200andpurchase_atisnotnull' = any(check_constraint_defs))
+     or not ('checkconfirmed_atisnullorconfirmed_at>=generated_at' = any(check_constraint_defs))
+     or not ('checkreaction_atisnullorreaction_at>=confirmed_at' = any(check_constraint_defs))
+     or not ('checkpurchase_atisnullorpurchase_at>=confirmed_at' = any(check_constraint_defs)) then
     raise exception 'creator_learning_constraint_invalid';
   end if;
 end
