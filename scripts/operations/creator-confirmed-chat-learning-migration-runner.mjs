@@ -19,6 +19,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REPO_ROOT = realpathSync(resolve(dirname(fileURLToPath(import.meta.url)), "../.."));
+const RUNNER_REPO_PATH = "scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs";
 const MIGRATION_ID = "20260923023000_creator_confirmed_chat_learning";
 const MIGRATION_REPO_PATH = `supabase/controlled/${MIGRATION_ID}.sql`;
 const MIGRATION_PATH = resolve(REPO_ROOT, MIGRATION_REPO_PATH);
@@ -27,6 +28,13 @@ const ROLLOUT_STATE_PATH = resolve(REPO_ROOT, ROLLOUT_STATE_REPO_PATH);
 const WORKSPACE_BOUNDARY_REPO_PATH =
   "supabase/controlled/20260816120000_workspace_member_data_boundary.sql";
 const CREATOR_ACCESS_REPO_PATH = "supabase/controlled/creator_revision_conflict_fix.sql";
+const REVIEWED_CONTROL_REPO_PATHS = Object.freeze([
+  RUNNER_REPO_PATH,
+  MIGRATION_REPO_PATH,
+  ROLLOUT_STATE_REPO_PATH,
+  WORKSPACE_BOUNDARY_REPO_PATH,
+  CREATOR_ACCESS_REPO_PATH,
+]);
 const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7";
 const EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa";
 const EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672";
@@ -316,6 +324,22 @@ declare
   index_def text;
   constraint_defs text[];
   check_constraint_defs text[];
+  expected_check_sources text[] := array[
+    '(creator_revision > 0)',
+    '(length(btrim(prompt_revision)) between 1 and 120)',
+    '(selected_variant in (''recommended'',''softer'',''stronger''))',
+    '(length(btrim(proposed_text)) between 1 and 4000)',
+    '((outbound_message_id is null and actual_text is null and confirmed_at is null and confirmed_by is null and reaction_message_id is null and reaction_at is null and purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null) or (outbound_message_id is not null and actual_text is not null and length(btrim(actual_text)) between 1 and 4000 and confirmed_at is not null))',
+    '((reaction_message_id is null) = (reaction_at is null))',
+    '((purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null) or (purchase_event_id is not null and purchase_evidence_reference is not null and length(btrim(purchase_evidence_reference)) between 1 and 200 and purchase_at is not null))',
+    '(confirmed_at is null or confirmed_at >= generated_at)',
+    '(reaction_at is null or reaction_at >= confirmed_at)',
+    '(purchase_at is null or purchase_at >= confirmed_at)'
+  ];
+  expected_check_defs text[] := '{}'::text[];
+  expected_check_source text;
+  expected_check_plan json;
+  expected_check_def text;
 begin
   if to_regclass('public.creators') is null
      or to_regclass('public.creator_commercial_events') is null
@@ -504,9 +528,12 @@ ${foundationChecks}
        and (t.tgtype & 1) = 1
        and (t.tgtype & 2) = 2
        and ((t.tgtype & 4) = 4 or (t.tgtype & 16) = 16)
-       and position(
-         'creator_learning_manual_send' in lower(pg_get_functiondef(p.oid))
-       ) > 0
+       and (
+         t.tgname > 'conversation_messages_stamp_creator_learning_manual_send'
+         or position(
+           'creator_learning_manual_send' in lower(pg_get_functiondef(p.oid))
+         ) > 0
+       )
   ) then
     raise exception 'creator_learning_manual_send_competing_trigger_invalid';
   end if;
@@ -649,7 +676,6 @@ ${learningChecks}
       from pg_index i
      where i.indrelid = learning_table
        and i.indisunique
-       and i.indisvalid
        and i.indisready
        and i.indislive
        and not exists (
@@ -678,22 +704,19 @@ ${learningChecks}
    where conrelid = learning_table;
 
   select array_agg(
-           replace(
+           regexp_replace(
              replace(
                replace(
-                 replace(
-                   regexp_replace(lower(pg_get_constraintdef(oid, true)), '[[:space:]]+', '', 'g'),
-                   '::text',
-                   ''
-                 ),
-                 'public.',
+                 lower(pg_get_expr(conbin, conrelid, true)),
+                 '::text',
                  ''
                ),
-               '(',
+               'public.',
                ''
              ),
-             ')',
-             ''
+             '[[:space:]]+',
+             '',
+             'g'
            )
            order by oid
          )
@@ -703,9 +726,34 @@ ${learningChecks}
      and contype = 'c'
      and convalidated;
 
+  foreach expected_check_source in array expected_check_sources
+  loop
+    execute format(
+      'explain (verbose, format json) select (%s) from public.creator_confirmed_chat_learning where false',
+      expected_check_source
+    ) into expected_check_plan;
+    expected_check_def := expected_check_plan->0->'Plan'->'Output'->>0;
+    expected_check_def := regexp_replace(
+      replace(
+        replace(
+          replace(lower(coalesce(expected_check_def, '')), 'creator_confirmed_chat_learning.', ''),
+          '::text',
+          ''
+        ),
+        'public.',
+        ''
+      ),
+      '[[:space:]]+',
+      '',
+      'g'
+    );
+    expected_check_defs := array_append(expected_check_defs, expected_check_def);
+  end loop;
+
   if constraint_defs is null
      or check_constraint_defs is null
      or array_length(check_constraint_defs, 1) <> 10
+     or array_length(expected_check_defs, 1) <> 10
      or not ('primarykey(proposal_id)' = any(constraint_defs))
      or not ('foreignkey(workspace_id,creator_id)referencescreators(workspace_id,id)ondeletecascade' = any(constraint_defs))
      or not ('foreignkey(workspace_id,contact_id,conversation_id)referencesconversations(workspace_id,contact_id,id)ondeletecascade' = any(constraint_defs))
@@ -714,16 +762,11 @@ ${learningChecks}
      or not ('unique(workspace_id,outbound_message_id)' = any(constraint_defs))
      or not ('unique(workspace_id,reaction_message_id)' = any(constraint_defs))
      or not ('unique(workspace_id,purchase_event_id)' = any(constraint_defs))
-     or not ('checkcreator_revision>0' = any(check_constraint_defs))
-     or not ('checklengthbtrimprompt_revision>=1andlengthbtrimprompt_revision<=120' = any(check_constraint_defs))
-     or not ('checkselected_variant=anyarray[''recommended'',''softer'',''stronger'']' = any(check_constraint_defs))
-     or not ('checklengthbtrimproposed_text>=1andlengthbtrimproposed_text<=4000' = any(check_constraint_defs))
-     or not ('checkoutbound_message_idisnullandactual_textisnullandconfirmed_atisnullandconfirmed_byisnullandreaction_message_idisnullandreaction_atisnullandpurchase_event_idisnullandpurchase_evidence_referenceisnullandpurchase_atisnulloroutbound_message_idisnotnullandactual_textisnotnullandlengthbtrimactual_text>=1andlengthbtrimactual_text<=4000andconfirmed_atisnotnull' = any(check_constraint_defs))
-     or not ('checkreaction_message_idisnull=reaction_atisnull' = any(check_constraint_defs))
-     or not ('checkpurchase_event_idisnullandpurchase_evidence_referenceisnullandpurchase_atisnullorpurchase_event_idisnotnullandpurchase_evidence_referenceisnotnullandlengthbtrimpurchase_evidence_reference>=1andlengthbtrimpurchase_evidence_reference<=200andpurchase_atisnotnull' = any(check_constraint_defs))
-     or not ('checkconfirmed_atisnullorconfirmed_at>=generated_at' = any(check_constraint_defs))
-     or not ('checkreaction_atisnullorreaction_at>=confirmed_at' = any(check_constraint_defs))
-     or not ('checkpurchase_atisnullorpurchase_at>=confirmed_at' = any(check_constraint_defs)) then
+     or exists (
+       select 1
+         from unnest(expected_check_defs) as expected(definition)
+        where not (expected.definition = any(check_constraint_defs))
+     ) then
     raise exception 'creator_learning_constraint_invalid';
   end if;
 end
@@ -801,6 +844,33 @@ function reviewedRolloutState(reviewedCommit, environment) {
 function requireCleanTrackedCheckout(environment) {
   const status = runGit(["status", "--porcelain=v1", "--untracked-files=no"], environment);
   if (status.status !== 0 || clean(status.stdout)) fail("checkout_dirty");
+}
+
+function requireReviewedControlFiles(reviewedCommit, environment) {
+  const indexed = runGit(["ls-files", "-v", "--", ...REVIEWED_CONTROL_REPO_PATHS], environment);
+  if (indexed.status !== 0) fail("checkout_index_state_unreadable");
+  const entries = clean(indexed.stdout).split(/\r?\n/u).filter(Boolean);
+  if (entries.length !== REVIEWED_CONTROL_REPO_PATHS.length) {
+    fail("checkout_index_flag_invalid");
+  }
+  const states = new Map();
+  for (const entry of entries) {
+    const match = /^([A-Za-z]) (.+)$/u.exec(entry);
+    if (!match || states.has(match[2])) fail("checkout_index_flag_invalid");
+    states.set(match[2], match[1]);
+  }
+  for (const repoPath of REVIEWED_CONTROL_REPO_PATHS) {
+    if (states.get(repoPath) !== "H") fail("checkout_index_flag_invalid");
+    const shown = runGit(["show", `${reviewedCommit}:${repoPath}`], environment);
+    if (shown.status !== 0) fail("reviewed_control_file_unreadable");
+    let working;
+    try {
+      working = readFileSync(resolve(REPO_ROOT, repoPath), "utf8");
+    } catch {
+      fail("reviewed_control_file_unreadable");
+    }
+    if (working !== shown.stdout) fail("checkout_reviewed_file_mismatch");
+  }
 }
 
 function readAndVerifyMigration() {
@@ -917,6 +987,7 @@ function requireTarget(environment, mode) {
   }
 
   requireCleanTrackedCheckout(environment);
+  requireReviewedControlFiles(reviewedCommit, environment);
   if (mode === "apply") {
     if (
       clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !==
