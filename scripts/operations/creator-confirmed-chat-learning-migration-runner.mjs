@@ -120,7 +120,7 @@ begin
      or lower(function_def) not like '%auth.role()%'
      or lower(function_def) not like '%auth.uid()%'
      or lower(function_def) not like '%new.direction = ''outbound''%'
-     or lower(function_def) not like '%new.message_type in (''dm'', ''manual'')%'
+     or lower(function_def) not like '%new.message_type in (''dm'',''manual'')%'
      or lower(function_def) not like '%manual_note%'
      or lower(function_def) not like '%old.creator_learning_manual_send%'
      or lower(function_def) not like '%new.content is not distinct from old.content%' then
