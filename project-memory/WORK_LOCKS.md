@@ -775,13 +775,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Follow-up: #1144 independent post-merge review exposed a separate new bounded set of one P1 and two P2 findings; those belong to the new lock below.
 
 ## LOCK-FM-CREATOR-PRIVACY-POSTMERGE-20260922
+- Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: RELEASED_OWNER_ACCEPTED_MERGE.
+- Result: PR #1160 final head `d354b200f4be6f81ce4a51616eb2f77e8e4b30d5` was owner-merged as `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`; #1161 records authoritative owner merge evidence. Do not reacquire this exact scope.
+- Follow-up boundary: one later P2 about preserving every owned Workspace ID across resume is a new scope and lock.
+
+## LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: ACTIVE.
-- Baseline: current main `11abb9a1081e702a23334fcd7bdf5d18dc5be58b`; merged PR #1144 / `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`.
-- Scope: only #1144 post-merge findings: rollout-order-safe Contact deletion before the controlled RPC is installed, valid null-Workspace account deletion, and resume-safe verification of a deleted historical request Workspace. No SQL Apply, Staging/Production mutation, provider, Billing, Mobile or unrelated Creator work.
-- Evidence plan: focused dynamic/static regressions, Operations/CI/CodeQL/Browser current-head checks and exactly one required independent review cycle.
-- Recovery: source/reconciliation revert only; controlled SQL remains unapplied.
-- Evidence: focused regressions/cross-tenant negatives, Operations, lint, build, Project Memory controls, CodeQL/current-head CI and independent review without P1/P2.
-- Recovery: source revert only; the controlled RPC remains unapplied in this Hotfix.
+- Baseline: exact main `3ec6115612f1e2b9cf58d2d2064fbb7a561b2f6b`.
+- Scope: repository-only controlled `owned_workspace_ids` + service-role-only atomic transition RPC contract/checker and fail-closed Operations persistence/resume proof. The RPC owns the destructive-start snapshot/transition boundary; no target Apply or real deletion.
+- Evidence plan: checksum/contract negatives, multi-Workspace persistence, missing contract/inventory failures before destructive completion, current-head CI/CodeQL/Browser and one independent review.
+- Recovery: source/docs revert; the controlled schema contract remains unapplied.
 
 ## LOCK-FM-CHATADMIN-20260920
 - Task: FM-CHATADMIN-001; holder: Codex Cloud; risk: R3; status: ACTIVE.

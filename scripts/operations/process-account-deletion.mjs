@@ -7,6 +7,8 @@ import { pathToFileURL } from "node:url";
 const DEFAULT_ENV_FILE = "/var/www/fanmind/.env.production";
 const REQUEST_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const PROCESSABLE_STATUSES = new Set(["pending", "blocked", "processing"]);
 
 export class AccountDeletionProcessorError extends Error {
@@ -121,6 +123,133 @@ async function restPatch(fetchImpl, config, table, query, body, errorCode) {
   return payload[0];
 }
 
+function missingWorkspaceInventoryContract(response, payload) {
+  const code = String(payload?.code ?? "");
+  const message = JSON.stringify(payload ?? "").toLowerCase();
+  return (
+    (response?.status === 400 &&
+      code === "PGRST204" &&
+      message.includes("owned_workspace_ids")) ||
+    (response?.status === 404 &&
+      (code === "PGRST202" || message.includes("begin_account_deletion_processing")))
+  );
+}
+
+function normalizeOwnedWorkspaceIds(values) {
+  if (!Array.isArray(values) || values.length > 100) {
+    throw new AccountDeletionProcessorError("workspace_inventory_invalid");
+  }
+  const normalized = values.map((value) => String(value ?? "").trim());
+  if (
+    normalized.some((value) => !UUID_PATTERN.test(value)) ||
+    new Set(normalized).size !== normalized.length
+  ) {
+    throw new AccountDeletionProcessorError("workspace_inventory_invalid");
+  }
+  return normalized;
+}
+
+export async function persistOwnedWorkspaceInventory(
+  fetchImpl,
+  config,
+  request,
+) {
+  const { response, payload } = await requestJson(
+    fetchImpl,
+    `${config.supabaseUrl}/rest/v1/rpc/begin_account_deletion_processing`,
+    {
+      method: "POST",
+      headers: serviceHeaders(config.serviceKey),
+      body: JSON.stringify({
+        p_request_id: request.id,
+        p_user_id: request.user_id,
+      }),
+    },
+    "workspace_inventory_persist_failed",
+  );
+  if (missingWorkspaceInventoryContract(response, payload)) {
+    throw new AccountDeletionProcessorError("workspace_inventory_contract_unavailable");
+  }
+  if (!response.ok) {
+    const message = String(payload?.message ?? "");
+    if (
+      message === "ownership_transfer_required" ||
+      message === "subscription_resolution_required"
+    ) {
+      throw new AccountDeletionProcessorError("request_blocked");
+    }
+    if (message === "workspace_inventory_too_large") {
+      throw new AccountDeletionProcessorError("workspace_inventory_too_large");
+    }
+    if (message === "request_not_processable") {
+      throw new AccountDeletionProcessorError("request_not_processable");
+    }
+    if (
+      message === "workspace_inventory_missing" ||
+      message === "workspace_inventory_drift" ||
+      message === "processing_blocker_drift" ||
+      message === "processing_blocker_state_invalid"
+    ) {
+      throw new AccountDeletionProcessorError(message);
+    }
+    throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+  }
+  if (
+    !Array.isArray(payload) ||
+    payload.length !== 1 ||
+    payload[0]?.request_id !== request.id
+  ) {
+    throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+  }
+
+  const persistedRow = payload[0];
+  if (persistedRow.status === "blocked") {
+    const hasDurableBlocker =
+      persistedRow.requires_ownership_transfer === true ||
+      persistedRow.requires_subscription_resolution === true;
+    if (persistedRow.owned_workspace_ids != null || !hasDurableBlocker) {
+      throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+    }
+    throw new AccountDeletionProcessorError("request_blocked");
+  }
+  if (
+    persistedRow.status !== "processing" ||
+    persistedRow.requires_ownership_transfer !== false ||
+    persistedRow.requires_subscription_resolution !== false
+  ) {
+    throw new AccountDeletionProcessorError("workspace_inventory_persist_failed");
+  }
+
+  const persisted = normalizeOwnedWorkspaceIds(persistedRow.owned_workspace_ids);
+  return {
+    ...persistedRow,
+    owned_workspace_ids: persisted,
+  };
+}
+
+export async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
+  const { response, payload } = await requestJson(
+    fetchImpl,
+    `${config.supabaseUrl}/rest/v1/account_deletion_requests?${new URLSearchParams({
+      select: "id,owned_workspace_ids",
+      id: `eq.${request.id}`,
+      limit: "1",
+    })}`,
+    { headers: serviceHeaders(config.serviceKey) },
+    "workspace_inventory_lookup_failed",
+  );
+  if (missingWorkspaceInventoryContract(response, payload)) {
+    throw new AccountDeletionProcessorError("workspace_inventory_contract_unavailable");
+  }
+  if (!response.ok || !Array.isArray(payload) || payload.length !== 1) {
+    throw new AccountDeletionProcessorError("workspace_inventory_lookup_failed");
+  }
+  if (payload[0]?.owned_workspace_ids == null) {
+    throw new AccountDeletionProcessorError("workspace_inventory_missing");
+  }
+  return normalizeOwnedWorkspaceIds(payload[0].owned_workspace_ids);
+}
+
 async function getDeletionRequest(fetchImpl, config, requestId) {
   const rows = await restSelect(
     fetchImpl,
@@ -128,7 +257,7 @@ async function getDeletionRequest(fetchImpl, config, requestId) {
     "account_deletion_requests",
     new URLSearchParams({
       select:
-        "id,user_id,workspace_id,notification_email,request_source,status,requires_ownership_transfer,requires_subscription_resolution,requested_at,processing_deadline_at,completion_notification_sent_at",
+        "id,user_id,workspace_id,notification_email,request_source,status,requires_ownership_transfer,requires_subscription_resolution,requested_at,processing_deadline_at,processing_started_at,completion_notification_sent_at",
       id: `eq.${requestId}`,
       limit: "1",
     }).toString(),
@@ -385,26 +514,6 @@ async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {
   }
 }
 
-export async function recoverWorkspaceIdsForResume(fetchImpl, config, request) {
-  if (!request.workspace_id) return [];
-  const rows = await restSelect(
-    fetchImpl,
-    config,
-    "workspaces",
-    new URLSearchParams({
-      select: "id",
-      id: `eq.${request.workspace_id}`,
-      limit: "1",
-    }).toString(),
-    "workspace_resume_lookup_failed",
-  );
-  // Existing means the historical Workspace survived (for example after
-  // ownership transfer) and must never be traversed as deleted tenant data.
-  // Absence after Auth deletion means it was the owned Workspace deleted by
-  // cascade and its captured ID must still drive the completeness postcheck.
-  return rows.length === 0 ? [request.workspace_id] : [];
-}
-
 async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
   const checks = await Promise.all([
     restSelect(
@@ -485,6 +594,7 @@ async function updateBlockedState(fetchImpl, config, request, eligibility) {
     new URLSearchParams({
       id: `eq.${request.id}`,
       user_id: `eq.${request.user_id}`,
+      status: "in.(pending,blocked)",
       select: "id,status",
     }).toString(),
     {
@@ -584,6 +694,7 @@ async function finalizeDeletedAccount({
     {
       user_id: null,
       workspace_id: null,
+      owned_workspace_ids: null,
       user_reference_hash: userReferenceHash(userId, hashSecret),
       status: finalStatus,
       completed_at: completedAt,
@@ -708,37 +819,23 @@ export async function processAccountDeletion({
     throw new AccountDeletionProcessorError("request_blocked");
   }
 
-  if (!resuming) {
-    await restPatch(
-      fetchImpl,
-      config,
-      "account_deletion_requests",
-      new URLSearchParams({
-        id: `eq.${request.id}`,
-        user_id: `eq.${request.user_id}`,
-        status: "in.(pending,blocked)",
-        select: "id,status",
-      }).toString(),
-      {
-        status: "processing",
-        processing_started_at: now.toISOString(),
-        requires_ownership_transfer: false,
-        requires_subscription_resolution: false,
-        last_error_code: null,
-      },
-      "request_update_failed",
-    );
-  }
+  const processingRequest = await persistOwnedWorkspaceInventory(
+    fetchImpl,
+    config,
+    request,
+  );
+  const workspaceIds = processingRequest.owned_workspace_ids;
+  log(`ACCOUNT_DELETION_ATOMIC_WORKSPACE_COUNT=${workspaceIds.length}`);
 
   await deleteAuthUser(fetchImpl, config, request.user_id);
   const finalStatus = await finalizeDeletedAccount({
     fetchImpl,
     env,
     config,
-    request: { ...request, status: "processing" },
+    request: { ...request, ...processingRequest, status: "processing" },
     userId: request.user_id,
     hashSecret,
-    workspaceIds: workspaces.map((workspace) => workspace.id),
+    workspaceIds,
     log,
   });
   return { executed: true, resumed: resuming, eligibility, finalStatus };

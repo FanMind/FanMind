@@ -18,7 +18,8 @@ Wichtige Felder:
 
 - `id`: öffentliche Request-Referenz als UUID;
 - `user_id`: interne Auth-User-Zuordnung während der Bearbeitung;
-- `workspace_id`: optionaler aktueller Workspace-Kontext;
+- `workspace_id`: optionaler historischer Workspace-Kontext;
+- `owned_workspace_ids`: service-role-only Snapshot aller unmittelbar vor der Auth-Löschung tatsächlich eigenen Workspaces; nur für crash-sichere Vollständigkeitsprüfung beim Resume;
 - `notification_email`: ausschließlich für persönliche Eingangs-/Abschlussbestätigung;
 - `user_reference_hash`: pseudonyme HMAC-SHA-256-Referenz nach Auth-Löschung;
 - `request_source`: `web` oder `mobile`;
@@ -42,6 +43,7 @@ Wichtige Felder:
 
 - `user_id = null`;
 - `workspace_id = null`;
+- `owned_workspace_ids = null`;
 - `user_reference_hash` auf einen serverseitigen HMAC-SHA-256-Wert;
 - `notification_email = null`, sobald die Abschlussbestätigung zugestellt wurde.
 
@@ -96,3 +98,35 @@ Bei Änderungen an dieser Tabelle müssen gleichzeitig geprüft werden:
 5. `docs/mobile/ACCOUNT_DELETION.md`;
 6. Tests in `tests/account-deletion-policy.test.mjs`;
 7. `docs/SECURITY_RLS_SECRETS_CHECK.md`.
+
+
+## Crash-sicheres Workspace-Inventar
+
+Der kontrollierte, normale Web-Deploy-unabhängige Vertrag
+`supabase/controlled/20260922213000_account_deletion_workspace_inventory.sql`
+ergänzt `owned_workspace_ids uuid[]` mit maximal 100 Einträgen. Dieser Vertrag
+wird **nicht** durch den normalen Deploy angewendet.
+
+Der Operations-Processor bleibt im Dry-run ohne diesen Vertrag lesbar. Vor
+jedem echten `--execute` muss er jedoch den vollständigen aktuell eigenen
+Workspace-ID-Snapshot zusammen mit dem Übergang auf `processing` erfolgreich
+persistieren. Fehlt die Spalte oder kann der Snapshot nicht exakt zurückgelesen
+werden, stoppt die Ausführung vor der Auth-Löschung. Nach einem Crash mit bereits
+gelöschtem Auth-User darf Resume ausschließlich den gespeicherten Snapshot für
+die Workspace-Daten-Nachprüfung verwenden. Ein fehlender/alter Request ohne
+Snapshot wird fail-closed nicht als vollständig gelöscht markiert.
+
+Der Übergang auf `processing` friert außerdem die für die Löschfreigabe
+relevanten dynamischen Blocker ein. Solange der Request `processing` ist, dürfen
+für die gespeicherten Workspaces weder Abo-/Billing-Felder verändert noch fremde
+Workspace-Mitgliedschaften hinzugefügt, entfernt oder auf einen anderen
+Workspace/User verschoben werden. Die eigene Mitgliedschaft des zu löschenden
+Users bleibt für die spätere Löschbereinigung veränderbar. Ein Resume sperrt
+`workspaces` und `workspace_members` erneut read-stabil, verifiziert den exakten
+Workspace-Snapshot und berechnet Mitgliedschafts- und Abo-Blocker nochmals.
+Jeder nachträglich festgestellte Blocker-Drift stoppt fail-closed vor weiterer
+destruktiver Fortsetzung.
+
+Damit werden übertragene historische Workspaces nicht fremd traversiert,
+während alle beim destruktiven Start tatsächlich eigenen Workspaces auch nach
+Auth-Cascade noch vollständig nachgeprüft werden können.
