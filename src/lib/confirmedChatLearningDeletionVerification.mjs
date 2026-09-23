@@ -35,6 +35,7 @@ async function queryConfirmedChatLearningEmpty({
   const response = await fetchImpl(url, {
     headers,
     cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
   }).catch(() => null);
   if (!response) return { ok: false, evidence: "failed" };
 
