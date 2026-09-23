@@ -1,7 +1,8 @@
 import "./creator-confirmed-chat-learning.cases.mjs";
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
@@ -58,6 +59,7 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_CHECKSUM=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified/u);
+  assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_FOUNDATION_CONTRACT=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=[0-9a-f]{64}/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_SOURCE_STATE=preinstall/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_APPLY=not_requested/u);
@@ -85,7 +87,7 @@ test("confirmed-chat apply fails before target access while source state is prei
 test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /status", "--porcelain=v1", "--untracked-files=no"/u);
-  assert.match(runner, /const state = reviewedRolloutState\(reviewedCommit\)/u);
+  assert.match(runner, /const state = reviewedRolloutState\(reviewedCommit, environment\)/u);
   assert.match(
     runner,
     /if \(state !== workingState\) fail\("rollout_state_checkout_mismatch"\)/u,
@@ -94,7 +96,7 @@ test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit"
   assert.match(runner, /checkout_dirty/u);
   assert.match(
     runner,
-    /requireCleanTrackedCheckout\(\);\s*if \(mode === "apply"\)/u,
+    /requireCleanTrackedCheckout\(environment\);\s*if \(mode === "apply"\)/u,
   );
 });
 
@@ -152,10 +154,7 @@ test("direct project host requires the plain postgres database user", () => {
     }),
   });
   assert.notEqual(valid.status, 0);
-  assert.match(
-    valid.stderr,
-    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u,
-  );
+  assert.match(valid.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u);
 
   const wrongUser = spawnSync(process.execPath, [runnerPath, "--verify"], {
     cwd: repoRoot,
@@ -175,8 +174,8 @@ test("direct project host requires the plain postgres database user", () => {
 
 test("installed-state verifier binds all stored function bodies and exact empty search paths to the pinned migration", async () => {
   const runner = await readFile(runnerPath, "utf8");
-  assert.match(runner, /const FUNCTION_CONTRACTS = \[/u);
-  assert.match(runner, /migrationFunctionBody/u);
+  assert.match(runner, /const FUNCTION_CONTRACTS =/u);
+  assert.match(runner, /functionBody/u);
   assert.match(runner, /functionBodyHash/u);
   assert.match(runner, /p\.prosrc/u);
   assert.match(runner, /md5\(function_source\)/u);
@@ -261,8 +260,70 @@ test("installed-state verifier preserves exact RLS, ACL, index, trigger and cons
   assert.match(runner, /generated_atdesc/u);
   assert.match(runner, /primarykey\(proposal_id\)/u);
   assert.match(runner, /unique\(workspace_id,purchase_event_id\)/u);
+  assert.match(runner, /check_constraint_defs is null/u);
   assert.match(runner, /array_length\(check_constraint_defs, 1\) <> 10/u);
   assert.match(runner, /not convalidated or condeferrable or condeferred/u);
+});
+
+test("installed-state verifier pins authorization helpers and callable metadata", async () => {
+  const runner = await readFile(runnerPath, "utf8");
+  assert.match(
+    runner,
+    /EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa"/u,
+  );
+  assert.match(
+    runner,
+    /EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672"/u,
+  );
+  for (const helper of [
+    "creator_workspace_access_allowed",
+    "workspace_owner_active_mutation_allowed",
+    "workspace_processing_allowed_contract",
+  ]) {
+    assert.match(runner, new RegExp(helper, "u"));
+  }
+  for (const field of [
+    "p.proisstrict",
+    "p.provolatile",
+    "l.lanname",
+    "format_type(p.prorettype, null)",
+    "p.proretset",
+    "p.proparallel",
+    "p.proleakproof",
+    "p.prokind",
+    "p.pronargdefaults",
+    "p.provariadic",
+  ]) {
+    assert.ok(runner.includes(field), `missing callable metadata ${field}`);
+  }
+  assert.match(runner, /creator_learning_foundation_function_invalid/u);
+  assert.match(runner, /creator_learning_function_metadata_invalid/u);
+});
+
+test("browser roles are explicitly forbidden from bypassing RLS", async () => {
+  const runner = await readFile(runnerPath, "utf8");
+  assert.match(runner, /rolname in \('anon','authenticated'\)/u);
+  assert.match(runner, /rolbypassrls or rolsuper/u);
+  assert.match(runner, /creator_learning_browser_role_rls_invalid/u);
+});
+
+test("Git attestation ignores caller repository redirection and stays bound to this checkout", async (t) => {
+  const fakeRepo = await mkdtemp(path.join(tmpdir(), "fanmind-git-redirection-"));
+  t.after(() => rm(fakeRepo, { recursive: true, force: true }));
+  const initialized = spawnSync("git", ["init", fakeRepo], { encoding: "utf8" });
+  assert.equal(initialized.status, 0, initialized.stderr);
+
+  const result = spawnSync(process.execPath, [runnerPath, "--verify"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: targetEnv({
+      GIT_DIR: path.join(fakeRepo, ".git"),
+      GIT_WORK_TREE: fakeRepo,
+      GIT_CONFIG: path.join(fakeRepo, "attacker-gitconfig"),
+    }),
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u);
 });
 
 test("production VERIFY never recommends the staging-only APPLY path", async () => {
