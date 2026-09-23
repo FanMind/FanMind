@@ -202,28 +202,36 @@ begin
      and policyname = 'creator_confirmed_chat_learning_member_read'
      and cmd = 'SELECT';
 
-  policy_qual := regexp_replace(lower(coalesce(policy_qual, '')), '\s+', '', 'g');
+  policy_qual := regexp_replace(
+    replace(lower(coalesce(policy_qual, '')), 'public.', ''),
+    '[[:space:]]+',
+    '',
+    'g'
+  );
+  policy_qual := replace(policy_qual, '(selectauth.uid()asuid)', 'AUTH_UID');
+  policy_qual := replace(policy_qual, '(selectauth.uid())', 'AUTH_UID');
+  policy_qual := replace(
+    policy_qual,
+    'creator_workspace_access_allowed(creator_confirmed_chat_learning.workspace_id)',
+    'creator_workspace_access_allowed(workspace_id)'
+  );
   if policy_count <> 1
      or policy_roles is distinct from array['authenticated']::name[]
      or policy_check is not null
-     or position('creator_workspace_access_allowed(workspace_id)' in policy_qual) = 0
-     or position('workspace_members' in policy_qual) = 0
-     or position('m.workspace_id=creator_confirmed_chat_learning.workspace_id' in policy_qual) = 0
-     or position('m.user_id=(selectauth.uid()' in policy_qual) = 0
-     or position('workspaces' in policy_qual) = 0
-     or position('w.id=creator_confirmed_chat_learning.workspace_id' in policy_qual) = 0
-     or position('w.owner_user_id=(selectauth.uid()' in policy_qual) = 0 then
+     or policy_qual <> '(creator_workspace_access_allowed(workspace_id)and((exists(select1fromworkspace_membersmwhere((m.workspace_id=creator_confirmed_chat_learning.workspace_id)and(m.user_id=AUTH_UID))))or(exists(select1fromworkspaceswwhere((w.id=creator_confirmed_chat_learning.workspace_id)and(w.owner_user_id=AUTH_UID))))))' then
     raise exception 'creator_learning_policy_invalid';
   end if;
 
   if not has_table_privilege('authenticated', learning_table, 'SELECT')
      or has_table_privilege('authenticated', learning_table, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
      or has_table_privilege('anon', learning_table, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-     or not has_table_privilege(
-       'service_role',
-       learning_table,
-       'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'
-     ) then
+     or not has_table_privilege('service_role', learning_table, 'SELECT')
+     or not has_table_privilege('service_role', learning_table, 'INSERT')
+     or not has_table_privilege('service_role', learning_table, 'UPDATE')
+     or not has_table_privilege('service_role', learning_table, 'DELETE')
+     or not has_table_privilege('service_role', learning_table, 'TRUNCATE')
+     or not has_table_privilege('service_role', learning_table, 'REFERENCES')
+     or not has_table_privilege('service_role', learning_table, 'TRIGGER') then
     raise exception 'creator_learning_table_privilege_invalid';
   end if;
 
@@ -474,11 +482,6 @@ function requireTarget(environment, mode) {
 
   if (mode === "apply") {
     requireCleanTrackedCheckout();
-    const committedState = reviewedRolloutState(reviewedCommit);
-    const workingState = rolloutState();
-    if (committedState !== workingState) fail("rollout_state_checkout_mismatch");
-    if (committedState !== "installed") fail("source_state_not_installed");
-
     if (
       clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !==
       APPLY_CONFIRMATION
@@ -492,7 +495,7 @@ function requireTarget(environment, mode) {
       fail("write_acknowledgement_missing");
     }
   }
-  return reviewedCommit;
+  return { reviewedCommit, runtime };
 }
 
 function privatePassfileSnapshot(environment) {
@@ -608,12 +611,21 @@ function runDatabaseMode(mode, sql, state, environment, database) {
   }
 
   if (mode === "verify") {
-    return before === "installed"
+    if (before === "installed") {
+      return [
+        "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
+        "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
+        "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
+        "CREATOR_CONFIRMED_CHAT_APPLY=not_requested",
+      ];
+    }
+    const runtime = clean(environment.FANMIND_RUNTIME_ENVIRONMENT).toLowerCase();
+    return runtime === "production"
       ? [
-          "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
+          "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=absent",
           "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-          "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
-          "CREATOR_CONFIRMED_CHAT_APPLY=not_requested",
+          "CREATOR_CONFIRMED_CHAT_NEXT=separate_production_rollout_plan_required",
+          "CREATOR_CONFIRMED_CHAT_APPLY=forbidden",
         ]
       : [
           "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=absent",
@@ -643,21 +655,25 @@ export function main(args = process.argv.slice(2), environment = process.env) {
     fail("mode_invalid");
   }
   const sql = readAndVerifyMigration();
-  const state = rolloutState();
+  const workingState = rolloutState();
   const digest = createHash("sha256").update(sql).digest("hex");
   if (modeArg === "--check") {
     console.log(`CREATOR_CONFIRMED_CHAT_MIGRATION_ID=${MIGRATION_ID}`);
     console.log("CREATOR_CONFIRMED_CHAT_MIGRATION_CHECKSUM=verified");
     console.log(`CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=${digest}`);
     console.log("CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified");
-    console.log(`CREATOR_CONFIRMED_CHAT_SOURCE_STATE=${state}`);
+    console.log(`CREATOR_CONFIRMED_CHAT_SOURCE_STATE=${workingState}`);
     console.log("CREATOR_CONFIRMED_CHAT_APPLY=not_requested");
     return;
   }
 
   const mode = modeArg.slice(2);
+  if (mode === "apply" && workingState !== "installed") fail("source_state_not_installed");
+  const { reviewedCommit } = requireTarget(environment, mode);
+  const state = reviewedRolloutState(reviewedCommit);
+  if (state !== workingState) fail("rollout_state_checkout_mismatch");
   if (mode === "apply" && state !== "installed") fail("source_state_not_installed");
-  requireTarget(environment, mode);
+
   const { snapshotDirectory, snapshotPath } = privatePassfileSnapshot(environment);
   try {
     for (const marker of runDatabaseMode(
