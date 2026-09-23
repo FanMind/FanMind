@@ -956,6 +956,8 @@ function formatNotice(
       : "Fan wurde aktualisiert.",
     contact_archived: "Kontakt wurde archiviert.",
     contacts_merged: "Fans wurden zusammengeführt.",
+    contact_delete_verification_failed:
+      "Der Kontakt wurde gelöscht, aber die vollständige Löschung der bestätigten Chat-Lerndaten konnte danach nicht verifiziert werden. Bitte nicht erneut löschen; Admin-Reconciliation ist erforderlich.",
     fan_update_failed:
       "Kanäle konnten nicht aktualisiert werden. Bitte erneut versuchen oder Admin prüfen.",
     top_fan_marked: "Kontakt wurde als Top Fan markiert.",

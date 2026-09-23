@@ -7,6 +7,8 @@ import {
   getSupabaseRestUrl,
 } from "@/lib/supabase/config";
 import { requireContactInActiveAuthorizedWorkspace } from "@/lib/workspaceAuthorization";
+import { CONFIRMED_CHAT_LEARNING_SCHEMA_STATE } from "@/lib/dataDisclosureMetaExport";
+import { verifyConfirmedChatLearningContactDeletion } from "@/lib/confirmedChatLearningDeletionVerification.mjs";
 
 const MEMORY_TYPES = new Set(["note", "preference", "promise"]);
 const IMPORTANCE_LEVELS = new Set(["low", "normal", "high"]);
@@ -46,7 +48,6 @@ function followupsPath(
 function serviceRoleKey(): string | null {
   return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
 }
-
 
 function isMissingPostgrestResource(status: number, payload: unknown): boolean {
   if (status !== 404 || !payload || typeof payload !== "object") return false;
@@ -374,6 +375,23 @@ export async function deleteContactAndCreatorData(formData: FormData) {
   }
   if (!deleted) {
     redirect(contactPath(contactId, locale, "contact_delete_failed"));
+  }
+
+  const learningVerification =
+    await verifyConfirmedChatLearningContactDeletion({
+      fetchImpl: fetch,
+      tableUrl: getSupabaseRestUrl("creator_confirmed_chat_learning"),
+      headers: getSupabaseHeaders(key),
+      workspaceId: workspace.id,
+      contactId,
+      schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+    });
+  if (!learningVerification.ok) {
+    redirect(
+      `/fans?notice=contact_delete_verification_failed${
+        locale === "en" ? "&lang=en" : ""
+      }#fans-list`,
+    );
   }
 
   revalidatePath("/fans");

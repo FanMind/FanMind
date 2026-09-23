@@ -79,8 +79,16 @@ The implementation slice following this inventory must add focused tests proving
 - no verification path performs a repair/delete mutation;
 - the disclosure and deletion rollout-state expectations cannot diverge silently.
 
+## Implementation progress — contact deletion
+
+PR #1166 is the bounded repository-only implementation of the contact-deletion half of this inventory. It adds an exact Workspace/contact read-only post-delete verifier, uses the existing disclosure rollout state as its compatibility authority, and fails closed on residual rows, malformed responses, authorization/network errors and missing schema once the state is `installed`. Missing schema while `preinstall` is classified only as `preinstall_absent`; it is not recorded as installed deletion evidence.
+
+The verifier runs only after one of the two already-reviewed contact-deletion paths reports success. It performs no repair/delete mutation and retains exact Workspace/contact filters. Focused regression coverage includes the exact query shape, residual/malformed/network/auth failures, preinstall-versus-installed missing-schema behavior, unknown-state fail-closed behavior and wiring after both RPC and legacy-success paths.
+
+This progress does **not** complete the account-deletion half. `scripts/operations/process-account-deletion.mjs` still needs direct checks for each persisted `owned_workspace_ids` entry plus a global `confirmed_by=<deleted user id>` anonymization check. Until that bounded follow-up converges, the overall confirmed-chat deletion-verification inventory remains only partially implemented.
+
 ## Evidence/acceptance boundary
 
-This inventory does not change runtime behavior and therefore does not constitute deletion acceptance or schema readiness by itself. It closes only the discovery/reconciliation step requested after #1164. The next repository implementation slice is the bounded deletion-verification integration above. Controlled migration runner/checksum, target-bound VERIFY/negative authorization evidence, protected APPLY/ACCEPT and real quality acceptance remain separate downstream gates.
+This inventory does not change runtime behavior and therefore does not constitute deletion acceptance or schema readiness by itself. The contact-deletion implementation described above is repository source only until its exact-head CI and required independent review converge; the account-deletion implementation remains outstanding. Controlled migration runner/checksum, target-bound VERIFY/negative authorization evidence, protected APPLY/ACCEPT and real quality acceptance remain separate downstream gates.
 
 Production backups are also outside this active-system verifier. Existing backup/retention policy and restore evidence remain their own finishline gates; active-system deletion must not be misreported as backup erasure.
