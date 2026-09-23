@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         contactId: context.contact.id,
         proposalId,
         outboundMessageId,
+        actorUserId: context.user.id,
         accessToken,
       });
       return json({ ok: true, evidence: result });
