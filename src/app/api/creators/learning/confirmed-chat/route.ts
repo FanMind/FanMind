@@ -12,23 +12,6 @@ import {
 
 const MAX_BODY_BYTES = 8_000;
 
-type ConfirmOutboundBody = {
-  action: "confirm_outbound";
-  contactId: string;
-  proposalId: string;
-  outboundMessageId: string;
-};
-
-type LinkOutcomesBody = {
-  action: "link_outcomes";
-  contactId: string;
-  proposalId: string;
-  reactionMessageId?: string | null;
-  purchaseEventId?: string | null;
-};
-
-type LearningBody = ConfirmOutboundBody | LinkOutcomesBody;
-
 function json(value: unknown, status = 200) {
   return NextResponse.json(value, {
     status,
