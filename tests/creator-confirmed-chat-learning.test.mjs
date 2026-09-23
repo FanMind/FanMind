@@ -119,6 +119,8 @@ test("controlled persistence keeps proposal origin server-only and evidence tena
   assert.match(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\(uuid,uuid,uuid,uuid,uuid,text\)[\s\S]*to service_role/u);
   assert.doesNotMatch(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\([^;]+\)\s*to\s+[^;]*\bauthenticated\b[^;]*;/u);
   assert.match(sql, /link_creator_confirmed_chat_outcomes[\s\S]*workspace_owner_active_mutation_allowed\(p_workspace_id\)[\s\S]*creator_workspace_access_allowed\(p_workspace_id\)/u);
+  assert.match(sql, /m\.direction='inbound'[\s\S]*coalesce\(m\.source_type,''\) <> 'manual_note'/u);
+  assert.match(sql, /reaction_time < target\.confirmed_at[\s\S]*reaction_time > statement_timestamp\(\) \+ interval '30 seconds'/u);
   assert.doesNotMatch(sql, /creator_learning_member_required/u);
   assert.match(sql, /proposed_text text not null check \(length\(btrim\(proposed_text\)\) between 1 and 4000\)/u);
   assert.match(sql, /actual_text\)\) between 1 and 4000/u);
