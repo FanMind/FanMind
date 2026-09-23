@@ -85,10 +85,20 @@ PR #1166 is the bounded repository-only implementation of the contact-deletion h
 
 The verifier runs only after one of the two already-reviewed contact-deletion paths reports success. It performs no repair/delete mutation and retains exact Workspace/contact filters. Focused regression coverage includes the exact query shape, residual/malformed/network/auth failures, preinstall-versus-installed missing-schema behavior, unknown-state fail-closed behavior and wiring after both RPC and legacy-success paths.
 
-This progress does **not** complete the account-deletion half. `scripts/operations/process-account-deletion.mjs` still needs direct checks for each persisted `owned_workspace_ids` entry plus a global `confirmed_by=<deleted user id>` anonymization check. Until that bounded follow-up converges, the overall confirmed-chat deletion-verification inventory remains only partially implemented.
+PR #1166 merged as `c1b73de9e0b39ccbd585d24ee2409bfd1bb9ead7`; this contact-deletion scope is closed and must not be rebuilt.
+
+## Implementation progress — account deletion
+
+The bounded repository continuation starts from exact merged `main` `c1b73de9e0b39ccbd585d24ee2409bfd1bb9ead7` on branch `feat/creator-confirmed-chat-account-delete-verify-20260923`. It extends the same read-only verifier family into `scripts/operations/process-account-deletion.mjs` after the existing active-system deletion checks.
+
+The account verifier receives only the durable `owned_workspace_ids` snapshot and the deleted Auth user ID. For each persisted Workspace it performs an exact `workspace_id` query with `select=proposal_id&limit=1`, then independently performs one global `confirmed_by=<deleted user id>` query. Residual rows, malformed payloads, authorization/network failures and installed-state schema absence fail as `deletion_verification_failed`. The verifier performs no DELETE, PATCH or repair operation.
+
+The same source-controlled lifecycle contract remains binding. While the controlled learning schema remains unapplied and the rollout state is `preinstall`, a missing table yields only `preinstall_absent` compatibility evidence and is never described as installed deletion proof. Once the state later becomes `installed`, missing schema must fail closed. Focused tests cover every persisted Workspace, global confirmer anonymization, zero-owned-Workspace behavior, residual/malformed/network/auth failures, preinstall-versus-installed missing-schema behavior, invalid/duplicate inventory, read-only query shape and synchronization with the disclosure rollout state.
+
+This source implementation is **not** target acceptance. No controlled schema APPLY, real account deletion, customer mutation, provider call, billing action or protected environment write is included. The active contract remains `FM-CONTRACT-DISCLOSURE-DELETE-001` at R4; exact-head CI and the one required independent review must converge before merge.
 
 ## Evidence/acceptance boundary
 
-This inventory does not change runtime behavior and therefore does not constitute deletion acceptance or schema readiness by itself. The contact-deletion implementation described above is repository source only until its exact-head CI and required independent review converge; the account-deletion implementation remains outstanding. Controlled migration runner/checksum, target-bound VERIFY/negative authorization evidence, protected APPLY/ACCEPT and real quality acceptance remain separate downstream gates.
+The inventory itself does not constitute deletion acceptance or schema readiness. The contact-deletion implementation is closed by merged PR #1166. The account-deletion source described above remains repository-only until its exact-head CI and required independent review converge. Controlled migration runner/checksum, target-bound VERIFY/negative authorization evidence, protected APPLY/ACCEPT and real quality acceptance remain separate downstream gates.
 
 Production backups are also outside this active-system verifier. Existing backup/retention policy and restore evidence remain their own finishline gates; active-system deletion must not be misreported as backup erasure.
