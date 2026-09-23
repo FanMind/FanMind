@@ -343,7 +343,9 @@ grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uu
   to service_role;
 
 -- Outcomes may only enrich an already confirmed outbound. "Reaction" means an
--- independently stored inbound Fan message. A purchase must be an independently
+-- independently stored inbound Fan message, excluding internal manual-note rows,
+-- whose timestamp is after the outbound and no more than the validator's bounded
+-- 30-second future-clock skew at link time. A purchase must be an independently
 -- confirmed creator_commercial_events purchase in the same tenant/Creator/Fan and
 -- either already carry the exact conversation_id or be an unbound legacy/current
 -- record_creator_fan_review event. For an unbound event, this explicit owner action
@@ -399,8 +401,11 @@ begin
         and m.workspace_id=target.workspace_id
         and m.contact_id=target.contact_id
         and m.conversation_id=target.conversation_id
-        and m.direction='inbound';
-      if not found or reaction_time < target.confirmed_at then
+        and m.direction='inbound'
+        and coalesce(m.source_type,'') <> 'manual_note';
+      if not found
+         or reaction_time < target.confirmed_at
+         or reaction_time > statement_timestamp() + interval '30 seconds' then
         raise exception 'creator_learning_reaction_evidence_mismatch' using errcode = '23514';
       end if;
       target.reaction_message_id := p_reaction_message_id;
