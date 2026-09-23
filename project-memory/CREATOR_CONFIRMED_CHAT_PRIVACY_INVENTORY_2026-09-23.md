@@ -18,13 +18,16 @@
 Implemented repository-only scope:
 
 1. add `creator_confirmed_chat_learning` to the workspace-scoped complete disclosure dataset inventory;
-2. keep it optional only while the controlled schema is absent, but fail closed on authorization/read errors once present;
-3. add explicit German/English disclosure section labels;
-4. extend disclosure regressions to prove workspace scoping, deterministic ordering, missing-schema compatibility, fail-closed denial and PDF inclusion.
+2. make its temporary missing-schema compatibility depend on the explicit source-controlled `CONFIRMED_CHAT_LEARNING_SCHEMA_STATE`, which is outside Supabase/PostgREST schema caching;
+3. keep that state at `preinstall` for the current unapplied source and fail closed on authorization/read errors;
+4. add explicit German/English disclosure section labels;
+5. extend disclosure regressions to prove workspace scoping, deterministic ordering, the source-controlled preinstall policy, fail-closed denial and PDF inclusion.
 
 ## Deferred follow-up gates
 
 This PR intentionally does **not** claim the entire privacy/apply gate complete. The next bounded repository step after this disclosure slice is account/contact deletion verification inventory for `creator_confirmed_chat_learning`, followed separately by controlled migration runner/checksum and target-bound VERIFY/negative authorization evidence. Protected APPLY/ACCEPT and runtime activation remain owner/environment gated.
+
+The controlled schema rollout has an additional fail-closed ordering invariant: **no target schema APPLY is allowed while `CONFIRMED_CHAT_LEARNING_SCHEMA_STATE` remains `preinstall`**. Before any protected APPLY, a bounded reviewed repository change must switch that state to `installed`, pass exact-head CI/review, and deploy the fail-closed disclosure reader. In the `installed` state a missing/stale PostgREST table can no longer be treated as an optional preinstall absence. The later migration runner/checksum gate must enforce this ordering; schema-cache observations are not accepted as rollout-state evidence.
 
 ## Safety boundary
 
