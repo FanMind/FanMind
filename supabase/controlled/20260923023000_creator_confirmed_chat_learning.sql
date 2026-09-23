@@ -253,9 +253,11 @@ grant execute on function public.record_creator_confirmed_chat_proposals(uuid,uu
 -- call this RPC after reading the exact owner-visible message and applying the
 -- authoritative <=512 NFC-grapheme validator. The RPC independently rechecks the
 -- actor's owner/processing entitlement and requires the exact message text observed
--- by that validator, closing the read/confirm race. Browser callers cannot bypass
--- measurement with a direct RPC. Provider/service imports and manual-note rows are
--- never eligible; replays are idempotent and a different second message fails closed.
+-- by that validator, closing the read/confirm race. The message timestamp must also
+-- be no more than 30 seconds ahead of database statement time, matching the pure
+-- validator's bounded future-clock skew. Browser callers cannot bypass measurement
+-- with a direct RPC. Provider/service imports and manual-note rows are never eligible;
+-- replays are idempotent and a different second message fails closed.
 create function public.confirm_creator_confirmed_chat_outbound(
   p_workspace_id uuid,
   p_contact_id uuid,
@@ -323,7 +325,8 @@ begin
   if not found
      or message_text is distinct from p_expected_actual_text
      or length(btrim(coalesce(message_text,''))) not between 1 and 4000
-     or message_time < target.generated_at then
+     or message_time < target.generated_at
+     or message_time > statement_timestamp() + interval '30 seconds' then
     raise exception 'creator_learning_outbound_evidence_mismatch' using errcode = '23514';
   end if;
 
