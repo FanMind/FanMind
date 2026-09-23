@@ -30,6 +30,7 @@ const CREATOR_ACCESS_REPO_PATH = "supabase/controlled/creator_revision_conflict_
 const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7";
 const EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa";
 const EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672";
+const EXPECTED_DATABASE_FUNCTION_OWNER = "postgres";
 const APPLY_CONFIRMATION = "apply-creator-confirmed-chat-learning";
 const NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT = "I_UNDERSTAND_NON_PRODUCTION_ONLY";
 const MAX_PASSFILE_BYTES = 64 * 1024;
@@ -171,6 +172,7 @@ function functionMetadataCondition({
 }) {
   return [
     "function_source is null",
+    `function_owner is distinct from '${EXPECTED_DATABASE_FUNCTION_OWNER}'`,
     `function_security_definer is distinct from ${securityDefiner ? "true" : "false"}`,
     `function_config is distinct from ${proconfig}`,
     `function_language is distinct from '${language}'`,
@@ -190,6 +192,7 @@ function functionMetadataCondition({
 function learningFunctionMetadataCondition(contract, bodyHash) {
   return [
     "function_source is null",
+    `function_owner is distinct from '${EXPECTED_DATABASE_FUNCTION_OWNER}'`,
     `function_security_definer is distinct from ${contract.securityDefiner ? "true" : "false"}`,
     `function_config is distinct from array['search_path=""']::text[]`,
     "function_language is distinct from 'plpgsql'",
@@ -209,6 +212,7 @@ function learningFunctionMetadataCondition(contract, bodyHash) {
 function pgProcSelect(signature) {
   return String.raw`select
       p.prosecdef,
+      pg_get_userbyid(p.proowner)::text,
       p.proconfig,
       p.prosrc,
       p.proisstrict,
@@ -223,6 +227,7 @@ function pgProcSelect(signature) {
       p.provariadic
     into
       function_security_definer,
+      function_owner,
       function_config,
       function_source,
       function_strict,
@@ -296,6 +301,7 @@ declare
   trigger_def text;
   function_source text;
   function_security_definer boolean;
+  function_owner text;
   function_config text[];
   function_strict boolean;
   function_volatility text;
@@ -321,6 +327,54 @@ begin
   end if;
 
 ${foundationChecks}
+
+  if not has_function_privilege(
+       'authenticated',
+       'public.creator_workspace_access_allowed(uuid)',
+       'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role',
+       'public.creator_workspace_access_allowed(uuid)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon',
+       'public.creator_workspace_access_allowed(uuid)',
+       'EXECUTE'
+     )
+     or not has_function_privilege(
+       'authenticated',
+       'public.workspace_owner_active_mutation_allowed(uuid)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon',
+       'public.workspace_owner_active_mutation_allowed(uuid)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'service_role',
+       'public.workspace_owner_active_mutation_allowed(uuid)',
+       'EXECUTE'
+     )
+     or not has_function_privilege(
+       'authenticated',
+       'public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon',
+       'public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'service_role',
+       'public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)',
+       'EXECUTE'
+     ) then
+    raise exception 'creator_learning_foundation_function_privilege_invalid';
+  end if;
 
   if learning_table is null then
     if exists (
@@ -437,6 +491,24 @@ ${foundationChecks}
        and regexp_replace(pg_get_expr(d.adbin, d.adrelid), '[[:space:]]+', '', 'g') = 'false'
   ) then
     raise exception 'creator_learning_manual_send_column_invalid';
+  end if;
+
+  if exists (
+    select 1
+      from pg_trigger t
+      join pg_proc p on p.oid = t.tgfoid
+     where t.tgrelid = messages_table
+       and not t.tgisinternal
+       and t.tgenabled <> 'D'
+       and t.tgname <> 'conversation_messages_stamp_creator_learning_manual_send'
+       and (t.tgtype & 1) = 1
+       and (t.tgtype & 2) = 2
+       and ((t.tgtype & 4) = 4 or (t.tgtype & 16) = 16)
+       and position(
+         'creator_learning_manual_send' in lower(pg_get_functiondef(p.oid))
+       ) > 0
+  ) then
+    raise exception 'creator_learning_manual_send_competing_trigger_invalid';
   end if;
 
   select pg_get_triggerdef(t.oid, true) into trigger_def
@@ -570,6 +642,25 @@ ${learningChecks}
   if index_def <>
      'createindexcreator_confirmed_chat_learning_contact_idxoncreator_confirmed_chat_learningusingbtree(workspace_id,creator_id,contact_id,generated_atdesc)' then
     raise exception 'creator_learning_index_invalid';
+  end if;
+
+  if exists (
+    select 1
+      from pg_index i
+     where i.indrelid = learning_table
+       and i.indisunique
+       and i.indisvalid
+       and i.indisready
+       and i.indislive
+       and not exists (
+         select 1
+           from pg_constraint c
+          where c.conrelid = learning_table
+            and c.conindid = i.indexrelid
+            and c.contype in ('p','u')
+       )
+  ) then
+    raise exception 'creator_learning_unexpected_unique_index';
   end if;
 
   if (select count(*) from pg_constraint where conrelid = learning_table) <> 18
