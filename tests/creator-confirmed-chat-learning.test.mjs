@@ -57,6 +57,18 @@ test("edit metrics use NFC-normalized grapheme clusters", () => {
   assert.equal(normalizeConfirmedChatLearning(record(), options).metrics.unchanged, false);
 });
 
+test("multi-code-point graphemes inside the workload limit remain measurable", () => {
+  const emojiText = "👩‍💻".repeat(300);
+  assert.ok(emojiText.length > 512);
+  const result = normalizeConfirmedChatLearning({
+    ...record(),
+    proposal: { ...proposal, proposedText: emojiText },
+    outbound: { ...outbound, actualText: emojiText },
+  }, options);
+  assert.equal(result.metrics.editDistance, 0);
+  assert.equal(result.metrics.unchanged, true);
+});
+
 test("edit and batch workloads are bounded without truncation", () => {
   const oversized = "a".repeat(CONFIRMED_CHAT_MAX_GRAPHEMES + 1);
   assert.throws(() => normalizeConfirmedChatLearning({ ...record(), proposal: { ...proposal, proposedText: oversized } }, options), /proposed_text_not_measurable/);
@@ -101,12 +113,17 @@ test("controlled persistence keeps proposal origin server-only and evidence tena
   assert.match(sql, /add column if not exists creator_learning_manual_send boolean not null default false/u);
   assert.match(sql, /stamp_creator_learning_manual_send[\s\S]*auth\.role\(\)[\s\S]*'authenticated'[\s\S]*direction = 'outbound'[\s\S]*source_type, ''\) <> 'manual_note'/u);
   assert.match(sql, /before insert or update on public\.conversation_messages/u);
-  assert.match(sql, /confirm_creator_confirmed_chat_outbound[\s\S]*workspace_owner_active_mutation_allowed\(p_workspace_id\)[\s\S]*creator_workspace_access_allowed\(p_workspace_id\)[\s\S]*m\.creator_learning_manual_send is true/u);
+  assert.match(sql, /workspace_processing_allowed_contract\(text,text,text,boolean,text,text,jsonb,timestamp with time zone\)/u);
+  assert.match(sql, /confirm_creator_confirmed_chat_outbound\([\s\S]*p_actor_user_id uuid,[\s\S]*p_expected_actual_text text[\s\S]*auth\.role\(\)[\s\S]*'service_role'[\s\S]*w\.owner_user_id = p_actor_user_id[\s\S]*workspace_processing_allowed_contract[\s\S]*m\.creator_learning_manual_send is true[\s\S]*message_text is distinct from p_expected_actual_text/u);
+  assert.match(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\(uuid,uuid,uuid,uuid,uuid,text\)[\s\S]*to service_role/u);
+  assert.doesNotMatch(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\([^;]+\)[\s\S]*to authenticated/u);
   assert.match(sql, /link_creator_confirmed_chat_outcomes[\s\S]*workspace_owner_active_mutation_allowed\(p_workspace_id\)[\s\S]*creator_workspace_access_allowed\(p_workspace_id\)/u);
   assert.doesNotMatch(sql, /creator_learning_member_required/u);
-  assert.match(sql, /proposed_text text not null check \(length\(btrim\(proposed_text\)\) between 1 and 512\)/u);
-  assert.match(sql, /actual_text\)\) between 1 and 512/u);
-  assert.match(sql, /e\.workspace_id=target\.workspace_id[\s\S]*e\.creator_id=target\.creator_id[\s\S]*e\.contact_id=target\.contact_id[\s\S]*\(e\.conversation_id is null or e\.conversation_id=target\.conversation_id\)[\s\S]*e\.kind='purchase'[\s\S]*e\.confirmed_by is not null/u);
+  assert.match(sql, /proposed_text text not null check \(length\(btrim\(proposed_text\)\) between 1 and 4000\)/u);
+  assert.match(sql, /actual_text\)\) between 1 and 4000/u);
+  assert.doesNotMatch(sql, /proposed_text text not null check \(length\(btrim\(proposed_text\)\) between 1 and 512\)/u);
+  assert.match(sql, /e\.workspace_id=target\.workspace_id[\s\S]*e\.creator_id=target\.creator_id[\s\S]*e\.contact_id=target\.contact_id[\s\S]*\(e\.conversation_id is null or e\.conversation_id=target\.conversation_id\)[\s\S]*e\.kind='purchase'[\s\S]*e\.confirmed_at is not null/u);
+  assert.doesNotMatch(sql, /e\.confirmed_by is not null/u);
   assert.match(sql, /unique \(workspace_id,purchase_event_id\)/u);
   assert.match(sql, /creator_learning_outbound_conflict/u);
   assert.match(sql, /creator_learning_reaction_conflict/u);
@@ -123,7 +140,12 @@ test("runtime learning API cannot mint proposals and remains rollout-gated", asy
   assert.match(persistence, /FANMIND_CREATOR_CONFIRMED_CHAT_LEARNING_ENABLED/u);
   assert.match(persistence, /SUPABASE_SERVICE_ROLE_KEY/u);
   assert.match(persistence, /CONFIRMED_CHAT_MAX_GRAPHEMES/u);
+  assert.match(persistence, /MAX_TEXT_CODE_UNITS = 4_000/u);
   assert.match(persistence, /Intl\.Segmenter/u);
+  assert.match(persistence, /readMeasurableOutboundText/u);
+  assert.match(persistence, /creator_learning_manual_send/u);
+  assert.match(persistence, /p_actor_user_id: actorUserId/u);
+  assert.match(persistence, /p_expected_actual_text: expectedActualText/u);
   assert.match(persistence, /registerCreatorConfirmedChatProposals/u);
   assert.match(persistence, /confirmCreatorConfirmedChatOutbound/u);
   assert.match(persistence, /linkCreatorConfirmedChatOutcomes/u);
@@ -132,6 +154,7 @@ test("runtime learning API cannot mint proposals and remains rollout-gated", asy
   assert.match(route, /isTrustedFanMindMutationRequest/u);
   assert.match(route, /creatorConfirmedChatLearningEnabled/u);
   assert.match(route, /confirmCreatorConfirmedChatOutbound/u);
+  assert.match(route, /actorUserId: context\.user\.id/u);
   assert.match(route, /linkCreatorConfirmedChatOutcomes/u);
   assert.doesNotMatch(route, /registerCreatorConfirmedChatProposals/u);
   assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/u);
