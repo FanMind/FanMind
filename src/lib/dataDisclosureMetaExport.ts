@@ -41,6 +41,7 @@ export type DisclosureMetaDataset = {
     | "creator_voices"
     | "creator_playbooks"
     | "creator_commercial_events"
+    | "creator_confirmed_chat_learning"
     | "chat_admin_capability"
     | "chat_characters"
     | "chat_character_conversations"
@@ -95,6 +96,7 @@ const DATASETS: DatasetDefinition[] = [
   { key: "creator_voices", table: "creator_voice_profiles", scope: "workspace", order: "creator_id.asc", optionalUntilInstalled: true },
   { key: "creator_playbooks", table: "creator_sales_playbooks", scope: "workspace", order: "creator_id.asc", optionalUntilInstalled: true },
   { key: "creator_commercial_events", table: "creator_commercial_events", scope: "workspace", order: "occurred_at.asc.nullsfirst,id.asc", optionalUntilInstalled: true },
+  { key: "creator_confirmed_chat_learning", table: "creator_confirmed_chat_learning", scope: "workspace", order: "generated_at.asc,proposal_id.asc", optionalUntilInstalled: true },
   { key: "chat_admin_capability", table: "workspace_chat_admin_capabilities", scope: "workspace", order: "workspace_id.asc", optionalUntilInstalled: true },
   { key: "chat_characters", table: "chat_characters", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_conversations", table: "chat_character_conversations", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
