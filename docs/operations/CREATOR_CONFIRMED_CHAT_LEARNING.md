@@ -41,10 +41,12 @@ worked":
    owner-visible message with the authenticated session, applies the same
    4,000-code-unit / 512-NFC-grapheme validator, then invokes the confirmation RPC
    with `service_role`. The RPC independently rechecks the actor's Workspace
-   ownership and processing entitlement and requires the persisted message text to
-   equal the exact text the server measured. The confirmation RPC is not granted
-   to `authenticated`, so a browser cannot bypass the grapheme validator by
-   calling Supabase directly. Rebinding to a different outbound fails closed.
+   ownership and processing entitlement, requires the persisted message text to
+   equal the exact text the server measured, and rejects a persisted message time
+   more than 30 seconds ahead of database statement time. The confirmation RPC is
+   not granted to `authenticated`, so a browser cannot bypass the grapheme or
+   bounded-clock validation by calling Supabase directly. Rebinding to a different
+   outbound fails closed.
 3. A reaction may only be an independently stored **inbound** message in the
    same Workspace/Fan/Conversation after that outbound. Internal `manual_note`
    rows are never fan-reaction evidence, and the persisted reaction timestamp may
@@ -83,8 +85,9 @@ it does not weaken the validator.
 - Outbound confirmation is also server-only. The application first authenticates
   and authorizes the current owner, measures the exact persisted outbound, then
   the service-role RPC independently binds `p_actor_user_id` to the Workspace
-  owner and re-evaluates the canonical processing predicate before accepting the
-  exact measured text. No service-role credential is exposed to the browser.
+  owner, re-evaluates the canonical processing predicate, verifies the exact
+  measured text and enforces the same 30-second future-clock bound before
+  accepting the evidence. No service-role credential is exposed to the browser.
 - Outcome linking remains browser-callable but enforces the canonical
   `workspace_owner_active_mutation_allowed(workspace_id)` contract **inside the
   database RPC**, plus the Creator Workspace gate. A non-owner member or a
