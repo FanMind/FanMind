@@ -23,7 +23,9 @@ end $$;
 
 -- Durable, server-owned human-send provenance. Existing provider rows are not
 -- backfilled. The trigger stamps only new authenticated outbound writes and never
--- trusts a client-supplied marker. Updates cannot manufacture or erase provenance.
+-- trusts a client-supplied marker. Updates preserve provenance only while every
+-- evidence-defining field stays identical; any later text/scope/provenance rewrite
+-- clears the marker permanently instead of turning edited data into send evidence.
 alter table public.conversation_messages
   add column if not exists creator_learning_manual_send boolean not null default false;
 
@@ -42,7 +44,18 @@ begin
       and new.message_type in ('dm','manual')
       and coalesce(new.source_type, '') <> 'manual_note';
   else
-    new.creator_learning_manual_send := old.creator_learning_manual_send;
+    new.creator_learning_manual_send :=
+      old.creator_learning_manual_send
+      and new.workspace_id is not distinct from old.workspace_id
+      and new.conversation_id is not distinct from old.conversation_id
+      and new.contact_id is not distinct from old.contact_id
+      and new.direction is not distinct from old.direction
+      and new.message_type is not distinct from old.message_type
+      and new.source_type is not distinct from old.source_type
+      and new.source_platform is not distinct from old.source_platform
+      and new.external_message_id is not distinct from old.external_message_id
+      and new.content is not distinct from old.content
+      and new.created_at is not distinct from old.created_at;
   end if;
   return new;
 end $$;
