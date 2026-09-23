@@ -135,6 +135,7 @@ jobs:
           sudo install -d -o root -g root -m 0700 /usr/local/lib/fanmind-ops
           sudo install -d -o root -g root -m 0755 /usr/local/lib/fanmind-audit
           sudo install -d -o root -g root -m 0755 /usr/local/lib/fanmind-monitor
+          sudo install -d -o root -g root -m 0755 /usr/local/src/lib
           test -x /usr/bin/flock
           sudo install -o root -g root -m 0755 scripts/operations/write-backup-release-env.sh /usr/local/lib/fanmind-ops/write-backup-release-env.sh
           sudo install -o root -g root -m 0644 config/certificates/supabase-root-2021-ca.crt /usr/local/lib/fanmind-ops/supabase-root-2021-ca.crt
@@ -171,6 +172,7 @@ jobs:
           sudo install -o root -g root -m 0750 scripts/operations/run-demo-cleanup.mjs /usr/local/lib/fanmind-ops/run-demo-cleanup.mjs
           sudo install -o root -g root -m 0750 scripts/operations/webhook-diagnostic-retention.mjs /usr/local/lib/fanmind-ops/webhook-diagnostic-retention.mjs
           sudo install -o root -g root -m 0750 scripts/operations/process-account-deletion.mjs /usr/local/lib/fanmind-ops/process-account-deletion.mjs
+          sudo install -o root -g root -m 0644 src/lib/confirmedChatLearningDeletionVerification.mjs /usr/local/src/lib/confirmedChatLearningDeletionVerification.mjs
           sudo install -o root -g root -m 0750 scripts/operations/deploy-isolated-release.sh /usr/local/lib/fanmind-ops/deploy-isolated-release.sh
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-worker.service /etc/systemd/system/fanmind-backup-worker.service
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-enqueue@.service /etc/systemd/system/fanmind-backup-enqueue@.service
@@ -218,7 +220,7 @@ jobs:
           if sudo systemctl is-enabled --quiet fanmind-webhook-retention.timer; then
             sudo systemctl restart fanmind-webhook-retention.timer
           else
-            echo "Webhook retention installed but intentionally not enabled before migration verification."
+            echo "Webhook retention timer installed but intentionally not enabled before migration verification."
           fi
 
           echo "FanMind deployment finished successfully at $RELEASE_COMMIT."

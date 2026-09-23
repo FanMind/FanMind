@@ -3,6 +3,10 @@
 import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import {
+  CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+  verifyConfirmedChatLearningAccountDeletion,
+} from "../../src/lib/confirmedChatLearningDeletionVerification.mjs";
 
 const DEFAULT_ENV_FILE = "/var/www/fanmind/.env.production";
 const REQUEST_ID_PATTERN =
@@ -545,6 +549,18 @@ async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
     throw new AccountDeletionProcessorError("deletion_verification_failed");
   }
   await verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds);
+
+  const learningVerification = await verifyConfirmedChatLearningAccountDeletion({
+    fetchImpl,
+    tableUrl: `${config.supabaseUrl}/rest/v1/creator_confirmed_chat_learning`,
+    headers: serviceHeaders(config.serviceKey),
+    workspaceIds,
+    userId,
+    schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+  });
+  if (!learningVerification.ok) {
+    throw new AccountDeletionProcessorError("deletion_verification_failed");
+  }
 }
 
 async function sendCompletionEmail(fetchImpl, env, email, requestId) {
