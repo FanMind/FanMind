@@ -116,6 +116,7 @@ test("controlled persistence keeps proposal origin server-only and evidence tena
   assert.match(sql, /before insert or update on public\.conversation_messages/u);
   assert.match(sql, /workspace_processing_allowed_contract\(text,text,text,boolean,text,text,jsonb,timestamp with time zone\)/u);
   assert.match(sql, /confirm_creator_confirmed_chat_outbound\([\s\S]*p_actor_user_id uuid,[\s\S]*p_expected_actual_text text[\s\S]*auth\.role\(\)[\s\S]*'service_role'[\s\S]*w\.owner_user_id = p_actor_user_id[\s\S]*workspace_processing_allowed_contract[\s\S]*m\.creator_learning_manual_send is true[\s\S]*message_text is distinct from p_expected_actual_text/u);
+  assert.match(sql, /message_time < target\.generated_at[\s\S]*message_time > statement_timestamp\(\) \+ interval '30 seconds'/u);
   assert.match(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\(uuid,uuid,uuid,uuid,uuid,text\)[\s\S]*to service_role/u);
   assert.doesNotMatch(sql, /grant execute on function public\.confirm_creator_confirmed_chat_outbound\([^;]+\)\s*to\s+[^;]*\bauthenticated\b[^;]*;/u);
   assert.match(sql, /link_creator_confirmed_chat_outcomes[\s\S]*workspace_owner_active_mutation_allowed\(p_workspace_id\)[\s\S]*creator_workspace_access_allowed\(p_workspace_id\)/u);
