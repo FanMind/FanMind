@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { creatorUuid } from "@/lib/creatorIntelligencePolicy.mjs";
+import { CONFIRMED_CHAT_MAX_GRAPHEMES } from "@/lib/creatorConfirmedChatLearning.mjs";
 import {
   getSupabaseHeaders,
   getSupabaseRestUrl,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/supabase/config";
 
 const VARIANTS = ["recommended", "softer", "stronger"] as const;
+const graphemeSegmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
 type CreatorLearningVariant = (typeof VARIANTS)[number];
 
 type ProposalInput = {
@@ -40,6 +42,18 @@ function normalizePromptRevision(value: string): string {
   return normalized;
 }
 
+function measurableProposalText(value: unknown): string {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  if (!normalized) throw new Error("creator_learning_proposal_invalid");
+  const graphemeCount = Array.from(
+    graphemeSegmenter.segment(normalized.normalize("NFC")),
+  ).length;
+  if (graphemeCount > CONFIRMED_CHAT_MAX_GRAPHEMES) {
+    throw new Error("creator_learning_proposal_invalid");
+  }
+  return normalized;
+}
+
 function normalizeProposals(values: ProposalInput[]): ProposalInput[] {
   if (!Array.isArray(values) || values.length !== 3) {
     throw new Error("creator_learning_three_proposals_required");
@@ -47,8 +61,8 @@ function normalizeProposals(values: ProposalInput[]): ProposalInput[] {
   const seen = new Set<string>();
   const normalized = values.map((value) => {
     const selectedVariant = value?.selectedVariant;
-    const proposedText = typeof value?.proposedText === "string" ? value.proposedText.trim() : "";
-    if (!VARIANTS.includes(selectedVariant) || seen.has(selectedVariant) || !proposedText || proposedText.length > 4000) {
+    const proposedText = measurableProposalText(value?.proposedText);
+    if (!VARIANTS.includes(selectedVariant) || seen.has(selectedVariant)) {
       throw new Error("creator_learning_proposal_invalid");
     }
     seen.add(selectedVariant);
