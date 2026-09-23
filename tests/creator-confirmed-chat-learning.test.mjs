@@ -83,6 +83,10 @@ test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit"
   assert.match(runner, /if \(state !== workingState\) fail\("rollout_state_checkout_mismatch"\)/u);
   assert.match(runner, /git", \["show"|runGit\(\["show"/u);
   assert.match(runner, /checkout_dirty/u);
+  assert.match(
+    runner,
+    /requireCleanTrackedCheckout\(\);\s*if \(mode === "apply"\)/u,
+  );
 });
 
 test("database binding rejects a foreign pooler user before any passfile or psql access", () => {
@@ -128,11 +132,26 @@ test("installed-state verifier requires the complete read policy and every servi
   assert.match(runner, /pg_get_triggerdef/u);
   assert.match(runner, /pg_get_functiondef/u);
   assert.match(runner, /function_security_definer/u);
+  assert.match(runner, /relpersistence = 'p'/u);
+  assert.match(
+    runner,
+    /createtriggerconversation_messages_stamp_creator_learning_manual_sendbeforeinsertorupdateonconversation_messagesforeachrowexecutefunctionstamp_creator_learning_manual_send/u,
+  );
+  assert.doesNotMatch(runner, /position\('beforeinsertorupdate' in trigger_def\)/u);
+  assert.match(
+    runner,
+    /selectm\.content,m\.created_atintomessage_text,message_timefromconversation_messagesmwhere\(\(m\.id=p_outbound_message_id\)and\(m\.workspace_id=target\.workspace_id\)and\(m\.contact_id=target\.contact_id\)and\(m\.conversation_id=target\.conversation_id\)and\(m\.direction=''outbound''::text\)and\(m\.creator_learning_manual_sendistrue\)\);/u,
+  );
+  assert.doesNotMatch(
+    runner,
+    /lower\(function_def\) not like '%m\.creator_learning_manual_send is true%'/u,
+  );
   assert.match(runner, /policy_qual <> '\(creator_workspace_access_allowed/u);
   assert.match(runner, /m\.user_id=AUTH_UID/u);
   assert.match(runner, /w\.owner_user_id=AUTH_UID/u);
   assert.doesNotMatch(runner, /position\('creator_workspace_access_allowed\(workspace_id\)' in policy_qual\)/u);
   assert.match(runner, /array\['authenticated'\]::name\[\]/u);
+  assert.match(runner, /policy_permissive is distinct from 'PERMISSIVE'/u);
   for (const privilege of [
     "SELECT",
     "INSERT",
@@ -147,6 +166,11 @@ test("installed-state verifier requires the complete read policy and every servi
       new RegExp(`not has_table_privilege\\('service_role', learning_table, '${privilege}'\\)`, "u"),
     );
   }
+  assert.match(
+    runner,
+    /has_function_privilege\(\s*'anon',\s*'public\.record_creator_confirmed_chat_proposals\(uuid,uuid,uuid,uuid,integer,text,jsonb\)',\s*'EXECUTE'\s*\)/u,
+  );
+  assert.match(runner, /primarykey\(proposal_id\)/u);
   assert.match(runner, /pg_get_indexdef/u);
   assert.match(runner, /generated_atdesc/u);
   assert.match(
