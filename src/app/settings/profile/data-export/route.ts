@@ -270,6 +270,7 @@ const SECTION_LABELS: Record<
   creator_voices: { de: "Freigegebener Creator-Schreibstil", en: "Approved Creator writing style" },
   creator_playbooks: { de: "Creator Sales Playbook", en: "Creator sales playbook" },
   creator_commercial_events: { de: "Bestätigte Angebots- und Kaufbelege", en: "Confirmed offer and purchase evidence" },
+  creator_confirmed_chat_learning: { de: "Bestätigte Chat-Lernevidenz", en: "Confirmed chat learning evidence" },
   chat_admin_capability: { de: "ChatAdmin-Workspace-Capability", en: "ChatAdmin Workspace capability" },
   chat_characters: { de: "ChatAdmin-Charaktere", en: "ChatAdmin characters" },
   chat_character_conversations: { de: "Character-gebundene manuelle Chats", en: "Character-bound manual chats" },
