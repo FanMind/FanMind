@@ -55,18 +55,19 @@ const expectedTables=[
   'conversation_messages','conversation_summaries','contact_reply_targets','fan_analysis_reports',
   'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','social_connections','meta_webhook_events',
   'content_sources','content_metric_snapshots','communication_analysis_reports','workspace_analysis_settings',
-  'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events',
+  'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events','creator_confirmed_chat_learning',
   'workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages',
 ];
 
 function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
   const calls=[];
   const config={SUPABASE_ACCESS_TOKEN_COOKIE:'cookie',getSupabaseHeaders:value=>({Authorization:`Bearer ${value}`}),getSupabaseRestUrl:table=>`https://synthetic.invalid/rest/v1/${table}`};
-  const collector=load('src/lib/dataDisclosureMetaExport.ts',{
+  const disclosure=load('src/lib/dataDisclosureMetaExport.ts',{
     'next/headers':{cookies:async()=>({get:()=>token?{value:token}:undefined})},
     '@/lib/supabase/config':config,
     '@/lib/dataDisclosurePagination':{DataDisclosureExportError:DisclosureFailure},
-  }).getWorkspaceMetaDataForDisclosure;
+  });
+  const collector=disclosure.getWorkspaceMetaDataForDisclosure;
   const fetchImpl=async(url,options)=>{
     const table=url.pathname.split('/').at(-1);const offset=Number(url.searchParams.get('offset')||0);calls.push({table,offset,url,options});
     assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');assert.equal(options.headers.Authorization,'Bearer synthetic-user-jwt');
@@ -79,14 +80,23 @@ function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
     } else assert.equal(url.searchParams.get('workspace_id'),`eq.${workspace}`);
     return (await override({table,offset,url,options,calls})) ?? jsonResponse([]);
   };
-  return{calls,run:(id=workspace,uid=userId)=>collector(id,uid,fetchImpl)};
+  return{calls,run:(id=workspace,uid=userId)=>collector(id,uid,fetchImpl),rolloutState:disclosure.CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,isOptional:disclosure.isConfirmedChatLearningDisclosureOptional};
 }
 
 test('complete disclosure enumerates every browser-readable Production Creator data family',async()=>{
   const h=collectorFixture();const result=await h.run();
   assert.deepEqual(h.calls.map(x=>x.table).sort(),[...expectedTables].sort());assert.equal(result.length,expectedTables.length);
   assert.equal(h.calls.find(x=>x.table==='conversation_messages').url.searchParams.get('source_platform'),null,'all channels must be exported');
+  assert.equal(h.calls.find(x=>x.table==='creator_confirmed_chat_learning').url.searchParams.get('order'),'generated_at.asc,proposal_id.asc');
   assert.ok(!h.calls.some(x=>x.table==='workspace_ai_prompt_settings'),'a table absent from current Production must not be invented as stored data');
+});
+
+test('confirmed-chat learning is optional only in source-controlled preinstall state',async()=>{
+  const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
+  assert.equal(missing.rolloutState,'preinstall');assert.equal(missing.isOptional('preinstall'),true);assert.equal(missing.isOptional('installed'),false);
+  const datasets=await missing.run();assert.equal(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows.length,0);
+  const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
+  await assert.rejects(denied.run(),DisclosureFailure);
 });
 
 test('profile, membership, workspace and social rows remain Creator-bound and credentials are stripped',async()=>{
@@ -198,12 +208,12 @@ function routeFixture({datasets=[],privateDatasets=[],failAt,authReadError=false
 }
 
 test('successful disclosure binds both readers to the signed-in Creator and is explicitly complete',async()=>{
-  const datasets=[{key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},{key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},{key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},{key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]}];
+  const datasets=[{key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},{key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},{key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},{key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]},{key:'creator_confirmed_chat_learning',rows:[{proposal_id:'p1',workspace_id:workspace,proposed_text:'PRESERVE_CONFIRMED_CHAT'}]}];
   const privateDatasets=[{key:'referral_membership',rows:[{workspace_id:workspace,user_id:userId,referral_code:'OWNCODE'}]}];
   const h=routeFixture({datasets,privateDatasets});const response=await h.run('de');
   assert.deepEqual(h.collectorArgs(),[workspace,userId]);assert.deepEqual(h.privateArgs(),[workspace,userId,email]);
   assert.equal(response.status,200);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');assert.match(response.headers.get('Content-Disposition'),/fanmind-datenauskunft\.pdf/);assert.doesNotMatch(response.headers.get('Content-Disposition'),/teilweise|partial/i);
-  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
+  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/Bestätigte Chat-Lernevidenz/);assert.match(lines,/PRESERVE_CONFIRMED_CHAT/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
 });
 
 test('workspace members cannot export the Creator Workspace disclosure',async()=>{
