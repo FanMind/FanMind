@@ -33,8 +33,10 @@ worked":
    Workspace/Fan/Conversation carrying the server-owned
    `creator_learning_manual_send=true` marker. The controlled trigger stamps this
    marker only for a new authenticated human outbound write, excludes
-   `manual_note`, refuses provider/service-role imports, and preserves the marker
-   unchanged on later updates. Existing historical rows are deliberately not
+   `manual_note`, and refuses provider/service-role imports. Unrelated later row
+   updates preserve the marker only while every evidence-defining field remains
+   identical; changing text, scope, provenance, external identity or message time
+   clears the marker permanently. Existing historical rows are deliberately not
    backfilled. Before confirmation, the FanMind server reads that exact
    owner-visible message with the authenticated session, applies the same
    4,000-code-unit / 512-NFC-grapheme validator, then invokes the confirmation RPC
@@ -44,7 +46,10 @@ worked":
    to `authenticated`, so a browser cannot bypass the grapheme validator by
    calling Supabase directly. Rebinding to a different outbound fails closed.
 3. A reaction may only be an independently stored **inbound** message in the
-   same Workspace/Fan/Conversation after that outbound.
+   same Workspace/Fan/Conversation after that outbound. Internal `manual_note`
+   rows are never fan-reaction evidence, and the persisted reaction timestamp may
+   be at most 30 seconds ahead of database statement time, matching the pure
+   validator's bounded future-clock skew.
 4. A purchase may only be an independently confirmed
    `creator_commercial_events` purchase for the exact same Workspace/Creator/Fan
    after that outbound. If the existing event already has a `conversation_id`,
@@ -86,8 +91,10 @@ it does not weaken the validator.
   read-only/expired/archived Workspace cannot bypass the application route by
   calling that RPC directly.
 - Human-send provenance is created by a database trigger from authenticated
-  insertion context and cannot be manufactured or erased by later row updates.
-  Provider/service-role imports and manual-note rows are not eligible.
+  insertion context and cannot be manufactured by later row updates. Unrelated
+  updates preserve it only when every evidence-defining field is unchanged; an
+  evidence-defining rewrite clears it permanently. Provider/service-role imports
+  and manual-note rows are not eligible.
 - Purchase linking requires an independently confirmed purchase event for the
   same Workspace/Creator/Fan. A non-null foreign conversation is rejected; an
   unbound event is associated only by the explicit owner link and cannot be
