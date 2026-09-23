@@ -38,9 +38,11 @@ declare
   policy_count integer;
   policy_roles name[];
   policy_qual text;
+  policy_permissive text;
   policy_check text;
   trigger_def text;
   function_def text;
+  normalized_function_def text;
   function_security_definer boolean;
   function_config text;
   index_def text;
@@ -73,7 +75,10 @@ begin
 
   if not exists (
     select 1 from pg_class
-     where oid = learning_table and relkind = 'r' and relrowsecurity
+     where oid = learning_table
+       and relkind = 'r'
+       and relpersistence = 'p'
+       and relrowsecurity
   ) then
     raise exception 'creator_learning_rls_invalid';
   end if;
@@ -95,11 +100,8 @@ begin
      and t.tgname = 'conversation_messages_stamp_creator_learning_manual_send'
      and t.tgenabled = 'O' and not t.tgisinternal;
   trigger_def := regexp_replace(lower(coalesce(trigger_def, '')), '\s+', '', 'g');
-  if position('beforeinsertorupdate' in trigger_def) = 0
-     or position('conversation_messages' in trigger_def) = 0
-     or position('foreachrow' in trigger_def) = 0
-     or position('executefunction' in trigger_def) = 0
-     or position('stamp_creator_learning_manual_send()' in trigger_def) = 0 then
+  if trigger_def <>
+     'createtriggerconversation_messages_stamp_creator_learning_manual_sendbeforeinsertorupdateonconversation_messagesforeachrowexecutefunctionstamp_creator_learning_manual_send()' then
     raise exception 'creator_learning_manual_send_trigger_invalid';
   end if;
 
@@ -158,13 +160,24 @@ begin
      or lower(function_def) not like '%service_role%'
      or lower(function_def) not like '%w.owner_user_id = p_actor_user_id%'
      or lower(function_def) not like '%workspace_processing_allowed_contract(%'
-     or lower(function_def) not like '%m.creator_learning_manual_send is true%'
      or lower(function_def) not like '%message_text is distinct from p_expected_actual_text%'
      or lower(function_def) not like '%message_time < target.generated_at%'
      or lower(function_def) not like '%statement_timestamp() + interval ''30 seconds''%'
      or lower(function_def) not like '%for update%'
      or lower(function_def) not like '%creator_learning_outbound_conflict%' then
     raise exception 'creator_learning_confirm_function_invalid';
+  end if;
+  normalized_function_def := regexp_replace(
+    replace(lower(function_def), 'public.', ''),
+    '[[:space:]]+',
+    '',
+    'g'
+  );
+  if position(
+    'selectm.content,m.created_atintomessage_text,message_timefromconversation_messagesmwhere((m.id=p_outbound_message_id)and(m.workspace_id=target.workspace_id)and(m.contact_id=target.contact_id)and(m.conversation_id=target.conversation_id)and(m.direction=''outbound''::text)and(m.creator_learning_manual_sendistrue));'
+    in normalized_function_def
+  ) = 0 then
+    raise exception 'creator_learning_confirm_manual_send_guard_invalid';
   end if;
 
   select p.prosecdef, coalesce(array_to_string(p.proconfig, ','), ''), pg_get_functiondef(p.oid)
@@ -194,8 +207,8 @@ begin
    where schemaname = 'public'
      and tablename = 'creator_confirmed_chat_learning';
 
-  select roles, qual, with_check
-    into policy_roles, policy_qual, policy_check
+  select roles, qual, permissive, with_check
+    into policy_roles, policy_qual, policy_permissive, policy_check
     from pg_policies
    where schemaname = 'public'
      and tablename = 'creator_confirmed_chat_learning'
@@ -217,6 +230,7 @@ begin
   );
   if policy_count <> 1
      or policy_roles is distinct from array['authenticated']::name[]
+     or policy_permissive is distinct from 'PERMISSIVE'
      or policy_check is not null
      or policy_qual <> '(creator_workspace_access_allowed(workspace_id)and((exists(select1fromworkspace_membersmwhere((m.workspace_id=creator_confirmed_chat_learning.workspace_id)and(m.user_id=AUTH_UID))))or(exists(select1fromworkspaceswwhere((w.id=creator_confirmed_chat_learning.workspace_id)and(w.owner_user_id=AUTH_UID))))))' then
     raise exception 'creator_learning_policy_invalid';
@@ -242,6 +256,11 @@ begin
      )
      or has_function_privilege(
        'authenticated',
+       'public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon',
        'public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)',
        'EXECUTE'
      )
@@ -287,6 +306,7 @@ begin
    where conrelid = learning_table;
 
   if constraint_defs is null
+     or not ('primarykey(proposal_id)' = any(constraint_defs))
      or not ('foreignkey(workspace_id,creator_id)referencescreators(workspace_id,id)ondeletecascade' = any(constraint_defs))
      or not ('foreignkey(workspace_id,contact_id,conversation_id)referencesconversations(workspace_id,contact_id,id)ondeletecascade' = any(constraint_defs))
      or not ('foreignkey(confirmed_by)referencesauth.users(id)ondeletesetnull' = any(constraint_defs))
@@ -480,8 +500,8 @@ function requireTarget(environment, mode) {
     fail("checkout_mismatch");
   }
 
+  requireCleanTrackedCheckout();
   if (mode === "apply") {
-    requireCleanTrackedCheckout();
     if (
       clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !==
       APPLY_CONFIRMATION
