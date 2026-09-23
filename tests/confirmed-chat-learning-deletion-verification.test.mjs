@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -249,6 +250,37 @@ test("account deletion processor wires the verifier to durable Workspace invento
   assert.match(
     source,
     /if \(!learningVerification\.ok\)[\s\S]*deletion_verification_failed/u,
+  );
+});
+
+test("production deploy installs the account-deletion verifier at the processor's resolved module path", async () => {
+  const [workflow, processor] = await Promise.all([
+    readFile(".github/workflows/deploy-fanmind.yml", "utf8"),
+    readFile("scripts/operations/process-account-deletion.mjs", "utf8"),
+  ]);
+  const dependencyName = "confirmedChatLearningDeletionVerification.mjs";
+  const installedProcessorDir = "/usr/local/lib/fanmind-ops";
+  const resolvedDependency = resolve(
+    installedProcessorDir,
+    "../../src/lib",
+    dependencyName,
+  );
+
+  assert.equal(
+    resolvedDependency,
+    "/usr/local/src/lib/confirmedChatLearningDeletionVerification.mjs",
+  );
+  assert.match(
+    processor,
+    /from "\.\.\/\.\.\/src\/lib\/confirmedChatLearningDeletionVerification\.mjs"/u,
+  );
+  assert.match(
+    workflow,
+    /sudo install -d -o root -g root -m 0755 \/usr\/local\/src\/lib/u,
+  );
+  assert.match(
+    workflow,
+    /sudo install -o root -g root -m 0644 src\/lib\/confirmedChatLearningDeletionVerification\.mjs \/usr\/local\/src\/lib\/confirmedChatLearningDeletionVerification\.mjs/u,
   );
 });
 
