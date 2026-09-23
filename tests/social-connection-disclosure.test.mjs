@@ -92,7 +92,7 @@ test('complete disclosure enumerates every browser-readable Production Creator d
 
 test('confirmed-chat learning is optional only until installed and becomes fail-closed once present',async()=>{
   const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
-  const datasets=await missing.run();assert.deepEqual(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows,[]);
+  const datasets=await missing.run();assert.equal(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows.length,0);
   const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
   await assert.rejects(denied.run(),DisclosureFailure);
 });
