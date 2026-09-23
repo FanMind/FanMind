@@ -100,6 +100,14 @@ test("account deletion resume inventory is controlled, unapplied and required be
     processor.indexOf("export async function processAccountDeletion"),
     processor.indexOf("async function main()"),
   );
+  const blockerUpdateSection = processor.slice(
+    processor.indexOf("async function updateBlockedState"),
+    processor.indexOf("function enforceExecutionGates"),
+  );
+  const inventoryPersistSection = processor.slice(
+    processor.indexOf("export async function persistOwnedWorkspaceInventory"),
+    processor.indexOf("export async function recoverWorkspaceIdsForResume"),
+  );
   assert.match(sql, /add column if not exists owned_workspace_ids uuid\[\]/u);
   assert.match(sql, /cardinality\(owned_workspace_ids\) <= 100/u);
   assert.doesNotMatch(sql, /\bgrant\b[^;]*\bto\s+(?:authenticated|anon|public)\b/isu);
@@ -113,6 +121,16 @@ test("account deletion resume inventory is controlled, unapplied and required be
   assert.match(processor, /persistedRow\.status === "blocked"/u);
   assert.match(processor, /hasDurableBlocker/u);
   assert.match(processor, /owned_workspace_ids: null/u);
+  assert.match(
+    inventoryPersistSection,
+    /message === "processing_blocker_drift"/u,
+    "the atomic RPC's processing blocker drift must retain its exact fail-closed diagnostic",
+  );
+  assert.match(
+    blockerUpdateSection,
+    /status: "in\.\(pending,blocked\)"/u,
+    "a stale blocker write must never regress a request that already entered processing",
+  );
   assert.match(sql, /create or replace function public\.guard_processing_account_deletion_workspace_ownership/u);
   assert.match(sql, /create trigger guard_processing_account_deletion_workspace_ownership[\s\S]*before insert or update of owner_user_id on public\.workspaces/u);
   assert.match(sql, /old\.owner_user_id is distinct from new\.owner_user_id/u);
