@@ -387,7 +387,11 @@ export async function deleteContactAndCreatorData(formData: FormData) {
       schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
     });
   if (!learningVerification.ok) {
-    redirect(contactPath(contactId, locale, "contact_delete_failed"));
+    redirect(
+      `/fans?notice=contact_delete_verification_failed${
+        locale === "en" ? "&lang=en" : ""
+      }#fans-list`,
+    );
   }
 
   revalidatePath("/fans");
