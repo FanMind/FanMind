@@ -94,10 +94,12 @@ test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit"
   );
   assert.match(runner, /runGit\(\["show"/u);
   assert.match(runner, /checkout_dirty/u);
+  assert.match(runner, /requireCleanTrackedCheckout\(environment\);/u);
   assert.match(
     runner,
-    /requireCleanTrackedCheckout\(environment\);\s*if \(mode === "apply"\)/u,
+    /requireReviewedControlFiles\(reviewedCommit, environment\);/u,
   );
+  assert.match(runner, /if \(mode === "apply"\)/u);
 });
 
 test("database binding rejects a foreign pooler user before any passfile or psql access", () => {
