@@ -187,6 +187,7 @@ export async function persistOwnedWorkspaceInventory(
     if (
       message === "workspace_inventory_missing" ||
       message === "workspace_inventory_drift" ||
+      message === "processing_blocker_drift" ||
       message === "processing_blocker_state_invalid"
     ) {
       throw new AccountDeletionProcessorError(message);
@@ -593,6 +594,7 @@ async function updateBlockedState(fetchImpl, config, request, eligibility) {
     new URLSearchParams({
       id: `eq.${request.id}`,
       user_id: `eq.${request.user_id}`,
+      status: "in.(pending,blocked)",
       select: "id,status",
     }).toString(),
     {
