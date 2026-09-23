@@ -92,9 +92,10 @@ test("controlled persistence keeps proposal origin server-only and evidence tena
   assert.match(sql, /enable row level security/u);
   assert.match(sql, /grant select on public\.creator_confirmed_chat_learning to authenticated/u);
   assert.match(sql, /record_creator_confirmed_chat_proposals[\s\S]*revoke all on function[\s\S]*from public, anon, authenticated, service_role;[\s\S]*grant execute on function[\s\S]*to service_role/u);
-  assert.match(sql, /confirm_creator_confirmed_chat_outbound[\s\S]*m\.workspace_id=target\.workspace_id[\s\S]*m\.contact_id=target\.contact_id[\s\S]*m\.conversation_id=target\.conversation_id[\s\S]*m\.direction='outbound'/u);
+  assert.match(sql, /confirm_creator_confirmed_chat_outbound[\s\S]*m\.workspace_id=target\.workspace_id[\s\S]*m\.contact_id=target\.contact_id[\s\S]*m\.conversation_id=target\.conversation_id[\s\S]*m\.direction='outbound'[\s\S]*m\.message_type='manual'[\s\S]*m\.source_type='manual'/u);
   assert.match(sql, /link_creator_confirmed_chat_outcomes[\s\S]*m\.direction='inbound'/u);
-  assert.match(sql, /e\.conversation_id=target\.conversation_id[\s\S]*e\.kind='purchase'/u);
+  assert.match(sql, /e\.workspace_id=target\.workspace_id[\s\S]*e\.creator_id=target\.creator_id[\s\S]*e\.contact_id=target\.contact_id[\s\S]*\(e\.conversation_id is null or e\.conversation_id=target\.conversation_id\)[\s\S]*e\.kind='purchase'[\s\S]*e\.confirmed_by is not null/u);
+  assert.match(sql, /unique \(workspace_id,purchase_event_id\)/u);
   assert.match(sql, /creator_learning_outbound_conflict/u);
   assert.match(sql, /creator_learning_reaction_conflict/u);
   assert.match(sql, /creator_learning_purchase_conflict/u);
