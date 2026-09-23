@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { CONFIRMED_CHAT_MAX_GRAPHEMES, CONFIRMED_CHAT_MAX_RECORDS, normalizeConfirmedChatLearning, summarizeConfirmedChatLearning } from "../src/lib/creatorConfirmedChatLearning.mjs";
 
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = Date.parse("2026-09-19T11:00:00Z");
 const options = { now };
 const ids = { workspaceId: "11111111-1111-4111-8111-111111111111", creatorId: "22222222-2222-4222-8222-222222222222", contactId: "33333333-3333-4333-8333-333333333333", conversationId: "44444444-4444-4444-8444-444444444444" };
@@ -78,4 +82,41 @@ test("duplicate stable evidence identifiers fail closed", () => {
   const distinctOutbound = { ...duplicateOutbound, outbound: { ...duplicateOutbound.outbound, messageId: "ffffffff-ffff-4fff-8fff-ffffffffffff" } };
   const secondPurchase = { ...distinctOutbound, purchase: { ...purchase(attribution({ proposalId: otherProposal.proposalId, generationId: otherProposal.generationId })), attribution: attribution({ proposalId: otherProposal.proposalId, generationId: otherProposal.generationId, outboundMessageId: distinctOutbound.outbound.messageId }) } };
   assert.throws(() => summarizeConfirmedChatLearning([firstPurchase, secondPurchase], expected, options), /duplicate_purchase_event_id/);
+});
+
+test("controlled persistence keeps proposal origin server-only and evidence tenant-bound", async () => {
+  const sql = await readFile(path.join(repoRoot, "supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql"), "utf8");
+  assert.match(sql, /create table public\.creator_confirmed_chat_learning/u);
+  assert.match(sql, /foreign key \(workspace_id,creator_id\)[\s\S]*on delete cascade/u);
+  assert.match(sql, /foreign key \(workspace_id,contact_id,conversation_id\)[\s\S]*on delete cascade/u);
+  assert.match(sql, /enable row level security/u);
+  assert.match(sql, /grant select on public\.creator_confirmed_chat_learning to authenticated/u);
+  assert.match(sql, /record_creator_confirmed_chat_proposals[\s\S]*revoke all on function[\s\S]*from public, anon, authenticated, service_role;[\s\S]*grant execute on function[\s\S]*to service_role/u);
+  assert.match(sql, /confirm_creator_confirmed_chat_outbound[\s\S]*m\.workspace_id=target\.workspace_id[\s\S]*m\.contact_id=target\.contact_id[\s\S]*m\.conversation_id=target\.conversation_id[\s\S]*m\.direction='outbound'/u);
+  assert.match(sql, /link_creator_confirmed_chat_outcomes[\s\S]*m\.direction='inbound'/u);
+  assert.match(sql, /e\.conversation_id=target\.conversation_id[\s\S]*e\.kind='purchase'/u);
+  assert.match(sql, /creator_learning_outbound_conflict/u);
+  assert.match(sql, /creator_learning_reaction_conflict/u);
+  assert.match(sql, /creator_learning_purchase_conflict/u);
+  assert.doesNotMatch(sql, /grant (?:insert|update|delete|all) on public\.creator_confirmed_chat_learning to authenticated/iu);
+});
+
+test("runtime learning API cannot mint proposals and remains rollout-gated", async () => {
+  const [persistence, route] = await Promise.all([
+    readFile(path.join(repoRoot, "src/lib/creatorConfirmedChatPersistence.ts"), "utf8"),
+    readFile(path.join(repoRoot, "src/app/api/creators/learning/confirmed-chat/route.ts"), "utf8"),
+  ]);
+  assert.match(persistence, /FANMIND_CREATOR_CONFIRMED_CHAT_LEARNING_ENABLED/u);
+  assert.match(persistence, /SUPABASE_SERVICE_ROLE_KEY/u);
+  assert.match(persistence, /registerCreatorConfirmedChatProposals/u);
+  assert.match(persistence, /confirmCreatorConfirmedChatOutbound/u);
+  assert.match(persistence, /linkCreatorConfirmedChatOutcomes/u);
+  assert.match(route, /requireContactInActiveAuthorizedWorkspace/u);
+  assert.match(route, /evaluateWorkspaceProcessingEntitlement/u);
+  assert.match(route, /isTrustedFanMindMutationRequest/u);
+  assert.match(route, /creatorConfirmedChatLearningEnabled/u);
+  assert.match(route, /confirmCreatorConfirmedChatOutbound/u);
+  assert.match(route, /linkCreatorConfirmedChatOutcomes/u);
+  assert.doesNotMatch(route, /registerCreatorConfirmedChatProposals/u);
+  assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/u);
 });
