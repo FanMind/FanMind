@@ -7,16 +7,53 @@ begin;
 set local lock_timeout = '5s';
 set local statement_timeout = '60s';
 
--- Fail closed when the already accepted Creator foundation is not installed.
+-- Fail closed when the already accepted Creator foundation or the canonical
+-- owner/processing mutation guard is not installed.
 do $$
 begin
   if to_regclass('public.creators') is null
      or to_regclass('public.creator_commercial_events') is null
      or to_regclass('public.conversation_messages') is null
-     or to_regprocedure('public.creator_workspace_access_allowed(uuid)') is null then
+     or to_regprocedure('public.creator_workspace_access_allowed(uuid)') is null
+     or to_regprocedure('public.workspace_owner_active_mutation_allowed(uuid)') is null then
     raise exception 'creator_learning_foundation_missing' using errcode = '55000';
   end if;
 end $$;
+
+-- Durable, server-owned human-send provenance. Existing provider rows are not
+-- backfilled. The trigger stamps only new authenticated outbound writes and never
+-- trusts a client-supplied marker. Updates cannot manufacture or erase provenance.
+alter table public.conversation_messages
+  add column if not exists creator_learning_manual_send boolean not null default false;
+
+create or replace function public.stamp_creator_learning_manual_send()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.creator_learning_manual_send :=
+      (select auth.role()) = 'authenticated'
+      and (select auth.uid()) is not null
+      and new.direction = 'outbound'
+      and new.message_type in ('dm','manual')
+      and coalesce(new.source_type, '') <> 'manual_note';
+  else
+    new.creator_learning_manual_send := old.creator_learning_manual_send;
+  end if;
+  return new;
+end $$;
+
+revoke all on function public.stamp_creator_learning_manual_send()
+  from public, anon, authenticated, service_role;
+
+drop trigger if exists conversation_messages_stamp_creator_learning_manual_send
+  on public.conversation_messages;
+create trigger conversation_messages_stamp_creator_learning_manual_send
+  before insert or update on public.conversation_messages
+  for each row execute function public.stamp_creator_learning_manual_send();
 
 create table public.creator_confirmed_chat_learning (
   proposal_id uuid primary key,
@@ -28,11 +65,16 @@ create table public.creator_confirmed_chat_learning (
   creator_revision integer not null check (creator_revision > 0),
   prompt_revision text not null check (length(btrim(prompt_revision)) between 1 and 120),
   selected_variant text not null check (selected_variant in ('recommended','softer','stronger')),
-  proposed_text text not null check (length(btrim(proposed_text)) between 1 and 4000),
+  -- PostgreSQL length() counts Unicode code points. The <=512 database ceiling is
+  -- deliberately conservative relative to the authoritative <=512 grapheme validator:
+  -- persisted evidence can never exceed the learning validator's workload bound.
+  proposed_text text not null check (length(btrim(proposed_text)) between 1 and 512),
   generated_at timestamptz not null,
   outbound_message_id uuid,
   actual_text text,
   confirmed_at timestamptz,
+  -- The actor is audit metadata, not the confirmation fact itself. Account deletion
+  -- anonymizes it while confirmed_at + immutable message binding retain valid history.
   confirmed_by uuid references auth.users(id) on delete set null,
   reaction_message_id uuid,
   reaction_at timestamptz,
@@ -55,7 +97,7 @@ create table public.creator_confirmed_chat_learning (
       and purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null)
     or
     (outbound_message_id is not null and actual_text is not null
-      and length(btrim(actual_text)) between 1 and 4000
+      and length(btrim(actual_text)) between 1 and 512
       and confirmed_at is not null)
   ),
   check ((reaction_message_id is null) = (reaction_at is null)),
@@ -161,7 +203,7 @@ begin
     proposal_text := btrim(coalesce(item->>'proposedText',''));
     if variant not in ('recommended','softer','stronger')
        or variant = any(seen_variants)
-       or length(proposal_text) not between 1 and 4000 then
+       or length(proposal_text) not between 1 and 512 then
       raise exception 'creator_learning_proposal_invalid' using errcode = '23514';
     end if;
     seen_variants := array_append(seen_variants, variant);
@@ -192,10 +234,10 @@ grant execute on function public.record_creator_confirmed_chat_proposals(uuid,uu
   to service_role;
 
 -- Confirmation is evidence binding, not message sending. Only an already stored
--- outbound message in the same Workspace/Fan/Conversation with durable manual-send
--- provenance can become learning evidence. Imported provider outbounds are not
--- accepted merely because their direction is outbound. Replays are idempotent;
--- a different second message fails closed.
+-- outbound message in the same Workspace/Fan/Conversation carrying the immutable
+-- server-stamped human-send marker can become learning evidence. Provider/service
+-- imports and manual-note rows are never stamped. Replays are idempotent; a
+-- different second message fails closed.
 create function public.confirm_creator_confirmed_chat_outbound(
   p_workspace_id uuid,
   p_contact_id uuid,
@@ -212,12 +254,9 @@ declare
   message_time timestamptz;
 begin
   if (select auth.uid()) is null
-     or not public.creator_workspace_access_allowed(p_workspace_id)
-     or not (
-       exists (select 1 from public.workspace_members m where m.workspace_id=p_workspace_id and m.user_id=(select auth.uid()))
-       or exists (select 1 from public.workspaces w where w.id=p_workspace_id and w.owner_user_id=(select auth.uid()))
-     ) then
-    raise exception 'creator_learning_member_required' using errcode = '42501';
+     or not public.workspace_owner_active_mutation_allowed(p_workspace_id)
+     or not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'creator_learning_owner_processing_required' using errcode = '42501';
   end if;
 
   select * into target
@@ -244,10 +283,9 @@ begin
     and m.contact_id=target.contact_id
     and m.conversation_id=target.conversation_id
     and m.direction='outbound'
-    and m.message_type='manual'
-    and m.source_type='manual';
+    and m.creator_learning_manual_send is true;
   if not found
-     or length(btrim(coalesce(message_text,''))) not between 1 and 4000
+     or length(btrim(coalesce(message_text,''))) not between 1 and 512
      or message_time < target.generated_at then
     raise exception 'creator_learning_outbound_evidence_mismatch' using errcode = '23514';
   end if;
@@ -271,9 +309,9 @@ grant execute on function public.confirm_creator_confirmed_chat_outbound(uuid,uu
 -- independently stored inbound Fan message. A purchase must be an independently
 -- confirmed creator_commercial_events purchase in the same tenant/Creator/Fan and
 -- either already carry the exact conversation_id or be an unbound legacy/current
--- record_creator_fan_review event. For an unbound event, this explicit authenticated
--- link is the durable conversation association; the learning row stores both IDs and
--- the unique purchase_event_id prevents reuse by another learned proposal.
+-- record_creator_fan_review event. For an unbound event, this explicit owner action
+-- is the durable conversation association; the learning row stores both IDs and the
+-- unique purchase_event_id prevents reuse by another learned proposal.
 -- IDs are append-only: conflicting re-attribution is rejected.
 create function public.link_creator_confirmed_chat_outcomes(
   p_workspace_id uuid,
@@ -293,12 +331,9 @@ declare
   purchase_reference text;
 begin
   if (select auth.uid()) is null
-     or not public.creator_workspace_access_allowed(p_workspace_id)
-     or not (
-       exists (select 1 from public.workspace_members m where m.workspace_id=p_workspace_id and m.user_id=(select auth.uid()))
-       or exists (select 1 from public.workspaces w where w.id=p_workspace_id and w.owner_user_id=(select auth.uid()))
-     ) then
-    raise exception 'creator_learning_member_required' using errcode = '42501';
+     or not public.workspace_owner_active_mutation_allowed(p_workspace_id)
+     or not public.creator_workspace_access_allowed(p_workspace_id) then
+    raise exception 'creator_learning_owner_processing_required' using errcode = '42501';
   end if;
   if p_reaction_message_id is null and p_purchase_event_id is null then
     raise exception 'creator_learning_outcome_required' using errcode = '23514';
