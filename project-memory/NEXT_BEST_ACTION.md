@@ -12,11 +12,11 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve all accepted Creator Intelligence source and Staging foundation evidence and resume only the prior bounded Creator continuation; do not rebuild accepted foundations, activate providers, auto-send, touch Mobile, or cross protected environment boundaries.
+PR #1162 is merged on main as `3532bd4b9a19400284443f35b9b94b2849393aeb`; its crash-safe account-deletion Workspace-inventory scope is closed and must not be rebuilt. Continue only the next bounded repository-only Creator scope: controlled confirmed-chat persistence/API preparation on top of the already verified pure learning validator. Preserve all accepted Creator foundation evidence. Do not apply the controlled schema, activate the rollout flag/providers, auto-send, touch Mobile, or cross protected-environment boundaries. Disclosure/delete inventory integration, target VERIFY/APPLY and real quality acceptance remain later gates and are not implied by source merge.
 
 ## Why this action
 
-standing-authorized safe work
+standing-authorized safe repository work after exact-scope #1162 closeout
 
 ## Candidate evaluation
 
