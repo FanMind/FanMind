@@ -18,6 +18,18 @@ The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Pres
 
 standing-authorized safe work
 
+## Builder manager
+
+- Default worker limit: `3`
+- Hard maximum worker limit: `5`
+- SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
+- Worker slots used by safe ready set: `1`
+- Active task continuations in safe ready set: `NONE`
+- Serialized due to conflict/limit: `NONE`
+- Blocked by action dependencies: `NONE`
+- Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
+- The manager reuses the existing action catalog and task/gate state; it does not create a second TODO/orchestration system.
+
 ## Candidate evaluation
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
@@ -40,5 +52,8 @@ standing-authorized safe work
 - A `DEFERRED_BY_OWNER` action remains open but is skipped for current assistant execution.
 - Skipping a deferred action never marks its gate accepted or lowers its priority permanently.
 - If an earlier unresolved action is owner-required/deferred, only later `parallel_safe=true` actions may be selected.
+- The Builder Manager may use at most 3 workers by default; later configuration may never exceed 5.
+- Same task/file/directory/module/contract/database/API/Project-Memory/CI/runtime/provider/environment scope is serialized.
+- Action dependencies must be verified before dependents enter the safe ready set; an independent task may continue if another worker fails.
 - Provider, payment, destructive, legal and protected Production boundaries still require their existing approvals.
 - Phase 8 remains outside the current finishline.
