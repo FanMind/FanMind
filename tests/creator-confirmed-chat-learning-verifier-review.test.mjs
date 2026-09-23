@@ -117,3 +117,54 @@ test("reviewed target execution rejects index suppression and binds control file
   assert.match(runner, /checkout_reviewed_file_mismatch/u);
   assert.match(runner, /requireReviewedControlFiles\(reviewedCommit, environment\)/u);
 });
+
+test("verifier binds the exact database name and pins its own trusted search path", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /EXPECTED_DATABASE_NAME = "postgres"/u);
+  assert.match(
+    runner,
+    /clean\(environment\.PGDATABASE\) !== EXPECTED_DATABASE_NAME/u,
+  );
+  assert.match(runner, /database_name_binding_invalid/u);
+  assert.match(runner, /set local search_path = pg_catalog;/u);
+});
+
+test("verifier rejects owner, inheritance and rewrite-rule drift on the learning table", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /not relispartition/u);
+  assert.match(
+    runner,
+    /pg_get_userbyid\(relowner\) = '\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'/u,
+  );
+  assert.match(runner, /from pg_inherits/u);
+  assert.match(runner, /inhrelid = learning_table or inhparent = learning_table/u);
+  assert.match(runner, /creator_learning_inheritance_invalid/u);
+  assert.match(runner, /from pg_rewrite/u);
+  assert.match(runner, /ev_class = learning_table/u);
+  assert.match(runner, /creator_learning_rewrite_rule_invalid/u);
+});
+
+test("verifier requires every reviewed foreign-key trigger to remain enabled on both sides", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /creator_learning_foreign_key_trigger_invalid/u);
+  assert.match(runner, /t\.tgconstraint = c\.oid/u);
+  assert.match(runner, /t\.tgisinternal/u);
+  assert.match(runner, /t\.tgrelid in \(c\.conrelid,c\.confrelid\)/u);
+  assert.match(runner, /<> 4/u);
+  assert.match(runner, /t\.tgenabled <> 'O'/u);
+});
+
+test("verifier compares the complete reviewed RPC EXECUTE ACL and rejects inherited broadening", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /executeRoles: Object\.freeze\(\["service_role"\]\)/u);
+  assert.match(runner, /executeRoles: Object\.freeze\(\["authenticated"\]\)/u);
+  assert.match(runner, /aclexplode/u);
+  assert.match(runner, /acl\.grantee = 0 then 'PUBLIC'/u);
+  assert.match(runner, /acl\.grantee <> p\.proowner/u);
+  assert.match(runner, /function_execute_grantees is distinct from/u);
+  assert.match(runner, /acl\.is_grantable/u);
+  assert.match(runner, /creator_learning_function_acl_invalid/u);
+  assert.match(runner, /from pg_auth_members membership/u);
+  assert.match(runner, /membership\.inherit_option/u);
+  assert.match(runner, /creator_learning_function_acl_inheritance_invalid/u);
+});

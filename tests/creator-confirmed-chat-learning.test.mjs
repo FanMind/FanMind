@@ -33,6 +33,7 @@ function targetEnv(overrides = {}) {
     NEXT_PUBLIC_SUPABASE_URL: `https://${target}.supabase.co`,
     FANMIND_TARGET_DB_HOST: "aws-0-eu-central-1.pooler.supabase.com",
     PGHOST: "aws-0-eu-central-1.pooler.supabase.com",
+    PGDATABASE: "postgres",
     PGUSER: `postgres.${target}`,
     PGSSLMODE: "verify-full",
     PGSSLROOTCERT: "/tmp/fanmind-test-ca.crt",
@@ -48,6 +49,7 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
     /EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7"/u,
   );
   assert.match(runner, /set transaction read only/u);
+  assert.match(runner, /set local search_path = pg_catalog/u);
   assert.match(runner, /production_apply_forbidden/u);
   assert.match(runner, /source_state_not_installed/u);
   assert.match(runner, /installed_target_with_preinstall_source/u);
@@ -128,6 +130,19 @@ test("database binding rejects project-looking users on non-Supabase hosts", () 
   assert.match(
     result.stderr,
     /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=database_project_binding_invalid/u,
+  );
+});
+
+test("database binding rejects a foreign database name before any passfile or psql access", () => {
+  const result = spawnSync(process.execPath, [runnerPath, "--verify"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: targetEnv({ PGDATABASE: "shadow_database" }),
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stderr,
+    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=database_name_binding_invalid/u,
   );
 });
 

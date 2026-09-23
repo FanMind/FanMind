@@ -39,6 +39,7 @@ const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272
 const EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa";
 const EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672";
 const EXPECTED_DATABASE_FUNCTION_OWNER = "postgres";
+const EXPECTED_DATABASE_NAME = "postgres";
 const APPLY_CONFIRMATION = "apply-creator-confirmed-chat-learning";
 const NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT = "I_UNDERSTAND_NON_PRODUCTION_ONLY";
 const MAX_PASSFILE_BYTES = 64 * 1024;
@@ -49,6 +50,7 @@ const FUNCTION_CONTRACTS = Object.freeze([
     signature: "public.stamp_creator_learning_manual_send()",
     securityDefiner: false,
     resultType: "trigger",
+    executeRoles: Object.freeze([]),
   }),
   Object.freeze({
     name: "record_creator_confirmed_chat_proposals",
@@ -56,6 +58,7 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)",
     securityDefiner: true,
     resultType: "jsonb",
+    executeRoles: Object.freeze(["service_role"]),
   }),
   Object.freeze({
     name: "confirm_creator_confirmed_chat_outbound",
@@ -63,6 +66,7 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)",
     securityDefiner: true,
     resultType: "jsonb",
+    executeRoles: Object.freeze(["service_role"]),
   }),
   Object.freeze({
     name: "link_creator_confirmed_chat_outcomes",
@@ -70,6 +74,7 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)",
     securityDefiner: true,
     resultType: "jsonb",
+    executeRoles: Object.freeze(["authenticated"]),
   }),
 ]);
 
@@ -253,6 +258,11 @@ function pgProcSelect(signature) {
    where p.oid = to_regprocedure('${signature}');`;
 }
 
+function sqlTextArray(values) {
+  if (values.length === 0) return "array[]::text[]";
+  return `array[${values.map((value) => `'${value.replaceAll("'", "''")}'`).join(",")}]::text[]`;
+}
+
 function buildVerifySql(sql, foundationSources) {
   const hashes = Object.fromEntries(
     FUNCTION_CONTRACTS.map(({ name }) => [name, functionBodyHash(sql, name)]),
@@ -292,10 +302,46 @@ function buildVerifySql(sql, foundationSources) {
   end if;`,
   ).join("\n");
 
+  const learningAclChecks = FUNCTION_CONTRACTS.map(
+    (contract) => String.raw`
+  select coalesce(
+           array_agg(grantee_name order by grantee_name),
+           array[]::text[]
+         )
+    into function_execute_grantees
+    from (
+      select distinct
+             case when acl.grantee = 0 then 'PUBLIC' else grantee.rolname end as grantee_name
+        from pg_proc p
+        cross join lateral aclexplode(
+          coalesce(p.proacl, acldefault('f', p.proowner))
+        ) acl
+        left join pg_roles grantee on grantee.oid = acl.grantee and acl.grantee <> 0
+       where p.oid = to_regprocedure('${contract.signature}')
+         and acl.privilege_type = 'EXECUTE'
+         and acl.grantee <> p.proowner
+    ) direct_execute;
+  if function_execute_grantees is distinct from ${sqlTextArray(contract.executeRoles)}
+     or exists (
+       select 1
+         from pg_proc p
+         cross join lateral aclexplode(
+           coalesce(p.proacl, acldefault('f', p.proowner))
+         ) acl
+        where p.oid = to_regprocedure('${contract.signature}')
+          and acl.privilege_type = 'EXECUTE'
+          and acl.grantee <> p.proowner
+          and acl.is_grantable
+     ) then
+    raise exception 'creator_learning_function_acl_invalid';
+  end if;`,
+  ).join("\n");
+
   return String.raw`
 \set ON_ERROR_STOP on
 begin;
 set transaction read only;
+set local search_path = pg_catalog;
 
 do $verify$
 declare
@@ -321,6 +367,7 @@ declare
   function_kind text;
   function_default_count integer;
   function_variadic oid;
+  function_execute_grantees text[];
   index_def text;
   constraint_defs text[];
   check_constraint_defs text[];
@@ -421,9 +468,25 @@ ${foundationChecks}
      where oid = learning_table
        and relkind = 'r'
        and relpersistence = 'p'
+       and not relispartition
+       and pg_get_userbyid(relowner) = '${EXPECTED_DATABASE_FUNCTION_OWNER}'
        and relrowsecurity
   ) then
     raise exception 'creator_learning_rls_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_inherits
+     where inhrelid = learning_table or inhparent = learning_table
+  ) then
+    raise exception 'creator_learning_inheritance_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_rewrite
+     where ev_class = learning_table
+  ) then
+    raise exception 'creator_learning_rewrite_rule_invalid';
   end if;
 
   if (select count(*) from pg_roles where rolname in ('anon','authenticated')) <> 2
@@ -558,6 +621,18 @@ ${foundationChecks}
   end if;
 
 ${learningChecks}
+
+${learningAclChecks}
+
+  if exists (
+    select 1
+      from pg_auth_members membership
+      join pg_roles inherited_role on inherited_role.oid = membership.roleid
+     where inherited_role.rolname in ('service_role','authenticated')
+       and membership.inherit_option
+  ) then
+    raise exception 'creator_learning_function_acl_inheritance_invalid';
+  end if;
 
   select count(*)::integer into policy_count
     from pg_policies
@@ -769,6 +844,33 @@ ${learningChecks}
      ) then
     raise exception 'creator_learning_constraint_invalid';
   end if;
+
+  if (select count(*) from pg_constraint where conrelid = learning_table and contype = 'f') <> 3
+     or exists (
+       select 1
+         from pg_constraint c
+        where c.conrelid = learning_table
+          and c.contype = 'f'
+          and (
+            (
+              select count(*)
+                from pg_trigger t
+               where t.tgconstraint = c.oid
+                 and t.tgisinternal
+                 and t.tgrelid in (c.conrelid,c.confrelid)
+            ) <> 4
+            or exists (
+              select 1
+                from pg_trigger t
+               where t.tgconstraint = c.oid
+                 and t.tgisinternal
+                 and t.tgrelid in (c.conrelid,c.confrelid)
+                 and t.tgenabled <> 'O'
+            )
+          )
+     ) then
+    raise exception 'creator_learning_foreign_key_trigger_invalid';
+  end if;
 end
 $verify$;
 
@@ -963,6 +1065,9 @@ function requireTarget(environment, mode) {
   const expectedHost = normalizedHost(environment.FANMIND_TARGET_DB_HOST);
   if (!pgHost || !expectedHost || pgHost !== expectedHost) {
     fail("database_host_binding_invalid");
+  }
+  if (clean(environment.PGDATABASE) !== EXPECTED_DATABASE_NAME) {
+    fail("database_name_binding_invalid");
   }
   const pgUser = clean(environment.PGUSER).toLowerCase();
   const directProjectHost = `db.${targetReference}.supabase.co`;
