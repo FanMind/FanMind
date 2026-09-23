@@ -62,11 +62,12 @@ const expectedTables=[
 function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
   const calls=[];
   const config={SUPABASE_ACCESS_TOKEN_COOKIE:'cookie',getSupabaseHeaders:value=>({Authorization:`Bearer ${value}`}),getSupabaseRestUrl:table=>`https://synthetic.invalid/rest/v1/${table}`};
-  const collector=load('src/lib/dataDisclosureMetaExport.ts',{
+  const disclosure=load('src/lib/dataDisclosureMetaExport.ts',{
     'next/headers':{cookies:async()=>({get:()=>token?{value:token}:undefined})},
     '@/lib/supabase/config':config,
     '@/lib/dataDisclosurePagination':{DataDisclosureExportError:DisclosureFailure},
-  }).getWorkspaceMetaDataForDisclosure;
+  });
+  const collector=disclosure.getWorkspaceMetaDataForDisclosure;
   const fetchImpl=async(url,options)=>{
     const table=url.pathname.split('/').at(-1);const offset=Number(url.searchParams.get('offset')||0);calls.push({table,offset,url,options});
     assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');assert.equal(options.headers.Authorization,'Bearer synthetic-user-jwt');
@@ -79,7 +80,7 @@ function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
     } else assert.equal(url.searchParams.get('workspace_id'),`eq.${workspace}`);
     return (await override({table,offset,url,options,calls})) ?? jsonResponse([]);
   };
-  return{calls,run:(id=workspace,uid=userId)=>collector(id,uid,fetchImpl)};
+  return{calls,run:(id=workspace,uid=userId)=>collector(id,uid,fetchImpl),rolloutState:disclosure.CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,isOptional:disclosure.isConfirmedChatLearningDisclosureOptional};
 }
 
 test('complete disclosure enumerates every browser-readable Production Creator data family',async()=>{
@@ -90,16 +91,10 @@ test('complete disclosure enumerates every browser-readable Production Creator d
   assert.ok(!h.calls.some(x=>x.table==='workspace_ai_prompt_settings'),'a table absent from current Production must not be invented as stored data');
 });
 
-test('confirmed-chat learning is optional only until installed and becomes fail-closed once present',async()=>{
-  const missing=collectorFixture(({table,url})=>{
-    if(table==='creator_confirmed_chat_learning') return jsonResponse({code:'PGRST205'},404);
-    if(table==='conversation_messages'&&url.searchParams.get('select')==='creator_learning_manual_send') {
-      return jsonResponse({code:'PGRST204',message:'Could not find the creator_learning_manual_send column'},400);
-    }
-  });
+test('confirmed-chat learning is optional only in source-controlled preinstall state',async()=>{
+  const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
+  assert.equal(missing.rolloutState,'preinstall');assert.equal(missing.isOptional('preinstall'),true);assert.equal(missing.isOptional('installed'),false);
   const datasets=await missing.run();assert.equal(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows.length,0);
-  const installedButMissing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
-  await assert.rejects(installedButMissing.run(),DisclosureFailure);
   const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
   await assert.rejects(denied.run(),DisclosureFailure);
 });
