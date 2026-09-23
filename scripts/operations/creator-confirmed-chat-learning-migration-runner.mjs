@@ -19,10 +19,8 @@ import { pathToFileURL } from "node:url";
 
 const MIGRATION_ID = "20260923023000_creator_confirmed_chat_learning";
 const MIGRATION_PATH = resolve(process.cwd(), `supabase/controlled/${MIGRATION_ID}.sql`);
-const ROLLOUT_STATE_PATH = resolve(
-  process.cwd(),
-  "src/lib/confirmedChatLearningDeletionVerification.mjs",
-);
+const ROLLOUT_STATE_REPO_PATH = "src/lib/confirmedChatLearningDeletionVerification.mjs";
+const ROLLOUT_STATE_PATH = resolve(process.cwd(), ROLLOUT_STATE_REPO_PATH);
 const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7";
 const APPLY_CONFIRMATION = "apply-creator-confirmed-chat-learning";
 const NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT = "I_UNDERSTAND_NON_PRODUCTION_ONLY";
@@ -38,6 +36,15 @@ declare
   learning_table oid := to_regclass('public.creator_confirmed_chat_learning');
   messages_table oid := to_regclass('public.conversation_messages');
   policy_count integer;
+  policy_roles name[];
+  policy_qual text;
+  policy_check text;
+  trigger_def text;
+  function_def text;
+  function_security_definer boolean;
+  function_config text;
+  index_def text;
+  constraint_defs text[];
 begin
   if to_regclass('public.creators') is null
      or to_regclass('public.creator_commercial_events') is null
@@ -82,12 +89,17 @@ begin
     raise exception 'creator_learning_manual_send_column_invalid';
   end if;
 
-  if not exists (
-    select 1 from pg_trigger
-     where tgrelid = messages_table
-       and tgname = 'conversation_messages_stamp_creator_learning_manual_send'
-       and tgenabled = 'O' and not tgisinternal
-  ) then
+  select pg_get_triggerdef(t.oid, true) into trigger_def
+    from pg_trigger t
+   where t.tgrelid = messages_table
+     and t.tgname = 'conversation_messages_stamp_creator_learning_manual_send'
+     and t.tgenabled = 'O' and not t.tgisinternal;
+  trigger_def := regexp_replace(lower(coalesce(trigger_def, '')), '\s+', '', 'g');
+  if position('beforeinsertorupdate' in trigger_def) = 0
+     or position('conversation_messages' in trigger_def) = 0
+     or position('foreachrow' in trigger_def) = 0
+     or position('executefunction' in trigger_def) = 0
+     or position('stamp_creator_learning_manual_send()' in trigger_def) = 0 then
     raise exception 'creator_learning_manual_send_trigger_invalid';
   end if;
 
@@ -98,24 +110,121 @@ begin
     raise exception 'creator_learning_functions_missing';
   end if;
 
+  select p.prosecdef, coalesce(array_to_string(p.proconfig, ','), ''), pg_get_functiondef(p.oid)
+    into function_security_definer, function_config, function_def
+    from pg_proc p
+   where p.oid = to_regprocedure('public.stamp_creator_learning_manual_send()');
+  if function_def is null
+     or function_security_definer
+     or position('search_path=' in function_config) = 0
+     or lower(function_def) not like '%auth.role()%'
+     or lower(function_def) not like '%auth.uid()%'
+     or lower(function_def) not like '%new.direction = ''outbound''%'
+     or lower(function_def) not like '%new.message_type in (''dm'', ''manual'')%'
+     or lower(function_def) not like '%manual_note%'
+     or lower(function_def) not like '%old.creator_learning_manual_send%'
+     or lower(function_def) not like '%new.content is not distinct from old.content%' then
+    raise exception 'creator_learning_stamp_function_invalid';
+  end if;
+
+  select p.prosecdef, coalesce(array_to_string(p.proconfig, ','), ''), pg_get_functiondef(p.oid)
+    into function_security_definer, function_config, function_def
+    from pg_proc p
+   where p.oid = to_regprocedure(
+     'public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)'
+   );
+  if function_def is null
+     or not function_security_definer
+     or position('search_path=' in function_config) = 0
+     or lower(function_def) not like '%creator_workspace_access_allowed(p_workspace_id)%'
+     or lower(function_def) not like '%jsonb_array_length(p_proposals) <> 3%'
+     or lower(function_def) not like '%c.revision = p_creator_revision%'
+     or lower(function_def) not like '%c.status = ''active''%'
+     or lower(function_def) not like '%insert into public.creator_confirmed_chat_learning%'
+     or lower(function_def) not like '%gen_random_uuid()%' then
+    raise exception 'creator_learning_proposal_function_invalid';
+  end if;
+
+  select p.prosecdef, coalesce(array_to_string(p.proconfig, ','), ''), pg_get_functiondef(p.oid)
+    into function_security_definer, function_config, function_def
+    from pg_proc p
+   where p.oid = to_regprocedure(
+     'public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)'
+   );
+  if function_def is null
+     or not function_security_definer
+     or position('search_path=' in function_config) = 0
+     or lower(function_def) not like '%auth.role()%'
+     or lower(function_def) not like '%service_role%'
+     or lower(function_def) not like '%w.owner_user_id = p_actor_user_id%'
+     or lower(function_def) not like '%workspace_processing_allowed_contract(%'
+     or lower(function_def) not like '%m.creator_learning_manual_send is true%'
+     or lower(function_def) not like '%message_text is distinct from p_expected_actual_text%'
+     or lower(function_def) not like '%message_time < target.generated_at%'
+     or lower(function_def) not like '%statement_timestamp() + interval ''30 seconds''%'
+     or lower(function_def) not like '%for update%'
+     or lower(function_def) not like '%creator_learning_outbound_conflict%' then
+    raise exception 'creator_learning_confirm_function_invalid';
+  end if;
+
+  select p.prosecdef, coalesce(array_to_string(p.proconfig, ','), ''), pg_get_functiondef(p.oid)
+    into function_security_definer, function_config, function_def
+    from pg_proc p
+   where p.oid = to_regprocedure(
+     'public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)'
+   );
+  if function_def is null
+     or not function_security_definer
+     or position('search_path=' in function_config) = 0
+     or lower(function_def) not like '%auth.uid()%'
+     or lower(function_def) not like '%workspace_owner_active_mutation_allowed(p_workspace_id)%'
+     or lower(function_def) not like '%creator_workspace_access_allowed(p_workspace_id)%'
+     or lower(function_def) not like '%m.direction = ''inbound''%'
+     or lower(function_def) not like '%manual_note%'
+     or lower(function_def) not like '%e.kind = ''purchase''%'
+     or lower(function_def) not like '%e.confirmed_at is not null%'
+     or lower(function_def) not like '%creator_learning_reaction_conflict%'
+     or lower(function_def) not like '%creator_learning_purchase_conflict%'
+     or lower(function_def) not like '%for update%' then
+    raise exception 'creator_learning_outcome_function_invalid';
+  end if;
+
   select count(*)::integer into policy_count
     from pg_policies
    where schemaname = 'public'
      and tablename = 'creator_confirmed_chat_learning';
-  if policy_count <> 1 or not exists (
-    select 1 from pg_policies
-     where schemaname = 'public'
-       and tablename = 'creator_confirmed_chat_learning'
-       and policyname = 'creator_confirmed_chat_learning_member_read'
-       and cmd = 'SELECT'
-  ) then
+
+  select roles, qual, with_check
+    into policy_roles, policy_qual, policy_check
+    from pg_policies
+   where schemaname = 'public'
+     and tablename = 'creator_confirmed_chat_learning'
+     and policyname = 'creator_confirmed_chat_learning_member_read'
+     and cmd = 'SELECT';
+
+  policy_qual := regexp_replace(lower(coalesce(policy_qual, '')), '\s+', '', 'g');
+  if policy_count <> 1
+     or policy_roles is distinct from array['authenticated']::name[]
+     or policy_check is not null
+     or position('creator_workspace_access_allowed(workspace_id)' in policy_qual) = 0
+     or position('workspace_members' in policy_qual) = 0
+     or position('m.workspace_id=creator_confirmed_chat_learning.workspace_id' in policy_qual) = 0
+     or position('m.user_id=(selectauth.uid()' in policy_qual) = 0
+     or position('workspaces' in policy_qual) = 0
+     or position('w.id=creator_confirmed_chat_learning.workspace_id' in policy_qual) = 0
+     or position('w.owner_user_id=(selectauth.uid()' in policy_qual) = 0 then
     raise exception 'creator_learning_policy_invalid';
   end if;
 
   if not has_table_privilege('authenticated', learning_table, 'SELECT')
      or has_table_privilege('authenticated', learning_table, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-     or has_table_privilege('anon', learning_table, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') then
-    raise exception 'creator_learning_browser_privilege_invalid';
+     or has_table_privilege('anon', learning_table, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+     or not has_table_privilege(
+       'service_role',
+       learning_table,
+       'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'
+     ) then
+    raise exception 'creator_learning_table_privilege_invalid';
   end if;
 
   if not has_function_privilege(
@@ -151,33 +260,43 @@ begin
     raise exception 'creator_learning_function_privilege_invalid';
   end if;
 
-  if not exists (
-    select 1 from pg_index i
+  select pg_get_indexdef(i.indexrelid) into index_def
+    from pg_index i
     join pg_class c on c.oid = i.indexrelid
-    where i.indrelid = learning_table
-      and i.indisvalid and i.indisready
-      and c.relname = 'creator_confirmed_chat_learning_contact_idx'
-  ) then
+   where i.indrelid = learning_table
+     and i.indisvalid and i.indisready and not i.indisunique
+     and i.indnkeyatts = 4
+     and c.relname = 'creator_confirmed_chat_learning_contact_idx';
+  if index_def is null
+     or regexp_replace(lower(index_def), '\s+', '', 'g') not like
+       '%(workspace_id,creator_id,contact_id,generated_atdesc)%' then
     raise exception 'creator_learning_index_invalid';
   end if;
 
-  if not exists (
-    select 1 from pg_constraint
-     where conrelid = learning_table
-       and contype = 'f'
-       and confdeltype = 'n'
-       and pg_get_constraintdef(oid) like '%confirmed_by%auth.users%ON DELETE SET NULL%'
-  ) then
-    raise exception 'creator_learning_confirmer_fk_invalid';
-  end if;
+  select array_agg(regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g'))
+    into constraint_defs
+    from pg_constraint
+   where conrelid = learning_table;
 
-  if (
-    select count(*) from pg_constraint
-     where conrelid = learning_table
-       and contype = 'f'
-       and confdeltype = 'c'
-  ) < 2 then
-    raise exception 'creator_learning_cascade_fk_invalid';
+  if constraint_defs is null
+     or not ('foreignkey(workspace_id,creator_id)referencescreators(workspace_id,id)ondeletecascade' = any(constraint_defs))
+     or not ('foreignkey(workspace_id,contact_id,conversation_id)referencesconversations(workspace_id,contact_id,id)ondeletecascade' = any(constraint_defs))
+     or not ('foreignkey(confirmed_by)referencesauth.users(id)ondeletesetnull' = any(constraint_defs))
+     or not ('unique(workspace_id,generation_id)' = any(constraint_defs))
+     or not ('unique(workspace_id,outbound_message_id)' = any(constraint_defs))
+     or not ('unique(workspace_id,reaction_message_id)' = any(constraint_defs))
+     or not ('unique(workspace_id,purchase_event_id)' = any(constraint_defs))
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%creator_revision%>0%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%prompt_revision%120%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%selected_variant%recommended%softer%stronger%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%proposed_text%4000%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%outbound_message_id%actual_text%confirmed_at%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%reaction_message_id%reaction_at%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%purchase_event_id%purchase_evidence_reference%purchase_at%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%confirmed_at%generated_at%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%reaction_at%confirmed_at%)')
+     or not exists (select 1 from unnest(constraint_defs) d where d like 'check(%purchase_at%confirmed_at%)') then
+    raise exception 'creator_learning_constraint_invalid';
   end if;
 end
 $verify$;
@@ -206,18 +325,44 @@ function gitBlobSha1(content) {
     .digest("hex");
 }
 
-function rolloutState() {
-  let source;
-  try {
-    source = readFileSync(ROLLOUT_STATE_PATH, "utf8");
-  } catch {
-    fail("rollout_state_unreadable");
-  }
+function parseRolloutState(source) {
   const match = source.match(
     /export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "(preinstall|installed)";/u,
   );
   if (!match) fail("rollout_state_invalid");
   return match[1];
+}
+
+function rolloutState() {
+  try {
+    return parseRolloutState(readFileSync(ROLLOUT_STATE_PATH, "utf8"));
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=")
+    ) {
+      throw error;
+    }
+    fail("rollout_state_unreadable");
+  }
+}
+
+function runGit(args) {
+  return spawnSync("git", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+}
+
+function reviewedRolloutState(reviewedCommit) {
+  const shown = runGit(["show", `${reviewedCommit}:${ROLLOUT_STATE_REPO_PATH}`]);
+  if (shown.status !== 0) fail("reviewed_rollout_state_unreadable");
+  return parseRolloutState(shown.stdout);
+}
+
+function requireCleanTrackedCheckout() {
+  const status = runGit(["status", "--porcelain=v1", "--untracked-files=no"]);
+  if (status.status !== 0 || clean(status.stdout)) fail("checkout_dirty");
 }
 
 function readAndVerifyMigration() {
@@ -237,12 +382,18 @@ function readAndVerifyMigration() {
     /create trigger conversation_messages_stamp_creator_learning_manual_send/iu,
     /alter table public\.creator_confirmed_chat_learning enable row level security/iu,
     /grant select on public\.creator_confirmed_chat_learning to authenticated/iu,
+    /grant all on public\.creator_confirmed_chat_learning to service_role/iu,
     /record_creator_confirmed_chat_proposals/iu,
     /confirm_creator_confirmed_chat_outbound/iu,
     /link_creator_confirmed_chat_outcomes/iu,
     /references auth\.users\(id\) on delete set null/iu,
     /references public\.creators\(workspace_id,id\) on delete cascade/iu,
     /references public\.conversations\(workspace_id,contact_id,id\) on delete cascade/iu,
+    /unique \(workspace_id,generation_id\)/iu,
+    /unique \(workspace_id,outbound_message_id\)/iu,
+    /unique \(workspace_id,reaction_message_id\)/iu,
+    /unique \(workspace_id,purchase_event_id\)/iu,
+    /creator_confirmed_chat_learning\(workspace_id,creator_id,contact_id,generated_at desc\)/iu,
     /commit;\s*$/iu,
   ];
   if (
@@ -303,21 +454,35 @@ function requireTarget(environment, mode) {
   if (!pgHost || !expectedHost || pgHost !== expectedHost) {
     fail("database_host_binding_invalid");
   }
+  const pgUser = clean(environment.PGUSER).toLowerCase();
+  const directProjectHost = `db.${targetReference}.supabase.co`;
+  const projectBoundConnection =
+    pgHost === directProjectHost || pgUser === `postgres.${targetReference}`;
+  if (!projectBoundConnection) fail("database_project_binding_invalid");
+
   if (clean(environment.PGSSLMODE) !== "verify-full") fail("tls_mode_invalid");
   if (!isAbsolute(clean(environment.PGSSLROOTCERT))) fail("tls_root_invalid");
 
-  const reviewedCommit = clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT).toLowerCase();
+  const reviewedCommit = clean(
+    environment.FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT,
+  ).toLowerCase();
   if (!/^[0-9a-f]{40}$/u.test(reviewedCommit)) fail("reviewed_commit_invalid");
-  const actual = spawnSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
+  const actual = runGit(["rev-parse", "HEAD"]);
   if (actual.status !== 0 || clean(actual.stdout).toLowerCase() !== reviewedCommit) {
     fail("checkout_mismatch");
   }
 
   if (mode === "apply") {
-    if (clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !== APPLY_CONFIRMATION) {
+    requireCleanTrackedCheckout();
+    const committedState = reviewedRolloutState(reviewedCommit);
+    const workingState = rolloutState();
+    if (committedState !== workingState) fail("rollout_state_checkout_mismatch");
+    if (committedState !== "installed") fail("source_state_not_installed");
+
+    if (
+      clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !==
+      APPLY_CONFIRMATION
+    ) {
       fail("apply_confirmation_missing");
     }
     if (
@@ -327,6 +492,7 @@ function requireTarget(environment, mode) {
       fail("write_acknowledgement_missing");
     }
   }
+  return reviewedCommit;
 }
 
 function privatePassfileSnapshot(environment) {
@@ -357,8 +523,11 @@ function privatePassfileSnapshot(environment) {
     }
     const settled = fstatSync(descriptor);
     if (
-      settled.dev !== opened.dev || settled.ino !== opened.ino || settled.size !== opened.size ||
-      settled.mtimeMs !== opened.mtimeMs || settled.ctimeMs !== opened.ctimeMs
+      settled.dev !== opened.dev ||
+      settled.ino !== opened.ino ||
+      settled.size !== opened.size ||
+      settled.mtimeMs !== opened.mtimeMs ||
+      settled.ctimeMs !== opened.ctimeMs
     ) {
       fail("passfile_changed");
     }
