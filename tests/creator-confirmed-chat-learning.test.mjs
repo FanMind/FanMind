@@ -75,13 +75,13 @@ test("confirmed-chat apply fails before target access while source state is prei
   assert.match(result.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=source_state_not_installed/u);
 });
 
-test("reviewed APPLY binding rejects tracked checkout drift and re-reads rollout state from the reviewed commit", async () => {
+test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /status", "--porcelain=v1", "--untracked-files=no"/u);
   assert.match(runner, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=\$\{code\}/u);
-  assert.match(runner, /reviewedRolloutState\(reviewedCommit\)/u);
+  assert.match(runner, /const state = reviewedRolloutState\(reviewedCommit\)/u);
+  assert.match(runner, /if \(state !== workingState\) fail\("rollout_state_checkout_mismatch"\)/u);
   assert.match(runner, /git", \["show"|runGit\(\["show"/u);
-  assert.match(runner, /rollout_state_checkout_mismatch/u);
   assert.match(runner, /checkout_dirty/u);
 });
 
@@ -123,17 +123,30 @@ test("database binding accepts the selected project's direct host before requiri
   assert.match(result.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u);
 });
 
-test("installed-state verifier checks policy, grants, definitions, index and exact evidence constraints", async () => {
+test("installed-state verifier requires the complete read policy and every service-role table privilege", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /pg_get_triggerdef/u);
   assert.match(runner, /pg_get_functiondef/u);
   assert.match(runner, /function_security_definer/u);
-  assert.match(runner, /creator_workspace_access_allowed\(workspace_id\)/u);
-  assert.match(runner, /workspace_members/u);
-  assert.match(runner, /owner_user_id/u);
+  assert.match(runner, /policy_qual <> '\(creator_workspace_access_allowed/u);
+  assert.match(runner, /m\.user_id=AUTH_UID/u);
+  assert.match(runner, /w\.owner_user_id=AUTH_UID/u);
+  assert.doesNotMatch(runner, /position\('creator_workspace_access_allowed\(workspace_id\)' in policy_qual\)/u);
   assert.match(runner, /array\['authenticated'\]::name\[\]/u);
-  assert.match(runner, /has_table_privilege\(\s*'service_role'/u);
-  assert.match(runner, /'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'/u);
+  for (const privilege of [
+    "SELECT",
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "TRUNCATE",
+    "REFERENCES",
+    "TRIGGER",
+  ]) {
+    assert.match(
+      runner,
+      new RegExp(`not has_table_privilege\\('service_role', learning_table, '${privilege}'\\)`, "u"),
+    );
+  }
   assert.match(runner, /pg_get_indexdef/u);
   assert.match(runner, /generated_atdesc/u);
   assert.match(
@@ -150,6 +163,13 @@ test("installed-state verifier checks policy, grants, definitions, index and exa
   );
   assert.match(runner, /unique\(workspace_id,purchase_event_id\)/u);
   assert.match(runner, /creator_learning_constraint_invalid/u);
+});
+
+test("production VERIFY never recommends the staging-only APPLY path", async () => {
+  const runner = await readFile(runnerPath, "utf8");
+  assert.match(runner, /CREATOR_CONFIRMED_CHAT_NEXT=separate_production_rollout_plan_required/u);
+  assert.match(runner, /CREATOR_CONFIRMED_CHAT_APPLY=forbidden/u);
+  assert.match(runner, /runtime === "production"/u);
 });
 
 test("confirmed-chat verify requires exact target binding and normal deploy never applies the schema", async () => {
