@@ -54,14 +54,15 @@ create table public.creator_confirmed_chat_learning (
       and reaction_message_id is null and reaction_at is null
       and purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null)
     or
-    (outbound_message_id is not null and length(btrim(actual_text)) between 1 and 4000
-      and confirmed_at is not null and confirmed_by is not null)
+    (outbound_message_id is not null and actual_text is not null
+      and length(btrim(actual_text)) between 1 and 4000
+      and confirmed_at is not null)
   ),
   check ((reaction_message_id is null) = (reaction_at is null)),
   check (
     (purchase_event_id is null and purchase_evidence_reference is null and purchase_at is null)
     or
-    (purchase_event_id is not null
+    (purchase_event_id is not null and purchase_evidence_reference is not null
       and length(btrim(purchase_evidence_reference)) between 1 and 200
       and purchase_at is not null)
   ),
