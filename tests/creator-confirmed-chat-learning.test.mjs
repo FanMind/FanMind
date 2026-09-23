@@ -189,6 +189,37 @@ test("installed-state verifier requires the complete read policy and every servi
   assert.match(runner, /creator_learning_constraint_invalid/u);
 });
 
+test("installed-state verifier rejects the reviewed drift classes exactly", async () => {
+  const runner = await readFile(runnerPath, "utf8");
+
+  assert.match(
+    runner,
+    /where tgrelid = learning_table\s+and not tgisinternal[\s\S]*creator_learning_trigger_set_invalid/u,
+  );
+  assert.match(
+    runner,
+    /attname = 'confirmed_by'[\s\S]*format_type\(atttypid, atttypmod\) = 'uuid'[\s\S]*and not attnotnull[\s\S]*creator_learning_confirmed_by_column_invalid/u,
+  );
+  assert.match(
+    runner,
+    /if\(selectauth\.uid\(\)\)isnullornotworkspace_owner_active_mutation_allowed\(p_workspace_id\)ornotcreator_workspace_access_allowed\(p_workspace_id\)thenraiseexception''creator_learning_owner_processing_required''usingerrcode=''42501'';endif;/u,
+  );
+  assert.match(runner, /i\.indpred is null and i\.indexprs is null/u);
+  assert.match(runner, /i\.indnkeyatts = 4 and i\.indnatts = 4/u);
+  assert.match(runner, /am\.amname = 'btree'/u);
+  assert.match(
+    runner,
+    /index_def <>\s*'createindexcreator_confirmed_chat_learning_contact_idxoncreator_confirmed_chat_learningusingbtree\(workspace_id,creator_id,contact_id,generated_atdesc\)'/u,
+  );
+  assert.match(runner, /where conrelid = learning_table\) <> 18/u);
+  assert.match(runner, /not convalidated or condeferrable or condeferred/u);
+  assert.match(runner, /array_length\(check_constraint_defs, 1\) <> 10/u);
+  assert.match(runner, /checkcreator_revision>0/u);
+  assert.match(runner, /checkselected_variant=anyarray/u);
+  assert.match(runner, /checkoutbound_message_idisnullandactual_textisnull/u);
+  assert.doesNotMatch(runner, /d like 'check\(%creator_revision%>0%\)'/u);
+});
+
 test("production VERIFY never recommends the staging-only APPLY path", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /CREATOR_CONFIRMED_CHAT_NEXT=separate_production_rollout_plan_required/u);
