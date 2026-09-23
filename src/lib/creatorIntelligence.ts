@@ -74,8 +74,8 @@ export async function getCreatorFanData(workspaceId: string, contactId: string, 
   if (bundles.length === 0) return { configured: false, commercial: {}, events: [], offers: [] };
   if (bundles.length !== 1) throw new Error("creator_profile_required");
   const profiles = await creatorRequest<Array<{ commercial_profile: Record<string, unknown> }>>("contact_ai_profiles", workspaceId, { accessToken, select: "commercial_profile", filters: { contact_id: `eq.${contactId}` } });
-  const events = await creatorRequest<Array<{ kind: string; occurred_at: string; amount_minor: number | null; currency: string | null; evidence_reference: string }>>("creator_commercial_events", workspaceId, {
-    accessToken, limit: 10, select: "kind,occurred_at,amount_minor,currency,evidence_reference",
+  const events = await creatorRequest<Array<{ id: string; kind: string; occurred_at: string; amount_minor: number | null; currency: string | null; evidence_reference: string }>>("creator_commercial_events", workspaceId, {
+    accessToken, limit: 10, select: "id,kind,occurred_at,amount_minor,currency,evidence_reference",
     filters: { creator_id: `eq.${bundles[0].id}`, contact_id: `eq.${contactId}`, order: "occurred_at.desc" },
   });
   return { configured: true, commercial: profiles[0]?.commercial_profile ?? {}, events, offers: bundles[0].playbook.offers.filter((offer) => offer.active && !offer.requiresConfirmation).map(({ id, name }) => ({ id, name })) };
