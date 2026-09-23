@@ -63,6 +63,10 @@ type DatasetDefinition = {
   order: string;
   scope: DatasetScope;
   optionalUntilInstalled?: boolean;
+  preinstallMarker?: {
+    table: string;
+    column: string;
+  };
 };
 
 // Complete browser-readable Production data families that can hold data for the
@@ -96,7 +100,21 @@ const DATASETS: DatasetDefinition[] = [
   { key: "creator_voices", table: "creator_voice_profiles", scope: "workspace", order: "creator_id.asc", optionalUntilInstalled: true },
   { key: "creator_playbooks", table: "creator_sales_playbooks", scope: "workspace", order: "creator_id.asc", optionalUntilInstalled: true },
   { key: "creator_commercial_events", table: "creator_commercial_events", scope: "workspace", order: "occurred_at.asc.nullsfirst,id.asc", optionalUntilInstalled: true },
-  { key: "creator_confirmed_chat_learning", table: "creator_confirmed_chat_learning", scope: "workspace", order: "generated_at.asc,proposal_id.asc", optionalUntilInstalled: true },
+  {
+    key: "creator_confirmed_chat_learning",
+    table: "creator_confirmed_chat_learning",
+    scope: "workspace",
+    order: "generated_at.asc,proposal_id.asc",
+    optionalUntilInstalled: true,
+    // This column is created by the same controlled migration as the learning
+    // table. A missing learning table is therefore tolerated only while this
+    // durable marker is also provably absent. Once the migration is visible,
+    // table/schema-cache drift must fail the disclosure closed.
+    preinstallMarker: {
+      table: "conversation_messages",
+      column: "creator_learning_manual_send",
+    },
+  },
   { key: "chat_admin_capability", table: "workspace_chat_admin_capabilities", scope: "workspace", order: "workspace_id.asc", optionalUntilInstalled: true },
   { key: "chat_characters", table: "chat_characters", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_conversations", table: "chat_character_conversations", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
@@ -226,6 +244,50 @@ async function fetchPage(input: {
   return { ok: true, rows: rows.map(sanitizeRow) };
 }
 
+async function preinstallMarkerIsAbsent(input: {
+  definition: DatasetDefinition;
+  workspaceId: string;
+  accessToken: string;
+  fetchImpl: typeof fetch;
+}): Promise<boolean> {
+  const marker = input.definition.preinstallMarker;
+  if (!marker) return true;
+
+  const url = new URL(getSupabaseRestUrl(marker.table));
+  url.searchParams.set("select", marker.column);
+  url.searchParams.set("workspace_id", `eq.${input.workspaceId}`);
+  url.searchParams.set("limit", "1");
+
+  const response = await input.fetchImpl(url, {
+    headers: getSupabaseHeaders(input.accessToken),
+    cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+  }).catch(() => null);
+
+  if (!response) {
+    throw new DataDisclosureExportError(
+      `${input.definition.table}: Preinstallationszustand konnte nicht verifiziert werden.`,
+    );
+  }
+  if (response.ok) return false;
+
+  const body = await response.text().catch(() => "");
+  let code = "";
+  try {
+    const parsed = JSON.parse(body) as { code?: unknown };
+    code = typeof parsed?.code === "string" ? parsed.code : "";
+  } catch {
+    code = "";
+  }
+  const normalized = body.toLowerCase();
+  return (
+    response.status === 400 &&
+    code === "PGRST204" &&
+    normalized.includes(marker.column.toLowerCase())
+  );
+}
+
 async function fetchDataset(input: {
   definition: DatasetDefinition;
   workspaceId: string;
@@ -247,7 +309,11 @@ async function fetchDataset(input: {
       offset: rows.length,
     });
     if (!result.ok) {
-      if (input.definition.optionalUntilInstalled && result.missingSchema) {
+      if (
+        input.definition.optionalUntilInstalled &&
+        result.missingSchema &&
+        (await preinstallMarkerIsAbsent(input))
+      ) {
         return { key: input.definition.key, rows: [] };
       }
       throw new DataDisclosureExportError(
