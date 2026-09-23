@@ -128,7 +128,10 @@ export function normalizeConfirmedChatLearning(value, options = {}) {
     promptRevision: boundedText(value.outbound.promptRevision, 120, "invalid_outbound_prompt_revision"),
     actualText: boundedText(value.outbound.actualText, 4000, "invalid_outbound_text"),
     confirmedAt: timestamp(value.outbound.confirmedAt, "invalid_outbound_confirmation", clock),
-    confirmedBy: creatorUuid(value.outbound.confirmedBy),
+    // confirmed_at + the immutable message binding are the confirmation fact.
+    // confirmed_by is optional audit metadata because the FK deliberately
+    // anonymizes a deleted actor with ON DELETE SET NULL.
+    confirmedBy: value.outbound.confirmedBy == null ? null : creatorUuid(value.outbound.confirmedBy),
   };
   requireProposalBinding(normalizedProposal, outbound, "outbound_proposal_mismatch");
   requireCondition(Date.parse(outbound.confirmedAt) >= Date.parse(normalizedProposal.generatedAt), "outbound_before_proposal");
