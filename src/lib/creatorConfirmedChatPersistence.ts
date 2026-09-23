@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabase/config";
 
 const VARIANTS = ["recommended", "softer", "stronger"] as const;
+const MAX_TEXT_CODE_UNITS = 4_000;
 const graphemeSegmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
 type CreatorLearningVariant = (typeof VARIANTS)[number];
 
@@ -22,6 +23,10 @@ type RegisteredProposal = {
   proposalId: string;
   generationId: string;
   selectedVariant: CreatorLearningVariant;
+};
+
+type OutboundEvidenceRow = {
+  content?: unknown;
 };
 
 export function creatorConfirmedChatLearningEnabled(): boolean {
@@ -42,16 +47,22 @@ function normalizePromptRevision(value: string): string {
   return normalized;
 }
 
-function measurableProposalText(value: unknown): string {
-  const normalized = typeof value === "string" ? value.trim() : "";
-  if (!normalized) throw new Error("creator_learning_proposal_invalid");
+function measurableText(value: unknown, code: string): { raw: string; normalized: string } {
+  const raw = typeof value === "string" ? value : "";
+  if (!raw || raw.length > MAX_TEXT_CODE_UNITS) throw new Error(code);
+  const normalized = raw.trim();
+  if (!normalized) throw new Error(code);
   const graphemeCount = Array.from(
     graphemeSegmenter.segment(normalized.normalize("NFC")),
   ).length;
   if (graphemeCount > CONFIRMED_CHAT_MAX_GRAPHEMES) {
-    throw new Error("creator_learning_proposal_invalid");
+    throw new Error(code);
   }
-  return normalized;
+  return { raw, normalized };
+}
+
+function measurableProposalText(value: unknown): string {
+  return measurableText(value, "creator_learning_proposal_invalid").normalized;
 }
 
 function normalizeProposals(values: ProposalInput[]): ProposalInput[] {
@@ -95,6 +106,41 @@ async function rpc<T>(name: string, token: string, body: Record<string, unknown>
   }).catch(() => null);
   if (!response?.ok) throw new Error("creator_learning_persistence_unavailable");
   return await response.json() as T;
+}
+
+async function readMeasurableOutboundText(input: {
+  workspaceId: string;
+  contactId: string;
+  outboundMessageId: string;
+  token: string;
+}): Promise<string> {
+  const query = new URLSearchParams({
+    select: "content",
+    id: `eq.${input.outboundMessageId}`,
+    workspace_id: `eq.${input.workspaceId}`,
+    contact_id: `eq.${input.contactId}`,
+    direction: "eq.outbound",
+    creator_learning_manual_send: "eq.true",
+    limit: "2",
+  });
+  const response = await fetch(
+    getSupabaseRestUrl(`conversation_messages?${query.toString()}`),
+    {
+      method: "GET",
+      headers: getSupabaseHeaders(input.token),
+      cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
+    },
+  ).catch(() => null);
+  if (!response?.ok) throw new Error("creator_learning_persistence_unavailable");
+  const rows = await response.json() as OutboundEvidenceRow[];
+  if (!Array.isArray(rows) || rows.length !== 1) {
+    throw new Error("creator_learning_outbound_evidence_mismatch");
+  }
+  return measurableText(
+    rows[0]?.content,
+    "creator_learning_outbound_evidence_mismatch",
+  ).raw;
 }
 
 // Server-only proposal capture. The SQL contract grants this RPC only to
@@ -153,21 +199,34 @@ export async function confirmCreatorConfirmedChatOutbound(input: {
   contactId: string;
   proposalId: string;
   outboundMessageId: string;
+  actorUserId: string;
   accessToken?: string;
 }): Promise<{ proposalId: string; outboundMessageId: string; confirmed: boolean }> {
   requireLearningEnabled();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!serviceKey) throw new Error("creator_learning_service_unavailable");
   const workspaceId = creatorUuid(input.workspaceId);
   const contactId = creatorUuid(input.contactId);
   const proposalId = creatorUuid(input.proposalId);
   const outboundMessageId = creatorUuid(input.outboundMessageId);
+  const actorUserId = creatorUuid(input.actorUserId);
+  const token = await accessToken(input.accessToken);
+  const expectedActualText = await readMeasurableOutboundText({
+    workspaceId,
+    contactId,
+    outboundMessageId,
+    token,
+  });
   return rpc(
     "confirm_creator_confirmed_chat_outbound",
-    await accessToken(input.accessToken),
+    serviceKey,
     {
       p_workspace_id: workspaceId,
       p_contact_id: contactId,
       p_proposal_id: proposalId,
       p_outbound_message_id: outboundMessageId,
+      p_actor_user_id: actorUserId,
+      p_expected_actual_text: expectedActualText,
     },
   );
 }
