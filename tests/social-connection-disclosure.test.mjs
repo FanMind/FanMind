@@ -55,7 +55,7 @@ const expectedTables=[
   'conversation_messages','conversation_summaries','contact_reply_targets','fan_analysis_reports',
   'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','social_connections','meta_webhook_events',
   'content_sources','content_metric_snapshots','communication_analysis_reports','workspace_analysis_settings',
-  'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events',
+  'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events','creator_confirmed_chat_learning',
   'workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages',
 ];
 
@@ -86,7 +86,15 @@ test('complete disclosure enumerates every browser-readable Production Creator d
   const h=collectorFixture();const result=await h.run();
   assert.deepEqual(h.calls.map(x=>x.table).sort(),[...expectedTables].sort());assert.equal(result.length,expectedTables.length);
   assert.equal(h.calls.find(x=>x.table==='conversation_messages').url.searchParams.get('source_platform'),null,'all channels must be exported');
+  assert.equal(h.calls.find(x=>x.table==='creator_confirmed_chat_learning').url.searchParams.get('order'),'generated_at.asc,proposal_id.asc');
   assert.ok(!h.calls.some(x=>x.table==='workspace_ai_prompt_settings'),'a table absent from current Production must not be invented as stored data');
+});
+
+test('confirmed-chat learning is optional only until installed and becomes fail-closed once present',async()=>{
+  const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
+  const datasets=await missing.run();assert.deepEqual(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows,[]);
+  const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
+  await assert.rejects(denied.run(),DisclosureFailure);
 });
 
 test('profile, membership, workspace and social rows remain Creator-bound and credentials are stripped',async()=>{
@@ -198,12 +206,12 @@ function routeFixture({datasets=[],privateDatasets=[],failAt,authReadError=false
 }
 
 test('successful disclosure binds both readers to the signed-in Creator and is explicitly complete',async()=>{
-  const datasets=[{key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},{key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},{key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},{key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]}];
+  const datasets=[{key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},{key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},{key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},{key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]},{key:'creator_confirmed_chat_learning',rows:[{proposal_id:'p1',workspace_id:workspace,proposed_text:'PRESERVE_CONFIRMED_CHAT'}]}];
   const privateDatasets=[{key:'referral_membership',rows:[{workspace_id:workspace,user_id:userId,referral_code:'OWNCODE'}]}];
   const h=routeFixture({datasets,privateDatasets});const response=await h.run('de');
   assert.deepEqual(h.collectorArgs(),[workspace,userId]);assert.deepEqual(h.privateArgs(),[workspace,userId,email]);
   assert.equal(response.status,200);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');assert.match(response.headers.get('Content-Disposition'),/fanmind-datenauskunft\.pdf/);assert.doesNotMatch(response.headers.get('Content-Disposition'),/teilweise|partial/i);
-  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
+  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/Bestätigte Chat-Lernevidenz/);assert.match(lines,/PRESERVE_CONFIRMED_CHAT/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
 });
 
 test('workspace members cannot export the Creator Workspace disclosure',async()=>{
