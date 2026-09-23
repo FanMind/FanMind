@@ -23,12 +23,20 @@ worked":
    `service_role`; the browser cannot mint proposal identities.
 2. A human confirmation may bind one proposal only to an **already stored
    outbound** `conversation_messages` row in the same
-   Workspace/Fan/Conversation. Rebinding to a different outbound fails closed.
+   Workspace/Fan/Conversation that carries durable manual-send provenance:
+   `direction='outbound'`, `message_type='manual'` and `source_type='manual'`.
+   A provider-imported outbound is therefore not learnable merely because it is
+   marked outbound. Rebinding to a different outbound fails closed.
 3. A reaction may only be an independently stored **inbound** message in the
    same Workspace/Fan/Conversation after that outbound.
 4. A purchase may only be an independently confirmed
-   `creator_commercial_events` purchase in the exact same
-   Workspace/Creator/Fan/Conversation after that outbound.
+   `creator_commercial_events` purchase for the exact same Workspace/Creator/Fan
+   after that outbound. If the existing event already has a `conversation_id`,
+   it must match. Current `record_creator_fan_review` events may have a null
+   `conversation_id`; for those, the explicit authenticated `link_outcomes`
+   action plus the learning row's exact conversation/proposal/purchase IDs is the
+   durable conversation association. A purchase event can be linked to only one
+   learning row.
 5. Missing reaction or purchase evidence remains unknown. The persistence
    contract does not infer outcome, intent, attribution, causality, or revenue
    from text.
@@ -45,6 +53,12 @@ it does not weaken the validator.
   checks Creator revision plus Workspace/Fan/Conversation scope.
 - Outbound confirmation and outcome linking require an authenticated Workspace
   owner/member, active Workspace access and exact tenant/contact/proposal scope.
+- Manual-send provenance is read from the durable message row; a later UI click
+  cannot turn a generic provider-imported outbound into learning evidence.
+- Purchase linking requires an independently confirmed purchase event for the
+  same Workspace/Creator/Fan. A non-null foreign conversation is rejected; an
+  unbound event is associated only by the explicit authenticated link and cannot
+  be reused by another learning record.
 - The application API additionally requires the normal trusted mutation/session
   boundary, active processing entitlement, Creator Intelligence availability and
   the dedicated rollout flag.
