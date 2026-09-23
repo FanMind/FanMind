@@ -10,47 +10,88 @@ import {
   openSync,
   readFileSync,
   readSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { isAbsolute, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+const REPO_ROOT = realpathSync(resolve(dirname(fileURLToPath(import.meta.url)), "../.."));
 const MIGRATION_ID = "20260923023000_creator_confirmed_chat_learning";
-const MIGRATION_PATH = resolve(process.cwd(), `supabase/controlled/${MIGRATION_ID}.sql`);
+const MIGRATION_REPO_PATH = `supabase/controlled/${MIGRATION_ID}.sql`;
+const MIGRATION_PATH = resolve(REPO_ROOT, MIGRATION_REPO_PATH);
 const ROLLOUT_STATE_REPO_PATH = "src/lib/confirmedChatLearningDeletionVerification.mjs";
-const ROLLOUT_STATE_PATH = resolve(process.cwd(), ROLLOUT_STATE_REPO_PATH);
+const ROLLOUT_STATE_PATH = resolve(REPO_ROOT, ROLLOUT_STATE_REPO_PATH);
+const WORKSPACE_BOUNDARY_REPO_PATH =
+  "supabase/controlled/20260816120000_workspace_member_data_boundary.sql";
+const CREATOR_ACCESS_REPO_PATH = "supabase/controlled/creator_revision_conflict_fix.sql";
 const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7";
+const EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa";
+const EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672";
 const APPLY_CONFIRMATION = "apply-creator-confirmed-chat-learning";
 const NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT = "I_UNDERSTAND_NON_PRODUCTION_ONLY";
 const MAX_PASSFILE_BYTES = 64 * 1024;
 
-const FUNCTION_CONTRACTS = [
-  {
+const FUNCTION_CONTRACTS = Object.freeze([
+  Object.freeze({
     name: "stamp_creator_learning_manual_send",
     signature: "public.stamp_creator_learning_manual_send()",
     securityDefiner: false,
-  },
-  {
+    resultType: "trigger",
+  }),
+  Object.freeze({
     name: "record_creator_confirmed_chat_proposals",
     signature:
       "public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)",
     securityDefiner: true,
-  },
-  {
+    resultType: "jsonb",
+  }),
+  Object.freeze({
     name: "confirm_creator_confirmed_chat_outbound",
     signature:
       "public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)",
     securityDefiner: true,
-  },
-  {
+    resultType: "jsonb",
+  }),
+  Object.freeze({
     name: "link_creator_confirmed_chat_outcomes",
     signature:
       "public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)",
     securityDefiner: true,
-  },
-];
+    resultType: "jsonb",
+  }),
+]);
+
+const FOUNDATION_FUNCTION_CONTRACTS = Object.freeze([
+  Object.freeze({
+    name: "creator_workspace_access_allowed",
+    signature: "public.creator_workspace_access_allowed(uuid)",
+    source: "creatorAccess",
+    securityDefiner: true,
+    language: "plpgsql",
+    proconfig: `array['search_path=""']::text[]`,
+  }),
+  Object.freeze({
+    name: "workspace_owner_active_mutation_allowed",
+    signature: "public.workspace_owner_active_mutation_allowed(uuid)",
+    source: "workspaceBoundary",
+    securityDefiner: false,
+    language: "sql",
+    proconfig:
+      "array['search_path=pg_catalog, public, pg_temp','row_security=on']::text[]",
+  }),
+  Object.freeze({
+    name: "workspace_processing_allowed_contract",
+    signature:
+      "public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)",
+    source: "workspaceBoundary",
+    securityDefiner: false,
+    language: "plpgsql",
+    proconfig: "array['search_path=pg_catalog, public, pg_temp']::text[]",
+  }),
+]);
 
 function fail(code) {
   throw new Error(`CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=${code}`);
@@ -68,32 +109,176 @@ function gitBlobSha1(content) {
     .digest("hex");
 }
 
-function migrationFunctionBody(sql, name) {
+function functionBody(source, name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   const signature = new RegExp(
     `create(?:\\s+or\\s+replace)?\\s+function\\s+public\\.${escaped}\\s*\\(`,
-    "iu",
+    "giu",
   );
-  const match = signature.exec(sql);
-  if (!match) fail("migration_contract_invalid");
-  const bodyMarker = /as\s+\$\$/giu;
-  bodyMarker.lastIndex = match.index;
-  const bodyStartMatch = bodyMarker.exec(sql);
-  if (!bodyStartMatch) fail("migration_contract_invalid");
-  const bodyStart = bodyStartMatch.index + bodyStartMatch[0].length;
-  const bodyEnd = sql.indexOf("$$;", bodyStart);
-  if (bodyEnd < 0) fail("migration_contract_invalid");
-  return sql.slice(bodyStart, bodyEnd);
+  const match = signature.exec(source);
+  if (!match) fail("contract_function_missing");
+  const bodyMarker = /\bas\s+(\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$)/giu;
+  bodyMarker.lastIndex = match.index + match[0].length;
+  const marker = bodyMarker.exec(source);
+  if (!marker) fail("contract_function_body_invalid");
+  const delimiter = marker[1];
+  const bodyStart = marker.index + marker[0].length;
+  const bodyEnd = source.indexOf(delimiter, bodyStart);
+  if (bodyEnd < 0) fail("contract_function_body_invalid");
+  return source.slice(bodyStart, bodyEnd);
 }
 
-function functionBodyHash(sql, name) {
-  return createHash("md5").update(migrationFunctionBody(sql, name), "utf8").digest("hex");
+function functionBodyHash(source, name) {
+  return createHash("md5").update(functionBody(source, name), "utf8").digest("hex");
 }
 
-function buildVerifySql(sql) {
+function readPinnedSource(repoPath, expectedBlobSha1, unreadableCode, checksumCode) {
+  let source;
+  try {
+    source = readFileSync(resolve(REPO_ROOT, repoPath), "utf8");
+  } catch {
+    fail(unreadableCode);
+  }
+  if (gitBlobSha1(source) !== expectedBlobSha1) fail(checksumCode);
+  return source;
+}
+
+function readFoundationContractSources() {
+  const workspaceBoundary = readPinnedSource(
+    WORKSPACE_BOUNDARY_REPO_PATH,
+    EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1,
+    "workspace_boundary_unreadable",
+    "workspace_boundary_checksum_mismatch",
+  );
+  const creatorAccess = readPinnedSource(
+    CREATOR_ACCESS_REPO_PATH,
+    EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1,
+    "creator_access_contract_unreadable",
+    "creator_access_contract_checksum_mismatch",
+  );
+  for (const contract of FOUNDATION_FUNCTION_CONTRACTS) {
+    functionBody(contract.source === "creatorAccess" ? creatorAccess : workspaceBoundary, contract.name);
+  }
+  return { workspaceBoundary, creatorAccess };
+}
+
+function functionMetadataCondition({
+  securityDefiner,
+  language,
+  resultType,
+  proconfig,
+  bodyHash,
+}) {
+  return [
+    "function_source is null",
+    `function_security_definer is distinct from ${securityDefiner ? "true" : "false"}`,
+    `function_config is distinct from ${proconfig}`,
+    `function_language is distinct from '${language}'`,
+    "function_strict is distinct from false",
+    "function_volatility is distinct from 's'",
+    `function_result_type is distinct from '${resultType}'`,
+    "function_returns_set is distinct from false",
+    "function_parallel is distinct from 'u'",
+    "function_leakproof is distinct from false",
+    "function_kind is distinct from 'f'",
+    "function_default_count is distinct from 0",
+    "function_variadic is distinct from 0::oid",
+    `md5(function_source) <> '${bodyHash}'`,
+  ].join("\n     or ");
+}
+
+function learningFunctionMetadataCondition(contract, bodyHash) {
+  return [
+    "function_source is null",
+    `function_security_definer is distinct from ${contract.securityDefiner ? "true" : "false"}`,
+    `function_config is distinct from array['search_path=""']::text[]`,
+    "function_language is distinct from 'plpgsql'",
+    "function_strict is distinct from false",
+    "function_volatility is distinct from 'v'",
+    `function_result_type is distinct from '${contract.resultType}'`,
+    "function_returns_set is distinct from false",
+    "function_parallel is distinct from 'u'",
+    "function_leakproof is distinct from false",
+    "function_kind is distinct from 'f'",
+    "function_default_count is distinct from 0",
+    "function_variadic is distinct from 0::oid",
+    `md5(function_source) <> '${bodyHash}'`,
+  ].join("\n     or ");
+}
+
+function pgProcSelect(signature) {
+  return String.raw`select
+      p.prosecdef,
+      p.proconfig,
+      p.prosrc,
+      p.proisstrict,
+      p.provolatile::text,
+      l.lanname::text,
+      format_type(p.prorettype, null),
+      p.proretset,
+      p.proparallel::text,
+      p.proleakproof,
+      p.prokind::text,
+      p.pronargdefaults,
+      p.provariadic
+    into
+      function_security_definer,
+      function_config,
+      function_source,
+      function_strict,
+      function_volatility,
+      function_language,
+      function_result_type,
+      function_returns_set,
+      function_parallel,
+      function_leakproof,
+      function_kind,
+      function_default_count,
+      function_variadic
+    from pg_proc p
+    join pg_language l on l.oid = p.prolang
+   where p.oid = to_regprocedure('${signature}');`;
+}
+
+function buildVerifySql(sql, foundationSources) {
   const hashes = Object.fromEntries(
     FUNCTION_CONTRACTS.map(({ name }) => [name, functionBodyHash(sql, name)]),
   );
+  const foundationHashes = Object.fromEntries(
+    FOUNDATION_FUNCTION_CONTRACTS.map((contract) => [
+      contract.name,
+      functionBodyHash(
+        contract.source === "creatorAccess"
+          ? foundationSources.creatorAccess
+          : foundationSources.workspaceBoundary,
+        contract.name,
+      ),
+    ]),
+  );
+
+  const foundationChecks = FOUNDATION_FUNCTION_CONTRACTS.map((contract) => {
+    const resultType = "boolean";
+    return String.raw`
+  ${pgProcSelect(contract.signature)}
+  if ${functionMetadataCondition({
+    securityDefiner: contract.securityDefiner,
+    language: contract.language,
+    resultType,
+    proconfig: contract.proconfig,
+    bodyHash: foundationHashes[contract.name],
+  })} then
+    raise exception 'creator_learning_foundation_function_invalid';
+  end if;`;
+  }).join("\n");
+
+  const learningChecks = FUNCTION_CONTRACTS.map(
+    (contract) => String.raw`
+  ${pgProcSelect(contract.signature)}
+  if ${learningFunctionMetadataCondition(contract, hashes[contract.name])} then
+    raise exception 'creator_learning_function_metadata_invalid';
+  end if;`,
+  ).join("\n");
+
   return String.raw`
 \set ON_ERROR_STOP on
 begin;
@@ -112,6 +297,16 @@ declare
   function_source text;
   function_security_definer boolean;
   function_config text[];
+  function_strict boolean;
+  function_volatility text;
+  function_language text;
+  function_result_type text;
+  function_returns_set boolean;
+  function_parallel text;
+  function_leakproof boolean;
+  function_kind text;
+  function_default_count integer;
+  function_variadic oid;
   index_def text;
   constraint_defs text[];
   check_constraint_defs text[];
@@ -124,6 +319,8 @@ begin
      or to_regprocedure('public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamp with time zone)') is null then
     raise exception 'creator_learning_foundation_missing';
   end if;
+
+${foundationChecks}
 
   if learning_table is null then
     if exists (
@@ -149,6 +346,15 @@ begin
        and relrowsecurity
   ) then
     raise exception 'creator_learning_rls_invalid';
+  end if;
+
+  if (select count(*) from pg_roles where rolname in ('anon','authenticated')) <> 2
+     or exists (
+       select 1 from pg_roles
+        where rolname in ('anon','authenticated')
+          and (rolbypassrls or rolsuper)
+     ) then
+    raise exception 'creator_learning_browser_role_rls_invalid';
   end if;
 
   if exists (
@@ -206,10 +412,7 @@ begin
      where a.attname is null
         or format_type(a.atttypid, a.atttypmod) <> e.type_name
         or a.attnotnull is distinct from e.not_null
-        or (
-          e.default_expr is null
-          and d.adbin is not null
-        )
+        or (e.default_expr is null and d.adbin is not null)
         or (
           e.default_expr is not null
           and regexp_replace(coalesce(pg_get_expr(d.adbin, d.adrelid), ''), '[[:space:]]+', '', 'g')
@@ -255,55 +458,7 @@ begin
     raise exception 'creator_learning_functions_missing';
   end if;
 
-  select p.prosecdef, p.proconfig, p.prosrc
-    into function_security_definer, function_config, function_source
-    from pg_proc p
-   where p.oid = to_regprocedure('public.stamp_creator_learning_manual_send()');
-  if function_source is null
-     or function_security_definer
-     or function_config is distinct from array['search_path=""']::text[]
-     or md5(function_source) <> '${hashes.stamp_creator_learning_manual_send}' then
-    raise exception 'creator_learning_stamp_function_invalid';
-  end if;
-
-  select p.prosecdef, p.proconfig, p.prosrc
-    into function_security_definer, function_config, function_source
-    from pg_proc p
-   where p.oid = to_regprocedure(
-     'public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)'
-   );
-  if function_source is null
-     or not function_security_definer
-     or function_config is distinct from array['search_path=""']::text[]
-     or md5(function_source) <> '${hashes.record_creator_confirmed_chat_proposals}' then
-    raise exception 'creator_learning_proposal_function_invalid';
-  end if;
-
-  select p.prosecdef, p.proconfig, p.prosrc
-    into function_security_definer, function_config, function_source
-    from pg_proc p
-   where p.oid = to_regprocedure(
-     'public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)'
-   );
-  if function_source is null
-     or not function_security_definer
-     or function_config is distinct from array['search_path=""']::text[]
-     or md5(function_source) <> '${hashes.confirm_creator_confirmed_chat_outbound}' then
-    raise exception 'creator_learning_confirm_function_invalid';
-  end if;
-
-  select p.prosecdef, p.proconfig, p.prosrc
-    into function_security_definer, function_config, function_source
-    from pg_proc p
-   where p.oid = to_regprocedure(
-     'public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)'
-   );
-  if function_source is null
-     or not function_security_definer
-     or function_config is distinct from array['search_path=""']::text[]
-     or md5(function_source) <> '${hashes.link_creator_confirmed_chat_outcomes}' then
-    raise exception 'creator_learning_outcome_function_invalid';
-  end if;
+${learningChecks}
 
   select count(*)::integer into policy_count
     from pg_policies
@@ -458,6 +613,7 @@ begin
      and convalidated;
 
   if constraint_defs is null
+     or check_constraint_defs is null
      or array_length(check_constraint_defs, 1) <> 10
      or not ('primarykey(proposal_id)' = any(constraint_defs))
      or not ('foreignkey(workspace_id,creator_id)referencescreators(workspace_id,id)ondeletecascade' = any(constraint_defs))
@@ -513,34 +669,56 @@ function rolloutState() {
   }
 }
 
-function runGit(args) {
-  return spawnSync("git", args, {
+function safeGitEnvironment(environment = process.env) {
+  const allowed = ["PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT", "WINDIR"];
+  const safe = Object.fromEntries(
+    allowed
+      .filter((key) => typeof environment[key] === "string")
+      .map((key) => [key, environment[key]]),
+  );
+  safe.GIT_NO_REPLACE_OBJECTS = "1";
+  safe.GIT_TERMINAL_PROMPT = "0";
+  return safe;
+}
+
+function runGit(args, environment = process.env) {
+  return spawnSync("git", ["-C", REPO_ROOT, ...args], {
+    cwd: REPO_ROOT,
+    env: safeGitEnvironment(environment),
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   });
 }
 
-function reviewedRolloutState(reviewedCommit) {
-  const shown = runGit(["show", `${reviewedCommit}:${ROLLOUT_STATE_REPO_PATH}`]);
+function requireRepositoryIdentity(environment) {
+  const topLevel = runGit(["rev-parse", "--show-toplevel"], environment);
+  if (
+    topLevel.status !== 0 ||
+    !clean(topLevel.stdout) ||
+    realpathSync(clean(topLevel.stdout)) !== REPO_ROOT
+  ) {
+    fail("checkout_repository_mismatch");
+  }
+}
+
+function reviewedRolloutState(reviewedCommit, environment) {
+  const shown = runGit(["show", `${reviewedCommit}:${ROLLOUT_STATE_REPO_PATH}`], environment);
   if (shown.status !== 0) fail("reviewed_rollout_state_unreadable");
   return parseRolloutState(shown.stdout);
 }
 
-function requireCleanTrackedCheckout() {
-  const status = runGit(["status", "--porcelain=v1", "--untracked-files=no"]);
+function requireCleanTrackedCheckout(environment) {
+  const status = runGit(["status", "--porcelain=v1", "--untracked-files=no"], environment);
   if (status.status !== 0 || clean(status.stdout)) fail("checkout_dirty");
 }
 
 function readAndVerifyMigration() {
-  let sql;
-  try {
-    sql = readFileSync(MIGRATION_PATH, "utf8");
-  } catch {
-    fail("migration_unreadable");
-  }
-  if (gitBlobSha1(sql) !== EXPECTED_MIGRATION_GIT_BLOB_SHA1) {
-    fail("migration_checksum_mismatch");
-  }
+  const sql = readPinnedSource(
+    MIGRATION_REPO_PATH,
+    EXPECTED_MIGRATION_GIT_BLOB_SHA1,
+    "migration_unreadable",
+    "migration_checksum_mismatch",
+  );
   const required = [
     /^begin;/imu,
     /create table public\.creator_confirmed_chat_learning/iu,
@@ -568,9 +746,7 @@ function readAndVerifyMigration() {
   ) {
     fail("migration_contract_invalid");
   }
-  for (const { name } of FUNCTION_CONTRACTS) {
-    migrationFunctionBody(sql, name);
-  }
+  for (const { name } of FUNCTION_CONTRACTS) functionBody(sql, name);
   return sql;
 }
 
@@ -643,12 +819,13 @@ function requireTarget(environment, mode) {
     environment.FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT,
   ).toLowerCase();
   if (!/^[0-9a-f]{40}$/u.test(reviewedCommit)) fail("reviewed_commit_invalid");
-  const actual = runGit(["rev-parse", "HEAD"]);
+  requireRepositoryIdentity(environment);
+  const actual = runGit(["rev-parse", "HEAD"], environment);
   if (actual.status !== 0 || clean(actual.stdout).toLowerCase() !== reviewedCommit) {
     fail("checkout_mismatch");
   }
 
-  requireCleanTrackedCheckout();
+  requireCleanTrackedCheckout(environment);
   if (mode === "apply") {
     if (
       clean(environment.FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION) !==
@@ -837,7 +1014,8 @@ export function main(args = process.argv.slice(2), environment = process.env) {
     fail("mode_invalid");
   }
   const sql = readAndVerifyMigration();
-  const verifySql = buildVerifySql(sql);
+  const foundationSources = readFoundationContractSources();
+  const verifySql = buildVerifySql(sql, foundationSources);
   const workingState = rolloutState();
   const digest = createHash("sha256").update(sql).digest("hex");
 
@@ -846,6 +1024,7 @@ export function main(args = process.argv.slice(2), environment = process.env) {
     console.log("CREATOR_CONFIRMED_CHAT_MIGRATION_CHECKSUM=verified");
     console.log(`CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=${digest}`);
     console.log("CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified");
+    console.log("CREATOR_CONFIRMED_CHAT_FOUNDATION_CONTRACT=verified");
     console.log(`CREATOR_CONFIRMED_CHAT_SOURCE_STATE=${workingState}`);
     console.log("CREATOR_CONFIRMED_CHAT_APPLY=not_requested");
     return;
@@ -854,7 +1033,7 @@ export function main(args = process.argv.slice(2), environment = process.env) {
   const mode = modeArg.slice(2);
   if (mode === "apply" && workingState !== "installed") fail("source_state_not_installed");
   const { reviewedCommit } = requireTarget(environment, mode);
-  const state = reviewedRolloutState(reviewedCommit);
+  const state = reviewedRolloutState(reviewedCommit, environment);
   if (state !== workingState) fail("rollout_state_checkout_mismatch");
   if (mode === "apply" && state !== "installed") fail("source_state_not_installed");
 
