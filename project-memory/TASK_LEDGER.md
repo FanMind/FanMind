@@ -1,3 +1,13 @@
+## FM-GOV-BUILDER-MANAGER-002
+- Date: 2026-09-24
+- Status: IN_PROGRESS
+- Risk: R2
+- Goal: correct Builder Manager worker accounting so non-running blocked/owner/deferred/prerequisite work cannot exhaust the worker pool and globally suppress independent SAFE READY repository work.
+- Defect evidence: after #1178 merged, generated state reported 11 reserved workers against a limit of 3 although the listed continuations were predominantly OWNER_ACTION_REQUIRED, DEFERRED_BY_OWNER, WAITING_PREREQUISITE or externally blocked. This serialized otherwise executable `NBA-CREATOR-INTELLIGENCE`.
+- Scope: `scripts/fanmind_next_best_action.py`, embedded manager contract tests, zombie-lock reconciliation and generated Project-Memory state only.
+- Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; conflict/scope/dependency checks and owner/protected gates remain unchanged.
+- Exact next step: converge the bounded PR; after merge release this governance lock and recompute the manager before admitting the next product task.
+
 # FanMind Task Ledger
 
 ## FM-BILL-003
