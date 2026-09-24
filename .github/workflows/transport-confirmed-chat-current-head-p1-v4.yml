@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Transport exact already-tested blobs, verify, commit, and push
+      - name: Transport exact already-tested blobs, commit clean tree, test, and push
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,7 +29,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BASE=de64f58efbd3b585c5e7901399724de10e4164d3
+          BASE=95574f1e69481adb8a1123518774c8391c2195ea
           BRANCH=feat/creator-confirmed-chat-rollout-runner-20260923
           HELPER=.github/workflows/transport-confirmed-chat-current-head-p1-v4.yml
           COMMENT_ID=5817040694
@@ -98,22 +98,24 @@ jobs:
           PY
 
           git rm "$HELPER"
-
           test "$(git hash-object "$RUNNER")" = 2bebd26f7a73ab8ac31acdc4f4ee5fa41467638e
           test "$(git hash-object "$CASES")" = b8d161516c6067280cee43c3b66c022e3500c925
 
-          node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
-          node --test tests/creator-confirmed-chat-learning.test.mjs
-          node --test tests/test-suite-coverage.test.mjs
-          npx eslint scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning.test.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
-          npm run test:operations
-          git diff --check
-
-          git add "$RUNNER" "$CASES" "$HELPER"
+          git add -A
           git diff --cached --check
           changed=$(git diff --cached --name-only | sort)
           expected=$(printf '%s\n' "$HELPER" "$RUNNER" "$CASES" | sort)
           test "$changed" = "$expected"
 
+          # Commit first so the checkout-integrity tests exercise the exact clean tree
+          # that will be pushed, rather than the intentionally dirty transport worktree.
           git commit -m "Close confirmed-chat current-head review findings"
+          test -z "$(git status --porcelain)"
+
+          node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
+          node --test tests/creator-confirmed-chat-learning.test.mjs
+          node --test tests/test-suite-coverage.test.mjs
+          npm run test:operations
+          test -z "$(git status --porcelain)"
+
           git push origin "HEAD:refs/heads/$BRANCH"
