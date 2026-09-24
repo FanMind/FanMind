@@ -113,8 +113,10 @@ def persisted_failed_action_ids(text: str, catalog: dict, state: dict | None = N
         if not status or status.group(1) != "FAILED":
             continue
         action = re.search(r"(?m)^- Action:\s*`?([A-Z0-9_-]+)`?\s*$", block)
-        if action and action.group(1) in by_id:
-            ids.add(action.group(1))
+        if action:
+            if action.group(1) in by_id:
+                ids.add(action.group(1))
+            continue
         task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
         if task_line:
             task_ids = set(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
@@ -139,9 +141,17 @@ def action_complete(action: dict, state: dict) -> bool:
     return gate_state(state, action["gate"]) in set(action.get("done_states", []))
 
 
-def classify(action: dict, state: dict, deferred: set[str]) -> tuple[str, str]:
+def classify(
+    action: dict,
+    state: dict,
+    deferred: set[str],
+    *,
+    failed_action_ids: set[str] | None = None,
+) -> tuple[str, str]:
     if action_complete(action, state):
         return "DONE", f"gate {action['gate']} is {gate_state(state, action['gate'])}"
+    if action["id"] in (failed_action_ids or set()):
+        return "FAILED_DO_NOT_RESTART", "failed_do_not_restart"
     prereq_ok, missing = prerequisites_satisfied(action, state)
     if not prereq_ok:
         return "WAITING_PREREQUISITE", ", ".join(missing)
@@ -153,9 +163,26 @@ def classify(action: dict, state: dict, deferred: set[str]) -> tuple[str, str]:
     return "EXECUTABLE", "standing-authorized safe work"
 
 
-def classified_actions(state: dict, catalog: dict, deferred: set[str]):
+def classified_actions(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    *,
+    failed_action_ids: set[str] | None = None,
+):
     ordered = sorted(catalog["actions"], key=lambda x: (x["priority"], x["id"]))
-    return [(action, *classify(action, state, deferred)) for action in ordered]
+    return [
+        (
+            action,
+            *classify(
+                action,
+                state,
+                deferred,
+                failed_action_ids=failed_action_ids,
+            ),
+        )
+        for action in ordered
+    ]
 
 
 def owner_priority_floor(classified) -> int | None:
@@ -165,8 +192,19 @@ def owner_priority_floor(classified) -> int | None:
     return None
 
 
-def executable_candidates(state: dict, catalog: dict, deferred: set[str]):
-    classified = classified_actions(state, catalog, deferred)
+def executable_candidates(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    *,
+    failed_action_ids: set[str] | None = None,
+):
+    classified = classified_actions(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed_action_ids,
+    )
     owner_floor = owner_priority_floor(classified)
     candidates = []
     for action, status, reason in classified:
@@ -189,11 +227,14 @@ def select(
     *,
     failed_action_ids: set[str] | None = None,
 ):
-    candidates, classified = executable_candidates(state, catalog, deferred)
     failed = failed_action_ids or set()
+    candidates, classified = executable_candidates(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed,
+    )
     for action, _ in candidates:
-        if action["id"] in failed:
-            continue
         dep_ok, _ = manager_dependency_status(action, state, catalog, failed)
         if dep_ok:
             return action, [(a, s, r) for a, s, r in classified]
@@ -293,7 +334,12 @@ def build_safe_ready_set(
     limit = resolve_worker_limit(requested_limit)
     failed = failed_action_ids or set()
     active = active_tasks or set()
-    candidates, _ = executable_candidates(state, catalog, deferred)
+    candidates, classified = executable_candidates(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed,
+    )
     candidates = sorted(
         candidates,
         key=lambda candidate: (
@@ -304,14 +350,14 @@ def build_safe_ready_set(
     )
 
     selected: list[dict] = []
-    serialized: list[dict] = []
+    serialized: list[dict] = [
+        {"id": action["id"], "reason": "failed_do_not_restart"}
+        for action, status, _ in classified
+        if status == "FAILED_DO_NOT_RESTART"
+    ]
     blocked_dependencies: list[dict] = []
 
     for action, _ in candidates:
-        if action["id"] in failed:
-            serialized.append({"id": action["id"], "reason": "failed_do_not_restart"})
-            continue
-
         dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
         if not dep_ok:
             blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
@@ -354,6 +400,33 @@ def build_safe_ready_set(
         "serialized_due_to_conflict": serialized,
         "blocked_dependencies": blocked_dependencies,
     }
+
+
+def select_from_manager(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    manager: dict,
+    *,
+    failed_action_ids: set[str] | None = None,
+):
+    classified = classified_actions(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed_action_ids,
+    )
+    by_id = _action_index(catalog)
+    ready = manager.get("safe_ready_set", [])
+    if ready:
+        selected = by_id.get(ready[0])
+        if selected is None:
+            raise ValueError(f"manager_selected_unknown_action:{ready[0]}")
+        return selected, classified
+    for action, status, _ in classified:
+        if status in OWNER_BLOCKING_STATES:
+            return action, classified
+    return None, classified
 
 
 def _synthetic_state(action_ids: list[str], *, accepted: set[str] | None = None) -> dict:
@@ -499,6 +572,24 @@ def run_manager_contract_tests() -> None:
     failure_state["gates"]["gate_FAIL-A"]["state"] = "FAILED"
     assert persisted_failed_action_ids("", failure_catalog, failure_state) == {"FAIL-A"}
 
+    # F3) an explicit failed action never expands to every action sharing its task.
+    exact_a = _action("FAIL-EXACT-A", 1, task="FM-FAIL-EXACT")
+    exact_b = _action("FAIL-EXACT-B", 2, task="FM-FAIL-EXACT")
+    exact_catalog = {"actions": [exact_a, exact_b]}
+    exact_failure_text = """## FM-FAIL-EXACT\n- Status: FAILED\n- Action: `FAIL-EXACT-A`\n- Task: `FM-FAIL-EXACT`\n"""
+    assert persisted_failed_action_ids(exact_failure_text, exact_catalog) == {"FAIL-EXACT-A"}
+
+    # F4) durable failures are classified as non-executable, not merely filtered later.
+    failed_classified = classified_actions(
+        _synthetic_state(["FAIL-EXACT-A", "FAIL-EXACT-B"]),
+        exact_catalog,
+        set(),
+        failed_action_ids={"FAIL-EXACT-A"},
+    )
+    failed_status = {action["id"]: status for action, status, _ in failed_classified}
+    assert failed_status["FAIL-EXACT-A"] == "FAILED_DO_NOT_RESTART"
+    assert failed_status["FAIL-EXACT-B"] == "EXECUTABLE"
+
     # G) failed A does not block independent C.
     independent = _action("INDEPENDENT-C", 3)
     result = manager([fail_a, fail_b, independent], failed={"FAIL-A"})
@@ -553,6 +644,25 @@ def run_manager_contract_tests() -> None:
     assert result["active_continuations"] == ["ACTIVE-D"]
     assert {"id": "C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
 
+    # K2b) the primary action is the first managed READY item, never a parallel selector fork.
+    active_catalog = {"actions": [a, active_d]}
+    active_state = _synthetic_state(["A", "ACTIVE-D"])
+    active_manager = build_safe_ready_set(
+        active_state,
+        active_catalog,
+        set(),
+        requested_limit=1,
+        active_tasks={"TASK-ACTIVE"},
+    )
+    active_primary, _ = select_from_manager(
+        active_state,
+        active_catalog,
+        set(),
+        active_manager,
+    )
+    assert active_manager["safe_ready_set"] == ["ACTIVE-D"]
+    assert active_primary is not None and active_primary["id"] == "ACTIVE-D"
+
     # K3) descriptive/composite canonical entries identify every active task.
     active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory\n- Status: IN_PROGRESS\n"""
     assert active_task_ids(active_started, "") == {"FM-CREATOR-001"}
@@ -585,12 +695,6 @@ def render(
     requested_limit: int | None = None,
     failed_action_ids: set[str] | None = None,
 ) -> str:
-    selected, classified = select(
-        state,
-        catalog,
-        deferred,
-        failed_action_ids=failed_action_ids,
-    )
     manager = build_safe_ready_set(
         state,
         catalog,
@@ -598,6 +702,13 @@ def render(
         requested_limit=requested_limit,
         failed_action_ids=failed_action_ids,
         active_tasks=active_tasks,
+    )
+    selected, classified = select_from_manager(
+        state,
+        catalog,
+        deferred,
+        manager,
+        failed_action_ids=failed_action_ids,
     )
     lines = [
         "# FanMind Next Best Action",
@@ -610,7 +721,12 @@ def render(
     if selected is None:
         lines += ["- Selected action: `NONE`", "", "No unresolved action is currently selectable."]
     else:
-        status, reason = classify(selected, state, deferred)
+        status, reason = classify(
+            selected,
+            state,
+            deferred,
+            failed_action_ids=failed_action_ids,
+        )
         lines += [
             f"- Selected action: `{selected['id']}`",
             f"- Task: `{selected['task']}`",
@@ -711,21 +827,6 @@ def main() -> int:
     active_tasks = active_task_ids(started_text, locks_text)
     failed_action_ids = persisted_failed_action_ids(failed_text, catalog, state)
 
-    selected, _ = select(
-        state,
-        catalog,
-        deferred,
-        failed_action_ids=failed_action_ids,
-    )
-    if selected:
-        status, _ = classify(selected, state, deferred)
-        print(f"FANMIND_NEXT_ACTION={selected['id']}")
-        print(f"FANMIND_NEXT_ACTION_STATUS={status}")
-        print(f"FANMIND_NEXT_ACTION_TASK={selected['task']}")
-    else:
-        print("FANMIND_NEXT_ACTION=NONE")
-        print("FANMIND_NEXT_ACTION_STATUS=NONE")
-
     try:
         manager = build_safe_ready_set(
             state,
@@ -738,6 +839,27 @@ def main() -> int:
     except ValueError as exc:
         print(f"FANMIND_BUILDER_MANAGER_RESULT=failed:{exc}")
         return 1
+
+    selected, _ = select_from_manager(
+        state,
+        catalog,
+        deferred,
+        manager,
+        failed_action_ids=failed_action_ids,
+    )
+    if selected:
+        status, _ = classify(
+            selected,
+            state,
+            deferred,
+            failed_action_ids=failed_action_ids,
+        )
+        print(f"FANMIND_NEXT_ACTION={selected['id']}")
+        print(f"FANMIND_NEXT_ACTION_STATUS={status}")
+        print(f"FANMIND_NEXT_ACTION_TASK={selected['task']}")
+    else:
+        print("FANMIND_NEXT_ACTION=NONE")
+        print("FANMIND_NEXT_ACTION_STATUS=NONE")
 
     print("FANMIND_SAFE_READY_SET=" + json.dumps(manager["safe_ready_set"], separators=(",", ":")))
     print(f"FANMIND_WORKER_LIMIT={manager['worker_limit']}")
