@@ -163,6 +163,8 @@ test("verifier compares the complete reviewed RPC EXECUTE ACL and rejects inheri
   assert.match(runner, /creator_learning_function_acl_invalid/u);
   assert.match(runner, /from pg_auth_members membership/u);
   assert.match(runner, /membership\.inherit_option/u);
+  assert.match(runner, /membership\.set_option/u);
+  assert.match(runner, /membership\.admin_option/u);
   assert.match(runner, /creator_learning_function_acl_inheritance_invalid/u);
 });
 
@@ -205,6 +207,7 @@ test("verifier safely binds the optional canonical WhatsApp identity trigger", a
   assert.match(runner, /creator_learning_whatsapp_identity_trigger_invalid/u);
   assert.match(runner, /creator_learning_whatsapp_identity_function_invalid/u);
   assert.match(runner, /creator_learning_whatsapp_identity_function_acl_invalid/u);
+  assert.match(runner, /securityDefiner: true,[\s\S]*resultType: "trigger",[\s\S]*argNames: null/u);
   assert.match(runner, /array\['service_role'\]::text\[\]/u);
 });
 
@@ -282,4 +285,29 @@ test("schema-qualified trigger and FK definitions are normalized before exact co
     runner,
     /replace\(lower\(pg_get_constraintdef\(oid\)\), 'public\.', ''\)/u,
   );
+});
+
+
+test("verifier rejects provenance rewrite rules and generated or identity manual-send markers", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /ev_class = messages_table/u);
+  assert.match(runner, /creator_learning_provenance_rewrite_rule_invalid/u);
+  assert.match(runner, /a\.attgenerated = ''/u);
+  assert.match(runner, /a\.attidentity = ''/u);
+  assert.match(runner, /creator_learning_manual_send_column_invalid/u);
+});
+
+test("controlled database sessions pin the search path before VERIFY or APPLY", async () => {
+  const runner = await runnerSource();
+  assert.match(
+    runner,
+    /"-c search_path=pg_catalog -c statement_timeout=60000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=60000"/u,
+  );
+});
+
+test("verifier requires public schema usage for reviewed authenticated and service callers", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /has_schema_privilege\('authenticated', 'public', 'USAGE'\)/u);
+  assert.match(runner, /has_schema_privilege\('service_role', 'public', 'USAGE'\)/u);
+  assert.match(runner, /creator_learning_schema_usage_invalid/u);
 });
