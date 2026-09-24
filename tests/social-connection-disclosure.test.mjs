@@ -91,10 +91,10 @@ test('complete disclosure enumerates every browser-readable Production Creator d
   assert.ok(!h.calls.some(x=>x.table==='workspace_ai_prompt_settings'),'a table absent from current Production must not be invented as stored data');
 });
 
-test('confirmed-chat learning is optional only in source-controlled preinstall state',async()=>{
+test('installed source makes confirmed-chat learning mandatory while preserving explicit preinstall semantics',async()=>{
   const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
-  assert.equal(missing.rolloutState,'preinstall');assert.equal(missing.isOptional('preinstall'),true);assert.equal(missing.isOptional('installed'),false);
-  const datasets=await missing.run();assert.equal(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows.length,0);
+  assert.equal(missing.rolloutState,'installed');assert.equal(missing.isOptional('preinstall'),true);assert.equal(missing.isOptional('installed'),false);
+  await assert.rejects(missing.run(),DisclosureFailure);
   const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
   await assert.rejects(denied.run(),DisclosureFailure);
 });
