@@ -12,11 +12,11 @@ const MAX_ROWS_PER_DATASET = 50_000;
 export type ConfirmedChatLearningSchemaState = "preinstall" | "installed";
 
 // Source-controlled rollout state outside Supabase/PostgREST schema caching.
-// The protected target schema APPLY is forbidden while this remains
-// "preinstall". The later bounded migration rollout must first change this to
-// "installed" and deploy that fail-closed reader; only then may schema APPLY run.
+// "installed" makes disclosure fail closed if the controlled table is absent.
+// It does not prove target installation or authorize APPLY; fresh target VERIFY
+// and the separate protected-environment authorization remain mandatory.
 export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE: ConfirmedChatLearningSchemaState =
-  "preinstall";
+  "installed";
 
 export function isConfirmedChatLearningDisclosureOptional(
   state: ConfirmedChatLearningSchemaState,
