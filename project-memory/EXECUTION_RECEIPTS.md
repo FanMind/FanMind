@@ -5,7 +5,9 @@
 - Current correction: non-running gated/BLOCKED work remains visible in classification but no longer consumes worker capacity. Unknown or ambiguous executable active work still consumes fail-closed capacity. Scope/conflict/dependency and owner/protected gates are unchanged.
 - Reconciliation: #1125 Daily UI lock is released from its durable Production-confirmed completion receipt; #1145 ChatAdmin source lock is released as merged/superseded by #1146/VERIFY; the Operations reboot lock is retained R4 but BLOCKED on protected host/recovery/idle/reboot evidence.
 - Safety: no product source, SQL, Staging/Production/provider/customer/Billing/Restore/Mobile mutation or protected action dispatch.
-- Acceptance pending: embedded manager contract, generated Project Memory, exact-head CI/God Mode/CodeQL/Browser and one independent review, then normal merge and post-merge manager recomputation.
+- Review continuation: independent exact-head review of `57ed454eff40616ece9c1bcc96d0ad1ea7b98e38` found three P1 fail-closed accounting gaps and one P2 duplicate Operations lock status. This continuation preserves ambiguous/partially matched identities, contradictory STARTED_WORK/active-lock state and dependency-invalid active continuations as reservations, while retaining canonical non-running owner/deferred/prerequisite/BLOCKED release semantics. The duplicate Operations `ACTIVE` field is removed; its single canonical status is `BLOCKED`.
+- Negative/regression continuation: embedded manager cases now require unknown exact IDs, unmatched task IDs, contradictory exact/task IDs, BLOCKED-vs-ACTIVE lock disagreement and dependency-invalid active continuations to consume fail-closed capacity. A consistent terminal exact identity still releases its slot.
+- Acceptance pending: fresh exact-head embedded manager contract, generated Project Memory, CI/God Mode/CodeQL/Browser and one independent review with P1=0/P2=0/no blocking threads, then normal merge and post-merge manager recomputation.
 
 ## RECEIPT-FM-CREATOR-001-CONFIRMED-CHAT-STAGING-VERIFY-CONTROL-20260924
 - Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R4.

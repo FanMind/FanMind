@@ -739,7 +739,6 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Review continuation: PR #1112 remains open under this lock. Both completed reviews are addressed in bounded source corrections; the second correction still requires its own completed review and green CI before merge. No Production startup or reboot mutation has occurred.
 - Continuation 2026-09-12: current owner publication approval confirmed; remote branch a33eedad matches the exact approved eef3f26b tree. Existing lock retained for PR/CI/review, normal rollout and installed verification; no competing PR found.
 - Task: FM-OPS-001 / FM-CR-036
-- Status: ACTIVE
 - Risk: R4
 - Holder: Codex
 - Baseline: exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, Production audit 34648286758 / 103525002411; exact Exoscale Production instance verified in authenticated portal/console.

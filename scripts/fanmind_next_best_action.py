@@ -107,8 +107,13 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if not heading.startswith("LOCK-"):
             continue
         task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
+        status_matches = [
+            value.upper()
+            for value in re.findall(r"(?im)^- [^\n]*?\bstatus:\s*([A-Z_]+)\b", block)
+        ]
         lock_records[heading] = {
-            "status": _record_status(block),
+            "status": status_matches[0] if status_matches else None,
+            "status_conflict": len(set(status_matches)) > 1,
             "tasks": _record_ids(task_line.group(1), "FM-") if task_line else set(),
             "actions": _record_actions(block),
         }
@@ -128,6 +133,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         actions = _record_actions(block)
         lock_match = re.search(r"\b(LOCK-[A-Z0-9_-]+)\b", block)
         lock_id = lock_match.group(1) if lock_match else None
+        status_conflict = False
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
@@ -135,11 +141,18 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 continue
             if lock:
                 actions |= lock["actions"]
+                lock_status = str(lock.get("status") or "").upper()
+                status_conflict = bool(lock.get("status_conflict"))
+                if lock_status and (
+                    (record_status == "BLOCKED") != (lock_status == "BLOCKED")
+                ):
+                    status_conflict = True
         if tasks:
             slots.append({
                 "tasks": tasks,
                 "action": next(iter(actions)) if len(actions) == 1 else None,
                 "status": record_status,
+                "status_conflict": status_conflict,
             })
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
@@ -151,13 +164,29 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 "tasks": lock["tasks"],
                 "action": next(iter(lock["actions"])) if len(lock["actions"]) == 1 else None,
                 "status": lock["status"],
+                "status_conflict": bool(lock.get("status_conflict")),
             }
         )
 
     # Repeated task-level evidence describes the same current slot, not extra workers.
+    # Conflicting current statuses are retained as a fail-closed identity conflict.
     deduplicated: list[dict] = []
     for slot in slots:
-        if any(slot["tasks"] == current["tasks"] and slot["action"] == current["action"] for current in deduplicated):
+        current = next(
+            (
+                item
+                for item in deduplicated
+                if slot["tasks"] == item["tasks"] and slot["action"] == item["action"]
+            ),
+            None,
+        )
+        if current is not None:
+            if (
+                slot.get("status_conflict")
+                or current.get("status_conflict")
+                or slot.get("status") != current.get("status")
+            ):
+                current["status_conflict"] = True
             continue
         deduplicated.append(slot)
     return deduplicated
@@ -469,27 +498,49 @@ def build_safe_ready_set(
         exact_id = slot.get("action")
         exact = by_id.get(exact_id) if exact_id else None
         slot_status = str(slot.get("status") or "").upper()
+        slot_tasks = set(slot.get("tasks", set()))
         task_matches = [
             action
             for action in catalog.get("actions", [])
-            if action.get("task") in slot.get("tasks", set())
+            if action.get("task") in slot_tasks
         ]
+        matched_task_ids = {
+            str(action.get("task"))
+            for action in task_matches
+            if action.get("task")
+        }
+        tasks_fully_resolved = bool(slot_tasks) and slot_tasks <= matched_task_ids
         matches = [
             action for action in task_matches if status_by_id[action["id"]] not in terminal_statuses
         ]
+        task_label = "/".join(sorted(slot_tasks)) or "UNKNOWN"
+        reservation_id = f"UNKNOWN:{exact_id}" if exact_id else f"TASK:{task_label}"
+
+        if slot.get("status_conflict"):
+            active_reservations.append({"id": reservation_id, "parallel_safe": False})
+            continue
 
         # Canonically blocked work is visible state, not a running worker.
         if slot_status == "BLOCKED":
             continue
 
         if exact_id:
+            exact_task = exact.get("task") if exact is not None else None
+            exact_identity_consistent = (
+                exact is not None
+                and exact_task in slot_tasks
+                and tasks_fully_resolved
+            )
             if exact is not None and status_by_id.get(exact_id) in terminal_statuses:
-                continue
-            action = exact if exact is not None and exact in matches else None
+                if exact_identity_consistent:
+                    continue
+                action = None
+            else:
+                action = exact if exact_identity_consistent and exact in matches else None
         else:
-            if task_matches and not matches:
+            if task_matches and not matches and tasks_fully_resolved:
                 continue
-            action = matches[0] if len(matches) == 1 else None
+            action = matches[0] if len(matches) == 1 and tasks_fully_resolved else None
 
         if action is not None:
             current_status = status_by_id.get(action["id"])
@@ -497,10 +548,8 @@ def build_safe_ready_set(
                 # Owner/deferred/prerequisite-gated work is not executing and
                 # therefore cannot consume worker capacity.
                 continue
-            dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
-            if not dep_ok:
-                blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
-                continue
+            # Dependency state controls execution, not whether the already-active
+            # continuation still reserves its worker slot.
             active_actions.append(action)
             active_reservations.append(action)
         else:
@@ -509,12 +558,13 @@ def build_safe_ready_set(
                 for item in matches
                 if status_by_id.get(item["id"]) not in terminal_statuses
             }
-            if live_match_statuses and live_match_statuses <= nonrunning_statuses:
-                # Ambiguous task evidence mapping only to gated, non-running
-                # actions remains visible but does not reserve a worker.
+            if (
+                exact_id is None
+                and tasks_fully_resolved
+                and live_match_statuses
+                and live_match_statuses <= nonrunning_statuses
+            ):
                 continue
-            task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"
-            reservation_id = f"UNKNOWN:{exact_id}" if exact_id else f"TASK:{task_label}"
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
     active_action_ids = {action["id"] for action in active_actions}
     executable_ids = {action["id"] for action, _ in candidates}
@@ -977,6 +1027,85 @@ def run_manager_contract_tests() -> None:
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
 
+    conflict_started = """## Active work
+## FM-CONFLICT-001 — blocked record
+- Status: BLOCKED
+- Work lock: LOCK-FM-CONFLICT-001
+"""
+    conflict_locks = """## LOCK-FM-CONFLICT-001
+- Task: FM-CONFLICT-001
+- Status: ACTIVE
+"""
+    conflict_slots = active_work_slots(conflict_started, conflict_locks)
+    assert len(conflict_slots) == 1
+    assert conflict_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=conflict_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-CONFLICT-001"]
+
+    result = manager(
+        [owner_active, a],
+        limit=1,
+        slots=[{
+            "tasks": {"TASK-OWNER-ACTIVE"},
+            "action": "UNKNOWN-OWNER-ACTIVE",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["UNKNOWN:UNKNOWN-OWNER-ACTIVE"]
+
+    result = manager(
+        [owner_active, a],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-UNMATCHED", "TASK-OWNER-ACTIVE"},
+            "action": None,
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-UNMATCHED/TASK-OWNER-ACTIVE"]
+
+    result = manager(
+        [owner_active, a],
+        limit=1,
+        slots=[{
+            "tasks": {"TASK-OWNER-ACTIVE"},
+            "action": "A",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["UNKNOWN:A"]
+
+    dependency_active = _action(
+        "DEPENDENCY-ACTIVE",
+        1,
+        task="TASK-DEPENDENCY-ACTIVE",
+        depends_on_actions=["DEPENDENCY-BASE"],
+    )
+    dependency_base = _action("DEPENDENCY-BASE", 2, task="TASK-DEPENDENCY-BASE")
+    dependency_new = _action("DEPENDENCY-NEW", 3, task="TASK-DEPENDENCY-NEW")
+    result = manager(
+        [dependency_active, dependency_base, dependency_new],
+        limit=1,
+        slots=[{
+            "tasks": {"TASK-DEPENDENCY-ACTIVE"},
+            "action": "DEPENDENCY-ACTIVE",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["DEPENDENCY-ACTIVE"]
+    assert result["worker_used"] == 1
+    assert {
+        "id": "DEPENDENCY-ACTIVE",
+        "reason": "dependency_not_verified:DEPENDENCY-BASE",
+    } in result["blocked_dependencies"]
+    assert {"id": "DEPENDENCY-BASE", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+    assert {"id": "DEPENDENCY-NEW", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
     # Terminal active records release their slots: failed work stays stopped and
     # completed work stays complete, while independent work may use the capacity.
     result = manager([fail_a, independent], failed={"FAIL-A"}, limit=1, active={fail_a["task"]})
@@ -1028,6 +1157,20 @@ def run_manager_contract_tests() -> None:
         accepted={"EXACT-ACTIVE"},
         limit=1,
         slots=contradictory_slot,
+    )
+    assert result["active_continuations"] == ["UNKNOWN:EXACT-ACTIVE"]
+    assert result["safe_ready_set"] == []
+
+    consistent_terminal_slot = [{
+        "tasks": {"FM-EXACT-A"},
+        "action": "EXACT-ACTIVE",
+        "status": "IN_PROGRESS",
+    }]
+    result = manager(
+        [exact_active, sibling_active],
+        accepted={"EXACT-ACTIVE"},
+        limit=1,
+        slots=consistent_terminal_slot,
     )
     assert result["active_continuations"] == []
     assert result["safe_ready_set"] == ["EXACT-SIBLING"]
