@@ -1,14 +1,22 @@
-## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
+## FM-CREATOR-001 — confirmed-chat installed source-state switch — 2026-09-24
 - Status: IN_PROGRESS
-- Risk: R2
-- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
+- Risk: R3
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
 - Owner: autonomous builder
-- Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171.
-- Trigger: independent #1171 review remains unresolved/non-outdated and identifies a P1: a noncanonical role could receive effective membership in `authenticator`, then follow the reviewed `authenticator -> service_role` SET edge.
-- Bounded scope: reject every effective incoming `pg_auth_members` edge whose granted role is `authenticator`; add focused regression coverage. No SQL APPLY, Staging/Production/provider/customer/Billing/Restore/Mobile mutation.
-- Exact next step: complete current-head CI and one independent review on PR #1172; reconcile any P1/P2 on the same PR, then merge only when every required check is green and blocking findings are zero.
-- Acceptance: exact current-head required CI green, one independent review cycle on every material head, OFFENE_P1=0, OFFENE_P2=0, no blocking threads, then normal merge and post-merge verify.
-- Recovery: ordinary bounded source/test revert; no external state changed.
+- Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after normal merge of PR #1172.
+- Consumed predecessor: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every triggered current-head workflow, independent Codex review reported no findings, had zero blocking threads and merged as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. Its authenticator P1 follow-up is complete and must not be rebuilt.
+- Bounded scope: switch the already-reviewed confirmed-chat disclosure/deletion lifecycle from `preinstall` to `installed`, update synchronized regression tests/runbook and reconcile only stale Creator navigation. This makes missing target schema fail closed; it does not install schema or activate runtime.
+- Exact next step: publish one bounded PR, complete current-head CI plus one independent review, fix any finding on that same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY; APPLY remains separately owner/protected-environment gated.
+- Forbidden: SQL APPLY, protected Staging/Production write, runtime flag activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
+- Recovery: ordinary repository revert; no external target state changed.
+
+## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
+- Status: MERGED_VERIFIED
+- Risk: R2
+- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924 — RELEASED
+- Result: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` converged with green triggered CI, exact-head independent review without findings and zero blocking threads, then merged normally as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`.
+- Boundary: repository-only verifier hardening; no SQL APPLY, Staging/Production/provider/customer/Billing/Restore/Mobile mutation.
+- Resume: do not reopen this P1 scope. Continue only the separate confirmed-chat installed source-state step above.
 
 ## FM-REG-001 — Daily setup display closeout
 - Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
