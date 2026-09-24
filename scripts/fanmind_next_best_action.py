@@ -151,25 +151,32 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
-            if lock:
+            if lock is None:
+                # A referenced lock is authoritative stop/run evidence. Missing
+                # lock state cannot prove that a non-running-looking STARTED_WORK
+                # record actually released its worker, so reserve fail-closed.
+                status_conflict = True
+            else:
                 actions |= lock["actions"]
                 lock_status = str(lock.get("status") or "").upper()
                 status_conflict = status_conflict or bool(lock.get("status_conflict"))
-                if lock_status and (
-                    (record_status == "BLOCKED") != (lock_status == "BLOCKED")
-                    or (
-                        lock_status in EXPLICIT_RUNNING_WORK_STATES
-                        and record_status not in EXPLICIT_RUNNING_WORK_STATES
-                    )
-                    or (
-                        lock_status in NONRUNNING_LOCK_STATES
-                        and record_status in EXPLICIT_RUNNING_WORK_STATES
-                    )
-                ):
+                lock_is_terminal = _lock_status_is_terminal(lock_status)
+                lock_is_running = lock_status in EXPLICIT_RUNNING_WORK_STATES
+                lock_is_nonrunning = (
+                    lock_status == "BLOCKED"
+                    or lock_status in NONRUNNING_LOCK_STATES
+                )
+                lock_is_known = lock_is_terminal or lock_is_running or lock_is_nonrunning
+                if not lock_is_known:
                     status_conflict = True
-                # A clean terminal lock closes the record. Any contradictory
-                # started/lock status remains reserved until reconciled.
-                if _lock_status_is_terminal(lock["status"]) and not status_conflict:
+                elif lock_is_running and record_status not in EXPLICIT_RUNNING_WORK_STATES:
+                    status_conflict = True
+                elif lock_is_nonrunning and record_status in EXPLICIT_RUNNING_WORK_STATES:
+                    status_conflict = True
+                # A clean explicit terminal lock is authoritative over an older
+                # single STARTED_WORK status. Intrinsic multi-status conflicts
+                # remain fail-closed because their ordering is itself ambiguous.
+                if lock_is_terminal and not status_conflict:
                     continue
         if tasks:
             slots.append({
@@ -1239,6 +1246,71 @@ def run_manager_contract_tests() -> None:
     result = manager([a], limit=1, slots=paused_running_slots)
     assert result["safe_ready_set"] == []
     assert result["active_continuations"] == ["TASK:FM-PAUSED-RUNNING-001"]
+
+    # Normal non-running transitions must not become artificial conflicts.
+    blocked_released_started = """## Active work
+## FM-BLOCKED-RELEASED-001
+- Status: BLOCKED
+- Work lock: LOCK-FM-BLOCKED-RELEASED-001
+"""
+    blocked_released_lock = """## LOCK-FM-BLOCKED-RELEASED-001
+- Task: FM-BLOCKED-RELEASED-001
+- Status: RELEASED
+"""
+    assert active_work_slots(blocked_released_started, blocked_released_lock) == []
+
+    partial_blocked_started = """## Active work
+## FM-PARTIAL-BLOCKED-001
+- Status: PARTIAL
+- Work lock: LOCK-FM-PARTIAL-BLOCKED-001
+"""
+    partial_blocked_lock = """## LOCK-FM-PARTIAL-BLOCKED-001
+- Task: FM-PARTIAL-BLOCKED-001
+- Status: BLOCKED
+"""
+    partial_blocked_slots = active_work_slots(
+        partial_blocked_started,
+        partial_blocked_lock,
+    )
+    assert len(partial_blocked_slots) == 1
+    assert partial_blocked_slots[0]["status_conflict"] is False
+
+    # Missing, empty or unknown referenced lock state cannot prove a worker stopped.
+    missing_lock_started = """## Active work
+## FM-MISSING-LOCK-001
+- Status: PARTIAL
+- Work lock: LOCK-FM-MISSING-LOCK-001
+"""
+    missing_lock_slots = active_work_slots(missing_lock_started, "")
+    assert len(missing_lock_slots) == 1
+    assert missing_lock_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=missing_lock_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-MISSING-LOCK-001"]
+
+    for unknown_lock_status in ("", "MYSTERY"):
+        unknown_lock_started = """## Active work
+## FM-UNKNOWN-LOCK-001
+- Status: PARTIAL
+- Work lock: LOCK-FM-UNKNOWN-LOCK-001
+"""
+        unknown_lock_line = (
+            f"- Status: {unknown_lock_status}\n" if unknown_lock_status else ""
+        )
+        unknown_lock_text = (
+            "## LOCK-FM-UNKNOWN-LOCK-001\n"
+            "- Task: FM-UNKNOWN-LOCK-001\n"
+            f"{unknown_lock_line}"
+        )
+        unknown_lock_slots = active_work_slots(
+            unknown_lock_started,
+            unknown_lock_text,
+        )
+        assert len(unknown_lock_slots) == 1
+        assert unknown_lock_slots[0]["status_conflict"] is True
+        result = manager([a], limit=1, slots=unknown_lock_slots)
+        assert result["safe_ready_set"] == []
+        assert result["active_continuations"] == ["TASK:FM-UNKNOWN-LOCK-001"]
 
     # An ambiguous task identity may release capacity only when canonical state
     # is genuinely non-running. Explicit IN_PROGRESS remains fail-closed.
