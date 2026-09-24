@@ -297,17 +297,17 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## Active work
 
 ## FM-CREATOR-001 — confirmed-chat protected Staging VERIFY control — 2026-09-24
-- Status: IN_PROGRESS
+- Status: MERGED_VERIFIED
 - Risk: R4
-- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY-20260924
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY-20260924 — RELEASED_MERGED_VERIFIED
 - Owner: autonomous builder
 - Baseline: exact main `c119e0eb82e0643fc676afb7725d7518011e1286`; PR #1174 is merged and its automatic Production deploy/runtime verification succeeded.
 - Contract / gate: `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001`.
-- Bounded scope: repository-only VERIFY control at `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static regression coverage, rollout runbook and bounded Project-Memory reconciliation. The workflow is exact-main, exact-reviewed-commit, protected-`staging`, target-bound and read-only.
-- Acceptance: exact current-head required CI green, independent review with P1=0/P2=0/no blocking threads, normal merge and post-merge source verification. This package does not dispatch Staging VERIFY.
-- Exact next step: publish the bounded PR, converge current-head CI/review, merge when green, then treat actual Staging deployment/VERIFY as a separate protected target action. The generic runner remains structurally incapable of APPLY.
-- Forbidden: workflow dispatch, SQL APPLY, Staging/Production write, runtime activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
-- Recovery: ordinary source revert; no external target state is changed by this repository package.
+- Bounded scope: repository-only VERIFY control at `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static regression coverage, rollout runbook and bounded Project-Memory reconciliation.
+- Result: PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` corrected its initial P1/P2 findings, all review threads were resolved, the independent current-head review reported no further major issues, and the PR merged normally as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
+- Boundary: this proves only the repository control. No Staging VERIFY was dispatched and no target schema state, APPLY, runtime activation, provider/customer/Billing/Restore/Mobile mutation or Production acceptance is inferred.
+- Exact next step: do not rebuild or republish #1175. Keep actual Staging VERIFY/APPLY as separately protected target actions; recompute `NBA-CREATOR-INTELLIGENCE` and continue only a distinct repository-safe unaccepted Creator scope.
+- Recovery: ordinary source revert; no external target state was changed by this repository package.
 
 ## FM-CREATOR-001 — post-merge gitless release-test repair — 2026-09-24
 - Status: PRODUCTION_CONFIRMED
