@@ -19,7 +19,7 @@ export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE: ConfirmedChatLearning
   "installed";
 
 export function getConfirmedChatLearningSchemaState(
-  environment: Pick<NodeJS.ProcessEnv, "FANMIND_RUNTIME_ENVIRONMENT"> = process.env,
+  environment: { FANMIND_RUNTIME_ENVIRONMENT?: string } = process.env,
 ): ConfirmedChatLearningSchemaState {
   return environment.FANMIND_RUNTIME_ENVIRONMENT?.trim().toLowerCase() === "staging"
     ? CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE
