@@ -576,6 +576,13 @@ ${foundationChecks}
     raise exception 'creator_learning_rewrite_rule_invalid';
   end if;
 
+  if exists (
+    select 1 from pg_rewrite
+     where ev_class = messages_table
+  ) then
+    raise exception 'creator_learning_provenance_rewrite_rule_invalid';
+  end if;
+
   if (select count(*) from pg_roles where rolname in ('anon','authenticated')) <> 2
      or exists (
        select 1 from pg_roles
@@ -583,6 +590,15 @@ ${foundationChecks}
           and (rolbypassrls or rolsuper)
      ) then
     raise exception 'creator_learning_browser_role_rls_invalid';
+  end if;
+
+  if (select count(*) from pg_roles where rolname = 'service_role') <> 1
+     or exists (
+       select 1 from pg_roles
+        where rolname = 'service_role'
+          and (not rolbypassrls or rolsuper)
+     ) then
+    raise exception 'creator_learning_service_role_rls_invalid';
   end if;
 
   if exists (
@@ -662,6 +678,8 @@ ${foundationChecks}
        and a.attnotnull
        and a.attnum > 0
        and not a.attisdropped
+       and a.attgenerated = ''
+       and a.attidentity = ''
        and regexp_replace(pg_get_expr(d.adbin, d.adrelid), '[[:space:]]+', '', 'g') = 'false'
   ) then
     raise exception 'creator_learning_manual_send_column_invalid';
@@ -719,6 +737,7 @@ ${foundationChecks}
       {
         securityDefiner: true,
         resultType: "trigger",
+        argNames: null,
       },
       whatsappIdentityBodyHash,
     ).replace(
@@ -791,7 +810,11 @@ ${learningAclChecks}
       from pg_auth_members membership
       join pg_roles inherited_role on inherited_role.oid = membership.roleid
      where inherited_role.rolname in ('service_role','authenticated','${EXPECTED_DATABASE_FUNCTION_OWNER}')
-       and membership.inherit_option
+       and (
+         membership.inherit_option
+         or membership.set_option
+         or membership.admin_option
+       )
   ) then
     raise exception 'creator_learning_function_acl_inheritance_invalid';
   end if;
@@ -887,6 +910,11 @@ ${learningAclChecks}
        and cardinality(a.attacl) > 0
   ) then
     raise exception 'creator_learning_column_acl_invalid';
+  end if;
+
+  if not has_schema_privilege('authenticated', 'public', 'USAGE')
+     or not has_schema_privilege('service_role', 'public', 'USAGE') then
+    raise exception 'creator_learning_schema_usage_invalid';
   end if;
 
   if not has_function_privilege(
@@ -1403,7 +1431,7 @@ function psqlEnvironment(environment, passfilePath) {
   safe.PGPASSFILE = passfilePath;
   safe.PGCONNECT_TIMEOUT = "10";
   safe.PGOPTIONS =
-    "-c statement_timeout=60000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=60000";
+    "-c search_path=pg_catalog -c statement_timeout=60000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=60000";
   return safe;
 }
 
