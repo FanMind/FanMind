@@ -296,8 +296,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
-## FM-CREATOR-001 — post-merge gitless release-test repair — 2026-09-24
+## FM-CREATOR-001 — confirmed-chat protected Staging VERIFY control — 2026-09-24
 - Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY-20260924
+- Owner: autonomous builder
+- Baseline: exact main `c119e0eb82e0643fc676afb7725d7518011e1286`; PR #1174 is merged and its automatic Production deploy/runtime verification succeeded.
+- Contract / gate: `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001`.
+- Bounded scope: repository-only VERIFY control at `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static regression coverage, rollout runbook and bounded Project-Memory reconciliation. The workflow is exact-main, exact-reviewed-commit, protected-`staging`, target-bound and read-only.
+- Acceptance: exact current-head required CI green, independent review with P1=0/P2=0/no blocking threads, normal merge and post-merge source verification. This package does not dispatch Staging VERIFY.
+- Exact next step: publish the bounded PR, converge current-head CI/review, merge when green, then treat actual Staging deployment/VERIFY as a separate protected target action. The generic runner remains structurally incapable of APPLY.
+- Forbidden: workflow dispatch, SQL APPLY, Staging/Production write, runtime activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
+- Recovery: ordinary source revert; no external target state is changed by this repository package.
+
+## FM-CREATOR-001 — post-merge gitless release-test repair — 2026-09-24
+- Status: PRODUCTION_CONFIRMED
 - Risk: R2
 - Work lock: LOCK-FM-CREATOR-POSTMERGE-GITLESS-TESTS-20260924
 - Owner: autonomous builder
@@ -310,7 +323,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: ordinary repository revert; no external state was changed by the failed deploy.
 
 ## FM-CREATOR-001 — confirmed-chat target-aware Staging source-state switch — 2026-09-24
-- Status: IN_PROGRESS
+- Status: PRODUCTION_CONFIRMED
 - Risk: R4
 - Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
 - Contract / gate: `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001`.
