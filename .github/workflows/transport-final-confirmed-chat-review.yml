@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write
-  issues: read
+  issues: write
   pull-requests: read
 
 jobs:
@@ -22,23 +22,38 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Configure exact fail-closed transport
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          test "$(git rev-parse HEAD^)" = "588f7d182a5080c0bd985f49a1a7267f0d62fd09"
-          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/transport-final-confirmed-chat-review.yml"
-
-      - name: Materialize exact already-tested files from PR evidence
+      - name: Materialize, verify and publish exact reviewed remediation
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BASE=588f7d182a5080c0bd985f49a1a7267f0d62fd09
+          BRANCH=feat/creator-confirmed-chat-rollout-runner-20260923
+          HELPER=.github/workflows/transport-final-confirmed-chat-review.yml
+
+          cleanup_failure() {
+            code=$?
+            if [ "$code" -ne 0 ]; then
+              git reset --hard HEAD || true
+              if [ -f "$HELPER" ]; then
+                git rm -f "$HELPER" || true
+                git commit -m "Remove failed confirmed-chat transport helper" || true
+                git push origin "HEAD:refs/heads/$BRANCH" || true
+              fi
+            fi
+            exit "$code"
+          }
+          trap cleanup_failure EXIT
+
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git diff --name-only "$BASE"..HEAD | sort -u)" = "$HELPER"
+
           gh api "repos/${GITHUB_REPOSITORY}/issues/comments/5811558634" --jq .body > /tmp/runner.comment
           gh api "repos/${GITHUB_REPOSITORY}/issues/comments/5811507222" --jq .body > /tmp/tests.comment
+
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -57,21 +72,25 @@ jobs:
           ]
           for source, label, target in targets:
               body = source.read_text(encoding='utf-8')
-              pattern = rf'\A{re.escape(label)}\n\n```js\n(.*)\n```\s*\Z'
-              match = re.match(pattern, body, flags=re.S)
+              match = re.match(
+                  rf'\A{re.escape(label)}\n\n```js\n(.*)\n```\s*\Z',
+                  body,
+                  flags=re.S,
+              )
               if match is None:
                   raise SystemExit(f'comment_contract_invalid:{label}')
-              content = match.group(1) + '\n'
-              target.write_text(content, encoding='utf-8')
+              target.write_text(match.group(1) + '\n', encoding='utf-8')
           PY
-          test "$(git hash-object scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs)" = "cb8ec0e6a1afdd92b653d176435763f3d6dc15be"
-          test "$(git hash-object tests/creator-confirmed-chat-learning-verifier-review.cases.mjs)" = "d832c64e4927b64d91a524354764eef68a531abd"
+
+          RUNNER_HASH=$(git hash-object scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs)
+          TEST_HASH=$(git hash-object tests/creator-confirmed-chat-learning-verifier-review.cases.mjs)
+          if [ "$RUNNER_HASH" != "cb8ec0e6a1afdd92b653d176435763f3d6dc15be" ] || [ "$TEST_HASH" != "d832c64e4927b64d91a524354764eef68a531abd" ]; then
+            gh issue comment 1168 --body "Transport hash diagnostic on base \`$BASE\`: runner=\`$RUNNER_HASH\`, verifier-cases=\`$TEST_HASH\`; expected runner=\`cb8ec0e6a1afdd92b653d176435763f3d6dc15be\`, verifier-cases=\`d832c64e4927b64d91a524354764eef68a531abd\`. No product files were committed."
+            exit 23
+          fi
+
           test "$(git diff --name-only HEAD -- scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs | sort)" = $'scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs\ntests/creator-confirmed-chat-learning-verifier-review.cases.mjs'
 
-      - name: Verify exact bounded remediation
-        shell: bash
-        run: |
-          set -euo pipefail
           node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
           node --test tests/creator-confirmed-chat-learning.test.mjs
           node --test tests/test-suite-coverage.test.mjs
@@ -79,16 +98,12 @@ jobs:
           npx eslint scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning.test.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
           git diff --check
 
-      - name: Commit exact remediation and remove transport helper
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "588f7d182a5080c0bd985f49a1a7267f0d62fd09"
-          git rm .github/workflows/transport-final-confirmed-chat-review.yml
+          git rm "$HELPER"
           git add scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
           git diff --cached --check
           git commit -m "Close final confirmed-chat verifier review gaps"
           test "$(git hash-object HEAD:scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs)" = "cb8ec0e6a1afdd92b653d176435763f3d6dc15be"
           test "$(git hash-object HEAD:tests/creator-confirmed-chat-learning-verifier-review.cases.mjs)" = "d832c64e4927b64d91a524354764eef68a531abd"
-          test -z "$(git diff --name-only 588f7d182a5080c0bd985f49a1a7267f0d62fd09..HEAD -- .github/workflows/transport-final-confirmed-chat-review.yml)"
-          git push origin HEAD:refs/heads/feat/creator-confirmed-chat-rollout-runner-20260923
+          test -z "$(git diff --name-only "$BASE"..HEAD -- "$HELPER")"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          trap - EXIT
