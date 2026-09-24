@@ -269,14 +269,16 @@
 
 ## LOCK-PR1088-REVIEW-20260910
 - Task: FM-AI-001 / FM-RST-001
-- Status: ACTIVE
+- Status: RELEASED
+- Released: 2026-09-25 stale-lock reconciliation. PR #1088 publication closeout records final head `83213f6007ac558617ffe9eff9ec37d816ff3c0e`, all seven exact-head workflows green, all three review threads resolved, squash merge `7004c9ea44c98f125fbd7988a2557cf356693b36` independently verified on main, and the documentation-review lock released. CTR-FM-AI-AUTH-20260910 and owner host authentication remain separate open blockers and are not accepted by this release.
 - Risk: R4 repository-only reconciliation
 - Scope: PR #1088 review correction and redacted owner-authorized SSH receipt. Does not authorize any AI/DB/provider operation.
-- Evidence: old exact-head seven green checks; three delayed review findings. Release after final-head checks/review and bounded documentation publication.
+- Evidence: historical exact-head publication evidence is closed; protected AI authorization and host-login acceptance remain separate.
 
 ## LOCK-FM-RST-SSH-20260910
 - Task: FM-RST-001
 - Status: PAUSED
+- Worker accounting: PAUSED preserves the unresolved owner host-authentication blocker but is not a running Builder worker. Any future SSH attempt requires a fresh owner-authorized execution transition; no retry is authorized by this record.
 - Risk: R4
 - Scope: new owner-approved single-source SSH allowlist on existing isolated Restore VM only; no database restore, Storage/provider target or default-group mutation.
 - Started: 2026-09-10
@@ -342,7 +344,8 @@
 
 
 ## LOCK-FINISHLINE-RESUME-20260906
-- Status: ACTIVE
+- Status: PAUSED
+- Paused/reconciled: 2026-09-25. No KI correction/rollback worker remains active; FM-DEC-021 defers all remaining Mobile work until company registration plus explicit owner resume, and remaining AI paid/tax/provider acceptance stays behind its owner/protected gates. This historical umbrella lock therefore preserves open finishline scope without consuming a Builder worker; any resumed protected action requires fresh authorization and an explicit lock transition.
 - Current bounded result: FM-FAIL-022 resolved by PR #1087 and fresh AI acceptance 34273836166 after exact-release Production/Staging deployment. No KI correction or rollback run remains active. The observed AI PASS has an open authorization reconciliation, CTR-FM-AI-AUTH-20260910; it must not satisfy the protected gate. Wider real-device and external AI activation scope is paused at owner/provider prerequisites.
 - Task: FM-AI-001 / FM-MOB-001
 - Holder: Codex
@@ -768,8 +771,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Historical continuation 2026-09-18: four review findings were addressed while controlled Admin-CRM SQL was still unapplied. This state was superseded by #1134 acceptance and the separately authorized Production apply; do not revive the old pending steps.
 - Closed by PR #1134 / merge `630aef3ccb53fed9b46284cb1d4bf1825a57687e`. Owner decision 2026-09-19 defers every remaining Mobile/Handy step until after company registration; preserve existing artifacts and do not start new builds/cohort/device/Push/Store/TestFlight work until explicit resume.
 ## LOCK-FM-AI-001-COST-GUARD-20260920
-- Task: FM-AI-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
-- Branch/PR: existing PR #1141 at initial review head `8a6f71a6b2ccc5b1d3edbc8938b1d9f21a673622`; no new branch or PR.
+- Task: FM-AI-001; holder: Codex Cloud; risk: R3; status: RELEASED.
+- Released: 2026-09-25 stale-lock reconciliation. STARTED_WORK already records the bounded foundation as VERIFIED; PR #1141 is closed unmerged and explicitly superseded by corrected merged #1142 on main `32223a6f0fef1c000c1d64ef3fad13f8f6e8be08`. Future monthly reservation/ledger or enforcement work is a distinct package and must acquire a fresh lock.
+- Branch/PR: historical PR #1141 at initial review head `8a6f71a6b2ccc5b1d3edbc8938b1d9f21a673622`; no new branch or PR.
 - Scope: repository-only usage normalization, versioned provider-cost arithmetic and unconfigured monthly budget decision. No Creator overlap, schema Apply, provider call, Stripe mutation, Production mutation or final limit values.
 - Evidence plan: focused exact-arithmetic/version/boundary tests, lint/type/build/full test suite, Project Memory controls and exact-head remote CI/CodeQL/independent review after publication.
 - Review correction: all three P2 findings are addressed in the bounded cost/usage modules with explicit malformed-value and missing-service-tier regression coverage. Full local checks, same-PR push, exact-head CI, thread replies/resolution and one renewed `@codex review` remain required before the lock can be released; never merge from this task.

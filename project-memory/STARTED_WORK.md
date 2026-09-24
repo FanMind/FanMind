@@ -191,7 +191,8 @@
 - Exact next step: preserve the deployed Web correction and continue only the separately authorized external acceptance.
 
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
-- Status: IN_PROGRESS
+- Status: VERIFIED
+- Reconciled: 2026-09-25 from the PR #1088 publication closeout: final head `83213f6007ac558617ffe9eff9ec37d816ff3c0e` passed all seven applicable exact-head workflows, all three review threads were resolved, and squash merge `7004c9ea44c98f125fbd7988a2557cf356693b36` was independently verified. This closes only the documentation reconciliation; CTR-FM-AI-AUTH-20260910 and owner SSH authentication remain separate open evidence gates.
 - Risk: R4
 - Boundary: repository evidence correction only
 - Work lock: LOCK-PR1088-REVIEW-20260910

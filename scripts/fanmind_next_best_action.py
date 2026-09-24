@@ -39,6 +39,7 @@ EXPLICIT_RUNNING_WORK_STATES = {
     "REVIEW_WAITING",
     "MERGE_READY",
 }
+NONRUNNING_LOCK_STATES = {"PAUSED"}
 TERMINAL_LOCK_STATES = {
     "ACCEPTED",
     "CLOSED",
@@ -160,6 +161,10 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                         lock_status in EXPLICIT_RUNNING_WORK_STATES
                         and record_status not in EXPLICIT_RUNNING_WORK_STATES
                     )
+                    or (
+                        lock_status in NONRUNNING_LOCK_STATES
+                        and record_status in EXPLICIT_RUNNING_WORK_STATES
+                    )
                 ):
                     status_conflict = True
                 # A clean terminal lock closes the record. Any contradictory
@@ -179,6 +184,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if (
             lock_id in represented_locks
             or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
+            or str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
             or not lock["tasks"]
         ):
             continue
@@ -1202,6 +1208,37 @@ def run_manager_contract_tests() -> None:
     assert result["active_continuations"] == [
         "TASK:FM-ORPHAN-TERMINAL-CONFLICT-001"
     ]
+
+    # PAUSED locks preserve the external/open blocker but are not running workers.
+    paused_orphan = """## LOCK-FM-PAUSED-ORPHAN-001
+- Task: FM-PAUSED-ORPHAN-001
+- Status: PAUSED
+"""
+    assert active_work_slots("", paused_orphan) == []
+    result = manager([a], limit=1, slots=active_work_slots("", paused_orphan))
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
+
+    # If STARTED_WORK still says the same PAUSED lock is running, the contradiction
+    # remains fail-closed until canonical state is reconciled.
+    paused_running_started = """## Active work
+## FM-PAUSED-RUNNING-001
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-PAUSED-RUNNING-001
+"""
+    paused_running_lock = """## LOCK-FM-PAUSED-RUNNING-001
+- Task: FM-PAUSED-RUNNING-001
+- Status: PAUSED
+"""
+    paused_running_slots = active_work_slots(
+        paused_running_started,
+        paused_running_lock,
+    )
+    assert len(paused_running_slots) == 1
+    assert paused_running_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=paused_running_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-PAUSED-RUNNING-001"]
 
     # An ambiguous task identity may release capacity only when canonical state
     # is genuinely non-running. Explicit IN_PROGRESS remains fail-closed.
