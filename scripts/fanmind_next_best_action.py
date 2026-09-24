@@ -21,14 +21,17 @@ OWNER_BLOCKING_STATES = {"DEFERRED_BY_OWNER", "OWNER_ACTION_REQUIRED"}
 DEFAULT_WORKER_LIMIT = 3
 HARD_MAX_WORKER_LIMIT = 5
 ACTIVE_WORK_STATES = {
+    "BLOCKED",
     "IN_PROGRESS",
     "IMPLEMENTED",
     "IMPLEMENTED_NOT_VERIFIED",
+    "PARTIAL",
     "RECONCILIATION_REQUIRED",
     "CI_WAITING",
     "REVIEW_WAITING",
     "MERGE_READY",
 }
+ACTIVE_LOCK_STATES = {"ACTIVE", "IN_PROGRESS", "PAUSED"}
 PARALLEL_SCOPE_KEYS = (
     "files",
     "directories",
@@ -59,29 +62,86 @@ def deferred_owner_ids(text: str) -> set[str]:
     return ids
 
 
-def active_task_ids(started_text: str, locks_text: str) -> set[str]:
-    tasks: set[str] = set()
+def _record_status(block: str) -> str | None:
+    match = re.search(r"(?m)^- Status:\s*([A-Z_]+)\b", block)
+    return match.group(1) if match else None
 
-    for block in re.split(r"(?m)^## ", started_text)[1:]:
-        lines = block.splitlines()
-        heading = lines[0].strip()
-        status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
-        if not status or status.group(1) not in ACTIVE_WORK_STATES:
-            continue
-        task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
-        if task_line:
-            tasks.update(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
-        tasks.update(re.findall(r"FM-[A-Z0-9_-]+", heading))
 
+def _record_ids(block: str, prefix: str) -> set[str]:
+    return set(re.findall(rf"{prefix}[A-Z0-9_-]+", block))
+
+
+def _record_actions(block: str) -> set[str]:
+    line = re.search(r"(?m)^- Action:\s*(.+?)\s*$", block)
+    return _record_ids(line.group(1), "NBA-") if line else set()
+
+
+def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
+    """Return current work slots without reviving historical checkpoints.
+
+    STARTED_WORK history outside its canonical ``Active work`` section is ignored.
+    An entry tied to a released/superseded lock is likewise historical.  Exact action
+    identity is retained when supplied; otherwise a whole record is one fail-closed
+    task-level slot even when it mentions several task IDs.
+    """
+    lock_records: dict[str, dict] = {}
     for block in re.split(r"(?m)^## ", locks_text)[1:]:
-        status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
-        if not status or status.group(1) not in {"ACTIVE", "IN_PROGRESS"}:
+        heading = block.splitlines()[0].strip()
+        if not heading.startswith("LOCK-"):
             continue
         task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
-        if task_line:
-            tasks.update(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
+        lock_records[heading] = {
+            "status": _record_status(block),
+            "tasks": _record_ids(task_line.group(1), "FM-") if task_line else set(),
+            "actions": _record_actions(block),
+        }
 
-    return tasks
+    active_section = re.split(r"(?m)^## Closed work\s*$", started_text, maxsplit=1)[0]
+    active_section = re.split(r"(?m)^## Active work\s*$", active_section, maxsplit=1)
+    active_section = active_section[1] if len(active_section) == 2 else ""
+    slots: list[dict] = []
+    represented_locks: set[str] = set()
+    for block in re.split(r"(?m)^## ", active_section)[1:]:
+        if _record_status(block) not in ACTIVE_WORK_STATES:
+            continue
+        heading = block.splitlines()[0].strip()
+        task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
+        tasks = _record_ids(task_line.group(1) if task_line else heading, "FM-")
+        actions = _record_actions(block)
+        lock_match = re.search(r"\b(LOCK-[A-Z0-9_-]+)\b", block)
+        lock_id = lock_match.group(1) if lock_match else None
+        if lock_id:
+            represented_locks.add(lock_id)
+            lock = lock_records.get(lock_id)
+            if lock and lock["status"] not in ACTIVE_LOCK_STATES:
+                continue
+            if lock:
+                actions |= lock["actions"]
+        if tasks:
+            slots.append({"tasks": tasks, "action": next(iter(actions)) if len(actions) == 1 else None})
+
+    # A genuinely active lock is current even if its STARTED_WORK record is missing.
+    for lock_id, lock in lock_records.items():
+        if lock_id in represented_locks or lock["status"] not in ACTIVE_LOCK_STATES or not lock["tasks"]:
+            continue
+        slots.append(
+            {
+                "tasks": lock["tasks"],
+                "action": next(iter(lock["actions"])) if len(lock["actions"]) == 1 else None,
+            }
+        )
+
+    # Repeated task-level evidence describes the same current slot, not extra workers.
+    deduplicated: list[dict] = []
+    for slot in slots:
+        if any(slot["tasks"] == current["tasks"] and slot["action"] == current["action"] for current in deduplicated):
+            continue
+        deduplicated.append(slot)
+    return deduplicated
+
+
+def active_task_ids(started_text: str, locks_text: str) -> set[str]:
+    return {task for slot in active_work_slots(started_text, locks_text) for task in slot["tasks"]}
 
 
 def gate_state(state: dict, gate: str) -> str:
@@ -325,6 +385,7 @@ def build_safe_ready_set(
     requested_limit: int | None = None,
     failed_action_ids: set[str] | None = None,
     active_tasks: set[str] | None = None,
+    active_slots: list[dict] | None = None,
 ) -> dict:
     limit = resolve_worker_limit(requested_limit)
     failed = failed_action_ids or set()
@@ -336,11 +397,32 @@ def build_safe_ready_set(
         failed_action_ids=failed,
     )
     candidates = sorted(candidates, key=lambda candidate: (candidate[0]["priority"], candidate[0]["id"]))
-    active_actions = [
-        action
-        for action, status, _ in classified
-        if action.get("task") in active and status not in {"DONE", "FAILED_DO_NOT_RESTART"}
+    status_by_id = {action["id"]: status for action, status, _ in classified}
+    by_id = _action_index(catalog)
+    resolved_slots = active_slots or [
+        {"tasks": {task}, "action": None} for task in sorted(active)
     ]
+    active_actions: list[dict] = []
+    active_reservations: list[dict] = []
+    for slot in resolved_slots:
+        exact = by_id.get(slot.get("action"))
+        matches = [
+            action
+            for action in catalog.get("actions", [])
+            if action.get("task") in slot.get("tasks", set())
+            and status_by_id[action["id"]] not in {"DONE", "FAILED_DO_NOT_RESTART"}
+        ]
+        action = exact if exact in matches else (matches[0] if len(matches) == 1 else None)
+        if action is not None:
+            active_actions.append(action)
+            active_reservations.append(action)
+        elif matches:
+            # Ambiguous task-to-action mapping consumes exactly one slot and has no
+            # provable parallel scope, so admission remains fail-closed.
+            task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"
+            active_reservations.append(
+                {"id": f"TASK:{task_label}", "parallel_safe": False}
+            )
     active_action_ids = {action["id"] for action in active_actions}
     executable_ids = {action["id"] for action, _ in candidates}
     new_candidates = [candidate for candidate in candidates if candidate[0]["id"] not in active_action_ids]
@@ -358,9 +440,11 @@ def build_safe_ready_set(
     # Active continuations already consume worker slots. Never serialize one active
     # continuation out of accounting merely because it conflicts with another active
     # continuation; doing so could admit new work above the configured limit.
-    for action in active_actions:
+    for action in active_reservations:
         running.append(action)
         active_continuations.append(action)
+        if action not in active_actions:
+            continue
         if action["id"] not in executable_ids:
             continue
         dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
@@ -499,6 +583,7 @@ def run_manager_contract_tests() -> None:
         limit=None,
         deferred=None,
         active=None,
+        slots=None,
     ):
         catalog = {"actions": actions}
         state = _synthetic_state([a["id"] for a in actions], accepted=accepted)
@@ -509,6 +594,7 @@ def run_manager_contract_tests() -> None:
             requested_limit=limit,
             failed_action_ids=failed or set(),
             active_tasks=active or set(),
+            active_slots=slots,
         )
 
     # A) 3 independent tasks -> all parallel.
@@ -750,20 +836,80 @@ def run_manager_contract_tests() -> None:
     result = manager([fail_a, independent], failed={"FAIL-A"}, limit=1, active={fail_a["task"]})
     assert result["safe_ready_set"] == ["INDEPENDENT-C"]
     assert result["active_continuations"] == []
+
+    # K2e) one ambiguous active task consumes one fail-closed slot, never one per
+    # sibling catalog action; an exact action identity selects only that sibling.
+    sibling_a = _action("SIBLING-A", 1, task="FM-SHARED-001")
+    sibling_b = _action("SIBLING-B", 2, task="FM-SHARED-001")
+    result = manager(
+        [sibling_a, sibling_b, independent],
+        limit=2,
+        slots=[{"tasks": {"FM-SHARED-001"}, "action": None}],
+    )
+    assert result["worker_used"] == 1
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-SHARED-001"]
+    result = manager(
+        [sibling_a, sibling_b, independent],
+        limit=1,
+        slots=[{"tasks": {"FM-SHARED-001"}, "action": "SIBLING-B"}],
+    )
+    assert result["safe_ready_set"] == ["SIBLING-B"]
+    assert result["active_continuations"] == ["SIBLING-B"]
     result = manager([done, live], accepted={"DONE"}, limit=1, active={done["task"]})
     assert result["safe_ready_set"] == ["LIVE"]
     assert result["active_continuations"] == []
 
     # K3) descriptive/composite canonical entries identify every active task.
-    active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
+    active_started = """## Active work
+
+## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
 - Status: IN_PROGRESS
 """
     assert active_task_ids(active_started, "") == {"FM-CREATOR-001"}
-    composite_started = """## FM-AI-001 / FM-RST-001 — shared active continuation
+    composite_started = """## Active work
+
+## FM-AI-001 / FM-RST-001 — shared active continuation
 - Status: IN_PROGRESS
 - Task: `FM-AI-001 / FM-RST-001`
 """
     assert active_task_ids(composite_started, "") == {"FM-AI-001", "FM-RST-001"}
+
+    # Canonical PARTIAL/BLOCKED records are active, while historical records and
+    # released checkpoints do not reserve slots.
+    reconciled_started = """## FM-HISTORY-001 — superseded checkpoint
+- Status: IN_PROGRESS
+
+## Active work
+
+## FM-PARTIAL-001
+- Status: PARTIAL
+- Work lock: LOCK-PARTIAL
+
+## FM-BLOCKED-001
+- Status: BLOCKED
+
+## FM-RELEASED-001
+- Status: IN_PROGRESS
+- Work lock: LOCK-RELEASED
+
+## Closed work
+
+## FM-CLOSED-001
+- Status: IN_PROGRESS
+"""
+    reconciled_locks = """## LOCK-PARTIAL
+- Task: FM-PARTIAL-001
+- Status: ACTIVE
+
+## LOCK-RELEASED
+- Task: FM-RELEASED-001
+- Status: RELEASED
+"""
+    assert active_task_ids(reconciled_started, reconciled_locks) == {
+        "FM-PARTIAL-001",
+        "FM-BLOCKED-001",
+    }
 
     # L) free slot is reused after predecessor reaches accepted state.
     steal_a = _action("STEAL-A", 1)
@@ -788,6 +934,7 @@ def render(
     deferred: set[str],
     *,
     active_tasks: set[str] | None = None,
+    active_slots: list[dict] | None = None,
     requested_limit: int | None = None,
     failed_action_ids: set[str] | None = None,
 ) -> str:
@@ -798,6 +945,7 @@ def render(
         requested_limit=requested_limit,
         failed_action_ids=failed_action_ids,
         active_tasks=active_tasks,
+        active_slots=active_slots,
     )
     selected, classified = select_from_manager(
         state,
@@ -921,6 +1069,7 @@ def main() -> int:
     locks_text = WORK_LOCKS_PATH.read_text(encoding="utf-8") if WORK_LOCKS_PATH.exists() else ""
     failed_text = FAILED_ATTEMPTS_PATH.read_text(encoding="utf-8") if FAILED_ATTEMPTS_PATH.exists() else ""
     active_tasks = active_task_ids(started_text, locks_text)
+    active_slots = active_work_slots(started_text, locks_text)
     failed_action_ids = persisted_failed_action_ids(failed_text, catalog, state)
 
     try:
@@ -931,6 +1080,7 @@ def main() -> int:
             requested_limit=args.worker_limit,
             failed_action_ids=failed_action_ids,
             active_tasks=active_tasks,
+            active_slots=active_slots,
         )
     except ValueError as exc:
         print(f"FANMIND_BUILDER_MANAGER_RESULT=failed:{exc}")
@@ -974,6 +1124,7 @@ def main() -> int:
         catalog,
         deferred,
         active_tasks=active_tasks,
+        active_slots=active_slots,
         requested_limit=args.worker_limit,
         failed_action_ids=failed_action_ids,
     )
