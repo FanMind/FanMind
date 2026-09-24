@@ -1,3 +1,15 @@
+## LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924
+- Task: FM-GOV-BUILDER-MANAGER-002
+- Status: ACTIVE
+- Risk: R2
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9`.
+- Scope: Builder Manager worker-slot semantics, embedded manager regression tests and exact Project-Memory reconciliation only.
+- Parallel safety: governance-only; no product/runtime/provider/database scope.
+- Forbidden: owner/protected action dispatch, Staging/Production/provider mutation, SQL APPLY, Billing/Restore/Mobile mutation, direct main write.
+- Release condition: exact current-head required CI green, independent review P1/P2=0/no blocking threads, normal merge and post-merge manager recomputation.
+- Recovery: repository revert only.
+
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-20260919
 - Task: FM-CREATOR-001
 - Status: RELEASED_FOR_PR
@@ -41,7 +53,8 @@
 - Released: PR #1136 merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Production deploy `35434847795` passed and the owner confirmed the same already-granted account reaches CRM. Do not repeat registration/grant/database rollout.
 
 ## LOCK-FM-DAILY-SETUP-UI-20260914
-- Task: FM-REG-001; Risk: R2; Holder: Codex; Status: ACTIVE until the final #1125 release receipt.
+- Task: FM-REG-001; Risk: R2; Holder: Codex; Status: RELEASED_PRODUCTION_CONFIRMED.
+- Released by: #1125 final head `423f82d67fd15d633d020c4f92da7f744e181416` -> merge `8694986f7d25639ccbdf67b23c40f88bd175f972`; durable completion receipt records Production deploy `34886792334`, audit `34886957898` and readiness `34886957948`.
 - Scope: current owner-narrowed Daily setup UI only, existing branch fix/daily-admin-visibility-20260914 and single PR #1125. Broader Admin control and duplicate #1126 are superseded for this release.
 - Evidence: actual rendered setup regressions including unavailable readiness, persisted preference and absence of automatic provisioning; independent final-diff review; all current-head CI; normal deploy and exact live /api/version SHA.
 - Closeout: the final #1125 receipt releases this bounded lock and records deployment/browser instructions; no subsequent work starts. DB/provisioning remains separate. Recovery is a normal reviewed source revert, with no data migration or provider transaction to undo.
@@ -715,6 +728,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence/recovery: raw-payload negatives, real PG17 legacy roundtrip plus hardened live-schema capture/dump/ACL countercheck, full current-head CI/review; exact installed source and backup result. Revert only the source if needed; preserve existing artifacts, histories, DB_POSTCHECKED and all real data.
 
 ## LOCK-FM-OPS-REBOOT-20260912
+- Status: BLOCKED
+- Blocked boundary: all bounded repository source corrections through #1116 are Production-confirmed. Remaining work requires independently bound Production host reference/recovery/idle evidence and the separately protected controlled reboot. Retain this R4 lock, but it is not a running repository worker.
 - Current continuation: #1116 source closed by final receipt 5653464231 on main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6. Retain this R4 lock for the owner-proven official 2.337.0 versioned runner layout correction, exact-head tests/review/CI and installed rollout, then independent reference/recovery/idle/reboot evidence. Branch fix/production-runner-versioned-layout-20260913; no host link or startup mutation.
 - Current continuation: #1115 is closed by final receipt 5652891341 on reviewed/deployed main 1bdf55838208788b361f48d8cc45a92c4571173a. Owner confirms corrected file modes, byte-identical migrated registration, absent migrated credentials and both protected PATH lists after guarded /snap/bin creation. The active bounded source work corrects the observed opaque Pipelines path and binds migration alternatives; exact-head CI/review, normal rollout, independent reference and fresh recovery/idle/boot evidence remain required.
 - Current 2026-09-13 continuation: reviewed/deployed main 41d2547806fc7f8288268c45446c3467b268f150, #1114 final receipt 5652605280. No competing Operations PR. Owner readout proves the exact official nginx condition is wrongly rejected. This bounded correction retains current-head review/CI/normal rollout, external reference and all host/recovery gates. Owner admin access and retained PM2 0600 are proven; runner 0664, registration unavailable and separate PM2 all-directory PATH failure remain open. Both Production and Staging runners share the host and need fresh idle proof before reboot.
@@ -787,7 +802,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: source/docs revert; the controlled schema contract remains unapplied.
 
 ## LOCK-FM-CHATADMIN-20260920
-- Task: FM-CHATADMIN-001; holder: Codex Cloud; risk: R3; status: ACTIVE.
+- Task: FM-CHATADMIN-001; holder: Codex Cloud; risk: R3; status: RELEASED_MERGED.
+- Released by: source PR #1145 final head `2038b05af980ac86534de57bafba9568f80d65ba` merged as `360c0dbe818258ae0001eef005a3dff67a54cefe`; downstream #1146 source rollout plus protected VERIFY consumed the next source/observation scope. Later ChatAdmin APPLY is a distinct owner-gated R4 action.
 - Baseline: main `93027f7cf04d7bff5a03b3ec3a3e39f0cc5fd334`; branch `feat/chatadmin-multi-character`.
 - Scope: repository-only isolated ChatAdmin capability/controlled schema/UI/manual measured reply/tests/docs. No target apply, capability grant, provider, Admin, Billing, Mobile, Meta, Backup or Restore work.
 - Separate known issue: `production_audit_backup_latest_stale_or_empty` remains open and unmodified; it does not establish a globally green Production Audit.
