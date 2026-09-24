@@ -4,7 +4,7 @@ import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import {
-  CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+  getConfirmedChatLearningSchemaState,
   verifyConfirmedChatLearningAccountDeletion,
 } from "../../src/lib/confirmedChatLearningDeletionVerification.mjs";
 
@@ -518,7 +518,13 @@ async function verifyWorkspaceDataDeleted(fetchImpl, config, workspaceIds) {
   }
 }
 
-async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
+async function verifyDeletion(
+  fetchImpl,
+  config,
+  userId,
+  workspaceIds = [],
+  environment = {},
+) {
   const checks = await Promise.all([
     restSelect(
       fetchImpl,
@@ -556,7 +562,7 @@ async function verifyDeletion(fetchImpl, config, userId, workspaceIds = []) {
     headers: serviceHeaders(config.serviceKey),
     workspaceIds,
     userId,
-    schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+    schemaState: getConfirmedChatLearningSchemaState(environment),
   });
   if (!learningVerification.ok) {
     throw new AccountDeletionProcessorError("deletion_verification_failed");
@@ -667,7 +673,7 @@ async function finalizeDeletedAccount({
   workspaceIds,
   log,
 }) {
-  await verifyDeletion(fetchImpl, config, userId, workspaceIds);
+  await verifyDeletion(fetchImpl, config, userId, workspaceIds, env);
   const notificationEmail = String(request.notification_email ?? "")
     .trim()
     .toLowerCase();
@@ -779,6 +785,7 @@ export async function processAccountDeletion({
         config,
         request.user_id,
         resumeWorkspaceIds,
+        env,
       );
       log("ACCOUNT_DELETION_RESULT=dry_run_resume_ready");
       return {
