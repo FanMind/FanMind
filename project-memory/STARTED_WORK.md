@@ -1,7 +1,7 @@
 ## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
 - Status: IN_PROGRESS
 - Risk: R2
-- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-TRANSITIVE-P1-20260924
+- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
 - Owner: autonomous builder
 - Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171.
 - Trigger: independent #1171 review remains unresolved/non-outdated and identifies a P1: a noncanonical role could receive effective membership in `authenticator`, then follow the reviewed `authenticator -> service_role` SET edge.
