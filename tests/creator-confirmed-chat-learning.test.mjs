@@ -64,11 +64,11 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_FOUNDATION_CONTRACT=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=[0-9a-f]{64}/u);
-  assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_SOURCE_STATE=preinstall/u);
+  assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_APPLY=not_requested/u);
 });
 
-test("confirmed-chat apply fails before target access while source state is preinstall", () => {
+test("installed source still requires target-bound preflight before any apply", () => {
   const result = spawnSync(process.execPath, [runnerPath, "--apply"], {
     cwd: repoRoot,
     encoding: "utf8",
@@ -83,7 +83,7 @@ test("confirmed-chat apply fails before target access while source state is prei
   assert.notEqual(result.status, 0);
   assert.match(
     result.stderr,
-    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=source_state_not_installed/u,
+    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=runtime_environment_invalid/u,
   );
 });
 
