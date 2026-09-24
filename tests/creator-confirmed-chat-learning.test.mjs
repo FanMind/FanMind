@@ -412,12 +412,18 @@ test("confirmed-chat Staging control is verify-only, exact-main and protected", 
 
   assert.match(workflow, /workflow_dispatch:/u);
   assert.match(workflow, /environment: staging/u);
-  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/u);
-  assert.match(workflow, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(workflow, /validate:\n[\s\S]*Reject invalid or stale dispatch parameters/u);
+  assert.match(workflow, /FANMIND_DISPATCH_REF: \$\{\{ github\.ref \}\}/u);
+  assert.match(workflow, /FANMIND_DISPATCH_SHA: \$\{\{ github\.sha \}\}/u);
+  assert.match(workflow, /FANMIND_REVIEWED_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
+  assert.match(workflow, /test "\$FANMIND_DISPATCH_REF" = "refs\/heads\/main"/u);
+  assert.match(workflow, /test "\$FANMIND_REVIEWED_COMMIT" = "\$FANMIND_DISPATCH_SHA"/u);
   assert.match(
     workflow,
-    /inputs\.confirmation == 'verify-creator-confirmed-chat-learning'/u,
+    /test "\$FANMIND_CONFIRMATION" = "verify-creator-confirmed-chat-learning"/u,
   );
+  assert.match(workflow, /verify:\n[\s\S]*needs: validate/u);
+  assert.doesNotMatch(workflow, /\n\s+if:\s*>-/u);
   assert.match(workflow, /FANMIND_RUNTIME_ENVIRONMENT: staging/u);
   assert.match(
     workflow,
