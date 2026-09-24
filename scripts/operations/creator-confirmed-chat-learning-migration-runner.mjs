@@ -585,7 +585,7 @@ ${foundationChecks}
      )
        and (membership.inherit_option or membership.set_option or membership.admin_option)
        and not (
-         inherited_role.rolname = 'authenticated'
+         inherited_role.rolname in ('authenticated','service_role')
          and member_role.rolname = 'authenticator'
          and not membership.inherit_option
          and membership.set_option
