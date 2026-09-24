@@ -1,0 +1,148 @@
+name: Transport bounded Builder Manager fixes
+
+on:
+  push:
+    branches:
+      - feat/builder-manager-safe-ready-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  transport:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/builder-manager-safe-ready-20260923
+          fetch-depth: 0
+      - name: Apply bounded review remediation
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('scripts/fanmind_next_best_action.py')
+          s = p.read_text(encoding='utf-8')
+
+          def one(old: str, new: str) -> None:
+              global s
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected one match, got {count}: {old[:120]!r}')
+              s = s.replace(old, new, 1)
+
+          one(
+              'import argparse\nimport json\nimport re\nfrom pathlib import Path\n',
+              'import argparse\nimport json\nimport posixpath\nimport re\nfrom pathlib import Path\n',
+          )
+
+          one(
+              'ACTIVE_LOCK_STATES = {"ACTIVE", "IN_PROGRESS", "PAUSED"}\nPARALLEL_SCOPE_KEYS = (\n',
+              'TERMINAL_LOCK_STATES = {\n'
+              '    "ACCEPTED",\n'
+              '    "CLOSED",\n'
+              '    "COMPLETED",\n'
+              '    "DONE",\n'
+              '    "RELEASED",\n'
+              '    "RELEASED_FOR_PR",\n'
+              '    "SUPERSEDED",\n'
+              '}\n'
+              'PATH_SCOPE_KEYS = {"files", "directories", "project_memory", "ci"}\n'
+              'PARALLEL_SCOPE_KEYS = (\n',
+          )
+
+          one(
+              'def _record_status(block: str) -> str | None:\n'
+              '    match = re.search(r"(?m)^- Status:\\s*([A-Z_]+)\\b", block)\n'
+              '    return match.group(1) if match else None\n',
+              'def _record_status(block: str) -> str | None:\n'
+              '    match = re.search(r"(?m)^- [^\\n]*?\\bStatus:\\s*([A-Z_]+)\\b", block)\n'
+              '    return match.group(1) if match else None\n',
+          )
+
+          one(
+              '            if lock and lock["status"] not in ACTIVE_LOCK_STATES:\n'
+              '                continue\n',
+              '            if lock and lock["status"] in TERMINAL_LOCK_STATES:\n'
+              '                continue\n',
+          )
+          one(
+              '        if lock_id in represented_locks or lock["status"] not in ACTIVE_LOCK_STATES or not lock["tasks"]:\n'
+              '            continue\n',
+              '        if lock_id in represented_locks or lock["status"] in TERMINAL_LOCK_STATES or not lock["tasks"]:\n'
+              '            continue\n',
+          )
+
+          one(
+              'def _path_overlap(left: str, right: str) -> bool:\n'
+              '    a = left.rstrip("/")\n'
+              '    b = right.rstrip("/")\n'
+              '    return a == b or a.startswith(b + "/") or b.startswith(a + "/")\n',
+              'def _canonical_repository_path(value: str) -> str | None:\n'
+              '    if not isinstance(value, str) or not value or "\\x00" in value or "\\\\" in value:\n'
+              '        return None\n'
+              '    if value.startswith("/") or re.match(r"^[A-Za-z]:", value):\n'
+              '        return None\n'
+              '    normalized = posixpath.normpath(value)\n'
+              '    if normalized == ".." or normalized.startswith("../"):\n'
+              '        return None\n'
+              '    return normalized.rstrip("/") or "."\n'
+              '\n'
+              '\n'
+              'def _path_overlap(left: str, right: str) -> bool:\n'
+              '    a = _canonical_repository_path(left)\n'
+              '    b = _canonical_repository_path(right)\n'
+              '    if a is None or b is None:\n'
+              '        return True\n'
+              '    if a == "." or b == ".":\n'
+              '        return True\n'
+              '    return a == b or a.startswith(b + "/") or b.startswith(a + "/")\n',
+          )
+
+          one(
+              '        if key in {"files", "directories", "project_memory", "ci"}:\n'
+              '            if any(_path_overlap(a, b) for a in left_values for b in right_values):\n'
+              '                reasons.append(f"{key}_overlap")\n',
+              '        if key in PATH_SCOPE_KEYS:\n'
+              '            if any(_canonical_repository_path(value) is None for value in (*left_values, *right_values)):\n'
+              '                reasons.append(f"{key}_invalid")\n'
+              '            elif any(_path_overlap(a, b) for a in left_values for b in right_values):\n'
+              '                reasons.append(f"{key}_overlap")\n',
+          )
+
+          old = '''    resolved_slots = active_slots or [\n        {"tasks": {task}, "action": None} for task in sorted(active)\n    ]\n    active_actions: list[dict] = []\n    active_reservations: list[dict] = []\n    for slot in resolved_slots:\n        exact = by_id.get(slot.get("action"))\n        matches = [\n            action\n            for action in catalog.get("actions", [])\n            if action.get("task") in slot.get("tasks", set())\n            and status_by_id[action["id"]] not in {"DONE", "FAILED_DO_NOT_RESTART"}\n        ]\n        action = exact if exact in matches else (matches[0] if len(matches) == 1 else None)\n        if action is not None:\n            active_actions.append(action)\n            active_reservations.append(action)\n        elif matches:\n            # Ambiguous task-to-action mapping consumes exactly one slot and has no\n            # provable parallel scope, so admission remains fail-closed.\n            task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"\n            active_reservations.append(\n                {"id": f"TASK:{task_label}", "parallel_safe": False}\n            )\n'''
+          new = '''    resolved_slots = active_slots if active_slots is not None else [\n        {"tasks": {task}, "action": None} for task in sorted(active)\n    ]\n    active_actions: list[dict] = []\n    active_reservations: list[dict] = []\n    terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}\n    for slot in resolved_slots:\n        exact_id = slot.get("action")\n        exact = by_id.get(exact_id) if exact_id else None\n        task_matches = [\n            action\n            for action in catalog.get("actions", [])\n            if action.get("task") in slot.get("tasks", set())\n        ]\n        matches = [\n            action for action in task_matches if status_by_id[action["id"]] not in terminal_statuses\n        ]\n\n        if exact_id:\n            if exact is not None and status_by_id.get(exact_id) in terminal_statuses:\n                # Exact identity is authoritative: a terminal exact action releases\n                # the slot even if stale task labels point at an unresolved sibling.\n                continue\n            action = exact if exact is not None and exact in matches else None\n        else:\n            if task_matches and not matches:\n                # Task-only evidence whose entire matching catalog scope is terminal\n                # no longer consumes capacity.\n                continue\n            action = matches[0] if len(matches) == 1 else None\n\n        if action is not None:\n            active_actions.append(action)\n            active_reservations.append(action)\n        else:\n            # Zero-match, ambiguous, unknown-exact, or contradictory exact/task\n            # evidence consumes one fail-closed slot with unknown parallel scope.\n            task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"\n            reservation_id = f"UNKNOWN:{exact_id}" if exact_id else f"TASK:{task_label}"\n            active_reservations.append({"id": reservation_id, "parallel_safe": False})\n'''
+          one(old, new)
+
+          marker = '''    # D) different files but same contract/module -> serialize.\n'''
+          insert = '''    # C3) repository-equivalent paths conflict; unsafe paths fail closed.\n    canonical_a = _action("CANONICAL-A", 1, scope=_scope("CANONICAL-A", files=["src/pkg/a.py"]))\n    canonical_b = _action("CANONICAL-B", 2, scope=_scope("CANONICAL-B", files=["./src/pkg/a.py"]))\n    result = manager([canonical_a, canonical_b])\n    assert result["safe_ready_set"] == ["CANONICAL-A"]\n    assert "files_overlap" in result["serialized_due_to_conflict"][0]["reason"]\n    unsafe_path = _action("UNSAFE-PATH", 2, scope=_scope("UNSAFE-PATH", files=["../outside.py"]))\n    result = manager([canonical_a, unsafe_path])\n    assert result["safe_ready_set"] == ["CANONICAL-A"]\n    assert "files_invalid" in result["serialized_due_to_conflict"][0]["reason"]\n\n'''
+          one(marker, insert + marker)
+
+          marker = '''    # K3) descriptive/composite canonical entries identify every active task.\n'''
+          insert = '''    # K2f) zero-match and contradictory exact identities reserve one unknown slot.\n    result = manager(\n        [independent],\n        limit=1,\n        slots=[{"tasks": {"FM-OPS-001"}, "action": None}],\n    )\n    assert result["worker_used"] == 1\n    assert result["safe_ready_set"] == []\n    assert result["active_continuations"] == ["TASK:FM-OPS-001"]\n\n    exact_active = _action("EXACT-ACTIVE", 1, task="FM-EXACT-A")\n    sibling_active = _action("EXACT-SIBLING", 2, task="FM-EXACT-B")\n    contradictory_slot = [{"tasks": {"FM-EXACT-B"}, "action": "EXACT-ACTIVE"}]\n    result = manager([exact_active, sibling_active], limit=1, slots=contradictory_slot)\n    assert result["worker_used"] == 1\n    assert result["safe_ready_set"] == []\n    assert result["active_continuations"] == ["UNKNOWN:EXACT-ACTIVE"]\n    result = manager(\n        [exact_active, sibling_active],\n        accepted={"EXACT-ACTIVE"},\n        limit=1,\n        slots=contradictory_slot,\n    )\n    assert result["active_continuations"] == []\n    assert result["safe_ready_set"] == ["EXACT-SIBLING"]\n\n'''
+          one(marker, insert + marker)
+
+          marker = '''    # L) free slot is reused after predecessor reaches accepted state.\n'''
+          insert = '''    # Inline, missing, and unknown lock states are fail-closed active; explicit\n    # terminal release states do not reserve slots.\n    lock_state_text = """## LOCK-INLINE\n- Task: FM-INLINE-001; Status: ACTIVE until owner reconciliation\n\n## LOCK-MISSING\n- Task: FM-MISSING-001\n\n## LOCK-UNKNOWN\n- Task: FM-UNKNOWN-001\n- Status: MYSTERY\n\n## LOCK-RELEASED\n- Task: FM-RELEASED-002\n- Status: RELEASED\n"""\n    assert active_task_ids("", lock_state_text) == {\n        "FM-INLINE-001",\n        "FM-MISSING-001",\n        "FM-UNKNOWN-001",\n    }\n\n'''
+          one(marker, insert + marker)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          python3 -m py_compile scripts/fanmind_next_best_action.py scripts/project_memory_quality_check.py
+          python3 scripts/fanmind_next_best_action.py --manager-check
+          python3 scripts/fanmind_next_best_action.py --write
+          python3 scripts/fanmind_next_best_action.py --check
+          python3 scripts/fanmind_memory_v8.py --check
+          python3 scripts/project_memory_quality_check.py
+          git diff --check
+
+          rm .github/workflows/transport-manager-fix.yml
+          git config user.name 'FanMind Builder'
+          git config user.email 'builder@users.noreply.github.com'
+          git add scripts/fanmind_next_best_action.py project-memory/NEXT_BEST_ACTION.md .github/workflows/transport-manager-fix.yml
+          git diff --cached --check
+          git commit -m 'Fix fail-closed manager active-slot reconciliation'
+          git push origin HEAD:feat/builder-manager-safe-ready-20260923
