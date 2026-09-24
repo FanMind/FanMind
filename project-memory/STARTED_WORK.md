@@ -306,7 +306,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Bounded scope: repository-only VERIFY control at `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static regression coverage, rollout runbook and bounded Project-Memory reconciliation.
 - Result: PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` corrected its initial P1/P2 findings, all review threads were resolved, the independent current-head review reported no further major issues, and the PR merged normally as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
 - Boundary: this proves only the repository control. No Staging VERIFY was dispatched and no target schema state, APPLY, runtime activation, provider/customer/Billing/Restore/Mobile mutation or Production acceptance is inferred.
-- Exact next step: do not rebuild or republish #1175. Keep actual Staging VERIFY/APPLY as separately protected target actions; recompute `NBA-CREATOR-INTELLIGENCE` and continue only a distinct repository-safe unaccepted Creator scope.
+- Exact next step: do not rebuild or republish #1175. Keep actual Staging VERIFY/APPLY as separately protected target actions. Recompute the Builder Manager first; continue a distinct Creator scope only after `NBA-CREATOR-INTELLIGENCE` is actually admitted to the current SAFE READY SET. If the manager reports `SAFE READY SET: NONE` or serializes Creator for worker capacity/conflict, reconcile stale/terminal continuations instead of starting Creator work.
 - Recovery: ordinary source revert; no external target state was changed by this repository package.
 
 ## FM-CREATOR-001 — post-merge gitless release-test repair — 2026-09-24
