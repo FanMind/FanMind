@@ -595,6 +595,17 @@ ${foundationChecks}
     raise exception 'creator_learning_function_acl_inheritance_invalid';
   end if;
 
+  if exists (
+    select 1
+      from pg_auth_members membership
+      join pg_roles inherited_role on inherited_role.oid = membership.roleid
+      join pg_roles member_role on member_role.oid = membership.member
+     where inherited_role.rolname = 'authenticator'
+       and (membership.inherit_option or membership.set_option or membership.admin_option)
+  ) then
+    raise exception 'creator_learning_authenticator_membership_path_invalid';
+  end if;
+
   if not has_schema_privilege('authenticated', 'public', 'USAGE')
      or not has_schema_privilege('service_role', 'public', 'USAGE') then
     raise exception 'creator_learning_schema_usage_invalid';
