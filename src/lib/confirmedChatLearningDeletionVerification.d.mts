@@ -1,5 +1,9 @@
 export type ConfirmedChatLearningDeletionSchemaState = "preinstall" | "installed";
 
+export declare const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE: ConfirmedChatLearningDeletionSchemaState;
+export declare function getConfirmedChatLearningSchemaState(
+  environment?: { FANMIND_RUNTIME_ENVIRONMENT?: string },
+): ConfirmedChatLearningDeletionSchemaState;
 export declare const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE: ConfirmedChatLearningDeletionSchemaState;
 
 export type ConfirmedChatLearningDeletionVerificationResult =
