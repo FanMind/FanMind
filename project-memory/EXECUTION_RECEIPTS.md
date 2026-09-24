@@ -4,7 +4,7 @@
 - Source result: PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` fixed the initial P1 supply-chain inventory finding and P2 invalid-dispatch finding; both review threads are resolved and the independent current-head review reported no further major issues. The PR merged normally as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
 - Accepted scope: repository-only `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static fail-closed regression, rollout runbook and bounded Project-Memory reconciliation.
 - Safety: the merged workflow is exact-main/exact-reviewed-commit, protected-`staging`, target/TLS/private-passfile bound and runs only `--check` + `--verify`; it exposes no APPLY mode. No workflow dispatch, SQL mutation, provider/customer/Billing/Restore/Mobile mutation or runtime activation occurred in this receipt.
-- Exact next step: do not rebuild or republish #1175. Treat actual Staging deployment/VERIFY and every later APPLY as distinct protected actions; continue only separately scoped repository-safe Creator work when selected.
+- Exact next step: do not rebuild or republish #1175. Treat actual Staging deployment/VERIFY and every later APPLY as distinct protected actions. Repository-safe Creator work may continue only when the freshly recomputed Builder Manager admits `NBA-CREATOR-INTELLIGENCE` to the current SAFE READY SET; an empty set or `worker_limit`/conflict serialization is a stop for new Creator work, not permission to bypass the manager.
 
 ## RECEIPT-FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919
 - Status: PRODUCTION_CONFIRMED for exact DB rollout; Task FM-REG-003 / FM-CR-041; Risk R4.
