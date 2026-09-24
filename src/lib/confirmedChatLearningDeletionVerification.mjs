@@ -1,4 +1,15 @@
-export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "preinstall";
+export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE = "installed";
+
+export function getConfirmedChatLearningSchemaState(environment = process.env) {
+  return String(environment?.FANMIND_RUNTIME_ENVIRONMENT ?? "")
+    .trim()
+    .toLowerCase() === "staging"
+    ? CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE
+    : "preinstall";
+}
+
+export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE =
+  getConfirmedChatLearningSchemaState();
 
 function missingPostgrestResource(status, payload) {
   if (status !== 404 || !payload || typeof payload !== "object") return false;

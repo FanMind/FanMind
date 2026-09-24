@@ -54,6 +54,10 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
   assert.match(runner, /production_apply_forbidden/u);
   assert.match(runner, /source_state_not_installed/u);
   assert.match(runner, /installed_target_with_preinstall_source/u);
+  assert.match(
+    runner,
+    /CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE = "\(preinstall\|installed\)"/u,
+  );
 
   const result = spawnSync(process.execPath, [runnerPath, "--check"], {
     cwd: repoRoot,
@@ -64,16 +68,17 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_FOUNDATION_CONTRACT=verified/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=[0-9a-f]{64}/u);
-  assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_SOURCE_STATE=preinstall/u);
+  assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_STAGING_SOURCE_STATE=installed/u);
   assert.match(result.stdout, /CREATOR_CONFIRMED_CHAT_APPLY=not_requested/u);
 });
 
-test("confirmed-chat apply fails before target access while source state is preinstall", () => {
+test("generic confirmed-chat runner keeps apply structurally disabled", () => {
   const result = spawnSync(process.execPath, [runnerPath, "--apply"], {
     cwd: repoRoot,
     encoding: "utf8",
     env: {
       ...process.env,
+      FANMIND_RUNTIME_ENVIRONMENT: "staging",
       FANMIND_CREATOR_CONFIRMED_CHAT_APPLY_CONFIRMATION:
         "apply-creator-confirmed-chat-learning",
       FANMIND_NON_PRODUCTION_WRITE_ACKNOWLEDGEMENT:
@@ -83,14 +88,18 @@ test("confirmed-chat apply fails before target access while source state is prei
   assert.notEqual(result.status, 0);
   assert.match(
     result.stderr,
-    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=source_state_not_installed/u,
+    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=apply_protected_path_required/u,
   );
 });
 
 test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /status", "--porcelain=v1", "--untracked-files=no"/u);
-  assert.match(runner, /const state = reviewedRolloutState\(reviewedCommit, environment\)/u);
+  assert.match(runner, /const state = reviewedRolloutState\(reviewedCommit, environment, runtime\)/u);
+  assert.match(
+    runner,
+    /const workingState = runtime === "staging" \? stagingSourceState : "preinstall"/u,
+  );
   assert.match(
     runner,
     /if \(state !== workingState\) fail\("rollout_state_checkout_mismatch"\)/u,
@@ -102,7 +111,7 @@ test("reviewed VERIFY and APPLY bind rollout state to the exact reviewed commit"
     runner,
     /requireReviewedControlFiles\(reviewedCommit, environment\);/u,
   );
-  assert.match(runner, /if \(mode === "apply"\)/u);
+  assert.match(runner, /if \(modeArg === "--apply"\) fail\("apply_protected_path_required"\)/u);
 });
 
 test("database binding rejects a foreign pooler user before any passfile or psql access", () => {

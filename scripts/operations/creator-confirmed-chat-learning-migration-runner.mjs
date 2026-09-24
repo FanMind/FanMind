@@ -1299,7 +1299,7 @@ rollback;
 
 function parseRolloutState(source) {
   const match = source.match(
-    /export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "(preinstall|installed)";/u,
+    /export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE = "(preinstall|installed)";/u,
   );
   if (!match) fail("rollout_state_invalid");
   return match[1];
@@ -1351,10 +1351,11 @@ function requireRepositoryIdentity(environment) {
   }
 }
 
-function reviewedRolloutState(reviewedCommit, environment) {
+function reviewedRolloutState(reviewedCommit, environment, runtime) {
   const shown = runGit(["show", `${reviewedCommit}:${ROLLOUT_STATE_REPO_PATH}`], environment);
   if (shown.status !== 0) fail("reviewed_rollout_state_unreadable");
-  return parseRolloutState(shown.stdout);
+  const stagingState = parseRolloutState(shown.stdout);
+  return runtime === "staging" ? stagingState : "preinstall";
 }
 
 function requireCleanTrackedCheckout(environment) {
@@ -1737,10 +1738,11 @@ export function main(args = process.argv.slice(2), environment = process.env) {
   if (args.length > 1 || !["--check", "--verify", "--apply"].includes(modeArg)) {
     fail("mode_invalid");
   }
+  if (modeArg === "--apply") fail("apply_protected_path_required");
   const sql = readAndVerifyMigration();
   const foundationSources = readFoundationContractSources();
   const verifySql = buildVerifySql(sql, foundationSources);
-  const workingState = rolloutState();
+  const stagingSourceState = rolloutState();
   const digest = createHash("sha256").update(sql).digest("hex");
 
   if (modeArg === "--check") {
@@ -1749,17 +1751,16 @@ export function main(args = process.argv.slice(2), environment = process.env) {
     console.log(`CREATOR_CONFIRMED_CHAT_MIGRATION_SHA256=${digest}`);
     console.log("CREATOR_CONFIRMED_CHAT_MIGRATION_CONTRACT=verified");
     console.log("CREATOR_CONFIRMED_CHAT_FOUNDATION_CONTRACT=verified");
-    console.log(`CREATOR_CONFIRMED_CHAT_SOURCE_STATE=${workingState}`);
+    console.log(`CREATOR_CONFIRMED_CHAT_STAGING_SOURCE_STATE=${stagingSourceState}`);
     console.log("CREATOR_CONFIRMED_CHAT_APPLY=not_requested");
     return;
   }
 
   const mode = modeArg.slice(2);
-  if (mode === "apply" && workingState !== "installed") fail("source_state_not_installed");
-  const { reviewedCommit } = requireTarget(environment, mode);
-  const state = reviewedRolloutState(reviewedCommit, environment);
+  const { reviewedCommit, runtime } = requireTarget(environment, mode);
+  const workingState = runtime === "staging" ? stagingSourceState : "preinstall";
+  const state = reviewedRolloutState(reviewedCommit, environment, runtime);
   if (state !== workingState) fail("rollout_state_checkout_mismatch");
-  if (mode === "apply" && state !== "installed") fail("source_state_not_installed");
 
   const { snapshotDirectory, snapshotPath } = privatePassfileSnapshot(environment);
   try {

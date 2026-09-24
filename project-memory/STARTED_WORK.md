@@ -1,14 +1,10 @@
 ## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
-- Status: IN_PROGRESS
+- Status: MERGED_VERIFIED
 - Risk: R2
-- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
-- Owner: autonomous builder
-- Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171.
-- Trigger: independent #1171 review remains unresolved/non-outdated and identifies a P1: a noncanonical role could receive effective membership in `authenticator`, then follow the reviewed `authenticator -> service_role` SET edge.
-- Bounded scope: reject every effective incoming `pg_auth_members` edge whose granted role is `authenticator`; add focused regression coverage. No SQL APPLY, Staging/Production/provider/customer/Billing/Restore/Mobile mutation.
-- Exact next step: complete current-head CI and one independent review on PR #1172; reconcile any P1/P2 on the same PR, then merge only when every required check is green and blocking findings are zero.
-- Acceptance: exact current-head required CI green, one independent review cycle on every material head, OFFENE_P1=0, OFFENE_P2=0, no blocking threads, then normal merge and post-merge verify.
-- Recovery: ordinary bounded source/test revert; no external state changed.
+- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924 — RELEASED
+- Result: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` converged with green triggered CI, exact-head independent review without findings and zero blocking threads, then merged normally as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`.
+- Boundary: repository-only verifier hardening; no SQL APPLY, Staging/Production/provider/customer/Billing/Restore/Mobile mutation.
+- Resume: do not reopen this P1 scope. Continue only the separate confirmed-chat installed source-state step above.
 
 ## FM-REG-001 — Daily setup display closeout
 - Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
@@ -299,6 +295,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Cross-link Task ID, Change Request, PR/branch, dependencies, work lock and execution receipt.
 
 ## Active work
+
+## FM-CREATOR-001 — confirmed-chat target-aware Staging source-state switch — 2026-09-24
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
+- Contract / gate: `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001`.
+- Owner: autonomous builder
+- Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after normal merge of PR #1172.
+- Consumed predecessor: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every triggered current-head workflow, independent Codex review reported no findings, had zero blocking threads and merged as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. Its authenticator P1 follow-up is complete and must not be rebuilt.
+- Bounded scope: switch only the reviewed **Staging** confirmed-chat disclosure/deletion lifecycle from `preinstall` to `installed`, while Production/unknown runtimes remain `preinstall`; update synchronized regression tests/runner/runbook and bounded Creator navigation. The initial global switch was rejected by current-head P1 because Production has no controlled schema yet. No target schema is installed and runtime learning stays inactive.
+- Current review reconciliation: the latest exact-head review identified four blocking findings (P1 contract/gate release-decision impact, P2 loaded-env account-deletion state, P1 generic APPLY reachability, P1 Production VERIFY using Staging state). The same PR now records the R4 privacy contract/gate as affected while keeping RELEASE_DECISION=BLOCK, resolves account deletion from its loaded env, binds VERIFY state to the selected runtime, and makes generic `--apply` fail immediately with `apply_protected_path_required`.
+- Exact next step: complete current-head CI plus the automatically triggered independent review of this material correction; fix any finding on the same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY. A later APPLY requires a new protected release-/receipt-bound path and separate owner/environment authorization.
+- Forbidden: SQL APPLY, protected Staging/Production write, runtime flag activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
+- Recovery: ordinary repository revert; no external target state changed.
 
 ## FM-WEB-004
 - Started: 2026-09-04 Europe/Vienna

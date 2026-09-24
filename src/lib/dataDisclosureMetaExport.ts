@@ -12,11 +12,22 @@ const MAX_ROWS_PER_DATASET = 50_000;
 export type ConfirmedChatLearningSchemaState = "preinstall" | "installed";
 
 // Source-controlled rollout state outside Supabase/PostgREST schema caching.
-// The protected target schema APPLY is forbidden while this remains
-// "preinstall". The later bounded migration rollout must first change this to
-// "installed" and deploy that fail-closed reader; only then may schema APPLY run.
+// Staging may move ahead of Production because the controlled schema is applied
+// separately per target. Unknown/non-Staging runtimes stay preinstall fail-safe
+// until a later reviewed Production rollout changes that explicit boundary.
+export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE: ConfirmedChatLearningSchemaState =
+  "installed";
+
+export function getConfirmedChatLearningSchemaState(
+  runtimeEnvironment = process.env["FANMIND_RUNTIME_ENVIRONMENT"],
+): ConfirmedChatLearningSchemaState {
+  return runtimeEnvironment?.trim().toLowerCase() === "staging"
+    ? CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE
+    : "preinstall";
+}
+
 export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE: ConfirmedChatLearningSchemaState =
-  "preinstall";
+  getConfirmedChatLearningSchemaState();
 
 export function isConfirmedChatLearningDisclosureOptional(
   state: ConfirmedChatLearningSchemaState,

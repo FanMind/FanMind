@@ -780,7 +780,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Follow-up boundary: one later P2 about preserving every owned Workspace ID across resume is a new scope and lock.
 
 ## LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
-- Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: ACTIVE.
+- Task: FM-CREATOR-001; holder: ChatGPT / connected GitHub; risk: R3; status: RELEASED_MERGED.
 - Baseline: exact main `3ec6115612f1e2b9cf58d2d2064fbb7a561b2f6b`.
 - Scope: repository-only controlled `owned_workspace_ids` + service-role-only atomic transition RPC contract/checker and fail-closed Operations persistence/resume proof. The RPC owns the destructive-start snapshot/transition boundary; no target Apply or real deletion.
 - Evidence plan: checksum/contract negatives, multi-Workspace persistence, missing contract/inventory failures before destructive completion, current-head CI/CodeQL/Browser and one independent review.
@@ -811,7 +811,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-GOV-EVENT-ORCH-001-20260924
 - Task: FM-GOV-EVENT-ORCH-001
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R2
 - Holder: ChatGPT / connected GitHub
 - Baseline: main `65c3a1266e37ac1a385caffff74745f25f54ddf3`.
@@ -822,7 +822,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
 - Task: FM-CREATOR-001
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: autonomous FanMind Builder
 - Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171; its independent review remains unresolved/non-outdated for the newly identified transitive authenticator-membership P1.
@@ -831,3 +831,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Forbidden: SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
 - Release condition: PR #1172 exact current-head required CI green, one independent review with P1/P2=0/no blocking threads, normal merge, then post-merge verification/reconciliation.
 - Recovery: ordinary repository revert; no external state mutation.
+
+## LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
+- Task: FM-CREATOR-001
+- Status: ACTIVE
+- Risk: R4
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after merged #1172.
+- Scope: synchronized target-aware source state: Staging `preinstall -> installed`, Production/unknown remain `preinstall`; confirmed-chat disclosure/deletion readers, loaded-env account-deletion binding, runtime-specific read-only VERIFY, generic APPLY structural disablement, `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001` fail-closed release decision, focused regressions, rollout runbook and bounded Creator Project-Memory reconciliation only. Initial and latest review findings remain in this same lock/PR until current-head convergence.
+- Parallel safety: serialize with all other Creator schema/disclosure/deletion/learning-contract work. No second safe Creator worker is admitted while this lock is active.
+- Forbidden: SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
+- Release condition: exact current-head required CI green, one independent review with P1/P2=0, no blocking threads, normal merge and post-merge verification.
+- Recovery: repository revert only; the target schema remains untouched by this lock.
