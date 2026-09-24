@@ -1,4 +1,4 @@
-name: Transport confirmed-chat P1 remediation v4
+name: Transport confirmed-chat reviewed remediation
 
 on:
   push:
@@ -20,217 +20,100 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Patch exact P1 findings, test final tree, commit, and push
+      - name: Transport exact already-tested blobs, verify, commit, and push
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          BASE=5a77cc6cfaa8891aef62f2ef45dfe87e9c2122b2
+
+          BASE=de64f58efbd3b585c5e7901399724de10e4164d3
           BRANCH=feat/creator-confirmed-chat-rollout-runner-20260923
           HELPER=.github/workflows/transport-confirmed-chat-current-head-p1-v4.yml
-          stage=bootstrap
+          COMMENT_ID=5817040694
+          RUNNER=scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs
+          CASES=tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
 
-          cleanup_failure() {
-            code=$?
-            if [ "$code" -ne 0 ]; then
-              git reset --hard HEAD || true
-              if [ -f "$HELPER" ]; then
-                git rm -f "$HELPER" || true
-                git commit -m "Remove failed confirmed-chat P1 transport v4 (${stage})" || true
-                git push origin "HEAD:refs/heads/$BRANCH" || true
-              fi
-            fi
-            exit "$code"
-          }
-          trap cleanup_failure EXIT
-
-          stage=parent_guard
           test "$(git rev-parse HEAD^)" = "$BASE"
-          test "$(git diff --name-only "$BASE" HEAD | sort -u)" = "$HELPER"
+          test "$(git diff --name-only "$BASE" HEAD)" = "$HELPER"
 
-          # Test the final intended tree, not the temporary transport workflow.
-          stage=remove_helper
-          git rm "$HELPER"
+          author=$(gh api "repos/FanMind/FanMind/issues/comments/$COMMENT_ID" --jq '.user.login')
+          test "$author" = 'chatgpt-codex-connector[bot]'
+          gh api "repos/FanMind/FanMind/issues/comments/$COMMENT_ID" --jq '.body' > /tmp/fanmind-1168-transport.md
 
-          stage=patch
           python3 - <<'PY'
           from pathlib import Path
+          import base64, gzip, hashlib, re
 
-          runner_path = Path('scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs')
-          tests_path = Path('tests/creator-confirmed-chat-learning-verifier-review.cases.mjs')
-          runner = runner_path.read_text(encoding='utf-8')
-          tests = tests_path.read_text(encoding='utf-8')
+          body = Path('/tmp/fanmind-1168-transport.md').read_text(encoding='utf-8')
+          expected_base = 'de64f58efbd3b585c5e7901399724de10e4164d3'
+          expected_local = 'af9197421e7843a5cd5825e114e0ac042643ccb6'
+          if f'REMOTE_BASE_SHA={expected_base}' not in body:
+              raise SystemExit('transport_remote_base_mismatch')
+          if f'LOCAL_COMMIT_SHA={expected_local}' not in body:
+              raise SystemExit('transport_local_commit_mismatch')
 
-          index_marker = """\n  if exists (\n    select 1\n      from pg_index i\n     where i.indrelid = learning_table\n       and i.indisunique\n"""
-          if runner.count(index_marker) != 1:
-              raise SystemExit(f'index_marker_count={runner.count(index_marker)}')
-          index_guard = """\n  if exists (\n    select 1\n      from pg_index i\n     where i.indrelid = learning_table\n       and (i.indpred is not null or i.indexprs is not null)\n  ) then\n    raise exception 'creator_learning_unexpected_expression_or_partial_index';\n  end if;\n"""
-          runner = runner.replace(index_marker, index_guard + index_marker, 1)
+          runner_heading = '#### `scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs`'
+          cases_heading = '#### `tests/creator-confirmed-chat-learning-verifier-review.cases.mjs`'
+          if runner_heading not in body or cases_heading not in body:
+              raise SystemExit('transport_section_missing')
+          runner_section = body.split(runner_heading, 1)[1].split(cases_heading, 1)[0]
+          cases_section = body.split(cases_heading, 1)[1]
 
-          start = runner.find('function runDatabaseMode(')
-          end_marker = '\n\nexport function main'
-          end = runner.find(end_marker, start)
-          if start < 0 or end < 0:
-              raise SystemExit(f'run_database_mode_slice_invalid:{start}:{end}')
+          def extract(section, label):
+              match = re.search(rf'{re.escape(label)}=([A-Za-z0-9+/=]+)', section)
+              if not match:
+                  raise SystemExit(f'transport_chunk_missing:{label}')
+              return match.group(1)
 
-          replacement = r'''function buildLockedApplySql(sql, verifySql) {
-  if (!/^\s*begin;/iu.test(sql) || !/commit;\s*$/iu.test(sql)) {
-    fail("apply_sql_contract_invalid");
-  }
-  const lockedMigration = sql.replace(
-    /^\s*begin;\s*/iu,
-    String.raw`begin;
-set local search_path = pg_catalog;
-lock table public.conversation_messages in access exclusive mode;
-do $apply_preflight$
-begin
-  if to_regclass('public.creator_confirmed_chat_learning') is not null
-     or exists (
-       select 1
-         from pg_attribute
-        where attrelid = to_regclass('public.conversation_messages')
-          and attname = 'creator_learning_manual_send'
-          and attnum > 0
-          and not attisdropped
-     )
-     or exists (
-       select 1
-         from pg_proc p
-         join pg_namespace n on n.oid = p.pronamespace
-        where n.nspname = 'public'
-          and p.proname in (
-            'stamp_creator_learning_manual_send',
-            'record_creator_confirmed_chat_proposals',
-            'confirm_creator_confirmed_chat_outbound',
-            'link_creator_confirmed_chat_outcomes'
-          )
-     )
-     or exists (
-       select 1
-         from pg_trigger t
-        where t.tgrelid = to_regclass('public.conversation_messages')
-          and t.tgname = 'conversation_messages_stamp_creator_learning_manual_send'
-          and not t.tgisinternal
-     ) then
-    raise exception 'creator_learning_apply_requires_absent_target';
-  end if;
-end
-$apply_preflight$;
-`,
-  );
-  const advisoryKey = "hashtextextended('fanmind:creator-confirmed-chat-learning', 0)";
-  return String.raw`\set ON_ERROR_STOP on
-select pg_advisory_lock(${advisoryKey});
-${verifySql}
-${lockedMigration}
-select pg_advisory_unlock(${advisoryKey});
-`;
-}
+          specs = [
+              (
+                  Path('scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs'),
+                  runner_section,
+                  ['GZIP_BASE64_CHUNK_01_OF_02', 'GZIP_BASE64_CHUNK_02_OF_02'],
+                  '2bebd26f7a73ab8ac31acdc4f4ee5fa41467638e',
+                  63889,
+              ),
+              (
+                  Path('tests/creator-confirmed-chat-learning-verifier-review.cases.mjs'),
+                  cases_section,
+                  ['GZIP_BASE64_CHUNK_01_OF_01'],
+                  'b8d161516c6067280cee43c3b66c022e3500c925',
+                  16469,
+              ),
+          ]
 
-function runDatabaseMode(mode, sql, verifySql, state, environment, database) {
-  if (mode === "apply") {
-    if (state !== "installed") fail("source_state_not_installed");
-    const applied = database(buildLockedApplySql(sql, verifySql));
-    if (applied.error || applied.status !== 0) {
-      fail("apply_indeterminate_verify_before_retry");
-    }
-    const after = databaseState(database(verifySql));
-    if (after !== "installed") fail("postflight_failed");
-    return [
-      "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
-      "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-      "CREATOR_CONFIRMED_CHAT_APPLY=committed",
-      "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
-      "CREATOR_CONFIRMED_CHAT_RUNTIME_ACTIVATED=false",
-    ];
-  }
-
-  const before = databaseState(database(verifySql));
-  if (state === "preinstall") {
-    if (before === "installed") fail("installed_target_with_preinstall_source");
-    return [
-      "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=absent",
-      "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=preinstall",
-      "CREATOR_CONFIRMED_CHAT_NEXT=reviewed_state_switch_before_apply",
-      "CREATOR_CONFIRMED_CHAT_APPLY=not_requested",
-    ];
-  }
-
-  if (before === "installed") {
-    return [
-      "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
-      "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-      "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
-      "CREATOR_CONFIRMED_CHAT_APPLY=not_requested",
-    ];
-  }
-  const runtime = clean(environment.FANMIND_RUNTIME_ENVIRONMENT).toLowerCase();
-  return runtime === "production"
-    ? [
-        "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=absent",
-        "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-        "CREATOR_CONFIRMED_CHAT_NEXT=separate_production_rollout_plan_required",
-        "CREATOR_CONFIRMED_CHAT_APPLY=forbidden",
-      ]
-    : [
-        "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=absent",
-        "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-        "CREATOR_CONFIRMED_CHAT_NEXT=apply",
-        "CREATOR_CONFIRMED_CHAT_APPLY=not_requested",
-      ];
-}'''
-          runner = runner[:start] + replacement + runner[end:]
-
-          extra_tests = r'''
-
-test("APPLY keeps verification and mutation in one guarded psql session", async () => {
-  const runner = await runnerSource();
-  assert.match(runner, /pg_advisory_lock\(\$\{advisoryKey\}\)/u);
-  assert.match(runner, /lock table public\.conversation_messages in access exclusive mode/u);
-  assert.match(runner, /creator_learning_apply_requires_absent_target/u);
-  assert.match(runner, /database\(buildLockedApplySql\(sql, verifySql\)\)/u);
-  const mode = runner.slice(
-    runner.indexOf("function runDatabaseMode"),
-    runner.indexOf("export function main"),
-  );
-  assert.doesNotMatch(mode, /if \(before !== "absent"\)[\s\S]*database\(sql\)/u);
-});
-
-test("verifier rejects every expression or partial index on the learning table", async () => {
-  const runner = await runnerSource();
-  const marker = runner.indexOf("creator_learning_unexpected_expression_or_partial_index");
-  assert.notEqual(marker, -1);
-  const block = runner.slice(runner.lastIndexOf("if exists (", marker), marker);
-  assert.match(block, /i\.indrelid = learning_table/u);
-  assert.match(block, /i\.indpred is not null/u);
-  assert.match(block, /i\.indexprs is not null/u);
-});
-'''
-          if 'APPLY keeps verification and mutation in one guarded psql session' in tests:
-              raise SystemExit('tests_already_present')
-          tests += extra_tests
-
-          runner_path.write_text(runner, encoding='utf-8')
-          tests_path.write_text(tests, encoding='utf-8')
+          for path, section, labels, expected_blob, expected_length in specs:
+              encoded = ''.join(extract(section, label) for label in labels)
+              data = gzip.decompress(base64.b64decode(encoded, validate=True))
+              if len(data) != expected_length:
+                  raise SystemExit(f'transport_length_mismatch:{path}:{len(data)}')
+              blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              if blob != expected_blob:
+                  raise SystemExit(f'transport_blob_mismatch:{path}:{blob}')
+              data.decode('utf-8')
+              path.write_bytes(data)
           PY
 
-          stage=check
+          git rm "$HELPER"
+
+          test "$(git hash-object "$RUNNER")" = 2bebd26f7a73ab8ac31acdc4f4ee5fa41467638e
+          test "$(git hash-object "$CASES")" = b8d161516c6067280cee43c3b66c022e3500c925
+
           node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
-
-          stage=focused_tests
           node --test tests/creator-confirmed-chat-learning.test.mjs
-
-          stage=coverage_test
           node --test tests/test-suite-coverage.test.mjs
-
-          stage=diff_check
+          npx eslint scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning.test.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
+          npm run test:operations
           git diff --check
-          git add scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs tests/creator-confirmed-chat-learning-verifier-review.cases.mjs
-          git diff --cached --check
 
-          stage=commit
-          git commit -m "Close confirmed-chat current-head P1 findings"
-          stage=push
+          git add "$RUNNER" "$CASES" "$HELPER"
+          git diff --cached --check
+          changed=$(git diff --cached --name-only | sort)
+          expected=$(printf '%s\n' "$HELPER" "$RUNNER" "$CASES" | sort)
+          test "$changed" = "$expected"
+
+          git commit -m "Close confirmed-chat current-head review findings"
           git push origin "HEAD:refs/heads/$BRANCH"
-          trap - EXIT
