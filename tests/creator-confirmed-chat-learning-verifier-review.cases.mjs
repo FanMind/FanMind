@@ -165,6 +165,15 @@ test("verifier compares the complete reviewed RPC EXECUTE ACL and rejects inheri
 });
 
 
+test("verifier rejects every incoming effective membership path to authenticator", async () => {
+  const runner = await runnerSource();
+  assert.match(
+    runner,
+    /inherited_role\.rolname = 'authenticator'[\s\S]*membership\.inherit_option or membership\.set_option or membership\.admin_option/u,
+  );
+  assert.match(runner, /creator_learning_authenticator_membership_path_invalid/u);
+});
+
 test("verifier requires the complete PostgreSQL 17 learning-table ACL", async () => {
   const runner = await runnerSource();
   assert.match(runner, /table_acl_entries text\[\]/u);
