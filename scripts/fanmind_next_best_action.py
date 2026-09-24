@@ -336,8 +336,14 @@ def build_safe_ready_set(
         failed_action_ids=failed,
     )
     candidates = sorted(candidates, key=lambda candidate: (candidate[0]["priority"], candidate[0]["id"]))
-    active_candidates = [candidate for candidate in candidates if candidate[0].get("task") in active]
-    new_candidates = [candidate for candidate in candidates if candidate[0].get("task") not in active]
+    active_actions = [
+        action
+        for action, status, _ in classified
+        if action.get("task") in active and status not in {"DONE", "FAILED_DO_NOT_RESTART"}
+    ]
+    active_action_ids = {action["id"] for action in active_actions}
+    executable_ids = {action["id"] for action, _ in candidates}
+    new_candidates = [candidate for candidate in candidates if candidate[0]["id"] not in active_action_ids]
 
     selected: list[dict] = []
     running: list[dict] = []
@@ -352,9 +358,11 @@ def build_safe_ready_set(
     # Active continuations already consume worker slots. Never serialize one active
     # continuation out of accounting merely because it conflicts with another active
     # continuation; doing so could admit new work above the configured limit.
-    for action, _ in active_candidates:
+    for action in active_actions:
         running.append(action)
         active_continuations.append(action)
+        if action["id"] not in executable_ids:
+            continue
         dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
         if not dep_ok:
             blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
@@ -702,6 +710,50 @@ def run_manager_contract_tests() -> None:
     assert result["worker_used"] == 2
     assert {"id": "NEW-C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
 
+    # K2d) non-executable active continuations reserve slots before admission.
+    owner_active = _action("OWNER-ACTIVE", 1, task="TASK-OWNER-ACTIVE", requires_owner=True)
+    result = manager(
+        [owner_active, a],
+        limit=1,
+        active={"TASK-OWNER-ACTIVE"},
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["OWNER-ACTIVE"]
+    assert result["worker_used"] == 1
+    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
+    deferred_active = _action("DEFERRED-ACTIVE", 1, task="TASK-DEFERRED-ACTIVE")
+    deferred_active["deferred_owner_id"] = "OWNER-DEFERRED-ACTIVE"
+    result = manager(
+        [deferred_active, a],
+        limit=1,
+        deferred={"OWNER-DEFERRED-ACTIVE"},
+        active={"TASK-DEFERRED-ACTIVE"},
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["DEFERRED-ACTIVE"]
+    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
+    waiting_active = _action("WAITING-ACTIVE", 1, task="TASK-WAITING-ACTIVE")
+    waiting_active["prerequisite_gates"] = ["missing_prerequisite"]
+    result = manager(
+        [waiting_active, a],
+        limit=1,
+        active={"TASK-WAITING-ACTIVE"},
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["WAITING-ACTIVE"]
+    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
+    # Terminal active records release their slots: failed work stays stopped and
+    # completed work stays complete, while independent work may use the capacity.
+    result = manager([fail_a, independent], failed={"FAIL-A"}, limit=1, active={fail_a["task"]})
+    assert result["safe_ready_set"] == ["INDEPENDENT-C"]
+    assert result["active_continuations"] == []
+    result = manager([done, live], accepted={"DONE"}, limit=1, active={done["task"]})
+    assert result["safe_ready_set"] == ["LIVE"]
+    assert result["active_continuations"] == []
+
     # K3) descriptive/composite canonical entries identify every active task.
     active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
 - Status: IN_PROGRESS
@@ -798,8 +850,8 @@ def render(
             if manager["safe_ready_set"]
             else "`NONE`"
         ),
-        f"- Worker slots used by safe ready set: `{manager['worker_used']}`",
-        "- Active task continuations in safe ready set: "
+        f"- Worker slots reserved by active/ready work: `{manager['worker_used']}`",
+        "- Active task continuations reserving slots: "
         + (
             ", ".join(f"`{item}`" for item in manager["active_continuations"])
             if manager["active_continuations"]
