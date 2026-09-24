@@ -124,7 +124,11 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
     slots: list[dict] = []
     represented_locks: set[str] = set()
     for block in re.split(r"(?m)^## ", active_section)[1:]:
-        record_status = _record_status(block)
+        started_status_matches = [
+            value.upper()
+            for value in re.findall(r"(?im)^- [^\n]*?\bstatus:\s*([A-Z_]+)\b", block)
+        ]
+        record_status = started_status_matches[0] if started_status_matches else None
         if record_status not in ACTIVE_WORK_STATES:
             continue
         heading = block.splitlines()[0].strip()
@@ -133,7 +137,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         actions = _record_actions(block)
         lock_match = re.search(r"\b(LOCK-[A-Z0-9_-]+)\b", block)
         lock_id = lock_match.group(1) if lock_match else None
-        status_conflict = False
+        status_conflict = len(set(started_status_matches)) > 1
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
@@ -1026,6 +1030,18 @@ def run_manager_contract_tests() -> None:
     )
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
+
+    started_status_conflict = """## Active work
+## FM-STARTED-CONFLICT-001 — contradictory record
+- Status: BLOCKED
+- Status: IN_PROGRESS
+"""
+    started_conflict_slots = active_work_slots(started_status_conflict, "")
+    assert len(started_conflict_slots) == 1
+    assert started_conflict_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=started_conflict_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-STARTED-CONFLICT-001"]
 
     conflict_started = """## Active work
 ## FM-CONFLICT-001 — blocked record
