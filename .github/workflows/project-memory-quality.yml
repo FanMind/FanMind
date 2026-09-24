@@ -22,6 +22,8 @@ jobs:
         run: python3 scripts/fanmind_sales_readiness.py
       - name: Scan FanMind canonical truth drift
         run: python3 scripts/fanmind_truth_drift_check.py
+      - name: Validate Builder Manager safe-ready contract
+        run: python3 scripts/fanmind_next_best_action.py --manager-check
       - name: Select FanMind next best action
         run: python3 scripts/fanmind_next_best_action.py --check
       - name: Validate evidence freshness
