@@ -838,7 +838,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Risk: R3
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after merged #1172.
-- Scope: synchronized `preinstall -> installed` source-state switch for confirmed-chat disclosure/deletion readers, focused regressions, rollout runbook and bounded Creator Project-Memory reconciliation only.
+- Scope: synchronized target-aware source state: Staging `preinstall -> installed`, Production/unknown remain `preinstall`; confirmed-chat disclosure/deletion readers, migration-runner source-state binding, focused regressions, rollout runbook and bounded Creator Project-Memory reconciliation only. Initial global-switch P1 is included in this same lock/PR and must be proven resolved.
 - Parallel safety: serialize with all other Creator schema/disclosure/deletion/learning-contract work. No second safe Creator worker is admitted while this lock is active.
 - Forbidden: SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
 - Release condition: exact current-head required CI green, one independent review with P1/P2=0, no blocking threads, normal merge and post-merge verification.
