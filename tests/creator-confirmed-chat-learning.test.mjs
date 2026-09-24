@@ -15,13 +15,15 @@ const runnerPath = path.join(
   "scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs",
 );
 
+const SYNTHETIC_REVIEWED_COMMIT = "0".repeat(40);
+
 function currentHead() {
   const result = spawnSync("git", ["rev-parse", "HEAD"], {
     cwd: repoRoot,
     encoding: "utf8",
   });
-  assert.equal(result.status, 0, result.stderr);
-  return result.stdout.trim();
+  const candidate = result.status === 0 ? result.stdout.trim().toLowerCase() : "";
+  return /^[0-9a-f]{40}$/u.test(candidate) ? candidate : null;
 }
 
 function targetEnv(overrides = {}) {
@@ -38,7 +40,8 @@ function targetEnv(overrides = {}) {
     PGUSER: `postgres.${target}`,
     PGSSLMODE: "verify-full",
     PGSSLROOTCERT: "/tmp/fanmind-test-ca.crt",
-    FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT: currentHead(),
+    FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT:
+      currentHead() ?? SYNTHETIC_REVIEWED_COMMIT,
     ...overrides,
   };
 }
@@ -156,7 +159,8 @@ test("database binding rejects a foreign database name before any passfile or ps
   );
 });
 
-test("database binding accepts the selected project's Supabase pooler identity before requiring credentials", () => {
+test("database binding accepts the selected project's Supabase pooler identity before the next protected boundary", () => {
+  const hasCheckout = currentHead() !== null;
   const result = spawnSync(process.execPath, [runnerPath, "--verify"], {
     cwd: repoRoot,
     encoding: "utf8",
@@ -165,7 +169,9 @@ test("database binding accepts the selected project's Supabase pooler identity b
   assert.notEqual(result.status, 0);
   assert.match(
     result.stderr,
-    /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u,
+    hasCheckout
+      ? /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u
+      : /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=checkout_repository_mismatch/u,
   );
 });
 
@@ -181,7 +187,12 @@ test("direct project host requires the plain postgres database user", () => {
     }),
   });
   assert.notEqual(valid.status, 0);
-  assert.match(valid.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u);
+  assert.match(
+    valid.stderr,
+    currentHead() !== null
+      ? /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u
+      : /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=checkout_repository_mismatch/u,
+  );
 
   const wrongUser = spawnSync(process.execPath, [runnerPath, "--verify"], {
     cwd: repoRoot,
@@ -350,7 +361,12 @@ test("Git attestation ignores caller repository redirection and stays bound to t
     }),
   });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u);
+  assert.match(
+    result.stderr,
+    currentHead() !== null
+      ? /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=passfile_missing/u
+      : /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=checkout_repository_mismatch/u,
+  );
 });
 
 test("production VERIFY never recommends the staging-only APPLY path", async () => {

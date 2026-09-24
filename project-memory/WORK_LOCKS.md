@@ -843,3 +843,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Forbidden: SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
 - Release condition: exact current-head required CI green, one independent review with P1/P2=0, no blocking threads, normal merge and post-merge verification.
 - Recovery: repository revert only; the target schema remains untouched by this lock.
+
+## LOCK-FM-CREATOR-POSTMERGE-GITLESS-TESTS-20260924
+- Task: FM-CREATOR-001
+- Status: ACTIVE
+- Risk: R2
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `ee87c430ea71d942966ce48e5696051b232d9742`; automatic deploy `36053892421` failed in release-isolated tests before publication.
+- Scope: `tests/creator-confirmed-chat-learning.test.mjs` plus bounded Project-Memory reconciliation only. Preserve all #1173 runtime/runner/privacy-contract behavior unchanged.
+- Parallel safety: serialize with FM-CREATOR-001 until deploy regression is closed.
+- Release condition: exact-head CI and independent review green, merge, then successful automatic post-merge deploy.
+- Recovery: source/test revert only; failed deploy did not switch the Production release.
