@@ -94,20 +94,15 @@ def _action_index(catalog: dict) -> dict[str, dict]:
 
 
 def persisted_failed_action_ids(text: str, catalog: dict, state: dict | None = None) -> set[str]:
-    """Load durable worker/action failures from existing canonical state.
+    """Load durable worker/action failures from exact FAILED_ATTEMPTS records.
 
-    Only explicit FAILED state participates. Historical BLOCKED or recorded failures do
-    not become permanent manager failures unless Project Memory marks the action/task
-    itself FAILED.
+    Aggregate finishline gate state is intentionally not an action-level failure signal:
+    several actions can share one gate. Only an explicit failed action or failed task in
+    the canonical failed-attempt ledger suppresses restart.
     """
+    _ = state  # Kept for call compatibility; aggregate gate state must not broaden failure.
     ids: set[str] = set()
     by_id = _action_index(catalog)
-    if state is not None:
-        ids.update(
-            action["id"]
-            for action in catalog.get("actions", [])
-            if gate_state(state, action["gate"]) == "FAILED"
-        )
     for block in re.split(r"(?m)^## ", text)[1:]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) != "FAILED":
@@ -340,16 +335,13 @@ def build_safe_ready_set(
         deferred,
         failed_action_ids=failed,
     )
-    candidates = sorted(
-        candidates,
-        key=lambda candidate: (
-            0 if candidate[0].get("task") in active else 1,
-            candidate[0]["priority"],
-            candidate[0]["id"],
-        ),
-    )
+    candidates = sorted(candidates, key=lambda candidate: (candidate[0]["priority"], candidate[0]["id"]))
+    active_candidates = [candidate for candidate in candidates if candidate[0].get("task") in active]
+    new_candidates = [candidate for candidate in candidates if candidate[0].get("task") not in active]
 
     selected: list[dict] = []
+    running: list[dict] = []
+    active_continuations: list[dict] = []
     serialized: list[dict] = [
         {"id": action["id"], "reason": "failed_do_not_restart"}
         for action, status, _ in classified
@@ -357,18 +349,35 @@ def build_safe_ready_set(
     ]
     blocked_dependencies: list[dict] = []
 
-    for action, _ in candidates:
+    # Active continuations already consume worker slots. Never serialize one active
+    # continuation out of accounting merely because it conflicts with another active
+    # continuation; doing so could admit new work above the configured limit.
+    for action, _ in active_candidates:
+        running.append(action)
+        active_continuations.append(action)
+        dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
+        if not dep_ok:
+            blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
+            continue
+        selected.append(action)
+
+    # Only new work is admitted through the normal parallel-safety conflict gate.
+    # Conflict checks include every already-running active continuation, including an
+    # active continuation whose dependency is currently invalid, so fail-closed slot
+    # accounting cannot be bypassed by stale or contradictory state.
+    for action, _ in new_candidates:
         dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
         if not dep_ok:
             blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
             continue
 
-        if len(selected) >= limit:
+        if len(running) >= limit:
             serialized.append({"id": action["id"], "reason": "worker_limit"})
             continue
 
-        if not selected:
+        if not running:
             selected.append(action)
+            running.append(action)
             continue
 
         if action.get("parallel_safe") is not True:
@@ -376,27 +385,26 @@ def build_safe_ready_set(
             continue
 
         conflicts: list[str] = []
-        for running in selected:
-            if running.get("parallel_safe") is not True:
-                conflicts.append(f"{running['id']}:parallel_safe_not_true")
+        for current in running:
+            if current.get("parallel_safe") is not True:
+                conflicts.append(f"{current['id']}:parallel_safe_not_true")
                 continue
-            pair = scope_conflicts(running, action)
-            conflicts.extend(f"{running['id']}:{reason}" for reason in pair)
+            pair = scope_conflicts(current, action)
+            conflicts.extend(f"{current['id']}:{reason}" for reason in pair)
 
         if conflicts:
             serialized.append({"id": action["id"], "reason": ",".join(sorted(set(conflicts)))})
             continue
 
         selected.append(action)
+        running.append(action)
 
     return {
         "worker_limit": limit,
         "hard_max_worker_limit": HARD_MAX_WORKER_LIMIT,
         "safe_ready_set": [action["id"] for action in selected],
-        "worker_used": len(selected),
-        "active_continuations": [
-            action["id"] for action in selected if action.get("task") in active
-        ],
+        "worker_used": len(running),
+        "active_continuations": [action["id"] for action in active_continuations],
         "serialized_due_to_conflict": serialized,
         "blocked_dependencies": blocked_dependencies,
     }
@@ -564,19 +572,26 @@ def run_manager_contract_tests() -> None:
         {"id": "FAIL-B", "reason": "dependency_failed:FAIL-A"}
     ]
 
-    # F2) FAILED state is durably loaded from canonical state/failed-attempt ledger.
+    # F2) durable failure comes from exact failed-attempt records, never shared gate state.
     failure_catalog = {"actions": [fail_a, fail_b]}
-    failure_text = """## FM-FAIL-WORKER\n- Status: FAILED\n- Action: `FAIL-A`\n"""
+    failure_text = """## FM-FAIL-WORKER
+- Status: FAILED
+- Action: `FAIL-A`
+"""
     assert persisted_failed_action_ids(failure_text, failure_catalog) == {"FAIL-A"}
     failure_state = _synthetic_state(["FAIL-A", "FAIL-B"])
     failure_state["gates"]["gate_FAIL-A"]["state"] = "FAILED"
-    assert persisted_failed_action_ids("", failure_catalog, failure_state) == {"FAIL-A"}
+    assert persisted_failed_action_ids("", failure_catalog, failure_state) == set()
 
     # F3) an explicit failed action never expands to every action sharing its task.
     exact_a = _action("FAIL-EXACT-A", 1, task="FM-FAIL-EXACT")
     exact_b = _action("FAIL-EXACT-B", 2, task="FM-FAIL-EXACT")
     exact_catalog = {"actions": [exact_a, exact_b]}
-    exact_failure_text = """## FM-FAIL-EXACT\n- Status: FAILED\n- Action: `FAIL-EXACT-A`\n- Task: `FM-FAIL-EXACT`\n"""
+    exact_failure_text = """## FM-FAIL-EXACT
+- Status: FAILED
+- Action: `FAIL-EXACT-A`
+- Task: `FM-FAIL-EXACT`
+"""
     assert persisted_failed_action_ids(exact_failure_text, exact_catalog) == {"FAIL-EXACT-A"}
 
     # F4) durable failures are classified as non-executable, not merely filtered later.
@@ -663,10 +678,39 @@ def run_manager_contract_tests() -> None:
     assert active_manager["safe_ready_set"] == ["ACTIVE-D"]
     assert active_primary is not None and active_primary["id"] == "ACTIVE-D"
 
+    # K2c) conflicting active continuations all reserve slots before new work is admitted.
+    active_a = _action(
+        "ACTIVE-A",
+        1,
+        task="TASK-ACTIVE-A",
+        scope=_scope("ACTIVE-A", files=["src/active-shared.py"]),
+    )
+    active_b = _action(
+        "ACTIVE-B",
+        2,
+        task="TASK-ACTIVE-B",
+        scope=_scope("ACTIVE-B", files=["src/active-shared.py"]),
+    )
+    new_c = _action("NEW-C", 3, task="TASK-NEW-C")
+    result = manager(
+        [active_a, active_b, new_c],
+        limit=2,
+        active={"TASK-ACTIVE-A", "TASK-ACTIVE-B"},
+    )
+    assert result["safe_ready_set"] == ["ACTIVE-A", "ACTIVE-B"]
+    assert result["active_continuations"] == ["ACTIVE-A", "ACTIVE-B"]
+    assert result["worker_used"] == 2
+    assert {"id": "NEW-C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
     # K3) descriptive/composite canonical entries identify every active task.
-    active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory\n- Status: IN_PROGRESS\n"""
+    active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
+- Status: IN_PROGRESS
+"""
     assert active_task_ids(active_started, "") == {"FM-CREATOR-001"}
-    composite_started = """## FM-AI-001 / FM-RST-001 — shared active continuation\n- Status: IN_PROGRESS\n- Task: `FM-AI-001 / FM-RST-001`\n"""
+    composite_started = """## FM-AI-001 / FM-RST-001 — shared active continuation
+- Status: IN_PROGRESS
+- Task: `FM-AI-001 / FM-RST-001`
+"""
     assert active_task_ids(composite_started, "") == {"FM-AI-001", "FM-RST-001"}
 
     # L) free slot is reused after predecessor reaches accepted state.
