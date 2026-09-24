@@ -1,3 +1,11 @@
+## RECEIPT-FM-CREATOR-001-CONFIRMED-CHAT-STAGING-VERIFY-CONTROL-20260924
+- Status: IN_PROGRESS; Task FM-CREATOR-001; Risk R4.
+- Predecessor closure: PR #1174 final head `db4d1ed22c617608d0c70b2ac0a5605bc6ecfb2f` passed exact-head CI/review and merged as `c119e0eb82e0643fc676afb7725d7518011e1286`. Automatic Deploy FanMind `36056745406`, Browser E2E `36056745375`, CodeQL `36056745369`, God Mode `36056745384` and Final Go-Live Readiness `36056908438` passed. Read-only Production Audit `36056908458` verified that exact runtime and failed only on the retained unrelated backup-freshness Operations gate.
+- Current scope: repository-only `.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`, focused static fail-closed regression, rollout runbook and bounded Project-Memory reconciliation.
+- Safety: workflow_dispatch is exact-main/exact-reviewed-commit, protected-`staging`, target/TLS/private-passfile bound and runs only `--check` + `--verify`; no APPLY mode, write acknowledgement, SQL mutation, provider/customer/Billing/Restore/Mobile mutation or runtime activation is included or dispatched.
+- Acceptance pending: current-head CI, one independent review cycle, P1=0/P2=0/no blocking threads, normal merge and post-merge source verification. Actual Staging deployment/VERIFY evidence remains separate; generic runner APPLY remains structurally disabled.
+- Exact next step: publish and converge the bounded PR; do not dispatch the workflow from this receipt.
+
 ## RECEIPT-FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919
 - Status: PRODUCTION_CONFIRMED for exact DB rollout; Task FM-REG-003 / FM-CR-041; Risk R4.
 - Receipt: `project-memory/receipts/FM-REG-003-ADMIN-CRM-PRODUCTION-APPLY-20260919.md`.
