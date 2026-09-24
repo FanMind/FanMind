@@ -288,7 +288,7 @@ test("verifier pins the provenance table owner before accepting RLS", async () =
   const runner = await runnerSource();
   assert.match(
     runner,
-    /where oid = messages_table[\\s\\S]*pg_get_userbyid\\(relowner\\) = '\\$\\{EXPECTED_DATABASE_FUNCTION_OWNER\\}'[\\s\\S]*relrowsecurity[\\s\\S]*not relforcerowsecurity/u,
+    /where oid = messages_table[\s\S]*pg_get_userbyid\(relowner\) = '\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'[\s\S]*relrowsecurity[\s\S]*not relforcerowsecurity/u,
   );
   assert.match(runner, /creator_learning_provenance_inheritance_invalid/u);
 });
