@@ -19,9 +19,9 @@ export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE: ConfirmedChatLearning
   "installed";
 
 export function getConfirmedChatLearningSchemaState(
-  environment: { FANMIND_RUNTIME_ENVIRONMENT?: string } = process.env,
+  runtimeEnvironment = process.env["FANMIND_RUNTIME_ENVIRONMENT"],
 ): ConfirmedChatLearningSchemaState {
-  return environment.FANMIND_RUNTIME_ENVIRONMENT?.trim().toLowerCase() === "staging"
+  return runtimeEnvironment?.trim().toLowerCase() === "staging"
     ? CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE
     : "preinstall";
 }
