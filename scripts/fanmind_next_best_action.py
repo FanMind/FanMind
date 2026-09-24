@@ -548,12 +548,23 @@ def build_safe_ready_set(
 
         if action is not None:
             current_status = status_by_id.get(action["id"])
-            if current_status in nonrunning_statuses:
-                # Owner/deferred/prerequisite-gated work is not executing and
-                # therefore cannot consume worker capacity.
+            if current_status in OWNER_BLOCKING_STATES:
+                # Canonical owner/deferred work is non-running.
                 continue
-            # Dependency state controls execution, not whether the already-active
-            # continuation still reserves its worker slot.
+            if current_status == "WAITING_PREREQUISITE":
+                # A prerequisite regression does not prove an already-recorded
+                # running continuation stopped. Explicit running evidence remains
+                # capacity-reserving until canonical state reconciles it.
+                if slot_status not in {
+                    "ACTIVE",
+                    "IN_PROGRESS",
+                    "CI_WAITING",
+                    "REVIEW_WAITING",
+                    "MERGE_READY",
+                }:
+                    continue
+            # Dependency/prerequisite state controls execution, not whether the
+            # already-active continuation still reserves its worker slot.
             active_actions.append(action)
             active_reservations.append(action)
         else:
@@ -1022,6 +1033,19 @@ def run_manager_contract_tests() -> None:
     )
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
+
+    result = manager(
+        [waiting_active, a],
+        limit=1,
+        slots=[{
+            "tasks": {"TASK-WAITING-ACTIVE"},
+            "action": "WAITING-ACTIVE",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["WAITING-ACTIVE"]
+    assert result["worker_used"] == 1
 
     result = manager(
         [a],
