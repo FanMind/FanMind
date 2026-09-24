@@ -318,6 +318,13 @@ test("verifier requires public schema usage for reviewed authenticated and servi
 });
 
 
+test("provenance policy expressions compare NULL-safely", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /lower\(coalesce\(with_check, ''\)\)/u);
+  assert.match(runner, /lower\(coalesce\(qual, ''\)\)/u);
+  assert.match(runner, /creator_learning_provenance_policy_invalid/u);
+});
+
 test("target prerequisites precede ABSENT and bind provenance RLS", async () => {
   const runner = await runnerSource();
   const absent = runner.indexOf("if learning_table is null then");
