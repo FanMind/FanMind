@@ -1,15 +1,3 @@
-## FM-CREATOR-001 — confirmed-chat installed source-state switch — 2026-09-24
-- Status: IN_PROGRESS
-- Risk: R3
-- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
-- Owner: autonomous builder
-- Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after normal merge of PR #1172.
-- Consumed predecessor: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every triggered current-head workflow, independent Codex review reported no findings, had zero blocking threads and merged as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. Its authenticator P1 follow-up is complete and must not be rebuilt.
-- Bounded scope: switch the already-reviewed confirmed-chat disclosure/deletion lifecycle from `preinstall` to `installed`, update synchronized regression tests/runbook and reconcile only stale Creator navigation. This makes missing target schema fail closed; it does not install schema or activate runtime.
-- Exact next step: publish one bounded PR, complete current-head CI plus one independent review, fix any finding on that same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY; APPLY remains separately owner/protected-environment gated.
-- Forbidden: SQL APPLY, protected Staging/Production write, runtime flag activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
-- Recovery: ordinary repository revert; no external target state changed.
-
 ## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
 - Status: MERGED_VERIFIED
 - Risk: R2
@@ -307,6 +295,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Cross-link Task ID, Change Request, PR/branch, dependencies, work lock and execution receipt.
 
 ## Active work
+
+## FM-CREATOR-001 — confirmed-chat installed source-state switch — 2026-09-24
+- Status: IN_PROGRESS
+- Risk: R3
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
+- Owner: autonomous builder
+- Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after normal merge of PR #1172.
+- Consumed predecessor: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every triggered current-head workflow, independent Codex review reported no findings, had zero blocking threads and merged as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. Its authenticator P1 follow-up is complete and must not be rebuilt.
+- Bounded scope: switch the already-reviewed confirmed-chat disclosure/deletion lifecycle from `preinstall` to `installed`, update synchronized regression tests/runbook and reconcile only stale Creator navigation. This makes missing target schema fail closed; it does not install schema or activate runtime.
+- Exact next step: publish one bounded PR, complete current-head CI plus one independent review, fix any finding on that same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY; APPLY remains separately owner/protected-environment gated.
+- Forbidden: SQL APPLY, protected Staging/Production write, runtime flag activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
+- Recovery: ordinary repository revert; no external target state changed.
 
 ## FM-WEB-004
 - Started: 2026-09-04 Europe/Vienna
