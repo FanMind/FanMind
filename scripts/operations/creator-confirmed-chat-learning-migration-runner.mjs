@@ -545,6 +545,7 @@ ${foundationChecks}
      where oid = messages_table
        and relkind = 'r'
        and not relispartition
+       and pg_get_userbyid(relowner) = '${EXPECTED_DATABASE_FUNCTION_OWNER}'
        and relrowsecurity
        and not relforcerowsecurity
   )
