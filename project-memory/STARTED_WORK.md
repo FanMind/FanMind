@@ -1,8 +1,12 @@
 ## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
-- Status: IN_PROGRESS; Risk: R2; lock: LOCK-FM-CREATOR-AUTHENTICATOR-TRANSITIVE-P1-20260924; owner: autonomous builder.
+- Status: IN_PROGRESS
+- Risk: R2
+- Work lock: LOCK-FM-CREATOR-AUTHENTICATOR-TRANSITIVE-P1-20260924
+- Owner: autonomous builder
 - Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171.
 - Trigger: independent #1171 review remains unresolved/non-outdated and identifies a P1: a noncanonical role could receive effective membership in `authenticator`, then follow the reviewed `authenticator -> service_role` SET edge.
 - Bounded scope: reject every effective incoming `pg_auth_members` edge whose granted role is `authenticator`; add focused regression coverage. No SQL APPLY, Staging/Production/provider/customer/Billing/Restore/Mobile mutation.
+- Exact next step: complete current-head CI and one independent review on PR #1172; reconcile any P1/P2 on the same PR, then merge only when every required check is green and blocking findings are zero.
 - Acceptance: exact current-head required CI green, one independent review cycle on every material head, OFFENE_P1=0, OFFENE_P2=0, no blocking threads, then normal merge and post-merge verify.
 - Recovery: ordinary bounded source/test revert; no external state changed.
 
