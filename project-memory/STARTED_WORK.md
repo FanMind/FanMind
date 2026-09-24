@@ -305,6 +305,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Trigger: automatic Deploy FanMind run `36053892421` failed before publication because six confirmed-chat verifier tests called `git rev-parse HEAD` while running inside the isolated release directory, which intentionally has no `.git`. The application build and 1,504/1,513 tests passed; no Production release switch, SQL, provider or customer mutation occurred.
 - Scope: test-harness-only correction so early target-binding negatives use a syntactically valid reviewed SHA in gitless release packaging, while real Git checkout attestation remains fully enforced by the runner and by CI checkouts. Do not weaken runner identity checks.
 - Acceptance: current-head CI/review green with P1=0/P2=0/no blocking threads; normal merge; automatic post-merge deploy must pass on the exact merge commit before this continuation is released.
+- Exact next step: complete current-head CI and the automatically triggered independent review on PR #1174; fix findings on that same PR, merge only at P1=0/P2=0/no blocking threads, then consume the automatic post-merge Deploy FanMind result on the exact merge commit.
 - Forbidden: SQL APPLY, manual Production/Staging deploy, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
 - Recovery: ordinary repository revert; no external state was changed by the failed deploy.
 
