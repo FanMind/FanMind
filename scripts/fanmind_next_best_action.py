@@ -32,6 +32,13 @@ ACTIVE_WORK_STATES = {
     "REVIEW_WAITING",
     "MERGE_READY",
 }
+EXPLICIT_RUNNING_WORK_STATES = {
+    "ACTIVE",
+    "IN_PROGRESS",
+    "CI_WAITING",
+    "REVIEW_WAITING",
+    "MERGE_READY",
+}
 TERMINAL_LOCK_STATES = {
     "ACCEPTED",
     "CLOSED",
@@ -149,6 +156,10 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 status_conflict = status_conflict or bool(lock.get("status_conflict"))
                 if lock_status and (
                     (record_status == "BLOCKED") != (lock_status == "BLOCKED")
+                    or (
+                        (record_status in EXPLICIT_RUNNING_WORK_STATES)
+                        != (lock_status in EXPLICIT_RUNNING_WORK_STATES)
+                    )
                 ):
                     status_conflict = True
                 # A clean terminal lock closes the record. Any contradictory
@@ -165,7 +176,11 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
     for lock_id, lock in lock_records.items():
-        if lock_id in represented_locks or _lock_status_is_terminal(lock["status"]) or not lock["tasks"]:
+        if (
+            lock_id in represented_locks
+            or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
+            or not lock["tasks"]
+        ):
             continue
         slots.append(
             {
@@ -502,13 +517,7 @@ def build_safe_ready_set(
     blocked_dependencies: list[dict] = []
     terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}
     nonrunning_statuses = OWNER_BLOCKING_STATES | {"WAITING_PREREQUISITE"}
-    explicit_running_statuses = {
-        "ACTIVE",
-        "IN_PROGRESS",
-        "CI_WAITING",
-        "REVIEW_WAITING",
-        "MERGE_READY",
-    }
+    explicit_running_statuses = EXPLICIT_RUNNING_WORK_STATES
     for slot in resolved_slots:
         exact_id = slot.get("action")
         exact = by_id.get(exact_id) if exact_id else None
@@ -586,6 +595,7 @@ def build_safe_ready_set(
                 and tasks_fully_resolved
                 and live_match_statuses
                 and live_match_statuses <= nonrunning_statuses
+                and slot_status not in explicit_running_statuses
             ):
                 continue
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
@@ -1155,6 +1165,81 @@ def run_manager_contract_tests() -> None:
     result = manager([a], limit=1, slots=conflict_slots)
     assert result["safe_ready_set"] == []
     assert result["active_continuations"] == ["TASK:FM-CONFLICT-001"]
+
+    # Every non-running STARTED_WORK state linked to an ACTIVE lock is
+    # contradictory running evidence and must reserve fail-closed capacity.
+    for nonrunning_started_status in sorted(
+        ACTIVE_WORK_STATES - EXPLICIT_RUNNING_WORK_STATES
+    ):
+        mixed_started = f"""## Active work
+## FM-MIXED-LOCK-001 — non-running started record
+- Status: {nonrunning_started_status}
+- Work lock: LOCK-FM-MIXED-LOCK-001
+"""
+        mixed_lock = """## LOCK-FM-MIXED-LOCK-001
+- Task: FM-MIXED-LOCK-001
+- Status: ACTIVE
+"""
+        mixed_slots = active_work_slots(mixed_started, mixed_lock)
+        assert len(mixed_slots) == 1
+        assert mixed_slots[0]["status_conflict"] is True
+        result = manager([a], limit=1, slots=mixed_slots)
+        assert result["safe_ready_set"] == []
+        assert result["active_continuations"] == ["TASK:FM-MIXED-LOCK-001"]
+
+    # A terminal-first orphan lock with later running evidence is contradictory,
+    # not historical; it reserves one unknown fail-closed slot.
+    orphan_terminal_conflict = """## LOCK-FM-ORPHAN-TERMINAL-CONFLICT-001
+- Task: FM-ORPHAN-TERMINAL-CONFLICT-001
+- Status: RELEASED
+- Status: ACTIVE
+"""
+    orphan_conflict_slots = active_work_slots("", orphan_terminal_conflict)
+    assert len(orphan_conflict_slots) == 1
+    assert orphan_conflict_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=orphan_conflict_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == [
+        "TASK:FM-ORPHAN-TERMINAL-CONFLICT-001"
+    ]
+
+    # An ambiguous task identity may release capacity only when canonical state
+    # is genuinely non-running. Explicit IN_PROGRESS remains fail-closed.
+    ambiguous_owner_a = _action(
+        "AMBIGUOUS-OWNER-A",
+        1,
+        task="FM-AMBIGUOUS-OWNER",
+        requires_owner=True,
+    )
+    ambiguous_owner_b = _action(
+        "AMBIGUOUS-OWNER-B",
+        2,
+        task="FM-AMBIGUOUS-OWNER",
+        requires_owner=True,
+    )
+    result = manager(
+        [ambiguous_owner_a, ambiguous_owner_b, a],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-AMBIGUOUS-OWNER"},
+            "action": None,
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-AMBIGUOUS-OWNER"]
+    assert result["worker_used"] == 1
+    result = manager(
+        [ambiguous_owner_a, ambiguous_owner_b, a],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-AMBIGUOUS-OWNER"},
+            "action": None,
+            "status": "PARTIAL",
+        }],
+    )
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
 
     result = manager(
         [owner_active, a],
