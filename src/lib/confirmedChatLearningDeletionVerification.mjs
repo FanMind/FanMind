@@ -1,4 +1,4 @@
-export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "preinstall";
+export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "installed";
 
 function missingPostgrestResource(status, payload) {
   if (status !== 404 || !payload || typeof payload !== "object") return false;
