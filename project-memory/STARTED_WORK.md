@@ -823,3 +823,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Post-merge evidence: Deploy, God Mode Gate, Browser E2E, CodeQL, Supply Chain and Final Go-Live Readiness passed on exact merge. Read-only Production Audit independently verifies the runtime/release and remains red only for the separate pre-existing backup-freshness Operations loop.
 - Recovery: ordinary source revert; no Staging/Production/database/provider/Billing/Restore/Mobile state was mutated by this scope.
 - Closed boundary: do not rebuild or reopen God Mode v1 for later hardening ideas. ChatAdmin APPLY is a distinct R4 protected owner/environment action.
+
+## FM-GOV-EVENT-ORCH-001 — event-driven manager wake-up
+- Date: 2026-09-24
+- Status: IMPLEMENTED_FOR_PR
+- Risk: R2
+- Lock: LOCK-FM-GOV-EVENT-ORCH-001-20260924
+- Owner: ChatGPT / connected GitHub
+- Baseline: exact main `65c3a1266e37ac1a385caffff74745f25f54ddf3` after merged Builder Manager PR #1169; active product PR #1168 remains separate.
+- Scope: repository-only event dispatcher and governance contract. A merged PR to `main` can wake a published FanMind Workspace Manager through the Workspace Agents API. The existing hourly Builder remains fallback.
+- Safety: no Product/DB/Staging/Production/provider/Billing/Restore/Mobile mutation; no secret value stored in Git. Missing trigger configuration is a successful no-op, not an inferred authorization.
+- External activation dependency: published Workspace Agent API channel ID plus Workspace Agent access token must be configured outside Git as documented.
+- Exact next step: current-head CI/review for this bounded PR; after merge, provision the external trigger values and perform one manual 202-acceptance test before relying on event latency.
