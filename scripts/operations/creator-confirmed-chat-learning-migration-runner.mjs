@@ -633,7 +633,7 @@ ${foundationChecks}
        and tablename = 'conversation_messages'
        and policyname = 'conversation_messages_insert_requires_workspace_owner'
        and (cmd <> 'INSERT' or qual is not null
-            or regexp_replace(replace(lower(with_check), 'public.', ''), '[[:space:]]+', '', 'g')
+            or regexp_replace(replace(lower(coalesce(with_check, '')), 'public.', ''), '[[:space:]]+', '', 'g')
                <> 'workspace_owner_active_mutation_allowed(workspace_id)')
   )
   or exists (
@@ -642,9 +642,9 @@ ${foundationChecks}
        and tablename = 'conversation_messages'
        and policyname = 'conversation_messages_update_requires_workspace_owner'
        and (cmd <> 'UPDATE'
-            or regexp_replace(replace(lower(qual), 'public.', ''), '[[:space:]]+', '', 'g')
+            or regexp_replace(replace(lower(coalesce(qual, '')), 'public.', ''), '[[:space:]]+', '', 'g')
                <> 'workspace_owner_active_mutation_allowed(workspace_id)'
-            or regexp_replace(replace(lower(with_check), 'public.', ''), '[[:space:]]+', '', 'g')
+            or regexp_replace(replace(lower(coalesce(with_check, '')), 'public.', ''), '[[:space:]]+', '', 'g')
                <> 'workspace_owner_active_mutation_allowed(workspace_id)')
   )
   or exists (
@@ -653,7 +653,7 @@ ${foundationChecks}
        and tablename = 'conversation_messages'
        and policyname = 'conversation_messages_delete_requires_workspace_owner'
        and (cmd <> 'DELETE' or with_check is not null
-            or regexp_replace(replace(lower(qual), 'public.', ''), '[[:space:]]+', '', 'g')
+            or regexp_replace(replace(lower(coalesce(qual, '')), 'public.', ''), '[[:space:]]+', '', 'g')
                <> 'workspace_owner_active_mutation_allowed(workspace_id)')
   ) then
     raise exception 'creator_learning_provenance_policy_invalid';
