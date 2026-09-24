@@ -1,3 +1,14 @@
+## LOCK-FM-CREATOR-AUTHENTICATOR-TRANSITIVE-P1-20260924
+- Task: FM-CREATOR-001
+- Status: ACTIVE
+- Risk: R2
+- Holder: autonomous builder
+- Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279`; merged PR #1171 with unresolved/non-outdated P1.
+- Scope: only the confirmed-chat migration verifier membership-path hardening, focused regression, and matching started-work/lock bookkeeping.
+- Parallel safety: SERIALIZED with all other Creator confirmed-chat/schema/contract work; no Project-Memory-wide concurrent writes.
+- Forbidden: SQL APPLY, protected environment/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
+- Release condition: current-head CI + independent review reconcile P1/P2 to zero and PR merges normally.
+
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-20260919
 - Task: FM-CREATOR-001
 - Status: RELEASED_FOR_PR
