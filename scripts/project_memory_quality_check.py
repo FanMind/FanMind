@@ -198,16 +198,17 @@ else:
     safe_ready_empty = bool(safe_ready and safe_ready.group(1).strip() == "`NONE`")
     if not selected_task:
         errors.append("generated-next-action-task-missing")
-    elif selected_task.group(1) != first_safe_task and not safe_ready_empty:
-        errors.append(
-            f"current-state-generated-next-action-task-mismatch:{first_safe_task}!={selected_task.group(1)}"
-        )
-    elif (
-        safe_ready_empty
-        and "- Selection status: `OWNER_ACTION_REQUIRED`" not in next_action_text
-        and "- Selection status: `DEFERRED_BY_OWNER`" not in next_action_text
-    ):
-        errors.append("generated-empty-safe-ready-set-must-surface-owner-boundary")
+    else:
+        if selected_task.group(1) != first_safe_task:
+            errors.append(
+                f"current-state-generated-next-action-task-mismatch:{first_safe_task}!={selected_task.group(1)}"
+            )
+        if (
+            safe_ready_empty
+            and "- Selection status: `OWNER_ACTION_REQUIRED`" not in next_action_text
+            and "- Selection status: `DEFERRED_BY_OWNER`" not in next_action_text
+        ):
+            errors.append("generated-empty-safe-ready-set-must-surface-owner-boundary")
 
 branch_contract = json.loads((PM / "BRANCH_PROTECTION_CONTRACT.json").read_text(encoding="utf-8"))
 if branch_contract.get("branch") != "main" or branch_contract.get("require_pull_request") is not True:
