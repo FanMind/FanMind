@@ -119,7 +119,8 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
     slots: list[dict] = []
     represented_locks: set[str] = set()
     for block in re.split(r"(?m)^## ", active_section)[1:]:
-        if _record_status(block) not in ACTIVE_WORK_STATES:
+        record_status = _record_status(block)
+        if record_status not in ACTIVE_WORK_STATES:
             continue
         heading = block.splitlines()[0].strip()
         task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
@@ -135,7 +136,11 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
             if lock:
                 actions |= lock["actions"]
         if tasks:
-            slots.append({"tasks": tasks, "action": next(iter(actions)) if len(actions) == 1 else None})
+            slots.append({
+                "tasks": tasks,
+                "action": next(iter(actions)) if len(actions) == 1 else None,
+                "status": record_status,
+            })
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
     for lock_id, lock in lock_records.items():
@@ -145,6 +150,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
             {
                 "tasks": lock["tasks"],
                 "action": next(iter(lock["actions"])) if len(lock["actions"]) == 1 else None,
+                "status": lock["status"],
             }
         )
 
@@ -456,10 +462,13 @@ def build_safe_ready_set(
     ]
     active_actions: list[dict] = []
     active_reservations: list[dict] = []
+    blocked_dependencies: list[dict] = []
     terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}
+    nonrunning_statuses = OWNER_BLOCKING_STATES | {"WAITING_PREREQUISITE"}
     for slot in resolved_slots:
         exact_id = slot.get("action")
         exact = by_id.get(exact_id) if exact_id else None
+        slot_status = str(slot.get("status") or "").upper()
         task_matches = [
             action
             for action in catalog.get("actions", [])
@@ -469,25 +478,41 @@ def build_safe_ready_set(
             action for action in task_matches if status_by_id[action["id"]] not in terminal_statuses
         ]
 
+        # Canonically blocked work is visible state, not a running worker.
+        if slot_status == "BLOCKED":
+            continue
+
         if exact_id:
             if exact is not None and status_by_id.get(exact_id) in terminal_statuses:
-                # Exact identity is authoritative: a terminal exact action releases
-                # the slot even if stale task labels point at an unresolved sibling.
                 continue
             action = exact if exact is not None and exact in matches else None
         else:
             if task_matches and not matches:
-                # Task-only evidence whose entire matching catalog scope is terminal
-                # no longer consumes capacity.
                 continue
             action = matches[0] if len(matches) == 1 else None
 
         if action is not None:
+            current_status = status_by_id.get(action["id"])
+            if current_status in nonrunning_statuses:
+                # Owner/deferred/prerequisite-gated work is not executing and
+                # therefore cannot consume worker capacity.
+                continue
+            dep_ok, dep_reason = manager_dependency_status(action, state, catalog, failed)
+            if not dep_ok:
+                blocked_dependencies.append({"id": action["id"], "reason": dep_reason})
+                continue
             active_actions.append(action)
             active_reservations.append(action)
         else:
-            # Zero-match, ambiguous, unknown-exact, or contradictory exact/task
-            # evidence consumes one fail-closed slot with unknown parallel scope.
+            live_match_statuses = {
+                status_by_id.get(item["id"])
+                for item in matches
+                if status_by_id.get(item["id"]) not in terminal_statuses
+            }
+            if live_match_statuses and live_match_statuses <= nonrunning_statuses:
+                # Ambiguous task evidence mapping only to gated, non-running
+                # actions remains visible but does not reserve a worker.
+                continue
             task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"
             reservation_id = f"UNKNOWN:{exact_id}" if exact_id else f"TASK:{task_label}"
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
@@ -503,7 +528,6 @@ def build_safe_ready_set(
         for action, status, _ in classified
         if status == "FAILED_DO_NOT_RESTART"
     ]
-    blocked_dependencies: list[dict] = []
 
     # Active continuations already consume worker slots. Never serialize one active
     # continuation out of accounting merely because it conflicts with another active
@@ -913,17 +937,16 @@ def run_manager_contract_tests() -> None:
     assert result["worker_used"] == 2
     assert {"id": "NEW-C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
 
-    # K2d) non-executable active continuations reserve slots before admission.
+    # K2d) non-running gated continuations do not consume worker capacity.
     owner_active = _action("OWNER-ACTIVE", 1, task="TASK-OWNER-ACTIVE", requires_owner=True)
     result = manager(
         [owner_active, a],
         limit=1,
         active={"TASK-OWNER-ACTIVE"},
     )
-    assert result["safe_ready_set"] == []
-    assert result["active_continuations"] == ["OWNER-ACTIVE"]
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
     assert result["worker_used"] == 1
-    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
 
     deferred_active = _action("DEFERRED-ACTIVE", 1, task="TASK-DEFERRED-ACTIVE")
     deferred_active["deferred_owner_id"] = "OWNER-DEFERRED-ACTIVE"
@@ -933,9 +956,8 @@ def run_manager_contract_tests() -> None:
         deferred={"OWNER-DEFERRED-ACTIVE"},
         active={"TASK-DEFERRED-ACTIVE"},
     )
-    assert result["safe_ready_set"] == []
-    assert result["active_continuations"] == ["DEFERRED-ACTIVE"]
-    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
 
     waiting_active = _action("WAITING-ACTIVE", 1, task="TASK-WAITING-ACTIVE")
     waiting_active["prerequisite_gates"] = ["missing_prerequisite"]
@@ -944,9 +966,16 @@ def run_manager_contract_tests() -> None:
         limit=1,
         active={"TASK-WAITING-ACTIVE"},
     )
-    assert result["safe_ready_set"] == []
-    assert result["active_continuations"] == ["WAITING-ACTIVE"]
-    assert {"id": "A", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
+
+    result = manager(
+        [a],
+        limit=1,
+        slots=[{"tasks": {"FM-EXTERNAL-BLOCKED"}, "action": None, "status": "BLOCKED"}],
+    )
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
 
     # Terminal active records release their slots: failed work stays stopped and
     # completed work stays complete, while independent work may use the capacity.
