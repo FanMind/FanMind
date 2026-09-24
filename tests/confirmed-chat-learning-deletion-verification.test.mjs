@@ -5,6 +5,8 @@ import test from "node:test";
 
 import {
   CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+  CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE,
+  getConfirmedChatLearningSchemaState,
   verifyConfirmedChatLearningAccountDeletion,
   verifyConfirmedChatLearningContactDeletion,
 } from "../src/lib/confirmedChatLearningDeletionVerification.mjs";
@@ -307,12 +309,26 @@ test("contact delete wires verification after both RPC and legacy success paths 
   assert.doesNotMatch(verificationFailureSection, /contactPath\(/u);
 });
 
-test("confirmed-chat deletion readers stay synchronized on the installed rollout boundary", async () => {
+test("confirmed-chat deletion readers keep Staging installed while Production and unknown runtimes remain preinstall", async () => {
   const disclosureSource = await readFile("src/lib/dataDisclosureMetaExport.ts", "utf8");
-  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "installed");
+  assert.equal(CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE, "installed");
+  assert.equal(
+    getConfirmedChatLearningSchemaState({ FANMIND_RUNTIME_ENVIRONMENT: "staging" }),
+    "installed",
+  );
+  assert.equal(
+    getConfirmedChatLearningSchemaState({ FANMIND_RUNTIME_ENVIRONMENT: "production" }),
+    "preinstall",
+  );
+  assert.equal(getConfirmedChatLearningSchemaState({}), "preinstall");
+  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "preinstall");
   assert.match(
     disclosureSource,
-    /CONFIRMED_CHAT_LEARNING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"installed";/u,
+    /CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"installed";/u,
+  );
+  assert.match(
+    disclosureSource,
+    /FANMIND_RUNTIME_ENVIRONMENT[\s\S]*=== "staging"[\s\S]*CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE[\s\S]*: "preinstall"/u,
   );
 });
 
