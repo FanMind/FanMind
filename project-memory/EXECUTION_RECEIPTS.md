@@ -1,3 +1,12 @@
+## RECEIPT-FM-GOV-BUILDER-MANAGER-002-20260924
+- Status: IN_PROGRESS; Task FM-GOV-BUILDER-MANAGER-002; Risk R2.
+- Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9` after clean #1178 merge.
+- Defect evidence: canonical manager output reserved 11 worker slots against limit 3 while the represented scopes were owner-gated, deferred, prerequisite-waiting or externally blocked; independent `NBA-CREATOR-INTELLIGENCE` was serialized solely by that accounting.
+- Current correction: non-running gated/BLOCKED work remains visible in classification but no longer consumes worker capacity. Unknown or ambiguous executable active work still consumes fail-closed capacity. Scope/conflict/dependency and owner/protected gates are unchanged.
+- Reconciliation: #1125 Daily UI lock is released from its durable Production-confirmed completion receipt; #1145 ChatAdmin source lock is released as merged/superseded by #1146/VERIFY; the Operations reboot lock is retained R4 but BLOCKED on protected host/recovery/idle/reboot evidence.
+- Safety: no product source, SQL, Staging/Production/provider/customer/Billing/Restore/Mobile mutation or protected action dispatch.
+- Acceptance pending: embedded manager contract, generated Project Memory, exact-head CI/God Mode/CodeQL/Browser and one independent review, then normal merge and post-merge manager recomputation.
+
 ## RECEIPT-FM-CREATOR-001-CONFIRMED-CHAT-STAGING-VERIFY-CONTROL-20260924
 - Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R4.
 - Predecessor closure: PR #1174 final head `db4d1ed22c617608d0c70b2ac0a5605bc6ecfb2f` passed exact-head CI/review and merged as `c119e0eb82e0643fc676afb7725d7518011e1286`. Automatic Deploy FanMind `36056745406`, Browser E2E `36056745375`, CodeQL `36056745369`, God Mode `36056745384` and Final Go-Live Readiness `36056908438` passed.
