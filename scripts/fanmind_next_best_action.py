@@ -128,8 +128,11 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
             value.upper()
             for value in re.findall(r"(?im)^- [^\n]*?\bstatus:\s*([A-Z_]+)\b", block)
         ]
+        status_conflict = len(set(started_status_matches)) > 1
         record_status = started_status_matches[0] if started_status_matches else None
-        if record_status not in ACTIVE_WORK_STATES:
+        # Contradictory status evidence is fail-closed even when the first status
+        # looks terminal/non-active; never drop later running evidence by ordering.
+        if record_status not in ACTIVE_WORK_STATES and not status_conflict:
             continue
         heading = block.splitlines()[0].strip()
         task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
@@ -137,12 +140,9 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         actions = _record_actions(block)
         lock_match = re.search(r"\b(LOCK-[A-Z0-9_-]+)\b", block)
         lock_id = lock_match.group(1) if lock_match else None
-        status_conflict = len(set(started_status_matches)) > 1
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
-            if lock and _lock_status_is_terminal(lock["status"]):
-                continue
             if lock:
                 actions |= lock["actions"]
                 lock_status = str(lock.get("status") or "").upper()
@@ -151,6 +151,10 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                     (record_status == "BLOCKED") != (lock_status == "BLOCKED")
                 ):
                     status_conflict = True
+                # A clean terminal lock closes the record. Any contradictory
+                # started/lock status remains reserved until reconciled.
+                if _lock_status_is_terminal(lock["status"]) and not status_conflict:
+                    continue
         if tasks:
             slots.append({
                 "tasks": tasks,
@@ -498,6 +502,13 @@ def build_safe_ready_set(
     blocked_dependencies: list[dict] = []
     terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}
     nonrunning_statuses = OWNER_BLOCKING_STATES | {"WAITING_PREREQUISITE"}
+    explicit_running_statuses = {
+        "ACTIVE",
+        "IN_PROGRESS",
+        "CI_WAITING",
+        "REVIEW_WAITING",
+        "MERGE_READY",
+    }
     for slot in resolved_slots:
         exact_id = slot.get("action")
         exact = by_id.get(exact_id) if exact_id else None
@@ -549,19 +560,16 @@ def build_safe_ready_set(
         if action is not None:
             current_status = status_by_id.get(action["id"])
             if current_status in OWNER_BLOCKING_STATES:
-                # Canonical owner/deferred work is non-running.
-                continue
+                # Owner/deferred classification does not prove an explicitly
+                # running continuation stopped. Preserve capacity until canonical
+                # state reconciles it; genuinely non-running gated records release.
+                if slot_status not in explicit_running_statuses:
+                    continue
             if current_status == "WAITING_PREREQUISITE":
                 # A prerequisite regression does not prove an already-recorded
                 # running continuation stopped. Explicit running evidence remains
                 # capacity-reserving until canonical state reconciles it.
-                if slot_status not in {
-                    "ACTIVE",
-                    "IN_PROGRESS",
-                    "CI_WAITING",
-                    "REVIEW_WAITING",
-                    "MERGE_READY",
-                }:
+                if slot_status not in explicit_running_statuses:
                     continue
             # Dependency/prerequisite state controls execution, not whether the
             # already-active continuation still reserves its worker slot.
@@ -1024,6 +1032,34 @@ def run_manager_contract_tests() -> None:
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
 
+    # Owner/deferred classification must not erase explicit running evidence.
+    result = manager(
+        [owner_active, a],
+        limit=1,
+        slots=[{
+            "tasks": {"TASK-OWNER-ACTIVE"},
+            "action": "OWNER-ACTIVE",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["OWNER-ACTIVE"]
+    assert result["worker_used"] == 1
+
+    result = manager(
+        [deferred_active, a],
+        limit=1,
+        deferred={"OWNER-DEFERRED-ACTIVE"},
+        slots=[{
+            "tasks": {"TASK-DEFERRED-ACTIVE"},
+            "action": "DEFERRED-ACTIVE",
+            "status": "ACTIVE",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["DEFERRED-ACTIVE"]
+    assert result["worker_used"] == 1
+
     waiting_active = _action("WAITING-ACTIVE", 1, task="TASK-WAITING-ACTIVE")
     waiting_active["prerequisite_gates"] = ["missing_prerequisite"]
     result = manager(
@@ -1054,6 +1090,21 @@ def run_manager_contract_tests() -> None:
     )
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
+
+    terminal_first_status_conflict = """## Active work
+## FM-TERMINAL-FIRST-CONFLICT-001 — contradictory record
+- Status: PRODUCTION_CONFIRMED
+- Status: IN_PROGRESS
+"""
+    terminal_first_slots = active_work_slots(terminal_first_status_conflict, "")
+    assert len(terminal_first_slots) == 1
+    assert terminal_first_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=terminal_first_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == [
+        "TASK:FM-TERMINAL-FIRST-CONFLICT-001"
+    ]
+    assert result["worker_used"] == 1
 
     started_status_conflict = """## Active work
 ## FM-STARTED-CONFLICT-001 — contradictory record
