@@ -73,8 +73,15 @@ def deferred_owner_ids(text: str) -> set[str]:
 
 
 def _record_status(block: str) -> str | None:
-    match = re.search(r"(?m)^- [^\n]*?\bStatus:\s*([A-Z_]+)\b", block)
-    return match.group(1) if match else None
+    match = re.search(r"(?im)^- [^\n]*?\bstatus:\s*([A-Z_]+)\b", block)
+    return match.group(1).upper() if match else None
+
+
+def _lock_status_is_terminal(status: str | None) -> bool:
+    if status is None:
+        return False
+    normalized = status.upper()
+    return normalized in TERMINAL_LOCK_STATES or normalized.startswith("RELEASED_")
 
 
 def _record_ids(block: str, prefix: str) -> set[str]:
@@ -123,7 +130,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
-            if lock and lock["status"] in TERMINAL_LOCK_STATES:
+            if lock and _lock_status_is_terminal(lock["status"]):
                 continue
             if lock:
                 actions |= lock["actions"]
@@ -375,14 +382,30 @@ def scope_conflicts(left: dict, right: dict) -> list[str]:
         elif set(left_values) & set(right_values):
             reasons.append(f"{key}_overlap")
 
-    left_files = _scope_values(left, "files") or ()
-    left_directories = _scope_values(left, "directories") or ()
-    right_files = _scope_values(right, "files") or ()
-    right_directories = _scope_values(right, "directories") or ()
-    if any(_path_overlap(path, directory) for path in left_files for directory in right_directories) or any(
-        _path_overlap(path, directory) for path in right_files for directory in left_directories
-    ):
-        reasons.append("file_directory_overlap")
+    # Every path-backed category owns repository paths, regardless of which
+    # metadata key described it. Cross-compare all categories so the same path
+    # cannot be admitted concurrently as e.g. files vs project_memory or
+    # directories vs ci.
+    path_values = {
+        key: _scope_values(left, key) or ()
+        for key in PATH_SCOPE_KEYS
+    }
+    right_path_values = {
+        key: _scope_values(right, key) or ()
+        for key in PATH_SCOPE_KEYS
+    }
+    for left_key, left_values in path_values.items():
+        for right_key, right_values in right_path_values.items():
+            if left_key == right_key:
+                continue
+            if any(_path_overlap(a, b) for a in left_values for b in right_values):
+                reason = (
+                    "file_directory_overlap"
+                    if {left_key, right_key} == {"files", "directories"}
+                    else f"path_overlap:{left_key}:{right_key}"
+                )
+                if reason not in reasons:
+                    reasons.append(reason)
     return reasons
 
 
@@ -675,6 +698,35 @@ def run_manager_contract_tests() -> None:
     result = manager([canonical_a, unsafe_path])
     assert result["safe_ready_set"] == ["CANONICAL-A"]
     assert "files_invalid" in result["serialized_due_to_conflict"][0]["reason"]
+
+    # C4) every path-backed category conflicts across category names.
+    cross_file = _action(
+        "CROSS-FILE",
+        1,
+        scope=_scope("CROSS-FILE", files=["project-memory/X.md"]),
+    )
+    cross_memory = _action(
+        "CROSS-MEMORY",
+        2,
+        scope=_scope("CROSS-MEMORY", project_memory=["project-memory/X.md"]),
+    )
+    result = manager([cross_file, cross_memory])
+    assert result["safe_ready_set"] == ["CROSS-FILE"]
+    assert "path_overlap:files:project_memory" in result["serialized_due_to_conflict"][0]["reason"]
+
+    cross_directory = _action(
+        "CROSS-DIR",
+        1,
+        scope=_scope("CROSS-DIR", directories=[".github/workflows"]),
+    )
+    cross_ci = _action(
+        "CROSS-CI",
+        2,
+        scope=_scope("CROSS-CI", ci=[".github/workflows/project-memory-quality.yml"]),
+    )
+    result = manager([cross_directory, cross_ci])
+    assert result["safe_ready_set"] == ["CROSS-DIR"]
+    assert "path_overlap:directories:ci" in result["serialized_due_to_conflict"][0]["reason"]
 
     # D) different files but same contract/module -> serialize.
     a2 = _action(
@@ -1006,6 +1058,10 @@ def run_manager_contract_tests() -> None:
 ## LOCK-RELEASED
 - Task: FM-RELEASED-002
 - Status: RELEASED
+
+## LOCK-RELEASED-VERIFY
+- Task: FM-RELEASED-VERIFY-001
+- status: RELEASED_VERIFY_COMPLETE
 """
     assert active_task_ids("", lock_state_text) == {
         "FM-INLINE-001",
