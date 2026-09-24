@@ -207,3 +207,79 @@ test("verifier safely binds the optional canonical WhatsApp identity trigger", a
   assert.match(runner, /creator_learning_whatsapp_identity_function_acl_invalid/u);
   assert.match(runner, /array\['service_role'\]::text\[\]/u);
 });
+
+
+test("verifier binds server-side database identity before state inspection", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /current_user is distinct from '\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'/u);
+  assert.match(runner, /current_database\(\) is distinct from '\$\{EXPECTED_DATABASE_NAME\}'/u);
+  assert.match(runner, /creator_learning_server_identity_invalid/u);
+});
+
+test("verifier rejects any unreviewed overload of each learning function", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /learningOverloadChecks/u);
+  assert.match(runner, /p\.proname = '\$\{contract\.name\}'/u);
+  assert.match(runner, /creator_learning_function_overload_invalid/u);
+  assert.match(
+    runner,
+    /p\.proname in \([\s\S]*'stamp_creator_learning_manual_send'[\s\S]*'record_creator_confirmed_chat_proposals'[\s\S]*'confirm_creator_confirmed_chat_outbound'[\s\S]*'link_creator_confirmed_chat_outcomes'/u,
+  );
+});
+
+test("preinstall state treats the controlled trigger name as partial state", async () => {
+  const runner = await runnerSource();
+  const marker = runner.indexOf("creator_learning_schema_partial");
+  assert.notEqual(marker, -1);
+  const block = runner.slice(Math.max(0, marker - 1800), marker);
+  assert.match(block, /from pg_trigger t/u);
+  assert.match(block, /conversation_messages_stamp_creator_learning_manual_send/u);
+});
+
+test("learning RPC metadata binds exact argument names and input modes", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /p\.proargnames/u);
+  assert.match(runner, /p\.proargmodes/u);
+  assert.match(runner, /function_arg_names is distinct from/u);
+  assert.match(runner, /function_arg_modes is not null/u);
+  for (const argName of [
+    "p_workspace_id",
+    "p_contact_id",
+    "p_conversation_id",
+    "p_creator_id",
+    "p_creator_revision",
+    "p_prompt_revision",
+    "p_proposals",
+    "p_proposal_id",
+    "p_outbound_message_id",
+    "p_actor_user_id",
+    "p_expected_actual_text",
+    "p_reaction_message_id",
+    "p_purchase_event_id",
+  ]) {
+    assert.match(runner, new RegExp(`"${argName}"`, "u"));
+  }
+});
+
+test("verifier rejects column ACLs and inherited owner privilege", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /a\.attacl is not null/u);
+  assert.match(runner, /cardinality\(a\.attacl\) > 0/u);
+  assert.match(runner, /creator_learning_column_acl_invalid/u);
+  assert.match(
+    runner,
+    /inherited_role\.rolname in \('service_role','authenticated','\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'\)/u,
+  );
+});
+
+test("schema-qualified trigger and FK definitions are normalized before exact comparison", async () => {
+  const runner = await runnerSource();
+  assert.match(
+    runner,
+    /replace\(lower\(coalesce\(trigger_def, ''\)\), 'public\.', ''\)/u,
+  );
+  assert.match(
+    runner,
+    /replace\(lower\(pg_get_constraintdef\(oid\)\), 'public\.', ''\)/u,
+  );
+});
