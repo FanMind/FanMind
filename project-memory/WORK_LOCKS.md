@@ -811,7 +811,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-GOV-EVENT-ORCH-001-20260924
 - Task: FM-GOV-EVENT-ORCH-001
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R2
 - Holder: ChatGPT / connected GitHub
 - Baseline: main `65c3a1266e37ac1a385caffff74745f25f54ddf3`.
