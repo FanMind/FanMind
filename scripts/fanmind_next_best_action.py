@@ -102,7 +102,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
     task-level slot even when it mentions several task IDs.
     """
     lock_records: dict[str, dict] = {}
-    for block in re.split(r"(?m)^## ", locks_text)[1:]:
+    for block in re.split(r"(?m)^#{1,2} ", locks_text)[1:]:
         heading = block.splitlines()[0].strip()
         if not heading.startswith("LOCK-"):
             continue
@@ -339,7 +339,8 @@ def _scope_values(action: dict, key: str) -> tuple[str, ...] | None:
 
 
 def scope_is_complete(action: dict) -> bool:
-    return all(_scope_values(action, key) is not None for key in PARALLEL_SCOPE_KEYS)
+    values = [_scope_values(action, key) for key in PARALLEL_SCOPE_KEYS]
+    return all(value is not None for value in values) and any(values)
 
 
 def _canonical_repository_path(value: str) -> str | None:
@@ -417,13 +418,14 @@ def manager_dependency_status(
 ) -> tuple[bool, str]:
     by_id = _action_index(catalog)
     for dep_id in action.get("depends_on_actions", []):
-        if dep_id in failed_action_ids:
-            return False, f"dependency_failed:{dep_id}"
         dep = by_id.get(dep_id)
         if dep is None:
             return False, f"dependency_unknown:{dep_id}"
-        if not action_complete(dep, state):
-            return False, f"dependency_not_verified:{dep_id}"
+        if action_complete(dep, state):
+            continue
+        if dep_id in failed_action_ids:
+            return False, f"dependency_failed:{dep_id}"
+        return False, f"dependency_not_verified:{dep_id}"
     return True, "dependencies_satisfied"
 
 
@@ -754,6 +756,15 @@ def run_manager_contract_tests() -> None:
     result = manager([dep_a, dep_b], accepted={"DEP-A"})
     assert result["safe_ready_set"] == ["DEP-B"]
 
+    # E1) verified completion wins over an older failure record, while an
+    # incomplete failed dependency remains blocked.
+    result = manager([dep_a, dep_b], accepted={"DEP-A"}, failed={"DEP-A"})
+    assert result["safe_ready_set"] == ["DEP-B"]
+    result = manager([dep_a, dep_b], failed={"DEP-A"})
+    assert result["blocked_dependencies"] == [
+        {"id": "DEP-B", "reason": "dependency_failed:DEP-A"}
+    ]
+
     # E2) primary selection must obey the same dependency gate.
     primary_dep = _action("PRIMARY-DEP", 1, depends_on_actions=["PRIMARY-BASE"])
     primary_base = _action("PRIMARY-BASE", 2)
@@ -1034,7 +1045,7 @@ def run_manager_contract_tests() -> None:
 - Task: FM-PARTIAL-001
 - Status: ACTIVE
 
-## LOCK-RELEASED
+# LOCK-RELEASED
 - Task: FM-RELEASED-001
 - Status: RELEASED
 """
@@ -1083,6 +1094,15 @@ def run_manager_contract_tests() -> None:
     unknown_a.pop("parallel_scope", None)
     result = manager([unknown_a, unknown_b])
     assert result["safe_ready_set"] == ["UNKNOWN-A"]
+    assert "scope_unknown" in result["serialized_due_to_conflict"][0]["reason"]
+
+    # A structurally present but entirely empty scope supplies no ownership
+    # evidence and therefore remains unknown/fail-closed.
+    empty_scope = {key: [] for key in PARALLEL_SCOPE_KEYS}
+    empty_a = _action("EMPTY-A", 1, scope=empty_scope)
+    empty_b = _action("EMPTY-B", 2, scope=empty_scope)
+    result = manager([empty_a, empty_b])
+    assert result["safe_ready_set"] == ["EMPTY-A"]
     assert "scope_unknown" in result["serialized_due_to_conflict"][0]["reason"]
 
 

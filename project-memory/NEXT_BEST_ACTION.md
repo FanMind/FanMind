@@ -24,8 +24,8 @@ standing-authorized safe work
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
-- Worker slots reserved by active/ready work: `16`
-- Active task continuations reserving slots: `TASK:FM-WEB-003`, `TASK:FM-WEB-002`, `TASK:FM-WEB-001`, `NBA-RESTORE-STORAGE-R4-AUTH`, `NBA-MOBILE-READONLY`, `NBA-AI-LIFECYCLE-RECONCILE`, `TASK:FM-SOC3-001`, `NBA-PHASE7-EXTERNAL`, `NBA-SALES-HANDOFF`, `TASK:FM-LEGAL-001`, `TASK:FM-REG-001`, `TASK:FM-AI-001/FM-RST-001`, `TASK:FM-AI-001/FM-MOB-001`, `TASK:FM-CR-036/FM-OPS-001`, `NBA-CREATOR-INTELLIGENCE`, `TASK:FM-CHATADMIN-001`
+- Worker slots reserved by active/ready work: `12`
+- Active task continuations reserving slots: `NBA-RESTORE-STORAGE-R4-AUTH`, `TASK:FM-SOC3-001`, `NBA-PHASE7-EXTERNAL`, `NBA-SALES-HANDOFF`, `TASK:FM-LEGAL-001`, `TASK:FM-REG-001`, `TASK:FM-AI-001/FM-RST-001`, `TASK:FM-AI-001/FM-MOB-001`, `TASK:FM-CR-036/FM-OPS-001`, `NBA-AI-LIFECYCLE-RECONCILE`, `NBA-CREATOR-INTELLIGENCE`, `TASK:FM-CHATADMIN-001`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
