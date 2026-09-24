@@ -41,7 +41,7 @@ TERMINAL_LOCK_STATES = {
     "RELEASED_FOR_PR",
     "SUPERSEDED",
 }
-PATH_SCOPE_KEYS = {"files", "directories", "project_memory", "ci"}
+PATH_SCOPE_KEYS = ("files", "directories", "project_memory", "ci")
 PARALLEL_SCOPE_KEYS = (
     "files",
     "directories",
