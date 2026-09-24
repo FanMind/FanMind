@@ -59,14 +59,14 @@ const expectedTables=[
   'workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages',
 ];
 
-function collectorFixture(override=()=>undefined,token='synthetic-user-jwt') {
+function collectorFixture(override=()=>undefined,token='synthetic-user-jwt',runtime='production') {
   const calls=[];
   const config={SUPABASE_ACCESS_TOKEN_COOKIE:'cookie',getSupabaseHeaders:value=>({Authorization:`Bearer ${value}`}),getSupabaseRestUrl:table=>`https://synthetic.invalid/rest/v1/${table}`};
   const disclosure=load('src/lib/dataDisclosureMetaExport.ts',{
     'next/headers':{cookies:async()=>({get:()=>token?{value:token}:undefined})},
     '@/lib/supabase/config':config,
     '@/lib/dataDisclosurePagination':{DataDisclosureExportError:DisclosureFailure},
-  });
+  },{FANMIND_RUNTIME_ENVIRONMENT:runtime});
   const collector=disclosure.getWorkspaceMetaDataForDisclosure;
   const fetchImpl=async(url,options)=>{
     const table=url.pathname.split('/').at(-1);const offset=Number(url.searchParams.get('offset')||0);calls.push({table,offset,url,options});
@@ -91,11 +91,20 @@ test('complete disclosure enumerates every browser-readable Production Creator d
   assert.ok(!h.calls.some(x=>x.table==='workspace_ai_prompt_settings'),'a table absent from current Production must not be invented as stored data');
 });
 
-test('installed source makes confirmed-chat learning mandatory while preserving explicit preinstall semantics',async()=>{
-  const missing=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined);
-  assert.equal(missing.rolloutState,'installed');assert.equal(missing.isOptional('preinstall'),true);assert.equal(missing.isOptional('installed'),false);
-  await assert.rejects(missing.run(),DisclosureFailure);
-  const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined);
+test('confirmed-chat learning is mandatory only on installed Staging and remains compatible on Production preinstall',async()=>{
+  const missingResponse=({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'PGRST205'},404):undefined;
+  const staging=collectorFixture(missingResponse,'synthetic-user-jwt','staging');
+  assert.equal(staging.rolloutState,'installed');assert.equal(staging.isOptional('preinstall'),true);assert.equal(staging.isOptional('installed'),false);
+  await assert.rejects(staging.run(),DisclosureFailure);
+
+  const production=collectorFixture(missingResponse,'synthetic-user-jwt','production');
+  assert.equal(production.rolloutState,'preinstall');
+  const datasets=await production.run();assert.equal(datasets.find(x=>x.key==='creator_confirmed_chat_learning').rows.length,0);
+
+  const unknown=collectorFixture(missingResponse,'synthetic-user-jwt','unknown');
+  assert.equal(unknown.rolloutState,'preinstall');
+
+  const denied=collectorFixture(({table})=>table==='creator_confirmed_chat_learning'?jsonResponse({code:'42501'},403):undefined,'synthetic-user-jwt','production');
   await assert.rejects(denied.run(),DisclosureFailure);
 });
 
