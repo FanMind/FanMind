@@ -146,7 +146,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
             if lock:
                 actions |= lock["actions"]
                 lock_status = str(lock.get("status") or "").upper()
-                status_conflict = bool(lock.get("status_conflict"))
+                status_conflict = status_conflict or bool(lock.get("status_conflict"))
                 if lock_status and (
                     (record_status == "BLOCKED") != (lock_status == "BLOCKED")
                 ):
@@ -1042,6 +1042,28 @@ def run_manager_contract_tests() -> None:
     result = manager([a], limit=1, slots=started_conflict_slots)
     assert result["safe_ready_set"] == []
     assert result["active_continuations"] == ["TASK:FM-STARTED-CONFLICT-001"]
+
+    started_status_conflict_with_lock = """## Active work
+## FM-STARTED-CONFLICT-LOCKED-001 — contradictory record
+- Status: BLOCKED
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-STARTED-CONFLICT-LOCKED-001
+"""
+    started_conflict_lock = """## LOCK-FM-STARTED-CONFLICT-LOCKED-001
+- Task: FM-STARTED-CONFLICT-LOCKED-001
+- Status: BLOCKED
+"""
+    started_conflict_locked_slots = active_work_slots(
+        started_status_conflict_with_lock,
+        started_conflict_lock,
+    )
+    assert len(started_conflict_locked_slots) == 1
+    assert started_conflict_locked_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=started_conflict_locked_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == [
+        "TASK:FM-STARTED-CONFLICT-LOCKED-001"
+    ]
 
     conflict_started = """## Active work
 ## FM-CONFLICT-001 — blocked record
