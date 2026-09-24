@@ -808,3 +808,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Final head/merge: `79510c8bc35371aa657cf42ca7cded5810341d88` -> exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
 - Scope completed: repository-only governance/integration control plane and post-merge reconciliation. No protected external mutation.
 - Do not reacquire for later optional hardening; create a new bounded task/lock if new scope is discovered.
+
+## LOCK-FM-GOV-EVENT-ORCH-001-20260924
+- Task: FM-GOV-EVENT-ORCH-001
+- Status: ACTIVE
+- Risk: R2
+- Holder: ChatGPT / connected GitHub
+- Baseline: main `65c3a1266e37ac1a385caffff74745f25f54ddf3`.
+- Scope: `.github/workflows/fanmind-manager-event-dispatch.yml`, `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md` and bounded Project-Memory governance reconciliation only.
+- Parallel safety: product PR #1168 is independent; this task must not edit Creator source/schema/runtime scope.
+- Recovery: ordinary repository revert. Without external trigger configuration, dispatcher remains no-op and hourly Builder continues unchanged.

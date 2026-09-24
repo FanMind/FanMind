@@ -527,3 +527,13 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Post-merge countercheck: God Mode Gate, Deploy, Browser E2E, CodeQL, Supply Chain and Final Go-Live Readiness green; Production runtime verified on exact release. The known backup-freshness audit loop remains separate.
 - Dependencies: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921 SATISFIED; FM-DEP-GODMODE-001 SATISFIED; FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921 now READY_OWNER_ACTION.
 - Prohibited boundary retained: no Staging/Production APPLY/ACCEPT/write, DB/provider/Billing/Stripe/Tax/Restore/Mobile mutation, capability grant or secret handling from this task.
+
+## FM-GOV-EVENT-ORCH-001
+- Status: IMPLEMENTED_FOR_PR
+- Risk: R2
+- Priority: governance/orchestration latency hardening
+- Goal: remove dependence on nominal task start times by adding an immediate GitHub merge -> FanMind Manager wake-up path while retaining the hourly Builder as fallback.
+- Implementation: bounded GitHub Actions dispatcher, Workspace Agents API wake-up contract, idempotency, fail-closed missing-config behavior and explicit state-driven Project-Memory rule.
+- Acceptance: workflow syntax/current-head CI clean; independent review has no blocking finding; no secret committed; missing configuration performs no external call; configured manual dispatch receives HTTP 202; later merge event wakes exactly one manager run for that merge SHA.
+- External prerequisite: published FanMind Workspace Manager API channel and scoped Workspace Agent access token. Repository implementation must not invent or commit either value.
+- Exclusions: no direct task-to-task ChatGPT control, no protected action authorization, no Product/DB/Staging/Production/provider mutation.

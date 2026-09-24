@@ -146,3 +146,17 @@ When `FM-GOV-GODMODE-001` exists, every substantive project-state/release/integr
 - `RELEASE_DECISION.json`
 
 Contract/schema/API/AI-context/Billing/disclosure/Social changes require consumer-impact and integration-gate revalidation. `ALLOW` is never inferred from green CI or a merge. Protected owner/environment actions remain separately gated.
+
+## Event-driven orchestration contract
+
+FanMind orchestration is state-driven, never clock-order-driven. Scheduled Builder, Supervisor, Navigator and Owner Manager runs are fallback/reconciliation opportunities, not ordering guarantees.
+
+- A task may be woken by a repository event, a manual trigger or its normal schedule.
+- Every wake-up must start with the complete mandatory preflight and a fresh current-state scan.
+- Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
+- Cross-run coordination happens through canonical Project Memory, current GitHub/runtime/provider evidence, STARTED_WORK, WORK_LOCKS, DEPENDENCIES, receipts and handoffs.
+- A merge event may wake the FanMind Workspace Manager through `.github/workflows/fanmind-manager-event-dispatch.yml`, but it never authorizes a protected action.
+- The manager must recompute the SAFE READY SET from current evidence, preserve the default three-worker limit, serialize uncertainty and return NO_CHANGE when nothing safe is executable.
+- The hourly Builder remains a fallback if an event is missed, delayed, disabled or rejected.
+- Event retries must be idempotent; repeated unchanged state must not create receipt/PR churn.
+- Configuration and activation details live in `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md`.

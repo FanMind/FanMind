@@ -144,3 +144,10 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - Updated: 2026-09-22
 - Evidence: VERIFY `35652258052` / `106507223598` = `ABSENT`; God Mode v1 merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35` and post-merge repository/runtime counterchecks completed.
 - Rule: this readiness is not authorization. APPLY requires a fresh current-main/target re-read plus separate protected owner/environment authorization; ACCEPT remains a distinct later gate.
+
+## FM-DEP-EVENT-MANAGER-20260924
+- From: FM-GOV-EVENT-ORCH-001
+- Requires: repository dispatcher merged; a published FanMind Workspace Manager with API channel `agtch_...`; a Workspace Agent access token permitted to trigger that agent; repository variable/secret configured outside Git.
+- Type: repository governance + external ChatGPT workspace configuration
+- Status: ACTIVE
+- Rule: repository merge alone does not prove event activation. Until one configured manual dispatch returns HTTP 202 and a real merge event is observed, the hourly Builder remains authoritative fallback. The event payload is never acceptance evidence and never grants protected authorization.
