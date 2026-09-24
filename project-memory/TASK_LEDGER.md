@@ -74,7 +74,7 @@
 - Required for sales: false.
 - Prerequisite: model/authorization/legacy-migration contract before pipeline integration; FM-DEC-015 removes the earlier development-after-handoff prerequisite.
 - Completed so far: source/JWT/revision/PDF foundation is accepted; confirmed-chat validator/persistence/disclosure/delete verification is merged through #1167. Controlled rollout runner hardening merged through #1168, canonical authenticator correction #1171 and transitive membership correction #1172. PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed all triggered current-head workflows and an independent review with no findings, then merged as exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. No target schema Apply or runtime activation occurred.
-- Exact next step: complete the separate repository-only source lifecycle switch to `installed` so disclosure/deletion readers fail closed on absent schema. After exact-head CI/review/merge and normal deployment, acquire fresh read-only isolated-Staging VERIFY evidence. Any APPLY remains a later separately authorized protected action.
+- Exact next step: complete the separate repository-only **Staging** source lifecycle switch to `installed` while Production remains `preinstall`, so only Staging disclosure/deletion readers fail closed on absent schema. PR #1173's initial global switch was correctly blocked by P1 and is being corrected on the same PR. After exact-head CI/review/merge and normal deployment, acquire fresh read-only isolated-Staging VERIFY evidence. Any APPLY remains a later separately authorized protected action.
 
 ## FM-SEC-002
 - Date: 2026-09-10
