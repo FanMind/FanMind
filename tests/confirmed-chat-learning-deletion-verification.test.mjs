@@ -239,7 +239,7 @@ test("account verifier treats missing schema as preinstall-only and unknown inve
   );
 });
 
-test("account deletion processor wires the verifier to durable Workspace inventory and deleted user", async () => {
+test("account deletion processor wires the verifier to durable Workspace inventory, deleted user and loaded runtime environment", async () => {
   const source = await readFile("scripts/operations/process-account-deletion.mjs", "utf8");
   assert.match(source, /verifyConfirmedChatLearningAccountDeletion/u);
   assert.match(
@@ -248,7 +248,7 @@ test("account deletion processor wires the verifier to durable Workspace invento
   );
   assert.match(source, /workspaceIds,/u);
   assert.match(source, /userId,/u);
-  assert.match(source, /schemaState: CONFIRMED_CHAT_LEARNING_SCHEMA_STATE/u);
+  assert.match(source, /schemaState: getConfirmedChatLearningSchemaState\(environment\)/u);
   assert.match(
     source,
     /if \(!learningVerification\.ok\)[\s\S]*deletion_verification_failed/u,
