@@ -857,12 +857,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY-20260924
 - Task: FM-CREATOR-001
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `c119e0eb82e0643fc676afb7725d7518011e1286`.
 - Scope: VERIFY-only protected Staging workflow, its static fail-closed regression, rollout runbook and bounded Project-Memory reconciliation. No runner APPLY capability and no workflow dispatch.
-- Parallel safety: serialize with all other FM-CREATOR-001 schema/disclosure/delete/learning rollout work.
-- Forbidden: protected target dispatch, SQL APPLY, Staging/Production write, provider/customer/Billing/Restore/Mobile mutation, secrets and direct main writes.
-- Release condition: exact-head required CI green, one independent review cycle with P1/P2=0/no blocking threads, normal merge and post-merge source verification.
-- Recovery: repository revert only; this lock mutates no external target.
+- Result: PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` converged after its P1/P2 review findings were fixed and resolved, then merged as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
+- Boundary: the released source lock does not authorize or prove a protected Staging VERIFY, SQL APPLY, runtime activation or any provider/customer/Billing/Restore/Mobile mutation.
+- Resume: never reopen this source-control lock merely because target evidence is still missing; acquire a separate exact protected-action lock only when that action is independently authorized.
+- Recovery: repository revert only; this lock mutated no external target.
