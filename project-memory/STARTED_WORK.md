@@ -835,3 +835,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Safety: no Product/DB/Staging/Production/provider/Billing/Restore/Mobile mutation; no secret value stored in Git. Missing trigger configuration is a successful no-op, not an inferred authorization.
 - External activation dependency: published Workspace Agent API channel ID plus Workspace Agent access token must be configured outside Git as documented.
 - Exact next step: current-head CI/review for this bounded PR; after merge, provision the external trigger values and perform one manual 202-acceptance test before relying on event latency.
+
+
+## FM-CREATOR-001 — post-merge authenticator service-role hotfix — 2026-09-24
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
+- Baseline: exact main a034d5517f1ad4846680b293a6b53645aa6bab69 after owner merge of PR #1168.
+- Trigger: exact-head independent review of #1168 found one remaining P1: canonical Supabase/PostgREST authenticator SET-role membership into service_role is rejected by the verifier.
+- Scope: repository-only allowlist of the exact non-inheriting, SET-enabled, non-admin authenticator -> service_role edge alongside the already reviewed authenticator -> authenticated edge, plus focused regression coverage.
+- Safety: no SQL APPLY, no Staging/Production/provider/runtime/customer/Billing/Restore/Mobile mutation; no broad role relaxation; postgres membership remains unexcepted.
+- Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
