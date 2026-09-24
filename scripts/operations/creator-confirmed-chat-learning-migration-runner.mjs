@@ -1299,7 +1299,7 @@ rollback;
 
 function parseRolloutState(source) {
   const match = source.match(
-    /export const CONFIRMED_CHAT_LEARNING_SCHEMA_STATE = "(preinstall|installed)";/u,
+    /export const CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE = "(preinstall|installed)";/u,
   );
   if (!match) fail("rollout_state_invalid");
   return match[1];
