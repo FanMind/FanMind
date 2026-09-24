@@ -157,8 +157,8 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 if lock_status and (
                     (record_status == "BLOCKED") != (lock_status == "BLOCKED")
                     or (
-                        (record_status in EXPLICIT_RUNNING_WORK_STATES)
-                        != (lock_status in EXPLICIT_RUNNING_WORK_STATES)
+                        lock_status in EXPLICIT_RUNNING_WORK_STATES
+                        and record_status not in EXPLICIT_RUNNING_WORK_STATES
                     )
                 ):
                     status_conflict = True
