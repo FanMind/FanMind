@@ -2,9 +2,9 @@
 
 ## Status
 
-`SOURCE_INSTALLED_TARGET_UNVERIFIED`. This runbook covers the repository-controlled migration runner for `supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql`. It does not authorize or perform Staging/Production APPLY, ACCEPT, customer mutation, provider activation or runtime learning activation.
+`STAGING_SOURCE_INSTALLED_PRODUCTION_PREINSTALL_TARGET_UNVERIFIED`. This runbook covers the repository-controlled migration runner for `supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql`. It does not authorize or perform Staging/Production APPLY, ACCEPT, customer mutation, provider activation or runtime learning activation.
 
-The reviewed source state is now `CONFIRMED_CHAT_LEARNING_SCHEMA_STATE="installed"`. This only makes the disclosure/deletion readers fail closed when the table is absent and makes the runner eligible for a later target-bound Staging APPLY. It does **not** prove that any target contains the schema and does **not** authorize APPLY. A fresh exact-target read-only VERIFY must still prove the isolated Staging target `ABSENT`, followed by separate action-time owner/protected-environment authorization before any write.
+The reviewed **Staging** source state is now `CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE="installed"`. Runtime readers resolve that state to `installed` only when `FANMIND_RUNTIME_ENVIRONMENT=staging`; Production, unknown and other runtimes remain `preinstall`. This prevents an ordinary Production deploy from requiring a controlled table that has not been installed there. The Staging state only makes Staging disclosure/deletion readers fail closed when the table is absent and makes the runner eligible for a later target-bound Staging APPLY. It does **not** prove that any target contains the schema and does **not** authorize APPLY. A fresh exact-target read-only VERIFY must still prove the isolated Staging target `ABSENT`, followed by separate action-time owner/protected-environment authorization before any write.
 
 ## Offline source check
 
@@ -32,7 +32,7 @@ A later protected workflow may supply these values from its environment. Do not 
 ## Mandatory ordering before any APPLY
 
 1. Preserve the reviewed runner/checksum and the now-merged disclosure/deletion reader chain.
-2. Keep the shared source state `installed` and pass exact-head CI/review/deploy for this fail-closed reader state before relying on it.
+2. Keep the reviewed Staging source state `installed` while Production remains `preinstall`, and pass exact-head CI/review/deploy for this target-aware reader state before relying on it.
 3. Run a fresh target-bound read-only VERIFY. `ABSENT` is the only acceptable pre-apply target state.
 4. Obtain the separate action-time owner/protected-environment authorization.
 5. Only on isolated Staging, use the exact reviewed checkout and the explicit apply confirmation plus non-Production write acknowledgement.
