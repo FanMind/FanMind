@@ -43,14 +43,7 @@ jobs:
           test "$(git hash-object tests/creator-confirmed-chat-learning-verifier-review.cases.mjs)" = "e099d8f1c941fc8cadf41784a23b31b5295a3d3e"
           test "$(git hash-object tests/creator-confirmed-chat-learning.test.mjs)" = "c0c278342dde0b4f042f373c7db12d90d3e1aba6"
           test ! -e tests/creator-confirmed-chat-learning-verifier-review.test.mjs
-      - name: Run bounded verifier tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
-          node --test tests/creator-confirmed-chat-learning.test.mjs
-          node --test tests/test-suite-coverage.test.mjs
-      - name: Commit exact transported fix and remove transport helper
+      - name: Commit exact transported fix and remove transport helper locally
         shell: bash
         run: |
           set -euo pipefail
@@ -60,4 +53,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Complete confirmed-chat verifier contracts"
+          test -z "$(git status --porcelain)"
+          test "$(git hash-object scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs)" = "bcc1a8de7e9bf343389a95b78d11dba7371bd7d8"
+          test "$(git hash-object tests/creator-confirmed-chat-learning-verifier-review.cases.mjs)" = "e099d8f1c941fc8cadf41784a23b31b5295a3d3e"
+          test "$(git hash-object tests/creator-confirmed-chat-learning.test.mjs)" = "c0c278342dde0b4f042f373c7db12d90d3e1aba6"
+      - name: Run bounded verifier tests on clean committed checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --check
+          node --test tests/creator-confirmed-chat-learning.test.mjs
+          node --test tests/test-suite-coverage.test.mjs
+          test -z "$(git status --porcelain)"
+      - name: Push only after exact clean tests pass
+        shell: bash
+        run: |
+          set -euo pipefail
           git push origin HEAD:feat/creator-confirmed-chat-rollout-runner-20260923
