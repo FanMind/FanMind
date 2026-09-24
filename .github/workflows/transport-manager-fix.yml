@@ -13,7 +13,7 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: feat/builder-manager-safe-ready-20260923
           fetch-depth: 0
@@ -135,6 +135,7 @@ jobs:
           python3 scripts/fanmind_next_best_action.py --manager-check
           python3 scripts/fanmind_next_best_action.py --write
           python3 scripts/fanmind_next_best_action.py --check
+          python3 scripts/fanmind_memory_v8.py --write-handoff
           python3 scripts/fanmind_memory_v8.py --check
           python3 scripts/project_memory_quality_check.py
           git diff --check
@@ -142,7 +143,7 @@ jobs:
           rm .github/workflows/transport-manager-fix.yml
           git config user.name 'FanMind Builder'
           git config user.email 'builder@users.noreply.github.com'
-          git add scripts/fanmind_next_best_action.py project-memory/NEXT_BEST_ACTION.md .github/workflows/transport-manager-fix.yml
+          git add scripts/fanmind_next_best_action.py project-memory/NEXT_BEST_ACTION.md project-memory/AUTO_HANDOFF.md .github/workflows/transport-manager-fix.yml
           git diff --cached --check
           git commit -m 'Fix fail-closed manager active-slot reconciliation'
           git push origin HEAD:feat/builder-manager-safe-ready-20260923
