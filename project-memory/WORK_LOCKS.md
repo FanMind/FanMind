@@ -818,3 +818,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: `.github/workflows/fanmind-manager-event-dispatch.yml`, `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md` and bounded Project-Memory governance reconciliation only.
 - Parallel safety: product PR #1168 is independent; this task must not edit Creator source/schema/runtime scope.
 - Recovery: ordinary repository revert. Without external trigger configuration, dispatcher remains no-op and hourly Builder continues unchanged.
+
+
+## LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
+- Task: FM-CREATOR-001
+- Status: ACTIVE
+- Risk: R3
+- Holder: autonomous FanMind Builder
+- Baseline: main a034d5517f1ad4846680b293a6b53645aa6bab69 after owner merge of #1168.
+- Scope: bounded post-merge fix for the exact canonical authenticator -> service_role SET-role edge and its regression test; no other Creator schema/runtime behavior.
+- Parallel safety: SAFE READY set contains only this Creator hotfix; protected/runtime/provider/database actions remain gated.
+- Recovery: ordinary repository revert; no external state mutation.
