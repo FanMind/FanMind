@@ -1,3 +1,9 @@
+## Creator confirmed-chat runner converged; installed source-state switch started — 2026-09-24
+- PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every workflow triggered by its bounded diff, including FanMind CI, Browser E2E, CodeQL and Project Memory gates; Supply Chain was not path-triggered. Independent Codex review on that exact head reported no findings and no blocking review threads existed. It merged normally as exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f`.
+- This consumes the authenticator/service-role verifier follow-up. The next repository-only Creator step is the runbook-mandated synchronized source lifecycle switch from `preinstall` to `installed` for confirmed-chat disclosure/deletion readers.
+- `installed` here is source policy only: it makes absent target schema a hard failure and makes a later isolated-Staging APPLY technically eligible after fresh target-bound VERIFY. It does not prove target installation, activate the learning flag, authorize SQL, or mutate Staging/Production/provider/customer state.
+- SAFE READY remains one Creator task; no artificial parallel worker is opened because the same schema/disclosure/deletion contract and Project-Memory scope overlap.
+
 ## Creator privacy #1160 owner-accepted; crash-safe resume inventory follow-up — 2026-09-22
 - PR #1160 final head `d354b200f4be6f81ce4a51616eb2f77e8e4b30d5` was deliberately owner-merged as `ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`; #1161 records that exact merge as `OWNER_ACCEPTED_MERGE`. Do not reopen or rebuild #1160.
 - Post-merge #1160 Deploy, Browser E2E, CodeQL, God Mode Gate and Final Go-Live Readiness passed; the read-only Production Audit verified the exact runtime and remained red only for the pre-existing backup-freshness Operations loop.
