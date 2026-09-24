@@ -13,6 +13,7 @@ CATALOG_PATH = PM / "NEXT_BEST_ACTIONS.json"
 DEFERRED_PATH = PM / "DEFERRED_OWNER_ACTIONS.md"
 STARTED_WORK_PATH = PM / "STARTED_WORK.md"
 WORK_LOCKS_PATH = PM / "WORK_LOCKS.md"
+FAILED_ATTEMPTS_PATH = PM / "FAILED_ATTEMPTS.md"
 OUTPUT_PATH = PM / "NEXT_BEST_ACTION.md"
 
 ACCEPTED_STATES = {"ACCEPTED", "PRODUCTION_CONFIRMED"}
@@ -67,21 +68,49 @@ def active_task_ids(started_text: str, locks_text: str) -> set[str]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) not in ACTIVE_WORK_STATES:
             continue
-        task = re.search(r"(?m)^- Task:\s*`?([A-Z0-9_-]+)`?\s*$", block)
+        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
         if task:
             tasks.add(task.group(1))
-        elif re.fullmatch(r"FM-[A-Z0-9_-]+", heading):
-            tasks.add(heading)
+            continue
+        heading_task = re.match(r"^(FM-[A-Z0-9_-]+)(?:\s+—|\s+-\s+|$)", heading)
+        if heading_task:
+            tasks.add(heading_task.group(1))
 
     for block in re.split(r"(?m)^## ", locks_text)[1:]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) not in {"ACTIVE", "IN_PROGRESS"}:
             continue
-        task = re.search(r"(?m)^- Task:\s*`?([A-Z0-9_-]+)`?\s*$", block)
+        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
         if task:
             tasks.add(task.group(1))
 
     return tasks
+
+
+def persisted_failed_action_ids(text: str, catalog: dict) -> set[str]:
+    """Load durable worker/action failures from the existing failed-attempt ledger.
+
+    Only explicit FAILED entries participate. Historical BLOCKED or recorded failures do
+    not become permanent manager failures unless Project Memory marks the action/task
+    itself FAILED.
+    """
+    ids: set[str] = set()
+    by_id = _action_index(catalog)
+    for block in re.split(r"(?m)^## ", text)[1:]:
+        status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
+        if not status or status.group(1) != "FAILED":
+            continue
+        action = re.search(r"(?m)^- Action:\s*`?([A-Z0-9_-]+)`?\s*$", block)
+        if action and action.group(1) in by_id:
+            ids.add(action.group(1))
+        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
+        if task:
+            ids.update(
+                item["id"]
+                for item in catalog.get("actions", [])
+                if item.get("task") == task.group(1)
+            )
+    return ids
 
 
 def gate_state(state: dict, gate: str) -> str:
@@ -203,6 +232,15 @@ def scope_conflicts(left: dict, right: dict) -> list[str]:
                 reasons.append(f"{key}_overlap")
         elif set(left_values) & set(right_values):
             reasons.append(f"{key}_overlap")
+
+    left_files = _scope_values(left, "files") or ()
+    left_directories = _scope_values(left, "directories") or ()
+    right_files = _scope_values(right, "files") or ()
+    right_directories = _scope_values(right, "directories") or ()
+    if any(_path_overlap(path, directory) for path in left_files for directory in right_directories) or any(
+        _path_overlap(path, directory) for path in right_files for directory in left_directories
+    ):
+        reasons.append("file_directory_overlap")
     return reasons
 
 
@@ -241,6 +279,14 @@ def build_safe_ready_set(
     failed = failed_action_ids or set()
     active = active_tasks or set()
     candidates, _ = executable_candidates(state, catalog, deferred)
+    candidates = sorted(
+        candidates,
+        key=lambda candidate: (
+            0 if candidate[0].get("task") in active else 1,
+            candidate[0]["priority"],
+            candidate[0]["id"],
+        ),
+    )
 
     selected: list[dict] = []
     serialized: list[dict] = []
@@ -341,7 +387,15 @@ def _action(
 
 
 def run_manager_contract_tests() -> None:
-    def manager(actions, *, accepted=None, failed=None, limit=None, deferred=None):
+    def manager(
+        actions,
+        *,
+        accepted=None,
+        failed=None,
+        limit=None,
+        deferred=None,
+        active=None,
+    ):
         catalog = {"actions": actions}
         state = _synthetic_state([a["id"] for a in actions], accepted=accepted)
         return build_safe_ready_set(
@@ -350,6 +404,7 @@ def run_manager_contract_tests() -> None:
             deferred or set(),
             requested_limit=limit,
             failed_action_ids=failed or set(),
+            active_tasks=active or set(),
         )
 
     # A) 3 independent tasks -> all parallel.
@@ -369,6 +424,13 @@ def run_manager_contract_tests() -> None:
     result = manager([a1, b1])
     assert result["safe_ready_set"] == ["A1"]
     assert "files_overlap" in result["serialized_due_to_conflict"][0]["reason"]
+
+    # C2) a file owned by another task's directory scope -> serialize.
+    a_dir = _action("A-DIR", 1, scope=_scope("A-DIR", files=["src/pkg/a.py"]))
+    b_dir = _action("B-DIR", 2, scope=_scope("B-DIR", directories=["src/pkg"]))
+    result = manager([a_dir, b_dir])
+    assert result["safe_ready_set"] == ["A-DIR"]
+    assert "file_directory_overlap" in result["serialized_due_to_conflict"][0]["reason"]
 
     # D) different files but same contract/module -> serialize.
     a2 = _action(
@@ -406,6 +468,11 @@ def run_manager_contract_tests() -> None:
         {"id": "FAIL-B", "reason": "dependency_failed:FAIL-A"}
     ]
 
+    # F2) FAILED state is durably loaded from the existing failed-attempt ledger.
+    failure_catalog = {"actions": [fail_a, fail_b]}
+    failure_text = """## FM-FAIL-WORKER\n- Status: FAILED\n- Action: `FAIL-A`\n"""
+    assert persisted_failed_action_ids(failure_text, failure_catalog) == {"FAIL-A"}
+
     # G) failed A does not block independent C.
     independent = _action("INDEPENDENT-C", 3)
     result = manager([fail_a, fail_b, independent], failed={"FAIL-A"})
@@ -439,11 +506,30 @@ def run_manager_contract_tests() -> None:
     else:
         raise AssertionError("worker limit above 5 must fail closed")
 
+    # J2) rendering uses the same requested limit as manager execution/checking.
+    render_catalog = {"actions": [a, b]}
+    render_state = _synthetic_state(["A", "B"])
+    rendered = render(render_state, render_catalog, set(), requested_limit=1)
+    assert "- Effective worker limit: `1`" in rendered
+    assert "- SAFE READY SET: `A`" in rendered
+    assert "`B` (worker_limit)" in rendered
+
     # K) one safe task -> one worker, no artificial utilization.
     only = _action("ONLY", 1)
     result = manager([only])
     assert result["safe_ready_set"] == ["ONLY"]
     assert result["worker_used"] == 1
+
+    # K2) already-active continuations reserve capacity before new work.
+    active_d = _action("ACTIVE-D", 4, task="TASK-ACTIVE")
+    result = manager([a, b, c, active_d], active={"TASK-ACTIVE"})
+    assert result["safe_ready_set"] == ["ACTIVE-D", "A", "B"]
+    assert result["active_continuations"] == ["ACTIVE-D"]
+    assert {"id": "C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
+    # K3) descriptive canonical headings still identify the active task.
+    active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory\n- Status: IN_PROGRESS\n"""
+    assert active_task_ids(active_started, "") == {"FM-CREATOR-001"}
 
     # L) free slot is reused after predecessor reaches accepted state.
     steal_a = _action("STEAL-A", 1)
@@ -462,13 +548,22 @@ def run_manager_contract_tests() -> None:
     assert "scope_unknown" in result["serialized_due_to_conflict"][0]["reason"]
 
 
-def render(state: dict, catalog: dict, deferred: set[str], *, active_tasks: set[str] | None = None) -> str:
+def render(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    *,
+    active_tasks: set[str] | None = None,
+    requested_limit: int | None = None,
+    failed_action_ids: set[str] | None = None,
+) -> str:
     selected, classified = select(state, catalog, deferred)
     manager = build_safe_ready_set(
         state,
         catalog,
         deferred,
-        requested_limit=DEFAULT_WORKER_LIMIT,
+        requested_limit=requested_limit,
+        failed_action_ids=failed_action_ids,
         active_tasks=active_tasks,
     )
     lines = [
@@ -502,6 +597,7 @@ def render(state: dict, catalog: dict, deferred: set[str], *, active_tasks: set[
     lines += ["", "## Builder manager", ""]
     lines += [
         f"- Default worker limit: `{DEFAULT_WORKER_LIMIT}`",
+        f"- Effective worker limit: `{manager['worker_limit']}`",
         f"- Hard maximum worker limit: `{HARD_MAX_WORKER_LIMIT}`",
         "- SAFE READY SET: "
         + (
@@ -578,7 +674,9 @@ def main() -> int:
     deferred = deferred_owner_ids(deferred_text)
     started_text = STARTED_WORK_PATH.read_text(encoding="utf-8") if STARTED_WORK_PATH.exists() else ""
     locks_text = WORK_LOCKS_PATH.read_text(encoding="utf-8") if WORK_LOCKS_PATH.exists() else ""
+    failed_text = FAILED_ATTEMPTS_PATH.read_text(encoding="utf-8") if FAILED_ATTEMPTS_PATH.exists() else ""
     active_tasks = active_task_ids(started_text, locks_text)
+    failed_action_ids = persisted_failed_action_ids(failed_text, catalog)
 
     selected, _ = select(state, catalog, deferred)
     if selected:
@@ -596,6 +694,7 @@ def main() -> int:
             catalog,
             deferred,
             requested_limit=args.worker_limit,
+            failed_action_ids=failed_action_ids,
             active_tasks=active_tasks,
         )
     except ValueError as exc:
@@ -614,7 +713,14 @@ def main() -> int:
         + json.dumps(manager["blocked_dependencies"], separators=(",", ":"))
     )
 
-    rendered = render(state, catalog, deferred, active_tasks=active_tasks)
+    rendered = render(
+        state,
+        catalog,
+        deferred,
+        active_tasks=active_tasks,
+        requested_limit=args.worker_limit,
+        failed_action_ids=failed_action_ids,
+    )
     if args.write:
         OUTPUT_PATH.write_text(rendered, encoding="utf-8")
     if args.check:
