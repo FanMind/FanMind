@@ -307,12 +307,12 @@ test("contact delete wires verification after both RPC and legacy success paths 
   assert.doesNotMatch(verificationFailureSection, /contactPath\(/u);
 });
 
-test("confirmed-chat deletion readers stay synchronized on the preinstall rollout boundary", async () => {
+test("confirmed-chat deletion readers stay synchronized on the installed rollout boundary", async () => {
   const disclosureSource = await readFile("src/lib/dataDisclosureMetaExport.ts", "utf8");
-  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "preinstall");
+  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "installed");
   assert.match(
     disclosureSource,
-    /CONFIRMED_CHAT_LEARNING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"preinstall";/u,
+    /CONFIRMED_CHAT_LEARNING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"installed";/u,
   );
 });
 
