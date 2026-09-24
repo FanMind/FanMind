@@ -1,3 +1,9 @@
+## Creator #1175 source control merged; protected target remains separate — 2026-09-24
+- PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` corrected its initial P1 supply-chain inventory and P2 invalid-dispatch findings. Both review threads are resolved; the independent current-head review reported no further major issues; the PR merged normally as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
+- This closes only the repository-side read-only Staging VERIFY entrypoint. No Staging VERIFY was dispatched and no target schema state, SQL APPLY, runtime activation, provider/customer/Billing/Restore/Mobile mutation or Production acceptance is inferred.
+- The old active #1175 Started Work/lock/receipt/ledger text is an orphan-success condition and is reconciled by the bounded Project-Memory follow-up. Do not rebuild #1175.
+- Actual Staging deployment/VERIFY and every later APPLY remain separately protected actions. A blocked protected target action is not a global project stop: recompute `NBA-CREATOR-INTELLIGENCE` and continue only a distinct repository-safe unaccepted Creator scope.
+
 ## Creator #1174 deployed; VERIFY-only Staging control prepared — 2026-09-24
 - PR #1174 final head `db4d1ed22c617608d0c70b2ac0a5605bc6ecfb2f` passed all required current-head checks and independent Codex review with no findings, then merged normally as exact main `c119e0eb82e0643fc676afb7725d7518011e1286`.
 - Automatic Deploy FanMind run `36056745406`, Browser E2E `36056745375`, CodeQL `36056745369`, God Mode Gate `36056745384` and Final Go-Live Readiness `36056908438` succeeded on that exact release. Read-only Production Audit `36056908458` independently verified `PRODUCTION_RUNTIME_VERIFIED=true` and the same exact release; its overall failure remains only the pre-existing `production_audit_backup_latest_stale_or_empty` Operations loop.
