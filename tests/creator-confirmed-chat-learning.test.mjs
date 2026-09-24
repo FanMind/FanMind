@@ -400,3 +400,40 @@ test("confirmed-chat verify requires exact target binding and normal deploy neve
     /CREATOR_CONFIRMED_CHAT_MIGRATION_ERROR=runtime_environment_invalid/u,
   );
 });
+
+test("confirmed-chat Staging control is verify-only, exact-main and protected", async () => {
+  const workflow = await readFile(
+    path.join(
+      repoRoot,
+      ".github/workflows/creator-confirmed-chat-learning-staging-verify.yml",
+    ),
+    "utf8",
+  );
+
+  assert.match(workflow, /workflow_dispatch:/u);
+  assert.match(workflow, /environment: staging/u);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(workflow, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(
+    workflow,
+    /inputs\.confirmation == 'verify-creator-confirmed-chat-learning'/u,
+  );
+  assert.match(workflow, /FANMIND_RUNTIME_ENVIRONMENT: staging/u);
+  assert.match(
+    workflow,
+    /FANMIND_CREATOR_CONFIRMED_CHAT_REVIEWED_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u,
+  );
+  assert.match(workflow, /PGSSLMODE: verify-full/u);
+  assert.match(workflow, /chmod 600 "\$PGPASSFILE"/u);
+  assert.match(
+    workflow,
+    /creator-confirmed-chat-learning-migration-runner\.mjs --check/u,
+  );
+  assert.match(
+    workflow,
+    /creator-confirmed-chat-learning-migration-runner\.mjs --verify/u,
+  );
+  assert.match(workflow, /FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'/u);
+  assert.doesNotMatch(workflow, /--apply|apply-creator-confirmed-chat-learning/u);
+  assert.doesNotMatch(workflow, /I_UNDERSTAND_NON_PRODUCTION_ONLY/u);
+});
