@@ -24,9 +24,9 @@ owner/platform action required
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `TASK:FM-GOV-BUILDER-MANAGER-002`
-- Serialized due to conflict/limit: `NBA-CREATOR-INTELLIGENCE` (TASK:FM-GOV-BUILDER-MANAGER-002:parallel_safe_not_true)
+- Worker slots reserved by active/ready work: `2`
+- Active task continuations reserving slots: `TASK:FM-GOV-BUILDER-MANAGER-002`, `TASK:FM-RST-001`
+- Serialized due to conflict/limit: `NBA-CREATOR-INTELLIGENCE` (TASK:FM-GOV-BUILDER-MANAGER-002:parallel_safe_not_true,TASK:FM-RST-001:parallel_safe_not_true)
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
 - The manager reuses the existing action catalog and task/gate state; it does not create a second TODO/orchestration system.
