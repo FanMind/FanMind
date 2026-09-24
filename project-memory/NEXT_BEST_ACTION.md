@@ -21,10 +21,11 @@ standing-authorized safe work
 ## Builder manager
 
 - Default worker limit: `3`
+- Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
 - Worker slots used by safe ready set: `1`
-- Active task continuations in safe ready set: `NONE`
+- Active task continuations in safe ready set: `NBA-CREATOR-INTELLIGENCE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
