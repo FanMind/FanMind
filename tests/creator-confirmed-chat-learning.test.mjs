@@ -54,6 +54,10 @@ test("confirmed-chat rollout runner pins the reviewed SQL and stays offline in c
   assert.match(runner, /production_apply_forbidden/u);
   assert.match(runner, /source_state_not_installed/u);
   assert.match(runner, /installed_target_with_preinstall_source/u);
+  assert.match(
+    runner,
+    /CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE = "\(preinstall\|installed\)"/u,
+  );
 
   const result = spawnSync(process.execPath, [runnerPath, "--check"], {
     cwd: repoRoot,
