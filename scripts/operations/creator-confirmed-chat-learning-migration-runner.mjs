@@ -54,6 +54,7 @@ const FUNCTION_CONTRACTS = Object.freeze([
     signature: "public.stamp_creator_learning_manual_send()",
     securityDefiner: false,
     resultType: "trigger",
+    argNames: null,
     executeRoles: Object.freeze([]),
   }),
   Object.freeze({
@@ -62,6 +63,15 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)",
     securityDefiner: true,
     resultType: "jsonb",
+    argNames: Object.freeze([
+      "p_workspace_id",
+      "p_contact_id",
+      "p_conversation_id",
+      "p_creator_id",
+      "p_creator_revision",
+      "p_prompt_revision",
+      "p_proposals",
+    ]),
     executeRoles: Object.freeze(["service_role"]),
   }),
   Object.freeze({
@@ -70,6 +80,14 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)",
     securityDefiner: true,
     resultType: "jsonb",
+    argNames: Object.freeze([
+      "p_workspace_id",
+      "p_contact_id",
+      "p_proposal_id",
+      "p_outbound_message_id",
+      "p_actor_user_id",
+      "p_expected_actual_text",
+    ]),
     executeRoles: Object.freeze(["service_role"]),
   }),
   Object.freeze({
@@ -78,6 +96,13 @@ const FUNCTION_CONTRACTS = Object.freeze([
       "public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)",
     securityDefiner: true,
     resultType: "jsonb",
+    argNames: Object.freeze([
+      "p_workspace_id",
+      "p_contact_id",
+      "p_proposal_id",
+      "p_reaction_message_id",
+      "p_purchase_event_id",
+    ]),
     executeRoles: Object.freeze(["authenticated"]),
   }),
 ]);
@@ -214,8 +239,14 @@ function functionMetadataCondition({
 }
 
 function learningFunctionMetadataCondition(contract, bodyHash) {
+  const argNameCondition =
+    contract.argNames === null
+      ? "function_arg_names is not null"
+      : `function_arg_names is distinct from ${sqlTextArray(contract.argNames)}`;
   return [
     "function_source is null",
+    argNameCondition,
+    "function_arg_modes is not null",
     `function_owner is distinct from '${EXPECTED_DATABASE_FUNCTION_OWNER}'`,
     `function_security_definer is distinct from ${contract.securityDefiner ? "true" : "false"}`,
     `function_config is distinct from array['search_path=""']::text[]`,
@@ -248,7 +279,9 @@ function pgProcSelect(signature) {
       p.proleakproof,
       p.prokind::text,
       p.pronargdefaults,
-      p.provariadic
+      p.provariadic,
+      p.proargnames,
+      p.proargmodes
     into
       function_security_definer,
       function_owner,
@@ -263,7 +296,9 @@ function pgProcSelect(signature) {
       function_leakproof,
       function_kind,
       function_default_count,
-      function_variadic
+      function_variadic,
+      function_arg_names,
+      function_arg_modes
     from pg_proc p
     join pg_language l on l.oid = p.prolang
    where p.oid = to_regprocedure('${signature}');`;
@@ -315,6 +350,19 @@ function buildVerifySql(sql, foundationSources) {
   ${pgProcSelect(contract.signature)}
   if ${learningFunctionMetadataCondition(contract, hashes[contract.name])} then
     raise exception 'creator_learning_function_metadata_invalid';
+  end if;`,
+  ).join("\n");
+
+  const learningOverloadChecks = FUNCTION_CONTRACTS.map(
+    (contract) => String.raw`
+  if (
+    select count(*)
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = '${contract.name}'
+  ) <> 1 then
+    raise exception 'creator_learning_function_overload_invalid';
   end if;`,
   ).join("\n");
 
@@ -383,6 +431,8 @@ declare
   function_kind text;
   function_default_count integer;
   function_variadic oid;
+  function_arg_names text[];
+  function_arg_modes "char"[];
   function_execute_grantees text[];
   table_acl_entries text[];
   index_def text;
@@ -405,6 +455,11 @@ declare
   expected_check_plan json;
   expected_check_def text;
 begin
+  if current_user is distinct from '${EXPECTED_DATABASE_FUNCTION_OWNER}'
+     or current_database() is distinct from '${EXPECTED_DATABASE_NAME}' then
+    raise exception 'creator_learning_server_identity_invalid';
+  end if;
+
   if to_regclass('public.creators') is null
      or to_regclass('public.creator_commercial_events') is null
      or messages_table is null
@@ -471,10 +526,25 @@ ${foundationChecks}
          and attname = 'creator_learning_manual_send'
          and attnum > 0 and not attisdropped
     )
-    or to_regprocedure('public.stamp_creator_learning_manual_send()') is not null
-    or to_regprocedure('public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)') is not null
-    or to_regprocedure('public.confirm_creator_confirmed_chat_outbound(uuid,uuid,uuid,uuid,uuid,text)') is not null
-    or to_regprocedure('public.link_creator_confirmed_chat_outcomes(uuid,uuid,uuid,uuid,uuid)') is not null then
+    or exists (
+      select 1
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname in (
+           'stamp_creator_learning_manual_send',
+           'record_creator_confirmed_chat_proposals',
+           'confirm_creator_confirmed_chat_outbound',
+           'link_creator_confirmed_chat_outcomes'
+         )
+    )
+    or exists (
+      select 1
+        from pg_trigger t
+       where t.tgrelid = messages_table
+         and t.tgname = 'conversation_messages_stamp_creator_learning_manual_send'
+         and not t.tgisinternal
+    ) then
       raise exception 'creator_learning_schema_partial';
     end if;
     return;
@@ -633,7 +703,12 @@ ${foundationChecks}
        and t.tgname = 'conversation_messages_whatsapp_identity_immutable'
        and t.tgenabled = 'O'
        and not t.tgisinternal;
-    trigger_def := regexp_replace(lower(coalesce(trigger_def, '')), '\s+', '', 'g');
+    trigger_def := regexp_replace(
+      replace(lower(coalesce(trigger_def, '')), 'public.', ''),
+      '\s+',
+      '',
+      'g'
+    );
     if trigger_def <>
        'createtriggerconversation_messages_whatsapp_identity_immutablebeforeupdateonconversation_messagesforeachrowexecutefunctionprotect_whatsapp_cloud_message_identity()' then
       raise exception 'creator_learning_whatsapp_identity_trigger_invalid';
@@ -687,11 +762,18 @@ ${foundationChecks}
      and t.tgname = 'conversation_messages_stamp_creator_learning_manual_send'
      and t.tgenabled = 'O'
      and not t.tgisinternal;
-  trigger_def := regexp_replace(lower(coalesce(trigger_def, '')), '\s+', '', 'g');
+  trigger_def := regexp_replace(
+      replace(lower(coalesce(trigger_def, '')), 'public.', ''),
+      '\s+',
+      '',
+      'g'
+    );
   if trigger_def <>
      'createtriggerconversation_messages_stamp_creator_learning_manual_sendbeforeinsertorupdateonconversation_messagesforeachrowexecutefunctionstamp_creator_learning_manual_send()' then
     raise exception 'creator_learning_manual_send_trigger_invalid';
   end if;
+
+${learningOverloadChecks}
 
   if to_regprocedure('public.stamp_creator_learning_manual_send()') is null
      or to_regprocedure('public.record_creator_confirmed_chat_proposals(uuid,uuid,uuid,uuid,integer,text,jsonb)') is null
@@ -708,7 +790,7 @@ ${learningAclChecks}
     select 1
       from pg_auth_members membership
       join pg_roles inherited_role on inherited_role.oid = membership.roleid
-     where inherited_role.rolname in ('service_role','authenticated')
+     where inherited_role.rolname in ('service_role','authenticated','${EXPECTED_DATABASE_FUNCTION_OWNER}')
        and membership.inherit_option
   ) then
     raise exception 'creator_learning_function_acl_inheritance_invalid';
@@ -793,6 +875,18 @@ ${learningAclChecks}
        'service_role:UPDATE:false:postgres'
      ]::text[] then
     raise exception 'creator_learning_table_acl_invalid';
+  end if;
+
+  if exists (
+    select 1
+      from pg_attribute a
+     where a.attrelid = learning_table
+       and a.attnum > 0
+       and not a.attisdropped
+       and a.attacl is not null
+       and cardinality(a.attacl) > 0
+  ) then
+    raise exception 'creator_learning_column_acl_invalid';
   end if;
 
   if not has_function_privilege(
@@ -887,7 +981,14 @@ ${learningAclChecks}
     raise exception 'creator_learning_constraint_invalid';
   end if;
 
-  select array_agg(regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g'))
+  select array_agg(
+           regexp_replace(
+             replace(lower(pg_get_constraintdef(oid)), 'public.', ''),
+             '\s+',
+             '',
+             'g'
+           )
+         )
     into constraint_defs
     from pg_constraint
    where conrelid = learning_table;
