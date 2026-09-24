@@ -298,13 +298,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CREATOR-001 — confirmed-chat target-aware Staging source-state switch — 2026-09-24
 - Status: IN_PROGRESS
-- Risk: R3
+- Risk: R4
 - Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
+- Contract / gate: `FM-CONTRACT-DISCLOSURE-DELETE-001` / `FM-IGATE-DISCLOSURE-DELETE-001`.
 - Owner: autonomous builder
 - Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after normal merge of PR #1172.
 - Consumed predecessor: PR #1172 exact head `ca6be4882aa3437a5e6858fdaa79b6f8e9b41e0d` passed every triggered current-head workflow, independent Codex review reported no findings, had zero blocking threads and merged as `418c1d0d1576d0c87e617f28fc4507ce0e83480f`. Its authenticator P1 follow-up is complete and must not be rebuilt.
 - Bounded scope: switch only the reviewed **Staging** confirmed-chat disclosure/deletion lifecycle from `preinstall` to `installed`, while Production/unknown runtimes remain `preinstall`; update synchronized regression tests/runner/runbook and bounded Creator navigation. The initial global switch was rejected by current-head P1 because Production has no controlled schema yet. No target schema is installed and runtime learning stays inactive.
-- Exact next step: publish one bounded PR, complete current-head CI plus one independent review, fix any finding on that same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY; APPLY remains separately owner/protected-environment gated.
+- Current review reconciliation: the latest exact-head review identified four blocking findings (P1 contract/gate release-decision impact, P2 loaded-env account-deletion state, P1 generic APPLY reachability, P1 Production VERIFY using Staging state). The same PR now records the R4 privacy contract/gate as affected while keeping RELEASE_DECISION=BLOCK, resolves account deletion from its loaded env, binds VERIFY state to the selected runtime, and makes generic `--apply` fail immediately with `apply_protected_path_required`.
+- Exact next step: complete current-head CI plus the automatically triggered independent review of this material correction; fix any finding on the same PR and merge only at P1=0/P2=0/no blocking threads. After merge/deploy, the next target step is a fresh read-only isolated-Staging VERIFY. A later APPLY requires a new protected release-/receipt-bound path and separate owner/environment authorization.
 - Forbidden: SQL APPLY, protected Staging/Production write, runtime flag activation, provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
 - Recovery: ordinary repository revert; no external target state changed.
 
