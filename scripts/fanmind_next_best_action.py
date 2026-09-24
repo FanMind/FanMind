@@ -68,34 +68,46 @@ def active_task_ids(started_text: str, locks_text: str) -> set[str]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) not in ACTIVE_WORK_STATES:
             continue
-        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
-        if task:
-            tasks.add(task.group(1))
-            continue
-        heading_task = re.match(r"^(FM-[A-Z0-9_-]+)(?:\s+—|\s+-\s+|$)", heading)
-        if heading_task:
-            tasks.add(heading_task.group(1))
+        task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
+        if task_line:
+            tasks.update(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
+        tasks.update(re.findall(r"FM-[A-Z0-9_-]+", heading))
 
     for block in re.split(r"(?m)^## ", locks_text)[1:]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) not in {"ACTIVE", "IN_PROGRESS"}:
             continue
-        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
-        if task:
-            tasks.add(task.group(1))
+        task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
+        if task_line:
+            tasks.update(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
 
     return tasks
 
 
-def persisted_failed_action_ids(text: str, catalog: dict) -> set[str]:
-    """Load durable worker/action failures from the existing failed-attempt ledger.
+def gate_state(state: dict, gate: str) -> str:
+    entry = state.get("gates", {}).get(gate)
+    return str(entry.get("state")) if isinstance(entry, dict) else "UNKNOWN"
 
-    Only explicit FAILED entries participate. Historical BLOCKED or recorded failures do
+
+def _action_index(catalog: dict) -> dict[str, dict]:
+    return {action["id"]: action for action in catalog.get("actions", [])}
+
+
+def persisted_failed_action_ids(text: str, catalog: dict, state: dict | None = None) -> set[str]:
+    """Load durable worker/action failures from existing canonical state.
+
+    Only explicit FAILED state participates. Historical BLOCKED or recorded failures do
     not become permanent manager failures unless Project Memory marks the action/task
     itself FAILED.
     """
     ids: set[str] = set()
     by_id = _action_index(catalog)
+    if state is not None:
+        ids.update(
+            action["id"]
+            for action in catalog.get("actions", [])
+            if gate_state(state, action["gate"]) == "FAILED"
+        )
     for block in re.split(r"(?m)^## ", text)[1:]:
         status = re.search(r"(?m)^- Status:\s*([A-Z_]+)\.?\s*$", block)
         if not status or status.group(1) != "FAILED":
@@ -103,19 +115,15 @@ def persisted_failed_action_ids(text: str, catalog: dict) -> set[str]:
         action = re.search(r"(?m)^- Action:\s*`?([A-Z0-9_-]+)`?\s*$", block)
         if action and action.group(1) in by_id:
             ids.add(action.group(1))
-        task = re.search(r"(?m)^- Task:\s*`?(FM-[A-Z0-9_-]+)", block)
-        if task:
+        task_line = re.search(r"(?m)^- Task:\s*(.+?)\s*$", block)
+        if task_line:
+            task_ids = set(re.findall(r"FM-[A-Z0-9_-]+", task_line.group(1)))
             ids.update(
                 item["id"]
                 for item in catalog.get("actions", [])
-                if item.get("task") == task.group(1)
+                if item.get("task") in task_ids
             )
     return ids
-
-
-def gate_state(state: dict, gate: str) -> str:
-    entry = state.get("gates", {}).get(gate)
-    return str(entry.get("state")) if isinstance(entry, dict) else "UNKNOWN"
 
 
 def prerequisites_satisfied(action: dict, state: dict) -> tuple[bool, list[str]]:
@@ -174,10 +182,21 @@ def executable_candidates(state: dict, catalog: dict, deferred: set[str]):
     return candidates, classified
 
 
-def select(state: dict, catalog: dict, deferred: set[str]):
+def select(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    *,
+    failed_action_ids: set[str] | None = None,
+):
     candidates, classified = executable_candidates(state, catalog, deferred)
-    if candidates:
-        return candidates[0][0], [(a, s, r) for a, s, r in classified]
+    failed = failed_action_ids or set()
+    for action, _ in candidates:
+        if action["id"] in failed:
+            continue
+        dep_ok, _ = manager_dependency_status(action, state, catalog, failed)
+        if dep_ok:
+            return action, [(a, s, r) for a, s, r in classified]
     for action, status, _ in classified:
         if status in OWNER_BLOCKING_STATES:
             return action, [(a, s, r) for a, s, r in classified]
@@ -242,10 +261,6 @@ def scope_conflicts(left: dict, right: dict) -> list[str]:
     ):
         reasons.append("file_directory_overlap")
     return reasons
-
-
-def _action_index(catalog: dict) -> dict[str, dict]:
-    return {action["id"]: action for action in catalog.get("actions", [])}
 
 
 def manager_dependency_status(
@@ -458,6 +473,14 @@ def run_manager_contract_tests() -> None:
     result = manager([dep_a, dep_b], accepted={"DEP-A"})
     assert result["safe_ready_set"] == ["DEP-B"]
 
+    # E2) primary selection must obey the same dependency gate.
+    primary_dep = _action("PRIMARY-DEP", 1, depends_on_actions=["PRIMARY-BASE"])
+    primary_base = _action("PRIMARY-BASE", 2)
+    primary_catalog = {"actions": [primary_dep, primary_base]}
+    primary_state = _synthetic_state(["PRIMARY-DEP", "PRIMARY-BASE"])
+    primary_selected, _ = select(primary_state, primary_catalog, set())
+    assert primary_selected is not None and primary_selected["id"] == "PRIMARY-BASE"
+
     # F) failed A keeps dependent B blocked and is not restarted.
     fail_a = _action("FAIL-A", 1)
     fail_b = _action("FAIL-B", 2, depends_on_actions=["FAIL-A"])
@@ -468,10 +491,13 @@ def run_manager_contract_tests() -> None:
         {"id": "FAIL-B", "reason": "dependency_failed:FAIL-A"}
     ]
 
-    # F2) FAILED state is durably loaded from the existing failed-attempt ledger.
+    # F2) FAILED state is durably loaded from canonical state/failed-attempt ledger.
     failure_catalog = {"actions": [fail_a, fail_b]}
     failure_text = """## FM-FAIL-WORKER\n- Status: FAILED\n- Action: `FAIL-A`\n"""
     assert persisted_failed_action_ids(failure_text, failure_catalog) == {"FAIL-A"}
+    failure_state = _synthetic_state(["FAIL-A", "FAIL-B"])
+    failure_state["gates"]["gate_FAIL-A"]["state"] = "FAILED"
+    assert persisted_failed_action_ids("", failure_catalog, failure_state) == {"FAIL-A"}
 
     # G) failed A does not block independent C.
     independent = _action("INDEPENDENT-C", 3)
@@ -527,9 +553,11 @@ def run_manager_contract_tests() -> None:
     assert result["active_continuations"] == ["ACTIVE-D"]
     assert {"id": "C", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
 
-    # K3) descriptive canonical headings still identify the active task.
+    # K3) descriptive/composite canonical entries identify every active task.
     active_started = """## FM-CREATOR-001 — crash-safe account deletion Workspace inventory\n- Status: IN_PROGRESS\n"""
     assert active_task_ids(active_started, "") == {"FM-CREATOR-001"}
+    composite_started = """## FM-AI-001 / FM-RST-001 — shared active continuation\n- Status: IN_PROGRESS\n- Task: `FM-AI-001 / FM-RST-001`\n"""
+    assert active_task_ids(composite_started, "") == {"FM-AI-001", "FM-RST-001"}
 
     # L) free slot is reused after predecessor reaches accepted state.
     steal_a = _action("STEAL-A", 1)
@@ -557,7 +585,12 @@ def render(
     requested_limit: int | None = None,
     failed_action_ids: set[str] | None = None,
 ) -> str:
-    selected, classified = select(state, catalog, deferred)
+    selected, classified = select(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed_action_ids,
+    )
     manager = build_safe_ready_set(
         state,
         catalog,
@@ -676,9 +709,14 @@ def main() -> int:
     locks_text = WORK_LOCKS_PATH.read_text(encoding="utf-8") if WORK_LOCKS_PATH.exists() else ""
     failed_text = FAILED_ATTEMPTS_PATH.read_text(encoding="utf-8") if FAILED_ATTEMPTS_PATH.exists() else ""
     active_tasks = active_task_ids(started_text, locks_text)
-    failed_action_ids = persisted_failed_action_ids(failed_text, catalog)
+    failed_action_ids = persisted_failed_action_ids(failed_text, catalog, state)
 
-    selected, _ = select(state, catalog, deferred)
+    selected, _ = select(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed_action_ids,
+    )
     if selected:
         status, _ = classify(selected, state, deferred)
         print(f"FANMIND_NEXT_ACTION={selected['id']}")
