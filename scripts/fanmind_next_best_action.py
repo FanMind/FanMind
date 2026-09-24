@@ -139,7 +139,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
     for lock_id, lock in lock_records.items():
-        if lock_id in represented_locks or lock["status"] in TERMINAL_LOCK_STATES or not lock["tasks"]:
+        if lock_id in represented_locks or _lock_status_is_terminal(lock["status"]) or not lock["tasks"]:
             continue
         slots.append(
             {
