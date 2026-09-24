@@ -61,10 +61,7 @@ test("verifier preserves exact foundation helper execution boundaries", async ()
 test("verifier rejects competing or later provenance triggers", async () => {
   const runner = await runnerSource();
   assert.match(runner, /creator_learning_manual_send_competing_trigger_invalid/u);
-  assert.match(
-    runner,
-    /t\.tgname <> 'conversation_messages_stamp_creator_learning_manual_send'/u,
-  );
+  assert.match(runner, /t\.tgname not in \(/u);
   assert.match(
     runner,
     /t\.tgname > 'conversation_messages_stamp_creator_learning_manual_send'/u,
@@ -167,4 +164,46 @@ test("verifier compares the complete reviewed RPC EXECUTE ACL and rejects inheri
   assert.match(runner, /from pg_auth_members membership/u);
   assert.match(runner, /membership\.inherit_option/u);
   assert.match(runner, /creator_learning_function_acl_inheritance_invalid/u);
+});
+
+
+test("verifier requires the complete PostgreSQL 17 learning-table ACL", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /table_acl_entries text\[\]/u);
+  assert.match(runner, /aclexplode\(coalesce\(c\.relacl, acldefault\('r', c\.relowner\)\)\)/u);
+  assert.match(runner, /acl\.grantee <> c\.relowner/u);
+  assert.match(runner, /acl\.is_grantable::text/u);
+  assert.match(runner, /grantor\.rolname/u);
+  assert.match(runner, /'authenticated:SELECT:false:postgres'/u);
+  for (const privilege of [
+    "DELETE",
+    "INSERT",
+    "MAINTAIN",
+    "REFERENCES",
+    "SELECT",
+    "TRIGGER",
+    "TRUNCATE",
+    "UPDATE",
+  ]) {
+    assert.match(runner, new RegExp(`'service_role:${privilege}:false:postgres'`, "u"));
+  }
+  assert.match(runner, /creator_learning_table_acl_invalid/u);
+});
+
+test("verifier safely binds the optional canonical WhatsApp identity trigger", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /WHATSAPP_INBOUND_REPO_PATH/u);
+  assert.match(
+    runner,
+    /EXPECTED_WHATSAPP_INBOUND_GIT_BLOB_SHA1 = "2aac4ab447eaf34685aa7fcff3b78be41332c22b"/u,
+  );
+  assert.match(runner, /functionBodyHash\(\s*foundationSources\.whatsappInbound,\s*"protect_whatsapp_cloud_message_identity"/u);
+  assert.match(
+    runner,
+    /createtriggerconversation_messages_whatsapp_identity_immutablebeforeupdateonconversation_messagesforeachrowexecutefunctionprotect_whatsapp_cloud_message_identity\(\)/u,
+  );
+  assert.match(runner, /creator_learning_whatsapp_identity_trigger_invalid/u);
+  assert.match(runner, /creator_learning_whatsapp_identity_function_invalid/u);
+  assert.match(runner, /creator_learning_whatsapp_identity_function_acl_invalid/u);
+  assert.match(runner, /array\['service_role'\]::text\[\]/u);
 });

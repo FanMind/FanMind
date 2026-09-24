@@ -28,16 +28,20 @@ const ROLLOUT_STATE_PATH = resolve(REPO_ROOT, ROLLOUT_STATE_REPO_PATH);
 const WORKSPACE_BOUNDARY_REPO_PATH =
   "supabase/controlled/20260816120000_workspace_member_data_boundary.sql";
 const CREATOR_ACCESS_REPO_PATH = "supabase/controlled/creator_revision_conflict_fix.sql";
+const WHATSAPP_INBOUND_REPO_PATH =
+  "supabase/controlled/20260817230000_whatsapp_cloud_inbound_foundation.sql";
 const REVIEWED_CONTROL_REPO_PATHS = Object.freeze([
   RUNNER_REPO_PATH,
   MIGRATION_REPO_PATH,
   ROLLOUT_STATE_REPO_PATH,
   WORKSPACE_BOUNDARY_REPO_PATH,
   CREATOR_ACCESS_REPO_PATH,
+  WHATSAPP_INBOUND_REPO_PATH,
 ]);
 const EXPECTED_MIGRATION_GIT_BLOB_SHA1 = "b09a22643d5076e68cfe7816980e88d0d00272f7";
 const EXPECTED_WORKSPACE_BOUNDARY_GIT_BLOB_SHA1 = "07286a4793204a1f3d82c18fca18728b1380d6fa";
 const EXPECTED_CREATOR_ACCESS_GIT_BLOB_SHA1 = "c2132db39e141131483afc44d045d21d632b1672";
+const EXPECTED_WHATSAPP_INBOUND_GIT_BLOB_SHA1 = "2aac4ab447eaf34685aa7fcff3b78be41332c22b";
 const EXPECTED_DATABASE_FUNCTION_OWNER = "postgres";
 const EXPECTED_DATABASE_NAME = "postgres";
 const APPLY_CONFIRMATION = "apply-creator-confirmed-chat-learning";
@@ -170,10 +174,17 @@ function readFoundationContractSources() {
     "creator_access_contract_unreadable",
     "creator_access_contract_checksum_mismatch",
   );
+  const whatsappInbound = readPinnedSource(
+    WHATSAPP_INBOUND_REPO_PATH,
+    EXPECTED_WHATSAPP_INBOUND_GIT_BLOB_SHA1,
+    "whatsapp_inbound_contract_unreadable",
+    "whatsapp_inbound_contract_checksum_mismatch",
+  );
   for (const contract of FOUNDATION_FUNCTION_CONTRACTS) {
     functionBody(contract.source === "creatorAccess" ? creatorAccess : workspaceBoundary, contract.name);
   }
-  return { workspaceBoundary, creatorAccess };
+  functionBody(whatsappInbound, "protect_whatsapp_cloud_message_identity");
+  return { workspaceBoundary, creatorAccess, whatsappInbound };
 }
 
 function functionMetadataCondition({
@@ -279,6 +290,11 @@ function buildVerifySql(sql, foundationSources) {
     ]),
   );
 
+  const whatsappIdentityBodyHash = functionBodyHash(
+    foundationSources.whatsappInbound,
+    "protect_whatsapp_cloud_message_identity",
+  );
+
   const foundationChecks = FOUNDATION_FUNCTION_CONTRACTS.map((contract) => {
     const resultType = "boolean";
     return String.raw`
@@ -368,6 +384,7 @@ declare
   function_default_count integer;
   function_variadic oid;
   function_execute_grantees text[];
+  table_acl_entries text[];
   index_def text;
   constraint_defs text[];
   check_constraint_defs text[];
@@ -587,7 +604,10 @@ ${foundationChecks}
      where t.tgrelid = messages_table
        and not t.tgisinternal
        and t.tgenabled <> 'D'
-       and t.tgname <> 'conversation_messages_stamp_creator_learning_manual_send'
+       and t.tgname not in (
+         'conversation_messages_stamp_creator_learning_manual_send',
+         'conversation_messages_whatsapp_identity_immutable'
+       )
        and (t.tgtype & 1) = 1
        and (t.tgtype & 2) = 2
        and ((t.tgtype & 4) = 4 or (t.tgtype & 16) = 16)
@@ -599,6 +619,66 @@ ${foundationChecks}
        )
   ) then
     raise exception 'creator_learning_manual_send_competing_trigger_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_trigger
+     where tgrelid = messages_table
+       and tgname = 'conversation_messages_whatsapp_identity_immutable'
+       and not tgisinternal
+  ) then
+    select pg_get_triggerdef(t.oid, true) into trigger_def
+      from pg_trigger t
+     where t.tgrelid = messages_table
+       and t.tgname = 'conversation_messages_whatsapp_identity_immutable'
+       and t.tgenabled = 'O'
+       and not t.tgisinternal;
+    trigger_def := regexp_replace(lower(coalesce(trigger_def, '')), '\s+', '', 'g');
+    if trigger_def <>
+       'createtriggerconversation_messages_whatsapp_identity_immutablebeforeupdateonconversation_messagesforeachrowexecutefunctionprotect_whatsapp_cloud_message_identity()' then
+      raise exception 'creator_learning_whatsapp_identity_trigger_invalid';
+    end if;
+
+    ${pgProcSelect("public.protect_whatsapp_cloud_message_identity()")}
+    if ${learningFunctionMetadataCondition(
+      {
+        securityDefiner: true,
+        resultType: "trigger",
+      },
+      whatsappIdentityBodyHash,
+    ).replace(
+      `array['search_path=""']::text[]`,
+      "array['search_path=pg_catalog, public, pg_temp']::text[]",
+    )} then
+      raise exception 'creator_learning_whatsapp_identity_function_invalid';
+    end if;
+    select coalesce(
+             array_agg(grantee_name order by grantee_name),
+             array[]::text[]
+           )
+      into function_execute_grantees
+      from (
+        select distinct
+               case when acl.grantee = 0 then 'PUBLIC' else grantee.rolname end as grantee_name
+          from pg_proc p
+          cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+          left join pg_roles grantee on grantee.oid = acl.grantee and acl.grantee <> 0
+         where p.oid = to_regprocedure('public.protect_whatsapp_cloud_message_identity()')
+           and acl.privilege_type = 'EXECUTE'
+           and acl.grantee <> p.proowner
+      ) direct_execute;
+    if function_execute_grantees is distinct from array['service_role']::text[]
+       or exists (
+         select 1
+           from pg_proc p
+           cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+          where p.oid = to_regprocedure('public.protect_whatsapp_cloud_message_identity()')
+            and acl.privilege_type = 'EXECUTE'
+            and acl.grantee <> p.proowner
+            and acl.is_grantable
+       ) then
+      raise exception 'creator_learning_whatsapp_identity_function_acl_invalid';
+    end if;
   end if;
 
   select pg_get_triggerdef(t.oid, true) into trigger_def
@@ -669,16 +749,50 @@ ${learningAclChecks}
   end if;
 
   if not has_table_privilege('authenticated', learning_table, 'SELECT')
-     or has_table_privilege('authenticated', learning_table, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-     or has_table_privilege('anon', learning_table, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+     or has_table_privilege('authenticated', learning_table, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')
+     or has_table_privilege('anon', learning_table, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')
      or not has_table_privilege('service_role', learning_table, 'SELECT')
      or not has_table_privilege('service_role', learning_table, 'INSERT')
      or not has_table_privilege('service_role', learning_table, 'UPDATE')
      or not has_table_privilege('service_role', learning_table, 'DELETE')
      or not has_table_privilege('service_role', learning_table, 'TRUNCATE')
      or not has_table_privilege('service_role', learning_table, 'REFERENCES')
-     or not has_table_privilege('service_role', learning_table, 'TRIGGER') then
+     or not has_table_privilege('service_role', learning_table, 'TRIGGER')
+     or not has_table_privilege('service_role', learning_table, 'MAINTAIN') then
     raise exception 'creator_learning_table_privilege_invalid';
+  end if;
+
+  select coalesce(
+           array_agg(
+             (case when acl.grantee = 0 then 'PUBLIC' else grantee.rolname end)
+             || ':' || acl.privilege_type
+             || ':' || acl.is_grantable::text
+             || ':' || grantor.rolname
+             order by
+               case when acl.grantee = 0 then 'PUBLIC' else grantee.rolname end,
+               acl.privilege_type
+           ),
+           array[]::text[]
+         )
+    into table_acl_entries
+    from pg_class c
+    cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl
+    left join pg_roles grantee on grantee.oid = acl.grantee and acl.grantee <> 0
+    join pg_roles grantor on grantor.oid = acl.grantor
+   where c.oid = learning_table
+     and acl.grantee <> c.relowner;
+  if table_acl_entries is distinct from array[
+       'authenticated:SELECT:false:postgres',
+       'service_role:DELETE:false:postgres',
+       'service_role:INSERT:false:postgres',
+       'service_role:MAINTAIN:false:postgres',
+       'service_role:REFERENCES:false:postgres',
+       'service_role:SELECT:false:postgres',
+       'service_role:TRIGGER:false:postgres',
+       'service_role:TRUNCATE:false:postgres',
+       'service_role:UPDATE:false:postgres'
+     ]::text[] then
+    raise exception 'creator_learning_table_acl_invalid';
   end if;
 
   if not has_function_privilege(

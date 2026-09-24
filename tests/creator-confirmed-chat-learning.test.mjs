@@ -1,4 +1,5 @@
 import "./creator-confirmed-chat-learning.cases.mjs";
+import "./creator-confirmed-chat-learning-verifier-review.cases.mjs";
 
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
