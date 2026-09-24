@@ -846,3 +846,4 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: repository-only allowlist of the exact non-inheriting, SET-enabled, non-admin authenticator -> service_role edge alongside the already reviewed authenticator -> authenticated edge, plus focused regression coverage.
 - Safety: no SQL APPLY, no Staging/Production/provider/runtime/customer/Billing/Restore/Mobile mutation; no broad role relaxation; postgres membership remains unexcepted.
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
+- Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
