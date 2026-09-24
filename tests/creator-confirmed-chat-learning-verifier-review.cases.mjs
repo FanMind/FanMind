@@ -360,12 +360,16 @@ test("reviewed functions reject planner support and bind helper arguments", asyn
     assert.match(runner, new RegExp(`"${name}"`, "u"));
 });
 
-test("canonical authenticator membership is the only controlled-role exception", async () => {
+test("canonical authenticator memberships for authenticated and service_role are the only controlled-role exceptions", async () => {
   const runner = await runnerSource();
-  assert.match(runner, /member_role\.rolname = 'authenticator'/u);
+  assert.match(
+    runner,
+    /inherited_role\.rolname in \('authenticated','service_role'\)[\s\S]*member_role\.rolname = 'authenticator'/u,
+  );
   assert.match(runner, /not membership\.inherit_option/u);
   assert.match(runner, /membership\.set_option/u);
   assert.match(runner, /not membership\.admin_option/u);
+  assert.match(runner, /creator_learning_function_acl_inheritance_invalid/u);
 });
 
 test("indexes and internal FK triggers retain complete reviewed integrity", async () => {
