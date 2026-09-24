@@ -115,6 +115,7 @@ const FOUNDATION_FUNCTION_CONTRACTS = Object.freeze([
     securityDefiner: true,
     language: "plpgsql",
     proconfig: `array['search_path=""']::text[]`,
+    argNames: Object.freeze(["p_workspace_id"]),
   }),
   Object.freeze({
     name: "workspace_owner_active_mutation_allowed",
@@ -124,6 +125,7 @@ const FOUNDATION_FUNCTION_CONTRACTS = Object.freeze([
     language: "sql",
     proconfig:
       "array['search_path=pg_catalog, public, pg_temp','row_security=on']::text[]",
+    argNames: Object.freeze(["p_workspace_id"]),
   }),
   Object.freeze({
     name: "workspace_processing_allowed_contract",
@@ -133,6 +135,16 @@ const FOUNDATION_FUNCTION_CONTRACTS = Object.freeze([
     securityDefiner: false,
     language: "plpgsql",
     proconfig: "array['search_path=pg_catalog, public, pg_temp']::text[]",
+    argNames: Object.freeze([
+      "p_workspace_access_mode",
+      "p_subscription_effective_end_at",
+      "p_billing_status",
+      "p_billing_manual_override",
+      "p_billing_grace_until",
+      "p_billing_suspended_at",
+      "p_test_access_flags",
+      "p_evaluated_at",
+    ]),
   }),
 ]);
 
@@ -218,9 +230,12 @@ function functionMetadataCondition({
   resultType,
   proconfig,
   bodyHash,
+  argNames,
 }) {
   return [
     "function_source is null",
+    `function_arg_names is distinct from ${sqlTextArray(argNames)}`,
+    "function_arg_modes is not null",
     `function_owner is distinct from '${EXPECTED_DATABASE_FUNCTION_OWNER}'`,
     `function_security_definer is distinct from ${securityDefiner ? "true" : "false"}`,
     `function_config is distinct from ${proconfig}`,
@@ -234,6 +249,7 @@ function functionMetadataCondition({
     "function_kind is distinct from 'f'",
     "function_default_count is distinct from 0",
     "function_variadic is distinct from 0::oid",
+    "function_support is distinct from 0::oid",
     `md5(function_source) <> '${bodyHash}'`,
   ].join("\n     or ");
 }
@@ -260,6 +276,7 @@ function learningFunctionMetadataCondition(contract, bodyHash) {
     "function_kind is distinct from 'f'",
     "function_default_count is distinct from 0",
     "function_variadic is distinct from 0::oid",
+    "function_support is distinct from 0::oid",
     `md5(function_source) <> '${bodyHash}'`,
   ].join("\n     or ");
 }
@@ -282,6 +299,7 @@ function pgProcSelect(signature) {
       p.provariadic,
       p.proargnames,
       p.proargmodes
+      , p.prosupport
     into
       function_security_definer,
       function_owner,
@@ -299,6 +317,7 @@ function pgProcSelect(signature) {
       function_variadic,
       function_arg_names,
       function_arg_modes
+      , function_support
     from pg_proc p
     join pg_language l on l.oid = p.prolang
    where p.oid = to_regprocedure('${signature}');`;
@@ -340,6 +359,7 @@ function buildVerifySql(sql, foundationSources) {
     resultType,
     proconfig: contract.proconfig,
     bodyHash: foundationHashes[contract.name],
+    argNames: contract.argNames,
   })} then
     raise exception 'creator_learning_foundation_function_invalid';
   end if;`;
@@ -433,6 +453,7 @@ declare
   function_variadic oid;
   function_arg_names text[];
   function_arg_modes "char"[];
+  function_support regproc;
   function_execute_grantees text[];
   table_acl_entries text[];
   index_def text;
@@ -519,6 +540,136 @@ ${foundationChecks}
     raise exception 'creator_learning_foundation_function_privilege_invalid';
   end if;
 
+  if not exists (
+    select 1 from pg_class
+     where oid = messages_table
+       and relkind = 'r'
+       and not relispartition
+       and relrowsecurity
+       and not relforcerowsecurity
+  )
+  or exists (
+    select 1 from pg_inherits
+     where inhrelid = messages_table or inhparent = messages_table
+  ) then
+    raise exception 'creator_learning_provenance_inheritance_invalid';
+  end if;
+
+  if exists (select 1 from pg_rewrite where ev_class = messages_table) then
+    raise exception 'creator_learning_provenance_rewrite_rule_invalid';
+  end if;
+
+  if (select count(*) from pg_roles where rolname in ('anon','authenticated')) <> 2
+     or exists (
+       select 1 from pg_roles
+        where rolname in ('anon','authenticated') and (rolbypassrls or rolsuper)
+     ) then
+    raise exception 'creator_learning_browser_role_rls_invalid';
+  end if;
+  if (select count(*) from pg_roles where rolname = 'service_role') <> 1
+     or exists (
+       select 1 from pg_roles
+        where rolname = 'service_role' and (not rolbypassrls or rolsuper)
+     ) then
+    raise exception 'creator_learning_service_role_rls_invalid';
+  end if;
+
+  if exists (
+    select 1
+      from pg_auth_members membership
+      join pg_roles inherited_role on inherited_role.oid = membership.roleid
+      join pg_roles member_role on member_role.oid = membership.member
+     where inherited_role.rolname in (
+       'service_role','authenticated','${EXPECTED_DATABASE_FUNCTION_OWNER}'
+     )
+       and (membership.inherit_option or membership.set_option or membership.admin_option)
+       and not (
+         inherited_role.rolname = 'authenticated'
+         and member_role.rolname = 'authenticator'
+         and not membership.inherit_option
+         and membership.set_option
+         and not membership.admin_option
+       )
+  ) then
+    raise exception 'creator_learning_function_acl_inheritance_invalid';
+  end if;
+
+  if not has_schema_privilege('authenticated', 'public', 'USAGE')
+     or not has_schema_privilege('service_role', 'public', 'USAGE') then
+    raise exception 'creator_learning_schema_usage_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_constraint c
+     where c.conrelid = messages_table
+       and (
+         c.conkey @> array[(select a.attnum from pg_attribute a
+                            where a.attrelid = messages_table
+                              and a.attname = 'creator_learning_manual_send'
+                              and a.attnum > 0 and not a.attisdropped)]::smallint[]
+         or position('creator_learning_manual_send'
+                     in lower(pg_get_constraintdef(c.oid))) > 0
+       )
+  ) then
+    raise exception 'creator_learning_manual_send_constraint_invalid';
+  end if;
+
+  if (
+    select count(*) from pg_policies
+     where schemaname = 'public'
+       and tablename = 'conversation_messages'
+       and policyname in (
+         'conversation_messages_insert_requires_workspace_owner',
+         'conversation_messages_update_requires_workspace_owner',
+         'conversation_messages_delete_requires_workspace_owner'
+       )
+       and permissive = 'RESTRICTIVE'
+       and roles = array['authenticated']::name[]
+  ) <> 3
+  or exists (
+    select 1 from pg_policies
+     where schemaname = 'public'
+       and tablename = 'conversation_messages'
+       and policyname = 'conversation_messages_insert_requires_workspace_owner'
+       and (cmd <> 'INSERT' or qual is not null
+            or regexp_replace(replace(lower(with_check), 'public.', ''), '[[:space:]]+', '', 'g')
+               <> 'workspace_owner_active_mutation_allowed(workspace_id)')
+  )
+  or exists (
+    select 1 from pg_policies
+     where schemaname = 'public'
+       and tablename = 'conversation_messages'
+       and policyname = 'conversation_messages_update_requires_workspace_owner'
+       and (cmd <> 'UPDATE'
+            or regexp_replace(replace(lower(qual), 'public.', ''), '[[:space:]]+', '', 'g')
+               <> 'workspace_owner_active_mutation_allowed(workspace_id)'
+            or regexp_replace(replace(lower(with_check), 'public.', ''), '[[:space:]]+', '', 'g')
+               <> 'workspace_owner_active_mutation_allowed(workspace_id)')
+  )
+  or exists (
+    select 1 from pg_policies
+     where schemaname = 'public'
+       and tablename = 'conversation_messages'
+       and policyname = 'conversation_messages_delete_requires_workspace_owner'
+       and (cmd <> 'DELETE' or with_check is not null
+            or regexp_replace(replace(lower(qual), 'public.', ''), '[[:space:]]+', '', 'g')
+               <> 'workspace_owner_active_mutation_allowed(workspace_id)')
+  ) then
+    raise exception 'creator_learning_provenance_policy_invalid';
+  end if;
+
+  if exists (
+    select 1 from pg_trigger t
+     where t.tgrelid = messages_table
+       and not t.tgisinternal and t.tgenabled <> 'D'
+       and t.tgname not in (
+         'conversation_messages_stamp_creator_learning_manual_send',
+         'conversation_messages_whatsapp_identity_immutable'
+       )
+  ) then
+    raise exception 'creator_learning_trigger_set_invalid';
+  end if;
+
   if learning_table is null then
     if exists (
       select 1 from pg_attribute
@@ -558,6 +709,7 @@ ${foundationChecks}
        and not relispartition
        and pg_get_userbyid(relowner) = '${EXPECTED_DATABASE_FUNCTION_OWNER}'
        and relrowsecurity
+       and not relforcerowsecurity
   ) then
     raise exception 'creator_learning_rls_invalid';
   end if;
@@ -656,6 +808,8 @@ ${foundationChecks}
      where a.attname is null
         or format_type(a.atttypid, a.atttypmod) <> e.type_name
         or a.attnotnull is distinct from e.not_null
+        or a.attgenerated <> ''
+        or a.attidentity <> ''
         or (e.default_expr is null and d.adbin is not null)
         or (
           e.default_expr is not null
@@ -680,33 +834,10 @@ ${foundationChecks}
        and not a.attisdropped
        and a.attgenerated = ''
        and a.attidentity = ''
+       and (not a.atthasmissing or a.attmissingval = '{f}'::boolean[])
        and regexp_replace(pg_get_expr(d.adbin, d.adrelid), '[[:space:]]+', '', 'g') = 'false'
   ) then
     raise exception 'creator_learning_manual_send_column_invalid';
-  end if;
-
-  if exists (
-    select 1
-      from pg_trigger t
-      join pg_proc p on p.oid = t.tgfoid
-     where t.tgrelid = messages_table
-       and not t.tgisinternal
-       and t.tgenabled <> 'D'
-       and t.tgname not in (
-         'conversation_messages_stamp_creator_learning_manual_send',
-         'conversation_messages_whatsapp_identity_immutable'
-       )
-       and (t.tgtype & 1) = 1
-       and (t.tgtype & 2) = 2
-       and ((t.tgtype & 4) = 4 or (t.tgtype & 16) = 16)
-       and (
-         t.tgname > 'conversation_messages_stamp_creator_learning_manual_send'
-         or position(
-           'creator_learning_manual_send' in lower(pg_get_functiondef(p.oid))
-         ) > 0
-       )
-  ) then
-    raise exception 'creator_learning_manual_send_competing_trigger_invalid';
   end if;
 
   if exists (
@@ -804,20 +935,6 @@ ${learningOverloadChecks}
 ${learningChecks}
 
 ${learningAclChecks}
-
-  if exists (
-    select 1
-      from pg_auth_members membership
-      join pg_roles inherited_role on inherited_role.oid = membership.roleid
-     where inherited_role.rolname in ('service_role','authenticated','${EXPECTED_DATABASE_FUNCTION_OWNER}')
-       and (
-         membership.inherit_option
-         or membership.set_option
-         or membership.admin_option
-       )
-  ) then
-    raise exception 'creator_learning_function_acl_inheritance_invalid';
-  end if;
 
   select count(*)::integer into policy_count
     from pg_policies
@@ -983,6 +1100,14 @@ ${learningAclChecks}
   end if;
 
   if exists (
+    select 1 from pg_index i
+     where i.indrelid = learning_table
+       and (i.indpred is not null or i.indexprs is not null)
+  ) then
+    raise exception 'creator_learning_unexpected_expression_or_partial_index';
+  end if;
+
+  if exists (
     select 1
       from pg_index i
      where i.indrelid = learning_table
@@ -1007,6 +1132,24 @@ ${learningAclChecks}
           and (not convalidated or condeferrable or condeferred)
      ) then
     raise exception 'creator_learning_constraint_invalid';
+  end if;
+
+  if exists (
+    select 1
+      from pg_constraint c
+      left join pg_index i on i.indexrelid = c.conindid
+     where c.conrelid = learning_table
+       and c.contype in ('p','u')
+       and (
+         c.conindid = 0
+         or i.indexrelid is null
+         or not i.indisunique
+         or not i.indisvalid
+         or not i.indisready
+         or not i.indislive
+       )
+  ) then
+    raise exception 'creator_learning_constraint_index_invalid';
   end if;
 
   select array_agg(
@@ -1090,23 +1233,39 @@ ${learningAclChecks}
 
   if (select count(*) from pg_constraint where conrelid = learning_table and contype = 'f') <> 3
      or exists (
-       select 1
-         from pg_constraint c
+       select 1 from pg_constraint c
+        where c.confrelid = learning_table
+          and c.conrelid <> learning_table
+     )
+     or (select count(*) from pg_trigger t
+          join pg_constraint c on c.oid = t.tgconstraint
+         where c.conrelid = learning_table
+           and c.contype = 'f'
+           and t.tgisinternal
+           and t.tgrelid = learning_table) <> 6
+     or exists (
+       select 1 from pg_trigger t
+       left join pg_constraint c on c.oid = t.tgconstraint
+        where t.tgrelid = learning_table
+          and t.tgisinternal
+          and (
+            c.oid is null
+            or c.conrelid <> learning_table
+            or c.contype <> 'f'
+            or t.tgenabled <> 'O'
+          )
+     )
+     or exists (
+       select 1 from pg_constraint c
         where c.conrelid = learning_table
           and c.contype = 'f'
           and (
-            (
-              select count(*)
-                from pg_trigger t
-               where t.tgconstraint = c.oid
-                 and t.tgisinternal
-                 and t.tgrelid in (c.conrelid,c.confrelid)
-            ) <> 4
+            (select count(*) from pg_trigger t
+              where t.tgconstraint = c.oid and t.tgisinternal
+                and t.tgrelid in (c.conrelid,c.confrelid)) <> 4
             or exists (
-              select 1
-                from pg_trigger t
-               where t.tgconstraint = c.oid
-                 and t.tgisinternal
+              select 1 from pg_trigger t
+               where t.tgconstraint = c.oid and t.tgisinternal
                  and t.tgrelid in (c.conrelid,c.confrelid)
                  and t.tgenabled <> 'O'
             )
@@ -1466,7 +1625,61 @@ function databaseState(result) {
   fail("verify_response_invalid");
 }
 
+function withoutTransactionWrapper(statement) {
+  return statement
+    .replace(/^\s*\\set ON_ERROR_STOP on\s*/u, "")
+    .replace(/^\s*begin;\s*/u, "")
+    .replace(/^\s*set transaction read only;\s*/u, "")
+    .replace(/\s*rollback;\s*$/u, "");
+}
+
+function buildAtomicApplySql(sql, verifySql) {
+  const stateQuery = String.raw`select case
+  when to_regclass('public.creator_confirmed_chat_learning') is null
+    then 'CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=ABSENT'
+  else 'CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=INSTALLED'
+end;`;
+  const preflight = withoutTransactionWrapper(verifySql).replace(
+    stateQuery,
+    String.raw`do $preflight_state$
+begin
+  if to_regclass('public.creator_confirmed_chat_learning') is not null then
+    raise exception 'creator_learning_apply_requires_absent';
+  end if;
+end
+$preflight_state$;`,
+  );
+  const migration = sql
+    .replace(/^\s*begin;\s*/iu, "")
+    .replace(/\s*commit;\s*$/iu, "");
+  const postflight = withoutTransactionWrapper(verifySql);
+  return String.raw`\set ON_ERROR_STOP on
+begin;
+select pg_advisory_xact_lock(hashtextextended('${MIGRATION_ID}', 0));
+lock table public.conversation_messages in access exclusive mode;
+${preflight}
+${migration}
+${postflight}
+commit;
+`;
+}
+
 function runDatabaseMode(mode, sql, verifySql, state, environment, database) {
+  if (mode === "apply" && state === "installed") {
+    const applied = database(buildAtomicApplySql(sql, verifySql));
+    if (applied.error || applied.status !== 0) {
+      fail("apply_indeterminate_verify_before_retry");
+    }
+    if (databaseState(applied) !== "installed") fail("postflight_failed");
+    return [
+      "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
+      "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
+      "CREATOR_CONFIRMED_CHAT_APPLY=committed",
+      "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
+      "CREATOR_CONFIRMED_CHAT_RUNTIME_ACTIVATED=false",
+    ];
+  }
+
   const before = databaseState(database(verifySql));
   if (state === "preinstall") {
     if (before === "installed") fail("installed_target_with_preinstall_source");
@@ -1504,18 +1717,7 @@ function runDatabaseMode(mode, sql, verifySql, state, environment, database) {
         ];
   }
 
-  if (before !== "absent") fail("apply_requires_absent_target");
-  const applied = database(sql);
-  if (applied.error || applied.status !== 0) fail("apply_indeterminate_verify_before_retry");
-  const after = databaseState(database(verifySql));
-  if (after !== "installed") fail("postflight_failed");
-  return [
-    "CREATOR_CONFIRMED_CHAT_SCHEMA_STATE=installed",
-    "CREATOR_CONFIRMED_CHAT_SOURCE_STATE=installed",
-    "CREATOR_CONFIRMED_CHAT_APPLY=committed",
-    "CREATOR_CONFIRMED_CHAT_POSTFLIGHT=PASS",
-    "CREATOR_CONFIRMED_CHAT_RUNTIME_ACTIVATED=false",
-  ];
+  fail("apply_state_invalid");
 }
 
 export function main(args = process.argv.slice(2), environment = process.env) {

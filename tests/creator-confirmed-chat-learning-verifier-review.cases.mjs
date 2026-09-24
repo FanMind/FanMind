@@ -58,19 +58,15 @@ test("verifier preserves exact foundation helper execution boundaries", async ()
   }
 });
 
-test("verifier rejects competing or later provenance triggers", async () => {
+test("provenance verification binds the complete enabled trigger set", async () => {
   const runner = await runnerSource();
-  assert.match(runner, /creator_learning_manual_send_competing_trigger_invalid/u);
-  assert.match(runner, /t\.tgname not in \(/u);
-  assert.match(
-    runner,
-    /t\.tgname > 'conversation_messages_stamp_creator_learning_manual_send'/u,
-  );
-  assert.match(runner, /t\.tgenabled <> 'D'/u);
-  assert.match(runner, /\(t\.tgtype & 1\) = 1/u);
-  assert.match(runner, /\(t\.tgtype & 2\) = 2/u);
-  assert.match(runner, /pg_get_functiondef\(p\.oid\)/u);
-  assert.match(runner, /creator_learning_manual_send' in lower/u);
+  assert.match(runner, /t\.tgrelid = messages_table[\s\S]*not t\.tgisinternal[\s\S]*t\.tgenabled <> 'D'/u);
+  assert.match(runner, /t\.tgname not in \([\s\S]*conversation_messages_stamp_creator_learning_manual_send[\s\S]*conversation_messages_whatsapp_identity_immutable/u);
+  assert.match(runner, /creator_learning_trigger_set_invalid/u);
+  assert.doesNotMatch(runner, /creator_learning_manual_send_competing_trigger_invalid/u);
+  assert.match(runner, /creator_learning_whatsapp_identity_trigger_invalid/u);
+  assert.match(runner, /creator_learning_whatsapp_identity_function_invalid/u);
+  assert.match(runner, /creator_learning_whatsapp_identity_function_acl_invalid/u);
 });
 
 test("verifier rejects ready/live standalone unique indexes even when invalid", async () => {
@@ -271,7 +267,7 @@ test("verifier rejects column ACLs and inherited owner privilege", async () => {
   assert.match(runner, /creator_learning_column_acl_invalid/u);
   assert.match(
     runner,
-    /inherited_role\.rolname in \('service_role','authenticated','\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'\)/u,
+    /inherited_role\.rolname in \([\s\S]*'service_role',[\s\S]*'authenticated',[\s\S]*'\$\{EXPECTED_DATABASE_FUNCTION_OWNER\}'/u,
   );
 });
 
@@ -310,4 +306,65 @@ test("verifier requires public schema usage for reviewed authenticated and servi
   assert.match(runner, /has_schema_privilege\('authenticated', 'public', 'USAGE'\)/u);
   assert.match(runner, /has_schema_privilege\('service_role', 'public', 'USAGE'\)/u);
   assert.match(runner, /creator_learning_schema_usage_invalid/u);
+});
+
+
+test("target prerequisites precede ABSENT and bind provenance RLS", async () => {
+  const runner = await runnerSource();
+  const absent = runner.indexOf("if learning_table is null then");
+  assert.ok(absent > 0);
+  for (const marker of [
+    "creator_learning_provenance_inheritance_invalid",
+    "creator_learning_provenance_rewrite_rule_invalid",
+    "creator_learning_service_role_rls_invalid",
+    "creator_learning_function_acl_inheritance_invalid",
+    "creator_learning_schema_usage_invalid",
+    "creator_learning_manual_send_constraint_invalid",
+    "creator_learning_provenance_policy_invalid",
+    "creator_learning_trigger_set_invalid",
+  ]) assert.ok(runner.indexOf(marker) < absent, marker);
+  assert.match(runner, /conversation_messages_insert_requires_workspace_owner/u);
+  assert.match(runner, /conversation_messages_update_requires_workspace_owner/u);
+  assert.match(runner, /conversation_messages_delete_requires_workspace_owner/u);
+});
+
+test("all learning columns and marker missing-value state remain ordinary", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /a\.attgenerated <> ''/u);
+  assert.match(runner, /a\.attidentity <> ''/u);
+  assert.match(runner, /not a\.atthasmissing or a\.attmissingval = '\{f\}'::boolean\[\]/u);
+  assert.match(runner, /and not relforcerowsecurity/u);
+});
+
+test("reviewed functions reject planner support and bind helper arguments", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /p\.prosupport/u);
+  assert.equal(runner.match(/function_support is distinct from 0::oid/gu)?.length, 2);
+  for (const name of ["p_workspace_id", "p_workspace_access_mode", "p_evaluated_at"])
+    assert.match(runner, new RegExp(`"${name}"`, "u"));
+});
+
+test("canonical authenticator membership is the only controlled-role exception", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /member_role\.rolname = 'authenticator'/u);
+  assert.match(runner, /not membership\.inherit_option/u);
+  assert.match(runner, /membership\.set_option/u);
+  assert.match(runner, /not membership\.admin_option/u);
+});
+
+test("indexes and internal FK triggers retain complete reviewed integrity", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /creator_learning_unexpected_expression_or_partial_index/u);
+  assert.match(runner, /creator_learning_constraint_index_invalid/u);
+  assert.match(runner, /not i\.indisunique[\s\S]*not i\.indisvalid[\s\S]*not i\.indisready[\s\S]*not i\.indislive/u);
+  assert.match(runner, /c\.confrelid = learning_table/u);
+  assert.match(runner, /t\.tgrelid = learning_table/u);
+});
+
+test("APPLY preflight migration and postflight share one locked transaction", async () => {
+  const runner = await runnerSource();
+  assert.match(runner, /function buildAtomicApplySql/u);
+  assert.match(runner, /pg_advisory_xact_lock/u);
+  assert.match(runner, /lock table public\.conversation_messages in access exclusive mode/u);
+  assert.match(runner, /database\(buildAtomicApplySql\(sql, verifySql\)\)/u);
 });
