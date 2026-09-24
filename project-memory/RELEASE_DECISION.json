@@ -41,6 +41,7 @@
     "FM-CONTRACT-DISCLOSURE-DELETE-001 and FM-IGATE-DISCLOSURE-DELETE-001 are explicitly affected by the target-aware confirmed-chat disclosure/delete lifecycle change",
     "Repository tests cover Staging installed versus Production/unknown preinstall behavior and loaded-environment account deletion verification",
     "No protected target VERIFY/APPLY, runtime activation, provider mutation or customer deletion was performed by this release decision",
-    "Release remains BLOCK until exact deployed Staging release, fresh ABSENT target VERIFY, required gate evidence and a separately reviewed protected APPLY path are bound"
+    "Release remains BLOCK until exact deployed Staging release, fresh ABSENT target VERIFY, required gate evidence and a separately reviewed protected APPLY path are bound",
+    "Exact Production release c119e0eb82e0643fc676afb7725d7518011e1286 is deployed and runtime-verified; this does not satisfy the still-open Staging deployment/ABSENT VERIFY/protected APPLY prerequisites"
   ]
 }

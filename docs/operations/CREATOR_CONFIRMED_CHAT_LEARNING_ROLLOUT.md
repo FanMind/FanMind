@@ -16,6 +16,22 @@ node scripts/operations/creator-confirmed-chat-learning-migration-runner.mjs --c
 
 The check pins the exact Git blob of the controlled SQL, validates the required schema/RLS/RPC/FK contract, reports a SHA-256 diagnostic and reads the explicit source rollout state. It has no database target and cannot mutate anything.
 
+## Protected Staging VERIFY entrypoint
+
+The repository-owned entrypoint for the next target observation is
+`.github/workflows/creator-confirmed-chat-learning-staging-verify.yml`.
+It is intentionally VERIFY-only: there is no APPLY input or branch. A dispatch
+must target exact `main`, bind `reviewed_commit == github.sha`, use the
+protected `staging` environment, the isolated Staging Supabase/database
+bindings, TLS `verify-full`, a private `0600` passfile and the exact
+confirmation `verify-creator-confirmed-chat-learning`.
+
+This workflow is repository preparation only until it is actually dispatched.
+Merging it does not prove Staging deployment or target schema state. The generic
+runner still rejects `--apply`; a future APPLY requires a separate reviewed
+protected path after a deployed Staging release and fresh `ABSENT` VERIFY
+evidence plus action-time owner/environment authorization.
+
 ## Read-only target VERIFY contract
 
 `--verify` is target-bound and read-only. It requires the reviewed checkout SHA, exact Supabase project-reference-to-URL binding, exact expected database host, TLS `verify-full`, an absolute CA path and a private `0600` passfile snapshot. It rejects partial schema state.

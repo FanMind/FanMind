@@ -1,7 +1,7 @@
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922
 - Status: CLOSED; Task: FM-CREATOR-001; Risk: R3.
 - Closed by: PR #1162 merged as `3532bd4b9a19400284443f35b9b94b2849393aeb`; downstream disclosure/deletion/persistence verification continued through #1163-#1167. Do not rebuild the crash-safe Workspace inventory contract.
-- Follow-up: confirmed-chat schema rollout is a separate lifecycle. Repository runner hardening converged through #1168, #1171 and #1172; the current bounded step is the reviewed source-state switch to `installed`. Protected target VERIFY/APPLY remains separate.
+- Follow-up: confirmed-chat schema rollout is a separate lifecycle. Repository runner hardening converged through #1168, #1171 and #1172; target-aware source-state/deploy reconciliation converged through #1173/#1174. The current bounded repository step is the VERIFY-only protected Staging control; actual target VERIFY and every APPLY remain separate protected actions.
 
 
 # FanMind Open Loops

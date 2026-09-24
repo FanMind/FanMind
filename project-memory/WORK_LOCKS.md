@@ -834,7 +834,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-INSTALLED-STATE-20260924
 - Task: FM-CREATOR-001
-- Status: ACTIVE
+- Status: RELEASED_PRODUCTION_CONFIRMED
 - Risk: R4
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `418c1d0d1576d0c87e617f28fc4507ce0e83480f` after merged #1172.
@@ -846,7 +846,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CREATOR-POSTMERGE-GITLESS-TESTS-20260924
 - Task: FM-CREATOR-001
-- Status: ACTIVE
+- Status: RELEASED_PRODUCTION_CONFIRMED
 - Risk: R2
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `ee87c430ea71d942966ce48e5696051b232d9742`; automatic deploy `36053892421` failed in release-isolated tests before publication.
@@ -854,3 +854,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Parallel safety: serialize with FM-CREATOR-001 until deploy regression is closed.
 - Release condition: exact-head CI and independent review green, merge, then successful automatic post-merge deploy.
 - Recovery: source/test revert only; failed deploy did not switch the Production release.
+
+## LOCK-FM-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY-20260924
+- Task: FM-CREATOR-001
+- Status: ACTIVE
+- Risk: R4
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `c119e0eb82e0643fc676afb7725d7518011e1286`.
+- Scope: VERIFY-only protected Staging workflow, its static fail-closed regression, rollout runbook and bounded Project-Memory reconciliation. No runner APPLY capability and no workflow dispatch.
+- Parallel safety: serialize with all other FM-CREATOR-001 schema/disclosure/delete/learning rollout work.
+- Forbidden: protected target dispatch, SQL APPLY, Staging/Production write, provider/customer/Billing/Restore/Mobile mutation, secrets and direct main writes.
+- Release condition: exact-head required CI green, one independent review cycle with P1/P2=0/no blocking threads, normal merge and post-merge source verification.
+- Recovery: repository revert only; this lock mutates no external target.
