@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import re
 from pathlib import Path
 
@@ -31,7 +32,16 @@ ACTIVE_WORK_STATES = {
     "REVIEW_WAITING",
     "MERGE_READY",
 }
-ACTIVE_LOCK_STATES = {"ACTIVE", "IN_PROGRESS", "PAUSED"}
+TERMINAL_LOCK_STATES = {
+    "ACCEPTED",
+    "CLOSED",
+    "COMPLETED",
+    "DONE",
+    "RELEASED",
+    "RELEASED_FOR_PR",
+    "SUPERSEDED",
+}
+PATH_SCOPE_KEYS = {"files", "directories", "project_memory", "ci"}
 PARALLEL_SCOPE_KEYS = (
     "files",
     "directories",
@@ -63,7 +73,7 @@ def deferred_owner_ids(text: str) -> set[str]:
 
 
 def _record_status(block: str) -> str | None:
-    match = re.search(r"(?m)^- Status:\s*([A-Z_]+)\b", block)
+    match = re.search(r"(?m)^- [^\n]*?\bStatus:\s*([A-Z_]+)\b", block)
     return match.group(1) if match else None
 
 
@@ -113,7 +123,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if lock_id:
             represented_locks.add(lock_id)
             lock = lock_records.get(lock_id)
-            if lock and lock["status"] not in ACTIVE_LOCK_STATES:
+            if lock and lock["status"] in TERMINAL_LOCK_STATES:
                 continue
             if lock:
                 actions |= lock["actions"]
@@ -122,7 +132,7 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
     for lock_id, lock in lock_records.items():
-        if lock_id in represented_locks or lock["status"] not in ACTIVE_LOCK_STATES or not lock["tasks"]:
+        if lock_id in represented_locks or lock["status"] in TERMINAL_LOCK_STATES or not lock["tasks"]:
             continue
         slots.append(
             {
@@ -325,9 +335,24 @@ def scope_is_complete(action: dict) -> bool:
     return all(_scope_values(action, key) is not None for key in PARALLEL_SCOPE_KEYS)
 
 
+def _canonical_repository_path(value: str) -> str | None:
+    if not isinstance(value, str) or not value or "\x00" in value or "\\" in value:
+        return None
+    if value.startswith("/") or re.match(r"^[A-Za-z]:", value):
+        return None
+    normalized = posixpath.normpath(value)
+    if normalized == ".." or normalized.startswith("../"):
+        return None
+    return normalized.rstrip("/") or "."
+
+
 def _path_overlap(left: str, right: str) -> bool:
-    a = left.rstrip("/")
-    b = right.rstrip("/")
+    a = _canonical_repository_path(left)
+    b = _canonical_repository_path(right)
+    if a is None or b is None:
+        return True
+    if a == "." or b == ".":
+        return True
     return a == b or a.startswith(b + "/") or b.startswith(a + "/")
 
 
@@ -342,8 +367,10 @@ def scope_conflicts(left: dict, right: dict) -> list[str]:
     for key in PARALLEL_SCOPE_KEYS:
         left_values = _scope_values(left, key) or ()
         right_values = _scope_values(right, key) or ()
-        if key in {"files", "directories", "project_memory", "ci"}:
-            if any(_path_overlap(a, b) for a in left_values for b in right_values):
+        if key in PATH_SCOPE_KEYS:
+            if any(_canonical_repository_path(value) is None for value in (*left_values, *right_values)):
+                reasons.append(f"{key}_invalid")
+            elif any(_path_overlap(a, b) for a in left_values for b in right_values):
                 reasons.append(f"{key}_overlap")
         elif set(left_values) & set(right_values):
             reasons.append(f"{key}_overlap")
@@ -399,30 +426,46 @@ def build_safe_ready_set(
     candidates = sorted(candidates, key=lambda candidate: (candidate[0]["priority"], candidate[0]["id"]))
     status_by_id = {action["id"]: status for action, status, _ in classified}
     by_id = _action_index(catalog)
-    resolved_slots = active_slots or [
+    resolved_slots = active_slots if active_slots is not None else [
         {"tasks": {task}, "action": None} for task in sorted(active)
     ]
     active_actions: list[dict] = []
     active_reservations: list[dict] = []
+    terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}
     for slot in resolved_slots:
-        exact = by_id.get(slot.get("action"))
-        matches = [
+        exact_id = slot.get("action")
+        exact = by_id.get(exact_id) if exact_id else None
+        task_matches = [
             action
             for action in catalog.get("actions", [])
             if action.get("task") in slot.get("tasks", set())
-            and status_by_id[action["id"]] not in {"DONE", "FAILED_DO_NOT_RESTART"}
         ]
-        action = exact if exact in matches else (matches[0] if len(matches) == 1 else None)
+        matches = [
+            action for action in task_matches if status_by_id[action["id"]] not in terminal_statuses
+        ]
+
+        if exact_id:
+            if exact is not None and status_by_id.get(exact_id) in terminal_statuses:
+                # Exact identity is authoritative: a terminal exact action releases
+                # the slot even if stale task labels point at an unresolved sibling.
+                continue
+            action = exact if exact is not None and exact in matches else None
+        else:
+            if task_matches and not matches:
+                # Task-only evidence whose entire matching catalog scope is terminal
+                # no longer consumes capacity.
+                continue
+            action = matches[0] if len(matches) == 1 else None
+
         if action is not None:
             active_actions.append(action)
             active_reservations.append(action)
-        elif matches:
-            # Ambiguous task-to-action mapping consumes exactly one slot and has no
-            # provable parallel scope, so admission remains fail-closed.
+        else:
+            # Zero-match, ambiguous, unknown-exact, or contradictory exact/task
+            # evidence consumes one fail-closed slot with unknown parallel scope.
             task_label = "/".join(sorted(slot.get("tasks", set()))) or "UNKNOWN"
-            active_reservations.append(
-                {"id": f"TASK:{task_label}", "parallel_safe": False}
-            )
+            reservation_id = f"UNKNOWN:{exact_id}" if exact_id else f"TASK:{task_label}"
+            active_reservations.append({"id": reservation_id, "parallel_safe": False})
     active_action_ids = {action["id"] for action in active_actions}
     executable_ids = {action["id"] for action, _ in candidates}
     new_candidates = [candidate for candidate in candidates if candidate[0]["id"] not in active_action_ids]
@@ -621,6 +664,17 @@ def run_manager_contract_tests() -> None:
     result = manager([a_dir, b_dir])
     assert result["safe_ready_set"] == ["A-DIR"]
     assert "file_directory_overlap" in result["serialized_due_to_conflict"][0]["reason"]
+
+    # C3) repository-equivalent paths conflict; unsafe paths fail closed.
+    canonical_a = _action("CANONICAL-A", 1, scope=_scope("CANONICAL-A", files=["src/pkg/a.py"]))
+    canonical_b = _action("CANONICAL-B", 2, scope=_scope("CANONICAL-B", files=["./src/pkg/a.py"]))
+    result = manager([canonical_a, canonical_b])
+    assert result["safe_ready_set"] == ["CANONICAL-A"]
+    assert "files_overlap" in result["serialized_due_to_conflict"][0]["reason"]
+    unsafe_path = _action("UNSAFE-PATH", 2, scope=_scope("UNSAFE-PATH", files=["../outside.py"]))
+    result = manager([canonical_a, unsafe_path])
+    assert result["safe_ready_set"] == ["CANONICAL-A"]
+    assert "files_invalid" in result["serialized_due_to_conflict"][0]["reason"]
 
     # D) different files but same contract/module -> serialize.
     a2 = _action(
@@ -860,6 +914,32 @@ def run_manager_contract_tests() -> None:
     assert result["safe_ready_set"] == ["LIVE"]
     assert result["active_continuations"] == []
 
+    # K2f) zero-match and contradictory exact identities reserve one unknown slot.
+    result = manager(
+        [independent],
+        limit=1,
+        slots=[{"tasks": {"FM-OPS-001"}, "action": None}],
+    )
+    assert result["worker_used"] == 1
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["TASK:FM-OPS-001"]
+
+    exact_active = _action("EXACT-ACTIVE", 1, task="FM-EXACT-A")
+    sibling_active = _action("EXACT-SIBLING", 2, task="FM-EXACT-B")
+    contradictory_slot = [{"tasks": {"FM-EXACT-B"}, "action": "EXACT-ACTIVE"}]
+    result = manager([exact_active, sibling_active], limit=1, slots=contradictory_slot)
+    assert result["worker_used"] == 1
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["UNKNOWN:EXACT-ACTIVE"]
+    result = manager(
+        [exact_active, sibling_active],
+        accepted={"EXACT-ACTIVE"},
+        limit=1,
+        slots=contradictory_slot,
+    )
+    assert result["active_continuations"] == []
+    assert result["safe_ready_set"] == ["EXACT-SIBLING"]
+
     # K3) descriptive/composite canonical entries identify every active task.
     active_started = """## Active work
 
@@ -909,6 +989,28 @@ def run_manager_contract_tests() -> None:
     assert active_task_ids(reconciled_started, reconciled_locks) == {
         "FM-PARTIAL-001",
         "FM-BLOCKED-001",
+    }
+
+    # Inline, missing, and unknown lock states are fail-closed active; explicit
+    # terminal release states do not reserve slots.
+    lock_state_text = """## LOCK-INLINE
+- Task: FM-INLINE-001; Status: ACTIVE until owner reconciliation
+
+## LOCK-MISSING
+- Task: FM-MISSING-001
+
+## LOCK-UNKNOWN
+- Task: FM-UNKNOWN-001
+- Status: MYSTERY
+
+## LOCK-RELEASED
+- Task: FM-RELEASED-002
+- Status: RELEASED
+"""
+    assert active_task_ids("", lock_state_text) == {
+        "FM-INLINE-001",
+        "FM-MISSING-001",
+        "FM-UNKNOWN-001",
     }
 
     # L) free slot is reused after predecessor reaches accepted state.
