@@ -20,14 +20,26 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    name: Validate exact reviewed dispatch parameters
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Reject invalid or stale dispatch parameters
+        env:
+          FANMIND_DISPATCH_REF: ${{ github.ref }}
+          FANMIND_DISPATCH_SHA: ${{ github.sha }}
+          FANMIND_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          FANMIND_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          test "$FANMIND_DISPATCH_REF" = "refs/heads/main"
+          test "$FANMIND_REVIEWED_COMMIT" = "$FANMIND_DISPATCH_SHA"
+          test "$FANMIND_CONFIRMATION" = "verify-creator-confirmed-chat-learning"
+
   verify:
     name: Verify confirmed-chat learning schema read-only on isolated Staging
-    if: >-
-      ${{
-        github.ref == 'refs/heads/main' &&
-        inputs.reviewed_commit == github.sha &&
-        inputs.confirmation == 'verify-creator-confirmed-chat-learning'
-      }}
+    needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     environment: staging
