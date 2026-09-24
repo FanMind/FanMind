@@ -825,7 +825,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Status: ACTIVE
 - Risk: R3
 - Holder: autonomous FanMind Builder
-- Baseline: main a034d5517f1ad4846680b293a6b53645aa6bab69 after owner merge of #1168.
-- Scope: bounded post-merge fix for the exact canonical authenticator -> service_role SET-role edge and its regression test; no other Creator schema/runtime behavior.
-- Parallel safety: SAFE READY set contains only this Creator hotfix; protected/runtime/provider/database actions remain gated.
+- Baseline: main `98a69f26b09c5c5a4f5a24b1d2b134e0371a1279` after merged PR #1171; its independent review remains unresolved/non-outdated for the newly identified transitive authenticator-membership P1.
+- Scope: continue the same bounded authenticator/service-role verifier hardening through PR #1172: reject every effective incoming membership edge into `authenticator`, retain the canonical SET-only `authenticator -> authenticated/service_role` edges, and add focused regression coverage. No other Creator schema/runtime behavior.
+- Parallel safety: this is the existing `FM-CREATOR-001` continuation, not a second worker slot; serialize with Creator deletion/schema/contract work where scope can overlap.
+- Forbidden: SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets, direct main writes.
+- Release condition: PR #1172 exact current-head required CI green, one independent review with P1/P2=0/no blocking threads, normal merge, then post-merge verification/reconciliation.
 - Recovery: ordinary repository revert; no external state mutation.
