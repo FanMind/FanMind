@@ -367,3 +367,39 @@ test("summary uses a locale-independent code-point tie-breaker for equally commo
 
   assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 3), ["😀", "😄", "🧡"]);
 });
+
+
+test("summary preserves fractional average character lengths", () => {
+  const records = dataset();
+  for (let index = 0; index < 15; index += 1) records[index] = record(index + 1, { text: "a" });
+  for (let index = 15; index < 30; index += 1) records[index] = record(index + 1, { text: "ab" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.averageChars, 1.5);
+});
+
+test("summary excludes text-presented emoji-capable symbols from emoji metrics", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☕︎" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0);
+  assert.equal(summary.metrics.emojisPerMessage, 0);
+  assert.ok(!summary.metrics.preferredEmojis.includes("☕︎"));
+});
