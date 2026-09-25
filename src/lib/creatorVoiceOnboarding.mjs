@@ -130,11 +130,22 @@ function isEmojiGrapheme(segment) {
 }
 
 function hasQuestionPunctuation(text) {
-  return /[?؟？⁇⁈⁉]/u.test(text);
+  return /[?¿՞؟？⁇⁈⁉]/u.test(text);
 }
 
 function hasExclamationPunctuation(text) {
-  return /[!！‼⁈⁉]/u.test(text);
+  return /[!¡՜！‼⁈⁉]/u.test(text);
+}
+
+function canonicalEmojiKey(segment) {
+  const codePoints = [...segment];
+  return codePoints
+    .filter((value, index) => {
+      if (value !== "\uFE0F") return true;
+      const previous = codePoints[index - 1];
+      return !(previous && /\p{Emoji_Presentation}/u.test(previous));
+    })
+    .join("");
 }
 
 export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {
@@ -184,7 +195,10 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, option
     const emojis = textGraphemes.filter(isEmojiGrapheme);
     if (emojis.length > 0) emojiMessages += 1;
     totalEmojiCount += emojis.length;
-    for (const emoji of emojis) emojiCounts.set(emoji, (emojiCounts.get(emoji) ?? 0) + 1);
+    for (const emoji of emojis) {
+      const key = canonicalEmojiKey(emoji);
+      emojiCounts.set(key, (emojiCounts.get(key) ?? 0) + 1);
+    }
   }
 
   const sortedLengths = [...lengths].sort((a, b) => a - b);
