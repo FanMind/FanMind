@@ -307,7 +307,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; this correction does not authorize owner/protected/provider/runtime/database work or relax scope-conflict checks.
 - Acceptance: manager contract tests, Project Memory Quality/Guard/Status, God Mode, current-head CI/CodeQL/Browser and one independent review with P1=0/P2=0/no blocking threads.
 - Result: PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and the independent exact-head review with P1=0/P2=0/no blocking threads, then squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`.
-- Exact next step: release the governance lock, recompute the Builder Manager from merged main and admit only the resulting SAFE READY repository scope.
+- Closeout: governance lock release and post-merge manager recomputation are captured by the enclosing #1181 reconciliation. Resulting SAFE READY repository action is `NBA-CREATOR-INTELLIGENCE`; do not reopen this governance task.
 - Recovery: ordinary repository revert; no external state is mutated.
 
 
