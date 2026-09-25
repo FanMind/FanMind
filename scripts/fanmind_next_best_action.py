@@ -1486,7 +1486,7 @@ def run_manager_contract_tests() -> None:
     # An orphan clean PAUSED lock with an exact action remains stopped identity
     # evidence even without STARTED_WORK; it consumes no worker and cannot reopen.
     orphan_exact_paused_action = _action(
-        "ORPHAN-EXACT-PAUSED",
+        "NBA-ORPHAN-EXACT-PAUSED",
         1,
         task="FM-ORPHAN-EXACT-PAUSED",
     )
@@ -1495,25 +1495,14 @@ def run_manager_contract_tests() -> None:
 - Action: NBA-ORPHAN-EXACT-PAUSED
 - Status: PAUSED
 """
-    # Synthetic action IDs in the catalog are not required to use the NBA prefix,
-    # so bind the parsed lock action to the test action explicitly.
-    orphan_exact_paused_lock = orphan_exact_paused_lock.replace(
-        "NBA-ORPHAN-EXACT-PAUSED",
-        "ORPHAN-EXACT-PAUSED",
-    )
     orphan_exact_paused_slots = active_work_slots("", orphan_exact_paused_lock)
     assert len(orphan_exact_paused_slots) == 1
     assert orphan_exact_paused_slots[0]["status"] == "PAUSED"
-    # _record_actions only accepts canonical NBA IDs; exercise candidate filtering
-    # with the equivalent exact slot produced by canonical repository records.
+    assert orphan_exact_paused_slots[0]["action"] == "NBA-ORPHAN-EXACT-PAUSED"
     result = manager(
         [orphan_exact_paused_action],
         limit=1,
-        slots=[{
-            "tasks": {"FM-ORPHAN-EXACT-PAUSED"},
-            "action": "ORPHAN-EXACT-PAUSED",
-            "status": "PAUSED",
-        }],
+        slots=orphan_exact_paused_slots,
     )
     assert result["safe_ready_set"] == []
     assert result["active_continuations"] == []
