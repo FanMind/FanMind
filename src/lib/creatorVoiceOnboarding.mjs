@@ -108,3 +108,86 @@ export function normalizeCreatorVoiceOnboardingDataset(records, expected, option
     messages: normalized,
   };
 }
+
+
+function roundRatio(numerator, denominator) {
+  return denominator === 0 ? 0 : Math.round((numerator / denominator) * 1000) / 1000;
+}
+
+function countMatches(text, pattern) {
+  return [...text.matchAll(pattern)].length;
+}
+
+export function summarizeCreatorVoiceOnboardingDataset(dataset) {
+  requireCondition(dataset && typeof dataset === "object" && !Array.isArray(dataset), "voice_onboarding_dataset_required");
+  const workspaceId = canonicalUuid(dataset.workspaceId);
+  const creatorId = canonicalUuid(dataset.creatorId);
+  requireCondition(Array.isArray(dataset.messages), "voice_onboarding_messages_required");
+  requireCondition(dataset.messages.length === dataset.sampleSize, "voice_onboarding_sample_size_mismatch");
+  requireCondition(
+    dataset.sampleSize >= CREATOR_VOICE_ONBOARDING_MIN_MESSAGES &&
+      dataset.sampleSize <= CREATOR_VOICE_ONBOARDING_MAX_MESSAGES,
+    "voice_onboarding_sample_size",
+  );
+
+  const lengths = [];
+  let questionMessages = 0;
+  let exclamationMessages = 0;
+  let emojiMessages = 0;
+  let totalEmojiCount = 0;
+  const emojiCounts = new Map();
+
+  for (const message of dataset.messages) {
+    requireCondition(
+      message &&
+        typeof message === "object" &&
+        canonicalUuid(message.workspaceId) === workspaceId &&
+        canonicalUuid(message.creatorId) === creatorId &&
+        message.direction === "outbound" &&
+        message.confirmed === true &&
+        message.source === "manual_outbound" &&
+        message.aiGenerated === false,
+      "voice_onboarding_summary_scope_mismatch",
+    );
+    const text = boundedText(message.text, CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH, "invalid_voice_onboarding_text");
+    lengths.push(text.length);
+    if (text.includes("?")) questionMessages += 1;
+    if (text.includes("!")) exclamationMessages += 1;
+
+    const emojis = [...text.matchAll(/\p{Extended_Pictographic}/gu)].map((match) => match[0]);
+    if (emojis.length > 0) emojiMessages += 1;
+    totalEmojiCount += emojis.length;
+    for (const emoji of emojis) emojiCounts.set(emoji, (emojiCounts.get(emoji) ?? 0) + 1);
+  }
+
+  const sortedLengths = [...lengths].sort((a, b) => a - b);
+  const midpoint = Math.floor(sortedLengths.length / 2);
+  const medianChars =
+    sortedLengths.length % 2 === 0
+      ? Math.round((sortedLengths[midpoint - 1] + sortedLengths[midpoint]) / 2)
+      : sortedLengths[midpoint];
+
+  const preferredEmojis = [...emojiCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 10)
+    .map(([emoji]) => emoji);
+
+  return {
+    workspaceId,
+    creatorId,
+    sampleSize: dataset.sampleSize,
+    evidenceOnly: true,
+    autoApprovalAllowed: false,
+    rawTextIncluded: false,
+    messageIdIncluded: false,
+    metrics: {
+      averageChars: Math.round(lengths.reduce((sum, value) => sum + value, 0) / lengths.length),
+      medianChars,
+      questionMessageRatio: roundRatio(questionMessages, lengths.length),
+      exclamationMessageRatio: roundRatio(exclamationMessages, lengths.length),
+      emojiMessageRatio: roundRatio(emojiMessages, lengths.length),
+      emojisPerMessage: roundRatio(totalEmojiCount, lengths.length),
+      preferredEmojis,
+    },
+  };
+}
