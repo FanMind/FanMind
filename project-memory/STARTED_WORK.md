@@ -1,3 +1,15 @@
+## FM-CREATOR-001 — bounded voice onboarding input contract — 2026-09-25
+- Status: CODE_CHANGED
+- Risk: R3
+- Work lock: LOCK-FM-CREATOR-VOICE-ONBOARDING-20260925
+- Baseline: exact merged main `aee02274f35c3c346c12710f98b84144c6f53077` after #1181 manager reconciliation admitted `NBA-CREATOR-INTELLIGENCE` as the single SAFE READY action.
+- Scope: repository-only deterministic validation for the still-open 30–100-message Creator voice-onboarding input contract plus focused negative regressions. Files are bounded to `src/lib/creatorVoiceOnboarding.mjs`, `tests/creator-voice-onboarding.test.mjs`, synchronized Creator documentation and exact Project-Memory records.
+- Acceptance: only 30–100 confirmed real manual outbound messages from one exact Workspace/Creator may enter the onboarding dataset; inbound content, AI drafts, unconfirmed data, wrong source/scope, duplicate message IDs, oversized/future evidence and mixed tenants fail closed.
+- Forbidden: raw private Creator samples in Git, provider/model calls, automatic profile mutation/training, persistence, SQL, Staging/Production/provider writes, automatic send, Billing/Stripe/Tax, Restore or Mobile changes.
+- Evidence required: exact branch diff within scope, focused executable tests through CI, negative/regression coverage, required current-head CI and one independent review cycle with P1=0/P2=0/no blocking threads before merge.
+- Current boundary: code exists on the bounded branch only. No repository review/CI/merge, runtime activation, real onboarding dataset or blinded two-Creator quality acceptance is claimed yet.
+- Recovery: ordinary bounded source/docs revert; no external state has been changed.
+
 ## FM-CREATOR-001 — authenticator transitive SET-path P1 follow-up — 2026-09-24
 - Status: MERGED_VERIFIED
 - Risk: R2
