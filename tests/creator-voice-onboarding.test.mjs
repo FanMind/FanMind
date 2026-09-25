@@ -108,3 +108,56 @@ test("rejects cross-workspace, cross-creator, duplicate-message and future evide
     );
   }
 });
+
+
+test("rejects non-canonical or impossible confirmation timestamps", () => {
+  for (const confirmedAt of ["0", "2026-02-30T10:00:00Z", "2026-09-25 10:00:00Z"]) {
+    const records = dataset();
+    records[0] = record(1, { confirmedAt });
+    assert.throws(
+      () => normalizeCreatorVoiceOnboardingDataset(
+        records,
+        { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+        { now: Date.parse("2026-09-25T10:00:00Z") },
+      ),
+      /invalid_voice_onboarding_confirmed_at/u,
+    );
+  }
+});
+
+test("normalizes UUID case before duplicate detection", () => {
+  const records = dataset();
+  records[0] = record(1, { messageId: uuid(2).toUpperCase() });
+  assert.throws(
+    () => normalizeCreatorVoiceOnboardingDataset(
+      records,
+      { expectedWorkspaceId: workspaceId.toUpperCase(), expectedCreatorId: creatorId.toUpperCase() },
+    ),
+    /duplicate_voice_onboarding_message_id/u,
+  );
+});
+
+test("rejects sparse samples even when array length reaches the minimum", () => {
+  const records = dataset();
+  delete records[0];
+  assert.equal(records.length, CREATOR_VOICE_ONBOARDING_MIN_MESSAGES);
+  assert.throws(
+    () => normalizeCreatorVoiceOnboardingDataset(
+      records,
+      { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    ),
+    /voice_onboarding_sparse_sample/u,
+  );
+});
+
+test("applies the text bound after NFC normalization", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "\u0344".repeat(4000) });
+  assert.throws(
+    () => normalizeCreatorVoiceOnboardingDataset(
+      records,
+      { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    ),
+    /invalid_voice_onboarding_text/u,
+  );
+});
