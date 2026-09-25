@@ -6,6 +6,7 @@ export const CREATOR_VOICE_ONBOARDING_MIN_MESSAGES = 30;
 export const CREATOR_VOICE_ONBOARDING_MAX_MESSAGES = 100;
 export const CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH = 4000;
 export const CREATOR_VOICE_ONBOARDING_CLOCK_SKEW_MS = 30_000;
+const graphemeSegmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
 
 function requireCondition(condition, code) {
   if (!condition) throw new CreatorPolicyError(code);
@@ -114,15 +115,34 @@ function roundRatio(numerator, denominator) {
   return denominator === 0 ? 0 : Math.round((numerator / denominator) * 1000) / 1000;
 }
 
-export function summarizeCreatorVoiceOnboardingDataset(dataset, options = {}) {
+function graphemes(value) {
+  return [...graphemeSegmenter.segment(value.normalize("NFC"))].map(({ segment }) => segment);
+}
+
+function isEmojiGrapheme(segment) {
+  return (
+    /^\p{Regional_Indicator}{2}$/u.test(segment) ||
+    (/\uFE0F/u.test(segment) && /\p{Emoji}/u.test(segment)) ||
+    /\p{Emoji_Presentation}/u.test(segment) ||
+    (/\u200D/u.test(segment) && /\p{Extended_Pictographic}/u.test(segment))
+  );
+}
+
+export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {
   requireCondition(dataset && typeof dataset === "object" && !Array.isArray(dataset), "voice_onboarding_dataset_required");
+  const expectedWorkspaceId = canonicalUuid(expected?.expectedWorkspaceId);
+  const expectedCreatorId = canonicalUuid(expected?.expectedCreatorId);
   const workspaceId = canonicalUuid(dataset.workspaceId);
   const creatorId = canonicalUuid(dataset.creatorId);
+  requireCondition(
+    workspaceId === expectedWorkspaceId && creatorId === expectedCreatorId,
+    "voice_onboarding_summary_scope_mismatch",
+  );
   requireCondition(Array.isArray(dataset.messages), "voice_onboarding_messages_required");
   requireCondition(dataset.messages.length === dataset.sampleSize, "voice_onboarding_sample_size_mismatch");
   const validated = normalizeCreatorVoiceOnboardingDataset(
     dataset.messages,
-    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    { expectedWorkspaceId, expectedCreatorId },
     options,
   );
   requireCondition(validated.sampleSize === dataset.sampleSize, "voice_onboarding_sample_size_mismatch");
@@ -147,11 +167,12 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, options = {}) {
       "voice_onboarding_summary_scope_mismatch",
     );
     const text = boundedText(message.text, CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH, "invalid_voice_onboarding_text");
-    lengths.push(text.length);
+    const textGraphemes = graphemes(text);
+    lengths.push(textGraphemes.length);
     if (text.includes("?")) questionMessages += 1;
     if (text.includes("!")) exclamationMessages += 1;
 
-    const emojis = [...text.matchAll(/\p{Extended_Pictographic}/gu)].map((match) => match[0]);
+    const emojis = textGraphemes.filter(isEmojiGrapheme);
     if (emojis.length > 0) emojiMessages += 1;
     totalEmojiCount += emojis.length;
     for (const emoji of emojis) emojiCounts.set(emoji, (emojiCounts.get(emoji) ?? 0) + 1);
