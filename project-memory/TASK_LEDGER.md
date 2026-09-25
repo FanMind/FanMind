@@ -1,13 +1,15 @@
 ## FM-GOV-BUILDER-MANAGER-002
 - Date: 2026-09-24
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R2
 - Goal: correct Builder Manager worker accounting so non-running blocked/owner/deferred/prerequisite work cannot exhaust the worker pool and globally suppress independent SAFE READY repository work.
 - Defect evidence: after #1178 merged, generated state reported 11 reserved workers against a limit of 3 although the listed continuations were predominantly OWNER_ACTION_REQUIRED, DEFERRED_BY_OWNER, WAITING_PREREQUISITE or externally blocked. This serialized otherwise executable `NBA-CREATOR-INTELLIGENCE`.
 - Scope: `scripts/fanmind_next_best_action.py`, embedded manager contract tests, zombie-lock reconciliation and generated Project-Memory state only.
 - Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; conflict/scope/dependency checks and owner/protected gates remain unchanged.
-- Exact next step: converge the bounded PR; after merge release this governance lock and recompute the manager before admitting the next product task.
+- Exact next step: completed. Recompute the manager from merged main after releasing the governance lock; only manager-admitted repository work may proceed.
 - 2026-09-25 post-merge reconciliation: PR #1179 merged as `398e972f02d94a9cdf9b480c83db74de3ade4973` before its final exact-head Codex review completed. That review then reported three P1 defects on the merged manager: stopped BLOCKED/PAUSED actions could re-enter fresh candidates; a composite stopped slot could release extra live task labels; and ambiguous non-running siblings whose dependencies were all incomplete could reserve capacity and block their prerequisite. Preserve #1179 as observed merged evidence but do not classify FM-GOV-BUILDER-MANAGER-002 accepted. PR #1180 is the bounded repository-only continuation under the existing task/lock; no protected/runtime/provider mutation is authorized by this reconciliation.
+
+- Final evidence: PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed Project Memory Guard/Quality/Status, God Mode Gate, FanMind CI, Browser E2E, CodeQL and Landing Language CI; the independent current-head review completed with zero unresolved P1/P2 threads; squash merge produced main `2c4954048d3ca359ac96978764b46e435854f0f4`. No protected/runtime/provider/database mutation occurred.
 
 # FanMind Task Ledger
 
