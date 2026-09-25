@@ -128,6 +128,14 @@ function isEmojiGrapheme(segment) {
   );
 }
 
+function hasQuestionPunctuation(text) {
+  return /[?؟？]/u.test(text);
+}
+
+function hasExclamationPunctuation(text) {
+  return /[!！]/u.test(text);
+}
+
 export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {
   requireCondition(dataset && typeof dataset === "object" && !Array.isArray(dataset), "voice_onboarding_dataset_required");
   const expectedWorkspaceId = canonicalUuid(expected?.expectedWorkspaceId);
@@ -169,8 +177,8 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, option
     const text = boundedText(message.text, CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH, "invalid_voice_onboarding_text");
     const textGraphemes = graphemes(text);
     lengths.push(textGraphemes.length);
-    if (text.includes("?")) questionMessages += 1;
-    if (text.includes("!")) exclamationMessages += 1;
+    if (hasQuestionPunctuation(text)) questionMessages += 1;
+    if (hasExclamationPunctuation(text)) exclamationMessages += 1;
 
     const emojis = textGraphemes.filter(isEmojiGrapheme);
     if (emojis.length > 0) emojiMessages += 1;
