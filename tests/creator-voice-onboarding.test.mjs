@@ -493,3 +493,48 @@ test("summary strips arbitrary combining and tag extenders from preferred emoji 
   assert.equal(summary.metrics.preferredEmojis.some((emoji) => /\p{Mark}/u.test(emoji)), false);
   assert.equal(summary.metrics.preferredEmojis.some((emoji) => /[\u{E0000}-\u{E007F}]/u.test(emoji)), false);
 });
+
+
+test("summary canonicalizes minimally-qualified RGI ZWJ emoji and rejects arbitrary ZWJ payloads", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "❤‍🔥" });
+  records[1] = record(2, { text: "🏃‍♀" });
+  records[2] = record(3, { text: "😀‍😀" });
+  records[3] = record(4, { text: Array.from({ length: 1000 }, () => "😀").join("\u200D") });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
+  assert.equal(summary.metrics.emojisPerMessage, 0.067);
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️‍🔥"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🏃‍♀️"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("😀‍😀"));
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => emoji.length > 32), false);
+});
+
+test("summary accepts modifiers only for Emoji_Modifier_Base characters", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👍🏽" });
+  records[1] = record(2, { text: "😀🏽" });
+  records[2] = record(3, { text: "©️🏽" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.033);
+  assert.equal(summary.metrics.emojisPerMessage, 0.033);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["👍🏽"]);
+});
