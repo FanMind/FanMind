@@ -215,3 +215,16 @@ test("summary requires a sampleSize that exactly matches the validated message a
     /voice_onboarding_sample_size_mismatch/u,
   );
 });
+
+
+test("summary revalidates message identity and rejects duplicate message IDs", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  normalized.messages[0] = { ...normalized.messages[0], messageId: normalized.messages[1].messageId };
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(normalized),
+    /duplicate_voice_onboarding_message_id/u,
+  );
+});
