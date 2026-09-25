@@ -311,3 +311,59 @@ test("summary recognizes Arabic and full-width question/exclamation punctuation"
   assert.equal(summary.metrics.questionMessageRatio, 0.067);
   assert.equal(summary.metrics.exclamationMessageRatio, 0.033);
 });
+
+
+test("summary recognizes combined Unicode question and exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Really⁇" });
+  records[1] = record(2, { text: "Really⁈" });
+  records[2] = record(3, { text: "Really⁉️" });
+  records[3] = record(4, { text: "Really‼" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.1);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.1);
+});
+
+test("summary preserves fractional medians for even samples", () => {
+  const records = dataset();
+  for (let index = 0; index < 15; index += 1) records[index] = record(index + 1, { text: "a" });
+  for (let index = 15; index < 30; index += 1) records[index] = record(index + 1, { text: "ab" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.medianChars, 1.5);
+});
+
+test("summary uses a locale-independent code-point tie-breaker for equally common emojis", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "🧡" });
+  records[1] = record(2, { text: "😀" });
+  records[2] = record(3, { text: "😄" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 3), ["😀", "😄", "🧡"]);
+});
