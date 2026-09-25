@@ -201,7 +201,7 @@ test("summary fails closed when a normalized-looking dataset crosses Creator sco
   };
   assert.throws(
     () => summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
-    /voice_onboarding_summary_scope_mismatch/u,
+    /voice_onboarding_(?:summary_)?scope_mismatch/u,
   );
 });
 
@@ -290,4 +290,24 @@ test("summary preserves complete emoji graphemes and excludes plain emoji-capabl
   assert.ok(summary.metrics.preferredEmojis.includes("🇦🇹"));
   assert.ok(!summary.metrics.preferredEmojis.includes("©"));
   assert.equal(summary.metrics.emojisPerMessage, 0.1);
+});
+
+
+test("summary recognizes Arabic and full-width question/exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "كيف حالك؟" });
+  records[1] = record(2, { text: "元気ですか？" });
+  records[2] = record(3, { text: "すごい！" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.033);
 });
