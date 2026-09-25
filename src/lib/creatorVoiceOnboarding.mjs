@@ -114,10 +114,6 @@ function roundRatio(numerator, denominator) {
   return denominator === 0 ? 0 : Math.round((numerator / denominator) * 1000) / 1000;
 }
 
-function countMatches(text, pattern) {
-  return [...text.matchAll(pattern)].length;
-}
-
 export function summarizeCreatorVoiceOnboardingDataset(dataset) {
   requireCondition(dataset && typeof dataset === "object" && !Array.isArray(dataset), "voice_onboarding_dataset_required");
   const workspaceId = canonicalUuid(dataset.workspaceId);
