@@ -217,19 +217,26 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 represented_locks.add(lock_id)
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
+    # A clean orphan BLOCKED/PAUSED lock with one exact action is also retained as
+    # non-running identity evidence so candidate selection cannot reopen it.
     for lock_id, lock in lock_records.items():
-        if (
-            lock_id in represented_locks
-            or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
-            or (
-                (
-                    str(lock.get("status") or "").upper() == "BLOCKED"
-                    or str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+        if lock_id in represented_locks or not lock["tasks"]:
+            continue
+        lock_status = str(lock.get("status") or "").upper()
+        lock_conflict = bool(lock.get("status_conflict"))
+        lock_nonrunning = lock_status == "BLOCKED" or lock_status in NONRUNNING_LOCK_STATES
+        if _lock_status_is_terminal(lock["status"]) and not lock_conflict:
+            continue
+        if lock_nonrunning and not lock_conflict:
+            if len(lock["actions"]) == 1:
+                slots.append(
+                    {
+                        "tasks": lock["tasks"],
+                        "action": next(iter(lock["actions"])),
+                        "status": lock_status,
+                        "status_conflict": False,
+                    }
                 )
-                and not bool(lock.get("status_conflict"))
-            )
-            or not lock["tasks"]
-        ):
             continue
         slots.append(
             {
@@ -673,13 +680,14 @@ def build_safe_ready_set(
                 and slot_status not in explicit_running_statuses
                 and matches
                 and all(
-                    not manager_dependency_status(item, state, catalog, failed)[0]
+                    status_by_id.get(item["id"]) in nonrunning_statuses
+                    or not manager_dependency_status(item, state, catalog, failed)[0]
                     for item in matches
                 )
             ):
                 # Ambiguous non-running continuations whose every resolved sibling
-                # is dependency-blocked do not consume a worker. Their prerequisite
-                # is allowed to run; each dependent remains blocked normally.
+                # is either owner/prerequisite-gated or dependency-blocked do not
+                # consume a worker. A runnable prerequisite may use the capacity.
                 continue
             if (
                 exact_id is None
@@ -1472,6 +1480,70 @@ def run_manager_contract_tests() -> None:
         }],
     )
     assert result["safe_ready_set"] == ["AMBIGUOUS-DEP-BASE"]
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 1
+
+    # An orphan clean PAUSED lock with an exact action remains stopped identity
+    # evidence even without STARTED_WORK; it consumes no worker and cannot reopen.
+    orphan_exact_paused_action = _action(
+        "ORPHAN-EXACT-PAUSED",
+        1,
+        task="FM-ORPHAN-EXACT-PAUSED",
+    )
+    orphan_exact_paused_lock = """## LOCK-FM-ORPHAN-EXACT-PAUSED
+- Task: FM-ORPHAN-EXACT-PAUSED
+- Action: NBA-ORPHAN-EXACT-PAUSED
+- Status: PAUSED
+"""
+    # Synthetic action IDs in the catalog are not required to use the NBA prefix,
+    # so bind the parsed lock action to the test action explicitly.
+    orphan_exact_paused_lock = orphan_exact_paused_lock.replace(
+        "NBA-ORPHAN-EXACT-PAUSED",
+        "ORPHAN-EXACT-PAUSED",
+    )
+    orphan_exact_paused_slots = active_work_slots("", orphan_exact_paused_lock)
+    assert len(orphan_exact_paused_slots) == 1
+    assert orphan_exact_paused_slots[0]["status"] == "PAUSED"
+    # _record_actions only accepts canonical NBA IDs; exercise candidate filtering
+    # with the equivalent exact slot produced by canonical repository records.
+    result = manager(
+        [orphan_exact_paused_action],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-ORPHAN-EXACT-PAUSED"},
+            "action": "ORPHAN-EXACT-PAUSED",
+            "status": "PAUSED",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 0
+
+    # Mixed ambiguous non-running siblings (dependency-blocked + owner-gated)
+    # release capacity so the runnable prerequisite is not serialized.
+    mixed_dep_base = _action("MIXED-DEP-BASE", 3, task="FM-MIXED-DEP-BASE")
+    mixed_dep = _action(
+        "MIXED-DEP",
+        1,
+        task="FM-MIXED-NONRUNNING",
+        depends_on_actions=["MIXED-DEP-BASE"],
+    )
+    mixed_owner = _action(
+        "MIXED-OWNER",
+        2,
+        task="FM-MIXED-NONRUNNING",
+        requires_owner=True,
+    )
+    result = manager(
+        [mixed_dep, mixed_owner, mixed_dep_base],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-MIXED-NONRUNNING"},
+            "action": None,
+            "status": "PARTIAL",
+        }],
+    )
+    assert result["safe_ready_set"] == ["MIXED-DEP-BASE"]
     assert result["active_continuations"] == []
     assert result["worker_used"] == 1
 
