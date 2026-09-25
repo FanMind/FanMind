@@ -1,5 +1,5 @@
 ## FM-CREATOR-001 — voice onboarding contract continuation — 2026-09-25
-- Status: MERGED_VERIFIED
+- Status: VERIFIED
 - Risk: R3
 - Parent task: FM-CREATOR-001 / Phase 7b / NBA-CREATOR-INTELLIGENCE.
 - Admission: #1181 merged as exact main `aee02274f35c3c346c12710f98b84144c6f53077`; the freshly recomputed Builder Manager admits Creator as the only SAFE READY repository action.
