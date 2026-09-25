@@ -538,3 +538,47 @@ test("summary accepts modifiers only for Emoji_Modifier_Base characters", () => 
   assert.equal(summary.metrics.emojisPerMessage, 0.033);
   assert.deepEqual(summary.metrics.preferredEmojis, ["👍🏽"]);
 });
+
+
+test("summary canonicalizes valid text-default modifier bases and rejects malformed VS16 modifier order", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☝🏽" });
+  records[1] = record(2, { text: "☝️🏽" });
+  records[2] = record(3, { text: "🕵🏽‍♀" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
+  assert.equal(summary.metrics.emojisPerMessage, 0.067);
+  assert.ok(summary.metrics.preferredEmojis.includes("☝🏽"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🕵🏽‍♀️"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("☝️🏽"));
+});
+
+test("summary restricts flags and reserved pictographs to assigned RGI emoji", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "🇦🇹" });
+  records[1] = record(2, { text: "🇦🇦" });
+  records[2] = record(3, { text: "🇿🇿" });
+  records[3] = record(4, { text: "\u{1F02C}\uFE0F" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.033);
+  assert.equal(summary.metrics.emojisPerMessage, 0.033);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["🇦🇹"]);
+});
