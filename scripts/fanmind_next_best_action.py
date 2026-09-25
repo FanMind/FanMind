@@ -173,6 +173,12 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                     status_conflict = True
                 elif lock_is_nonrunning and record_status in EXPLICIT_RUNNING_WORK_STATES:
                     status_conflict = True
+                elif lock_is_nonrunning and not status_conflict:
+                    # A clean BLOCKED/PAUSED lock is the authoritative current
+                    # non-running state. Propagate it so the manager cannot
+                    # reopen the same executable action from an older PARTIAL /
+                    # IMPLEMENTED_NOT_VERIFIED STARTED_WORK snapshot.
+                    record_status = lock_status
                 # A clean explicit terminal lock is authoritative over an older
                 # single STARTED_WORK status. Intrinsic multi-status conflicts
                 # remain fail-closed because their ordering is itself ambiguous.
@@ -191,7 +197,10 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
         if (
             lock_id in represented_locks
             or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
-            or str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+            or (
+                str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+                and not bool(lock.get("status_conflict"))
+            )
             or not lock["tasks"]
         ):
             continue
@@ -557,8 +566,9 @@ def build_safe_ready_set(
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
             continue
 
-        # Canonically blocked work is visible state, not a running worker.
-        if slot_status == "BLOCKED":
+        # Canonically blocked/paused work is visible state, not a running
+        # worker and must not be reopened as a fresh continuation.
+        if slot_status == "BLOCKED" or slot_status in NONRUNNING_LOCK_STATES:
             continue
 
         if exact_id:
@@ -1226,6 +1236,20 @@ def run_manager_contract_tests() -> None:
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
 
+    paused_orphan_conflict = """## LOCK-FM-PAUSED-ORPHAN-CONFLICT-001
+- Task: FM-PAUSED-ORPHAN-CONFLICT-001
+- Status: PAUSED
+- Status: ACTIVE
+"""
+    paused_orphan_conflict_slots = active_work_slots("", paused_orphan_conflict)
+    assert len(paused_orphan_conflict_slots) == 1
+    assert paused_orphan_conflict_slots[0]["status_conflict"] is True
+    result = manager([a], limit=1, slots=paused_orphan_conflict_slots)
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == [
+        "TASK:FM-PAUSED-ORPHAN-CONFLICT-001"
+    ]
+
     # If STARTED_WORK still says the same PAUSED lock is running, the contradiction
     # remains fail-closed until canonical state is reconciled.
     paused_running_started = """## Active work
@@ -1274,6 +1298,48 @@ def run_manager_contract_tests() -> None:
     )
     assert len(partial_blocked_slots) == 1
     assert partial_blocked_slots[0]["status_conflict"] is False
+    assert partial_blocked_slots[0]["status"] == "BLOCKED"
+    partial_blocked_action = _action(
+        "PARTIAL-BLOCKED-ACTION",
+        1,
+        task="FM-PARTIAL-BLOCKED-001",
+    )
+    result = manager(
+        [partial_blocked_action, a],
+        limit=1,
+        slots=partial_blocked_slots,
+    )
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
+
+    partial_paused_started = """## Active work
+## FM-PARTIAL-PAUSED-001
+- Status: PARTIAL
+- Work lock: LOCK-FM-PARTIAL-PAUSED-001
+"""
+    partial_paused_lock = """## LOCK-FM-PARTIAL-PAUSED-001
+- Task: FM-PARTIAL-PAUSED-001
+- Status: PAUSED
+"""
+    partial_paused_slots = active_work_slots(
+        partial_paused_started,
+        partial_paused_lock,
+    )
+    assert len(partial_paused_slots) == 1
+    assert partial_paused_slots[0]["status_conflict"] is False
+    assert partial_paused_slots[0]["status"] == "PAUSED"
+    partial_paused_action = _action(
+        "PARTIAL-PAUSED-ACTION",
+        1,
+        task="FM-PARTIAL-PAUSED-001",
+    )
+    result = manager(
+        [partial_paused_action, a],
+        limit=1,
+        slots=partial_paused_slots,
+    )
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
 
     # Missing, empty or unknown referenced lock state cannot prove a worker stopped.
     missing_lock_started = """## Active work
