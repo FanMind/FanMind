@@ -297,7 +297,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## Active work
 
 ## FM-GOV-BUILDER-MANAGER-002 — non-running slot accounting — 2026-09-24
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R2
 - Work lock: LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924
 - Owner: autonomous FanMind Builder
@@ -306,7 +306,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Bounded scope: `scripts/fanmind_next_best_action.py`, its embedded manager regression contract and exact Project-Memory reconciliation only.
 - Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; this correction does not authorize owner/protected/provider/runtime/database work or relax scope-conflict checks.
 - Acceptance: manager contract tests, Project Memory Quality/Guard/Status, God Mode, current-head CI/CodeQL/Browser and one independent review with P1=0/P2=0/no blocking threads.
-- Exact next step: converge this bounded PR, then recompute the actual SAFE READY SET from merged state before starting any product scope.
+- Result: PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and the independent exact-head review with P1=0/P2=0/no blocking threads, then squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`.
+- Exact next step: release the governance lock, recompute the Builder Manager from merged main and admit only the resulting SAFE READY repository scope.
 - Recovery: ordinary repository revert; no external state is mutated.
 
 
