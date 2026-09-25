@@ -25,7 +25,7 @@ standing-authorized safe work
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NBA-CREATOR-INTELLIGENCE`
+- Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.

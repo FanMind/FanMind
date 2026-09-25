@@ -1,12 +1,14 @@
 ## FM-CREATOR-001 — voice onboarding contract continuation — 2026-09-25
-- Status: IN_PROGRESS
+- Status: VERIFIED
 - Risk: R3
 - Parent task: FM-CREATOR-001 / Phase 7b / NBA-CREATOR-INTELLIGENCE.
 - Admission: #1181 merged as exact main `aee02274f35c3c346c12710f98b84144c6f53077`; the freshly recomputed Builder Manager admits Creator as the only SAFE READY repository action.
 - Bounded goal: close the repository-side input-validation gap for the documented 30–100-message voice onboarding without using real private samples or invoking AI/provider/runtime systems.
 - Scope/acceptance: deterministic pure validator + tests require one Workspace/Creator, 30–100 confirmed manual outbound messages, unique message IDs, bounded text/time, and reject AI drafts/inbound/unconfirmed/wrong-source/cross-tenant/duplicate/future evidence.
 - Not acceptance of: real onboarding data, learned voice/profile generation, blinded two-Creator quality, target schema/runtime, Staging/Production/provider activation, automatic send or any protected action.
-- Current next step: obtain exact-head CI and one independent material-head review on the bounded PR; reconcile findings before merge.
+- Result: PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19` converged after one P1 and four P2 review findings were corrected. All nine triggered required checks passed, all review threads are resolved, exact-head Codex reported no further major issues, and squash merge created main `134d1ba100aaa1dbae734c9db19c076e5c513b52`.
+- Post-merge verify: current main re-read confirms the validator, CI registration, hardened timestamp/UUID/sparse/NFC boundaries and their regression tests.
+- Exact next step: keep this bounded input contract closed; recompute the Builder Manager and continue only a distinct still-open Creator scope. Real samples/style derivation/blinded quality remain separate evidence work.
 - Recovery: bounded repository revert; no external state mutation.
 
 ## FM-GOV-BUILDER-MANAGER-002

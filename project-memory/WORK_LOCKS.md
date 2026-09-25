@@ -1,10 +1,11 @@
 ## LOCK-FM-CREATOR-VOICE-ONBOARDING-20260925
 - Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE
 - Action: NBA-CREATOR-INTELLIGENCE
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `aee02274f35c3c346c12710f98b84144c6f53077`.
+- Released by: PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19`, all required exact-head checks green, exact-head Codex review with no remaining major findings, zero unresolved threads, squash merge `134d1ba100aaa1dbae734c9db19c076e5c513b52` and post-merge repository content verification.
 - Scope: `src/lib/creatorVoiceOnboarding.mjs`, `tests/creator-voice-onboarding.test.mjs`, Creator onboarding documentation and bounded Project-Memory reconciliation only.
 - Parallel safety: serialize all Creator voice/onboarding/quality work against this lock; no second worker may touch the same Creator contract, samples, profile semantics or Project-Memory records.
 - Acceptance: 30–100 same-Workspace/same-Creator confirmed manual outbound messages only; deterministic negative tests reject AI drafts, inbound/unconfirmed/cross-tenant/duplicate/future evidence.

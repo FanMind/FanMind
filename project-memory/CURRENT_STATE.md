@@ -1,3 +1,10 @@
+## Creator voice-onboarding input contract merged and repository-verified — 2026-09-25
+- PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19` passed all nine triggered required checks after correcting one P1 CI-registration finding and four P2 fail-closed findings. Every review thread is resolved and the final exact-head Codex review reported no further major issues.
+- Normal squash merge produced exact main `134d1ba100aaa1dbae734c9db19c076e5c513b52`. A post-merge re-read of current main confirms the hardened validator, direct regression tests, operations-suite registration and synchronized Creator documentation.
+- `LOCK-FM-CREATOR-VOICE-ONBOARDING-20260925` is released. The accepted scope is repository-only input validation for 30–100 confirmed manual outbound messages from one exact Workspace/Creator.
+- No real private messages, style generation, blinded quality result, provider/model call, persistence, SQL, Staging/Production/customer/Billing/Restore/Mobile mutation or runtime activation occurred. Those remain separate evidence/gates.
+- Recompute the Builder Manager before selecting another Creator increment; never rebuild #1182.
+
 ## Builder Manager correction accepted; Creator SAFE READY — 2026-09-25
 - PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and its independent exact-head review with P1=0/P2=0/no blocking threads, then squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`.
 - `FM-GOV-BUILDER-MANAGER-002` is ACCEPTED. `LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924` is released in this reconciliation. The correction keeps unknown/ambiguous executable work fail-closed while excluding owner/deferred/prerequisite/BLOCKED non-running work from worker capacity.
