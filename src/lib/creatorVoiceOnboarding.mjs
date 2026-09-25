@@ -129,22 +129,22 @@ function canonicalEmojiAtom(segment) {
   if (!simple) return null;
 
   const [, base, variationSelector = "", modifier = ""] = simple;
-  const defaultEmojiPresentation = /\\p{Emoji_Presentation}/u.test(base);
-  if (!defaultEmojiPresentation && variationSelector !== "\\uFE0F") return null;
+  const defaultEmojiPresentation = /\p{Emoji_Presentation}/u.test(base);
+  if (!defaultEmojiPresentation && variationSelector !== "\uFE0F") return null;
   const keepVariationSelector = variationSelector && !defaultEmojiPresentation;
-  return `${base}${keepVariationSelector ? "\\uFE0F" : ""}${modifier}`;
+  return `${base}${keepVariationSelector ? "\uFE0F" : ""}${modifier}`;
 }
 
 function canonicalEmojiKey(segment) {
   if (/\uFE0E/u.test(segment)) return null;
 
-  const tagSequence = /^(\\p{Extended_Pictographic})([\\u{E0030}-\\u{E0039}\\u{E0061}-\\u{E007A}]+)\\u{E007F}$/u.exec(segment);
+  const tagSequence = /^(\p{Extended_Pictographic})([\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]+)\u{E007F}$/u.exec(segment);
   if (tagSequence) {
     const [, base, encodedPayload] = tagSequence;
     const payload = [...encodedPayload]
       .map((value) => String.fromCodePoint(value.codePointAt(0) - 0xE0000))
       .join("");
-    if (base === "\\u{1F3F4}" && ["gbeng", "gbsct", "gbwls"].includes(payload)) return segment;
+    if (base === "\u{1F3F4}" && ["gbeng", "gbsct", "gbwls"].includes(payload)) return segment;
   }
 
   const sanitized = [...segment]
