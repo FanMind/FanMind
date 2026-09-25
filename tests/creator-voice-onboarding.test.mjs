@@ -445,3 +445,47 @@ test("summary merges redundant emoji presentation selectors but preserves meanin
   assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
   assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 2), ["☕", "❤️"]);
 });
+
+
+test("summary recognizes minimally-qualified keycap emoji", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "1⃣" });
+  records[1] = record(2, { text: "#⃣" });
+  records[2] = record(3, { text: "*⃣" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.1);
+  assert.equal(summary.metrics.emojisPerMessage, 0.1);
+  assert.ok(summary.metrics.preferredEmojis.includes("1⃣"));
+  assert.ok(summary.metrics.preferredEmojis.includes("#⃣"));
+  assert.ok(summary.metrics.preferredEmojis.includes("*⃣"));
+});
+
+test("summary strips arbitrary combining and tag extenders from preferred emoji output", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "😀\u0301\u0301" });
+  records[1] = record(2, { text: "😀\u{E0061}\u{E0062}" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
+  assert.equal(summary.metrics.emojisPerMessage, 0.067);
+  assert.equal(summary.metrics.preferredEmojis[0], "😀");
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => /\p{Mark}/u.test(emoji)), false);
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => /[\u{E0000}-\u{E007F}]/u.test(emoji)), false);
+});
