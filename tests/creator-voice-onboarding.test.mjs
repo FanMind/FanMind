@@ -5,6 +5,7 @@ import {
   CREATOR_VOICE_ONBOARDING_MAX_MESSAGES,
   CREATOR_VOICE_ONBOARDING_MIN_MESSAGES,
   normalizeCreatorVoiceOnboardingDataset,
+  summarizeCreatorVoiceOnboardingDataset,
 } from "../src/lib/creatorVoiceOnboarding.mjs";
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
@@ -159,5 +160,58 @@ test("applies the text bound after NFC normalization", () => {
       { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
     ),
     /invalid_voice_onboarding_text/u,
+  );
+});
+
+
+test("summarizes validated Creator onboarding evidence without returning raw text or message IDs", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Hey 😊 Wie geht es dir?" });
+  records[1] = record(2, { text: "Mega! 😊" });
+  records[2] = record(3, { text: "Erzähl mir mehr davon 😄" });
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    { now: Date.parse("2026-09-25T10:00:00Z") },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(normalized);
+
+  assert.equal(summary.sampleSize, CREATOR_VOICE_ONBOARDING_MIN_MESSAGES);
+  assert.equal(summary.evidenceOnly, true);
+  assert.equal(summary.autoApprovalAllowed, false);
+  assert.equal(summary.rawTextIncluded, false);
+  assert.equal(summary.messageIdIncluded, false);
+  assert.ok(summary.metrics.averageChars > 0);
+  assert.ok(summary.metrics.medianChars > 0);
+  assert.ok(summary.metrics.questionMessageRatio > 0);
+  assert.ok(summary.metrics.exclamationMessageRatio > 0);
+  assert.ok(summary.metrics.emojiMessageRatio > 0);
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 2), ["😊", "😄"]);
+  assert.doesNotMatch(JSON.stringify(summary), /Hey|Mega|Erzähl|44444444/u);
+});
+
+test("summary fails closed when a normalized-looking dataset crosses Creator scope", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  normalized.messages[0] = {
+    ...normalized.messages[0],
+    creatorId: "66666666-6666-4666-8666-666666666666",
+  };
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(normalized),
+    /voice_onboarding_summary_scope_mismatch/u,
+  );
+});
+
+test("summary requires a sampleSize that exactly matches the validated message array", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset({ ...normalized, sampleSize: normalized.sampleSize + 1 }),
+    /voice_onboarding_sample_size_mismatch/u,
   );
 });
