@@ -519,11 +519,12 @@ test("summary canonicalizes minimally-qualified RGI ZWJ emoji and rejects arbitr
   assert.equal(summary.metrics.preferredEmojis.some((emoji) => emoji.length > 32), false);
 });
 
-test("summary accepts modifiers only for Emoji_Modifier_Base characters", () => {
+test("summary accepts only complete RGI modifier sequences", () => {
   const records = dataset();
   records[0] = record(1, { text: "👍🏽" });
   records[1] = record(2, { text: "😀🏽" });
   records[2] = record(3, { text: "©️🏽" });
+  records[3] = record(4, { text: "👪🏽" });
 
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
@@ -568,7 +569,8 @@ test("summary restricts flags and reserved pictographs to assigned RGI emoji", (
   records[1] = record(2, { text: "🇦🇦" });
   records[2] = record(3, { text: "🇿🇿" });
   records[3] = record(4, { text: "🇦" });
-  records[4] = record(5, { text: "\u{1F02C}\uFE0F" });
+  records[4] = record(5, { text: "🇦️" });
+  records[5] = record(6, { text: "\u{1F02C}\uFE0F" });
 
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
