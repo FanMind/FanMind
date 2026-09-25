@@ -1,3 +1,14 @@
+## FM-CREATOR-001 — voice onboarding contract continuation — 2026-09-25
+- Status: IN_PROGRESS
+- Risk: R3
+- Parent task: FM-CREATOR-001 / Phase 7b / NBA-CREATOR-INTELLIGENCE.
+- Admission: #1181 merged as exact main `aee02274f35c3c346c12710f98b84144c6f53077`; the freshly recomputed Builder Manager admits Creator as the only SAFE READY repository action.
+- Bounded goal: close the repository-side input-validation gap for the documented 30–100-message voice onboarding without using real private samples or invoking AI/provider/runtime systems.
+- Scope/acceptance: deterministic pure validator + tests require one Workspace/Creator, 30–100 confirmed manual outbound messages, unique message IDs, bounded text/time, and reject AI drafts/inbound/unconfirmed/wrong-source/cross-tenant/duplicate/future evidence.
+- Not acceptance of: real onboarding data, learned voice/profile generation, blinded two-Creator quality, target schema/runtime, Staging/Production/provider activation, automatic send or any protected action.
+- Current next step: obtain exact-head CI and one independent material-head review on the bounded PR; reconcile findings before merge.
+- Recovery: bounded repository revert; no external state mutation.
+
 ## FM-GOV-BUILDER-MANAGER-002
 - Date: 2026-09-24
 - Status: ACCEPTED
