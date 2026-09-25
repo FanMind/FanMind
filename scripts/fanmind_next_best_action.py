@@ -612,13 +612,18 @@ def build_safe_ready_set(
                     stopped_action_ids.add(exact_id)
                 else:
                     active_reservations.append({"id": reservation_id, "parallel_safe": False})
-            elif tasks_fully_resolved:
+            elif task_matches and tasks_fully_resolved:
                 stopped_action_ids.update(
                     action["id"] for action in task_matches
                     if status_by_id.get(action["id"]) not in terminal_statuses
                 )
-            else:
+            elif task_matches:
+                # Some, but not all, task labels resolve into the catalog. Preserve
+                # the mixed identity fail-closed because the unmatched live portion
+                # is unknown.
                 active_reservations.append({"id": reservation_id, "parallel_safe": False})
+            # A clean blocked/paused task with no catalog match is an external/open
+            # blocker, not a running repository worker and never a global stop.
             continue
 
         if exact_id:
