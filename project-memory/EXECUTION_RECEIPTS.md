@@ -1,5 +1,5 @@
 ## RECEIPT-FM-GOV-BUILDER-MANAGER-002-20260924
-- Status: IN_PROGRESS; Task FM-GOV-BUILDER-MANAGER-002; Risk R2.
+- Status: ACCEPTED; Task FM-GOV-BUILDER-MANAGER-002; Risk R2.
 - Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9` after clean #1178 merge.
 - Defect evidence: canonical manager output reserved 11 worker slots against limit 3 while the represented scopes were owner-gated, deferred, prerequisite-waiting or externally blocked; independent `NBA-CREATOR-INTELLIGENCE` was serialized solely by that accounting.
 - Current correction: non-running gated/BLOCKED work remains visible in classification but no longer consumes worker capacity. Unknown or ambiguous executable active work still consumes fail-closed capacity. Scope/conflict/dependency and owner/protected gates are unchanged.
@@ -16,6 +16,8 @@
 - Exact-scope stale-lock reconciliation: PR #1088's own publication closeout proves its documentation lock was released; the AI cost foundation lock is released because STARTED_WORK is VERIFIED and #1141 is explicitly superseded by merged #1142; the historical finishline umbrella is PAUSED because no worker remains active and Mobile/paid acceptance is owner/protected-gated; the Restore SSH lock stays PAUSED and visible but no longer consumes a worker. No protected runtime/provider/database action was performed.
 - Review correction on `885152316688d069c571aed6feb670c6754912f3`: normal non-running transitions no longer become artificial conflicts (BLOCKED->RELEASED and PARTIAL+BLOCKED), while missing, empty or unknown referenced lock state now reserves fail-closed capacity. Explicit running/non-running contradictions remain reserved; clean terminal locks remain authoritative.
 - Acceptance pending: fresh exact-head embedded manager contract, generated Project Memory, CI/God Mode/CodeQL/Browser and one independent review with P1=0/P2=0/no blocking threads, then normal merge and post-merge manager recomputation.
+
+- Final closeout: after #1179 merged before its final review completed, #1180 bounded every post-merge P1 under the same task/lock. Final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required checks and independent exact-head review with P1=0/P2=0/no blocking threads; normal squash merge created main `2c4954048d3ca359ac96978764b46e435854f0f4`. Governance scope is accepted and its lock is released; this does not imply Production/provider acceptance or authorize any protected action.
 
 ## RECEIPT-FM-CREATOR-001-CONFIRMED-CHAT-STAGING-VERIFY-CONTROL-20260924
 - Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R4.
