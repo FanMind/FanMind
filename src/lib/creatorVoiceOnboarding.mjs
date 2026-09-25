@@ -119,14 +119,47 @@ function graphemes(value) {
   return [...graphemeSegmenter.segment(value.normalize("NFC"))].map(({ segment }) => segment);
 }
 
+function canonicalEmojiAtom(segment) {
+  const keycap = /^([0-9#*])\uFE0F?\u20E3$/u.exec(segment);
+  if (keycap) return `${keycap[1]}\u20E3`;
+
+  if (/^\p{Regional_Indicator}{2}$/u.test(segment)) return segment;
+
+  const simple = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(\uFE0F)?(\p{Emoji_Modifier})?$/u.exec(segment);
+  if (!simple) return null;
+
+  const [, base, variationSelector = "", modifier = ""] = simple;
+  const keepVariationSelector = variationSelector && !/\p{Emoji_Presentation}/u.test(base);
+  return `${base}${keepVariationSelector ? "\uFE0F" : ""}${modifier}`;
+}
+
+function canonicalEmojiKey(segment) {
+  if (/\uFE0E/u.test(segment)) return null;
+
+  const tagSequence = /^(\p{Extended_Pictographic})([\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]+)\u{E007F}$/u.exec(segment);
+  if (tagSequence) return segment;
+
+  const sanitized = [...segment]
+    .filter((value) => {
+      const codePoint = value.codePointAt(0);
+      if (codePoint >= 0xE0000 && codePoint <= 0xE007F) return false;
+      if (value === "\uFE0F" || value === "\u20E3") return true;
+      return !/\p{Mark}/u.test(value);
+    })
+    .join("");
+
+  const parts = sanitized.split("\u200D");
+  if (parts.length > 1) {
+    const canonicalParts = parts.map(canonicalEmojiAtom);
+    if (canonicalParts.some((part) => part == null)) return null;
+    return canonicalParts.join("\u200D");
+  }
+
+  return canonicalEmojiAtom(sanitized);
+}
+
 function isEmojiGrapheme(segment) {
-  if (/\uFE0E/u.test(segment)) return false;
-  return (
-    /^\p{Regional_Indicator}{2}$/u.test(segment) ||
-    (/\uFE0F/u.test(segment) && /\p{Emoji}/u.test(segment)) ||
-    /\p{Emoji_Presentation}/u.test(segment) ||
-    (/\u200D/u.test(segment) && /\p{Extended_Pictographic}/u.test(segment))
-  );
+  return canonicalEmojiKey(segment) !== null;
 }
 
 function hasQuestionPunctuation(text) {
@@ -134,18 +167,7 @@ function hasQuestionPunctuation(text) {
 }
 
 function hasExclamationPunctuation(text) {
-  return /[!¡՜！‼⁈⁉]/u.test(text);
-}
-
-function canonicalEmojiKey(segment) {
-  const codePoints = [...segment];
-  return codePoints
-    .filter((value, index) => {
-      if (value !== "\uFE0F") return true;
-      const previous = codePoints[index - 1];
-      return !(previous && /\p{Emoji_Presentation}/u.test(previous));
-    })
-    .join("");
+  return /[! ნ՜！‼⁈⁉]/u.test(text);
 }
 
 export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {
@@ -192,13 +214,12 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, option
     if (hasQuestionPunctuation(text)) questionMessages += 1;
     if (hasExclamationPunctuation(text)) exclamationMessages += 1;
 
-    const emojis = textGraphemes.filter(isEmojiGrapheme);
+    const emojis = textGraphemes
+      .map(canonicalEmojiKey)
+      .filter((emoji) => emoji !== null);
     if (emojis.length > 0) emojiMessages += 1;
     totalEmojiCount += emojis.length;
-    for (const emoji of emojis) {
-      const key = canonicalEmojiKey(emoji);
-      emojiCounts.set(key, (emojiCounts.get(key) ?? 0) + 1);
-    }
+    for (const emoji of emojis) emojiCounts.set(emoji, (emojiCounts.get(emoji) ?? 0) + 1);
   }
 
   const sortedLengths = [...lengths].sort((a, b) => a - b);
