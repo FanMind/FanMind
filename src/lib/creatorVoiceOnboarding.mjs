@@ -114,17 +114,18 @@ function roundRatio(numerator, denominator) {
   return denominator === 0 ? 0 : Math.round((numerator / denominator) * 1000) / 1000;
 }
 
-export function summarizeCreatorVoiceOnboardingDataset(dataset) {
+export function summarizeCreatorVoiceOnboardingDataset(dataset, options = {}) {
   requireCondition(dataset && typeof dataset === "object" && !Array.isArray(dataset), "voice_onboarding_dataset_required");
   const workspaceId = canonicalUuid(dataset.workspaceId);
   const creatorId = canonicalUuid(dataset.creatorId);
   requireCondition(Array.isArray(dataset.messages), "voice_onboarding_messages_required");
   requireCondition(dataset.messages.length === dataset.sampleSize, "voice_onboarding_sample_size_mismatch");
-  requireCondition(
-    dataset.sampleSize >= CREATOR_VOICE_ONBOARDING_MIN_MESSAGES &&
-      dataset.sampleSize <= CREATOR_VOICE_ONBOARDING_MAX_MESSAGES,
-    "voice_onboarding_sample_size",
+  const validated = normalizeCreatorVoiceOnboardingDataset(
+    dataset.messages,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    options,
   );
+  requireCondition(validated.sampleSize === dataset.sampleSize, "voice_onboarding_sample_size_mismatch");
 
   const lengths = [];
   let questionMessages = 0;
@@ -133,7 +134,7 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset) {
   let totalEmojiCount = 0;
   const emojiCounts = new Map();
 
-  for (const message of dataset.messages) {
+  for (const message of validated.messages) {
     requireCondition(
       message &&
         typeof message === "object" &&
