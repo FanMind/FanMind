@@ -567,7 +567,8 @@ test("summary restricts flags and reserved pictographs to assigned RGI emoji", (
   records[0] = record(1, { text: "🇦🇹" });
   records[1] = record(2, { text: "🇦🇦" });
   records[2] = record(3, { text: "🇿🇿" });
-  records[3] = record(4, { text: "\u{1F02C}\uFE0F" });
+  records[3] = record(4, { text: "🇦" });
+  records[4] = record(5, { text: "\u{1F02C}\uFE0F" });
 
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
