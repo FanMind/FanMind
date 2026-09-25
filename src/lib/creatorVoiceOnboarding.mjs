@@ -9,6 +9,7 @@ export const CREATOR_VOICE_ONBOARDING_CLOCK_SKEW_MS = 30_000;
 const graphemeSegmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
 const rgiEmojiZwjSequence = /^\p{RGI_Emoji_ZWJ_Sequence}$/v;
 const rgiEmojiFlagSequence = /^\p{RGI_Emoji_Flag_Sequence}$/v;
+const rgiEmojiModifierSequence = /^\p{RGI_Emoji_Modifier_Sequence}$/v;
 const assignedEmojiBase = /^\p{Emoji}$/u;
 const emojiModifierBase = /^\p{Emoji_Modifier_Base}$/u;
 
@@ -130,7 +131,7 @@ function canonicalEmojiAtom(segment, { allowMinimallyQualified = false } = {}) {
   if (/^\p{Regional_Indicator}{2}$/u.test(segment)) {
     return rgiEmojiFlagSequence.test(segment) ? segment : null;
   }
-  if (/^\p{Regional_Indicator}$/u.test(segment)) return null;
+  if (/^\p{Regional_Indicator}\uFE0F?$/u.test(segment)) return null;
 
   const simple = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(\uFE0F)?(\p{Emoji_Modifier})?$/u.exec(segment);
   if (!simple) return null;
@@ -139,8 +140,13 @@ function canonicalEmojiAtom(segment, { allowMinimallyQualified = false } = {}) {
   if (!assignedEmojiBase.test(base)) return null;
 
   if (modifier) {
-    if (!emojiModifierBase.test(base) || variationSelector !== "") return null;
-    return `${base}${modifier}`;
+    const modifierSequence = `${base}${modifier}`;
+    if (
+      !emojiModifierBase.test(base) ||
+      variationSelector !== "" ||
+      !rgiEmojiModifierSequence.test(modifierSequence)
+    ) return null;
+    return modifierSequence;
   }
 
   const defaultEmojiPresentation = /\p{Emoji_Presentation}/u.test(base);
