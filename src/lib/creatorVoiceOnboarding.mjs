@@ -12,17 +12,32 @@ function requireCondition(condition, code) {
 }
 
 function boundedText(value, maximum, code) {
-  requireCondition(typeof value === "string" && value.length <= maximum, code);
+  requireCondition(typeof value === "string", code);
   const normalized = value.normalize("NFC").trim();
-  requireCondition(normalized.length > 0, code);
+  requireCondition(normalized.length > 0 && normalized.length <= maximum, code);
   return normalized;
+}
+
+function canonicalUuid(value) {
+  return creatorUuid(value).toLowerCase();
 }
 
 function timestamp(value, now, clockSkewMs) {
   const normalized = boundedText(value, 40, "invalid_voice_onboarding_confirmed_at");
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/u.exec(normalized);
+  requireCondition(match !== null, "invalid_voice_onboarding_confirmed_at");
   const parsed = Date.parse(normalized);
+  requireCondition(Number.isFinite(parsed), "invalid_voice_onboarding_confirmed_at");
+  const date = new Date(parsed);
+  const [, year, month, day, hour, minute, second] = match;
   requireCondition(
-    Number.isFinite(parsed) && parsed <= now + clockSkewMs,
+    date.getUTCFullYear() === Number(year) &&
+      date.getUTCMonth() + 1 === Number(month) &&
+      date.getUTCDate() === Number(day) &&
+      date.getUTCHours() === Number(hour) &&
+      date.getUTCMinutes() === Number(minute) &&
+      date.getUTCSeconds() === Number(second) &&
+      parsed <= now + clockSkewMs,
     "invalid_voice_onboarding_confirmed_at",
   );
   return normalized;
@@ -36,8 +51,8 @@ export function normalizeCreatorVoiceOnboardingDataset(records, expected, option
     "voice_onboarding_sample_size",
   );
 
-  const expectedWorkspaceId = creatorUuid(expected?.expectedWorkspaceId);
-  const expectedCreatorId = creatorUuid(expected?.expectedCreatorId);
+  const expectedWorkspaceId = canonicalUuid(expected?.expectedWorkspaceId);
+  const expectedCreatorId = canonicalUuid(expected?.expectedCreatorId);
   const now = options.now ?? Date.now();
   const clockSkewMs = options.clockSkewMs ?? CREATOR_VOICE_ONBOARDING_CLOCK_SKEW_MS;
   requireCondition(Number.isFinite(now) && now >= 0, "invalid_voice_onboarding_time");
@@ -48,11 +63,15 @@ export function normalizeCreatorVoiceOnboardingDataset(records, expected, option
     "invalid_voice_onboarding_clock_skew",
   );
 
+  for (let index = 0; index < records.length; index += 1) {
+    requireCondition(Object.hasOwn(records, index), "voice_onboarding_sparse_sample");
+  }
+
   const normalized = records.map((raw) => {
     requireCondition(raw && typeof raw === "object" && !Array.isArray(raw), "voice_onboarding_record_required");
 
-    const workspaceId = creatorUuid(raw.workspaceId);
-    const creatorId = creatorUuid(raw.creatorId);
+    const workspaceId = canonicalUuid(raw.workspaceId);
+    const creatorId = canonicalUuid(raw.creatorId);
     requireCondition(
       workspaceId === expectedWorkspaceId && creatorId === expectedCreatorId,
       "voice_onboarding_scope_mismatch",
@@ -66,10 +85,10 @@ export function normalizeCreatorVoiceOnboardingDataset(records, expected, option
     return {
       workspaceId,
       creatorId,
-      messageId: creatorUuid(raw.messageId),
+      messageId: canonicalUuid(raw.messageId),
       text: boundedText(raw.text, CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH, "invalid_voice_onboarding_text"),
       confirmedAt: timestamp(raw.confirmedAt, now, clockSkewMs),
-      confirmedBy: raw.confirmedBy == null ? null : creatorUuid(raw.confirmedBy),
+      confirmedBy: raw.confirmedBy == null ? null : canonicalUuid(raw.confirmedBy),
       direction: "outbound",
       confirmed: true,
       source: "manual_outbound",
