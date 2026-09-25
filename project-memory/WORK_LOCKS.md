@@ -1,13 +1,13 @@
 ## LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924
 - Task: FM-GOV-BUILDER-MANAGER-002
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R2
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9`.
 - Scope: Builder Manager worker-slot semantics, embedded manager regression tests and exact Project-Memory reconciliation only.
 - Parallel safety: governance-only; no product/runtime/provider/database scope.
 - Forbidden: owner/protected action dispatch, Staging/Production/provider mutation, SQL APPLY, Billing/Restore/Mobile mutation, direct main write.
-- Release condition: exact current-head required CI green, independent review P1/P2=0/no blocking threads, normal merge and post-merge manager recomputation.
+- Release condition: satisfied by PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829`, 8/8 required checks green, independent exact-head review complete with P1=0/P2=0/no blocking threads, and normal squash merge `2c4954048d3ca359ac96978764b46e435854f0f4`. Post-merge manager recomputation is performed in the enclosing reconciliation.
 - Recovery: repository revert only.
 
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-20260919

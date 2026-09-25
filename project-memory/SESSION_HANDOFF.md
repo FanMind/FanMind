@@ -1,3 +1,9 @@
+## Builder Manager #1180 accepted; Creator SAFE READY — 2026-09-25
+- PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and its independent exact-head Codex review completed with P1=0/P2=0 and no blocking threads.
+- The PR squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`. This closes the post-#1179 manager regression without any Production/Staging/database/provider/Billing/Restore/Mobile mutation.
+- `FM-GOV-BUILDER-MANAGER-002` is ACCEPTED and `LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924` is released. Fresh manager recomputation removes the governance reservation and admits `NBA-CREATOR-INTELLIGENCE` as the single SAFE READY repository action.
+- Continue only a new bounded Creator Intelligence increment under its own lock/contract. Preserve accepted #1175 confirmed-chat foundations; external Meta/provider/account consent remains owner-gated, ChatAdmin APPLY remains protected OWNER_ACTION_REQUIRED, and Mobile remains DEFERRED_BY_OWNER.
+
 ## God Mode v1 closed; Creator continuation selected, ChatAdmin APPLY owner-gated — 2026-09-22
 - PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged through the normal PR path as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
 - Post-merge Deploy, God Mode Gate, Browser E2E, CodeQL, Supply Chain and Final Go-Live Readiness succeeded. Read-only Production Audit verifies the exact runtime/release and remains red only for the pre-existing `production_audit_backup_latest_stale_or_empty` Operations loop.

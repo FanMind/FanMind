@@ -4,29 +4,29 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
-- Task: `FM-REG-003`
-- Gate: `registration_admin_crm` (`IN_PROGRESS`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
+- Selected action: `NBA-CREATOR-INTELLIGENCE`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_intelligence` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: Creator-Profil pro Account und Social-Handoff ausbauen
 
 ## Instruction
 
-The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration.
+The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve all accepted Creator Intelligence source and Staging foundation evidence and resume only the prior bounded Creator continuation; do not rebuild accepted foundations, activate providers, auto-send, touch Mobile, or cross protected environment boundaries.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NONE`
+- SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `TASK:FM-GOV-BUILDER-MANAGER-002`
-- Serialized due to conflict/limit: `NBA-CREATOR-INTELLIGENCE` (TASK:FM-GOV-BUILDER-MANAGER-002:parallel_safe_not_true)
+- Active task continuations reserving slots: `NONE`
+- Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
 - The manager reuses the existing action catalog and task/gate state; it does not create a second TODO/orchestration system.
