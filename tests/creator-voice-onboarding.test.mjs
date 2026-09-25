@@ -174,7 +174,7 @@ test("summarizes validated Creator onboarding evidence without returning raw tex
     { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
     { now: Date.parse("2026-09-25T10:00:00Z") },
   );
-  const summary = summarizeCreatorVoiceOnboardingDataset(normalized);
+  const summary = summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId });
 
   assert.equal(summary.sampleSize, CREATOR_VOICE_ONBOARDING_MIN_MESSAGES);
   assert.equal(summary.evidenceOnly, true);
@@ -200,7 +200,7 @@ test("summary fails closed when a normalized-looking dataset crosses Creator sco
     creatorId: "66666666-6666-4666-8666-666666666666",
   };
   assert.throws(
-    () => summarizeCreatorVoiceOnboardingDataset(normalized),
+    () => summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
     /voice_onboarding_summary_scope_mismatch/u,
   );
 });
@@ -211,7 +211,7 @@ test("summary requires a sampleSize that exactly matches the validated message a
     { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
   );
   assert.throws(
-    () => summarizeCreatorVoiceOnboardingDataset({ ...normalized, sampleSize: normalized.sampleSize + 1 }),
+    () => summarizeCreatorVoiceOnboardingDataset({ ...normalized, sampleSize: normalized.sampleSize + 1 }, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
     /voice_onboarding_sample_size_mismatch/u,
   );
 });
@@ -224,7 +224,70 @@ test("summary revalidates message identity and rejects duplicate message IDs", (
   );
   normalized.messages[0] = { ...normalized.messages[0], messageId: normalized.messages[1].messageId };
   assert.throws(
-    () => summarizeCreatorVoiceOnboardingDataset(normalized),
+    () => summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
     /duplicate_voice_onboarding_message_id/u,
   );
+});
+
+
+test("summary binds the dataset header and messages to authorization-owned Creator scope", () => {
+  const foreignWorkspaceId = "77777777-7777-4777-8777-777777777777";
+  const foreignCreatorId = "88888888-8888-4888-8888-888888888888";
+  const foreign = dataset().map((item) => ({
+    ...item,
+    workspaceId: foreignWorkspaceId,
+    creatorId: foreignCreatorId,
+  }));
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    foreign,
+    { expectedWorkspaceId: foreignWorkspaceId, expectedCreatorId: foreignCreatorId },
+  );
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(
+      normalized,
+      { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    ),
+    /voice_onboarding_summary_scope_mismatch/u,
+  );
+});
+
+test("summary measures user-perceived graphemes rather than UTF-16 code units", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👨‍👩‍👧‍👦" });
+  records[1] = record(2, { text: "é" });
+  for (let index = 2; index < records.length; index += 1) {
+    records[index] = record(index + 1, { text: "a" });
+  }
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  assert.equal(summary.metrics.averageChars, 1);
+  assert.equal(summary.metrics.medianChars, 1);
+});
+
+test("summary preserves complete emoji graphemes and excludes plain emoji-capable symbols", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👨‍👩‍👧‍👦" });
+  records[1] = record(2, { text: "❤️" });
+  records[2] = record(3, { text: "🇦🇹" });
+  records[3] = record(4, { text: "©" });
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.ok(summary.metrics.preferredEmojis.includes("👨‍👩‍👧‍👦"));
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🇦🇹"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("©"));
+  assert.equal(summary.metrics.emojisPerMessage, 0.1);
 });
