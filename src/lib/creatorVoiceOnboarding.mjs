@@ -130,6 +130,7 @@ function canonicalEmojiAtom(segment, { allowMinimallyQualified = false } = {}) {
   if (/^\p{Regional_Indicator}{2}$/u.test(segment)) {
     return rgiEmojiFlagSequence.test(segment) ? segment : null;
   }
+  if (/^\p{Regional_Indicator}$/u.test(segment)) return null;
 
   const simple = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(\uFE0F)?(\p{Emoji_Modifier})?$/u.exec(segment);
   if (!simple) return null;
