@@ -192,13 +192,40 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 "status_conflict": status_conflict,
             })
 
+    # Reconcile clean orphan non-running locks against same-identity STARTED_WORK
+    # before discarding them. This prevents an unlinked PARTIAL snapshot from
+    # reopening work that an authoritative BLOCKED/PAUSED lock has stopped.
+    for lock_id, lock in lock_records.items():
+        if lock_id in represented_locks or not lock["tasks"]:
+            continue
+        lock_status = str(lock.get("status") or "").upper()
+        lock_nonrunning = lock_status == "BLOCKED" or lock_status in NONRUNNING_LOCK_STATES
+        if lock_nonrunning and not bool(lock.get("status_conflict")):
+            lock_action = next(iter(lock["actions"])) if len(lock["actions"]) == 1 else None
+            matching = [slot for slot in slots if slot.get("tasks") == lock["tasks"]]
+            if matching:
+                for slot in matching:
+                    slot_action = slot.get("action")
+                    if lock_action and slot_action and lock_action != slot_action:
+                        slot["status_conflict"] = True
+                    elif str(slot.get("status") or "").upper() in EXPLICIT_RUNNING_WORK_STATES:
+                        slot["status_conflict"] = True
+                    elif not slot.get("status_conflict"):
+                        slot["status"] = lock_status
+                        if slot_action is None and lock_action is not None:
+                            slot["action"] = lock_action
+                represented_locks.add(lock_id)
+
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
     for lock_id, lock in lock_records.items():
         if (
             lock_id in represented_locks
             or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
             or (
-                str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+                (
+                    str(lock.get("status") or "").upper() == "BLOCKED"
+                    or str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+                )
                 and not bool(lock.get("status_conflict"))
             )
             or not lock["tasks"]
@@ -575,6 +602,7 @@ def build_safe_ready_set(
             exact_task = exact.get("task") if exact is not None else None
             exact_identity_consistent = (
                 exact is not None
+                and len(slot_tasks) == 1
                 and exact_task in slot_tasks
                 and tasks_fully_resolved
             )
@@ -603,8 +631,13 @@ def build_safe_ready_set(
                 # capacity-reserving until canonical state reconciles it.
                 if slot_status not in explicit_running_statuses:
                     continue
-            # Dependency/prerequisite state controls execution, not whether the
-            # already-active continuation still reserves its worker slot.
+            # A dependency regression preserves capacity only when canonical
+            # evidence still says the continuation is actually running. PARTIAL /
+            # IMPLEMENTED_NOT_VERIFIED state is not a running worker and must not
+            # serialize its unfinished predecessor.
+            dep_ok, _ = manager_dependency_status(action, state, catalog, failed)
+            if not dep_ok and slot_status not in explicit_running_statuses:
+                continue
             active_actions.append(action)
             active_reservations.append(action)
         else:
@@ -1478,6 +1511,69 @@ def run_manager_contract_tests() -> None:
     } in result["blocked_dependencies"]
     assert {"id": "DEPENDENCY-BASE", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
     assert {"id": "DEPENDENCY-NEW", "reason": "worker_limit"} in result["serialized_due_to_conflict"]
+
+    # Dependency-invalid non-running continuations do not consume capacity;
+    # their predecessor remains eligible, while explicit running evidence reserves.
+    dependency_partial_slots = [{
+        "tasks": {"TASK-DEPENDENCY-ACTIVE"},
+        "action": "DEPENDENCY-ACTIVE",
+        "status": "PARTIAL",
+    }]
+    result = manager(
+        [dependency_active, dependency_base, dependency_new],
+        limit=1,
+        slots=dependency_partial_slots,
+    )
+    assert result["safe_ready_set"] == ["DEPENDENCY-BASE"]
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 1
+
+    # A clean PAUSED orphan lock reconciles an unlinked non-running started
+    # snapshot for the same task and suppresses reopening that action.
+    unlinked_paused_started = """## Active work
+## FM-UNLINKED-PAUSED-001
+- Status: PARTIAL
+"""
+    unlinked_paused_lock = """## LOCK-FM-UNLINKED-PAUSED-001
+- Task: FM-UNLINKED-PAUSED-001
+- Status: PAUSED
+"""
+    unlinked_paused_slots = active_work_slots(
+        unlinked_paused_started,
+        unlinked_paused_lock,
+    )
+    assert len(unlinked_paused_slots) == 1
+    assert unlinked_paused_slots[0]["status"] == "PAUSED"
+    assert unlinked_paused_slots[0]["status_conflict"] is False
+    unlinked_paused_action = _action(
+        "UNLINKED-PAUSED-ACTION",
+        1,
+        task="FM-UNLINKED-PAUSED-001",
+    )
+    result = manager(
+        [unlinked_paused_action, a],
+        limit=1,
+        slots=unlinked_paused_slots,
+    )
+    assert result["safe_ready_set"] == ["A"]
+    assert result["active_continuations"] == []
+
+    # An exact action cannot resolve a composite slot with additional live task
+    # labels; preserve one unknown fail-closed reservation for the whole slot.
+    composite_exact_a = _action("COMPOSITE-EXACT-A", 1, task="FM-COMPOSITE-A")
+    composite_exact_b = _action("COMPOSITE-EXACT-B", 2, task="FM-COMPOSITE-B")
+    result = manager(
+        [composite_exact_a, composite_exact_b, a],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-COMPOSITE-A", "FM-COMPOSITE-B"},
+            "action": "COMPOSITE-EXACT-A",
+            "status": "IN_PROGRESS",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["UNKNOWN:COMPOSITE-EXACT-A"]
+    assert result["worker_used"] == 1
 
     # Terminal active records release their slots: failed work stays stopped and
     # completed work stays complete, while independent work may use the capacity.
