@@ -129,11 +129,11 @@ function isEmojiGrapheme(segment) {
 }
 
 function hasQuestionPunctuation(text) {
-  return /[?؟？]/u.test(text);
+  return /[?؟？⁇⁈⁉]/u.test(text);
 }
 
 function hasExclamationPunctuation(text) {
-  return /[!！]/u.test(text);
+  return /[!！‼⁈⁉]/u.test(text);
 }
 
 export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {
@@ -190,11 +190,21 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, option
   const midpoint = Math.floor(sortedLengths.length / 2);
   const medianChars =
     sortedLengths.length % 2 === 0
-      ? Math.round((sortedLengths[midpoint - 1] + sortedLengths[midpoint]) / 2)
+      ? (sortedLengths[midpoint - 1] + sortedLengths[midpoint]) / 2
       : sortedLengths[midpoint];
 
+  function compareCodePoints(left, right) {
+    const leftPoints = Array.from(left, (value) => value.codePointAt(0));
+    const rightPoints = Array.from(right, (value) => value.codePointAt(0));
+    const length = Math.min(leftPoints.length, rightPoints.length);
+    for (let index = 0; index < length; index += 1) {
+      if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
+    }
+    return leftPoints.length - rightPoints.length;
+  }
+
   const preferredEmojis = [...emojiCounts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .sort((a, b) => b[1] - a[1] || compareCodePoints(a[0], b[0]))
     .slice(0, 10)
     .map(([emoji]) => emoji);
 
