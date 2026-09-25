@@ -14,8 +14,8 @@
 - Mismatch: stale current AI readers, publication approval incorrectly attributed to the protected fixture, and deployment-invalidated evidence still marked usable.
 - Actual state: PR #1087 and deployments passed; AI run 34273836166 technically passed, with separate authorization unverified. SSH rule has a distinct new explicit owner approval and exact provider read-back.
 - Required correction: reconcile readers/freshness and separate observations from protected acceptance; preserve historical evidence and prohibit blind duplicate runs.
-- Status: OPEN
-- Remaining: exact-head documentation checks/review/publication; CTR-FM-AI-AUTH-20260910 remains open even after the documentation fix. Owner SSH observation remains pending.
+- Status: RESOLVED
+- Resolved: 2026-09-25 from the already-published PR #1088 closeout: final head `83213f6007ac558617ffe9eff9ec37d816ff3c0e` passed all seven applicable exact-head workflows, all three review threads were resolved, and squash merge `7004c9ea44c98f125fbd7988a2557cf356693b36` was independently verified. CTR-FM-AI-AUTH-20260910 and owner SSH authentication remain separate open blockers; resolving this documentation mismatch does not accept either protected gate.
 
 Mandatory consistency check between project memory and actual repository/runtime state.
 

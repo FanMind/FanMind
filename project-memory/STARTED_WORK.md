@@ -7,12 +7,11 @@
 - Resume: do not reopen this P1 scope. Continue only the separate confirmed-chat installed source-state step above.
 
 ## FM-REG-001 — Daily setup display closeout
-- Status: IMPLEMENTED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914; owner: Codex.
-- Baseline: main 1e011edd422d3cc7165ac3a4be221af8b8c57f56, already deployed #1124; final source continues the existing branch fix/daily-admin-visibility-20260914 and single PR #1125.
-- Completed so far: reconciled the owner test and narrowed the final tree to setup presentation and meaningful regression tests. Removed the broader Admin switch from this release; preserved all existing actions and readiness gates.
-- Still open/exact next step: complete current-head automated checks and independent review, merge #1125, normal Production deploy and exact /api/version proof, then existing-account browser handoff and stop. The final PR receipt closes this bounded lock; overall Daily provisioning remains PARTIAL.
-- Owner action needed: existing-account browser test after deployed confirmation, no re-registration. No Production DB migration, real payment, Price creation or next work package is authorized here.
-- Recovery: bounded source revert through the normal isolated release; this presentation change has no data mutation.
+- Status: PRODUCTION_CONFIRMED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914 — RELEASED_PRODUCTION_CONFIRMED; owner: Codex.
+- Result: PR #1125 final head `423f82d67fd15d633d020c4f92da7f744e181416` passed its final-head checks/review and merged as `8694986f7d25639ccbdf67b23c40f88bd175f972`. Its durable completion receipt records successful Production deploy `34886792334`, exact `/api/version`, Production audit `34886957898` and public readiness `34886957948`.
+- Scope closed: Daily setup presentation only. The receipt explicitly releases this lock. Full Daily provisioning/payment/tax readiness remains separate and PARTIAL.
+- Exact next step: do not rebuild or reopen this UI closeout. Continue only the distinct retained Daily/Billing gates when their own prerequisites and authorizations are satisfied.
+- Recovery: bounded source revert through the normal isolated release; this presentation change had no data mutation.
 
 ## Creator foundation closeout — 2026-09-11
 - Scope: FM-CREATOR-001 / FM-SOC3-001 / FM-CR-033; bounded source/schema/JWT/revision/PDF package ACCEPTED. LOCK-FM-CREATOR-META-FINISH-20260911 is RELEASED for that package; overall tasks remain IN_PROGRESS/PARTIAL.
@@ -192,7 +191,8 @@
 - Exact next step: preserve the deployed Web correction and continue only the separately authorized external acceptance.
 
 ## FM-AI-001 / FM-RST-001 — PR #1088 review reconciliation 2026-09-10
-- Status: IN_PROGRESS
+- Status: VERIFIED
+- Reconciled: 2026-09-25 from the PR #1088 publication closeout: final head `83213f6007ac558617ffe9eff9ec37d816ff3c0e` passed all seven applicable exact-head workflows, all three review threads were resolved, and squash merge `7004c9ea44c98f125fbd7988a2557cf356693b36` was independently verified. This closes only the documentation reconciliation; CTR-FM-AI-AUTH-20260910 and owner SSH authentication remain separate open evidence gates.
 - Risk: R4
 - Boundary: repository evidence correction only
 - Work lock: LOCK-PR1088-REVIEW-20260910
@@ -295,6 +295,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Cross-link Task ID, Change Request, PR/branch, dependencies, work lock and execution receipt.
 
 ## Active work
+
+## FM-GOV-BUILDER-MANAGER-002 — non-running slot accounting — 2026-09-24
+- Status: IN_PROGRESS
+- Risk: R2
+- Work lock: LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924
+- Owner: autonomous FanMind Builder
+- Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9` after clean merge of #1178.
+- Defect: the existing Builder Manager counted OWNER_ACTION_REQUIRED, DEFERRED_BY_OWNER, WAITING_PREREQUISITE and canonically BLOCKED continuations as running workers. Eleven non-running scopes therefore exhausted the three-worker pool and serialized independent `NBA-CREATOR-INTELLIGENCE`, contrary to the closed-loop rule that one blocked scope must not globally stop safe work.
+- Bounded scope: `scripts/fanmind_next_best_action.py`, its embedded manager regression contract and exact Project-Memory reconciliation only.
+- Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; this correction does not authorize owner/protected/provider/runtime/database work or relax scope-conflict checks.
+- Acceptance: manager contract tests, Project Memory Quality/Guard/Status, God Mode, current-head CI/CodeQL/Browser and one independent review with P1=0/P2=0/no blocking threads.
+- Exact next step: converge this bounded PR, then recompute the actual SAFE READY SET from merged state before starting any product scope.
+- Recovery: ordinary repository revert; no external state is mutated.
+
 
 ## FM-CREATOR-001 — confirmed-chat protected Staging VERIFY control — 2026-09-24
 - Status: MERGED_VERIFIED
