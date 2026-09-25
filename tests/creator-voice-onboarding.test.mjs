@@ -276,6 +276,7 @@ test("summary preserves complete emoji graphemes and excludes plain emoji-capabl
   records[1] = record(2, { text: "❤️" });
   records[2] = record(3, { text: "🇦🇹" });
   records[3] = record(4, { text: "©" });
+  records[4] = record(5, { text: "©️" });
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
     { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
@@ -289,7 +290,8 @@ test("summary preserves complete emoji graphemes and excludes plain emoji-capabl
   assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
   assert.ok(summary.metrics.preferredEmojis.includes("🇦🇹"));
   assert.ok(!summary.metrics.preferredEmojis.includes("©"));
-  assert.equal(summary.metrics.emojisPerMessage, 0.1);
+  assert.ok(summary.metrics.preferredEmojis.includes("©️"));
+  assert.equal(summary.metrics.emojisPerMessage, 0.133);
 });
 
 
@@ -411,6 +413,7 @@ test("summary recognizes Spanish opening and Armenian question/exclamation punct
   records[1] = record(2, { text: "¡Solo apertura" });
   records[2] = record(3, { text: "Հայերեն՞" });
   records[3] = record(4, { text: "Հայերեն՜" });
+  records[4] = record(5, { text: "ქართული ნ ტექსტი" });
 
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
@@ -473,6 +476,7 @@ test("summary strips arbitrary combining and tag extenders from preferred emoji 
   const records = dataset();
   records[0] = record(1, { text: "😀\u0301\u0301" });
   records[1] = record(2, { text: "😀\u{E0061}\u{E0062}" });
+  records[2] = record(3, { text: "😀\u{E0073}\u{E0065}\u{E0063}\u{E0072}\u{E0065}\u{E0074}\u{E007F}" });
 
   const normalized = normalizeCreatorVoiceOnboardingDataset(
     records,
@@ -483,9 +487,9 @@ test("summary strips arbitrary combining and tag extenders from preferred emoji 
     { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
   );
 
-  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
-  assert.equal(summary.metrics.emojisPerMessage, 0.067);
-  assert.equal(summary.metrics.preferredEmojis[0], "😀");
+  assert.equal(summary.metrics.emojiMessageRatio, 0.1);
+  assert.equal(summary.metrics.emojisPerMessage, 0.1);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["😀"]);
   assert.equal(summary.metrics.preferredEmojis.some((emoji) => /\p{Mark}/u.test(emoji)), false);
   assert.equal(summary.metrics.preferredEmojis.some((emoji) => /[\u{E0000}-\u{E007F}]/u.test(emoji)), false);
 });
