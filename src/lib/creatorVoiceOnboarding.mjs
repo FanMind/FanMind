@@ -7,6 +7,8 @@ export const CREATOR_VOICE_ONBOARDING_MAX_MESSAGES = 100;
 export const CREATOR_VOICE_ONBOARDING_MAX_TEXT_LENGTH = 4000;
 export const CREATOR_VOICE_ONBOARDING_CLOCK_SKEW_MS = 30_000;
 const graphemeSegmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
+const rgiEmojiZwjSequence = /^\\p{RGI_Emoji_ZWJ_Sequence}$/v;
+const emojiModifierBase = /^\\p{Emoji_Modifier_Base}$/u;
 
 function requireCondition(condition, code) {
   if (!condition) throw new CreatorPolicyError(code);
@@ -119,22 +121,24 @@ function graphemes(value) {
   return [...graphemeSegmenter.segment(value.normalize("NFC"))].map(({ segment }) => segment);
 }
 
-function canonicalEmojiAtom(segment) {
-  const keycap = /^([0-9#*])\uFE0F?\u20E3$/u.exec(segment);
-  if (keycap) return `${keycap[1]}\u20E3`;
+function canonicalEmojiAtom(segment, { allowMinimallyQualified = false } = {}) {
+  const keycap = /^([0-9#*])\\uFE0F?\\u20E3$/u.exec(segment);
+  if (keycap) return `${keycap[1]}\\u20E3`;
 
-  if (/^\p{Regional_Indicator}{2}$/u.test(segment)) return segment;
+  if (/^\\p{Regional_Indicator}{2}$/u.test(segment)) return segment;
 
-  const simple = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(\uFE0F)?(\p{Emoji_Modifier})?$/u.exec(segment);
+  const simple = /^(\\p{Extended_Pictographic}|\\p{Emoji_Presentation})(\\uFE0F)?(\\p{Emoji_Modifier})?$/u.exec(segment);
   if (!simple) return null;
 
   const [, base, variationSelector = "", modifier = ""] = simple;
-  const defaultEmojiPresentation = /\p{Emoji_Presentation}/u.test(base);
-  if (!defaultEmojiPresentation && variationSelector !== "\uFE0F") return null;
-  const keepVariationSelector = variationSelector && !defaultEmojiPresentation;
-  return `${base}${keepVariationSelector ? "\uFE0F" : ""}${modifier}`;
-}
+  if (modifier && !emojiModifierBase.test(base)) return null;
 
+  const defaultEmojiPresentation = /\\p{Emoji_Presentation}/u.test(base);
+  if (!defaultEmojiPresentation && variationSelector !== "\\uFE0F" && !allowMinimallyQualified) return null;
+
+  const keepVariationSelector = !defaultEmojiPresentation && (variationSelector === "\\uFE0F" || allowMinimallyQualified);
+  return `${base}${keepVariationSelector ? "\\uFE0F" : ""}${modifier}`;
+}
 function canonicalEmojiKey(segment) {
   if (/\uFE0E/u.test(segment)) return null;
 
@@ -158,9 +162,12 @@ function canonicalEmojiKey(segment) {
 
   const parts = sanitized.split("\u200D");
   if (parts.length > 1) {
-    const canonicalParts = parts.map(canonicalEmojiAtom);
+    const canonicalParts = parts.map((part) => canonicalEmojiAtom(part, { allowMinimallyQualified: true }));
     if (canonicalParts.some((part) => part == null)) return null;
-    return canonicalParts.join("\u200D");
+
+    const canonicalSequence = canonicalParts.join("\u200D");
+    if (!rgiEmojiZwjSequence.test(canonicalSequence)) return null;
+    return canonicalSequence;
   }
 
   return canonicalEmojiAtom(sanitized);
