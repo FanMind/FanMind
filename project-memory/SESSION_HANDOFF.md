@@ -1,3 +1,9 @@
+## Creator voice onboarding #1182 merged; next Creator scope requires fresh selection — 2026-09-25
+- PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19` passed all nine triggered required checks and the final exact-head Codex review with no further major findings after the P1/P2 corrections; all threads are resolved.
+- Squash merge created exact main `134d1ba100aaa1dbae734c9db19c076e5c513b52`. Current-main post-merge re-read confirms the hardened 30–100 confirmed-manual-outbound validator, regression tests and required CI registration.
+- The bounded voice-onboarding lock is released. This proves repository input validation only; real private samples, actual style derivation, blinded quality and all runtime/provider/target activation remain unaccepted.
+- Builder Manager remains on `NBA-CREATOR-INTELLIGENCE` as the repository-safe action family, with no active continuation after this closeout. Select a distinct still-open Creator increment only after fresh duplicate/dependency/scope checks.
+
 ## Builder Manager #1180 accepted; Creator SAFE READY — 2026-09-25
 - PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and its independent exact-head Codex review completed with P1=0/P2=0 and no blocking threads.
 - The PR squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`. This closes the post-#1179 manager regression without any Production/Staging/database/provider/Billing/Restore/Mobile mutation.
