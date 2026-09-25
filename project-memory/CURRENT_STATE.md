@@ -1,8 +1,8 @@
-## Builder Manager non-running slot defect under correction — 2026-09-24
-- Exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9` cleanly merged #1178 and closed the mandatory-reader P2.
-- Fresh manager reconciliation then proved a separate implementation defect: OWNER_ACTION_REQUIRED, DEFERRED_BY_OWNER, WAITING_PREREQUISITE and canonically BLOCKED continuations were counted as running workers. The generated state therefore reserved 11 slots against the default limit 3 and globally serialized independent Creator repository work.
-- Bounded governance correction `FM-GOV-BUILDER-MANAGER-002` keeps unknown/ambiguous executable work fail-closed, but removes non-running gated work from worker capacity. Daily #1125 and ChatAdmin #1145 zombie source locks are reconciled terminal; the genuine Operations reboot lock remains R4 but is classified BLOCKED on protected host/reboot evidence rather than as a running repository worker.
-- While this correction itself is active it reserves one fail-closed governance slot, so no product work starts from this reconciliation. After merge/release, recompute the actual SAFE READY SET before selecting the next scope.
+## Builder Manager correction accepted; Creator SAFE READY — 2026-09-25
+- PR #1180 final head `8f672bfad8c7124b8bd440f3deb1fb4b34873829` passed all eight required current-head checks and its independent exact-head review with P1=0/P2=0/no blocking threads, then squash-merged normally as exact main `2c4954048d3ca359ac96978764b46e435854f0f4`.
+- `FM-GOV-BUILDER-MANAGER-002` is ACCEPTED. `LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924` is released in this reconciliation. The correction keeps unknown/ambiguous executable work fail-closed while excluding owner/deferred/prerequisite/BLOCKED non-running work from worker capacity.
+- Fresh post-merge recomputation admits `NBA-CREATOR-INTELLIGENCE` as the single repository-safe READY action. Admin-CRM synthetic lifecycle, ChatAdmin APPLY, external provider/account work and Mobile remain separately owner/protected/deferred and do not authorize target mutation.
+- No Production/Staging/database/provider/Billing/Restore/Mobile mutation occurred in the manager correction or this Project-Memory closeout.
 
 ## Creator #1175 source control merged; protected target remains separate — 2026-09-24
 - PR #1175 final head `398abaa709ae4e526e1bd1d1d16df832b6ade815` corrected its initial P1 supply-chain inventory and P2 invalid-dispatch findings. Both review threads are resolved; the independent current-head review reported no further major issues; the PR merged normally as exact main `6e43bc6a86d73bffec203f7af2270002255a3008`.
