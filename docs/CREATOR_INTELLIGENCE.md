@@ -201,6 +201,17 @@ keinen kausalen Verkaufserfolg aus zeitlicher Nähe behaupten. Preise/Grenzen
 ändern sich nicht automatisch. Voice-Onboarding aus 30–100 freigegebenen echten
 Creator-Nachrichten und die verblindete Stimmenbewertung sind noch offen.
 
+Der repository-seitige Onboarding-Eingangsvertrag ist nun separat vorbereitet:
+`src/lib/creatorVoiceOnboarding.mjs` akzeptiert ausschließlich 30–100 bestätigte
+manuelle Outbound-Nachrichten desselben Workspace/Creators. Inbound-Nachrichten,
+KI-Entwürfe, unbestätigte oder quellenfremde Einträge, gemischte Mandanten,
+doppelte Message-IDs sowie unzulässige Zeit-/Textwerte werden fail-closed
+abgewiesen. Dieser reine Validator enthält keine echten privaten Beispieltexte,
+keinen Provider-/Modellaufruf, kein Persistieren, kein Training und keine
+automatische Profiländerung. Die tatsächliche private 30–100-Nachrichten-
+Abnahme, Stilableitung und verblindete Zwei-Creator-Qualitätsbewertung bleiben
+separate Evidence-Gates.
+
 Der repository-seitige, nebenwirkungsfreie Lernvertrag ist inzwischen in
 `src/lib/creatorConfirmedChatLearning.mjs` vorbereitet. Der bestätigte Outbound
 muss Vorschlags- und Generierungs-ID sowie die exakte Creator- und Prompt-
