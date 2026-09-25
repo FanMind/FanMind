@@ -7,6 +7,7 @@
 - Scope: `scripts/fanmind_next_best_action.py`, embedded manager contract tests, zombie-lock reconciliation and generated Project-Memory state only.
 - Safety: unknown/ambiguous executable active work still reserves fail-closed capacity; conflict/scope/dependency checks and owner/protected gates remain unchanged.
 - Exact next step: converge the bounded PR; after merge release this governance lock and recompute the manager before admitting the next product task.
+- 2026-09-25 post-merge reconciliation: PR #1179 merged as `398e972f02d94a9cdf9b480c83db74de3ade4973` before its final exact-head Codex review completed. That review then reported three P1 defects on the merged manager: stopped BLOCKED/PAUSED actions could re-enter fresh candidates; a composite stopped slot could release extra live task labels; and ambiguous non-running siblings whose dependencies were all incomplete could reserve capacity and block their prerequisite. Preserve #1179 as observed merged evidence but do not classify FM-GOV-BUILDER-MANAGER-002 accepted. PR #1180 is the bounded repository-only continuation under the existing task/lock; no protected/runtime/provider mutation is authorized by this reconciliation.
 
 # FanMind Task Ledger
 
