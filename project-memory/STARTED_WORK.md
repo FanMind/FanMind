@@ -1,3 +1,14 @@
+## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
+- Status: CODE_CHANGED
+- Risk: R2
+- Work lock: LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925
+- Baseline: exact main `094334c38e9942affe7e8100aeb02df45808e530` after #1183 reconciled the bounded onboarding input contract and released its predecessor lock.
+- Scope: repository-only deterministic summary over an already normalized 30–100-message Creator onboarding dataset. Files are bounded to `src/lib/creatorVoiceOnboarding.mjs`, `tests/creator-voice-onboarding.test.mjs`, Creator documentation and exact Project-Memory records.
+- Acceptance: return only aggregate character/question/exclamation/emoji statistics and top emojis for one exact Workspace/Creator. No raw message text or message IDs in the summary, no automatic profile/voice approval, no provider/model call, no persistence, no SQL or target mutation.
+- Negative paths: cross-Creator scope or sample-size mismatch fail closed; privacy regression proves raw sample text and message IDs are absent from the summary.
+- Boundary: this is evidence preparation for later human review only. It does not derive subjective style scores, create an approved Creator voice profile, use real private samples in Git, run blinded quality, activate runtime/provider or mutate Staging/Production.
+- Recovery: ordinary repository revert; no external state changed.
+
 ## FM-CREATOR-001 — bounded voice onboarding input contract — 2026-09-25
 - Status: MERGED_VERIFIED
 - Risk: R3
