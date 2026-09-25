@@ -120,6 +120,7 @@ function graphemes(value) {
 }
 
 function isEmojiGrapheme(segment) {
+  if (/\uFE0E/u.test(segment)) return false;
   return (
     /^\p{Regional_Indicator}{2}$/u.test(segment) ||
     (/\uFE0F/u.test(segment) && /\p{Emoji}/u.test(segment)) ||
@@ -217,7 +218,7 @@ export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, option
     rawTextIncluded: false,
     messageIdIncluded: false,
     metrics: {
-      averageChars: Math.round(lengths.reduce((sum, value) => sum + value, 0) / lengths.length),
+      averageChars: Math.round((lengths.reduce((sum, value) => sum + value, 0) / lengths.length) * 1000) / 1000,
       medianChars,
       questionMessageRatio: roundRatio(questionMessages, lengths.length),
       exclamationMessageRatio: roundRatio(exclamationMessages, lengths.length),
