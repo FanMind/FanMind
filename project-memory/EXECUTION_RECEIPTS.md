@@ -1,3 +1,14 @@
+## RECEIPT-FM-CREATOR-VOICE-ONBOARDING-20260925
+- Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R3.
+- Baseline: exact main `aee02274f35c3c346c12710f98b84144c6f53077`; Builder Manager admitted `NBA-CREATOR-INTELLIGENCE`.
+- Scope: pure repository-side 30–100-message Creator voice-onboarding input validator, focused negative/regression tests, required CI registration, Creator documentation and bounded Project-Memory records only.
+- Review/CI: initial exact-head review found one P1 (test not registered in required CI) and four P2 fail-closed gaps (permissive timestamps, UUID case duplicates, sparse arrays, pre-NFC length check). All were corrected with direct regressions. Final head `4ce84791a01efa1ebe99293243bd4d70428edb19` passed FanMind CI, Browser E2E, CodeQL, Supply Chain, Landing Language, God Mode, Project Memory Guard/Quality/Status; all review threads are resolved and exact-head Codex reported no further major issues.
+- Merge: normal squash merge produced exact main `134d1ba100aaa1dbae734c9db19c076e5c513b52`.
+- Post-merge repository verify: main contains source blob `c714afb0175fc9d6c06ed1d4b4d6a87fc6b03c30`, test blob `64e90e75f0d0761ce7c36377d4b712efa0e2444d`, required operations-suite registration and the documented bounded contract.
+- Safety: no private Creator sample, provider/model invocation, training, persistence, SQL, Staging/Production/provider/customer mutation, automatic profile update/send, Billing/Stripe/Tax, Restore or Mobile change occurred.
+- Boundary: merge/repository verification is not runtime, Staging, provider or Production acceptance. Real 30–100-message evidence, style derivation and blinded two-Creator quality remain open separately.
+- Recovery: normal reviewed source revert; no external rollback required.
+
 ## RECEIPT-FM-GOV-BUILDER-MANAGER-002-20260924
 - Status: ACCEPTED; Task FM-GOV-BUILDER-MANAGER-002; Risk R2.
 - Baseline: exact main `5ca91a63ae9f6df0871830269d4ac987d7b3f2c9` after clean #1178 merge.
