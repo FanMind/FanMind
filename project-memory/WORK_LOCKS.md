@@ -1,3 +1,16 @@
+## LOCK-FM-CREATOR-VOICE-ONBOARDING-20260925
+- Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE
+- Status: ACTIVE
+- Risk: R3
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `aee02274f35c3c346c12710f98b84144c6f53077`.
+- Scope: `src/lib/creatorVoiceOnboarding.mjs`, `tests/creator-voice-onboarding.test.mjs`, Creator onboarding documentation and bounded Project-Memory reconciliation only.
+- Parallel safety: serialize all Creator voice/onboarding/quality work against this lock; no second worker may touch the same Creator contract, samples, profile semantics or Project-Memory records.
+- Acceptance: 30–100 same-Workspace/same-Creator confirmed manual outbound messages only; deterministic negative tests reject AI drafts, inbound/unconfirmed/cross-tenant/duplicate/future evidence.
+- Forbidden: private real messages in Git, model/provider invocation, persistence/schema/application, Staging/Production/provider/customer mutation, automatic profile update/send, Billing/Restore/Mobile.
+- Release condition: exact current-head required CI green, one independent review for the material head with P1=0/P2=0/no blocking threads, normal merge, then post-merge reconciliation.
+- Recovery: repository revert only.
+
 ## LOCK-FM-GOV-BUILDER-MANAGER-SLOTS-20260924
 - Task: FM-GOV-BUILDER-MANAGER-002
 - Status: RELEASED_MERGED_VERIFIED
