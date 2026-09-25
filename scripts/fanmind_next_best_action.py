@@ -217,19 +217,26 @@ def active_work_slots(started_text: str, locks_text: str) -> list[dict]:
                 represented_locks.add(lock_id)
 
     # A genuinely active lock is current even if its STARTED_WORK record is missing.
+    # A clean orphan BLOCKED/PAUSED lock with one exact action is also retained as
+    # non-running identity evidence so candidate selection cannot reopen it.
     for lock_id, lock in lock_records.items():
-        if (
-            lock_id in represented_locks
-            or (_lock_status_is_terminal(lock["status"]) and not lock.get("status_conflict"))
-            or (
-                (
-                    str(lock.get("status") or "").upper() == "BLOCKED"
-                    or str(lock.get("status") or "").upper() in NONRUNNING_LOCK_STATES
+        if lock_id in represented_locks or not lock["tasks"]:
+            continue
+        lock_status = str(lock.get("status") or "").upper()
+        lock_conflict = bool(lock.get("status_conflict"))
+        lock_nonrunning = lock_status == "BLOCKED" or lock_status in NONRUNNING_LOCK_STATES
+        if _lock_status_is_terminal(lock["status"]) and not lock_conflict:
+            continue
+        if lock_nonrunning and not lock_conflict:
+            if len(lock["actions"]) == 1:
+                slots.append(
+                    {
+                        "tasks": lock["tasks"],
+                        "action": next(iter(lock["actions"])),
+                        "status": lock_status,
+                        "status_conflict": False,
+                    }
                 )
-                and not bool(lock.get("status_conflict"))
-            )
-            or not lock["tasks"]
-        ):
             continue
         slots.append(
             {
@@ -563,6 +570,7 @@ def build_safe_ready_set(
     ]
     active_actions: list[dict] = []
     active_reservations: list[dict] = []
+    stopped_action_ids: set[str] = set()
     blocked_dependencies: list[dict] = []
     terminal_statuses = {"DONE", "FAILED_DO_NOT_RESTART"}
     nonrunning_statuses = OWNER_BLOCKING_STATES | {"WAITING_PREREQUISITE"}
@@ -593,19 +601,39 @@ def build_safe_ready_set(
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
             continue
 
-        # Canonically blocked/paused work is visible state, not a running
-        # worker and must not be reopened as a fresh continuation.
+        exact_task = exact.get("task") if exact is not None else None
+        exact_identity_consistent = (
+            exact is not None
+            and len(slot_tasks) == 1
+            and exact_task in slot_tasks
+            and tasks_fully_resolved
+        )
+
+        # Canonically blocked/paused work is visible state, not a running worker.
+        # Preserve exact stopped identities so candidate selection cannot reopen the
+        # same action. Composite or otherwise inconsistent exact identities remain
+        # fail-closed as one unknown reservation rather than releasing extra labels.
         if slot_status == "BLOCKED" or slot_status in NONRUNNING_LOCK_STATES:
+            if exact_id:
+                if exact_identity_consistent:
+                    stopped_action_ids.add(exact_id)
+                else:
+                    active_reservations.append({"id": reservation_id, "parallel_safe": False})
+            elif task_matches and tasks_fully_resolved:
+                stopped_action_ids.update(
+                    action["id"] for action in task_matches
+                    if status_by_id.get(action["id"]) not in terminal_statuses
+                )
+            elif task_matches:
+                # Some, but not all, task labels resolve into the catalog. Preserve
+                # the mixed identity fail-closed because the unmatched live portion
+                # is unknown.
+                active_reservations.append({"id": reservation_id, "parallel_safe": False})
+            # A clean blocked/paused task with no catalog match is an external/open
+            # blocker, not a running repository worker and never a global stop.
             continue
 
         if exact_id:
-            exact_task = exact.get("task") if exact is not None else None
-            exact_identity_consistent = (
-                exact is not None
-                and len(slot_tasks) == 1
-                and exact_task in slot_tasks
-                and tasks_fully_resolved
-            )
             if exact is not None and status_by_id.get(exact_id) in terminal_statuses:
                 if exact_identity_consistent:
                     continue
@@ -649,6 +677,21 @@ def build_safe_ready_set(
             if (
                 exact_id is None
                 and tasks_fully_resolved
+                and slot_status not in explicit_running_statuses
+                and matches
+                and all(
+                    status_by_id.get(item["id"]) in nonrunning_statuses
+                    or not manager_dependency_status(item, state, catalog, failed)[0]
+                    for item in matches
+                )
+            ):
+                # Ambiguous non-running continuations whose every resolved sibling
+                # is either owner/prerequisite-gated or dependency-blocked do not
+                # consume a worker. A runnable prerequisite may use the capacity.
+                continue
+            if (
+                exact_id is None
+                and tasks_fully_resolved
                 and live_match_statuses
                 and live_match_statuses <= nonrunning_statuses
                 and slot_status not in explicit_running_statuses
@@ -657,7 +700,12 @@ def build_safe_ready_set(
             active_reservations.append({"id": reservation_id, "parallel_safe": False})
     active_action_ids = {action["id"] for action in active_actions}
     executable_ids = {action["id"] for action, _ in candidates}
-    new_candidates = [candidate for candidate in candidates if candidate[0]["id"] not in active_action_ids]
+    new_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate[0]["id"] not in active_action_ids
+        and candidate[0]["id"] not in stopped_action_ids
+    ]
 
     selected: list[dict] = []
     running: list[dict] = []
@@ -1373,6 +1421,120 @@ def run_manager_contract_tests() -> None:
     )
     assert result["safe_ready_set"] == ["A"]
     assert result["active_continuations"] == []
+
+    # A reconciled clean PAUSED/BLOCKED action must stay out of new candidates,
+    # even when no unrelated action sorts before it.
+    paused_only_action = _action(
+        "PAUSED-ONLY-ACTION",
+        1,
+        task="FM-PARTIAL-PAUSED-001",
+    )
+    result = manager(
+        [paused_only_action],
+        limit=1,
+        slots=partial_paused_slots,
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 0
+
+    # A non-running composite slot with an exact identity covering only one task
+    # remains one unknown fail-closed reservation; extra live labels are not lost.
+    composite_blocked_a = _action("COMPOSITE-BLOCKED-A", 1, task="FM-COMPOSITE-BLOCKED-A")
+    composite_blocked_b = _action("COMPOSITE-BLOCKED-B", 2, task="FM-COMPOSITE-BLOCKED-B")
+    result = manager(
+        [composite_blocked_a, composite_blocked_b],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-COMPOSITE-BLOCKED-A", "FM-COMPOSITE-BLOCKED-B"},
+            "action": "COMPOSITE-BLOCKED-A",
+            "status": "BLOCKED",
+        }],
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == ["UNKNOWN:COMPOSITE-BLOCKED-A"]
+    assert result["worker_used"] == 1
+
+    # Ambiguous non-running siblings that are all dependency-blocked release the
+    # slot so their shared prerequisite can execute.
+    ambiguous_dep_base = _action("AMBIGUOUS-DEP-BASE", 3, task="FM-AMBIGUOUS-DEP-BASE")
+    ambiguous_dep_a = _action(
+        "AMBIGUOUS-DEP-A",
+        1,
+        task="FM-AMBIGUOUS-DEP",
+        depends_on_actions=["AMBIGUOUS-DEP-BASE"],
+    )
+    ambiguous_dep_b = _action(
+        "AMBIGUOUS-DEP-B",
+        2,
+        task="FM-AMBIGUOUS-DEP",
+        depends_on_actions=["AMBIGUOUS-DEP-BASE"],
+    )
+    result = manager(
+        [ambiguous_dep_a, ambiguous_dep_b, ambiguous_dep_base],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-AMBIGUOUS-DEP"},
+            "action": None,
+            "status": "PARTIAL",
+        }],
+    )
+    assert result["safe_ready_set"] == ["AMBIGUOUS-DEP-BASE"]
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 1
+
+    # An orphan clean PAUSED lock with an exact action remains stopped identity
+    # evidence even without STARTED_WORK; it consumes no worker and cannot reopen.
+    orphan_exact_paused_action = _action(
+        "NBA-ORPHAN-EXACT-PAUSED",
+        1,
+        task="FM-ORPHAN-EXACT-PAUSED",
+    )
+    orphan_exact_paused_lock = """## LOCK-FM-ORPHAN-EXACT-PAUSED
+- Task: FM-ORPHAN-EXACT-PAUSED
+- Action: NBA-ORPHAN-EXACT-PAUSED
+- Status: PAUSED
+"""
+    orphan_exact_paused_slots = active_work_slots("", orphan_exact_paused_lock)
+    assert len(orphan_exact_paused_slots) == 1
+    assert orphan_exact_paused_slots[0]["status"] == "PAUSED"
+    assert orphan_exact_paused_slots[0]["action"] == "NBA-ORPHAN-EXACT-PAUSED"
+    result = manager(
+        [orphan_exact_paused_action],
+        limit=1,
+        slots=orphan_exact_paused_slots,
+    )
+    assert result["safe_ready_set"] == []
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 0
+
+    # Mixed ambiguous non-running siblings (dependency-blocked + owner-gated)
+    # release capacity so the runnable prerequisite is not serialized.
+    mixed_dep_base = _action("MIXED-DEP-BASE", 3, task="FM-MIXED-DEP-BASE")
+    mixed_dep = _action(
+        "MIXED-DEP",
+        1,
+        task="FM-MIXED-NONRUNNING",
+        depends_on_actions=["MIXED-DEP-BASE"],
+    )
+    mixed_owner = _action(
+        "MIXED-OWNER",
+        2,
+        task="FM-MIXED-NONRUNNING",
+        requires_owner=True,
+    )
+    result = manager(
+        [mixed_dep, mixed_owner, mixed_dep_base],
+        limit=1,
+        slots=[{
+            "tasks": {"FM-MIXED-NONRUNNING"},
+            "action": None,
+            "status": "PARTIAL",
+        }],
+    )
+    assert result["safe_ready_set"] == ["MIXED-DEP-BASE"]
+    assert result["active_continuations"] == []
+    assert result["worker_used"] == 1
 
     # Missing, empty or unknown referenced lock state cannot prove a worker stopped.
     missing_lock_started = """## Active work
