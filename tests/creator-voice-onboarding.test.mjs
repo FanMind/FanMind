@@ -403,3 +403,45 @@ test("summary excludes text-presented emoji-capable symbols from emoji metrics",
   assert.equal(summary.metrics.emojisPerMessage, 0);
   assert.ok(!summary.metrics.preferredEmojis.includes("☕︎"));
 });
+
+
+test("summary recognizes Spanish opening and Armenian question/exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "¿Solo apertura" });
+  records[1] = record(2, { text: "¡Solo apertura" });
+  records[2] = record(3, { text: "Հայերեն՞" });
+  records[3] = record(4, { text: "Հայերեն՜" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.067);
+});
+
+test("summary merges redundant emoji presentation selectors but preserves meaningful FE0F", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☕" });
+  records[1] = record(2, { text: "☕️" });
+  records[2] = record(3, { text: "❤️" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.preferredEmojis.filter((emoji) => emoji === "☕").length, 1);
+  assert.ok(!summary.metrics.preferredEmojis.includes("☕️"));
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 2), ["☕", "❤️"]);
+});
