@@ -18,6 +18,8 @@ const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
+const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
+const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -112,12 +114,14 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
   const reconciliationId = "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT";
   const catalogId = "NBA-CREATOR-FOUNDATION-STAGING-CATALOG";
   const designId = "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN";
+  const generatorId = "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR";
   const verify = actionCatalog.actions.find((a) => a.id === verifyId);
   const control = actionCatalog.actions.find((a) => a.id === controlId);
   assert.ok(verify);
   const reconciliation = actionCatalog.actions.find((a) => a.id === reconciliationId);
   const catalogObservation = actionCatalog.actions.find((a) => a.id === catalogId);
   const profileDesign = actionCatalog.actions.find((a) => a.id === designId);
+  const transitionGenerator = actionCatalog.actions.find((a) => a.id === generatorId);
   assert.equal(verify.priority, control || reconciliation ? 6 : 2);
   assert.equal(verify.requires_owner, true);
   assert.equal(verify.parallel_safe, false);
@@ -131,7 +135,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.deepEqual(control.depends_on_actions, [verifyId]);
     assert.equal(control.gate, "creator_confirmed_chat_apply_control");
   } else if (profileDesign) {
-    assert.equal(profileDesign.priority, 2);
+    assert.equal(profileDesign.priority, 14);
     assert.equal(profileDesign.requires_owner, false);
     assert.equal(profileDesign.parallel_safe, false);
     assert.deepEqual(profileDesign.depends_on_actions, [reconciliationId, catalogId]);
@@ -147,6 +151,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(state.gates.creator_foundation_reconciliation_preflight.state, "ACCEPTED");
     assert.equal(state.gates.creator_foundation_staging_catalog.state, "RECONCILED");
     assert.equal(state.gates.creator_foundation_profile_transition_design.state, "ACCEPTED");
+    assert.equal(state.gates.creator_foundation_transition_generator.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_intelligence.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.state, "RECONCILED");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
@@ -164,7 +169,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.ok(["REMOVED", "NOT_CREATED"].includes(receipt.cleanup.credentials));
     assert.ok(Object.values(receipt.counts).every(value => value === 0));
     const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
-    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED/u);
+    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED; bounded repository transition-generator work is IN_PROGRESS/u);
     assert.match(profileDesign.instruction, /Completed and consumed repository source package/u);
     assert.match(profileDesign.instruction, /No target\/provider call, APPLY, target reference acceptance or runtime activation occurred/u);
     assert.match(profileDesign.instruction, /distinct protected action with current authorization and exact target binding/u);
@@ -174,10 +179,29 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(sourceReceipt.targetAccepted, false);
     assert.equal(sourceReceipt.applyAllowed, false);
     assert.equal(sourceReceipt.runtimeActivated, false);
-    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 2: \*\*DONE\*\*/u);
-    assert.match(nextAction, /- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`/u);
-    assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-    assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+    assert.equal(sourceReceipt.ci.tested_checkout_sha, "b323361cafc3829e470f6da611c7ab7d8c8664f6");
+    assert.equal(sourceReceipt.reference_artifact.manifest_sha256, "f21e3fbdb01fe136e3a1b3924e86f6982423cfca57f3e845baf037e89a6d87bb");
+    const freshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-PROFILE-TRANSITION-PR1207");
+    assert.ok(freshness);
+    assert.equal(freshness.gate, "creator_foundation_profile_transition_design");
+    assert.equal(freshness.class, "immutable_commit");
+    assert.equal(freshness.status, "ACCEPTED");
+    assert.match(freshness.source, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
+    assert.ok(transitionGenerator);
+    assert.equal(transitionGenerator.priority, 2);
+    assert.equal(transitionGenerator.requires_owner, false);
+    assert.equal(transitionGenerator.parallel_safe, false);
+    assert.deepEqual(transitionGenerator.depends_on_actions, [designId]);
+    assert.equal(transitionGenerator.gate, "creator_foundation_transition_generator");
+    assert.match(transitionGenerator.instruction, /fail closed on pin\/profile drift/u);
+    assert.match(transitionGenerator.instruction, /No target\/provider call, workflow dispatch, SQL APPLY/u);
+    assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR IN_PROGRESS/u);
+    assert.match(transitionDesign, /Nächste konkrete Source-Arbeit ist `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
+    assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
+    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
+    assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
+    assert.match(nextAction, /- Selection status: `EXECUTABLE`/u);
+    assert.match(nextAction, /- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
   } else if (catalogObservation) {
     assert.equal(catalogObservation.priority, 2);
     assert.equal(catalogObservation.requires_owner, true);

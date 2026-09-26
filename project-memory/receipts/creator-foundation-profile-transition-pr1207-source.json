@@ -13,10 +13,26 @@
   "ci": {
     "run_id": "36273161074",
     "attempt": "1",
+    "tested_checkout_sha": "b323361cafc3829e470f6da611c7ab7d8c8664f6",
+    "reviewed_source_sha": "3cd67cedbcdc051be855d09de8d5ea3225179217",
     "native_pg17_job_id": "108490997482",
     "conclusion": "success",
     "required_workflows": 8,
     "required_workflows_success": 8
+  },
+  "reference_artifact": {
+    "artifact_id": "10916053961",
+    "name": "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6",
+    "archive_sha256": "c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c",
+    "manifest_sha256": "f21e3fbdb01fe136e3a1b3924e86f6982423cfca57f3e845baf037e89a6d87bb",
+    "query_sha256": "252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436",
+    "provider_contract_sha256": "123fdda5c1a718ce643ea42471d6f56a4ee512178a0df1eb613910fbef046d26",
+    "parent_profile": "canonical_daily_without_optional_billing_baseline_aug16_v1",
+    "parent_reference_sql_sha256": "4f54b28202154baa756487b1df993a83ce36b1eee2fb08b75923ec98937df154",
+    "legacy_json_sha256": "310325bf904790db5644b0674cc3f70f7cf5562c0a7c749b98e716e5d36ce2ab",
+    "current_json_sha256": "26fdb3969f985f1bc91539925615df725ae98f7fda4f8b38354e2934917bfe7e",
+    "targetAccepted": false,
+    "applyAllowed": false
   },
   "independent_review": {
     "reviewed_head": "3cd67cedbcdc051be855d09de8d5ea3225179217",
@@ -45,6 +61,6 @@
   "learningState": "UNDETERMINED",
   "runtimeActivated": false,
   "target_observation": "not_performed_in_this_scope",
-  "next_integration": "A fresh target observation/reference acceptance or transition execution is a separate protected action requiring current authorization and exact target binding.",
+  "next_integration": "Implement and independently verify NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as repository-only source work. A later target observation/reference acceptance or transition execution is a separate protected action requiring current authorization and exact target binding.",
   "boundary": "Repository source/CI acceptance only. No target/provider call, SQL APPLY, target reference acceptance, runtime activation, customer mutation, deployment acceptance or aggregate Creator completion is inferred."
 }

@@ -369,7 +369,7 @@
     },
     {
       "id": "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
-      "priority": 2,
+      "priority": 14,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_profile_transition_design",
       "title": "Creator-Profile unabh\u00e4ngig abgleichen und begrenzten Quellen\u00fcbergang entwerfen",
@@ -388,7 +388,29 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Completed and consumed repository source package. PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; all eight exact-head workflows, native PG17 job `108490997482` and independent review passed. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`. No target/provider call, APPLY, target reference acceptance or runtime activation occurred. Creator aggregate remains IN_PROGRESS; any target observation/reference acceptance or transition execution is a distinct protected action with current authorization and exact target binding. Do not repeat the consumed catalog observation unchanged."
+      "instruction": "Completed and consumed repository source package. PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; all eight exact-head workflows, native PG17 job `108490997482` and independent review passed. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`. No target/provider call, APPLY, target reference acceptance or runtime activation occurred. Creator aggregate remains IN_PROGRESS. The next source integration is NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR; only a later target observation/reference acceptance or transition execution is a distinct protected action with current authorization and exact target binding. Do not repeat the consumed catalog observation unchanged."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR",
+      "priority": 2,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_transition_generator",
+      "title": "Begrenzten Creator-Foundation-Übergang fail-closed erzeugen und nativ beweisen",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_profile_transition_design"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Implement the bounded repository-only transition generator and native PG17 proofs defined by the accepted profile/transition package. It may emit only the pinned creator_workspace_access_allowed helper, the two pinned RPC bodies and the four exact policy USING replacements; it must never replay the whole Foundation or write product data. Bind the accepted auth.uid, Daily parent and Hosted role profiles plus all query/source/reference pins; fail closed on pin/profile drift, mixed or already-current state, unknown overload/policy/role paths, unexpected AdminCRM and any unsupported target-derived value. Prove atomic rollback after each injected step, unchanged stored data, Legacy-to-Current result and required negative/cross-workspace cases. Deliver source, tests and reproducible artifact manifest through independent exact-head review and CI. No target/provider call, workflow dispatch, SQL APPLY, runtime activation or deployment acceptance belongs to this action. A later target-bound observation/reference acceptance/transition remains a separately authorized protected action."
     }
   ],
   "retired_actions": [

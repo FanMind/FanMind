@@ -152,6 +152,13 @@
       "state": "ACCEPTED",
       "required_for_sales": false,
       "evidence": "Repository source package accepted and consumed: PR #1207 final head 3cd67cedbcdc051be855d09de8d5ea3225179217, source tree 8b06776701f45000aa6acb27fd7fc3c590ea7f37, verified merge 08a4bfc82f080d58cbea5bde59e92244506c3e4e. All eight exact-head workflows passed, including FanMind CI 36273161074 / native PG17 job 108490997482; independent exact-head review had no P0-P3. Receipt project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. No target/provider call, APPLY, target reference acceptance or runtime activation occurred; Creator aggregate remains IN_PROGRESS."
+    },
+    "creator_foundation_transition_generator": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false,
+      "evidence": "Inputs are accepted by PR #1207 and project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. The bounded transition generator, reproducible artifact and native rollback/data-preservation proofs are not yet implemented. Repository-only work is admitted by FM-DEC-024; target observation, reference acceptance, SQL APPLY and runtime acceptance remain separate protected scopes."
     }
   },
   "sales_required_states": [

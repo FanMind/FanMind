@@ -4,27 +4,27 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
-- Task: `FM-REG-003`
-- Gate: `registration_admin_crm` (`IN_PROGRESS`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
+- Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_foundation_transition_generator` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: Begrenzten Creator-Foundation-Übergang fail-closed erzeugen und nativ beweisen
 
 ## Instruction
 
-The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration.
+Implement the bounded repository-only transition generator and native PG17 proofs defined by the accepted profile/transition package. It may emit only the pinned creator_workspace_access_allowed helper, the two pinned RPC bodies and the four exact policy USING replacements; it must never replay the whole Foundation or write product data. Bind the accepted auth.uid, Daily parent and Hosted role profiles plus all query/source/reference pins; fail closed on pin/profile drift, mixed or already-current state, unknown overload/policy/role paths, unexpected AdminCRM and any unsupported target-derived value. Prove atomic rollback after each injected step, unchanged stored data, Legacy-to-Current result and required negative/cross-workspace cases. Deliver source, tests and reproducible artifact manifest through independent exact-head review and CI. No target/provider call, workflow dispatch, SQL APPLY, runtime activation or deployment acceptance belongs to this action. A later target-bound observation/reference acceptance/transition remains a separately authorized protected action.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `0`
+- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
+- Worker slots reserved by active/ready work: `1`
 - Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
@@ -35,7 +35,7 @@ owner/platform action required
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
-- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 2: **DONE** — gate creator_foundation_profile_transition_design is ACCEPTED
+- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: **EXECUTABLE** — standing-authorized safe work
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
@@ -47,6 +47,7 @@ owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 11: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT` priority 12: **DONE** — gate creator_foundation_reconciliation_preflight is ACCEPTED
 - `NBA-CREATOR-FOUNDATION-STAGING-CATALOG` priority 13: **DONE** — gate creator_foundation_staging_catalog is RECONCILED
+- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: **DONE** — gate creator_foundation_profile_transition_design is ACCEPTED
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required

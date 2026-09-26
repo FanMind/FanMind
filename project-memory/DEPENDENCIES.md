@@ -1,3 +1,11 @@
+## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
+- Status: IN_PROGRESS; exact bounded repository continuation admitted.
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Task: FM-CREATOR-001
+- Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
+- Completion contract: emit only the helper, two RPC bodies and four policy USING replacements; fail closed on every unsupported profile/pin/state; prove native rollback, negative isolation and unchanged data; publish a reproducible manifest through exact-head CI and independent review.
+- Boundary: repository source/tests only. No target/provider call, SQL APPLY, workflow dispatch, runtime activation or deployment acceptance. A later target-bound continuation requires a distinct protected action and current authorization.
+
 ## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
@@ -5,7 +13,7 @@
 - Status: ACCEPTED
 - Requires: creator_foundation_reconciliation_preflight=ACCEPTED and action NBA-CREATOR-FOUNDATION-STAGING-CATALOG completed through its RECONCILED state.
 - Completion: Repository-only source dependency satisfied by PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`, exact-head green CI/native PG17 and independent review. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
-- Remaining dependency: Any fresh target observation/reference acceptance or transition execution is a distinct protected action requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
+- Remaining dependency: Implement and accept NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as repository-only source work. Any later target observation/reference acceptance or transition execution is a distinct protected action requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
 
 ## DEP-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Task: FM-CREATOR-001
