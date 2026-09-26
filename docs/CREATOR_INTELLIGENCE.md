@@ -260,7 +260,7 @@ bleibt `creators.workspace_id UNIQUE` unangetastet. Die Capability
 `chat_admin_multi_character=true` ist unabhängig von Platform Admin,
 Admin-Allowlist, Admin-CRM und allen generischen Admin-RPCs.
 
-Der kontrollierte, noch unapplied Vertrag ergänzt unter dem Workspace
+Der kontrollierte, in isoliertem Staging angewendete Vertrag ergänzt unter dem Workspace
 `chat_characters` sowie Character-gebundene Conversations und Messages. Alle
 Beziehungen tragen `workspace_id + character_id`; zusammengesetzte Fremdschlüssel,
 RLS, Owner-/Capability-Prüfung und Revisionen verhindern Vermischung. `public_age`
@@ -273,5 +273,14 @@ erzeugen, kopieren und bei OnlyFans selbst versenden. Es gibt keinen OnlyFans-
 Login, API-Aufruf, Scraper, Auto-Read oder Auto-Send. AI Usage/Cost nutzt das
 bestehende Event-System. `character_id + character_revision` werden ausgegeben,
 aber automatisches Lernen oder automatische Persona-Änderung bleiben deaktiviert.
-Schema-Apply, Workspace-Freischaltung, Storage-Policy-Abnahme und echte Provider-
-Anbindung sind separate spätere Schritte.
+Der Staging-Schema-Apply und die DB/RLS-Abnahme sind abgeschlossen. Der geschützte
+Manual-Flow `36255475314` vom 26. September 2026 hat auf Release
+`9652ae62928c70d8f39d8f184857a34fcd4de74f` zwei echte Generierungen mit jeweils drei
+Vorschlägen, Auswahl/Copy, Character-Wechsel und die negativen Zugriffs-,
+Revisions- und Origin-Prüfungen bestanden. Cleanup und unabhängiger Gegencheck
+bestätigen null synthetische ChatAdmin-Datensätze, null zugehörige Usage-Ereignisse
+und null verbleibende Sessions dieses Testlaufs. Die genaue Abnahme steht in
+`project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+Produktive Schema-/Capability-Aktivierung, reale Workspace-Freischaltung und die
+private Storage-Policy-Abnahme bleiben separate Schritte. Externes Senden war
+nicht Teil dieser Abnahme.

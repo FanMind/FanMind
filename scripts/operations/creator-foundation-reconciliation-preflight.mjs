@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { closeSync, constants, fstatSync, openSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql} from "./creator-foundation-reconciliation-provider.mjs";
 
 export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   legacyFoundation: Object.freeze({path: "./creator-foundation-reconciliation-artifacts/legacy-foundation.sql", sha256: "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f", gitBlob: "ebb7c91b799c687a57c251a3f4c0da3699a988d7"}),
@@ -14,20 +15,22 @@ export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   currentConflict: Object.freeze({path: "../../supabase/controlled/creator_revision_conflict_fix.sql", sha256: "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f", gitBlob: "c2132db39e141131483afc44d045d21d632b1672"}),
 });
 const TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
-const SECTIONS = ["tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
-const CORE_SECTIONS = SECTIONS.filter(key => !["roles", "memberships"].includes(key));
-const CHECKS = ["pg17", "parentTablesRls", "parentUuidColumnsReadable", "authUsersPresent", "authUidPresent", "anonProfileDenied", "authenticatedProfileWriteDenied", "profileWorkspaceContactUnique", "adminCrmContractAbsent", "allSatisfied"];
+const SECTIONS = ["namespaces", "authUidFunctions", "tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
+const CORE_SECTIONS = SECTIONS.filter(key => !["roles", "memberships", "namespaces", "authUidFunctions"].includes(key));
+const CHECKS = ["pg17", "databaseOwnerPostgres", "parentTablesRls", "parentUuidColumnsReadable", "authUsersPresent", "authUidPresent", "anonProfileDenied", "authenticatedProfileWriteDenied", "profileWorkspaceContactUnique", "adminCrmContractAbsent", "allSatisfied"];
 const ROW_KEYS = {
+  namespaces: "schema owner directAcl effectiveAcl".split(" "),
   tables: "schema table owner kind persistence rowSecurity forceRowSecurity isPartition replicaIdentity accessMethod options directAcl effectiveAcl parents children rewriteRules".split(" "),
   columns: "schema table name type notNull identity generated default collation dimensions storage compression isLocal inheritanceCount directAcl effectiveAcl".split(" "),
   constraints: "schema table name type validated deferrable deferred isLocal inheritanceCount noInherit definition columns foreignSchema foreignTable foreignColumns updateAction deleteAction matchType deleteSetColumns parentConstraint index exclusionOperators foreignEqualityOperators parentEqualityOperators childEqualityOperators".split(" "),
   indexes: "schema table name owner kind persistence accessMethod options valid ready live unique primary exclusion immediate clustered replicaIdentity checkXmin nullsNotDistinct attributeCount keyAttributeCount definition expressions predicate columns collations operatorClasses columnOptions".split(" "),
   policies: "schema table name command permissive roles using check".split(" "),
   triggers: "schema table name internal type enabled deferrable deferred function argumentCount argumentsHex when columns constraint constraintRelation constraintIndex parent oldTransitionTable newTransitionTable".split(" "),
-  functions: "schema name identity owner language bodyMd5 binary sqlBodyPresent kind securityDefiner leakproof strict returnsSet volatility parallel cost rows inputCount defaultCount returnType argTypes allArgTypes argModes argNames defaults variadicType support transformTypes config directAcl effectiveAcl".split(" "),
+  functions: "schema name identity owner language bodySha256 binary sqlBodyPresent kind securityDefiner leakproof strict returnsSet volatility parallel cost rows inputCount defaultCount returnType argTypes allArgTypes argModes argNames defaults variadicType support transformTypes config directAcl effectiveAcl".split(" "),
   roles: "name superuser inherit createRole createDb canLogin replication bypassRls connectionLimit validUntil config".split(" "),
   memberships: "role member grantor adminOption inheritOption setOption".split(" "),
 };
+ROW_KEYS.authUidFunctions = ROW_KEYS.functions;
 const FUNCTIONS = [
   ["guard_creator_identity", "guard_creator_identity()"],
   ["save_creator_bundle", "save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)"],
@@ -46,6 +49,7 @@ export function verifyCreatorFoundationSource(name, sql) {
 }
 
 export function loadPinnedCreatorFoundationSources() {
+  loadPinnedCreatorProviderAuthSql();
   return Object.fromEntries(Object.entries(CREATOR_FOUNDATION_SOURCE_PINS).map(([name, pin]) =>
     [name, verifyCreatorFoundationSource(name, readFileSync(new URL(pin.path, import.meta.url), "utf8"))]));
 }
@@ -71,7 +75,7 @@ function expectedFunctions(variant, sources) {
     const sql = name === "save_creator_bundle" ? conflict : foundation;
     const match = sql.match(new RegExp(`create(?: or replace)? function public\\.${name}\\([\\s\\S]*?as \\$\\$([\\s\\S]*?)\\$\\$;`, "u"));
     if (!match) fail("function_source_contract");
-    return {name, identity, bodyMd5: digest(match[1], "md5")};
+    return {name, identity, bodySha256: digest(match[1])};
   });
 }
 
@@ -85,6 +89,8 @@ function coverage(snapshot) {
       if (!object(catalog[key]) || CHECKS.some(check => typeof catalog[key][check] !== "boolean")) missing.push(`catalog_${key}`);
     } else if (!Array.isArray(catalog[key]) || catalog[key].some(row => !object(row) || (ROW_KEYS[key] ?? []).some(field => !Object.hasOwn(row, field)))) missing.push(`catalog_${key}`);
   }
+  if (Array.isArray(catalog.namespaces) && !equal(catalog.namespaces.map(row => row?.schema).sort(), ["auth", "public"])) missing.push("namespace_inventory");
+  if (Array.isArray(catalog.authUidFunctions) && catalog.authUidFunctions.length !== 1) missing.push("auth_uid_inventory");
   if (Array.isArray(catalog.tables) && (!equal(catalog.tables.map(row => row?.table).sort(), [...TABLES].sort()) || catalog.tables.some(row => row?.schema !== "public"))) missing.push("creator_table_inventory");
   for (const key of ["columns", "constraints", "indexes", "policies", "triggers"]) {
     if (Array.isArray(catalog[key]) && TABLES.some(table => !catalog[key].some(row => row?.schema === "public" && row?.table === table))) missing.push(`creator_${key}_inventory`);
@@ -96,7 +102,7 @@ function coverage(snapshot) {
 
 function functionsMatch(catalog, variant, sources) {
   const expected = expectedFunctions(variant, sources);
-  return Array.isArray(catalog?.functions) && catalog.functions.length === expected.length && expected.every(fn => catalog.functions.some(row => row.schema === "public" && row.name === fn.name && row.identity === fn.identity && row.bodyMd5 === fn.bodyMd5));
+  return Array.isArray(catalog?.functions) && catalog.functions.length === expected.length && expected.every(fn => catalog.functions.some(row => row.schema === "public" && row.name === fn.name && row.identity === fn.identity && row.bodySha256 === fn.bodySha256));
 }
 
 export function compareCreatorFoundationCatalogs(actual, expected) {
@@ -113,6 +119,10 @@ export function buildCreatorFoundationReference({legacy, current, roleProfile, q
     if (coverage(snapshot).length || CHECKS.some(key => snapshot.catalog.parentChecks[key] !== true) || !functionsMatch(snapshot.catalog, variant, sources)) fail("reference_incomplete");
   }
   if (!object(roleProfile) || !Array.isArray(roleProfile.roles) || !Array.isArray(roleProfile.memberships) || !Array.isArray(roleProfile.provenance) || !/^[a-f0-9]{64}$/u.test(querySha256 ?? "")) fail("reference_incomplete");
+  if (!equal(roleProfile.providerContract, creatorFoundationUpstreamProviderContract())) fail("provider_contract_missing");
+  for (const snapshot of [legacy, current]) {
+    if (["namespaces", "authUidFunctions"].some(key => !equal(unorderedRows(snapshot.catalog[key]), unorderedRows(roleProfile.providerContract[key])))) fail("reference_provider_mismatch");
+  }
   const reference = {
     schemaVersion: 1,
     scope: "creator_foundation_catalog_only",
@@ -138,7 +148,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   }
   if (!/^[a-f0-9]{64}$/u.test(trustedReferenceSha256 ?? "")) blockers.push("reference_pin_missing");
   else if (typeof referenceJson !== "string" || Buffer.byteLength(referenceJson) > MAX_BYTES || digest(referenceJson) !== trustedReferenceSha256) blockers.push("reference_pin_mismatch");
-  if (blockers.includes("reference_pin_missing") || blockers.includes("reference_pin_mismatch")) return result;
+  if (blockers.includes("reference_pin_missing") || blockers.includes("reference_pin_mismatch")) { blockers.push("auth_uid_provider_contract_missing"); return result; }
   let reference;
   try { reference = JSON.parse(referenceJson); } catch { blockers.push("reference_invalid"); return result; }
   if (!object(reference) || reference.schemaVersion !== 1 || reference.scope !== result.scope || !equal(reference.sourcePins, sourceIdentities()) || !/^[a-f0-9]{64}$/u.test(expectedQuerySha256 ?? "") || reference.querySha256 !== expectedQuerySha256) {
@@ -146,17 +156,19 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   }
   const profile = reference.roleProfile;
   if (!object(profile) || !Array.isArray(profile.roles) || !Array.isArray(profile.memberships) || !Array.isArray(profile.provenance)) { blockers.push("role_provenance_missing"); return result; }
+  if (!equal(profile.providerContract, creatorFoundationUpstreamProviderContract())) { blockers.push("auth_uid_provider_contract_missing"); return result; }
+  const provider = {namespaces: profile.providerContract.namespaces, authUidFunctions: profile.providerContract.authUidFunctions};
   // Every individual grant (including its grantor and options) needs provenance.
   // Names such as supabase_* never bypass this exact allowlist comparison.
   if (profile.memberships.some(edge => !profile.provenance.some(entry => equal(entry.membership, edge) && typeof entry.source === "string" && /^https:\/\/github\.com\/supabase\/(postgres|realtime)\/blob\/[a-f0-9]{40}\//u.test(entry.source)))) {
     blockers.push("role_provenance_missing"); return result;
   }
   for (const variant of ["legacy", "current"]) {
-    const candidate = {schemaVersion: 1, pgMajor: 17, observedAt: "2026-09-26T00:00:00.000Z", catalog: {...reference.variants?.[variant], roles: profile.roles, memberships: profile.memberships}};
+    const candidate = {schemaVersion: 1, pgMajor: 17, observedAt: "2026-09-26T00:00:00.000Z", catalog: {...reference.variants?.[variant], ...provider, roles: profile.roles, memberships: profile.memberships}};
     if (coverage(candidate).length || CHECKS.some(key => candidate.catalog.parentChecks[key] !== true) || !functionsMatch(candidate.catalog, variant, sources)) blockers.push(`reference_${variant}_incomplete`);
   }
   if (blockers.length) return result;
-  const common = {roles: profile.roles, memberships: profile.memberships};
+  const common = {...provider, roles: profile.roles, memberships: profile.memberships};
   const comparisons = Object.fromEntries(["legacy", "current"].map(variant => [variant, compareCreatorFoundationCatalogs(snapshot.catalog, {...reference.variants[variant], ...common})]));
   if (snapshot.catalog.parentChecks.allSatisfied && comparisons.legacy.length === 0) result.status = "LEGACY_EXACT";
   else if (snapshot.catalog.parentChecks.allSatisfied && comparisons.current.length === 0) result.status = "CURRENT_EXACT";

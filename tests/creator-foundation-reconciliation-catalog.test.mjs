@@ -51,9 +51,43 @@ test("catalog captures complete function overloads and connected role grants wit
   for (const field of ["grantor", "inherit_option", "set_option", "admin_option"]) assert.ok(sql.includes(field), field);
   assert.match(sql, /role_component\(oid\) AS/u);
   assert.match(sql, /m\.roleid = rc\.oid OR m\.member = rc\.oid/u);
-  assert.match(sql, /pg_catalog\.md5\(p\.prosrc\)/u);
+  assert.match(sql, /'bodySha256',pg_catalog\.encode\(pg_catalog\.sha256\(pg_catalog\.convert_to\(p\.prosrc,'UTF8'\)\),'hex'\)/u);
+  assert.doesNotMatch(sql, /bodyMd5|pg_catalog\.md5\(/u);
   assert.doesNotMatch(sql, /'[A-Za-z]*(?:Oid|OID)'\s*,/u);
   for (const field of ["schemaVersion", "observedAt", "pgMajor", "catalog", "parentChecks", "allSatisfied"]) assert.ok(sql.includes(`'${field}'`));
+});
+
+test("namespace export includes direct and effective browser creation and usage rights", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const namespaceStart = sql.indexOf("namespace_rows AS (");
+  assert.ok(namespaceStart > 0, "namespace export is required");
+  const namespaceRows = sql.slice(namespaceStart, sql.indexOf("table_rows AS (", namespaceStart));
+  assert.match(namespaceRows, /n\.nspname IN \('public','auth'\)/u);
+  assert.match(namespaceRows, /pg_catalog\.aclexplode\(COALESCE\(n\.nspacl,pg_catalog\.acldefault\('n',n\.nspowner\)\)\)/u);
+  assert.match(namespaceRows, /pg_catalog\.has_schema_privilege\(r\.oid,n\.oid,v\.name\)/u);
+  assert.match(namespaceRows, /pg_catalog\.has_schema_privilege\(r\.oid,n\.oid,v\.name \|\| ' WITH GRANT OPTION'\)/u);
+  assert.match(namespaceRows, /VALUES \('USAGE'\),\('CREATE'\)/u);
+  assert.match(sql, /'namespaces',COALESCE\(\(SELECT pg_catalog\.jsonb_agg\(row ORDER BY row::text COLLATE "C"\) FROM namespace_rows\)/u);
+});
+
+test("auth UID overloads have the same complete body and metadata contract in a distinct section", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const functionRows = sql.slice(sql.indexOf("function_rows AS ("), sql.indexOf("parent_checks AS ("));
+  assert.match(functionRows, /OR \(n\.nspname = 'auth' AND p\.proname = 'uid'\)/u);
+  assert.match(sql, /'functions',[^\n]+FROM function_rows WHERE row->>'schema' = 'public'/u);
+  assert.match(sql, /'authUidFunctions',[^\n]+FROM function_rows WHERE row->>'schema' = 'auth'/u);
+  assert.doesNotMatch(functionRows, /p\.pronargs\s*=|p\.proargtypes\s*=/u, "unexpected auth.uid overloads must be visible");
+});
+
+test("role graph includes the authority owning the fixed schemas and every auth UID overload", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const graph = sql.slice(sql.indexOf("role_component(oid) AS ("), sql.indexOf("relevant_memberships AS ("));
+  assert.match(graph, /SELECT d\.datdba FROM pg_catalog\.pg_database d WHERE d\.datname = pg_catalog\.current_database\(\)/u);
+  assert.match(sql, /databaseOwnerPostgres/u);
+  assert.match(graph, /SELECT n\.nspowner FROM pg_catalog\.pg_namespace n WHERE n\.nspname IN \('public','auth'\)/u);
+  assert.match(graph, /SELECT p\.proowner FROM pg_catalog\.pg_proc p JOIN pg_catalog\.pg_namespace n ON n\.oid = p\.pronamespace/u);
+  assert.match(graph, /WHERE n\.nspname = 'auth' AND p\.proname = 'uid'/u);
+  assert.doesNotMatch(graph, /UNION ALL/u, "recursive role expansion must remain cycle-safe");
 });
 
 test("parent privacy checks reject column-only anonymous access outside managed columns", () => {

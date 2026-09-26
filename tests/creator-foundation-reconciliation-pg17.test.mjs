@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { isAbsolute, join, resolve } from "node:path";
 import test from "node:test";
 import { buildCreatorFoundationCatalogSql } from "../scripts/operations/creator-foundation-reconciliation-catalog.mjs";
 import {
   buildCreatorFoundationReference,
   classifyCreatorFoundationSnapshot,
   loadPinnedCreatorFoundationSources,
+  CREATOR_FOUNDATION_SOURCE_PINS,
 } from "../scripts/operations/creator-foundation-reconciliation-preflight.mjs";
+
+import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
 
 const enabled = process.env.FANMIND_CREATOR_PG17_REQUIRED === "true";
 const container = process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
@@ -16,6 +21,34 @@ const databases = ["fanmind_creator_reconciliation_legacy_ci", "fanmind_creator_
 const sources = loadPinnedCreatorFoundationSources();
 const query = buildCreatorFoundationCatalogSql();
 const digest = (text) => createHash("sha256").update(text).digest("hex");
+
+// Test-only export of the isolated fixtures, called after every native assertion
+// and finally-cleanup succeeded. No caller-selected output file is accepted.
+function exportCiReferenceArtifacts({legacy, current, postgresVersion, environment}) {
+  const invalid = () => { throw new Error("creator_reference_export_invalid"); };
+  if (environment.FANMIND_CREATOR_RECONCILIATION_EXPORT !== "true" || environment.GITHUB_ACTIONS !== "true" || environment.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
+    !/^[a-f0-9]{40}$/u.test(environment.GITHUB_SHA ?? "") || !/^[a-f0-9]{40}$/u.test(environment.FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA ?? "") || !/^[1-9][0-9]{0,19}$/u.test(environment.GITHUB_RUN_ID ?? "") ||
+    !/^[1-9][0-9]{0,9}$/u.test(environment.GITHUB_RUN_ATTEMPT ?? "") || !/^17\.[0-9]+(?:\s.*)?$/u.test(postgresVersion ?? "") ||
+    typeof environment.RUNNER_TEMP !== "string" || !isAbsolute(environment.RUNNER_TEMP)) invalid();
+  const root = lstatSync(environment.RUNNER_TEMP);
+  if (!root.isDirectory() || root.isSymbolicLink() || root.uid !== process.getuid() || (root.mode & 0o022) !== 0 || realpathSync(environment.RUNNER_TEMP) !== resolve(environment.RUNNER_TEMP)) invalid();
+  const content = {"legacy.json": `${JSON.stringify(legacy)}\n`, "current.json": `${JSON.stringify(current)}\n`};
+  if (Object.values(content).some(value => Buffer.byteLength(value) > 2 * 1024 * 1024)) invalid();
+  const manifest = {
+    schemaVersion: 1, scope: "isolated_ci_creator_foundation_reference",
+    stagingRoleProfileApproved: false, targetAccepted: false, applyAllowed: false,
+    repository: environment.GITHUB_REPOSITORY, githubSha: environment.GITHUB_SHA,
+    reviewedSourceSha: environment.FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA,
+    runId: environment.GITHUB_RUN_ID, runAttempt: environment.GITHUB_RUN_ATTEMPT,
+    postgresVersion, querySha256: digest(query), sourcePins: CREATOR_FOUNDATION_SOURCE_PINS, providerSourcePins: CREATOR_FOUNDATION_PROVIDER_PINS,
+    stagingProviderProfileApproved: false, providerContractSha256: digest(JSON.stringify(creatorFoundationUpstreamProviderContract())),
+    files: Object.fromEntries(Object.entries(content).map(([name, value]) => [name, digest(value)])),
+  };
+  const output = join(environment.RUNNER_TEMP, `fanmind-creator-foundation-reference-${environment.GITHUB_RUN_ID}-${environment.GITHUB_RUN_ATTEMPT}`);
+  mkdirSync(output, {mode: 0o700});
+  for (const [name, value] of Object.entries({...content, "manifest.json": `${JSON.stringify(manifest)}\n`})) writeFileSync(join(output, name), value, {mode: 0o600, flag: "wx"});
+  return output;
+}
 
 // The only connection used by this test is docker exec into the explicit CI
 // container. No host/URL/password or externally configured database is accepted.
@@ -28,11 +61,15 @@ function sql(statement, database = "postgres") {
 }
 
 const parents = `
-CREATE SCHEMA auth;
+CREATE SCHEMA auth AUTHORIZATION supabase_admin;
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;
-GRANT USAGE ON SCHEMA auth,public TO anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION auth.uid() TO anon,authenticated,service_role;
+GRANT ALL ON SCHEMA auth TO supabase_auth_admin,dashboard_user;
+GRANT USAGE ON SCHEMA auth,public TO postgres,anon,authenticated,service_role;
+SET ROLE supabase_admin;
+${loadPinnedCreatorProviderAuthSql()}
+GRANT ALL ON FUNCTION auth.uid() TO postgres,dashboard_user;
+RESET ROLE;
+ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;
 CREATE TABLE public.workspaces(id uuid PRIMARY KEY,owner_user_id uuid NOT NULL REFERENCES auth.users(id),test_access_flags jsonb,workspace_access_mode text,billing_status text,billing_manual_override boolean);
 CREATE TABLE public.workspace_members(workspace_id uuid REFERENCES public.workspaces(id),user_id uuid REFERENCES auth.users(id));
 CREATE TABLE public.contacts(id uuid PRIMARY KEY,workspace_id uuid NOT NULL REFERENCES public.workspaces(id));
@@ -53,6 +90,9 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN BYPASSRLS; END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticator') THEN CREATE ROLE authenticator NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supabase_admin') THEN CREATE ROLE supabase_admin NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supabase_auth_admin') THEN CREATE ROLE supabase_auth_admin NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='dashboard_user') THEN CREATE ROLE dashboard_user NOLOGIN; END IF;
   END $$;`);
   const createFixture = (variant) => {
     const database = databases[variant === "legacy" ? 0 : 1];
@@ -62,6 +102,8 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     sql(sources[`${variant}Conflict`], database);
     return JSON.parse(sql(query, database));
   };
+  let verifiedSnapshots;
+  const postgresVersion = sql("SELECT current_setting('server_version');");
   try {
     const legacy = createFixture("legacy");
     const current = createFixture("current");
@@ -76,8 +118,11 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     // The fixture profile is explicitly empty. Supabase platform edges require
     // separate real provenance and must never be fabricated by this CI test.
     assert.deepEqual(current.catalog.memberships, []);
+    const provider = creatorFoundationUpstreamProviderContract();
+    assert.deepEqual([...current.catalog.namespaces].sort((a, b) => a.schema.localeCompare(b.schema)), provider.namespaces);
+    assert.deepEqual(current.catalog.authUidFunctions, provider.authUidFunctions);
     const reference = buildCreatorFoundationReference({ legacy, current,
-      roleProfile: { roles: current.catalog.roles, memberships: [], provenance: [] }, querySha256: digest(query) });
+      roleProfile: { roles: current.catalog.roles, memberships: [], provenance: [], providerContract: creatorFoundationUpstreamProviderContract() }, querySha256: digest(query) });
     const referenceJson = JSON.stringify(reference);
     const options = { referenceJson, trustedReferenceSha256: digest(referenceJson), expectedQuerySha256: digest(query) };
     const classify = (snapshot) => classifyCreatorFoundationSnapshot(snapshot, options);
@@ -106,6 +151,16 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.deepEqual(again.catalog, current.catalog);
 
     const mutations = [
+      ["database owner", `ALTER DATABASE ${databases[1]} OWNER TO supabase_admin;`, "parentChecks"],
+      ["public CREATE", "GRANT CREATE ON SCHEMA public TO authenticated;", "namespaces"],
+      ["public USAGE ACL", "REVOKE USAGE ON SCHEMA public FROM authenticated;", "namespaces"],
+      ["auth USAGE", "REVOKE USAGE ON SCHEMA auth FROM authenticated;", "namespaces"],
+      ["schema owner", "ALTER SCHEMA auth OWNER TO postgres;", "namespaces"],
+      ["auth UID body", "CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;", "authUidFunctions"],
+      ["auth UID owner", "ALTER FUNCTION auth.uid() OWNER TO postgres;", "authUidFunctions"],
+      ["auth UID security", "ALTER FUNCTION auth.uid() SECURITY DEFINER;", "authUidFunctions"],
+      ["auth UID config", "ALTER FUNCTION auth.uid() SET search_path='public';", "authUidFunctions"],
+      ["auth UID ACL", "REVOKE EXECUTE ON FUNCTION auth.uid() FROM PUBLIC;", "authUidFunctions"],
       ["helper body", "CREATE OR REPLACE FUNCTION public.creator_workspace_access_allowed(p_workspace_id uuid) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$ BEGIN RETURN true; END $$;", "functions"],
       ["helper ACL", "GRANT EXECUTE ON FUNCTION public.creator_workspace_access_allowed(uuid) TO anon;", "functions"],
       ["read policy", "ALTER POLICY creators_member_read ON public.creators USING (true);", "policies"],
@@ -125,6 +180,14 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       assert.equal(result.status, "DRIFT", name);
       assert.ok(result.differingSections.includes(expectedSection), name);
     }
+
+    const missingProvider = structuredClone(reference);
+    delete missingProvider.roleProfile.providerContract;
+    const missingProviderJson = JSON.stringify(missingProvider);
+    assert.ok(classifyCreatorFoundationSnapshot(current, {...options, referenceJson: missingProviderJson, trustedReferenceSha256: digest(missingProviderJson)}).blockers.includes("auth_uid_provider_contract_missing"));
+    const stub = structuredClone(current);
+    stub.catalog.authUidFunctions[0].bodySha256 = digest(" SELECT NULL::uuid ");
+    assert.throws(() => buildCreatorFoundationReference({legacy, current: stub, roleProfile: reference.roleProfile, querySha256: digest(query)}), /reference_provider_mismatch/u);
 
     // Apply the exact canonical Admin CRM helper/policy portion, without its
     // unrelated setter/audit fixture dependencies. Both install orders are
@@ -169,8 +232,58 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.ok(indirect.catalog.roles.some((role) => role.name === "creator_reconciliation_ci_indirect"));
     assert.ok(indirect.catalog.memberships.some((row) => row.role === "creator_reconciliation_ci_grantor" && row.member === "creator_reconciliation_ci_indirect" && row.grantor === "postgres"));
     assert.equal(classify(indirect).status, "DRIFT");
+    verifiedSnapshots = {legacy, current};
   } finally {
     for (const database of databases) sql(`DROP DATABASE IF EXISTS ${database} WITH (FORCE);`);
     sql("DROP ROLE IF EXISTS creator_reconciliation_ci_indirect; DROP ROLE IF EXISTS creator_reconciliation_ci_rogue; DROP ROLE IF EXISTS creator_reconciliation_ci_grantor;");
   }
+  if (process.env.FANMIND_CREATOR_RECONCILIATION_EXPORT === "true") {
+    assert.equal(execFileSync("git", ["rev-parse", "HEAD"], {encoding: "utf8"}).trim(), process.env.GITHUB_SHA, "reference export must bind the tested checkout");
+    execFileSync("git", ["diff", "--exit-code", "HEAD", "--", ".github/workflows/ci-fanmind.yml", "tests/creator-foundation-reconciliation-pg17.test.mjs", "scripts/operations/creator-foundation-reconciliation-catalog.mjs", "scripts/operations/creator-foundation-reconciliation-preflight.mjs", "scripts/operations/creator-foundation-reconciliation-provider.mjs", "scripts/operations/creator-foundation-reconciliation-artifacts", "supabase/controlled/creator_intelligence_foundation.sql", "supabase/controlled/creator_revision_conflict_fix.sql"], {stdio: ["ignore", "ignore", "ignore"]});
+    exportCiReferenceArtifacts({...verifiedSnapshots, postgresVersion, environment: process.env});
+  }
+});
+
+test("CI reference export writes private source-bound files without overwriting an existing destination", () => {
+  const directory = mkdtempSync(join(tmpdir(), "creator-ci-reference-test-"));
+  const environment = {FANMIND_CREATOR_RECONCILIATION_EXPORT: "true", FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: "b".repeat(40), GITHUB_ACTIONS: "true", GITHUB_REPOSITORY: "FanMind/FanMind", GITHUB_RUN_ID: "12345", GITHUB_RUN_ATTEMPT: "1", GITHUB_SHA: "a".repeat(40), RUNNER_TEMP: directory};
+  try {
+    const output = exportCiReferenceArtifacts({legacy: {fixture: "legacy"}, current: {fixture: "current"}, postgresVersion: "17.11", environment});
+    assert.deepEqual(readdirSync(output).sort(), ["current.json", "legacy.json", "manifest.json"]);
+    assert.equal(lstatSync(output).mode & 0o777, 0o700);
+    for (const file of readdirSync(output)) assert.equal(lstatSync(join(output, file)).mode & 0o777, 0o600);
+    const manifest = JSON.parse(readFileSync(join(output, "manifest.json"), "utf8"));
+    assert.equal(manifest.githubSha, environment.GITHUB_SHA);
+    assert.equal(manifest.reviewedSourceSha, "b".repeat(40));
+    assert.equal(manifest.stagingRoleProfileApproved, false);
+    assert.equal(manifest.stagingProviderProfileApproved, false);
+    assert.deepEqual(manifest.providerSourcePins, CREATOR_FOUNDATION_PROVIDER_PINS);
+    assert.equal(manifest.providerContractSha256, digest(JSON.stringify(creatorFoundationUpstreamProviderContract())));
+    assert.equal(manifest.scope, "isolated_ci_creator_foundation_reference");
+    assert.equal(manifest.querySha256, digest(query));
+    assert.equal(manifest.files["legacy.json"], digest(readFileSync(join(output, "legacy.json"))));
+    assert.throws(() => exportCiReferenceArtifacts({legacy: {}, current: {}, postgresVersion: "17.11", environment}));
+    assert.deepEqual(JSON.parse(readFileSync(join(output, "legacy.json"), "utf8")), {fixture: "legacy"});
+  } finally { rmSync(directory, {recursive: true, force: true}); }
+});
+
+test("CI reference export rejects missing binding and symlinked or non-private roots before creating files", () => {
+  const directory = mkdtempSync(join(tmpdir(), "creator-ci-reference-boundary-test-"));
+  const environment = {FANMIND_CREATOR_RECONCILIATION_EXPORT: "true", FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: "b".repeat(40), GITHUB_ACTIONS: "true", GITHUB_REPOSITORY: "FanMind/FanMind", GITHUB_RUN_ID: "12345", GITHUB_RUN_ATTEMPT: "1", GITHUB_SHA: "a".repeat(40), RUNNER_TEMP: directory};
+  try {
+    for (const patch of [{FANMIND_CREATOR_RECONCILIATION_EXPORT: "false"}, {FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ""}, {GITHUB_ACTIONS: "false"}, {GITHUB_REPOSITORY: "elsewhere/repo"}, {GITHUB_RUN_ID: "../escape"}, {GITHUB_RUN_ATTEMPT: ""}, {GITHUB_SHA: "invalid"}, {RUNNER_TEMP: "relative"}]) {
+      assert.throws(() => exportCiReferenceArtifacts({legacy: {}, current: {}, postgresVersion: "17.11", environment: {...environment, ...patch}}), /creator_reference_export_invalid/u);
+      assert.deepEqual(readdirSync(directory), []);
+    }
+    const alias = join(directory, "alias");
+    const target = join(directory, "real");
+    mkdirSync(target, {mode: 0o700}); symlinkSync(target, alias);
+    assert.throws(() => exportCiReferenceArtifacts({legacy: {}, current: {}, postgresVersion: "17.11", environment: {...environment, RUNNER_TEMP: alias}}), /creator_reference_export_invalid/u);
+    assert.deepEqual(readdirSync(target), []);
+    chmodSync(directory, 0o777);
+    assert.throws(() => exportCiReferenceArtifacts({legacy: {}, current: {}, postgresVersion: "17.11", environment}), /creator_reference_export_invalid/u);
+    chmodSync(directory, 0o700);
+    assert.throws(() => exportCiReferenceArtifacts({legacy: {tooLarge: "x".repeat(2 * 1024 * 1024)}, current: {}, postgresVersion: "17.11", environment}), /creator_reference_export_invalid/u);
+    assert.equal(readdirSync(directory).includes("fanmind-creator-foundation-reference-12345-1"), false);
+  } finally { rmSync(directory, {recursive: true, force: true}); }
 });

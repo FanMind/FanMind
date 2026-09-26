@@ -23,6 +23,8 @@ catalogs private. They contain schema/role metadata, not credentials or CRM rows
 The export covers the four Creator tables, their full policies, columns, keys,
 indexes, triggers and direct/effective ACLs, the controlled parent extensions,
 parent privacy prerequisites, exact Creator function overloads and metadata,
+complete `auth.uid()` overloads, `public`/`auth` namespace owners and direct/effective
+CREATE/USAGE rights,
 and the complete connected role/member authority graph, including every edge's
 grantor identity and attributes. Array order
 within signatures, composite keys and indexes is significant. Export row order
@@ -30,7 +32,26 @@ and JSON object-key order are not.
 
 The executable PG17 test constructs separate disposable databases from the
 pinned historical Foundation plus PT409 correction and from the current
-Foundation plus correction. The reference builder accepts complete exports:
+Foundation plus correction. After all native positive/negative checks and
+fixture cleanup succeed, the existing CI job exports `legacy.json`,
+`current.json` and `manifest.json`. The seven-day artifact is named
+`fanmind-creator-foundation-reference-<GITHUB_SHA>`. Its manifest binds the
+actual tested checkout, run/attempt, PostgreSQL version, query hash, all source
+pins, provider source pins/contract hash and both file hashes. Check the successful exact-SHA job and artifact
+identity before consuming it. The files contain only the isolated CI catalogs;
+their role and provider data is explicitly **not an approved Staging profile**.
+For pull requests, `githubSha` is the tested checkout/merge-ref SHA and
+`reviewedSourceSha` is the PR head; these values need not be equal. Bind both
+identities and the query/source pins to the reviewed final head when downloading.
+
+Export is opt-in only in this existing CI job. It uses an exclusively created,
+mode-0700 directory beneath the validated owned runner temporary directory and
+mode-0600, create-only files. Symlinks, writable-by-others roots, dirty controlled
+source files and checkout/SHA mismatches fail. Upload runs only after the whole
+native test step succeeds; a test or cleanup failure cannot publish references.
+
+Use the two downloaded native catalogs plus the separately reviewed target
+role profile as inputs. The reference builder accepts complete exports:
 
 ```sh
 node scripts/operations/creator-foundation-reconciliation-preflight.mjs \
@@ -38,12 +59,44 @@ node scripts/operations/creator-foundation-reconciliation-preflight.mjs \
   --role-profile reviewed-role-profile.json
 ```
 
-A role profile has `roles`, `memberships` and `provenance` arrays. Each membership
+A role profile has `roles`, `memberships` and `provenance` arrays, plus a
+`providerContract` object. Each membership
 retains its role, member, grantor and all three membership options. Each needs an
 exact `provenance` entry with the complete `membership` object and a `source` URL
 bound to a full commit in `supabase/postgres` or `supabase/realtime`. Known provider
 names never skip comparison. A role profile requires independent source review;
 copying target observations does not establish that its grants are authorized.
+
+Only the complete `supabase_upstream_source_pg17_v1` provider contract exported
+by `creatorFoundationUpstreamProviderContract()` in the provider module is
+supported. It is a reproducible source profile, **not a Hosted-default claim**.
+The independently reviewed bundle must include its exact source pins and values.
+Missing or altered provider contracts yield `auth_uid_provider_contract_missing`;
+a different observed schema owner, ACL or function contract yields DRIFT. New
+Hosted/provider variants need separate source review; no target value is silently
+copied into the expected profile.
+
+The pinned original Supabase Auth statement reads the JWT subject. Every
+function body uses native PostgreSQL SHA256 over its exact UTF-8 `prosrc`, with
+no extension dependency. Owner, all function metadata, configuration and direct
+and effective ACLs remain exact comparison fields. The NULL-returning CI stub
+is removed and cannot serve as a reference. The native test creates the pinned
+function under `supabase_admin`, applies the explicit routine grants to
+`postgres`/`dashboard_user`, then transfers ownership to `supabase_auth_admin`.
+This reproduces the reviewed grants and grantors; it does not infer a Hosted
+installation history. The owner migration can warn on failure, so observations
+still must match the successful source profile exactly.
+
+The namespace source matrix pins explicit roles and owners. Its `pg_roles` join
+omits PUBLIC: the required native PG17 test separately checks creation defaults
+(PUBLIC USAGE on `public`, no PUBLIC privilege on `auth`, and PUBLIC EXECUTE for
+new functions). The source reproduction and exact native comparison cover those
+otherwise omitted ACLs. The current database owner must be `postgres` and is
+also a role-graph seed: PostgreSQL grants it implicit `pg_database_owner`
+membership outside `pg_auth_members`. Database names are never compared. Native negative cases change namespace owner/CREATE/
+USAGE and auth.uid body/owner/security/config/ACL, and must all fail comparison.
+Both isolated Creator reference exports must match this full provider contract
+before the builder can emit a reference.
 
 Role traversal follows actual membership edges in both directions. It does not
 turn every grant issued by the seeded `postgres` role into an incoming privilege

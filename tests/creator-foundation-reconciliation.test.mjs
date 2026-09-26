@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
 import {
   classifyCreatorFoundationSnapshot,
   loadPinnedCreatorFoundationSources,
@@ -23,6 +24,22 @@ test("historical foundation and accepted PT409 bytes are pinned independently fr
   assert.equal(sha256(sources.currentConflict), "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f");
   assert.throws(() => verifyCreatorFoundationSource("legacyFoundation", `${sources.legacyFoundation}\n`), /artifact_checksum/u);
   assert.throws(() => verifyCreatorFoundationSource("legacyConflict", sources.currentConflict), /artifact_checksum/u);
+});
+
+test("provider reference binds the original auth.uid statement, body and complete source profile", () => {
+  const sql = loadPinnedCreatorProviderAuthSql();
+  assert.equal(sha256(sql), CREATOR_FOUNDATION_PROVIDER_PINS.authUid.statementSha256);
+  assert.equal(sha256(sql.match(/as \$\$([\s\S]*?)\$\$;/u)[1]), CREATOR_FOUNDATION_PROVIDER_PINS.authUid.bodySha256);
+  const profile = creatorFoundationUpstreamProviderContract();
+  assert.equal(profile.authUidFunctions[0].owner, "supabase_auth_admin");
+  assert.equal(profile.authUidFunctions[0].securityDefiner, false);
+  assert.equal(profile.authUidFunctions[0].config, null);
+  assert.deepEqual(profile.authUidFunctions[0].directAcl.map(row => row.grantee), ["PUBLIC", "dashboard_user", "postgres", "supabase_auth_admin"]);
+  assert.deepEqual(profile.namespaces.map(row => [row.schema, row.owner]), [["auth", "supabase_admin"], ["public", "pg_database_owner"]]);
+  assert.equal(profile.namespaces.find(row => row.schema === "auth").directAcl.some(row => row.grantee === "PUBLIC"), false);
+  assert.equal(profile.namespaces.find(row => row.schema === "public").directAcl.some(row => row.grantee === "PUBLIC" && row.privilege === "USAGE"), true);
+  profile.authUidFunctions[0].config = ["search_path=public"];
+  assert.equal(creatorFoundationUpstreamProviderContract().authUidFunctions[0].config, null);
 });
 
 test("an empty or partial catalog cannot become an exact foundation verdict", () => {
@@ -70,6 +87,12 @@ test("optional Admin-CRM dependency or policies require their own reviewed refer
   }
 });
 
+test("missing reviewed provider contract is explicit and a CI auth.uid stub cannot supply it", () => {
+  const result = classifyCreatorFoundationSnapshot({schemaVersion: 1, pgMajor: 17, observedAt: "2026-09-26T00:00:00Z", catalog: {authUidFunctions: [{schema: "auth", name: "uid", identity: "uid()", bodySha256: "a".repeat(64)}]}});
+  assert.equal(result.status, "INCOMPLETE");
+  assert.ok(result.blockers.includes("auth_uid_provider_contract_missing"));
+});
+
 test("comparison preserves unknown role paths, grantors, policy expressions and duplicate rows", () => {
   const expected = {memberships: [{role: "service_role", member: "authenticator", grantor: "supabase_admin", adminOption: false, inheritOption: false, setOption: true}], policies: [{table: "creators", expression: "owner AND creator_gate"}]};
   for (const changed of [
@@ -87,6 +110,15 @@ test("comparison preserves positional function arguments and composite key colum
   assert.deepEqual(compareCreatorFoundationCatalogs({...expected, constraints: [{columns: ["contact_id", "workspace_id"]}]}, expected), ["constraints"]);
 });
 
+test("schema ownership and browser CREATE or USAGE changes are not normalized away", () => {
+  const expected = {namespaces: [{schema: "public", owner: "postgres", effectiveAcl: [{role: "authenticated", privilege: "CREATE", allowed: false}, {role: "authenticated", privilege: "USAGE", allowed: true}]}]};
+  for (const actual of [
+    {namespaces: [{...expected.namespaces[0], owner: "other_owner"}]},
+    {namespaces: [{...expected.namespaces[0], effectiveAcl: [{role: "authenticated", privilege: "CREATE", allowed: true}, {role: "authenticated", privilege: "USAGE", allowed: true}]}]},
+    {namespaces: [{...expected.namespaces[0], effectiveAcl: [{role: "authenticated", privilege: "CREATE", allowed: false}, {role: "authenticated", privilege: "USAGE", allowed: false}]}]},
+  ]) assert.deepEqual(compareCreatorFoundationCatalogs(actual, expected), ["namespaces"]);
+});
+
 test("reference construction refuses a list of object names without their security metadata", () => {
   const sources = loadPinnedCreatorFoundationSources();
   const tables = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
@@ -97,7 +129,7 @@ test("reference construction refuses a list of object names without their securi
     functions: names.slice(0, variant === "legacy" ? 3 : 4).map((name, index) => {
       const sql = sources[`${variant}${index === 1 ? "Conflict" : "Foundation"}`];
       const body = sql.match(new RegExp(`function public\\.${name}\\([\\s\\S]*?as \\$\\$([\\s\\S]*?)\\$\\$;`, "u"))[1];
-      return {schema: "public", name, identity: ids[index], bodyMd5: createHash("md5").update(body).digest("hex")};
+      return {schema: "public", name, identity: ids[index], bodySha256: sha256(body)};
     }),
     parentChecks: Object.fromEntries(["pg17", "parentTablesRls", "parentUuidColumnsReadable", "authUsersPresent", "authUidPresent", "anonProfileDenied", "authenticatedProfileWriteDenied", "profileWorkspaceContactUnique", "allSatisfied"].map(key => [key, true])),
     roles: ["anon", "authenticated", "service_role", "authenticator", "postgres"].map(name => ({name})), memberships: [],

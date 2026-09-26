@@ -25,8 +25,17 @@ browser_roles(name) AS (VALUES ('anon'),('authenticated'),('service_role')),
 table_privileges(name) AS (VALUES ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')),
 column_privileges(name) AS (VALUES ('SELECT'),('INSERT'),('UPDATE'),('REFERENCES')),
 role_component(oid) AS (
- SELECT r.oid FROM pg_catalog.pg_roles r
- WHERE r.rolname IN ('anon','authenticated','service_role','authenticator','postgres')
+ SELECT seed.oid FROM (
+  SELECT r.oid FROM pg_catalog.pg_roles r
+  WHERE r.rolname IN ('anon','authenticated','service_role','authenticator','postgres')
+  UNION
+  SELECT d.datdba FROM pg_catalog.pg_database d WHERE d.datname = pg_catalog.current_database()
+  UNION
+  SELECT n.nspowner FROM pg_catalog.pg_namespace n WHERE n.nspname IN ('public','auth')
+  UNION
+  SELECT p.proowner FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'auth' AND p.proname = 'uid'
+ ) seed
  UNION
  SELECT CASE WHEN m.roleid = rc.oid THEN m.member ELSE m.roleid END
  FROM role_component rc JOIN pg_catalog.pg_auth_members m ON m.roleid = rc.oid OR m.member = rc.oid
@@ -38,6 +47,20 @@ relevant_memberships AS (
 relevant_roles AS (
  SELECT r.* FROM pg_catalog.pg_roles r WHERE r.oid IN
   (SELECT oid FROM role_component UNION SELECT grantor FROM relevant_memberships)
+),
+namespace_rows AS (
+ SELECT pg_catalog.jsonb_build_object(
+  'schema',n.nspname,'owner',pg_catalog.pg_get_userbyid(n.nspowner),
+  'directAcl',COALESCE((SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+    'grantor',pg_catalog.pg_get_userbyid(a.grantor),'grantee',CASE WHEN a.grantee = 0 THEN 'PUBLIC' ELSE pg_catalog.pg_get_userbyid(a.grantee) END,
+    'privilege',a.privilege_type,'grantable',a.is_grantable)
+    ORDER BY a.grantee = 0 DESC,pg_catalog.pg_get_userbyid(a.grantee),a.privilege_type,pg_catalog.pg_get_userbyid(a.grantor),a.is_grantable)
+   FROM pg_catalog.aclexplode(COALESCE(n.nspacl,pg_catalog.acldefault('n',n.nspowner))) a),'[]'::jsonb),
+  'effectiveAcl',COALESCE((SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+    'role',b.name,'privilege',v.name,'allowed',pg_catalog.has_schema_privilege(r.oid,n.oid,v.name),
+    'grantable',pg_catalog.has_schema_privilege(r.oid,n.oid,v.name || ' WITH GRANT OPTION')) ORDER BY b.name,v.name)
+   FROM browser_roles b CROSS JOIN (VALUES ('USAGE'),('CREATE')) v(name) LEFT JOIN pg_catalog.pg_roles r ON r.rolname = b.name),'[]'::jsonb)
+ ) AS row FROM pg_catalog.pg_namespace n WHERE n.nspname IN ('public','auth')
 ),
 table_rows AS (
  SELECT pg_catalog.jsonb_build_object(
@@ -163,7 +186,7 @@ trigger_rows AS (
 function_rows AS (
  SELECT pg_catalog.jsonb_build_object(
   'schema',n.nspname,'name',p.proname,'identity',p.proname || '(' || pg_catalog.replace(pg_catalog.oidvectortypes(p.proargtypes),', ',',' ) || ')',
-  'owner',pg_catalog.pg_get_userbyid(p.proowner),'language',l.lanname,'bodyMd5',pg_catalog.md5(p.prosrc),
+  'owner',pg_catalog.pg_get_userbyid(p.proowner),'language',l.lanname,'bodySha256',pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.prosrc,'UTF8')),'hex'),
   'binary',p.probin,'sqlBodyPresent',p.prosqlbody IS NOT NULL,
   'kind',p.prokind,'securityDefiner',p.prosecdef,'leakproof',p.proleakproof,'strict',p.proisstrict,
   'returnsSet',p.proretset,'volatility',p.provolatile,'parallel',p.proparallel,'cost',p.procost,'rows',p.prorows,
@@ -186,12 +209,14 @@ function_rows AS (
  ) AS row FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
  JOIN pg_catalog.pg_language l ON l.oid = p.prolang
  LEFT JOIN pg_catalog.pg_proc sp ON sp.oid = p.prosupport LEFT JOIN pg_catalog.pg_namespace sn ON sn.oid = sp.pronamespace
- WHERE n.nspname = 'public' AND p.proname IN
-  ('guard_creator_identity','save_creator_bundle','record_creator_fan_review','creator_workspace_access_allowed')
+ WHERE (n.nspname = 'public' AND p.proname IN
+  ('guard_creator_identity','save_creator_bundle','record_creator_fan_review','creator_workspace_access_allowed'))
+  OR (n.nspname = 'auth' AND p.proname = 'uid')
 ),
 parent_checks AS (
  SELECT pg_catalog.jsonb_build_object(
   'pg17',pg_catalog.current_setting('server_version_num')::integer / 10000 = 17,
+  'databaseOwnerPostgres',EXISTS (SELECT 1 FROM pg_catalog.pg_database d JOIN pg_catalog.pg_roles r ON r.oid = d.datdba WHERE d.datname = pg_catalog.current_database() AND r.rolname = 'postgres'),
   'adminCrmContractAbsent',pg_catalog.to_regprocedure('public.admin_crm_read_allowed(uuid)') IS NULL,
   'parentTablesRls',NOT EXISTS (
    SELECT 1 FROM (VALUES ('workspaces'),('workspace_members'),('contacts'),('conversations'),('contact_ai_profiles')) e(name)
@@ -223,13 +248,15 @@ membership_rows AS (
 SELECT pg_catalog.jsonb_build_object(
  'schemaVersion',1,'observedAt',pg_catalog.transaction_timestamp(),'pgMajor',pg_catalog.current_setting('server_version_num')::integer / 10000,
  'catalog',pg_catalog.jsonb_build_object(
+  'namespaces',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM namespace_rows),'[]'::jsonb),
   'tables',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM table_rows),'[]'::jsonb),
   'columns',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM column_rows),'[]'::jsonb),
   'constraints',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM constraint_rows),'[]'::jsonb),
   'indexes',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM index_rows),'[]'::jsonb),
   'policies',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM policy_rows),'[]'::jsonb),
   'triggers',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM trigger_rows),'[]'::jsonb),
-  'functions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows),'[]'::jsonb),
+  'functions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'public'),'[]'::jsonb),
+  'authUidFunctions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'auth'),'[]'::jsonb),
   'parentChecks',(SELECT document || pg_catalog.jsonb_build_object('allSatisfied',(SELECT pg_catalog.bool_and(value::text::boolean) FROM pg_catalog.jsonb_each(document))) FROM parent_checks),
   'roles',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM role_rows),'[]'::jsonb),
   'memberships',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM membership_rows),'[]'::jsonb)
