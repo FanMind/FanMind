@@ -16,6 +16,7 @@ const env={
   PGHOST:"aws-0-eu.pooler.supabase.com",FANMIND_TARGET_DB_HOST:"aws-0-eu.pooler.supabase.com",FANMIND_PRODUCTION_DB_HOST:"db.productionref123.supabase.co",PGUSER:"postgres.stagingref123",PGPORT:"5432",PGDATABASE:"postgres",PGSSLMODE:"verify-full",PGSSLROOTCERT:"/repo/config/certificates/supabase-root-2021-ca.crt",
   FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true",FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",
   FANMIND_STAGING_E2E_EMAIL:"primary-staging@example.invalid",FANMIND_STAGING_E2E_PASSWORD:"synthetic-password-primary",FANMIND_STAGING_E2E_SECONDARY_EMAIL:"secondary-staging@example.invalid",FANMIND_STAGING_E2E_SECONDARY_PASSWORD:"synthetic-password-secondary",
+  FANMIND_ADMIN_EMAILS:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_EMAIL:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_PASSWORD:"synthetic-password-admin",
   ...Object.fromEntries(keys.map((key,i)=>[`FANMIND_CHAT_ADMIN_${key}`,ids[i]])),
 };
 function sql(query,db=database){assert.match(container,/^[0-9a-f]{12,64}$/u);return execFileSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",db,"-v","ON_ERROR_STOP=1","-At"],{input:query,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"]});}
@@ -54,6 +55,13 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)));
     assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
     sql(`update public.workspaces set test_access_flags='{"staging_synthetic_fixture":true}' where id='${ids[0]}';`);
+    sql(`update auth.users set email='ordinary-staging@example.invalid' where id='${ids[5]}';`);
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"an existing ordinary user cannot stand in for the protected admin identity");
+    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    sql(`update auth.users set email='admin-staging@example.invalid',email_confirmed_at=null where id='${ids[5]}';`);
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"unconfirmed admin identity must fail before mutation");
+    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    sql(`update auth.users set email_confirmed_at=now() where id='${ids[5]}';`);
     assert.match(sql(buildManualFlowSql("prepare",env,receipt)),/CHAT_ADMIN_MANUAL_PREPARE=PASS/u);
     assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"existing capability must never be overwritten");
     assert.throws(()=>sql(buildManualFlowSql("cleanup",env,{...receipt,marker:"e".repeat(32)})),"wrong receipt must not delete rows");

@@ -171,6 +171,7 @@
     "db:account-deletion-workspace-inventory:check": "node scripts/operations/account-deletion-workspace-inventory-check.mjs",
     "test:chat-admin-client": "node --test e2e-component/chat-admin-client.test.mjs e2e-component/chat-admin-network-boundary.test.mjs",
     "chat-admin:manual-flow:check": "node scripts/operations/chat-admin-manual-flow-staging.mjs --check",
+    "chat-admin:manual-flow:reserve": "node scripts/operations/chat-admin-manual-flow-staging.mjs --reserve",
     "chat-admin:manual-flow:run": "node scripts/operations/chat-admin-manual-flow-staging.mjs --run",
     "chat-admin:manual-flow:cleanup": "node scripts/operations/chat-admin-manual-flow-staging.mjs --cleanup",
     "test:e2e:chatadmin-staging": "playwright test --config=playwright.chatadmin-staging.config.mts",

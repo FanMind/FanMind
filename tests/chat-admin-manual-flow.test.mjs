@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import {
   validateManualFlowEnvironment, verifyManualFlowRelease,
   buildManualFlowSql, runWithGuaranteedCleanup,
   completeManualFlowCleanup,
+  reserveManualFlowReceipt, authorizeReservedManualFlow,
 } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
@@ -24,6 +29,7 @@ const env = {
   FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",
   FANMIND_STAGING_E2E_EMAIL:"primary-staging@example.invalid", FANMIND_STAGING_E2E_PASSWORD:"synthetic-pass-primary",
   FANMIND_STAGING_E2E_SECONDARY_EMAIL:"secondary-staging@example.invalid", FANMIND_STAGING_E2E_SECONDARY_PASSWORD:"synthetic-pass-secondary",
+  FANMIND_ADMIN_EMAILS:"admin-staging@example.invalid", FANMIND_STAGING_ADMIN_E2E_EMAIL:"admin-staging@example.invalid", FANMIND_STAGING_ADMIN_E2E_PASSWORD:"synthetic-pass-admin",
   ...Object.fromEntries(keys.map((key,index)=>[`FANMIND_CHAT_ADMIN_${key}`,ids[index]])),
 };
 // The tenth test UUID uses a hexadecimal digit too.
@@ -38,7 +44,40 @@ test("manual flow accepts only its exact protected Staging request", () => {
     {FANMIND_ENABLE_NON_PRODUCTION_WRITES:"false"}, {FANMIND_NON_PRODUCTION_WRITE_ACK:""},
     {FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-acceptance"},
     {FANMIND_CHAT_ADMIN_CHARACTER_B_ID:ids[6]}, {PGSSLMODE:"require"}, {PGPASSWORD:"secret"},
+    {FANMIND_ADMIN_EMAILS:"stale-admin@example.invalid"}, {FANMIND_STAGING_ADMIN_E2E_EMAIL:env.FANMIND_STAGING_E2E_EMAIL},
+    {FANMIND_STAGING_ADMIN_E2E_PASSWORD:""},
   ]) assert.throws(()=>validateManualFlowEnvironment({...env,...change}));
+});
+
+test("reservation is sanitized and cannot authorize mutation without the uploaded exact recovery binding", () => {
+  const directory=mkdtempSync(join(tmpdir(),"chatadmin-reservation-test-"));
+  const current={...env,RUNNER_TEMP:directory,GITHUB_RUN_ID:"12345",GITHUB_RUN_ATTEMPT:"2"};
+  const active=join(directory,"fanmind-chat-admin-manual-flow.json");
+  const recovery=join(directory,"fanmind-chat-admin-manual-flow-recovery.json");
+  try {
+    reserveManualFlowReceipt(current);
+    const archived=JSON.parse(readFileSync(recovery,"utf8"));
+    assert.deepEqual(Object.keys(archived),["schemaVersion","sha","target","run","attempt","ids","marker","startedAt","inFlightUncertain"]);
+    assert.equal(archived.inFlightUncertain,true,"durable snapshot must require independent reconciliation after interruption");
+    assert.deepEqual(Object.keys(archived.ids),keys.filter(key=>key!=="PLATFORM_ADMIN_ID"));
+    assert.doesNotMatch(JSON.stringify(archived),new RegExp(ids[5],"u"));
+    assert.doesNotMatch(JSON.stringify(archived),/password|email|example\.invalid|synthetic-pass|token/iu);
+    assert.equal(JSON.parse(readFileSync(active,"utf8")).mutationAttempted,false);
+    assert.throws(()=>authorizeReservedManualFlow(current),/recovery_artifact/u);
+    const cleanup=spawnSync(process.execPath,[fileURLToPath(new URL("../scripts/operations/chat-admin-manual-flow-staging.mjs",import.meta.url)),"--cleanup"],{env:current,encoding:"utf8",timeout:5000});
+    assert.equal(cleanup.status,0,"a reservation without upload must not attempt any database cleanup");
+    assert.match(cleanup.stdout,/CHAT_ADMIN_MANUAL_CLEANUP=NOT_NEEDED/u);
+    const uploaded={...current,FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID:"98765",FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST:"c".repeat(64)};
+    for(const change of [{FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID:""},{FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST:""},{GITHUB_RUN_ATTEMPT:"3"}]) assert.throws(()=>authorizeReservedManualFlow({...uploaded,...change}));
+    assert.equal(JSON.parse(readFileSync(active,"utf8")).mutationAttempted,false);
+    writeFileSync(recovery,JSON.stringify({...archived,marker:"b".repeat(32)}),{mode:0o600});
+    assert.throws(()=>authorizeReservedManualFlow(uploaded),/recovery_binding/u);
+    writeFileSync(recovery,JSON.stringify(archived),{mode:0o600});
+    const receipt=authorizeReservedManualFlow(uploaded);
+    assert.equal(receipt.mutationAttempted,true);
+    assert.equal(receipt.artifactId,"98765");
+    assert.throws(()=>authorizeReservedManualFlow(uploaded),/reservation_consumed/u);
+  } finally {rmSync(directory,{recursive:true,force:true});}
 });
 
 test("deployed version mismatch rejects before fixture preparation", async () => {
@@ -83,10 +122,18 @@ test("committed fixtures and cleanup are marker/actor/target bound without upser
   assert.throws(()=>buildManualFlowSql("cleanup",env,{...receipt,marker:"'; delete"}));
 });
 
-test("workflow serializes ChatAdmin writes, disables artifacts and always retries exact receipt cleanup", () => {
+test("workflow uploads only the bounded recovery receipt before writes and always retries exact receipt cleanup", () => {
   const workflow=readFileSync(new URL("../.github/workflows/chat-admin-manual-flow-staging.yml",import.meta.url),"utf8");
   assert.match(workflow,/group: fanmind-chat-admin-staging-write/u);
   assert.match(workflow,/environment: staging/u);
   assert.match(workflow,/always\(\)/u);
-  assert.doesNotMatch(workflow,/upload-artifact|SERVICE_ROLE|--apply|db push|member-credential/u);
+  assert.match(workflow,/uses: actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/u);
+  assert.match(workflow,/retention-days: 7/u);
+  assert.match(workflow,/if-no-files-found: error/u);
+  assert.match(workflow,/path: \$\{\{ runner.temp \}\}\/fanmind-chat-admin-manual-flow-recovery\.json/u);
+  assert.ok(workflow.indexOf(" --reserve")<workflow.indexOf("uses: actions/upload-artifact@"));
+  assert.ok(workflow.indexOf("uses: actions/upload-artifact@")<workflow.indexOf(" --run"));
+  assert.match(workflow,/FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID: \$\{\{ steps.recovery.outputs.artifact-id \}\}/u);
+  assert.match(workflow,/FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST: \$\{\{ steps.recovery.outputs.artifact-digest \}\}/u);
+  assert.doesNotMatch(workflow,/SERVICE_ROLE|--apply|db push|member-credential/u);
 });

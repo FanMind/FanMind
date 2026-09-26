@@ -15,8 +15,8 @@ async function boundary(context:BrowserContext) {
   return ()=>expect(violations()).toBe(0);
 }
 
-async function login(page:Page,remember:(session:Session)=>void,secondary=false):Promise<Session> {
-  const prefix=secondary?"FANMIND_STAGING_E2E_SECONDARY":"FANMIND_STAGING_E2E";
+async function login(page:Page,remember:(session:Session)=>void,actor:"owner"|"secondary"|"admin"="owner"):Promise<Session> {
+  const prefix=actor==="admin"?"FANMIND_STAGING_ADMIN_E2E":actor==="secondary"?"FANMIND_STAGING_E2E_SECONDARY":"FANMIND_STAGING_E2E";
   await page.goto("/login");
   await page.getByRole("textbox",{name:"E-Mail",exact:true}).fill(process.env[`${prefix}_EMAIL`]!);
   await page.locator('input[name="password"]').fill(process.env[`${prefix}_PASSWORD`]!);
@@ -29,7 +29,7 @@ async function login(page:Page,remember:(session:Session)=>void,secondary=false)
   const session={token:payload.access_token as string,anon:response.request().headers().apikey};
   // Retain a newly created Auth session before any assertion/navigation can fail.
   if(typeof session.token==="string"&&session.token)remember(session);
-  expect(payload.user?.id).toBe(id(secondary?"FOREIGN_OWNER_ID":"OWNER_ID"));
+  expect(payload.user?.id).toBe(id(actor==="admin"?"PLATFORM_ADMIN_ID":actor==="secondary"?"FOREIGN_OWNER_ID":"OWNER_ID"));
   expect(typeof payload.access_token).toBe("string");
   await expect(page).toHaveURL(/\/dashboard(?:\?|$)/u);
   return session;
@@ -58,13 +58,20 @@ async function generate(page:Page,characterId:string,revision:number) {
 test("protected synthetic ChatAdmin application flow and authority negatives",async({browser,page})=>{
   const ownerBoundary=await boundary(page.context());
   const secondaryContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
+  const adminContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
   const anonymousContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
   const secondaryPage=await secondaryContext.newPage();const secondaryBoundary=await boundary(secondaryContext);
-  let ownerSession:Session|undefined,secondarySession:Session|undefined;
+  const adminPage=await adminContext.newPage();const adminBoundary=await boundary(adminContext);
+  let ownerSession:Session|undefined,secondarySession:Session|undefined,adminSession:Session|undefined;
   try {
     const version=await direct(page.request,`${APP}/api/version`);expect(version.ok()).toBe(true);
     const state=await version.json();expect(state.runtimeEnvironment).toBe("staging");expect(state.releaseCommit).toBe(process.env.GITHUB_SHA);
     const anonymous=await direct(anonymousContext.request,`${APP}/api/chatadmin/characters`);expect(anonymous.status()).toBe(401);
+    adminSession=await login(adminPage,session=>{adminSession=session;},"admin");
+    // This route checks the live FANMIND_ADMIN_EMAILS, proving this is an actual
+    // platform admin before its ChatAdmin denial is counted. No admin writes.
+    const adminProof=await direct(adminPage.request,`${APP}/api/admin/notifications`);expect(adminProof.status()).toBe(200);await adminProof.dispose();
+    const adminDenied=await direct(adminPage.request,`${APP}/api/chatadmin/characters`);expect(adminDenied.status()).toBe(403);
     ownerSession=await login(page,session=>{ownerSession=session;});await page.goto("/chatadmin");await expect(page.getByRole("heading",{name:"ChatAdmin",exact:true})).toBeVisible();
     const a=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character A",exact:true})});
     const b=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character B",exact:true})});
@@ -82,14 +89,14 @@ test("protected synthetic ChatAdmin application flow and authority negatives",as
     await expect(page.getByRole("button",{name:"Antwort kopieren",exact:true})).toHaveCount(0);
     const inactive=await api(page,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_B_ID"),character_revision:2,incoming_message:"Synthetisch"});expect(inactive.status()).toBe(400);
     const untrusted=await direct(page.request,`${APP}/api/chatadmin/characters`,{method:"POST",headers:{Origin:"https://example.invalid"},data:{}});expect(untrusted.status()).toBe(403);
-    secondarySession=await login(secondaryPage,session=>{secondarySession=session;},true);
+    secondarySession=await login(secondaryPage,session=>{secondarySession=session;},"secondary");
     const denied=await direct(secondaryPage.request,`${APP}/api/chatadmin/characters`);expect(denied.status()).toBe(403);
     const deniedReply=await api(secondaryPage,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:1,incoming_message:"Synthetisch"});expect(deniedReply.status()).toBe(403);
     const directRead=await direct(secondaryPage.request,`${SUPABASE}/rest/v1/chat_characters?select=id`,{headers:{apikey:secondarySession.anon,Authorization:`Bearer ${secondarySession.token}`}});expect(directRead.ok()).toBe(true);expect(await directRead.json()).toEqual([]);
-    ownerBoundary();secondaryBoundary();
+    ownerBoundary();secondaryBoundary();adminBoundary();
   } finally {
-    const cleanup=[];if(ownerSession)cleanup.push(logout(page.context(),ownerSession));if(secondarySession)cleanup.push(logout(secondaryContext,secondarySession));
-    const results=await Promise.allSettled(cleanup);await secondaryContext.close();await anonymousContext.close();
+    const cleanup=[];if(ownerSession)cleanup.push(logout(page.context(),ownerSession));if(secondarySession)cleanup.push(logout(secondaryContext,secondarySession));if(adminSession)cleanup.push(logout(adminContext,adminSession));
+    const results=await Promise.allSettled(cleanup);await secondaryContext.close();await anonymousContext.close();await adminContext.close();
     if(results.some(result=>result.status==="rejected"))throw Error("chat_admin_manual_session_cleanup");
   }
   console.log("CHAT_ADMIN_MANUAL_BROWSER=PASS");

@@ -201,7 +201,7 @@ This register contains started, partially completed or follow-up work that could
 - Attempt 1 failed before mutation at `fixture_identity`; owner-provided protected fixture variables resolved the prerequisite. Do not repeat DB/RLS ACCEPT.
 
 ## FM-LOOP-CHATADMIN-MANUAL-FLOW-20260926
-- Status: OWNER_ACTION_REQUIRED; task FM-CHATADMIN-002.
+- Status: IN_PROGRESS; task FM-CHATADMIN-002. Owner authorization FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is active; PR #1193 owns the bounded source/acceptance prerequisite under LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926. No repeat owner request is needed for this exact synthetic scope.
 - Prerequisite satisfied: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED.
 - Remaining exact flow: protected Staging application/runtime acceptance with synthetic data only — active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
 - Close only after actual runtime/application evidence, negative tenant/authority proof and cleanup/zero-persistence evidence. No provider send, automatic send or Production mutation.

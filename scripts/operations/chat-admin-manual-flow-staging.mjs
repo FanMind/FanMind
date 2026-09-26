@@ -32,7 +32,10 @@ export function validateManualFlowEnvironment(env) {
   if (Object.values(ids).some(id => !UUID.test(id)) || new Set(Object.values(ids)).size !== ID_KEYS.length) fail("fixture_identity");
   const emails = [env.FANMIND_STAGING_E2E_EMAIL,env.FANMIND_STAGING_E2E_SECONDARY_EMAIL];
   if (emails.some(email => typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email) || !/staging|synthetic|test/iu.test(email)) || emails[0].toLowerCase() === emails[1].toLowerCase()) fail("fixture_email");
-  if ([env.FANMIND_STAGING_E2E_PASSWORD,env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD].some(password => typeof password !== "string" || password.length < 16 || /[\r\n]/u.test(password))) fail("fixture_credential");
+  const adminEmail=String(env.FANMIND_STAGING_ADMIN_E2E_EMAIL??'').trim().toLowerCase();
+  const adminEmails=String(env.FANMIND_ADMIN_EMAILS??'').split(',').map(email=>email.trim().toLowerCase()).filter(Boolean);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(adminEmail)||!adminEmails.includes(adminEmail)||[...emails.map(email=>email.toLowerCase()),'fanmind-ai-member-staging@example.invalid'].includes(adminEmail))fail('fixture_admin');
+  if ([env.FANMIND_STAGING_E2E_PASSWORD,env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD,env.FANMIND_STAGING_ADMIN_E2E_PASSWORD].some(password => typeof password !== "string" || password.length < 16 || /[\r\n]/u.test(password))) fail("fixture_credential");
   return ids;
 }
 
@@ -63,7 +66,7 @@ function fixtureContract(env, ids) {
     (id=${member}::uuid and lower(email)='fanmind-ai-member-staging@example.invalid' and raw_user_meta_data->>'fanmind_staging_fixture'='ai_member'))) <> 3 then raise exception 'fixture_auth'; end if;
   if (select count(*) from public.workspace_members where user_id in (${owner}::uuid,${foreign}::uuid,${member}::uuid)) <> 3 or
      (select count(*) from public.workspace_members where (user_id=${owner}::uuid and workspace_id=${ws}::uuid and role='owner') or (user_id=${foreign}::uuid and workspace_id=${second}::uuid and role='owner') or (user_id=${member}::uuid and workspace_id=${ws}::uuid and role='member')) <> 3 then raise exception 'fixture_membership'; end if;
-  if not exists(select 1 from auth.users where id=${literal(ids.PLATFORM_ADMIN_ID)}::uuid) then raise exception 'fixture_admin'; end if;`;
+  if not exists(select 1 from auth.users where id=${literal(ids.PLATFORM_ADMIN_ID)}::uuid and email_confirmed_at is not null and lower(trim(email))=${literal(env.FANMIND_STAGING_ADMIN_E2E_EMAIL.trim().toLowerCase())}) then raise exception 'fixture_admin'; end if;`;
 }
 
 export function buildManualFlowSql(mode, env, receipt) {
@@ -160,10 +163,40 @@ export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
 }
 
 function receiptPath(env) {if(!isAbsolute(env.RUNNER_TEMP ?? ''))fail('runner_temp');return join(env.RUNNER_TEMP,'fanmind-chat-admin-manual-flow.json');}
+function recoveryPath(env) {receiptPath(env);return join(env.RUNNER_TEMP,'fanmind-chat-admin-manual-flow-recovery.json');}
+function recoveryBinding(receipt) {
+  // Explicit allowlist: never archive environment, credentials, emails or responses.
+  // The immutable snapshot cannot know how an interrupted future request finished.
+  const ids=Object.fromEntries(ID_KEYS.filter(key=>key!=='PLATFORM_ADMIN_ID').map(key=>[key,receipt.ids[key]]));
+  return {schemaVersion:1,sha:receipt.sha,target:receipt.target,run:receipt.run,attempt:receipt.attempt,ids,marker:receipt.marker,startedAt:receipt.startedAt,inFlightUncertain:true};
+}
+export function reserveManualFlowReceipt(env) {
+  validateManualFlowEnvironment(env);
+  if(!/^\d+$/u.test(env.GITHUB_RUN_ID??'')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT??''))fail('run_identity');
+  const receipt={sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),marker:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),inFlightUncertain:false,mutationAttempted:false};
+  // Reservation is local only. No prepare/cleanup SQL may run before durable upload.
+  for(const [path,value] of [[receiptPath(env),receipt],[recoveryPath(env),recoveryBinding(receipt)]]) {
+    const fd=openSync(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+    try {writeFileSync(fd,JSON.stringify(value));fsyncSync(fd);}finally{closeSync(fd);}
+  }
+  return receipt;
+}
 function loadReceipt(env) {
   const bytes=privateRead(receiptPath(env));let receipt;
   try {receipt=JSON.parse(bytes.toString('utf8'));} finally {bytes.fill(0);}
-  if(receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||typeof receipt.inFlightUncertain!=='boolean')fail('receipt_binding');
+  if(receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||typeof receipt.inFlightUncertain!=='boolean'||typeof receipt.mutationAttempted!=='boolean'||! /^[0-9a-f]{32}$/u.test(receipt.marker??'')||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt??''))fail('receipt_binding');
+  return receipt;
+}
+export function authorizeReservedManualFlow(env) {
+  validateManualFlowEnvironment(env);
+  if(!/^[1-9]\d*$/u.test(env.FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID??'')||! /^[0-9a-f]{64}$/u.test(env.FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST??''))fail('recovery_artifact');
+  const receipt=loadReceipt(env);
+  if(receipt.mutationAttempted||receipt.inFlightUncertain)fail('reservation_consumed');
+  const bytes=privateRead(recoveryPath(env));
+  try {if(bytes.toString('utf8')!==JSON.stringify(recoveryBinding(receipt)))fail('recovery_binding');}finally{bytes.fill(0);}
+  receipt.artifactId=env.FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID;
+  receipt.artifactDigest=env.FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST;
+  receipt.mutationAttempted=true;updateReceipt(env,receipt);
   return receipt;
 }
 function updateReceipt(env,receipt) {
@@ -185,6 +218,7 @@ function cleanup(env) {
   validateManualFlowEnvironment(env);
   let receipt;
   try {receipt=loadReceipt(env);}catch(error){if(error?.code==='ENOENT'){console.log('CHAT_ADMIN_MANUAL_CLEANUP=NOT_NEEDED');return;}throw error;}
+  if(!receipt.mutationAttempted){console.log('CHAT_ADMIN_MANUAL_CLEANUP=NOT_NEEDED');return;}
   // An interrupted browser can leave a server request running beyond its lifetime.
   // Never claim absence/recovery or erase its receipt merely after a fixed wait.
   completeManualFlowCleanup({receipt,remove:emit=>sqlMode('cleanup',env,receipt,emit),
@@ -192,15 +226,16 @@ function cleanup(env) {
 }
 
 async function main() {
-  const mode=process.argv[2];if(process.argv.length!==3||!['--check','--run','--cleanup'].includes(mode))fail('mode');
+  const mode=process.argv[2];if(process.argv.length!==3||!['--check','--reserve','--run','--cleanup'].includes(mode))fail('mode');
   if(mode==='--check'){if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
   const env=process.env;validateManualFlowEnvironment(env);
   if(mode==='--cleanup'){cleanup(env);return;}
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID ?? '')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT ?? ''))fail('run_identity');
   await verifyManualFlowRelease(env);schema(env);
-  const receipt={sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),marker:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),inFlightUncertain:false};
-  // Persist BEFORE the transaction; a lost commit acknowledgement remains recoverable.
-  writeFileSync(receiptPath(env),JSON.stringify(receipt),{mode:0o600,flag:'wx'});
+  if(mode==='--reserve'){reserveManualFlowReceipt(env);console.log('CHAT_ADMIN_MANUAL_RESERVATION=PASS');return;}
+  // The reviewed workflow supplies these outputs only after pinned upload succeeded.
+  // Bind that durable artifact to the exact private reservation before any SQL write.
+  const receipt=authorizeReservedManualFlow(env);
   await runWithGuaranteedCleanup({
     prepare:async()=>{await verifyManualFlowRelease(env);sqlMode('prepare',env,receipt);},
     run:async()=>{

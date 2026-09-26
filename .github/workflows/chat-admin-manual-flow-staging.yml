@@ -52,6 +52,7 @@ jobs:
       FANMIND_CHAT_ADMIN_MANUAL_CONFIRM: ${{ inputs.confirmation }}
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_ADMIN_EMAILS: ${{ vars.FANMIND_STAGING_ADMIN_EMAILS }}
       FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID }}
       FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID }}
       FANMIND_CHAT_ADMIN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_OWNER_ID }}
@@ -112,12 +113,38 @@ jobs:
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
           chmod 600 "$PGPASSFILE"
           printf 'PGPASSFILE=%s\n' "$PGPASSFILE" >> "$GITHUB_ENV"
-      - name: Execute actual UI and API acceptance with guaranteed cleanup
+      - name: Reserve the exact recovery binding before any fixture mutation
         env: &fixture_credentials
           FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
           FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
           FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
           FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+          FANMIND_STAGING_ADMIN_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
+          FANMIND_STAGING_ADMIN_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+        run: |
+          set -euo pipefail
+          unset http_proxy https_proxy all_proxy
+          node scripts/operations/chat-admin-manual-flow-staging.mjs --reserve
+      - name: Persist the sanitized recovery binding before fixture mutation
+        id: recovery
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-chatadmin-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fanmind-chat-admin-manual-flow-recovery.json
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: false
+      - name: Execute actual UI and API acceptance with guaranteed cleanup
+        if: ${{ steps.recovery.outcome == 'success' }}
+        env:
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+          FANMIND_STAGING_ADMIN_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
+          FANMIND_STAGING_ADMIN_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+          FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID: ${{ steps.recovery.outputs.artifact-id }}
+          FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST: ${{ steps.recovery.outputs.artifact-digest }}
         run: |
           set -euo pipefail
           unset http_proxy https_proxy all_proxy
