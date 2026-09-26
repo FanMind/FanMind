@@ -9,7 +9,7 @@ const FIELDS=["version","run","attempt","sha","target","source","mode",...Object
 const fail=()=>{throw Error("CHAT_ADMIN_MANUAL_FLOW_ERROR=browser_diagnostic");};
 function sourceDigest() {
   const hash=createHash("sha256");
-  for(const file of ["./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./manual-flow.spec.ts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
+  for(const file of ["./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./manual-flow.spec.mts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
   return hash.digest("hex");
 }
 function binding(env,mode) {

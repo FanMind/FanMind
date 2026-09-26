@@ -363,6 +363,15 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 - Resolution: PR #1197 merged as0a368095 after all8CI+review. Exact Staging deploy36250344137 passed; subsequent manual run36250479400 passed reservation/fixture credential contract without account/password/secret changes. Its distinct browser failure is tracked below.
 
+## FM-FAIL-CHATADMIN-PLAYWRIGHT-COLLECTION-20260926
+- Date: 2026-09-26
+- Status: ROOT_CAUSE_REPRODUCED
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: run36252027247/attempt1/job108431733948 on reviewed/deployed3b3570df2b1ff85080e6bc9b4cf4e284d5fea558.
+- Failure: mandatory probe stopped at browser_launch; fixed diagnostics report HTTP/network none and session cleanup not_started. DB password preparation/reserve/artifact/acceptance steps were skipped.
+- Cause: two independent actual Playwright CLI `--list` executions with synthetic valid environment reproduce zero collected tests and `Cannot use 'import.meta' outside a module`; the `.spec.ts` CommonJS transform imports browser-diagnostic.mjs containing import.meta.url. Failure precedes browser/test callback, login, fixture and provider execution.
+- Correction: explicit ESM collection boundary and a real CLI collection regression before deployment. Current-head review/CI/merge, exact deploy and fresh successful acceptance remain required. No target cleanup or uncertainty recovery is needed for this pre-fixture attempt.
+
 ## FM-FAIL-CHATADMIN-BROWSER-UNCERTAINTY-20260926
 - Date: 2026-09-26
 - Status: RECONCILED_BEFORE_PROVIDER

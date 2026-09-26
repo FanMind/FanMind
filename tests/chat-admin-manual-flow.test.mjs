@@ -39,6 +39,17 @@ const env = {
 // The tenth test UUID uses a hexadecimal digit too.
 env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID="aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa";
 
+test("actual Playwright CLI collects the protected probe and imports its ESM diagnostics without contacting a target",()=>{
+  const root=fileURLToPath(new URL("../",import.meta.url));
+  const cli=fileURLToPath(new URL("../node_modules/@playwright/test/cli.js",import.meta.url));
+  const result=spawnSync(process.execPath,[cli,"test","--config=playwright.chatadmin-staging.config.mts","--list"],{
+    cwd:root,env:{...env,PATH:process.env.PATH,HOME:process.env.HOME,CI:"1",FANMIND_CHAT_ADMIN_BROWSER_MODE:"probe"},encoding:"utf8",timeout:30_000,maxBuffer:128*1024,
+  });
+  assert.equal(result.status,0,result.stderr);
+  assert.match(result.stdout,/manual-flow\.spec\.mts/u);
+  assert.match(result.stdout,/Total: 1 test in 1 file/u);
+});
+
 test("browser and SQL share strict fixture UUID normalization for the observed trailing carriage return",()=>{
   const rawOwner=`${env.FANMIND_CHAT_ADMIN_OWNER_ID}\r`;
   const validated=validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:rawOwner});
