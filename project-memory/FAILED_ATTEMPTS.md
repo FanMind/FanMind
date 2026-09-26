@@ -339,3 +339,11 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Negative evidence: deployment stopped during Operations tests before build/restart; `/api/version` at `2026-09-26T14:16:38.983Z` still reports prior `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`. Manual acceptance was not dispatched; no fixture/provider call occurred.
 - Correction: reproduce under Staging and test fresh module imports across Staging/mixed-case, Production, unknown and empty environments. Keep runtime code, rollout states and deployment gates unchanged. Do not rerun the unchanged failed release.
 - Completion remains open until the corrected reviewed release deploys successfully; no target acceptance is inferred from the test fix.
+## FM-FAIL-STAGING-RELEASE-STATE-20260926
+- Date: 2026-09-26
+- Status: CORRECTION_IN_PROGRESS
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: corrected-release Staging deploy `36248407036` / job `108421775888` at `8ebb344633618de27c570734210c41ce69fc7721` stopped before source copy with `STAGING_BILLING_CAPTURE=FAIL`.
+- Cause: executable reproduction of the actual deployment copy shows `rsync --delete` deletes the generated `.release.env` and current `.next/` build. The preceding deploy failed during tests after copying, before replacement. Missing release state makes the existing preserve/capture gate reject; do not bypass it with a new freeze choice.
+- Correction boundary: preserve both paths and admit only explicit recovery of an actually absent release file from exact stable live Staging service metadata. Validate the unchanged capture contract/proof; no defaults, reconstructed receipts, existing-file replacement, secret-file read, Billing/Stripe call or flag activation.
+- Recovery is not yet executed. A successful corrected protected deployment and independent version check remain required before any ChatAdmin fixture.

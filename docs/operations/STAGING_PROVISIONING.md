@@ -302,6 +302,32 @@ wird zu `verify`, jede partielle Objektmenge zu `block`.
 
 ## Freigabekriterien
 
+### Release-Zustand bei Deployment-Abbruch erhalten
+
+Der Source-Kopierschritt erhält `.release.env` und den vorhandenen `.next/`-Build.
+Ein fehlgeschlagener Test vor dem neuen Build darf weder die bisherige
+Release-/Freeze-/Capture-Metadatei noch den laufenden Build löschen.
+
+Fehlt ausschließlich `.release.env`, kann der geschützte Staging-Deploy mit
+`billing_write_freeze=preserve`,
+`release_state_recovery_confirmation=recover-live-staging-release-state`
+und `previous_release_commit=<exakter laufender Staging-SHA>` die vorhandenen
+öffentlichen Release-Metadaten des laufenden Staging-Dienstes wiederherstellen.
+Der separate Helper verlangt einen identischen aktiven systemd-Dienst,
+stabile Prozessidentität, das genaue Staging-Ziel und denselben alten SHA
+vor und nach der Beobachtung. Er liest keine Secret-Datei und gibt keine
+Prozessumgebung aus. Gespeichert werden ausschließlich die geprüften
+Release-/Freeze-/Capture-Felder; vorhandene Dateien werden niemals ersetzt.
+Fehlende Capture-Belege, unvollständige Werte oder wechselnde Prozess-/Ziel-
+Bindung sperren die Wiederherstellung. Ein fehlender Beleg wird nicht aus
+Projekttexten rekonstruiert. Es erfolgt kein Capture-Aufruf, Stripe-Aufruf,
+Entsperren oder Wechsel einer Billing-Einstellung.
+
+Die Wiederherstellung ersetzt nicht den anschließenden erfolgreichen Deploy
+mit exakter `/api/version`-Prüfung und keine fachliche Staging-Abnahme.
+
+### Laufzeitnachweise
+
 Staging gilt erst als tatsächlich eingerichtet, wenn:
 
 - eigener HTTPS-Host erreichbar ist;
