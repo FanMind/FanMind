@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN`
-- Next action title: Creator-Profile unabhängig abgleichen und begrenzten Quellenübergang entwerfen
+- Next action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
+- Next action title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
 
 ## Finishline gates
 
@@ -31,7 +31,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `creator_confirmed_chat_staging_verify`: `RECONCILED`
 - `creator_foundation_reconciliation_preflight`: `ACCEPTED`
 - `creator_foundation_staging_catalog`: `RECONCILED`
-- `creator_foundation_profile_transition_design`: `IN_PROGRESS`
+- `creator_foundation_profile_transition_design`: `ACCEPTED`
 
 ## Deferred owner actions
 

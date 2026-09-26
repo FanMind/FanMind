@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task": "FM-CREATOR-001",
+  "action": "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  "status": "ACCEPTED",
+  "scope": "repository_source_only",
+  "source_pr": 1207,
+  "base_sha": "c0c0278d59bc702dd42827ba123df7a3a720513c",
+  "final_head": "3cd67cedbcdc051be855d09de8d5ea3225179217",
+  "source_tree": "8b06776701f45000aa6acb27fd7fc3c590ea7f37",
+  "merge_sha": "08a4bfc82f080d58cbea5bde59e92244506c3e4e",
+  "merged_at": "2026-09-26T21:38:04Z",
+  "ci": {
+    "run_id": "36273161074",
+    "attempt": "1",
+    "native_pg17_job_id": "108490997482",
+    "conclusion": "success",
+    "required_workflows": 8,
+    "required_workflows_success": 8
+  },
+  "independent_review": {
+    "reviewed_head": "3cd67cedbcdc051be855d09de8d5ea3225179217",
+    "blocking_findings": 0,
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "p3": 0,
+    "open_review_threads": 0
+  },
+  "local_verification": {
+    "focused_passed": 41,
+    "focused_failed": 0,
+    "focused_skipped_native_pg17": 1,
+    "eslint_errors": 0,
+    "eslint_preexisting_warnings": 1
+  },
+  "accepted_results": [
+    "auth.uid original postgres owner is asserted before transfer and post-transfer ACL materialization",
+    "Daily Workspace parent profile excludes the optional Billing baseline while preserving required Daily constraints",
+    "Hosted PG17 profile pins 21 roles and 22 memberships with exact grantors, configuration and provenance",
+    "caller-altered role profiles fail closed"
+  ],
+  "targetAccepted": false,
+  "applyAllowed": false,
+  "learningState": "UNDETERMINED",
+  "runtimeActivated": false,
+  "target_observation": "not_performed_in_this_scope",
+  "next_integration": "A fresh target observation/reference acceptance or transition execution is a separate protected action requiring current authorization and exact target binding.",
+  "boundary": "Repository source/CI acceptance only. No target/provider call, SQL APPLY, target reference acceptance, runtime activation, customer mutation, deployment acceptance or aggregate Creator completion is inferred."
+}
