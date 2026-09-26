@@ -25,7 +25,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `registration_admin_crm`: `IN_PROGRESS`
 - `chatadmin_staging_verify`: `VERIFIED`
 - `governance_god_mode`: `ACCEPTED`
-- `chatadmin_staging_apply`: `VERIFIED`
+- `chatadmin_staging_apply`: `ACCEPTED`
 - `chatadmin_staging_accept`: `OWNER_ACTION_REQUIRED`
 
 ## Deferred owner actions

@@ -147,7 +147,7 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 
 ## FM-DEP-CHATADMIN-STAGING-ACCEPT-20260926
 - From: FM-CHATADMIN-002
-- Requires: `chatadmin_staging_apply=VERIFIED`; fresh exact current-main/target binding; same-target read-only pre-ACCEPT VERIFY; clean/distinct protected synthetic fixture variables; separate protected owner/environment action.
+- Requires: `chatadmin_staging_apply=ACCEPTED`; fresh exact current-main/target binding; same-target read-only pre-ACCEPT VERIFY; clean/distinct protected synthetic fixture variables; separate protected owner/environment action.
 - Type: protected Staging rollback-only DB/RLS acceptance
 - Status: READY_OWNER_ACTION
 - Updated: 2026-09-26

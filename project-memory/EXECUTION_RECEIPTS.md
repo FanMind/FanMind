@@ -1,12 +1,12 @@
 ## RECEIPT-FM-CHATADMIN-002-STAGING-APPLY-20260926
-- Status: VERIFIED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
+- Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
 - Authorization: explicit owner authorization consumed once by protected GitHub Actions run `36235870895` / job `108387398410`.
 - Exact binding: reviewed commit `2aaf225fec29fd91c20f822185c770f87eb3d10d`; FanMind Staging Supabase `vshyhvgcmrlagvfnvomc`; Production ref `drqkpdvtbbrrdwmtrodz`; mode `APPLY`; confirmation `apply-chat-admin-migration`.
 - Artifact: `supabase/controlled/20260920230000_chat_admin_multi_character.sql`; offline contract SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b` passed before write.
 - Workflow result: controlled transaction succeeded and built-in postflight emitted `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; private passfile cleanup succeeded; ACCEPT steps were skipped.
 - Independent countercheck: Staging has exactly the expected four ChatAdmin RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; capability/character/conversation/message row counts are all zero. Production has none of the four tables.
 - Safety/negative evidence: no real capability grant/customer row, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, no automatic send and no runtime/manual application-flow acceptance.
-- Completion boundary: `chatadmin_staging_apply=VERIFIED`. Separate protected rollback-only DB/RLS ACCEPT and later manual application flow remain open.
+- Completion boundary: `chatadmin_staging_apply=ACCEPTED`. Separate protected rollback-only DB/RLS ACCEPT and later manual application flow remain open.
 - Recovery: no rollback is requested for the verified Staging installation; any future destructive rollback would require its own exact protected authorization.
 
 ## RECEIPT-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926

@@ -564,7 +564,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Source package #1146 and historical read-only VERIFY remain consumed evidence; God Mode v1 is ACCEPTED.
 - Protected APPLY run `36235870895` / job `108387398410` executed exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` against Staging `vshyhvgcmrlagvfnvomc` with the checksum-pinned ChatAdmin migration `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; workflow postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
 - Independent target countercheck proves the four RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; all four ChatAdmin tables contain zero rows. Production `drqkpdvtbbrrdwmtrodz` contains none of them.
-- The schema APPLY gate is closed as VERIFIED without claiming DB/RLS ACCEPT, real capability grant, runtime/manual application-flow acceptance or Production activation.
+- The schema APPLY gate is closed as ACCEPTED after the owner-authorized write, built-in postflight and independent target countercheck, without claiming the separate DB/RLS ACCEPT, real capability grant, runtime/manual application-flow acceptance or Production activation.
 - Exact next step: protected rollback-only synthetic DB/RLS ACCEPT after fresh current-main/target binding and exact owner/environment action. The manual Character -> Fan-Nachricht -> three suggestions -> Copy -> manual-send flow remains a separate later acceptance.
 
 
