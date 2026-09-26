@@ -1,3 +1,14 @@
+## LOCK-FM-CHATADMIN-STAGING-APPLY-RECONCILE-20260926
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-APPLY
+- Action: NBA-CHATADMIN-STAGING-APPLY
+- Status: RELEASED_FOR_PR
+- Risk: R4 evidence reconciliation; repository documentation only.
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `d2af392dfa099da8d675481bb343154d829743ff` after #1186.
+- Scope: reconcile already completed protected APPLY `36235870895` / `108387398410`, independent Staging/Production read-only postflight, finishline/dependencies/authorization/next-action state; no additional target mutation.
+- Released for PR: evidence collection and bounded memory update complete; exact-head CI/review and normal merge remain.
+- Safety: this lock authorizes no APPLY/ACCEPT retry, SQL, real capability grant, Production/provider/customer/Billing/Restore/Mobile mutation.
+
 ## LOCK-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926
 - Task: FM-CREATOR-001
 - Status: RELEASED_FOR_PR

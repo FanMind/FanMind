@@ -1,3 +1,10 @@
+## ChatAdmin Staging APPLY completed and independently verified — 2026-09-26
+- Owner-authorized protected run `36235870895` / job `108387398410` executed exact reviewed main `2aaf225fec29fd91c20f822185c770f87eb3d10d` against FanMind Staging Supabase `vshyhvgcmrlagvfnvomc` in `APPLY` mode with `apply-chat-admin-migration`.
+- Offline contract check pinned SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; the controlled transaction completed and its built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
+- Independent read-only Supabase countercheck confirms the four expected ChatAdmin tables, RLS, exact policies/grants, SECURITY INVOKER helper and global uniqueness index. Capability/Character/Conversation/Message tables all contain zero rows. Production `drqkpdvtbbrrdwmtrodz` still has none of the four ChatAdmin tables.
+- APPLY is consumed and must not be repeated. No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
+- Next protected ChatAdmin step is the separate rollback-only synthetic DB/RLS `ACCEPT` path after fresh current-main/target binding. The real Character -> Fan-Nachricht -> drei Vorschläge -> Copy -> manueller Send-Handoff remains OPEN and cannot be inferred from schema acceptance.
+
 ## Creator broad action consumed; no repository scope currently admitted — 2026-09-26
 - Exact baseline main `2aaf225fec29fd91c20f822185c770f87eb3d10d` exposed a post-#1184 contradiction: `docs/CREATOR_INTELLIGENCE.md` still called the merged aggregate summary the next repository step and `NBA-CREATOR-INTELLIGENCE` remained executable despite no active bounded continuation.
 - The repository-only reconciliation marks #1184's evidence summary completed, moves the exhausted broad action to `CONSUMED`, preserves aggregate `FM-CREATOR-001` / `creator_intelligence=IN_PROGRESS`, and requires any later repository increment to enter as a new exact bounded engineering action.

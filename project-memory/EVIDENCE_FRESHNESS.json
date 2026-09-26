@@ -398,6 +398,22 @@
         "target_binding_change",
         "before_chatadmin_staging_apply"
       ]
+    },
+    {
+      "id": "EV-CHATADMIN-STAGING-APPLY-20260926",
+      "gate": "chatadmin_staging_apply",
+      "class": "staging_smoke",
+      "status": "VERIFIED",
+      "observed_at": "2026-09-26T10:30:37Z",
+      "source": "Protected run 36235870895 / job 108387398410 / exact reviewed 2aaf225fec29fd91c20f822185c770f87eb3d10d / checksum 9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b / CHAT_ADMIN_SCHEMA_STATE=VERIFIED; independent Supabase catalog/RLS/ACL/helper/index read confirms four empty ChatAdmin tables on Staging and absence on Production",
+      "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
+      "revalidate_on": [
+        "staging_deploy",
+        "runtime_config_change",
+        "chatadmin_schema_or_acl_change",
+        "target_binding_change",
+        "before_chatadmin_staging_accept"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."

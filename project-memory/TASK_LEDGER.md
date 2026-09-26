@@ -560,11 +560,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Status: VERIFIED; Risk: R3; Decision: FM-DEC-022; Updated: 2026-09-21.
-- PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed all required current-head gates and independent review, then merged as main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
-- Protected read-only run `35652258052` / job `106507223598` executed exact main `973e70f6d243984d95ec1420a79701faad04a39a` and returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT were skipped.
-- The observation gate is closed without claiming schema installation or runtime acceptance. A later Staging APPLY remains a separate R4 owner/environment action.
-- Exact next step: complete and merge `FM-GOV-GODMODE-001`; only then prepare the separate protected ChatAdmin APPLY request for the observed ABSENT state.
+- Status: VERIFIED; Risk: R4; Decision: FM-DEC-022; Updated: 2026-09-26.
+- Source package #1146 and historical read-only VERIFY remain consumed evidence; God Mode v1 is ACCEPTED.
+- Protected APPLY run `36235870895` / job `108387398410` executed exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` against Staging `vshyhvgcmrlagvfnvomc` with the checksum-pinned ChatAdmin migration `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; workflow postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
+- Independent target countercheck proves the four RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; all four ChatAdmin tables contain zero rows. Production `drqkpdvtbbrrdwmtrodz` contains none of them.
+- The schema APPLY gate is closed as VERIFIED without claiming DB/RLS ACCEPT, real capability grant, runtime/manual application-flow acceptance or Production activation.
+- Exact next step: protected rollback-only synthetic DB/RLS ACCEPT after fresh current-main/target binding and exact owner/environment action. The manual Character -> Fan-Nachricht -> three suggestions -> Copy -> manual-send flow remains a separate later acceptance.
 
 
 ## FM-GOV-GODMODE-001 — FanMind God Mode v1

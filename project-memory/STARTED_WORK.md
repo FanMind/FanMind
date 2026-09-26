@@ -909,11 +909,11 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Still open: exact-head local verification, one PR, Current-Head CI/CodeQL/Browser E2E and independent Codex review without P1/P2. Do not merge automatically.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Date: 2026-09-20; Status: VERIFIED; Risk: R3; Lock: LOCK-FM-CHATADMIN-STAGING-20260920; Owner: Codex Cloud; Updated: 2026-09-21.
-- Source closeout: PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed current-head CI/CodeQL/Browser E2E/Supply Chain/Project Memory and independent review with no remaining P1/P2, then merged as `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
-- Protected read-only VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` succeeded with `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY and ACCEPT were skipped.
-- No protected write, capability grant or Production/Backup/provider/Billing/Mobile mutation occurred.
-- Exact next step: God Mode v1 repository-only, then a separately owner-gated APPLY request if the governance gate is clean.
+- Date: 2026-09-20; Status: VERIFIED; Risk: R4; historical source lock released; Updated: 2026-09-26.
+- Source/VERIFY/God Mode prerequisites are consumed. Owner-authorized protected APPLY `36235870895` / `108387398410` on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` installed only the pinned ChatAdmin schema on Staging `vshyhvgcmrlagvfnvomc`; built-in and independent postflight are VERIFIED.
+- Independent target evidence: exact tables/RLS/policies/grants/helper/index are present, all ChatAdmin tables are empty, and Production has no ChatAdmin schema.
+- No real capability grant, customer data, provider/Billing/Restore/Mobile mutation, automatic send or runtime/manual-flow acceptance occurred.
+- Exact next step: distinct protected `ACCEPT` + `run-chat-admin-acceptance`, same-target pre-verify and rollback-only synthetic DB/RLS proof; real manual application flow remains OPEN.
 
 
 ## FM-GOV-GODMODE-001 — God Mode v1
