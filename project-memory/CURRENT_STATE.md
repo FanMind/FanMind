@@ -1,8 +1,9 @@
-## ChatAdmin manual flow authorized; isolation prerequisites in progress — 2026-09-26
+## ChatAdmin source merged; Staging deployment test correction in progress — 2026-09-26
 - FM-DEC-024 prioritizes ChatAdmin, then Creator Intelligence, free Admin-CRM, its distinct synthetic lifecycle, Social and Sales. Existing accepted free access is preserved.
-- FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 authorizes synthetic Staging fixture, actual application flow, negatives, cleanup and independent countercheck. PR #1193 / LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 owns the bounded continuation.
+- FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 authorizes synthetic Staging fixture, actual application flow, negatives, cleanup and independent countercheck. PR #1193 passed all nine exact-head checks and final independent review, then merged as `955b8bf425bc2073e7e4b5d0316be1d478a313e4`; LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 retains the target continuation.
 - Fresh Staging version reports f0c7a84e6105752d34b489520fb92d2bb7e5b61a; all four ChatAdmin tables remain empty. A reviewed current Staging deployment is required before manual-flow acceptance.
-- Independent source review confirms stale replies/fan context survive Character changes and API authority is not rechecked after provider generation. Executable route regressions reproduced six late-change failures; the bounded correction is under test/review.
+- Source defects are corrected: Character/input/late-response isolation, explicit Platform Admin denial, post-provider reauthorization, real foreign-resource negatives and exact cleanup. Local Operations passed 1,566 tests with zero failures and five explicit skips; actual browser suite passed 12/12 and native PG17 CI passed.
+- Protected Staging deploy `36247833422` / job `108420215949` stopped before build/restart: an existing Creator test incorrectly expected a runtime-bound module constant to be `preinstall` on Staging. The test now checks actual fresh-process imports for Staging, Production and unknown/empty environments; no product or rollout behavior changes. Runtime reread at `2026-09-26T14:16:38.983Z` remains the old release. Publish this bounded test correction before another deployment; do not retry the unchanged failing commit.
 - Manual-flow gate remains IN_PROGRESS, not ACCEPTED. No temporary target fixture or provider send has occurred; prior APPLY/DB ACCEPT remain consumed.
 
 ## ChatAdmin synthetic DB/RLS ACCEPT completed — manual flow remains open — 2026-09-26

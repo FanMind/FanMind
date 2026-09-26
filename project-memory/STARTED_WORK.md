@@ -2,13 +2,13 @@
 - Status: IN_PROGRESS
 - Risk: R4
 - Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Exact next step: complete PR #1193 source isolation regressions/review/CI, then reviewed Staging deploy and protected synthetic manual flow with cleanup.
+- Exact next step: PR #1193 is merged; publish bounded `fix/staging-creator-schema-state-test-20260926` regression correction for failed Staging deployment `36247833422`, then deploy corrected reviewed main and run protected synthetic manual flow with cleanup.
 - Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
 - Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
 - Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
 - Fresh target evidence: Staging API version is `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`, runtimeEnvironment=staging; DB tables have 0/0/0/0 rows. Public health responds; email remains unknown. Protected DB/RLS ACCEPT run 36238536613 attempt 2 remains successful and consumed.
-- Still open: source correction/review/merge, current Staging deploy, actual synthetic manual flow, cleanup and independent countercheck. No target write performed.
+- Still open: environment-sensitive deployment test correction/review/merge, successful current Staging deploy, actual synthetic manual flow, cleanup and independent countercheck. No runtime fixture or provider call performed.
 - Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
 
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
