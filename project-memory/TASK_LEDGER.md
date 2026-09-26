@@ -1,9 +1,9 @@
 ## FM-CHATADMIN-002 — manual application-flow completion — 2026-09-26
-- Status: IN_PROGRESS; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW; Priority: first by FM-DEC-024.
-- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; current follow-up branch `fix/chatadmin-teardown-write-boundary-20260926` on exact main `d91405d67792aa65a14964553a09a36fa0c87de0`.
-- Remaining outcome: ensure quiescing never hides a new non-idempotent request, pass exact-head review/CI/merge, deploy exact reviewed main and freshly revalidate the already-proven synthetic UI/API flow, negatives, cleanup and absence proof.
-- Fresh evidence: #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but the independent P1 means it is partial rather than final acceptance. No Production/provider/Billing/Restore/Mobile mutation is implicated.
-- Completion: source review/CI/merge alone is a partial result; chatadmin_manual_flow remains open until current target evidence and cleanup exist.
+- Status: ACCEPTED; Risk: R4; consumed Action: NBA-CHATADMIN-MANUAL-FLOW.
+- Authorization FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is consumed; LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 is released.
+- Source closure: PR #1202 head `ab9b371eb8db048394a4d3743e8bec319c953ea7`, tree `b2d4de790ce7de1a9d6a8d53429cb8cf03313eb5`, eight exact-head workflows and independent review clear; merge `9652ae62928c70d8f39d8f184857a34fcd4de74f`.
+- Target closure: exact Staging deploy `36255356091` / job `108440984312`; protected acceptance `36255475314` / job `108441348490` passed probe, browser/UI/API flow, negative boundaries, verify, cleanup and independent absence proof.
+- Completion boundary: synthetic Staging ChatAdmin manual application/runtime acceptance is closed. Provider delivery, automatic send, Production activation and real customer data remain outside this result.
 
 ## FM-CREATOR-001 — exhausted broad action reconciliation — 2026-09-26
 - Status: MERGED_VERIFIED

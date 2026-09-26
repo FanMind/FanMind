@@ -159,10 +159,10 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - From: FM-CHATADMIN-002
 - Requires: `chatadmin_staging_apply=ACCEPTED`; `chatadmin_staging_accept=ACCEPTED`; fresh current-main/Staging binding; separately authorized synthetic runtime fixture/capability preparation and cleanup.
 - Type: protected Staging application/runtime acceptance
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Updated: 2026-09-26
-- Current execution: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic scope. PR #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but a P1 false-green boundary remains: new acceptance-authorized writes after stop are aborted without a violation. Corrected reviewed merge, exact redeploy and fresh revalidation are required before this dependency can be consumed.
-- Required evidence: actual Staging application flow active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, plus negative tenant/authority checks and cleanup/zero-persistence evidence.
+- Consumed evidence: PR #1202 merged as `9652ae62928c70d8f39d8f184857a34fcd4de74f`; exact Staging deploy `36255356091` succeeded; protected acceptance `36255475314` passed active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, negative tenant/authority checks, cleanup and independent absence proof.
+- Completion: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is consumed. Do not repeat this dependency, APPLY or DB/RLS ACCEPT merely because main advances.
 - Rule: no real customer/provider send, no automatic send and no Production/provider/Billing/Restore/Mobile mutation.
 
 

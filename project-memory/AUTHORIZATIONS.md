@@ -1,13 +1,13 @@
 ## FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926
-- Status: ACTIVE
+- Status: CONSUMED
 - Risk: R4
 - Source: Bernd explicitly requested fresh preflight, synthetic fixture preparation, actual Staging manual flow, negative tests, cleanup, independent countercheck and Project Memory/Finishline reconciliation on 2026-09-26.
 - Scope: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW; necessary bounded source corrections and their tested/reviewed normal PR path, exact reviewed Staging deployment, temporary synthetic non-customer capability/runtime fixtures, actual Character -> pasted synthetic Fan message -> three bound AI suggestions -> copy/manual handoff, cleanup and independent zero-residue countercheck.
 - Target: only FanMind Staging (`vshyhvgcmrlagvfnvomc`, `https://staging.fanmind.ch`), with fresh exact release/schema/identity checks before every protected action.
 - Boundary: no real customer/fan fixture, OnlyFans/Social send, automatic send, Production capability/schema activation, Billing/Stripe/Tax/Restore/Mobile mutation. Prior APPLY and DB/RLS ACCEPT remain consumed; no repeat.
 - Necessary deployment recovery remains bounded to preserving the already-running Staging configuration: reviewed source-copy exclusion and explicit exact-service reconstruction of a missing generated `.release.env` from its existing nonsecret values. No Billing setting may change, missing proof may not be invented, no secret file is read and no Stripe/capture action is authorized. The original `preserve` requirement remains mandatory.
-- Current continuation: #1193/#1194/#1196/#1197 are merged and0a368095 deployed. Run36250479400 created the exact synthetic fixture then failed during browser execution; preserve its original recovery binding. Separate deterministic trailing-CR assertion proof reconciles that failed run beforeprovider; it is not manual acceptance. Canonical UUID normalization, nonmutating probe/enum diagnostics and fresh corrected protected acceptance after review/CI/deploy remain covered; no blind unchanged retry, invented proof, credential rotation or account mutation.
-- Subsequent prerequisite: #1199 merged/deployed as3b3570df; run36252027247 stopped in its pre-fixture probe because Playwright could not collect the CommonJS-transformed spec importing an ESM diagnostic helper. Actual CLI reproduction establishes no test/browser/fixture/provider execution. Explicit ESM correction plus real collection regression and the same reviewed fresh acceptance remain within this authorization.
+- Consumed result: PR #1202 final head `ab9b371eb8db048394a4d3743e8bec319c953ea7` passed eight exact-head workflows and independent review, merged as `9652ae62928c70d8f39d8f184857a34fcd4de74f`; exact Staging deploy `36255356091` and protected acceptance `36255475314` passed the actual synthetic flow, negative boundaries, cleanup and independent absence proof.
+- Reuse: forbidden. Historical failed and partial runs remain immutable evidence, not continuation authority. Any later ChatAdmin protected action requires its own current scope and authorization.
 
 ## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
 - Status: CONSUMED

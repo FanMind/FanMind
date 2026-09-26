@@ -1,15 +1,15 @@
 ## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R4
-- Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Exact next step: continue `fix/chatadmin-teardown-write-boundary-20260926` after merged/deployed #1201 and partial runtime PASS `36253850844`. Count every new non-idempotent request after boundary stop while continuing to cancel only new reads and drain already-started requests; then exact-head review/CI/merge/deploy and one fresh protected revalidation.
-- Baseline: exact main `d91405d67792aa65a14964553a09a36fa0c87de0`; same serialized ChatAdmin lock and existing owner authorization remain active. The direct regression is RED on baseline and GREEN with the bounded source correction.
+- Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; released after accepted target evidence.
+- Final source: PR #1202 final head `ab9b371eb8db048394a4d3743e8bec319c953ea7`, exact tree `b2d4de790ce7de1a9d6a8d53429cb8cf03313eb5`, merged as `9652ae62928c70d8f39d8f184857a34fcd4de74f` after eight exact-head checks and independent review with no P0/P1/P2.
+- Final target: exact deploy `36255356091` / `108440984312`; protected acceptance `36255475314` / `108441348490` passed probe, browser flow, negatives, verify, cleanup and independent absence.
 - Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
 - Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
 - Fresh target evidence: reviewed main0a368095 deployed by36250344137 and independently observed15:00:58.670Z. Postfailure Staging15:03:59.978681Z counts0/0/0/0 and usage0; full schema VERIFIED15:04:15.903990Z; Production six objects absent15:04:00.695911Z. This does not settle in-flight uncertainty.
-- Still open: teardown-write correction review/CI/merge/deploy and fresh protected revalidation. Run `36253850844` proves the full synthetic flow and cleanup but remains partial until the false-green boundary is corrected and revalidated. Failed run36250479400 stays separately RECONCILED_BEFORE_PROVIDER; its original artifact remains unchanged.
-- Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
+- Closed: `chatadmin_manual_flow=ACCEPTED`; historical run `36253850844` remains partial evidence and failed run `36250479400` remains separately RECONCILED_BEFORE_PROVIDER without rewriting its artifact.
+- Owner action needed: none. FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is consumed and must not be requested again for this completed scope.
 
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
 - Status: MERGED_VERIFIED

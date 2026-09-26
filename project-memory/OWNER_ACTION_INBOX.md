@@ -23,14 +23,15 @@
 - Consumed boundary: do not repeat DB/RLS ACCEPT merely because main advances.
 
 ## FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926 — ChatAdmin manueller Anwendungsflow
-- Status: AUTHORIZED_IN_PROGRESS
+- Status: COMPLETED
 - Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Bernd explicitly requested execution, negative tests, cleanup and independent countercheck. Do not request this same bounded permission again.
-- Builder prerequisite: #1201 is merged/deployed and protected run `36253850844` passed the full synthetic flow and cleanup. A Builder-owned P1 remains because boundary stop silently aborts a newly attempted acceptance-authorized write; correct/review/merge/deploy and freshly revalidate it. No repeat Owner permission is required.
+- Result: PR #1202 merged as `9652ae62928c70d8f39d8f184857a34fcd4de74f`; exact Staging deploy `36255356091` and protected acceptance `36255475314` passed the full synthetic flow, negatives, cleanup and independent absence proof. The authorization is consumed.
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-MANUAL-FLOW-20260926; Risk: R4 protected Staging application acceptance.
 - Why now: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED. The workflow intentionally left `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
 - Required exact flow: on Staging only, with synthetic/non-customer data and the minimum separately authorized temporary capability/runtime fixture needed for the test, exercise active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
 - Must prove the actual application/runtime layer, not a comment/static string. Cleanup/zero-persistence evidence is required for temporary fixture state.
 - Boundary: no real customer/fan data, no provider send, no automatic send, no Production/Billing/Stripe/Tax/Restore/Mobile mutation, and no inference that a Copy/manual-send handoff equals an external message delivery.
+- Consumed boundary: do not present this owner action again merely because `main` advances.
 
 
 

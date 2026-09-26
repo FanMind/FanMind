@@ -115,9 +115,9 @@
     "chatadmin_manual_flow": {
       "task": "FM-CHATADMIN-002",
       "risk": "R4",
-      "state": "IN_PROGRESS",
+      "state": "ACCEPTED",
       "required_for_sales": false,
-      "evidence": "PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED: PR #1201 merged as d91405d67792aa65a14964553a09a36fa0c87de0 and exact Staging deploy 36253747829 succeeded; protected run 36253850844 passed probe, full synthetic browser/UI/API flow, negatives, cleanup and absence. Independent P1 found stop silently aborts a newly attempted acceptance-authorized write. Complete the bounded teardown-write correction, exact reviewed redeploy and fresh protected revalidation; do not repeat APPLY, DB/RLS ACCEPT or Owner authorization."
+      "evidence": "PR #1202 final head ab9b371eb8db048394a4d3743e8bec319c953ea7 passed eight exact-head workflows and independent review with no P0/P1/P2, merged as 9652ae62928c70d8f39d8f184857a34fcd4de74f; exact Staging deploy 36255356091 succeeded; fresh protected acceptance 36255475314 passed probe, real synthetic browser/UI/API flow, authority/tenant/Character negatives, verify, cleanup and independent absence proof with CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS. Synthetic Staging scope only; provider delivery and Production activation remain separate."
     }
   },
   "sales_required_states": [

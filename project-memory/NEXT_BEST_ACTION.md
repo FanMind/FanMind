@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CHATADMIN-MANUAL-FLOW`
-- Task: `FM-CHATADMIN-002`
-- Gate: `chatadmin_manual_flow` (`IN_PROGRESS`)
+- Selected action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
+- Task: `FM-SOC3-001`
+- Gate: `phase3_social` (`PARTIAL`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: ChatAdmin manuellen Staging-Anwendungsflow abnehmen
+- Title: Reale Meta-Konfiguration und Facebook-Inbound abnehmen
 
 ## Instruction
 
-Owner-authorized continuation under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 and first priority under FM-DEC-024. #1201 merged/deployed and run 36253850844 passed the full synthetic flow/negatives/cleanup, but a P1 source countercheck shows that stop can silently abort an acceptance-authorized write. Complete the bounded teardown-write correction with normal review/CI/merge, bind exact Staging deployment and freshly revalidate Character -> synthetic pasted Fan message -> exactly three revision-bound suggestions -> select/copy/manual handoff plus negatives and cleanup. No repeat Owner action; no real data, Social send, auto-send, Production activation, Billing/Stripe/Tax/Restore/Mobile mutation.
+FM-CR-045 is PRODUCTION_CONFIRMED by canonical PR #1138 (final head cea0d43108187a4dcd2510f17798f250d4a3c429, merge ccfe0ccef743e889d4ea16d454282cf66e465ed9), Production Deploy 35450031498, Production Audit 35450097882 and Public Go-Live Readiness 35450097892. Do not repeat its placeholder/OAuth fail-closed source work. The remaining step is owner/provider-controlled secure configuration of the real central Meta App ID/secret, exact FanMind callback, token-encryption key and matching permissions, followed by the bounded Facebook connection/inbound proof. No secrets in chat/Git; Instagram follows only after Facebook acceptance. Payment, automatic send and Mobile stay deferred.
 
 ## Why this action
 
@@ -24,8 +24,8 @@ owner/platform action required
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NBA-CHATADMIN-MANUAL-FLOW`
+- Worker slots reserved by active/ready work: `0`
+- Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -34,7 +34,7 @@ owner/platform action required
 ## Candidate evaluation
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
-- `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED

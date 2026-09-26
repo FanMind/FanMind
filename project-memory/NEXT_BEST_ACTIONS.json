@@ -300,7 +300,7 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Owner-authorized continuation under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 and first priority under FM-DEC-024. #1201 merged/deployed and run 36253850844 passed the full synthetic flow/negatives/cleanup, but a P1 source countercheck shows that stop can silently abort an acceptance-authorized write. Complete the bounded teardown-write correction with normal review/CI/merge, bind exact Staging deployment and freshly revalidate Character -> synthetic pasted Fan message -> exactly three revision-bound suggestions -> select/copy/manual handoff plus negatives and cleanup. No repeat Owner action; no real data, Social send, auto-send, Production activation, Billing/Stripe/Tax/Restore/Mobile mutation."
+      "instruction": "Completed and consumed: PR #1202 merged as 9652ae62928c70d8f39d8f184857a34fcd4de74f; exact Staging deploy 36255356091 and protected acceptance 36255475314 passed probe, real synthetic browser/UI/API flow, negative boundaries, verify, cleanup and independent absence proof. Do not repeat this owner action, VERIFY, APPLY or DB/RLS ACCEPT merely because main advances. Provider delivery, automatic send and Production activation remain separate."
     }
   ],
   "retired_actions": [
