@@ -25,7 +25,7 @@
 ## FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926 — ChatAdmin manueller Anwendungsflow
 - Status: AUTHORIZED_IN_PROGRESS
 - Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Bernd explicitly requested execution, negative tests, cleanup and independent countercheck. Do not request this same bounded permission again.
-- Builder prerequisite: PR #1193 corrects observed Character/late-response isolation defects. Then deploy and verify the exact reviewed Staging release before preparing the temporary fixture; current runtime still reports f0c7a84e6105752d34b489520fb92d2bb7e5b61a.
+- Builder prerequisite: #1201 is merged/deployed and protected run `36253850844` passed the full synthetic flow and cleanup. A Builder-owned P1 remains because boundary stop silently aborts a newly attempted acceptance-authorized write; correct/review/merge/deploy and freshly revalidate it. No repeat Owner permission is required.
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-MANUAL-FLOW-20260926; Risk: R4 protected Staging application acceptance.
 - Why now: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED. The workflow intentionally left `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
 - Required exact flow: on Staging only, with synthetic/non-customer data and the minimum separately authorized temporary capability/runtime fixture needed for the test, exercise active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.

@@ -2,13 +2,13 @@
 - Status: IN_PROGRESS
 - Risk: R4
 - Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Exact next step: continue fix/chatadmin-browser-preflight-diagnostics-20260926 after actual run36250479400 browser failure. Add nonmutating bound probe/enum diagnostics, preserve exact causal reconciliation of oldrun beforeprovider; after reviewed corrected deploy execute fresh acceptance.
-- Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
+- Exact next step: continue `fix/chatadmin-teardown-write-boundary-20260926` after merged/deployed #1201 and partial runtime PASS `36253850844`. Count every new non-idempotent request after boundary stop while continuing to cancel only new reads and drain already-started requests; then exact-head review/CI/merge/deploy and one fresh protected revalidation.
+- Baseline: exact main `d91405d67792aa65a14964553a09a36fa0c87de0`; same serialized ChatAdmin lock and existing owner authorization remain active. The direct regression is RED on baseline and GREEN with the bounded source correction.
 - Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
 - Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
 - Fresh target evidence: reviewed main0a368095 deployed by36250344137 and independently observed15:00:58.670Z. Postfailure Staging15:03:59.978681Z counts0/0/0/0 and usage0; full schema VERIFIED15:04:15.903990Z; Production six objects absent15:04:00.695911Z. This does not settle in-flight uncertainty.
-- Still open: shared UUID/probe/diagnostic correction review/CI/merge/deploy, actual successful manual flow and independent cleanup. Failed run36250479400 is separately RECONCILED_BEFORE_PROVIDER by deterministic owner-ID assertion proof and fresh zero counts/sessions; original artifact stays unchanged.
+- Still open: teardown-write correction review/CI/merge/deploy and fresh protected revalidation. Run `36253850844` proves the full synthetic flow and cleanup but remains partial until the false-green boundary is corrected and revalidated. Failed run36250479400 stays separately RECONCILED_BEFORE_PROVIDER; its original artifact remains unchanged.
 - Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
 
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26

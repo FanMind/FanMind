@@ -12,9 +12,12 @@ export async function installChatAdminNetworkBoundary(context,{appOrigin,supabas
     if(url.origin==="https://challenges.cloudflare.com"&&method==="GET"&&url.pathname==="/turnstile/v0/api.js"){await route.abort().catch(()=>{});return;}
     if(![appOrigin,supabaseOrigin].includes(url.origin)){violation('origin');await route.abort().catch(()=>{});return;}
     if(!chatAdminRequestAllowed(url,method,{appOrigin,supabaseOrigin,mode})){violation('write');await route.abort().catch(()=>{});return;}
-    // Keep the boundary installed while shutting down. New allowed requests are
-    // intentionally cancelled, while previously started transports must settle.
-    if(stopping){await route.abort().catch(()=>{});return;}
+    // Keep the boundary installed while shutting down. New idempotent reads are
+    // cancelled, new writes stay violations, and started transports must settle.
+    if(stopping){
+      if(!["GET","HEAD","OPTIONS"].includes(method))violation('write');
+      await route.abort().catch(()=>{});return;
+    }
     // Chromium automatically continues redirected hops without invoking context.route.
     // Fetch one response only, then preserve its body/headers (including Set-Cookie).
     let response;

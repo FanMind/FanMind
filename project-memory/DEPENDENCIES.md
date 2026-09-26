@@ -161,7 +161,7 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - Type: protected Staging application/runtime acceptance
 - Status: IN_PROGRESS
 - Updated: 2026-09-26
-- Current execution: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic scope; current source/runtime binding, actual flow and cleanup evidence remain required in PR #1193 and its protected follow-through.
+- Current execution: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic scope. PR #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but a P1 false-green boundary remains: new acceptance-authorized writes after stop are aborted without a violation. Corrected reviewed merge, exact redeploy and fresh revalidation are required before this dependency can be consumed.
 - Required evidence: actual Staging application flow active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, plus negative tenant/authority checks and cleanup/zero-persistence evidence.
 - Rule: no real customer/provider send, no automatic send and no Production/provider/Billing/Restore/Mobile mutation.
 

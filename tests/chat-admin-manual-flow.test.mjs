@@ -98,6 +98,21 @@ test("probe network policy blocks fixture and provider writes before route trans
   assert.equal(chatAdminRequestAllowed(new URL("/api/auth/session",targets.appOrigin),"POST",targets),true);
 });
 
+test("teardown never hides writes that acceptance mode would normally allow",async()=>{
+  const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"acceptance"};
+  let handler,fetches=0,aborts=0;const reasons=[];
+  const boundary=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
+  await boundary.stop();
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"]])await handler({
+    request:()=>({url:()=>`${targets.appOrigin}${path}`,method:()=>method}),
+    fetch:async()=>{fetches++;},abort:async()=>{aborts++;},
+  });
+  assert.equal(fetches,0,"teardown must never forward a write");
+  assert.equal(aborts,2);
+  assert.equal(boundary(),2,"acceptance-authorized writes remain violations once teardown starts");
+  assert.deepEqual(reasons,["write","write"]);
+});
+
 test("probe dispatch calls only release verification and the browser probe without preparing fixtures",async()=>{
   const observed=[];
   await runManualFlowProbe(env,{verifyRelease:async()=>observed.push("version"),runBrowser:(_env,mode)=>observed.push(mode)});

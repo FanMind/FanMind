@@ -1,8 +1,8 @@
 ## FM-CHATADMIN-002 — manual application-flow completion — 2026-09-26
 - Status: IN_PROGRESS; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW; Priority: first by FM-DEC-024.
-- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; PR #1193.
-- Remaining outcome: source Character/late-result isolation correction, current reviewed Staging deployment, synthetic actual UI/API manual flow with negatives, fixture cleanup and independent countercheck.
-- Fresh prerequisite finding: live Staging release f0c7a84e6105752d34b489520fb92d2bb7e5b61a predates ChatAdmin; all four installed ChatAdmin tables have zero rows. No target fixture was written.
+- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; current follow-up branch `fix/chatadmin-teardown-write-boundary-20260926` on exact main `d91405d67792aa65a14964553a09a36fa0c87de0`.
+- Remaining outcome: ensure quiescing never hides a new non-idempotent request, pass exact-head review/CI/merge, deploy exact reviewed main and freshly revalidate the already-proven synthetic UI/API flow, negatives, cleanup and absence proof.
+- Fresh evidence: #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but the independent P1 means it is partial rather than final acceptance. No Production/provider/Billing/Restore/Mobile mutation is implicated.
 - Completion: source review/CI/merge alone is a partial result; chatadmin_manual_flow remains open until current target evidence and cleanup exist.
 
 ## FM-CREATOR-001 — exhausted broad action reconciliation — 2026-09-26

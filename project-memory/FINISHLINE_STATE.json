@@ -116,7 +116,8 @@
       "task": "FM-CHATADMIN-002",
       "risk": "R4",
       "state": "IN_PROGRESS",
-      "required_for_sales": false
+      "required_for_sales": false,
+      "evidence": "PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED: PR #1201 merged as d91405d67792aa65a14964553a09a36fa0c87de0 and exact Staging deploy 36253747829 succeeded; protected run 36253850844 passed probe, full synthetic browser/UI/API flow, negatives, cleanup and absence. Independent P1 found stop silently aborts a newly attempted acceptance-authorized write. Complete the bounded teardown-write correction, exact reviewed redeploy and fresh protected revalidation; do not repeat APPLY, DB/RLS ACCEPT or Owner authorization."
     }
   },
   "sales_required_states": [

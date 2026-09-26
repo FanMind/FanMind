@@ -374,12 +374,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CHATADMIN-PROBE-TRANSPORT-20260926
 - Date: 2026-09-26
-- Status: SOURCE_CORRECTION_VERIFIED_LOCAL
+- Status: PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: run36252899026/attempt1/job108434155060 on reviewed/deployedce7013e6e59c76f8dffb7568eabaec60bc14c50f.
 - Failure: mandatory probe reached stagecomplete after successful assertions and sessioncleanup, but the parent correctly rejected networktransport; no DB/passfile/reservation/artifact/fixture execution occurred.
 - Independent post-probe:15:45:01.501410Z four globaltables0/0/0/0/global+scopedreplyusage0/allthreeactorsrun-windowsessions0. No blind retry or arbitrary network-error suppression.
-- Next: actual Chromium reproduction of pending route transport versus context teardown, preserving redirect/origin/write enforcement; reviewed correction and fresh exact deployment before acceptance.
+- Published correction and runtime: PR #1201 merged as `d91405d67792aa65a14964553a09a36fa0c87de0`; deploy `36253747829` succeeded; protected run `36253850844` passed probe/full synthetic browser flow/negatives/cleanup/absence. This is real progress, but not final acceptance because the following boundary finding weakens false-green detection.
+- Current finding/next: after quiescing, a new POST/PATCH that acceptance mode normally permits is aborted without a `write` violation. A direct regression reproduces zero violations. Repair only that classification while preserving active-request drain and genuine transport/redirect evidence, then review/CI/merge, exact redeploy and fresh protected revalidation.
 - Independent reproduction: real local Chromium with the current helper, an allowed delayed GET and context.close reproduces the exact complete/transport/passed/failed tuple. The historical tuple proves the violation arrived after the network assertions, but does not uniquely distinguish shutdown cancellation from a genuine late transport error. Both cases must be covered; the old run stays FAILED.
 
 ## FM-FAIL-CHATADMIN-BROWSER-UNCERTAINTY-20260926
