@@ -103,7 +103,7 @@
       "risk": "R4",
       "state": "ACCEPTED",
       "required_for_sales": false,
-      "evidence": "GitHub Actions run 36235870895 / job 108387398410 on 2aaf225fec29fd91c20f822185c770f87eb3d10d; checksum 9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b; CHAT_ADMIN_SCHEMA_STATE=VERIFIED; independent Staging catalog/RLS/ACL postflight PASS with zero ChatAdmin rows and Production absence"
+      "evidence": "Durable protected GitHub Actions run 36235870895 / job 108387398410 bound to exact reviewed 2aaf225fec29fd91c20f822185c770f87eb3d10d and checksum 9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b completed APPLY with built-in CHAT_ADMIN_SCHEMA_STATE=VERIFIED; mutable current Staging schema observation is tracked separately by EV-CHATADMIN-STAGING-SCHEMA-POSTFLIGHT-20260926."
     },
     "chatadmin_staging_accept": {
       "task": "FM-CHATADMIN-002",
