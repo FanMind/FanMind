@@ -17,6 +17,7 @@ const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
 const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
+const startedWork = read("project-memory/STARTED_WORK.md");
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -195,8 +196,10 @@ test("current canonical readers cannot reopen consumed reconciliation steps", ()
 });
 
 test("historical merge evidence is not mislabeled as the current main head", () => {
-  assert.doesNotMatch(
-    sessionHandoff,
-    /PR #1189[^\n]*merged as current main/u,
-  );
+  for (const reader of [sessionHandoff, startedWork]) {
+    assert.doesNotMatch(
+      reader,
+      /PR #1189[^\n]*merged as current main/u,
+    );
+  }
 });
