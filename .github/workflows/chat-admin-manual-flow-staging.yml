@@ -3,6 +3,14 @@ name: FanMind ChatAdmin Manual Flow Staging Acceptance
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: Probe authentication only, or explicitly run fixture acceptance after the probe
+        required: true
+        type: choice
+        default: probe
+        options:
+          - probe
+          - acceptance
       reviewed_commit:
         description: Exact reviewed main commit already deployed to isolated Staging
         required: true
@@ -26,6 +34,7 @@ jobs:
     env:
       REQUESTED_COMMIT: ${{ inputs.reviewed_commit }}
       REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+      REQUESTED_MODE: ${{ inputs.mode }}
     steps:
       - name: Validate the exact independent manual-flow request
         run: |
@@ -34,6 +43,7 @@ jobs:
           [[ "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
           [[ "$REQUESTED_COMMIT" == "$GITHUB_SHA" ]]
           [[ "$REQUESTED_CONFIRMATION" == 'run-chat-admin-manual-flow' ]]
+          [[ "$REQUESTED_MODE" == 'probe' || "$REQUESTED_MODE" == 'acceptance' ]]
 
   acceptance:
     needs: validate-dispatch
@@ -97,7 +107,20 @@ jobs:
           node --test tests/chat-admin-manual-flow.test.mjs
       - name: Install the pinned Chromium
         run: npx playwright install --with-deps chromium
+      - name: Probe actual authentication and authority before any fixture mutation
+        env: &fixture_credentials
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+          FANMIND_STAGING_ADMIN_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
+          FANMIND_STAGING_ADMIN_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+        run: |
+          set -euo pipefail
+          unset http_proxy https_proxy all_proxy
+          node scripts/operations/chat-admin-manual-flow-staging.mjs --probe
       - name: Prepare the dedicated private database password file
+        if: ${{ inputs.mode == 'acceptance' }}
         id: passfile
         env:
           PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
@@ -114,18 +137,14 @@ jobs:
           chmod 600 "$PGPASSFILE"
           printf 'PGPASSFILE=%s\n' "$PGPASSFILE" >> "$GITHUB_ENV"
       - name: Reserve the exact recovery binding before any fixture mutation
-        env: &fixture_credentials
-          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
-          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
-          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
-          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
-          FANMIND_STAGING_ADMIN_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
-          FANMIND_STAGING_ADMIN_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+        if: ${{ inputs.mode == 'acceptance' }}
+        env: *fixture_credentials
         run: |
           set -euo pipefail
           unset http_proxy https_proxy all_proxy
           node scripts/operations/chat-admin-manual-flow-staging.mjs --reserve
       - name: Persist the sanitized recovery binding before fixture mutation
+        if: ${{ inputs.mode == 'acceptance' }}
         id: recovery
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -135,7 +154,7 @@ jobs:
           retention-days: 7
           include-hidden-files: false
       - name: Execute actual UI and API acceptance with guaranteed cleanup
-        if: ${{ steps.recovery.outcome == 'success' }}
+        if: ${{ inputs.mode == 'acceptance' && steps.recovery.outcome == 'success' }}
         env:
           FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
           FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
@@ -155,4 +174,4 @@ jobs:
         run: node scripts/operations/chat-admin-manual-flow-staging.mjs --cleanup
       - name: Remove the dedicated password file
         if: ${{ always() }}
-        run: rm -f "$PGPASSFILE"
+        run: rm -f "$RUNNER_TEMP/fanmind-chat-admin-manual.pgpass"

@@ -8,14 +8,15 @@ import { pathToFileURL } from "node:url";
 import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAdminStagingControlPolicy.mjs";
 import { CHAT_ADMIN_POSTFLIGHT_SQL, SQL_PATH, SQL_SHA256 } from "./chat-admin-staging-runner.mjs";
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME } from "../../src/lib/stagingSyntheticFixturePolicy.mjs";
+import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, formatBrowserDiagnostic, requireSuccessfulProbe } from "../../e2e-chatadmin-staging/browser-diagnostic.mjs";
+import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture-identity.mjs";
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
 const TABLES = ["workspace_chat_admin_capabilities", "chat_characters", "chat_character_conversations", "chat_character_messages"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
 const literal = (value) => `'${String(value).replaceAll("'", "''")}'`;
-const identities = (env) => Object.fromEntries(ID_KEYS.map(key => [key, String(env[`FANMIND_CHAT_ADMIN_${key}`] ?? "").trim().toLowerCase()]));
+const identities = (env) => Object.fromEntries(ID_KEYS.map(key => [key, canonicalChatAdminFixtureId(env[`FANMIND_CHAT_ADMIN_${key}`])]));
 
 export function validateManualFlowEnvironment(env) {
   // Reuse the read-only target contract, with a NEW independent write confirmation.
@@ -29,7 +30,7 @@ export function validateManualFlowEnvironment(env) {
       env.FANMIND_NON_PRODUCTION_WRITE_ACK !== "I_UNDERSTAND_NON_PRODUCTION_ONLY" ||
       env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM !== MANUAL_FLOW_CONFIRMATION) fail("boundary");
   const ids = identities(env);
-  if (Object.values(ids).some(id => !UUID.test(id)) || new Set(Object.values(ids)).size !== ID_KEYS.length) fail("fixture_identity");
+  if (new Set(Object.values(ids)).size !== ID_KEYS.length) fail("fixture_identity");
   const emails = [env.FANMIND_STAGING_E2E_EMAIL,env.FANMIND_STAGING_E2E_SECONDARY_EMAIL];
   if (emails.some(email => typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email) || !/staging|synthetic|test/iu.test(email)) || emails[0].toLowerCase() === emails[1].toLowerCase()) fail("fixture_email");
   const adminEmail=String(env.FANMIND_STAGING_ADMIN_E2E_EMAIL??'').trim().toLowerCase();
@@ -175,6 +176,29 @@ export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
   try {await prepare();await run();await verify();} finally {await cleanup();}
 }
 
+export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) {
+  initializeBrowserDiagnostic(env,mode);
+  const browserEnv={...env,FANMIND_CHAT_ADMIN_BROWSER_MODE:mode};for(const key of Object.keys(browserEnv))if(key.startsWith('PG')||key.includes('DB_PASSWORD')||key.includes('SERVICE_ROLE'))delete browserEnv[key];
+  let passed=false;
+  try {
+    const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:240_000,maxBuffer:1024*1024});
+    const diagnostic=readBrowserDiagnostic(env,mode);
+    passed=!result.error&&result.status===0&&diagnostic.stage==='complete'&&diagnostic.outcome==='passed'&&diagnostic.network==='none'&&diagnostic.sessionCleanup==='passed';
+  } catch {
+    passed=false;
+  } finally {
+    // Raw browser stdout/stderr/errors may contain credentials or private content.
+    // Even failures emit only values independently validated against fixed enums.
+    try {if(!passed)updateBrowserDiagnostic(env,mode,{outcome:'failed'});for(const line of formatBrowserDiagnostic(env,mode))emit(line);}
+    catch {passed=false;emit('CHAT_ADMIN_MANUAL_DIAGNOSTIC=INVALID');}
+  }
+  if(!passed)fail('browser');
+  emit(mode==='probe'?'CHAT_ADMIN_MANUAL_PROBE=PASS':'CHAT_ADMIN_MANUAL_BROWSER=PASS');
+}
+export async function runManualFlowProbe(env,{verifyRelease=verifyManualFlowRelease,runBrowser=runManualBrowser}={}) {
+  await verifyRelease(env);runBrowser(env,'probe');
+}
+
 function receiptPath(env) {if(!isAbsolute(env.RUNNER_TEMP ?? ''))fail('runner_temp');return join(env.RUNNER_TEMP,'fanmind-chat-admin-manual-flow.json');}
 function recoveryPath(env) {receiptPath(env);return join(env.RUNNER_TEMP,'fanmind-chat-admin-manual-flow-recovery.json');}
 function recoveryBinding(receipt) {
@@ -239,11 +263,13 @@ function cleanup(env) {
 }
 
 async function main() {
-  const mode=process.argv[2];if(process.argv.length!==3||!['--check','--reserve','--run','--cleanup'].includes(mode))fail('mode');
+  const mode=process.argv[2];if(process.argv.length!==3||!['--check','--probe','--reserve','--run','--cleanup'].includes(mode))fail('mode');
   if(mode==='--check'){if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
   const env=process.env;validateManualFlowEnvironment(env);
   if(mode==='--cleanup'){cleanup(env);return;}
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID ?? '')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT ?? ''))fail('run_identity');
+  if(mode==='--probe'){await runManualFlowProbe(env);return;}
+  requireSuccessfulProbe(env);
   await verifyManualFlowRelease(env);schema(env);
   if(mode==='--reserve'){reserveManualFlowReceipt(env);console.log('CHAT_ADMIN_MANUAL_RESERVATION=PASS');return;}
   // The reviewed workflow supplies these outputs only after pinned upload succeeded.
@@ -253,12 +279,8 @@ async function main() {
     prepare:async()=>{await verifyManualFlowRelease(env);sqlMode('prepare',env,receipt);},
     run:async()=>{
       receipt.inFlightUncertain=true;updateReceipt(env,receipt);
-      const browserEnv={...env};for(const key of Object.keys(browserEnv))if(key.startsWith('PG')||key.includes('DB_PASSWORD')||key.includes('SERVICE_ROLE'))delete browserEnv[key];
-      const result=spawnSync('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:240_000,maxBuffer:1024*1024});
-      // Never relay browser diagnostics: they may contain synthetic content or credentials.
-      if(result.error||result.status!==0||!result.stdout.includes('CHAT_ADMIN_MANUAL_BROWSER=PASS'))fail('browser');
+      runManualBrowser(env,'acceptance');
       receipt.inFlightUncertain=false;updateReceipt(env,receipt);
-      console.log('CHAT_ADMIN_MANUAL_BROWSER=PASS');
     },
     verify:async()=>{await verifyManualFlowRelease(env);sqlMode('verify',env,receipt);},
     cleanup:async()=>cleanup(env),

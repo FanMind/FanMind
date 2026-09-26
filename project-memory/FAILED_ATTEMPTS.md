@@ -354,9 +354,22 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CHATADMIN-EXISTING-ADMIN-CREDENTIAL-20260926
 - Date: 2026-09-26
-- Status: CORRECTION_IN_PROGRESS
+- Status: RESOLVED_VERIFIED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: manual-flow run `36249816690` / job `108425635786`, exact reviewed/deployed `930ae196d20c0cd646b30a3d9a210269d694abeb`.
 - Failure: fixture_credential before reservation/fixture/browser. All existing credential inputs are masked-present. The new validator imposes a 16-character minimum on an already existing admin login; established admin E2E consumes a supplied password and verifies authentication/authority live. No secret value or length was read.
 - Cleanup evidence: no fixture/receipt/browser request was started; dedicated passfile removal succeeded. Independent post-failure Staging count at `2026-09-26T14:51:42.539013Z` is 0/0/0/0 with zero global chat_admin_reply usage.
 - Correction: align existing-admin password consumption only, preserve synthetic-owner validation, exact identity separation and actual authenticated admin-proof route; add short-existing-password acceptance and missing/newline rejection regressions. No account/password/secret mutation. Current-head CI/review, normal merge, exact deployment and actual manual acceptance remain required.
+
+- Resolution: PR #1197 merged as0a368095 after all8CI+review. Exact Staging deploy36250344137 passed; subsequent manual run36250479400 passed reservation/fixture credential contract without account/password/secret changes. Its distinct browser failure is tracked below.
+
+## FM-FAIL-CHATADMIN-BROWSER-UNCERTAINTY-20260926
+- Date: 2026-09-26
+- Status: RECONCILED_BEFORE_PROVIDER
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: run36250479400/attempt1/job108427466146 on reviewed/deployed0a368095790cf6ff297d6735569c4edb03186efb; reservation/artifact/PREPARE passed before browser failure.
+- Failure: browser did not emit PASS; finally cleanup correctly retained in-flight uncertainty and masked the original browser failure with inflight_reconciliation_required. Raw diagnostics were not retained for privacy, so the exact phase/provider submission is not established.
+- Recovery: sanitized artifact10908424691 and unchanged permanent receipt copy bind exact run/attempt/SHA/target/fixture IDs/marker/start. Best-effort exact removal completed and passfile removal succeeded; independent counts0/0/0/0 and usage0 plus full schema/Production absence passed. None of this independently proves every earlier request settled.
+- Next: read-only exact request/session metadata diagnosis; add nonmutating probe and strict fixed-enum failure diagnostics before future fixtures. Keep old uncertainty until independently evidenced request completion/quiescence; never infer it from elapsed time, zero current rows or a new successful run.
+
+- Resolution: actual OWNER_ID trailingCR in all11 environment observations causes the historical browser strict identity comparison to fail before dashboard/ChatAdmin/provider. Two independent actual-helper reproductions verify ordering; expected sessions were logged out204 and fresh session/table/usage counts are zero with full schema/Production absence verified. Original archived uncertainty is immutable; separate reconciliation receipt records causal closure. Source normalization/probe correction and actual successful acceptance remain open.

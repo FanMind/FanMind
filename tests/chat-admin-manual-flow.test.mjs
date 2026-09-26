@@ -10,7 +10,11 @@ import {
   buildManualFlowSql, runWithGuaranteedCleanup,
   completeManualFlowCleanup,
   reserveManualFlowReceipt, authorizeReservedManualFlow,
+  runManualBrowser, runManualFlowProbe,
 } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, requireSuccessfulProbe, formatBrowserDiagnostic } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
+import { canonicalChatAdminFixtureId } from "../e2e-chatadmin-staging/fixture-identity.mjs";
+import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "../e2e-chatadmin-staging/network-boundary.mjs";
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
 const keys = ["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
@@ -34,6 +38,64 @@ const env = {
 };
 // The tenth test UUID uses a hexadecimal digit too.
 env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID="aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa";
+
+test("browser and SQL share strict fixture UUID normalization for the observed trailing carriage return",()=>{
+  const rawOwner=`${env.FANMIND_CHAT_ADMIN_OWNER_ID}\r`;
+  const validated=validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:rawOwner});
+  assert.equal(canonicalChatAdminFixtureId(rawOwner),validated.OWNER_ID);
+  assert.equal(canonicalChatAdminFixtureId("ABCDEFAB-1111-4111-8111-ABCDEFABCDEF\r"),"abcdefab-1111-4111-8111-abcdefabcdef");
+  for(const invalid of [undefined,"",`${rawOwner}x`,"not-a-uuid","abcdefab-1111-0111-8111-abcdefabcdef"])assert.throws(()=>canonicalChatAdminFixtureId(invalid),/fixture_identity/u);
+  assert.throws(()=>validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:`${env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID}\r`}),/fixture_identity/u);
+});
+
+test("browser diagnostics reject private payloads and the parent never forwards raw Playwright output",()=>{
+  const directory=mkdtempSync(join(tmpdir(),"chatadmin-diagnostic-test-"));
+  const current={...env,RUNNER_TEMP:directory,GITHUB_RUN_ID:"12345",GITHUB_RUN_ATTEMPT:"1"};
+  try {
+    initializeBrowserDiagnostic(current,"probe");
+    assert.throws(()=>requireSuccessfulProbe(current));
+    for(const patch of [{stage:"private-password"},{url:"https://private.invalid"},{status:"private-token"},{sessionCleanup:"private-response"}])assert.throws(()=>updateBrowserDiagnostic(current,"probe",patch));
+    updateBrowserDiagnostic(current,"probe",{stage:"admin_token",status:"4xx"});
+    assert.deepEqual(formatBrowserDiagnostic(current,"probe"),["CHAT_ADMIN_MANUAL_MODE=probe","CHAT_ADMIN_MANUAL_STAGE=admin_token","CHAT_ADMIN_MANUAL_OUTCOME=running","CHAT_ADMIN_MANUAL_HTTP=4xx","CHAT_ADMIN_MANUAL_NETWORK=none","CHAT_ADMIN_MANUAL_SESSION_CLEANUP=not_started"]);
+    updateBrowserDiagnostic(current,"probe",{stage:"complete",outcome:"passed",sessionCleanup:"passed"});
+    assert.doesNotThrow(()=>requireSuccessfulProbe(current));
+    for(const changed of [{GITHUB_RUN_ATTEMPT:"2"},{GITHUB_RUN_ID:"99"},{GITHUB_SHA:"b".repeat(40)},{FANMIND_TARGET_SUPABASE_PROJECT_REF:"otherstagingref"}])assert.throws(()=>requireSuccessfulProbe({...current,...changed}));
+    const probePath=join(directory,"fanmind-chat-admin-probe-diagnostic.json"),saved=readFileSync(probePath,"utf8");
+    writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),source:"d".repeat(64)}));assert.throws(()=>requireSuccessfulProbe(current));
+    writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),response:"private-token"}));assert.throws(()=>formatBrowserDiagnostic(current,"probe"));writeFileSync(probePath,saved);
+    const output=[];
+    assert.throws(()=>runManualBrowser(current,"acceptance",()=>{
+      updateBrowserDiagnostic(current,"acceptance",{stage:"owner_token",status:"4xx",outcome:"failed",sessionCleanup:"passed"});
+      return {status:1,stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token private-response",stderr:"private-password",error:undefined};
+    },line=>output.push(line)),/browser/u);
+    assert.ok(output.includes("CHAT_ADMIN_MANUAL_STAGE=owner_token"));
+    assert.doesNotMatch(output.join("\n"),/private-token|private-response|private-password/u);
+    assert.equal(readBrowserDiagnostic(current,"acceptance").outcome,"failed");
+  } finally {rmSync(directory,{recursive:true,force:true});}
+});
+
+test("probe network policy blocks fixture and provider writes before route transport",async()=>{
+  const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"probe"};
+  let handler,transport=0,aborted=0;const reasons=[];
+  await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/characters","POST"]]) {
+    const url=new URL(path,targets.appOrigin);assert.equal(chatAdminRequestAllowed(url,method,targets),false);
+    await handler({request:()=>({url:()=>url.href,method:()=>method}),abort:async()=>{aborted++;},fetch:async()=>{transport++;}});
+  }
+  assert.equal(transport,0);assert.equal(aborted,3);assert.deepEqual(reasons,["write","write","write"]);
+  assert.equal(chatAdminRequestAllowed(new URL("/auth/v1/logout",targets.supabaseOrigin),"POST",targets),true);
+  assert.equal(chatAdminRequestAllowed(new URL("/api/auth/session",targets.appOrigin),"POST",targets),true);
+});
+
+test("probe dispatch calls only release verification and the browser probe without preparing fixtures",async()=>{
+  const observed=[];
+  await runManualFlowProbe(env,{verifyRelease:async()=>observed.push("version"),runBrowser:(_env,mode)=>observed.push(mode)});
+  assert.deepEqual(observed,["version","probe"]);
+  const workflow=readFileSync(new URL("../.github/workflows/chat-admin-manual-flow-staging.yml",import.meta.url),"utf8");
+  assert.match(workflow,/default: probe/u);
+  assert.ok(workflow.indexOf(" --probe")<workflow.indexOf("id: passfile"));
+  assert.match(workflow,/inputs.mode == 'acceptance'/u);
+});
 
 test("manual flow accepts only its exact protected Staging request", () => {
   assert.doesNotThrow(()=>validateManualFlowEnvironment(env));
