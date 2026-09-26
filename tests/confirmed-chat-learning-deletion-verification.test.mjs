@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
 
 import {
-  CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
   CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE,
   getConfirmedChatLearningSchemaState,
   verifyConfirmedChatLearningAccountDeletion,
@@ -321,7 +321,15 @@ test("confirmed-chat deletion readers keep Staging installed while Production an
     "preinstall",
   );
   assert.equal(getConfirmedChatLearningSchemaState({}), "preinstall");
-  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "preinstall");
+  for (const [runtime, expected] of [["staging", "installed"], [" StAgInG ", "installed"], ["production", "preinstall"], ["unknown", "preinstall"], ["", "preinstall"]]) {
+    const moduleUrl = new URL("../src/lib/confirmedChatLearningDeletionVerification.mjs", import.meta.url).href;
+    const imported = spawnSync(process.execPath, ["--input-type=module", "--eval",
+      `import { CONFIRMED_CHAT_LEARNING_SCHEMA_STATE } from ${JSON.stringify(moduleUrl)}; process.stdout.write(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE);`], {
+      env: { ...process.env, FANMIND_RUNTIME_ENVIRONMENT: runtime }, encoding: "utf8", timeout: 10_000,
+    });
+    assert.equal(imported.status, 0, `module import must complete for ${runtime || "empty runtime"}`);
+    assert.equal(imported.stdout, expected, `module constant must bind to ${runtime || "empty runtime"}`);
+  }
   assert.match(
     disclosureSource,
     /CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"installed";/u,

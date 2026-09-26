@@ -330,3 +330,12 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Result: app and loopback fixture started, but Playwright Chromium v1234 was absent. `npx playwright install chromium` retried the official CDN and received HTTP 403 `Domain forbidden` from the Codex Cloud network boundary.
 - Safety: no Production/Staging/provider/customer mutation occurred; no gate was weakened and no screenshot/result was invented.
 - Next: use required remote Current-Head Browser E2E/CI, where the workflow installs the pinned browser. Do not replace it with an unpinned system browser.
+## FM-FAIL-CHATADMIN-DEPLOY-RUNTIME-TEST-20260926
+- Date: 2026-09-26
+- Status: CORRECTION_IN_PROGRESS
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: Staging deploy `36247833422` / job `108420215949`, exact main `955b8bf425bc2073e7e4b5d0316be1d478a313e4`.
+- Failure: existing `confirmed-chat-learning-deletion-verification.test.mjs` expected the imported runtime constant to be `preinstall` even under the explicitly loaded Staging environment, where `installed` is the reviewed contract.
+- Negative evidence: deployment stopped during Operations tests before build/restart; `/api/version` at `2026-09-26T14:16:38.983Z` still reports prior `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`. Manual acceptance was not dispatched; no fixture/provider call occurred.
+- Correction: reproduce under Staging and test fresh module imports across Staging/mixed-case, Production, unknown and empty environments. Keep runtime code, rollout states and deployment gates unchanged. Do not rerun the unchanged failed release.
+- Completion remains open until the corrected reviewed release deploys successfully; no target acceptance is inferred from the test fix.
