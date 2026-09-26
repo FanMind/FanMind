@@ -261,7 +261,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Completed and consumed: owner-authorized protected run 36235870895 / job 108387398410 on exact 2aaf225fec29fd91c20f822185c770f87eb3d10d applied only the checksum-pinned ChatAdmin migration to Staging vshyhvgcmrlagvfnvomc; workflow postflight and independent target/RLS/ACL/zero-row countercheck are VERIFIED, while Production remains without the ChatAdmin tables. Do not repeat APPLY. Continue only through the distinct protected ChatAdmin ACCEPT action."
+      "instruction": "Completed and consumed: owner-authorized protected run 36235870895 / job 108387398410 on exact 2aaf225fec29fd91c20f822185c770f87eb3d10d applied only the checksum-pinned ChatAdmin migration to Staging vshyhvgcmrlagvfnvomc; workflow postflight and independent target/RLS/ACL/zero-row countercheck are VERIFIED, while Production remains without the ChatAdmin tables. The later DB/RLS ACCEPT is also completed and consumed. Do not repeat APPLY or DB/RLS ACCEPT; continue only through the separately owner-gated manual application-flow action."
     },
     {
       "id": "NBA-CHATADMIN-STAGING-ACCEPT",

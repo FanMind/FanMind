@@ -10,7 +10,7 @@
 - Offline contract check pinned SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; the controlled transaction completed and its built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
 - Independent read-only Supabase countercheck confirms the four expected ChatAdmin tables, RLS, exact policies/grants, SECURITY INVOKER helper and global uniqueness index. Capability/Character/Conversation/Message tables all contain zero rows. Production `drqkpdvtbbrrdwmtrodz` still has none of the four ChatAdmin tables.
 - APPLY is consumed and must not be repeated. No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
-- Next protected ChatAdmin step is the separate rollback-only synthetic DB/RLS `ACCEPT` path after fresh current-main/target binding. The real Character -> Fan-Nachricht -> drei Vorschläge -> Copy -> manueller Send-Handoff remains OPEN and cannot be inferred from schema acceptance.
+- The separate rollback-only synthetic DB/RLS `ACCEPT` subsequently completed and was consumed through PR #1189 / main `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Only the real Character -> Fan-Nachricht -> drei Vorschläge -> Copy -> manueller Send-Handoff remains OPEN; it cannot be inferred from schema acceptance.
 
 ## Creator broad action consumed; no repository scope currently admitted — 2026-09-26
 - Exact baseline main `2aaf225fec29fd91c20f822185c770f87eb3d10d` exposed a post-#1184 contradiction: `docs/CREATOR_INTELLIGENCE.md` still called the merged aggregate summary the next repository step and `NBA-CREATOR-INTELLIGENCE` remained executable despite no active bounded continuation.

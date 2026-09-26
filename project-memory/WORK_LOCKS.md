@@ -30,9 +30,9 @@
 - Forbidden: product feature expansion, SQL APPLY, protected Staging/Production/runtime/provider/customer/Billing/Restore/Mobile mutation, secrets or direct main writes.
 - Release condition: focused regression, manager contract, truth/drift/quality/status checks, exact diff countercheck, commit/PR current-head CI and one independent review with P1=0/P2=0/no blocking threads.
 - Recovery: ordinary repository revert; no external state changes.
-- Released by: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80`, focused negative/regression proof, 1,548 Operations tests with 0 failures, and all local Manager/Memory/drift controls. Exact-head remote CI, independent review and normal merge remain required before merged completion.
+- Historical local release: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed focused negative/regression proof, 1,548 Operations tests with 0 failures, and all local Manager/Memory/drift controls before publication.
 - Review continuation: reacquired on the same PR for the P1 stale `OPEN_LOOPS` authorization and P2 legacy-action reactivation gap; no second Creator scope or PR is created.
-- Review-fix release: correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` passed focused negative coverage and the full Operations suite with 0 failures. The lock is released only for the same PR's new exact-head CI/review cycle; merge remains conditional on P1=0/P2=0/no blocking threads.
+- Historical review-fix release: correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` passed focused negative coverage and the full Operations suite with 0 failures; the final publication evidence is recorded below.
 - Final release: PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` passed all triggered exact-head workflows and independent review with no unresolved blocking thread, then squash-merged as `d2af392dfa099da8d675481bb343154d829743ff`. No worker remains reserved by this lock.
 
 ## LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925

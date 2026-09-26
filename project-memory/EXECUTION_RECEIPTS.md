@@ -18,7 +18,7 @@
 - Workflow result: controlled transaction succeeded and built-in postflight emitted `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; private passfile cleanup succeeded; ACCEPT steps were skipped.
 - Independent countercheck: Staging has exactly the expected four ChatAdmin RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; capability/character/conversation/message row counts are all zero. Production has none of the four tables.
 - Safety/negative evidence: no real capability grant/customer row, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, no automatic send and no runtime/manual application-flow acceptance.
-- Completion boundary: `chatadmin_staging_apply=ACCEPTED`. Separate protected rollback-only DB/RLS ACCEPT and later manual application flow remain open.
+- Completion boundary: `chatadmin_staging_apply=ACCEPTED`. The later rollback-only DB/RLS ACCEPT is also completed and consumed; only the manual application flow remains open.
 - Recovery: no rollback is requested for the verified Staging installation; any future destructive rollback would require its own exact protected authorization.
 - Repository publication: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` completed all triggered exact-head workflows successfully, independent exact-head review reported no major issues, and normal squash merge produced `7655aed2cae6ff3588207fee6f2227fd5b8db41c`. This records the reconciliation publication only; it does not refresh mutable Staging evidence or authorize another APPLY.
 

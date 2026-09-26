@@ -12,6 +12,17 @@ const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
 const openLoops = read("project-memory/OPEN_LOOPS.md");
+const currentState = read("project-memory/CURRENT_STATE.md");
+const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
+const workLocks = read("project-memory/WORK_LOCKS.md");
+const taskLedger = read("project-memory/TASK_LEDGER.md");
+
+const markdownSection = (document, heading) => {
+  const start = document.indexOf(heading);
+  assert.notEqual(start, -1, `missing section: ${heading}`);
+  const next = document.indexOf("\n## ", start + heading.length);
+  return document.slice(start, next === -1 ? undefined : next);
+};
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
@@ -115,4 +126,57 @@ test("truth drift accepts only active eligible or evidence-bound consumed Creato
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /FANMIND_CREATOR_ACTION_CONTRACT_RESULT=passed/u);
+});
+
+test("current canonical readers cannot reopen consumed reconciliation steps", () => {
+  const currentApply = markdownSection(
+    currentState,
+    "## ChatAdmin Staging APPLY completed and independently verified",
+  );
+  const applyReceipt = markdownSection(
+    executionReceipts,
+    "## RECEIPT-FM-CHATADMIN-002-STAGING-APPLY-20260926",
+  );
+  const creatorLock = markdownSection(
+    workLocks,
+    "## LOCK-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926",
+  );
+  const creatorLedgerReconciliation = markdownSection(
+    taskLedger,
+    "## FM-CREATOR-001 — exhausted broad action reconciliation",
+  );
+  const creatorAggregateLedger = markdownSection(taskLedger, "## FM-CREATOR-001\n");
+  const applyAction = actionCatalog.actions.find(
+    (action) => action.id === "NBA-CHATADMIN-STAGING-APPLY",
+  );
+
+  assert.match(currentApply, /ACCEPT[^\n]*subsequently completed and was consumed/u);
+  assert.doesNotMatch(currentApply, /Next protected ChatAdmin step[^\n]*ACCEPT/u);
+  assert.match(applyReceipt, /only the manual application flow remains open/u);
+  assert.doesNotMatch(applyReceipt, /DB\/RLS ACCEPT and later manual application flow remain open/u);
+
+  assert.ok(applyAction);
+  assert.match(applyAction.instruction, /DB\/RLS ACCEPT is also completed and consumed/u);
+  assert.match(applyAction.instruction, /manual application-flow action/u);
+  assert.doesNotMatch(
+    applyAction.instruction,
+    /Continue only through the distinct protected ChatAdmin ACCEPT action/u,
+  );
+
+  assert.match(creatorLock, /- Status: RELEASED_MERGED_VERIFIED/u);
+  assert.match(creatorLock, /Final release:[\s\S]*PR #1186/u);
+  assert.doesNotMatch(
+    creatorLock,
+    /CI, independent review and normal merge remain|required before merged completion|merge remains conditional/u,
+  );
+  assert.match(creatorLedgerReconciliation, /- Status: MERGED_VERIFIED/u);
+  assert.match(
+    creatorLedgerReconciliation,
+    /PR #1186[\s\S]*d2af392dfa099da8d675481bb343154d829743ff/u,
+  );
+  assert.match(creatorAggregateLedger, /broad `NBA-CREATOR-INTELLIGENCE` ID is retired/u);
+  assert.doesNotMatch(
+    creatorAggregateLedger,
+    /Only if `NBA-CREATOR-INTELLIGENCE` is admitted/u,
+  );
 });
