@@ -32,7 +32,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `creator_foundation_reconciliation_preflight`: `ACCEPTED`
 - `creator_foundation_staging_catalog`: `RECONCILED`
 - `creator_foundation_profile_transition_design`: `ACCEPTED`
-- `creator_foundation_transition_generator`: `TODO`
+- `creator_foundation_transition_generator`: `IN_PROGRESS`
 
 ## Deferred owner actions
 

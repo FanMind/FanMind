@@ -1,3 +1,9 @@
+## Creator Foundation transition generator started
+- Status: IN_PROGRESS; repository source/tests only.
+- Task/action: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.
+- Exact base/lock: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` / `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927` ACTIVE.
+- Next: write failing generator contract tests, implement only the accepted helper/two RPC/four policy transition, then prove native rollback, unchanged data and authorization negatives. No target action is admitted.
+
 ## Creator source profile reconciliation and transition design accepted
 - Status: ACCEPTED; repository source package consumed.
 - Completion: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`. All eight exact-head workflows passed; FanMind CI run `36273161074` and native PG17 job `108490997482` passed. Independent exact-head review reported no P0/P1/P2/P3; all review threads are resolved. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.

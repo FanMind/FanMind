@@ -1,5 +1,5 @@
 ## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
-- Status: TODO; exact bounded repository continuation admitted and executable, but not started. It becomes IN_PROGRESS only with its own atomic exact-base start contract and lock.
+- Status: IN_PROGRESS; exact bounded repository continuation started from `a165f3c074e8e0eb2b24ea3882a3fd57db011939` under `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927`.
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Task: FM-CREATOR-001
 - Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
