@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 24912)
-Total output lines: 968
-
 ## LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926
 - Task: FM-CHATADMIN-002
 - Action: NBA-CHATADMIN-MANUAL-FLOW
@@ -421,7 +418,208 @@ Total output lines: 968
 - Holder: Codex
 - Risk: R4 repository-only Restore control preparation; no runtime mutation
 - Acquired: 2026-09-07 after reconciling the accepted `DB_POSTCHECKED` state and releasing the completed database-postcheck lock.
-- Scope: implement and countercheck exact Full-Backup Storage-part preparation, exact manifest/path/size/hash verification, private non-overwriting outputs and a separately verifiable cryptographic…4912 tokens truncated…history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`
+- Scope: implement and countercheck exact Full-Backup Storage-part preparation, exact manifest/path/size/hash verification, private non-overwriting outputs and a separately verifiable cryptographic receipt. No workflow dispatch, real artifact decryption, Storage/provider connection, upload, database action, target cleanup claim, Production or Supabase-Staging access.
+- Released: 2026-09-07 after focused local implementation/security countercheck; publication and exact-head CI/review remain repository transfer only.
+- Resume from: exact-head PR acceptance/merge, then require a new exact R4 authorization and a distinct isolated non-Production Storage target before any upload.
+- Rollback: revert the repository commit; no external state changed.
+
+
+## LOCK-FINISHLINE-RESUME-20260906
+- Status: PAUSED
+- Paused/reconciled: 2026-09-25. No KI correction/rollback worker remains active; FM-DEC-021 defers all remaining Mobile work until company registration plus explicit owner resume, and remaining AI paid/tax/provider acceptance stays behind its owner/protected gates. This historical umbrella lock therefore preserves open finishline scope without consuming a Builder worker; any resumed protected action requires fresh authorization and an explicit lock transition.
+- Current bounded result: FM-FAIL-022 resolved by PR #1087 and fresh AI acceptance 34273836166 after exact-release Production/Staging deployment. No KI correction or rollback run remains active. The observed AI PASS has an open authorization reconciliation, CTR-FM-AI-AUTH-20260910; it must not satisfy the protected gate. Wider real-device and external AI activation scope is paused at owner/provider prerequisites.
+- Task: FM-AI-001 / FM-MOB-001
+- Holder: Codex
+- Risk: R4
+- Acquired: 2026-09-06
+- Narrowed: 2026-09-07 after the isolated database Restore, ACL completion and permanent helper correction closed.
+- Resumed: 2026-09-08 by Bernd for Android/Push and KI/Billing completion; existing prices are finished. The reviewed current-main Staging deployment preserves billing configuration and prepares revision-bound acceptance. This does not authorize live payments or paid-tier/Production activation.
+- Scope: remaining owner-resumed isolated Staging Billing and Android/Play work. FM-RST-001 is excluded; no runtime Restore lock is active. No Production database write or real payment.
+- Evidence plan: exact-commit CI/run/runtime and independent provider/device evidence; no stale acceptance or duplicate build.
+
+
+## LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Status: RELEASED
+- Released: 2026-09-06 after successful exact-release Staging deployment and independent HTTP countercheck.
+- Risk: R4
+- Acquired: 2026-09-06
+- Holder: Codex owner-authorized merge/Staging activation
+- Scope: repair fresh P1 runtime-attestation review, merge checked PR #1058 and enable only the Staging freeze.
+- Evidence: exact-head CI/review, exact merge/deploy SHA, healthy Staging and fixed-code HTTP 503; no Stripe session can be created by the unauthenticated probe.
+- Recovery: before any ledger apply, deploy with explicit freeze=false; no SQL/schema action is included.
+
+
+## LOCK-FM-AI-001-FREEZE-REVIEW-20260906
+- Task: FM-AI-001 / FM-CR-020
+- Status: RELEASED
+- Holder: Codex continuation 2026-09-06
+- Acquired: 2026-09-06
+- Released: 2026-09-06 after bounded implementation and local negative/countercheck; PR publication and remote checks remain tracked in the receipt.
+- Risk: R4 Billing code only
+- Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
+- Scope: repair confirmed shared-Checkout freeze bypass, maintain caller feedback, executable negative/regression verification and handoff.
+- Reconciliation: previous AI locks are RELEASED; no freeze lock exists. Preserve all accepted tasks and owner-deferred external work.
+- Evidence plan: actual shared-function execution with a mocked Stripe client, zero provider calls during freeze, restored normal behavior when off, caller handling, relevant CI and diff countercheck.
+- Recovery: revert only this repository follow-up; no database/provider/runtime state changes.
+
+
+Prevents two agents/sessions from independently working the same task.
+
+## LOCK-FM-WEB-004-RETENTION-STAGING-20260904
+- Task: FM-WEB-004 / FM-CR-017
+- Status: RELEASED
+- Holder: ChatGPT Website Chat retention Staging-control session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after FM-WEB-003 exact-main remote checks passed
+- Risk: R3
+- Scope: repository-only Workspace-scoped retention contract plus exact-main verify/apply and rollback-only Staging acceptance controls, tests and documentation.
+- Safety: no workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after complete local countercheck; publication remains a repository transfer only.
+- Resume from: exact-main remote CI; every protected Staging action remains separate.
+- Rollback: revert the repository commit; the controlled SQL is unapplied and no external state changes under this lock.
+
+## LOCK-FM-MOB-006-DELIVERY-LEDGER-ACCEPTANCE-20260903
+- Task: FM-MOB-006 / FM-CR-013 continuation
+- Status: RELEASED
+- Holder: ChatGPT Mobile delivery-ledger rollback-only acceptance session 2026-09-03
+- Acquired: 2026-09-03 Europe/Vienna after reconciling remote `main` and the released implementation lock
+- Scope: repository-only manual rollback-only Delivery-Ledger Staging acceptance control, tests and synchronized readers.
+- Safety: no workflow dispatch, database apply, provider request, Production mutation, Store action or signed build.
+- Released: 2026-09-03 after complete local countercheck; publication remains a repository transfer only.
+- Resume from: exact-head remote CI and then read-only Staging verification. Any real Staging apply/acceptance remains separately approved.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
+## LOCK-FM-MOB-006-DELIVERY-LEDGER-20260903
+- Task: FM-MOB-006 / FM-CR-013
+- Status: RELEASED
+- Holder: ChatGPT Mobile delivery-ledger repository session 2026-09-03
+- Acquired: 2026-09-03 Europe/Vienna
+- Scope: controlled service-role-only ledger SQL, server-only RPC adapter, checksum/rollback-only Staging controls, tests and documentation.
+- Safety: no database apply, provider request, route, timer, worker, Production activation, Store action or signed build.
+- Released: 2026-09-03 after repository implementation and focused countercheck.
+- Resume from: exact-head CI and separately approved protected-Staging apply/rollback-only PostgreSQL acceptance; keep provider/device delivery separately gated.
+- Rollback: revert the repository commit; because this task performs no external mutation, no runtime/database rollback is required.
+
+## Rules
+- Acquire a lock before substantive implementation.
+- One active lock per Task ID.
+- A second worker must inspect the existing lock and continue/coordinate rather than restart.
+- Locks older than 24h are STALE, not free: reconcile `STARTED_WORK.md`, PRs, commits and receipts before replacing.
+- Release only after updating `STARTED_WORK.md` and the execution receipt.
+
+# LOCK-FM-WEB-001-HANDOFF-20260904
+- Task: FM-WEB-001 / FM-CR-014
+- Status: RELEASED
+- Holder: ChatGPT Website Chat handoff repository session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna
+- Risk: R3
+- Scope: repository-only Website Chat processing gate, visitor-email consent and manual CRM handoff foundation with tests/documentation.
+- Safety: no database apply, installation activation, AI/provider request, outbound email, timer, Production mutation or real visitor data.
+- Released: 2026-09-04 after repository implementation and complete local countercheck.
+- Result: the repository now contains the consent-bound manual handoff, atomic processing-gated v2 ingestion and checksum-pinned controlled SQL; no external state changed.
+- Resume from: exact-main remote checks, then a separately protected Staging verify/apply/rollback-only acceptance path. Preserve disabled installations and the no-AI/no-email boundary.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
+# LOCK-FM-WEB-002-STAGING-CONTROL-20260904
+- Task: FM-WEB-002 / FM-CR-015
+- Status: RELEASED
+- Holder: ChatGPT Website Chat protected-Staging control session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after reconciling exact remote `main` and the released FM-WEB-001 implementation lock
+- Risk: R3
+- Scope: repository-only exact-main Staging verify/apply policy, rollback-only synthetic acceptance, manual workflows, tests and documentation.
+- Safety: no workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after repository implementation and complete local countercheck.
+- Result: exact-main manual verify/apply and rollback-only acceptance controls are repository-ready; no external state changed.
+- Resume from: exact-main remote CI, then only a separately authorized protected Staging dispatch. Apply and acceptance remain independently gated.
+- Rollback: revert the repository commit; no external state changes under this lock.
+
+# LOCK-FM-WEB-003-RETENTION-20260904
+- Task: FM-WEB-003 / FM-CR-016
+- Status: RELEASED
+- Holder: ChatGPT Website Chat retention repository session 2026-09-04
+- Acquired: 2026-09-04 Europe/Vienna after exact-main FM-WEB-002 remote checks passed
+- Risk: R3
+- Scope: repository-only checksum-pinned bounded technical-session retention SQL, offline checker, tests and documentation.
+- Safety: no database apply, workflow dispatch, timer/worker, CRM deletion, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Released: 2026-09-04 after repository implementation and local countercheck.
+- Result: dry-run-first service-role-only retention contract is repository-ready and preserves active Handoff evidence plus CRM history; no external state changed.
+- Resume from: exact-main remote CI, then a future separately authorized protected Staging verify/apply/rollback-only acceptance task.
+- Rollback: revert the repository commit; the controlled SQL remains unapplied.
+
+## Active locks
+
+
+# LOCK-FM-MOB-001-ANDROID-STORE-20260830
+- Task: FM-MOB-001 / FM-CR-006 / FM-CR-007 / FM-CR-010
+- Status: RELEASED
+- Transferred: 2026-09-06 to LOCK-FINISHLINE-RESUME-20260906 after owner resumed the same Android/Play scope; prior merged Store/build evidence is preserved. No competing active holder remains.
+- Holder: ChatGPT Android/Apple Store preparation continuation session 2026-08-30
+- Branch/PR: App Store Connect worksheet PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c` merged as `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`; dual-store PR #1031, prior handoff PR #1030 and Store implementation PR #1028 are merged.
+- Acquired: 2026-08-30 UTC
+- Risk: R3 Mobile Production build and external Store acceptance
+- Scope: preserve the first-release version, protected one-AAB Production evidence and exact FanMind Production binding; complete repository-only Google/Apple Store graphics, metadata, support, review/tester, screenshot-plan and App Store Connect field-matrix preparation. Android recovery/full device acceptance begins only after Play-test-track installation. No automatic Submit/Update, no second Android build, no iOS build/signing/TestFlight, no fabricated device evidence, no database/schema/RLS mutation and no push-delivery activation.
+- Current blocker: the closed Google Play Alpha track is published, but the owner deliberately defers the required cohort until FanMind is ready for the Gerhard handoff; at least 12 testers must opt in and remain enrolled for at least 14 days before Production access can be requested.
+- Completed under this lock: PR #1028 passed its exact-head gates and merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; Production readiness run `33316105624` / job `99269748215` passed, and Store-build run `33316172583` / job `99269924756` completed exactly one verified Android `1.0.0` AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 added the private evidence preparer; FM-EV-031 prepared dual-store assets/metadata/support and bound later Play-installed evidence to the exact Android receipt. FM-EV-034 adds the fail-closed 33-field Apple portal worksheet; PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c` passed all eight workflows and final review with zero unresolved threads, then merged as `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`.
+- Resume from: never repeat the baseline AAB build. When FanMind is ready for the Gerhard handoff, enroll at least 12 approved Alpha testers, keep the test active for at least 14 days and use the Play-installed build with the private preparer to complete all 19 real-device/Recovery checks plus real screenshots. Request Production access only after those gates are evidenced. Apple signing/build/TestFlight/device work waits for Phase 8. Require immediate confirmation before any review submission or publication.
+
+# LOCK-FM-MOB-005-MESSAGE-PUSH-DATA-BOUNDARY-20260831
+- Task: FM-MOB-005 / FM-CR-011
+- Status: RELEASED
+- Holder: ChatGPT Mobile message-push/data-boundary continuation 2026-08-31 / 2026-09-01
+- Implementation branch/PR: `feat/mobile-message-push-data-boundary-20260831` / #1050
+- Final head: `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7`
+- Squash merge: `953fcc56de0d02d5c2c5d41468226ba051624b53`
+- Risk: R3 repository-only message notification/data-boundary preparation
+- Scope: fail-closed Production/Staging/test-data boundary plus dormant `message_received`/single-`message_reminder` policy and native exact-fan `Nachrichten` handling; no provider send, Delivery-Ledger apply, database/Production mutation, Store action or Android build.
+- Released: repository implementation exact-head CI/review passed, #1050 merged SHA-bound, merged `main` was re-read and #1049 closed `completed` only for this bounded repository scope.
+- Remaining boundary: broader FM-MOB-001 stays `IMPLEMENTED_NOT_VERIFIED`; real Push Staging/Delivery-Ledger/provider/device/Store acceptance remains open and requires a separate task/lock.
+- Rollback: if the post-merge closeout is later merged and FM-MOB-005 must be withdrawn, revert the closeout merge first, then implementation squash `953fcc56de0d02d5c2c5d41468226ba051624b53`; never leave this lock `RELEASED` while the implementation is removed.
+
+## LOCK-FM-MOB-004-FAN-SECTIONS-20260829
+- Task: FM-MOB-004
+- Status: RELEASED
+- Holder: ChatGPT Mobile fan-sections/analysis/follow-up/splash session 2026-08-29
+- Branch/PR: `feat/mobile-fan-sections-analysis-followups-splash-20260829` / #1025; final head `64329ac628188cf532281ddb742058612b9e9eb8`, merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`.
+- Acquired: 2026-08-29 Europe/Vienna
+- Risk: R3 Mobile authenticated reads/AI action plus signed Android preview
+- Scope: three fan sections, one-line identifier, provenance-bound stored fan analysis with Web/Mobile capability-, processing-entitlement- and full-schema-gated generation clearly marked as preparation, active-owner-only Bearer mutation, no write without a valid fully dated source period, rejected-conclusion hiding and prompt exclusion, typed capability failures, parallel fail-closed legacy probes and error-gated empty/count state, fan-bound/today Follow-up navigation with explicit error/count/truncation handling, legacy-null-open semantics plus complete focus-refreshed central pagination, corrected splash, exact-head checks, merge and one replacement Android preview.
+- Resume from: merged FM-MOB-003 foundation on current `main`; extend existing RLS, owner-only mutation and server AI controls without recreating them.
+- Safety: no automatic sending, service-role key in Mobile, offline message/analysis cache, schema/demo-row/provider/Production mutation, iOS submission or Store publication is authorized.
+- Released: 2026-08-30 after all nine exact-head gates passed, #1025 merged and protected run `33298699290` / job `99222705186` completed one verified exact-merge `preview` Android artifact with receipt and cleanup.
+- Accepted: owner real-device acceptance completed on 2026-08-30 for the exact FM-MOB-004 Android Preview. Do not resume this lock; a newly observed defect requires a new bounded task and does not authorize an automatic rebuild, schema change, provider activation or duplicate demo data.
+
+## LOCK-FM-MOB-003-FAN-INBOX-20260829
+- Task: FM-MOB-003
+- Status: RELEASED
+- Holder: ChatGPT Mobile fan-inbox/channel/follow-up completion session 2026-08-29
+- Branch/PR: `feat/mobile-fan-inbox-channel-followup-20260829` / #1021; final head `c4baed86bdcfd389a1f8ff5ce7752407113fb734`, merge `93496a4afac9b3b315c9985afbbce02b8524fc44`
+- Acquired: 2026-08-29 Europe/Vienna
+- Risk: R3 Mobile read/seen state plus signed Android preview build
+- Scope: dynamic message-channel switch for every contact, unseen-inbound-only start dashboard, manual owner Follow-up creation in the contact detail, exact-head checks, merge and one replacement Android preview; no schema/provider/Production mutation.
+- Resume from: existing message-history UI on merged `main` `ef0b7210c997558759a80c5ff46a7a5a0c005c3b`; use existing `seen_at`, authenticated RLS and owner-only Follow-up contracts.
+- Safety: no automatic sending, service-role key, offline message cache, new demo rows, schema migration, Production deploy, provider activation, iOS submission or Store publication is authorized.
+- Released: 2026-08-29 after terminal-green merge and protected Android run `33260695232` / job `99122008690` completed one verified exact-merge preview artifact with cleanup.
+- Accepted: the owner's 2026-08-30 real-device acceptance of the superseding exact FM-MOB-004 Android Preview confirms FM-MOB-003. Do not resume this lock; a newly observed defect requires a new bounded task and does not authorize an automatic rebuild, schema change or duplicate demo data.
+
+## Released locks
+
+# LOCK-FM-AI-001-STRIPE-CONFORMANCE-20260830
+- Task: FM-AI-001 / FM-CR-009
+- Status: RELEASED
+- Holder: ChatGPT Stripe code-conformance continuation session 2026-08-30
+- Branch/PR: `feat/stripe-client-conformance-20260830` / #1035; final head `ffdc11ab4a1c199134dc009abc516cc8257f5e8b`, squash merge `9a7b37f2cee798dc64c1d32f70fda338db174b5e`
+- Acquired: 2026-08-30 UTC
+- Risk: R3 billing runtime code with all external/provider actions excluded
+- Scope: replace production server-side raw Stripe REST calls with one current SDK client contract, remove explicit Checkout payment-method narrowing, add a per-session eight-letter integration identifier, preserve fail-closed tax readiness and regression-test cancellation/referral safety. The verified Staging webhook endpoint remains pinned at its observed inbound version until a separately authorized provider migration.
+- Safety: no Stripe/provider read or write, payment/refund, price/coupon/subscription mutation, webhook endpoint update, SQL/database mutation, protected workflow, Plus/Ultra activation, Production configuration or Mobile build/store action was authorized or performed.
+- Released: 2026-08-30 after all eight exact-head workflows passed, final review completed with zero unresolved threads and #1035 merged as `9a7b37f2cee798dc64c1d32f70fda338db174b5e`.
+- Resume from: do not revive this lock or rerun the three FM-EV-022 protected jobs. Remaining product/private/provider/lifecycle work requires the existing `FM-AI-OWNER-001`/`002` gates and a new scoped lock.
+
+## LOCK-FM-MOB-002-CONTACT-HISTORY-20260829
+- Task: FM-MOB-002
+- Status: RELEASED
+- Holder: ChatGPT Mobile demo conversation-history completion session 2026-08-29
+- Branch/PR: `fix/mobile-contact-message-history-20260829` / #1019; implementation head before Project Memory reconciliation `d7bb661d4ed2ed74b656c0ee2d822cb7396d5a8a`
 - Acquired: 2026-08-29 Europe/Vienna
 - Risk: R3 Mobile data display plus signed Android preview build
 - Scope: display existing RLS-protected contact messages read-only, pass exact-head checks, merge and produce one replacement signed Android internal build; no database/provider/Production mutation.
