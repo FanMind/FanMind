@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-09-26",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -159,24 +159,6 @@
       "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted. Creator development now proceeds under FM-DEC-015, without becoming an additional pre-sales prerequisite."
     },
     {
-      "id": "NBA-CREATOR-INTELLIGENCE",
-      "priority": 5,
-      "task": "FM-CREATOR-001",
-      "gate": "creator_intelligence",
-      "title": "Creator-Profil pro Account und Social-Handoff ausbauen",
-      "requires_owner": false,
-      "parallel_safe": true,
-      "prerequisite_gates": [
-        "memory_v6",
-        "staging"
-      ],
-      "done_states": [
-        "ACCEPTED",
-        "PRODUCTION_CONFIRMED"
-      ],
-      "instruction": "The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve all accepted Creator Intelligence source and Staging foundation evidence and resume only the prior bounded Creator continuation; do not rebuild accepted foundations, activate providers, auto-send, touch Mobile, or cross protected environment boundaries."
-    },
-    {
       "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
       "priority": 8,
       "task": "FM-SOC3-001",
@@ -283,6 +265,15 @@
     }
   ],
   "retired_actions": [
+    {
+      "id": "NBA-CREATOR-INTELLIGENCE",
+      "task": "FM-CREATOR-001",
+      "status": "CONSUMED",
+      "retired_at": "2026-09-26",
+      "bounded_source_evidence": "PR #1184 final head 12924950dfcfee263c48774c16c667d9bd5c6167 passed all required exact-head checks and independent review, then merged as 2dace28f6ab631261c60da1f3aa7920eaa40c849; PR #1185 reconciled that repository-only aggregate-summary scope on main 2aaf225fec29fd91c20f822185c770f87eb3d10d.",
+      "reason": "The broad Creator placeholder has no remaining concrete bounded repository continuation after #1184. Keeping it executable would let the Builder invent or rebuild scope. FM-CREATOR-001 remains IN_PROGRESS because private real samples, human style approval, blinded quality and protected/runtime/provider acceptance remain open; any distinct repository increment requires a new bounded engineering action with its own acceptance contract.",
+      "replacement_rule": "Do not reactivate this broad placeholder. Add a new bounded engineering action only when current approved requirements identify an exact repository outcome, files/contracts, negative tests and integration step. External and protected Creator/Social steps remain under their existing owner-required actions."
+    },
     {
       "id": "NBA-PHASE3-SOCIAL",
       "task": "FM-SOC3-001",

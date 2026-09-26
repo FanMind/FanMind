@@ -1,3 +1,14 @@
+## FM-CREATOR-001 — exhausted broad action reconciliation — 2026-09-26
+- Status: VERIFIED_FOR_PR
+- Risk: R2
+- Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d`; #1184/#1185 prove the bounded aggregate-summary scope is merged and repository-reconciled.
+- Defect: the Creator document still named that merged summary as the next repository step while the broad action catalog classified it executable with no active continuation, creating a rebuild/invented-scope path.
+- Bounded result: #1184 is documented as completed; `NBA-CREATOR-INTELLIGENCE` is evidence-bound `CONSUMED`, while the aggregate Creator gate remains `IN_PROGRESS`; truth drift and the registered roadmap policy regression fail closed on missing/ambiguous/unevidenced classification.
+- Verification: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed 1,548 Operations tests (1,544 pass, 0 fail, 4 documented skips) and all local Manager/Memory/drift/freshness/status controls. Manager result is no executable safe set, zero reserved workers and the existing `FM-REG-003` owner boundary.
+- Review correction: first published tree review found P1 stale live authorization in `OPEN_LOOPS.md` and P2 acceptance of legacy-ID reactivation. Clean correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` removes that authorization, permanently rejects an active `NBA-CREATOR-INTELLIGENCE` entry, and passed the focused regressions plus all 1,548 Operations tests with 0 failures.
+- Boundary: no new Creator product behavior, private evidence, SQL, runtime, provider or protected target action. Current-head PR CI, independent review and normal merge remain required; merge will still not imply Creator quality/runtime/provider acceptance.
+- Recovery: ordinary repository revert.
+
 ## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
 - Status: VERIFIED
 - Risk: R2

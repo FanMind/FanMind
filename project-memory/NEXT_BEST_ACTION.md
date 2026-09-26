@@ -4,27 +4,27 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-INTELLIGENCE`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_intelligence` (`IN_PROGRESS`)
-- Selection status: `EXECUTABLE`
-- Title: Creator-Profil pro Account und Social-Handoff ausbauen
+- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
+- Task: `FM-REG-003`
+- Gate: `registration_admin_crm` (`IN_PROGRESS`)
+- Selection status: `OWNER_ACTION_REQUIRED`
+- Title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
 
 ## Instruction
 
-The temporary ChatAdmin VERIFY -> God Mode sequencing deferral is resolved. Preserve all accepted Creator Intelligence source and Staging foundation evidence and resume only the prior bounded Creator continuation; do not rebuild accepted foundations, activate providers, auto-send, touch Mobile, or cross protected environment boundaries.
+The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration.
 
 ## Why this action
 
-standing-authorized safe work
+owner/platform action required
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NBA-CREATOR-INTELLIGENCE`
-- Worker slots reserved by active/ready work: `1`
+- SAFE READY SET: `NONE`
+- Worker slots reserved by active/ready work: `0`
 - Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
@@ -38,7 +38,6 @@ standing-authorized safe work
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-CREATOR-INTELLIGENCE` priority 5: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required

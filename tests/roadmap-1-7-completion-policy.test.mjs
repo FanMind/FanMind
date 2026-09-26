@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -6,6 +7,11 @@ const completion = readFileSync(
   new URL("../docs/operations/ROADMAP_1_7_COMPLETION.md", import.meta.url),
   "utf8",
 );
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
+const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
+const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
+const openLoops = read("project-memory/OPEN_LOOPS.md");
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
@@ -65,4 +71,48 @@ test("paid AI tiers stay fail closed across technical and external gates", () =>
   assert.match(completion, /weiterhin nicht buchbar/u);
   assert.match(completion, /Plus und Ultra getrennt aktivieren/u);
   assert.match(completion, /fällt immer auf Standard zurück/u);
+});
+
+test("consumed Creator evidence work cannot remain an executable placeholder", () => {
+  assert.equal(
+    actionCatalog.actions.some((action) => action.id === "NBA-CREATOR-INTELLIGENCE"),
+    false,
+  );
+
+  const retired = actionCatalog.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-INTELLIGENCE",
+  );
+  assert.ok(retired);
+  assert.equal(retired.status, "CONSUMED");
+  assert.match(retired.bounded_source_evidence, /#1184/u);
+  assert.match(retired.reason, /new bounded engineering action/u);
+});
+
+test("Creator aggregate summary is closed and the manager invents no next scope", () => {
+  assert.doesNotMatch(
+    creatorDoc,
+    /Der nächste repository-seitige Schritt bleibt ausdrücklich evidence-only/u,
+  );
+  assert.match(creatorDoc, /repository-seitige evidence-only Schritt ist abgeschlossen/u);
+  assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+  assert.match(nextAction, /- Worker slots reserved by active\/ready work: `0`/u);
+  assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
+  assert.match(nextAction, /- Task: `FM-REG-003`/u);
+  assert.match(openLoops, /no current repository action is admitted/u);
+  assert.match(openLoops, /never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE`/u);
+  assert.doesNotMatch(
+    openLoops,
+    /engineering under NBA-CREATOR-INTELLIGENCE/u,
+  );
+});
+
+test("truth drift accepts only active eligible or evidence-bound consumed Creator action", () => {
+  const result = spawnSync(
+    "python3",
+    ["scripts/fanmind_truth_drift_check.py", "--creator-contract-test"],
+    { cwd: new URL("..", import.meta.url), encoding: "utf8" },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /FANMIND_CREATOR_ACTION_CONTRACT_RESULT=passed/u);
 });
