@@ -1,3 +1,10 @@
+## ChatAdmin DB/RLS ACCEPT accepted; manual application flow is next — 2026-09-26
+- Protected ChatAdmin Staging Rollout run `36238536613`, successful attempt 2 / job `108396358120`, on exact reviewed main `7655aed2cae6ff3588207fee6f2227fd5b8db41c` passed same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, rollback-only `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and cleanup; it intentionally emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
+- Attempt 1 failed before acceptance mutation at `fixture_identity` because all ten protected fixture variables were empty. Bernd populated those Staging variables and the same exact workflow action succeeded on rerun. PR #1188 fallback source is closed unmerged and must not be revived.
+- Independent postflight: Staging capability/character/conversation/message rows remain 0/0/0/0, all four ChatAdmin tables retain RLS, and Production still has no ChatAdmin schema.
+- DB/RLS ACCEPT is consumed. Next ChatAdmin gate is the actual Staging application/runtime flow with synthetic data only: active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, with cleanup and no provider/automatic send.
+- No real capability grant/customer data, Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation or external message delivery is implied by this acceptance.
+
 ## ChatAdmin Staging APPLY accepted; ACCEPT is the next protected step — 2026-09-26
 - Owner-authorized protected ChatAdmin Staging APPLY run `36235870895` / job `108387398410` completed on exact reviewed commit `2aaf225fec29fd91c20f822185c770f87eb3d10d` with migration SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`.
 - The completed APPLY gate is `ACCEPTED` from durable exact-run evidence. Built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; independent read-only Staging countercheck confirmed the expected RLS schema with zero ChatAdmin rows, while Production remained without the ChatAdmin tables.

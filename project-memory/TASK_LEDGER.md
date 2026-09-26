@@ -561,11 +561,11 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
 - Status: VERIFIED; Risk: R4; Decision: FM-DEC-022; Updated: 2026-09-26.
-- Source package #1146 and historical read-only VERIFY remain consumed evidence; God Mode v1 is ACCEPTED.
-- Protected APPLY run `36235870895` / job `108387398410` executed exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` against Staging `vshyhvgcmrlagvfnvomc` with the checksum-pinned ChatAdmin migration `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; workflow postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
-- Independent target countercheck proves the four RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; all four ChatAdmin tables contain zero rows. Production `drqkpdvtbbrrdwmtrodz` contains none of them.
-- The schema APPLY gate is closed as ACCEPTED after the owner-authorized write, built-in postflight and independent target countercheck, without claiming the separate DB/RLS ACCEPT, real capability grant, runtime/manual application-flow acceptance or Production activation.
-- Exact next step: protected rollback-only synthetic DB/RLS ACCEPT after fresh current-main/target binding and exact owner/environment action. The manual Character -> Fan-Nachricht -> three suggestions -> Copy -> manual-send flow remains a separate later acceptance.
+- Source/VERIFY/God Mode and Staging APPLY are consumed evidence.
+- Protected DB/RLS ACCEPT run `36238536613`, successful attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, passed same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and rollback cleanup. Independent postflight confirms zero persistent ChatAdmin rows and Production schema absence.
+- Historical attempt 1 failed before mutation at `fixture_identity` because all ten protected fixture variables were empty; owner configuration corrected that prerequisite. PR #1188 fallback source was closed unmerged as superseded.
+- Completion boundary: schema APPLY and synthetic DB/RLS ACCEPT are ACCEPTED. This does not prove the application/runtime manual flow and does not create a real capability grant.
+- Exact next ChatAdmin step: separate protected Staging application acceptance using only synthetic data: active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff; cleanup required, no provider or automatic send.
 
 
 ## FM-GOV-GODMODE-001 — FanMind God Mode v1

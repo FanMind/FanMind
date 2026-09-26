@@ -1,3 +1,14 @@
+## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly initiated the protected ChatAdmin Staging ACCEPT, then corrected the required protected Staging fixture configuration and authorized continuation of the same exact action after the first fail-closed attempt.
+- Exact scope consumed: GitHub Actions run `36238536613`, successful attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, target FanMind Staging Supabase `vshyhvgcmrlagvfnvomc`, mode `ACCEPT`, confirmation `run-chat-admin-acceptance`.
+- Result: same-run schema preverify returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; rollback-only DB/RLS acceptance returned `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; password-file cleanup passed.
+- Independent postflight: Staging capability/character/conversation/message row counts are all zero, all four ChatAdmin tables retain RLS, and Production `drqkpdvtbbrrdwmtrodz` still has none of the ChatAdmin tables.
+- First attempt: run attempt 1 / job `108394659516` failed before fixture mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity` because the protected fixture variables were empty. This was corrected by protected environment configuration, not by bypassing the workflow.
+- Not authorized/consumed: no real capability grant/customer data, no real manual application-flow acceptance, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation and no automatic send.
+- Reuse: forbidden. The later manual ChatAdmin application-flow acceptance is a separate protected action.
+
 ## FM-AUTH-CHATADMIN-STAGING-APPLY-20260926
 - Status: CONSUMED
 - Risk: R4

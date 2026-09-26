@@ -149,10 +149,21 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - From: FM-CHATADMIN-002
 - Requires: `chatadmin_staging_apply=ACCEPTED`; fresh exact current-main/target binding; same-target read-only pre-ACCEPT VERIFY; clean/distinct protected synthetic fixture variables; separate protected owner/environment action.
 - Type: protected Staging rollback-only DB/RLS acceptance
+- Status: SATISFIED
+- Updated: 2026-09-26
+- Evidence: run `36238536613`, successful attempt 2 / job `108396358120` on exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS`, `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`, cleanup PASS; independent zero-row/RLS postflight PASS.
+- Historical negative: attempt 1 failed at `fixture_identity` before mutation because the protected fixture variables were empty; protected environment configuration corrected the prerequisite.
+- Rule: DB/RLS ACCEPT is consumed and must not be repeated. Manual application acceptance remains a distinct later gate.
+
+## FM-DEP-CHATADMIN-MANUAL-FLOW-20260926
+- From: FM-CHATADMIN-002
+- Requires: `chatadmin_staging_apply=ACCEPTED`; `chatadmin_staging_accept=ACCEPTED`; fresh current-main/Staging binding; separately authorized synthetic runtime fixture/capability preparation and cleanup.
+- Type: protected Staging application/runtime acceptance
 - Status: READY_OWNER_ACTION
 - Updated: 2026-09-26
-- Evidence prerequisite: APPLY `36235870895` / `108387398410` and independent Staging postflight are VERIFIED with zero persistent ChatAdmin rows.
-- Rule: ACCEPT must use mode `ACCEPT` + `run-chat-admin-acceptance`, complete transactional rollback, and preserve the manual application flow as OPEN. No real grant or Production/provider mutation.
+- Required evidence: actual Staging application flow active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, plus negative tenant/authority checks and cleanup/zero-persistence evidence.
+- Rule: no real customer/provider send, no automatic send and no Production/provider/Billing/Restore/Mobile mutation.
+
 
 
 ## FM-DEP-EVENT-MANAGER-20260924

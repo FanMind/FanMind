@@ -1,3 +1,14 @@
+## RECEIPT-FM-CHATADMIN-002-STAGING-ACCEPT-20260926
+- Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
+- Authorization: owner-triggered protected ACCEPT; after attempt 1 failed fail-closed for missing fixture identities, Bernd populated the ten protected Staging fixture variables and instructed continuation. Authorization is consumed for this exact DB/RLS acceptance.
+- Exact binding: GitHub Actions run `36238536613`, successful attempt 2 / job `108396358120`; exact reviewed main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; FanMind Staging Supabase `vshyhvgcmrlagvfnvomc`; mode `ACCEPT`; confirmation `run-chat-admin-acceptance`.
+- Same-run evidence: offline contract PASS; `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS`; `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; private passfile cleanup PASS.
+- Independent countercheck after rollback: Staging ChatAdmin capability/character/conversation/message row counts = 0/0/0/0, all four ChatAdmin tables retain RLS, and Production `drqkpdvtbbrrdwmtrodz` still has none of the four ChatAdmin tables.
+- Historical negative: attempt 1 / job `108394659516` stopped before psql acceptance mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity`; no data was left behind.
+- Superseded fallback: PR #1188 was closed unmerged after protected environment configuration fixed the actual prerequisite.
+- Completion boundary: `chatadmin_staging_accept=ACCEPTED`. The real application/runtime manual flow remains OPEN and separate; no real capability grant/customer/provider send/automatic send or Production/Billing/Restore/Mobile mutation occurred.
+- Recovery: acceptance transaction rolled back by contract; postflight zero rows proves cleanup. No rollback action is required.
+
 ## RECEIPT-FM-CHATADMIN-002-STAGING-APPLY-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
 - Authorization: explicit owner authorization consumed once by protected GitHub Actions run `36235870895` / job `108387398410`.

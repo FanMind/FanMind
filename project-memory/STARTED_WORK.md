@@ -910,10 +910,11 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
 - Date: 2026-09-20; Status: VERIFIED; Risk: R4; historical source lock released; Updated: 2026-09-26.
-- Source/VERIFY/God Mode prerequisites are consumed. Owner-authorized protected APPLY `36235870895` / `108387398410` on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` installed only the pinned ChatAdmin schema on Staging `vshyhvgcmrlagvfnvomc`; built-in and independent postflight are VERIFIED.
-- Independent target evidence: exact tables/RLS/policies/grants/helper/index are present, all ChatAdmin tables are empty, and Production has no ChatAdmin schema.
-- No real capability grant, customer data, provider/Billing/Restore/Mobile mutation, automatic send or runtime/manual-flow acceptance occurred.
-- Exact next step: distinct protected `ACCEPT` + `run-chat-admin-acceptance`, same-target pre-verify and rollback-only synthetic DB/RLS proof; real manual application flow remains OPEN.
+- Source/VERIFY/God Mode, Staging APPLY and synthetic DB/RLS ACCEPT are consumed. Successful ACCEPT evidence: run `36238536613`, attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; same-run schema VERIFY PASS, database acceptance PASS, manual flow OPEN, cleanup PASS.
+- Independent target evidence after rollback: exact ChatAdmin tables/RLS remain present on Staging, capability/character/conversation/message row counts are 0/0/0/0, and Production has no ChatAdmin schema.
+- Failed attempt 1 stopped before mutation at `fixture_identity`; the owner populated the protected synthetic fixture variables and the same exact action succeeded on rerun. The repository fallback PR #1188 was closed unmerged.
+- No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
+- Exact next step: distinct protected manual application-layer acceptance with synthetic Staging data and cleanup; Character -> manual Fan message -> exactly three revision-bound suggestions -> Copy -> manual-send handoff.
 
 
 ## FM-GOV-GODMODE-001 — God Mode v1

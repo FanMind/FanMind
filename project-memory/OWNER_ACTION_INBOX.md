@@ -15,11 +15,21 @@
 - Consumed boundary: do not rerun APPLY. No real capability grant, customer data, Production/provider/Billing/Restore/Mobile mutation or application-flow acceptance occurred.
 
 ## FM-CHATADMIN-OWNER-ACCEPT-20260926 — ChatAdmin synthetische DB/RLS-Acceptance
-- Status: OWNER_ACTION_REQUIRED
+- Status: COMPLETED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-ACCEPT-20260926; Risk: R4 protected Staging rollback-only acceptance.
-- Why now: Staging APPLY/postflight is independently VERIFIED and left all four ChatAdmin tables empty.
-- Required protected scope: re-read exact current `main` and Staging target immediately before dispatch, then run only `FanMind ChatAdmin Staging Rollout` in mode `ACCEPT` with confirmation `run-chat-admin-acceptance`. The workflow must first return `CHAT_ADMIN_SCHEMA_STATE=VERIFIED` on the same target and use only its configured distinct synthetic identities.
-- Boundary: complete transactional rollback is mandatory; no persistent capability/Character/Conversation/Message row, real user/customer mutation, Production/provider/Billing/Stripe/Tax/Restore/Mobile action or automatic send is allowed. The real Character -> Fan-Nachricht -> drei Vorschläge -> Copy -> manueller Send-Handoff remains a later application acceptance.
+- Result: protected run `36238536613`, successful attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, target Staging `vshyhvgcmrlagvfnvomc`.
+- Evidence: same-run preverify `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS`; `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; cleanup PASS. Independent postflight proves capability/character/conversation/message row counts 0/0/0/0, RLS still enabled and Production unchanged/absent.
+- Historical failed attempt: attempt 1 / job `108394659516` stopped fail-closed at `fixture_identity` before any acceptance mutation because protected fixture variables were empty; corrected environment variables were then used for the successful rerun.
+- Consumed boundary: do not repeat DB/RLS ACCEPT merely because main advances.
+
+## FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926 — ChatAdmin manueller Anwendungsflow
+- Status: OWNER_ACTION_REQUIRED
+- Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-MANUAL-FLOW-20260926; Risk: R4 protected Staging application acceptance.
+- Why now: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED. The workflow intentionally left `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
+- Required exact flow: on Staging only, with synthetic/non-customer data and the minimum separately authorized temporary capability/runtime fixture needed for the test, exercise active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
+- Must prove the actual application/runtime layer, not a comment/static string. Cleanup/zero-persistence evidence is required for temporary fixture state.
+- Boundary: no real customer/fan data, no provider send, no automatic send, no Production/Billing/Stripe/Tax/Restore/Mobile mutation, and no inference that a Copy/manual-send handoff equals an external message delivery.
+
 
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen

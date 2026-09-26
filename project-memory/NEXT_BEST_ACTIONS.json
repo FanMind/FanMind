@@ -280,7 +280,27 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Before dispatch, freshly re-read exact current main and the protected Staging target. Run only FanMind ChatAdmin Staging Rollout in mode ACCEPT with confirmation run-chat-admin-acceptance. The same run must first verify CHAT_ADMIN_SCHEMA_STATE=VERIFIED and then exercise only distinct configured synthetic identities with complete transaction rollback. No persistent capability/Character/Conversation/Message row, real user/customer data, Production/provider/Billing/Restore/Mobile mutation or automatic send is allowed. The real Character -> Fan-Nachricht -> exactly three suggestions -> Copy -> manual-send handoff remains a separate later application acceptance."
+      "instruction": "Completed and consumed: protected run 36238536613, successful attempt 2 / job 108396358120, exact reviewed 7655aed2cae6ff3588207fee6f2227fd5b8db41c; same-run schema VERIFY passed, rollback-only DB/RLS acceptance passed, manual-flow marker remained OPEN, and independent zero-row/RLS postflight passed. Do not repeat DB/RLS ACCEPT merely because main advances. Continue only through the distinct manual application-flow acceptance."
+    },
+    {
+      "id": "NBA-CHATADMIN-MANUAL-FLOW",
+      "priority": 6,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_manual_flow",
+      "title": "ChatAdmin manuellen Staging-Anwendungsflow abnehmen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_staging_apply",
+        "chatadmin_staging_accept"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "On exact current Staging, under a separately authorized protected synthetic runtime fixture/capability scope, exercise the actual application flow: active Character -> manually inserted synthetic Fan message -> exactly three revision-bound suggestions -> select/copy -> manual-send handoff. Prove actual application/runtime behavior and negative authority/tenant boundaries, then clean up temporary fixture state. Do not use real customer/fan data, do not send to any provider, do not enable automatic sending, and do not mutate Production/Billing/Stripe/Tax/Restore/Mobile."
     }
   ],
   "retired_actions": [
