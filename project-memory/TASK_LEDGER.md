@@ -1,12 +1,13 @@
 ## FM-CREATOR-001 — exhausted broad action reconciliation — 2026-09-26
-- Status: VERIFIED_FOR_PR
+- Status: MERGED_VERIFIED
 - Risk: R2
 - Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d`; #1184/#1185 prove the bounded aggregate-summary scope is merged and repository-reconciled.
 - Defect: the Creator document still named that merged summary as the next repository step while the broad action catalog classified it executable with no active continuation, creating a rebuild/invented-scope path.
 - Bounded result: #1184 is documented as completed; `NBA-CREATOR-INTELLIGENCE` is evidence-bound `CONSUMED`, while the aggregate Creator gate remains `IN_PROGRESS`; truth drift and the registered roadmap policy regression fail closed on missing/ambiguous/unevidenced classification.
 - Verification: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed 1,548 Operations tests (1,544 pass, 0 fail, 4 documented skips) and all local Manager/Memory/drift/freshness/status controls. Manager result is no executable safe set, zero reserved workers and the existing `FM-REG-003` owner boundary.
 - Review correction: first published tree review found P1 stale live authorization in `OPEN_LOOPS.md` and P2 acceptance of legacy-ID reactivation. Clean correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` removes that authorization, permanently rejects an active `NBA-CREATOR-INTELLIGENCE` entry, and passed the focused regressions plus all 1,548 Operations tests with 0 failures.
-- Boundary: no new Creator product behavior, private evidence, SQL, runtime, provider or protected target action. Current-head PR CI, independent review and normal merge remain required; merge will still not imply Creator quality/runtime/provider acceptance.
+- Publication: PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` passed all triggered exact-head workflows; independent exact-head review reported no major issues and no unresolved review thread remained. Normal squash merge produced `d2af392dfa099da8d675481bb343154d829743ff`; current main retains the consumed-action classification and `SAFE READY SET=NONE`.
+- Boundary: no new Creator product behavior, private evidence, SQL, runtime, provider or protected target action. The merge does not imply Creator quality/runtime/provider acceptance.
 - Recovery: ordinary repository revert.
 
 ## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
@@ -567,6 +568,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Completion boundary: schema APPLY and synthetic DB/RLS ACCEPT are ACCEPTED. This does not prove the application/runtime manual flow and does not create a real capability grant.
 - Exact next ChatAdmin step: separate protected Staging application acceptance using only synthetic data: active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff; cleanup required, no provider or automatic send.
 
+- Repository reconciliation publication: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Both exact-head cycles completed with all triggered workflows successful, independent review clean and no unresolved blocking threads. This closes only repository evidence reconciliation; `chatadmin_manual_flow` remains OWNER_ACTION_REQUIRED.
 
 ## FM-GOV-GODMODE-001 — FanMind God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
