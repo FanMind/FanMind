@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "task": "FM-CREATOR-001",
+  "action": "NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY",
+  "status": "RECONCILED",
+  "observed_result": "FOUNDATION_MISSING",
+  "workflow": {
+    "run_id": 36254337623,
+    "attempt": 1,
+    "job_id": 108438159538,
+    "conclusion": "failure",
+    "started_at": "2026-09-26T16:07:39Z",
+    "completed_at": "2026-09-26T16:07:59Z",
+    "error_at": "2026-09-26T16:07:56.0581882Z",
+    "safe_error": "verify_query_failed",
+    "private_passfile_cleanup": "success"
+  },
+  "release_commit": "d91405d67792aa65a14964553a09a36fa0c87de0",
+  "target_project_ref": "vshyhvgcmrlagvfnvomc",
+  "independent_version_observed_at": "2026-09-26T16:05:35.686Z",
+  "source_sha256": "7e798de615d0d9a2c290deae26950cec154ec51e655a02555f24293b2d4d416c",
+  "generated_verify_sql_sha256": "32079c5863e01295d380491ba6e332952f04a6219875d5d9caf3ef82a2f0f174",
+  "independent_diagnosis": {
+    "missing_helper": "public.creator_workspace_access_allowed(uuid)",
+    "sql_error": "P0001 creator_learning_foundation_missing",
+    "observed_at": "2026-09-26T16:09:35.118261Z",
+    "additional_observations_from": "2026-09-26T16:12:18.910279Z",
+    "additional_observations_through": "2026-09-26T16:14:52.671432Z",
+    "workspace_helper_checks_passed": 26,
+    "foundation_diagnostic_conditions_passed": 8,
+    "failed_membership_conditions": [
+      "creator_learning_function_acl_inheritance_invalid",
+      "creator_learning_authenticator_membership_path_invalid"
+    ],
+    "observed_memberships_rejected_by_current_contract": [
+      {
+        "granted_role": "authenticator",
+        "member_role": "postgres",
+        "inherit_option": true,
+        "set_option": true,
+        "admin_option": true
+      },
+      {
+        "granted_role": "authenticator",
+        "member_role": "supabase_storage_admin",
+        "inherit_option": false,
+        "set_option": true,
+        "admin_option": false
+      },
+      {
+        "granted_role": "authenticated",
+        "member_role": "postgres",
+        "inherit_option": true,
+        "set_option": true,
+        "admin_option": true
+      },
+      {
+        "granted_role": "authenticated",
+        "member_role": "supabase_realtime_admin",
+        "inherit_option": false,
+        "set_option": true,
+        "admin_option": false
+      },
+      {
+        "granted_role": "service_role",
+        "member_role": "postgres",
+        "inherit_option": true,
+        "set_option": true,
+        "admin_option": true
+      },
+      {
+        "granted_role": "service_role",
+        "member_role": "supabase_realtime_admin",
+        "inherit_option": false,
+        "set_option": true,
+        "admin_option": false
+      }
+    ],
+    "policies_missing_current_helper_guard": [
+      "creators_member_read",
+      "creator_commercial_events_member_read"
+    ],
+    "scope_limit": "Partial read-only contract diagnosis, not complete historical or current foundation acceptance. Observed platform memberships are not a finding of platform insecurity or authorization for revocation."
+  },
+  "source_history": {
+    "accepted_foundation_commit": "f0c7a84e6105752d34b489520fb92d2bb7e5b61a",
+    "helper_introduced_commit": "630aef3ccb53fed9b46284cb1d4bf1825a57687e",
+    "helper_introduced_pr": 1134,
+    "legacy_foundation_blob": "ebb7c91b799c687a57c251a3f4c0da3699a988d7",
+    "legacy_foundation_sha256": "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f",
+    "legacy_pt409_blob": "fac1c49afbd738bd6f2a5469321ab78eedbdfaa6",
+    "legacy_pt409_sha256": "7e1111357bf1b210023fe43913d11247f3fe6eea32d1a7440b8079d988e671ee"
+  },
+  "learning_schema_state": null,
+  "target_write_count": 0,
+  "runtime_activation_count": 0,
+  "provider_request_count": 0,
+  "next_action": "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT"
+}

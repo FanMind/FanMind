@@ -242,7 +242,19 @@ jobs:
         run: npm run test:database-authorization:pg17
 
       - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
+        id: creator_pg17
         env:
           FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
           FANMIND_CREATOR_PG17_REQUIRED: "true"
-        run: node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
+          FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
+          FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
+
+      - name: Upload verified isolated Creator foundation references
+        if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-creator-foundation-reference-${{ github.sha }}
+          path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+          if-no-files-found: error
+          retention-days: 7

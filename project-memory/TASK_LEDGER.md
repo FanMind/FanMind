@@ -1,9 +1,30 @@
+## FM-CREATOR-001 — Foundation reconciliation preflight — 2026-09-26
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926
+- Scope: Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
+- Evidence: actual failed prerequisite is reconciled in `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`; no complete target baseline or new source acceptance claimed yet.
+
+- Implemented source: fixed read-only catalog export, pinned historical/current SQL references and offline classifier/CLI; no database transport. PR #1204 review additions bind namespace owner/ACL, implicit database ownership, complete independently pinned auth.uid() provider contract and SHA256 function bodies. The subsequent parent-policy review also binds all five parent tables, twenty source-pinned policies, both original workspace-authority helpers and their dependency graph; unknown helper variants stay INCOMPLETE. Parent coverage also includes every column ACL, trigger, constraint, index and their recorded function dependencies, with actual privilege/write-path corruption regressions. Premerge native run36259380242 on397afe9 failed at OLD/NEW trigger-WHEN deparsing; cleanup passed and no reference artifact was published. The narrow correction uses PostgreSQL trigger-definition deparsing and retains both NEW-only and OLD/NEW regressions. Final-head72e83db native run36259850982/job108453466571 passed (2 authorization plus7 native tests, cleanup PASS); reference artifact10911897882 was independently validated. The subsequent completed review found an incomplete parent fixture, SQL checkout-byte portability and unpinned identifier quoting; these findings must be corrected and newly verified before source acceptance or target observation. The existing PG17 CI job exports exact-run reference catalogs only after native assertions and cleanup succeed. Optional Admin-CRM variants and missing trusted profiles stay INCOMPLETE; Hosted authorization is never inferred from CI roles. Verified72e83db local Operations main batch1623 total/1617 pass/0 fail/6 skips plus separate Admin-CRM7/7; focused46 pass/1 native PG17 skip. New exact-head PG17, CI, review and normal merge remain required.
+- Final source correction awaiting native proof: the declared canonical_billing_baseline_aug16_v1 replay uses original complete parent DDL and provider default privileges, includes the actual workspace_analysis_settings trigger dependency, and binds its profile in references/manifests. Only incoming internal FK action triggers owned by unrelated feature tables are outside this scoped comparison; user triggers, columns, policies and privileges stay complete. SQL bytes are preserved across checkouts, identifier quoting is pinned, and directly granted ACL principals seed the role graph. Fresh exact-head native CI/review remains required; previous artifacts are not the new reference.
+
+## FM-CREATOR-001 — Confirmed-Chat VERIFY — 2026-09-26
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RECONCILED
+- Outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT.
+
 ## FM-CHATADMIN-002 — manual application-flow completion — 2026-09-26
-- Status: IN_PROGRESS; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW; Priority: first by FM-DEC-024.
-- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; current follow-up branch `fix/chatadmin-teardown-write-boundary-20260926` on exact main `d91405d67792aa65a14964553a09a36fa0c87de0`.
-- Remaining outcome: ensure quiescing never hides a new non-idempotent request, pass exact-head review/CI/merge, deploy exact reviewed main and freshly revalidate the already-proven synthetic UI/API flow, negatives, cleanup and absence proof.
-- Fresh evidence: #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but the independent P1 means it is partial rather than final acceptance. No Production/provider/Billing/Restore/Mobile mutation is implicated.
-- Completion: source review/CI/merge alone is a partial result; chatadmin_manual_flow remains open until current target evidence and cleanup exist.
+- Status: ACCEPTED; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW.
+- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 CONSUMED; lock LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 RELEASED.
+- Result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+- Next priority: FM-DEC-024 retains Creator Intelligence next. Admit only a distinct bounded Creator action through the separate creator_next preparation; never reactivate consumed NBA-CREATOR-INTELLIGENCE. Preserve existing free Admin-CRM access; its synthetic lifecycle, Social/Sales and deferred Mobile gates remain separate.
 
 ## FM-CREATOR-001 — exhausted broad action reconciliation — 2026-09-26
 - Status: MERGED_VERIFIED
@@ -568,14 +589,11 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Status: VERIFIED; Risk: R4; Decision: FM-DEC-022; Updated: 2026-09-26.
-- Source/VERIFY/God Mode and Staging APPLY are consumed evidence.
-- Protected DB/RLS ACCEPT run `36238536613`, successful attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, passed same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and rollback cleanup. Independent postflight confirms zero persistent ChatAdmin rows and Production schema absence.
-- Historical attempt 1 failed before mutation at `fixture_identity` because all ten protected fixture variables were empty; owner configuration corrected that prerequisite. PR #1188 fallback source was closed unmerged as superseded.
-- Completion boundary: schema APPLY and synthetic DB/RLS ACCEPT are ACCEPTED. This does not prove the application/runtime manual flow and does not create a real capability grant.
-- Exact next ChatAdmin step: separate protected Staging application acceptance using only synthetic data: active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff; cleanup required, no provider or automatic send.
-
-- Repository reconciliation publication: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Both exact-head cycles completed with all triggered workflows successful, independent review clean and no unresolved blocking threads. This closes only repository evidence reconciliation; `chatadmin_manual_flow` remains OWNER_ACTION_REQUIRED.
+- Status: ACCEPTED; Risk: R4; Decision: FM-DEC-022 / FM-DEC-024; Updated: 2026-09-26.
+- Completed Staging gates: source/VERIFY/God Mode, schema APPLY, synthetic DB/RLS ACCEPT and distinct actual manual application flow are consumed.
+- Actual manual result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Historical DB-only run `36238536613`, attempt 2 / job `108396358120`, emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; that immutable output remains correct for its DB-only scope.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-GOV-GODMODE-001 — FanMind God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22

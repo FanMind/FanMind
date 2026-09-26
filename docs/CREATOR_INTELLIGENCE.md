@@ -244,12 +244,15 @@ serverseitige Proposal-Persistenz sowie die autorisierte API-/Persistenzschicht
 zum Bestätigen realer manuell gesendeter Outbounds und zum expliziten Verknüpfen
 belegter Reaktionen/Käufe. Diese Quellenänderungen führen weder in Staging noch
 Production selbstständig eine Migration aus und der Rollout-Schalter bleibt
-fail-closed deaktiviert. Vor realer Nutzung fehlen weiterhin der explizit
-autorisierte target-bound Schema-Apply/Verify/Accept, unabhängige Prüfung des
-tatsächlich aktivierten Runtime-Schalters, die vollständige Disclosure/Delete-
-Integration für die neue Datenfamilie sowie die reale verblindete Qualitätsabnahme
-mit privaten, freigegebenen Beispielen. Der Vertrag sendet keine Nachricht und
-ändert weder Stil noch Preise/Playbook automatisch.
+fail-closed deaktiviert. Disclosure und Account-/Kontaktlösch-Verifikation für
+die neue Datenfamilie sind bis PR #1167 im Repository umgesetzt. PR #1173–#1175
+ergänzen den zielabhängigen Rollout-Vertrag und den geschützten read-only
+VERIFY-Einstieg. Vor realer Nutzung fehlen weiterhin der explizit autorisierte
+target-bound Schema-Apply/Verify/Accept, die unabhängige Prüfung des tatsächlichen
+Runtime-Schalters, die Disclosure-/Löschabnahme auf dem installierten Ziel sowie
+die reale verblindete Qualitätsabnahme mit privaten, freigegebenen Beispielen.
+Der Vertrag sendet keine Nachricht und ändert weder Stil noch Preise/Playbook
+automatisch.
 
 ## Isolierte ChatAdmin-Owner-Exception (FM-DEC-022)
 
@@ -260,7 +263,7 @@ bleibt `creators.workspace_id UNIQUE` unangetastet. Die Capability
 `chat_admin_multi_character=true` ist unabhängig von Platform Admin,
 Admin-Allowlist, Admin-CRM und allen generischen Admin-RPCs.
 
-Der kontrollierte, noch unapplied Vertrag ergänzt unter dem Workspace
+Der kontrollierte, in isoliertem Staging angewendete Vertrag ergänzt unter dem Workspace
 `chat_characters` sowie Character-gebundene Conversations und Messages. Alle
 Beziehungen tragen `workspace_id + character_id`; zusammengesetzte Fremdschlüssel,
 RLS, Owner-/Capability-Prüfung und Revisionen verhindern Vermischung. `public_age`
@@ -273,5 +276,14 @@ erzeugen, kopieren und bei OnlyFans selbst versenden. Es gibt keinen OnlyFans-
 Login, API-Aufruf, Scraper, Auto-Read oder Auto-Send. AI Usage/Cost nutzt das
 bestehende Event-System. `character_id + character_revision` werden ausgegeben,
 aber automatisches Lernen oder automatische Persona-Änderung bleiben deaktiviert.
-Schema-Apply, Workspace-Freischaltung, Storage-Policy-Abnahme und echte Provider-
-Anbindung sind separate spätere Schritte.
+Der Staging-Schema-Apply und die DB/RLS-Abnahme sind abgeschlossen. Der geschützte
+Manual-Flow `36255475314` vom 26. September 2026 hat auf Release
+`9652ae62928c70d8f39d8f184857a34fcd4de74f` zwei echte Generierungen mit jeweils drei
+Vorschlägen, Auswahl/Copy, Character-Wechsel und die negativen Zugriffs-,
+Revisions- und Origin-Prüfungen bestanden. Cleanup und unabhängiger Gegencheck
+bestätigen null synthetische ChatAdmin-Datensätze, null zugehörige Usage-Ereignisse
+und null verbleibende Sessions dieses Testlaufs. Die genaue Abnahme steht in
+`project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+Produktive Schema-/Capability-Aktivierung, reale Workspace-Freischaltung und die
+private Storage-Policy-Abnahme bleiben separate Schritte. Externes Senden war
+nicht Teil dieser Abnahme.

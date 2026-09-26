@@ -374,14 +374,14 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CHATADMIN-PROBE-TRANSPORT-20260926
 - Date: 2026-09-26
-- Status: PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED
+- Status: RESOLVED_VERIFIED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: run36252899026/attempt1/job108434155060 on reviewed/deployedce7013e6e59c76f8dffb7568eabaec60bc14c50f.
 - Failure: mandatory probe reached stagecomplete after successful assertions and sessioncleanup, but the parent correctly rejected networktransport; no DB/passfile/reservation/artifact/fixture execution occurred.
 - Independent post-probe:15:45:01.501410Z four globaltables0/0/0/0/global+scopedreplyusage0/allthreeactorsrun-windowsessions0. No blind retry or arbitrary network-error suppression.
-- Published correction and runtime: PR #1201 merged as `d91405d67792aa65a14964553a09a36fa0c87de0`; deploy `36253747829` succeeded; protected run `36253850844` passed probe/full synthetic browser flow/negatives/cleanup/absence. This is real progress, but not final acceptance because the following boundary finding weakens false-green detection.
-- Current finding/next: after quiescing, a new POST/PATCH that acceptance mode normally permits is aborted without a `write` violation. A direct regression reproduces zero violations. Repair only that classification while preserving active-request drain and genuine transport/redirect evidence, then review/CI/merge, exact redeploy and fresh protected revalidation.
+- Next: actual Chromium reproduction of pending route transport versus context teardown, preserving redirect/origin/write enforcement; reviewed correction and fresh exact deployment before acceptance.
 - Independent reproduction: real local Chromium with the current helper, an allowed delayed GET and context.close reproduces the exact complete/transport/passed/failed tuple. The historical tuple proves the violation arrived after the network assertions, but does not uniquely distinguish shutdown cancellation from a genuine late transport error. Both cases must be covered; the old run stays FAILED.
+- Resolution: PR #1201 final head76a03a5fe1bdf05a4721e1d8e5d1241cd31996f8/tree7af3a1ee22678635c9d88f9b2b332744fe10ff84 passed all8CI and independent/bot reviews, merged/deployed asd91405d6. Fresh run36253850844/1 passed both probe and acceptance with networknone/sessionCleanuppassed, actual browser/verify/cleanup/absence/manualPASS; independent postflight16:03Z confirms complete cleanup. The original failed run remains FAILED.
 
 ## FM-FAIL-CHATADMIN-BROWSER-UNCERTAINTY-20260926
 - Date: 2026-09-26
@@ -393,3 +393,12 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Next: read-only exact request/session metadata diagnosis; add nonmutating probe and strict fixed-enum failure diagnostics before future fixtures. Keep old uncertainty until independently evidenced request completion/quiescence; never infer it from elapsed time, zero current rows or a new successful run.
 
 - Resolution: actual OWNER_ID trailingCR in all11 environment observations causes the historical browser strict identity comparison to fail before dashboard/ChatAdmin/provider. Two independent actual-helper reproductions verify ordering; expected sessions were logged out204 and fresh session/table/usage counts are zero with full schema/Production absence verified. Original archived uncertainty is immutable; separate reconciliation receipt records causal closure. Source normalization/probe correction and actual successful acceptance remain open.
+
+## FM-FAIL-CREATOR-CONFIRMED-CHAT-FOUNDATION-20260926
+- Date: 2026-09-26
+- Status: EXACT_READONLY_CAUSE_IDENTIFIED
+- Task: FM-CREATOR-001 / NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY.
+- Attempt: protected read-only run36254337623/attempt1/job108438159538 on reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, independently version-bound at16:05:35.686Z.
+- Offline migration checksum/contract/foundation-source checks passed; reviewed Staging source state installed. Actual query failed at16:07:56.0581882Z with verify_query_failed. Dedicated private passfile cleanup succeeded; no APPLY, fixture or runtime activation was requested.
+- Independent exact full SQL reproduction fails P0001 creator_learning_foundation_missing, inline_code_block line61. At16:09:35.118261Z public.creator_workspace_access_allowed(uuid) is absent, while the other five presence-checked foundation objects exist. Source verifier SHA2567e798de615d0d9a2c290deae26950cec154ec51e655a02555f24293b2d4d416c; generated query SHA25632079c5863e01295d380491ba6e332952f04a6219875d5d9caf3ef82a2f0f174.
+- No ABSENT/INSTALLED learning-schema result is established. Diagnose all remaining exact foundation contracts and the helper's source/rollout history before defining any separate corrective package. Do not weaken the verifier, retry unchanged, apply learning SQL or repeat consumed historical Creator installation.

@@ -1,16 +1,37 @@
+## LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT
+- Risk: R3
+- Status: IN_PROGRESS
+- Holder: interactive Codex Builder
+- Scope: source-only classifier/export/tests and canonical receipt; one serialized Creator action.
+- Contracts: FM-CONTRACT-DISCLOSURE-DELETE-001 / FM-IGATE-DISCLOSURE-DELETE-001.
+- Boundaries: Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
+- Release condition: tested/reviewed exact source, normal PR completion and canonical receipt.
+
+## LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RELEASED
+- Result: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Release: bounded read-only attempt and diagnostic countercheck complete, no target writes or unresolved passfile lifecycle; feature verification remains blocked.
+
 ## LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926
 - Task: FM-CHATADMIN-002
 - Action: NBA-CHATADMIN-MANUAL-FLOW
-- Status: IN_PROGRESS
+- Status: RELEASED
 - Holder: interactive Codex Builder
 - Risk: R4 parent Staging acceptance; bounded source correction R3.
-- Baseline: exact current main `d91405d67792aa65a14964553a09a36fa0c87de0` after merged #1201.
+- Baseline: `dd4ee6b65772e5833a09077a04c96254934067f9`.
 - Scope: Character-bound composer/response isolation, actual runtime negative tests, reviewed Staging preparation and manual application-flow acceptance under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Serialize all ChatAdmin source/target work against this lock.
 - Contracts: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Release: current-head tests/CI, independent review, normal merge; target completion additionally requires exact reviewed Staging release, real manual flow and negatives, temporary-fixture cleanup plus independent countercheck. Source completion never closes target acceptance.
 - Recovery: ordinary source revert; temporary fixture cleanup restricted to exact recorded synthetic identities, with baseline/zero-residue proof. No real capability grant or customer deletion.
 - Deployment prerequisite reconciliation: after #1193/#1194 merged, two protected deploys exposed ambient test assumptions and deletion of generated release state. This lock also covers the minimal reviewed source-copy preservation and exact unchanged live-metadata recovery; existing Billing/capture proofs must be retained, never fabricated. No schema, secret-file, Stripe or Billing-setting mutation is in scope.
-- Current continuation: #1201 was merged/deployed and protected run `36253850844` passed the full synthetic flow and cleanup, but a P1 countercheck found that stop silently aborts a new acceptance-authorized write. Branch `fix/chatadmin-teardown-write-boundary-20260926` exclusively repairs that classification and requires exact redeploy/revalidation before lock release.
+- Final release: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- No duplicate continuation: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT

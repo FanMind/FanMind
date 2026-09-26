@@ -1,0 +1,5 @@
+# SQL source checksums require exact bytes on every checkout platform.
+*.sql -text
+
+# Preserve whitespace in the byte-pinned upstream SQL statement.
+scripts/operations/creator-foundation-reconciliation-artifacts/provider-auth-uid.sql -whitespace

@@ -101,22 +101,48 @@ test("consumed Creator evidence work cannot remain an executable placeholder", (
   assert.match(retired.reason, /new bounded engineering action/u);
 });
 
-test("Creator aggregate summary is closed and the manager invents no next scope", () => {
-  assert.doesNotMatch(
-    creatorDoc,
-    /Der nächste repository-seitige Schritt bleibt ausdrücklich evidence-only/u,
-  );
+test("Creator selection stays bounded and the consumed parent cannot reopen", () => {
+  assert.doesNotMatch(creatorDoc, /Der nächste repository-seitige Schritt bleibt ausdrücklich evidence-only/u);
   assert.match(creatorDoc, /repository-seitige evidence-only Schritt ist abgeschlossen/u);
-  assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
   assert.doesNotMatch(nextAction, /- Active task continuations reserving slots: `[^`]*NBA-CREATOR-INTELLIGENCE/u);
-  assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-  assert.doesNotMatch(nextAction, /- Task: `FM-CREATOR-001`/u);
-  assert.match(openLoops, /no current repository action is admitted/u);
   assert.match(openLoops, /never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE`/u);
-  assert.doesNotMatch(
-    openLoops,
-    /engineering under NBA-CREATOR-INTELLIGENCE/u,
-  );
+  assert.doesNotMatch(openLoops, /engineering under NBA-CREATOR-INTELLIGENCE/u);
+  const verifyId = "NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY";
+  const controlId = "NBA-CREATOR-CONFIRMED-CHAT-APPLY-CONTROL";
+  const reconciliationId = "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT";
+  const verify = actionCatalog.actions.find((a) => a.id === verifyId);
+  const control = actionCatalog.actions.find((a) => a.id === controlId);
+  assert.ok(verify);
+  const reconciliation = actionCatalog.actions.find((a) => a.id === reconciliationId);
+  assert.equal(verify.priority, control || reconciliation ? 6 : 2);
+  assert.equal(verify.requires_owner, true);
+  assert.equal(verify.parallel_safe, false);
+  assert.ok(verify.prerequisite_gates.includes("chatadmin_manual_flow"));
+  assert.equal(verify.gate, "creator_confirmed_chat_staging_verify");
+  const socials = ["NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT", "NBA-CREATOR-SOCIAL-EXTERNAL", "NBA-PHASE7-EXTERNAL"];
+  for (const id of socials) assert.ok(actionCatalog.actions.find((a) => a.id === id).priority > 7);
+  if (control) {
+    assert.equal(control.priority, 2);
+    assert.equal(control.requires_owner, false);
+    assert.deepEqual(control.depends_on_actions, [verifyId]);
+    assert.equal(control.gate, "creator_confirmed_chat_apply_control");
+  } else if (reconciliation) {
+    assert.equal(reconciliation.priority, 2);
+    assert.equal(reconciliation.requires_owner, false);
+    assert.deepEqual(reconciliation.depends_on_actions, [verifyId]);
+    assert.equal(reconciliation.gate, "creator_foundation_reconciliation_preflight");
+    const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
+    assert.match(creatorLoop, /- Exact next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT/u);
+    assert.doesNotMatch(creatorLoop, /- Exact next: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY/u);
+    const state = JSON.parse(read("project-memory/FINISHLINE_STATE.json"));
+    assert.equal(state.gates.creator_confirmed_chat_staging_verify.state, "RECONCILED");
+    assert.equal(state.gates.creator_confirmed_chat_staging_verify.observed_result, "FOUNDATION_MISSING");
+    assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
+    assert.match(reconciliation.instruction, /No target DDL/u);
+  } else {
+    assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+    assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
+  }
 });
 
 test("truth drift accepts only active eligible or evidence-bound consumed Creator action", () => {
@@ -158,12 +184,33 @@ test("current canonical readers cannot reopen consumed reconciliation steps", ()
 
   assert.match(currentApply, /ACCEPT[^\n]*subsequently completed and was consumed/u);
   assert.doesNotMatch(currentApply, /Next protected ChatAdmin step[^\n]*ACCEPT/u);
-  assert.match(applyReceipt, /only the manual application flow remains open/u);
+  assert.match(applyReceipt, /manual application-flow acceptance is also completed and consumed/u);
   assert.doesNotMatch(applyReceipt, /DB\/RLS ACCEPT and later manual application flow remain open/u);
 
   assert.ok(applyAction);
   assert.match(applyAction.instruction, /DB\/RLS ACCEPT is also completed and consumed/u);
   assert.match(applyAction.instruction, /manual application-flow action/u);
+  const finishline = JSON.parse(read("project-memory/FINISHLINE_STATE.json"));
+  for (const gate of ["chatadmin_staging_apply", "chatadmin_staging_accept", "chatadmin_manual_flow"]) {
+    assert.equal(finishline.gates[gate].state, "ACCEPTED");
+    assert.equal(finishline.gates[gate].required_for_sales, false);
+  }
+  assert.equal(finishline.sales_ready, false);
+  const manualReceipt = markdownSection(executionReceipts, "## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926");
+  assert.match(manualReceipt, /- Status: ACCEPTED/u);
+  const manualAction = actionCatalog.actions.find(action => action.id === "NBA-CHATADMIN-MANUAL-FLOW");
+  assert.ok(manualAction);
+  assert.deepEqual(manualAction.done_states, ["ACCEPTED"]);
+  assert.match(manualAction.instruction, /Completed and consumed/u);
+  const freshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
+  const oldReadiness = freshness.entries.find(entry => entry.id === "EV-CHATADMIN-STAGING-SCHEMA-POSTFLIGHT-20260926");
+  assert.equal(oldReadiness.status, "SUPERSEDED");
+  assert.equal(oldReadiness.observed_at, "2026-09-26T11:33:25Z");
+  const manualEvidence = freshness.entries.find(entry => entry.id === oldReadiness.superseded_by);
+  assert.equal(manualEvidence.gate, "chatadmin_manual_flow");
+  assert.equal(manualEvidence.class, "immutable_commit");
+  assert.equal(manualEvidence.status, "ACCEPTED");
+
   assert.doesNotMatch(
     applyAction.instruction,
     /Continue only through the distinct protected ChatAdmin ACCEPT action/u,

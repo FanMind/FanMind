@@ -1,3 +1,11 @@
+## DEP-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RECONCILED
+- Observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Sequence: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT -> proven exact foundation baseline -> separate atomic forward transition -> fresh release-bound learning VERIFY. Only actual fully verified ABSENT may admit the distinct learning APPLY-controller scope. No aggregate Creator acceptance is inferred.
+
 ## DEP-SOCIAL-CONNECT-FLOW-20260911
 - Task: FM-SOC7-001 / FM-CR-032
 - Engineering uses verified #1102 source and existing isolated Staging; no new database/server. The Social schema setup is complete (#1104 / 34591339718); full provider activation still depends on central FanMind apps, per-Creator consent, X budget and current external evidence under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7).
@@ -157,15 +165,11 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 
 ## FM-DEP-CHATADMIN-MANUAL-FLOW-20260926
 - From: FM-CHATADMIN-002
-- Requires: `chatadmin_staging_apply=ACCEPTED`; `chatadmin_staging_accept=ACCEPTED`; fresh current-main/Staging binding; separately authorized synthetic runtime fixture/capability preparation and cleanup.
 - Type: protected Staging application/runtime acceptance
-- Status: IN_PROGRESS
+- Status: SATISFIED
 - Updated: 2026-09-26
-- Current execution: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic scope. PR #1201 merged/deployed and run `36253850844` passed the full flow and cleanup, but a P1 false-green boundary remains: new acceptance-authorized writes after stop are aborted without a violation. Corrected reviewed merge, exact redeploy and fresh revalidation are required before this dependency can be consumed.
-- Required evidence: actual Staging application flow active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, plus negative tenant/authority checks and cleanup/zero-persistence evidence.
-- Rule: no real customer/provider send, no automatic send and no Production/provider/Billing/Restore/Mobile mutation.
-
-
+- Evidence: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Rule: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-DEP-EVENT-MANAGER-20260924
 - From: FM-GOV-EVENT-ORCH-001

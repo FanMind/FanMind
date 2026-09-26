@@ -4,28 +4,28 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CHATADMIN-MANUAL-FLOW`
-- Task: `FM-CHATADMIN-002`
-- Gate: `chatadmin_manual_flow` (`IN_PROGRESS`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: ChatAdmin manuellen Staging-Anwendungsflow abnehmen
+- Selected action: `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_foundation_reconciliation_preflight` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten
 
 ## Instruction
 
-Owner-authorized continuation under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 and first priority under FM-DEC-024. #1201 merged/deployed and run 36253850844 passed the full synthetic flow/negatives/cleanup, but a P1 source countercheck shows that stop can silently abort an acceptance-authorized write. Complete the bounded teardown-write correction with normal review/CI/merge, bind exact Staging deployment and freshly revalidate Character -> synthetic pasted Fan message -> exactly three revision-bound suggestions -> select/copy/manual handoff plus negatives and cleanup. No repeat Owner action; no real data, Social send, auto-send, Production activation, Billing/Stripe/Tax/Restore/Mobile mutation.
+Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NONE`
+- SAFE READY SET: `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NBA-CHATADMIN-MANUAL-FLOW`
+- Active task continuations reserving slots: `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -34,15 +34,17 @@ owner/platform action required
 ## Candidate evaluation
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
-- `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
+- `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT` priority 2: **EXECUTABLE** — standing-authorized safe work
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
+- `NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY` priority 6: **DONE** — gate creator_confirmed_chat_staging_verify is RECONCILED
 - `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 7: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CREATOR-SOCIAL-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-PHASE7-EXTERNAL` priority 11: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required

@@ -2,9 +2,15 @@
 
 ## Status
 
-`STAGING_SOURCE_INSTALLED_PRODUCTION_PREINSTALL_TARGET_UNVERIFIED`. This runbook covers the repository-controlled migration runner for `supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql`. It does not authorize or perform Staging/Production APPLY, ACCEPT, customer mutation, provider activation or runtime learning activation.
+`STAGING_SOURCE_INSTALLED_PRODUCTION_PREINSTALL_FOUNDATION_MISSING`. This runbook covers the repository-controlled migration runner for `supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql`. It does not authorize or perform Staging/Production APPLY, ACCEPT, customer mutation, provider activation or runtime learning activation.
 
 The reviewed **Staging** source state is now `CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE="installed"`. Runtime readers resolve that state to `installed` only when `FANMIND_RUNTIME_ENVIRONMENT=staging`; Production, unknown and other runtimes remain `preinstall`. This prevents an ordinary Production deploy from requiring a controlled table that has not been installed there. The Staging state only makes Staging disclosure/deletion readers fail closed when the table is absent. It does **not** prove that any target contains the schema and does **not** authorize APPLY. A fresh exact-target read-only VERIFY must still prove the isolated Staging target `ABSENT`.
+
+## Actual read-only observation — 2026-09-26
+
+Protected run `36254337623`, attempt1 / job `108438159538`, on reviewed/deployed `d91405d67792aa65a14964553a09a36fa0c87de0`, passed the pinned offline source checks, then failed with `verify_query_failed`. Private password-file cleanup succeeded. Independent execution of the exact full verifier reproduces `creator_learning_foundation_missing`: at `2026-09-26T16:09:35.118261Z`, Staging lacks `public.creator_workspace_access_allowed(uuid)`. The learning-schema state is therefore not established as ABSENT or INSTALLED. A separately bounded foundation diagnosis/reconciliation must precede any learning-schema APPLY path; this observation does not authorize replaying an already consumed installation or weakening the verifier.
+
+The bounded observation is now RECONCILED, preserving the workflow FAILURE, under `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`. Read-only counterchecks through `2026-09-26T16:14:52.671432Z` also find two rejected platform-role membership conditions and missing current helper guards on `creators_member_read` and `creator_commercial_events_member_read`. The helper and policy/RPC changes originated in PR #1134 (2026-09-19), after the accepted 2026-09-11 foundation. The old consumed PT409 upgrade neither admits this historical baseline nor updates all four policies. Continue only `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT`: pinned historical/current source contracts, SELECT-only catalog export and offline classification with explicit incomplete coverage. No helper-only install, role revocation or unchanged VERIFY replay is implied.
 
 ## Offline source check
 

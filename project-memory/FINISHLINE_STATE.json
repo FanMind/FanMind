@@ -115,9 +115,27 @@
     "chatadmin_manual_flow": {
       "task": "FM-CHATADMIN-002",
       "risk": "R4",
-      "state": "IN_PROGRESS",
+      "state": "ACCEPTED",
       "required_for_sales": false,
-      "evidence": "PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED: PR #1201 merged as d91405d67792aa65a14964553a09a36fa0c87de0 and exact Staging deploy 36253747829 succeeded; protected run 36253850844 passed probe, full synthetic browser/UI/API flow, negatives, cleanup and absence. Independent P1 found stop silently aborts a newly attempted acceptance-authorized write. Complete the bounded teardown-write correction, exact reviewed redeploy and fresh protected revalidation; do not repeat APPLY, DB/RLS ACCEPT or Owner authorization."
+      "evidence": "run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`."
+    },
+    "creator_confirmed_chat_staging_verify": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "RECONCILED",
+      "required_for_sales": false,
+      "observed_result": "FOUNDATION_MISSING",
+      "workflow_conclusion": "failure",
+      "workflow_run_id": 36254337623,
+      "release_commit": "d91405d67792aa65a14964553a09a36fa0c87de0",
+      "target_project_ref": "vshyhvgcmrlagvfnvomc",
+      "evidence": "project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json"
+    },
+    "creator_foundation_reconciliation_preflight": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false
     }
   },
   "sales_required_states": [

@@ -1,13 +1,23 @@
+## FM-AUTH-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: CONSUMED
+- Source: Bernd's autonomous continuation and FM-DEC-024.
+- Consumed observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Boundary: no schema APPLY, runtime activation, provider/customer/Production mutation. No unchanged retry; further source diagnosis uses its separate bounded action.
+
 ## FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926
-- Status: ACTIVE
+- Status: CONSUMED
 - Risk: R4
 - Source: Bernd explicitly requested fresh preflight, synthetic fixture preparation, actual Staging manual flow, negative tests, cleanup, independent countercheck and Project Memory/Finishline reconciliation on 2026-09-26.
 - Scope: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW; necessary bounded source corrections and their tested/reviewed normal PR path, exact reviewed Staging deployment, temporary synthetic non-customer capability/runtime fixtures, actual Character -> pasted synthetic Fan message -> three bound AI suggestions -> copy/manual handoff, cleanup and independent zero-residue countercheck.
 - Target: only FanMind Staging (`vshyhvgcmrlagvfnvomc`, `https://staging.fanmind.ch`), with fresh exact release/schema/identity checks before every protected action.
 - Boundary: no real customer/fan fixture, OnlyFans/Social send, automatic send, Production capability/schema activation, Billing/Stripe/Tax/Restore/Mobile mutation. Prior APPLY and DB/RLS ACCEPT remain consumed; no repeat.
 - Necessary deployment recovery remains bounded to preserving the already-running Staging configuration: reviewed source-copy exclusion and explicit exact-service reconstruction of a missing generated `.release.env` from its existing nonsecret values. No Billing setting may change, missing proof may not be invented, no secret file is read and no Stripe/capture action is authorized. The original `preserve` requirement remains mandatory.
-- Current continuation: #1193/#1194/#1196/#1197 are merged and0a368095 deployed. Run36250479400 created the exact synthetic fixture then failed during browser execution; preserve its original recovery binding. Separate deterministic trailing-CR assertion proof reconciles that failed run beforeprovider; it is not manual acceptance. Canonical UUID normalization, nonmutating probe/enum diagnostics and fresh corrected protected acceptance after review/CI/deploy remain covered; no blind unchanged retry, invented proof, credential rotation or account mutation.
-- Subsequent prerequisite: #1199 merged/deployed as3b3570df; run36252027247 stopped in its pre-fixture probe because Playwright could not collect the CommonJS-transformed spec importing an ESM diagnostic helper. Actual CLI reproduction establishes no test/browser/fixture/provider execution. Explicit ESM correction plus real collection regression and the same reviewed fresh acceptance remain within this authorization.
+- Exact consumed result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Reuse: forbidden for this completed action. Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
 - Status: CONSUMED

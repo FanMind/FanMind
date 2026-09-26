@@ -1,16 +1,17 @@
-## FM-EV-CHATADMIN-RUNTIME-PARTIAL-20260926
-- Status: PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED; `chatadmin_manual_flow` remains IN_PROGRESS.
-- Source/release: PR #1201 final head `76a03a5fe1bdf05a4721e1d8e5d1241cd31996f8` passed nine exact-head workflows and completed Codex review without findings, merged as `d91405d67792aa65a14964553a09a36fa0c87de0`; Staging deploy `36253747829` / job `108436517413` succeeded on that exact release.
-- Protected runtime: run `36253850844` / job `108436822845` passed the nonmutating probe, reservation and sanitized durable recovery artifact, fixture preparation, actual browser/UI/API flow, authority/tenant/Character negatives, exact cleanup and independent absence proof. Fixed outputs include `CHAT_ADMIN_MANUAL_PROBE=PASS`, `CHAT_ADMIN_MANUAL_BROWSER=PASS`, `CHAT_ADMIN_MANUAL_VERIFY=PASS`, `CHAT_ADMIN_MANUAL_CLEANUP=PASS`, `CHAT_ADMIN_MANUAL_ABSENCE=PASS` and `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS`.
-- Limitation: independent post-run source review reproduced one P1 false-green boundary. After stop, an acceptance-authorized POST/PATCH is aborted before target access but is not counted as a write violation. Therefore the flow/cleanup are real partial evidence, but final acceptance is not consumed.
-- Exact remainder: branch `fix/chatadmin-teardown-write-boundary-20260926` makes every new non-idempotent request remain a violation while retaining cancellation of new reads and drainage of already-started requests. Require exact-head review/CI/merge, exact redeploy and one fresh protected revalidation; do not repeat completed APPLY or DB/RLS ACCEPT and do not request repeat Owner authorization.
+## EV-CHATADMIN-MANUAL-OLD-RUN-SUPERSESSION-20260926
+- Status: RECONCILED. Original run36253850844 and cleanup remain historical successful execution; PR1202 required stronger write-attempt diagnostics. Actual revalidation36255475314 now establishes final acceptance. Both original recovery receipts remain unchanged; separate completion/supersession receipts preserve the distinction.
+
+## EV-CHATADMIN-MANUAL-ACCEPT-36255475314-1
+- Status: ACCEPTED; bounded synthetic Staging manual application flow only.
+- Evidence: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-EV-CHATADMIN-PROBE-COLLECTION-20260926
-- Status: RESOLVED_BEFORE_FIXTURE; historical collection failure only. Manual acceptance remains IN_PROGRESS for the separate current revalidation boundary.
+- Historical status: FAILED_BEFORE_FIXTURE; manual acceptance was IN_PROGRESS at this observation and is now completed by EV-CHATADMIN-MANUAL-ACCEPT-36255475314-1.
 - Source: PR #1199 final head `6c61af151632a2ee2c977e24d51b4ce9a10031f6`, exact tree `c4f5914d33c8fe5d80cac5cf722ff39501737fce`, all nine CI checks and final independent review clear; merge `3b3570df2b1ff85080e6bc9b4cf4e284d5fea558`.
 - Deployment: Staging run `36251864810` / job `108431281545` success; independent public version at `2026-09-26T15:30:56.077Z` matches exact release and runtimeEnvironment=staging.
 - Failed probe: run `36252027247`, attempt1 / job `108431733948`; browser_launch/failed, HTTP/network none, session cleanup not_started, all DB/reservation/artifact/fixture steps skipped.
-- Independent reproduction/resolution: two actual Playwright CLI collection executions with synthetic environment reported zero collected tests and import.meta/CommonJS syntax failure before the test callback. PR #1200 corrected collection, merged/deployed, and later probes/runs collected and executed the real spec. Do not request this source correction again; this historical evidence is not itself a runtime PASS.
+- Independent reproduction: two actual Playwright CLI collection executions with synthetic environment report zero collected tests and import.meta/CommonJS syntax failure before the test callback. The source correction must pass actual CLI collection, followed by reviewed deployment and a fresh protected acceptance. This evidence is not a runtime PASS.
 
 ## FM-EV-ADMIN-CRM-PRODUCTION-20260919
 - Task: FM-REG-003 / FM-CR-041
