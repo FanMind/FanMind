@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT`
-- Next action title: Reale Meta-Konfiguration und Facebook-Inbound abnehmen
+- Next action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
+- Next action title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
 
 ## Finishline gates
 

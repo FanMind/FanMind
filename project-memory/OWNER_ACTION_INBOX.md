@@ -49,7 +49,7 @@
 - Reason: the first real permanent Admin-CRM grant happened before the runbook-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was recorded.
 - Current safety rule: the existing real 0-EUR account remains usable and must not be re-granted/deleted. No additional real Admin-CRM grants until this synthetic acceptance is completed.
 - Required future scope: separately authorize a protected synthetic confirmed-noncustomer fixture and prove permanent, future temporary, blocked, login/direct authenticated read boundaries and cleanup. Do not repeat the Production migration.
-- Parallel-safe work: Facebook/Instagram repository continuation and the existing real account's Social use are allowed while this is open.
+- Sequencing: FM-DEC-024 places this synthetic lifecycle before the real-account Social/provider step. Independent repository work may proceed only when a separately bounded action is admitted by the current Builder Manager; this owner action itself reserves no Builder worker.
 
 ## FM-SOC3-OWNER-APP-20260911 — Meta-App-Zugang und Creator-Freigaben
 - Status: OWNER_ACTION_REQUIRED

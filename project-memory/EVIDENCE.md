@@ -6,7 +6,7 @@
 - Boundary: this accepts the synthetic Staging application/runtime flow only. It does not prove provider delivery, automatic send, Production activation or any real-customer behavior. No completed APPLY/DB ACCEPT/Owner action should be repeated.
 
 ## FM-EV-CHATADMIN-PROBE-COLLECTION-20260926
-- Status: RESOLVED_BEFORE_FIXTURE; historical collection failure only. Manual acceptance remains IN_PROGRESS for the separate current revalidation boundary.
+- Status: RESOLVED_BEFORE_FIXTURE; historical collection failure only. The separate manual acceptance was subsequently completed by run `36255475314` and is recorded above; this entry creates no current action.
 - Source: PR #1199 final head `6c61af151632a2ee2c977e24d51b4ce9a10031f6`, exact tree `c4f5914d33c8fe5d80cac5cf722ff39501737fce`, all nine CI checks and final independent review clear; merge `3b3570df2b1ff85080e6bc9b4cf4e284d5fea558`.
 - Deployment: Staging run `36251864810` / job `108431281545` success; independent public version at `2026-09-26T15:30:56.077Z` matches exact release and runtimeEnvironment=staging.
 - Failed probe: run `36252027247`, attempt1 / job `108431733948`; browser_launch/failed, HTTP/network none, session cleanup not_started, all DB/reservation/artifact/fixture steps skipped.

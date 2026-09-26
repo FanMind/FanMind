@@ -24,7 +24,7 @@
     },
     {
       "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
-      "priority": 7,
+      "priority": 2,
       "task": "FM-REG-003",
       "gate": "registration_admin_crm",
       "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
@@ -205,7 +205,7 @@
     },
     {
       "id": "NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT",
-      "priority": 2,
+      "priority": 7,
       "task": "FM-SOC3-001",
       "gate": "phase3_social",
       "title": "Reale Meta-Konfiguration und Facebook-Inbound abnehmen",

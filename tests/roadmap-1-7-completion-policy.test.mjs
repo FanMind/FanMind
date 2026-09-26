@@ -18,6 +18,10 @@ const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
+const decisions = read("project-memory/DECISIONS.md");
+const evidence = read("project-memory/EVIDENCE.md");
+const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
+const chatAdminRollout = read("docs/operations/CHAT_ADMIN_STAGING_ROLLOUT.md");
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -202,4 +206,57 @@ test("historical merge evidence is not mislabeled as the current main head", () 
       /PR #1189[^\n]*merged as current main/u,
     );
   }
+});
+
+test("FM-DEC-024 selects the synthetic Admin-CRM lifecycle before Social", () => {
+  assert.match(
+    decisions,
+    /ChatAdmin completion -> Creator Intelligence -> free Admin-CRM access -> synthetic Admin-CRM lifecycle acceptance -> Social and Sales/u,
+  );
+
+  const adminLifecycle = actionCatalog.actions.find(
+    (action) => action.id === "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
+  );
+  const social = actionCatalog.actions.find(
+    (action) => action.id === "NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT",
+  );
+  assert.ok(adminLifecycle);
+  assert.ok(social);
+  assert.ok(adminLifecycle.priority < social.priority);
+  assert.match(nextAction, /- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`/u);
+  assert.match(nextAction, /- Task: `FM-REG-003`/u);
+});
+
+test("accepted ChatAdmin flow has final immutable and mutable freshness evidence", () => {
+  const entries = evidenceFreshness.entries.filter(
+    (entry) => entry.gate === "chatadmin_manual_flow",
+  );
+  const execution = entries.find(
+    (entry) => entry.id === "EV-CHATADMIN-MANUAL-FLOW-ACCEPT-20260926",
+  );
+  const postflight = entries.find(
+    (entry) => entry.id === "EV-CHATADMIN-MANUAL-FLOW-POSTFLIGHT-20260926",
+  );
+
+  assert.equal(execution?.class, "immutable_commit");
+  assert.equal(execution?.status, "ACCEPTED");
+  assert.match(execution?.source ?? "", /36255475314/u);
+  assert.match(execution?.source ?? "", /9652ae62928c70d8f39d8f184857a34fcd4de74f/u);
+  assert.equal(postflight?.class, "staging_smoke");
+  assert.equal(postflight?.status, "ACCEPTED");
+  assert.match(postflight?.source ?? "", /CHAT_ADMIN_MANUAL_ABSENCE=PASS/u);
+});
+
+test("accepted ChatAdmin flow cannot retain an executable runbook instruction", () => {
+  const historicalProbe = markdownSection(
+    evidence,
+    "## FM-EV-CHATADMIN-PROBE-COLLECTION-20260926",
+  );
+
+  assert.doesNotMatch(historicalProbe, /Manual acceptance remains IN_PROGRESS/u);
+  assert.match(historicalProbe, /subsequently completed/u);
+  assert.match(chatAdminRollout, /36255356091/u);
+  assert.match(chatAdminRollout, /36255475314/u);
+  assert.match(chatAdminRollout, /FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926[^\n]*consumed/u);
+  assert.doesNotMatch(chatAdminRollout, /Der echte manuelle Anwendungsflow bleibt offen/u);
 });
