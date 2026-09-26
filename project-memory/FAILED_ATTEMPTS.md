@@ -365,12 +365,22 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CHATADMIN-PLAYWRIGHT-COLLECTION-20260926
 - Date: 2026-09-26
-- Status: ROOT_CAUSE_REPRODUCED
+- Status: RESOLVED_VERIFIED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: run36252027247/attempt1/job108431733948 on reviewed/deployed3b3570df2b1ff85080e6bc9b4cf4e284d5fea558.
 - Failure: mandatory probe stopped at browser_launch; fixed diagnostics report HTTP/network none and session cleanup not_started. DB password preparation/reserve/artifact/acceptance steps were skipped.
 - Cause: two independent actual Playwright CLI `--list` executions with synthetic valid environment reproduce zero collected tests and `Cannot use 'import.meta' outside a module`; the `.spec.ts` CommonJS transform imports browser-diagnostic.mjs containing import.meta.url. Failure precedes browser/test callback, login, fixture and provider execution.
-- Correction: explicit ESM collection boundary and a real CLI collection regression before deployment. Current-head review/CI/merge, exact deploy and fresh successful acceptance remain required. No target cleanup or uncertainty recovery is needed for this pre-fixture attempt.
+- Resolution: PR #1200 merged/deployed asce7013e6 after actualCLI RED/GREEN,14/14focusedtests, all8CI and independentreview. Subsequent actualrun36252899026 reaches probecomplete with allthree login/assertions and sessioncleanup; the separate transport diagnostic is tracked below. No target cleanup or uncertainty recovery was needed for the collection-failed attempt.
+
+## FM-FAIL-CHATADMIN-PROBE-TRANSPORT-20260926
+- Date: 2026-09-26
+- Status: SOURCE_CORRECTION_VERIFIED_LOCAL
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: run36252899026/attempt1/job108434155060 on reviewed/deployedce7013e6e59c76f8dffb7568eabaec60bc14c50f.
+- Failure: mandatory probe reached stagecomplete after successful assertions and sessioncleanup, but the parent correctly rejected networktransport; no DB/passfile/reservation/artifact/fixture execution occurred.
+- Independent post-probe:15:45:01.501410Z four globaltables0/0/0/0/global+scopedreplyusage0/allthreeactorsrun-windowsessions0. No blind retry or arbitrary network-error suppression.
+- Next: actual Chromium reproduction of pending route transport versus context teardown, preserving redirect/origin/write enforcement; reviewed correction and fresh exact deployment before acceptance.
+- Independent reproduction: real local Chromium with the current helper, an allowed delayed GET and context.close reproduces the exact complete/transport/passed/failed tuple. The historical tuple proves the violation arrived after the network assertions, but does not uniquely distinguish shutdown cancellation from a genuine late transport error. Both cases must be covered; the old run stays FAILED.
 
 ## FM-FAIL-CHATADMIN-BROWSER-UNCERTAINTY-20260926
 - Date: 2026-09-26

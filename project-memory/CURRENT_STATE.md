@@ -1,4 +1,12 @@
-## ChatAdmin probe caught Playwright collection failure before fixtures — 2026-09-26
+## ChatAdmin probe completed logins; orderly browser teardown correction — 2026-09-26
+
+- PR #1200 final head `22232d375c7b9b6da830367a988767b53f8d740e`, tree `37bf5be99818a1f8add61bec6700fdd6cc8511dd`, passed all eight CI checks and final independent/bot review; merged as `ce7013e6e59c76f8dffb7568eabaec60bc14c50f`. Staging deploy `36252765866` / job `108433775166` passed; independent version at `2026-09-26T15:42:26.838Z` matches exact release and Staging.
+- Full acceptance request `36252899026`, attempt1 / job `108434155060`, reached probe stage `complete` after all three login/identity/access assertions and successful session cleanup. The parent correctly rejected the nonzero network diagnostic `transport`; no successful probe/manual PASS is claimed. All DB password/reservation/artifact/fixture steps were skipped.
+- Independent read-only post-probe at `2026-09-26T15:45:01.501410Z`: four global ChatAdmin tables0/0/0/0, global and exact scoped replyusage0, all owner/secondary/admin sessions created since15:42:54Z absent.
+- Continue `fix/chatadmin-browser-boundary-teardown-20260926` under the existing serialized authorization/lock. Diagnose actual pending route transport during teardown with a local Chromium reproduction; retain redirect/write/origin isolation and do not ignore arbitrary transport errors. Reviewed correction/deploy and real acceptance remain required. Creator stays second.
+- Implemented correction keeps the guard installed, blocks new allowed requests during quiescing, drains pending handlers before context closure, then checks final counters. Actual local Chromium regressions pass for delayed success/new-request blocking, delayed genuine transport failure and redirect isolation with zero foreign hops; all14 browser tests and14 manual-runner tests pass. These are local source proofs, not acceptance of the failed historical run.
+
+## Historical Playwright collection failure — resolved by PR #1200
 
 - PR #1199 final head `6c61af151632a2ee2c977e24d51b4ce9a10031f6`, tree `c4f5914d33c8fe5d80cac5cf722ff39501737fce`, passed all nine checks and independent final review; merged as `3b3570df2b1ff85080e6bc9b4cf4e284d5fea558`. Normal Staging deploy `36251864810` / job `108431281545` succeeded; independent `/api/version` at `2026-09-26T15:30:56.077Z` matches this exact commit and Staging.
 - Actual manual workflow `36252027247`, attempt 1 / job `108431733948`, failed in its mandatory pre-fixture probe at `browser_launch`, with no HTTP/network/session activity recorded. Database password preparation, reservation, artifact and fixture acceptance steps were skipped. This run is not accepted.

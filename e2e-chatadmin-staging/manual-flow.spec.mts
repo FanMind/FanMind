@@ -18,7 +18,7 @@ async function direct(request:APIRequestContext,url:string,options:Parameters<AP
 
 async function boundary(context:BrowserContext) {
   const violations=await installChatAdminNetworkBoundary(context,{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE,onViolation:network=>updateBrowserDiagnostic(process.env,MODE,{network})});
-  return ()=>expect(violations()).toBe(0);
+  return {check:()=>expect(violations()).toBe(0),stop:()=>violations.stop()};
 }
 
 async function login(page:Page,remember:(session:Session)=>void,actor:"owner"|"secondary"|"admin"="owner"):Promise<Session> {
@@ -75,6 +75,7 @@ test("protected synthetic ChatAdmin application flow and authority negatives",as
   const secondaryPage=await secondaryContext.newPage();const secondaryBoundary=await boundary(secondaryContext);
   const adminPage=await adminContext.newPage();const adminBoundary=await boundary(adminContext);
   let ownerSession:Session|undefined,secondarySession:Session|undefined,adminSession:Session|undefined;
+  let flowCompleted=false;
   try {
     mark("version");const version=await direct(page.request,`${APP}/api/version`);noteStatus(version.status());expect(version.ok()).toBe(true);
     const state=await version.json();expect(state.runtimeEnvironment).toBe("staging");expect(state.releaseCommit).toBe(process.env.GITHUB_SHA);
@@ -117,15 +118,21 @@ test("protected synthetic ChatAdmin application flow and authority negatives",as
     const deniedReply=await api(secondaryPage,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:1,incoming_message:"Synthetisch"});expect(deniedReply.status()).toBe(403);
     const directRead=await direct(secondaryPage.request,`${SUPABASE}/rest/v1/chat_characters?select=id`,{headers:{apikey:secondarySession.anon,Authorization:`Bearer ${secondarySession.token}`}});expect(directRead.ok()).toBe(true);expect(await directRead.json()).toEqual([]);
     }
-    mark("network_check");
-    ownerBoundary();secondaryBoundary();adminBoundary();
+    flowCompleted=true;
   } catch(error) {
     updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw error;
   } finally {
     const cleanup=[];if(ownerSession)cleanup.push(logout(page.context(),ownerSession));if(secondarySession)cleanup.push(logout(secondaryContext,secondarySession));if(adminSession)cleanup.push(logout(adminContext,adminSession));
-    const results=await Promise.allSettled(cleanup);await secondaryContext.close();await anonymousContext.close();await adminContext.close();
+    const results=await Promise.allSettled(cleanup);
+    const boundaries=[ownerBoundary,secondaryBoundary,adminBoundary];
+    const drains=await Promise.allSettled(boundaries.map(item=>item.stop()));
+    const closures=await Promise.allSettled([page.context(),secondaryContext,anonymousContext,adminContext].map(context=>context.close()));
+    const finalDrains=await Promise.allSettled(boundaries.map(item=>item.stop()));
     if(results.some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"failed",outcome:"failed"});throw Error("chat_admin_manual_session_cleanup");}
     updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"passed"});
+    if([...drains,...closures,...finalDrains].some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw Error("chat_admin_manual_boundary_cleanup");}
+    if(flowCompleted)mark("network_check");
+    ownerBoundary.check();secondaryBoundary.check();adminBoundary.check();
   }
   mark("complete");updateBrowserDiagnostic(process.env,MODE,{outcome:"passed"});
 });
