@@ -31,11 +31,11 @@ export function loadPinnedCreatorProviderAuthSql() {
 }
 
 export function buildCreatorFoundationProviderReferenceSql() {
-  return `SET ROLE postgres;\n${loadPinnedCreatorProviderAuthSql()}GRANT ALL ON FUNCTION auth.uid() TO postgres,dashboard_user;\nDO $provider$ BEGIN
+  return `SET ROLE postgres;\n${loadPinnedCreatorProviderAuthSql()}DO $provider$ BEGIN
   IF pg_catalog.pg_get_userbyid((SELECT proowner FROM pg_catalog.pg_proc WHERE oid = 'auth.uid()'::pg_catalog.regprocedure)) <> 'postgres' THEN
     RAISE EXCEPTION 'creator_provider_auth_uid_original_owner_invalid';
   END IF;
-END $provider$;\nRESET ROLE;\nALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;\n`;
+END $provider$;\nRESET ROLE;\nALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;\nSET ROLE supabase_auth_admin;\nGRANT ALL ON FUNCTION auth.uid() TO postgres,dashboard_user;\nRESET ROLE;\n`;
 }
 
 const browsers = ["anon", "authenticated", "service_role"];

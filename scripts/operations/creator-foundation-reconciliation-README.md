@@ -155,8 +155,11 @@ no extension dependency. Owner, all function metadata, configuration and direct
 and effective ACLs remain exact comparison fields. The NULL-returning CI stub
 is removed and cannot serve as a reference. The native test creates the pinned
 function under its original `postgres` owner, asserts that owner before any
-transition, applies the explicit routine grants to `postgres`/`dashboard_user`,
-then transfers ownership to `supabase_auth_admin`.
+transition, transfers ownership to `supabase_auth_admin`, and only then
+materializes the explicit routine grants to `postgres`/`dashboard_user` under
+that new owner. This preserves the former owner's privilege as an explicit ACL
+entry instead of relying on an owner-implicit privilege that disappears at the
+transfer.
 This reproduces the reviewed grants and grantors; it does not infer a Hosted
 installation history. The owner migration can warn on failure, so observations
 still must match the successful source profile exactly.

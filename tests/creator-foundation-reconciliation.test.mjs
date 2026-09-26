@@ -48,6 +48,7 @@ test("provider replay preserves the original postgres auth.uid owner before the 
   const sql = buildCreatorFoundationProviderReferenceSql();
   assert.match(sql, /^SET ROLE postgres;/u);
   assert.match(sql, /original_owner_invalid[\s\S]*RESET ROLE;[\s\S]*ALTER FUNCTION auth\.uid\(\) OWNER TO supabase_auth_admin;/u);
+  assert.match(sql, /ALTER FUNCTION auth\.uid\(\) OWNER TO supabase_auth_admin;[\s\S]*SET ROLE supabase_auth_admin;[\s\S]*GRANT ALL ON FUNCTION auth\.uid\(\) TO postgres,dashboard_user;/u);
 });
 
 test("Hosted PG17 role profile is complete, pinned and immutable across callers", () => {

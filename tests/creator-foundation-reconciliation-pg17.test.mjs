@@ -70,7 +70,9 @@ GRANT ALL ON SCHEMA auth TO supabase_auth_admin,dashboard_user;
 GRANT USAGE ON SCHEMA auth,public TO postgres,anon,authenticated,service_role;
 ${buildCreatorFoundationProviderReferenceSql()}
 ALTER SCHEMA auth OWNER TO supabase_admin;
+SET ROLE supabase_admin;
 GRANT USAGE ON SCHEMA auth TO postgres;
+RESET ROLE;
 ${buildCreatorFoundationParentReferenceSql()}
 `;
 
