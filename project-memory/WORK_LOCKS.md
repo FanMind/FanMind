@@ -1,27 +1,27 @@
 ## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT
-- Status: RELEASED_FOR_PR
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4 evidence reconciliation; repository documentation only.
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`.
 - Scope: reconcile successful protected ACCEPT run `36238536613` attempt 2 / `108396358120`, its failed attempt-1 history, independent rollback/zero-row/RLS/Production countercheck, close DB/RLS gate and expose the distinct manual application-flow gate.
 - Safety: no additional SQL, capability grant, customer/provider send, Production/Billing/Restore/Mobile mutation or repeat ACCEPT is authorized by this lock.
-- Released for PR: external evidence collection and exact-scope reconciliation are complete; exact-head CI/review and normal merge remain.
+- Final release: PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` passed all triggered exact-head workflows; independent exact-head review reported no major issues after the blocking P2 correction, all threads were resolved, and normal squash merge produced `a1af8f5742958e5e666ae3f361e388b8a4cf922f`.
 
 ## LOCK-FM-CHATADMIN-STAGING-APPLY-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-APPLY
 - Action: NBA-CHATADMIN-STAGING-APPLY
-- Status: RELEASED_FOR_PR
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4 evidence reconciliation; repository documentation only.
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `d2af392dfa099da8d675481bb343154d829743ff` after #1186.
 - Scope: reconcile already completed protected APPLY `36235870895` / `108387398410`, independent Staging/Production read-only postflight, finishline/dependencies/authorization/next-action state; no additional target mutation.
-- Released for PR: evidence collection and bounded memory update complete; exact-head CI/review and normal merge remain.
+- Final release: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` passed all triggered exact-head workflows and independent review with no unresolved blocking thread, then squash-merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`.
 - Safety: this lock authorizes no APPLY/ACCEPT retry, SQL, real capability grant, Production/provider/customer/Billing/Restore/Mobile mutation.
 
 ## LOCK-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926
 - Task: FM-CREATOR-001
-- Status: RELEASED_FOR_PR
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R2
 - Holder: autonomous FanMind Builder
 - Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d`.
@@ -33,6 +33,7 @@
 - Released by: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80`, focused negative/regression proof, 1,548 Operations tests with 0 failures, and all local Manager/Memory/drift controls. Exact-head remote CI, independent review and normal merge remain required before merged completion.
 - Review continuation: reacquired on the same PR for the P1 stale `OPEN_LOOPS` authorization and P2 legacy-action reactivation gap; no second Creator scope or PR is created.
 - Review-fix release: correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` passed focused negative coverage and the full Operations suite with 0 failures. The lock is released only for the same PR's new exact-head CI/review cycle; merge remains conditional on P1=0/P2=0/no blocking threads.
+- Final release: PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` passed all triggered exact-head workflows and independent review with no unresolved blocking thread, then squash-merged as `d2af392dfa099da8d675481bb343154d829743ff`. No worker remains reserved by this lock.
 
 ## LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925
 - Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE
