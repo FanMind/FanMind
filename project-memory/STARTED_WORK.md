@@ -2,13 +2,13 @@
 - Status: IN_PROGRESS
 - Risk: R4
 - Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Exact next step: #1193/#1194/#1196 are merged and Staging deploy 36249685518 succeeded on 930ae196. Continue bounded fix/chatadmin-existing-admin-login-contract-20260926 after first manual run 36249816690 failed pre-reservation at fixture_credential; align existing-admin login consumption, review/CI/merge, deploy and rerun actual synthetic flow with cleanup.
+- Exact next step: source #1197 and exact Staging deploy36250344137 are complete. Reconcile failed browser run36250479400 and its exact recovery artifact, diagnose without secrets, then fresh controlled manual acceptance. No duplicate login/recovery source work.
 - Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
 - Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
 - Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
 - Fresh target evidence: Staging API version at 2026-09-26T14:49:02.035Z is `930ae196d20c0cd646b30a3d9a210269d694abeb`, runtimeEnvironment=staging. Independent post-failure DB counts at 14:51:42.539013Z are 0/0/0/0 and zero chat_admin_reply usage. Protected DB/RLS ACCEPT run 36238536613 attempt 2 remains successful and consumed.
-- Still open: existing-admin login-contract correction review/CI/merge/deployment, actual synthetic manual flow, cleanup and independent countercheck. No runtime fixture or provider call performed; independent post-failure counts remain zero.
+- Still open: browser-failure diagnosis, independent in-flight/receipt reconciliation, successful actual manual flow, cleanup and countercheck. Fixture preparation occurred in36250479400; independent postflight rows/usage are zero, but acceptance is not complete.
 - Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
 
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26

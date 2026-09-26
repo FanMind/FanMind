@@ -354,9 +354,17 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CHATADMIN-EXISTING-ADMIN-CREDENTIAL-20260926
 - Date: 2026-09-26
-- Status: CORRECTION_IN_PROGRESS
+- Status: RESOLVED_VERIFIED for credential-consumption source/preflight only; overall acceptance open.
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: manual-flow run `36249816690` / job `108425635786`, exact reviewed/deployed `930ae196d20c0cd646b30a3d9a210269d694abeb`.
 - Failure: fixture_credential before reservation/fixture/browser. All existing credential inputs are masked-present. The new validator imposes a 16-character minimum on an already existing admin login; established admin E2E consumes a supplied password and verifies authentication/authority live. No secret value or length was read.
 - Cleanup evidence: no fixture/receipt/browser request was started; dedicated passfile removal succeeded. Independent post-failure Staging count at `2026-09-26T14:51:42.539013Z` is 0/0/0/0 with zero global chat_admin_reply usage.
-- Correction: align existing-admin password consumption only, preserve synthetic-owner validation, exact identity separation and actual authenticated admin-proof route; add short-existing-password acceptance and missing/newline rejection regressions. No account/password/secret mutation. Current-head CI/review, normal merge, exact deployment and actual manual acceptance remain required.
+- Correction: align existing-admin password consumption only, preserve synthetic-owner validation, exact identity separation and actual authenticated admin-proof route; add short-existing-password acceptance and missing/newline rejection regressions. No account/password/secret mutation. Published in #1197 after eight green exact-head workflows and independent review; merged as 0a368095 and successfully deployed in36250344137. Subsequent manual run36250479400 passed reservation and fixture preparation, proving this preflight is no longer the blocker. The browser phase and in-flight reconciliation remain separate and open.
+
+## FM-FAIL-CHATADMIN-MANUAL-BROWSER-20260926
+- Date: 2026-09-26
+- Status: RECONCILIATION_REQUIRED
+- Task: FM-CHATADMIN-002; exact reviewed/deployed main0a368095790cf6ff297d6735569c4edb03186efb.
+- Attempt:36250479400/job108427466146 passed reservation, recovery upload and fixture preparation, then failed the browser phase. Both cleanup attempts returned inflight_reconciliation_required; raw browser output is deliberately suppressed, so the failing browser assertion is not established.
+- Independent postflight15:03:25.355432Z: four ChatAdmin tables and global chat_admin_reply usage all zero. This is a point-in-time absence observation, not completion of interrupted-request reconciliation.
+- Preserve artifact10908424691, run36250479400 attempt1, archive SHA256 ad76a2aaa5549499c2c9956eec61598e044dfb09c407113a500b0bd40de3f77d. Diagnose with bounded sanitized evidence and reconcile the exact receipt before another fixture attempt. Do not flip inFlightUncertain or mark acceptance passed.

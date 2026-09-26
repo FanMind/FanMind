@@ -11,6 +11,8 @@
 - Recovery: ordinary source revert; temporary fixture cleanup restricted to exact recorded synthetic identities, with baseline/zero-residue proof. No real capability grant or customer deletion.
 - Deployment prerequisite reconciliation: after #1193/#1194 merged, two protected deploys exposed ambient test assumptions and deletion of generated release state. This lock also covers the minimal reviewed source-copy preservation and exact unchanged live-metadata recovery; existing Billing/capture proofs must be retained, never fabricated. No schema, secret-file, Stripe or Billing-setting mutation is in scope.
 
+- Current target continuation: #1197/deploy36250344137 complete; run36250479400 failed browser with in-flight reconciliation required. Serialize exact-receipt diagnosis/reconciliation before any new fixture dispatch. Owner-ID formatting correction and its exact-value recovery are recorded in RECEIPT-FM-CHATADMIN-OWNER-ID-FORMAT-20260926.
+
 ## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT
 - Status: RELEASED_MERGED_VERIFIED
