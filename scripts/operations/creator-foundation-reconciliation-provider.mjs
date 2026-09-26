@@ -77,7 +77,7 @@ const hostedRoles = [
   ["pg_signal_backend", false, true, false, false, false, false, false, null],
   ["pg_stat_scan_tables", false, true, false, false, false, false, false, null],
   ["pgtle_admin", false, true, false, false, false, false, false, null],
-  ["postgres", false, true, true, true, true, true, true, ['search_path="$user", public, extensions']],
+  ["postgres", false, true, true, true, true, true, true, ['search_path="\\$user", public, extensions']],
   ["service_role", false, true, false, false, false, false, true, null],
   ["supabase_admin", true, true, true, true, true, true, true, ['search_path="$user", public, auth, extensions', "log_statement=none"]],
   ["supabase_auth_admin", false, false, true, false, true, false, false, ["search_path=auth", "idle_in_transaction_session_timeout=60000", "log_statement=none"]],

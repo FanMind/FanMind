@@ -57,6 +57,10 @@ test("Hosted PG17 role profile is complete, pinned and immutable across callers"
   assert.equal(profile.memberships.length, 22);
   assert.equal(profile.provenance.length, 22);
   assert.equal(profile.roles.some(role => role.name === "supabase_privileged_role"), true);
+  assert.deepEqual(
+    profile.roles.find(role => role.name === "postgres").config,
+    ['search_path="\\$user", public, extensions'],
+  );
   assert.equal(profile.memberships.some(edge => edge.role === "authenticator" && edge.member === "supabase_storage_admin"), true);
   assert.deepEqual(
     profile.memberships
