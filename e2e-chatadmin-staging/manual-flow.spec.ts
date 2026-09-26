@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
+import { installChatAdminNetworkBoundary } from "./network-boundary.mjs";
 
 const APP="https://staging.fanmind.ch";
 const SUPABASE=process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -10,20 +11,8 @@ async function direct(request:APIRequestContext,url:string,options:Parameters<AP
 }
 
 async function boundary(context:BrowserContext) {
-  let violations=0;
-  await context.route("**/*",async route=>{
-    const url=new URL(route.request().url()), method=route.request().method();
-    if(url.origin==="https://challenges.cloudflare.com"&&method==="GET"&&url.pathname==="/turnstile/v0/api.js"){await route.abort();return;}
-    if(![APP,SUPABASE].includes(url.origin)){violations++;await route.abort();return;}
-    if(!["GET","HEAD","OPTIONS"].includes(method)) {
-      const allowed=(url.origin===SUPABASE&&method==="POST"&&["/auth/v1/token","/auth/v1/logout"].includes(url.pathname)) ||
-        (url.origin===APP&&((method==="POST"&&["/api/auth/session","/api/chatadmin/reply-suggestions"].includes(url.pathname)) ||
-        (method==="PATCH"&&url.pathname==="/api/chatadmin/characters")));
-      if(!allowed){violations++;await route.abort();return;}
-    }
-    await route.continue();
-  });
-  return ()=>expect(violations).toBe(0);
+  const violations=await installChatAdminNetworkBoundary(context,{appOrigin:APP,supabaseOrigin:SUPABASE});
+  return ()=>expect(violations()).toBe(0);
 }
 
 async function login(page:Page,remember:(session:Session)=>void,secondary=false):Promise<Session> {
