@@ -8,6 +8,7 @@
 - Superseded fallback: PR #1188 was closed unmerged after protected environment configuration fixed the actual prerequisite.
 - Completion boundary: `chatadmin_staging_accept=ACCEPTED`. The real application/runtime manual flow remains OPEN and separate; no real capability grant/customer/provider send/automatic send or Production/Billing/Restore/Mobile mutation occurred.
 - Recovery: acceptance transaction rolled back by contract; postflight zero rows proves cleanup. No rollback action is required.
+- Repository publication: PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` completed all triggered exact-head workflows successfully, independent exact-head review reported no major issues after the stale-next-step P2 correction, all blocking threads were resolved, and normal squash merge produced `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. This does not refresh mutable Staging evidence and does not authorize the manual flow.
 
 ## RECEIPT-FM-CHATADMIN-002-STAGING-APPLY-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
@@ -19,16 +20,17 @@
 - Safety/negative evidence: no real capability grant/customer row, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, no automatic send and no runtime/manual application-flow acceptance.
 - Completion boundary: `chatadmin_staging_apply=ACCEPTED`. Separate protected rollback-only DB/RLS ACCEPT and later manual application flow remain open.
 - Recovery: no rollback is requested for the verified Staging installation; any future destructive rollback would require its own exact protected authorization.
+- Repository publication: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` completed all triggered exact-head workflows successfully, independent exact-head review reported no major issues, and normal squash merge produced `7655aed2cae6ff3588207fee6f2227fd5b8db41c`. This records the reconciliation publication only; it does not refresh mutable Staging evidence or authorize another APPLY.
 
 ## RECEIPT-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926
-- Status: VERIFIED_FOR_PR; Task FM-CREATOR-001; Risk R2.
+- Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R2.
 - Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d`; #1184 aggregate summary and #1185 closeout are consumed evidence, not new work.
 - Scope: repository-only correction of the stale Creator next-step wording and broad executable action, hardened truth-drift classification, registered negative/regression coverage and bounded Project Memory reconciliation.
 - Verification: baseline regression failed because the action was active and the completed summary was still called next. Clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` then passed the focused policy suite, 1,548 Operations tests (1,544 pass / 0 fail / 4 documented environment skips), Builder Manager contract/selection and all local Memory/drift/freshness/status controls.
 - Independent review continuation: the first published tree had one P1 stale authorization in `OPEN_LOOPS.md` and one P2 reactivation gap in truth drift. Clean correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` removes the live legacy instruction, requires any later repository package to use a new exact action, rejects any active reuse of the consumed ID, and passed focused regressions plus the full 1,548-test Operations suite with 0 failures.
 - Result boundary: the broad action is `CONSUMED`, aggregate Creator remains `IN_PROGRESS`, `SAFE READY SET=NONE`, and zero workers are reserved. The existing `FM-REG-003` Owner action is surfaced but not executed.
 - Safety: no product feature, real/private sample, provider/model call, persistence, SQL, Staging/Production/customer mutation, Billing/Stripe/Tax, Restore or Mobile change occurred.
-- Next: one exact-head PR, required CI, one independent review with no blocking P1/P2, normal merge and post-merge content verification. No follow-up is created merely to record a future merge SHA.
+- Publication: PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` passed all triggered exact-head workflows; independent exact-head review reported no major issues and all threads were resolved. Normal squash merge produced `d2af392dfa099da8d675481bb343154d829743ff`, and current main preserves the consumed broad action plus `SAFE READY SET=NONE`. No further reconciliation is created solely to record this closeout PR's own future merge SHA.
 - Recovery: normal repository revert; no external rollback.
 
 ## RECEIPT-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260926
