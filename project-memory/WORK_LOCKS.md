@@ -951,3 +951,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Boundary: the released source lock does not authorize or prove a protected Staging VERIFY, SQL APPLY, runtime activation or any provider/customer/Billing/Restore/Mobile mutation.
 - Resume: never reopen this source-control lock merely because target evidence is still missing; acquire a separate exact protected-action lock only when that action is independently authorized.
 - Recovery: repository revert only; this lock mutated no external target.
+## LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926
+- Task: FM-CHATADMIN-002
+- Action: NBA-CHATADMIN-MANUAL-FLOW
+- Status: IN_PROGRESS
+- Holder: interactive Codex Builder
+- Risk: R4 parent Staging acceptance; bounded source correction R3.
+- Baseline: `dd4ee6b65772e5833a09077a04c96254934067f9`.
+- Scope: Character-bound composer/response isolation, actual runtime negative tests, reviewed Staging preparation and manual application-flow acceptance under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Serialize all ChatAdmin source/target work against this lock.
+- Contracts: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
+- Release: current-head tests/CI, independent review, normal merge; target completion additionally requires exact reviewed Staging release, real manual flow and negatives, temporary-fixture cleanup plus independent countercheck. Source completion never closes target acceptance.
+- Recovery: ordinary source revert; temporary fixture cleanup restricted to exact recorded synthetic identities, with baseline/zero-residue proof. No real capability grant or customer deletion.
