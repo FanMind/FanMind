@@ -8,6 +8,7 @@
 - Scope: Character-bound composer/response isolation, actual runtime negative tests, reviewed Staging preparation and manual application-flow acceptance under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Serialize all ChatAdmin source/target work against this lock.
 - Contracts: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Release: current-head tests/CI, independent review, normal merge; target completion additionally requires exact reviewed Staging release, real manual flow and negatives, temporary-fixture cleanup plus independent countercheck. Source completion never closes target acceptance.
+- Current continuation: PR #1193 merged as `955b8bf425bc2073e7e4b5d0316be1d478a313e4`; Staging deploy `36247833422` then failed before restart on the environment-sensitive Confirmed-Chat test. The serialized bounded Builder correction is `FM-CHATADMIN-002-STAGING-DEPLOY-TEST` on branch `fix/chatadmin-staging-deploy-test-20260926`; no duplicate ChatAdmin or target worker is permitted.
 - Recovery: ordinary source revert; temporary fixture cleanup restricted to exact recorded synthetic identities, with baseline/zero-residue proof. No real capability grant or customer deletion.
 
 ## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
