@@ -1,6 +1,6 @@
 # Creator Foundation: begrenzter Forward-Übergang
 
-Stand 2026-09-26. **PROFIL-/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR IN_PROGRESS; TARGET-AUSFÜHRUNG BLOCKIERT.** Dieses Dokument plant einen neuen Übergang. Es führt kein SQL aus, ändert keine Zielkonfiguration und ersetzt keine Targetabnahme. Die konsumierten Foundation-Apply-/PT409-Upgrade-Actions bleiben konsumiert. Ein generischer `--apply`-Pfad wird weder benutzt noch entsperrt.
+Stand 2026-09-26. **PROFIL-/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR TODO/EXECUTABLE, NICHT GESTARTET; TARGET-AUSFÜHRUNG BLOCKIERT.** Dieses Dokument plant einen neuen Übergang. Es führt kein SQL aus, ändert keine Zielkonfiguration und ersetzt keine Targetabnahme. Die konsumierten Foundation-Apply-/PT409-Upgrade-Actions bleiben konsumiert. Ein generischer `--apply`-Pfad wird weder benutzt noch entsperrt.
 
 ## Nachgewiesener Ausgangspunkt
 

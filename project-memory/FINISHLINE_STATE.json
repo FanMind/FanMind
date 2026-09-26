@@ -156,9 +156,9 @@
     "creator_foundation_transition_generator": {
       "task": "FM-CREATOR-001",
       "risk": "R3",
-      "state": "IN_PROGRESS",
+      "state": "TODO",
       "required_for_sales": false,
-      "evidence": "Inputs are accepted by PR #1207 and project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. The bounded transition generator, reproducible artifact and native rollback/data-preservation proofs are not yet implemented. Repository-only work is admitted by FM-DEC-024; target observation, reference acceptance, SQL APPLY and runtime acceptance remain separate protected scopes."
+      "evidence": "Inputs are accepted by PR #1207 and project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. The bounded transition generator, reproducible artifact and native rollback/data-preservation proofs are not yet implemented or started. Repository-only work is executable under FM-DEC-024, but implementation requires its own exact-base start contract and lock; target observation, reference acceptance, SQL APPLY and runtime acceptance remain separate protected scopes."
     }
   },
   "sales_required_states": [
