@@ -1,3 +1,12 @@
+## RECEIPT-FM-CHATADMIN-OWNER-ID-FORMAT-20260926
+- Status: VERIFIED; Task: FM-CHATADMIN-002; bounded configuration correction under LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 and the existing synthetic manual-flow authorization.
+- Observation: failed manual run `36249816690` logged an extra trailing control character in `FANMIND_CHAT_ADMIN_OWNER_ID`. The protected GitHub Staging variable editor independently exposed the intended UUID followed by a newline. The runner canonicalizes IDs, but the actual browser acceptance compares its environment value literally with the authenticated user ID.
+- Identity countercheck: read-only Staging SQL confirmed the existing intended owner `3abca6a2-c4f7-4ff7-b72d-915d19181ffc` and its ownership of the existing synthetic workspace `58a18c7e-4af0-459d-b44d-7d924ee7ffe9`. No Auth/user/workspace identity or grant changed.
+- Action: removed only the trailing newline from that one nonsecret Staging environment variable. Existing UUID retained exactly; no secret, password, protection rule or other configuration was changed. At execution the latest ChatAdmin manual-flow run was terminal; the separate reviewed #1197 Staging deployment `36250344137` was active and does not consume this fixture variable.
+- Readback: reopened the saved variable editor and independently confirmed exactExpected=true and hasOuterWhitespace=false. Closed the editor without a second save. This fixes input formatting only and does not claim that the earlier generic credential failure was caused by the ID.
+- Independent source review: PR #1197 exact head `4a6adf797f4ca55c4b3c2ef7396562e3120f4452` aligns existing admin-login validation with its established consumer contract; real authentication, exact user-ID, live admin authority and ChatAdmin denial remain required. Clean-base patch tests9/9 and review found no blockers. Normal merge is `0a368095790cf6ff297d6735569c4edb03186efb`.
+- Local duplicate preservation and credential-diagnostic drafts are superseded by merged #1196/#1197 and must not be published. Actual manual-flow acceptance and cleanup remain independently required; this receipt does not close that gate.
+
 ## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926
 - Status: IN_PROGRESS; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
 - Owner request: fresh preflight -> synthetic fixture -> actual Staging flow -> negatives -> cleanup -> independent countercheck -> canonical closeout.
