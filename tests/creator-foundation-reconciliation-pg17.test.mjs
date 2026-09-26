@@ -116,6 +116,9 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.equal(legacy.catalog.functions.length, 3);
     assert.equal(current.catalog.functions.length, 4);
     assert.equal(current.catalog.parentTables.length, 5);
+    const expectedColumnCount = Number(sql("SELECT count(*) FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('workspaces','workspace_members','contacts','conversations','contact_ai_profiles') AND a.attnum>0 AND NOT a.attisdropped;", databases[1]));
+    assert.equal(current.catalog.parentColumns.length, expectedColumnCount);
+    for (const table of ["workspaces", "workspace_members", "contacts", "conversations", "contact_ai_profiles"]) assert.ok(current.catalog.parentColumns.some(column => column.table === table));
     assert.deepEqual(current.catalog.parentPolicies.map(({schema, table, name}) => ({schema, table, name})).sort((a, b) => a.name.localeCompare(b.name)), creatorFoundationParentPolicyInventory());
     assert.equal(current.catalog.parentFunctions.length, 2);
     assert.ok(current.catalog.parentDependencies.some(row => row.sourceKind === "policy" && row.targetIdentity === "workspace_owner_active_mutation_allowed(uuid)"));
@@ -159,6 +162,12 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.deepEqual(again.catalog, current.catalog);
 
     const mutations = [
+      ["server-owned billing column UPDATE", "GRANT UPDATE(billing_status) ON public.workspaces TO authenticated;", "parentColumns"],
+      ["membership identity column UPDATE", "GRANT UPDATE(user_id) ON public.workspace_members TO authenticated;", "parentColumns"],
+      ["membership SELECT revoked", "REVOKE SELECT ON public.workspace_members FROM authenticated;", "parentColumns"],
+      ["parent constraint", "ALTER TABLE public.workspace_members ADD CONSTRAINT reconciliation_write_denied CHECK(false) NOT VALID;", "parentConstraints"],
+      ["parent index", "CREATE INDEX reconciliation_parent_index ON public.workspaces(billing_status);", "parentIndexes"],
+      ["parent trigger state", "ALTER TABLE public.workspaces DISABLE TRIGGER ALL;", "parentTriggers"],
       ["parent SELECT predicate", "ALTER POLICY contact_ai_profiles_select_workspace_member ON public.contact_ai_profiles USING (true);", "parentPolicies"],
       ["parent extra permissive", "CREATE POLICY reconciliation_parent_rogue ON public.contact_ai_profiles FOR SELECT TO authenticated USING (true);", "parentPolicies"],
       ["parent policy role", "ALTER POLICY contacts_select_workspace_member ON public.contacts TO anon;", "parentPolicies"],
@@ -201,6 +210,31 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       assert.ok(result.differingSections.includes(expectedSection), name);
     }
 
+    for (const [name, statement, expectedSection] of [
+      ["unreviewed trigger authority", "CREATE FUNCTION public.reconciliation_parent_trigger() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.billing_manual_override=true; RETURN NEW; END $$; CREATE TRIGGER reconciliation_parent_trigger BEFORE UPDATE ON public.workspaces FOR EACH ROW EXECUTE FUNCTION public.reconciliation_parent_trigger();", "parentTriggers"],
+      ["unreviewed trigger WHEN authority", "CREATE FUNCTION public.reconciliation_trigger_base() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$; CREATE FUNCTION public.reconciliation_trigger_when(boolean) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT $1 $$; CREATE TRIGGER reconciliation_parent_when BEFORE UPDATE ON public.workspaces FOR EACH ROW WHEN(public.reconciliation_trigger_when(NEW.billing_manual_override)) EXECUTE FUNCTION public.reconciliation_trigger_base();", "parentTriggers"],
+      ["unreviewed index authority", "CREATE FUNCTION public.reconciliation_parent_index(text) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT $1 $$; CREATE INDEX reconciliation_parent_expression ON public.workspaces(public.reconciliation_parent_index(billing_status));", "parentIndexes"],
+      ["unreviewed constraint authority", "CREATE FUNCTION public.reconciliation_parent_check(uuid) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT true $$; ALTER TABLE public.workspace_members ADD CONSTRAINT reconciliation_parent_check CHECK(public.reconciliation_parent_check(user_id)) NOT VALID;", "parentConstraints"],
+      ["unreviewed default authority", "CREATE FUNCTION public.reconciliation_parent_default() RETURNS text LANGUAGE sql AS $$ SELECT 'active'::text $$; ALTER TABLE public.workspaces ALTER COLUMN billing_status SET DEFAULT public.reconciliation_parent_default();", "parentColumns"],
+    ]) {
+      createFixture("current");
+      sql(statement, databases[1]);
+      const snapshot = JSON.parse(sql(query, databases[1]));
+      assert.ok(snapshot.catalog[expectedSection].length > 0, name);
+      if (name === "unreviewed trigger WHEN authority") {
+        assert.ok(snapshot.catalog.parentFunctions.some(row => row.identity === "reconciliation_trigger_base()"));
+        assert.ok(snapshot.catalog.parentFunctions.some(row => row.identity === "reconciliation_trigger_when(boolean)"));
+      }
+      const result = classify(snapshot);
+      assert.equal(result.status, "INCOMPLETE", name);
+      assert.ok(result.blockers.includes("parent_helper_contract_unreviewed"), name);
+    }
+    const missingParentColumns = structuredClone(current);
+    missingParentColumns.catalog.parentColumns = missingParentColumns.catalog.parentColumns.filter(row => row.table !== "workspace_members");
+    assert.throws(() => buildCreatorFoundationReference({legacy, current: missingParentColumns, roleProfile: reference.roleProfile, querySha256: digest(query)}), /reference_incomplete/u);
+    const partialParentColumn = structuredClone(current);
+    delete partialParentColumn.catalog.parentColumns[0].directAcl;
+    assert.throws(() => buildCreatorFoundationReference({legacy, current: partialParentColumn, roleProfile: reference.roleProfile, querySha256: digest(query)}), /reference_incomplete/u);
     createFixture("current");
     sql("CREATE FUNCTION public.is_workspace_member(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$; ALTER POLICY contact_ai_profiles_select_workspace_member ON public.contact_ai_profiles USING (public.is_workspace_member(workspace_id));", databases[1]);
     const unsupportedParent = classify(JSON.parse(sql(query, databases[1])));

@@ -71,6 +71,25 @@ test("unproven parent authorization helpers stay explicitly incomplete", () => {
   assert.ok(result.blockers.includes("parent_helper_contract_unreviewed"));
 });
 
+test("every parent column's metadata and direct/effective privileges participate in comparison", () => {
+  const column = {schema: "public", table: "workspaces", name: "billing_status", type: "text", default: null, directAcl: [], effectiveAcl: [{role: "authenticated", privilege: "UPDATE", allowed: false, grantable: false}]};
+  const expected = {parentColumns: [column]};
+  for (const changed of [
+    {...column, directAcl: [{grantor: "postgres", grantee: "authenticated", privilege: "UPDATE", grantable: false}]},
+    {...column, effectiveAcl: [{role: "authenticated", privilege: "UPDATE", allowed: true, grantable: false}]},
+    {...column, default: "'active'::text"},
+    {...column, type: "character varying"},
+  ]) assert.deepEqual(compareCreatorFoundationCatalogs({parentColumns: [changed]}, expected), ["parentColumns"]);
+  const result = classifyCreatorFoundationSnapshot({catalog: {parentColumns: []}});
+  assert.ok(result.blockers.includes("parent_column_inventory"));
+});
+
+test("parent write-time triggers, constraints and indexes cannot disappear from comparison", () => {
+  for (const section of ["parentTriggers", "parentConstraints", "parentIndexes"]) {
+    assert.deepEqual(compareCreatorFoundationCatalogs({[section]: [{name: "extra_write_path"}]}, {[section]: []}), [section]);
+  }
+});
+
 test("an empty or partial catalog cannot become an exact foundation verdict", () => {
   for (const snapshot of [null, {}, {schemaVersion: 1, pgMajor: 17, catalog: {}}, {schemaVersion: 1, pgMajor: 16, catalog: {}},
     {schemaVersion: 1, pgMajor: 17, catalog: {tables: [null], policies: [false], roles: [42]}},

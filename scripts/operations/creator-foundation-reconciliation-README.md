@@ -33,7 +33,11 @@ and JSON object-key order are not.
 Parent authorization is compared separately for `workspaces`, `workspace_members`,
 `contacts`, `conversations` and `contact_ai_profiles`: full table owner/RLS flags,
 ACLs, inheritance and rewrite rules; every policy's command, permissiveness,
-roles, USING and WITH CHECK; and the full workspace-helper metadata/ACLs.
+roles, USING and WITH CHECK; every column's complete metadata, defaults and
+direct/effective column privileges; full triggers, constraints and indexes;
+and the full workspace-helper metadata/ACLs. Parent columns have their own
+`parentColumns` section, including server-owned Workspace and membership columns,
+in addition to the existing Creator extension-column scope.
 An additional permissive policy is a difference, even if all named canonical
 policies still exist.
 
@@ -47,8 +51,9 @@ cannot become references. Expected policies are never collected from Staging.
 Their source identities are required in each reference and exported manifest;
 the manifest also binds the exact generated reference SQL hash.
 
-Catalog-recorded policy/function dependency edges are exported, including unknown
-helpers. PostgreSQL does not record every dependency inside SQL/PLpgSQL string
+Catalog-recorded function dependencies of policies, triggers, constraints,
+expression indexes, defaults/generated expressions and rewrite rules are exported,
+including unknown helpers. PostgreSQL does not record every dependency inside SQL/PLpgSQL string
 bodies: the supported source-reviewed closure explicitly includes both workspace
 helpers and the separately pinned `auth.uid()` contract. No completeness claim
 is inferred from `pg_depend` alone. An unreviewed helper such as a target-only
@@ -57,6 +62,12 @@ is inferred from `pg_depend` alone. An unreviewed helper such as a target-only
 variants require separate source evidence. Native negative tests alter the real
 profile SELECT policy to USING(true), add a permissive policy, change policy
 roles/WITH CHECK, and change authority helper body, owner, config, ACL or security.
+Further native negatives grant UPDATE on `workspaces.billing_status` and
+`workspace_members.user_id`, revoke membership SELECT, alter parent trigger
+state, and add a constraint/index. Unreviewed trigger, expression-index,
+constraint or default helpers remain INCOMPLETE. Actual additional parent
+columns or privileges are compared; they are never copied into the reference
+or normalized away to obtain an exact result.
 
 The executable PG17 test constructs separate disposable databases from the
 pinned historical Foundation plus PT409 correction and from the current

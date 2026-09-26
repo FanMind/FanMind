@@ -17,7 +17,7 @@ export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   currentConflict: Object.freeze({path: "../../supabase/controlled/creator_revision_conflict_fix.sql", sha256: "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f", gitBlob: "c2132db39e141131483afc44d045d21d632b1672"}),
 });
 const TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
-const SECTIONS = ["namespaces", "authUidFunctions", "parentTables", "parentPolicies", "parentFunctions", "parentDependencies", "tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
+const SECTIONS = ["namespaces", "authUidFunctions", "parentTables", "parentColumns", "parentTriggers", "parentConstraints", "parentIndexes", "parentPolicies", "parentFunctions", "parentDependencies", "tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
 const CORE_SECTIONS = SECTIONS.filter(key => !["roles", "memberships", "namespaces", "authUidFunctions"].includes(key));
 const CHECKS = ["pg17", "databaseOwnerPostgres", "parentTablesRls", "parentUuidColumnsReadable", "authUsersPresent", "authUidPresent", "anonProfileDenied", "authenticatedProfileWriteDenied", "profileWorkspaceContactUnique", "adminCrmContractAbsent", "allSatisfied"];
 const ROW_KEYS = {
@@ -35,6 +35,10 @@ const ROW_KEYS = {
 ROW_KEYS.authUidFunctions = ROW_KEYS.functions;
 ROW_KEYS.parentFunctions = ROW_KEYS.functions;
 ROW_KEYS.parentTables = ROW_KEYS.tables;
+ROW_KEYS.parentColumns = ROW_KEYS.columns;
+ROW_KEYS.parentTriggers = ROW_KEYS.triggers;
+ROW_KEYS.parentConstraints = ROW_KEYS.constraints;
+ROW_KEYS.parentIndexes = ROW_KEYS.indexes;
 ROW_KEYS.parentPolicies = ROW_KEYS.policies;
 ROW_KEYS.parentDependencies = "sourceKind sourceSchema sourceTable sourceName targetSchema targetIdentity dependencyType".split(" ");
 const FUNCTIONS = [
@@ -97,6 +101,7 @@ function coverage(snapshot) {
     } else if (!Array.isArray(catalog[key]) || catalog[key].some(row => !object(row) || (ROW_KEYS[key] ?? []).some(field => !Object.hasOwn(row, field)))) missing.push(`catalog_${key}`);
   }
   if (Array.isArray(catalog.parentTables) && (!equal(catalog.parentTables.map(row => row?.table).sort(), [...CREATOR_FOUNDATION_PARENT_TABLES].sort()) || catalog.parentTables.some(row => row?.schema !== "public"))) missing.push("parent_table_inventory");
+  if (Array.isArray(catalog.parentColumns) && CREATOR_FOUNDATION_PARENT_TABLES.some(table => !catalog.parentColumns.some(row => row?.schema === "public" && row?.table === table))) missing.push("parent_column_inventory");
   if (Array.isArray(catalog.parentPolicies) && CREATOR_FOUNDATION_PARENT_TABLES.some(table => !catalog.parentPolicies.some(row => row?.schema === "public" && row?.table === table))) missing.push("parent_policy_inventory");
   if (Array.isArray(catalog.parentFunctions) && CREATOR_FOUNDATION_PARENT_HELPERS.some(([, identity]) => !catalog.parentFunctions.some(row => row?.schema === "public" && row?.identity === identity))) missing.push("parent_helper_inventory");
   if (Array.isArray(catalog.namespaces) && !equal(catalog.namespaces.map(row => row?.schema).sort(), ["auth", "public"])) missing.push("namespace_inventory");

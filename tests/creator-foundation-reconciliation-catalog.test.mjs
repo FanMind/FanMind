@@ -118,6 +118,56 @@ test("parent tables and policies use complete metadata in separate result sectio
   }
 });
 
+test("all parent columns include ACLs while existing managed-column coverage stays bounded", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const columns = sql.slice(sql.indexOf("column_rows AS ("), sql.indexOf("constraint_rows AS ("));
+  assert.match(columns, /SELECT c\.oid AS relation_oid,/u);
+  assert.match(columns, /FROM all_table_relations c JOIN pg_catalog\.pg_attribute a ON a\.attrelid = c\.oid/u);
+  assert.match(columns, /WHERE a\.attnum > 0 AND NOT a\.attisdropped\s*\),\s*$/u);
+  assert.match(columns, /c\.oid IN \(SELECT oid FROM creator_relations\)/u);
+  assert.match(columns, /c\.relname = 'conversations' AND a\.attname IN \('sales_state','sales_state_updated_at','sales_state_source'\)/u);
+  assert.match(columns, /c\.relname = 'contact_ai_profiles' AND a\.attname = 'commercial_profile'\)\) AS creator_managed/u);
+  assert.match(columns, /pg_catalog\.aclexplode\(a\.attacl\)/u);
+  assert.match(columns, /pg_catalog\.has_column_privilege\(r\.oid,c\.oid,a\.attnum,v\.name\)/u);
+  assert.match(columns, /pg_catalog\.has_column_privilege\(r\.oid,c\.oid,a\.attnum,v\.name \|\| ' WITH GRANT OPTION'\)/u);
+  assert.match(sql, /'columns',[^\n]+FROM column_rows WHERE creator_managed/u);
+  assert.match(sql, /'parentColumns',[^\n]+FROM column_rows WHERE relation_oid IN \(SELECT oid FROM parent_relations\)/u);
+  const constraints = sql.slice(sql.indexOf("constraint_rows AS ("), sql.indexOf("index_rows AS ("));
+  assert.match(constraints, /c\.oid IN \(SELECT oid FROM managed_relations\) AND k\.conname IN/u);
+});
+
+test("parent constraints indexes and triggers share the complete Creator projections", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  for (const [section, rows, next, source] of [
+    ["constraints", "constraint_rows", "index_rows", "pg_constraint"],
+    ["indexes", "index_rows", "policy_rows", "pg_index"],
+    ["triggers", "trigger_rows", "function_rows", "pg_trigger"],
+  ]) {
+    const projection = sql.slice(sql.indexOf(`${rows} AS (`), sql.indexOf(`${next} AS (`));
+    assert.match(projection, /SELECT c\.oid AS relation_oid,/u);
+    assert.match(projection, new RegExp(`FROM all_table_relations c JOIN pg_catalog\\.${source}`));
+    const parentSection = `parent${section[0].toUpperCase()}${section.slice(1)}`;
+    assert.match(sql, new RegExp(`'${parentSection}',[^\\n]+FROM ${rows} WHERE relation_oid IN \\(SELECT oid FROM parent_relations\\)`));
+    const scope = section === "constraints" ? "creator_managed" : "relation_oid IN \\(SELECT oid FROM creator_relations\\)";
+    assert.match(sql, new RegExp(`'${section}',[^\\n]+FROM ${rows} WHERE ${scope}`));
+  }
+});
+
+test("parent function discovery covers trigger expression and rule execution surfaces", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const objects = sql.slice(sql.indexOf("parent_object_function_edges AS ("), sql.indexOf("parent_function_component(oid) AS ("));
+  assert.match(objects, /t\.tgfoid AS target_oid/u);
+  assert.match(objects, /SELECT 'trigger',c\.nspname,c\.relname,t\.tgname,d\.refobjid,d\.deptype/u, "trigger WHEN helpers must also enter the function contract");
+  for (const [kind, catalog] of [["constraint", "pg_constraint"], ["index", "pg_class"], ["default", "pg_attrdef"], ["rule", "pg_rewrite"]]) {
+    assert.ok(objects.includes(`'${kind}'`), kind);
+    assert.ok(objects.includes(`d.classid = 'pg_catalog.${catalog}'::pg_catalog.regclass`), catalog);
+  }
+  assert.match(objects, /d\.refclassid = 'pg_catalog\.pg_proc'::pg_catalog\.regclass/u);
+  const component = sql.slice(sql.indexOf("parent_function_component(oid) AS ("), sql.indexOf("browser_roles(name) AS"));
+  assert.match(component, /SELECT target_oid FROM parent_object_function_edges/u);
+  assert.match(sql, /FROM parent_object_function_edges e JOIN pg_catalog\.pg_proc p ON p\.oid = e\.target_oid/u);
+});
+
 test("parent helper export follows policy and function dependencies without losing unknown helpers", () => {
   const sql = catalogModule.buildCreatorFoundationCatalogSql();
   const policyEdges = sql.slice(sql.indexOf("parent_policy_function_edges AS ("), sql.indexOf("parent_function_component(oid) AS ("));
