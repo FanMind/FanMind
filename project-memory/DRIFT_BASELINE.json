@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-09-20",
-  "last_source_of_truth_review": "2026-09-20 FM-CHATADMIN-001 / FM-DEC-022: reviewed the bounded, default-off one-Workspace ChatAdmin Owner exception. It is not Platform Admin, preserves normal one-Creator/one-style semantics, adds only controlled unapplied Character isolation and manual measured copy/paste replies, and does not change any accepted Production gate. The separate stale/empty latest Backup audit remains open and unmodified.",
+  "captured": "2026-09-26",
+  "last_source_of_truth_review": "2026-09-26 FM-CHATADMIN-002 / PR #1193: source reader clarifies the existing never-Platform-Admin invariant. Actual shared application authorization now denies configured Platform Admin even when Owner/capability prerequisites would otherwise pass; executable bypass regressions reproduced RED then passed. This is source-only reconciliation, not target acceptance, Production activation or a refresh of runtime evidence. Other watched files and accepted boundaries remain unchanged.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "f06120ca21e33239a001e4f258e05877e0d44e4e",
+    "docs/SOURCE_OF_TRUTH.md": "d7614edadde7261d0431c3cf6bb2e2fbbf880fbc",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

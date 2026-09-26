@@ -159,8 +159,9 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 - From: FM-CHATADMIN-002
 - Requires: `chatadmin_staging_apply=ACCEPTED`; `chatadmin_staging_accept=ACCEPTED`; fresh current-main/Staging binding; separately authorized synthetic runtime fixture/capability preparation and cleanup.
 - Type: protected Staging application/runtime acceptance
-- Status: READY_OWNER_ACTION
+- Status: IN_PROGRESS
 - Updated: 2026-09-26
+- Current execution: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic scope; current source/runtime binding, actual flow and cleanup evidence remain required in PR #1193 and its protected follow-through.
 - Required evidence: actual Staging application flow active Character -> manual Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, plus negative tenant/authority checks and cleanup/zero-persistence evidence.
 - Rule: no real customer/provider send, no automatic send and no Production/provider/Billing/Restore/Mobile mutation.
 

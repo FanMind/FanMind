@@ -140,7 +140,7 @@ test("routes require capability and workspace-bound character; no OnlyFans netwo
     combined,
     /onlyfans\.com|OnlyFans API|provider.password|service_role/u,
   );
-  assert.doesNotMatch(combined, /isPlatformAdmin/u);
+  assert.match(store, /if \(isPlatformAdminEmail\(context\.user\.email\)\) throw new WorkspaceAuthorizationError/u);
 });
 
 test("ChatAdmin stays separate from Platform Admin and UI is capability-hidden", async () => {
@@ -173,7 +173,7 @@ test("ChatAdmin cannot inherit user, Admin-CRM, Billing or Operations administra
   const capability = await readFile("src/lib/chatAdmin.ts", "utf8");
   assert.doesNotMatch(
     capability,
-    /isPlatformAdmin|SUPABASE_SERVICE_ROLE_KEY|impersonat/iu,
+    /SUPABASE_SERVICE_ROLE_KEY|impersonat/iu,
   );
 });
 

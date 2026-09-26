@@ -108,9 +108,9 @@ test("Creator aggregate summary is closed and the manager invents no next scope"
   );
   assert.match(creatorDoc, /repository-seitige evidence-only Schritt ist abgeschlossen/u);
   assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
-  assert.match(nextAction, /- Worker slots reserved by active\/ready work: `0`/u);
+  assert.doesNotMatch(nextAction, /- Active task continuations reserving slots: `[^`]*NBA-CREATOR-INTELLIGENCE/u);
   assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-  assert.match(nextAction, /- Task: `FM-REG-003`/u);
+  assert.doesNotMatch(nextAction, /- Task: `FM-CREATOR-001`/u);
   assert.match(openLoops, /no current repository action is admitted/u);
   assert.match(openLoops, /never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE`/u);
   assert.doesNotMatch(
