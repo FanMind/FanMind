@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
+import {buildCreatorFoundationParentReferenceSql, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
 import {
   classifyCreatorFoundationSnapshot,
   loadPinnedCreatorFoundationSources,
@@ -40,6 +41,34 @@ test("provider reference binds the original auth.uid statement, body and complet
   assert.equal(profile.namespaces.find(row => row.schema === "public").directAcl.some(row => row.grantee === "PUBLIC" && row.privilege === "USAGE"), true);
   profile.authUidFunctions[0].config = ["search_path=public"];
   assert.equal(creatorFoundationUpstreamProviderContract().authUidFunctions[0].config, null);
+});
+
+test("parent reference reproduces twenty pinned policies and original authority helpers", () => {
+  const sql = buildCreatorFoundationParentReferenceSql();
+  assert.equal(creatorFoundationParentPolicyInventory().length, 20);
+  assert.equal((sql.match(/create policy /gu) ?? []).length, 20);
+  assert.match(sql, /create policy contact_ai_profiles_select_workspace_member/u);
+  assert.match(sql, /workspace_owner_active_mutation_allowed\(workspace_id\)/u);
+  assert.match(sql, /owned_workspace\.subscription_effective_end_at::text/u);
+  assert.doesNotMatch(sql, /is_workspace_member|is_workspace_admin|select true;/iu);
+  assert.deepEqual(creatorFoundationParentHelperBodies().map(row => row.bodySha256), ["e9e57a8bef3d480de6c932eadb11a7c8123219db0ffa52969641b216c5cfd42d", "a40948f1efb59ff2d23f720508705a3162b63746761ef57b96da5dab41cacc78"]);
+});
+
+test("parent policy definitions, complete policy sets and authority metadata cannot be normalized away", () => {
+  const expected = {parentPolicies: [{schema: "public", table: "contact_ai_profiles", name: "contact_ai_profiles_select_workspace_member", using: "member OR owner", check: null, roles: ["PUBLIC"]}], parentFunctions: [{identity: "workspace_owner_active_mutation_allowed(uuid)", bodySha256: "a".repeat(64), securityDefiner: false}], parentTables: [{table: "workspaces", owner: "postgres", rowSecurity: true}]};
+  for (const [section, rows] of [
+    ["parentPolicies", [{...expected.parentPolicies[0], using: "true"}]],
+    ["parentPolicies", [...expected.parentPolicies, {...expected.parentPolicies[0], name: "extra_permissive", using: "true"}]],
+    ["parentPolicies", [{...expected.parentPolicies[0], roles: ["anon", "authenticated"]}]],
+    ["parentFunctions", [{...expected.parentFunctions[0], securityDefiner: true}]],
+    ["parentTables", [{...expected.parentTables[0], owner: "other_owner"}]],
+  ]) assert.deepEqual(compareCreatorFoundationCatalogs({...expected, [section]: rows}, expected), [section]);
+});
+
+test("unproven parent authorization helpers stay explicitly incomplete", () => {
+  const result = classifyCreatorFoundationSnapshot({catalog: {parentFunctions: [{schema: "public", name: "is_workspace_member", identity: "is_workspace_member(uuid)"}]}});
+  assert.equal(result.status, "INCOMPLETE");
+  assert.ok(result.blockers.includes("parent_helper_contract_unreviewed"));
 });
 
 test("an empty or partial catalog cannot become an exact foundation verdict", () => {

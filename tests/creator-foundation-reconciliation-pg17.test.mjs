@@ -15,6 +15,8 @@ import {
 
 import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
 
+import {CREATOR_FOUNDATION_PARENT_PINS, buildCreatorFoundationParentReferenceSql, creatorFoundationParentPolicyInventory} from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
+
 const enabled = process.env.FANMIND_CREATOR_PG17_REQUIRED === "true";
 const container = process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const databases = ["fanmind_creator_reconciliation_legacy_ci", "fanmind_creator_reconciliation_current_ci", "fanmind_creator_reconciliation_admin_first_ci", "fanmind_creator_reconciliation_creator_first_ci"];
@@ -41,6 +43,7 @@ function exportCiReferenceArtifacts({legacy, current, postgresVersion, environme
     reviewedSourceSha: environment.FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA,
     runId: environment.GITHUB_RUN_ID, runAttempt: environment.GITHUB_RUN_ATTEMPT,
     postgresVersion, querySha256: digest(query), sourcePins: CREATOR_FOUNDATION_SOURCE_PINS, providerSourcePins: CREATOR_FOUNDATION_PROVIDER_PINS,
+    parentSourcePins: CREATOR_FOUNDATION_PARENT_PINS, parentReferenceSqlSha256: digest(buildCreatorFoundationParentReferenceSql()),
     stagingProviderProfileApproved: false, providerContractSha256: digest(JSON.stringify(creatorFoundationUpstreamProviderContract())),
     files: Object.fromEntries(Object.entries(content).map(([name, value]) => [name, digest(value)])),
   };
@@ -70,7 +73,7 @@ ${loadPinnedCreatorProviderAuthSql()}
 GRANT ALL ON FUNCTION auth.uid() TO postgres,dashboard_user;
 RESET ROLE;
 ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;
-CREATE TABLE public.workspaces(id uuid PRIMARY KEY,owner_user_id uuid NOT NULL REFERENCES auth.users(id),test_access_flags jsonb,workspace_access_mode text,billing_status text,billing_manual_override boolean);
+CREATE TABLE public.workspaces(id uuid PRIMARY KEY,owner_user_id uuid NOT NULL REFERENCES auth.users(id),test_access_flags jsonb,workspace_access_mode text,billing_status text,billing_manual_override boolean,subscription_effective_end_at timestamptz,billing_grace_until timestamptz,billing_suspended_at timestamptz);
 CREATE TABLE public.workspace_members(workspace_id uuid REFERENCES public.workspaces(id),user_id uuid REFERENCES auth.users(id));
 CREATE TABLE public.contacts(id uuid PRIMARY KEY,workspace_id uuid NOT NULL REFERENCES public.workspaces(id));
 CREATE TABLE public.conversations(id uuid PRIMARY KEY,workspace_id uuid NOT NULL REFERENCES public.workspaces(id),contact_id uuid NOT NULL REFERENCES public.contacts(id));
@@ -81,6 +84,7 @@ ALTER TABLE public.workspace_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_ai_profiles ENABLE ROW LEVEL SECURITY;
+${buildCreatorFoundationParentReferenceSql()}
 `;
 
 test("PG17 reconciles exact historical/current catalogs and rejects real contract drift", { skip: !enabled }, () => {
@@ -111,6 +115,10 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.equal(current.catalog.parentChecks.allSatisfied, true);
     assert.equal(legacy.catalog.functions.length, 3);
     assert.equal(current.catalog.functions.length, 4);
+    assert.equal(current.catalog.parentTables.length, 5);
+    assert.deepEqual(current.catalog.parentPolicies.map(({schema, table, name}) => ({schema, table, name})).sort((a, b) => a.name.localeCompare(b.name)), creatorFoundationParentPolicyInventory());
+    assert.equal(current.catalog.parentFunctions.length, 2);
+    assert.ok(current.catalog.parentDependencies.some(row => row.sourceKind === "policy" && row.targetIdentity === "workspace_owner_active_mutation_allowed(uuid)"));
     // Vanilla PG17 includes monitor-role memberships granted by postgres, but
     // their grantor is not a privilege path into the Creator/browser roles.
     assert.ok(Number(sql("SELECT count(*) FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.member WHERE r.rolname='pg_monitor';")) >= 3);
@@ -151,6 +159,18 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.deepEqual(again.catalog, current.catalog);
 
     const mutations = [
+      ["parent SELECT predicate", "ALTER POLICY contact_ai_profiles_select_workspace_member ON public.contact_ai_profiles USING (true);", "parentPolicies"],
+      ["parent extra permissive", "CREATE POLICY reconciliation_parent_rogue ON public.contact_ai_profiles FOR SELECT TO authenticated USING (true);", "parentPolicies"],
+      ["parent policy role", "ALTER POLICY contacts_select_workspace_member ON public.contacts TO anon;", "parentPolicies"],
+      ["parent WITH CHECK", "ALTER POLICY contacts_insert_requires_workspace_owner ON public.contacts WITH CHECK (true);", "parentPolicies"],
+      ["parent owner", "ALTER TABLE public.contact_ai_profiles OWNER TO supabase_admin;", "parentTables"],
+      ["parent FORCE RLS", "ALTER TABLE public.workspaces FORCE ROW LEVEL SECURITY;", "parentTables"],
+      ["parent helper body", "CREATE OR REPLACE FUNCTION public.workspace_owner_active_mutation_allowed(p_workspace_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$;", "parentFunctions"],
+      ["parent helper security", "ALTER FUNCTION public.workspace_owner_active_mutation_allowed(uuid) SECURITY DEFINER;", "parentFunctions"],
+      ["parent helper ACL", "GRANT EXECUTE ON FUNCTION public.workspace_owner_active_mutation_allowed(uuid) TO anon;", "parentFunctions"],
+      ["parent helper owner", "ALTER FUNCTION public.workspace_owner_active_mutation_allowed(uuid) OWNER TO supabase_admin;", "parentFunctions"],
+      ["parent helper config", "ALTER FUNCTION public.workspace_owner_active_mutation_allowed(uuid) SET search_path='public';", "parentFunctions"],
+      ["transitive authority helper", "ALTER FUNCTION public.workspace_processing_allowed_contract(text,text,text,boolean,text,text,jsonb,timestamptz) SECURITY DEFINER;", "parentFunctions"],
       ["database owner", `ALTER DATABASE ${databases[1]} OWNER TO supabase_admin;`, "parentChecks"],
       ["public CREATE", "GRANT CREATE ON SCHEMA public TO authenticated;", "namespaces"],
       ["public USAGE ACL", "REVOKE USAGE ON SCHEMA public FROM authenticated;", "namespaces"],
@@ -180,6 +200,19 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       assert.equal(result.status, "DRIFT", name);
       assert.ok(result.differingSections.includes(expectedSection), name);
     }
+
+    createFixture("current");
+    sql("CREATE FUNCTION public.is_workspace_member(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$; ALTER POLICY contact_ai_profiles_select_workspace_member ON public.contact_ai_profiles USING (public.is_workspace_member(workspace_id));", databases[1]);
+    const unsupportedParent = classify(JSON.parse(sql(query, databases[1])));
+    assert.equal(unsupportedParent.status, "INCOMPLETE");
+    assert.ok(unsupportedParent.blockers.includes("parent_helper_contract_unreviewed"));
+    const emptyParent = structuredClone(current);
+    emptyParent.catalog.parentPolicies = [];
+    assert.throws(() => buildCreatorFoundationReference({legacy, current: emptyParent, roleProfile: reference.roleProfile, querySha256: digest(query)}), /reference_incomplete/u);
+    const missingParentPins = structuredClone(reference);
+    delete missingParentPins.parentSourcePins;
+    const missingParentJson = JSON.stringify(missingParentPins);
+    assert.ok(classifyCreatorFoundationSnapshot(current, {...options, referenceJson: missingParentJson, trustedReferenceSha256: digest(missingParentJson)}).blockers.includes("reference_contract"));
 
     const missingProvider = structuredClone(reference);
     delete missingProvider.roleProfile.providerContract;
@@ -239,7 +272,7 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
   }
   if (process.env.FANMIND_CREATOR_RECONCILIATION_EXPORT === "true") {
     assert.equal(execFileSync("git", ["rev-parse", "HEAD"], {encoding: "utf8"}).trim(), process.env.GITHUB_SHA, "reference export must bind the tested checkout");
-    execFileSync("git", ["diff", "--exit-code", "HEAD", "--", ".github/workflows/ci-fanmind.yml", "tests/creator-foundation-reconciliation-pg17.test.mjs", "scripts/operations/creator-foundation-reconciliation-catalog.mjs", "scripts/operations/creator-foundation-reconciliation-preflight.mjs", "scripts/operations/creator-foundation-reconciliation-provider.mjs", "scripts/operations/creator-foundation-reconciliation-artifacts", "supabase/controlled/creator_intelligence_foundation.sql", "supabase/controlled/creator_revision_conflict_fix.sql"], {stdio: ["ignore", "ignore", "ignore"]});
+    execFileSync("git", ["diff", "--exit-code", "HEAD", "--", ".github/workflows/ci-fanmind.yml", "tests/creator-foundation-reconciliation-pg17.test.mjs", "scripts/operations/creator-foundation-reconciliation-catalog.mjs", "scripts/operations/creator-foundation-reconciliation-preflight.mjs", "scripts/operations/creator-foundation-reconciliation-provider.mjs", "scripts/operations/creator-foundation-reconciliation-parents.mjs", ...Object.values(CREATOR_FOUNDATION_PARENT_PINS).map(pin => pin.path.replace("../../", "")), "scripts/operations/creator-foundation-reconciliation-artifacts", "supabase/controlled/creator_intelligence_foundation.sql", "supabase/controlled/creator_revision_conflict_fix.sql"], {stdio: ["ignore", "ignore", "ignore"]});
     exportCiReferenceArtifacts({...verifiedSnapshots, postgresVersion, environment: process.env});
   }
 });
@@ -258,6 +291,8 @@ test("CI reference export writes private source-bound files without overwriting 
     assert.equal(manifest.stagingRoleProfileApproved, false);
     assert.equal(manifest.stagingProviderProfileApproved, false);
     assert.deepEqual(manifest.providerSourcePins, CREATOR_FOUNDATION_PROVIDER_PINS);
+    assert.deepEqual(manifest.parentSourcePins, CREATOR_FOUNDATION_PARENT_PINS);
+    assert.equal(manifest.parentReferenceSqlSha256, digest(buildCreatorFoundationParentReferenceSql()));
     assert.equal(manifest.providerContractSha256, digest(JSON.stringify(creatorFoundationUpstreamProviderContract())));
     assert.equal(manifest.scope, "isolated_ci_creator_foundation_reference");
     assert.equal(manifest.querySha256, digest(query));

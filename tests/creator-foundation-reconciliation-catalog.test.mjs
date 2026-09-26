@@ -104,3 +104,38 @@ test("catalog marks Admin CRM variants and follows membership rights instead of 
   assert.doesNotMatch(graph, /m\.grantor = rc\.oid|m\.grantor IN \(SELECT oid FROM role_component\)/u);
   assert.match(graph, /UNION SELECT grantor FROM relevant_memberships/u);
 });
+
+test("parent tables and policies use complete metadata in separate result sections", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const parents = sql.slice(sql.indexOf("parent_relations AS ("), sql.indexOf("managed_relations AS ("));
+  assert.match(parents, /'workspaces','workspace_members','contacts','conversations','contact_ai_profiles'/u);
+  assert.match(sql, /AS relation_oid[\s\S]+FROM all_table_relations c LEFT JOIN pg_catalog\.pg_am/u);
+  assert.match(sql, /AS relation_oid[\s\S]+FROM all_table_relations c JOIN pg_catalog\.pg_policy/u);
+  for (const [section, rows] of [["tables", "table_rows"], ["policies", "policy_rows"]]) {
+    assert.match(sql, new RegExp(`'${section}',[^\\n]+FROM ${rows} WHERE relation_oid IN \\(SELECT oid FROM creator_relations\\)`));
+    const parentSection = `parent${section[0].toUpperCase()}${section.slice(1)}`;
+    assert.match(sql, new RegExp(`'${parentSection}',[^\\n]+FROM ${rows} WHERE relation_oid IN \\(SELECT oid FROM parent_relations\\)`));
+  }
+});
+
+test("parent helper export follows policy and function dependencies without losing unknown helpers", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const policyEdges = sql.slice(sql.indexOf("parent_policy_function_edges AS ("), sql.indexOf("parent_function_component(oid) AS ("));
+  assert.match(policyEdges, /d\.classid = 'pg_catalog\.pg_policy'::pg_catalog\.regclass AND d\.objid = pol\.oid/u);
+  assert.match(policyEdges, /d\.refclassid = 'pg_catalog\.pg_proc'::pg_catalog\.regclass/u);
+  assert.match(policyEdges, /n\.nspname <> 'pg_catalog'/u);
+  const component = sql.slice(sql.indexOf("parent_function_component(oid) AS ("), sql.indexOf("browser_roles(name) AS"));
+  assert.match(component, /'workspace_owner_active_mutation_allowed','workspace_processing_allowed_contract'/u);
+  assert.match(component, /SELECT target_oid FROM parent_policy_function_edges/u);
+  assert.match(component, /FROM parent_function_component fc JOIN pg_catalog\.pg_depend d/u);
+  assert.match(component, /d\.classid = 'pg_catalog\.pg_proc'::pg_catalog\.regclass AND d\.objid = fc\.oid/u);
+  assert.match(component, /d\.refclassid = 'pg_catalog\.pg_proc'::pg_catalog\.regclass/u);
+  assert.match(component, /n\.nspname <> 'pg_catalog'/u);
+  assert.doesNotMatch(component, /UNION ALL/u, "recursive function dependencies must terminate on cycles");
+  assert.match(sql, /'parentFunctions',[^\n]+WHERE function_oid IN \(SELECT oid FROM parent_function_component\) AND NOT \(row->>'schema' = 'auth' AND row->>'name' = 'uid'\)/u);
+  assert.match(sql, /'parentDependencies',[^\n]+FROM parent_dependency_rows/u);
+  for (const field of ["sourceKind", "sourceSchema", "sourceTable", "sourceName", "targetSchema", "targetIdentity", "dependencyType"]) assert.ok(sql.includes(`'${field}'`), field);
+  const graph = sql.slice(sql.indexOf("role_component(oid) AS ("), sql.indexOf("relevant_memberships AS ("));
+  assert.match(graph, /SELECT c\.relowner FROM parent_relations c/u);
+  assert.match(graph, /SELECT p\.proowner FROM pg_catalog\.pg_proc p WHERE p\.oid IN \(SELECT oid FROM parent_function_component\)/u);
+});

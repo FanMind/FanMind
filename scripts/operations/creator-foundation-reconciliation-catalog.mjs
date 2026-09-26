@@ -1,6 +1,8 @@
 // A fixed PostgreSQL 17 catalog snapshot. This module has no connection, file,
 // environment, reference-generation or mutation capability. The caller must
 // validate its own target before executing and keep the snapshot private.
+// Parent helper discovery follows catalog-recorded pg_depend edges only.
+// Dependencies inside SQL/PLpgSQL string bodies require a reviewed source profile.
 const CATALOG_SQL = `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL search_path = pg_catalog;
 SET LOCAL statement_timeout = '60s';
@@ -14,12 +16,46 @@ creator_relations AS (
  WHERE n.nspname = 'public' AND c.relname IN
   ('creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events')
 ),
+parent_relations AS (
+ SELECT c.*, n.nspname
+ FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'public' AND c.relname IN
+  ('workspaces','workspace_members','contacts','conversations','contact_ai_profiles')
+),
+all_table_relations AS (
+ SELECT * FROM creator_relations UNION ALL SELECT * FROM parent_relations
+),
 managed_relations AS (
  SELECT c.*, n.nspname
  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
  WHERE n.nspname = 'public' AND c.relname IN
   ('creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events',
    'contacts','conversations','contact_ai_profiles')
+),
+parent_policy_function_edges AS (
+ SELECT pol.oid AS policy_oid,c.nspname AS source_schema,c.relname AS source_table,
+  pol.polname AS source_name,p.oid AS target_oid,d.deptype
+ FROM parent_relations c JOIN pg_catalog.pg_policy pol ON pol.polrelid = c.oid
+ JOIN pg_catalog.pg_depend d ON d.classid = 'pg_catalog.pg_policy'::pg_catalog.regclass AND d.objid = pol.oid
+  AND d.refclassid = 'pg_catalog.pg_proc'::pg_catalog.regclass
+ JOIN pg_catalog.pg_proc p ON p.oid = d.refobjid JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname <> 'pg_catalog'
+),
+parent_function_component(oid) AS (
+ SELECT seed.oid FROM (
+  SELECT p.oid FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname IN
+   ('workspace_owner_active_mutation_allowed','workspace_processing_allowed_contract')
+  UNION
+  SELECT target_oid FROM parent_policy_function_edges
+ ) seed
+ UNION
+ SELECT p.oid
+ FROM parent_function_component fc JOIN pg_catalog.pg_depend d
+  ON d.classid = 'pg_catalog.pg_proc'::pg_catalog.regclass AND d.objid = fc.oid
+  AND d.refclassid = 'pg_catalog.pg_proc'::pg_catalog.regclass
+ JOIN pg_catalog.pg_proc p ON p.oid = d.refobjid JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname <> 'pg_catalog'
 ),
 browser_roles(name) AS (VALUES ('anon'),('authenticated'),('service_role')),
 table_privileges(name) AS (VALUES ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')),
@@ -35,6 +71,10 @@ role_component(oid) AS (
   UNION
   SELECT p.proowner FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'auth' AND p.proname = 'uid'
+  UNION
+  SELECT c.relowner FROM parent_relations c
+  UNION
+  SELECT p.proowner FROM pg_catalog.pg_proc p WHERE p.oid IN (SELECT oid FROM parent_function_component)
  ) seed
  UNION
  SELECT CASE WHEN m.roleid = rc.oid THEN m.member ELSE m.roleid END
@@ -63,7 +103,7 @@ namespace_rows AS (
  ) AS row FROM pg_catalog.pg_namespace n WHERE n.nspname IN ('public','auth')
 ),
 table_rows AS (
- SELECT pg_catalog.jsonb_build_object(
+ SELECT c.oid AS relation_oid,pg_catalog.jsonb_build_object(
   'schema',c.nspname,'table',c.relname,'owner',pg_catalog.pg_get_userbyid(c.relowner),
   'kind',c.relkind,'persistence',c.relpersistence,'rowSecurity',c.relrowsecurity,
   'forceRowSecurity',c.relforcerowsecurity,'isPartition',c.relispartition,
@@ -83,7 +123,7 @@ table_rows AS (
    FROM pg_catalog.pg_inherits i JOIN pg_catalog.pg_class cc ON cc.oid = i.inhrelid JOIN pg_catalog.pg_namespace cn ON cn.oid = cc.relnamespace WHERE i.inhparent = c.oid),'[]'::jsonb),
   'rewriteRules',COALESCE((SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name',rw.rulename,'enabled',rw.ev_enabled,'definition',pg_catalog.pg_get_ruledef(rw.oid,false)) ORDER BY rw.rulename)
    FROM pg_catalog.pg_rewrite rw WHERE rw.ev_class = c.oid),'[]'::jsonb)
- ) AS row FROM creator_relations c LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam
+ ) AS row FROM all_table_relations c LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam
 ),
 column_rows AS (
  SELECT pg_catalog.jsonb_build_object(
@@ -158,11 +198,11 @@ index_rows AS (
  JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid LEFT JOIN pg_catalog.pg_am am ON am.oid = ic.relam
 ),
 policy_rows AS (
- SELECT pg_catalog.jsonb_build_object(
+ SELECT c.oid AS relation_oid,pg_catalog.jsonb_build_object(
   'schema',c.nspname,'table',c.relname,'name',p.polname,'command',p.polcmd,'permissive',p.polpermissive,
   'roles',COALESCE((SELECT pg_catalog.jsonb_agg(CASE WHEN v.id = 0 THEN 'PUBLIC' ELSE pg_catalog.pg_get_userbyid(v.id) END ORDER BY CASE WHEN v.id = 0 THEN 'PUBLIC' ELSE pg_catalog.pg_get_userbyid(v.id) END) FROM pg_catalog.unnest(p.polroles) v(id)),'[]'::jsonb),
   'using',pg_catalog.pg_get_expr(p.polqual,p.polrelid,false),'check',pg_catalog.pg_get_expr(p.polwithcheck,p.polrelid,false)
- ) AS row FROM creator_relations c JOIN pg_catalog.pg_policy p ON p.polrelid = c.oid
+ ) AS row FROM all_table_relations c JOIN pg_catalog.pg_policy p ON p.polrelid = c.oid
 ),
 trigger_rows AS (
  SELECT pg_catalog.jsonb_build_object(
@@ -184,7 +224,7 @@ trigger_rows AS (
  LEFT JOIN pg_catalog.pg_trigger pt ON pt.oid = t.tgparentid LEFT JOIN pg_catalog.pg_class ptc ON ptc.oid = pt.tgrelid LEFT JOIN pg_catalog.pg_namespace ptn ON ptn.oid = ptc.relnamespace
 ),
 function_rows AS (
- SELECT pg_catalog.jsonb_build_object(
+ SELECT p.oid AS function_oid,pg_catalog.jsonb_build_object(
   'schema',n.nspname,'name',p.proname,'identity',p.proname || '(' || pg_catalog.replace(pg_catalog.oidvectortypes(p.proargtypes),', ',',' ) || ')',
   'owner',pg_catalog.pg_get_userbyid(p.proowner),'language',l.lanname,'bodySha256',pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.prosrc,'UTF8')),'hex'),
   'binary',p.probin,'sqlBodyPresent',p.prosqlbody IS NOT NULL,
@@ -212,6 +252,29 @@ function_rows AS (
  WHERE (n.nspname = 'public' AND p.proname IN
   ('guard_creator_identity','save_creator_bundle','record_creator_fan_review','creator_workspace_access_allowed'))
   OR (n.nspname = 'auth' AND p.proname = 'uid')
+  OR p.oid IN (SELECT oid FROM parent_function_component)
+),
+parent_dependency_rows AS (
+ SELECT pg_catalog.jsonb_build_object(
+  'sourceKind','policy','sourceSchema',e.source_schema,'sourceTable',e.source_table,'sourceName',e.source_name,
+  'targetSchema',n.nspname,'targetIdentity',p.proname || '(' || pg_catalog.replace(pg_catalog.oidvectortypes(p.proargtypes),', ',',' ) || ')',
+  'dependencyType',e.deptype
+ ) AS row
+ FROM parent_policy_function_edges e JOIN pg_catalog.pg_proc p ON p.oid = e.target_oid
+ JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+ UNION
+ SELECT pg_catalog.jsonb_build_object(
+  'sourceKind','function','sourceSchema',sn.nspname,'sourceTable',NULL,
+  'sourceName',sp.proname || '(' || pg_catalog.replace(pg_catalog.oidvectortypes(sp.proargtypes),', ',',' ) || ')',
+  'targetSchema',tn.nspname,'targetIdentity',tp.proname || '(' || pg_catalog.replace(pg_catalog.oidvectortypes(tp.proargtypes),', ',',' ) || ')',
+  'dependencyType',d.deptype
+ ) AS row
+ FROM parent_function_component fc JOIN pg_catalog.pg_depend d
+  ON d.classid = 'pg_catalog.pg_proc'::pg_catalog.regclass AND d.objid = fc.oid
+  AND d.refclassid = 'pg_catalog.pg_proc'::pg_catalog.regclass
+ JOIN pg_catalog.pg_proc sp ON sp.oid = fc.oid JOIN pg_catalog.pg_namespace sn ON sn.oid = sp.pronamespace
+ JOIN pg_catalog.pg_proc tp ON tp.oid = d.refobjid JOIN pg_catalog.pg_namespace tn ON tn.oid = tp.pronamespace
+ WHERE tn.nspname <> 'pg_catalog'
 ),
 parent_checks AS (
  SELECT pg_catalog.jsonb_build_object(
@@ -249,14 +312,18 @@ SELECT pg_catalog.jsonb_build_object(
  'schemaVersion',1,'observedAt',pg_catalog.transaction_timestamp(),'pgMajor',pg_catalog.current_setting('server_version_num')::integer / 10000,
  'catalog',pg_catalog.jsonb_build_object(
   'namespaces',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM namespace_rows),'[]'::jsonb),
-  'tables',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM table_rows),'[]'::jsonb),
+  'tables',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM table_rows WHERE relation_oid IN (SELECT oid FROM creator_relations)),'[]'::jsonb),
+  'parentTables',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM table_rows WHERE relation_oid IN (SELECT oid FROM parent_relations)),'[]'::jsonb),
   'columns',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM column_rows),'[]'::jsonb),
   'constraints',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM constraint_rows),'[]'::jsonb),
   'indexes',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM index_rows),'[]'::jsonb),
-  'policies',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM policy_rows),'[]'::jsonb),
+  'policies',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM policy_rows WHERE relation_oid IN (SELECT oid FROM creator_relations)),'[]'::jsonb),
+  'parentPolicies',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM policy_rows WHERE relation_oid IN (SELECT oid FROM parent_relations)),'[]'::jsonb),
   'triggers',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM trigger_rows),'[]'::jsonb),
-  'functions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'public'),'[]'::jsonb),
-  'authUidFunctions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'auth'),'[]'::jsonb),
+  'functions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'public' AND row->>'name' IN ('guard_creator_identity','save_creator_bundle','record_creator_fan_review','creator_workspace_access_allowed')),'[]'::jsonb),
+  'authUidFunctions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE row->>'schema' = 'auth' AND row->>'name' = 'uid'),'[]'::jsonb),
+  'parentFunctions',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM function_rows WHERE function_oid IN (SELECT oid FROM parent_function_component) AND NOT (row->>'schema' = 'auth' AND row->>'name' = 'uid')),'[]'::jsonb),
+  'parentDependencies',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM parent_dependency_rows),'[]'::jsonb),
   'parentChecks',(SELECT document || pg_catalog.jsonb_build_object('allSatisfied',(SELECT pg_catalog.bool_and(value::text::boolean) FROM pg_catalog.jsonb_each(document))) FROM parent_checks),
   'roles',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM role_rows),'[]'::jsonb),
   'memberships',COALESCE((SELECT pg_catalog.jsonb_agg(row ORDER BY row::text COLLATE "C") FROM membership_rows),'[]'::jsonb)

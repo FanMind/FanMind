@@ -8,6 +8,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql} from "./creator-foundation-reconciliation-provider.mjs";
 
+import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_TABLES, CREATOR_FOUNDATION_PARENT_HELPERS, loadPinnedCreatorParentSources, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "./creator-foundation-reconciliation-parents.mjs";
+
 export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   legacyFoundation: Object.freeze({path: "./creator-foundation-reconciliation-artifacts/legacy-foundation.sql", sha256: "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f", gitBlob: "ebb7c91b799c687a57c251a3f4c0da3699a988d7"}),
   legacyConflict: Object.freeze({path: "./creator-foundation-reconciliation-artifacts/legacy-pt409.sql", sha256: "7e1111357bf1b210023fe43913d11247f3fe6eea32d1a7440b8079d988e671ee", gitBlob: "fac1c49afbd738bd6f2a5469321ab78eedbdfaa6"}),
@@ -15,7 +17,7 @@ export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   currentConflict: Object.freeze({path: "../../supabase/controlled/creator_revision_conflict_fix.sql", sha256: "d3e984bfd7ef240c63d0e47431d25ca9f21a18d0287b25375830a1a721d88e3f", gitBlob: "c2132db39e141131483afc44d045d21d632b1672"}),
 });
 const TABLES = ["creators", "creator_voice_profiles", "creator_sales_playbooks", "creator_commercial_events"];
-const SECTIONS = ["namespaces", "authUidFunctions", "tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
+const SECTIONS = ["namespaces", "authUidFunctions", "parentTables", "parentPolicies", "parentFunctions", "parentDependencies", "tables", "columns", "constraints", "indexes", "policies", "triggers", "functions", "parentChecks", "roles", "memberships"];
 const CORE_SECTIONS = SECTIONS.filter(key => !["roles", "memberships", "namespaces", "authUidFunctions"].includes(key));
 const CHECKS = ["pg17", "databaseOwnerPostgres", "parentTablesRls", "parentUuidColumnsReadable", "authUsersPresent", "authUidPresent", "anonProfileDenied", "authenticatedProfileWriteDenied", "profileWorkspaceContactUnique", "adminCrmContractAbsent", "allSatisfied"];
 const ROW_KEYS = {
@@ -31,6 +33,10 @@ const ROW_KEYS = {
   memberships: "role member grantor adminOption inheritOption setOption".split(" "),
 };
 ROW_KEYS.authUidFunctions = ROW_KEYS.functions;
+ROW_KEYS.parentFunctions = ROW_KEYS.functions;
+ROW_KEYS.parentTables = ROW_KEYS.tables;
+ROW_KEYS.parentPolicies = ROW_KEYS.policies;
+ROW_KEYS.parentDependencies = "sourceKind sourceSchema sourceTable sourceName targetSchema targetIdentity dependencyType".split(" ");
 const FUNCTIONS = [
   ["guard_creator_identity", "guard_creator_identity()"],
   ["save_creator_bundle", "save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)"],
@@ -50,6 +56,7 @@ export function verifyCreatorFoundationSource(name, sql) {
 
 export function loadPinnedCreatorFoundationSources() {
   loadPinnedCreatorProviderAuthSql();
+  loadPinnedCreatorParentSources();
   return Object.fromEntries(Object.entries(CREATOR_FOUNDATION_SOURCE_PINS).map(([name, pin]) =>
     [name, verifyCreatorFoundationSource(name, readFileSync(new URL(pin.path, import.meta.url), "utf8"))]));
 }
@@ -89,6 +96,9 @@ function coverage(snapshot) {
       if (!object(catalog[key]) || CHECKS.some(check => typeof catalog[key][check] !== "boolean")) missing.push(`catalog_${key}`);
     } else if (!Array.isArray(catalog[key]) || catalog[key].some(row => !object(row) || (ROW_KEYS[key] ?? []).some(field => !Object.hasOwn(row, field)))) missing.push(`catalog_${key}`);
   }
+  if (Array.isArray(catalog.parentTables) && (!equal(catalog.parentTables.map(row => row?.table).sort(), [...CREATOR_FOUNDATION_PARENT_TABLES].sort()) || catalog.parentTables.some(row => row?.schema !== "public"))) missing.push("parent_table_inventory");
+  if (Array.isArray(catalog.parentPolicies) && CREATOR_FOUNDATION_PARENT_TABLES.some(table => !catalog.parentPolicies.some(row => row?.schema === "public" && row?.table === table))) missing.push("parent_policy_inventory");
+  if (Array.isArray(catalog.parentFunctions) && CREATOR_FOUNDATION_PARENT_HELPERS.some(([, identity]) => !catalog.parentFunctions.some(row => row?.schema === "public" && row?.identity === identity))) missing.push("parent_helper_inventory");
   if (Array.isArray(catalog.namespaces) && !equal(catalog.namespaces.map(row => row?.schema).sort(), ["auth", "public"])) missing.push("namespace_inventory");
   if (Array.isArray(catalog.authUidFunctions) && catalog.authUidFunctions.length !== 1) missing.push("auth_uid_inventory");
   if (Array.isArray(catalog.tables) && (!equal(catalog.tables.map(row => row?.table).sort(), [...TABLES].sort()) || catalog.tables.some(row => row?.schema !== "public"))) missing.push("creator_table_inventory");
@@ -105,6 +115,14 @@ function functionsMatch(catalog, variant, sources) {
   return Array.isArray(catalog?.functions) && catalog.functions.length === expected.length && expected.every(fn => catalog.functions.some(row => row.schema === "public" && row.name === fn.name && row.identity === fn.identity && row.bodySha256 === fn.bodySha256));
 }
 
+function parentReferenceMatches(catalog) {
+  const inventory = (catalog?.parentPolicies ?? []).map(({schema, table, name}) => ({schema, table, name}));
+  const helpers = creatorFoundationParentHelperBodies();
+  return equal(unorderedRows(inventory), unorderedRows(creatorFoundationParentPolicyInventory())) &&
+    Array.isArray(catalog?.parentFunctions) && catalog.parentFunctions.length === helpers.length &&
+    helpers.every(expected => catalog.parentFunctions.some(actual => Object.entries(expected).every(([key, value]) => actual[key] === value)));
+}
+
 export function compareCreatorFoundationCatalogs(actual, expected) {
   return SECTIONS.filter(key => !equal(unorderedRows(actual?.[key]), unorderedRows(expected?.[key])));
 }
@@ -116,7 +134,7 @@ export function compareCreatorFoundationCatalogs(actual, expected) {
 export function buildCreatorFoundationReference({legacy, current, roleProfile, querySha256}) {
   const sources = loadPinnedCreatorFoundationSources();
   for (const [variant, snapshot] of Object.entries({legacy, current})) {
-    if (coverage(snapshot).length || CHECKS.some(key => snapshot.catalog.parentChecks[key] !== true) || !functionsMatch(snapshot.catalog, variant, sources)) fail("reference_incomplete");
+    if (coverage(snapshot).length || CHECKS.some(key => snapshot.catalog.parentChecks[key] !== true) || !functionsMatch(snapshot.catalog, variant, sources) || !parentReferenceMatches(snapshot.catalog)) fail("reference_incomplete");
   }
   if (!object(roleProfile) || !Array.isArray(roleProfile.roles) || !Array.isArray(roleProfile.memberships) || !Array.isArray(roleProfile.provenance) || !/^[a-f0-9]{64}$/u.test(querySha256 ?? "")) fail("reference_incomplete");
   if (!equal(roleProfile.providerContract, creatorFoundationUpstreamProviderContract())) fail("provider_contract_missing");
@@ -126,7 +144,7 @@ export function buildCreatorFoundationReference({legacy, current, roleProfile, q
   const reference = {
     schemaVersion: 1,
     scope: "creator_foundation_catalog_only",
-    sourcePins: sourceIdentities(),
+    sourcePins: sourceIdentities(), parentSourcePins: CREATOR_FOUNDATION_PARENT_PINS,
     querySha256,
     variants: Object.fromEntries(Object.entries({legacy, current}).map(([variant, snapshot]) => [variant, Object.fromEntries(CORE_SECTIONS.map(key => [key, snapshot.catalog[key]]))])),
     roleProfile,
@@ -142,6 +160,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
     learningState: "UNDETERMINED", applyAllowed: false, runtimeActivated: false,
     blockers, differingSections: [],
   };
+  if (Array.isArray(snapshot?.catalog?.parentFunctions) && snapshot.catalog.parentFunctions.some(row => row?.schema !== "public" || !CREATOR_FOUNDATION_PARENT_HELPERS.some(([, identity]) => identity === row?.identity))) blockers.push("parent_helper_contract_unreviewed");
   if (snapshot?.catalog?.parentChecks?.adminCrmContractAbsent === false || (Array.isArray(snapshot?.catalog?.policies) && snapshot.catalog.policies.some(row => row?.name === "admin_crm_entitlement_boundary"))) {
     blockers.push("admin_crm_variant_unreviewed");
     return result;
@@ -151,7 +170,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   if (blockers.includes("reference_pin_missing") || blockers.includes("reference_pin_mismatch")) { blockers.push("auth_uid_provider_contract_missing"); return result; }
   let reference;
   try { reference = JSON.parse(referenceJson); } catch { blockers.push("reference_invalid"); return result; }
-  if (!object(reference) || reference.schemaVersion !== 1 || reference.scope !== result.scope || !equal(reference.sourcePins, sourceIdentities()) || !/^[a-f0-9]{64}$/u.test(expectedQuerySha256 ?? "") || reference.querySha256 !== expectedQuerySha256) {
+  if (!object(reference) || reference.schemaVersion !== 1 || reference.scope !== result.scope || !equal(reference.sourcePins, sourceIdentities()) || !equal(reference.parentSourcePins, CREATOR_FOUNDATION_PARENT_PINS) || !/^[a-f0-9]{64}$/u.test(expectedQuerySha256 ?? "") || reference.querySha256 !== expectedQuerySha256) {
     blockers.push("reference_contract"); return result;
   }
   const profile = reference.roleProfile;
@@ -165,7 +184,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   }
   for (const variant of ["legacy", "current"]) {
     const candidate = {schemaVersion: 1, pgMajor: 17, observedAt: "2026-09-26T00:00:00.000Z", catalog: {...reference.variants?.[variant], ...provider, roles: profile.roles, memberships: profile.memberships}};
-    if (coverage(candidate).length || CHECKS.some(key => candidate.catalog.parentChecks[key] !== true) || !functionsMatch(candidate.catalog, variant, sources)) blockers.push(`reference_${variant}_incomplete`);
+    if (coverage(candidate).length || CHECKS.some(key => candidate.catalog.parentChecks[key] !== true) || !functionsMatch(candidate.catalog, variant, sources) || !parentReferenceMatches(candidate.catalog)) blockers.push(`reference_${variant}_incomplete`);
   }
   if (blockers.length) return result;
   const common = {...provider, roles: profile.roles, memberships: profile.memberships};

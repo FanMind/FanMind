@@ -30,6 +30,34 @@ grantor identity and attributes. Array order
 within signatures, composite keys and indexes is significant. Export row order
 and JSON object-key order are not.
 
+Parent authorization is compared separately for `workspaces`, `workspace_members`,
+`contacts`, `conversations` and `contact_ai_profiles`: full table owner/RLS flags,
+ACLs, inheritance and rewrite rules; every policy's command, permissiveness,
+roles, USING and WITH CHECK; and the full workspace-helper metadata/ACLs.
+An additional permissive policy is a difference, even if all named canonical
+policies still exist.
+
+The parent module pins six existing repository sources and reproduces their
+20-policy authorization layer in the isolated fixture, including the owner-only
+workspace read and restrictive mutation boundaries. It executes the original
+`workspace_owner_active_mutation_allowed` and
+`workspace_processing_allowed_contract` definitions and ACL statements, with
+real entitlement columns for SQL validation. Empty parent policy fixtures
+cannot become references. Expected policies are never collected from Staging.
+Their source identities are required in each reference and exported manifest;
+the manifest also binds the exact generated reference SQL hash.
+
+Catalog-recorded policy/function dependency edges are exported, including unknown
+helpers. PostgreSQL does not record every dependency inside SQL/PLpgSQL string
+bodies: the supported source-reviewed closure explicitly includes both workspace
+helpers and the separately pinned `auth.uid()` contract. No completeness claim
+is inferred from `pg_depend` alone. An unreviewed helper such as a target-only
+`is_workspace_member` or `is_workspace_admin` yields
+`parent_helper_contract_unreviewed` / INCOMPLETE. New parent authorization
+variants require separate source evidence. Native negative tests alter the real
+profile SELECT policy to USING(true), add a permissive policy, change policy
+roles/WITH CHECK, and change authority helper body, owner, config, ACL or security.
+
 The executable PG17 test constructs separate disposable databases from the
 pinned historical Foundation plus PT409 correction and from the current
 Foundation plus correction. After all native positive/negative checks and
@@ -37,7 +65,8 @@ fixture cleanup succeed, the existing CI job exports `legacy.json`,
 `current.json` and `manifest.json`. The seven-day artifact is named
 `fanmind-creator-foundation-reference-<GITHUB_SHA>`. Its manifest binds the
 actual tested checkout, run/attempt, PostgreSQL version, query hash, all source
-pins, provider source pins/contract hash and both file hashes. Check the successful exact-SHA job and artifact
+pins, provider source pins/contract hash, parent source pins/reference SQL hash
+and both file hashes. Check the successful exact-SHA job and artifact
 identity before consuming it. The files contain only the isolated CI catalogs;
 their role and provider data is explicitly **not an approved Staging profile**.
 For pull requests, `githubSha` is the tested checkout/merge-ref SHA and
