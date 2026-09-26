@@ -35,7 +35,13 @@ export function validateManualFlowEnvironment(env) {
   const adminEmail=String(env.FANMIND_STAGING_ADMIN_E2E_EMAIL??'').trim().toLowerCase();
   const adminEmails=String(env.FANMIND_ADMIN_EMAILS??'').split(',').map(email=>email.trim().toLowerCase()).filter(Boolean);
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(adminEmail)||!adminEmails.includes(adminEmail)||[...emails.map(email=>email.toLowerCase()),'fanmind-ai-member-staging@example.invalid'].includes(adminEmail))fail('fixture_admin');
-  if ([env.FANMIND_STAGING_E2E_PASSWORD,env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD,env.FANMIND_STAGING_ADMIN_E2E_PASSWORD].some(password => typeof password !== "string" || password.length < 16 || /[\r\n]/u.test(password))) fail("fixture_credential");
+  // Existing admin login follows admin-e2e-staging's configured-password contract.
+  // Synthetic owner fixture credentials retain their separate minimum length.
+  for(const [password,minimum,code] of [
+    [env.FANMIND_STAGING_E2E_PASSWORD,16,"fixture_primary_credential"],
+    [env.FANMIND_STAGING_E2E_SECONDARY_PASSWORD,16,"fixture_secondary_credential"],
+    [env.FANMIND_STAGING_ADMIN_E2E_PASSWORD,1,"fixture_admin_credential"],
+  ]) if(typeof password!=="string"||password.length<minimum||/[\r\n]/u.test(password))fail(code);
   return ids;
 }
 

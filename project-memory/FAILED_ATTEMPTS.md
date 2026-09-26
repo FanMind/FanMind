@@ -332,18 +332,31 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Next: use required remote Current-Head Browser E2E/CI, where the workflow installs the pinned browser. Do not replace it with an unpinned system browser.
 ## FM-FAIL-CHATADMIN-DEPLOY-RUNTIME-TEST-20260926
 - Date: 2026-09-26
-- Status: CORRECTION_IN_PROGRESS
+- Status: RESOLVED_VERIFIED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: Staging deploy `36247833422` / job `108420215949`, exact main `955b8bf425bc2073e7e4b5d0316be1d478a313e4`.
 - Failure: existing `confirmed-chat-learning-deletion-verification.test.mjs` expected the imported runtime constant to be `preinstall` even under the explicitly loaded Staging environment, where `installed` is the reviewed contract.
 - Negative evidence: deployment stopped during Operations tests before build/restart; `/api/version` at `2026-09-26T14:16:38.983Z` still reports prior `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`. Manual acceptance was not dispatched; no fixture/provider call occurred.
 - Correction: reproduce under Staging and test fresh module imports across Staging/mixed-case, Production, unknown and empty environments. Keep runtime code, rollout states and deployment gates unchanged. Do not rerun the unchanged failed release.
-- Completion remains open until the corrected reviewed release deploys successfully; no target acceptance is inferred from the test fix.
+- Historical prerequisite at the failed attempt: completion required a corrected reviewed deployment; fulfilled by the resolution below. No manual target acceptance is inferred from the test fix.
+- Resolution: corrected protected Staging deployment `36249685518` / job `108425269678` succeeded at reviewed `930ae196d20c0cd646b30a3d9a210269d694abeb`, recovery PASS with unchanged values/proofs; independent exact version match at `2026-09-26T14:49:02.035Z`. Manual-flow acceptance remains a separate open gate.
+
 ## FM-FAIL-STAGING-RELEASE-STATE-20260926
 - Date: 2026-09-26
-- Status: CORRECTION_IN_PROGRESS
+- Status: RESOLVED_VERIFIED
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
 - Attempt: corrected-release Staging deploy `36248407036` / job `108421775888` at `8ebb344633618de27c570734210c41ce69fc7721` stopped before source copy with `STAGING_BILLING_CAPTURE=FAIL`.
 - Cause: executable reproduction of the actual deployment copy shows `rsync --delete` deletes the generated `.release.env` and current `.next/` build. The preceding deploy failed during tests after copying, before replacement. Missing release state makes the existing preserve/capture gate reject; do not bypass it with a new freeze choice.
 - Correction boundary: preserve both paths and admit only explicit recovery of an actually absent release file from exact stable live Staging service metadata. Validate the unchanged capture contract/proof; no defaults, reconstructed receipts, existing-file replacement, secret-file read, Billing/Stripe call or flag activation.
-- Recovery is not yet executed. A successful corrected protected deployment and independent version check remain required before any ChatAdmin fixture.
+- Historical prerequisite at the failed attempt: recovery/deployment and independent version check were required before any ChatAdmin fixture; fulfilled by the resolution below.
+
+- Resolution: corrected protected Staging deployment `36249685518` / job `108425269678` succeeded at reviewed `930ae196d20c0cd646b30a3d9a210269d694abeb`, recovery PASS with unchanged values/proofs; independent exact version match at `2026-09-26T14:49:02.035Z`. Manual-flow acceptance remains a separate open gate.
+
+## FM-FAIL-CHATADMIN-EXISTING-ADMIN-CREDENTIAL-20260926
+- Date: 2026-09-26
+- Status: CORRECTION_IN_PROGRESS
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW.
+- Attempt: manual-flow run `36249816690` / job `108425635786`, exact reviewed/deployed `930ae196d20c0cd646b30a3d9a210269d694abeb`.
+- Failure: fixture_credential before reservation/fixture/browser. All existing credential inputs are masked-present. The new validator imposes a 16-character minimum on an already existing admin login; established admin E2E consumes a supplied password and verifies authentication/authority live. No secret value or length was read.
+- Cleanup evidence: no fixture/receipt/browser request was started; dedicated passfile removal succeeded. Independent post-failure Staging count at `2026-09-26T14:51:42.539013Z` is 0/0/0/0 with zero global chat_admin_reply usage.
+- Correction: align existing-admin password consumption only, preserve synthetic-owner validation, exact identity separation and actual authenticated admin-proof route; add short-existing-password acceptance and missing/newline rejection regressions. No account/password/secret mutation. Current-head CI/review, normal merge, exact deployment and actual manual acceptance remain required.

@@ -6,7 +6,7 @@
 - Target: only FanMind Staging (`vshyhvgcmrlagvfnvomc`, `https://staging.fanmind.ch`), with fresh exact release/schema/identity checks before every protected action.
 - Boundary: no real customer/fan fixture, OnlyFans/Social send, automatic send, Production capability/schema activation, Billing/Stripe/Tax/Restore/Mobile mutation. Prior APPLY and DB/RLS ACCEPT remain consumed; no repeat.
 - Necessary deployment recovery remains bounded to preserving the already-running Staging configuration: reviewed source-copy exclusion and explicit exact-service reconstruction of a missing generated `.release.env` from its existing nonsecret values. No Billing setting may change, missing proof may not be invented, no secret file is read and no Stripe/capture action is authorized. The original `preserve` requirement remains mandatory.
-- Current prerequisite findings: Staging runtime still reports `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`; current source has cross-character composer/late-response isolation defects. Correct and verify these before acceptance. No runtime fixture has yet been written.
+- Current prerequisite: isolation/recovery corrections #1193/#1194/#1196 are merged and 930ae196 is deployed. Manual run 36249816690 stopped before reservation at fixture_credential. Correct existing-admin login validation to its established credential-consumption contract, preserving exact identity and live authority proof; no credential rotation or account mutation. No runtime fixture has yet been written.
 
 ## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
 - Status: CONSUMED
