@@ -196,11 +196,11 @@ function isEmojiGrapheme(segment) {
 }
 
 function hasQuestionPunctuation(text) {
-  return /[?¿՞؟？⁇⁈⁉]/u.test(text);
+  return /[?¿՞؟？⁇⁈⁉❓❔]/u.test(text);
 }
 
 function hasExclamationPunctuation(text) {
-  return /[!¡՜！‼⁈⁉]/u.test(text);
+  return /[!¡՜！‼⁈⁉❗❕]/u.test(text);
 }
 
 export function summarizeCreatorVoiceOnboardingDataset(dataset, expected, options = {}) {

@@ -335,6 +335,26 @@ test("summary recognizes combined Unicode question and exclamation punctuation",
   assert.equal(summary.metrics.exclamationMessageRatio, 0.1);
 });
 
+test("summary counts emoji-style question and exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Warum❓" });
+  records[1] = record(2, { text: "Wirklich❔" });
+  records[2] = record(3, { text: "Sehr gut❗" });
+  records[3] = record(4, { text: "Achtung❕" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.067);
+});
+
 test("summary preserves fractional medians for even samples", () => {
   const records = dataset();
   for (let index = 0; index < 15; index += 1) records[index] = record(index + 1, { text: "a" });
