@@ -244,12 +244,15 @@ serverseitige Proposal-Persistenz sowie die autorisierte API-/Persistenzschicht
 zum Bestätigen realer manuell gesendeter Outbounds und zum expliziten Verknüpfen
 belegter Reaktionen/Käufe. Diese Quellenänderungen führen weder in Staging noch
 Production selbstständig eine Migration aus und der Rollout-Schalter bleibt
-fail-closed deaktiviert. Vor realer Nutzung fehlen weiterhin der explizit
-autorisierte target-bound Schema-Apply/Verify/Accept, unabhängige Prüfung des
-tatsächlich aktivierten Runtime-Schalters, die vollständige Disclosure/Delete-
-Integration für die neue Datenfamilie sowie die reale verblindete Qualitätsabnahme
-mit privaten, freigegebenen Beispielen. Der Vertrag sendet keine Nachricht und
-ändert weder Stil noch Preise/Playbook automatisch.
+fail-closed deaktiviert. Disclosure und Account-/Kontaktlösch-Verifikation für
+die neue Datenfamilie sind bis PR #1167 im Repository umgesetzt. PR #1173–#1175
+ergänzen den zielabhängigen Rollout-Vertrag und den geschützten read-only
+VERIFY-Einstieg. Vor realer Nutzung fehlen weiterhin der explizit autorisierte
+target-bound Schema-Apply/Verify/Accept, die unabhängige Prüfung des tatsächlichen
+Runtime-Schalters, die Disclosure-/Löschabnahme auf dem installierten Ziel sowie
+die reale verblindete Qualitätsabnahme mit privaten, freigegebenen Beispielen.
+Der Vertrag sendet keine Nachricht und ändert weder Stil noch Preise/Playbook
+automatisch.
 
 ## Isolierte ChatAdmin-Owner-Exception (FM-DEC-022)
 

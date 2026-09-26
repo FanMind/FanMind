@@ -9,6 +9,7 @@ SET LOCAL statement_timeout = '60s';
 SET LOCAL lock_timeout = '5s';
 SET LOCAL TimeZone = 'UTC';
 SET LOCAL DateStyle = 'ISO, YMD';
+SET LOCAL quote_all_identifiers = off;
 WITH RECURSIVE
 creator_relations AS (
  SELECT c.*, n.nspname
@@ -20,7 +21,7 @@ parent_relations AS (
  SELECT c.*, n.nspname
  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
  WHERE n.nspname = 'public' AND c.relname IN
-  ('workspaces','workspace_members','contacts','conversations','contact_ai_profiles')
+  ('workspaces','workspace_members','contacts','conversations','contact_ai_profiles','workspace_analysis_settings')
 ),
 all_table_relations AS (
  SELECT * FROM creator_relations UNION ALL SELECT * FROM parent_relations
@@ -82,7 +83,8 @@ parent_function_component(oid) AS (
  SELECT seed.oid FROM (
   SELECT p.oid FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND p.proname IN
-   ('workspace_owner_active_mutation_allowed','workspace_processing_allowed_contract')
+   ('workspace_owner_active_mutation_allowed','workspace_processing_allowed_contract',
+    'set_contacts_updated_at','set_conversations_updated_at','set_memory_profiles_updated_at','create_default_workspace_analysis_settings','set_meta_content_intelligence_updated_at')
   UNION
   SELECT target_oid FROM parent_policy_function_edges
   UNION
@@ -99,6 +101,29 @@ parent_function_component(oid) AS (
 browser_roles(name) AS (VALUES ('anon'),('authenticated'),('service_role')),
 table_privileges(name) AS (VALUES ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')),
 column_privileges(name) AS (VALUES ('SELECT'),('INSERT'),('UPDATE'),('REFERENCES')),
+object_acl_principals(oid) AS (
+ SELECT a.grantee
+ FROM pg_catalog.pg_namespace n
+ CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(n.nspacl,pg_catalog.acldefault('n',n.nspowner))) a
+ WHERE a.grantee <> 0 AND n.nspname IN ('public','auth')
+ UNION
+ SELECT a.grantee FROM all_table_relations c
+ CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+ WHERE a.grantee <> 0
+ UNION
+ SELECT a.grantee FROM all_table_relations c
+ JOIN pg_catalog.pg_attribute att ON att.attrelid = c.oid AND att.attnum > 0 AND NOT att.attisdropped
+ CROSS JOIN LATERAL pg_catalog.aclexplode(att.attacl) a
+ WHERE a.grantee <> 0
+ UNION
+ SELECT a.grantee
+ FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+ CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) a
+ WHERE a.grantee <> 0 AND (
+  (n.nspname = 'public' AND p.proname IN ('guard_creator_identity','save_creator_bundle','record_creator_fan_review','creator_workspace_access_allowed'))
+  OR (n.nspname = 'auth' AND p.proname = 'uid')
+  OR p.oid IN (SELECT oid FROM parent_function_component))
+),
 role_component(oid) AS (
  SELECT seed.oid FROM (
   SELECT r.oid FROM pg_catalog.pg_roles r
@@ -114,6 +139,8 @@ role_component(oid) AS (
   SELECT c.relowner FROM parent_relations c
   UNION
   SELECT p.proowner FROM pg_catalog.pg_proc p WHERE p.oid IN (SELECT oid FROM parent_function_component)
+  UNION
+  SELECT oid FROM object_acl_principals
  ) seed
  UNION
  SELECT CASE WHEN m.roleid = rc.oid THEN m.member ELSE m.roleid END
@@ -272,6 +299,10 @@ trigger_rows AS (
  LEFT JOIN pg_catalog.pg_class cr ON cr.oid = t.tgconstrrelid LEFT JOIN pg_catalog.pg_namespace crn ON crn.oid = cr.relnamespace
  LEFT JOIN pg_catalog.pg_class ix ON ix.oid = t.tgconstrindid LEFT JOIN pg_catalog.pg_namespace ixn ON ixn.oid = ix.relnamespace
  LEFT JOIN pg_catalog.pg_trigger pt ON pt.oid = t.tgparentid LEFT JOIN pg_catalog.pg_class ptc ON ptc.oid = pt.tgrelid LEFT JOIN pg_catalog.pg_namespace ptn ON ptn.oid = ptc.relnamespace
+ WHERE c.oid IN (SELECT oid FROM creator_relations)
+  OR NOT t.tgisinternal OR k.contype IS DISTINCT FROM 'f'
+  OR k.conrelid IN (SELECT oid FROM all_table_relations)
+  OR (kn.nspname = 'public' AND kc.relname = 'workspace_analysis_settings')
 ),
 function_rows AS (
  SELECT p.oid AS function_oid,pg_catalog.jsonb_build_object(
@@ -340,7 +371,7 @@ parent_checks AS (
   'databaseOwnerPostgres',EXISTS (SELECT 1 FROM pg_catalog.pg_database d JOIN pg_catalog.pg_roles r ON r.oid = d.datdba WHERE d.datname = pg_catalog.current_database() AND r.rolname = 'postgres'),
   'adminCrmContractAbsent',pg_catalog.to_regprocedure('public.admin_crm_read_allowed(uuid)') IS NULL,
   'parentTablesRls',NOT EXISTS (
-   SELECT 1 FROM (VALUES ('workspaces'),('workspace_members'),('contacts'),('conversations'),('contact_ai_profiles')) e(name)
+   SELECT 1 FROM (VALUES ('workspaces'),('workspace_members'),('contacts'),('conversations'),('contact_ai_profiles'),('workspace_analysis_settings')) e(name)
    WHERE NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = e.name AND c.relkind = 'r' AND c.relrowsecurity)),
   'parentUuidColumnsReadable',NOT EXISTS (
    SELECT 1 FROM (VALUES ('workspaces','id'),('workspaces','owner_user_id'),('workspace_members','workspace_id'),('workspace_members','user_id'),('contacts','id'),('contacts','workspace_id'),('conversations','id'),('conversations','workspace_id'),('conversations','contact_id'),('contact_ai_profiles','workspace_id'),('contact_ai_profiles','contact_id')) e(tab,col)

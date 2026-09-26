@@ -18,7 +18,8 @@ node scripts/operations/creator-foundation-reconciliation-preflight.mjs --sql
 transaction. It creates no reference objects or temporary functions and reads
 no application rows. Executing it on a target remains a separate protected,
 target-bound observation; this CLI deliberately cannot do that. Keep exported
-catalogs private. They contain schema/role metadata, not credentials or CRM rows.
+catalogs private. The query reads no CRM rows, but raw role configuration can
+contain sensitive values. Never print or publish a raw target snapshot.
 
 The export covers the four Creator tables, their full policies, columns, keys,
 indexes, triggers and direct/effective ACLs, the controlled parent extensions,
@@ -31,7 +32,8 @@ within signatures, composite keys and indexes is significant. Export row order
 and JSON object-key order are not.
 
 Parent authorization is compared separately for `workspaces`, `workspace_members`,
-`contacts`, `conversations` and `contact_ai_profiles`: full table owner/RLS flags,
+`contacts`, `conversations`, `contact_ai_profiles`, and the real trigger dependency
+`workspace_analysis_settings`: full table owner/RLS flags,
 ACLs, inheritance and rewrite rules; every policy's command, permissiveness,
 roles, USING and WITH CHECK; every column's complete metadata, defaults and
 direct/effective column privileges; full triggers, constraints and indexes;
@@ -41,21 +43,42 @@ in addition to the existing Creator extension-column scope.
 An additional permissive policy is a difference, even if all named canonical
 policies still exist.
 
-The parent module pins six existing repository sources and reproduces their
-20-policy authorization layer in the isolated fixture, including the owner-only
-workspace read and restrictive mutation boundaries. It executes the original
-`workspace_owner_active_mutation_allowed` and
-`workspace_processing_allowed_contract` definitions and ACL statements, with
-real entitlement columns for SQL validation. Empty parent policy fixtures
-cannot become references. Expected policies are never collected from Staging.
-Their source identities are required in each reference and exported manifest;
-the manifest also binds the exact generated reference SQL hash.
+The supported parent profile is `canonical_billing_baseline_aug16_v1`. It pins
+and replays the complete table DDL from the MVP baseline, explicit optional
+Billing preparation baseline, the relevant June–August migrations, and the
+controlled server-owned-column and member-boundary layers. Native CI has 144
+parent/dependency columns after either Creator variant, 22 policies, seven original
+helper definitions and five original user triggers. These are full source tables,
+not shortened fixtures. Native CI executes the actual workspace INSERT trigger
+and UPDATE timestamp trigger and checks the real analysis-settings dependency. Original timestamps, defaults,
+constraints, indexes and ACLs are retained. The parent module pins the upstream
+Supabase initializer's exact bytes and reproduces its postgres-owned public
+TABLE/FUNCTION default privileges before creating product objects; subsequent
+pinned source revokes and column grants are then applied unchanged.
+
+This is an explicit supported source replay, not evidence that Staging installed
+that optional billing baseline or every controlled product module. Daily,
+account-deletion and Admin-CRM variants are not inferred. Additional parent
+columns, policies, user triggers, constraints, indexes, privileges or unknown
+helpers prevent an exact result. Target definitions never supply expected values.
+The chosen profile identity and source pins are required in every reference and
+export manifest, together with the exact generated reference SQL hash.
+
+Only incoming internal foreign-key action triggers whose owning constraint is
+on a table outside these six relations and the four Creator relations are outside
+the parent projection. Those belong to unrelated installed features. Every user
+trigger and every outgoing scoped FK remains included. Native CI adds an unrelated
+feature table with incoming workspace/contact FKs and proves that the scoped
+catalog is unchanged. This classifier does not approve those external feature
+constraints or their lifecycle; a full database acceptance remains separate.
 
 Catalog-recorded function dependencies of policies, triggers, constraints,
 expression indexes, defaults/generated expressions and rewrite rules are exported,
 including unknown helpers. PostgreSQL does not record every dependency inside SQL/PLpgSQL string
 bodies: the supported source-reviewed closure explicitly includes both workspace
-helpers and the separately pinned `auth.uid()` contract. No completeness claim
+authority helpers, all five original timestamp/analysis-settings trigger helpers,
+the complete analysis-settings table dependency, and the separately pinned
+`auth.uid()` contract. No completeness claim
 is inferred from `pg_depend` alone. An unreviewed helper such as a target-only
 `is_workspace_member` or `is_workspace_admin` yields
 `parent_helper_contract_unreviewed` / INCOMPLETE. New parent authorization
@@ -80,7 +103,7 @@ fixture cleanup succeed, the existing CI job exports `legacy.json`,
 `current.json` and `manifest.json`. The seven-day artifact is named
 `fanmind-creator-foundation-reference-<GITHUB_SHA>`. Its manifest binds the
 actual tested checkout, run/attempt, PostgreSQL version, query hash, all source
-pins, provider source pins/contract hash, parent source pins/reference SQL hash
+pins, provider source pins/contract hash, parent profile/source pins/reference SQL hash
 and both file hashes. Check the successful exact-SHA job and artifact
 identity before consuming it. The files contain only the isolated CI catalogs;
 their role and provider data is explicitly **not an approved Staging profile**.

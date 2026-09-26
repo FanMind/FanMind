@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { CREATOR_FOUNDATION_SOURCE_PINS } from "../scripts/operations/creator-foundation-reconciliation-preflight.mjs";
+import { CREATOR_FOUNDATION_PARENT_PINS } from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
+import { CREATOR_FOUNDATION_PROVIDER_PINS } from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
 
 const moduleUrl = new URL("../scripts/operations/creator-foundation-reconciliation-catalog.mjs", import.meta.url);
 let catalogModule;
@@ -33,14 +41,47 @@ test("catalog SQL is one fixed catalog SELECT inside a read-only snapshot", () =
   assert.equal(commands[0], "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   assert.equal(commands.at(-1), "ROLLBACK");
   assert.deepEqual(commands.slice(1, -2).map((value) => value.split(" = ")[0]), [
-    "SET LOCAL search_path", "SET LOCAL statement_timeout", "SET LOCAL lock_timeout", "SET LOCAL TimeZone", "SET LOCAL DateStyle",
+    "SET LOCAL search_path", "SET LOCAL statement_timeout", "SET LOCAL lock_timeout", "SET LOCAL TimeZone", "SET LOCAL DateStyle", "SET LOCAL quote_all_identifiers",
   ]);
+  assert.ok(commands.includes("SET LOCAL quote_all_identifiers = off"), "session identifier quoting must not change exact catalog comparison");
   assert.match(commands.at(-2), /^WITH RECURSIVE\b/u);
   assert.doesNotMatch(commands.at(-2), /\b(?:INSERT|UPDATE|DELETE|MERGE|CREATE|ALTER|DROP|GRANT|REVOKE|COPY|CALL|DO|EXECUTE|INTO|COMMIT|SET|RESET)\b/iu);
   assert.doesNotMatch(sql, /(?:FROM|JOIN)\s+(?:public|auth)\./iu, "never read application data");
   assert.doesNotMatch(sql, /\b(?:dblink|pg_read_file|pg_ls_dir|set_config|pg_advisory|pg_sleep)\b/iu);
   assert.doesNotMatch(sql, /(?:rolpassword|pg_authid|pg_get_functiondef)/iu);
   assert.doesNotMatch(readFileSync(moduleUrl, "utf8"), /(?:from\s+["']node:|process\.|fetch\(|execFile|spawn\()/u);
+});
+
+test("byte-pinned SQL survives a Git checkout configured to convert text to CRLF", () => {
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  const operations = new URL("../scripts/operations/", import.meta.url);
+  const pins = [
+    ...Object.values(CREATOR_FOUNDATION_SOURCE_PINS),
+    ...Object.values(CREATOR_FOUNDATION_PARENT_PINS),
+    {path: "./creator-foundation-reconciliation-artifacts/provider-auth-uid.sql", sha256: CREATOR_FOUNDATION_PROVIDER_PINS.authUid.statementSha256},
+  ];
+  const fixture = mkdtempSync(join(tmpdir(), "creator-sql-checkout-"));
+  const git = (args) => execFileSync("git", ["-c", "core.autocrlf=false", "-c", "core.safecrlf=false", "-c", `core.attributesfile=${join(fixture, "empty-attributes")}`, ...args], {cwd: fixture, stdio: ["ignore", "pipe", "pipe"]});
+  try {
+    writeFileSync(join(fixture, "empty-attributes"), "");
+    writeFileSync(join(fixture, ".gitattributes"), readFileSync(join(root, ".gitattributes")));
+    const files = pins.map(pin => {
+      const source = fileURLToPath(new URL(pin.path, operations));
+      const path = relative(root, source);
+      const bytes = readFileSync(source);
+      assert.equal(createHash("sha256").update(bytes).digest("hex"), pin.sha256, path);
+      mkdirSync(dirname(join(fixture, path)), {recursive: true});
+      writeFileSync(join(fixture, path), bytes);
+      return {path, sha256: pin.sha256};
+    });
+    git(["init", "--quiet"]);
+    git(["add", "--", ".gitattributes", ...files.map(file => file.path)]);
+    for (const {path} of files) rmSync(join(fixture, path));
+    git(["-c", "core.autocrlf=true", "-c", "core.eol=crlf", "checkout-index", "--all", "--force"]);
+    for (const {path, sha256} of files) {
+      assert.equal(createHash("sha256").update(readFileSync(join(fixture, path))).digest("hex"), sha256, `checkout must preserve pinned bytes: ${path}`);
+    }
+  } finally { rmSync(fixture, {recursive: true, force: true}); }
 });
 
 test("catalog captures complete function overloads and connected role grants without numeric identities", () => {
@@ -88,6 +129,20 @@ test("role graph includes the authority owning the fixed schemas and every auth 
   assert.match(graph, /SELECT p\.proowner FROM pg_catalog\.pg_proc p JOIN pg_catalog\.pg_namespace n ON n\.oid = p\.pronamespace/u);
   assert.match(graph, /WHERE n\.nspname = 'auth' AND p\.proname = 'uid'/u);
   assert.doesNotMatch(graph, /UNION ALL/u, "recursive role expansion must remain cycle-safe");
+});
+
+test("role graph includes direct ACL principals even without existing memberships", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  const start = sql.indexOf("object_acl_principals(oid) AS (");
+  assert.ok(start > 0, "auth CREATE grantees such as dashboard_user must seed the authority graph");
+  const principals = sql.slice(start, sql.indexOf("role_component(oid) AS (", start));
+  for (const field of ["n.nspacl", "c.relacl", "att.attacl", "p.proacl"]) assert.ok(principals.includes(field), field);
+  assert.match(principals, /n\.nspname IN \('public','auth'\)/u);
+  assert.match(principals, /FROM all_table_relations c/u);
+  assert.match(principals, /p\.oid IN \(SELECT oid FROM parent_function_component\)/u);
+  assert.match(principals, /WHERE a\.grantee <> 0/u, "PUBLIC is a pseudo-principal, not a pg_roles identity");
+  const graph = sql.slice(sql.indexOf("role_component(oid) AS ("), sql.indexOf("relevant_memberships AS ("));
+  assert.match(graph, /SELECT oid FROM object_acl_principals/u);
 });
 
 test("parent privacy checks reject column-only anonymous access outside managed columns", () => {

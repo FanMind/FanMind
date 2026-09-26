@@ -43,15 +43,19 @@ test("provider reference binds the original auth.uid statement, body and complet
   assert.equal(creatorFoundationUpstreamProviderContract().authUidFunctions[0].config, null);
 });
 
-test("parent reference reproduces twenty pinned policies and original authority helpers", () => {
+test("parent reference replays complete pinned parent DDL and real authority helpers", () => {
   const sql = buildCreatorFoundationParentReferenceSql();
-  assert.equal(creatorFoundationParentPolicyInventory().length, 20);
-  assert.equal((sql.match(/create policy /gu) ?? []).length, 20);
+  assert.equal(creatorFoundationParentPolicyInventory().length, 22);
+  assert.equal((sql.match(/create policy /gu) ?? []).length, 22);
+  for (const table of ["workspaces", "workspace_members", "contacts", "conversations", "contact_ai_profiles", "workspace_analysis_settings"]) assert.match(sql, new RegExp(`create table if not exists public\\.${table}\\s*\\(`, "u"));
+  for (const column of ["monthly_fee_cents", "organization_name", "internal_notes", "last_message_preview", "source_message_count", "personal_content_retention_days", "meta_sync_mode", "content_cache_retention_days"]) assert.ok(sql.includes(column), column);
+  assert.equal(creatorFoundationParentHelperBodies().length, 7);
+  for (const trigger of ["workspaces_create_analysis_settings", "contacts_set_updated_at", "conversations_set_updated_at", "contact_ai_profiles_set_updated_at", "workspace_analysis_settings_set_updated_at"]) assert.ok(sql.includes(`create trigger ${trigger}`));
   assert.match(sql, /create policy contact_ai_profiles_select_workspace_member/u);
   assert.match(sql, /workspace_owner_active_mutation_allowed\(workspace_id\)/u);
   assert.match(sql, /owned_workspace\.subscription_effective_end_at::text/u);
   assert.doesNotMatch(sql, /is_workspace_member|is_workspace_admin|select true;/iu);
-  assert.deepEqual(creatorFoundationParentHelperBodies().map(row => row.bodySha256), ["e9e57a8bef3d480de6c932eadb11a7c8123219db0ffa52969641b216c5cfd42d", "a40948f1efb59ff2d23f720508705a3162b63746761ef57b96da5dab41cacc78"]);
+  assert.deepEqual(creatorFoundationParentHelperBodies().slice(0, 2).map(row => row.bodySha256), ["e9e57a8bef3d480de6c932eadb11a7c8123219db0ffa52969641b216c5cfd42d", "a40948f1efb59ff2d23f720508705a3162b63746761ef57b96da5dab41cacc78"]);
 });
 
 test("parent policy definitions, complete policy sets and authority metadata cannot be normalized away", () => {

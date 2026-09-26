@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql} from "./creator-foundation-reconciliation-provider.mjs";
 
-import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_TABLES, CREATOR_FOUNDATION_PARENT_HELPERS, loadPinnedCreatorParentSources, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "./creator-foundation-reconciliation-parents.mjs";
+import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_PROFILE, CREATOR_FOUNDATION_PARENT_TABLES, CREATOR_FOUNDATION_PARENT_HELPERS, loadPinnedCreatorParentSources, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "./creator-foundation-reconciliation-parents.mjs";
 
 export const CREATOR_FOUNDATION_SOURCE_PINS = Object.freeze({
   legacyFoundation: Object.freeze({path: "./creator-foundation-reconciliation-artifacts/legacy-foundation.sql", sha256: "8065596853f07feffd419ac1473a34fe727a6152f1f742161af16a909d2f457f", gitBlob: "ebb7c91b799c687a57c251a3f4c0da3699a988d7"}),
@@ -149,7 +149,7 @@ export function buildCreatorFoundationReference({legacy, current, roleProfile, q
   const reference = {
     schemaVersion: 1,
     scope: "creator_foundation_catalog_only",
-    sourcePins: sourceIdentities(), parentSourcePins: CREATOR_FOUNDATION_PARENT_PINS,
+    sourcePins: sourceIdentities(), parentSourcePins: CREATOR_FOUNDATION_PARENT_PINS, parentProfile: CREATOR_FOUNDATION_PARENT_PROFILE,
     querySha256,
     variants: Object.fromEntries(Object.entries({legacy, current}).map(([variant, snapshot]) => [variant, Object.fromEntries(CORE_SECTIONS.map(key => [key, snapshot.catalog[key]]))])),
     roleProfile,
@@ -175,7 +175,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   if (blockers.includes("reference_pin_missing") || blockers.includes("reference_pin_mismatch")) { blockers.push("auth_uid_provider_contract_missing"); return result; }
   let reference;
   try { reference = JSON.parse(referenceJson); } catch { blockers.push("reference_invalid"); return result; }
-  if (!object(reference) || reference.schemaVersion !== 1 || reference.scope !== result.scope || !equal(reference.sourcePins, sourceIdentities()) || !equal(reference.parentSourcePins, CREATOR_FOUNDATION_PARENT_PINS) || !/^[a-f0-9]{64}$/u.test(expectedQuerySha256 ?? "") || reference.querySha256 !== expectedQuerySha256) {
+  if (!object(reference) || reference.schemaVersion !== 1 || reference.scope !== result.scope || !equal(reference.sourcePins, sourceIdentities()) || !equal(reference.parentSourcePins, CREATOR_FOUNDATION_PARENT_PINS) || reference.parentProfile !== CREATOR_FOUNDATION_PARENT_PROFILE || !/^[a-f0-9]{64}$/u.test(expectedQuerySha256 ?? "") || reference.querySha256 !== expectedQuerySha256) {
     blockers.push("reference_contract"); return result;
   }
   const profile = reference.roleProfile;
