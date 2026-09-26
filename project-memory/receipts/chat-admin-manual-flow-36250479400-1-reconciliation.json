@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "run": "36250479400",
+  "attempt": "1",
+  "job": "108427466146",
+  "sha": "0a368095790cf6ff297d6735569c4edb03186efb",
+  "target": "vshyhvgcmrlagvfnvomc",
+  "originalReceipt": "chat-admin-manual-flow-36250479400-1.json",
+  "artifactId": "10908424691",
+  "artifactZipSha256": "ad76a2aaa5549499c2c9956eec61598e044dfb09c407113a500b0bd40de3f77d",
+  "resolution": "RECONCILED_BEFORE_PROVIDER",
+  "manualAcceptance": "FAILED_NOT_ACCEPTED",
+  "originalReceiptUnchanged": true,
+  "causalEvidence": {
+    "ownerEnvironmentOccurrences": 11,
+    "rawOwnerIdLength": 37,
+    "canonicalOwnerIdLength": 36,
+    "trailingControl": "U+000D",
+    "runnerNormalizesFixtureIds": true,
+    "historicalBrowserUsesRawOwnerId": true,
+    "strictOwnerIdentityAssertionNecessarilyFails": true,
+    "failureBeforeOwnerDashboardAssertionAndChatAdminNavigation": true,
+    "historicalHelperReplay": "PASS_REPRODUCED_FAILURE_AND_NORMALIZED_SUCCESS",
+    "independentReviews": 2
+  },
+  "cleanupEvidence": {
+    "stagingObservedAt": "2026-09-26T15:14:42.749201Z",
+    "chatAdminTableCounts": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "globalReplyUsage": 0,
+    "exactScopedReplyUsage": 0,
+    "ownerRunWindowSessions": 0,
+    "adminRunWindowSessions": 0,
+    "ownerLogoutStatus": 204,
+    "adminLogoutStatus": 204,
+    "fullSchemaObservedAt": "2026-09-26T15:14:43.803049Z",
+    "fullSchema": "VERIFIED",
+    "productionObservedAt": "2026-09-26T15:14:44.497182Z",
+    "productionObjectsAbsent": 6
+  },
+  "basisExcludes": [
+    "elapsed_time_inference",
+    "absence_of_sampled_logs",
+    "new_successful_run"
+  ]
+}
