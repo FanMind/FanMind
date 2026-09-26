@@ -321,7 +321,11 @@ test("confirmed-chat deletion readers keep Staging installed while Production an
     "preinstall",
   );
   assert.equal(getConfirmedChatLearningSchemaState({}), "preinstall");
-  assert.equal(CONFIRMED_CHAT_LEARNING_SCHEMA_STATE, "preinstall");
+  assert.equal(
+    CONFIRMED_CHAT_LEARNING_SCHEMA_STATE,
+    getConfirmedChatLearningSchemaState(process.env),
+    "the import-time state must reflect the actual runtime environment",
+  );
   assert.match(
     disclosureSource,
     /CONFIRMED_CHAT_LEARNING_STAGING_SCHEMA_STATE:[\s\S]*=\s*\n?\s*"installed";/u,
