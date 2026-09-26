@@ -1,0 +1,111 @@
+{
+  "scope": "diagnostic_against_isolated_ci_only_not_approved_target_reference",
+  "observedAt": "2026-09-26T18:24:28.937033+00:00",
+  "catalogSha256": "c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc",
+  "classifier": {
+    "status": "INCOMPLETE",
+    "scope": "creator_foundation_catalog_only",
+    "targetAccepted": false,
+    "learningState": "UNDETERMINED",
+    "applyAllowed": false,
+    "runtimeActivated": false,
+    "blockers": [
+      "reference_pin_missing",
+      "auth_uid_provider_contract_missing"
+    ],
+    "differingSections": []
+  },
+  "inventory": {
+    "roles": 21,
+    "tables": 4,
+    "columns": 42,
+    "indexes": 8,
+    "policies": 4,
+    "triggers": 28,
+    "functions": 3,
+    "namespaces": 2,
+    "constraints": 44,
+    "memberships": 24,
+    "parentTables": 6,
+    "parentColumns": 144,
+    "parentIndexes": 28,
+    "parentPolicies": 22,
+    "parentTriggers": 51,
+    "parentFunctions": 7,
+    "authUidFunctions": 1,
+    "parentConstraints": 51,
+    "parentDependencies": 27
+  },
+  "parentChecks": {
+    "pg17": true,
+    "allSatisfied": true,
+    "authUidPresent": true,
+    "parentTablesRls": true,
+    "authUsersPresent": true,
+    "anonProfileDenied": true,
+    "databaseOwnerPostgres": true,
+    "adminCrmContractAbsent": true,
+    "parentUuidColumnsReadable": true,
+    "profileWorkspaceContactUnique": true,
+    "authenticatedProfileWriteDenied": true
+  },
+  "comparison": {
+    "legacy": {
+      "differentSections": [
+        "authUidFunctions",
+        "parentConstraints",
+        "roles",
+        "memberships"
+      ],
+      "missingFunctionIdentities": [],
+      "functionsBodyMatch": [
+        "guard_creator_identity()",
+        "record_creator_fan_review(uuid,uuid,jsonb,jsonb)",
+        "save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)"
+      ]
+    },
+    "current": {
+      "differentSections": [
+        "authUidFunctions",
+        "parentConstraints",
+        "policies",
+        "functions",
+        "roles",
+        "memberships"
+      ],
+      "missingFunctionIdentities": [
+        "creator_workspace_access_allowed(uuid)"
+      ],
+      "functionsBodyMatch": [
+        "guard_creator_identity()"
+      ]
+    }
+  },
+  "trustedComparisonCompleted": false,
+  "independentCountercheck": {
+    "completed": true,
+    "catalogSha256": "c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc",
+    "legacyCreatorCoreSectionsEqual": [
+      "tables",
+      "columns",
+      "constraints",
+      "indexes",
+      "policies",
+      "triggers",
+      "functions"
+    ],
+    "parentConstraintDifferences": [
+      "workspaces_billing_provider_check absent",
+      "workspaces_commercial_option_check differs",
+      "workspaces_payment_collection_method_check differs"
+    ],
+    "authUidDifference": "CI-only direct EXECUTE for postgres from supabase_auth_admin; other metadata, body and effective ACL equal",
+    "roleInventory": "21 roles/24 memberships observed versus 9 roles/0 memberships in isolated CI; no approved Hosted profile",
+    "nextSourceChecks": [
+      "Reproduce pinned original postgres creation followed by auth owner transfer in isolated native PG17; do not edit target ACL",
+      "Reproduce exact Daily-Control workspace CHECK expressions and explicit profile without optional billing provider CHECK from independent repository sources",
+      "Complete independently pinned Hosted role/configuration/membership provenance; no target-derived allowlist"
+    ],
+    "privateRetention": "Private catalog preserved unchanged; configuration key-only audit found zero unknown or credential-like keys; no raw configuration values published"
+  }
+}

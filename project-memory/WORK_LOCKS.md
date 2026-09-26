@@ -1,13 +1,41 @@
+## LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
+- Risk: R3
+- Status: IN_PROGRESS
+- Holder: interactive Codex Builder
+- Scope: Bounded repository/offline source work at priority 2 under existing user authorization and FM-DEC-024. Independently reconcile supported provider/role and installed-parent source profiles using the already captured private observation and separately pinned source evidence. Never use target-derived expected values. Design a source-defined forward transition with exact preconditions, supported baseline, authorization boundaries, atomicity, cleanup/recovery and meaningful isolated tests. No APPLY, runtime activation, target calls, provider calls, workflow dispatch, target DDL/data/role changes, temporary target helper or customer fixture. Bounded completion: publish independently supported profile inputs and a reviewable source transition design, or record PARTIAL with the exact missing external provenance. If external input blocks completion, make the specific action requires_owner=true and link an exact owner/evidence item so existing selection reports OWNER_ACTION_REQUIRED; do not call PARTIAL completed or keep a generic executable placeholder. No repeated permission question for already authorized safe offline work. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
+- Completion: bounded source profile/transition design; exact missing provenance is a PARTIAL result, not acceptance.
+
+## LOCK-FM-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-STAGING-CATALOG
+- Risk: R3
+- Status: RELEASED
+- Holder: interactive Codex Builder
+- Scope: one serialized read-only Staging catalog observation and private offline reference evaluation.
+- Boundaries: Bounded owner-authorized read-only Staging catalog observation under FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926, priority 2 under FM-DEC-024. Use only the reviewed PR #1204 catalog SELECT in its repeatable-read, read-only transaction against FanMind Staging vshyhvgcmrlagvfnvomc; bind fresh Staging project identity/health and exact reviewed source/query. Application-release context is separate: the live version probe is unavailable (browser ERR_BLOCKED_BY_CLIENT and public retrieval unavailable); retain only historical release 9652ae62928c70d8f39d8f184857a34fcd4de74f observed 2026-09-26T16:27:14.666Z with release_fresh=false and release_probe=UNAVAILABLE. This read-only database catalog observation does not depend on app runtime and provides no fresh deployed-version or runtime acceptance. Validate the actual successful final-head CI run/job and reference artifact, tested checkout and PR-head identities, manifest/source/query/catalog/provider/parent pins and hashes, parent RLS and authority-helper contracts, and independently reviewed Supabase provider-role provenance plus the full supported provider contract. Build/classify references offline with their SHA256 recorded outside the reference. CI fixture roles and the target under test are never their own approved provider-role reference. Missing or untrusted reference/profile/coverage means INCOMPLETE; the supported upstream provider profile is not a Hosted-default claim. Preserve actual LEGACY_EXACT/CURRENT_EXACT/DRIFT/INCOMPLETE without promoting it to feature acceptance. Keep targetAccepted=false, applyAllowed=false, learningState=UNDETERMINED and runtimeActivated=false. Record an actual separately dated observation receipt and private credential/artifact cleanup; no result is claimed yet. No schema APPLY, target DDL/data/role changes, temporary helper, customer fixture, runtime activation, provider/model call, workflow dispatch or Production/Billing/Restore/Mobile mutation. Existing user authorization covers this narrow read-only continuation; no repeated permission question. Keep NBA-CREATOR-INTELLIGENCE CONSUMED and the failed learning VERIFY consumed.
+- Recovery: private credential/catalog cleanup; no target repair or schema rollback.
+- Release condition: actual scoped observation and canonical receipt, including an explicit INCOMPLETE/DRIFT outcome when applicable.
+
+
+- Actual release: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
+- No retry: Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
+
 ## LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT
 - Risk: R3
-- Status: IN_PROGRESS
+- Status: RELEASED_MERGED_VERIFIED
 - Holder: interactive Codex Builder
 - Scope: source-only classifier/export/tests and canonical receipt; one serialized Creator action.
 - Contracts: FM-CONTRACT-DISCLOSURE-DELETE-001 / FM-IGATE-DISCLOSURE-DELETE-001.
 - Boundaries: Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
 - Release condition: tested/reviewed exact source, normal PR completion and canonical receipt.
+
+
+- Final source release: PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
+- Boundary: Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred.
 
 ## LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
 - Task: FM-CREATOR-001
