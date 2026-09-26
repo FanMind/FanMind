@@ -203,7 +203,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-CHATADMIN-MANUAL-FLOW-20260926
 - Status: IN_PROGRESS; task FM-CHATADMIN-002. Owner authorization FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is active; PR #1193 owns the bounded source/acceptance prerequisite under LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926. No repeat owner request is needed for this exact synthetic scope.
 - Prerequisite satisfied: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED.
+- Source prerequisite satisfied: PR #1193 passed exact-head CI/final review and merged as `955b8bf425bc2073e7e4b5d0316be1d478a313e4`. Automatic Staging deploy `36247833422` failed before restart on one environment-sensitive Confirmed-Chat test; the bounded Builder correction `FM-CHATADMIN-002-STAGING-DEPLOY-TEST` is now the exact technical prerequisite. No target fixture was prepared.
 - Remaining exact flow: protected Staging application/runtime acceptance with synthetic data only — active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
 - Close only after actual runtime/application evidence, negative tenant/authority proof and cleanup/zero-persistence evidence. No provider send, automatic send or Production mutation.
-
 
