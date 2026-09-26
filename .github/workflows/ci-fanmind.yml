@@ -248,7 +248,9 @@ jobs:
           FANMIND_CREATOR_PG17_REQUIRED: "true"
           FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
           FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
+        run: |
+          node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
+          npm run test:creator-foundation-transition
 
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}

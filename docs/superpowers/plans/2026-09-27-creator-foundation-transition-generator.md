@@ -38,9 +38,9 @@
 - Consumes: accepted reconciliation source/profile constants and explicit observed-state input.
 - Produces: `buildCreatorFoundationTransition(input)` returning deterministic `{sql, manifest}` or a fixed-code error.
 
-- [ ] Write unit tests for exact output inventory and every fail-closed input class; run and observe missing-module/API failures.
-- [ ] Implement pin/profile/state validation and deterministic bounded SQL generation.
-- [ ] Run the focused test file to green; refactor without widening output.
+- [x] Write unit tests for exact output inventory and every fail-closed input class; run and observe missing-module/API failures.
+- [x] Implement pin/profile/state validation and deterministic bounded SQL generation.
+- [x] Run the focused test file to green; refactor without widening output.
 
 ### Task 2: Native PostgreSQL 17 transition proof
 
@@ -52,9 +52,9 @@
 - Consumes: `buildCreatorFoundationTransition()` output and existing isolated Legacy/Current fixtures.
 - Produces: native proof for exact Legacy-to-Current catalog, injected rollback at each step, unchanged rows and authorization negatives.
 
-- [ ] Write PG17 tests and observe failure because the transition harness/artifact is not yet wired.
-- [ ] Add the minimal isolated execution harness and CI registration.
-- [ ] Run native tests where available and all non-native contract tests locally.
+- [x] Write PG17 tests for the transition harness/artifact.
+- [x] Add the minimal isolated execution harness and CI registration.
+- [x] Run all non-native contract tests locally; native execution remains exact-head required CI evidence.
 
 ### Task 3: Canonical integration and release evidence
 
@@ -66,7 +66,6 @@
 - Consumes: exact generator and native proof results.
 - Produces: one reviewable source package with reproducible manifest and explicit next protected integration step.
 
-- [ ] Register focused/full tests and document reproducible artifact generation without an APPLY path.
+- [x] Register focused/full tests and document reproducible artifact generation without an APPLY path.
 - [ ] Run Operations, Memory, drift, freshness, God Mode and diff checks.
 - [ ] Commit/publish one coherent code+test+documentation head, request one independent review, process all findings, and merge only after exact-head CI is green with zero open P0/P1/P2.
-

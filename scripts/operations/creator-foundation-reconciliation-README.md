@@ -14,6 +14,25 @@ node scripts/operations/creator-foundation-reconciliation-preflight.mjs --check
 node scripts/operations/creator-foundation-reconciliation-preflight.mjs --sql
 ```
 
+The separately scoped forward-transition generator is also source-only:
+
+```sh
+node scripts/operations/creator-foundation-transition-generator.mjs --check
+node scripts/operations/creator-foundation-transition-generator.mjs --sql
+npm run test:creator-foundation-transition
+```
+
+It emits exactly one pinned helper definition with its ACL, the two pinned RPC
+replacements, and four `ALTER POLICY ... USING` statements. Its SQL SHA256 is
+`db69721ce1a3e81a82a0f101e3bd0bdbda1959b0f367a2ffa6413004dd3bb214`.
+There is deliberately no `--apply` mode or target transport. Forming a transition
+plan requires the fixed catalog-query hash, an independently SHA256-bound
+reference, and a fresh `LEGACY_EXACT` result from the classifier. `CURRENT_EXACT`,
+DRIFT/INCOMPLETE, Admin-CRM variants, unknown overloads/policies/role paths and
+caller-supplied target-derived expectations fail closed. A plan still reports
+`applyAllowed=false` and `targetAccepted=false`; protected target reconciliation
+remains a later, separately authorized action.
+
 `--sql` prints one fixed catalog SELECT inside a repeatable-read, read-only
 transaction. It creates no reference objects or temporary functions and reads
 no application rows. Executing it on a target remains a separate protected,
