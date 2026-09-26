@@ -12,6 +12,7 @@ const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
 const openLoops = read("project-memory/OPEN_LOOPS.md");
+const dependencies = read("project-memory/DEPENDENCIES.md");
 const currentState = read("project-memory/CURRENT_STATE.md");
 const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
 const workLocks = read("project-memory/WORK_LOCKS.md");
@@ -171,6 +172,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.ok(Object.values(receipt.counts).every(value => value === 0));
     const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
     assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED; bounded repository transition-generator work is TODO\/EXECUTABLE/u);
+    const generatorDependency = markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926");
+    assert.match(generatorDependency, /- Status: TODO; exact bounded repository continuation admitted and executable, but not started\./u);
+    assert.match(generatorDependency, /It becomes IN_PROGRESS only with its own atomic exact-base start contract and lock\./u);
     assert.match(profileDesign.instruction, /Completed and consumed repository source package/u);
     assert.match(profileDesign.instruction, /No target\/provider call, APPLY, target reference acceptance or runtime activation occurred/u);
     assert.match(profileDesign.instruction, /distinct protected action with current authorization and exact target binding/u);
@@ -201,6 +205,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.match(transitionGenerator.instruction, /fail closed on pin\/profile drift/u);
     assert.match(transitionGenerator.instruction, /No target\/provider call, workflow dispatch, SQL APPLY/u);
     assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR TODO\/EXECUTABLE, NICHT GESTARTET/u);
+    assert.match(transitionDesign, /Diese Repository-Arbeit ist \*\*TODO\/EXECUTABLE, aber nicht gestartet\*\*/u);
     assert.match(transitionDesign, /Nächste konkrete Source-Arbeit ist `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
     assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
     assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
