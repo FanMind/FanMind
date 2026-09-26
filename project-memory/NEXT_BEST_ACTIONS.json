@@ -24,7 +24,7 @@
     },
     {
       "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
-      "priority": 1,
+      "priority": 7,
       "task": "FM-REG-003",
       "gate": "registration_admin_crm",
       "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
@@ -284,7 +284,7 @@
     },
     {
       "id": "NBA-CHATADMIN-MANUAL-FLOW",
-      "priority": 6,
+      "priority": 1,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_manual_flow",
       "title": "ChatAdmin manuellen Staging-Anwendungsflow abnehmen",
@@ -300,7 +300,7 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "On exact current Staging, under a separately authorized protected synthetic runtime fixture/capability scope, exercise the actual application flow: active Character -> manually inserted synthetic Fan message -> exactly three revision-bound suggestions -> select/copy -> manual-send handoff. Prove actual application/runtime behavior and negative authority/tenant boundaries, then clean up temporary fixture state. Do not use real customer/fan data, do not send to any provider, do not enable automatic sending, and do not mutate Production/Billing/Stripe/Tax/Restore/Mobile."
+      "instruction": "Owner-authorized continuation under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 and first priority under FM-DEC-024. Complete bounded Character/late-response source isolation correction and normal review/CI/merge, then bind actual Staging runtime to exact reviewed main before any temporary synthetic capability fixture. Exercise Character -> synthetic pasted Fan message -> exactly three revision-bound suggestions -> select/copy/manual handoff, negative authority/tenant/Character boundaries and exact fixture cleanup with independent countercheck. No real data, Social send, auto-send, Production activation, Billing/Stripe/Tax/Restore/Mobile mutation; prior APPLY and DB ACCEPT remain consumed."
     }
   ],
   "retired_actions": [

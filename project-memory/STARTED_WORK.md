@@ -1,3 +1,16 @@
+## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
+- Exact next step: complete PR #1193 source isolation regressions/review/CI, then reviewed Staging deploy and protected synthetic manual flow with cleanup.
+- Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
+- Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
+- Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
+- Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
+- Fresh target evidence: Staging API version is `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`, runtimeEnvironment=staging; DB tables have 0/0/0/0 rows. Public health responds; email remains unknown. Protected DB/RLS ACCEPT run 36238536613 attempt 2 remains successful and consumed.
+- Still open: source correction/review/merge, current Staging deploy, actual synthetic manual flow, cleanup and independent countercheck. No target write performed.
+- Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
+
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
 - Status: MERGED_VERIFIED
 - Risk: R2
@@ -917,7 +930,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
 - Exact next step: distinct protected manual application-layer acceptance with synthetic Staging data and cleanup; Character -> manual Fan message -> exactly three revision-bound suggestions -> Copy -> manual-send handoff.
 
-- Repository closeout publication: APPLY reconciliation PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ACCEPT reconciliation PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as current main `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Exact-head checks/reviews converged with no unresolved blocking thread. Manual application flow remains separately owner-gated.
+- Repository closeout publication: APPLY reconciliation PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ACCEPT reconciliation PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Exact-head checks/reviews converged with no unresolved blocking thread. Manual application flow remains separately owner-gated.
 
 ## FM-GOV-GODMODE-001 — God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
@@ -954,12 +967,3 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Safety: no SQL APPLY, no Staging/Production/provider/runtime/customer/Billing/Restore/Mobile mutation; no broad role relaxation; postgres membership remains unexcepted.
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
-## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
-- Status: IN_PROGRESS; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
-- Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
-- Expected files/contracts: ChatAdmin client/reply route and direct tests, existing browser CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
-- Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
-- Fresh target evidence: Staging API version is `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`, runtimeEnvironment=staging; DB tables have 0/0/0/0 rows. Public health responds; email remains unknown. Protected DB/RLS ACCEPT run 36238536613 attempt 2 remains successful and consumed.
-- Still open: source correction/review/merge, current Staging deploy, actual synthetic manual flow, cleanup and independent countercheck. No target write performed.
-- Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.

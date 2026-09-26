@@ -1,3 +1,12 @@
+## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926
+- Status: IN_PROGRESS; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
+- Owner request: fresh preflight -> synthetic fixture -> actual Staging flow -> negatives -> cleanup -> independent countercheck -> canonical closeout.
+- Baseline: dd4ee6b65772e5833a09077a04c96254934067f9. Full mandatory readers supplied; drift/freshness controls passed, historical unrelated external revalidation remains open.
+- Independent initial observations: Supabase Staging ACTIVE_HEALTHY; four ChatAdmin table counts 0/0/0/0; live Staging runtime release f0c7a84e6105752d34b489520fb92d2bb7e5b61a; GitHub protected DB ACCEPT latest job 108396358120 success.
+- Falsifier: a response generated for Character A appearing/copying under B, a response surviving revoked authority/revision change, wrong target/release, or any residual temporary fixture prevents manual-flow acceptance.
+- Source prerequisite implemented in PR #1193: Character/input/draft isolation, response binding and stale-request invalidation; post-provider authority/persona revalidation with exactly one usage event. Actual React/Chromium regression suite 11/11 and API regression suite 8/8 passed after reproducing original failures. Independent review corrections cover session cleanup, redirect boundaries, uncertain in-flight requests and atomic recovery receipts.
+- Protected manual-flow workflow and native PG17 lifecycle proof are registered in required CI. Exact-head CI/review/merge, reviewed Staging deployment, actual provider/UI acceptance, cleanup and independent target countercheck remain open; this receipt claims no target write or runtime success.
+
 ## RECEIPT-FM-CHATADMIN-002-STAGING-ACCEPT-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
 - Authorization: owner-triggered protected ACCEPT; after attempt 1 failed fail-closed for missing fixture identities, Bernd populated the ten protected Staging fixture variables and instructed continuation. Authorization is consumed for this exact DB/RLS acceptance.
@@ -1427,10 +1436,3 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Exact #1160 read-only runtime evidence: Production Audit `35777327823` reports `PRODUCTION_RUNTIME_VERIFIED=true`, `PRODUCTION_RELEASE=ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`, 8 healthy components, PM2 online, nginx active, local/public login HTTP 200. The complete audit remains red only for the already-open `production_audit_backup_latest_stale_or_empty` finding.
 - Interpretation: Bernd's explicit statement that he personally merged #1158 and #1160 is authoritative Owner evidence for those deliberate manual merges. GitHub confirms both merged states and exact merge SHAs, so both are `OWNER_ACCEPTED_MERGE`; do not reopen a missing pre-merge review/merge-authorization requirement solely for those already owner-accepted source/governance scopes. For #1160, the listed post-merge deploy/runtime observations are separately evidenced. This does not authorize any protected action or manufacture provider/Staging/Production facts not independently observed.
 - Reconciliation boundary: downstream canonical files must consume the actual merge/acceptance status without reopening or duplicating the merged source work. ChatAdmin APPLY remains separately owner/action-time gated; Creator privacy/delete/disclosure closure must remain evidence-driven.
-## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926
-- Status: IN_PROGRESS; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
-- Owner request: fresh preflight -> synthetic fixture -> actual Staging flow -> negatives -> cleanup -> independent countercheck -> canonical closeout.
-- Baseline: dd4ee6b65772e5833a09077a04c96254934067f9. Full mandatory readers supplied; drift/freshness controls passed, historical unrelated external revalidation remains open.
-- Independent initial observations: Supabase Staging ACTIVE_HEALTHY; four ChatAdmin table counts 0/0/0/0; live Staging runtime release f0c7a84e6105752d34b489520fb92d2bb7e5b61a; GitHub protected DB ACCEPT latest job 108396358120 success.
-- Falsifier: a response generated for Character A appearing/copying under B, a response surviving revoked authority/revision change, wrong target/release, or any residual temporary fixture prevents manual-flow acceptance.
-- Source correction and runtime acceptance remain open; this receipt claims no merge, deployment, fixture mutation or manual-flow success.

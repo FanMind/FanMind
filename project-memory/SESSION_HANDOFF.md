@@ -1,7 +1,13 @@
+## Authorized ChatAdmin manual-flow continuation — 2026-09-26
+- Continue the existing PR #1193 / branch fix/chatadmin-manual-flow-isolation-20260926 / LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926. Do not duplicate this ChatAdmin scope.
+- FM-DEC-024 sets ChatAdmin first; FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 covers the synthetic Staging application acceptance and cleanup. The prior earlier Admin-CRM owner action remains open and does not preempt this work.
+- Current prerequisite: fix Character/editor/late-response isolation and verify source/CI/review, then deploy exact reviewed main to Staging (currently f0c7a84e6105752d34b489520fb92d2bb7e5b61a), execute actual synthetic flow and negatives, clean up and independently countercheck.
+- No target fixture has been written. Source tests or a merge do not close the manual-flow gate; schema APPLY and DB/RLS ACCEPT are already consumed.
+
 ## Post-merge completion reconciliation consumed — 2026-09-26
 - PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` merged as `d2af392dfa099da8d675481bb343154d829743ff`; the exhausted broad Creator action is consumed, its lock is released, and no replacement repository scope is invented.
 - PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ChatAdmin Staging APPLY remains ACCEPTED and non-repeatable.
-- PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as current main `a1af8f5742958e5e666ae3f361e388b8a4cf922f`; ChatAdmin DB/RLS ACCEPT remains ACCEPTED/consumed and the distinct manual application flow remains OWNER_ACTION_REQUIRED.
+- PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as `a1af8f5742958e5e666ae3f361e388b8a4cf922f`; ChatAdmin DB/RLS ACCEPT remains ACCEPTED/consumed and the distinct manual application flow remains OWNER_ACTION_REQUIRED.
 - All three final heads have successful triggered workflow sets, independent exact-head review without unresolved blocking findings, and verified GitHub merge state. This reconciliation changes no runtime/provider/database/customer state and does not refresh mutable external evidence.
 - Current Builder Manager remains `SAFE READY SET=NONE`; earliest selected action remains `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` / FM-REG-003 as OWNER_ACTION_REQUIRED. Mobile remains deferred.
 

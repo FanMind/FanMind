@@ -110,6 +110,9 @@ jobs:
       - name: Run the local regular-user core flow
         run: npm run test:e2e:core-flow
 
+      - name: Run actual ChatAdmin component isolation regressions
+        run: npm run test:chat-admin-client
+
       - name: Upload failure-oriented synthetic core-flow evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

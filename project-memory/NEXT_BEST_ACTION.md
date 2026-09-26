@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
-- Task: `FM-REG-003`
-- Gate: `registration_admin_crm` (`IN_PROGRESS`)
+- Selected action: `NBA-CHATADMIN-MANUAL-FLOW`
+- Task: `FM-CHATADMIN-002`
+- Gate: `chatadmin_manual_flow` (`IN_PROGRESS`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
+- Title: ChatAdmin manuellen Staging-Anwendungsflow abnehmen
 
 ## Instruction
 
-The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration.
+Owner-authorized continuation under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 and first priority under FM-DEC-024. Complete bounded Character/late-response source isolation correction and normal review/CI/merge, then bind actual Staging runtime to exact reviewed main before any temporary synthetic capability fixture. Exercise Character -> synthetic pasted Fan message -> exactly three revision-bound suggestions -> select/copy/manual handoff, negative authority/tenant/Character boundaries and exact fixture cleanup with independent countercheck. No real data, Social send, auto-send, Production activation, Billing/Stripe/Tax/Restore/Mobile mutation; prior APPLY and DB ACCEPT remain consumed.
 
 ## Why this action
 
@@ -24,8 +24,8 @@ owner/platform action required
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `0`
-- Active task continuations reserving slots: `NONE`
+- Worker slots reserved by active/ready work: `1`
+- Active task continuations reserving slots: `NBA-CHATADMIN-MANUAL-FLOW`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -34,12 +34,12 @@ owner/platform action required
 ## Candidate evaluation
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
-- `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
-- `NBA-CHATADMIN-MANUAL-FLOW` priority 6: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` priority 7: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required

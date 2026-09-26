@@ -1,0 +1,131 @@
+name: FanMind ChatAdmin Manual Flow Staging Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: Exact reviewed main commit already deployed to isolated Staging
+        required: true
+        type: string
+      confirmation:
+        description: Type run-chat-admin-manual-flow
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-chat-admin-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dispatch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      REQUESTED_COMMIT: ${{ inputs.reviewed_commit }}
+      REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Validate the exact independent manual-flow request
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$REQUESTED_COMMIT" == "$GITHUB_SHA" ]]
+          [[ "$REQUESTED_CONFIRMATION" == 'run-chat-admin-manual-flow' ]]
+
+  acceptance:
+    needs: validate-dispatch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CHAT_ADMIN_MANUAL_CONFIRM: ${{ inputs.confirmation }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID }}
+      FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID }}
+      FANMIND_CHAT_ADMIN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_OWNER_ID }}
+      FANMIND_CHAT_ADMIN_MEMBER_ID: ${{ vars.FANMIND_CHAT_ADMIN_MEMBER_ID }}
+      FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID }}
+      FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID: ${{ vars.FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID }}
+      FANMIND_CHAT_ADMIN_CHARACTER_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_A_ID }}
+      FANMIND_CHAT_ADMIN_CHARACTER_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_B_ID }}
+      FANMIND_CHAT_ADMIN_CONVERSATION_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_A_ID }}
+      FANMIND_CHAT_ADMIN_CONVERSATION_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      CI: '1'
+      NODE_OPTIONS: ''
+      NODE_EXTRA_CA_CERTS: ''
+      NODE_USE_ENV_PROXY: ''
+      HTTP_PROXY: ''
+      HTTPS_PROXY: ''
+      ALL_PROXY: ''
+
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+      - name: Verify the acceptance transport offline
+        run: |
+          node scripts/operations/chat-admin-manual-flow-staging.mjs --check
+          node --test tests/chat-admin-manual-flow.test.mjs
+      - name: Install the pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Prepare the dedicated private database password file
+        id: passfile
+        env:
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-chat-admin-manual.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+          printf 'PGPASSFILE=%s\n' "$PGPASSFILE" >> "$GITHUB_ENV"
+      - name: Execute actual UI and API acceptance with guaranteed cleanup
+        env: &fixture_credentials
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          unset http_proxy https_proxy all_proxy
+          node scripts/operations/chat-admin-manual-flow-staging.mjs --run
+      - name: Recover an interrupted exact receipt and independently prove absence
+        if: ${{ always() && steps.passfile.outcome == 'success' }}
+        env: *fixture_credentials
+        run: node scripts/operations/chat-admin-manual-flow-staging.mjs --cleanup
+      - name: Remove the dedicated password file
+        if: ${{ always() }}
+        run: rm -f "$PGPASSFILE"
