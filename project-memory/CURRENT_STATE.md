@@ -1,3 +1,10 @@
+## Creator voice evidence summary merged and repository-verified — 2026-09-26
+- PR #1184 final head `12924950dfcfee263c48774c16c667d9bd5c6167` passed all eight required exact-head checks after correcting the P2 emoji-style punctuation finding. The review thread is resolved and the final exact-head Codex review reported no major issues.
+- Normal squash merge produced exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`. A post-merge re-read confirms source blob `55efe11da5916a13d90c8c287e49bbb62c6798ac` and test blob `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3` on current main.
+- `LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925` is released. The accepted scope is a deterministic, privacy-safe aggregate summary for one already validated exact Workspace/Creator onboarding dataset; no raw text or message ID is returned and `autoApprovalAllowed=false` remains enforced.
+- This is repository verification only. No real private sample, subjective style/profile approval, blinded quality result, provider/model call, persistence, SQL, Staging/Production/customer/Billing/Restore/Mobile mutation or runtime acceptance occurred.
+- Recompute the Builder Manager before selecting a distinct Creator increment; never rebuild #1184.
+
 ## Creator voice-onboarding input contract merged and repository-verified — 2026-09-25
 - PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19` passed all nine triggered required checks after correcting one P1 CI-registration finding and four P2 fail-closed findings. Every review thread is resolved and the final exact-head Codex review reported no further major issues.
 - Normal squash merge produced exact main `134d1ba100aaa1dbae734c9db19c076e5c513b52`. A post-merge re-read of current main confirms the hardened validator, direct regression tests, operations-suite registration and synchronized Creator documentation.

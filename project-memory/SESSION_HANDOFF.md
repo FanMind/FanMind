@@ -1,3 +1,10 @@
+## Creator voice evidence #1184 merged; next Creator scope requires fresh selection — 2026-09-26
+- PR #1184 final head `12924950dfcfee263c48774c16c667d9bd5c6167` passed all eight required exact-head checks after the emoji-style punctuation P2 was corrected with direct regression coverage. The thread is resolved and final exact-head Codex review reported no major issues.
+- Normal squash merge created exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`. Current-main re-read confirms source blob `55efe11da5916a13d90c8c287e49bbb62c6798ac` and test blob `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3`.
+- The bounded voice-evidence lock is released. This proves only deterministic aggregate repository evidence: exact Workspace/Creator, counts/ratios/top emojis, no raw text or message IDs, and no automatic approval.
+- Real private samples, subjective voice/profile approval, blinded quality, provider/model use, persistence, SQL and all runtime/protected-target acceptance remain unperformed and unaccepted.
+- Recompute the Builder Manager after this closeout. Continue only a distinct still-open Creator increment; never rebuild #1184.
+
 ## Creator voice onboarding #1182 merged; next Creator scope requires fresh selection — 2026-09-25
 - PR #1182 final head `4ce84791a01efa1ebe99293243bd4d70428edb19` passed all nine triggered required checks and the final exact-head Codex review with no further major findings after the P1/P2 corrections; all threads are resolved.
 - Squash merge created exact main `134d1ba100aaa1dbae734c9db19c076e5c513b52`. Current-main post-merge re-read confirms the hardened 30–100 confirmed-manual-outbound validator, regression tests and required CI registration.

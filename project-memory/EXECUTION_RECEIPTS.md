@@ -1,3 +1,15 @@
+## RECEIPT-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260926
+- Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R2.
+- Baseline: exact main `094334c38e9942affe7e8100aeb02df45808e530`; Builder Manager admitted `NBA-CREATOR-INTELLIGENCE` and the predecessor onboarding-input scope was already repository-verified.
+- Scope: pure repository-side aggregate evidence summary over an already validated 30–100-message exact Workspace/Creator dataset, focused privacy/negative/regression tests, synchronized Creator documentation and bounded Project-Memory records only.
+- Review/CI: current-head review found one P2 because emoji-style punctuation `❓`, `❔`, `❗`, `❕` was excluded from question/exclamation ratios. The correction added direct regression coverage. Final head `12924950dfcfee263c48774c16c667d9bd5c6167` passed FanMind CI, Browser E2E, CodeQL, Landing Language, God Mode and Project Memory Guard/Quality/Status; the finding thread is resolved and exact-head Codex reported no major issues.
+- Local verification: focused Creator onboarding suite 31/31 passed; full operations suite reported 1,545 tests, 1,541 passed, 0 failed and 4 skipped, with account-deletion Workspace inventory verified.
+- Merge: normal squash merge produced exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`.
+- Post-merge repository verify: current main contains source blob `55efe11da5916a13d90c8c287e49bbb62c6798ac` and test blob `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3`.
+- Safety: summary output is aggregate-only, exact Workspace/Creator and sample-size consistency fail closed, raw text/message IDs are absent, and `autoApprovalAllowed=false`. No real private sample, provider/model invocation, training, persistence, SQL, Staging/Production/provider/customer mutation, automatic profile update/send, Billing/Stripe/Tax, Restore or Mobile change occurred.
+- Boundary: merge/repository verification is not human voice approval, blinded quality, runtime, Staging, provider or Production acceptance.
+- Recovery: normal reviewed source revert; no external rollback required.
+
 ## RECEIPT-FM-CREATOR-VOICE-ONBOARDING-20260925
 - Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R3.
 - Baseline: exact main `aee02274f35c3c346c12710f98b84144c6f53077`; Builder Manager admitted `NBA-CREATOR-INTELLIGENCE`.

@@ -1,12 +1,14 @@
 ## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
-- Status: IN_PROGRESS
+- Status: VERIFIED
 - Risk: R2
 - Parent: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE.
 - Admission: #1183 merged as exact main `094334c38e9942affe7e8100aeb02df45808e530`; the Builder Manager keeps `NBA-CREATOR-INTELLIGENCE` as the only SAFE READY repository action and reports no active continuation.
 - Bounded goal: expose deterministic, non-sensitive onboarding evidence from the already validated 30–100-message dataset without pretending that objective statistics are an approved writing style.
 - Scope/acceptance: aggregate character length, punctuation ratios and emoji frequency/top-emoji evidence only; exact Workspace/Creator and sample-size consistency; no raw texts or message IDs in output; `autoApprovalAllowed=false`.
 - Not acceptance of: subjective tone/directness/humor scores, generated voice/profile, human approval, real private onboarding data, blinded quality, runtime/provider/target activation or protected actions.
-- Current next step: exact-head CI and independent review on the bounded PR, then normal merge if clean.
+- Result: PR #1184 final head `12924950dfcfee263c48774c16c667d9bd5c6167` converged after the emoji-style punctuation P2 correction. All eight required checks passed, the finding thread is resolved, exact-head Codex reported no major issues, and normal squash merge produced exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`.
+- Post-merge verify: current main contains the aggregate-only implementation and focused regression at blobs `55efe11da5916a13d90c8c287e49bbb62c6798ac` and `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3`.
+- Exact next step: keep this bounded summary closed; recompute the Builder Manager and select only a distinct Creator scope. Real data, subjective profile approval, blinded quality, runtime/provider and target acceptance remain separate.
 - Recovery: repository revert only.
 
 ## FM-CREATOR-001 — voice onboarding contract continuation — 2026-09-25
