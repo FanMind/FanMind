@@ -105,7 +105,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
   assert.doesNotMatch(creatorDoc, /Der nächste repository-seitige Schritt bleibt ausdrücklich evidence-only/u);
   assert.match(creatorDoc, /repository-seitige evidence-only Schritt ist abgeschlossen/u);
   assert.doesNotMatch(nextAction, /- Active task continuations reserving slots: `[^`]*NBA-CREATOR-INTELLIGENCE/u);
-  assert.match(openLoops, /never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE`/u);
+  assert.match(openLoops, /No unchanged retry, ABSENT inference or reactivation of broad `NBA-CREATOR-INTELLIGENCE`/u);
   assert.doesNotMatch(openLoops, /engineering under NBA-CREATOR-INTELLIGENCE/u);
   const verifyId = "NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY";
   const controlId = "NBA-CREATOR-CONFIRMED-CHAT-APPLY-CONTROL";
@@ -146,7 +146,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     const state = JSON.parse(read("project-memory/FINISHLINE_STATE.json"));
     assert.equal(state.gates.creator_foundation_reconciliation_preflight.state, "ACCEPTED");
     assert.equal(state.gates.creator_foundation_staging_catalog.state, "RECONCILED");
-    assert.equal(state.gates.creator_foundation_profile_transition_design.state, "IN_PROGRESS");
+    assert.equal(state.gates.creator_foundation_profile_transition_design.state, "ACCEPTED");
     assert.equal(state.gates.creator_intelligence.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.state, "RECONCILED");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
@@ -164,12 +164,20 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.ok(["REMOVED", "NOT_CREATED"].includes(receipt.cleanup.credentials));
     assert.ok(Object.values(receipt.counts).every(value => value === 0));
     const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
-    assert.match(creatorLoop, /- Exact next: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN/u);
-    assert.match(profileDesign.instruction, /Never use target-derived expected values/u);
-    assert.match(profileDesign.instruction, /No APPLY, runtime activation, target calls, provider calls/u);
-    assert.match(profileDesign.instruction, /PARTIAL with the exact missing external provenance/u);
-    assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN`/u);
-    assert.match(nextAction, /- Selection status: `EXECUTABLE`/u);
+    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED/u);
+    assert.match(profileDesign.instruction, /Completed and consumed repository source package/u);
+    assert.match(profileDesign.instruction, /No target\/provider call, APPLY, target reference acceptance or runtime activation occurred/u);
+    assert.match(profileDesign.instruction, /distinct protected action with current authorization and exact target binding/u);
+    const sourceReceipt = JSON.parse(read("project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json"));
+    assert.equal(sourceReceipt.status, "ACCEPTED");
+    assert.equal(sourceReceipt.final_head, "3cd67cedbcdc051be855d09de8d5ea3225179217");
+    assert.equal(sourceReceipt.targetAccepted, false);
+    assert.equal(sourceReceipt.applyAllowed, false);
+    assert.equal(sourceReceipt.runtimeActivated, false);
+    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 2: \*\*DONE\*\*/u);
+    assert.match(nextAction, /- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`/u);
+    assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
+    assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
   } else if (catalogObservation) {
     assert.equal(catalogObservation.priority, 2);
     assert.equal(catalogObservation.requires_owner, true);
