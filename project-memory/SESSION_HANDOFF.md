@@ -2,6 +2,7 @@
 - Baseline main `2aaf225fec29fd91c20f822185c770f87eb3d10d` had no active bounded Creator continuation, but stale canonical wording and the broad catalog entry still advertised `NBA-CREATOR-INTELLIGENCE` as executable.
 - The bounded repository correction consumes that placeholder without closing `FM-CREATOR-001`, documents #1184 as the completed evidence-only step, and hardens truth drift plus registered regression coverage so absence/ambiguity cannot silently recreate the state.
 - Clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed 1,548 Operations tests with 0 failures and all local Manager/Memory/drift controls. Fresh selection has no executable safe set, zero worker reservation and surfaces unchanged `FM-REG-003` as OWNER_ACTION_REQUIRED.
+- First-tree independent review found and blocked on one P1 stale `OPEN_LOOPS` authorization plus one P2 legacy-ID reactivation gap. Correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` fixes both on the same PR and passed the focused regressions plus all 1,548 Operations tests with 0 failures.
 - Exact next step: publish this single branch as one PR, consume exact-head CI and exactly one independent review, fix any blocking finding on the same PR, then merge normally only when current-head evidence is clean. No protected action, runtime/provider/SQL mutation or new Creator product scope belongs to this handoff.
 
 ## Creator voice evidence #1184 merged; next Creator scope requires fresh selection — 2026-09-26

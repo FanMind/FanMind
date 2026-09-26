@@ -38,12 +38,7 @@ def creator_development_contract_errors(creator_gate: dict, catalog: dict) -> li
         result.append("creator-action-identity-must-be-unambiguous")
         return result
     if active:
-        action = active[0]
-        if (
-            action.get("prerequisite_gates") != ["memory_v6", "staging"]
-            or action.get("parallel_safe") is not True
-        ):
-            result.append("creator-development-must-follow-owner-decision-015")
+        result.append("consumed-creator-action-cannot-reactivate")
         return result
     if retired:
         action = retired[0]
@@ -80,7 +75,9 @@ if "--creator-contract-test" in sys.argv:
         }],
     }
     creator_gate = {"required_for_sales": False}
-    assert creator_development_contract_errors(creator_gate, active_catalog) == []
+    assert "consumed-creator-action-cannot-reactivate" in (
+        creator_development_contract_errors(creator_gate, active_catalog)
+    )
     assert creator_development_contract_errors(creator_gate, retired_catalog) == []
     assert "creator-development-action-missing-without-consumed-evidence" in (
         creator_development_contract_errors(creator_gate, {"actions": [], "retired_actions": []})

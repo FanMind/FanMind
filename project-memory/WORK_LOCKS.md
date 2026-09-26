@@ -10,6 +10,8 @@
 - Release condition: focused regression, manager contract, truth/drift/quality/status checks, exact diff countercheck, commit/PR current-head CI and one independent review with P1=0/P2=0/no blocking threads.
 - Recovery: ordinary repository revert; no external state changes.
 - Released by: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80`, focused negative/regression proof, 1,548 Operations tests with 0 failures, and all local Manager/Memory/drift controls. Exact-head remote CI, independent review and normal merge remain required before merged completion.
+- Review continuation: reacquired on the same PR for the P1 stale `OPEN_LOOPS` authorization and P2 legacy-action reactivation gap; no second Creator scope or PR is created.
+- Review-fix release: correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` passed focused negative coverage and the full Operations suite with 0 failures. The lock is released only for the same PR's new exact-head CI/review cycle; merge remains conditional on P1=0/P2=0/no blocking threads.
 
 ## LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925
 - Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE

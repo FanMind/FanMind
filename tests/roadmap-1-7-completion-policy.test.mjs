@@ -11,6 +11,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
+const openLoops = read("project-memory/OPEN_LOOPS.md");
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
@@ -97,6 +98,12 @@ test("Creator aggregate summary is closed and the manager invents no next scope"
   assert.match(nextAction, /- Worker slots reserved by active\/ready work: `0`/u);
   assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
   assert.match(nextAction, /- Task: `FM-REG-003`/u);
+  assert.match(openLoops, /no current repository action is admitted/u);
+  assert.match(openLoops, /never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE`/u);
+  assert.doesNotMatch(
+    openLoops,
+    /engineering under NBA-CREATOR-INTELLIGENCE/u,
+  );
 });
 
 test("truth drift accepts only active eligible or evidence-bound consumed Creator action", () => {
