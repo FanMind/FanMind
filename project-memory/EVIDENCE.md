@@ -1,5 +1,10 @@
+## EV-CHATADMIN-MANUAL-ACCEPT-36253850844-1
+- Status: ACCEPTED; bounded synthetic Staging manual application flow only.
+- Evidence: run `36253850844`, attempt 1 / job `108436822845`, reviewed/deployed main `d91405d67792aa65a14964553a09a36fa0c87de0`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:03:03.744089Z`, schema/RLS/ACL `2026-09-26T16:03:04.594731Z`, sessions `2026-09-26T16:03:03.744089Z` and Production absence `2026-09-26T16:03:05.358302Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36253850844-1-acceptance.json`.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+
 ## FM-EV-CHATADMIN-PROBE-COLLECTION-20260926
-- Status: FAILED_BEFORE_FIXTURE; manual acceptance remains IN_PROGRESS.
+- Historical status: FAILED_BEFORE_FIXTURE; manual acceptance was IN_PROGRESS at this observation and is now completed by EV-CHATADMIN-MANUAL-ACCEPT-36253850844-1.
 - Source: PR #1199 final head `6c61af151632a2ee2c977e24d51b4ce9a10031f6`, exact tree `c4f5914d33c8fe5d80cac5cf722ff39501737fce`, all nine CI checks and final independent review clear; merge `3b3570df2b1ff85080e6bc9b4cf4e284d5fea558`.
 - Deployment: Staging run `36251864810` / job `108431281545` success; independent public version at `2026-09-26T15:30:56.077Z` matches exact release and runtimeEnvironment=staging.
 - Failed probe: run `36252027247`, attempt1 / job `108431733948`; browser_launch/failed, HTTP/network none, session cleanup not_started, all DB/reservation/artifact/fixture steps skipped.

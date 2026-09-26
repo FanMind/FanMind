@@ -115,6 +115,25 @@
     "chatadmin_manual_flow": {
       "task": "FM-CHATADMIN-002",
       "risk": "R4",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "run `36253850844`, attempt 1 / job `108436822845`, reviewed/deployed main `d91405d67792aa65a14964553a09a36fa0c87de0`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:03:03.744089Z`, schema/RLS/ACL `2026-09-26T16:03:04.594731Z`, sessions `2026-09-26T16:03:03.744089Z` and Production absence `2026-09-26T16:03:05.358302Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36253850844-1-acceptance.json`."
+    },
+    "creator_confirmed_chat_staging_verify": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "RECONCILED",
+      "required_for_sales": false,
+      "observed_result": "FOUNDATION_MISSING",
+      "workflow_conclusion": "failure",
+      "workflow_run_id": 36254337623,
+      "release_commit": "d91405d67792aa65a14964553a09a36fa0c87de0",
+      "target_project_ref": "vshyhvgcmrlagvfnvomc",
+      "evidence": "project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json"
+    },
+    "creator_foundation_reconciliation_preflight": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
       "state": "IN_PROGRESS",
       "required_for_sales": false
     }

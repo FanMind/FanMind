@@ -1,15 +1,29 @@
-## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
+## FM-CREATOR-001 — bounded Foundation reconciliation preflight — 2026-09-26
+- Exact next step: implement the bounded SELECT-only catalog export and offline pinned-reference classifier, then exact source tests, independent review and normal PR completion.
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT
+- Risk: R3
 - Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926
+- Scope: Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
+- Evidence: actual failed prerequisite is reconciled in `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`; no complete target baseline or new source acceptance claimed yet.
+
+## FM-CREATOR-001 — bounded Confirmed-Chat VERIFY — 2026-09-26
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RECONCILED
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926 (RELEASED).
+- Outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT; no unchanged retry.
+
+## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
+- Status: ACCEPTED
 - Risk: R4
-- Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; holder: interactive Codex Builder.
-- Exact next step: continue fix/chatadmin-browser-preflight-diagnostics-20260926 after actual run36250479400 browser failure. Add nonmutating bound probe/enum diagnostics, preserve exact causal reconciliation of oldrun beforeprovider; after reviewed corrected deploy execute fresh acceptance.
-- Baseline: exact main `dd4ee6b65772e5833a09077a04c96254934067f9`; fresh drift/freshness controls passed; no overlapping active ChatAdmin lock/PR.
-- Goal: complete the authorized synthetic actual Staging manual flow. First close observed Character/editor/late-response isolation defects in the existing UI/API, with meaningful executable regressions and independent review.
-- Expected files/contracts: ChatAdmin client/reply route and direct tests, protected manual-flow runner/workflow/browser acceptance and PG17 lifecycle proof, existing browser/native CI registration, bounded ChatAdmin docs and Project Memory; FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
-- Source acceptance: (1) drafts/input never cross Character identity; (2) stale, mismatched or superseded responses stay hidden; (3) edits/deactivation/deletion invalidate context; (4) late API results revalidate current authority/persona; (5) executable negatives and normal exact-head review/CI pass.
-- Fresh target evidence: reviewed main0a368095 deployed by36250344137 and independently observed15:00:58.670Z. Postfailure Staging15:03:59.978681Z counts0/0/0/0 and usage0; full schema VERIFIED15:04:15.903990Z; Production six objects absent15:04:00.695911Z. This does not settle in-flight uncertainty.
-- Still open: shared UUID/probe/diagnostic correction review/CI/merge/deploy, actual successful manual flow and independent cleanup. Failed run36250479400 is separately RECONCILED_BEFORE_PROVIDER by deterministic owner-ID assertion proof and fresh zero counts/sessions; original artifact stays unchanged.
-- Owner action needed: none for the stated synthetic scope; reuse FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Any newly encountered factual/protected boundary remains explicit.
+- Work lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; released after actual acceptance and independent countercheck.
+- Result: run `36253850844`, attempt 1 / job `108436822845`, reviewed/deployed main `d91405d67792aa65a14964553a09a36fa0c87de0`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:03:03.744089Z`, schema/RLS/ACL `2026-09-26T16:03:04.594731Z`, sessions `2026-09-26T16:03:03.744089Z` and Production absence `2026-09-26T16:03:05.358302Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36253850844-1-acceptance.json`.
+- Exact next step: none for this consumed scope. FM-DEC-024 retains Creator Intelligence next. Admit only a distinct bounded Creator action through the separate creator_next preparation; never reactivate consumed NBA-CREATOR-INTELLIGENCE. Preserve existing free Admin-CRM access; its synthetic lifecycle, Social/Sales and deferred Mobile gates remain separate.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
 - Status: MERGED_VERIFIED

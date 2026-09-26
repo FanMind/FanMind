@@ -24,11 +24,11 @@
 - Preserve: this does not complete the requested Ubuntu reboot or remaining isolated Storage/config Restore. Do not repeat the accepted database Restore or reopen the corrected contract without fresh contradictory evidence.
 
 ## FM-LOOP-CREATOR-SOCIAL-20260910
-- Status: IN_PROGRESS aggregate gate; no current repository action is admitted.
+- Status: IN_PROGRESS aggregate gate; only NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT is admitted as source-only continuation.
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
 - Source #1099-#1108 and the bounded privacy/delete, confirmed-chat, onboarding-input and aggregate-summary continuations through #1184 are published. Their accepted repository scopes stay closed. Actual deployed flag, enabled runtime UI, real private samples, human style approval, blinded quality and provider acceptance remain separate and do not by themselves define a repository implementation package.
-- Exact next: no Builder action is currently admitted for Creator Intelligence. Any later repository increment requires a new exact bounded engineering action with approved outcome, files/contracts, negative tests and integration step; never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE` placeholder. External app/account/provider acceptance remains separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL. FM-DEC-021 supersedes the old Android timing: all remaining Mobile/Handy work waits for completed company registration plus explicit owner resume.
+- Exact next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT is the sole admitted source-only continuation at priority 2. The actual failed NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY observation is RECONCILED/CONSUMED; do not replay unchanged VERIFY or infer ABSENT. Never repeat consumed work; never reactivate the consumed broad `NBA-CREATOR-INTELLIGENCE` placeholder. No schema APPLY/runtime activation is implied. External app/account/provider acceptance remains separate under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7). Revalidate mutable target evidence after triggers/TTL. FM-DEC-021 preserves Mobile deferral until completed company registration plus explicit owner resume.
 - Paid activation deferral: PR #1098 already published the consent correction. FM-BILL-003 is PARTIAL and owner-deferred until actual tax/UID facts arrive. Earlier activation-first instructions below are historical and must not restart questions/actions during this deferral.
 
 
@@ -201,9 +201,6 @@ This register contains started, partially completed or follow-up work that could
 - Attempt 1 failed before mutation at `fixture_identity`; owner-provided protected fixture variables resolved the prerequisite. Do not repeat DB/RLS ACCEPT.
 
 ## FM-LOOP-CHATADMIN-MANUAL-FLOW-20260926
-- Status: IN_PROGRESS; task FM-CHATADMIN-002. Owner authorization FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 is active; PR #1193 owns the bounded source/acceptance prerequisite under LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926. No repeat owner request is needed for this exact synthetic scope.
-- Prerequisite satisfied: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED.
-- Remaining exact flow: protected Staging application/runtime acceptance with synthetic data only — active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
-- Close only after actual runtime/application evidence, negative tenant/authority proof and cleanup/zero-persistence evidence. No provider send, automatic send or Production mutation.
-
-
+- Status: CLOSED; task FM-CHATADMIN-002.
+- Result: run `36253850844`, attempt 1 / job `108436822845`, reviewed/deployed main `d91405d67792aa65a14964553a09a36fa0c87de0`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:03:03.744089Z`, schema/RLS/ACL `2026-09-26T16:03:04.594731Z`, sessions `2026-09-26T16:03:03.744089Z` and Production absence `2026-09-26T16:03:05.358302Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36253850844-1-acceptance.json`.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.

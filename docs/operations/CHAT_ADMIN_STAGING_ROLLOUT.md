@@ -1,6 +1,6 @@
 # ChatAdmin V1 — kontrollierter Staging-Rollout
 
-Stand 26. September 2026: Das ChatAdmin-Schema ist auf Staging angewendet (Run `36235870895`); die getrennte synthetische DB/RLS-Abnahme ist bestanden (Run `36238536613`, Versuch 2). Beide Schritte sind verbraucht und werden nicht wiederholt. Der echte manuelle Anwendungsflow bleibt offen. Kein realer Workspace besitzt die Capability; Production-Aktivierung bleibt offen. ChatAdmin ist ausschließlich ein normaler Workspace Owner plus `chat_admin_multi_character=true`, niemals Platform Admin.
+Stand 26. September 2026: Das ChatAdmin-Schema ist auf Staging angewendet (Run `36235870895`); die getrennte synthetische DB/RLS-Abnahme ist bestanden (Run `36238536613`, Versuch 2). Beide Schritte sind verbraucht und werden nicht wiederholt. Der getrennte synthetische manuelle Staging-Anwendungsflow ist durch Run `36253850844`, Versuch 1, samt unabhängigem Cleanup-/Schema-/Session-/Production-Gegencheck abgenommen und verbraucht. Der historische DB-Workflow behält seinen begrenzten `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`-Output. Kein realer Workspace besitzt die Capability; Production-Aktivierung bleibt offen. ChatAdmin ist ausschließlich ein normaler Workspace Owner plus `chat_admin_multi_character=true`, niemals Platform Admin.
 
 ## Geschützter Ablauf
 
