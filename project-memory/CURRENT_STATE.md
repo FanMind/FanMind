@@ -1,3 +1,8 @@
+## ChatAdmin ACCEPT fixture configuration failure isolated — 2026-09-26
+- Protected ACCEPT run `36238536613` / job `108394659516` on exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c` passed contract validation and same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, then failed before fixture mutation because all ten GitHub fixture variables were empty.
+- Independent Staging postcheck remains clean: capability/character/conversation/message counts are all zero. The completed schema APPLY remains ACCEPTED; DB/RLS ACCEPT remains OPEN.
+- Bounded repository correction is active under `LOCK-FM-CHATADMIN-ACCEPT-FIXTURE-RESOLUTION-20260926`: resolve only canonical marked synthetic Staging parents read-only when every explicit fixture variable is absent; preserve fail-closed behavior for partial/ambiguous configuration and the rollback-only/manual-flow-open boundary.
+
 ## ChatAdmin Staging APPLY completed and independently verified — 2026-09-26
 - Owner-authorized protected run `36235870895` / job `108387398410` executed exact reviewed main `2aaf225fec29fd91c20f822185c770f87eb3d10d` against FanMind Staging Supabase `vshyhvgcmrlagvfnvomc` in `APPLY` mode with `apply-chat-admin-migration`.
 - Offline contract check pinned SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; the controlled transaction completed and its built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.

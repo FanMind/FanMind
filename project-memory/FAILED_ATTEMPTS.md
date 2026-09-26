@@ -1,3 +1,13 @@
+## FM-FAIL-CHATADMIN-ACCEPT-FIXTURE-20260926
+- Date: 2026-09-26
+- Status: CORRECTION_IN_PROGRESS
+- Area: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT.
+- Attempt: protected ChatAdmin Staging Rollout run `36238536613` / job `108394659516` on exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, mode `ACCEPT`.
+- Result: exact-main/mode/contract checks and same-run schema VERIFY passed with `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; ACCEPT stopped before psql fixture mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity` because all ten optional GitHub Environment fixture variables resolved empty. Password-file cleanup passed.
+- Independent negative proof: post-run Staging counts remain capability=0, characters=0, conversations=0, messages=0; Production ChatAdmin schema remains absent.
+- Cause/correction: the protected workflow assumed preconfigured fixture UUID variables even though FanMind already has canonical marked Staging synthetic parents. Add fail-closed read-only resolver fallback only when all ten variables are absent; partial custom configuration must still fail.
+- Do not repeat: do not rerun the unchanged ACCEPT head or bypass the protected workflow with direct SQL.
+
 ## FM-FAIL-META-PROD-PLACEHOLDER-20260919
 - Date: 2026-09-19
 - Status: RECORDED_NOT_REPEATED

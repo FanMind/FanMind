@@ -1,3 +1,13 @@
+## FM-CHATADMIN-002 — ACCEPT synthetic fixture resolver hotfix — 2026-09-26
+- Status: IN_PROGRESS
+- Risk: R3 repository correction supporting the R4 protected Staging ACCEPT.
+- Baseline: exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; failed protected ACCEPT run `36238536613` / job `108394659516`.
+- Remaining result: keep explicit ten-variable fixtures supported, but when all ten are absent resolve only the existing canonical marked Primary/Secondary/Member/Staging-Operator identities read-only from Staging and generate four transient Character/Conversation UUIDs; partial/ambiguous fixtures must fail closed.
+- Expected files/contracts: `scripts/operations/chat-admin-staging-acceptance.mjs`, `tests/chat-admin-policy.test.mjs`, `docs/operations/CHAT_ADMIN_STAGING_ROLLOUT.md`, bounded Project Memory only.
+- Acceptance criteria: (1) resolver transaction is read-only; (2) exact canonical markers and exactly-one parents are required; (3) partial/invalid/overlapping explicit fixture configuration still fails; (4) acceptance remains transaction rollback-only and manual flow remains OPEN; (5) current-head CI/review is green before merge.
+- Negative/regression: no email lookup, no customer fixture, no Production/provider/Billing/Restore/Mobile mutation, no direct SQL acceptance bypass.
+- Completion stage: repository fix must reach MERGED_VERIFIED; only then may the separately owner-authorized protected ACCEPT be re-dispatched on fresh exact main.
+
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
 - Status: VERIFIED_FOR_PR
 - Risk: R2

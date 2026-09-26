@@ -6,6 +6,125 @@ import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAd
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
+export const CHAT_ADMIN_FIXTURE_RESOLUTION_SQL = String.raw`\set ON_ERROR_STOP on
+begin;
+set transaction read only;
+
+do $fixture$
+begin
+  if (
+    select count(*)
+      from public.workspaces w
+      join auth.users u on u.id = w.owner_user_id
+     where w.test_access_flags ->> 'staging_synthetic_fixture' = 'true'
+       and w.test_access_flags ->> 'workspace_processing_acceptance' = 'true'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'primary'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+       and w.stripe_customer_id is null
+       and w.stripe_subscription_id is null
+       and w.stripe_checkout_session_id is null
+       and w.stripe_payment_intent_id is null
+       and w.stripe_mandate_id is null
+       and exists (
+         select 1 from public.workspace_members wm
+          where wm.workspace_id = w.id and wm.user_id = w.owner_user_id and wm.role = 'owner'
+       )
+  ) <> 1 then raise exception 'chat_admin_primary_fixture_invalid'; end if;
+
+  if (
+    select count(*)
+      from public.workspaces w
+      join auth.users u on u.id = w.owner_user_id
+     where w.test_access_flags ->> 'staging_synthetic_fixture' = 'true'
+       and coalesce(w.test_access_flags ->> 'workspace_processing_acceptance', 'false') <> 'true'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'secondary'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+       and w.stripe_customer_id is null
+       and w.stripe_subscription_id is null
+       and w.stripe_checkout_session_id is null
+       and w.stripe_payment_intent_id is null
+       and w.stripe_mandate_id is null
+       and exists (
+         select 1 from public.workspace_members wm
+          where wm.workspace_id = w.id and wm.user_id = w.owner_user_id and wm.role = 'owner'
+       )
+  ) <> 1 then raise exception 'chat_admin_secondary_fixture_invalid'; end if;
+
+  if (
+    select count(*)
+      from public.workspace_members wm
+      join public.workspaces w on w.id = wm.workspace_id
+      join auth.users u on u.id = wm.user_id
+     where w.test_access_flags ->> 'staging_synthetic_fixture' = 'true'
+       and w.test_access_flags ->> 'workspace_processing_acceptance' = 'true'
+       and wm.role = 'member'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'ai_member'
+       and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+  ) <> 1 then raise exception 'chat_admin_member_fixture_invalid'; end if;
+
+  if (
+    select count(*)
+      from public.workspaces w
+      join auth.users u on u.id = w.owner_user_id
+     where w.test_access_flags ->> 'staging_operator_workspace' = 'true'
+       and w.test_access_flags ->> 'admin' = 'true'
+       and w.test_access_flags ->> 'internal' = 'true'
+       and w.stripe_customer_id is null
+       and w.stripe_subscription_id is null
+       and exists (
+         select 1 from public.workspace_members wm
+          where wm.workspace_id = w.id and wm.user_id = w.owner_user_id and wm.role = 'owner'
+       )
+  ) <> 1 then raise exception 'chat_admin_platform_admin_fixture_invalid'; end if;
+end
+$fixture$;
+
+with primary_fixture as (
+  select w.id as workspace_id, w.owner_user_id
+    from public.workspaces w
+    join auth.users u on u.id = w.owner_user_id
+   where w.test_access_flags ->> 'staging_synthetic_fixture' = 'true'
+     and w.test_access_flags ->> 'workspace_processing_acceptance' = 'true'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'primary'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+),
+secondary_fixture as (
+  select w.id as workspace_id, w.owner_user_id
+    from public.workspaces w
+    join auth.users u on u.id = w.owner_user_id
+   where w.test_access_flags ->> 'staging_synthetic_fixture' = 'true'
+     and coalesce(w.test_access_flags ->> 'workspace_processing_acceptance', 'false') <> 'true'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'secondary'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+),
+member_fixture as (
+  select wm.user_id
+    from public.workspace_members wm
+    join primary_fixture p on p.workspace_id = wm.workspace_id
+    join auth.users u on u.id = wm.user_id
+   where wm.role = 'member'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture' = 'ai_member'
+     and u.raw_user_meta_data ->> 'fanmind_staging_fixture_version' = '1'
+),
+platform_admin_fixture as (
+  select w.owner_user_id
+    from public.workspaces w
+   where w.test_access_flags ->> 'staging_operator_workspace' = 'true'
+     and w.test_access_flags ->> 'admin' = 'true'
+     and w.test_access_flags ->> 'internal' = 'true'
+)
+select p.workspace_id::text, s.workspace_id::text, p.owner_user_id::text, m.user_id::text,
+       s.owner_user_id::text, a.owner_user_id::text,
+       gen_random_uuid()::text, gen_random_uuid()::text,
+       gen_random_uuid()::text, gen_random_uuid()::text
+from primary_fixture p
+cross join secondary_fixture s
+cross join member_fixture m
+cross join platform_admin_fixture a;
+
+rollback;
+`;
+
 export const CHAT_ADMIN_ACCEPTANCE_SQL = String.raw`\set ON_ERROR_STOP on
 begin;
 select set_config('fanmind.accept.workspace_id', :'workspace_id', true);
@@ -319,8 +438,7 @@ function fixtureIds(environment) {
   ].map((value) => (typeof value === "string" ? value.trim().toLowerCase() : ""));
 }
 
-function validateFixtures(environment) {
-  const ids = fixtureIds(environment);
+function validateFixtureIds(ids) {
   if (ids.some((value) => !UUID_PATTERN.test(value))) {
     throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity");
   }
@@ -328,6 +446,56 @@ function validateFixtures(environment) {
     throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_overlap");
   }
   return ids;
+}
+
+function parseResolvedFixtures(output) {
+  const candidates = String(output ?? "")
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split("|").map((value) => value.trim().toLowerCase()))
+    .filter(
+      (values) =>
+        values.length === 10 &&
+        values.every((value) => UUID_PATTERN.test(value)),
+    );
+  if (candidates.length !== 1) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_resolution");
+  }
+  return validateFixtureIds(candidates[0]);
+}
+
+function resolveFixtures(environment) {
+  const configured = fixtureIds(environment);
+  const configuredCount = configured.filter(Boolean).length;
+  if (configuredCount === configured.length) {
+    return validateFixtureIds(configured);
+  }
+  if (configuredCount !== 0) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity");
+  }
+
+  const result = spawnSync(
+    "psql",
+    [
+      "--no-password",
+      "--no-psqlrc",
+      "--quiet",
+      "--tuples-only",
+      "--no-align",
+      "--field-separator=|",
+      "--set=ON_ERROR_STOP=1",
+    ],
+    {
+      env: environment,
+      input: CHAT_ADMIN_FIXTURE_RESOLUTION_SQL,
+      encoding: "utf8",
+    },
+  );
+  if (result.error || result.status !== 0) {
+    throw new Error("CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_resolution");
+  }
+  return parseResolvedFixtures(result.stdout);
 }
 
 export function check() {
@@ -368,7 +536,7 @@ export function run(environment = process.env) {
     characterB,
     conversationA,
     conversationB,
-  ] = validateFixtures(environment);
+  ] = resolveFixtures(environment);
 
   const result = spawnSync(
     "psql",

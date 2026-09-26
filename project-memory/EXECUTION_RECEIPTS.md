@@ -1,3 +1,11 @@
+## RECEIPT-FM-CHATADMIN-002-ACCEPT-FIXTURE-FIX-20260926
+- Status: IN_PROGRESS
+- Risk: R3 repository correction for the R4 ChatAdmin Staging ACCEPT.
+- Trigger evidence: run `36238536613` / job `108394659516` passed exact-main/contract/schema VERIFY and failed before fixture mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity`; all ten workflow fixture variables were empty.
+- Target safety countercheck: Staging ChatAdmin row counts remain 0/0/0/0 after the failure; no direct SQL workaround was used.
+- Planned correction: fully absent explicit fixture variables -> read-only exact-marker resolver; partially configured or ambiguous identities -> fail closed; four transient ChatAdmin row IDs generated for the rollback-only transaction.
+- Success boundary: repository merge does not equal DB/RLS ACCEPT. The protected ACCEPT must be freshly re-dispatched and independently postflighted after the fix merges.
+
 ## RECEIPT-FM-CHATADMIN-002-STAGING-APPLY-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
 - Authorization: explicit owner authorization consumed once by protected GitHub Actions run `36235870895` / job `108387398410`.

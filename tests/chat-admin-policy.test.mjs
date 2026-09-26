@@ -12,7 +12,10 @@ import {
   CHAT_ADMIN_POSTFLIGHT_SQL,
   SQL_SHA256,
 } from "../scripts/operations/chat-admin-staging-runner.mjs";
-import { CHAT_ADMIN_ACCEPTANCE_SQL } from "../scripts/operations/chat-admin-staging-acceptance.mjs";
+import {
+  CHAT_ADMIN_ACCEPTANCE_SQL,
+  CHAT_ADMIN_FIXTURE_RESOLUTION_SQL,
+} from "../scripts/operations/chat-admin-staging-acceptance.mjs";
 import {
   assertChatAdminCharacterInput,
   buildChatAdminCharacterContext,
@@ -297,6 +300,27 @@ test("schema verifier checks definitions, composite tenant constraints and globa
     /pg_constraint[\s\S]*count\(\*\)[\s\S]*<\s*14/iu,
   );
   assert.doesNotMatch(CHAT_ADMIN_POSTFLIGHT_SQL, /\bcommit\s*;/iu);
+});
+
+test("ACCEPT resolves only canonical synthetic Staging parents when all explicit fixture variables are absent", () => {
+  for (const token of [
+    "set transaction read only",
+    "staging_synthetic_fixture",
+    "workspace_processing_acceptance",
+    "fanmind_staging_fixture",
+    "ai_member",
+    "staging_operator_workspace",
+    "gen_random_uuid()",
+    "rollback;",
+  ]) {
+    assert.equal(
+      CHAT_ADMIN_FIXTURE_RESOLUTION_SQL.toLowerCase().includes(token.toLowerCase()),
+      true,
+      token,
+    );
+  }
+  assert.doesNotMatch(CHAT_ADMIN_FIXTURE_RESOLUTION_SQL, /email/iu);
+  assert.doesNotMatch(CHAT_ADMIN_FIXTURE_RESOLUTION_SQL, /\binsert\b|\bupdate\b|\bdelete\b/iu);
 });
 
 test("acceptance uses authenticated JWT subjects and keeps unexercised application flow OPEN", () => {

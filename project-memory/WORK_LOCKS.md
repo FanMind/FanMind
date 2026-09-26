@@ -1,3 +1,13 @@
+## LOCK-FM-CHATADMIN-ACCEPT-FIXTURE-RESOLUTION-20260926
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT
+- Status: ACTIVE
+- Risk: R3 repository correction; downstream ACCEPT remains R4.
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`.
+- Scope: fix only missing synthetic fixture resolution for the existing ChatAdmin Staging ACCEPT runner, focused regression tests, runbook and exact failure/recovery memory. No schema change and no target mutation in this lock.
+- Forbidden: direct Staging SQL acceptance, real capability/customer data, Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, weakening same-run VERIFY or rollback.
+- Release condition: bounded PR exact-head CI/security/governance green, independent review P1/P2=0, normal merge and post-merge current-main verification.
+
 ## LOCK-FM-CHATADMIN-STAGING-APPLY-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-APPLY
 - Action: NBA-CHATADMIN-STAGING-APPLY
