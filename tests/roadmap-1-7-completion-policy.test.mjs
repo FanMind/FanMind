@@ -16,6 +16,8 @@ const currentState = read("project-memory/CURRENT_STATE.md");
 const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
 const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
+const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
+const startedWork = read("project-memory/STARTED_WORK.md");
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -145,6 +147,10 @@ test("current canonical readers cannot reopen consumed reconciliation steps", ()
     taskLedger,
     "## FM-CREATOR-001 — exhausted broad action reconciliation",
   );
+  const creatorCurrentReconciliation = markdownSection(
+    currentState,
+    "## Creator broad action consumed; no repository scope currently admitted",
+  );
   const creatorAggregateLedger = markdownSection(taskLedger, "## FM-CREATOR-001\n");
   const applyAction = actionCatalog.actions.find(
     (action) => action.id === "NBA-CHATADMIN-STAGING-APPLY",
@@ -174,9 +180,26 @@ test("current canonical readers cannot reopen consumed reconciliation steps", ()
     creatorLedgerReconciliation,
     /PR #1186[\s\S]*d2af392dfa099da8d675481bb343154d829743ff/u,
   );
+  assert.match(
+    creatorCurrentReconciliation,
+    /PR #1186[\s\S]*d2af392dfa099da8d675481bb343154d829743ff/u,
+  );
+  assert.doesNotMatch(
+    creatorCurrentReconciliation,
+    /exact-head CI, independent review and normal merge remain next/u,
+  );
   assert.match(creatorAggregateLedger, /broad `NBA-CREATOR-INTELLIGENCE` ID is retired/u);
   assert.doesNotMatch(
     creatorAggregateLedger,
     /Only if `NBA-CREATOR-INTELLIGENCE` is admitted/u,
   );
+});
+
+test("historical merge evidence is not mislabeled as the current main head", () => {
+  for (const reader of [sessionHandoff, startedWork]) {
+    assert.doesNotMatch(
+      reader,
+      /PR #1189[^\n]*merged as current main/u,
+    );
+  }
 });

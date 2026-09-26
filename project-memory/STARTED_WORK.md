@@ -917,7 +917,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
 - Exact next step: distinct protected manual application-layer acceptance with synthetic Staging data and cleanup; Character -> manual Fan message -> exactly three revision-bound suggestions -> Copy -> manual-send handoff.
 
-- Repository closeout publication: APPLY reconciliation PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ACCEPT reconciliation PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as current main `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Exact-head checks/reviews converged with no unresolved blocking thread. Manual application flow remains separately owner-gated.
+- Repository closeout publication: APPLY reconciliation PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ACCEPT reconciliation PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Exact-head checks/reviews converged with no unresolved blocking thread. Manual application flow remains separately owner-gated.
 
 ## FM-GOV-GODMODE-001 — God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
