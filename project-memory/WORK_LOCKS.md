@@ -4,12 +4,13 @@
 - Status: IN_PROGRESS
 - Holder: interactive Codex Builder
 - Risk: R4 parent Staging acceptance; bounded source correction R3.
-- Baseline: `dd4ee6b65772e5833a09077a04c96254934067f9`.
+- Baseline: exact current main `d91405d67792aa65a14964553a09a36fa0c87de0` after merged #1201.
 - Scope: Character-bound composer/response isolation, actual runtime negative tests, reviewed Staging preparation and manual application-flow acceptance under FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926. Serialize all ChatAdmin source/target work against this lock.
 - Contracts: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-GOLDEN-CHATADMIN-001.
 - Release: current-head tests/CI, independent review, normal merge; target completion additionally requires exact reviewed Staging release, real manual flow and negatives, temporary-fixture cleanup plus independent countercheck. Source completion never closes target acceptance.
 - Recovery: ordinary source revert; temporary fixture cleanup restricted to exact recorded synthetic identities, with baseline/zero-residue proof. No real capability grant or customer deletion.
 - Deployment prerequisite reconciliation: after #1193/#1194 merged, two protected deploys exposed ambient test assumptions and deletion of generated release state. This lock also covers the minimal reviewed source-copy preservation and exact unchanged live-metadata recovery; existing Billing/capture proofs must be retained, never fabricated. No schema, secret-file, Stripe or Billing-setting mutation is in scope.
+- Current continuation: #1201 was merged/deployed and protected run `36253850844` passed the full synthetic flow and cleanup, but a P1 countercheck found that stop silently aborts a new acceptance-authorized write. Branch `fix/chatadmin-teardown-write-boundary-20260926` exclusively repairs that classification and requires exact redeploy/revalidation before lock release.
 
 ## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT
