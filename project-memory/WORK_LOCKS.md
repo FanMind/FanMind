@@ -1,3 +1,13 @@
+## LOCK-FM-CHATADMIN-STAGING-ACCEPT-RECONCILE-20260926
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT
+- Status: RELEASED_FOR_PR
+- Risk: R4 evidence reconciliation; repository documentation only.
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`.
+- Scope: reconcile successful protected ACCEPT run `36238536613` attempt 2 / `108396358120`, its failed attempt-1 history, independent rollback/zero-row/RLS/Production countercheck, close DB/RLS gate and expose the distinct manual application-flow gate.
+- Safety: no additional SQL, capability grant, customer/provider send, Production/Billing/Restore/Mobile mutation or repeat ACCEPT is authorized by this lock.
+- Released for PR: external evidence collection and exact-scope reconciliation are complete; exact-head CI/review and normal merge remain.
+
 ## LOCK-FM-CHATADMIN-STAGING-APPLY-RECONCILE-20260926
 - Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-APPLY
 - Action: NBA-CHATADMIN-STAGING-APPLY

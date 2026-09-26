@@ -1,3 +1,13 @@
+## FM-FAIL-CHATADMIN-ACCEPT-FIXTURE-20260926
+- Date: 2026-09-26
+- Status: RESOLVED
+- Task: FM-CHATADMIN-002 / NBA-CHATADMIN-STAGING-ACCEPT.
+- Attempt 1: protected run `36238536613` / job `108394659516`, exact main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, passed mode/contract/same-run schema VERIFY and then stopped before acceptance mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity`.
+- Cause: all ten required protected Staging synthetic fixture variables were empty.
+- Negative proof: immediate independent Staging postcheck showed capability/character/conversation/message = 0/0/0/0.
+- Resolution: owner populated the ten protected Staging environment variables. The same workflow run was re-run as attempt 2 / job `108396358120`; DB/RLS acceptance and cleanup passed, and the independent postflight again proved 0/0/0/0.
+- Superseded workaround: repository fallback PR #1188 was closed unmerged. Do not merge/recreate it or rerun the empty-variable attempt.
+
 ## FM-FAIL-META-PROD-PLACEHOLDER-20260919
 - Date: 2026-09-19
 - Status: RECORDED_NOT_REPEATED

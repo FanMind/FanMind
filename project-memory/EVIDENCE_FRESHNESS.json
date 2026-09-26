@@ -413,18 +413,30 @@
     },
     {
       "id": "EV-CHATADMIN-STAGING-SCHEMA-POSTFLIGHT-20260926",
-      "gate": "chatadmin_staging_accept",
+      "gate": "chatadmin_manual_flow",
       "class": "staging_smoke",
       "status": "VERIFIED",
-      "observed_at": "2026-09-26T10:30:37Z",
-      "source": "Independent read-only Supabase countercheck after APPLY confirms the four expected ChatAdmin tables, RLS, exact policies/grants, SECURITY INVOKER helper and global uniqueness index; capability/character/conversation/message row counts are all zero. Production drqkpdvtbbrrdwmtrodz has none of the four ChatAdmin tables.",
+      "observed_at": "2026-09-26T11:33:25Z",
+      "source": "Independent read-only post-ACCEPT countercheck after run 36238536613 successful attempt 2 / job 108396358120: Staging ChatAdmin capability/character/conversation/message row counts are 0/0/0/0, all four ChatAdmin tables retain RLS, and Production drqkpdvtbbrrdwmtrodz has none of the ChatAdmin tables. This mutable observation supports readiness for the still-open manual application flow, not durability of the completed DB/RLS ACCEPT.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
       "revalidate_on": [
         "staging_deploy",
         "runtime_config_change",
         "chatadmin_schema_or_acl_change",
         "target_binding_change",
-        "before_chatadmin_staging_accept"
+        "before_chatadmin_manual_flow"
+      ]
+    },
+    {
+      "id": "EV-CHATADMIN-STAGING-ACCEPT-20260926",
+      "gate": "chatadmin_staging_accept",
+      "class": "immutable_commit",
+      "status": "ACCEPTED",
+      "observed_at": "2026-09-26T11:33:25Z",
+      "source": "Durable protected GitHub Actions run 36238536613, successful attempt 2 / job 108396358120, exact reviewed commit 7655aed2cae6ff3588207fee6f2227fd5b8db41c, mode ACCEPT / confirmation run-chat-admin-acceptance; same-run CHAT_ADMIN_SCHEMA_STATE=VERIFIED, CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS, CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN and cleanup PASS. Attempt 1 failed before mutation at fixture_identity and is superseded by the successful protected-environment-configured rerun.",
+      "revalidate_on": [
+        "referenced_commit_missing_or_superseded",
+        "chatadmin_acceptance_workflow_contract_changed"
       ]
     }
   ],

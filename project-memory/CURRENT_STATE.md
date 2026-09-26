@@ -1,3 +1,10 @@
+## ChatAdmin synthetic DB/RLS ACCEPT completed — manual flow remains open — 2026-09-26
+- Protected ChatAdmin Staging Rollout run `36238536613`, successful attempt 2 / job `108396358120`, executed on exact reviewed main `7655aed2cae6ff3588207fee6f2227fd5b8db41c`.
+- Same-run schema preverify returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; rollback-only acceptance returned `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and intentionally `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; private passfile cleanup passed.
+- Attempt 1 / job `108394659516` had failed fail-closed at `fixture_identity` before acceptance mutation because all ten protected fixture variables were empty. After the owner populated those Staging environment variables, the same run was safely re-run.
+- Independent Staging postflight proves capability/character/conversation/message row counts remain 0/0/0/0 and all four ChatAdmin tables retain RLS; Production still has no ChatAdmin schema.
+- `chatadmin_staging_accept` is ACCEPTED and consumed. The distinct real application-layer flow remains OWNER_ACTION_REQUIRED: active Character -> manual synthetic Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff, with temporary fixture cleanup and no provider send.
+
 ## ChatAdmin Staging APPLY completed and independently verified — 2026-09-26
 - Owner-authorized protected run `36235870895` / job `108387398410` executed exact reviewed main `2aaf225fec29fd91c20f822185c770f87eb3d10d` against FanMind Staging Supabase `vshyhvgcmrlagvfnvomc` in `APPLY` mode with `apply-chat-admin-migration`.
 - Offline contract check pinned SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`; the controlled transaction completed and its built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.

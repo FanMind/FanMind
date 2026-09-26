@@ -108,6 +108,13 @@
     "chatadmin_staging_accept": {
       "task": "FM-CHATADMIN-002",
       "risk": "R4",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "Durable protected GitHub Actions run 36238536613, successful attempt 2 / job 108396358120, exact reviewed 7655aed2cae6ff3588207fee6f2227fd5b8db41c; same-run CHAT_ADMIN_SCHEMA_STATE=VERIFIED; CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS; CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN; independent Staging zero-row/RLS postflight PASS and Production schema absent"
+    },
+    "chatadmin_manual_flow": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
       "state": "OWNER_ACTION_REQUIRED",
       "required_for_sales": false
     }

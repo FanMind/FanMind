@@ -196,8 +196,14 @@ This register contains started, partially completed or follow-up work that could
 - Do not repeat APPLY.
 
 ## FM-LOOP-CHATADMIN-STAGING-ACCEPT-20260926
+- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-26.
+- Protected run `36238536613`, successful attempt 2 / job `108396358120` on exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c` passed same-run schema VERIFY, rollback-only DB/RLS acceptance and cleanup. Independent postflight confirms zero persistent ChatAdmin rows.
+- Attempt 1 failed before mutation at `fixture_identity`; owner-provided protected fixture variables resolved the prerequisite. Do not repeat DB/RLS ACCEPT.
+
+## FM-LOOP-CHATADMIN-MANUAL-FLOW-20260926
 - Status: OWNER_ACTION_REQUIRED; task FM-CHATADMIN-002.
-- Prerequisite satisfied: ChatAdmin Staging APPLY/postflight is VERIFIED with zero persistent ChatAdmin rows.
-- Remaining boundary: fresh current-main/target binding plus protected mode `ACCEPT` / confirmation `run-chat-admin-acceptance`; same-run pre-verify and complete synthetic transaction rollback are mandatory.
-- Close only after exact DB/RLS acceptance evidence and independent zero-row postflight. Manual application flow remains separate and OPEN.
+- Prerequisite satisfied: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED.
+- Remaining exact flow: protected Staging application/runtime acceptance with synthetic data only — active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
+- Close only after actual runtime/application evidence, negative tenant/authority proof and cleanup/zero-persistence evidence. No provider send, automatic send or Production mutation.
+
 
