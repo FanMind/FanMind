@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 
 export const CREATOR_FOUNDATION_PARENT_PINS = Object.freeze({
   incrementalHistory: {path: "../../supabase/migrations/20260803210000_preserve_incremental_conversation_history.sql", sha256: "79c81cdd204fc2fc45f4fa16ab381ce2278e16f13950914e125e22cfdca924f1"},
-  billingBaseline: {path: "../../docs/database/billing_prep_migration.sql", sha256: "8e0381421b9893e83ffc05d6dbad244929635fd72537dbe45f646c25b160b94e"},
+  dailyProvisioning: {path: "../../supabase/controlled/20260808230102_internal_daily_test_workspace_provisioning.sql", sha256: "235b1f7e57cd2c6ecfdc9d68b6412c3649aee776b7bb1bc8688d74ac0da5ed4a"},
   billing: {path: "../../supabase/migrations/20260628120000_expand_admin_billing.sql", sha256: "042c7050e660ece252d595cf94f3a68cc24f6bc21756bd4fd21e82c2fbedef46"},
   flags: {path: "../../supabase/migrations/20260707120000_internal_test_ai_maintenance_flags.sql", sha256: "6559555a1cf9a216fc4ea3a9c870270925f8f961deae2bf25603c76974fb6187"},
   masterData: {path: "../../supabase/migrations/20260710120000_profile_workspace_master_data.sql", sha256: "781f10ec30168fbe7f6c4ee94926ec8bacd3306f6cf762ac1f67a3511a99fcc5"},
@@ -75,8 +75,8 @@ function helperStatement(source, name) {
 // All selected DDL is copied byte-for-byte from independently pinned sources.
 // Unrelated feature FK action triggers are excluded by the catalog projection;
 // every user trigger and every outgoing scoped constraint remains compared.
-export const CREATOR_FOUNDATION_PARENT_PROFILE = "canonical_billing_baseline_aug16_v1";
-const structureLayers = ["workspace", "billingBaseline", "contacts", "conversations", "messageRetention", "memoryProfiles", "sourceMetadata", "contactNotes", "billing", "flags", "masterData", "contactTopFan", "cancellation", "provisioning", "profiles", "incrementalHistory", "assignment"];
+export const CREATOR_FOUNDATION_PARENT_PROFILE = "canonical_daily_without_optional_billing_baseline_aug16_v1";
+const structureLayers = ["workspace", "contacts", "conversations", "messageRetention", "memoryProfiles", "sourceMetadata", "contactNotes", "billing", "flags", "masterData", "contactTopFan", "cancellation", "provisioning", "dailyProvisioning", "profiles", "incrementalHistory", "assignment"];
 function structuralStatements(source) {
   // These exact, pinned sources use ordinary static statements for these DDL
   // forms. Strip standalone comments so historical commented examples cannot

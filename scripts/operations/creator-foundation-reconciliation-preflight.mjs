@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { closeSync, constants, fstatSync, openSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql} from "./creator-foundation-reconciliation-provider.mjs";
+import {creatorFoundationHostedPg17RoleProfile, creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql} from "./creator-foundation-reconciliation-provider.mjs";
 
 import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_PROFILE, CREATOR_FOUNDATION_PARENT_TABLES, CREATOR_FOUNDATION_PARENT_HELPERS, loadPinnedCreatorParentSources, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "./creator-foundation-reconciliation-parents.mjs";
 
@@ -143,6 +143,7 @@ export function buildCreatorFoundationReference({legacy, current, roleProfile, q
   }
   if (!object(roleProfile) || !Array.isArray(roleProfile.roles) || !Array.isArray(roleProfile.memberships) || !Array.isArray(roleProfile.provenance) || !/^[a-f0-9]{64}$/u.test(querySha256 ?? "")) fail("reference_incomplete");
   if (!equal(roleProfile.providerContract, creatorFoundationUpstreamProviderContract())) fail("provider_contract_missing");
+  if (!equal(roleProfile, creatorFoundationHostedPg17RoleProfile())) fail("role_profile_contract");
   for (const snapshot of [legacy, current]) {
     if (["namespaces", "authUidFunctions"].some(key => !equal(unorderedRows(snapshot.catalog[key]), unorderedRows(roleProfile.providerContract[key])))) fail("reference_provider_mismatch");
   }
@@ -181,6 +182,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   const profile = reference.roleProfile;
   if (!object(profile) || !Array.isArray(profile.roles) || !Array.isArray(profile.memberships) || !Array.isArray(profile.provenance)) { blockers.push("role_provenance_missing"); return result; }
   if (!equal(profile.providerContract, creatorFoundationUpstreamProviderContract())) { blockers.push("auth_uid_provider_contract_missing"); return result; }
+  if (!equal(profile, creatorFoundationHostedPg17RoleProfile())) { blockers.push("role_profile_contract"); return result; }
   const provider = {namespaces: profile.providerContract.namespaces, authUidFunctions: profile.providerContract.authUidFunctions};
   // Every individual grant (including its grantor and options) needs provenance.
   // Names such as supabase_* never bypass this exact allowlist comparison.

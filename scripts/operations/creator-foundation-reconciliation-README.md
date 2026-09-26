@@ -43,10 +43,12 @@ in addition to the existing Creator extension-column scope.
 An additional permissive policy is a difference, even if all named canonical
 policies still exist.
 
-The supported parent profile is `canonical_billing_baseline_aug16_v1`. It pins
-and replays the complete table DDL from the MVP baseline, explicit optional
-Billing preparation baseline, the relevant June–August migrations, and the
-controlled server-owned-column and member-boundary layers. Native CI has 144
+The supported parent profile is
+`canonical_daily_without_optional_billing_baseline_aug16_v1`. It pins and
+replays the complete table DDL from the MVP baseline, the controlled Daily
+workspace CHECK expansion, the relevant June–August migrations, and the
+controlled server-owned-column and member-boundary layers. The optional Billing
+preparation baseline is deliberately absent. Native CI has 144
 parent/dependency columns after either Creator variant, 22 policies, seven original
 helper definitions and five original user triggers. These are full source tables,
 not shortened fixtures. Native CI executes the actual workspace INSERT trigger
@@ -57,7 +59,7 @@ TABLE/FUNCTION default privileges before creating product objects; subsequent
 pinned source revokes and column grants are then applied unchanged.
 
 This is an explicit supported source replay, not evidence that Staging installed
-that optional billing baseline or every controlled product module. Daily,
+every controlled product module. Optional Billing preparation,
 account-deletion and Admin-CRM variants are not inferred. Additional parent
 columns, policies, user triggers, constraints, indexes, privileges or unknown
 helpers prevent an exact result. Target definitions never supply expected values.
@@ -127,12 +129,16 @@ node scripts/operations/creator-foundation-reconciliation-preflight.mjs \
 ```
 
 A role profile has `roles`, `memberships` and `provenance` arrays, plus a
-`providerContract` object. Each membership
+`providerContract` object. This source profile is fixed to 21 complete role rows
+and 22 complete membership edges. Each membership
 retains its role, member, grantor and all three membership options. Each needs an
 exact `provenance` entry with the complete `membership` object and a `source` URL
 bound to a full commit in `supabase/postgres` or `supabase/realtime`. Known provider
 names never skip comparison. A role profile requires independent source review;
 copying target observations does not establish that its grants are authorized.
+The builder and classifier require exact equality with
+`creatorFoundationHostedPg17RoleProfile()`; a caller cannot authorize a partial
+or altered profile merely by supplying matching provenance fields.
 
 Only the complete `supabase_upstream_source_pg17_v1` provider contract exported
 by `creatorFoundationUpstreamProviderContract()` in the provider module is
@@ -148,8 +154,9 @@ function body uses native PostgreSQL SHA256 over its exact UTF-8 `prosrc`, with
 no extension dependency. Owner, all function metadata, configuration and direct
 and effective ACLs remain exact comparison fields. The NULL-returning CI stub
 is removed and cannot serve as a reference. The native test creates the pinned
-function under `supabase_admin`, applies the explicit routine grants to
-`postgres`/`dashboard_user`, then transfers ownership to `supabase_auth_admin`.
+function under its original `postgres` owner, asserts that owner before any
+transition, applies the explicit routine grants to `postgres`/`dashboard_user`,
+then transfers ownership to `supabase_auth_admin`.
 This reproduces the reviewed grants and grantors; it does not infer a Hosted
 installation history. The owner migration can warn on failure, so observations
 still must match the successful source profile exactly.
