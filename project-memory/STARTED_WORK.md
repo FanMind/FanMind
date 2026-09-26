@@ -1,5 +1,5 @@
 ## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
-- Status: CODE_CHANGED
+- Status: MERGED_VERIFIED
 - Risk: R2
 - Work lock: LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925
 - Baseline: exact main `094334c38e9942affe7e8100aeb02df45808e530` after #1183 reconciled the bounded onboarding input contract and released its predecessor lock.
@@ -7,6 +7,9 @@
 - Acceptance: return only aggregate character/question/exclamation/emoji statistics and top emojis for one exact Workspace/Creator. No raw message text or message IDs in the summary, no automatic profile/voice approval, no provider/model call, no persistence, no SQL or target mutation.
 - Negative paths: cross-Creator scope or sample-size mismatch fail closed; privacy regression proves raw sample text and message IDs are absent from the summary.
 - Boundary: this is evidence preparation for later human review only. It does not derive subjective style scores, create an approved Creator voice profile, use real private samples in Git, run blinded quality, activate runtime/provider or mutate Staging/Production.
+- Result: PR #1184 final head `12924950dfcfee263c48774c16c667d9bd5c6167` passed all eight required exact-head checks and independent review with no remaining major issue after the emoji-punctuation P2 correction; the thread is resolved and normal squash merge produced exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`.
+- Post-merge repository verify: current main contains source blob `55efe11da5916a13d90c8c287e49bbb62c6798ac` and test blob `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3`.
+- Resume: keep this aggregate-summary scope closed. Recompute the Builder Manager and admit only a distinct still-open Creator increment; real samples, subjective profile approval, blinded quality and runtime/provider/target acceptance remain separate.
 - Recovery: ordinary repository revert; no external state changed.
 
 ## FM-CREATOR-001 — bounded voice onboarding input contract — 2026-09-25
