@@ -49,6 +49,17 @@ test("manual flow accepts only its exact protected Staging request", () => {
   ]) assert.throws(()=>validateManualFlowEnvironment({...env,...change}));
 });
 
+test("existing admin login accepts a shorter configured password while synthetic owner passwords retain their contract", () => {
+  const existingAdmin={...env,FANMIND_STAGING_ADMIN_E2E_PASSWORD:"existing-pass"};
+  assert.doesNotThrow(()=>validateManualFlowEnvironment(existingAdmin));
+  for(const [key,code,invalid] of [
+    ["FANMIND_STAGING_E2E_PASSWORD","fixture_primary_credential",[undefined,"", "short", "valid-length-password\n"]],
+    ["FANMIND_STAGING_E2E_SECONDARY_PASSWORD","fixture_secondary_credential",[undefined,"", "short", "valid-length-password\r"]],
+    ["FANMIND_STAGING_ADMIN_E2E_PASSWORD","fixture_admin_credential",[undefined,"", "existing\npass", "existing\rpass"]],
+  ]) for(const password of invalid) assert.throws(()=>validateManualFlowEnvironment({...existingAdmin,[key]:password}),{message:`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`});
+  for(const change of [{FANMIND_ADMIN_EMAILS:"different-admin@example.invalid"},{FANMIND_STAGING_ADMIN_E2E_EMAIL:env.FANMIND_STAGING_E2E_EMAIL}]) assert.throws(()=>validateManualFlowEnvironment({...existingAdmin,...change}),{message:"CHAT_ADMIN_MANUAL_FLOW_ERROR=fixture_admin"});
+});
+
 test("reservation is sanitized and cannot authorize mutation without the uploaded exact recovery binding", () => {
   const directory=mkdtempSync(join(tmpdir(),"chatadmin-reservation-test-"));
   const current={...env,RUNNER_TEMP:directory,GITHUB_RUN_ID:"12345",GITHUB_RUN_ATTEMPT:"2"};
