@@ -1,7 +1,9 @@
 ## FM-CHATADMIN-002 — manual application-flow completion — 2026-09-26
 - Status: IN_PROGRESS; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW; Priority: first by FM-DEC-024.
 - Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926; PR #1193.
-- Remaining outcome: source Character/late-result isolation correction, current reviewed Staging deployment, synthetic actual UI/API manual flow with negatives, fixture cleanup and independent countercheck.
+- Remaining outcome: merge the bounded environment-sensitive deploy-test correction, current reviewed Staging deployment, synthetic actual UI/API manual flow with negatives, fixture cleanup and independent countercheck.
+- Source completion: PR #1193 head `841fad48ee26d01814b86ccd22b457f7b5a902fd` passed exact-head CI and final independent review without P0/P1/P2, then merged normally as `955b8bf425bc2073e7e4b5d0316be1d478a313e4`.
+- New Builder blocker: Staging deploy `36247833422` failed before restart because the Confirmed-Chat deletion test assumed an unknown runtime while executed under the actual Staging environment. `FM-CHATADMIN-002-STAGING-DEPLOY-TEST` corrects only that test contract from baseline `955b8bf425bc2073e7e4b5d0316be1d478a313e4`; explicit Staging/Production/unknown assertions remain required.
 - Fresh prerequisite finding: live Staging release f0c7a84e6105752d34b489520fb92d2bb7e5b61a predates ChatAdmin; all four installed ChatAdmin tables have zero rows. No target fixture was written.
 - Completion: source review/CI/merge alone is a partial result; chatadmin_manual_flow remains open until current target evidence and cleanup exist.
 
