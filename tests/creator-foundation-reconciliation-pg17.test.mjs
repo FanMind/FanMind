@@ -13,7 +13,7 @@ import {
   CREATOR_FOUNDATION_SOURCE_PINS,
 } from "../scripts/operations/creator-foundation-reconciliation-preflight.mjs";
 
-import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
+import {buildCreatorFoundationProviderReferenceSql, creatorFoundationHostedPg17RoleProfile, creatorFoundationUpstreamProviderContract, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
 
 import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_PROFILE, buildCreatorFoundationParentReferenceSql, creatorFoundationParentPolicyInventory} from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
 
@@ -64,15 +64,15 @@ function sql(statement, database = "postgres") {
 }
 
 const parents = `
-CREATE SCHEMA auth AUTHORIZATION supabase_admin;
+CREATE SCHEMA auth AUTHORIZATION postgres;
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
 GRANT ALL ON SCHEMA auth TO supabase_auth_admin,dashboard_user;
 GRANT USAGE ON SCHEMA auth,public TO postgres,anon,authenticated,service_role;
+${buildCreatorFoundationProviderReferenceSql()}
+ALTER SCHEMA auth OWNER TO supabase_admin;
 SET ROLE supabase_admin;
-${loadPinnedCreatorProviderAuthSql()}
-GRANT ALL ON FUNCTION auth.uid() TO postgres,dashboard_user;
+GRANT USAGE ON SCHEMA auth TO postgres;
 RESET ROLE;
-ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;
 ${buildCreatorFoundationParentReferenceSql()}
 `;
 
@@ -115,6 +115,9 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.deepEqual(current.catalog.parentPolicies.map(({schema, table, name}) => ({schema, table, name})).sort((a, b) => a.name.localeCompare(b.name)), creatorFoundationParentPolicyInventory());
     assert.equal(current.catalog.parentFunctions.length, 7);
     assert.equal(current.catalog.parentTriggers.filter(row => !row.internal).length, 5);
+    assert.equal(current.catalog.parentConstraints.some(row => row.name === "workspaces_billing_provider_check"), false);
+    assert.match(current.catalog.parentConstraints.find(row => row.name === "workspaces_commercial_option_check").definition, /internal_daily_test/u);
+    assert.match(current.catalog.parentConstraints.find(row => row.name === "workspaces_payment_collection_method_check").definition, /card/u);
     assert.ok(current.catalog.parentDependencies.some(row => row.sourceKind === "policy" && row.targetIdentity === "workspace_owner_active_mutation_allowed(uuid)"));
     // Vanilla PG17 includes monitor-role memberships granted by postgres, but
     // their grantor is not a privilege path into the Creator/browser roles.
@@ -126,15 +129,24 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     const provider = creatorFoundationUpstreamProviderContract();
     assert.deepEqual([...current.catalog.namespaces].sort((a, b) => a.schema.localeCompare(b.schema)), provider.namespaces);
     assert.deepEqual(current.catalog.authUidFunctions, provider.authUidFunctions);
-    const reference = buildCreatorFoundationReference({ legacy, current,
-      roleProfile: { roles: current.catalog.roles, memberships: [], provenance: [], providerContract: creatorFoundationUpstreamProviderContract() }, querySha256: digest(query) });
+    const roleProfile = creatorFoundationHostedPg17RoleProfile();
+    assert.throws(() => buildCreatorFoundationReference({legacy, current, roleProfile: {roles: current.catalog.roles, memberships: [], provenance: [], providerContract: creatorFoundationUpstreamProviderContract()}, querySha256: digest(query)}), /role_profile_contract/u);
+    const reference = buildCreatorFoundationReference({ legacy, current, roleProfile, querySha256: digest(query) });
     const referenceJson = JSON.stringify(reference);
     const options = { referenceJson, trustedReferenceSha256: digest(referenceJson), expectedQuerySha256: digest(query) };
     const classify = (snapshot) => classifyCreatorFoundationSnapshot(snapshot, options);
-    assert.equal(classify(legacy).status, "LEGACY_EXACT");
-    assert.equal(classify(current).status, "CURRENT_EXACT");
-    assert.equal(classifyCreatorFoundationSnapshot(current, { ...options, trustedReferenceSha256: "0".repeat(64) }).status, "INCOMPLETE");
-    for (const snapshot of [legacy, current]) {
+    assert.equal(classify(legacy).status, "DRIFT");
+    assert.equal(classify(current).status, "DRIFT");
+    const hostedLegacy = structuredClone(legacy);
+    const hostedCurrent = structuredClone(current);
+    for (const snapshot of [hostedLegacy, hostedCurrent]) {
+      snapshot.catalog.roles = structuredClone(roleProfile.roles);
+      snapshot.catalog.memberships = structuredClone(roleProfile.memberships);
+    }
+    assert.equal(classify(hostedLegacy).status, "LEGACY_EXACT");
+    assert.equal(classify(hostedCurrent).status, "CURRENT_EXACT");
+    assert.equal(classifyCreatorFoundationSnapshot(hostedCurrent, { ...options, trustedReferenceSha256: "0".repeat(64) }).status, "INCOMPLETE");
+    for (const snapshot of [hostedLegacy, hostedCurrent]) {
       const result = classify(snapshot);
       assert.equal(result.applyAllowed, false);
       assert.equal(result.targetAccepted, false);
@@ -173,6 +185,9 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     const mutations = [
       ["real timestamp helper", "ALTER FUNCTION public.set_contacts_updated_at() SECURITY DEFINER;", "parentFunctions"],
       ["settings retention constraint", "ALTER TABLE public.workspace_analysis_settings DROP CONSTRAINT workspace_analysis_settings_personal_content_retention_days_check;", "parentConstraints"],
+      ["optional billing baseline constraint", "ALTER TABLE public.workspaces ADD CONSTRAINT workspaces_billing_provider_check CHECK (billing_provider IS NULL OR billing_provider IN ('manual','stripe')) NOT VALID;", "parentConstraints"],
+      ["Daily commercial option", "ALTER TABLE public.workspaces DROP CONSTRAINT workspaces_commercial_option_check; ALTER TABLE public.workspaces ADD CONSTRAINT workspaces_commercial_option_check CHECK (commercial_option IN ('pilot_only','starter_paid_setup','starter_no_setup_commitment'));", "parentConstraints"],
+      ["Daily payment method", "ALTER TABLE public.workspaces DROP CONSTRAINT workspaces_payment_collection_method_check; ALTER TABLE public.workspaces ADD CONSTRAINT workspaces_payment_collection_method_check CHECK (payment_collection_method IS NULL OR payment_collection_method IN ('none','manual_invoice','sepa_direct_debit'));", "parentConstraints"],
       ["settings dependency policy", "ALTER POLICY workspace_analysis_settings_select_requires_workspace_owner ON public.workspace_analysis_settings USING(true);", "parentPolicies"],
       ["settings dependency column ACL", "GRANT UPDATE(fan_analysis_enabled) ON public.workspace_analysis_settings TO authenticated;", "parentColumns"],
       ["server-owned billing column UPDATE", "GRANT UPDATE(billing_status) ON public.workspaces TO authenticated;", "parentColumns"],

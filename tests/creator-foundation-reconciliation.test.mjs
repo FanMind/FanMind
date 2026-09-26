@@ -4,14 +4,15 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import {creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
-import {buildCreatorFoundationParentReferenceSql, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
+import {buildCreatorFoundationProviderReferenceSql, creatorFoundationHostedPg17RoleProfile, creatorFoundationUpstreamProviderContract, loadPinnedCreatorProviderAuthSql, CREATOR_FOUNDATION_PROVIDER_PINS} from "../scripts/operations/creator-foundation-reconciliation-provider.mjs";
+import {CREATOR_FOUNDATION_PARENT_PINS, CREATOR_FOUNDATION_PARENT_PROFILE, buildCreatorFoundationParentReferenceSql, creatorFoundationParentHelperBodies, creatorFoundationParentPolicyInventory} from "../scripts/operations/creator-foundation-reconciliation-parents.mjs";
 import {
   classifyCreatorFoundationSnapshot,
   loadPinnedCreatorFoundationSources,
   verifyCreatorFoundationSource,
   compareCreatorFoundationCatalogs,
   buildCreatorFoundationReference,
+  CREATOR_FOUNDATION_SOURCE_PINS,
   main,
 } from "../scripts/operations/creator-foundation-reconciliation-preflight.mjs";
 
@@ -43,8 +44,70 @@ test("provider reference binds the original auth.uid statement, body and complet
   assert.equal(creatorFoundationUpstreamProviderContract().authUidFunctions[0].config, null);
 });
 
+test("provider replay preserves the original postgres auth.uid owner before the reviewed owner transition", () => {
+  const sql = buildCreatorFoundationProviderReferenceSql();
+  assert.match(sql, /^SET ROLE postgres;/u);
+  assert.match(sql, /original_owner_invalid[\s\S]*RESET ROLE;[\s\S]*ALTER FUNCTION auth\.uid\(\) OWNER TO supabase_auth_admin;/u);
+  assert.match(sql, /ALTER FUNCTION auth\.uid\(\) OWNER TO supabase_auth_admin;[\s\S]*SET ROLE supabase_auth_admin;[\s\S]*GRANT ALL ON FUNCTION auth\.uid\(\) TO postgres,dashboard_user;/u);
+});
+
+test("Hosted PG17 role profile is complete, pinned and immutable across callers", () => {
+  const profile = creatorFoundationHostedPg17RoleProfile();
+  assert.equal(profile.roles.length, 21);
+  assert.equal(profile.memberships.length, 22);
+  assert.equal(profile.provenance.length, 22);
+  assert.equal(profile.roles.some(role => role.name === "supabase_privileged_role"), true);
+  assert.deepEqual(
+    profile.roles.find(role => role.name === "postgres").config,
+    ['search_path="\\$user", public, extensions'],
+  );
+  assert.equal(profile.memberships.some(edge => edge.role === "authenticator" && edge.member === "supabase_storage_admin"), true);
+  assert.deepEqual(
+    profile.memberships
+      .filter(edge => edge.member === "pg_monitor")
+      .map(edge => [edge.role, edge.grantor]),
+    [
+      ["pg_read_all_settings", "postgres"],
+      ["pg_read_all_stats", "postgres"],
+      ["pg_stat_scan_tables", "postgres"],
+    ],
+  );
+  assert.equal(
+    profile.memberships
+      .filter(edge => edge.member !== "pg_monitor")
+      .every(edge => edge.grantor === "supabase_admin"),
+    true,
+  );
+  assert.equal(profile.provenance.every(entry => entry.membership && entry.source.startsWith("https://github.com/supabase/")), true);
+  profile.roles.pop();
+  assert.equal(creatorFoundationHostedPg17RoleProfile().roles.length, 21);
+});
+
+test("classifier rejects a caller-altered Hosted role profile even with a valid reference hash", () => {
+  const roleProfile = creatorFoundationHostedPg17RoleProfile();
+  roleProfile.roles.pop();
+  const querySha256 = "a".repeat(64);
+  const reference = {
+    schemaVersion: 1,
+    scope: "creator_foundation_catalog_only",
+    sourcePins: Object.fromEntries(Object.entries(CREATOR_FOUNDATION_SOURCE_PINS).map(([name, pin]) => [name, {sha256: pin.sha256, gitBlob: pin.gitBlob}])),
+    parentSourcePins: CREATOR_FOUNDATION_PARENT_PINS,
+    parentProfile: CREATOR_FOUNDATION_PARENT_PROFILE,
+    querySha256,
+    variants: {},
+    roleProfile,
+  };
+  const referenceJson = JSON.stringify(reference);
+  const result = classifyCreatorFoundationSnapshot({}, {referenceJson, trustedReferenceSha256: sha256(referenceJson), expectedQuerySha256: querySha256});
+  assert.equal(result.status, "INCOMPLETE");
+  assert.ok(result.blockers.includes("role_profile_contract"));
+});
+
 test("parent reference replays complete pinned parent DDL and real authority helpers", () => {
   const sql = buildCreatorFoundationParentReferenceSql();
+  assert.equal(CREATOR_FOUNDATION_PARENT_PROFILE, "canonical_daily_without_optional_billing_baseline_aug16_v1");
+  assert.doesNotMatch(sql, /workspaces_billing_provider_check/u);
+  assert.match(sql, /internal_daily_test/u);
   assert.equal(creatorFoundationParentPolicyInventory().length, 22);
   assert.equal((sql.match(/create policy /gu) ?? []).length, 22);
   for (const table of ["workspaces", "workspace_members", "contacts", "conversations", "contact_ai_profiles", "workspace_analysis_settings"]) assert.match(sql, new RegExp(`create table if not exists public\\.${table}\\s*\\(`, "u"));
