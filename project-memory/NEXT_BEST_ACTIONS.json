@@ -27,7 +27,7 @@
       "priority": 7,
       "task": "FM-REG-003",
       "gate": "registration_admin_crm",
-      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
+      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919",
@@ -65,7 +65,7 @@
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
+      "title": "Begrenzte Staging-RPC-Ausnahmen pr\u00fcfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-SEC-OWNER-002",
@@ -103,7 +103,7 @@
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
@@ -141,7 +141,7 @@
       "priority": 80,
       "task": "FM-SALES-001",
       "gate": "sales_handoff",
-      "title": "Finalen Production-Demo- und Sales-Handoff schließen",
+      "title": "Finalen Production-Demo- und Sales-Handoff schlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -182,7 +182,7 @@
       "priority": 11,
       "task": "FM-SOC7-001",
       "gate": "phase7_social",
-      "title": "Externe Phase-7-Abnahme kanalweise abschließen",
+      "title": "Externe Phase-7-Abnahme kanalweise abschlie\u00dfen",
       "requires_owner": true,
       "parallel_safe": true,
       "owner_action_id": "FM-SOC7-OWNER-EXTERNAL-20260911",
@@ -247,7 +247,7 @@
       "priority": 4,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_apply",
-      "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
+      "title": "ChatAdmin-Schema gesch\u00fctzt auf Staging anwenden",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-CHATADMIN-OWNER-APPLY-20260921",
@@ -268,7 +268,7 @@
       "priority": 5,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_accept",
-      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausführen",
+      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausf\u00fchren",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-CHATADMIN-OWNER-ACCEPT-20260926",
@@ -320,14 +320,14 @@
         "VERIFIED",
         "RECONCILED"
       ],
-      "instruction": "Completed and consumed read-only observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof. Continue only NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT."
+      "instruction": "Completed and consumed read-only observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof. The distinct source preflight is now consumed; continue only NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN."
     },
     {
       "id": "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT",
-      "priority": 2,
+      "priority": 12,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_reconciliation_preflight",
-      "title": "Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten",
+      "title": "Creator-Foundation-Vertr\u00e4ge lesend abgleichen und \u00dcbergang vorbereiten",
       "requires_owner": false,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -341,7 +341,54 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline."
+      "instruction": "Completed and consumed repository source package. PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred. Continue only NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-STAGING-CATALOG",
+      "priority": 13,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_staging_catalog",
+      "title": "Creator-Foundation-Katalog auf Staging lesend beobachten und Referenzen pr\u00fcfen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CREATOR-OWNER-FOUNDATION-STAGING-CATALOG-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_reconciliation_preflight"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "RECONCILED"
+      ],
+      "instruction": "Completed and consumed read-only catalog observation. Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry. Continue only NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+      "priority": 2,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_profile_transition_design",
+      "title": "Creator-Profile unabh\u00e4ngig abgleichen und begrenzten Quellen\u00fcbergang entwerfen",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_reconciliation_preflight"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT",
+        "NBA-CREATOR-FOUNDATION-STAGING-CATALOG"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Source transition design drafted in `docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md`; do not re-author or republish it unchanged. Exact next source steps: isolated native PG17 proof of original auth.uid postgres-to-auth-owner sequence; independently reproduce the Daily workspace CHECK profile without assuming the optional billing baseline; complete independently pinned Hosted role/configuration/membership provenance. These source tasks remain unperformed and executable; no exclusively external blocker is established. Bounded repository/offline source work at priority 2 under existing user authorization and FM-DEC-024. Independently reconcile supported provider/role and installed-parent source profiles using the already captured private observation and separately pinned source evidence. Never use target-derived expected values. Design a source-defined forward transition with exact preconditions, supported baseline, authorization boundaries, atomicity, cleanup/recovery and meaningful isolated tests. No APPLY, runtime activation, target calls, provider calls, workflow dispatch, target DDL/data/role changes, temporary target helper or customer fixture. Bounded completion: publish independently supported profile inputs and a reviewable source transition design, or record PARTIAL with the exact missing external provenance. If external input blocks completion, make the specific action requires_owner=true and link an exact owner/evidence item so existing selection reports OWNER_ACTION_REQUIRED; do not call PARTIAL completed or keep a generic executable placeholder. No repeated permission question for already authorized safe offline work. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry."
     }
   ],
   "retired_actions": [

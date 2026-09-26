@@ -464,6 +464,33 @@
         "referenced_commit_missing_or_superseded",
         "manual_flow_acceptance_contract_changed"
       ]
+    },
+    {
+      "id": "EV-CREATOR-FOUNDATION-PREFLIGHT-PR1204",
+      "gate": "creator_foundation_reconciliation_preflight",
+      "class": "immutable_commit",
+      "status": "ACCEPTED",
+      "observed_at": "2026-09-26T18:18:16.062Z",
+      "source": "PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred.",
+      "revalidate_on": [
+        "referenced_commit_missing_or_superseded",
+        "creator_foundation_preflight_contract_changed"
+      ]
+    },
+    {
+      "id": "EV-CREATOR-FOUNDATION-STAGING-CATALOG-20260926",
+      "gate": "creator_foundation_staging_catalog",
+      "class": "provider_console",
+      "status": "RECONCILED",
+      "observed_at": "2026-09-26T18:24:28.937033Z",
+      "source": "Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.",
+      "revalidate_on": [
+        "staging_schema_or_acl_change",
+        "provider_role_or_parent_profile_change",
+        "query_or_reference_contract_change",
+        "target_binding_or_deployed_release_change",
+        "before_any_separately_authorized_target_transition"
+      ]
     }
   ],
   "rule": "Mutable evidence must carry observed_at when VERIFIED/ACCEPTED/PRODUCTION_CONFIRMED. Deferred or missing evidence stays explicit and does not silently expire into success."
