@@ -191,7 +191,13 @@ This register contains started, partially completed or follow-up work that could
 - Boundary: later hardening ideas are new bounded scope. The distinct ChatAdmin Staging APPLY owner action is ready for separate authorization; this loop never authorizes it.
 
 ## FM-LOOP-CHATADMIN-APPLY-AFTER-GODMODE-20260922
+- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-26.
+- Protected owner-authorized APPLY `36235870895` / `108387398410` completed on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d`; workflow and independent Staging postflight are VERIFIED, tables remain empty, Production is unchanged.
+- Do not repeat APPLY.
+
+## FM-LOOP-CHATADMIN-STAGING-ACCEPT-20260926
 - Status: OWNER_ACTION_REQUIRED; task FM-CHATADMIN-002.
-- Preconditions satisfied: Staging VERIFY = ABSENT; God Mode v1 merged/reconciled.
-- Remaining boundary: fresh current-main/target binding and separate protected owner/environment authorization for APPLY. ACCEPT remains later.
-- Builder must not execute or simulate the protected write.
+- Prerequisite satisfied: ChatAdmin Staging APPLY/postflight is VERIFIED with zero persistent ChatAdmin rows.
+- Remaining boundary: fresh current-main/target binding plus protected mode `ACCEPT` / confirmation `run-chat-admin-acceptance`; same-run pre-verify and complete synthetic transaction rollback are mandatory.
+- Close only after exact DB/RLS acceptance evidence and independent zero-row postflight. Manual application flow remains separate and OPEN.
+

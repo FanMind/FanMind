@@ -1,3 +1,13 @@
+## FM-AUTH-CHATADMIN-STAGING-APPLY-20260926
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly authorized only the controlled ChatAdmin Staging APPLY and then manually dispatched the protected workflow after the exact inputs were checked.
+- Exact scope consumed: one `FanMind ChatAdmin Staging Rollout` run `36235870895` / job `108387398410` against reviewed commit `2aaf225fec29fd91c20f822185c770f87eb3d10d`, target Supabase Staging `vshyhvgcmrlagvfnvomc`, mode `APPLY`, confirmation `apply-chat-admin-migration`.
+- Pinned migration: `supabase/controlled/20260920230000_chat_admin_multi_character.sql`, SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`.
+- Result: workflow APPLY and its built-in postflight succeeded with `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`. Independent read-only Supabase countercheck confirms all four expected ChatAdmin tables, RLS/policies/grants, the SECURITY INVOKER helper and global uniqueness index; all four tables contain zero rows. Production `drqkpdvtbbrrdwmtrodz` has none of the four ChatAdmin tables.
+- Not authorized/consumed: no ACCEPT run, real capability grant, real customer data, Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, automatic send or manual application-flow acceptance.
+- Reuse: forbidden. Any later protected mutation, including ChatAdmin ACCEPT or Production apply, is a distinct exact action.
+
 ## FM-AUTH-ADMIN-CRM-PRODUCTION-APPLY-20260919
 - Status: CONSUMED
 - Risk: R4

@@ -261,7 +261,26 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "The read-only ChatAdmin VERIFY is consumed as ABSENT and God Mode v1 is merged/reconciled. Before any write, freshly re-read current main and the protected Staging target, then obtain separate owner/environment authorization for exactly FanMind ChatAdmin Staging Rollout mode APPLY with confirmation apply-chat-admin-migration and the workflow's required write acknowledgement. The builder must not dispatch this protected write autonomously. ACCEPT remains a later separate protected action after successful APPLY/postflight."
+      "instruction": "Completed and consumed: owner-authorized protected run 36235870895 / job 108387398410 on exact 2aaf225fec29fd91c20f822185c770f87eb3d10d applied only the checksum-pinned ChatAdmin migration to Staging vshyhvgcmrlagvfnvomc; workflow postflight and independent target/RLS/ACL/zero-row countercheck are VERIFIED, while Production remains without the ChatAdmin tables. Do not repeat APPLY. Continue only through the distinct protected ChatAdmin ACCEPT action."
+    },
+    {
+      "id": "NBA-CHATADMIN-STAGING-ACCEPT",
+      "priority": 5,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_accept",
+      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausführen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-ACCEPT-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_staging_apply"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Before dispatch, freshly re-read exact current main and the protected Staging target. Run only FanMind ChatAdmin Staging Rollout in mode ACCEPT with confirmation run-chat-admin-acceptance. The same run must first verify CHAT_ADMIN_SCHEMA_STATE=VERIFIED and then exercise only distinct configured synthetic identities with complete transaction rollback. No persistent capability/Character/Conversation/Message row, real user/customer data, Production/provider/Billing/Restore/Mobile mutation or automatic send is allowed. The real Character -> Fan-Nachricht -> exactly three suggestions -> Copy -> manual-send handoff remains a separate later application acceptance."
     }
   ],
   "retired_actions": [

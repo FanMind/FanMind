@@ -8,11 +8,19 @@
 - Consumed outcome: do not repeat this VERIFY only because `main` advances. The next repository step is `FM-GOV-GODMODE-001`.
 
 ## FM-CHATADMIN-OWNER-APPLY-20260921 — ChatAdmin Staging APPLY nach God Mode
-- Status: OWNER_ACTION_REQUIRED
+- Status: COMPLETED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921; Risk: R4 protected Staging write.
-- Why now: read-only VERIFY run `35652258052` proved exact Staging state `ABSENT`; God Mode v1 PR #1157 is merged and post-merge repository/runtime verification is reconciled on exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
-- Required protected scope: re-read the current main/target immediately before action, then separately authorize only `FanMind ChatAdmin Staging Rollout` mode `APPLY` with confirmation `apply-chat-admin-migration` and the workflow's exact write acknowledgement. Never infer authorization from this Project-Memory entry.
-- Boundary: the builder must not dispatch APPLY autonomously. ACCEPT remains a later separate protected step after successful APPLY/postflight. No Production/capability/provider/Billing/Restore/Mobile mutation is bundled.
+- Result: owner-authorized protected run `36235870895` / job `108387398410` applied only the checksum-pinned ChatAdmin schema on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d` to Staging `vshyhvgcmrlagvfnvomc`; built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`.
+- Independent countercheck: four expected RLS tables/policies/grants and SECURITY INVOKER helper are present, all ChatAdmin tables remain empty, and Production `drqkpdvtbbrrdwmtrodz` still has none of these tables.
+- Consumed boundary: do not rerun APPLY. No real capability grant, customer data, Production/provider/Billing/Restore/Mobile mutation or application-flow acceptance occurred.
+
+## FM-CHATADMIN-OWNER-ACCEPT-20260926 — ChatAdmin synthetische DB/RLS-Acceptance
+- Status: OWNER_ACTION_REQUIRED
+- Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-ACCEPT-20260926; Risk: R4 protected Staging rollback-only acceptance.
+- Why now: Staging APPLY/postflight is independently VERIFIED and left all four ChatAdmin tables empty.
+- Required protected scope: re-read exact current `main` and Staging target immediately before dispatch, then run only `FanMind ChatAdmin Staging Rollout` in mode `ACCEPT` with confirmation `run-chat-admin-acceptance`. The workflow must first return `CHAT_ADMIN_SCHEMA_STATE=VERIFIED` on the same target and use only its configured distinct synthetic identities.
+- Boundary: complete transactional rollback is mandatory; no persistent capability/Character/Conversation/Message row, real user/customer mutation, Production/provider/Billing/Stripe/Tax/Restore/Mobile action or automatic send is allowed. The real Character -> Fan-Nachricht -> drei Vorschläge -> Copy -> manueller Send-Handoff remains a later application acceptance.
+
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
 - Status: COMPLETED

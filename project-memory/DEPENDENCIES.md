@@ -138,12 +138,22 @@ Cross-domain dependencies must be linked to the same FanMind task IDs and #874. 
 
 ## FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921
 - From: FM-CHATADMIN-002
-- Requires: exact observed Staging state `ABSENT`; cleanly merged and reconciled `FM-GOV-GODMODE-001`; fresh current-main/target binding; separate protected owner authorization.
+- Requires: exact observed Staging state `ABSENT`; cleanly merged/reconciled God Mode v1; fresh current-main/target binding; separate protected owner authorization.
 - Type: protected Staging write
+- Status: SATISFIED
+- Updated: 2026-09-26
+- Evidence: protected APPLY run `36235870895` / job `108387398410` on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d`, checksum `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`, target Staging `vshyhvgcmrlagvfnvomc`; workflow postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`. Independent read-only countercheck confirms exact tables/RLS/policies/grants, zero ChatAdmin rows and Production absence.
+- Rule: APPLY authorization is consumed and must not be reused.
+
+## FM-DEP-CHATADMIN-STAGING-ACCEPT-20260926
+- From: FM-CHATADMIN-002
+- Requires: `chatadmin_staging_apply=ACCEPTED`; fresh exact current-main/target binding; same-target read-only pre-ACCEPT VERIFY; clean/distinct protected synthetic fixture variables; separate protected owner/environment action.
+- Type: protected Staging rollback-only DB/RLS acceptance
 - Status: READY_OWNER_ACTION
-- Updated: 2026-09-22
-- Evidence: VERIFY `35652258052` / `106507223598` = `ABSENT`; God Mode v1 merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35` and post-merge repository/runtime counterchecks completed.
-- Rule: this readiness is not authorization. APPLY requires a fresh current-main/target re-read plus separate protected owner/environment authorization; ACCEPT remains a distinct later gate.
+- Updated: 2026-09-26
+- Evidence prerequisite: APPLY `36235870895` / `108387398410` and independent Staging postflight are VERIFIED with zero persistent ChatAdmin rows.
+- Rule: ACCEPT must use mode `ACCEPT` + `run-chat-admin-acceptance`, complete transactional rollback, and preserve the manual application flow as OPEN. No real grant or Production/provider mutation.
+
 
 ## FM-DEP-EVENT-MANAGER-20260924
 - From: FM-GOV-EVENT-ORCH-001
