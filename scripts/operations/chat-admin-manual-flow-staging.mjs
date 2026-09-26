@@ -74,14 +74,18 @@ export function buildManualFlowSql(mode, env, receipt) {
   if (!['prepare','verify','cleanup','absence'].includes(mode) || !/^[0-9a-f]{32}$/u.test(receipt.marker ?? '') || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt ?? '')) fail('receipt');
   const ws=literal(ids.STAGING_WORKSPACE_ID), owner=literal(ids.OWNER_ID);
   const a=literal(ids.CHARACTER_A_ID), b=literal(ids.CHARACTER_B_ID), started=literal(receipt.startedAt);
+  // This manual flow creates no conversations. Reuse its reserved second UUID
+  // for a real foreign Character without adding or rotating fixture identities.
+  const foreignCharacter=literal(ids.CONVERSATION_B_ID), second=literal(ids.SECOND_WORKSPACE_ID), foreignOwner=literal(ids.FOREIGN_OWNER_ID);
   const marker=literal(`FanMind synthetic manual acceptance ${receipt.marker}`);
+  const ownedCharacters=`((id in (${a}::uuid,${b}::uuid) and workspace_id=${ws}::uuid and created_by_user_id=${owner}::uuid) or (id=${foreignCharacter}::uuid and workspace_id=${second}::uuid and created_by_user_id=${foreignOwner}::uuid)) and bio=${marker} and created_at = ${started}::timestamptz and profile_image_path is null`;
   const usage=`workspace_id=${ws}::uuid and user_id=${owner}::uuid and feature = 'chat_admin_reply' and source_route='/api/chatadmin/reply-suggestions'`;
   const empty=TABLES.map(table=>`exists(select 1 from public.${table})`).join(' or ');
   const common=`\\set ON_ERROR_STOP on\nbegin;\nset local lock_timeout='5s';\nset local statement_timeout='30s';\n`;
   const contract=fixtureContract(env,ids);
   const owned=`
   if exists(select 1 from public.workspace_chat_admin_capabilities where not(workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at = ${started}::timestamptz)) or
-     exists(select 1 from public.chat_characters where not(id in (${a}::uuid,${b}::uuid) and workspace_id=${ws}::uuid and created_by_user_id=${owner}::uuid and bio=${marker} and created_at = ${started}::timestamptz and profile_image_path is null)) or
+     exists(select 1 from public.chat_characters where not(${ownedCharacters})) or
      exists(select 1 from public.chat_character_conversations) or exists(select 1 from public.chat_character_messages) or
      exists(select 1 from public.ai_usage_events where ${usage} and created_at < ${started}::timestamptz)
      then raise exception 'cleanup_identity_drift'; end if;`;
@@ -93,14 +97,15 @@ end $guard$;
 insert into public.workspace_chat_admin_capabilities(workspace_id,granted_to_user_id,chat_admin_multi_character,created_at,updated_at) values(${ws}::uuid,${owner}::uuid,true,${started}::timestamptz,${started}::timestamptz);
 insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,languages,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status,created_at,updated_at) values
 (${a}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character A',24,${marker},array['Deutsch'],'ruhig und freundlich','kurze ruhige Sätze','keine','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz),
-(${b}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character B',28,${marker},array['Deutsch'],'fröhlich und freundlich','fröhliche natürliche Sätze','sparsam','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz);
+(${b}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character B',28,${marker},array['Deutsch'],'fröhlich und freundlich','fröhliche natürliche Sätze','sparsam','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz),
+(${foreignCharacter}::uuid,${second}::uuid,${foreignOwner}::uuid,'FM Synthetic Foreign Character',26,${marker},array['Deutsch'],'sachlich und freundlich','kurze sachliche Sätze','keine','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz);
 commit;
 select 'CHAT_ADMIN_MANUAL_PREPARE=PASS';`;
   if(mode==='cleanup')return `${common}
 lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
 do $guard$ begin ${contract} ${owned} end $guard$;
 delete from public.ai_usage_events where ${usage} and created_at >= ${started}::timestamptz;
-delete from public.chat_characters where id in (${a}::uuid,${b}::uuid) and workspace_id=${ws}::uuid and created_by_user_id=${owner}::uuid and bio=${marker} and created_at = ${started}::timestamptz;
+delete from public.chat_characters where ${ownedCharacters};
 delete from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and created_at = ${started}::timestamptz;
 do $empty$ begin if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'cleanup_incomplete'; end if; end $empty$;
 commit;
@@ -111,9 +116,11 @@ rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  if (select count(*) from public.chat_characters) <> 2 or (select count(*) from public.workspace_chat_admin_capabilities) <> 1 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz) <> 2 then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.chat_characters) <> 3 or (select count(*) from public.workspace_chat_admin_capabilities) <> 1 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz) <> 2 then raise exception 'runtime_effect_missing'; end if;
 end $guard$;
 set local role authenticated;
+select set_config('request.jwt.claim.sub',${owner},true);
+do $owner$ begin if (select count(*) from public.chat_characters) <> 2 or exists(select 1 from public.chat_characters where id=${foreignCharacter}::uuid) then raise exception 'owner_character_isolation'; end if; end $owner$;
 select set_config('request.jwt.claim.sub',${literal(ids.MEMBER_ID)},true);
 do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'member_read_allowed'; end if; end $denied$;
 select set_config('request.jwt.claim.sub',${literal(ids.FOREIGN_OWNER_ID)},true);

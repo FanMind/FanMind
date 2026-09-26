@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { isPlatformAdminEmail } from "@/lib/admin";
 import { getSupabaseHeaders, getSupabaseRestUrl, SUPABASE_ACCESS_TOKEN_COOKIE } from "@/lib/supabase/config";
 import { requireActiveAuthorizedWorkspace, WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
 
@@ -14,6 +15,7 @@ async function rest<T>(path:string, init:RequestInit = {}):Promise<T> {
 }
 export async function requireChatAdminCapability() {
   const context = await requireActiveAuthorizedWorkspace();
+  if (isPlatformAdminEmail(context.user.email)) throw new WorkspaceAuthorizationError("Platform Admin darf ChatAdmin nicht verwenden.", "resource_forbidden");
   if (context.workspace.role.toLowerCase() !== "owner") throw new WorkspaceAuthorizationError("Owner erforderlich.", "resource_forbidden");
   let rows:Array<{workspace_id:string;chat_admin_multi_character:boolean}>;
   try { rows = await rest<Array<{workspace_id:string;chat_admin_multi_character:boolean}>>(`workspace_chat_admin_capabilities?workspace_id=eq.${encodeURIComponent(context.workspace.id)}&select=workspace_id,chat_admin_multi_character&limit=2`); }

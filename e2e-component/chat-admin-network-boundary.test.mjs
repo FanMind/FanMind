@@ -13,7 +13,7 @@ async function close(server){server.closeAllConnections();await new Promise(reso
 test("browser boundary rejects redirects before any foreign request while preserving session cookies and request bodies",async()=>{
   let foreignHits=0,postedBody="",apiKey="";
   const foreign=createServer((_request,response)=>{foreignHits++;response.end("foreign target must never receive a request");});
-  const foreignOrigin=await listen(foreign);
+  let foreignOrigin;
   const app=createServer(async(request,response)=>{
     if(request.url==="/redirect") {response.writeHead(302,{Location:`${foreignOrigin}/sentinel`});response.end();return;}
     if(request.url==="/api/auth/session") {
@@ -24,9 +24,11 @@ test("browser boundary rejects redirects before any foreign request while preser
     }
     response.writeHead(200,{"Content-Type":"text/html"});response.end("<!doctype html><title>Synthetic local boundary</title>");
   });
-  const appOrigin=await listen(app);
-  const browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});
+  let browser;
   try {
+    foreignOrigin=await listen(foreign);
+    const appOrigin=await listen(app);
+    browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});
     const context=await browser.newContext({serviceWorkers:"block"});
     const violations=await installChatAdminNetworkBoundary(context,{appOrigin,supabaseOrigin:appOrigin});
     const page=await context.newPage();await page.goto(appOrigin);
@@ -39,5 +41,9 @@ test("browser boundary rejects redirects before any foreign request while preser
     await page.goto(`${appOrigin}/redirect`).catch(()=>{});
     assert.equal(foreignHits,0,"redirected hop must never escape interception");
     assert.equal(violations(),1,"rejected redirect must invalidate acceptance");
-  } finally {await browser.close();await close(app);await close(foreign);}
+  } finally {
+    const cleanup=await Promise.allSettled([browser?.close(),close(app),close(foreign)]);
+    const failures=cleanup.filter(result=>result.status==="rejected").map(result=>result.reason);
+    if(failures.length)throw new AggregateError(failures,"Browser boundary fixture cleanup failed");
+  }
 });

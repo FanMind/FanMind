@@ -63,9 +63,18 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
     sql(`update auth.users set email_confirmed_at=now() where id='${ids[5]}';`);
     assert.match(sql(buildManualFlowSql("prepare",env,receipt)),/CHAT_ADMIN_MANUAL_PREPARE=PASS/u);
+    assert.equal(sql(`select count(*) from public.chat_characters where id='${ids[9]}' and workspace_id='${ids[1]}' and created_by_user_id='${ids[4]}' and bio='FanMind synthetic manual acceptance ${receipt.marker}' and created_at='${receipt.startedAt}'::timestamptz;`).trim(),"1","foreign denial must target an existing, exactly bound Character");
+    assert.equal(sql(`select count(*) from public.workspace_chat_admin_capabilities where workspace_id='${ids[1]}';`).trim(),"0","foreign fixture must not add another capability");
     assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"existing capability must never be overwritten");
     assert.throws(()=>sql(buildManualFlowSql("cleanup",env,{...receipt,marker:"e".repeat(32)})),"wrong receipt must not delete rows");
-    assert.equal(sql("select count(*) from public.chat_characters;").trim(),"2");
+    assert.equal(sql("select count(*) from public.chat_characters;").trim(),"3");
+    for(const [column,wrong,original] of [["workspace_id",ids[0],ids[1]],["created_by_user_id",ids[2],ids[4]]]) {
+      sql(`update public.chat_characters set ${column}='${wrong}' where id='${ids[9]}';`);
+      assert.throws(()=>sql(buildManualFlowSql("cleanup",env,receipt)),`foreign ${column} drift must prevent every cleanup delete`);
+      assert.equal(sql("select count(*) from public.chat_characters;").trim(),"3");
+      assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"1");
+      sql(`update public.chat_characters set ${column}='${original}' where id='${ids[9]}';`);
+    }
     sql(`insert into public.ai_usage_events values('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:00Z'),('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:01Z'); update public.chat_characters set status='inactive',revision=2 where id='${ids[7]}';`);
     assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
     assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u);

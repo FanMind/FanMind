@@ -1268,7 +1268,9 @@ Für genau einen explizit gebundenen normalen Owner/Workspace ist eine getrennte
 standardmäßig deaktivierte Capability `chat_admin_multi_character` als
 Repository-/Controlled-Schema-Vertrag vorbereitet. ChatAdmin ist kein Platform
 Admin und erteilt keinerlei Admin-, Billing-, Operations-, Provider-,
-Impersonation- oder service-role-Rechte. Normale Accounts bleiben bei genau einem
+Impersonation- oder service-role-Rechte. Konfigurierte Platform Admins werden von der
+ChatAdmin-Anwendungsautorisierung auch bei sonst vorhandener Owner-Capability
+ausdrücklich abgewiesen. Normale Accounts bleiben bei genau einem
 Creator und einem Schreibstil; `creators.workspace_id UNIQUE` wird nicht geändert.
 V1 verarbeitet ausschließlich manuell eingefügte OnlyFans-Nachrichten und liefert
 kopierbare Entwürfe aus einer serverseitig autorisierten, revisionsgebundenen

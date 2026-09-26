@@ -73,6 +73,7 @@ test("protected synthetic ChatAdmin application flow and authority negatives",as
     const adminProof=await direct(adminPage.request,`${APP}/api/admin/notifications`);expect(adminProof.status()).toBe(200);await adminProof.dispose();
     const adminDenied=await direct(adminPage.request,`${APP}/api/chatadmin/characters`);expect(adminDenied.status()).toBe(403);
     ownerSession=await login(page,session=>{ownerSession=session;});await page.goto("/chatadmin");await expect(page.getByRole("heading",{name:"ChatAdmin",exact:true})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"FM Synthetic Foreign Character",exact:true})).toHaveCount(0);
     const a=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character A",exact:true})});
     const b=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character B",exact:true})});
     await a.getByRole("button",{name:"Auswählen",exact:true}).click();
@@ -83,7 +84,11 @@ test("protected synthetic ChatAdmin application flow and authority negatives",as
     await expect(page.getByLabel("Fan/Chat-Bezeichnung (optional)")).toHaveValue("");
     await generate(page,id("CHARACTER_B_ID"),1);
     const stale=await api(page,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:999,incoming_message:"Synthetisch"});expect(stale.status()).toBe(409);
-    const foreign=await api(page,"/api/chatadmin/reply-suggestions",{character_id:id("CONVERSATION_B_ID"),character_revision:1,incoming_message:"Synthetisch"});expect(foreign.status()).toBe(403);
+    // The committed fixture uses this otherwise unused UUID for an existing
+    // Character owned by the second synthetic Workspace, without its capability.
+    const foreignCharacterId=id("CONVERSATION_B_ID");
+    const foreign=await api(page,"/api/chatadmin/reply-suggestions",{character_id:foreignCharacterId,character_revision:1,incoming_message:"Synthetisch"});expect(foreign.status()).toBe(403);expect(await foreign.json()).toEqual({error:"resource_forbidden"});
+    const ownerForeignRead=await direct(page.request,`${SUPABASE}/rest/v1/chat_characters?id=eq.${foreignCharacterId}&select=id`,{headers:{apikey:ownerSession.anon,Authorization:`Bearer ${ownerSession.token}`}});expect(ownerForeignRead.ok()).toBe(true);expect(await ownerForeignRead.json()).toEqual([]);
     await b.getByRole("button",{name:"Deaktivieren",exact:true}).click();
     await expect(page.getByRole("button",{name:"Antwortvorschläge erzeugen",exact:true})).toBeDisabled();
     await expect(page.getByRole("button",{name:"Antwort kopieren",exact:true})).toHaveCount(0);

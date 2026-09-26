@@ -13,6 +13,52 @@ const userId = "33333333-3333-4333-8333-333333333333";
 const code = ts.transpileModule(readFileSync("src/app/api/chatadmin/reply-suggestions/route.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
+function authorityHarness(email, role = "owner") {
+  const context = { user: { id: userId, email }, workspace: { id: workspaceId, role } };
+  const calls = { capability: 0 };
+  const compile = path => ts.transpileModule(readFileSync(path, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const admin = {};
+  runInNewContext(compile("src/lib/admin.ts"), {
+    exports: admin, process: { env: { FANMIND_ADMIN_EMAILS: "platform-admin@fanmind.invalid" } },
+    require(name) { assert.ok(["next/navigation", "@/lib/supabase/server"].includes(name)); return {}; },
+  });
+  const dependencies = {
+    "@/lib/admin": admin,
+    "next/headers": { cookies: async () => ({ get: () => ({ value: "synthetic-session" }) }) },
+    "@/lib/supabase/config": { getSupabaseHeaders: () => ({}), getSupabaseRestUrl: path => `https://database.invalid/${path}`, SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic" },
+    "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError, requireActiveAuthorizedWorkspace: async () => context },
+  };
+  const authority = {};
+  runInNewContext(compile("src/lib/chatAdmin.ts"), {
+    exports: authority,
+    require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
+    fetch: async () => {
+      calls.capability++;
+      return Response.json([{ workspace_id: workspaceId, chat_admin_multi_character: true }]);
+    },
+  });
+  return { authority, calls, context };
+}
+
+test("actual authority permits a normal Owner with the explicit capability", async () => {
+  const h = authorityHarness("owner@fanmind.invalid");
+  assert.equal(await h.authority.requireChatAdminCapability(), h.context);
+  assert.equal(h.calls.capability, 1);
+});
+for (const email of ["platform-admin@fanmind.invalid", " PLATFORM-ADMIN@FANMIND.INVALID "]) {
+  test(`actual authority rejects configured Platform Admin despite Owner role and available capability (${email.trim()})`, async () => {
+    const h = authorityHarness(email);
+    await assert.rejects(h.authority.requireChatAdminCapability(), error => error instanceof WorkspaceAuthorizationError && error.code === "resource_forbidden");
+    assert.equal(await h.authority.hasChatAdminCapability(), false);
+  });
+}
+test("actual authority rejects a Member even when the capability store would return a grant", async () => {
+  const h = authorityHarness("member@fanmind.invalid", "member");
+  await assert.rejects(h.authority.requireChatAdminCapability(), error => error instanceof WorkspaceAuthorizationError && error.code === "resource_forbidden");
+  assert.equal(h.calls.capability, 0);
+});
 function harness(change) {
   let revoked = false;
   let character = {

@@ -122,6 +122,23 @@ test("committed fixtures and cleanup are marker/actor/target bound without upser
   assert.throws(()=>buildManualFlowSql("cleanup",env,{...receipt,marker:"'; delete"}));
 });
 
+test("foreign denial uses an existing character with exact second-workspace cleanup ownership", () => {
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
+  const foreignId=env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID;
+  const second=env.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID;
+  const foreignOwner=env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID;
+  const prepare=buildManualFlowSql("prepare",env,receipt);
+  assert.ok(prepare.includes(`('${foreignId}'::uuid,'${second}'::uuid,'${foreignOwner}'::uuid,'FM Synthetic Foreign Character'`),"the denied identifier must exist in the other synthetic workspace");
+  assert.equal((prepare.match(/insert into public.workspace_chat_admin_capabilities/gu)??[]).length,1);
+  const cleanup=buildManualFlowSql("cleanup",env,receipt);
+  const deletion=cleanup.split("delete from public.chat_characters where ")[1]?.split(";")[0];
+  assert.ok(deletion?.includes(`id='${foreignId}'::uuid and workspace_id='${second}'::uuid and created_by_user_id='${foreignOwner}'::uuid`));
+  assert.match(deletion,/bio='FanMind synthetic manual acceptance f{32}' and created_at = '2026-09-26T10:00:00.000Z'/u);
+  const verify=buildManualFlowSql("verify",env,receipt);
+  assert.match(verify,/count\(\*\) from public.chat_characters\) <> 3/u);
+  assert.match(verify,/owner_character_isolation/u);
+});
+
 test("workflow uploads only the bounded recovery receipt before writes and always retries exact receipt cleanup", () => {
   const workflow=readFileSync(new URL("../.github/workflows/chat-admin-manual-flow-staging.yml",import.meta.url),"utf8");
   assert.match(workflow,/group: fanmind-chat-admin-staging-write/u);
