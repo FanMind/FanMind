@@ -1,5 +1,5 @@
 ## FM-CREATOR-001 — exhausted Creator action reconciliation — 2026-09-26
-- Status: VERIFIED_FOR_PR
+- Status: MERGED_VERIFIED
 - Risk: R2
 - Work lock: LOCK-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926
 - Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d` after #1185 closed the #1184 aggregate-summary repository receipt.
@@ -7,12 +7,13 @@
 - Expected files/contracts: `docs/CREATOR_INTELLIGENCE.md`, `project-memory/NEXT_BEST_ACTIONS.json`, generated `NEXT_BEST_ACTION.md`, `scripts/fanmind_truth_drift_check.py`, a focused regression and scope-exact Project Memory records. No product/runtime contract changes.
 - Acceptance: #1184 is documented as completed; the consumed broad action cannot be classified executable; the manager reserves zero workers and invents no scope; truth drift rejects absence of both an active eligible Creator action and a consumed retired record; all focused Manager/Memory/drift checks pass.
 - Negative/regression proof: the new regression fails against baseline because the action is still active and the Creator document still calls the merged summary the next step; a missing retired evidence/reason record remains invalid.
-- Completion stage / next integration: repository `VERIFIED_FOR_PR`; then one normal PR, exact-head CI, one independent review, normal merge and post-merge content verification. Merge is not Creator runtime/Staging/provider/quality acceptance.
-- Exact next step: complete local controls and diff countercheck, release this repository-only lock for one PR, obtain exact-head CI plus one independent review, then merge normally only with no blocking findings.
+- Completion stage: repository `MERGED_VERIFIED`. PR #1186 final head `a5e9880ad14961143ecee2611da921d8ec1e07fe` passed all triggered exact-head workflows, independent exact-head review reported no major issues, all review threads were resolved, and normal squash merge produced `d2af392dfa099da8d675481bb343154d829743ff`. Merge is not Creator runtime/Staging/provider/quality acceptance.
+- Exact next step: none for this bounded repository reconciliation. Keep `NBA-CREATOR-INTELLIGENCE` consumed; any later Creator repository increment requires a new exact bounded action. Current Builder Manager state remains `SAFE READY SET=NONE`.
 - Forbidden: SQL APPLY, protected environment/runtime/provider/customer/Billing/Restore/Mobile mutation, real private sample use, new Creator product decisions, direct main writes or another broad unbounded action.
 - Result: clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed the focused regression, 1,548 Operations tests (1,544 pass / 0 fail / 4 documented skips), Manager contract/selection, truth drift, Project Memory quality/V8/status, accepted-state drift, freshness, sales-readiness, milestone and legacy controls. The current branch is ready for one exact-head PR/review cycle; no merge or runtime acceptance is claimed.
 - Review continuation: independent review of published tree `af3cbe14d0819e68ee037a9748afa81e751f6812` found one P1 and one P2. P1: current `OPEN_LOOPS.md` still authorized repository work under the retired broad action. P2: truth drift accepted reactivation of the consumed legacy ID. The same PR now reconciles the loop and makes any active `NBA-CREATOR-INTELLIGENCE` entry fail closed; focused regressions cover both paths.
 - Review-fix verification: clean correction head `33cc31b62b98cc3d125a4cd60792a4717168eca1` passed the focused active-ID and open-loop regressions plus the full 1,548-test Operations suite (1,544 pass / 0 fail / 4 documented skips). Current-head remote CI and exactly one new independent review remain required after publication.
+- Post-merge verify: current `main` contains the retired/consumed broad Creator action classification and continues to surface `FM-REG-003` as the earliest owner boundary; no product/runtime/provider state changed.
 
 ## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
 - Status: MERGED_VERIFIED
@@ -916,6 +917,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - No real capability grant, customer data, provider/Billing/Restore/Mobile mutation or automatic send occurred.
 - Exact next step: distinct protected manual application-layer acceptance with synthetic Staging data and cleanup; Character -> manual Fan message -> exactly three revision-bound suggestions -> Copy -> manual-send handoff.
 
+- Repository closeout publication: APPLY reconciliation PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` merged as `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; ACCEPT reconciliation PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` merged as current main `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. Exact-head checks/reviews converged with no unresolved blocking thread. Manual application flow remains separately owner-gated.
 
 ## FM-GOV-GODMODE-001 — God Mode v1
 - Date: 2026-09-21; Updated: 2026-09-22
