@@ -261,7 +261,7 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
-      "instruction": "Completed and consumed: owner-authorized protected run 36235870895 / job 108387398410 on exact 2aaf225fec29fd91c20f822185c770f87eb3d10d applied only the checksum-pinned ChatAdmin migration to Staging vshyhvgcmrlagvfnvomc; workflow postflight and independent target/RLS/ACL/zero-row countercheck are VERIFIED, while Production remains without the ChatAdmin tables. The later DB/RLS ACCEPT is also completed and consumed. Do not repeat APPLY or DB/RLS ACCEPT; continue only through the separately owner-gated manual application-flow action."
+      "instruction": "Completed and consumed: owner-authorized protected run 36235870895 / job 108387398410 on exact 2aaf225fec29fd91c20f822185c770f87eb3d10d applied only the checksum-pinned ChatAdmin migration to Staging vshyhvgcmrlagvfnvomc; workflow postflight and independent target/RLS/ACL/zero-row countercheck are VERIFIED, while Production remains without the ChatAdmin tables. The later DB/RLS ACCEPT is also completed and consumed. The protected manual application-flow action later passed run 36255475314 and is consumed as well. Do not repeat VERIFY, APPLY, DB/RLS ACCEPT or the manual owner action."
     },
     {
       "id": "NBA-CHATADMIN-STAGING-ACCEPT",
@@ -280,7 +280,7 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Completed and consumed: protected run 36238536613, successful attempt 2 / job 108396358120, exact reviewed 7655aed2cae6ff3588207fee6f2227fd5b8db41c; same-run schema VERIFY passed, rollback-only DB/RLS acceptance passed, manual-flow marker remained OPEN, and independent zero-row/RLS postflight passed. Do not repeat DB/RLS ACCEPT merely because main advances. Continue only through the distinct manual application-flow acceptance."
+      "instruction": "Completed and consumed: protected run 36238536613, successful attempt 2 / job 108396358120, exact reviewed 7655aed2cae6ff3588207fee6f2227fd5b8db41c; same-run schema VERIFY passed, rollback-only DB/RLS acceptance passed, the then-current manual-flow marker remained OPEN, and independent zero-row/RLS postflight passed. Historical transition note: the distinct manual application flow later passed run 36255475314 and is also consumed. Do not repeat DB/RLS ACCEPT or the manual owner action merely because main advances."
     },
     {
       "id": "NBA-CHATADMIN-MANUAL-FLOW",

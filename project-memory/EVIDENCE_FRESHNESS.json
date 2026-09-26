@@ -444,9 +444,10 @@
       "id": "EV-CHATADMIN-MANUAL-FLOW-POSTFLIGHT-20260926",
       "gate": "chatadmin_manual_flow",
       "class": "staging_smoke",
-      "status": "ACCEPTED",
+      "status": "SUPERSEDED",
       "observed_at": "2026-09-26T16:28:39Z",
       "source": "Fresh same-run mutable Staging postflight from protected acceptance 36255475314 / job 108441348490 on release 9652ae62928c70d8f39d8f184857a34fcd4de74f: CHAT_ADMIN_MANUAL_VERIFY=PASS, CHAT_ADMIN_MANUAL_CLEANUP=PASS, CHAT_ADMIN_MANUAL_ABSENCE=PASS and CHAT_ADMIN_MANUAL_SESSION_CLEANUP=passed after the actual browser flow. The bounded observation proves cleanup and zero-residue at acceptance time; later deploy/runtime/schema/target drift requires fresh evidence before any new ChatAdmin target action.",
+      "invalidated_by": "Archived after the immutable acceptance receipt closed chatadmin_manual_flow. This acceptance-time snapshot is retained as historical mutable evidence and must not remain active TTL-bound support for the permanently closed gate; obtain new mutable evidence only before a newly authorized ChatAdmin target action.",
       "target": "https://staging.fanmind.ch / Supabase vshyhvgcmrlagvfnvomc",
       "revalidate_on": [
         "staging_deploy",

@@ -21,6 +21,7 @@ const startedWork = read("project-memory/STARTED_WORK.md");
 const decisions = read("project-memory/DECISIONS.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
+const finishline = read("project-memory/FANMIND_FINISHLINE.md");
 const chatAdminRollout = read("docs/operations/CHAT_ADMIN_STAGING_ROLLOUT.md");
 
 const markdownSection = (document, heading) => {
@@ -227,7 +228,7 @@ test("FM-DEC-024 selects the synthetic Admin-CRM lifecycle before Social", () =>
   assert.match(nextAction, /- Task: `FM-REG-003`/u);
 });
 
-test("accepted ChatAdmin flow has final immutable and mutable freshness evidence", () => {
+test("accepted ChatAdmin flow has immutable acceptance and an archived mutable postflight", () => {
   const entries = evidenceFreshness.entries.filter(
     (entry) => entry.gate === "chatadmin_manual_flow",
   );
@@ -243,8 +244,9 @@ test("accepted ChatAdmin flow has final immutable and mutable freshness evidence
   assert.match(execution?.source ?? "", /36255475314/u);
   assert.match(execution?.source ?? "", /9652ae62928c70d8f39d8f184857a34fcd4de74f/u);
   assert.equal(postflight?.class, "staging_smoke");
-  assert.equal(postflight?.status, "ACCEPTED");
+  assert.equal(postflight?.status, "SUPERSEDED");
   assert.match(postflight?.source ?? "", /CHAT_ADMIN_MANUAL_ABSENCE=PASS/u);
+  assert.match(postflight?.invalidated_by ?? "", /immutable acceptance/u);
 });
 
 test("accepted ChatAdmin flow cannot retain an executable runbook instruction", () => {
@@ -259,4 +261,22 @@ test("accepted ChatAdmin flow cannot retain an executable runbook instruction", 
   assert.match(chatAdminRollout, /36255475314/u);
   assert.match(chatAdminRollout, /FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926[^\n]*consumed/u);
   assert.doesNotMatch(chatAdminRollout, /Der echte manuelle Anwendungsflow bleibt offen/u);
+});
+
+test("consumed ChatAdmin actions cannot remain executable in canonical readers", () => {
+  const applyAction = actionCatalog.actions.find(
+    (action) => action.id === "NBA-CHATADMIN-STAGING-APPLY",
+  );
+  const databaseAcceptance = actionCatalog.actions.find(
+    (action) => action.id === "NBA-CHATADMIN-STAGING-ACCEPT",
+  );
+
+  assert.ok(applyAction);
+  assert.ok(databaseAcceptance);
+  assert.doesNotMatch(finishline, /next ChatAdmin action is the distinct protected manual/u);
+  assert.doesNotMatch(currentState, /Only the real Character[^\n]*remains OPEN/u);
+  assert.doesNotMatch(applyAction.instruction, /continue only through[^.]*manual/u);
+  assert.doesNotMatch(databaseAcceptance.instruction, /Continue only through[^.]*manual/u);
+  assert.match(applyAction.instruction, /36255475314/u);
+  assert.match(databaseAcceptance.instruction, /36255475314/u);
 });
