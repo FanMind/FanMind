@@ -1,5 +1,13 @@
 # FanMind Owner Action Inbox
 
+## FM-CREATOR-OWNER-CONFIRMED-CHAT-VERIFY-20260926 — Bounded Creator Confirmed-Chat VERIFY
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: COMPLETED
+- Outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- No additional owner response is needed for the source-only follow-up NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT.
+
 ## FM-CHATADMIN-OWNER-VERIFY-20260921 — Read-only Staging VERIFY starten
 - Status: COMPLETED
 - Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-STAGING-VERIFY-20260921; Risk: R3 read-only.
@@ -23,16 +31,11 @@
 - Consumed boundary: do not repeat DB/RLS ACCEPT merely because main advances.
 
 ## FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926 — ChatAdmin manueller Anwendungsflow
-- Status: AUTHORIZED_IN_PROGRESS
-- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926; Bernd explicitly requested execution, negative tests, cleanup and independent countercheck. Do not request this same bounded permission again.
-- Builder prerequisite: #1201 is merged/deployed and protected run `36253850844` passed the full synthetic flow and cleanup. A Builder-owned P1 remains because boundary stop silently aborts a newly attempted acceptance-authorized write; correct/review/merge/deploy and freshly revalidate it. No repeat Owner permission is required.
-- Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-MANUAL-FLOW-20260926; Risk: R4 protected Staging application acceptance.
-- Why now: ChatAdmin schema APPLY and synthetic DB/RLS ACCEPT are both ACCEPTED. The workflow intentionally left `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
-- Required exact flow: on Staging only, with synthetic/non-customer data and the minimum separately authorized temporary capability/runtime fixture needed for the test, exercise active Character -> manually inserted Fan message -> exactly three revision-bound suggestions -> selection/copy -> manual-send handoff.
-- Must prove the actual application/runtime layer, not a comment/static string. Cleanup/zero-persistence evidence is required for temporary fixture state.
-- Boundary: no real customer/fan data, no provider send, no automatic send, no Production/Billing/Stripe/Tax/Restore/Mobile mutation, and no inference that a Copy/manual-send handoff equals an external message delivery.
-
-
+- Status: COMPLETED
+- Task: FM-CHATADMIN-002; Dependency: FM-DEP-CHATADMIN-MANUAL-FLOW-20260926; Risk: R4.
+- Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 CONSUMED; no repeat request or execution.
+- Result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
 
 ## FM-REG-OWNER-ADMIN-CRM-BROWSER-20260919 — Kostenlosen CRM-Zugang im Browser abnehmen
 - Status: COMPLETED

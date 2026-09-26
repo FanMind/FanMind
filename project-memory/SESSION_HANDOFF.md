@@ -1,11 +1,35 @@
-## ChatAdmin runtime PASS requires teardown-write revalidation — 2026-09-26
+## ChatAdmin stricter teardown contract revalidated — 2026-09-26
+- PR #1202 final head ab9b371eb8db048394a4d3743e8bec319c953ea7 / merge9652ae62928c70d8f39d8f184857a34fcd4de74f adds counting of every new blocked write attempt during browser shutdown. All triggered CI and final review passed.
+- Previous run36253850844 remains a historical successful execution with independently verified cleanup, superseded for final acceptance by a distinct successful revalidation. Its original recovery snapshot is unchanged; its separate acceptance receipt now records supersession. PR #1203 stale closeout was closed unmerged.
+- Protected deploy36255356091/job108440984312 passed; independent version16:27:14.666Z matches exact release. New actual acceptance: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- ChatAdmin synthetic Staging manual gate is ACCEPTED and consumed. No duplicate workflow was dispatched; source, schema/RLS, fixture/usage/session cleanup and Production absence were independently counterchecked. Creator source-only preflight is the next active scope.
+
+## Creator Foundation reconciliation preflight active — 2026-09-26
+- ChatAdmin actual synthetic Staging manual acceptance is complete; its exact immutable evidence remains below.
+- Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
+- Resume only NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT under LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926; the failed protected VERIFY is reconciled and consumed, its raw result remains FAILURE.
+
+## Creator bounded Confirmed-Chat VERIFY continuation — 2026-09-26
+- Status: RECONCILED; consumed observation, not a successful schema verification.
+- Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT, under LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926. Do not repeat consumed broad Creator work or this unchanged failed VERIFY.
+
+## ChatAdmin synthetic Staging manual flow accepted — 2026-09-26
+
+- Actual result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Authorization is CONSUMED; runtime work, owner action, loop and dependency are closed; execution lock is RELEASED. Earlier failed runs retain their original failed outcomes and recovery records.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+- Next: FM-DEC-024 retains Creator Intelligence next. Continue only the separately admitted Foundation reconciliation preflight; never reactivate consumed NBA-CREATOR-INTELLIGENCE. Preserve existing free Admin-CRM access; its synthetic lifecycle, Social/Sales and deferred Mobile gates remain separate.
+
+## ChatAdmin probe completed logins; orderly browser teardown correction — 2026-09-26
+- Historical snapshot: superseded for current manual-flow status by the accepted closeout above; historical run markers and failures are unchanged.
 
 - PR #1200 final head `22232d375c7b9b6da830367a988767b53f8d740e`, tree `37bf5be99818a1f8add61bec6700fdd6cc8511dd`, passed all eight CI checks and final independent/bot review; merged as `ce7013e6e59c76f8dffb7568eabaec60bc14c50f`. Staging deploy `36252765866` / job `108433775166` passed; independent version at `2026-09-26T15:42:26.838Z` matches exact release and Staging.
 - Full acceptance request `36252899026`, attempt1 / job `108434155060`, reached probe stage `complete` after all three login/identity/access assertions and successful session cleanup. The parent correctly rejected the nonzero network diagnostic `transport`; no successful probe/manual PASS is claimed. All DB password/reservation/artifact/fixture steps were skipped.
 - Independent read-only post-probe at `2026-09-26T15:45:01.501410Z`: four global ChatAdmin tables0/0/0/0, global and exact scoped replyusage0, all owner/secondary/admin sessions created since15:42:54Z absent.
-- PR #1201 head `76a03a5fe1bdf05a4721e1d8e5d1241cd31996f8` passed nine workflows and final review, merged as `d91405d67792aa65a14964553a09a36fa0c87de0`, and exact Staging deploy `36253747829` / job `108436517413` succeeded.
-- Protected run `36253850844` / job `108436822845` passed probe, actual browser/UI/API flow, negatives, cleanup and absence proof and emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS`. Independent source review then found one P1: a new acceptance-authorized POST/PATCH after boundary stop is aborted but not counted as a write violation. Preserve the run as partial runtime evidence, not final acceptance.
-- Continue `fix/chatadmin-teardown-write-boundary-20260926`: retain drained in-flight transport/redirect failures, allow only new idempotent reads to be silently cancelled, and count every new write. Then normal review/CI/merge, exact redeploy and one fresh revalidation. No repeat owner permission is required; Creator remains second.
+- Continue `fix/chatadmin-browser-boundary-teardown-20260926` under the existing serialized authorization/lock. Diagnose actual pending route transport during teardown with a local Chromium reproduction; retain redirect/write/origin isolation and do not ignore arbitrary transport errors. Reviewed correction/deploy and real acceptance remain required. Creator stays second.
+- Implemented correction keeps the guard installed, blocks new allowed requests during quiescing, drains pending handlers before context closure, then checks final counters. Actual local Chromium regressions pass for delayed success/new-request blocking, delayed genuine transport failure and redirect isolation with zero foreign hops; all14 browser tests and14 manual-runner tests pass. These are local source proofs, not acceptance of the failed historical run.
 
 ## Historical Playwright collection correction — resolved by PR #1200
 - Current reviewed/deployed main is `3b3570df2b1ff85080e6bc9b4cf4e284d5fea558` from merged PR #1199, all nine CI checks and final review clear. Staging deploy36251864810/job108431281545 succeeded; independent version matches at15:30:56.077Z.
@@ -28,6 +52,7 @@
 - Current Builder Manager remains `SAFE READY SET=NONE`; earliest selected action remains `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` / FM-REG-003 as OWNER_ACTION_REQUIRED. Mobile remains deferred.
 
 ## ChatAdmin DB/RLS ACCEPT accepted; manual application flow is next — 2026-09-26
+- Historical snapshot: superseded for current manual-flow status by the accepted closeout above; historical run markers and failures are unchanged.
 - Protected ChatAdmin Staging Rollout run `36238536613`, successful attempt 2 / job `108396358120`, on exact reviewed main `7655aed2cae6ff3588207fee6f2227fd5b8db41c` passed same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, rollback-only `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and cleanup; it intentionally emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`.
 - Attempt 1 failed before acceptance mutation at `fixture_identity` because all ten protected fixture variables were empty. Bernd populated those Staging variables and the same exact workflow action succeeded on rerun. PR #1188 fallback source is closed unmerged and must not be revived.
 - Independent postflight: Staging capability/character/conversation/message rows remain 0/0/0/0, all four ChatAdmin tables retain RLS, and Production still has no ChatAdmin schema.
@@ -35,6 +60,7 @@
 - No real capability grant/customer data, Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation or external message delivery is implied by this acceptance.
 
 ## Historical ChatAdmin Staging APPLY closeout — superseded by accepted DB/RLS ACCEPT — 2026-09-26
+- Historical snapshot: superseded for current manual-flow status by the accepted closeout above; historical run markers and failures are unchanged.
 - Owner-authorized protected ChatAdmin Staging APPLY run `36235870895` / job `108387398410` completed on exact reviewed commit `2aaf225fec29fd91c20f822185c770f87eb3d10d` with migration SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`.
 - The completed APPLY gate is `ACCEPTED` from durable exact-run evidence. Built-in postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; independent read-only Staging countercheck confirmed the expected RLS schema with zero ChatAdmin rows, while Production remained without the ChatAdmin tables.
 - Historical only: do not repeat APPLY. DB/RLS ACCEPT subsequently completed and is also consumed; the current ChatAdmin next action is the distinct protected manual application flow under `FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926`.
@@ -67,6 +93,7 @@
 - Continue only a new bounded Creator Intelligence increment under its own lock/contract. Preserve accepted #1175 confirmed-chat foundations; external Meta/provider/account consent remains owner-gated, ChatAdmin APPLY remains protected OWNER_ACTION_REQUIRED, and Mobile remains DEFERRED_BY_OWNER.
 
 ## God Mode v1 closed; Creator continuation selected, ChatAdmin APPLY owner-gated — 2026-09-22
+- Historical snapshot: superseded for current manual-flow status by the accepted closeout above; historical run markers and failures are unchanged.
 - PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged through the normal PR path as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
 - Post-merge Deploy, God Mode Gate, Browser E2E, CodeQL, Supply Chain and Final Go-Live Readiness succeeded. Read-only Production Audit verifies the exact runtime/release and remains red only for the pre-existing `production_audit_backup_latest_stale_or_empty` Operations loop.
 - ChatAdmin read-only VERIFY `35652258052` remains consumed as `ABSENT`; do not repeat it because main advanced. ChatAdmin Staging APPLY is now a separate protected OWNER_ACTION_REQUIRED boundary and is not authorized by this handoff; ACCEPT remains later.
@@ -74,6 +101,7 @@
 - No Staging/Production/database/provider/Billing/Restore/Mobile write occurred in this reconciliation.
 
 ## ChatAdmin #1146 source closed; VERIFY owner action is next — 2026-09-21
+- Historical snapshot: superseded for current manual-flow status by the accepted closeout above; historical run markers and failures are unchanged.
 - PR #1146 final head `cb6249b9fbcf15bcb0507fa61d0c97033229ab44` passed FanMind CI, Browser E2E, CodeQL, Supply Chain and Project Memory checks; independent Codex review on that exact head reported no major issues and all review threads were resolved.
 - Squash merge succeeded as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b`.
 - Current Staging ChatAdmin schema state remains unknown. No VERIFY/APPLY/ACCEPT dispatch, DB write, real capability grant or Production activation occurred in source closeout.

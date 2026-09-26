@@ -1,5 +1,34 @@
+## FM-EXEC-CREATOR-FOUNDATION-RECONCILIATION-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926
+- Scope: Repository-only Creator foundation reconciliation preflight, priority 2 under FM-DEC-024 and existing autonomous source authorization. Pin the accepted Sept11 foundation/PT409 artifacts and current Sept19 contracts; implement a SELECT-only catalog export and offline classifier for LEGACY_EXACT/CURRENT_EXACT/DRIFT, with explicit INCOMPLETE when coverage or trusted reference is missing. Check exact helper/RPC/policy/ACL contracts and reviewed Supabase platform-role provenance; include historical/current and corruption regression coverage. No target DDL, temporary fake function, role revocation, workflow dispatch, schema APPLY, runtime activation, provider call or customer fixture. Keep the broad Creator action consumed. An atomic forward transition is a distinct later scope after a proven baseline.
+- Evidence: actual failed prerequisite is reconciled in `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`; no complete target baseline or new source acceptance claimed yet.
+
+- Implemented source: fixed read-only catalog export, pinned historical/current SQL references and offline classifier/CLI; no database transport. Optional Admin-CRM variants stay INCOMPLETE. Local Operations1604 total/1598 pass/0 fail/6 skips; focused29 pass/1 PG17 skip. Native PG17 and final CI/review/merge remain required.
+
+## FM-EXEC-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RECONCILED
+- Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926 (RELEASED).
+- Actual outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Durable evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Next: NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT; do not redispatch unchanged VERIFY or admit learning APPLY based on this result.
+
 ## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926
-- Status: IN_PROGRESS; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
+- Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
+- Actual acceptance: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Deployment: PR #1202 final head `ab9b371eb8db048394a4d3743e8bec319c953ea7`, source tree `b2d4de790ce7de1a9d6a8d53429cb8cf03313eb5`; deploy `36255356091` / job `108440984312`; independent version `2026-09-26T16:27:14.666Z` matches.
+- Recovery binding: marker `a0e520d99c8fd23bb6ca8119d0f4664a`; artifact `10910671451`, archive SHA-256 `6b54f17db18bde8fb47b78d63acbab44e9b3aa74a3c567b0b5e4fbd4b602869c` matched downloaded bytes.
+- Cleanup: all four global ChatAdmin tables, global/exact-scoped reply usage and all three run-window auth-session counts are zero; full schema/RLS/ACL verified; all six checked Production objects absent.
+- Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+
+### Historical prerequisite and failed-run observations; superseded for current status
+
 - Owner request: fresh preflight -> synthetic fixture -> actual Staging flow -> negatives -> cleanup -> independent countercheck -> canonical closeout.
 - Baseline: dd4ee6b65772e5833a09077a04c96254934067f9. Full mandatory readers supplied; drift/freshness controls passed, historical unrelated external revalidation remains open.
 - Independent initial observations: Supabase Staging ACTIVE_HEALTHY; four ChatAdmin table counts 0/0/0/0; live Staging runtime release f0c7a84e6105752d34b489520fb92d2bb7e5b61a; GitHub protected DB ACCEPT latest job 108396358120 success.
@@ -29,8 +58,8 @@
 - Fourth manual request36252899026/attempt1/job108434155060 reached probecomplete after allthree login/assertions and sessioncleanup, then parent rejected networktransport. NoDB/reservation/artifact/fixture steps executed. Independent15:45:01.501410Z counts0/0/0/0/global+scopedusage0/allthreerun-windowsessions0. Root cause of the transport diagnostic is investigated before any fresh dispatch; manualgate remainsIN_PROGRESS.
 
 - Transport-order correction: explicit quiescing retains origin/write guards, blocks new allowed forwarding and drains existing route handlers before context closure and final network assertion. Actual Chromium delayed-success, genuine-failure and redirect regressions pass; all14 browser and14 manual-runner tests pass. Historical transport causality is not narrowed beyond evidence and the failed run is not accepted.
-- Transport-order publication/runtime evidence: PR #1201 head `76a03a5fe1bdf05a4721e1d8e5d1241cd31996f8` passed nine exact-head workflows and final Codex review, merged as `d91405d67792aa65a14964553a09a36fa0c87de0`, and deployed exactly by `36253747829` / `108436517413`. Protected run `36253850844` / `108436822845` passed probe, reservation/artifact, fixture preparation, real browser/UI/API assertions, negative cases, cleanup and absence proof and emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS`.
-- Independent post-run source countercheck found one P1 in the merged boundary: after stop, a new acceptance-authorized POST/PATCH is aborted without a write violation. Because this can hide an unexpected write attempt from the acceptance assertion, the run is `PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED`, not final gate consumption. Branch `fix/chatadmin-teardown-write-boundary-20260926` adds the direct RED/GREEN regression; exact-head review/CI/merge, redeploy and fresh revalidation remain open.
+- Transport-order publication/runtime evidence: PR #1201 head `76a03a5fe1bdf05a4721e1d8e5d1241cd31996f8` passed all eight triggered CI workflows and final Codex review, merged as `d91405d67792aa65a14964553a09a36fa0c87de0`, and deployed exactly by `36253747829` / `108436517413`. Protected run `36253850844` / `108436822845` passed probe, reservation/artifact, fixture preparation, real browser/UI/API assertions, negative cases, cleanup and absence proof and emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS`.
+- Independent post-run source countercheck found one P1 in the merged boundary: after stop, a new acceptance-authorized POST/PATCH is aborted without a write violation. Because this can hide an unexpected write attempt from the acceptance assertion, the run is `PARTIAL_RUNTIME_PASS_REVALIDATION_REQUIRED`, not final gate consumption. That historical limitation was resolved by PR #1202, exact deploy36255356091 and fresh accepted run36255475314. The original successful run is preserved; no late write attempt in that original run is inferred.
 
 ## RECEIPT-FM-CHATADMIN-002-STAGING-ACCEPT-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; Decision: FM-DEC-022.
@@ -40,7 +69,7 @@
 - Independent countercheck after rollback: Staging ChatAdmin capability/character/conversation/message row counts = 0/0/0/0, all four ChatAdmin tables retain RLS, and Production `drqkpdvtbbrrdwmtrodz` still has none of the four ChatAdmin tables.
 - Historical negative: attempt 1 / job `108394659516` stopped before psql acceptance mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity`; no data was left behind.
 - Superseded fallback: PR #1188 was closed unmerged after protected environment configuration fixed the actual prerequisite.
-- Completion boundary: `chatadmin_staging_accept=ACCEPTED`. The real application/runtime manual flow remains OPEN and separate; no real capability grant/customer/provider send/automatic send or Production/Billing/Restore/Mobile mutation occurred.
+- Completion boundary: `chatadmin_staging_accept=ACCEPTED`. At this historical DB-only execution the real application/runtime manual flow remained OPEN and separate; its later acceptance is recorded in FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926; no real capability grant/customer/provider send/automatic send or Production/Billing/Restore/Mobile mutation occurred.
 - Recovery: acceptance transaction rolled back by contract; postflight zero rows proves cleanup. No rollback action is required.
 - Repository publication: PR #1189 final head `8eee77b76a9273b9652920254d6d635cca6bbaf4` completed all triggered exact-head workflows successfully, independent exact-head review reported no major issues after the stale-next-step P2 correction, all blocking threads were resolved, and normal squash merge produced `a1af8f5742958e5e666ae3f361e388b8a4cf922f`. This does not refresh mutable Staging evidence and does not authorize the manual flow.
 
@@ -52,7 +81,7 @@
 - Workflow result: controlled transaction succeeded and built-in postflight emitted `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; private passfile cleanup succeeded; ACCEPT steps were skipped.
 - Independent countercheck: Staging has exactly the expected four ChatAdmin RLS tables, policies/grants, SECURITY INVOKER helper and global uniqueness index; capability/character/conversation/message row counts are all zero. Production has none of the four tables.
 - Safety/negative evidence: no real capability grant/customer row, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, no automatic send and no runtime/manual application-flow acceptance.
-- Completion boundary: `chatadmin_staging_apply=ACCEPTED`. The later rollback-only DB/RLS ACCEPT is also completed and consumed; only the manual application flow remains open.
+- Completion boundary: `chatadmin_staging_apply=ACCEPTED`. The later rollback-only DB/RLS ACCEPT is also completed and consumed; the manual application-flow acceptance is also completed and consumed; Production activation remains open.
 - Recovery: no rollback is requested for the verified Staging installation; any future destructive rollback would require its own exact protected authorization.
 - Repository publication: PR #1187 final head `85b1b7e40cf1767c8439d7a32dd2c10ffc87ff8a` completed all triggered exact-head workflows successfully, independent exact-head review reported no major issues, and normal squash merge produced `7655aed2cae6ff3588207fee6f2227fd5b8db41c`. This records the reconciliation publication only; it does not refresh mutable Staging evidence or authorize another APPLY.
 

@@ -5,8 +5,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CHATADMIN-MANUAL-FLOW`
-- Next action title: ChatAdmin manuellen Staging-Anwendungsflow abnehmen
+- Next action: `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT`
+- Next action title: Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten
 
 ## Finishline gates
 
@@ -27,7 +27,9 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `governance_god_mode`: `ACCEPTED`
 - `chatadmin_staging_apply`: `ACCEPTED`
 - `chatadmin_staging_accept`: `ACCEPTED`
-- `chatadmin_manual_flow`: `IN_PROGRESS`
+- `chatadmin_manual_flow`: `ACCEPTED`
+- `creator_confirmed_chat_staging_verify`: `RECONCILED`
+- `creator_foundation_reconciliation_preflight`: `IN_PROGRESS`
 
 ## Deferred owner actions
 
