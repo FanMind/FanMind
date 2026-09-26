@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdtemp, mkdir, writeFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const workflowPath = ".github/workflows/deploy-staging.yml";
 const provisioningWorkflowPath = ".github/workflows/provision-staging-host.yml";
@@ -36,6 +38,36 @@ function verifyStagingNginxBoundary(configuration) {
   );
 }
 
+test("actual Staging source copy preserves live release metadata and build after a prebuild failure", async () => {
+  const workflow = await read(workflowPath);
+  const start = workflow.indexOf("          rsync --archive --delete");
+  const end = workflow.indexOf('          if [ -e "$SOURCE_DIR/.git" ]', start);
+  assert.ok(start >= 0 && end > start);
+  const root = await mkdtemp(join(tmpdir(), "fanmind-staging-copy-"));
+  const source = join(root, "reviewed"), target = join(root, "staging");
+  try {
+    await mkdir(join(source, ".git"), { recursive: true });
+    await mkdir(join(target, ".next", "server"), { recursive: true });
+    await writeFile(join(source, "current-source.txt"), "reviewed source");
+    await writeFile(join(source, ".git", "config"), "must not reach runtime");
+    await writeFile(join(target, "removed-source.txt"), "stale source");
+    await writeFile(join(target, ".release.env"), "FANMIND_STRIPE_BILLING_WRITE_FREEZE=true\n", { mode: 0o600 });
+    await writeFile(join(target, ".env.production"), "synthetic environment", { mode: 0o600 });
+    await writeFile(join(target, ".next", "server", "live-build.json"), "live build");
+    const result = spawnSync("bash", ["-euo", "pipefail", "-c", `${workflow.slice(start, end)}\nexit 41`], {
+      env: { ...process.env, GITHUB_WORKSPACE: source, SOURCE_DIR: target }, encoding: "utf8", timeout: 10_000,
+    });
+    assert.equal(result.status, 41, "copy must complete before simulated prebuild failure");
+    assert.equal(await read(join(target, ".release.env")), "FANMIND_STRIPE_BILLING_WRITE_FREEZE=true\n");
+    assert.equal((await stat(join(target, ".release.env"))).mode & 0o777, 0o600);
+    assert.equal(await read(join(target, ".next", "server", "live-build.json")), "live build");
+    assert.equal(await read(join(target, ".env.production")), "synthetic environment");
+    assert.equal(await read(join(target, "current-source.txt")), "reviewed source");
+    await assert.rejects(stat(join(target, ".git")), { code: "ENOENT" });
+    await assert.rejects(stat(join(target, "removed-source.txt")), { code: "ENOENT" });
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("staging deploy is manual, isolated and fail-closed", async () => {
   const workflow = await read(workflowPath);
 
@@ -55,6 +87,12 @@ test("staging deploy is manual, isolated and fail-closed", async () => {
   assert.match(workflow, /rsync --archive --delete/);
   assert.match(workflow, /--exclude '\.git\/'/);
   assert.match(workflow, /--exclude '\.env\.production'/);
+  assert.match(workflow, /--exclude '\.release\.env'/);
+  assert.match(workflow, /--exclude '\.next\/'/);
+  assert.match(workflow, /release_state_recovery_confirmation:[\s\S]*required: false/u);
+  assert.match(workflow, /FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: \$\{\{ inputs\.previous_release_commit \}\}/u);
+  assert.ok(workflow.indexOf('git -C "$GITHUB_WORKSPACE" rev-parse HEAD') < workflow.indexOf('staging-release-state-recovery.mjs" --recover'));
+  assert.ok(workflow.indexOf('staging-release-state-recovery.mjs" --recover') < workflow.indexOf('--resolve "$BILLING_WRITE_FREEZE"'));
   assert.match(workflow, /Git metadata must not persist/);
   assert.match(
     workflow,

@@ -16,6 +16,16 @@ on:
           - 'preserve'
           - 'false'
           - 'true'
+      release_state_recovery_confirmation:
+        description: 'Only for missing release metadata: type recover-live-staging-release-state'
+        required: false
+        default: ''
+        type: string
+      previous_release_commit:
+        description: 'Exact currently running Staging commit required only for release metadata recovery'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: fanmind-staging-deploy
@@ -44,6 +54,10 @@ jobs:
         env:
           EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
           BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
+          FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
+          FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
+          FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
 
@@ -77,6 +91,17 @@ jobs:
             echo "Unsafe Staging release state." >&2
             exit 1
           fi
+          if [ "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" != "$EXPECTED_RELEASE_COMMIT" ]; then
+            echo "Authenticated staging checkout does not match the triggering commit." >&2
+            exit 1
+          fi
+          if ! git -C "$GITHUB_WORKSPACE" diff --quiet -- || ! git -C "$GITHUB_WORKSPACE" diff --cached --quiet --; then
+            echo "Authenticated staging checkout is not clean." >&2
+            exit 1
+          fi
+          if [ -n "$FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM" ] || [ -n "$FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT" ]; then
+            node "$GITHUB_WORKSPACE/scripts/operations/staging-release-state-recovery.mjs" --recover
+          fi
           BILLING_WRITE_FREEZE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-freeze-control.mjs" \
             --resolve "$BILLING_WRITE_FREEZE" "$SOURCE_DIR/.release.env")"
           if [[ "$BILLING_WRITE_FREEZE" != "true" && "$BILLING_WRITE_FREEZE" != "false" ]]; then
@@ -86,15 +111,6 @@ jobs:
 
           BILLING_CAPTURE_STATE="$(node "$GITHUB_WORKSPACE/scripts/operations/staging-billing-capture-runtime.mjs" --preserve "$BILLING_WRITE_FREEZE" "$EXPECTED_RELEASE_COMMIT")"
 
-          if [ "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" != "$EXPECTED_RELEASE_COMMIT" ]; then
-            echo "Authenticated staging checkout does not match the triggering commit." >&2
-            exit 1
-          fi
-          if ! git -C "$GITHUB_WORKSPACE" diff --quiet -- || ! git -C "$GITHUB_WORKSPACE" diff --cached --quiet --; then
-            echo "Authenticated staging checkout is not clean." >&2
-            exit 1
-          fi
-
           if ! command -v rsync >/dev/null 2>&1; then
             echo "rsync is required for an isolated credential-free release copy." >&2
             exit 1
@@ -102,6 +118,8 @@ jobs:
           rsync --archive --delete \
             --exclude '.git/' \
             --exclude '.env.production' \
+            --exclude '.release.env' \
+            --exclude '.next/' \
             "$GITHUB_WORKSPACE/" "$SOURCE_DIR/"
           if [ -e "$SOURCE_DIR/.git" ]; then
             echo "Git metadata must not persist in the staging runtime path." >&2

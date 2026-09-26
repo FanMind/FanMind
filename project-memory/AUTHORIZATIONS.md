@@ -5,6 +5,7 @@
 - Scope: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW; necessary bounded source corrections and their tested/reviewed normal PR path, exact reviewed Staging deployment, temporary synthetic non-customer capability/runtime fixtures, actual Character -> pasted synthetic Fan message -> three bound AI suggestions -> copy/manual handoff, cleanup and independent zero-residue countercheck.
 - Target: only FanMind Staging (`vshyhvgcmrlagvfnvomc`, `https://staging.fanmind.ch`), with fresh exact release/schema/identity checks before every protected action.
 - Boundary: no real customer/fan fixture, OnlyFans/Social send, automatic send, Production capability/schema activation, Billing/Stripe/Tax/Restore/Mobile mutation. Prior APPLY and DB/RLS ACCEPT remain consumed; no repeat.
+- Necessary deployment recovery remains bounded to preserving the already-running Staging configuration: reviewed source-copy exclusion and explicit exact-service reconstruction of a missing generated `.release.env` from its existing nonsecret values. No Billing setting may change, missing proof may not be invented, no secret file is read and no Stripe/capture action is authorized. The original `preserve` requirement remains mandatory.
 - Current prerequisite findings: Staging runtime still reports `f0c7a84e6105752d34b489520fb92d2bb7e5b61a`; current source has cross-character composer/late-response isolation defects. Correct and verify these before acceptance. No runtime fixture has yet been written.
 
 ## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
