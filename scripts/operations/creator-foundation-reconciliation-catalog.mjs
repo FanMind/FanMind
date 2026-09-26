@@ -251,7 +251,14 @@ trigger_rows AS (
   'schema',c.nspname,'table',c.relname,'name',CASE WHEN t.tgisinternal THEN NULL ELSE t.tgname END,
   'internal',t.tgisinternal,'type',t.tgtype,'enabled',t.tgenabled,'deferrable',t.tgdeferrable,'deferred',t.tginitdeferred,
   'function',pg_catalog.format('%I.%I(%s)',pn.nspname,p.proname,pg_catalog.replace(pg_catalog.oidvectortypes(p.proargtypes),', ',',')),
-  'argumentCount',t.tgnargs,'argumentsHex',pg_catalog.encode(t.tgargs,'hex'),'when',pg_catalog.pg_get_expr(t.tgqual,t.tgrelid,false),
+  'argumentCount',t.tgnargs,'argumentsHex',pg_catalog.encode(t.tgargs,'hex'),
+  -- WHEN expressions have an OLD/NEW range table. pg_get_expr only supports
+  -- a single relation. Retain the complete canonical trigger definition;
+  -- only an internal generated name's exact header token is stabilized.
+  'when',CASE WHEN t.tgqual IS NULL THEN NULL WHEN t.tgisinternal THEN
+    pg_catalog.substr(td.definition,1,pg_catalog.strpos(td.definition,'TRIGGER ') + 7) || '"<internal>"' ||
+    pg_catalog.substr(td.definition,pg_catalog.strpos(td.definition,'TRIGGER ') + 8 + pg_catalog.length(pg_catalog.quote_ident(t.tgname)))
+    ELSE td.definition END,
   'columns',COALESCE((SELECT pg_catalog.jsonb_agg(a.attname ORDER BY v.ord) FROM pg_catalog.unnest(t.tgattr) WITH ORDINALITY v(num,ord) LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = t.tgrelid AND a.attnum = v.num),'[]'::jsonb),
   'constraint',CASE WHEN k.oid IS NULL THEN NULL ELSE pg_catalog.jsonb_build_object('schema',kn.nspname,'table',kc.relname,'name',k.conname) END,
   'constraintRelation',CASE WHEN cr.oid IS NULL THEN NULL ELSE pg_catalog.format('%I.%I',crn.nspname,cr.relname) END,
@@ -259,6 +266,7 @@ trigger_rows AS (
   'parent',CASE WHEN pt.oid IS NULL THEN NULL ELSE pg_catalog.jsonb_build_object('schema',ptn.nspname,'table',ptc.relname,'name',CASE WHEN pt.tgisinternal THEN NULL ELSE pt.tgname END) END,
   'oldTransitionTable',t.tgoldtable,'newTransitionTable',t.tgnewtable
  ) AS row FROM all_table_relations c JOIN pg_catalog.pg_trigger t ON t.tgrelid = c.oid
+ LEFT JOIN LATERAL (SELECT pg_catalog.pg_get_triggerdef(t.oid,false) AS definition) td ON t.tgqual IS NOT NULL
  JOIN pg_catalog.pg_proc p ON p.oid = t.tgfoid JOIN pg_catalog.pg_namespace pn ON pn.oid = p.pronamespace
  LEFT JOIN pg_catalog.pg_constraint k ON k.oid = t.tgconstraint LEFT JOIN pg_catalog.pg_class kc ON kc.oid = k.conrelid LEFT JOIN pg_catalog.pg_namespace kn ON kn.oid = kc.relnamespace
  LEFT JOIN pg_catalog.pg_class cr ON cr.oid = t.tgconstrrelid LEFT JOIN pg_catalog.pg_namespace crn ON crn.oid = cr.relnamespace

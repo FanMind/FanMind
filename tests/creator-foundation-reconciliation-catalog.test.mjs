@@ -168,6 +168,15 @@ test("parent function discovery covers trigger expression and rule execution sur
   assert.match(sql, /FROM parent_object_function_edges e JOIN pg_catalog\.pg_proc p ON p\.oid = e\.target_oid/u);
 });
 
+test("trigger WHEN uses PostgreSQL's trigger deparser with its OLD and NEW context", () => {
+  const sql = catalogModule.buildCreatorFoundationCatalogSql();
+  assert.doesNotMatch(sql, /pg_catalog\.pg_get_expr\(t\.tgqual/u);
+  assert.match(sql, /pg_catalog\.pg_get_triggerdef\(t\.oid,false\)/u);
+  assert.match(sql, /WHEN t\.tgqual IS NULL THEN NULL/u);
+  assert.match(sql, /pg_catalog\.length\(pg_catalog\.quote_ident\(t\.tgname\)\)/u);
+  assert.doesNotMatch(sql, /regexp_replace/u, "never erase conditions while stabilizing an internal name");
+});
+
 test("parent helper export follows policy and function dependencies without losing unknown helpers", () => {
   const sql = catalogModule.buildCreatorFoundationCatalogSql();
   const policyEdges = sql.slice(sql.indexOf("parent_policy_function_edges AS ("), sql.indexOf("parent_function_component(oid) AS ("));

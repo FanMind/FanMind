@@ -213,6 +213,7 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     for (const [name, statement, expectedSection] of [
       ["unreviewed trigger authority", "CREATE FUNCTION public.reconciliation_parent_trigger() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.billing_manual_override=true; RETURN NEW; END $$; CREATE TRIGGER reconciliation_parent_trigger BEFORE UPDATE ON public.workspaces FOR EACH ROW EXECUTE FUNCTION public.reconciliation_parent_trigger();", "parentTriggers"],
       ["unreviewed trigger WHEN authority", "CREATE FUNCTION public.reconciliation_trigger_base() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$; CREATE FUNCTION public.reconciliation_trigger_when(boolean) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT $1 $$; CREATE TRIGGER reconciliation_parent_when BEFORE UPDATE ON public.workspaces FOR EACH ROW WHEN(public.reconciliation_trigger_when(NEW.billing_manual_override)) EXECUTE FUNCTION public.reconciliation_trigger_base();", "parentTriggers"],
+      ["unreviewed trigger OLD NEW authority", "CREATE FUNCTION public.reconciliation_trigger_base() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$; CREATE FUNCTION public.reconciliation_trigger_when(boolean) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT $1 $$; CREATE TRIGGER reconciliation_parent_when BEFORE UPDATE ON public.workspaces FOR EACH ROW WHEN(public.reconciliation_trigger_when(NEW.billing_manual_override) AND OLD.billing_manual_override IS DISTINCT FROM NEW.billing_manual_override) EXECUTE FUNCTION public.reconciliation_trigger_base();", "parentTriggers"],
       ["unreviewed index authority", "CREATE FUNCTION public.reconciliation_parent_index(text) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT $1 $$; CREATE INDEX reconciliation_parent_expression ON public.workspaces(public.reconciliation_parent_index(billing_status));", "parentIndexes"],
       ["unreviewed constraint authority", "CREATE FUNCTION public.reconciliation_parent_check(uuid) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT true $$; ALTER TABLE public.workspace_members ADD CONSTRAINT reconciliation_parent_check CHECK(public.reconciliation_parent_check(user_id)) NOT VALID;", "parentConstraints"],
       ["unreviewed default authority", "CREATE FUNCTION public.reconciliation_parent_default() RETURNS text LANGUAGE sql AS $$ SELECT 'active'::text $$; ALTER TABLE public.workspaces ALTER COLUMN billing_status SET DEFAULT public.reconciliation_parent_default();", "parentColumns"],
@@ -221,9 +222,12 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       sql(statement, databases[1]);
       const snapshot = JSON.parse(sql(query, databases[1]));
       assert.ok(snapshot.catalog[expectedSection].length > 0, name);
-      if (name === "unreviewed trigger WHEN authority") {
+      if (["unreviewed trigger WHEN authority", "unreviewed trigger OLD NEW authority"].includes(name)) {
         assert.ok(snapshot.catalog.parentFunctions.some(row => row.identity === "reconciliation_trigger_base()"));
         assert.ok(snapshot.catalog.parentFunctions.some(row => row.identity === "reconciliation_trigger_when(boolean)"));
+        const definition = snapshot.catalog.parentTriggers.find(row => row.name === "reconciliation_parent_when").when;
+        assert.match(definition, /WHEN[\s\S]*new\.billing_manual_override/iu);
+        if (name === "unreviewed trigger OLD NEW authority") assert.match(definition, /old\.billing_manual_override IS DISTINCT FROM new\.billing_manual_override/iu);
       }
       const result = classify(snapshot);
       assert.equal(result.status, "INCOMPLETE", name);
