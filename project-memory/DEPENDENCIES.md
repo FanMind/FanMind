@@ -1,11 +1,19 @@
+## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
+- Status: TODO; exact bounded repository continuation admitted and executable, but not started. It becomes IN_PROGRESS only with its own atomic exact-base start contract and lock.
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Task: FM-CREATOR-001
+- Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
+- Completion contract: emit only the helper, two RPC bodies and four policy USING replacements; fail closed on every unsupported profile/pin/state; prove native rollback, negative isolation and unchanged data; publish a reproducible manifest through exact-head CI and independent review.
+- Boundary: repository source/tests only. No target/provider call, SQL APPLY, workflow dispatch, runtime activation or deployment acceptance. A later target-bound continuation requires a distinct protected action and current authorization.
+
 ## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
 - Risk: R3
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Requires: creator_foundation_reconciliation_preflight=ACCEPTED and action NBA-CREATOR-FOUNDATION-STAGING-CATALOG completed through its RECONCILED state.
-- Scope: Bounded repository/offline source work at priority 2 under existing user authorization and FM-DEC-024. Independently reconcile supported provider/role and installed-parent source profiles using the already captured private observation and separately pinned source evidence. Never use target-derived expected values. Design a source-defined forward transition with exact preconditions, supported baseline, authorization boundaries, atomicity, cleanup/recovery and meaningful isolated tests. No APPLY, runtime activation, target calls, provider calls, workflow dispatch, target DDL/data/role changes, temporary target helper or customer fixture. Bounded completion: publish independently supported profile inputs and a reviewable source transition design, or record PARTIAL with the exact missing external provenance. If external input blocks completion, make the specific action requires_owner=true and link an exact owner/evidence item so existing selection reports OWNER_ACTION_REQUIRED; do not call PARTIAL completed or keep a generic executable placeholder. No repeated permission question for already authorized safe offline work. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
-- Exact missing evidence: derive from the actual observation and independent source review; no unobserved conclusion claimed.
+- Completion: Repository-only source dependency satisfied by PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`, exact-head green CI/native PG17 and independent review. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
+- Remaining dependency: Implement and accept NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as repository-only source work. Any later target observation/reference acceptance or transition execution is a distinct protected action requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
 
 ## DEP-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Task: FM-CREATOR-001
@@ -13,7 +21,7 @@
 - Risk: R3
 - Status: RECONCILED
 - Requires: creator_foundation_reconciliation_preflight=ACCEPTED, immutable trusted CI references, independently reviewed provider-role profile, exact Staging/source/query binding.
-- Sequence: actual catalog INCOMPLETE recorded; only NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN is next, no unchanged observation retry.
+- Sequence: actual catalog INCOMPLETE recorded; the subsequent NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN source package is ACCEPTED/CONSUMED. No unchanged observation retry; any target continuation is a distinct protected action.
 - Rule: no learning-schema ABSENT/INSTALLED proof, target acceptance, write authorization or aggregate Creator acceptance follows from catalog equality.
 
 
@@ -25,7 +33,7 @@
 - Risk: R3
 - Status: RECONCILED
 - Observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
-- Sequence: source preflight accepted and catalog observation RECONCILED; only NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN may reconcile source profiles/design. Any target transition and fresh learning VERIFY remain separate scopes.
+- Sequence: source preflight accepted, catalog observation RECONCILED and NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN ACCEPTED/CONSUMED. Any target transition and fresh learning VERIFY remain separate protected scopes.
 
 ## DEP-SOCIAL-CONNECT-FLOW-20260911
 - Task: FM-SOC7-001 / FM-CR-032

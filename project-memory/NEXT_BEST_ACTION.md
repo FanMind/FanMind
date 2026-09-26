@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN`
+- Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
 - Task: `FM-CREATOR-001`
-- Gate: `creator_foundation_profile_transition_design` (`IN_PROGRESS`)
+- Gate: `creator_foundation_transition_generator` (`TODO`)
 - Selection status: `EXECUTABLE`
-- Title: Creator-Profile unabhängig abgleichen und begrenzten Quellenübergang entwerfen
+- Title: Begrenzten Creator-Foundation-Übergang fail-closed erzeugen und nativ beweisen
 
 ## Instruction
 
-Source transition design drafted in `docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md`; do not re-author or republish it unchanged. Exact next source steps: isolated native PG17 proof of original auth.uid postgres-to-auth-owner sequence; independently reproduce the Daily workspace CHECK profile without assuming the optional billing baseline; complete independently pinned Hosted role/configuration/membership provenance. These source tasks remain unperformed and executable; no exclusively external blocker is established. Bounded repository/offline source work at priority 2 under existing user authorization and FM-DEC-024. Independently reconcile supported provider/role and installed-parent source profiles using the already captured private observation and separately pinned source evidence. Never use target-derived expected values. Design a source-defined forward transition with exact preconditions, supported baseline, authorization boundaries, atomicity, cleanup/recovery and meaningful isolated tests. No APPLY, runtime activation, target calls, provider calls, workflow dispatch, target DDL/data/role changes, temporary target helper or customer fixture. Bounded completion: publish independently supported profile inputs and a reviewable source transition design, or record PARTIAL with the exact missing external provenance. If external input blocks completion, make the specific action requires_owner=true and link an exact owner/evidence item so existing selection reports OWNER_ACTION_REQUIRED; do not call PARTIAL completed or keep a generic executable placeholder. No repeated permission question for already authorized safe offline work. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
+Implement the bounded repository-only transition generator and native PG17 proofs defined by the accepted profile/transition package. It may emit only the pinned creator_workspace_access_allowed helper, the two pinned RPC bodies and the four exact policy USING replacements; it must never replay the whole Foundation or write product data. Bind the accepted auth.uid, Daily parent and Hosted role profiles plus all query/source/reference pins; fail closed on pin/profile drift, mixed or already-current state, unknown overload/policy/role paths, unexpected AdminCRM and any unsupported target-derived value. Prove atomic rollback after each injected step, unchanged stored data, Legacy-to-Current result and required negative/cross-workspace cases. Deliver source, tests and reproducible artifact manifest through independent exact-head review and CI. No target/provider call, workflow dispatch, SQL APPLY, runtime activation or deployment acceptance belongs to this action. A later target-bound observation/reference acceptance/transition remains a separately authorized protected action.
 
 ## Why this action
 
@@ -23,9 +23,9 @@ standing-authorized safe work
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN`
+- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN`
+- Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -35,7 +35,7 @@ standing-authorized safe work
 
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
-- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 2: **EXECUTABLE** — standing-authorized safe work
+- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: **EXECUTABLE** — standing-authorized safe work
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
@@ -47,6 +47,7 @@ standing-authorized safe work
 - `NBA-PHASE7-EXTERNAL` priority 11: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT` priority 12: **DONE** — gate creator_foundation_reconciliation_preflight is ACCEPTED
 - `NBA-CREATOR-FOUNDATION-STAGING-CATALOG` priority 13: **DONE** — gate creator_foundation_staging_catalog is RECONCILED
+- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: **DONE** — gate creator_foundation_profile_transition_design is ACCEPTED
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required

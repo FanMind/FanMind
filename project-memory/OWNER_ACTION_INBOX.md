@@ -5,7 +5,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-STAGING-CATALOG
 - Authorization: FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926; reuse existing user authorization without a repeated permission question.
-- Exact next: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN; existing user authorization covers safe offline source work, no further target call or unchanged retry.
+- Consumed continuation: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN is ACCEPTED by PR #1207 / merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`. NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR is now the repository-only Builder continuation and needs no owner response. Any later target observation/reference acceptance or transition requires its own newly admitted protected action; no unchanged catalog retry is READY_NOW.
 
 
 - Actual observation: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
@@ -16,7 +16,7 @@
 - Risk: R3
 - Status: COMPLETED
 - Outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
-- No additional owner response is needed for NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN; target observation is consumed and the continuation is bounded offline source work.
+- No additional owner response is needed for the consumed profile/design package or the now-admitted repository-only transition generator. Their source work does not authorize a target observation, reference acceptance or transition.
 
 ## FM-CHATADMIN-OWNER-VERIFY-20260921 — Read-only Staging VERIFY starten
 - Status: COMPLETED
