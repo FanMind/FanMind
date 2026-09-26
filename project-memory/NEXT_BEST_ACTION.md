@@ -38,7 +38,7 @@ owner/platform action required
 - `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` priority 2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is VERIFIED
-- `NBA-CHATADMIN-STAGING-ACCEPT` priority 4: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-SOCIAL-EXTERNAL` priority 8: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-PHASE7-EXTERNAL` priority 9: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-RESTORE-STORAGE-R4-AUTH` priority 10: **OWNER_ACTION_REQUIRED** — owner/platform action required

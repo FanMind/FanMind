@@ -265,7 +265,7 @@
     },
     {
       "id": "NBA-CHATADMIN-STAGING-ACCEPT",
-      "priority": 4,
+      "priority": 5,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_accept",
       "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausführen",
