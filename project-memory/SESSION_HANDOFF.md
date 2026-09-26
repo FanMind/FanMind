@@ -1,3 +1,9 @@
+## Creator broad action reconciliation verified for PR — 2026-09-26
+- Baseline main `2aaf225fec29fd91c20f822185c770f87eb3d10d` had no active bounded Creator continuation, but stale canonical wording and the broad catalog entry still advertised `NBA-CREATOR-INTELLIGENCE` as executable.
+- The bounded repository correction consumes that placeholder without closing `FM-CREATOR-001`, documents #1184 as the completed evidence-only step, and hardens truth drift plus registered regression coverage so absence/ambiguity cannot silently recreate the state.
+- Clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` passed 1,548 Operations tests with 0 failures and all local Manager/Memory/drift controls. Fresh selection has no executable safe set, zero worker reservation and surfaces unchanged `FM-REG-003` as OWNER_ACTION_REQUIRED.
+- Exact next step: publish this single branch as one PR, consume exact-head CI and exactly one independent review, fix any blocking finding on the same PR, then merge normally only when current-head evidence is clean. No protected action, runtime/provider/SQL mutation or new Creator product scope belongs to this handoff.
+
 ## Creator voice evidence #1184 merged; next Creator scope requires fresh selection — 2026-09-26
 - PR #1184 final head `12924950dfcfee263c48774c16c667d9bd5c6167` passed all eight required exact-head checks after the emoji-style punctuation P2 was corrected with direct regression coverage. The thread is resolved and final exact-head Codex review reported no major issues.
 - Normal squash merge created exact main `2dace28f6ab631261c60da1f3aa7920eaa40c849`. Current-main re-read confirms source blob `55efe11da5916a13d90c8c287e49bbb62c6798ac` and test blob `07cee74e32ab64d2d9dab59d4323f0e0c7b3d2f3`.

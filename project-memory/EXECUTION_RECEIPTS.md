@@ -1,3 +1,13 @@
+## RECEIPT-FM-CREATOR-NEXT-ACTION-RECONCILIATION-20260926
+- Status: VERIFIED_FOR_PR; Task FM-CREATOR-001; Risk R2.
+- Baseline: exact main `2aaf225fec29fd91c20f822185c770f87eb3d10d`; #1184 aggregate summary and #1185 closeout are consumed evidence, not new work.
+- Scope: repository-only correction of the stale Creator next-step wording and broad executable action, hardened truth-drift classification, registered negative/regression coverage and bounded Project Memory reconciliation.
+- Verification: baseline regression failed because the action was active and the completed summary was still called next. Clean implementation head `0eb05fddaa92a3e9b865ffc1261964e50ff41c80` then passed the focused policy suite, 1,548 Operations tests (1,544 pass / 0 fail / 4 documented environment skips), Builder Manager contract/selection and all local Memory/drift/freshness/status controls.
+- Result boundary: the broad action is `CONSUMED`, aggregate Creator remains `IN_PROGRESS`, `SAFE READY SET=NONE`, and zero workers are reserved. The existing `FM-REG-003` Owner action is surfaced but not executed.
+- Safety: no product feature, real/private sample, provider/model call, persistence, SQL, Staging/Production/customer mutation, Billing/Stripe/Tax, Restore or Mobile change occurred.
+- Next: one exact-head PR, required CI, one independent review with no blocking P1/P2, normal merge and post-merge content verification. No follow-up is created merely to record a future merge SHA.
+- Recovery: normal repository revert; no external rollback.
+
 ## RECEIPT-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260926
 - Status: MERGED_VERIFIED; Task FM-CREATOR-001; Risk R2.
 - Baseline: exact main `094334c38e9942affe7e8100aeb02df45808e530`; Builder Manager admitted `NBA-CREATOR-INTELLIGENCE` and the predecessor onboarding-input scope was already repository-verified.

@@ -201,14 +201,15 @@ keinen kausalen Verkaufserfolg aus zeitlicher Nähe behaupten. Preise/Grenzen
 ändern sich nicht automatisch. Voice-Onboarding aus 30–100 freigegebenen echten
 Creator-Nachrichten und die verblindete Stimmenbewertung sind noch offen.
 
-Der nächste repository-seitige Schritt bleibt ausdrücklich evidence-only: Eine
-deterministische Zusammenfassung darf aus einem bereits validierten Sample nur
-aggregierte Zeichenlängen-, Frage-/Ausrufezeichen- und Emoji-Metriken sowie
-häufige Emojis ableiten. Die Zusammenfassung enthält keine Rohtexte und keine
+Der repository-seitige evidence-only Schritt ist abgeschlossen: PR #1184 stellt
+aus einem bereits validierten Sample eine deterministische Zusammenfassung mit
+aggregierten Zeichenlängen-, Frage-/Ausrufezeichen- und Emoji-Metriken sowie
+häufigen Emojis bereit. Die Zusammenfassung enthält keine Rohtexte und keine
 Message-IDs, erzeugt keine subjektiven Stil-Scores und kann niemals automatisch
 ein `creator_voice_profiles`-Profil freigeben. Reale Creator-Beispiele,
 menschliche Stilfreigabe und die verblindete Zwei-Creator-Bewertung bleiben
-separate Evidence-Gates.
+separate Evidence-Gates und begründen ohne einen neuen bounded contract keinen
+weiteren repository-seitigen Arbeitsschritt.
 
 Der repository-seitige Onboarding-Eingangsvertrag ist nun separat vorbereitet:
 `src/lib/creatorVoiceOnboarding.mjs` akzeptiert ausschließlich 30–100 bestätigte
