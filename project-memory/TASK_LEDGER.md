@@ -1,3 +1,14 @@
+## FM-CREATOR-001 — privacy-safe voice evidence summary — 2026-09-25
+- Status: IN_PROGRESS
+- Risk: R2
+- Parent: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE.
+- Admission: #1183 merged as exact main `094334c38e9942affe7e8100aeb02df45808e530`; the Builder Manager keeps `NBA-CREATOR-INTELLIGENCE` as the only SAFE READY repository action and reports no active continuation.
+- Bounded goal: expose deterministic, non-sensitive onboarding evidence from the already validated 30–100-message dataset without pretending that objective statistics are an approved writing style.
+- Scope/acceptance: aggregate character length, punctuation ratios and emoji frequency/top-emoji evidence only; exact Workspace/Creator and sample-size consistency; no raw texts or message IDs in output; `autoApprovalAllowed=false`.
+- Not acceptance of: subjective tone/directness/humor scores, generated voice/profile, human approval, real private onboarding data, blinded quality, runtime/provider/target activation or protected actions.
+- Current next step: exact-head CI and independent review on the bounded PR, then normal merge if clean.
+- Recovery: repository revert only.
+
 ## FM-CREATOR-001 — voice onboarding contract continuation — 2026-09-25
 - Status: VERIFIED
 - Risk: R3

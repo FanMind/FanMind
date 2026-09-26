@@ -5,6 +5,7 @@ import {
   CREATOR_VOICE_ONBOARDING_MAX_MESSAGES,
   CREATOR_VOICE_ONBOARDING_MIN_MESSAGES,
   normalizeCreatorVoiceOnboardingDataset,
+  summarizeCreatorVoiceOnboardingDataset,
 } from "../src/lib/creatorVoiceOnboarding.mjs";
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
@@ -160,4 +161,447 @@ test("applies the text bound after NFC normalization", () => {
     ),
     /invalid_voice_onboarding_text/u,
   );
+});
+
+
+test("summarizes validated Creator onboarding evidence without returning raw text or message IDs", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Hey 😊 Wie geht es dir?" });
+  records[1] = record(2, { text: "Mega! 😊" });
+  records[2] = record(3, { text: "Erzähl mir mehr davon 😄" });
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    { now: Date.parse("2026-09-25T10:00:00Z") },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId });
+
+  assert.equal(summary.sampleSize, CREATOR_VOICE_ONBOARDING_MIN_MESSAGES);
+  assert.equal(summary.evidenceOnly, true);
+  assert.equal(summary.autoApprovalAllowed, false);
+  assert.equal(summary.rawTextIncluded, false);
+  assert.equal(summary.messageIdIncluded, false);
+  assert.ok(summary.metrics.averageChars > 0);
+  assert.ok(summary.metrics.medianChars > 0);
+  assert.ok(summary.metrics.questionMessageRatio > 0);
+  assert.ok(summary.metrics.exclamationMessageRatio > 0);
+  assert.ok(summary.metrics.emojiMessageRatio > 0);
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 2), ["😊", "😄"]);
+  assert.doesNotMatch(JSON.stringify(summary), /Hey|Mega|Erzähl|44444444/u);
+});
+
+test("summary fails closed when a normalized-looking dataset crosses Creator scope", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  normalized.messages[0] = {
+    ...normalized.messages[0],
+    creatorId: "66666666-6666-4666-8666-666666666666",
+  };
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
+    /voice_onboarding_(?:summary_)?scope_mismatch/u,
+  );
+});
+
+test("summary requires a sampleSize that exactly matches the validated message array", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset({ ...normalized, sampleSize: normalized.sampleSize + 1 }, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
+    /voice_onboarding_sample_size_mismatch/u,
+  );
+});
+
+
+test("summary revalidates message identity and rejects duplicate message IDs", () => {
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    dataset(),
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  normalized.messages[0] = { ...normalized.messages[0], messageId: normalized.messages[1].messageId };
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(normalized, { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId }),
+    /duplicate_voice_onboarding_message_id/u,
+  );
+});
+
+
+test("summary binds the dataset header and messages to authorization-owned Creator scope", () => {
+  const foreignWorkspaceId = "77777777-7777-4777-8777-777777777777";
+  const foreignCreatorId = "88888888-8888-4888-8888-888888888888";
+  const foreign = dataset().map((item) => ({
+    ...item,
+    workspaceId: foreignWorkspaceId,
+    creatorId: foreignCreatorId,
+  }));
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    foreign,
+    { expectedWorkspaceId: foreignWorkspaceId, expectedCreatorId: foreignCreatorId },
+  );
+  assert.throws(
+    () => summarizeCreatorVoiceOnboardingDataset(
+      normalized,
+      { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+    ),
+    /voice_onboarding_summary_scope_mismatch/u,
+  );
+});
+
+test("summary measures user-perceived graphemes rather than UTF-16 code units", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👨‍👩‍👧‍👦" });
+  records[1] = record(2, { text: "é" });
+  for (let index = 2; index < records.length; index += 1) {
+    records[index] = record(index + 1, { text: "a" });
+  }
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  assert.equal(summary.metrics.averageChars, 1);
+  assert.equal(summary.metrics.medianChars, 1);
+});
+
+test("summary preserves complete emoji graphemes and excludes plain emoji-capable symbols", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👨‍👩‍👧‍👦" });
+  records[1] = record(2, { text: "❤️" });
+  records[2] = record(3, { text: "🇦🇹" });
+  records[3] = record(4, { text: "©" });
+  records[4] = record(5, { text: "©️" });
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.ok(summary.metrics.preferredEmojis.includes("👨‍👩‍👧‍👦"));
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🇦🇹"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("©"));
+  assert.ok(summary.metrics.preferredEmojis.includes("©️"));
+  assert.equal(summary.metrics.emojisPerMessage, 0.133);
+});
+
+
+test("summary recognizes Arabic and full-width question/exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "كيف حالك؟" });
+  records[1] = record(2, { text: "元気ですか？" });
+  records[2] = record(3, { text: "すごい！" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.033);
+});
+
+
+test("summary recognizes combined Unicode question and exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Really⁇" });
+  records[1] = record(2, { text: "Really⁈" });
+  records[2] = record(3, { text: "Really⁉️" });
+  records[3] = record(4, { text: "Really‼" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.1);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.1);
+});
+
+test("summary counts emoji-style question and exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "Warum❓" });
+  records[1] = record(2, { text: "Wirklich❔" });
+  records[2] = record(3, { text: "Sehr gut❗" });
+  records[3] = record(4, { text: "Achtung❕" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.067);
+});
+
+test("summary preserves fractional medians for even samples", () => {
+  const records = dataset();
+  for (let index = 0; index < 15; index += 1) records[index] = record(index + 1, { text: "a" });
+  for (let index = 15; index < 30; index += 1) records[index] = record(index + 1, { text: "ab" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.medianChars, 1.5);
+});
+
+test("summary uses a locale-independent code-point tie-breaker for equally common emojis", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "🧡" });
+  records[1] = record(2, { text: "😀" });
+  records[2] = record(3, { text: "😄" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 3), ["😀", "😄", "🧡"]);
+});
+
+
+test("summary preserves fractional average character lengths", () => {
+  const records = dataset();
+  for (let index = 0; index < 15; index += 1) records[index] = record(index + 1, { text: "a" });
+  for (let index = 15; index < 30; index += 1) records[index] = record(index + 1, { text: "ab" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.averageChars, 1.5);
+});
+
+test("summary excludes text-presented emoji-capable symbols from emoji metrics", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☕︎" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0);
+  assert.equal(summary.metrics.emojisPerMessage, 0);
+  assert.ok(!summary.metrics.preferredEmojis.includes("☕︎"));
+});
+
+
+test("summary recognizes Spanish opening and Armenian question/exclamation punctuation", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "¿Solo apertura" });
+  records[1] = record(2, { text: "¡Solo apertura" });
+  records[2] = record(3, { text: "Հայերեն՞" });
+  records[3] = record(4, { text: "Հայերեն՜" });
+  records[4] = record(5, { text: "ქართული ნ ტექსტი" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.questionMessageRatio, 0.067);
+  assert.equal(summary.metrics.exclamationMessageRatio, 0.067);
+});
+
+test("summary merges redundant emoji presentation selectors but preserves meaningful FE0F", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☕" });
+  records[1] = record(2, { text: "☕️" });
+  records[2] = record(3, { text: "❤️" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.preferredEmojis.filter((emoji) => emoji === "☕").length, 1);
+  assert.ok(!summary.metrics.preferredEmojis.includes("☕️"));
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️"));
+  assert.deepEqual(summary.metrics.preferredEmojis.slice(0, 2), ["☕", "❤️"]);
+});
+
+
+test("summary recognizes minimally-qualified keycap emoji", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "1⃣" });
+  records[1] = record(2, { text: "#⃣" });
+  records[2] = record(3, { text: "*⃣" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.1);
+  assert.equal(summary.metrics.emojisPerMessage, 0.1);
+  assert.ok(summary.metrics.preferredEmojis.includes("1⃣"));
+  assert.ok(summary.metrics.preferredEmojis.includes("#⃣"));
+  assert.ok(summary.metrics.preferredEmojis.includes("*⃣"));
+});
+
+test("summary strips arbitrary combining and tag extenders from preferred emoji output", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "😀\u0301\u0301" });
+  records[1] = record(2, { text: "😀\u{E0061}\u{E0062}" });
+  records[2] = record(3, { text: "😀\u{E0073}\u{E0065}\u{E0063}\u{E0072}\u{E0065}\u{E0074}\u{E007F}" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.1);
+  assert.equal(summary.metrics.emojisPerMessage, 0.1);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["😀"]);
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => /\p{Mark}/u.test(emoji)), false);
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => /[\u{E0000}-\u{E007F}]/u.test(emoji)), false);
+});
+
+
+test("summary canonicalizes minimally-qualified RGI ZWJ emoji and rejects arbitrary ZWJ payloads", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "❤‍🔥" });
+  records[1] = record(2, { text: "🏃‍♀" });
+  records[2] = record(3, { text: "😀‍😀" });
+  records[3] = record(4, { text: Array.from({ length: 1000 }, () => "😀").join("\u200D") });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
+  assert.equal(summary.metrics.emojisPerMessage, 0.067);
+  assert.ok(summary.metrics.preferredEmojis.includes("❤️‍🔥"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🏃‍♀️"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("😀‍😀"));
+  assert.equal(summary.metrics.preferredEmojis.some((emoji) => emoji.length > 32), false);
+});
+
+test("summary accepts only complete RGI modifier sequences", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "👍🏽" });
+  records[1] = record(2, { text: "😀🏽" });
+  records[2] = record(3, { text: "©️🏽" });
+  records[3] = record(4, { text: "👪🏽" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.033);
+  assert.equal(summary.metrics.emojisPerMessage, 0.033);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["👍🏽"]);
+});
+
+
+test("summary canonicalizes valid text-default modifier bases and rejects malformed VS16 modifier order", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "☝🏽" });
+  records[1] = record(2, { text: "☝️🏽" });
+  records[2] = record(3, { text: "🕵🏽‍♀" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.067);
+  assert.equal(summary.metrics.emojisPerMessage, 0.067);
+  assert.ok(summary.metrics.preferredEmojis.includes("☝🏽"));
+  assert.ok(summary.metrics.preferredEmojis.includes("🕵🏽‍♀️"));
+  assert.ok(!summary.metrics.preferredEmojis.includes("☝️🏽"));
+});
+
+test("summary restricts flags and reserved pictographs to assigned RGI emoji", () => {
+  const records = dataset();
+  records[0] = record(1, { text: "🇦🇹" });
+  records[1] = record(2, { text: "🇦🇦" });
+  records[2] = record(3, { text: "🇿🇿" });
+  records[3] = record(4, { text: "🇦" });
+  records[4] = record(5, { text: "🇦️" });
+  records[5] = record(6, { text: "\u{1F02C}\uFE0F" });
+
+  const normalized = normalizeCreatorVoiceOnboardingDataset(
+    records,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+  const summary = summarizeCreatorVoiceOnboardingDataset(
+    normalized,
+    { expectedWorkspaceId: workspaceId, expectedCreatorId: creatorId },
+  );
+
+  assert.equal(summary.metrics.emojiMessageRatio, 0.033);
+  assert.equal(summary.metrics.emojisPerMessage, 0.033);
+  assert.deepEqual(summary.metrics.preferredEmojis, ["🇦🇹"]);
 });

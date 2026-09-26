@@ -1,3 +1,16 @@
+## LOCK-FM-CREATOR-VOICE-EVIDENCE-SUMMARY-20260925
+- Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE
+- Action: NBA-CREATOR-INTELLIGENCE
+- Status: ACTIVE
+- Risk: R2
+- Holder: autonomous FanMind Builder
+- Baseline: exact main `094334c38e9942affe7e8100aeb02df45808e530`.
+- Scope: privacy-safe aggregate evidence summary for an already validated Creator voice-onboarding dataset plus direct tests/docs/Project-Memory only.
+- Parallel safety: serialize Creator voice/onboarding/quality work against this lock. No second worker may touch the same onboarding contract or voice-evidence semantics.
+- Forbidden: real private sample content in Git, automatic voice/profile derivation or approval, model/provider call, persistence/schema/APPLY, Staging/Production/customer/Billing/Restore/Mobile mutation.
+- Release condition: focused/full CI, negative/privacy regression, exact-head independent review with P1=0/P2=0/no blocking threads, normal merge and post-merge reconciliation.
+- Recovery: repository revert only.
+
 ## LOCK-FM-CREATOR-VOICE-ONBOARDING-20260925
 - Task: FM-CREATOR-001 / NBA-CREATOR-INTELLIGENCE
 - Action: NBA-CREATOR-INTELLIGENCE
