@@ -1,3 +1,17 @@
+## LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4
+- Status: ACTIVE
+- Holder: autonomous FanMind Builder
+- Exact base: `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Scope: one serialized Creator R4 source+protected-execution path: exact Staging deploy, private-reference-bound Legacy-to-Current target transition, Current postflight, then server-only Staging runtime flag activation and authenticated synthetic readback.
+- Parallel safety: no concurrent Creator target/schema/runtime worker. Other independent tasks may proceed only if their files/contracts/environments do not overlap.
+- Allowed target: FanMind Staging Supabase `vshyhvgcmrlagvfnvomc` and the isolated `fanmind-staging.service` host only, under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927.
+- Forbidden: Production `drqkpdvtbbrrdwmtrodz`, real customer/fan/Creator data, provider/model calls, external send, Billing/Stripe/Tax/Restore/Mobile mutation, generic migration ledger use, secrets/raw private catalog publication and direct main writes.
+- Release condition: source PR exact-head CI/review/zero P0-P2 + normal merge; one exact owner command bound to current main; successful exact Staging deploy; protected transition Legacy preflight and CURRENT_EXACT committed postflight; runtime flag enabled with exact release and authenticated `/api/creators available:true`; independent read-only target countercheck; receipt/memory reconciliation.
+- Recovery: before COMMIT any target failure rolls back the whole transition. After a successful Current postflight, runtime failure restores only the previous Staging flag file and restarts `fanmind-staging.service`; schema is not blindly reverted. Any later schema reversal with real data requires a separate recovery/export authorization.
+
 ## LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
 - Task: FM-CREATOR-001
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
