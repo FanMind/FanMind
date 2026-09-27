@@ -1,3 +1,20 @@
+## FM-CREATOR-001 — PR #1210 post-merge closeout P2 correction — 2026-09-27
+- Task: FM-CREATOR-001
+- Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
+- Risk: R3
+- Boundary: repository/test reconciliation only; no product/runtime/provider contract change.
+- Status: IN_PROGRESS.
+- Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (ACTIVE).
+- Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499` (verified merge of PR #1210).
+- Trigger/evidence: PR #1210 final head `27ed5ae56981df30a72151ded44b0c2657ddda76` had full exact-head CI green and merged as `63e6380cb75da80e9d5bd6b8d8892639a3127499`; the delayed exact-head review then reported valid P2s showing lifecycle conflict checks could start from protected-action spans and still depended on an incomplete connector list.
+- Remaining result: make the consumed-generator closeout regression subject-correct so lifecycle conflicts originate only from actual generator completion spans, while direct contradictory predicates remain fail-closed without treating separately authorized target status as generator status.
+- Expected files/contracts: `tests/roadmap-1-7-completion-policy.test.mjs` plus this exact Project Memory state entry. No product/runtime/provider contract changes.
+- Acceptance criteria: (1) lifecycle checks use generator completion spans only; (2) direct conflicts including `though remains ACTIVE` fail closed without a finite connector allowlist; (3) `Continue the separately authorized target transition; Status: ACTIVE` stays allowed; (4) existing superseded-closeout/ACTIVE/unfinished/protected-target regressions remain green; (5) exact-head CI including native PostgreSQL 17, Browser E2E, CodeQL and one independent review pass with zero open blocking P0/P1/P2 before normal merge.
+- Negative/regression tests: protected target action followed by `Status: ACTIVE`; generator closeout followed by `though remains ACTIVE`; prior `yet`/`while`/superseded closeout contradictions.
+- Completion stage: repository test/governance correction only. No target/provider/database call, SQL APPLY, deployment, runtime activation or external acceptance.
+- Exact next step: complete exact-head CI and independent review for PR #1211, resolve only evidence-backed P0/P1/P2 threads, normal-merge if clean, then recompute the SAFE READY SET from canonical `main`; do not reopen consumed generator source/catalog work or target mutation without a separately admitted protected action.
+- Do-not-repeat: green CI alone is not sufficient when the required exact-head independent review is still pending; a late blocking review finding remains blocking even if the prior PR has already merged.
+
 ## FM-CREATOR-001 — bounded Foundation transition generator — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR

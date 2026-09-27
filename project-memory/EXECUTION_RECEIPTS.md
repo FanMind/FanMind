@@ -1,3 +1,17 @@
+## FM-EXEC-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
+- Task: FM-CREATOR-001
+- Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (ACTIVE).
+- Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499`.
+- Completed so far: merged PR #1210 and its delayed exact-head review were reconciled; the valid post-merge lifecycle-scope findings were reproduced; PR #1211 was opened from exact main and the correction is implemented in one test file with canonical STARTED_WORK/lock/receipt tracking.
+- Still open: exact-head CI including PostgreSQL 17, Browser E2E and CodeQL; independent exact-head review; evidence-backed resolution of any blocking P0/P1/P2; normal merge and post-merge verification.
+- Exact next step: run the complete exact-head gates on PR #1211, process all current findings together, and merge only when the exact head is clean and mergeable.
+- Owner action needed: none.
+- Boundary: repository test/governance correction only. No target/provider/database call, SQL APPLY, deployment/runtime activation, customer mutation or external acceptance.
+- Recovery: ordinary repository revert; no external cleanup.
+
 ## FM-EXEC-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
