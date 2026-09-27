@@ -45,8 +45,10 @@ const markdownSection = (document, heading) => {
 
 const consumedGeneratorNextLineIsClosed = (line) => {
   const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
+  const consumedGeneratorReference =
+    `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
   const directlyTargetsConsumedGenerator = new RegExp(
-    `^\\s+(?:${consumedGeneratorId}\\b|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`,
+    `^\\s+(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?${consumedGeneratorReference}`,
     "iu",
   );
   const restartMentions = [];
@@ -370,6 +372,32 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; resume it`),
       false,
     );
+    const reopeningVerbs = ["start", "restart", "implement", "reopen", "rebuild", "resume"];
+    const consumedGeneratorTargets = [
+      generatorId,
+      `\`${generatorId}\``,
+      "work on it",
+      `work on \`${generatorId}\``,
+      `implementation of ${generatorId}`,
+    ];
+    for (const verb of reopeningVerbs) {
+      for (const target of consumedGeneratorTargets) {
+        assert.equal(
+          consumedGeneratorNextLineIsClosed(
+            `Next: ${generatorId} is ACCEPTED/CONSUMED; ${verb} ${target}`,
+          ),
+          false,
+          `${verb} ${target}`,
+        );
+        assert.equal(
+          consumedGeneratorNextLineIsClosed(
+            `Next: ${generatorId} is ACCEPTED/CONSUMED; do not ${verb} ${target}`,
+          ),
+          true,
+          `do not ${verb} ${target}`,
+        );
+      }
+    }
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
