@@ -79,6 +79,10 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     }
   }
   const reopeningVerb = "(?:start|restart|implement|reopen|rebuild|resume|continue)";
+  const reopeningVerbForm =
+    "(?:starts?|started|starting|restarts?|restarted|restarting|implements?|implemented|implementing|reopens?|reopened|reopening|rebuilds?|rebuilt|rebuilding|resumes?|resumed|resuming|continues?|continued|continuing)";
+  const actionVerbForm =
+    `(?:${reopeningVerbForm}|repeats?|repeated|repeating|proceeds?|proceeded|proceeding|advances?|advanced|advancing)`;
   const explicitlyClosedDirective = new RegExp(
     `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+${reopeningVerb}(?:\\s+(?:and|or)\\s+${reopeningVerb})*\\s+${consumedGeneratorActionTarget}`,
     "giu",
@@ -87,7 +91,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     closedSpans.push([match.index, match.index + match[0].length]);
   }
   const explicitlyNegatedAction = new RegExp(
-    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+(?:${reopeningVerb}|repeat|proceed|advance)\\b`,
+    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+(?:be\\s+)?${actionVerbForm}(?:\\s+(?:and|or)\\s+(?:be\\s+)?${actionVerbForm})*\\b`,
     "giu",
   );
   for (const match of line.matchAll(explicitlyNegatedAction)) {
@@ -100,7 +104,9 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   for (const match of line.matchAll(explicitlySeparateProtectedAction)) {
     closedSpans.push([match.index, match.index + match[0].length]);
   }
-  const maskedLine = [...line];
+  // RegExp match indices are UTF-16 code-unit offsets. split("") preserves
+  // those offsets, unlike code-point iteration with [...line].
+  const maskedLine = line.split("");
   for (const [start, end] of closedSpans) {
     maskedLine.fill(" ", start, end);
   }
@@ -109,11 +115,13 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     "iu",
   ).test(maskedLine.join(""));
   const leavesUnclassifiedReopenDirective = new RegExp(
-    `\\b(?:${reopeningVerb}|repeat|proceed|advance)\\b`,
+    `\\b${actionVerbForm}\\b`,
     "iu",
   ).test(maskedLine.join(""));
   const leavesConflictingCompletionClaim =
-    /\b(?:superseded\s+by|accepted\/consumed|done)\b/iu.test(maskedLine.join(""));
+    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?)|(?:remains?|still|is|was|were)\s+(?:incomplete|unfinished|pending|open))\b/iu.test(
+      maskedLine.join(""),
+    );
   const affirmativelyRestarts =
     leavesUnclassifiedGeneratorReference ||
     leavesUnclassifiedReopenDirective ||
@@ -508,6 +516,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       `${generatorId} is DONE but cannot be ACCEPTED/CONSUMED`,
       `${generatorId} is DONE but can't be ACCEPTED/CONSUMED`,
       `${generatorId} is DONE but won't be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE, but not completed`,
+      `${generatorId} is ACCEPTED/CONSUMED, but remains incomplete`,
+      `${generatorId} is ACCEPTED/CONSUMED, but still unfinished`,
     ]) {
       assert.equal(
         consumedGeneratorNextLineIsClosed(`Next: ${negatedCompletion}`),
@@ -515,6 +526,32 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
         negatedCompletion,
       );
     }
+    for (const passiveReopenDirective of [
+      "must be implemented again",
+      "needs to be reopened",
+      "should be rebuilt",
+      "will be resumed",
+      "must be continued",
+      "has to be restarted",
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(
+          `Next: ${generatorId} is ACCEPTED/CONSUMED but ${passiveReopenDirective}`,
+        ),
+        false,
+        passiveReopenDirective,
+      );
+    }
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: 😀😀😀 Do not start ${generatorId}; ${generatorId}`),
+      false,
+      "UTF-16 offsets must not hide a remaining generator reference",
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: 😀😀😀 Do not start ${generatorId}`),
+      true,
+      "UTF-16 offsets must preserve a fully closed directive",
+    );
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
