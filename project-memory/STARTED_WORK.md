@@ -1,3 +1,18 @@
+## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (ACTIVE)
+- Exact base: `c4326090052b7ccda34f73744d62f814bc342abb` (verified final Creator closeout main after PR #1212).
+- Remaining result: deliver one protected Staging-only R4 path that deploys exact reviewed main, classifies the fresh target against the independently accepted private PR #1207 reference, atomically applies the exact PR #1209 seven-step Legacy-to-Current transition only from LEGACY_EXACT with zero Creator rows/RPC activity, proves CURRENT_EXACT before COMMIT, then separately enables the server-only Creator runtime flag and proves authenticated `GET /api/creators` returns `available:true` with zero Creator rows.
+- Expected files/contracts: `scripts/operations/creator-foundation-transition-staging-runner.mjs`, `scripts/operations/creator-runtime-staging.mjs`, `.github/workflows/creator-target-transition-runtime.yml`, focused tests, package registration and exact Project Memory admission/receipt. No Production mutation.
+- Acceptance criteria: (1) source/reference/target/release pins and Production exclusion fail closed; (2) apply rechecks full Legacy under advisory/table locks and refuses data, active RPCs, drift or unknown state; (3) exact seven-step transition plus full Current postflight occur in one transaction before COMMIT; (4) exact current main is deployed before APPLY and runtime flag activation is separately proven by authenticated synthetic API readback with rollback-on-runtime-failure; (5) exact-head CI including native PG17, Browser E2E, CodeQL, independent review and zero open P0/P1/P2 pass before normal merge, followed by one owner-authenticated protected Staging execution and independent countercheck.
+- Negative/regression tests: Production project/ref mismatch; stale reviewed SHA; missing write gates; TLS downgrade; wrong confirmation; private-reference mismatch; nonempty Creator data; active Creator RPC; LEGACY/CURRENT drift; flag override conflict; runtime probe/release mismatch; no automatic schema rollback after successful Current postflight.
+- Current target preflight evidence: FanMind Staging project `vshyhvgcmrlagvfnvomc` is ACTIVE_HEALTHY on PostgreSQL 17; current read-only check in this builder session found counts 0/0/0/0 across the four Creator tables, zero active Creator RPC sessions, absent `creator_workspace_access_allowed(uuid)`/Admin-CRM helper, the two legacy Creator RPC bodies and four legacy member-read policies. This is freshness evidence only, not permission to bypass the protected same-transaction precondition.
+- Completion stage: source/review first, then protected Staging target APPLY, then runtime activation. Each stage remains a separate evidence claim.
+- Exact next step: finish this source branch, local/CI/review it, merge normally, post the exact owner-authenticated issue #874 command bound to resulting current main, verify deploy/APPLY/runtime jobs, run an independent read-only target countercheck, then reconcile this action once without creating a merge-SHA-only closeout chain.
+
 ## FM-CREATOR-001 — PR #1210 post-merge closeout P2 correction — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
