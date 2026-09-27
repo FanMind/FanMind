@@ -178,6 +178,7 @@ begin
       select 1 from indexes
       where tablename='chat_character_conversations'
         and indexname='chat_character_conversations_one_per_fan'
+        and exists(select 1 from pg_class ic join pg_namespace ns on ns.oid=ic.relnamespace join pg_index ix on ix.indexrelid=ic.oid where ns.nspname='public' and ic.relname=indexname and ix.indisvalid and ix.indisready)
         and normalized like '%createuniqueindexchat_character_conversations_one_per_fanonpublic.chat_character_conversationsusingbtree(workspace_id,character_id,fan_id)where(fan_idisnotnull)%'
     )
     union all
@@ -185,6 +186,7 @@ begin
       select 1 from indexes
       where tablename='chat_character_conversations'
         and indexname='chat_character_conversations_fan_identity'
+        and exists(select 1 from pg_class ic join pg_namespace ns on ns.oid=ic.relnamespace join pg_index ix on ix.indexrelid=ic.oid where ns.nspname='public' and ic.relname=indexname and ix.indisvalid and ix.indisready)
         and normalized like '%createuniqueindexchat_character_conversations_fan_identityonpublic.chat_character_conversationsusingbtree(workspace_id,character_id,fan_id,id)%'
     )
     union all
@@ -192,6 +194,7 @@ begin
       select 1 from indexes
       where tablename='chat_character_messages'
         and indexname='chat_character_messages_generation_once'
+        and exists(select 1 from pg_class ic join pg_namespace ns on ns.oid=ic.relnamespace join pg_index ix on ix.indexrelid=ic.oid where ns.nspname='public' and ic.relname=indexname and ix.indisvalid and ix.indisready)
         and normalized like '%createuniqueindexchat_character_messages_generation_onceonpublic.chat_character_messagesusingbtree(workspace_id,character_id,fan_id,conversation_id,generation_id)%'
         and normalized like '%where((direction=''fan_inbound''::text)and(generation_idisnotnull))%'
     )
@@ -200,6 +203,7 @@ begin
       select 1 from indexes
       where tablename='chat_character_messages'
         and indexname='chat_character_messages_confirmation_once'
+        and exists(select 1 from pg_class ic join pg_namespace ns on ns.oid=ic.relnamespace join pg_index ix on ix.indexrelid=ic.oid where ns.nspname='public' and ic.relname=indexname and ix.indisvalid and ix.indisready)
         and normalized like '%createuniqueindexchat_character_messages_confirmation_onceonpublic.chat_character_messagesusingbtree(workspace_id,character_id,fan_id,conversation_id,generation_id)%'
         and normalized like '%where((direction=''confirmed_reply''::text)and(generation_idisnotnull))%'
     )
@@ -243,8 +247,8 @@ begin
   where roles = '{authenticated}'::name[]
     and (
       (tablename='chat_character_fans' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc='is_current_chat_admin_workspaceworkspace_id')
-      or (tablename='chat_character_conversations' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc like '%fan_idisnotnull%' and wc like '%existsselect1fromchat_character_fansfwheref.workspace_id=chat_character_conversations.workspace_idandf.character_id=chat_character_conversations.character_idandf.id=chat_character_conversations.fan_id%')
-      or (tablename='chat_character_messages' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc like '%fan_idisnotnull%' and wc like '%existsselect1fromchat_character_conversationscwherec.workspace_id=chat_character_messages.workspace_idandc.character_id=chat_character_messages.character_idandc.fan_id=chat_character_messages.fan_idandc.id=chat_character_messages.conversation_id%')
+      or (tablename='chat_character_conversations' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc='fan_idisnotnullandis_current_chat_admin_workspaceworkspace_idandexistsselect1fromchat_character_fansfwheref.workspace_id=chat_character_conversations.workspace_idandf.character_id=chat_character_conversations.character_idandf.id=chat_character_conversations.fan_id')
+      or (tablename='chat_character_messages' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc='fan_idisnotnullandis_current_chat_admin_workspaceworkspace_idandexistsselect1fromchat_character_conversationscwherec.workspace_id=chat_character_messages.workspace_idandc.character_id=chat_character_messages.character_idandc.fan_id=chat_character_messages.fan_idandc.id=chat_character_messages.conversation_id')
     );
 
   select count(*) into base_policy_count
@@ -313,6 +317,10 @@ begin
     and table_name='chat_character_fans'
     and grantee in ('PUBLIC','anon','authenticated','service_role')
     and privilege_type='INSERT';
+  fan_insert_grant_mismatch := fan_insert_grant_mismatch + case
+    when has_table_privilege('authenticated','public.chat_character_fans','INSERT')
+      or has_any_column_privilege('authenticated','public.chat_character_fans','INSERT')
+    then 1 else 0 end;
 
   select count(*) into authenticated_conversation_message_write_grant_mismatch
   from information_schema.table_privileges
@@ -320,6 +328,18 @@ begin
     and table_name in ('chat_character_conversations','chat_character_messages')
     and grantee='authenticated'
     and privilege_type in ('INSERT','UPDATE','DELETE');
+  authenticated_conversation_message_write_grant_mismatch := authenticated_conversation_message_write_grant_mismatch + (
+    select count(*) from (values
+      ('public.chat_character_conversations'::regclass),
+      ('public.chat_character_messages'::regclass)
+    ) as t(relid)
+    where has_table_privilege('authenticated',relid,'INSERT')
+       or has_table_privilege('authenticated',relid,'UPDATE')
+       or has_table_privilege('authenticated',relid,'DELETE')
+       or has_any_column_privilege('authenticated',relid,'INSERT')
+       or has_any_column_privilege('authenticated',relid,'UPDATE')
+       or has_any_column_privilege('authenticated',relid,'REFERENCES')
+  );
 
   select count(*) into function_body_mismatch
   from (
