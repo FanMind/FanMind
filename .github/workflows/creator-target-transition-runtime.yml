@@ -61,9 +61,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ steps.command.outputs.reviewed_commit }}"
-          grep -Fq 'FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927' project-memory/AUTHORIZATIONS.md
-          grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' project-memory/AUTHORIZATIONS.md
-          grep -Fq 'Production is forbidden' project-memory/AUTHORIZATIONS.md
+          authorization="$(sed -n '/^## FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927$/,/^## /p' project-memory/AUTHORIZATIONS.md)"
+          grep -Fq -- '- Status: READY_NOW' <<< "$authorization"
+          grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' <<< "$authorization"
+          grep -Fq 'Production is forbidden' <<< "$authorization"
 
       - name: Consume the protected owner command exactly once
         env:
@@ -74,7 +75,9 @@ jobs:
           set -euo pipefail
           node --input-type=module <<'NODE'
           const api = "https://api.github.com/repos/FanMind/FanMind";
-          const marker = "<!-- fanmind-creator-target-transition-runtime-consumed:FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 -->";
+          const reviewed = process.env.REVIEWED_COMMIT ?? "";
+          if (!/^[0-9a-f]{40}$/u.test(reviewed)) throw new Error("reviewed_commit_invalid");
+          const marker = `<!-- fanmind-creator-target-transition-runtime-consumed:${reviewed} -->`;
           const headers = {
             Authorization: `Bearer ${process.env.GH_TOKEN}`,
             Accept: "application/vnd.github+json",
@@ -358,14 +361,13 @@ jobs:
           . "$RELEASE_FILE"
           set +a
           test "$FANMIND_RELEASE_COMMIT" = "${{ needs.authorize.outputs.reviewed_commit }}"
-          sudo test -f /etc/systemd/system/fanmind-staging.service
-          sudo test ! -L /etc/systemd/system/fanmind-staging.service
-          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          test -f /etc/systemd/system/fanmind-staging.service
+          test ! -L /etc/systemd/system/fanmind-staging.service
+          cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --verify-closed
-          PERSISTENT_BACKUP=/var/lib/fanmind-staging/creator-runtime-recovery.env
-          sudo install -d -o root -g root -m 700 /var/lib/fanmind-staging
-          sudo test ! -e "$PERSISTENT_BACKUP"
-          sudo install -o root -g root -m 600 "$ENV_FILE" "$PERSISTENT_BACKUP"
+          PERSISTENT_BACKUP=/var/www/fanmind-staging/.creator-runtime-recovery.env
+          test ! -e "$PERSISTENT_BACKUP" && test ! -L "$PERSISTENT_BACKUP"
+          install -m 600 "$ENV_FILE" "$PERSISTENT_BACKUP"
           BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
           test ! -e "$BACKUP" && test ! -L "$BACKUP"
           rollback_flag() {
@@ -379,14 +381,14 @@ jobs:
                 echo "CREATOR_RUNTIME_ROLLBACK_RESTORE=FAILED" >&2
                 exit 97
               fi
-              sudo systemctl restart fanmind-staging.service
+              sudo -n systemctl restart fanmind-staging.service
               restart_status=$?
               if [ "$restart_status" -ne 0 ]; then
                 echo "CREATOR_RUNTIME_ROLLBACK_RESTART=FAILED" >&2
                 exit 98
               fi
               rm -f "$BACKUP"
-              sudo rm -f "$PERSISTENT_BACKUP"
+              rm -f "$PERSISTENT_BACKUP"
             fi
             exit "$failure_status"
           }
@@ -394,8 +396,8 @@ jobs:
           trap 'rollback_flag 130' INT
           trap 'rollback_flag 143' TERM
           node scripts/operations/creator-runtime-staging.mjs enable "$BACKUP"
-          sudo systemctl restart fanmind-staging.service
-          sudo systemctl is-active --quiet fanmind-staging.service
+          sudo -n systemctl restart fanmind-staging.service
+          sudo -n systemctl is-active --quiet fanmind-staging.service
           node --input-type=module <<'NODE'
           let versionOk = false;
           for (let attempt = 0; attempt < 20; attempt++) {
@@ -446,7 +448,7 @@ jobs:
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
           trap - EXIT ERR INT TERM
           rm -f "$BACKUP"
-          sudo rm -f "$PERSISTENT_BACKUP"
+          rm -f "$PERSISTENT_BACKUP"
           echo "CREATOR_RUNTIME_STAGING_ACTIVATED=PASS"
 
       - name: Remove private runtime database credentials
@@ -510,20 +512,21 @@ jobs:
         run: |
           set -euo pipefail
           ENV_FILE=/var/www/fanmind-staging/.env.production
-          PERSISTENT_BACKUP=/var/lib/fanmind-staging/creator-runtime-recovery.env
+          PERSISTENT_BACKUP=/var/www/fanmind-staging/.creator-runtime-recovery.env
           test "$(git rev-parse HEAD)" = "${{ needs.authorize.outputs.reviewed_commit }}"
-          sudo test -f /etc/systemd/system/fanmind-staging.service
-          sudo test ! -L /etc/systemd/system/fanmind-staging.service
-          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
-          if sudo test -e "$PERSISTENT_BACKUP"; then
+          test -f /etc/systemd/system/fanmind-staging.service
+          test ! -L /etc/systemd/system/fanmind-staging.service
+          cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          if test -e "$PERSISTENT_BACKUP"; then
             test -f "$ENV_FILE" && test ! -L "$ENV_FILE" && test "$(stat -c '%a' "$ENV_FILE")" = 600
-            test "$(sudo stat -c '%U:%G:%a' "$PERSISTENT_BACKUP")" = root:root:600
+            test -f "$PERSISTENT_BACKUP" && test ! -L "$PERSISTENT_BACKUP"
+            test "$(stat -c '%u:%g:%a' "$PERSISTENT_BACKUP")" = "$(id -u):$(id -g):600"
             BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
             test ! -e "$BACKUP" && test ! -L "$BACKUP"
-            sudo install -o "$(id -un)" -g "$(id -gn)" -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
+            install -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
             node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
-            sudo systemctl restart fanmind-staging.service
-            sudo systemctl is-active --quiet fanmind-staging.service
+            sudo -n systemctl restart fanmind-staging.service
+            sudo -n systemctl is-active --quiet fanmind-staging.service
             node --input-type=module <<'NODE'
             let versionOk = false;
             for (let attempt = 0; attempt < 20; attempt++) {
@@ -557,7 +560,7 @@ jobs:
             console.log("CREATOR_RUNTIME_STAGING_RECOVERED=PASS");
             NODE
             rm -f "$BACKUP"
-            sudo rm -f "$PERSISTENT_BACKUP"
+            rm -f "$PERSISTENT_BACKUP"
           else
             echo "CREATOR_RUNTIME_STAGING_RECOVERY=no_persistent_backup"
           fi
@@ -622,4 +625,3 @@ jobs:
         run: |
           rm -rf "$RUNNER_TEMP/creator-runtime-recovery-reference"
           rm -f "$RUNNER_TEMP/fanmind-creator-runtime-recovery.pgpass" "$RUNNER_TEMP/creator-runtime-recovery-reference.zip"
-

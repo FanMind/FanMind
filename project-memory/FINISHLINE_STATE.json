@@ -165,7 +165,7 @@
       "risk": "R4",
       "state": "IN_PROGRESS",
       "required_for_sales": false,
-      "evidence": "Protected R4 source/admission in progress under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. No target APPLY or runtime activation claimed yet."
+      "evidence": "Protected run 36321009852 on exact main 8bf23be6af739086354c58548ea43c3910c17ee1 authenticated and deployed Staging, then classified the target as DRIFT with APPLY=not_requested. Runtime was skipped; recovery failed on runner sudo-policy mismatch for file operations. SQL APPLY/runtime activation/Production mutation counts remain zero. Source correction, one exact-main read-only drift diagnosis and reviewed remediation are required before any distinct fresh transition authorization. Receipt: project-memory/receipts/creator-target-transition-runtime-36321009852-1.json."
     }
   },
   "sales_required_states": [

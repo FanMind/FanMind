@@ -1,3 +1,15 @@
+## FM-FAIL-CREATOR-TARGET-RECOVERY-SUDO-20260927
+- Date: 2026-09-27
+- Status: CORRECTION_ACTIVE
+- Task: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME.
+- Attempt: protected run `36321009852`, attempt 1, on exact main `8bf23be6af739086354c58548ea43c3910c17ee1` after authenticated issue #874 command consumption.
+- Result: authorization and exact Staging deploy succeeded. Target classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery job `108624950593` then failed before runtime mutation because its ordinary file `test/stat/cmp/install/rm` commands used sudo, while the runner permits passwordless sudo only for the narrow service commands.
+- Secondary diagnostic defect: the transition output exposed only DRIFT and not the validated differing sections/blockers needed to determine the exact catalog mismatch without private artifacts.
+- Safety: SQL APPLY count 0, runtime activation count 0, Production mutation count 0. This is not target or runtime acceptance. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Correction: use the Staging deploy user for a persistent recovery snapshot preserved by rsync, use `sudo -n` only for allowed systemctl commands, and emit only validated bounded drift tokens. Code and regressions remain one reviewed PR.
+- Review correction: the first PR head also attempted to request another transition command before resolving known DRIFT, used a global consumed marker, and let manual recovery reopen RPC admission after service-active only. The corrected head separates a read-only diagnosis command, scopes replay to exact main, requires current READY_NOW transition authorization, and proves exact release plus authenticated `available:false` before deleting recovery evidence or restoring grants.
+- Do not repeat: do not rerun the consumed transition command, request another transition while DRIFT is unresolved, broaden passwordless sudo, log raw/private catalogs, or treat DRIFT/deploy/service-active success as APPLY/runtime acceptance.
+
 ## FM-FAIL-CREATOR-TRANSITION-PG17-20260927
 - Date: 2026-09-27
 - Status: RESOLVED

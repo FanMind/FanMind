@@ -328,8 +328,9 @@
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_reconciliation_preflight",
       "title": "Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten",
-      "requires_owner": false,
+      "requires_owner": true,
       "parallel_safe": false,
+      "owner_action_id": "FM-CREATOR-OWNER-TARGET-TRANSITION-RUNTIME-RETRY-20260927",
       "prerequisite_gates": [
         "memory_v6",
         "staging",
@@ -432,7 +433,7 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Current protected R4 action admitted under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. Finish the reviewed Staging-only runner/workflow source first. After exact-head CI/review and normal merge, consume one owner-authenticated issue #874 command bound to the resulting exact current main. Use only accepted private PR #1207 reference evidence and PR #1209 seven-step transition source; deploy exact main, require fresh LEGACY_EXACT plus four empty Creator tables and zero active Creator RPCs, recheck the full Legacy catalog under advisory/table locks, apply the exact transition atomically, prove CURRENT_EXACT before COMMIT, then separately enable the server-only Creator runtime flag on the isolated Staging host and prove authenticated synthetic GET /api/creators returns available:true with zero Creator rows. CURRENT_EXACT skips the database write. DRIFT/INCOMPLETE/unknown, Production binding, target data/activity, stale SHA/release/reference or runtime probe failure must stop fail-closed. Runtime failure restores only the previous Staging flag; never blindly reverse a successfully verified schema transition."
+      "instruction": "Protected run 36321009852 consumed the original transition command on main 8bf23be6af739086354c58548ea43c3910c17ee1. Exact Staging deploy passed; classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations outside the runner sudo allowlist; no SQL APPLY, runtime activation or Production mutation occurred. Merge the bounded diagnostics/recovery correction with exact-head CI and review. Then FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 authorizes only one exact-main read-only classification. Review and remediate its proven differing sections before requesting a distinct transition/runtime authorization."
     }
   ],
   "retired_actions": [

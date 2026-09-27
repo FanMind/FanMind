@@ -393,6 +393,24 @@ export function classifyCreatorTargetSnapshot(snapshot, referenceJson) {
   });
 }
 
+export function formatCreatorTransitionVerification(classification) {
+  const status = clean(classification?.status);
+  const differingSections = classification?.differingSections ?? [];
+  const blockers = classification?.blockers ?? [];
+  const safeToken = value => typeof value === "string" && /^[A-Za-z0-9_]+$/u.test(value);
+  if (!safeToken(status) || !Array.isArray(differingSections) || !Array.isArray(blockers) ||
+      differingSections.some(value => !safeToken(value)) || blockers.some(value => !safeToken(value))) {
+    fail("diagnostic_invalid");
+  }
+  return [
+    `CREATOR_TARGET_TRANSITION_STATE=${status}`,
+    `CREATOR_TARGET_TRANSITION_DIFFERING_SECTIONS=${differingSections.join(",") || "none"}`,
+    `CREATOR_TARGET_TRANSITION_BLOCKERS=${blockers.join(",") || "none"}`,
+    "CREATOR_TARGET_TRANSITION_APPLY=not_requested",
+    "CREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false",
+  ].join("\n");
+}
+
 function verifyAdmissionClosedTarget(environment, trusted, variant = "current") {
   const output = runPsql(buildCreatorFoundationCatalogSql(), environment);
   let snapshot;
@@ -451,7 +469,7 @@ export async function main(args = process.argv.slice(2), environment = process.e
   const before = verifyTarget(environment, trusted);
   if (mode === "--verify") {
     return {exitCode: before.classification.status.endsWith("_EXACT") ? 0 : 2,
-      output: `CREATOR_TARGET_TRANSITION_STATE=${before.classification.status}\nCREATOR_TARGET_TRANSITION_APPLY=not_requested\nCREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false`};
+      output: formatCreatorTransitionVerification(before.classification)};
   }
   if (before.classification.status === "CURRENT_EXACT") {
     const gated = runPsql(buildCreatorRpcAdmissionCloseSql({current: trusted.current}), environment, "admission_gate_failed");

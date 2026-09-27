@@ -12,6 +12,7 @@ import {
   buildTrustedCreatorTransitionReference,
   CREATOR_TARGET_TRANSITION_REFERENCE,
   evaluateCreatorTargetEnvironment,
+  formatCreatorTransitionVerification,
 } from "../scripts/operations/creator-foundation-transition-staging-runner.mjs";
 import * as creatorTransitionRunner from "../scripts/operations/creator-foundation-transition-staging-runner.mjs";
 
@@ -117,6 +118,31 @@ test("Creator target transition classifies every failed APPLY response as indete
       "apply_indeterminate_verify_before_retry",
     ),
     /CREATOR_TARGET_TRANSITION_ERROR=apply_indeterminate_verify_before_retry/u,
+  );
+});
+
+test("Creator target verification reports only bounded drift metadata", () => {
+  assert.equal(
+    formatCreatorTransitionVerification({
+      status: "DRIFT",
+      differingSections: ["parentPolicies", "roles"],
+      blockers: ["catalog_differs_from_pinned_reference"],
+    }),
+    [
+      "CREATOR_TARGET_TRANSITION_STATE=DRIFT",
+      "CREATOR_TARGET_TRANSITION_DIFFERING_SECTIONS=parentPolicies,roles",
+      "CREATOR_TARGET_TRANSITION_BLOCKERS=catalog_differs_from_pinned_reference",
+      "CREATOR_TARGET_TRANSITION_APPLY=not_requested",
+      "CREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false",
+    ].join("\n"),
+  );
+  assert.throws(
+    () => formatCreatorTransitionVerification({
+      status: "DRIFT\nSECRET=value",
+      differingSections: [],
+      blockers: [],
+    }),
+    /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
   );
 });
 
