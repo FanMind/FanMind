@@ -60,7 +60,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status)
       values('${fanCharacterId}','${ids[0]}','${ids[2]}','Fan RPC Character',24,'rpc','friendly','calm','none','short','safe','none','active');
     set role authenticated;
-    select set_config('request.jwt.claim.sub','${ids[2]}',true);
+    select set_config('request.jwt.claim.sub','${ids[2]}',false);
     select public.chat_admin_fan_schema_ready();
     select id from public.create_chat_admin_fan('${ids[0]}','${fanCharacterId}','${fanCreationId}','{"display_name":"RPC Fan","platform":"OnlyFans","summary":"s","notes":"n"}'::jsonb);
     reset role;`);
@@ -69,19 +69,19 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.match(fanId,/^[0-9a-f-]{36}$/u);
     assert.match(conversationId,/^[0-9a-f-]{36}$/u);
     assert.match(sql(`set role authenticated;
-      select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      select set_config('request.jwt.claim.sub','${ids[2]}',false);
       select public.persist_chat_admin_generation('${ids[0]}','${fanCharacterId}','${fanId}','${conversationId}',1,1,'${fanGenerationId}','{}'::uuid[],'Hi',array['A','B','C']);
       reset role;`),/\{A,B,C\}/u);
     assert.match(sql(`set role authenticated;
-      select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      select set_config('request.jwt.claim.sub','${ids[2]}',false);
       select public.persist_chat_admin_generation('${ids[0]}','${fanCharacterId}','${fanId}','${conversationId}',1,1,'${fanGenerationId}','{}'::uuid[],'Hi',array['A','B','C']);
       reset role;`),/\{A,B,C\}/u);
     assert.match(sql(`set role authenticated;
-      select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      select set_config('request.jwt.claim.sub','${ids[2]}',false);
       select id from public.persist_chat_admin_confirmed_reply('${ids[0]}','${fanCharacterId}','${fanId}','${conversationId}',1,1,'${fanConfirmationId}','Confirmed');
       reset role;`),/^[0-9a-f-]{36}$/mu);
     assert.match(sql(`set role authenticated;
-      select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      select set_config('request.jwt.claim.sub','${ids[2]}',false);
       select id from public.persist_chat_admin_confirmed_reply('${ids[0]}','${fanCharacterId}','${fanId}','${conversationId}',1,1,'${fanConfirmationId}','Confirmed');
       reset role;`),/^[0-9a-f-]{36}$/mu);
     assert.equal(sql(`select count(*) from public.chat_character_messages where workspace_id='${ids[0]}' and character_id='${fanCharacterId}' and fan_id='${fanId}' and conversation_id='${conversationId}';`).trim(),"5");
