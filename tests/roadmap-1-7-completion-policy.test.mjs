@@ -98,7 +98,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     closedSpans.push([match.index, match.index + match[0].length]);
   }
   const explicitlySeparateProtectedAction = new RegExp(
-    `\\b${reopeningVerb}\\s+the\\s+separately\\s+authorized\\s+target\\s+transition\\b`,
+    `\\b${actionVerbForm}\\s+(?:the|this|that)\\s+separately\\s+authorized\\s+target\\s+transition\\b`,
     "giu",
   );
   for (const match of line.matchAll(explicitlySeparateProtectedAction)) {
@@ -147,40 +147,64 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
   assert.ok(generatorBearingEntries.length > 0);
   for (const action of generatorBearingEntries) {
     const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
-    const generatorSentences = instructionSentences.filter((sentence) =>
-      sentence.includes(consumedGeneratorId),
-    );
-    if (action.id === consumedGeneratorId && generatorSentences.length === 0) {
-      generatorSentences.push(
-        `${consumedGeneratorId} is ACCEPTED/CONSUMED; ${instructionSentences[0]}`,
+    let generatorContext = action.id === consumedGeneratorId;
+    let checkedSentences = 0;
+
+    for (const sentence of instructionSentences) {
+      if (sentence.includes(consumedGeneratorId)) generatorContext = true;
+      if (!generatorContext) continue;
+
+      const classifiedSentence = sentence.includes(consumedGeneratorId)
+        ? sentence
+        : `${consumedGeneratorId} is ACCEPTED/CONSUMED; ${sentence}`;
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(classifiedSentence),
+        true,
+        `${action.id}: ${sentence}`,
       );
+      checkedSentences += 1;
     }
-    assert.ok(generatorSentences.length > 0, action.id);
-    for (const sentence of generatorSentences) {
-      const closeoutClause = sentence.split(";")[0];
-      assert.equal(consumedGeneratorNextLineIsClosed(closeoutClause), true, sentence);
-    }
-    assert.doesNotMatch(
-      action.instruction,
-      /\b(?:start|restart|implement|re-?implement|reopen|rebuild|resume|continue)(?:s|ed|ing)?\s+(?:it|this|that|the\s+(?:same\s+|original\s+)?(?:work|implementation)|`?NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR\b`?)/iu,
-      action.instruction,
-    );
+    assert.ok(checkedSentences > 0, action.id);
   }
 };
 
 test("consumed generator closeout covers every catalog lifecycle instruction", () => {
-  const catalog = structuredClone(actionCatalog);
-  const profileDesignIndex = catalog.actions.findIndex(
+  const retiredProfileDesignCatalog = structuredClone(actionCatalog);
+  const profileDesignIndex = retiredProfileDesignCatalog.actions.findIndex(
     (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
   );
   assert.notEqual(profileDesignIndex, -1);
-  const [profileDesign] = catalog.actions.splice(profileDesignIndex, 1);
-  profileDesign.instruction += " Reimplement it.";
-  catalog.retired_actions.push(profileDesign);
+  const [profileDesign] = retiredProfileDesignCatalog.actions.splice(profileDesignIndex, 1);
+  retiredProfileDesignCatalog.retired_actions.push(profileDesign);
 
+  const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
+  anaphoricReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction += " Reimplement it.";
   assert.throws(
-    () => assertGeneratorCatalogInstructionsClosed(catalog),
+    () => assertGeneratorCatalogInstructionsClosed(anaphoricReopen),
     /Reimplement it/u,
+  );
+
+  const namedReopen = structuredClone(retiredProfileDesignCatalog);
+  namedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction += " Reimplement the transition generator.";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(namedReopen),
+    /Reimplement the transition generator/u,
+  );
+
+  const protectedTargetContinuation = structuredClone(retiredProfileDesignCatalog);
+  protectedTargetContinuation.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction += " Continue this separately authorized target transition.";
+  assert.doesNotThrow(
+    () => assertGeneratorCatalogInstructionsClosed(protectedTargetContinuation),
+  );
+
+  assert.doesNotThrow(
+    () => assertGeneratorCatalogInstructionsClosed(retiredProfileDesignCatalog),
   );
 });
 
