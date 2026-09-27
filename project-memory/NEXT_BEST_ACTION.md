@@ -25,7 +25,7 @@ owner/platform action required
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NONE`
+- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.

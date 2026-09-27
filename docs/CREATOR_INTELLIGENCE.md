@@ -263,7 +263,7 @@ bleibt `creators.workspace_id UNIQUE` unangetastet. Die Capability
 `chat_admin_multi_character=true` ist unabhängig von Platform Admin,
 Admin-Allowlist, Admin-CRM und allen generischen Admin-RPCs.
 
-Der kontrollierte, in isoliertem Staging angewendete Vertrag ergänzt unter dem Workspace
+Der akzeptierte Basisvertrag, der in isoliertem Staging angewendet wurde, ergänzt unter dem Workspace
 `chat_characters` sowie Character-gebundene Conversations und Messages. Alle
 Beziehungen tragen `workspace_id + character_id`; zusammengesetzte Fremdschlüssel,
 RLS, Owner-/Capability-Prüfung und Revisionen verhindern Vermischung. `public_age`
@@ -276,7 +276,8 @@ erzeugen, kopieren und bei OnlyFans selbst versenden. Es gibt keinen OnlyFans-
 Login, API-Aufruf, Scraper, Auto-Read oder Auto-Send. AI Usage/Cost nutzt das
 bestehende Event-System. `character_id + character_revision` werden ausgegeben,
 aber automatisches Lernen oder automatische Persona-Änderung bleiben deaktiviert.
-Der Staging-Schema-Apply und die DB/RLS-Abnahme sind abgeschlossen. Der geschützte
+Für diesen **Character-only-Basisvertrag** sind Staging-Schema-Apply und
+DB/RLS-Abnahme abgeschlossen. Der geschützte
 Manual-Flow `36255475314` vom 26. September 2026 hat auf Release
 `9652ae62928c70d8f39d8f184857a34fcd4de74f` zwei echte Generierungen mit jeweils drei
 Vorschlägen, Auswahl/Copy, Character-Wechsel und die negativen Zugriffs-,
@@ -287,3 +288,15 @@ und null verbleibende Sessions dieses Testlaufs. Die genaue Abnahme steht in
 Produktive Schema-/Capability-Aktivierung, reale Workspace-Freischaltung und die
 private Storage-Policy-Abnahme bleiben separate Schritte. Externes Senden war
 nicht Teil dieser Abnahme.
+
+Die persistente Fan-Erweiterung (`chat_character_fans`, Fan-Bindungen an
+Conversation/Message, monotone Nachrichtenreihenfolge sowie idempotente Erzeugungs-,
+Fan-Anlage- und Bestätigungsoperationen) ist dagegen nur als kontrollierte,
+**unapplied** Repository-Quelle vorbereitet. Sie wird von der bisherigen Abnahme
+nicht erfasst. Die Fan-Oberfläche bleibt deshalb über den serverseitigen
+`FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED`-Schalter standardmäßig aus; das
+bestehende V1 bleibt vor einem Apply nutzbar. Vor Aktivierung sind ein separat
+autorisierter, checksum-/target-gebundener Staging-Apply, RLS-/RPC-Postflight,
+Rollback-only Mehr-Character-/Mehr-Fan-Acceptance, Browser-Abnahme, Datenschutz-
+und Löschprüfung sowie ein geprüfter Runtime-Release erforderlich. Ein normaler
+Web-Deploy darf weder die SQL anwenden noch den Schalter aktivieren.
