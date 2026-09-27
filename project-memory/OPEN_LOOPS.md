@@ -3,7 +3,7 @@
 - Status: IN_PROGRESS overall; repository correction merged, protected diagnosis OWNER_ACTION_REQUIRED, Builder worker paused.
 - Attempt 1: run `36321009852` deployed prior main, classified DRIFT, requested no APPLY and skipped runtime; no SQL APPLY/runtime/Production mutation occurred.
 - Source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged normally as `bc85493f8fc25ff90c965208bd20c7dc64641158`; bounded diagnostics/recovery source is accepted and must not be rebuilt.
-- Open protected sequence: owner posts `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` -> bounded read-only diagnosis -> Builder-reviewed remediation of proven differing sections -> distinct fresh transition authorization -> only then potential Staging transition/runtime acceptance.
+- Open protected sequence: owner posts `run-creator-target-drift-diagnosis <then-current-main-sha>` after this reconciliation merges -> bounded read-only diagnosis -> Builder-reviewed remediation of proven differing sections -> distinct fresh transition authorization -> only then potential Staging transition/runtime acceptance.
 - Fail closed: no transition replay while DRIFT is unresolved, no owner action substitution by Builder, no raw/private catalog output, no Production/provider/customer/Billing/Restore/Mobile mutation.
 
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922

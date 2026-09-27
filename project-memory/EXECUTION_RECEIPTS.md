@@ -8,7 +8,7 @@
 - Source correction completion: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` passed exact-head CI/independent review with zero open P0/P1/P2 and merged normally as `bc85493f8fc25ff90c965208bd20c7dc64641158`.
 - Protected attempt 1: issue #874 command `5856097930` consumed by marker `5856099043`; run `36321009852` deployed prior main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified DRIFT, requested no APPLY and skipped runtime. Recovery failed on the then-unfixed sudo file-operation boundary. SQL APPLY/runtime activation/Production mutation counts are zero.
 - Merged correction result: bounded validated drift metadata, exact-main read-only diagnosis workflow, SHA-scoped consumption, deploy-safe recovery snapshot, allowed-service-only sudo, exact release plus authenticated disabled-runtime recovery proof.
-- Still open: owner-authenticated `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158`; consume bounded diagnosis; Builder-reviewed remediation; distinct fresh transition/runtime authorization; eventual target/runtime countercheck and final reconciliation.
+- Still open: owner-authenticated `run-creator-target-drift-diagnosis <then-current-main-sha>` after this reconciliation merges; consume bounded diagnosis; Builder-reviewed remediation; distinct fresh transition/runtime authorization; eventual target/runtime countercheck and final reconciliation.
 - Current actor/blocker: OWNER (Bernd) for the exact diagnosis comment. No Builder worker is reserved while waiting.
 - Boundary: diagnosis is read-only and cannot authorize SQL APPLY/runtime activation. Production/customer/provider/Billing/Restore/Mobile remain untouched.
 

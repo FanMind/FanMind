@@ -418,7 +418,7 @@
       "priority": -1,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_target_transition_runtime",
-      "title": "Creator Foundation auf Staging atomar überführen und Runtime aktivieren",
+      "title": "Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -433,7 +433,7 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` once on issue #874. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
+      "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
       "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
     }
   ],

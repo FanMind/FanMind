@@ -9,7 +9,7 @@
 - Parallel safety: this PAUSED scope consumes no worker slot. Any later Creator target/schema/runtime remediation reacquires/updates the same task identity after the diagnosis; unknown overlap remains serialized.
 - Allowed next target operation: one read-only FanMind Staging diagnosis under FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927. Production is forbidden.
 - Forbidden: transition-command replay, SQL APPLY, runtime activation, Production `drqkpdvtbbrrdwmtrodz`, real customer/fan/Creator data, provider/model calls, Billing/Stripe/Tax/Restore/Mobile mutation, secrets/raw private catalog publication and direct main writes.
-- Resume condition: exact owner command `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` is consumed and yields bounded evidence. Then update the lock for Builder-owned reviewed remediation. Any later transition/runtime execution requires a distinct fresh authorization.
+- Resume condition: exact owner command `run-creator-target-drift-diagnosis <then-current-main-sha>` is consumed and yields bounded evidence. Then update the lock for Builder-owned reviewed remediation. Any later transition/runtime execution requires a distinct fresh authorization.
 - Recovery: protected run `36321009852` remains reconciled fail-closed; no SQL/runtime/Production mutation occurred. PR #1214 fixed the recovery/diagnostic source path but did not itself mutate Staging.
 
 ## LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927

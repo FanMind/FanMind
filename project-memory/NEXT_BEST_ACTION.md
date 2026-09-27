@@ -8,11 +8,11 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 - Task: `FM-CREATOR-001`
 - Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Creator Foundation auf Staging atomar überführen und Runtime aktivieren
+- Title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
 
 ## Instruction
 
-PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` once on issue #874. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
+PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
 
 ## Why this action
 

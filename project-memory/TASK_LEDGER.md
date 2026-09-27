@@ -6,7 +6,7 @@
 - Lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (PAUSED; zero Builder worker slots while owner-gated).
 - Attempt-1 target result: run `36321009852` deployed prior main, classified DRIFT, requested no APPLY and skipped runtime; SQL APPLY/runtime/Production mutation counts are zero.
 - Remaining deliverable: one exact-main read-only drift diagnosis, reviewed remediation of only proven differing sections, then a distinct fresh R4 transition/runtime authorization and target acceptance.
-- Exact next: owner comment `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` on issue #874. Builder resumes after its bounded result.
+- Exact next: owner comment `run-creator-target-drift-diagnosis <then-current-main-sha>` on issue #874 after this reconciliation merges. Builder resumes after its bounded result.
 - Boundary: no Production, real customer/fan data, provider/model send, Billing/Restore/Mobile mutation or secret publication.
 
 ## FM-CREATOR-001 — bounded profile reconciliation and transition design

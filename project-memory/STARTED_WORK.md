@@ -11,7 +11,7 @@
 - Negative/regression boundary: no replay of consumed transition command; no SQL APPLY/runtime activation from diagnosis; no Production binding; no private/raw catalog output; no active worker reservation while waiting for owner action.
 - Protected execution evidence: run `36321009852` authenticated the prior exact command and deployed main `8bf23be6af739086354c58548ea43c3910c17ee1` to Staging, then classified DRIFT with `APPLY=not_requested`; runtime was skipped and no Production mutation occurred. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
 - Completion stage: source/recovery correction ACCEPTED by #1214; protected drift diagnosis OWNER_ACTION_REQUIRED; remediation and any later transition/runtime remain separate.
-- Exact next step: Bernd posts `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` once on issue #874. Until that owner action occurs, this scope consumes zero Builder worker slots.
+- Exact next step: Bernd posts `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874. Until that owner action occurs, this scope consumes zero Builder worker slots.
 
 ## FM-CREATOR-001 — PR #1210 post-merge closeout P2 correction — 2026-09-27
 - Task: FM-CREATOR-001
