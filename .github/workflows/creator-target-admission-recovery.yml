@@ -66,22 +66,23 @@ jobs:
         run: |
           set -euo pipefail
           ENV_FILE=/var/www/fanmind-staging/.env.production
-          PERSISTENT_BACKUP=/var/lib/fanmind-staging/creator-runtime-recovery.env
+          PERSISTENT_BACKUP=/var/www/fanmind-staging/.creator-runtime-recovery.env
           test "$(git rev-parse HEAD)" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
-          sudo test -f /etc/systemd/system/fanmind-staging.service
-          sudo test ! -L /etc/systemd/system/fanmind-staging.service
-          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
-          if sudo test -e "$PERSISTENT_BACKUP"; then
+          test -f /etc/systemd/system/fanmind-staging.service
+          test ! -L /etc/systemd/system/fanmind-staging.service
+          cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          if test -e "$PERSISTENT_BACKUP"; then
             test -f "$ENV_FILE" && test ! -L "$ENV_FILE" && test "$(stat -c '%a' "$ENV_FILE")" = 600
-            test "$(sudo stat -c '%U:%G:%a' "$PERSISTENT_BACKUP")" = root:root:600
+            test -f "$PERSISTENT_BACKUP" && test ! -L "$PERSISTENT_BACKUP"
+            test "$(stat -c '%u:%g:%a' "$PERSISTENT_BACKUP")" = "$(id -u):$(id -g):600"
             BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
             test ! -e "$BACKUP" && test ! -L "$BACKUP"
-            sudo install -o "$(id -un)" -g "$(id -gn)" -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
+            install -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
             node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
-            sudo systemctl restart fanmind-staging.service
-            sudo systemctl is-active --quiet fanmind-staging.service
+            sudo -n systemctl restart fanmind-staging.service
+            sudo -n systemctl is-active --quiet fanmind-staging.service
             rm -f "$BACKUP"
-            sudo rm -f "$PERSISTENT_BACKUP"
+            rm -f "$PERSISTENT_BACKUP"
             echo "CREATOR_RUNTIME_STAGING_RECOVERED=PASS"
           else
             echo "CREATOR_RUNTIME_STAGING_RECOVERY=no_persistent_backup"

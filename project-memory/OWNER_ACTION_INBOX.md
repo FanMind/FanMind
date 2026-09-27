@@ -1,5 +1,16 @@
 # FanMind Owner Action Inbox
 
+## FM-CREATOR-OWNER-TARGET-TRANSITION-RUNTIME-RETRY-20260927 — Korrigierten Creator-Staging-Lauf exakt starten
+- Status: WAITING_TECHNICAL_PR
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4 protected Staging write/runtime action.
+- Current evidence: protected run `36321009852` consumed the prior exact command, deployed main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified the target as DRIFT, requested no APPLY, skipped runtime and then failed recovery on disallowed sudo file operations. No SQL APPLY, runtime activation or Production mutation occurred.
+- Technical prerequisite owned by Builder: merge the bounded diagnostic/privilege/recovery-persistence correction with exact-head CI, independent review and zero open P0/P1/P2. Do not act while this item is WAITING_TECHNICAL_PR.
+- Owner action after the prerequisite: on GitHub issue #874, Bernd posts exactly `run-creator-target-transition-runtime <then-current-main-sha>` once, using the exact current main SHA after the correction merge.
+- Unlocks: one new protected run that may proceed from fresh target classification; LEGACY_EXACT may transition, CURRENT_EXACT may skip the write, and DRIFT/INCOMPLETE/PARTIAL/unknown must stop without write.
+- Boundaries: do not replay the consumed old command/SHA, do not authorize Production, broaden sudo, paste secrets/private artifacts or infer acceptance from deploy success.
+
 ## FM-CREATOR-OWNER-FOUNDATION-STAGING-CATALOG-20260926 — Bounded Creator Staging catalog observation
 - Status: RECONCILED_CONSUMED
 - Task: FM-CREATOR-001

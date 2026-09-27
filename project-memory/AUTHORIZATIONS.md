@@ -1,5 +1,5 @@
 ## FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
-- Status: READY_NOW
+- Status: CONSUMED_FAIL_CLOSED
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R4
@@ -11,6 +11,8 @@
 - Dispatch: one exact owner-authenticated command on master issue #874, `run-creator-target-transition-runtime <current-main-sha>`, consumed by one protected workflow run. The command must match current main exactly and may not be replayed unchanged after successful consumption.
 - Boundaries: no Production database/runtime/config mutation; no customer/real Creator/fan fixture; no model/provider call; no external send; no Billing/Stripe/Tax/Restore/Mobile mutation; no secrets or raw private catalog/reference artifacts in logs, Git or chat.
 - Completion evidence required: exact source PR/head/CI/review, exact main/deploy run, protected transition run with Legacy preflight + committed Current postflight, private-artifact cleanup, Staging runtime flag readback via authenticated synthetic API, independent read-only target countercheck, lock/receipt reconciliation. Merge, deploy, target APPLY and runtime acceptance remain separate claims.
+- Consumption: exact issue #874 command comment `5856097930` was authenticated and consumed by marker `5856099043` and protected run `36321009852` on main `8bf23be6af739086354c58548ea43c3910c17ee1`. Authorization and exact deploy passed; classification returned DRIFT, so APPLY was not requested, runtime was skipped and no SQL/runtime/Production mutation occurred. Recovery failed on disallowed passwordless `sudo` file operations. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Reuse: forbidden. The repository defect may be corrected under the active lock and normal PR authority, but after that correction merges a new exact owner-authenticated command bound to the then-current main is required for another protected run.
 
 ## FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Status: CONSUMED

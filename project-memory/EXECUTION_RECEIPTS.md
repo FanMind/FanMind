@@ -4,14 +4,16 @@
 - Risk: R4
 - Status: IN_PROGRESS
 - Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (ACTIVE)
-- Authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (READY_NOW)
-- Exact base: `c4326090052b7ccda34f73744d62f814bc342abb`.
-- Source dependencies accepted/consumed: PR #1207 independent profile/reference package; PR #1209 bounded seven-step transition generator; final Creator closeout through PR #1212 / main `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (CONSUMED_FAIL_CLOSED)
+- Exact correction base: `8bf23be6af739086354c58548ea43c3910c17ee1`.
+- Source dependencies accepted/consumed: PR #1207 independent profile/reference package; PR #1209 bounded seven-step transition generator; protected source through PR #1213 / main `8bf23be6af739086354c58548ea43c3910c17ee1`.
 - Current read-only target preflight: FanMind Staging `vshyhvgcmrlagvfnvomc`, PostgreSQL 17 / ACTIVE_HEALTHY; four Creator table counts 0/0/0/0; active Creator RPC sessions 0; current helper absent; two Creator RPCs and four member-read policies still in Legacy form; Production project is distinct `drqkpdvtbbrrdwmtrodz`. This evidence is not a write authorization and must be rechecked under transaction protection.
 - Private trust root: accepted PG17 reference artifact 10916053961 from run 36273161074 / source head `3cd67cedbcdc051be855d09de8d5ea3225179217`, ZIP digest `c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c`; deterministic reference SHA256 `0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c`. Raw reference remains private.
-- Implemented so far: protected target runner, Staging runtime flag controller, owner-comment dispatch workflow, focused negative/regression tests and Operations registration are on the active branch. No target or runtime mutation has occurred from this scope yet.
-- Still open: finish canonical action/gate admission; exact-head source tests/CI/review; normal merge; one exact issue #874 owner command; exact Staging deploy; atomic target transition; Current postflight; runtime activation/readback; independent read-only countercheck; final single reconciliation.
-- Exact next step: complete the source PR contract and merge only at zero P0/P1/P2; then execute the protected workflow exactly once against resulting current main and verify all three stages independently.
+- Protected attempt 1: issue #874 command comment `5856097930` was consumed by marker `5856099043`; run `36321009852` authenticated main `8bf23be6af739086354c58548ea43c3910c17ee1` and completed exact Staging deploy. Transition job `108624905760` classified DRIFT with `APPLY=not_requested`; runtime was skipped. Recovery job `108624950593` failed because ordinary file operations used sudo outside the runner's passwordless allowlist. SQL APPLY/runtime activation/Production mutation counts are zero.
+- Source correction: emit bounded validated drift sections/blockers, perform recovery-file operations as the deploy user, preserve the snapshot across deploy rsync, and reserve `sudo -n` for allowed service commands. Focused regressions cover both the diagnostic and privilege/persistence contracts.
+- Evidence receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Still open: exact-head source tests/CI/independent review; normal merge; one new exact issue #874 owner command bound to then-current main; protected target transition/runtime execution; independent read-only countercheck; final single reconciliation.
+- Exact next step: complete the correction PR contract and merge only at zero P0/P1/P2. Do not replay the consumed command; the new protected run requires a new owner-authenticated exact-main command.
 - Boundary: Staging only. No Production/customer/provider/Billing/Restore/Mobile mutation.
 
 ## FM-EXEC-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927

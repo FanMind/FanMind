@@ -1,10 +1,11 @@
-## Creator Target Transition + Runtime admitted — 2026-09-27
-- Status: IN_PROGRESS; current protected R4 action is `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`.
-- Authorization/lock: `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` READY_NOW / `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` ACTIVE.
-- Exact source base: `c4326090052b7ccda34f73744d62f814bc342abb`, after final Creator closeout PR #1212. PR #1207 reference/profile and PR #1209 seven-step generator remain accepted/consumed inputs, not work to repeat.
-- Current target evidence: FanMind Staging `vshyhvgcmrlagvfnvomc` ACTIVE_HEALTHY on PostgreSQL 17; current read-only preflight found four Creator table counts 0/0/0/0, zero active Creator RPC sessions, absent workspace-access helper/Admin-CRM helper and Legacy RPC/policy state. Production `drqkpdvtbbrrdwmtrodz` is distinct and excluded.
-- Active source scope: protected target runner, exact owner-command workflow, runtime flag controller and focused tests. No target write or runtime activation has occurred from this scope yet.
-- Next: exact-head CI/review/merge, then one issue #874 owner command bound to exact current main; protected workflow must deploy exact Staging release, apply only from full LEGACY_EXACT under same-transaction locks, prove CURRENT_EXACT before COMMIT, then enable the Staging Creator flag and prove authenticated `/api/creators available:true`. Runtime failure restores only the flag.
+## Creator Target Transition + Runtime fail-closed execution correction — 2026-09-27
+- Status: IN_PROGRESS; protected run `36321009852` failed safely and the repository correction is active under `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`.
+- Authorization/lock: `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` is CONSUMED_FAIL_CLOSED; `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` remains ACTIVE for the same serialized correction scope.
+- Exact execution source: main `8bf23be6af739086354c58548ea43c3910c17ee1`, merged from PR #1213. The exact owner command on issue #874 was consumed once by run `36321009852`.
+- Verified stages: owner authorization and exact Staging deploy succeeded. Target classification returned `DRIFT`, so `APPLY=not_requested`; SQL APPLY count is zero and runtime activation was skipped. Recovery then failed before changing runtime state because the runner's sudo policy rejected passwordless file operations.
+- Root cause/source correction: recovery and the still-unreached runtime job used `sudo` for ordinary file operations outside the runner's allowlist, and the transition output did not expose bounded drift sections needed for diagnosis. The active correction emits validated, non-secret drift metadata, keeps recovery files user-owned and persistent across deploy rsync, and uses `sudo -n` only for the allowed service commands.
+- Evidence: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`. This is negative Staging execution evidence, not target acceptance, SQL APPLY, runtime acceptance or Production evidence.
+- Next: publish the correction from exact base `8bf23be6af739086354c58548ea43c3910c17ee1`, pass exact-head CI and independent review, then merge normally. A new owner-authenticated issue #874 command bound to the then-current main is required before a new protected execution; the consumed command may not be replayed.
 
 ## Creator Foundation transition generator accepted
 - Status: ACCEPTED; repository source package consumed.

@@ -1,8 +1,9 @@
 ## Creator Target Transition + Runtime — active R4 loop — 2026-09-27
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
-- Status: IN_PROGRESS under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 and LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927.
-- Open source work: finish/review/merge the Staging-only target runner, protected owner-command workflow, runtime controller and regressions.
-- Open protected execution after merge: exact current-main Staging deploy -> fresh Legacy/full-profile preflight -> atomic seven-step transition -> CURRENT_EXACT postflight/commit -> runtime flag enable -> service restart -> authenticated synthetic `/api/creators available:true` readback -> independent read-only database countercheck -> one final reconciliation.
+- Status: IN_PROGRESS under LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 was consumed fail-closed by run `36321009852`.
+- Attempt 1: exact current-main deploy passed; target classified DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations that incorrectly required unrestricted passwordless sudo. No SQL APPLY, runtime activation or Production mutation occurred.
+- Open source work: finish/review/merge the bounded correction for safe drift diagnostics, user-owned persistent recovery-file operations, `sudo -n` service commands and deploy preservation.
+- Open protected execution after correction merge: new exact owner-authenticated issue #874 command -> exact current-main Staging deploy -> fresh Legacy/full-profile preflight -> atomic seven-step transition only if LEGACY_EXACT -> CURRENT_EXACT postflight/commit -> runtime flag enable -> service restart -> authenticated synthetic `/api/creators available:true` readback -> independent read-only database countercheck -> one final reconciliation.
 - Fail closed on target/reference/release drift, nonempty Creator data, active Creator RPCs, Production binding, stale command/SHA, private-reference mismatch or runtime verification failure. Do not repeat consumed catalog/source/generator work.
 
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922

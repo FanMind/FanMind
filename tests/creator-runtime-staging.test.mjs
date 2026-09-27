@@ -85,12 +85,13 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT[\s\S]*EXPECTED_RELEASE_COMMIT[\s\S]*Reviewed Staging release commit does not match/iu);
   assert.ok(deploy.indexOf("Reviewed Staging release commit does not match") < deploy.indexOf("rsync --archive --delete"));
+  assert.match(deploy, /--exclude '\.creator-runtime-recovery\.env'/u);
 
   assert.match(workflow, /FANMIND_STAGING_E2E_WORKSPACE_ID: \$\{\{ vars\.FANMIND_STAGING_E2E_WORKSPACE_ID \}\}/u);
   assert.match(workflow, /creator\.canManage !== true/u);
   assert.match(workflow, /rest\/v1\/workspaces\?select=id%2Cowner_user_id/u);
   assert.match(workflow, /expectedWorkspace\.owner_user_id !== syntheticUserId/u);
-  assert.match(workflow, /sudo cmp --silent \/etc\/systemd\/system\/fanmind-staging\.service "\$GITHUB_WORKSPACE\/ops\/systemd\/fanmind-staging\.service"/u);
+  assert.match(workflow, /cmp --silent \/etc\/systemd\/system\/fanmind-staging\.service "\$GITHUB_WORKSPACE\/ops\/systemd\/fanmind-staging\.service"/u);
 
   assert.doesNotMatch(workflow, /creator-runtime-staging\.mjs restore "\$BACKUP" \|\| true/u);
   assert.doesNotMatch(workflow, /systemctl restart fanmind-staging\.service \|\| true/u);
@@ -123,8 +124,8 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(workflow, /trap 'rollback_flag 130' INT/u);
   assert.match(workflow, /trap 'rollback_flag 143' TERM/u);
   assert.match(workflow, /trap - EXIT ERR INT TERM/u);
-  assert.match(workflow, /PERSISTENT_BACKUP=\/var\/lib\/fanmind-staging\/creator-runtime-recovery\.env/u);
-  assert.match(workflow, /sudo install -o root -g root -m 600 "\$ENV_FILE" "\$PERSISTENT_BACKUP"/u);
+  assert.match(workflow, /PERSISTENT_BACKUP=\/var\/www\/fanmind-staging\/\.creator-runtime-recovery\.env/u);
+  assert.match(workflow, /install -m 600 "\$ENV_FILE" "\$PERSISTENT_BACKUP"/u);
   assert.match(workflow, /recover:\n\s+name: Recover Creator runtime flag and RPC admission after failed protected run/u);
   assert.match(workflow, /needs: \[authorize, transition, runtime\]/u);
   assert.match(workflow, /needs\.runtime\.result == 'failure'/u);
@@ -132,7 +133,12 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   const internalRecoveryIndex = workflow.indexOf("Restore persistent runtime flag before reopening Creator RPC admission");
   const internalAdmissionIndex = workflow.indexOf("Restore canonical Creator RPC admission only after runtime recovery");
   assert.ok(internalRecoveryIndex >= 0 && internalRecoveryIndex < internalAdmissionIndex);
-  assert.match(recovery, /PERSISTENT_BACKUP=\/var\/lib\/fanmind-staging\/creator-runtime-recovery\.env/u);
+  assert.match(recovery, /PERSISTENT_BACKUP=\/var\/www\/fanmind-staging\/\.creator-runtime-recovery\.env/u);
+  for (const source of [workflow, recovery]) {
+    assert.doesNotMatch(source, /sudo (?:test|stat|cmp|install|rm)\b/u);
+    assert.doesNotMatch(source, /sudo systemctl\b/u);
+    assert.match(source, /sudo -n systemctl/u);
+  }
   const manualRuntimeIndex = recovery.indexOf("Restore persistent Creator runtime flag before RPC admission");
   const manualAdmissionIndex = recovery.indexOf("Restore exact canonical RPC grants");
   assert.ok(manualRuntimeIndex >= 0 && manualRuntimeIndex < manualAdmissionIndex);
