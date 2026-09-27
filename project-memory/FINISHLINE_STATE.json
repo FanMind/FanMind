@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -159,6 +159,13 @@
       "state": "ACCEPTED",
       "required_for_sales": false,
       "evidence": "Repository source package accepted and consumed: PR #1209 exact head 176efc9bfaf84b75b72591abb6a4bcc453e4a58c, tree bf2239fd01690be9b23c3a47f1b428759dc6179a, verified merge 08fba825d1228d5b57ff0d145919b6bdb51d7504. All nine exact-head workflows passed, including FanMind CI 36284679968 / native PG17 job 108523066296; independent exact-head review had no new blocking findings and zero review threads remain open. Receipt project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json. No target observation, reference acceptance, SQL APPLY, deployment acceptance or runtime activation occurred; Creator aggregate remains IN_PROGRESS."
+    },
+    "creator_foundation_target_transition_runtime": {
+      "task": "FM-CREATOR-001",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false,
+      "evidence": "Protected R4 source/admission in progress under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. No target APPLY or runtime activation claimed yet."
     }
   },
   "sales_required_states": [
