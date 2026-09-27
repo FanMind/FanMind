@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { buildManualFlowSql } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH } from "../scripts/operations/chat-admin-fan-staging-runner.mjs";
 
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled=process.env.FANMIND_CREATOR_PG17_REQUIRED==="true";
@@ -82,5 +83,15 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup remains idempotent");
     assert.equal(sql("select count(*) from public.workspaces;").trim(),"2");
     assert.equal(sql("select count(*) from auth.users;").trim(),"4");
+
+    // Exercise the exact fan migration and its read-only catalog verifier on native PG17.
+    const fanSql = readFileSync(new URL(`../${FAN_SQL_PATH}`, import.meta.url), "utf8");
+    sql(fanSql);
+    const postflight = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+      input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    assert.equal(postflight.status, 0, postflight.stderr || postflight.stdout);
+    assert.match(`${postflight.stdout}${postflight.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
   } finally {sql(`drop database ${database} with (force);`,"postgres");}
 });
