@@ -136,7 +136,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   const directLifecycleConflictAfterCloseout = completionSpans.some(([, end]) => {
     const tail = line
       .slice(end)
-      .replace(/^\\s*[,.;:]?\\s*/u, "");
+      .replace(/^\s*[,.;:]?\s*/u, "");
     const lifecyclePredicate = new RegExp(
       `(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`,
       "iu",
@@ -148,11 +148,11 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     if (!prefix.trim()) return true;
 
     const explicitSeparateSubjectBeforePredicate =
-      /(?:^|[\\s,;:.-])(?:the\\s+)?separately\\s+authorized\\s+target\\s+transition\\s*[;,.: -]*$/iu;
+      /(?:^|[\s,;:.-])(?:the\s+)?separately\s+authorized\s+target\s+transition\s*[;,.: -]*$/iu;
     if (explicitSeparateSubjectBeforePredicate.test(prefix)) return false;
 
     const aggregateSubjectBeforePredicate =
-      /(?:^|[\\s,;:.-])Creator\\s+aggregate\\s*[;,.: -]*$/iu;
+      /(?:^|[\s,;:.-])Creator\s+aggregate\s*[;,.: -]*$/iu;
     if (aggregateSubjectBeforePredicate.test(prefix)) return false;
 
     // No explicit new subject owns the first lifecycle predicate after the
