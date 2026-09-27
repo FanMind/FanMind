@@ -34,6 +34,7 @@ const failedAttempts = read("project-memory/FAILED_ATTEMPTS.md");
 const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
+const consumedGeneratorId = "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR";
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -44,22 +45,45 @@ const markdownSection = (document, heading) => {
 
 const consumedGeneratorNextLineIsClosed = (line) => {
   const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
+  const directlyTargetsConsumedGenerator = new RegExp(
+    `^\\s+(?:${consumedGeneratorId}\\b|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`,
+    "iu",
+  );
   const restartMentions = [];
-  for (const match of line.matchAll(/\b(?:start|implement|reopen)\b/giu)) {
+  for (const match of line.matchAll(/\b(?:start|restart|implement|reopen|rebuild|resume)\b/giu)) {
     const previous = restartMentions.at(-1);
     const prefix = line.slice(0, match.index);
     const connector = previous ? line.slice(previous.end, match.index) : "";
     const directlyNegated = /\b(?:do\s+not|don't|must\s+not|cannot|never)\s*$/iu.test(prefix);
-    const continuesNegatedList =
-      previous?.negated === true && /^\s+(?:and|or)\s+$/iu.test(connector);
+    const connectedToPrevious = previous !== undefined && /^\s+(?:and|or)\s+$/iu.test(connector);
     restartMentions.push({
+      connectedToPrevious,
       end: match.index + match[0].length,
-      negated: directlyNegated || continuesNegatedList,
+      negated: directlyNegated || (previous?.negated === true && connectedToPrevious),
+      targetsConsumedGenerator: directlyTargetsConsumedGenerator.test(
+        line.slice(match.index + match[0].length),
+      ),
     });
   }
-  const explicitlyNegatesRestart = restartMentions.some(({ negated }) => negated);
+  for (let groupStart = 0; groupStart < restartMentions.length;) {
+    let groupEnd = groupStart + 1;
+    while (groupEnd < restartMentions.length && restartMentions[groupEnd].connectedToPrevious) {
+      groupEnd += 1;
+    }
+    if (restartMentions.slice(groupStart, groupEnd).some(({ targetsConsumedGenerator }) => targetsConsumedGenerator)) {
+      for (let index = groupStart; index < groupEnd; index += 1) {
+        restartMentions[index].targetsConsumedGenerator = true;
+      }
+    }
+    groupStart = groupEnd;
+  }
+  const explicitlyNegatesRestart = restartMentions.some(
+    ({ negated, targetsConsumedGenerator }) => negated && targetsConsumedGenerator,
+  );
   const affirmativelyRestarts =
-    restartMentions.some(({ negated }) => !negated) ||
+    restartMentions.some(
+      ({ negated, targetsConsumedGenerator }) => !negated && targetsConsumedGenerator,
+    ) ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
   return (recordsConsumedStatus || explicitlyNegatesRestart) && !affirmativelyRestarts;
 };
@@ -150,7 +174,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
   const reconciliationId = "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT";
   const catalogId = "NBA-CREATOR-FOUNDATION-STAGING-CATALOG";
   const designId = "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN";
-  const generatorId = "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR";
+  const generatorId = consumedGeneratorId;
   const verify = actionCatalog.actions.find((a) => a.id === verifyId);
   const control = actionCatalog.actions.find((a) => a.id === controlId);
   assert.ok(verify);
@@ -250,7 +274,15 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     ];
     for (const section of currentCreatorReaders) {
       assert.match(section, /(?:superseded by the accepted\/consumed .*PR #1209|already ACCEPTED\/CONSUMED by PR #1209)/u);
-      assert.doesNotMatch(section, /(?:Next integration|Next step|Next|Remaining dependency):[^\n]*(?:implement|start)[^\n]*NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/iu);
+      const generatorNextLines = section.split("\n").filter(
+        (line) =>
+          /(?:Next action|Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
+          line.includes(generatorId),
+      );
+      assert.ok(generatorNextLines.length > 0, section);
+      for (const line of generatorNextLines) {
+        assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
+      }
     }
     const mandatoryPreflightReaders = [
       agents,
@@ -316,6 +348,26 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       consumedGeneratorNextLineIsClosed(
         `Next action: ${generatorId} ACCEPTED/CONSUMED; do not start, implement it instead`,
       ),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: superseded by the accepted/consumed source in PR #1209; do not implement ${generatorId} again`,
+      ),
+      true,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: ${generatorId} is ACCEPTED/CONSUMED; implement the separately authorized target transition`,
+      ),
+      true,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; rebuild it`),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; resume it`),
       false,
     );
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
