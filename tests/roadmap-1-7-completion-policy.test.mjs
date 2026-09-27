@@ -137,18 +137,27 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     const tail = line
       .slice(end)
       .replace(/^\\s*[,.;:]?\\s*/u, "");
-    const lifecyclePredicate =
-      `(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`;
-    if (new RegExp(`^${lifecyclePredicate}`, "iu").test(tail)) return true;
+    const lifecyclePredicate = new RegExp(
+      `(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`,
+      "iu",
+    );
+    const lifecycleMatch = tail.match(lifecyclePredicate);
+    if (!lifecycleMatch || lifecycleMatch.index === undefined) return false;
 
-    const explicitSeparateSubject =
-      /^(?:the\\s+)?separately\\s+authorized\\s+target\\s+transition\\b|^Creator\\s+aggregate\\b/iu;
-    if (explicitSeparateSubject.test(tail)) return false;
+    const prefix = tail.slice(0, lifecycleMatch.index);
+    if (!prefix.trim()) return true;
 
-    const connectorOnlyPrefix =
-      /^(?:(?!(?:the|this|that|a|an|creator|target|transition|generator|source|workspace|action|task|status|remains?|is|was|were|still|incomplete|unfinished|pending|open|active|in[_\\s-]?progress)\\b)[\\p{L}'’_-]+\\s+)*/iu;
-    const connectorPrefix = tail.match(connectorOnlyPrefix)?.[0] ?? "";
-    return new RegExp(`^${lifecyclePredicate}`, "iu").test(tail.slice(connectorPrefix.length));
+    const explicitSeparateSubjectBeforePredicate =
+      /(?:^|[\\s,;:.-])(?:the\\s+)?separately\\s+authorized\\s+target\\s+transition\\s*[;,.: -]*$/iu;
+    if (explicitSeparateSubjectBeforePredicate.test(prefix)) return false;
+
+    const aggregateSubjectBeforePredicate =
+      /(?:^|[\\s,;:.-])Creator\\s+aggregate\\s*[;,.: -]*$/iu;
+    if (aggregateSubjectBeforePredicate.test(prefix)) return false;
+
+    // No explicit new subject owns the first lifecycle predicate after the
+    // generator closeout, so fail closed regardless of connector wording.
+    return true;
   });
   const hasConflictingLifecycleState = directLifecycleConflictAfterCloseout;
   const affirmativelyRestarts =
@@ -281,6 +290,14 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
     ),
     true,
     "protected target action span must not become a generator lifecycle subject",
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED, but remains incomplete`,
+    ),
+    false,
+    "connector text must not swallow the generator lifecycle predicate",
   );
 
   assert.equal(
