@@ -272,7 +272,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   ]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_PUSH_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RECOVERY_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
-  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === DAILY_PRODUCTION_CONTROL_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   for (const restoreWorkflow of restoreWorkflows) {
     assert.match(
