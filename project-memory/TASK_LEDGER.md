@@ -1,3 +1,14 @@
+## FM-CREATOR-001 — Creator Target Transition + Runtime — 2026-09-27
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk/Status: R4 / IN_PROGRESS
+- Authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (READY_NOW)
+- Lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (ACTIVE)
+- Exact base: `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Deliverable: reviewed Staging-only runner/workflow that consumes accepted private reference/profile + PR #1209 transition, deploys exact main, permits one atomic Legacy->Current target transition only under full fail-closed preconditions, proves Current before commit, then separately activates and proves the server-only Creator runtime flag.
+- Acceptance: exact-head CI/native PG17/Browser E2E/CodeQL + independent review + zero P0-P2; then one protected owner-command run with deploy/APPLY/runtime success and independent target countercheck.
+- Current target preflight: project `vshyhvgcmrlagvfnvomc` healthy PG17; four Creator tables empty; zero active Creator RPCs; Legacy helper/RPC/policy state observed; Production distinct. Recheck is mandatory at action time.
+- Boundary: no Production, real customer/fan data, provider/model send, Billing/Restore/Mobile mutation or secret publication.
+
 ## FM-CREATOR-001 — bounded profile reconciliation and transition design
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
