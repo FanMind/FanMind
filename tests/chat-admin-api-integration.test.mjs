@@ -78,6 +78,7 @@ function harness(change) {
       requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
+      getChatAdminGeneration: async () => [],
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => [],
@@ -108,7 +109,7 @@ function harness(change) {
   });
   const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, incoming_message: "Hallo, wie geht es dir?" }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, fan_revision: 1, conversation_id: conversationId, operation_id: "66666666-6666-4666-8666-666666666666", incoming_message: "Hallo, wie geht es dir?" }),
   });
   return { calls, route: exports.POST, request };
 }

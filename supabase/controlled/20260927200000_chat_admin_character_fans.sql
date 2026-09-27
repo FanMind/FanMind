@@ -31,6 +31,8 @@ alter table public.chat_character_conversations add constraint chat_character_co
 
 alter table public.chat_character_messages add column fan_id uuid;
 alter table public.chat_character_messages add column sequence bigint generated always as identity;
+alter table public.chat_character_messages add column generation_operation_id uuid;
+create unique index chat_character_messages_generation_inbound_once on public.chat_character_messages(generation_operation_id) where direction='fan_inbound' and generation_operation_id is not null;
 alter table public.chat_character_messages add constraint chat_character_messages_fan_conversation_fk
   foreign key (workspace_id, character_id, fan_id, conversation_id)
   references public.chat_character_conversations(workspace_id, character_id, fan_id, id) on delete cascade;
@@ -83,24 +85,35 @@ revoke insert,update,delete on table public.chat_character_conversations,public.
 create function public.persist_chat_admin_generation(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
   target_conversation_id uuid, target_character_revision integer, target_fan_revision integer,
-  expected_history_ids uuid[], inbound_content text, suggested_contents text[]
+  target_operation_id uuid, expected_history_ids uuid[], inbound_content text, suggested_contents text[]
 ) returns void language plpgsql security definer set search_path='' as $$
 begin
   if not public.is_current_chat_admin_workspace(target_workspace_id)
+     or target_operation_id is null
      or coalesce(cardinality(suggested_contents),0) <> 3
      or exists(select 1 from unnest(suggested_contents) value where char_length(btrim(value)) not between 1 and 4000)
      or char_length(btrim(inbound_content)) not between 1 and 4000
   then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(target_operation_id::text, 0));
+  if exists(select 1 from public.chat_character_messages where generation_operation_id=target_operation_id) then
+    if (select count(*) from public.chat_character_messages
+        where generation_operation_id=target_operation_id
+          and workspace_id=target_workspace_id and character_id=target_character_id
+          and fan_id=target_fan_id and conversation_id=target_conversation_id) = 4
+    then return;
+    end if;
+    raise exception 'chat_admin_generation_operation_conflict' using errcode='40001';
+  end if;
   perform 1 from public.chat_characters c where c.workspace_id=target_workspace_id and c.id=target_character_id and c.status='active' and c.revision=target_character_revision for update;
   if not found then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.id=target_fan_id and f.status='active' and f.revision=target_fan_revision for update;
   if not found then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_character_conversations c where c.workspace_id=target_workspace_id and c.character_id=target_character_id and c.fan_id=target_fan_id and c.id=target_conversation_id for update;
   if not found or coalesce(expected_history_ids,'{}'::uuid[]) <> coalesce((select array_agg(id order by sequence) from (select id,sequence from public.chat_character_messages where workspace_id=target_workspace_id and character_id=target_character_id and fan_id=target_fan_id and conversation_id=target_conversation_id order by sequence desc limit 20) recent),'{}'::uuid[]) then raise exception 'chat_admin_generation_context_changed' using errcode='40001'; end if;
-  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision)
-    values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'fan_inbound',inbound_content,target_character_revision);
-  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision)
-    select target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'suggested_reply',value,target_character_revision from unnest(suggested_contents) value;
+  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision,generation_operation_id)
+    values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'fan_inbound',inbound_content,target_character_revision,target_operation_id);
+  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision,generation_operation_id)
+    select target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'suggested_reply',value,target_character_revision,target_operation_id from unnest(suggested_contents) with ordinality ordered(value, ordinal) order by ordinal;
 end $$;
 create function public.persist_chat_admin_confirmed_reply(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
@@ -121,8 +134,8 @@ begin
   values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'confirmed_reply',reply_content,target_character_revision) returning * into saved;
   return saved;
 end $$;
-revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid[],text,text[]) from public,anon,service_role;
-grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid[],text,text[]) to authenticated;
+revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) from public,anon,service_role;
+grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) to authenticated;
 revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) from public,anon,service_role;
 grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) to authenticated;
 revoke all on function public.create_chat_admin_fan_conversation() from public,anon,authenticated,service_role;

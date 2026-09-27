@@ -329,7 +329,8 @@ const sections: PrivacySection[] = [
         <p>
           FanMind nutzt OpenAI über serverseitige API-Aufrufe, soweit eine KI-Funktion ausgelöst
           wird. Bei KI-Antwortvorschlägen können Kontakt-ID, Anzeigename, Handle, Quelle,
-          Plattform, Sprache, Status, Tags, Zusammenfassung, eingefügter Chat-Kontext, eingehende
+          Plattform, Sprache, Status, Tags, Fan-Zusammenfassung, interne Notizen, eingefügter
+          Chat-Kontext, eingehende
           Nachricht, gewünschter Antwortmodus und vorhandener Analysebericht verarbeitet werden.
         </p>
         <p>

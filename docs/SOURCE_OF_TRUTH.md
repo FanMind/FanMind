@@ -1278,7 +1278,12 @@ bindet Conversations und Messages über zusammengesetzte Workspace-/Character-/
 Fan-Schlüssel. Die Oberfläche führt Character → dessen Fans → Fanwissen und
 Verlauf; tatsächlich manuell verwendete Antworten können als `confirmed_reply`
 gespeichert werden. Der Server lädt Character, exakte Revision, Fan, Conversation
-und Verlauf neu, bevor er genau drei Vorschläge ausgibt. Keine OnlyFans-Verbindung,
+und Verlauf neu, bevor er genau drei Vorschläge ausgibt. Generationen bleiben an
+eine stabile, atomar konsumierte Vorgangs-ID gebunden; ein Retry kann einen bereits
+persistierten Dreier-Batch ohne zweiten Provider-Aufruf laden. Monotone Sequenzen
+ordnen eingehende Nachricht und Vorschläge deterministisch. Abgebrochene Requests
+werden vor der Persistenz verworfen, der kanonische Kontextgrenzwert gilt und
+Provider-Speicherung ist deaktiviert. Keine OnlyFans-Verbindung,
 kein Scraping und kein Auto-Send. Der Fan-Vertrag benötigt einen neuen geschützten
 Staging-Apply; Production-Aktivierung und Providerintegration sind nicht Teil
 dieses Source-Pakets. Die neue Oberfläche bleibt zusätzlich mit

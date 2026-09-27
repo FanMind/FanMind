@@ -1173,7 +1173,10 @@ Aktivierung:
 `chat_character_conversations` and `chat_character_messages`. The additive,
 controlled and unapplied `20260927200000_chat_admin_character_fans.sql` adds
 `chat_character_fans` plus strict Character/Fan keys on conversations and
-messages; this is not current target state. The contract permits at most one enabled Workspace,
+messages; this is not current target state. Messages receive a monotonic sequence
+and a generation operation identifier so one inbound-plus-three-suggestions batch
+is ordered and atomically idempotent. Character and fan revisions are locked while
+the batch is persisted. The contract permits at most one enabled Workspace,
 requires its exact Owner/User binding, enforces adult public persona age and uses
 RLS plus composite Workspace/Character foreign keys. It does not alter
 `creators.workspace_id UNIQUE` and grants no Platform-Admin or service-role
