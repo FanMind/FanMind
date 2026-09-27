@@ -1,6 +1,25 @@
 name: Deploy FanMind Staging
 
 on:
+  workflow_call:
+    inputs:
+      confirmation:
+        required: true
+        type: string
+      billing_write_freeze:
+        required: true
+        type: string
+      release_state_recovery_confirmation:
+        required: false
+        default: ''
+        type: string
+      previous_release_commit:
+        required: false
+        default: ''
+        type: string
+      reviewed_commit:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       confirmation:
@@ -34,7 +53,8 @@ on:
 
 concurrency:
   # A protected chained caller holds the canonical lease for the complete operation.
-  group: ${{ inputs.reviewed_commit != '' && format('fanmind-staging-deploy-chained-{0}', inputs.reviewed_commit) || 'fanmind-staging-deploy' }}
+  # Only the non-user-selectable workflow_call event may use the child lease.
+  group: ${{ github.event_name == 'workflow_call' && format('fanmind-staging-deploy-chained-{0}', github.sha) || 'fanmind-staging-deploy' }}
   cancel-in-progress: false
 
 permissions:

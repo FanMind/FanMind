@@ -1,0 +1,83 @@
+name: FanMind Creator Target Admission Recovery
+
+on:
+  workflow_run:
+    workflows:
+      - FanMind Creator Target Transition and Runtime
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact current main commit containing the reviewed recovery control'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type restore-creator-target-admission'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  restore-admission:
+    name: Restore canonical Creator RPC admission on Staging
+    if: >-
+      ${{
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.head_branch == 'main' &&
+         github.event.workflow_run.conclusion != 'success') ||
+        (github.event_name == 'workflow_dispatch' &&
+         github.ref == 'refs/heads/main' &&
+         inputs.reviewed_commit == github.sha &&
+         inputs.confirmation == 'restore-creator-target-admission')
+      }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: https://staging.fanmind.ch
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ github.sha }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+    steps:
+      - name: Checkout exact current main recovery control
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Restore exact canonical RPC grants
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          PGPASSFILE="$RUNNER_TEMP/fanmind-creator-admission-recovery.pgpass"
+          export PGPASSFILE
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
+          rm -f "$PGPASSFILE"

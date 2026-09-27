@@ -103,66 +103,16 @@ jobs:
   deploy:
     name: Deploy exact reviewed main to isolated Staging
     needs: authorize
-    runs-on: ubuntu-24.04
     permissions:
-      actions: write
       contents: read
-    outputs:
-      deployment_run: ${{ steps.dispatch.outputs.deployment_run }}
-    steps:
-      - name: Dispatch existing protected Staging deploy and wait for success
-        id: dispatch
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
-        run: |
-          set -euo pipefail
-          node --input-type=module <<'NODE'
-          import {appendFileSync} from "node:fs";
-          const api = "https://api.github.com/repos/FanMind/FanMind";
-          const headers = {
-            Authorization: `Bearer ${process.env.GH_TOKEN}`,
-            Accept: "application/vnd.github+json",
-            "Content-Type": "application/json",
-          };
-          const started = new Date(Date.now() - 2000).toISOString();
-          let response = await fetch(`${api}/actions/workflows/deploy-staging.yml/dispatches`, {
-            method: "POST", headers, redirect: "error", signal: AbortSignal.timeout(15000),
-            body: JSON.stringify({
-              ref: "main",
-              inputs: {
-                confirmation: "deploy-staging-only",
-                billing_write_freeze: "preserve",
-                release_state_recovery_confirmation: "",
-                previous_release_commit: "",
-                reviewed_commit: process.env.REVIEWED_COMMIT,
-              },
-            }),
-          });
-          if (response.status !== 204) throw new Error(`deploy_dispatch_${response.status}`);
-          let run;
-          for (let attempt = 0; attempt < 240; attempt++) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            response = await fetch(`${api}/actions/workflows/deploy-staging.yml/runs?branch=main&event=workflow_dispatch&per_page=20`, {
-              headers, redirect: "error", signal: AbortSignal.timeout(15000),
-            });
-            if (!response.ok) throw new Error("deploy_runs_unavailable");
-            const payload = await response.json();
-            const matches = (payload.workflow_runs ?? []).filter(candidate =>
-              candidate.head_sha === process.env.REVIEWED_COMMIT &&
-              Date.parse(candidate.created_at) >= Date.parse(started));
-            if (!run && matches.length) run = matches.sort((a,b) => Date.parse(a.created_at)-Date.parse(b.created_at))[0];
-            if (!run) continue;
-            const current = (payload.workflow_runs ?? []).find(candidate => candidate.id === run.id) ?? run;
-            if (current.status === "completed") {
-              if (current.conclusion !== "success") throw new Error(`deploy_failed_${current.id}`);
-              appendFileSync(process.env.GITHUB_OUTPUT, `deployment_run=${current.id}\n`);
-              console.log(`CREATOR_TARGET_DEPLOY_RUN=${current.id}`);
-              process.exit(0);
-            }
-          }
-          throw new Error("deploy_timeout");
-          NODE
+    uses: ./.github/workflows/deploy-staging.yml
+    with:
+      confirmation: deploy-staging-only
+      billing_write_freeze: preserve
+      release_state_recovery_confirmation: ''
+      previous_release_commit: ''
+      reviewed_commit: ${{ needs.authorize.outputs.reviewed_commit }}
+    secrets: inherit
 
   transition:
     name: Apply exact Legacy-to-Current Creator transition on Staging
@@ -288,37 +238,18 @@ jobs:
       - name: Verify source, classify fresh target and apply atomically
         env:
           FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
-          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
         run: |
           set -euo pipefail
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --check
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --verify
-          umask 077
-          printf '%s\n' "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT" > "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --apply
-          rm -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
-
-      - name: Restore Creator RPC admission after an interrupted transition
-        if: ${{ always() }}
-        env:
-          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
-          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
-        run: |
-          set -euo pipefail
-          if [ -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER" ]; then
-            test ! -L "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
-            test "$(cat "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER")" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
-            node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
-            rm -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
-          fi
+          echo "CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED"
 
       - name: Remove private target evidence
         if: ${{ always() }}
-        env:
-          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
         run: |
           rm -rf "$RUNNER_TEMP/creator-transition-reference"
-          rm -f "$RUNNER_TEMP/fanmind-creator-transition.pgpass" "$RUNNER_TEMP/creator-reference.zip" "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
+          rm -f "$RUNNER_TEMP/fanmind-creator-transition.pgpass" "$RUNNER_TEMP/creator-reference.zip"
 
   runtime:
     name: Enable Creator runtime and prove authenticated Staging readback
@@ -333,12 +264,24 @@ jobs:
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
       FANMIND_CREATOR_RUNTIME_REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
       FANMIND_CREATOR_RUNTIME_CONFIRM: enable-creator-intelligence-staging
       FANMIND_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
       FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
       FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
       FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
       FANMIND_STAGING_E2E_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_WORKSPACE_ID }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
     steps:
       - name: Checkout exact reviewed main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -347,7 +290,25 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
+      - name: Prepare dedicated private database password file
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-creator-runtime.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+          echo "PGPASSFILE=$PGPASSFILE" >> "$GITHUB_ENV"
+
       - name: Enable flag, restart, prove runtime and rollback flag on failure
+        env:
+          FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
         run: |
           set -euo pipefail
           ENV_FILE=/var/www/fanmind-staging/.env.production
@@ -366,6 +327,7 @@ jobs:
           sudo test -f /etc/systemd/system/fanmind-staging.service
           sudo test ! -L /etc/systemd/system/fanmind-staging.service
           sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --verify-closed
           BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
           test ! -e "$BACKUP" && test ! -L "$BACKUP"
           rollback_flag() {
@@ -442,6 +404,19 @@ jobs:
           console.log("CREATOR_RUNTIME_STAGING_AVAILABLE=PASS");
           console.log("CREATOR_RUNTIME_STAGING_CREATORS=0");
           NODE
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
           trap - EXIT ERR INT TERM
           rm -f "$BACKUP"
           echo "CREATOR_RUNTIME_STAGING_ACTIVATED=PASS"
+
+      - name: Restore Creator RPC admission after failed or interrupted acceptance
+        if: ${{ always() }}
+        env:
+          FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
+        run: |
+          set -euo pipefail
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
+
+      - name: Remove private runtime database credentials
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/fanmind-creator-runtime.pgpass"

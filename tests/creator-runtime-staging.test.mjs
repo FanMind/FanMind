@@ -60,10 +60,14 @@ test("Creator runtime refuses stale already-enabled disk state before restart", 
 test("Creator protected workflow binds deploy, owner workspace, service unit and rollback", async () => {
   const workflow = await readFile(".github/workflows/creator-target-transition-runtime.yml", "utf8");
   const deploy = await readFile(".github/workflows/deploy-staging.yml", "utf8");
+  const recovery = await readFile(".github/workflows/creator-target-admission-recovery.yml", "utf8");
 
-  assert.match(workflow, /reviewed_commit: process\.env\.REVIEWED_COMMIT/u);
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/deploy-staging\.yml/u);
+  assert.doesNotMatch(workflow, /deploy-staging\.yml\/dispatches/u);
+  assert.match(deploy, /workflow_call:/u);
   assert.match(deploy, /reviewed_commit:[\s\S]*required: false/u);
-  assert.match(deploy, /fanmind-staging-deploy-chained-/u);
+  assert.match(deploy, /github\.event_name == 'workflow_call'[\s\S]*fanmind-staging-deploy-chained-/u);
+  assert.doesNotMatch(deploy, /inputs\.reviewed_commit != '' && format\('fanmind-staging-deploy-chained-/u);
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT[\s\S]*EXPECTED_RELEASE_COMMIT[\s\S]*Reviewed Staging release commit does not match/iu);
   assert.ok(deploy.indexOf("Reviewed Staging release commit does not match") < deploy.indexOf("rsync --archive --delete"));
@@ -83,7 +87,16 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(workflow, /issues: write/u);
   assert.match(workflow, /fanmind-creator-target-transition-runtime-consumed/u);
   assert.match(workflow, /github-actions\[bot\]/u);
-  assert.ok(workflow.indexOf("fanmind-creator-target-transition-runtime-consumed") < workflow.indexOf("deploy-staging.yml/dispatches"));
+  assert.ok(workflow.indexOf("fanmind-creator-target-transition-runtime-consumed") < workflow.indexOf("uses: ./.github/workflows/deploy-staging.yml"));
+  assert.doesNotMatch(workflow, /FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER/u);
+  assert.match(workflow, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
+  assert.match(workflow, /creator-foundation-transition-staging-runner\.mjs --restore-admission/u);
+  assert.ok(workflow.indexOf("runtime_creator_readback_failed") < workflow.indexOf("--restore-admission"));
+  assert.match(recovery, /workflow_run:[\s\S]*FanMind Creator Target Transition and Runtime/u);
+  assert.match(recovery, /workflow_dispatch:/u);
+  assert.match(recovery, /restore-creator-target-admission/u);
+  assert.match(recovery, /creator-foundation-transition-staging-runner\.mjs --restore-admission/u);
+  assert.match(recovery, /group: fanmind-staging-deploy/u);
   assert.match(workflow, /trap 'rollback_flag \$\?' EXIT ERR/u);
   assert.match(workflow, /trap 'rollback_flag 130' INT/u);
   assert.match(workflow, /trap 'rollback_flag 143' TERM/u);

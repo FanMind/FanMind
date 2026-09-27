@@ -9,6 +9,7 @@ import { buildCreatorFoundationCatalogSql } from "./creator-foundation-reconcili
 import {
   buildCreatorFoundationReference,
   classifyCreatorFoundationSnapshot,
+  compareCreatorFoundationCatalogs,
 } from "./creator-foundation-reconciliation-preflight.mjs";
 import { creatorFoundationHostedPg17RoleProfile } from "./creator-foundation-reconciliation-provider.mjs";
 import {
@@ -116,10 +117,41 @@ function dollarJson(value, tag) {
   return `${marker}${json}${marker}::jsonb`;
 }
 
+function admissionClosedCatalog(snapshot) {
+  const catalog = expectedHostedCatalog(snapshot);
+  const identities = new Set([
+    "save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)",
+    "record_creator_fan_review(uuid,uuid,jsonb,jsonb)",
+  ]);
+  for (const fn of catalog.functions) {
+    if (!identities.has(fn.identity)) continue;
+    fn.directAcl = fn.directAcl.filter(grant =>
+      !(grant.grantee === "authenticated" && grant.privilege === "EXECUTE"));
+    fn.effectiveAcl = fn.effectiveAcl.map(grant =>
+      grant.role === "authenticated" && grant.privilege === "EXECUTE"
+        ? {...grant, allowed: false, grantable: false}
+        : grant);
+  }
+  return catalog;
+}
+
+function exactCatalogGuard(expected, tag, errorCode) {
+  return `DO $${tag}$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM (${catalogQueryBody()}) AS snapshot
+    WHERE snapshot.jsonb_build_object->'catalog' = ${dollarJson(expected, `${tag}_catalog`)}
+  ) THEN
+    RAISE EXCEPTION '${errorCode}';
+  END IF;
+END
+$${tag}$;`;
+}
+
 export function buildAtomicCreatorTransitionSql({legacy, current}) {
-  const legacyCatalog = expectedHostedCatalog(legacy);
-  const currentCatalog = expectedHostedCatalog(current);
-  const query = catalogQueryBody();
+  const legacyCatalog = admissionClosedCatalog(legacy);
+  const currentCatalog = admissionClosedCatalog(current);
   const artifact = buildCreatorFoundationTransitionSource();
   const tableList = TABLES.map(table => `public.${table}`).join(", ");
   return `BEGIN;
@@ -147,32 +179,13 @@ BEGIN
   END IF;
 END
 $fm_guard$;
-DO $fm_legacy$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM (${query}) AS snapshot
-    WHERE snapshot.jsonb_build_object->'catalog' = ${dollarJson(legacyCatalog, "fm_legacy_catalog")}
-  ) THEN
-    RAISE EXCEPTION 'CREATOR_TARGET_TRANSITION_PRECONDITION_DRIFT';
-  END IF;
-END
-$fm_legacy$;
+${exactCatalogGuard(legacyCatalog, "fm_legacy", "CREATOR_TARGET_TRANSITION_PRECONDITION_DRIFT")}
 ${artifact.sql}
-DO $fm_current$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM (${query}) AS snapshot
-    WHERE snapshot.jsonb_build_object->'catalog' = ${dollarJson(currentCatalog, "fm_current_catalog")}
-  ) THEN
-    RAISE EXCEPTION 'CREATOR_TARGET_TRANSITION_POSTFLIGHT_DRIFT';
-  END IF;
-END
-$fm_current$;
+${exactCatalogGuard(currentCatalog, "fm_current", "CREATOR_TARGET_TRANSITION_POSTFLIGHT_DRIFT")}
 COMMIT;
 SELECT 'CREATOR_TARGET_TRANSITION_APPLY=COMMITTED';
 SELECT 'CREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT';
+SELECT 'CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED';
 `;
 }
 
@@ -210,11 +223,17 @@ SELECT 'CREATOR_TARGET_TRANSITION_SAFETY=PASS';
 `;
 }
 
-export function buildCreatorRpcAdmissionGateSql() {
+export function buildCreatorRpcAdmissionCloseSql({legacy, current}) {
+  const snapshot = current ?? legacy;
+  if (!snapshot) fail("admission_reference_missing");
+  const expected = expectedHostedCatalog(snapshot);
   return `BEGIN;
 SET LOCAL search_path = pg_catalog;
 SET LOCAL statement_timeout = '60s';
-SELECT pg_catalog.pg_advisory_lock(pg_catalog.hashtextextended('fanmind_creator_foundation_transition_v1', 0));
+SET LOCAL lock_timeout = '5s';
+SELECT pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('fanmind_creator_foundation_transition_v1', 0));
+LOCK TABLE public.creators, public.creator_voice_profiles, public.creator_sales_playbooks, public.creator_commercial_events IN SHARE ROW EXCLUSIVE MODE;
+${exactCatalogGuard(expected, "fm_admission_source", "CREATOR_TARGET_TRANSITION_ADMISSION_SOURCE_DRIFT")}
 REVOKE EXECUTE ON FUNCTION public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean) FROM authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_creator_fan_review(uuid,uuid,jsonb,jsonb) FROM authenticated;
 COMMIT;
@@ -253,7 +272,7 @@ SELECT 'CREATOR_TARGET_TRANSITION_ADMISSION=OPEN';
 }
 
 export function evaluateCreatorTargetEnvironment(environment, {mode}) {
-  const apply = mode === "apply";
+  const write = mode === "apply" || mode === "restore";
   const target = clean(environment.FANMIND_TARGET_SUPABASE_PROJECT_REF);
   const production = clean(environment.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF);
   const reviewed = clean(environment.FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT);
@@ -294,10 +313,12 @@ export function evaluateCreatorTargetEnvironment(environment, {mode}) {
     isAbsolute(clean(environment.PGSSLROOTCERT)) &&
     clean(environment.PGPASSFILE).length > 0 &&
     !hiddenLibpqOverride &&
-    (!apply || (
+    (!write || (
       environment.FANMIND_ENABLE_NON_PRODUCTION_WRITES === "true" &&
       environment.FANMIND_NON_PRODUCTION_WRITE_ACK === "I_UNDERSTAND_NON_PRODUCTION_ONLY" &&
-      environment.FANMIND_CREATOR_TRANSITION_CONFIRM === "apply-creator-foundation-transition"
+      environment.FANMIND_CREATOR_TRANSITION_CONFIRM === (mode === "restore"
+        ? "restore-creator-target-admission"
+        : "apply-creator-foundation-transition")
     ));
   return {ok, target, production, reviewed};
 }
@@ -330,32 +351,24 @@ function runPsql(sql, environment, failureCode = "psql_failed") {
   return requireCreatorTransitionPsqlSuccess(result, failureCode);
 }
 
-function withCreatorRpcAdmissionClosed(environment, operation) {
-  const gated = runPsql(buildCreatorRpcAdmissionGateSql(), environment, "admission_gate_failed");
-  if (!gated.includes("CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED")) fail("admission_gate_failed");
-  let operationResult;
-  let operationError;
-  try {
-    operationResult = operation();
-  } catch (error) {
-    operationError = error;
-  }
-  const restored = runPsql(
-    buildCreatorRpcAdmissionRestoreSql(),
-    environment,
-    "admission_restore_failed",
-  );
-  if (!restored.includes("CREATOR_TARGET_TRANSITION_ADMISSION=OPEN")) fail("admission_restore_failed");
-  if (operationError) throw operationError;
-  return operationResult;
-}
-
 export function classifyCreatorTargetSnapshot(snapshot, referenceJson) {
   return classifyCreatorFoundationSnapshot(snapshot, {
     referenceJson,
     trustedReferenceSha256: CREATOR_FOUNDATION_TRANSITION_ACCEPTED_INPUTS.referenceSha256,
     expectedQuerySha256: CREATOR_FOUNDATION_TRANSITION_QUERY_SHA256,
   });
+}
+
+function verifyAdmissionClosedTarget(environment, trusted, variant = "current") {
+  const output = runPsql(buildCreatorFoundationCatalogSql(), environment);
+  let snapshot;
+  try { snapshot = JSON.parse(output); } catch { fail("snapshot_invalid"); }
+  const expected = admissionClosedCatalog(trusted[variant]);
+  const differingSections = compareCreatorFoundationCatalogs(snapshot.catalog, expected);
+  if (snapshot.catalog?.parentChecks?.allSatisfied !== true || differingSections.length !== 0) {
+    fail(`${variant}_admission_closed_drift`);
+  }
+  return snapshot;
 }
 
 function verifyTarget(environment, trusted) {
@@ -377,7 +390,7 @@ export async function main(args = process.argv.slice(2), environment = process.e
     };
   }
   if (mode === "--restore-admission") {
-    if (!evaluateCreatorTargetEnvironment(environment, {mode: "apply"}).ok) fail("environment_invalid");
+    if (!evaluateCreatorTargetEnvironment(environment, {mode: "restore"}).ok) fail("environment_invalid");
     const restored = runPsql(
       buildCreatorRpcAdmissionRestoreSql(),
       environment,
@@ -385,6 +398,18 @@ export async function main(args = process.argv.slice(2), environment = process.e
     );
     if (!restored.includes("CREATOR_TARGET_TRANSITION_ADMISSION=OPEN")) fail("admission_restore_failed");
     return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_ADMISSION=OPEN"};
+  }
+  if (mode === "--verify-closed") {
+    if (!evaluateCreatorTargetEnvironment(environment, {mode: "verify"}).ok) fail("environment_invalid");
+    const safety = runPsql(buildCreatorTargetSafetySql(), environment, "target_safety_failed");
+    if (!safety.includes("CREATOR_TARGET_TRANSITION_SAFETY=PASS")) fail("target_safety_failed");
+    const admission = runPsql(`SELECT CASE WHEN
+      NOT pg_catalog.has_function_privilege('authenticated', 'public.save_creator_bundle(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean)', 'EXECUTE')
+      AND NOT pg_catalog.has_function_privilege('authenticated', 'public.record_creator_fan_review(uuid,uuid,jsonb,jsonb)', 'EXECUTE')
+      THEN 'CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED'
+      ELSE 'CREATOR_TARGET_TRANSITION_ADMISSION=OPEN' END;`, environment, "admission_verify_failed");
+    if (!admission.includes("CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED")) fail("admission_not_closed");
+    return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_SAFETY=PASS\nCREATOR_TARGET_TRANSITION_ADMISSION=CLOSED"};
   }
   if (!["--verify","--apply"].includes(mode) || !referenceDirectory) fail("mode_invalid");
   const requested = mode.slice(2);
@@ -396,27 +421,27 @@ export async function main(args = process.argv.slice(2), environment = process.e
       output: `CREATOR_TARGET_TRANSITION_STATE=${before.classification.status}\nCREATOR_TARGET_TRANSITION_APPLY=not_requested\nCREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false`};
   }
   if (before.classification.status === "CURRENT_EXACT") {
-    const safety = withCreatorRpcAdmissionClosed(
-      environment,
-      () => runPsql(buildCreatorTargetSafetySql(), environment, "target_safety_failed"),
-    );
+    const gated = runPsql(buildCreatorRpcAdmissionCloseSql({current: trusted.current}), environment, "admission_gate_failed");
+    if (!gated.includes("CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED")) fail("admission_gate_failed");
+    verifyAdmissionClosedTarget(environment, trusted, "current");
+    const safety = runPsql(buildCreatorTargetSafetySql(), environment, "target_safety_failed");
     if (!safety.includes("CREATOR_TARGET_TRANSITION_SAFETY=PASS")) fail("target_safety_failed");
-    return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_STATE=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_APPLY=not_requested\nCREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT"};
+    return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_STATE=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_APPLY=not_requested\nCREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_ADMISSION=CLOSED"};
   }
   if (before.classification.status !== "LEGACY_EXACT") fail("precondition_not_legacy_exact");
-  const applied = withCreatorRpcAdmissionClosed(
+  const gated = runPsql(buildCreatorRpcAdmissionCloseSql({legacy: trusted.legacy}), environment, "admission_gate_failed");
+  if (!gated.includes("CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED")) fail("admission_gate_failed");
+  verifyAdmissionClosedTarget(environment, trusted, "legacy");
+  const applied = runPsql(
+    buildAtomicCreatorTransitionSql(trusted),
     environment,
-    () => runPsql(
-      buildAtomicCreatorTransitionSql(trusted),
-      environment,
-      "apply_indeterminate_verify_before_retry",
-    ),
+    "apply_indeterminate_verify_before_retry",
   );
   if (!applied.includes("CREATOR_TARGET_TRANSITION_APPLY=COMMITTED") ||
-      !applied.includes("CREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT")) fail("apply_indeterminate_verify_before_retry");
-  const after = verifyTarget(environment, trusted);
-  if (after.classification.status !== "CURRENT_EXACT") fail("postflight_failed");
-  return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_STATE=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_APPLY=committed\nCREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT"};
+      !applied.includes("CREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT") ||
+      !applied.includes("CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED")) fail("apply_indeterminate_verify_before_retry");
+  verifyAdmissionClosedTarget(environment, trusted, "current");
+  return {exitCode: 0, output: "CREATOR_TARGET_TRANSITION_STATE=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_APPLY=committed\nCREATOR_TARGET_TRANSITION_POSTFLIGHT=CURRENT_EXACT\nCREATOR_TARGET_TRANSITION_ADMISSION=CLOSED"};
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

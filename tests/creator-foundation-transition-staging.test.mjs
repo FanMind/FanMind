@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 import {
   buildAtomicCreatorTransitionSql,
-  buildCreatorRpcAdmissionGateSql,
+  buildCreatorRpcAdmissionCloseSql,
   buildCreatorRpcAdmissionRestoreSql,
   buildCreatorTargetSafetySql,
   buildTrustedCreatorTransitionReference,
@@ -135,6 +135,8 @@ test("Atomic Creator target SQL rechecks Legacy under lock and Current before co
   assert.ok(preconditionIndex < helperIndex);
   assert.ok(helperIndex < postflightIndex);
   assert.ok(postflightIndex < commitIndex);
+  assert.match(sql, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
+  assert.doesNotMatch(sql, /(?:grant|revoke) execute on function public\.(?:save_creator_bundle|record_creator_fan_review)/iu);
 });
 
 test("Creator target safety is enforced even when Current is already exact", () => {
@@ -146,14 +148,16 @@ test("Creator target safety is enforced even when Current is already exact", () 
   assert.doesNotMatch(sql, /(?:insert|update|delete|truncate|alter|grant|revoke)\s/iu);
 });
 
-test("Creator RPC admission is closed before drain and restored explicitly", () => {
-  const gate = buildCreatorRpcAdmissionGateSql();
+test("Creator RPC admission closes only after exact catalog proof and restores idempotently", () => {
+  const current = {catalog: {tables: [], columns: [], constraints: [], indexes: [], policies: [], triggers: [], functions: []}};
+  const close = buildCreatorRpcAdmissionCloseSql({current});
   const restore = buildCreatorRpcAdmissionRestoreSql();
-  assert.match(gate, /pg_advisory_lock/u);
-  assert.match(gate, /revoke execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) from authenticated/iu);
-  assert.match(gate, /revoke execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) from authenticated/iu);
-  assert.match(gate, /pg_stat_activity[\s\S]*pg_sleep/iu);
-  assert.match(gate, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
+  assert.match(close, /pg_advisory_xact_lock/u);
+  assert.match(close, /CREATOR_TARGET_TRANSITION_ADMISSION_SOURCE_DRIFT/u);
+  assert.match(close, /revoke execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) from authenticated/iu);
+  assert.match(close, /revoke execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) from authenticated/iu);
+  assert.ok(close.indexOf("CREATOR_TARGET_TRANSITION_ADMISSION_SOURCE_DRIFT") < close.toLowerCase().indexOf("revoke execute"));
+  assert.match(close, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
   assert.match(restore, /grant execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) to authenticated/iu);
   assert.match(restore, /grant execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) to authenticated/iu);
   assert.match(restore, /CREATOR_TARGET_TRANSITION_ADMISSION=OPEN/u);
