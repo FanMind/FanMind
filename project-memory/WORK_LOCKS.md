@@ -2,15 +2,15 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R4
-- Status: ACTIVE
-- Holder: autonomous FanMind Builder
-- Exact correction base: `8bf23be6af739086354c58548ea43c3910c17ee1`; active branch `fix/creator-target-drift-recovery-20260927`.
-- Scope: one serialized Creator R4 source+protected-execution correction path. Protected run `36321009852` consumed the original exact command, deployed Staging and stopped at DRIFT without APPLY; the same lock now covers only the resulting bounded workflow/diagnostic correction through normal PR merge and the later fresh owner-command execution.
-- Parallel safety: no concurrent Creator target/schema/runtime worker. Other independent tasks may proceed only if their files/contracts/environments do not overlap.
-- Allowed target: FanMind Staging Supabase `vshyhvgcmrlagvfnvomc` and the isolated `fanmind-staging.service` host only, under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927.
-- Forbidden: Production `drqkpdvtbbrrdwmtrodz`, real customer/fan/Creator data, provider/model calls, external send, Billing/Stripe/Tax/Restore/Mobile mutation, generic migration ledger use, secrets/raw private catalog publication and direct main writes.
-- Release condition: correction PR exact-head CI/review/zero P0-P2 + normal merge; one exact owner-authenticated read-only drift diagnosis; reviewed remediation of the proven differing sections; only then a distinct fresh transition/runtime authorization, successful exact Staging deploy, protected Legacy preflight/CURRENT_EXACT committed postflight, runtime activation/readback and independent countercheck.
-- Recovery: the original protected run is reconciled fail-closed in `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`; no SQL/runtime/Production mutation occurred. Before COMMIT any later target failure rolls back the whole transition. After a successful Current postflight, runtime failure restores only the previous Staging flag file and restarts `fanmind-staging.service`; schema is not blindly reverted.
+- Status: PAUSED
+- Holder: no active Builder worker; awaiting FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927.
+- Exact source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, merged/current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.
+- Scope: preserve serialized Creator target/schema/runtime identity while the next permitted operation is the separately owner-authenticated read-only drift diagnosis. The #1214 diagnostics/recovery correction is merged and consumed as source; do not rebuild it.
+- Parallel safety: this PAUSED scope consumes no worker slot. Any later Creator target/schema/runtime remediation reacquires/updates the same task identity after the diagnosis; unknown overlap remains serialized.
+- Allowed next target operation: one read-only FanMind Staging diagnosis under FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927. Production is forbidden.
+- Forbidden: transition-command replay, SQL APPLY, runtime activation, Production `drqkpdvtbbrrdwmtrodz`, real customer/fan/Creator data, provider/model calls, Billing/Stripe/Tax/Restore/Mobile mutation, secrets/raw private catalog publication and direct main writes.
+- Resume condition: exact owner command `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` is consumed and yields bounded evidence. Then update the lock for Builder-owned reviewed remediation. Any later transition/runtime execution requires a distinct fresh authorization.
+- Recovery: protected run `36321009852` remains reconciled fail-closed; no SQL/runtime/Production mutation occurred. PR #1214 fixed the recovery/diagnostic source path but did not itself mutate Staging.
 
 ## LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
 - Task: FM-CREATOR-001

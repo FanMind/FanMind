@@ -419,7 +419,7 @@
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_target_transition_runtime",
       "title": "Creator Foundation auf Staging atomar überführen und Runtime aktivieren",
-      "requires_owner": false,
+      "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
         "memory_v6",
@@ -433,7 +433,8 @@
       "done_states": [
         "ACCEPTED"
       ],
-      "instruction": "Protected run 36321009852 consumed the original transition command on main 8bf23be6af739086354c58548ea43c3910c17ee1. Exact Staging deploy passed; classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations outside the runner sudo allowlist; no SQL APPLY, runtime activation or Production mutation occurred. Merge the bounded diagnostics/recovery correction with exact-head CI and review. Then FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 authorizes only one exact-main read-only classification. Review and remediate its proven differing sections before requesting a distinct transition/runtime authorization."
+      "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` once on issue #874. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
+      "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
     }
   ],
   "retired_actions": [

@@ -1,12 +1,12 @@
 ## DEP-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
-- Status: IN_PROGRESS; protected attempt 1 RECONCILED_FAIL_CLOSED, source correction active.
+- Status: IN_PROGRESS; source correction dependency SATISFIED, protected diagnosis owner-gated.
 - Action/task: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME / FM-CREATOR-001
-- Requires: memory_v6=ACCEPTED, staging=ACCEPTED, chatadmin_manual_flow=ACCEPTED, creator_foundation_transition_generator=ACCEPTED; accepted private PR #1207 reference/profile; accepted PR #1209 transition source; correction base `8bf23be6af739086354c58548ea43c3910c17ee1`. Original authorization FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 is consumed fail-closed.
-- Target prerequisites at execution: exact reviewed current main deployed to FanMind Staging, private reference artifact/pins valid, full fresh Legacy classification, four Creator tables empty, zero active Creator RPCs, Production exclusion and TLS verify-full. Any drift/unknown/current state blocks or skips the write as defined by the runner.
-- Runtime dependency: successful CURRENT_EXACT database postflight and exact deployed release before flag enable; authenticated synthetic `GET /api/creators` must prove enabled runtime with zero Creator rows.
-- Correction dependency: merge the bounded workflow/diagnostic fix with exact-head CI and independent review. Then obtain one owner-authenticated read-only drift-diagnosis command bound to then-current main, consume its bounded result, and complete reviewed remediation. The transition command consumed by run `36321009852` cannot be replayed; any later transition requires a distinct fresh authorization.
-- Attempt-1 evidence: exact deploy succeeded, target state was DRIFT, APPLY was not requested, runtime was skipped and recovery failed on disallowed sudo file operations. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
-- Boundary: Staging only; no Production/provider/customer/Billing/Restore/Mobile mutation.
+- Accepted source dependency: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged as exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`; prior PR #1207 reference/profile and PR #1209 transition source remain accepted/consumed.
+- Attempt-1 evidence: run `36321009852` deployed prior main, target state DRIFT, APPLY not requested, runtime skipped; no SQL/runtime/Production mutation. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Current dependency: one owner-authenticated read-only diagnosis on exact main `bc85493f8fc25ff90c965208bd20c7dc64641158` via `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158`.
+- After diagnosis: Builder may implement/review only the proven differing-section remediation. A later transition/runtime execution requires a distinct fresh authorization and revalidated exact target prerequisites.
+- Runtime dependency remains: successful CURRENT_EXACT database postflight plus exact deployed release before any flag enable; authenticated synthetic `GET /api/creators` must prove enabled runtime with zero Creator rows.
+- Boundary: Staging diagnosis only at this step; no Production/provider/customer/Billing/Restore/Mobile mutation.
 
 ## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
 - Status: ACCEPTED; exact bounded repository source continuation consumed.

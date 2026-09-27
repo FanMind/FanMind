@@ -1,10 +1,10 @@
-## Current handoff — Creator Target Transition + Runtime correction — 2026-09-27
-- Current action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` / FM-CREATOR-001, R4, IN_PROGRESS.
-- Authorization/lock/receipt: `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` CONSUMED_FAIL_CLOSED; `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` ACTIVE; `FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` IN_PROGRESS.
-- Source branch: `fix/creator-target-drift-recovery-20260927`, exact base `8bf23be6af739086354c58548ea43c3910c17ee1`.
-- Attempt 1: run `36321009852` authenticated the exact owner command and deployed Staging. The transition classified DRIFT, did not request APPLY and skipped runtime; recovery then failed because ordinary file operations required sudo outside the runner allowlist. No SQL APPLY/runtime/Production mutation occurred. Evidence: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
-- Implemented correction: validated bounded drift diagnostics; a separate owner-authenticated read-only diagnosis path; SHA-scoped replay markers; user-owned persistent recovery snapshot; exact release plus authenticated `available:false` recovery proof; deploy-rsync preservation; `sudo -n` only for allowed service commands; focused regressions.
-- Exact next: finish exact-head independent review/CI and normal merge. Then Bernd posts only `run-creator-target-drift-diagnosis <then-current-main-sha>` on issue #874. Consume the bounded diagnosis, implement/review the exact drift remediation, and only then admit a distinct transition/runtime authorization.
+## Current handoff — Creator drift diagnosis owner-gated — 2026-09-27
+- Current action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` / FM-CREATOR-001 remains IN_PROGRESS overall, but no Builder worker is active.
+- Source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` passed exact-head CI/review and merged normally as current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.
+- Authorization/lock/receipt: transition authorization remains CONSUMED_FAIL_CLOSED; `FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927` is OWNER_ACTION_REQUIRED; `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` is PAUSED; receipt remains PARTIAL until diagnosis/remediation/target acceptance.
+- Attempt 1: run `36321009852` deployed prior main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified DRIFT, requested no APPLY and skipped runtime. No SQL APPLY/runtime/Production mutation occurred.
+- Exact next: Bernd posts only `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158` once on issue #874. The Builder then consumes the bounded read-only result and implements/reviews only the proven remediation. Any transition/runtime retry requires a distinct fresh authorization.
+- Worker state: SAFE READY Creator worker = none while awaiting this owner action; Mobile remains deferred and unrelated owner/provider gates remain separate.
 
 ## Creator Foundation transition generator accepted
 - Status: ACCEPTED; repository source package consumed.

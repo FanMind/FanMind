@@ -1,9 +1,9 @@
 ## FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927
-- Status: OWNER_ACTION_REQUIRED_AFTER_SOURCE_MERGE
+- Status: OWNER_ACTION_REQUIRED
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R3 protected read-only Staging observation.
-- Source: run `36321009852` established `DRIFT` without bounded differing sections. A new exact owner-authenticated issue #874 command is the activating authorization after the reviewed correction merges: `run-creator-target-drift-diagnosis <current-main-sha>`.
+- Source: run `36321009852` established DRIFT without bounded differing sections. PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged normally as exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`, satisfying the technical prerequisite. The activating authorization is now one exact owner-authenticated issue #874 command: `run-creator-target-drift-diagnosis bc85493f8fc25ff90c965208bd20c7dc64641158`.
 - Authorized target: FanMind Staging `vshyhvgcmrlagvfnvomc` only. Production is forbidden.
 - Authorized operation: one exact-main, private-reference-bound, repeatable-read catalog classification that emits only validated state, differing-section and blocker tokens. No SQL APPLY, deploy, runtime activation or Production mutation; no raw/private catalog, credential or customer data may be logged.
 - Completion boundary: the result is diagnosis only. DRIFT/INCOMPLETE/PARTIAL/unknown requires a separately reviewed remediation before any new transition/runtime authorization. It must not automatically dispatch or reactivate the consumed transition command.
