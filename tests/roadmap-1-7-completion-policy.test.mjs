@@ -53,7 +53,8 @@ const markdownSection = (document, heading) => {
 const consumedGeneratorNextLineIsClosed = (line) => {
   const consumedGeneratorReference =
     `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
-  const consumedGeneratorAnaphor = "(?:this|it|(?:this|the)\\s+work)\\b";
+  const consumedGeneratorAnaphor =
+    "(?:this|that|it|(?:this|that|the)\\s+(?:work|implementation))\\b";
   const consumedGeneratorActionTarget =
     `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?(?:${consumedGeneratorReference}|${consumedGeneratorAnaphor})`;
   const closedSpans = [];
@@ -99,7 +100,13 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     leavesUnclassifiedGeneratorReference ||
     leavesUnclassifiedReopenDirective ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
-  return closedSpans.length > 0 && !affirmativelyRestarts;
+  const completionNegator =
+    "(?:not|never|no\\s+longer|(?:is|was|were|has|have|had|does|do|did|can|could|should|would|will|must)n['’]t)";
+  const hasNegatedCompletionClaim = new RegExp(
+    `\\b${completionNegator}(?:\\s+[\\p{L}-]+){0,4}\\s+(?:superseded\\s+by|accepted\\/consumed|done)\\b`,
+    "iu",
+  ).test(line);
+  return closedSpans.length > 0 && !affirmativelyRestarts && !hasNegatedCompletionClaim;
 };
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
@@ -414,6 +421,10 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       "this",
       "the work",
       "this work",
+      "that work",
+      "the implementation",
+      "this implementation",
+      "that implementation",
     ];
     for (const verb of reopeningVerbs) {
       for (const target of consumedGeneratorTargets) {
@@ -450,8 +461,11 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       "proceed with it",
       `advance work on \`${generatorId}\``,
       "continue this",
+      "continue that work",
       "rebuild this",
+      "rebuild the implementation",
       "resume the work",
+      "resume the implementation",
     ]) {
       assert.equal(
         consumedGeneratorNextLineIsClosed(
@@ -470,6 +484,10 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     for (const negatedCompletion of [
       `not fully superseded by the accepted/consumed ${generatorId} source package`,
       `no longer superseded by the accepted/consumed ${generatorId} source package`,
+      `isn't superseded by the accepted/consumed ${generatorId} source package`,
+      `wasn't superseded by the accepted/consumed ${generatorId} source package`,
+      `${generatorId} is DONE but not ACCEPTED/CONSUMED`,
+      `${generatorId} is ACCEPTED/CONSUMED, but not DONE`,
     ]) {
       assert.equal(
         consumedGeneratorNextLineIsClosed(`Next: ${negatedCompletion}`),
