@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { readFileSync, statSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -41,9 +41,38 @@ export const CREATOR_TARGET_TRANSITION_REFERENCE = Object.freeze({
 });
 
 function readJson(path) {
-  const stat = statSync(path);
-  if (!stat.isFile() || stat.size < 2 || stat.size > MAX_REFERENCE_BYTES) fail("reference_file_invalid");
-  return JSON.parse(readFileSync(path, "utf8"));
+  let descriptor;
+  try {
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const opened = fstatSync(descriptor);
+    if (!opened.isFile() || opened.nlink !== 1 || opened.size < 2 || opened.size > MAX_REFERENCE_BYTES) {
+      fail("reference_file_invalid");
+    }
+    const buffer = Buffer.alloc(opened.size);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const bytesRead = readSync(descriptor, buffer, offset, buffer.length - offset, offset);
+      if (bytesRead === 0) fail("reference_file_invalid");
+      offset += bytesRead;
+    }
+    const settled = fstatSync(descriptor);
+    if (
+      settled.dev !== opened.dev ||
+      settled.ino !== opened.ino ||
+      settled.size !== opened.size ||
+      settled.mtimeMs !== opened.mtimeMs ||
+      settled.ctimeMs !== opened.ctimeMs
+    ) {
+      fail("reference_file_changed");
+    }
+    return JSON.parse(buffer.toString("utf8"));
+  } catch (error) {
+    if (error instanceof Error && /^CREATOR_TARGET_TRANSITION_ERROR=/u.test(error.message)) throw error;
+    if (error && typeof error === "object" && "code" in error && error.code === "ELOOP") fail("reference_file_invalid");
+    fail("reference_file_invalid");
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
+  }
 }
 
 export function buildTrustedCreatorTransitionReference(referenceDirectory) {
