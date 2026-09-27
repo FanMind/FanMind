@@ -304,9 +304,9 @@ test("schema verifier checks definitions, composite tenant constraints and globa
     "ABSENT",
     "PARTIAL",
     "VERIFIED",
-    "chat_admin_fans_owner_all",
-    "chat_admin_conversations_owner_all",
-    "chat_admin_messages_owner_all",
+    "tablename='chat_character_fans' and cmd='ALL'",
+    "tablename='chat_character_conversations' and cmd='ALL'",
+    "tablename='chat_character_messages' and cmd='ALL'",
     "chat_admin_fan_schema_ready",
     "roles = '{authenticated}'::name[]",
     "pg_get_constraintdef",
@@ -321,6 +321,9 @@ test("schema verifier checks definitions, composite tenant constraints and globa
     "require_chat_admin_message_fan",
     "create_chat_admin_fan_conversation_after_insert",
     "public.chat_admin_fan_schema_ready()",
+    "base_policy_count <> 2",
+    "base_function_mismatch",
+    "owner_user_id=auth.uid()",
     "has_function_privilege",
   ]) {
     assert.match(CHAT_ADMIN_POSTFLIGHT_SQL, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
