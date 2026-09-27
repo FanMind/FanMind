@@ -810,7 +810,19 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
     assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
     assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: \*\*DONE\*\*/u);
-    assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+    const targetRuntime = actionCatalog.actions.find(
+      (action) => action.id === "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME",
+    );
+    if (targetRuntime) {
+      assert.equal(targetRuntime.priority, -1);
+      assert.equal(targetRuntime.requires_owner, false);
+      assert.equal(targetRuntime.parallel_safe, false);
+      assert.deepEqual(targetRuntime.depends_on_actions, [generatorId]);
+      assert.match(nextAction, /- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
+      assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
+    } else {
+      assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+    }
   if (!profileDesign && catalogObservation) {
     assert.equal(catalogObservation.priority, 2);
     assert.equal(catalogObservation.requires_owner, true);
