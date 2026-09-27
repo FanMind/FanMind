@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -27,7 +27,7 @@
       "priority": 7,
       "task": "FM-REG-003",
       "gate": "registration_admin_crm",
-      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schlie\u00dfen",
+      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919",
@@ -65,7 +65,7 @@
       "priority": 15,
       "task": "FM-SEC-001",
       "gate": "meta_security",
-      "title": "Begrenzte Staging-RPC-Ausnahmen pr\u00fcfen",
+      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-SEC-OWNER-002",
@@ -103,7 +103,7 @@
       "priority": 30,
       "task": "FM-AI-001",
       "gate": "ai_billing",
-      "title": "KI/Billing Produkt- und Provider-Lifecycle abschlie\u00dfen",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
       "requires_owner": true,
       "parallel_safe": true,
       "deferred_owner_id": "FM-AI-OWNER-001",
@@ -141,7 +141,7 @@
       "priority": 80,
       "task": "FM-SALES-001",
       "gate": "sales_handoff",
-      "title": "Finalen Production-Demo- und Sales-Handoff schlie\u00dfen",
+      "title": "Finalen Production-Demo- und Sales-Handoff schließen",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -182,7 +182,7 @@
       "priority": 11,
       "task": "FM-SOC7-001",
       "gate": "phase7_social",
-      "title": "Externe Phase-7-Abnahme kanalweise abschlie\u00dfen",
+      "title": "Externe Phase-7-Abnahme kanalweise abschließen",
       "requires_owner": true,
       "parallel_safe": true,
       "owner_action_id": "FM-SOC7-OWNER-EXTERNAL-20260911",
@@ -247,7 +247,7 @@
       "priority": 4,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_apply",
-      "title": "ChatAdmin-Schema gesch\u00fctzt auf Staging anwenden",
+      "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-CHATADMIN-OWNER-APPLY-20260921",
@@ -268,7 +268,7 @@
       "priority": 5,
       "task": "FM-CHATADMIN-002",
       "gate": "chatadmin_staging_accept",
-      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausf\u00fchren",
+      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausführen",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-CHATADMIN-OWNER-ACCEPT-20260926",
@@ -327,7 +327,7 @@
       "priority": 12,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_reconciliation_preflight",
-      "title": "Creator-Foundation-Vertr\u00e4ge lesend abgleichen und \u00dcbergang vorbereiten",
+      "title": "Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten",
       "requires_owner": false,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -348,7 +348,7 @@
       "priority": 13,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_staging_catalog",
-      "title": "Creator-Foundation-Katalog auf Staging lesend beobachten und Referenzen pr\u00fcfen",
+      "title": "Creator-Foundation-Katalog auf Staging lesend beobachten und Referenzen prüfen",
       "requires_owner": true,
       "parallel_safe": false,
       "owner_action_id": "FM-CREATOR-OWNER-FOUNDATION-STAGING-CATALOG-20260926",
@@ -372,7 +372,7 @@
       "priority": 14,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_profile_transition_design",
-      "title": "Creator-Profile unabh\u00e4ngig abgleichen und begrenzten Quellen\u00fcbergang entwerfen",
+      "title": "Creator-Profile unabhängig abgleichen und begrenzten Quellenübergang entwerfen",
       "requires_owner": false,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -411,6 +411,28 @@
         "ACCEPTED"
       ],
       "instruction": "Completed and consumed repository source package. PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`; all nine exact-head workflows, FanMind CI `36284679968`, native PG17 job `108523066296`, independent review and zero open review threads passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`. No target/provider call, target observation/reference acceptance, SQL APPLY, deployment acceptance or runtime activation occurred. Creator aggregate remains IN_PROGRESS. A target-bound observation/reference acceptance/transition requires a distinct newly admitted protected action with current authorization and exact target binding; do not repeat the consumed catalog observation unchanged."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME",
+      "priority": -1,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_target_transition_runtime",
+      "title": "Creator Foundation auf Staging atomar überführen und Runtime aktivieren",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_transition_generator"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Current protected R4 action admitted under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. Finish the reviewed Staging-only runner/workflow source first. After exact-head CI/review and normal merge, consume one owner-authenticated issue #874 command bound to the resulting exact current main. Use only accepted private PR #1207 reference evidence and PR #1209 seven-step transition source; deploy exact main, require fresh LEGACY_EXACT plus four empty Creator tables and zero active Creator RPCs, recheck the full Legacy catalog under advisory/table locks, apply the exact transition atomically, prove CURRENT_EXACT before COMMIT, then separately enable the server-only Creator runtime flag on the isolated Staging host and prove authenticated synthetic GET /api/creators returns available:true with zero Creator rows. CURRENT_EXACT skips the database write. DRIFT/INCOMPLETE/unknown, Production binding, target data/activity, stale SHA/release/reference or runtime probe failure must stop fail-closed. Runtime failure restores only the previous Staging flag; never blindly reverse a successfully verified schema transition."
     }
   ],
   "retired_actions": [

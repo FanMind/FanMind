@@ -90,6 +90,10 @@ test("staging deploy is manual, isolated and fail-closed", async () => {
   assert.match(workflow, /--exclude '\.release\.env'/);
   assert.match(workflow, /--exclude '\.next\/'/);
   assert.match(workflow, /release_state_recovery_confirmation:[\s\S]*required: false/u);
+  assert.match(workflow, /reviewed_commit:[\s\S]*required: false/u);
+  assert.match(workflow, /REVIEWED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
+  assert.match(workflow, /Reviewed Staging release commit does not match/u);
+  assert.ok(workflow.indexOf("Reviewed Staging release commit does not match") < workflow.indexOf("rsync --archive --delete"));
   assert.match(workflow, /FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: \$\{\{ inputs\.previous_release_commit \}\}/u);
   assert.ok(workflow.indexOf('git -C "$GITHUB_WORKSPACE" rev-parse HEAD') < workflow.indexOf('staging-release-state-recovery.mjs" --recover'));
   assert.ok(workflow.indexOf('staging-release-state-recovery.mjs" --recover') < workflow.indexOf('--resolve "$BILLING_WRITE_FREEZE"'));

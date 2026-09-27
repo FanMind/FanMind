@@ -1,3 +1,17 @@
+## FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Status: READY_NOW
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4
+- Source: Bernd explicitly instructed on 2026-09-27 that Creator Closeout / Memory-Reconciliation and Creator Target APPLY / Runtime-Aktivierung must be completed today, then explicitly said to continue.
+- Authorized target: FanMind Staging `vshyhvgcmrlagvfnvomc` only. Production is forbidden.
+- Authorized source/integration: use only the accepted PR #1207 independent profile/reference evidence, accepted PR #1209 transition generator, final Creator closeout main, and the separately reviewed R4 runner/workflow from this scope. Deploy only the exact reviewed current main to isolated Staging through the existing protected Staging deploy workflow.
+- Authorized database mutation: one fail-closed Legacy-to-Current Creator Foundation transition on Staging only, and only when a fresh exact target classification is LEGACY_EXACT, all four Creator tables are empty, active Creator RPC sessions are zero, the accepted private reference hash/pins match, Production exclusion and TLS verify-full are proven, and the full Legacy catalog is rechecked under the same transaction/advisory/table-lock protection immediately before the seven pinned transition steps. Full Current postflight must pass before COMMIT. CURRENT_EXACT means no transition write. DRIFT/INCOMPLETE/PARTIAL/unknown means stop without write.
+- Authorized runtime mutation: after exact-main Staging deployment and successful Current postflight, set server-only `FANMIND_CREATOR_INTELLIGENCE_ENABLED=true` on the isolated Staging host, restart only `fanmind-staging.service`, verify exact `/api/version`, authenticate only the existing marked synthetic Staging owner and require `GET /api/creators` to return `available:true` with zero Creator rows. On runtime verification failure, restore only the prior Staging flag file and restart the same service; do not roll back a successfully verified schema transition blindly.
+- Dispatch: one exact owner-authenticated command on master issue #874, `run-creator-target-transition-runtime <current-main-sha>`, consumed by one protected workflow run. The command must match current main exactly and may not be replayed unchanged after successful consumption.
+- Boundaries: no Production database/runtime/config mutation; no customer/real Creator/fan fixture; no model/provider call; no external send; no Billing/Stripe/Tax/Restore/Mobile mutation; no secrets or raw private catalog/reference artifacts in logs, Git or chat.
+- Completion evidence required: exact source PR/head/CI/review, exact main/deploy run, protected transition run with Legacy preflight + committed Current postflight, private-artifact cleanup, Staging runtime flag readback via authenticated synthetic API, independent read-only target countercheck, lock/receipt reconciliation. Merge, deploy, target APPLY and runtime acceptance remain separate claims.
+
 ## FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Status: CONSUMED
 - Task: FM-CREATOR-001

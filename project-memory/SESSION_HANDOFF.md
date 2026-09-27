@@ -1,3 +1,11 @@
+## Current handoff — Creator Target Transition + Runtime — 2026-09-27
+- Current action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` / FM-CREATOR-001, R4, IN_PROGRESS.
+- Authorization/lock/receipt: `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` READY_NOW; `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` ACTIVE; `FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` IN_PROGRESS.
+- Source branch: `codex/fm-creator-target-transition-runtime-20260927`, exact base `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Implemented: private-reference-bound target runner; atomic same-transaction Legacy precondition/current postflight around the exact PR #1209 seven-step SQL; Staging runtime flag controller; protected issue #874 owner-command workflow using the existing Staging deploy; focused tests and Operations registration.
+- Read-only target evidence: FanMind Staging `vshyhvgcmrlagvfnvomc`, PG17 ACTIVE_HEALTHY, Creator table counts 0/0/0/0, active Creator RPCs 0, Legacy state observed; Production distinct.
+- Exact next: finish source CI/review and normal merge. Then post `run-creator-target-transition-runtime <current-main-sha>` on issue #874 exactly once; verify deploy -> target transition -> runtime jobs; independently countercheck Current target and runtime; reconcile once. No Production mutation and no repeat of consumed source/catalog/generator scopes.
+
 ## Creator Foundation transition generator accepted
 - Status: ACCEPTED; repository source package consumed.
 - Task/action: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.

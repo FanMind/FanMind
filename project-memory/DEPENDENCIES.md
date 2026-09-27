@@ -1,3 +1,11 @@
+## DEP-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Status: IN_PROGRESS
+- Action/task: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME / FM-CREATOR-001
+- Requires: memory_v6=ACCEPTED, staging=ACCEPTED, chatadmin_manual_flow=ACCEPTED, creator_foundation_transition_generator=ACCEPTED; accepted private PR #1207 reference/profile; accepted PR #1209 transition source; final closeout main `c4326090052b7ccda34f73744d62f814bc342abb`; current authorization FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927.
+- Target prerequisites at execution: exact reviewed current main deployed to FanMind Staging, private reference artifact/pins valid, full fresh Legacy classification, four Creator tables empty, zero active Creator RPCs, Production exclusion and TLS verify-full. Any drift/unknown/current state blocks or skips the write as defined by the runner.
+- Runtime dependency: successful CURRENT_EXACT database postflight and exact deployed release before flag enable; authenticated synthetic `GET /api/creators` must prove enabled runtime with zero Creator rows.
+- Boundary: Staging only; no Production/provider/customer/Billing/Restore/Mobile mutation.
+
 ## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
 - Status: ACCEPTED; exact bounded repository source continuation consumed.
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR

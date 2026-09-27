@@ -1,3 +1,19 @@
+## FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (ACTIVE)
+- Authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (READY_NOW)
+- Exact base: `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Source dependencies accepted/consumed: PR #1207 independent profile/reference package; PR #1209 bounded seven-step transition generator; final Creator closeout through PR #1212 / main `c4326090052b7ccda34f73744d62f814bc342abb`.
+- Current read-only target preflight: FanMind Staging `vshyhvgcmrlagvfnvomc`, PostgreSQL 17 / ACTIVE_HEALTHY; four Creator table counts 0/0/0/0; active Creator RPC sessions 0; current helper absent; two Creator RPCs and four member-read policies still in Legacy form; Production project is distinct `drqkpdvtbbrrdwmtrodz`. This evidence is not a write authorization and must be rechecked under transaction protection.
+- Private trust root: accepted PG17 reference artifact 10916053961 from run 36273161074 / source head `3cd67cedbcdc051be855d09de8d5ea3225179217`, ZIP digest `c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c`; deterministic reference SHA256 `0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c`. Raw reference remains private.
+- Implemented so far: protected target runner, Staging runtime flag controller, owner-comment dispatch workflow, focused negative/regression tests and Operations registration are on the active branch. No target or runtime mutation has occurred from this scope yet.
+- Still open: finish canonical action/gate admission; exact-head source tests/CI/review; normal merge; one exact issue #874 owner command; exact Staging deploy; atomic target transition; Current postflight; runtime activation/readback; independent read-only countercheck; final single reconciliation.
+- Exact next step: complete the source PR contract and merge only at zero P0/P1/P2; then execute the protected workflow exactly once against resulting current main and verify all three stages independently.
+- Boundary: Staging only. No Production/customer/provider/Billing/Restore/Mobile mutation.
+
 ## FM-EXEC-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
 - Task: FM-CREATOR-001
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION

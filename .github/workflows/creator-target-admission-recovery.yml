@@ -1,0 +1,146 @@
+name: FanMind Creator Target Admission Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact current main commit containing the reviewed recovery control'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type restore-creator-target-admission'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  restore-admission:
+    name: Restore canonical Creator RPC admission on Staging
+    if: >-
+      ${{ github.ref == 'refs/heads/main' &&
+          inputs.reviewed_commit == github.sha &&
+          inputs.confirmation == 'restore-creator-target-admission' }}
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: https://staging.fanmind.ch
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: ''
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      FANMIND_CREATOR_RUNTIME_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CREATOR_RUNTIME_CONFIRM: enable-creator-intelligence-staging
+      FANMIND_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
+      FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+      FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+    steps:
+      - name: Checkout exact recovery control that closed admission
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Restore persistent Creator runtime flag before RPC admission
+        run: |
+          set -euo pipefail
+          ENV_FILE=/var/www/fanmind-staging/.env.production
+          PERSISTENT_BACKUP=/var/lib/fanmind-staging/creator-runtime-recovery.env
+          test "$(git rev-parse HEAD)" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
+          sudo test -f /etc/systemd/system/fanmind-staging.service
+          sudo test ! -L /etc/systemd/system/fanmind-staging.service
+          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          if sudo test -e "$PERSISTENT_BACKUP"; then
+            test -f "$ENV_FILE" && test ! -L "$ENV_FILE" && test "$(stat -c '%a' "$ENV_FILE")" = 600
+            test "$(sudo stat -c '%U:%G:%a' "$PERSISTENT_BACKUP")" = root:root:600
+            BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
+            test ! -e "$BACKUP" && test ! -L "$BACKUP"
+            sudo install -o "$(id -un)" -g "$(id -gn)" -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
+            node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
+            sudo systemctl restart fanmind-staging.service
+            sudo systemctl is-active --quiet fanmind-staging.service
+            rm -f "$BACKUP"
+            sudo rm -f "$PERSISTENT_BACKUP"
+            echo "CREATOR_RUNTIME_STAGING_RECOVERED=PASS"
+          else
+            echo "CREATOR_RUNTIME_STAGING_RECOVERY=no_persistent_backup"
+          fi
+
+      - name: Download and verify the accepted private PG17 reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="$RUNNER_TEMP/creator-admission-recovery-reference"
+          export FANMIND_CREATOR_TRANSITION_REFERENCE_DIR
+          echo "FANMIND_CREATOR_TRANSITION_REFERENCE_DIR=$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR" >> "$GITHUB_ENV"
+          mkdir -m 700 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from "node:fs";
+          const id = 10916053961;
+          const headers = {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json"};
+          let response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/artifacts/${id}`, {
+            headers, redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          if (!response.ok) throw new Error("reference_metadata_unavailable");
+          const meta = await response.json();
+          if (meta.id !== id || meta.expired || meta.name !== "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6" ||
+              meta.workflow_run?.id !== 36273161074 ||
+              meta.workflow_run?.head_sha !== "3cd67cedbcdc051be855d09de8d5ea3225179217" ||
+              meta.digest !== "sha256:c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c") throw new Error("reference_metadata_mismatch");
+          response = await fetch(meta.archive_download_url, {
+            headers, redirect: "follow", signal: AbortSignal.timeout(30000),
+          });
+          if (!response.ok) throw new Error("reference_download_failed");
+          writeFileSync(`${process.env.RUNNER_TEMP}/creator-admission-recovery-reference.zip`, Buffer.from(await response.arrayBuffer()), {mode: 0o600, flag: "wx"});
+          NODE
+          printf '%s  %s\n' 'c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c' "$RUNNER_TEMP/creator-admission-recovery-reference.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/creator-admission-recovery-reference.zip" -d "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          rm -f "$RUNNER_TEMP/creator-admission-recovery-reference.zip"
+          chmod 600 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"/*.json
+
+      - name: Restore exact canonical RPC grants
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
+          PGPASSFILE="$RUNNER_TEMP/fanmind-creator-admission-recovery.pgpass"
+          export PGPASSFILE
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
+          rm -f "$PGPASSFILE"
+
+      - name: Remove private recovery evidence
+        if: ${{ always() }}
+        run: |
+          rm -rf "$RUNNER_TEMP/creator-admission-recovery-reference"
+          rm -f "$RUNNER_TEMP/fanmind-creator-admission-recovery.pgpass" "$RUNNER_TEMP/creator-admission-recovery-reference.zip"

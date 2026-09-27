@@ -1,3 +1,10 @@
+## Creator Target Transition + Runtime — active R4 loop — 2026-09-27
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Status: IN_PROGRESS under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 and LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927.
+- Open source work: finish/review/merge the Staging-only target runner, protected owner-command workflow, runtime controller and regressions.
+- Open protected execution after merge: exact current-main Staging deploy -> fresh Legacy/full-profile preflight -> atomic seven-step transition -> CURRENT_EXACT postflight/commit -> runtime flag enable -> service restart -> authenticated synthetic `/api/creators available:true` readback -> independent read-only database countercheck -> one final reconciliation.
+- Fail closed on target/reference/release drift, nonempty Creator data, active Creator RPCs, Production binding, stale command/SHA, private-reference mismatch or runtime verification failure. Do not repeat consumed catalog/source/generator work.
+
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922
 - Status: CLOSED; Task: FM-CREATOR-001; Risk: R3.
 - Closed by: PR #1162 merged as `3532bd4b9a19400284443f35b9b94b2849393aeb`; downstream disclosure/deletion/persistence verification continued through #1163-#1167. Do not rebuild the crash-safe Workspace inventory contract.
