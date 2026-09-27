@@ -1,3 +1,12 @@
+## ChatAdmin Fan rollout review hardening — PR #1220 — 2026-09-27
+- PR #1220 head advanced from `ca863b03820215f61b88a1d498a0b6e6af641528` through `6808ca8e986276dbfd3674c001c2853a184c5c21` to `414fd69e4ef5b8e49fec9d49c73396aae089302f` while correcting Postflight and the native PG17 fixture.
+- Postflight now requires RLS on the two base and three fan-runtime tables; fan-binding triggers must be enabled with exact event/function bindings; six function bodies must match the checksum-pinned controlled SQL. This is repository verification only; no Staging/Production database mutation.
+- Exact-head workflows for `6808ca8`: FanMind CI failed in the new PG17 manual-flow test because JWT claim `set_config(..., true)` was transaction-local and expired between separate psql statements. Corrected to session scope on head `414fd69`; exact-head rerun required. Project Memory Guard also required this state reconciliation. CI/PG17 result for the corrected head is not yet observed.
+- Local: `node --test tests/chat-admin-policy.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs` passed 17, skipped the database-backed PG17 test because no local container is configured; `git diff --check` passed.
+- Remaining: inspect corrected-head workflows, verify the expected failure mode with database-backed negative Postflight tests, then confirm review/check state. Current state remains IMPLEMENTED_NOT_VERIFIED; no merge, Staging action, runtime activation, or Production mutation.
+
+---
+
 ## ChatAdmin persistente Character-Fans — Repository-Implementierung, Staging ausstehend — 2026-09-27
 - Status: IMPLEMENTED_NOT_VERIFIED; Task `FM-CHATADMIN-003`, Lock `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`.
 - Sichtbarer Scope: Character-spezifische persistente Fans, minimales Fanwissen, Conversation-/Message-Verlauf, drei servergebundene KI-Vorschläge und bestätigte manuelle Antwort. Normale Creator/Contacts bleiben getrennt; kein Auto-Send.
