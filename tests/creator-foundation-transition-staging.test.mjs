@@ -6,10 +6,14 @@ import { join } from "node:path";
 
 import {
   buildAtomicCreatorTransitionSql,
+  buildCreatorRpcAdmissionGateSql,
+  buildCreatorRpcAdmissionRestoreSql,
+  buildCreatorTargetSafetySql,
   buildTrustedCreatorTransitionReference,
   CREATOR_TARGET_TRANSITION_REFERENCE,
   evaluateCreatorTargetEnvironment,
 } from "../scripts/operations/creator-foundation-transition-staging-runner.mjs";
+import * as creatorTransitionRunner from "../scripts/operations/creator-foundation-transition-staging-runner.mjs";
 
 const baseEnvironment = {
   GITHUB_REF: "refs/heads/main",
@@ -23,7 +27,14 @@ const baseEnvironment = {
   FANMIND_ENABLE_NON_PRODUCTION_WRITES: "true",
   FANMIND_NON_PRODUCTION_WRITE_ACK: "I_UNDERSTAND_NON_PRODUCTION_ONLY",
   FANMIND_CREATOR_TRANSITION_CONFIRM: "apply-creator-foundation-transition",
+  FANMIND_TARGET_DB_HOST: "aws-0-eu-west-3.pooler.supabase.com",
+  FANMIND_PRODUCTION_DB_HOST: "db.drqkpdvtbbrrdwmtrodz.supabase.co",
+  PGHOST: "aws-0-eu-west-3.pooler.supabase.com",
+  PGPORT: "5432",
+  PGDATABASE: "postgres",
+  PGUSER: "postgres.vshyhvgcmrlagvfnvomc",
   PGSSLMODE: "verify-full",
+  PGSSLROOTCERT: "/tmp/supabase-root.crt",
   PGPASSFILE: "/tmp/private.pgpass",
 };
 
@@ -66,6 +77,39 @@ test("Creator target environment rejects Production, stale heads and missing wri
   assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, FANMIND_ENABLE_NON_PRODUCTION_WRITES: "false"}, {mode: "verify"}).ok, true);
 });
 
+test("Creator target transition binds the actual PostgreSQL connection to Staging", () => {
+  assert.equal(evaluateCreatorTargetEnvironment(baseEnvironment, {mode: "apply"}).ok, true);
+  for (const override of [
+    {PGHOST: "db.other-project.supabase.co"},
+    {FANMIND_TARGET_DB_HOST: "db.other-project.supabase.co"},
+    {PGHOST: baseEnvironment.FANMIND_PRODUCTION_DB_HOST},
+    {PGDATABASE: "other"},
+    {PGUSER: "postgres.other-project"},
+    {PGHOSTADDR: "203.0.113.8"},
+    {PGSERVICE: "unsafe"},
+  ]) {
+    assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, ...override}, {mode: "apply"}).ok, false);
+  }
+});
+
+test("Creator target transition classifies every failed APPLY response as indeterminate", () => {
+  assert.equal(typeof creatorTransitionRunner.requireCreatorTransitionPsqlSuccess, "function");
+  assert.throws(
+    () => creatorTransitionRunner.requireCreatorTransitionPsqlSuccess(
+      {error: new Error("connection lost"), status: null, stdout: ""},
+      "apply_indeterminate_verify_before_retry",
+    ),
+    /CREATOR_TARGET_TRANSITION_ERROR=apply_indeterminate_verify_before_retry/u,
+  );
+  assert.throws(
+    () => creatorTransitionRunner.requireCreatorTransitionPsqlSuccess(
+      {error: null, status: 1, stdout: ""},
+      "apply_indeterminate_verify_before_retry",
+    ),
+    /CREATOR_TARGET_TRANSITION_ERROR=apply_indeterminate_verify_before_retry/u,
+  );
+});
+
 test("Atomic Creator target SQL rechecks Legacy under lock and Current before commit", () => {
   const legacy = {catalog: {tables: [], columns: [], constraints: [], indexes: [], policies: [], triggers: [], functions: []}};
   const current = {catalog: {tables: [], columns: [], constraints: [], indexes: [], policies: [], triggers: [], functions: []}};
@@ -91,4 +135,26 @@ test("Atomic Creator target SQL rechecks Legacy under lock and Current before co
   assert.ok(preconditionIndex < helperIndex);
   assert.ok(helperIndex < postflightIndex);
   assert.ok(postflightIndex < commitIndex);
+});
+
+test("Creator target safety is enforced even when Current is already exact", () => {
+  const sql = buildCreatorTargetSafetySql();
+  assert.match(sql, /LOCK TABLE public\.creators, public\.creator_voice_profiles, public\.creator_sales_playbooks, public\.creator_commercial_events IN SHARE ROW EXCLUSIVE MODE/u);
+  assert.match(sql, /CREATOR_TARGET_TRANSITION_DATA_PRESENT/u);
+  assert.match(sql, /CREATOR_TARGET_TRANSITION_RPC_ACTIVE/u);
+  assert.match(sql, /CREATOR_TARGET_TRANSITION_SAFETY=PASS/u);
+  assert.doesNotMatch(sql, /(?:insert|update|delete|truncate|alter|grant|revoke)\s/iu);
+});
+
+test("Creator RPC admission is closed before drain and restored explicitly", () => {
+  const gate = buildCreatorRpcAdmissionGateSql();
+  const restore = buildCreatorRpcAdmissionRestoreSql();
+  assert.match(gate, /pg_advisory_lock/u);
+  assert.match(gate, /revoke execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) from authenticated/iu);
+  assert.match(gate, /revoke execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) from authenticated/iu);
+  assert.match(gate, /pg_stat_activity[\s\S]*pg_sleep/iu);
+  assert.match(gate, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
+  assert.match(restore, /grant execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) to authenticated/iu);
+  assert.match(restore, /grant execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) to authenticated/iu);
+  assert.match(restore, /CREATOR_TARGET_TRANSITION_ADMISSION=OPEN/u);
 });

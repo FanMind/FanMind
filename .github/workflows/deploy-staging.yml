@@ -26,9 +26,15 @@ on:
         required: false
         default: ''
         type: string
+      reviewed_commit:
+        description: 'Optional exact reviewed main commit required by protected chained deployments'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
-  group: fanmind-staging-deploy
+  # A protected chained caller holds the canonical lease for the complete operation.
+  group: ${{ inputs.reviewed_commit != '' && format('fanmind-staging-deploy-chained-{0}', inputs.reviewed_commit) || 'fanmind-staging-deploy' }}
   cancel-in-progress: false
 
 permissions:
@@ -53,6 +59,7 @@ jobs:
       - name: Deploy on isolated staging host
         env:
           EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          REVIEWED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
           BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
           FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
           FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
@@ -64,6 +71,11 @@ jobs:
           SOURCE_DIR="/var/www/fanmind-staging"
           ENV_FILE="$SOURCE_DIR/.env.production"
           RUNTIME_SECRET_FILE="/etc/fanmind-staging/runtime-secrets.env"
+
+          if [ -n "$REVIEWED_RELEASE_COMMIT" ] && [ "$REVIEWED_RELEASE_COMMIT" != "$EXPECTED_RELEASE_COMMIT" ]; then
+            echo "Reviewed Staging release commit does not match the dispatched workflow commit." >&2
+            exit 1
+          fi
 
           if [ ! -d "$SOURCE_DIR" ]; then
             echo "Staging source directory is missing." >&2

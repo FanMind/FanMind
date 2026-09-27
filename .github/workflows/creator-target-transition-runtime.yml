@@ -5,7 +5,7 @@ on:
     types: [created]
 
 concurrency:
-  group: fanmind-staging-core-csv-write
+  group: fanmind-staging-deploy
   cancel-in-progress: false
 
 permissions:
@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+      issues: write
     outputs:
       reviewed_commit: ${{ steps.command.outputs.reviewed_commit }}
     steps:
@@ -64,6 +65,41 @@ jobs:
           grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' project-memory/AUTHORIZATIONS.md
           grep -Fq 'Production is forbidden' project-memory/AUTHORIZATIONS.md
 
+      - name: Consume the protected owner command exactly once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEWED_COMMIT: ${{ steps.command.outputs.reviewed_commit }}
+          SOURCE_COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const api = "https://api.github.com/repos/FanMind/FanMind";
+          const marker = "<!-- fanmind-creator-target-transition-runtime-consumed:FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 -->";
+          const headers = {
+            Authorization: `Bearer ${process.env.GH_TOKEN}`,
+            Accept: "application/vnd.github+json",
+            "Content-Type": "application/json",
+          };
+          let consumed = false;
+          for (let page = 1; page <= 20; page++) {
+            const response = await fetch(`${api}/issues/874/comments?per_page=100&page=${page}`, {
+              headers, redirect: "error", signal: AbortSignal.timeout(15000),
+            });
+            if (!response.ok) throw new Error("consumption_read_failed");
+            const comments = await response.json();
+            consumed ||= comments.some(comment =>
+              comment.user?.login === "github-actions[bot]" && comment.body?.startsWith(marker));
+            if (comments.length < 100) break;
+          }
+          if (consumed) throw new Error("command_already_consumed");
+          const response = await fetch(`${api}/issues/874/comments`, {
+            method: "POST", headers, redirect: "error", signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({body: `${marker}\nreviewed_commit=${process.env.REVIEWED_COMMIT}\nsource_comment_id=${process.env.SOURCE_COMMENT_ID}`}),
+          });
+          if (response.status !== 201) throw new Error("consumption_write_failed");
+          console.log("CREATOR_TARGET_COMMAND=CONSUMED");
+          NODE
+
   deploy:
     name: Deploy exact reviewed main to isolated Staging
     needs: authorize
@@ -99,6 +135,7 @@ jobs:
                 billing_write_freeze: "preserve",
                 release_state_recovery_confirmation: "",
                 previous_release_commit: "",
+                reviewed_commit: process.env.REVIEWED_COMMIT,
               },
             }),
           });
@@ -145,6 +182,8 @@ jobs:
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
       FANMIND_CREATOR_TRANSITION_CONFIRM: apply-creator-foundation-transition
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       PGPORT: '5432'
       PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
@@ -249,17 +288,37 @@ jobs:
       - name: Verify source, classify fresh target and apply atomically
         env:
           FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
+          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
         run: |
           set -euo pipefail
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --check
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --verify
+          umask 077
+          printf '%s\n' "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT" > "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --apply
+          rm -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
+
+      - name: Restore Creator RPC admission after an interrupted transition
+        if: ${{ always() }}
+        env:
+          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
+          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
+        run: |
+          set -euo pipefail
+          if [ -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER" ]; then
+            test ! -L "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
+            test "$(cat "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER")" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
+            node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
+            rm -f "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
+          fi
 
       - name: Remove private target evidence
         if: ${{ always() }}
+        env:
+          FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER: ${{ runner.temp }}/creator-transition-admission.marker
         run: |
           rm -rf "$RUNNER_TEMP/creator-transition-reference"
-          rm -f "$RUNNER_TEMP/fanmind-creator-transition.pgpass" "$RUNNER_TEMP/creator-reference.zip"
+          rm -f "$RUNNER_TEMP/fanmind-creator-transition.pgpass" "$RUNNER_TEMP/creator-reference.zip" "$FANMIND_CREATOR_TRANSITION_ADMISSION_MARKER"
 
   runtime:
     name: Enable Creator runtime and prove authenticated Staging readback
@@ -279,6 +338,7 @@ jobs:
       FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
       FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
       FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+      FANMIND_STAGING_E2E_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_WORKSPACE_ID }}
     steps:
       - name: Checkout exact reviewed main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -303,16 +363,35 @@ jobs:
           . "$RELEASE_FILE"
           set +a
           test "$FANMIND_RELEASE_COMMIT" = "${{ needs.authorize.outputs.reviewed_commit }}"
+          sudo test -f /etc/systemd/system/fanmind-staging.service
+          sudo test ! -L /etc/systemd/system/fanmind-staging.service
+          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
           BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
           test ! -e "$BACKUP" && test ! -L "$BACKUP"
           rollback_flag() {
+            failure_status="${1:-$?}"
+            trap - EXIT ERR INT TERM
+            set +e
             if [ -f "$BACKUP" ]; then
-              node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP" || true
-              sudo systemctl restart fanmind-staging.service || true
+              node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
+              restore_status=$?
+              if [ "$restore_status" -ne 0 ]; then
+                echo "CREATOR_RUNTIME_ROLLBACK_RESTORE=FAILED" >&2
+                exit 97
+              fi
+              sudo systemctl restart fanmind-staging.service
+              restart_status=$?
+              if [ "$restart_status" -ne 0 ]; then
+                echo "CREATOR_RUNTIME_ROLLBACK_RESTART=FAILED" >&2
+                exit 98
+              fi
               rm -f "$BACKUP"
             fi
+            exit "$failure_status"
           }
-          trap rollback_flag ERR
+          trap 'rollback_flag $?' EXIT ERR
+          trap 'rollback_flag 130' INT
+          trap 'rollback_flag 143' TERM
           node scripts/operations/creator-runtime-staging.mjs enable "$BACKUP"
           sudo systemctl restart fanmind-staging.service
           sudo systemctl is-active --quiet fanmind-staging.service
@@ -337,15 +416,32 @@ jobs:
           });
           if (!loginResponse.ok) throw new Error("runtime_login_failed");
           const token = (await loginResponse.json()).access_token;
+          if (typeof token !== "string" || token.length < 20) throw new Error("runtime_token_invalid");
+          const tokenParts = token.split(".");
+          if (tokenParts.length !== 3) throw new Error("runtime_token_invalid");
+          const tokenPayload = JSON.parse(Buffer.from(tokenParts[1], "base64url").toString("utf8"));
+          const syntheticUserId = typeof tokenPayload.sub === "string" ? tokenPayload.sub : "";
+          const expectedWorkspaceId = process.env.FANMIND_STAGING_E2E_WORKSPACE_ID ?? "";
+          const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+          if (!uuid.test(syntheticUserId) || !uuid.test(expectedWorkspaceId)) throw new Error("runtime_fixture_identity_invalid");
+          const workspaceResponse = await fetch(`${process.env.FANMIND_STAGING_SUPABASE_URL}/rest/v1/workspaces?select=id%2Cowner_user_id&id=eq.${expectedWorkspaceId}`, {
+            headers: {Authorization: `Bearer ${token}`, apikey: process.env.FANMIND_STAGING_SUPABASE_ANON_KEY},
+            cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          const workspaces = await workspaceResponse.json();
+          const expectedWorkspace = Array.isArray(workspaces) && workspaces.length === 1 ? workspaces[0] : null;
+          if (!workspaceResponse.ok || expectedWorkspace?.id !== expectedWorkspaceId ||
+              expectedWorkspace.owner_user_id !== syntheticUserId) throw new Error("runtime_fixture_owner_mismatch");
           const creatorResponse = await fetch("https://staging.fanmind.ch/api/creators", {
             headers: {Authorization: `Bearer ${token}`}, cache: "no-store", redirect: "error",
             signal: AbortSignal.timeout(15000),
           });
           const creator = await creatorResponse.json();
-          if (!creatorResponse.ok || creator.available !== true || !Array.isArray(creator.creators) || creator.creators.length !== 0) throw new Error("runtime_creator_readback_failed");
+          if (!creatorResponse.ok || creator.available !== true || creator.canManage !== true ||
+              !Array.isArray(creator.creators) || creator.creators.length !== 0) throw new Error("runtime_creator_readback_failed");
           console.log("CREATOR_RUNTIME_STAGING_AVAILABLE=PASS");
           console.log("CREATOR_RUNTIME_STAGING_CREATORS=0");
           NODE
-          trap - ERR
+          trap - EXIT ERR INT TERM
           rm -f "$BACKUP"
           echo "CREATOR_RUNTIME_STAGING_ACTIVATED=PASS"

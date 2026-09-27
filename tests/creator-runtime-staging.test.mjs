@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import {
   evaluateCreatorRuntimeEnvironment,
   renderCreatorRuntime,
 } from "../scripts/operations/creator-runtime-staging.mjs";
+import * as creatorRuntime from "../scripts/operations/creator-runtime-staging.mjs";
 
 const env = {
   GITHUB_REF: "refs/heads/main",
@@ -42,4 +44,48 @@ test("Creator runtime rendering replaces prior values without exposing other env
   const disabled = renderCreatorRuntime(enabled, false);
   assert.match(disabled, /FANMIND_CREATOR_INTELLIGENCE_ENABLED='false'/u);
   assert.equal((disabled.match(/FANMIND_CREATOR_INTELLIGENCE_ENABLED=/gu) ?? []).length, 1);
+});
+
+test("Creator runtime refuses stale already-enabled disk state before restart", () => {
+  assert.equal(typeof creatorRuntime.requireCreatorRuntimeDisabled, "function");
+  assert.throws(
+    () => creatorRuntime.requireCreatorRuntimeDisabled("FANMIND_CREATOR_INTELLIGENCE_ENABLED='true'\n"),
+    /CREATOR_RUNTIME_STAGING_ERROR=flag_already_enabled_reconciliation_required/u,
+  );
+  assert.doesNotThrow(
+    () => creatorRuntime.requireCreatorRuntimeDisabled("FANMIND_CREATOR_INTELLIGENCE_ENABLED='false'\n"),
+  );
+});
+
+test("Creator protected workflow binds deploy, owner workspace, service unit and rollback", async () => {
+  const workflow = await readFile(".github/workflows/creator-target-transition-runtime.yml", "utf8");
+  const deploy = await readFile(".github/workflows/deploy-staging.yml", "utf8");
+
+  assert.match(workflow, /reviewed_commit: process\.env\.REVIEWED_COMMIT/u);
+  assert.match(deploy, /reviewed_commit:[\s\S]*required: false/u);
+  assert.match(deploy, /fanmind-staging-deploy-chained-/u);
+  assert.match(deploy, /REVIEWED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
+  assert.match(deploy, /REVIEWED_RELEASE_COMMIT[\s\S]*EXPECTED_RELEASE_COMMIT[\s\S]*Reviewed Staging release commit does not match/iu);
+  assert.ok(deploy.indexOf("Reviewed Staging release commit does not match") < deploy.indexOf("rsync --archive --delete"));
+
+  assert.match(workflow, /FANMIND_STAGING_E2E_WORKSPACE_ID: \$\{\{ vars\.FANMIND_STAGING_E2E_WORKSPACE_ID \}\}/u);
+  assert.match(workflow, /creator\.canManage !== true/u);
+  assert.match(workflow, /rest\/v1\/workspaces\?select=id%2Cowner_user_id/u);
+  assert.match(workflow, /expectedWorkspace\.owner_user_id !== syntheticUserId/u);
+  assert.match(workflow, /sudo cmp --silent \/etc\/systemd\/system\/fanmind-staging\.service "\$GITHUB_WORKSPACE\/ops\/systemd\/fanmind-staging\.service"/u);
+
+  assert.doesNotMatch(workflow, /creator-runtime-staging\.mjs restore "\$BACKUP" \|\| true/u);
+  assert.doesNotMatch(workflow, /systemctl restart fanmind-staging\.service \|\| true/u);
+  assert.match(workflow, /CREATOR_RUNTIME_ROLLBACK_RESTORE=FAILED/u);
+  assert.match(workflow, /CREATOR_RUNTIME_ROLLBACK_RESTART=FAILED/u);
+  assert.ok(workflow.indexOf("CREATOR_RUNTIME_ROLLBACK_RESTART=FAILED") < workflow.indexOf('rm -f "$BACKUP"'));
+  assert.match(workflow, /group: fanmind-staging-deploy\s+cancel-in-progress: false/u);
+  assert.match(workflow, /issues: write/u);
+  assert.match(workflow, /fanmind-creator-target-transition-runtime-consumed/u);
+  assert.match(workflow, /github-actions\[bot\]/u);
+  assert.ok(workflow.indexOf("fanmind-creator-target-transition-runtime-consumed") < workflow.indexOf("deploy-staging.yml/dispatches"));
+  assert.match(workflow, /trap 'rollback_flag \$\?' EXIT ERR/u);
+  assert.match(workflow, /trap 'rollback_flag 130' INT/u);
+  assert.match(workflow, /trap 'rollback_flag 143' TERM/u);
+  assert.match(workflow, /trap - EXIT ERR INT TERM/u);
 });

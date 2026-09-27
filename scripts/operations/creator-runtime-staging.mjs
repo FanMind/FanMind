@@ -70,6 +70,12 @@ function overrideValue(contents) {
   return match?.[1] ?? null;
 }
 
+export function requireCreatorRuntimeDisabled(contents) {
+  const value = overrideValue(contents);
+  if (value === "true") fail("flag_already_enabled_reconciliation_required");
+  if (value !== null && value !== "false") fail("flag_state_invalid");
+}
+
 export async function main(args = process.argv.slice(2), environment = process.env) {
   const [mode, backupArg] = args;
   if (!["enable","restore"].includes(mode) || !backupArg) fail("mode_invalid");
@@ -91,9 +97,7 @@ export async function main(args = process.argv.slice(2), environment = process.e
     return {output: "CREATOR_RUNTIME_STAGING_RESTORED=PASS", exitCode: 0};
   }
 
-  if (overrideValue(envOriginal) === "true") {
-    return {output: "CREATOR_RUNTIME_STAGING_FLAG=already_enabled", exitCode: 0};
-  }
+  requireCreatorRuntimeDisabled(envOriginal);
   writeFileSync(backup, envOriginal, {mode: 0o600, flag: "wx"});
   replacePrivate(ENV_FILE, renderCreatorRuntime(envOriginal, true));
   if (overrideValue(privateFile(ENV_FILE, 0o600)) !== "true") fail("write_postflight");
