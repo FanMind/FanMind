@@ -124,7 +124,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     "iu",
   ).test(maskedLine.join(""));
   const leavesConflictingCompletionClaim =
-    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?)|(?:remains?|still|is|was|were)(?:\s+still)?\s+(?:incomplete|unfinished|pending|open|in[_\s-]?progress))\b/iu.test(
+    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?)|(?:remains?|still|is|was|were)(?:\s+still)?\s+(?:incomplete|unfinished|pending|open|active|in[_\s-]?progress))\b/iu.test(
       maskedLine.join(""),
     );
   const affirmativelyRestarts =
@@ -146,6 +146,7 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
   );
   assert.ok(generatorBearingEntries.length > 0);
   for (const action of generatorBearingEntries) {
+    assert.match(action.instruction, /\S/u, `${action.id}: instruction must be non-empty`);
     const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
 
     for (const sentence of instructionSentences) {
@@ -170,6 +171,23 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
   assert.notEqual(profileDesignIndex, -1);
   const [profileDesign] = retiredProfileDesignCatalog.actions.splice(profileDesignIndex, 1);
   retiredProfileDesignCatalog.retired_actions.push(profileDesign);
+
+  const blankGeneratorInstruction = structuredClone(retiredProfileDesignCatalog);
+  blankGeneratorInstruction.actions.find(
+    (action) => action.id === consumedGeneratorId,
+  ).instruction = "   ";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(blankGeneratorInstruction),
+    /instruction must be non-empty/u,
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED but remains ACTIVE`,
+    ),
+    false,
+    "ACTIVE contradicts consumed closeout",
+  );
 
   const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
   anaphoricReopen.retired_actions.find(
