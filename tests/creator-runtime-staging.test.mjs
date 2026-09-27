@@ -55,6 +55,19 @@ test("Creator runtime refuses stale already-enabled disk state before restart", 
   assert.doesNotThrow(
     () => creatorRuntime.requireCreatorRuntimeDisabled("FANMIND_CREATOR_INTELLIGENCE_ENABLED='false'\n"),
   );
+  assert.equal(typeof creatorRuntime.requireCreatorRuntimeOverrideAbsent, "function");
+  for (const value of ["true", "false", "unexpected"]) {
+    assert.throws(
+      () => creatorRuntime.requireCreatorRuntimeOverrideAbsent(
+        `FANMIND_CREATOR_INTELLIGENCE_ENABLED='${value}'\n`,
+        "runtime_secret",
+      ),
+      /CREATOR_RUNTIME_STAGING_ERROR=runtime_secret_override/u,
+    );
+  }
+  assert.doesNotThrow(
+    () => creatorRuntime.requireCreatorRuntimeOverrideAbsent("OTHER_RUNTIME_SECRET='preserved'\n", "runtime_secret"),
+  );
 });
 
 test("Creator protected workflow binds deploy, owner workspace, service unit and rollback", async () => {
@@ -97,7 +110,13 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(recovery, /workflow_dispatch:/u);
   assert.match(recovery, /restore-creator-target-admission/u);
   assert.match(recovery, /creator-foundation-transition-staging-runner\.mjs --restore-admission/u);
-  assert.match(recovery, /group: fanmind-staging-deploy/u);
+  assert.match(recovery, /fanmind-creator-admission-recovery-\{0\}/u);
+  assert.match(recovery, /github\.event\.workflow_run\.id/u);
+  assert.doesNotMatch(recovery, /group: fanmind-staging-deploy/u);
+  assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/u);
+  assert.match(recovery, /FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.head_sha \|\| '' \}\}/u);
+  assert.match(recovery, /ref: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/u);
+  assert.match(recovery, /test "\$\(git rev-parse HEAD\)" = "\$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"/u);
   assert.match(workflow, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-runtime-reference"/u);
   assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-admission-recovery-reference"/u);
   assert.match(workflow, /actions\/artifacts\/\$\{id\}/u);

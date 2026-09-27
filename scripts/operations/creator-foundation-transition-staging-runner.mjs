@@ -303,6 +303,13 @@ export function evaluateCreatorTargetEnvironment(environment, {mode}) {
   const target = clean(environment.FANMIND_TARGET_SUPABASE_PROJECT_REF);
   const production = clean(environment.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF);
   const reviewed = clean(environment.FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT);
+  const recoveryHead = clean(environment.FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD);
+  const automaticRecovery = mode === "restore" && recoveryHead.length > 0;
+  const reviewedHeadMatches = /^[0-9a-f]{40}$/u.test(reviewed) && (
+    automaticRecovery
+      ? reviewed === recoveryHead
+      : recoveryHead.length === 0 && reviewed === environment.GITHUB_SHA
+  );
   const pgHost = normalizedHost(environment.PGHOST);
   const targetDbHost = normalizedHost(environment.FANMIND_TARGET_DB_HOST);
   const productionDbHost = normalizedHost(environment.FANMIND_PRODUCTION_DB_HOST);
@@ -321,7 +328,7 @@ export function evaluateCreatorTargetEnvironment(environment, {mode}) {
   const ok =
     environment.GITHUB_REF === "refs/heads/main" &&
     /^[0-9a-f]{40}$/u.test(environment.GITHUB_SHA ?? "") &&
-    reviewed === environment.GITHUB_SHA &&
+    reviewedHeadMatches &&
     environment.FANMIND_RUNTIME_ENVIRONMENT === "staging" &&
     environment.NEXT_PUBLIC_APP_URL === "https://staging.fanmind.ch" &&
     environment.FANMIND_PRODUCTION_API_ORIGIN === "https://fanmind.ch" &&

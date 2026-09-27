@@ -17,7 +17,9 @@ on:
         type: string
 
 concurrency:
-  group: fanmind-staging-deploy
+  # Recovery must not be displaced by an unrelated run waiting on a shared group.
+  # The SQL controller carries the Creator-specific advisory lock and exact catalog guard.
+  group: ${{ github.event_name == 'workflow_run' && format('fanmind-creator-admission-recovery-{0}', github.event.workflow_run.id) || format('fanmind-creator-admission-recovery-manual-{0}', github.run_id) }}
   cancel-in-progress: false
 
 permissions:
@@ -45,7 +47,8 @@ jobs:
       FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
-      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ github.sha }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
       FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
@@ -58,9 +61,10 @@ jobs:
       PGSSLMODE: verify-full
       PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
     steps:
-      - name: Checkout exact current main recovery control
+      - name: Checkout exact recovery control that closed admission
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
           fetch-depth: 1
 
@@ -102,7 +106,7 @@ jobs:
           FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
           PGPASSFILE="$RUNNER_TEMP/fanmind-creator-admission-recovery.pgpass"
           export PGPASSFILE
           umask 077

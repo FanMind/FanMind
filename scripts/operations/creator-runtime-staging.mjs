@@ -76,6 +76,10 @@ export function requireCreatorRuntimeDisabled(contents) {
   if (value !== null && value !== "false") fail("flag_state_invalid");
 }
 
+export function requireCreatorRuntimeOverrideAbsent(contents, source) {
+  if (overrideValue(contents) !== null) fail(`${source}_override`);
+}
+
 export async function main(args = process.argv.slice(2), environment = process.env) {
   const [mode, backupArg] = args;
   if (!["enable","restore"].includes(mode) || !backupArg) fail("mode_invalid");
@@ -84,11 +88,10 @@ export async function main(args = process.argv.slice(2), environment = process.e
   if (!evaluateCreatorRuntimeEnvironment(environment).ok) fail("environment_invalid");
 
   const envOriginal = privateFile(ENV_FILE, 0o600);
-  const secret = readFileSync(SECRET_FILE, "utf8");
+  const secret = privateFile(SECRET_FILE, 0o640);
   const release = privateFile(RELEASE_FILE, 0o600);
   for (const [name, contents] of [["runtime_secret", secret], ["release", release]]) {
-    const value = overrideValue(contents);
-    if (value !== null && value !== "true") fail(`${name}_override`);
+    requireCreatorRuntimeOverrideAbsent(contents, name);
   }
 
   if (mode === "restore") {

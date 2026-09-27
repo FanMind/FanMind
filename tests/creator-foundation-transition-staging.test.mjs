@@ -75,6 +75,16 @@ test("Creator target environment rejects Production, stale heads and missing wri
   assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, PGSSLMODE: "require"}, {mode: "apply"}).ok, false);
   assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, FANMIND_CREATOR_TRANSITION_CONFIRM: "verify-creator-foundation-transition"}, {mode: "apply"}).ok, false);
   assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, FANMIND_ENABLE_NON_PRODUCTION_WRITES: "false"}, {mode: "verify"}).ok, true);
+  const recoveryHead = "b".repeat(40);
+  const automaticRecovery = {
+    ...baseEnvironment,
+    FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: recoveryHead,
+    FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: recoveryHead,
+    FANMIND_CREATOR_TRANSITION_CONFIRM: "restore-creator-target-admission",
+  };
+  assert.equal(evaluateCreatorTargetEnvironment(automaticRecovery, {mode: "restore"}).ok, true);
+  assert.equal(evaluateCreatorTargetEnvironment({...automaticRecovery, FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: "c".repeat(40)}, {mode: "restore"}).ok, false);
+  assert.equal(evaluateCreatorTargetEnvironment(automaticRecovery, {mode: "apply"}).ok, false);
 });
 
 test("Creator target transition binds the actual PostgreSQL connection to Staging", () => {
