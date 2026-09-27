@@ -1170,8 +1170,10 @@ Aktivierung:
 
 `supabase/controlled/20260920230000_chat_admin_multi_character.sql` prepares
 `workspace_chat_admin_capabilities`, `chat_characters`,
-`chat_character_conversations` and `chat_character_messages`. It is not part of
-the current applied schema. The contract permits at most one enabled Workspace,
+`chat_character_conversations` and `chat_character_messages`. The additive,
+controlled and unapplied `20260927200000_chat_admin_character_fans.sql` adds
+`chat_character_fans` plus strict Character/Fan keys on conversations and
+messages; this is not current target state. The contract permits at most one enabled Workspace,
 requires its exact Owner/User binding, enforces adult public persona age and uses
 RLS plus composite Workspace/Character foreign keys. It does not alter
 `creators.workspace_id UNIQUE` and grants no Platform-Admin or service-role

@@ -9,6 +9,8 @@ import { WorkspaceAuthorizationError } from "../src/lib/workspaceAuthorizationPo
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const characterId = "22222222-2222-4222-8222-222222222222";
+const fanId = "44444444-4444-4444-8444-444444444444";
+const conversationId = "55555555-5555-4555-8555-555555555555";
 const userId = "33333333-3333-4333-8333-333333333333";
 const code = ts.transpileModule(readFileSync("src/app/api/chatadmin/reply-suggestions/route.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -75,6 +77,10 @@ function harness(change) {
     "@/lib/chatAdmin": {
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
+      getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
+      listRecentChatMessages: async () => [],
+      persistChatAdminGeneration: async () => undefined,
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => { calls.usage++; } },
@@ -100,7 +106,7 @@ function harness(change) {
   });
   const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, incoming_message: "Hallo, wie geht es dir?", fan_label: "Synthetic Fan" }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, incoming_message: "Hallo, wie geht es dir?" }),
   });
   return { calls, route: exports.POST, request };
 }

@@ -1069,3 +1069,14 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Safety: no SQL APPLY, no Staging/Production/provider/runtime/customer/Billing/Restore/Mobile mutation; no broad role relaxation; postgres membership remains unexcepted.
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
+
+## FM-CHATADMIN-003 — persistente Fans je Character
+- Date: 2026-09-27
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
+- Owner: Codex Cloud
+- Baseline: `dbb37855f3eca4a652193b2db1db983a70118eba`; GitHub CLI/Web-Zugriff ist in dieser Umgebung nicht authentifiziert, daher ist der behauptete Remote-PR-Stand nicht als verifiziert gewertet.
+- Scope: additiver kontrollierter ChatAdmin-Fan-/Conversation-/Message-Vertrag, Owner-only API, sichtbare Character→Fan→Wissen/Verlauf UI, exakt servergebundener KI-Kontext und negative Isolationstests. Keine normale Creator-Semantik, kein Auto-Send, kein Provider-/Production-/Staging-Write.
+- Evidence plan: Policy/API/DB-PG17/UI tests, typecheck, lint, build, Browser-E2E, vollständige CI soweit lokal ausführbar, unabhängige Review und normaler PR. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
+- Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.

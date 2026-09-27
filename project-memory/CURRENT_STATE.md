@@ -1,3 +1,10 @@
+## ChatAdmin persistente Character-Fans — Repository-Implementierung, Staging ausstehend — 2026-09-27
+- Status: IMPLEMENTED_NOT_VERIFIED; Task `FM-CHATADMIN-003`, Lock `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`.
+- Sichtbarer Scope: Character-spezifische persistente Fans, minimales Fanwissen, Conversation-/Message-Verlauf, drei servergebundene KI-Vorschläge und bestätigte manuelle Antwort. Normale Creator/Contacts bleiben getrennt; kein Auto-Send.
+- Sicherheit: additive kontrollierte SQL-Quelle mit zusammengesetzten Workspace/Character/Fan-FKs, RLS, genau einer Conversation je Fan, direkten Message-/Conversation-Mutationen entzogen und atomaren revision-/status-/history-gebundenen RPCs. Disclosure und Account-Delete-Inventar enthalten Fans.
+- Lokale Evidenz: fokussierte Policy/API/Disclosure/Delete-Tests, Lint und Production Build bestanden; vollständige Operations-Suite wurde ausgeführt, finale Fehlerreconciliation ist noch offen. Browser-E2E/Screenshot ist lokal blockiert, weil der Playwright-Chromium-Download mit HTTP 403 scheitert.
+- Boundary/Nächster Schritt: Der neue checksum-gepinnte geschützte Staging-Runner/Postflight/rollback-only 2-Character/4-Fan-Acceptance-Pfad fehlt noch und muss im selben Feature-Inkrement ergänzt/reviewt werden. Kein Staging-/Production-Apply erfolgte; Bernd kann den neuen Flow noch nicht im Browser testen.
+
 ## Creator Target Transition + Runtime — source correction merged, drift diagnosis owner-gated — 2026-09-27
 - Status: IN_PROGRESS; repository correction is ACCEPTED, while target/runtime acceptance remains open.
 - Authorization/lock: transition authorization `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` is CONSUMED_FAIL_CLOSED; read-only diagnosis authorization `FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927` is OWNER_ACTION_REQUIRED; `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` is PAUSED and consumes no Builder worker.
