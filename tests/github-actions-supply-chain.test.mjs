@@ -21,6 +21,7 @@ const RESTORE_HOST_WORKFLOW = "restore-drill-host-readiness.yml";
 const STAGING_PROVISION_WORKFLOW = "provision-staging-host.yml";
 const STAGING_BILLING_CAPTURE_WORKFLOW = "staging-billing-capture.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
+const CREATOR_TARGET_RUNTIME_WORKFLOW = "creator-target-transition-runtime.yml";
 const DAILY_PRODUCTION_CONTROL_WORKFLOW =
   "internal-daily-test-workspace-provisioning-production-control.yml";
 
@@ -231,6 +232,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       .filter((workflow) => workflow.checkoutShas.length > 0)
       .map((workflow) => workflow.file),
     [
+      CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
       DAILY_PRODUCTION_CONTROL_WORKFLOW,
       STAGING_PROVISION_WORKFLOW,
@@ -266,6 +268,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     HOSTED_CHECKOUT_V7_0_1_SHA,
   ]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_PUSH_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === DAILY_PRODUCTION_CONTROL_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   for (const restoreWorkflow of restoreWorkflows) {
     assert.match(
