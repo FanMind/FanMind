@@ -8,7 +8,7 @@
 - Result: Original `auth.uid()` ownership/transfer, Daily-without-optional-Billing parent profile, exact 21-role/22-membership Hosted profile including grantors/configuration, and strict caller-profile equality are source-verified.
 - Boundary: Repository source/CI only. No target/provider call, SQL APPLY, target reference acceptance, runtime activation, customer mutation or deployment acceptance. Creator aggregate remains IN_PROGRESS; `targetAccepted=false`, `applyAllowed=false`, `runtimeActivated=false`, `learningState=UNDETERMINED`.
 - Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
-- Next integration: Implement NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as repository-only source/test work. Any later target observation/reference acceptance or transition execution requires a distinct protected action and current authorization; do not repeat the consumed catalog observation unchanged.
+- Next integration: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Do not implement it again; any later target observation/reference acceptance or transition execution requires a distinct protected action and current authorization.
 
 ## FM-EXEC-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Task: FM-CREATOR-001
@@ -18,7 +18,7 @@
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-STAGING-CATALOG-20260926 (RELEASED).
 - Result: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
 - Boundary: Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
-- Next step: implement the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR; no unchanged catalog retry or target action is implied.
+- Next step: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Do not implement it again; no unchanged catalog retry or target action is implied.
 
 ### Historical admission — consumed by the actual observation above
 
@@ -40,7 +40,7 @@
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926 (RELEASED_MERGED_VERIFIED).
 - Completion: PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
 - Boundary: Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred.
-- Next step: implement the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR; profile/source and catalog scopes remain consumed and must not be rebuilt/repeated unchanged.
+- Next step: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Profile/source/catalog/generator scopes remain consumed and must not be rebuilt or repeated unchanged.
 
 ### Historical source-stage notes — superseded by the accepted source receipt above
 
@@ -63,7 +63,7 @@
 - Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926 (RELEASED).
 - Actual outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
 - Durable evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
-- Next: implement the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR; preserve failed VERIFY and consumed source/catalog observations with no unchanged retry or learning APPLY.
+- Next: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Preserve the failed VERIFY and consumed source/catalog/generator evidence; no unchanged retry or learning APPLY is admitted.
 
 ## FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926
 - Status: ACCEPTED; Task: FM-CHATADMIN-002; Risk: R4; lock: LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926.
@@ -1536,3 +1536,13 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Exact #1160 read-only runtime evidence: Production Audit `35777327823` reports `PRODUCTION_RUNTIME_VERIFIED=true`, `PRODUCTION_RELEASE=ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`, 8 healthy components, PM2 online, nginx active, local/public login HTTP 200. The complete audit remains red only for the already-open `production_audit_backup_latest_stale_or_empty` finding.
 - Interpretation: Bernd's explicit statement that he personally merged #1158 and #1160 is authoritative Owner evidence for those deliberate manual merges. GitHub confirms both merged states and exact merge SHAs, so both are `OWNER_ACCEPTED_MERGE`; do not reopen a missing pre-merge review/merge-authorization requirement solely for those already owner-accepted source/governance scopes. For #1160, the listed post-merge deploy/runtime observations are separately evidenced. This does not authorize any protected action or manufacture provider/Staging/Production facts not independently observed.
 - Reconciliation boundary: downstream canonical files must consume the actual merge/acceptance status without reopening or duplicating the merged source work. ChatAdmin APPLY remains separately owner/action-time gated; Creator privacy/delete/disclosure closure must remain evidence-driven.
+## RECEIPT-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209-20260927
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Risk: R3
+- Status: ACCEPTED; repository source package consumed.
+- Source: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`.
+- Verification: all nine exact-head workflows succeeded; FanMind CI `36284679968`, native PG17 job `108523066296`, truth/lint/Operations/build job `108523066366`, independent exact-head review and zero open review threads passed. Reference artifact `10919937178`, archive SHA256 `4c23bc1f8ad4d0b2acae4090db8b775cc1e14926bb485c540629708f223a0035`, manifest SHA256 `c04f8d7a3ccdc2432a3d1576c6c9874674339b781a87debbfea5462139d4a722`.
+- Boundary: source/test acceptance only. No target/provider call, target observation/reference acceptance, SQL APPLY, deployment acceptance, runtime activation, product-data write or aggregate Creator completion occurred.
+- Receipt file: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Next: only a distinct newly admitted protected target action with current authorization and exact target binding may observe/accept a target reference or execute the transition; no unchanged catalog retry is admitted.

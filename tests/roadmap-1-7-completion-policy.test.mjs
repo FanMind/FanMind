@@ -8,20 +8,40 @@ const completion = readFileSync(
   "utf8",
 );
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
+const actionCatalogText = read("project-memory/NEXT_BEST_ACTIONS.json");
+const actionCatalog = JSON.parse(actionCatalogText);
+const agents = read("AGENTS.md");
+const sourceOfTruth = read("docs/SOURCE_OF_TRUTH.md");
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
+const protocol = read("project-memory/PROTOCOL.md");
+const executionPolicy = read("project-memory/EXECUTION_POLICY.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
+const deferredOwnerActions = read("project-memory/DEFERRED_OWNER_ACTIONS.md");
+const autoHandoff = read("project-memory/AUTO_HANDOFF.md");
+const ownerActionInbox = read("project-memory/OWNER_ACTION_INBOX.md");
 const openLoops = read("project-memory/OPEN_LOOPS.md");
 const dependencies = read("project-memory/DEPENDENCIES.md");
 const currentState = read("project-memory/CURRENT_STATE.md");
+const deepAudit = read("project-memory/FANMIND_DEEP_AUDIT_2026-08-19.md");
+const finishline = read("project-memory/FANMIND_FINISHLINE.md");
+const finishlineState = read("project-memory/FINISHLINE_STATE.json");
 const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
 const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
+const decisions = read("project-memory/DECISIONS.md");
+const failedAttempts = read("project-memory/FAILED_ATTEMPTS.md");
+const changeRequests = read("project-memory/CHANGE_REQUESTS.md");
+const doNotAssume = read("project-memory/DO_NOT_ASSUME.md");
+const authorizations = read("project-memory/AUTHORIZATIONS.md");
+const reconciliationLog = read("project-memory/RECONCILIATION.md");
+const assumptions = read("project-memory/ASSUMPTIONS.md");
+const contradictions = read("project-memory/CONTRADICTIONS.md");
 const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
+const consumedGeneratorId = "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR";
 
 const markdownSection = (document, heading) => {
   const start = document.indexOf(heading);
@@ -29,6 +49,254 @@ const markdownSection = (document, heading) => {
   const next = document.indexOf("\n## ", start + heading.length);
   return document.slice(start, next === -1 ? undefined : next);
 };
+
+const consumedGeneratorNextLineIsClosed = (line) => {
+  const consumedGeneratorReference =
+    `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
+  const consumedGeneratorAnaphor =
+    "(?:this|that|it|(?:this|that|the)(?:\\s+(?:same|original))?\\s+(?:work|implementation))\\b";
+  const consumedGeneratorActionTarget =
+    `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?(?:${consumedGeneratorReference}|${consumedGeneratorAnaphor})`;
+  const closedSpans = [];
+  const completionNegation =
+    /\b(?:not|never|no\s+longer|cannot|(?:is|was|were|has|have|had|does|do|did|can|could|should|would|will|must)n['’]t|won['’]t)\b/iu;
+  const affirmativeCompletionPatterns = [
+    new RegExp(
+      `superseded\\s+by\\s+the\\s+accepted\\/consumed\\s+(?:source(?:\\s+package)?|${consumedGeneratorReference}(?:\\s+source\\s+package)?)`,
+      "giu",
+    ),
+    new RegExp(
+      `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+|also\\s+)?(?:accepted\\/consumed|done)\\b`,
+      "giu",
+    ),
+  ];
+  for (const pattern of affirmativeCompletionPatterns) {
+    for (const match of line.matchAll(pattern)) {
+      const clausePrefix = line.slice(0, match.index).split(/[.;]/u).at(-1) ?? "";
+      if (!completionNegation.test(clausePrefix)) {
+        closedSpans.push([match.index, match.index + match[0].length]);
+      }
+    }
+  }
+  const reopeningVerb = "(?:start|restart|implement|reopen|rebuild|resume|continue)";
+  const reopeningVerbForm =
+    "(?:starts?|started|starting|restarts?|restarted|restarting|implements?|implemented|implementing|re-?implements?|re-?implemented|re-?implementing|reopens?|reopened|reopening|rebuilds?|rebuilt|rebuilding|resumes?|resumed|resuming|continues?|continued|continuing)";
+  const actionVerbForm =
+    `(?:${reopeningVerbForm}|repeats?|repeated|repeating|proceeds?|proceeded|proceeding|advances?|advanced|advancing)`;
+  const explicitlyClosedDirective = new RegExp(
+    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+${reopeningVerb}(?:\\s+(?:and|or)\\s+${reopeningVerb})*\\s+${consumedGeneratorActionTarget}`,
+    "giu",
+  );
+  for (const match of line.matchAll(explicitlyClosedDirective)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  const explicitlyNegatedAction = new RegExp(
+    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+(?:be\\s+)?${actionVerbForm}(?:\\s+(?:and|or)\\s+(?:be\\s+)?${actionVerbForm})*\\b`,
+    "giu",
+  );
+  for (const match of line.matchAll(explicitlyNegatedAction)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  const explicitlySeparateProtectedAction = new RegExp(
+    `\\b${actionVerbForm}\\s+(?:the|this|that)\\s+separately\\s+authorized\\s+target\\s+transition\\b`,
+    "giu",
+  );
+  for (const match of line.matchAll(explicitlySeparateProtectedAction)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  const explicitlySeparateAggregateState =
+    /\bCreator\s+aggregate\s+(?:remains?|is)(?:\s+still)?\s+in[_\s-]?progress\b/giu;
+  for (const match of line.matchAll(explicitlySeparateAggregateState)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  // RegExp match indices are UTF-16 code-unit offsets. split("") preserves
+  // those offsets, unlike code-point iteration with [...line].
+  const maskedLine = line.split("");
+  for (const [start, end] of closedSpans) {
+    maskedLine.fill(" ", start, end);
+  }
+  const leavesUnclassifiedGeneratorReference = new RegExp(
+    consumedGeneratorReference,
+    "iu",
+  ).test(maskedLine.join(""));
+  const leavesUnclassifiedReopenDirective = new RegExp(
+    `\\b${actionVerbForm}\\b`,
+    "iu",
+  ).test(maskedLine.join(""));
+  const remainingText = maskedLine.join("");
+  const leavesConflictingCompletionClaim =
+    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?))\b/iu.test(
+      remainingText,
+    );
+  const conflictingLifecycleState =
+    "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
+  const directLifecycleConflictAfterCloseout = closedSpans.some(([, end]) => {
+    const tail = line.slice(end);
+    return new RegExp(
+      `^\\s*(?:[,.;:]\\s*)?(?:(?:but|and|yet|while)\\s+)?(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`,
+      "iu",
+    ).test(tail);
+  });
+  const hasConflictingLifecycleState = directLifecycleConflictAfterCloseout;
+  const affirmativelyRestarts =
+    leavesUnclassifiedGeneratorReference ||
+    leavesUnclassifiedReopenDirective ||
+    /requires its own exact-base start contract and lock before implementation/iu.test(line);
+  return (
+    closedSpans.length > 0 &&
+    !affirmativelyRestarts &&
+    !leavesConflictingCompletionClaim &&
+    !hasConflictingLifecycleState
+  );
+};
+
+const assertGeneratorCatalogInstructionsClosed = (catalog) => {
+  const catalogEntries = [
+    ...(catalog.actions ?? []),
+    ...(catalog.retired_actions ?? []),
+  ];
+  const knownGeneratorDependentActionIds = new Set([
+    consumedGeneratorId,
+    "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ]);
+  const generatorBearingEntries = catalogEntries.filter(
+    (action) =>
+      knownGeneratorDependentActionIds.has(action.id) ||
+      (typeof action.instruction === "string" && action.instruction.includes(consumedGeneratorId)),
+  );
+  assert.ok(generatorBearingEntries.length > 0);
+  for (const action of generatorBearingEntries) {
+    assert.match(action.instruction, /\S/u, `${action.id}: instruction must be non-empty`);
+    const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
+
+    for (const sentence of instructionSentences) {
+      const classifiedSentence = sentence.includes(consumedGeneratorId)
+        ? sentence
+        : `${consumedGeneratorId} is ACCEPTED/CONSUMED; ${sentence}`;
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(classifiedSentence),
+        true,
+        `${action.id}: ${sentence}`,
+      );
+    }
+    assert.ok(instructionSentences.length > 0, action.id);
+  }
+};
+
+test("consumed generator closeout covers every catalog lifecycle instruction", () => {
+  const retiredProfileDesignCatalog = structuredClone(actionCatalog);
+  const profileDesignIndex = retiredProfileDesignCatalog.actions.findIndex(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  );
+  assert.notEqual(profileDesignIndex, -1);
+  const [profileDesign] = retiredProfileDesignCatalog.actions.splice(profileDesignIndex, 1);
+  retiredProfileDesignCatalog.retired_actions.push(profileDesign);
+
+  const blankDependentInstruction = structuredClone(retiredProfileDesignCatalog);
+  blankDependentInstruction.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction = "   ";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(blankDependentInstruction),
+    /instruction must be non-empty/u,
+  );
+
+  const directActiveStatus = structuredClone(retiredProfileDesignCatalog);
+  directActiveStatus.actions.find(
+    (action) => action.id === consumedGeneratorId,
+  ).instruction += " Status: ACTIVE.";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(directActiveStatus),
+    /Status: ACTIVE/u,
+  );
+
+  const blankGeneratorInstruction = structuredClone(retiredProfileDesignCatalog);
+  blankGeneratorInstruction.actions.find(
+    (action) => action.id === consumedGeneratorId,
+  ).instruction = "   ";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(blankGeneratorInstruction),
+    /instruction must be non-empty/u,
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED but remains ACTIVE`,
+    ),
+    false,
+    "ACTIVE contradicts consumed closeout",
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED, but the separately authorized target transition is still unfinished`,
+    ),
+    true,
+    "unrelated protected target lifecycle must not reopen the consumed generator",
+  );
+
+  for (const directConflict of [
+    `${consumedGeneratorId} is ACCEPTED/CONSUMED, yet remains ACTIVE`,
+    `${consumedGeneratorId} is ACCEPTED/CONSUMED while still unfinished`,
+    `superseded by the accepted/consumed ${consumedGeneratorId} source package but remains ACTIVE`,
+  ]) {
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(directConflict),
+      false,
+      directConflict,
+    );
+  }
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED. The separately authorized target transition; Status: ACTIVE.`,
+    ),
+    true,
+    "target-scoped Status: ACTIVE must not reopen the consumed generator",
+  );
+
+  const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
+  anaphoricReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction += " Reimplement it.";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(anaphoricReopen),
+    /Reimplement it/u,
+  );
+
+  const prefixedNamedReopen = structuredClone(retiredProfileDesignCatalog);
+  prefixedNamedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction = `Reimplement the transition generator. ${prefixedNamedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction}`;
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(prefixedNamedReopen),
+    /Reimplement the transition generator/u,
+  );
+
+  const namedReopen = structuredClone(retiredProfileDesignCatalog);
+  namedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction += " Reimplement the transition generator.";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(namedReopen),
+    /Reimplement the transition generator/u,
+  );
+
+  const protectedTargetContinuation = structuredClone(retiredProfileDesignCatalog);
+  protectedTargetContinuation.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction +=
+    " Continue this separately authorized target transition. The separately authorized target transition remains ACTIVE.";
+  assert.doesNotThrow(
+    () => assertGeneratorCatalogInstructionsClosed(protectedTargetContinuation),
+  );
+
+  assert.doesNotThrow(
+    () => assertGeneratorCatalogInstructionsClosed(retiredProfileDesignCatalog),
+  );
+});
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
@@ -116,14 +384,18 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
   const reconciliationId = "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT";
   const catalogId = "NBA-CREATOR-FOUNDATION-STAGING-CATALOG";
   const designId = "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN";
-  const generatorId = "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR";
+  const generatorId = consumedGeneratorId;
   const verify = actionCatalog.actions.find((a) => a.id === verifyId);
   const control = actionCatalog.actions.find((a) => a.id === controlId);
   assert.ok(verify);
   const reconciliation = actionCatalog.actions.find((a) => a.id === reconciliationId);
   const catalogObservation = actionCatalog.actions.find((a) => a.id === catalogId);
   const profileDesign = actionCatalog.actions.find((a) => a.id === designId);
-  const transitionGenerator = actionCatalog.actions.find((a) => a.id === generatorId);
+  const transitionGenerator = [
+    ...actionCatalog.actions,
+    ...actionCatalog.retired_actions,
+  ].find((a) => a.id === generatorId);
+  assertGeneratorCatalogInstructionsClosed(actionCatalog);
   assert.equal(verify.priority, control || reconciliation ? 6 : 2);
   assert.equal(verify.requires_owner, true);
   assert.equal(verify.parallel_safe, false);
@@ -136,7 +408,11 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(control.requires_owner, false);
     assert.deepEqual(control.depends_on_actions, [verifyId]);
     assert.equal(control.gate, "creator_confirmed_chat_apply_control");
-  } else if (profileDesign) {
+  }
+  // Closeout invariants are independent of whichever later Creator action is
+  // selected. In particular, adding the apply-control action must not bypass
+  // the consumed-generator regression below.
+  if (profileDesign) {
     assert.equal(profileDesign.priority, 14);
     assert.equal(profileDesign.requires_owner, false);
     assert.equal(profileDesign.parallel_safe, false);
@@ -153,7 +429,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(state.gates.creator_foundation_reconciliation_preflight.state, "ACCEPTED");
     assert.equal(state.gates.creator_foundation_staging_catalog.state, "RECONCILED");
     assert.equal(state.gates.creator_foundation_profile_transition_design.state, "ACCEPTED");
-    assert.equal(state.gates.creator_foundation_transition_generator.state, "IN_PROGRESS");
+    assert.equal(state.gates.creator_foundation_transition_generator.state, "ACCEPTED");
     assert.equal(state.gates.creator_intelligence.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.state, "RECONCILED");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
@@ -171,9 +447,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.ok(["REMOVED", "NOT_CREATED"].includes(receipt.cleanup.credentials));
     assert.ok(Object.values(receipt.counts).every(value => value === 0));
     const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
-    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED; bounded repository transition-generator work is IN_PROGRESS/u);
+    assert.match(creatorLoop, /- Exact next boundary: source preflight, profile-transition design and bounded transition-generator work are ACCEPTED\/CONSUMED/u);
     const generatorDependency = markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926");
-    assert.match(generatorDependency, /- Status: IN_PROGRESS; exact bounded repository continuation started from `a165f3c074e8e0eb2b24ea3882a3fd57db011939` under `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927`\./u);
+    assert.match(generatorDependency, /- Status: ACCEPTED; exact bounded repository source continuation consumed\./u);
     assert.match(profileDesign.instruction, /Completed and consumed repository source package/u);
     assert.match(profileDesign.instruction, /No target\/provider call, APPLY, target reference acceptance or runtime activation occurred/u);
     assert.match(profileDesign.instruction, /distinct protected action with current authorization and exact target binding/u);
@@ -191,27 +467,298 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(freshness.class, "immutable_commit");
     assert.equal(freshness.status, "ACCEPTED");
     assert.match(freshness.source, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
+  }
+  // Permanent closeout invariants must survive active-catalog cleanup and the
+  // selection of later Creator actions.
+    const generatorReceipt = JSON.parse(read("project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json"));
+    assert.equal(generatorReceipt.status, "ACCEPTED");
+    assert.equal(generatorReceipt.final_head, "176efc9bfaf84b75b72591abb6a4bcc453e4a58c");
+    assert.equal(generatorReceipt.merge_sha, "08fba825d1228d5b57ff0d145919b6bdb51d7504");
+    assert.equal(generatorReceipt.ci.native_pg17_job_id, "108523066296");
+    assert.equal(generatorReceipt.independent_review.open_review_threads, 0);
+    assert.equal(generatorReceipt.targetAccepted, false);
+    assert.equal(generatorReceipt.applyAllowed, false);
+    assert.equal(generatorReceipt.runtimeActivated, false);
+    const currentCreatorReaders = [
+      markdownSection(taskLedger, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26"),
+      markdownSection(taskLedger, "## FM-CREATOR-001 — Foundation reconciliation preflight — 2026-09-26"),
+      markdownSection(taskLedger, "## FM-CREATOR-001 — Confirmed-Chat VERIFY — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Foundation reconciliation preflight — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Confirmed-Chat VERIFY — 2026-09-26"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-STAGING-CATALOG-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-RECONCILIATION-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-CONFIRMED-CHAT-VERIFY-20260926"),
+      markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+      markdownSection(workLocks, "## LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+    ];
+    for (const section of currentCreatorReaders) {
+      assert.match(section, /(?:superseded by the accepted\/consumed .*PR #1209|already ACCEPTED\/CONSUMED by PR #1209)/u);
+      const generatorNextLines = section.split("\n").filter(
+        (line) =>
+          /(?:Next action|Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
+          line.includes(generatorId),
+      );
+      assert.ok(generatorNextLines.length > 0, section);
+      for (const line of generatorNextLines) {
+        assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
+      }
+    }
+    const mandatoryPreflightReaders = [
+      agents,
+      sourceOfTruth,
+      protocol,
+      executionPolicy,
+      currentState,
+      deepAudit,
+      finishline,
+      finishlineState,
+      nextAction,
+      deferredOwnerActions,
+      autoHandoff,
+      ownerActionInbox,
+      sessionHandoff,
+      startedWork,
+      workLocks,
+      openLoops,
+      taskLedger,
+      dependencies,
+      decisions,
+      failedAttempts,
+      executionReceipts,
+      actionCatalogText,
+      changeRequests,
+      evidence,
+      doNotAssume,
+      authorizations,
+      reconciliationLog,
+      assumptions,
+      contradictions,
+    ];
+    for (const requiredReader of [
+      actionCatalogText,
+      changeRequests,
+      evidence,
+      doNotAssume,
+      authorizations,
+      reconciliationLog,
+      assumptions,
+      contradictions,
+    ]) {
+      assert.ok(mandatoryPreflightReaders.includes(requiredReader), "missing mandatory operational reader");
+    }
+    for (const reader of mandatoryPreflightReaders) {
+      const generatorNextLines = reader.split("\n").filter(
+        (line) =>
+          /(?:Next action|Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
+          /NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u.test(line),
+      );
+      for (const line of generatorNextLines) {
+        assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
+      }
+    }
+    const catalogInstruction = `${generatorId} is ACCEPTED/CONSUMED; ${transitionGenerator.instruction}`;
+    assert.equal(consumedGeneratorNextLineIsClosed(`${catalogInstruction} Implement it again.`), false);
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next action: ${generatorId}`), false);
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: Do not start or implement ${generatorId}`),
+      true,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next action: Do not wait; implement ${generatorId}`),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next action: ${generatorId} ACCEPTED/CONSUMED; implement it again`,
+      ),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next action: ${generatorId} ACCEPTED/CONSUMED; do not start it, instead revise the plan and implement it again`,
+      ),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: Do not start, implement, or reopen ${generatorId}`),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next action: ${generatorId} ACCEPTED/CONSUMED; do not start, implement it instead`,
+      ),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: superseded by the accepted/consumed source in PR #1209; do not implement ${generatorId} again`,
+      ),
+      true,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: ${generatorId} is ACCEPTED/CONSUMED; implement the separately authorized target transition`,
+      ),
+      true,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; rebuild it`),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; resume it`),
+      false,
+    );
+    const reopeningVerbs = ["start", "restart", "implement", "reopen", "rebuild", "resume", "continue"];
+    const consumedGeneratorTargets = [
+      generatorId,
+      `\`${generatorId}\``,
+      "work on it",
+      `work on \`${generatorId}\``,
+      `implementation of ${generatorId}`,
+      "this",
+      "the work",
+      "this work",
+      "that work",
+      "the implementation",
+      "this implementation",
+      "that implementation",
+      "the same work",
+      "the original implementation",
+    ];
+    for (const verb of reopeningVerbs) {
+      for (const target of consumedGeneratorTargets) {
+        assert.equal(
+          consumedGeneratorNextLineIsClosed(
+            `Next: ${generatorId} is ACCEPTED/CONSUMED; ${verb} ${target}`,
+          ),
+          false,
+          `${verb} ${target}`,
+        );
+        assert.equal(
+          consumedGeneratorNextLineIsClosed(
+            `Next: ${generatorId} is ACCEPTED/CONSUMED; do not ${verb} ${target}`,
+          ),
+          true,
+          `do not ${verb} ${target}`,
+        );
+      }
+    }
+    for (const unfinishedStatus of [
+      "is not ACCEPTED/CONSUMED yet",
+      "is not yet ACCEPTED/CONSUMED",
+      "is not DONE",
+      "is never DONE",
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(`Next: ${generatorId} ${unfinishedStatus}`),
+        false,
+        unfinishedStatus,
+      );
+    }
+    for (const unclassifiedReopenDirective of [
+      `repeat ${generatorId}`,
+      "proceed with it",
+      `advance work on \`${generatorId}\``,
+      "continue this",
+      "continue that work",
+      "rebuild this",
+      "rebuild the implementation",
+      "resume the work",
+      "resume the implementation",
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(
+          `Next: ${generatorId} is ACCEPTED/CONSUMED; ${unclassifiedReopenDirective}`,
+        ),
+        false,
+        unclassifiedReopenDirective,
+      );
+    }
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: not superseded by the accepted/consumed ${generatorId} source package`,
+      ),
+      false,
+    );
+    for (const negatedCompletion of [
+      `not fully superseded by the accepted/consumed ${generatorId} source package`,
+      `no longer superseded by the accepted/consumed ${generatorId} source package`,
+      `isn't superseded by the accepted/consumed ${generatorId} source package`,
+      `wasn't superseded by the accepted/consumed ${generatorId} source package`,
+      `${generatorId} is DONE but not ACCEPTED/CONSUMED`,
+      `${generatorId} is ACCEPTED/CONSUMED, but not DONE`,
+      `${generatorId} is DONE but cannot be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE but can't be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE but won't be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE, but not completed`,
+      `${generatorId} is ACCEPTED/CONSUMED, but remains incomplete`,
+      `${generatorId} is ACCEPTED/CONSUMED, but still unfinished`,
+      `${generatorId} is ACCEPTED/CONSUMED, but remains IN_PROGRESS`,
+      `${generatorId} is ACCEPTED/CONSUMED, but is still in progress`,
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(`Next: ${negatedCompletion}`),
+        false,
+        negatedCompletion,
+      );
+    }
+    for (const passiveReopenDirective of [
+      "must be implemented again",
+      "needs to be reopened",
+      "should be rebuilt",
+      "will be resumed",
+      "must be continued",
+      "has to be restarted",
+      "must be reimplemented",
+      "needs to be re-implemented",
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(
+          `Next: ${generatorId} is ACCEPTED/CONSUMED but ${passiveReopenDirective}`,
+        ),
+        false,
+        passiveReopenDirective,
+      );
+    }
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: 😀😀😀 Do not start ${generatorId}; ${generatorId}`),
+      false,
+      "UTF-16 offsets must not hide a remaining generator reference",
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: 😀😀😀 Do not start ${generatorId}`),
+      true,
+      "UTF-16 offsets must preserve a fully closed directive",
+    );
+    const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
+    assert.ok(generatorFreshness);
+    assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
+    assert.equal(generatorFreshness.class, "immutable_commit");
+    assert.equal(generatorFreshness.status, "ACCEPTED");
     const acceptedEvidence = markdownSection(evidence, "## EV-CREATOR-FOUNDATION-PROFILE-TRANSITION-PR1207");
     assert.match(acceptedEvidence, /- Status: ACCEPTED; immutable repository source package, consumed\./u);
     assert.match(acceptedEvidence, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
-    assert.match(acceptedEvidence, /The transition generator is IN_PROGRESS from exact base `a165f3c074e8e0eb2b24ea3882a3fd57db011939`/u);
+    assert.match(acceptedEvidence, /The transition generator is ACCEPTED\/CONSUMED by PR #1209/u);
     assert.ok(transitionGenerator);
     assert.equal(transitionGenerator.priority, 2);
     assert.equal(transitionGenerator.requires_owner, false);
     assert.equal(transitionGenerator.parallel_safe, false);
     assert.deepEqual(transitionGenerator.depends_on_actions, [designId]);
     assert.equal(transitionGenerator.gate, "creator_foundation_transition_generator");
-    assert.match(transitionGenerator.instruction, /fail closed on pin\/profile drift/u);
-    assert.match(transitionGenerator.instruction, /No target\/provider call, workflow dispatch, SQL APPLY/u);
-    assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR IN_PROGRESS AUF EXACT BASE/u);
-    assert.match(transitionDesign, /Diese Repository-Arbeit ist \*\*IN_PROGRESS\*\*/u);
-    assert.match(transitionDesign, /Aktuelle konkrete Source-Arbeit ist `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
+    assert.match(transitionGenerator.instruction, /Completed and consumed repository source package/u);
+    assert.match(transitionGenerator.instruction, /No target\/provider call, target observation\/reference acceptance, SQL APPLY/u);
+    assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE UND ÜBERGANGSGENERATOR ACCEPTED\/CONSUMED/u);
+    assert.match(transitionDesign, /`NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` ist als Repository-Source \*\*ACCEPTED\/CONSUMED\*\*/u);
     assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
     assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
-    assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
-    assert.match(nextAction, /- Selection status: `EXECUTABLE`/u);
-    assert.match(nextAction, /- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
-  } else if (catalogObservation) {
+    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: \*\*DONE\*\*/u);
+    assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+  if (!profileDesign && catalogObservation) {
     assert.equal(catalogObservation.priority, 2);
     assert.equal(catalogObservation.requires_owner, true);
     assert.equal(catalogObservation.parallel_safe, false);
@@ -235,7 +782,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.match(catalogObservation.instruction, /No schema APPLY/u);
     assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-STAGING-CATALOG`/u);
     assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-  } else if (reconciliation) {
+  } else if (!profileDesign && reconciliation) {
     assert.equal(reconciliation.priority, 2);
     assert.equal(reconciliation.requires_owner, false);
     assert.deepEqual(reconciliation.depends_on_actions, [verifyId]);
@@ -248,7 +795,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.observed_result, "FOUNDATION_MISSING");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
     assert.match(reconciliation.instruction, /No target DDL/u);
-  } else {
+  } else if (!profileDesign) {
     assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
     assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
   }

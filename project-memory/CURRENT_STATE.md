@@ -1,10 +1,10 @@
-## Creator Foundation transition generator started
-- Status: IN_PROGRESS; repository source/tests only.
+## Creator Foundation transition generator accepted
+- Status: ACCEPTED; repository source package consumed.
 - Task/action: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.
-- Exact base/lock: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` / `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927` ACTIVE.
-- Result required: deterministic fail-closed generator for only the accepted helper, two RPCs and four policy USING changes, plus reproducible manifest and native PostgreSQL 17 rollback/data-preservation/negative proofs.
-- Boundary: no target/provider call, SQL APPLY, workflow dispatch, product-data write, runtime activation or deployment acceptance. Later target observation/reference acceptance and transition execution remain separate protected actions.
-- Current evidence: PR #1209 head `d7aebf7d749487e1e23a9f104f5869f86e84784d` is blocked. FanMind CI `36281083473` failed in the native PG17 proof because extension-local `digest` was unavailable; review also identified exact-output, trust-binding and unknown-role-negative gaps. Independent review of local correction `863ade1b701bffcf5f8c9028450460a74ed63c47` then found that the new role was not connected to the catalog authority graph; that valid P1 is corrected locally and must pass fresh exact-head CI/review. No completion or merge is claimed.
+- Exact base/lock: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` / `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927` RELEASED_MERGED_VERIFIED.
+- Result: deterministic fail-closed generator for only the accepted helper, two RPCs and four policy USING changes, plus reproducible manifest and native PostgreSQL 17 rollback/data-preservation/negative proofs.
+- Evidence: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`; all nine workflows, FanMind CI `36284679968`, native PG17 job `108523066296`, independent exact-head review and zero open threads passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Boundary: no target/provider call, target observation/reference acceptance, SQL APPLY, workflow dispatch, product-data write, runtime activation or deployment acceptance. Any target continuation remains a distinct protected action requiring current authorization and exact target binding.
 
 ## Creator source profile reconciliation and transition design accepted
 - Status: ACCEPTED; repository source package consumed.
@@ -12,13 +12,13 @@
 - Result: Source-only profile transition contract proves original `auth.uid()` ownership before transfer, Daily Workspace constraints without the optional Billing baseline, the exact pinned 21-role/22-membership Hosted PG17 profile including grantors/configuration, and fail-closed rejection of altered caller profiles.
 - Lock: `LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926` is `RELEASED_MERGED_VERIFIED`.
 - Boundary: No target/provider call, SQL APPLY, target reference acceptance, runtime activation, customer mutation or deployment acceptance occurred. Creator aggregate remains IN_PROGRESS; `targetAccepted=false`, `applyAllowed=false`, `runtimeActivated=false`, `learningState=UNDETERMINED` remain unchanged.
-- Next integration: Implement and independently verify `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` as bounded repository-only source work. A later target observation/reference acceptance or transition execution is a separate protected action with current authorization and exact target binding; do not repeat the prior catalog observation unchanged.
+- Next integration: The bounded transition-generator repository source is ACCEPTED/CONSUMED by PR #1209. A target observation/reference acceptance or transition execution is a separate protected action requiring current authorization and exact target binding; do not repeat the prior catalog observation unchanged.
 
 ## Creator bounded Staging catalog observation reconciled
 - Status: RECONCILED; actual classifier result INCOMPLETE.
 - Evidence: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
 - Boundary: Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
-- Next: The profile/design source continuation is ACCEPTED/CONSUMED; the separately admitted repository-only transition generator is the next step. No target continuation has been admitted; use the generated Next Best Action instead of reopening this scope.
+- Next: The profile/design and transition-generator repository sources are ACCEPTED/CONSUMED. No target continuation has been admitted; use the generated Next Best Action instead of reopening either scope.
 
 ### Historical admission — consumed
 
@@ -610,16 +610,15 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-CREATOR-001:** implement `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` from the accepted #1207 profiles, with fail-closed pins and native rollback/data-preservation proof. This is repository-only; any later target observation/reference acceptance or transition is a distinct protected action with a fresh exact target binding.
-2. **FM-REG-003:** after the ordered Creator source increment, the generated owner-required action remains `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`. Preserve the accepted existing real 0-EUR account without registration/regrant; the distinct synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle precedes additional real grants.
-3. **FM-CHATADMIN-002:** manual application flow and independent cleanup are accepted before this continuation. VERIFY/APPLY/DB ACCEPT/manual acceptance are consumed; do not repeat them solely because main advances.
-4. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
-5. **FM-SOC7-001:** TikTok/X connection/preview source and dated Social schema installation #1104 / 34591339718 / 34591566257 remain complete; actual apps/consent/budget/provider and full CRM ingestion remain open. Discord stays later; OnlyFans retains the implemented manual handoff and separate direct-access feasibility.
-6. **FM-MOB-001:** FM-DEC-021 defers every remaining Mobile/Handy step until company registration is complete and the owner explicitly resumes Mobile. Creator/Social completion alone never restarts Mobile.
-7. **FM-RST-001:** DB_POSTCHECKED and private Storage controller preparation remain accepted. Real Storage target/upload/cost and final acceptance remain owner-deferred; no repeated database Restore.
-8. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
-9. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
-10. **FM-META-001:** real App Review/provider/legal acceptance remains external; do not infer it from repository evidence.
+1. **FM-REG-003:** the generated owner-required action is `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`. Preserve the accepted existing real 0-EUR account without registration/regrant; the distinct synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle precedes additional real grants.
+2. **FM-CHATADMIN-002:** manual application flow and independent cleanup are accepted before this continuation. VERIFY/APPLY/DB ACCEPT/manual acceptance are consumed; do not repeat them solely because main advances.
+3. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
+4. **FM-SOC7-001:** TikTok/X connection/preview source and dated Social schema installation #1104 / 34591339718 / 34591566257 remain complete; actual apps/consent/budget/provider and full CRM ingestion remain open. Discord stays later; OnlyFans retains the implemented manual handoff and separate direct-access feasibility.
+5. **FM-MOB-001:** FM-DEC-021 defers every remaining Mobile/Handy step until company registration is complete and the owner explicitly resumes Mobile. Creator/Social completion alone never restarts Mobile.
+6. **FM-RST-001:** DB_POSTCHECKED and private Storage controller preparation remain accepted. Real Storage target/upload/cost and final acceptance remain owner-deferred; no repeated database Restore.
+7. **FM-SEC-001:** trigger hardening and both leaked-password protections are proved by the latest recorded receipts; do not repeat them. Only genuine remaining bounded Staging RPC and Meta/legal acceptance stay open.
+8. **FM-AI-001:** retain accepted general Billing/Staging sub-gates and overall PARTIAL. Paid activation/tax facts remain owner-deferred; Plus/Ultra and canonical Production projection stay guarded.
+9. **FM-META-001:** real App Review/provider/legal acceptance remains external; do not infer it from repository evidence.
 
 ## Manual Daily beta admission — 2026-09-14
 - FM-DEC-019 supersedes only FM-DEC-014's permanent-public Daily classification. Daily remains 0 EUR setup + 1 EUR/day, daily cancellable and referral-ineligible, but is now a manually Platform-Admin-controlled internal beta without automatic countdown.

@@ -2,7 +2,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Holder: autonomous FanMind Builder
 - Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939`.
 - Scope: one serialized repository-only generator/assertions implementation with focused/native tests and reproducible manifest. It may emit only the accepted helper, two RPC bodies and four policy USING replacements from independently pinned source/profile inputs.
@@ -10,6 +10,8 @@
 - Forbidden: target/provider/database calls, workflow dispatch, SQL APPLY, product-data writes, runtime activation, deployment/target acceptance, Production/Billing/Restore/Mobile mutation, secrets and direct main writes.
 - Release condition: source and tests on one exact head, native PG17 rollback/data-preservation/negative proof, reproducible manifest, all required exact-head checks, one independent review, zero open P0/P1/P2, normal merge and post-merge source verification.
 - Recovery: ordinary repository revert; no external cleanup because this scope performs no external mutation.
+- Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`. All nine exact-head workflows passed; FanMind CI run `36284679968`, native PostgreSQL 17 job `108523066296`, independent exact-head review and zero open P0/P1/P2 passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Boundary: repository source/CI acceptance only. No target observation, target reference acceptance, SQL APPLY, deployment acceptance, runtime activation or aggregate Creator completion is inferred. Any target continuation is a distinct protected action requiring current authorization and exact target binding.
 
 ## LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
@@ -19,7 +21,7 @@
 - Holder: interactive Codex Builder
 - Scope: Bounded repository/offline source work at priority 2 under existing user authorization and FM-DEC-024. Independently reconcile supported provider/role and installed-parent source profiles using the already captured private observation and separately pinned source evidence. Never use target-derived expected values. Design a source-defined forward transition with exact preconditions, supported baseline, authorization boundaries, atomicity, cleanup/recovery and meaningful isolated tests. No APPLY, runtime activation, target calls, provider calls, workflow dispatch, target DDL/data/role changes, temporary target helper or customer fixture. Bounded completion: publish independently supported profile inputs and a reviewable source transition design, or record PARTIAL with the exact missing external provenance. If external input blocks completion, make the specific action requires_owner=true and link an exact owner/evidence item so existing selection reports OWNER_ACTION_REQUIRED; do not call PARTIAL completed or keep a generic executable placeholder. No repeated permission question for already authorized safe offline work. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
 - Completion: PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; exact-head CI/native PG17 and independent review passed. Repository source package accepted and consumed; no target/runtime acceptance.
-- Next: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` is a distinct repository-only scope and requires its own exact-base start contract and lock before implementation. This released lock grants no target action.
+- Next: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Do not start or implement it again; this released design lock grants no target action, and any target continuation requires a distinct protected action with current authorization and exact target binding.
 
 ## LOCK-FM-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Task: FM-CREATOR-001

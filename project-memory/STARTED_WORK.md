@@ -2,16 +2,15 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: IN_PROGRESS; PR #1209 current published head `d7aebf7d749487e1e23a9f104f5869f86e84784d` is not accepted.
+- Status: ACCEPTED; repository source package consumed.
 - Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` (verified merge of PR #1208).
-- Work lock: LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927 (ACTIVE).
-- Remaining result: implement the repository-only, fail-closed generator/assertions wrapper that emits only the pinned Creator access helper, two RPC bodies and four policy USING replacements, plus a reproducible manifest and native PostgreSQL 17 proofs.
+- Work lock: LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927 (RELEASED_MERGED_VERIFIED).
+- Result: the repository-only, fail-closed generator/assertions wrapper emits only the pinned Creator access helper, two RPC bodies and four policy USING replacements, plus a reproducible manifest and native PostgreSQL 17 proofs.
 - Expected files/contracts: `scripts/operations/creator-foundation-transition-generator.mjs`, focused unit/native tests, package/CI registration, the accepted profile/transition design and exact Project Memory readers. Contract: source/test artifacts only; no target/provider call, workflow dispatch, SQL APPLY, product-data write, runtime activation or deployment acceptance.
 - Acceptance criteria: (1) exact accepted source/query/profile pins are verified before generation; (2) output contains only the one helper, two RPC replacements and four policy changes; (3) mixed/current/unknown overload-policy-role/AdminCRM/profile drift fails closed; (4) native PG17 proves rollback after injected failures, unchanged data and required cross-workspace negatives; (5) exact-head CI plus one independent review pass with no open P0/P1/P2 before normal merge.
 - Negative/regression tests: corrupt pins/profile, mixed/already-current state, unexpected AdminCRM, unknown overload/policy/role path, injected failure after every transition step, preserved stored data and foreign-workspace/member denial.
-- Completed so far: the bounded generator, unit/native regression suite and CI registration are published on PR #1209. Its first exact-head FanMind CI run `36281083473` failed because the fresh fixture database did not provide extension-local `digest`; review also found a duplicated CLI newline, caller-replaceable classification, incomplete accepted input pins and a missing unknown-role native negative. The first local correction commit `863ade1b701bffcf5f8c9028450460a74ed63c47` passed focused tests, Operations, lint and build, but its independent pre-publication review found one P1: the synthetic unknown role was not connected to the catalog's authority graph and therefore could not be observed. The corrected fixture grants that role to the seeded `postgres` principal, asserts the actual catalog row, then revokes and drops it. No target/provider/runtime mutation occurred.
-- Exact next step: repeat affected verification, publish all corrections together to the same PR, run exact-head CI including native PG17, request exactly one independent review of that changed head and merge only with zero open P0/P1/P2.
-- Completion stage: repository source acceptance only. Next integration after acceptance is a separately authorized exact-target observation/reference acceptance; transition execution/APPLY and learning/runtime acceptance remain distinct protected gates.
+- Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`. All nine exact-head workflows passed; FanMind CI `36284679968`, native PostgreSQL 17 job `108523066296`, independent exact-head review and zero open review threads passed. Artifact `10919937178`, archive SHA256 `4c23bc1f8ad4d0b2acae4090db8b775cc1e14926bb485c540629708f223a0035`, manifest SHA256 `c04f8d7a3ccdc2432a3d1576c6c9874674339b781a87debbfea5462139d4a722`. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Completion stage: repository source acceptance only. No target/provider call, SQL APPLY, deployment acceptance or runtime activation occurred. The next target observation/reference acceptance or transition execution remains a distinct protected action requiring current authorization and exact target binding; no unchanged catalog retry is admitted.
 
 ## FM-CREATOR-001 — bounded profile reconciliation and transition design
 - Task: FM-CREATOR-001
@@ -22,7 +21,7 @@
 - Completion: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`. All eight exact-head workflows passed; FanMind CI run `36273161074` and native PG17 job `108490997482` passed. Independent exact-head review reported no P0/P1/P2/P3; all review threads are resolved. Local focused verification: 41 passed, 0 failed, 1 native-PG17 skip. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
 - Result: Source-only profile transition contract proves original `auth.uid()` ownership before transfer, Daily Workspace constraints without the optional Billing baseline, the exact pinned 21-role/22-membership Hosted PG17 profile including grantors/configuration, and fail-closed rejection of altered caller profiles.
 - Boundary: No target/provider call, SQL APPLY, target reference acceptance, runtime activation, customer mutation or deployment acceptance occurred. Creator aggregate remains IN_PROGRESS; `targetAccepted=false`, `applyAllowed=false`, `runtimeActivated=false`, `learningState=UNDETERMINED` remain unchanged.
-- Next integration: Implement NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as a new bounded repository-only scope with its own start contract/lock. A later target observation/reference acceptance or transition execution is a separate protected action with current authorization and exact target binding; do not repeat the prior catalog observation unchanged.
+- Next integration: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR is now ACCEPTED/CONSUMED by PR #1209. A target observation/reference acceptance or transition execution remains a separate protected action requiring current authorization and exact target binding; do not repeat the prior catalog observation unchanged.
 
 ## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26
 - Task: FM-CREATOR-001
@@ -32,7 +31,7 @@
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-STAGING-CATALOG-20260926 (RELEASED).
 - Result: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
 - Boundary: Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry.
-- Next step: start the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR under its own exact base/lock; no unchanged catalog retry or target action is implied.
+- Next step: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Do not start it again; no unchanged catalog retry or target action is implied.
 
 ### Historical admission — consumed by the actual observation above
 
@@ -54,7 +53,7 @@
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-RECONCILIATION-20260926 (RELEASED_MERGED_VERIFIED).
 - Completion: PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
 - Boundary: Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred.
-- Next step: start the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR under its own exact base/lock; profile/source and catalog scopes remain consumed and must not be rebuilt/repeated unchanged.
+- Next step: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Profile/source/catalog/generator scopes remain consumed and must not be rebuilt or repeated unchanged.
 
 ### Historical source-stage notes — superseded by the accepted source receipt above
 
@@ -77,7 +76,7 @@
 - Status: RECONCILED
 - Work lock: LOCK-FM-CREATOR-CONFIRMED-CHAT-VERIFY-20260926 (RELEASED).
 - Outcome: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
-- Next: start the separately admitted repository-only NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR under its own exact base/lock; preserve failed VERIFY and consumed source/catalog observations with no unchanged retry or learning APPLY.
+- Next: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Preserve the failed VERIFY and consumed source/catalog/generator evidence; no unchanged retry or learning APPLY is admitted.
 
 ## FM-CHATADMIN-002 — manual flow and Character isolation — 2026-09-26
 - Status: ACCEPTED

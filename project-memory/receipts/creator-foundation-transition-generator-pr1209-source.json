@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task": "FM-CREATOR-001",
+  "action": "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR",
+  "status": "ACCEPTED",
+  "scope": "repository_source_only",
+  "source_pr": 1209,
+  "base_sha": "a165f3c074e8e0eb2b24ea3882a3fd57db011939",
+  "final_head": "176efc9bfaf84b75b72591abb6a4bcc453e4a58c",
+  "source_tree": "bf2239fd01690be9b23c3a47f1b428759dc6179a",
+  "merge_sha": "08fba825d1228d5b57ff0d145919b6bdb51d7504",
+  "merged_at": "2026-09-27T01:15:46Z",
+  "ci": {
+    "run_id": "36284679968",
+    "attempt": "1",
+    "tested_checkout_sha": "75fa8ceb2b21d91a8faf0aa53ac0d1a04e417243",
+    "reviewed_source_sha": "176efc9bfaf84b75b72591abb6a4bcc453e4a58c",
+    "native_pg17_job_id": "108523066296",
+    "truth_tests_build_job_id": "108523066366",
+    "conclusion": "success",
+    "required_workflows": 9,
+    "required_workflows_success": 9
+  },
+  "reference_artifact": {
+    "artifact_id": "10919937178",
+    "name": "fanmind-creator-foundation-reference-75fa8ceb2b21d91a8faf0aa53ac0d1a04e417243",
+    "archive_sha256": "4c23bc1f8ad4d0b2acae4090db8b775cc1e14926bb485c540629708f223a0035",
+    "manifest_sha256": "c04f8d7a3ccdc2432a3d1576c6c9874674339b781a87debbfea5462139d4a722",
+    "query_sha256": "252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436",
+    "reviewed_source_sha": "176efc9bfaf84b75b72591abb6a4bcc453e4a58c",
+    "targetAccepted": false,
+    "applyAllowed": false
+  },
+  "generator_artifact": {
+    "scope": "creator_foundation_legacy_to_current_transition_source_only",
+    "accepted_reference_sha256": "0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c",
+    "sql_sha256": "db69721ce1a3e81a82a0f101e3bd0bdbda1959b0f367a2ffa6413004dd3bb214",
+    "transport": "NONE",
+    "apply_mode": false
+  },
+  "independent_review": {
+    "reviewed_head": "176efc9bfaf84b75b72591abb6a4bcc453e4a58c",
+    "blocking_findings": 0,
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "open_review_threads": 0
+  },
+  "local_verification": {
+    "operations_total": 1628,
+    "operations_passed": 1622,
+    "operations_failed": 0,
+    "operations_skipped": 6,
+    "focused_total": 6,
+    "focused_passed": 5,
+    "focused_failed": 0,
+    "focused_skipped_native_pg17": 1,
+    "eslint_errors": 0,
+    "eslint_preexisting_warnings": 4,
+    "build": "success"
+  },
+  "accepted_results": [
+    "exact accepted source, query, reference, parent, provider and role-profile pins are verified before generation",
+    "output contains only one workspace-access helper, two RPC replacements and four policy USING replacements",
+    "mixed, already-current, unsupported AdminCRM and unknown overload, policy or role states fail closed",
+    "native PostgreSQL 17 proves rollback after each step, unchanged stored data, exact Legacy-to-Current catalog and required authorization negatives",
+    "CLI SQL bytes hash exactly to the pinned deterministic artifact"
+  ],
+  "targetAccepted": false,
+  "applyAllowed": false,
+  "learningState": "UNDETERMINED",
+  "runtimeActivated": false,
+  "target_observation": "not_performed_in_this_scope",
+  "next_integration": "A target observation/reference acceptance or transition execution is a separate protected action requiring current authorization and exact target binding. No unchanged catalog retry is admitted.",
+  "boundary": "Repository source/CI acceptance only. No target/provider call, SQL APPLY, target reference acceptance, deployment acceptance, runtime activation, customer mutation or aggregate Creator completion is inferred."
+}

@@ -156,9 +156,9 @@
     "creator_foundation_transition_generator": {
       "task": "FM-CREATOR-001",
       "risk": "R3",
-      "state": "IN_PROGRESS",
+      "state": "ACCEPTED",
       "required_for_sales": false,
-      "evidence": "Inputs are accepted by PR #1207 and project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. Repository-only implementation started from exact base a165f3c074e8e0eb2b24ea3882a3fd57db011939 under LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927. The bounded generator, reproducible artifact and native rollback/data-preservation proofs remain the current source deliverable; target observation, reference acceptance, SQL APPLY and runtime acceptance remain separate protected scopes."
+      "evidence": "Repository source package accepted and consumed: PR #1209 exact head 176efc9bfaf84b75b72591abb6a4bcc453e4a58c, tree bf2239fd01690be9b23c3a47f1b428759dc6179a, verified merge 08fba825d1228d5b57ff0d145919b6bdb51d7504. All nine exact-head workflows passed, including FanMind CI 36284679968 / native PG17 job 108523066296; independent exact-head review had no new blocking findings and zero review threads remain open. Receipt project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json. No target observation, reference acceptance, SQL APPLY, deployment acceptance or runtime activation occurred; Creator aggregate remains IN_PROGRESS."
     }
   },
   "sales_required_states": [

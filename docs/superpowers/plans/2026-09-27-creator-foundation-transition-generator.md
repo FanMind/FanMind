@@ -68,4 +68,4 @@
 
 - [x] Register focused/full tests and document reproducible artifact generation without an APPLY path.
 - [x] Run Operations, Memory, drift, freshness, God Mode and diff checks on the initial published head; repeat all affected checks after review corrections.
-- [ ] Commit/publish one coherent code+test+documentation head, request one independent review, process all findings, and merge only after exact-head CI is green with zero open P0/P1/P2.
+- [x] Commit/publish one coherent code+test+documentation head, request one independent review, process all findings, and merge only after exact-head CI is green with zero open P0/P1/P2.
