@@ -147,13 +147,8 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
   assert.ok(generatorBearingEntries.length > 0);
   for (const action of generatorBearingEntries) {
     const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
-    let generatorContext = action.id === consumedGeneratorId;
-    let checkedSentences = 0;
 
     for (const sentence of instructionSentences) {
-      if (sentence.includes(consumedGeneratorId)) generatorContext = true;
-      if (!generatorContext) continue;
-
       const classifiedSentence = sentence.includes(consumedGeneratorId)
         ? sentence
         : `${consumedGeneratorId} is ACCEPTED/CONSUMED; ${sentence}`;
@@ -162,9 +157,8 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
         true,
         `${action.id}: ${sentence}`,
       );
-      checkedSentences += 1;
     }
-    assert.ok(checkedSentences > 0, action.id);
+    assert.ok(instructionSentences.length > 0, action.id);
   }
 };
 
@@ -184,6 +178,17 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
   assert.throws(
     () => assertGeneratorCatalogInstructionsClosed(anaphoricReopen),
     /Reimplement it/u,
+  );
+
+  const prefixedNamedReopen = structuredClone(retiredProfileDesignCatalog);
+  prefixedNamedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction = `Reimplement the transition generator. ${prefixedNamedReopen.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction}`;
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(prefixedNamedReopen),
+    /Reimplement the transition generator/u,
   );
 
   const namedReopen = structuredClone(retiredProfileDesignCatalog);
