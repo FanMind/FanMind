@@ -2,19 +2,15 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R4
-- Status: IN_PROGRESS
-- Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (ACTIVE)
-- Authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (CONSUMED_FAIL_CLOSED)
-- Exact correction base: `8bf23be6af739086354c58548ea43c3910c17ee1`.
-- Source dependencies accepted/consumed: PR #1207 independent profile/reference package; PR #1209 bounded seven-step transition generator; protected source through PR #1213 / main `8bf23be6af739086354c58548ea43c3910c17ee1`.
-- Current read-only target preflight: FanMind Staging `vshyhvgcmrlagvfnvomc`, PostgreSQL 17 / ACTIVE_HEALTHY; four Creator table counts 0/0/0/0; active Creator RPC sessions 0; current helper absent; two Creator RPCs and four member-read policies still in Legacy form; Production project is distinct `drqkpdvtbbrrdwmtrodz`. This evidence is not a write authorization and must be rechecked under transaction protection.
-- Private trust root: accepted PG17 reference artifact 10916053961 from run 36273161074 / source head `3cd67cedbcdc051be855d09de8d5ea3225179217`, ZIP digest `c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c`; deterministic reference SHA256 `0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c`. Raw reference remains private.
-- Protected attempt 1: issue #874 command comment `5856097930` was consumed by marker `5856099043`; run `36321009852` authenticated main `8bf23be6af739086354c58548ea43c3910c17ee1` and completed exact Staging deploy. Transition job `108624905760` classified DRIFT with `APPLY=not_requested`; runtime was skipped. Recovery job `108624950593` failed because ordinary file operations used sudo outside the runner's passwordless allowlist. SQL APPLY/runtime activation/Production mutation counts are zero.
-- Source correction: emit bounded validated drift sections/blockers, perform recovery-file operations as the deploy user, preserve the snapshot across deploy rsync, and reserve `sudo -n` for allowed service commands. Focused regressions cover both the diagnostic and privilege/persistence contracts.
-- Evidence receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
-- Still open: exact-head source tests/CI/independent review; normal merge; one exact-main owner-authenticated read-only drift diagnosis; reviewed drift remediation; only then a distinct fresh protected target transition/runtime authorization and execution; independent countercheck; final reconciliation.
-- Exact next step: complete the correction PR contract and merge only at zero P0/P1/P2. Do not request or replay a transition command while DRIFT remains unresolved.
-- Boundary: Staging only. No Production/customer/provider/Billing/Restore/Mobile mutation.
+- Status: PARTIAL
+- Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (PAUSED)
+- Transition authorization: FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (CONSUMED_FAIL_CLOSED).
+- Source correction completion: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` passed exact-head CI/independent review with zero open P0/P1/P2 and merged normally as `bc85493f8fc25ff90c965208bd20c7dc64641158`.
+- Protected attempt 1: issue #874 command `5856097930` consumed by marker `5856099043`; run `36321009852` deployed prior main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified DRIFT, requested no APPLY and skipped runtime. Recovery failed on the then-unfixed sudo file-operation boundary. SQL APPLY/runtime activation/Production mutation counts are zero.
+- Merged correction result: bounded validated drift metadata, exact-main read-only diagnosis workflow, SHA-scoped consumption, deploy-safe recovery snapshot, allowed-service-only sudo, exact release plus authenticated disabled-runtime recovery proof.
+- Still open: owner-authenticated `run-creator-target-drift-diagnosis <then-current-main-sha>` after this reconciliation merges; consume bounded diagnosis; Builder-reviewed remediation; distinct fresh transition/runtime authorization; eventual target/runtime countercheck and final reconciliation.
+- Current actor/blocker: OWNER (Bernd) for the exact diagnosis comment. No Builder worker is reserved while waiting.
+- Boundary: diagnosis is read-only and cannot authorize SQL APPLY/runtime activation. Production/customer/provider/Billing/Restore/Mobile remain untouched.
 
 ## FM-EXEC-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
 - Task: FM-CREATOR-001

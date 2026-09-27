@@ -7,25 +7,25 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 - Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
 - Task: `FM-CREATOR-001`
 - Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
-- Selection status: `EXECUTABLE`
-- Title: Creator Foundation auf Staging atomar überführen und Runtime aktivieren
+- Selection status: `OWNER_ACTION_REQUIRED`
+- Title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
 
 ## Instruction
 
-Protected run 36321009852 consumed the original transition command on main 8bf23be6af739086354c58548ea43c3910c17ee1. Exact Staging deploy passed; classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations outside the runner sudo allowlist; no SQL APPLY, runtime activation or Production mutation occurred. Merge the bounded diagnostics/recovery correction with exact-head CI and review. Then FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 authorizes only one exact-main read-only classification. Review and remediate its proven differing sections before requesting a distinct transition/runtime authorization.
+PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
 
 ## Why this action
 
-standing-authorized safe work
+owner/platform action required
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
+- SAFE READY SET: `NONE`
+- Worker slots reserved by active/ready work: `0`
+- Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -33,7 +33,7 @@ standing-authorized safe work
 
 ## Candidate evaluation
 
-- `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **EXECUTABLE** — standing-authorized safe work
+- `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
 - `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: **DONE** — gate creator_foundation_transition_generator is ACCEPTED

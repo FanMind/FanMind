@@ -29,6 +29,7 @@ def render_handoff() -> str:
     owner = (PM / "OWNER_ACTION_INBOX.md").read_text(encoding="utf-8")
     selected = re.search(r"Selected action: `([^`]+)`", next_action)
     title = re.search(r"- Title: (.+)", next_action)
+    selection_status = re.search(r"- Selection status: `([A-Z_]+)`", next_action)
     deferred = re.findall(r"^## ([^\n]+)\n- Status: DEFERRED_BY_OWNER", owner, flags=re.M)
     gates = state.get("gates", {})
     gate_lines = [f"- `{name}`: `{data.get('state','UNKNOWN')}`" for name, data in gates.items()]
@@ -41,6 +42,7 @@ def render_handoff() -> str:
         f"- Sales ready: `{str(bool(state.get('sales_ready'))).lower()}`",
         f"- Phase 8 started: `{str(bool(state.get('phase8_started'))).lower()}`",
         f"- Next action: `{selected.group(1) if selected else 'UNKNOWN'}`",
+        f"- Next action status: `{selection_status.group(1) if selection_status else 'UNKNOWN'}`",
         f"- Next action title: {title.group(1) if title else 'UNKNOWN'}",
         "",
         "## Finishline gates",

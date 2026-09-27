@@ -1,10 +1,10 @@
-## Creator Target Transition + Runtime — active R4 loop — 2026-09-27
+## Creator Target Transition + Runtime — owner-gated drift diagnosis — 2026-09-27
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
-- Status: IN_PROGRESS under LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 was consumed fail-closed by run `36321009852`.
-- Attempt 1: exact current-main deploy passed; target classified DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations that incorrectly required unrestricted passwordless sudo. No SQL APPLY, runtime activation or Production mutation occurred.
-- Open source work: finish/review/merge the bounded correction for safe drift diagnostics, user-owned persistent recovery-file operations, `sudo -n` service commands and deploy preservation.
-- Open protected sequence after correction merge: exact owner-authenticated read-only drift diagnosis -> reviewed remediation of the proven differing sections -> distinct fresh transition authorization -> exact current-main Staging deploy -> Legacy/full-profile preflight -> atomic seven-step transition only if LEGACY_EXACT -> CURRENT_EXACT postflight/commit -> runtime activation/readback -> independent countercheck -> one final reconciliation.
-- Fail closed on target/reference/release drift, nonempty Creator data, active Creator RPCs, Production binding, stale command/SHA, private-reference mismatch or runtime verification failure. Do not repeat consumed catalog/source/generator work.
+- Status: IN_PROGRESS overall; repository correction merged, protected diagnosis OWNER_ACTION_REQUIRED, Builder worker paused.
+- Attempt 1: run `36321009852` deployed prior main, classified DRIFT, requested no APPLY and skipped runtime; no SQL APPLY/runtime/Production mutation occurred.
+- Source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged normally as `bc85493f8fc25ff90c965208bd20c7dc64641158`; bounded diagnostics/recovery source is accepted and must not be rebuilt.
+- Open protected sequence: owner posts `run-creator-target-drift-diagnosis <then-current-main-sha>` after this reconciliation merges -> bounded read-only diagnosis -> Builder-reviewed remediation of proven differing sections -> distinct fresh transition authorization -> only then potential Staging transition/runtime acceptance.
+- Fail closed: no transition replay while DRIFT is unresolved, no owner action substitution by Builder, no raw/private catalog output, no Production/provider/customer/Billing/Restore/Mobile mutation.
 
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922
 - Status: CLOSED; Task: FM-CREATOR-001; Risk: R3.

@@ -6,7 +6,8 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Sales ready: `false`
 - Phase 8 started: `true`
 - Next action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Next action title: Creator Foundation auf Staging atomar überführen und Runtime aktivieren
+- Next action status: `OWNER_ACTION_REQUIRED`
+- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
 
 ## Finishline gates
 

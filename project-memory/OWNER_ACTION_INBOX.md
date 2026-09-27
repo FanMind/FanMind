@@ -1,13 +1,13 @@
 # FanMind Owner Action Inbox
 
 ## FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 — Creator-Drift exakt und nur lesend diagnostizieren
-- Status: WAITING_TECHNICAL_PR
+- Status: OWNER_ACTION_REQUIRED
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R3 protected read-only Staging diagnosis.
-- Current evidence: protected run `36321009852` consumed the prior exact command, deployed main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified the target as DRIFT, requested no APPLY, skipped runtime and then failed recovery on disallowed sudo file operations. No SQL APPLY, runtime activation or Production mutation occurred.
-- Technical prerequisite owned by Builder: merge the bounded diagnostics/recovery correction with exact-head CI, independent review and zero open P0/P1/P2. Do not act while this item is WAITING_TECHNICAL_PR.
-- Owner action after the prerequisite: on GitHub issue #874, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once, using the exact current main SHA after the correction merge.
+- Current evidence: protected run `36321009852` consumed the prior transition command, deployed main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified the target as DRIFT, requested no APPLY, skipped runtime and then failed recovery on disallowed sudo file operations. No SQL APPLY, runtime activation or Production mutation occurred.
+- Technical source prerequisite: SATISFIED by PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, normal merge `bc85493f8fc25ff90c965208bd20c7dc64641158`, exact-head CI/review with zero open P0/P1/P2, and the merged bounded diagnostics/recovery correction.
+- Owner action after this reconciliation merges: on GitHub issue #874, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once, using the then-current main SHA.
 - Unlocks: one bounded read-only classification with validated differing-section/blocker tokens, followed by Builder-owned reviewed remediation planning. It does not unlock APPLY or runtime activation directly.
 - Boundaries: no deploy, SQL APPLY, runtime/config change, Production access, raw/private catalog output or automatic transition retry. A later transition command requires completed reviewed drift remediation and a distinct fresh authorization.
 

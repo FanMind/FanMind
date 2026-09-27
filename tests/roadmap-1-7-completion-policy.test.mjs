@@ -815,11 +815,21 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     );
     if (targetRuntime) {
       assert.equal(targetRuntime.priority, -1);
-      assert.equal(targetRuntime.requires_owner, false);
+      assert.equal(targetRuntime.requires_owner, true);
+      assert.equal(targetRuntime.owner_action_id, "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927");
       assert.equal(targetRuntime.parallel_safe, false);
       assert.deepEqual(targetRuntime.depends_on_actions, [generatorId]);
-      assert.match(nextAction, /- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
+      assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
+      assert.match(nextAction, /- Active task continuations reserving slots: `NONE`/u);
       assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
+      assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
+      assert.match(nextAction, /run-creator-target-drift-diagnosis <then-current-main-sha>/u);
+      assert.match(autoHandoff, /- Next action status: `OWNER_ACTION_REQUIRED`/u);
+      assert.match(autoHandoff, /- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt/u);
+      assert.doesNotMatch(startedWork, /diagnosis is bound to exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
+      assert.doesNotMatch(dependencies, /diagnosis on exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
+      assert.match(startedWork, /diagnosis is bound to the exact then-current `main` after this reconciliation merges/u);
+      assert.match(dependencies, /diagnosis on the exact then-current `main` via `run-creator-target-drift-diagnosis <then-current-main-sha>`/u);
     } else {
       assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
     }
