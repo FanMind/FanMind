@@ -74,12 +74,19 @@ export function assertChatAdminFanInput(input) {
   };
 }
 
-export function buildChatAdminFanContext(character, fan, conversation, messages, incomingMessage) {
+export function buildChatAdminFanContext(character, fan, conversation, messages, incomingMessage, maxChars = Number.POSITIVE_INFINITY) {
   if (!fan || fan.workspace_id !== character.workspace_id || fan.character_id !== character.id || fan.status !== "active") throw new ChatAdminPolicyError("fan_unavailable");
   if (!conversation || conversation.workspace_id !== character.workspace_id || conversation.character_id !== character.id || conversation.fan_id !== fan.id) throw new ChatAdminPolicyError("conversation_unavailable");
   if (!Array.isArray(messages) || messages.some(message => message.workspace_id !== character.workspace_id || message.character_id !== character.id || message.fan_id !== fan.id || message.conversation_id !== conversation.id)) throw new ChatAdminPolicyError("message_context_mismatch");
   const base = JSON.parse(buildChatAdminCharacterContext(character, incomingMessage));
   base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, summary: fan.summary, notes: fan.notes };
-  base.conversation = { id: conversation.id, recent_messages: messages.slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at })) };
+  base.conversation = { id: conversation.id, recent_messages: [] };
+  const candidates = messages.slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at }));
+  // Prefer the newest complete turns. Never cut a message in the middle: if the
+  // fixed Character/Fan/incoming context itself is too large, the caller rejects it.
+  for (let index = candidates.length - 1; index >= 0; index -= 1) {
+    base.conversation.recent_messages.unshift(candidates[index]);
+    if (JSON.stringify(base).length > maxChars) { base.conversation.recent_messages.shift(); break; }
+  }
   return JSON.stringify(base);
 }

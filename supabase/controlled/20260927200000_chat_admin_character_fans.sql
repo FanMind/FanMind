@@ -13,10 +13,12 @@ create table public.chat_character_fans (
   status text not null default 'active' check (status in ('active','inactive')),
   summary text not null default '' check (char_length(summary) <= 4000),
   notes text not null default '' check (char_length(notes) <= 4000),
+  creation_id uuid not null,
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (workspace_id, character_id, id),
+  unique (workspace_id, character_id, creation_id),
   foreign key (workspace_id, character_id) references public.chat_characters(workspace_id, id) on delete cascade
 );
 
@@ -35,6 +37,9 @@ alter table public.chat_character_messages add column generation_id uuid;
 create unique index chat_character_messages_generation_once
   on public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,generation_id)
   where direction='fan_inbound' and generation_id is not null;
+create unique index chat_character_messages_confirmation_once
+  on public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,generation_id)
+  where direction='confirmed_reply' and generation_id is not null;
 alter table public.chat_character_messages add constraint chat_character_messages_fan_conversation_fk
   foreign key (workspace_id, character_id, fan_id, conversation_id)
   references public.chat_character_conversations(workspace_id, character_id, fan_id, id) on delete cascade;
@@ -81,8 +86,32 @@ create policy chat_admin_messages_owner_all on public.chat_character_messages fo
   );
 
 revoke all on table public.chat_character_fans from public, anon, authenticated, service_role;
-grant select,insert,update,delete on table public.chat_character_fans to authenticated, service_role;
+grant select,update,delete on table public.chat_character_fans to authenticated, service_role;
 revoke insert,update,delete on table public.chat_character_conversations,public.chat_character_messages from authenticated;
+
+create function public.create_chat_admin_fan(
+  target_workspace_id uuid, target_character_id uuid, target_creation_id uuid, fan_data jsonb
+) returns setof public.chat_character_fans language plpgsql security definer set search_path='' as $$
+declare saved public.chat_character_fans;
+begin
+  if target_creation_id is null or not public.is_current_chat_admin_workspace(target_workspace_id)
+  then raise exception 'chat_admin_fan_binding_invalid' using errcode='42501'; end if;
+  perform 1 from public.chat_characters c where c.workspace_id=target_workspace_id and c.id=target_character_id for update;
+  if not found then raise exception 'chat_admin_fan_binding_invalid' using errcode='42501'; end if;
+  select * into saved from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.creation_id=target_creation_id;
+  if found then
+    if saved.display_name <> btrim(fan_data->>'display_name') or saved.platform <> btrim(fan_data->>'platform')
+       or saved.handle is distinct from nullif(btrim(fan_data->>'handle'),'') or saved.language is distinct from nullif(btrim(fan_data->>'language'),'')
+       or saved.summary <> coalesce(fan_data->>'summary','') or saved.notes <> coalesce(fan_data->>'notes','')
+       or saved.status <> coalesce(fan_data->>'status','active')
+    then raise exception 'chat_admin_fan_creation_id_conflict' using errcode='23505'; end if;
+    return next saved; return;
+  end if;
+  insert into public.chat_character_fans(workspace_id,character_id,creation_id,display_name,handle,platform,language,status,summary,notes)
+  values(target_workspace_id,target_character_id,target_creation_id,btrim(fan_data->>'display_name'),nullif(btrim(fan_data->>'handle'),''),btrim(fan_data->>'platform'),nullif(btrim(fan_data->>'language'),''),coalesce(fan_data->>'status','active'),coalesce(fan_data->>'summary',''),coalesce(fan_data->>'notes',''))
+  returning * into saved;
+  return next saved;
+end $$;
 
 create function public.persist_chat_admin_generation(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
@@ -119,11 +148,12 @@ begin
 end $$;
 create function public.persist_chat_admin_confirmed_reply(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
-  target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, reply_content text
-) returns public.chat_character_messages language plpgsql security definer set search_path='' as $$
+  target_conversation_id uuid, target_character_revision integer, target_fan_revision integer,
+  target_confirmation_id uuid, reply_content text
+) returns setof public.chat_character_messages language plpgsql security definer set search_path='' as $$
 declare saved public.chat_character_messages;
 begin
-  if not public.is_current_chat_admin_workspace(target_workspace_id)
+  if target_confirmation_id is null or not public.is_current_chat_admin_workspace(target_workspace_id)
      or char_length(btrim(reply_content)) not between 1 and 4000
   then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_characters c where c.workspace_id=target_workspace_id and c.id=target_character_id and c.status='active' and c.revision=target_character_revision for update;
@@ -132,14 +162,28 @@ begin
   if not found then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_character_conversations c where c.workspace_id=target_workspace_id and c.character_id=target_character_id and c.fan_id=target_fan_id and c.id=target_conversation_id for update;
   if not found then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
-  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision)
-  values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'confirmed_reply',reply_content,target_character_revision) returning * into saved;
-  return saved;
+  select * into saved from public.chat_character_messages where workspace_id=target_workspace_id and character_id=target_character_id and fan_id=target_fan_id and conversation_id=target_conversation_id and direction='confirmed_reply' and generation_id=target_confirmation_id;
+  if found then
+    if saved.content <> btrim(reply_content) then raise exception 'chat_admin_confirmation_id_conflict' using errcode='23505'; end if;
+    return next saved; return;
+  end if;
+  insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision,generation_id)
+  values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'confirmed_reply',btrim(reply_content),target_character_revision,target_confirmation_id) returning * into saved;
+  return next saved;
 end $$;
 revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) from public,anon,service_role;
 grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) to authenticated;
-revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) from public,anon,service_role;
-grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) to authenticated;
+revoke all on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from public,anon,service_role;
+grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to authenticated;
+revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text) from public,anon,service_role;
+grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text) to authenticated;
+create function public.chat_admin_fan_schema_ready() returns boolean language sql stable security invoker set search_path='' as $$
+  select to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null
+     and to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null
+     and to_regprocedure('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)') is not null;
+$$;
+revoke all on function public.chat_admin_fan_schema_ready() from public,anon,service_role;
+grant execute on function public.chat_admin_fan_schema_ready() to authenticated;
 revoke all on function public.create_chat_admin_fan_conversation() from public,anon,authenticated,service_role;
 revoke all on function public.require_chat_admin_fan_binding() from public,anon,authenticated,service_role;
 commit;

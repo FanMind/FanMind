@@ -94,7 +94,7 @@ function harness(change) {
   const exports = {};
   runInNewContext(code, {
     exports, Response, Request, URL, AbortSignal, Date,
-    process: { env: { OPENAI_API_KEY: "synthetic-no-provider" } },
+    process: { env: { OPENAI_API_KEY: "synthetic-no-provider", FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED: "true" } },
     require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
     fetch: async (_url, init) => {
       calls.provider++;

@@ -1061,6 +1061,6 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Status: ACTIVE
 - Risk: R3
 - Holder: Codex Cloud
-- Baseline: `dbb37855f3eca4a652193b2db1db983a70118eba`
+- Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; Owner-Head `248c923232c8a55356bf601d11d475372568039a` mangels Remote/Objekt nicht verifiziert.
 - Scope: exakt ein zusammenhängender Repository-Strang für persistente Character-Fans, deren Wissen, Conversation/Message-Bindung, UI und KI-Kontext.
 - Forbidden: Staging-/Production-APPLY, Capability-Aktivierung, echte Kundendaten, Social/OnlyFans-Zugriff, Auto-Send, Billing, Mobile oder Creator-Target-Transition.

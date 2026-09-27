@@ -1076,8 +1076,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Owner: Codex Cloud
-- Baseline: `dbb37855f3eca4a652193b2db1db983a70118eba`; GitHub CLI/Web-Zugriff ist in dieser Umgebung nicht authentifiziert, daher ist der behauptete Remote-PR-Stand nicht als verifiziert gewertet.
+- Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; kein Git-Remote vorhanden. Der Owner-Head `248c923232c8a55356bf601d11d475372568039a` ist lokal nicht erreichbar, daher bleiben GitHub-Konflikte/Threads/Checks/Review unbestätigt.
 - Scope: additiver kontrollierter ChatAdmin-Fan-/Conversation-/Message-Vertrag, Owner-only API, sichtbare Character→Fan→Wissen/Verlauf UI, exakt servergebundener KI-Kontext und negative Isolationstests. Keine normale Creator-Semantik, kein Auto-Send, kein Provider-/Production-/Staging-Write.
-- Evidence plan: Policy/API/DB-PG17/UI tests, typecheck, lint, build, Browser-E2E, vollständige CI soweit lokal ausführbar, unabhängige Review und normaler PR. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
+- Completed locally: fokussierte Policy/API/Disclosure/Delete/Roadmap-Tests und Lint. Browser-Harness ist angepasst, seine Ausführung bleibt nach fehlendem Binary und HTTP-403-Download blockiert. Offen: Build/weitere lokale Gates, bestehendes-PR-Publishing, genau ein vollständiger GitHub-Gate-Lauf und exakte unabhängige Review. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
 - Exact next step: bestehenden PR #1216 korrigieren, auf dem finalen aktuellen Head FanMind CI, CodeQL, Browser E2E, God Mode und Project Memory grün nachweisen, danach die unabhängige Review ohne P1/P2 und ohne blockierende Threads abschließen und erst dann normal mergen. Ein kontrollierter Staging-Apply bleibt bis nach dem Source-Merge getrennt und nicht autorisiert.
 - Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.
