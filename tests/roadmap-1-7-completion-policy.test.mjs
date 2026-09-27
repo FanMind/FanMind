@@ -146,7 +146,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     if (explicitSeparateSubject.test(tail)) return false;
 
     const connectorOnlyPrefix =
-      /^(?:(?!the\\b|this\\b|that\\b|a\\b|an\\b|creator\\b|target\\b|transition\\b|generator\\b|source\\b|workspace\\b|action\\b|task\\b)[\\p{L}'’_-]+\\s+)*/iu;
+      /^(?:(?!(?:the|this|that|a|an|creator|target|transition|generator|source|workspace|action|task|status|remains?|is|was|were|still|incomplete|unfinished|pending|open|active|in[_\\s-]?progress)\\b)[\\p{L}'’_-]+\\s+)*/iu;
     const connectorPrefix = tail.match(connectorOnlyPrefix)?.[0] ?? "";
     return new RegExp(`^${lifecyclePredicate}`, "iu").test(tail.slice(connectorPrefix.length));
   });
@@ -180,6 +180,13 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
   assert.ok(generatorBearingEntries.length > 0);
   for (const action of generatorBearingEntries) {
     assert.match(action.instruction, /\S/u, `${action.id}: instruction must be non-empty`);
+    if (action.id === consumedGeneratorId) {
+      assert.doesNotMatch(
+        action.instruction,
+        /(?:^|[.!?]\s+)Status\s*:\s*(?:INCOMPLETE|UNFINISHED|PENDING|OPEN|ACTIVE|IN[_\s-]?PROGRESS)\b/iu,
+        action.instruction,
+      );
+    }
     const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
 
     for (const sentence of instructionSentences) {
