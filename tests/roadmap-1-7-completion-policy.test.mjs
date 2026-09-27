@@ -8,7 +8,8 @@ const completion = readFileSync(
   "utf8",
 );
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
+const actionCatalogText = read("project-memory/NEXT_BEST_ACTIONS.json");
+const actionCatalog = JSON.parse(actionCatalogText);
 const agents = read("AGENTS.md");
 const sourceOfTruth = read("docs/SOURCE_OF_TRUTH.md");
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
@@ -31,6 +32,12 @@ const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
 const decisions = read("project-memory/DECISIONS.md");
 const failedAttempts = read("project-memory/FAILED_ATTEMPTS.md");
+const changeRequests = read("project-memory/CHANGE_REQUESTS.md");
+const doNotAssume = read("project-memory/DO_NOT_ASSUME.md");
+const authorizations = read("project-memory/AUTHORIZATIONS.md");
+const reconciliationLog = read("project-memory/RECONCILIATION.md");
+const assumptions = read("project-memory/ASSUMPTIONS.md");
+const contradictions = read("project-memory/CONTRADICTIONS.md");
 const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
@@ -46,8 +53,9 @@ const markdownSection = (document, heading) => {
 const consumedGeneratorNextLineIsClosed = (line) => {
   const consumedGeneratorReference =
     `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
+  const consumedGeneratorAnaphor = "(?:this|it|(?:this|the)\\s+work)\\b";
   const consumedGeneratorActionTarget =
-    `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?${consumedGeneratorReference}`;
+    `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?(?:${consumedGeneratorReference}|${consumedGeneratorAnaphor})`;
   const closedSpans = [];
   const affirmativeCompletionPatterns = [
     new RegExp(
@@ -61,8 +69,8 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   ];
   for (const pattern of affirmativeCompletionPatterns) {
     for (const match of line.matchAll(pattern)) {
-      const prefix = line.slice(0, match.index);
-      if (!/\b(?:not|never)\s*$/iu.test(prefix)) {
+      const clausePrefix = line.slice(0, match.index).split(/[.;]/u).at(-1) ?? "";
+      if (!/\b(?:not|never|no\s+longer)\b/iu.test(clausePrefix)) {
         closedSpans.push([match.index, match.index + match[0].length]);
       }
     }
@@ -83,8 +91,13 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     consumedGeneratorReference,
     "iu",
   ).test(maskedLine.join(""));
+  const leavesUnclassifiedReopenDirective = new RegExp(
+    `\\b${reopeningVerb}\\s+${consumedGeneratorActionTarget}`,
+    "iu",
+  ).test(maskedLine.join(""));
   const affirmativelyRestarts =
     leavesUnclassifiedGeneratorReference ||
+    leavesUnclassifiedReopenDirective ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
   return closedSpans.length > 0 && !affirmativelyRestarts;
 };
@@ -307,7 +320,27 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       decisions,
       failedAttempts,
       executionReceipts,
+      actionCatalogText,
+      changeRequests,
+      evidence,
+      doNotAssume,
+      authorizations,
+      reconciliationLog,
+      assumptions,
+      contradictions,
     ];
+    for (const requiredReader of [
+      actionCatalogText,
+      changeRequests,
+      evidence,
+      doNotAssume,
+      authorizations,
+      reconciliationLog,
+      assumptions,
+      contradictions,
+    ]) {
+      assert.ok(mandatoryPreflightReaders.includes(requiredReader), "missing mandatory operational reader");
+    }
     for (const reader of mandatoryPreflightReaders) {
       const generatorNextLines = reader.split("\n").filter(
         (line) =>
@@ -378,6 +411,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       "work on it",
       `work on \`${generatorId}\``,
       `implementation of ${generatorId}`,
+      "this",
+      "the work",
+      "this work",
     ];
     for (const verb of reopeningVerbs) {
       for (const target of consumedGeneratorTargets) {
@@ -413,6 +449,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       `repeat ${generatorId}`,
       "proceed with it",
       `advance work on \`${generatorId}\``,
+      "continue this",
+      "rebuild this",
+      "resume the work",
     ]) {
       assert.equal(
         consumedGeneratorNextLineIsClosed(
@@ -428,6 +467,16 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       ),
       false,
     );
+    for (const negatedCompletion of [
+      `not fully superseded by the accepted/consumed ${generatorId} source package`,
+      `no longer superseded by the accepted/consumed ${generatorId} source package`,
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(`Next: ${negatedCompletion}`),
+        false,
+        negatedCompletion,
+      );
+    }
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
