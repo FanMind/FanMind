@@ -54,10 +54,12 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   const consumedGeneratorReference =
     `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
   const consumedGeneratorAnaphor =
-    "(?:this|that|it|(?:this|that|the)\\s+(?:work|implementation))\\b";
+    "(?:this|that|it|(?:this|that|the)(?:\\s+(?:same|original))?\\s+(?:work|implementation))\\b";
   const consumedGeneratorActionTarget =
     `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?(?:${consumedGeneratorReference}|${consumedGeneratorAnaphor})`;
   const closedSpans = [];
+  const completionNegation =
+    /\b(?:not|never|no\s+longer|cannot|(?:is|was|were|has|have|had|does|do|did|can|could|should|would|will|must)n['’]t|won['’]t)\b/iu;
   const affirmativeCompletionPatterns = [
     new RegExp(
       `superseded\\s+by\\s+the\\s+accepted\\/consumed\\s+(?:source(?:\\s+package)?|${consumedGeneratorReference}(?:\\s+source\\s+package)?)`,
@@ -71,7 +73,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   for (const pattern of affirmativeCompletionPatterns) {
     for (const match of line.matchAll(pattern)) {
       const clausePrefix = line.slice(0, match.index).split(/[.;]/u).at(-1) ?? "";
-      if (!/\b(?:not|never|no\s+longer)\b/iu.test(clausePrefix)) {
+      if (!completionNegation.test(clausePrefix)) {
         closedSpans.push([match.index, match.index + match[0].length]);
       }
     }
@@ -84,6 +86,20 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   for (const match of line.matchAll(explicitlyClosedDirective)) {
     closedSpans.push([match.index, match.index + match[0].length]);
   }
+  const explicitlyNegatedAction = new RegExp(
+    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+(?:${reopeningVerb}|repeat|proceed|advance)\\b`,
+    "giu",
+  );
+  for (const match of line.matchAll(explicitlyNegatedAction)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  const explicitlySeparateProtectedAction = new RegExp(
+    `\\b${reopeningVerb}\\s+the\\s+separately\\s+authorized\\s+target\\s+transition\\b`,
+    "giu",
+  );
+  for (const match of line.matchAll(explicitlySeparateProtectedAction)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
   const maskedLine = [...line];
   for (const [start, end] of closedSpans) {
     maskedLine.fill(" ", start, end);
@@ -93,20 +109,16 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     "iu",
   ).test(maskedLine.join(""));
   const leavesUnclassifiedReopenDirective = new RegExp(
-    `\\b${reopeningVerb}\\s+${consumedGeneratorActionTarget}`,
+    `\\b(?:${reopeningVerb}|repeat|proceed|advance)\\b`,
     "iu",
   ).test(maskedLine.join(""));
+  const leavesConflictingCompletionClaim =
+    /\b(?:superseded\s+by|accepted\/consumed|done)\b/iu.test(maskedLine.join(""));
   const affirmativelyRestarts =
     leavesUnclassifiedGeneratorReference ||
     leavesUnclassifiedReopenDirective ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
-  const completionNegator =
-    "(?:not|never|no\\s+longer|(?:is|was|were|has|have|had|does|do|did|can|could|should|would|will|must)n['’]t)";
-  const hasNegatedCompletionClaim = new RegExp(
-    `\\b${completionNegator}(?:\\s+[\\p{L}-]+){0,4}\\s+(?:superseded\\s+by|accepted\\/consumed|done)\\b`,
-    "iu",
-  ).test(line);
-  return closedSpans.length > 0 && !affirmativelyRestarts && !hasNegatedCompletionClaim;
+  return closedSpans.length > 0 && !affirmativelyRestarts && !leavesConflictingCompletionClaim;
 };
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
@@ -358,6 +370,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
         assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
       }
     }
+    const catalogInstruction = `${generatorId} is ACCEPTED/CONSUMED; ${transitionGenerator.instruction}`;
+    assert.equal(consumedGeneratorNextLineIsClosed(catalogInstruction), true);
+    assert.equal(consumedGeneratorNextLineIsClosed(`${catalogInstruction} Implement it again.`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next action: ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
@@ -425,6 +440,8 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       "the implementation",
       "this implementation",
       "that implementation",
+      "the same work",
+      "the original implementation",
     ];
     for (const verb of reopeningVerbs) {
       for (const target of consumedGeneratorTargets) {
@@ -488,6 +505,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       `wasn't superseded by the accepted/consumed ${generatorId} source package`,
       `${generatorId} is DONE but not ACCEPTED/CONSUMED`,
       `${generatorId} is ACCEPTED/CONSUMED, but not DONE`,
+      `${generatorId} is DONE but cannot be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE but can't be ACCEPTED/CONSUMED`,
+      `${generatorId} is DONE but won't be ACCEPTED/CONSUMED`,
     ]) {
       assert.equal(
         consumedGeneratorNextLineIsClosed(`Next: ${negatedCompletion}`),
