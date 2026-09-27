@@ -131,7 +131,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   const conflictingLifecycleState =
     "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
   const generatorScopedLifecycleConflict = new RegExp(
-    `${consumedGeneratorReference}(?:(?![.;]).){0,180}\\b(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState}\\b`,
+    `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+|also\\s+)?(?:accepted\\/consumed|done)\\b\\s*(?:,?\\s*(?:but|and)\\s*)?(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState}\\b`,
     "iu",
   ).test(line);
   const subjectlessLifecycleConflict = new RegExp(
@@ -227,6 +227,14 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
     ),
     false,
     "ACTIVE contradicts consumed closeout",
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED, but the separately authorized target transition is still unfinished`,
+    ),
+    true,
+    "unrelated protected target lifecycle must not reopen the consumed generator",
   );
 
   const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
