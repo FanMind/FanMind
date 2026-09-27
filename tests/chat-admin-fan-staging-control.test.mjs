@@ -11,6 +11,15 @@ test("fan migration runner pins the only controlled SQL", () => {
   assert.match(POSTFLIGHT_SQL, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
   assert.match(POSTFLIGHT_SQL, /persist_chat_admin_generation/u);
   assert.match(POSTFLIGHT_SQL, /has_function_privilege/u);
+  assert.match(POSTFLIGHT_SQL, /base_present/u);
+  assert.match(POSTFLIGHT_SQL, /base_rls_enabled<>4/u);
+  assert.match(POSTFLIGHT_SQL, /exact_function_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /rpc_contract_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /column_default_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /chat_character_conversations_one_per_fan/u);
+  assert.match(POSTFLIGHT_SQL, /authenticated_conversation_message_write_grant_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
+  assert.doesNotMatch(POSTFLIGHT_SQL, /\bcommit\s*;/iu);
 });
 
 test("fan workflow is manual, exact-main, staging-only and has no production mutation", () => {
