@@ -414,7 +414,7 @@
     },
     {
       "id": "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME",
-      "priority": 2,
+      "priority": -1,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_target_transition_runtime",
       "title": "Creator Foundation auf Staging atomar überführen und Runtime aktivieren",
