@@ -20,6 +20,7 @@ const RESTORE_DATABASE_WORKFLOW = "restore-drill-database.yml";
 const RESTORE_HOST_WORKFLOW = "restore-drill-host-readiness.yml";
 const STAGING_PROVISION_WORKFLOW = "provision-staging-host.yml";
 const STAGING_BILLING_CAPTURE_WORKFLOW = "staging-billing-capture.yml";
+const CHAT_ADMIN_FAN_STAGING_WORKFLOW = "chat-admin-fan-staging-migration.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
 const CREATOR_TARGET_RUNTIME_WORKFLOW = "creator-target-transition-runtime.yml";
 const CREATOR_TARGET_RECOVERY_WORKFLOW = "creator-target-admission-recovery.yml";
@@ -296,13 +297,17 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   const hostedWorkflows = workflowRecords.filter(
     (workflow) => !workflow.selfHosted && workflow.checkoutShas.length > 0,
   );
-  assert.equal(hostedWorkflows.length, 69);
+  assert.deepEqual(
+    hostedWorkflows.find((workflow) => workflow.file === CHAT_ADMIN_FAN_STAGING_WORKFLOW)?.checkoutShas,
+    [HOSTED_CHECKOUT_V7_0_1_SHA],
+  );
+  assert.equal(hostedWorkflows.length, 70);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    76,
+    77,
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
