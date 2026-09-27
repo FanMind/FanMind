@@ -1,0 +1,351 @@
+name: FanMind Creator Target Transition and Runtime
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: fanmind-staging-core-csv-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  authorize:
+    name: Validate exact owner command and current main
+    if: >-
+      ${{ github.event.issue.number == 874 &&
+      github.event.comment.user.login == 'Bernds-tech' &&
+      github.event.comment.user.id == 270165082 &&
+      startsWith(github.event.comment.body, 'run-creator-target-transition-runtime ') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      reviewed_commit: ${{ steps.command.outputs.reviewed_commit }}
+    steps:
+      - name: Parse exact one-shot command
+        id: command
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const body = process.env.COMMENT_BODY ?? "";
+          const match = body.match(/^run-creator-target-transition-runtime ([0-9a-f]{40})$/u);
+          if (!match) throw new Error("command_invalid");
+          const reviewed = match[1];
+          const response = await fetch("https://api.github.com/repos/FanMind/FanMind/branches/main", {
+            headers: {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json"},
+            redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          if (!response.ok) throw new Error("main_unavailable");
+          const main = await response.json();
+          if (main.commit?.sha !== reviewed) throw new Error("main_moved");
+          const {appendFileSync} = await import("node:fs");
+          appendFileSync(process.env.GITHUB_OUTPUT, `reviewed_commit=${reviewed}\n`);
+          console.log("CREATOR_TARGET_COMMAND=AUTHORIZED");
+          NODE
+
+      - name: Checkout exact current main authorization
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.command.outputs.reviewed_commit }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify current protected authorization is present
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ steps.command.outputs.reviewed_commit }}"
+          grep -Fq 'FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927' project-memory/AUTHORIZATIONS.md
+          grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' project-memory/AUTHORIZATIONS.md
+          grep -Fq 'Production is forbidden' project-memory/AUTHORIZATIONS.md
+
+  deploy:
+    name: Deploy exact reviewed main to isolated Staging
+    needs: authorize
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: read
+    outputs:
+      deployment_run: ${{ steps.dispatch.outputs.deployment_run }}
+    steps:
+      - name: Dispatch existing protected Staging deploy and wait for success
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {appendFileSync} from "node:fs";
+          const api = "https://api.github.com/repos/FanMind/FanMind";
+          const headers = {
+            Authorization: `Bearer ${process.env.GH_TOKEN}`,
+            Accept: "application/vnd.github+json",
+            "Content-Type": "application/json",
+          };
+          const started = new Date(Date.now() - 2000).toISOString();
+          let response = await fetch(`${api}/actions/workflows/deploy-staging.yml/dispatches`, {
+            method: "POST", headers, redirect: "error", signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({
+              ref: "main",
+              inputs: {
+                confirmation: "deploy-staging-only",
+                billing_write_freeze: "preserve",
+                release_state_recovery_confirmation: "",
+                previous_release_commit: "",
+              },
+            }),
+          });
+          if (response.status !== 204) throw new Error(`deploy_dispatch_${response.status}`);
+          let run;
+          for (let attempt = 0; attempt < 240; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            response = await fetch(`${api}/actions/workflows/deploy-staging.yml/runs?branch=main&event=workflow_dispatch&per_page=20`, {
+              headers, redirect: "error", signal: AbortSignal.timeout(15000),
+            });
+            if (!response.ok) throw new Error("deploy_runs_unavailable");
+            const payload = await response.json();
+            const matches = (payload.workflow_runs ?? []).filter(candidate =>
+              candidate.head_sha === process.env.REVIEWED_COMMIT &&
+              Date.parse(candidate.created_at) >= Date.parse(started));
+            if (!run && matches.length) run = matches.sort((a,b) => Date.parse(a.created_at)-Date.parse(b.created_at))[0];
+            if (!run) continue;
+            const current = (payload.workflow_runs ?? []).find(candidate => candidate.id === run.id) ?? run;
+            if (current.status === "completed") {
+              if (current.conclusion !== "success") throw new Error(`deploy_failed_${current.id}`);
+              appendFileSync(process.env.GITHUB_OUTPUT, `deployment_run=${current.id}\n`);
+              console.log(`CREATOR_TARGET_DEPLOY_RUN=${current.id}`);
+              process.exit(0);
+            }
+          }
+          throw new Error("deploy_timeout");
+          NODE
+
+  transition:
+    name: Apply exact Legacy-to-Current Creator transition on Staging
+    needs: [authorize, deploy]
+    runs-on: ubuntu-24.04
+    environment: staging
+    permissions:
+      actions: read
+      contents: read
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: https://staging.fanmind.ch
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_CREATOR_TRANSITION_CONFIRM: apply-creator-foundation-transition
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+    steps:
+      - name: Checkout exact reviewed main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.authorize.outputs.reviewed_commit }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify deployed release and disabled runtime before database write
+        env:
+          FANMIND_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+          FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$REVIEWED_COMMIT"
+          node --input-type=module <<'NODE'
+          const versionResponse = await fetch("https://staging.fanmind.ch/api/version", {
+            cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          const version = await versionResponse.json();
+          if (!versionResponse.ok || version.application !== "fanmind" ||
+              version.runtimeEnvironment !== "staging" ||
+              version.releaseCommit !== process.env.REVIEWED_COMMIT) throw new Error("release_mismatch");
+          const loginResponse = await fetch(`${process.env.FANMIND_STAGING_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: "POST", redirect: "error", signal: AbortSignal.timeout(15000),
+            headers: {"Content-Type":"application/json", apikey: process.env.FANMIND_STAGING_SUPABASE_ANON_KEY},
+            body: JSON.stringify({email: process.env.FANMIND_STAGING_E2E_EMAIL, password: process.env.FANMIND_STAGING_E2E_PASSWORD}),
+          });
+          if (!loginResponse.ok) throw new Error("synthetic_login_failed");
+          const token = (await loginResponse.json()).access_token;
+          if (typeof token !== "string" || token.length < 20) throw new Error("synthetic_token_invalid");
+          const creatorResponse = await fetch("https://staging.fanmind.ch/api/creators", {
+            headers: {Authorization: `Bearer ${token}`}, cache: "no-store", redirect: "error",
+            signal: AbortSignal.timeout(15000),
+          });
+          const creator = await creatorResponse.json();
+          if (!creatorResponse.ok || creator.available !== false) throw new Error("runtime_not_disabled");
+          console.log("CREATOR_TARGET_RUNTIME_PREFLIGHT=DISABLED_CONFIRMED");
+          NODE
+
+      - name: Download and verify the accepted private PG17 reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
+        run: |
+          set -euo pipefail
+          mkdir -m 700 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from "node:fs";
+          const id = 10916053961;
+          const headers = {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json"};
+          let response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/artifacts/${id}`, {
+            headers, redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          if (!response.ok) throw new Error("reference_metadata_unavailable");
+          const meta = await response.json();
+          if (meta.id !== id || meta.expired || meta.name !== "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6" ||
+              meta.workflow_run?.id !== 36273161074 ||
+              meta.workflow_run?.head_sha !== "3cd67cedbcdc051be855d09de8d5ea3225179217" ||
+              meta.digest !== "sha256:c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c") throw new Error("reference_metadata_mismatch");
+          response = await fetch(meta.archive_download_url, {
+            headers, redirect: "follow", signal: AbortSignal.timeout(30000),
+          });
+          if (!response.ok) throw new Error("reference_download_failed");
+          writeFileSync(`${process.env.RUNNER_TEMP}/creator-reference.zip`, Buffer.from(await response.arrayBuffer()), {mode: 0o600, flag: "wx"});
+          NODE
+          printf '%s  %s\n' 'c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c' "$RUNNER_TEMP/creator-reference.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/creator-reference.zip" -d "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          rm -f "$RUNNER_TEMP/creator-reference.zip"
+          chmod 600 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"/*.json
+
+      - name: Prepare dedicated private database password file
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-creator-transition.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+          echo "PGPASSFILE=$PGPASSFILE" >> "$GITHUB_ENV"
+
+      - name: Verify source, classify fresh target and apply atomically
+        env:
+          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-transition-reference
+        run: |
+          set -euo pipefail
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --check
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --verify
+          node scripts/operations/creator-foundation-transition-staging-runner.mjs --apply
+
+      - name: Remove private target evidence
+        if: ${{ always() }}
+        run: |
+          rm -rf "$RUNNER_TEMP/creator-transition-reference"
+          rm -f "$RUNNER_TEMP/fanmind-creator-transition.pgpass" "$RUNNER_TEMP/creator-reference.zip"
+
+  runtime:
+    name: Enable Creator runtime and prove authenticated Staging readback
+    needs: [authorize, deploy, transition]
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    environment: staging
+    permissions:
+      contents: read
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: https://staging.fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CREATOR_RUNTIME_REVIEWED_COMMIT: ${{ needs.authorize.outputs.reviewed_commit }}
+      FANMIND_CREATOR_RUNTIME_CONFIRM: enable-creator-intelligence-staging
+      FANMIND_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
+      FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+      FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+    steps:
+      - name: Checkout exact reviewed main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.authorize.outputs.reviewed_commit }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Enable flag, restart, prove runtime and rollback flag on failure
+        run: |
+          set -euo pipefail
+          ENV_FILE=/var/www/fanmind-staging/.env.production
+          SECRET_FILE=/etc/fanmind-staging/runtime-secrets.env
+          RELEASE_FILE=/var/www/fanmind-staging/.release.env
+          test "$(git rev-parse HEAD)" = "${{ needs.authorize.outputs.reviewed_commit }}"
+          test -f "$ENV_FILE" && test ! -L "$ENV_FILE" && test "$(stat -c '%a' "$ENV_FILE")" = 600
+          test -f "$SECRET_FILE" && test ! -L "$SECRET_FILE" && test "$(stat -c '%U:%G:%a' "$SECRET_FILE")" = root:fanmind-staging:640
+          test -f "$RELEASE_FILE" && test ! -L "$RELEASE_FILE" && test "$(stat -c '%a' "$RELEASE_FILE")" = 600
+          set -a
+          . "$ENV_FILE"
+          . "$SECRET_FILE"
+          . "$RELEASE_FILE"
+          set +a
+          test "$FANMIND_RELEASE_COMMIT" = "${{ needs.authorize.outputs.reviewed_commit }}"
+          BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
+          test ! -e "$BACKUP" && test ! -L "$BACKUP"
+          rollback_flag() {
+            if [ -f "$BACKUP" ]; then
+              node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP" || true
+              sudo systemctl restart fanmind-staging.service || true
+              rm -f "$BACKUP"
+            fi
+          }
+          trap rollback_flag ERR
+          node scripts/operations/creator-runtime-staging.mjs enable "$BACKUP"
+          sudo systemctl restart fanmind-staging.service
+          sudo systemctl is-active --quiet fanmind-staging.service
+          node --input-type=module <<'NODE'
+          let versionOk = false;
+          for (let attempt = 0; attempt < 20; attempt++) {
+            try {
+              const response = await fetch("https://staging.fanmind.ch/api/version", {
+                cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000),
+              });
+              const body = await response.json();
+              if (response.ok && body.application === "fanmind" && body.runtimeEnvironment === "staging" &&
+                  body.releaseCommit === process.env.GITHUB_SHA) { versionOk = true; break; }
+            } catch {}
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          if (!versionOk) throw new Error("runtime_release_mismatch");
+          const loginResponse = await fetch(`${process.env.FANMIND_STAGING_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: "POST", redirect: "error", signal: AbortSignal.timeout(15000),
+            headers: {"Content-Type":"application/json", apikey: process.env.FANMIND_STAGING_SUPABASE_ANON_KEY},
+            body: JSON.stringify({email: process.env.FANMIND_STAGING_E2E_EMAIL, password: process.env.FANMIND_STAGING_E2E_PASSWORD}),
+          });
+          if (!loginResponse.ok) throw new Error("runtime_login_failed");
+          const token = (await loginResponse.json()).access_token;
+          const creatorResponse = await fetch("https://staging.fanmind.ch/api/creators", {
+            headers: {Authorization: `Bearer ${token}`}, cache: "no-store", redirect: "error",
+            signal: AbortSignal.timeout(15000),
+          });
+          const creator = await creatorResponse.json();
+          if (!creatorResponse.ok || creator.available !== true || !Array.isArray(creator.creators) || creator.creators.length !== 0) throw new Error("runtime_creator_readback_failed");
+          console.log("CREATOR_RUNTIME_STAGING_AVAILABLE=PASS");
+          console.log("CREATOR_RUNTIME_STAGING_CREATORS=0");
+          NODE
+          trap - ERR
+          rm -f "$BACKUP"
+          echo "CREATOR_RUNTIME_STAGING_ACTIVATED=PASS"
