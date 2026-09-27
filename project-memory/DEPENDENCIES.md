@@ -3,7 +3,7 @@
 - Action/task: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME / FM-CREATOR-001
 - Accepted source dependency: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged as exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`; prior PR #1207 reference/profile and PR #1209 transition source remain accepted/consumed.
 - Attempt-1 evidence: run `36321009852` deployed prior main, target state DRIFT, APPLY not requested, runtime skipped; no SQL/runtime/Production mutation. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
-- Current dependency: one owner-authenticated read-only diagnosis on exact main `bc85493f8fc25ff90c965208bd20c7dc64641158` via `run-creator-target-drift-diagnosis <then-current-main-sha>`.
+- Current dependency: after this reconciliation merges, one owner-authenticated read-only diagnosis on the exact then-current `main` via `run-creator-target-drift-diagnosis <then-current-main-sha>`.
 - After diagnosis: Builder may implement/review only the proven differing-section remediation. A later transition/runtime execution requires a distinct fresh authorization and revalidated exact target prerequisites.
 - Runtime dependency remains: successful CURRENT_EXACT database postflight plus exact deployed release before any flag enable; authenticated synthetic `GET /api/creators` must prove enabled runtime with zero Creator rows.
 - Boundary: Staging diagnosis only at this step; no Production/provider/customer/Billing/Restore/Mobile mutation.

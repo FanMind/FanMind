@@ -826,6 +826,10 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       assert.match(nextAction, /run-creator-target-drift-diagnosis <then-current-main-sha>/u);
       assert.match(autoHandoff, /- Next action status: `OWNER_ACTION_REQUIRED`/u);
       assert.match(autoHandoff, /- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt/u);
+      assert.doesNotMatch(startedWork, /diagnosis is bound to exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
+      assert.doesNotMatch(dependencies, /diagnosis on exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
+      assert.match(startedWork, /diagnosis is bound to the exact then-current `main` after this reconciliation merges/u);
+      assert.match(dependencies, /diagnosis on the exact then-current `main` via `run-creator-target-drift-diagnosis <then-current-main-sha>`/u);
     } else {
       assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
     }
