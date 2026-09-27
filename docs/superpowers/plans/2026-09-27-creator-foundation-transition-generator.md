@@ -36,7 +36,7 @@
 
 **Interfaces:**
 - Consumes: accepted reconciliation source/profile constants and explicit observed-state input.
-- Produces: `buildCreatorFoundationTransition(input)` returning deterministic `{sql, manifest}` or a fixed-code error.
+- Produces: `buildCreatorFoundationTransitionSource()` for the deterministic source artifact and `assertCreatorFoundationTransitionPreconditions(input)` for the fail-closed plan.
 
 - [x] Write unit tests for exact output inventory and every fail-closed input class; run and observe missing-module/API failures.
 - [x] Implement pin/profile/state validation and deterministic bounded SQL generation.
@@ -46,10 +46,10 @@
 
 **Files:**
 - Create: `tests/creator-foundation-transition-generator-pg17.test.mjs`
-- Modify: `.github/workflows/ci.yml`
+- Modify: `.github/workflows/ci-fanmind.yml`
 
 **Interfaces:**
-- Consumes: `buildCreatorFoundationTransition()` output and existing isolated Legacy/Current fixtures.
+- Consumes: `buildCreatorFoundationTransitionSource()` output and existing isolated Legacy/Current fixtures.
 - Produces: native proof for exact Legacy-to-Current catalog, injected rollback at each step, unchanged rows and authorization negatives.
 
 - [x] Write PG17 tests for the transition harness/artifact.
@@ -67,5 +67,5 @@
 - Produces: one reviewable source package with reproducible manifest and explicit next protected integration step.
 
 - [x] Register focused/full tests and document reproducible artifact generation without an APPLY path.
-- [ ] Run Operations, Memory, drift, freshness, God Mode and diff checks.
+- [x] Run Operations, Memory, drift, freshness, God Mode and diff checks on the initial published head; repeat all affected checks after review corrections.
 - [ ] Commit/publish one coherent code+test+documentation head, request one independent review, process all findings, and merge only after exact-head CI is green with zero open P0/P1/P2.

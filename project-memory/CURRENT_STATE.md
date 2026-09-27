@@ -4,6 +4,7 @@
 - Exact base/lock: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` / `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927` ACTIVE.
 - Result required: deterministic fail-closed generator for only the accepted helper, two RPCs and four policy USING changes, plus reproducible manifest and native PostgreSQL 17 rollback/data-preservation/negative proofs.
 - Boundary: no target/provider call, SQL APPLY, workflow dispatch, product-data write, runtime activation or deployment acceptance. Later target observation/reference acceptance and transition execution remain separate protected actions.
+- Current evidence: PR #1209 head `d7aebf7d749487e1e23a9f104f5869f86e84784d` is blocked. FanMind CI `36281083473` failed in the native PG17 proof because extension-local `digest` was unavailable; review also identified exact-output, trust-binding and unknown-role-negative gaps. Independent review of local correction `863ade1b701bffcf5f8c9028450460a74ed63c47` then found that the new role was not connected to the catalog authority graph; that valid P1 is corrected locally and must pass fresh exact-head CI/review. No completion or merge is claimed.
 
 ## Creator source profile reconciliation and transition design accepted
 - Status: ACCEPTED; repository source package consumed.

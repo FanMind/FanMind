@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { buildCreatorFoundationCatalogSql } from "../scripts/operations/creator-foundation-reconciliation-catalog.mjs";
@@ -9,6 +11,7 @@ import { CREATOR_FOUNDATION_SOURCE_PINS } from "../scripts/operations/creator-fo
 import {
   assertCreatorFoundationTransitionPreconditions,
   buildCreatorFoundationTransitionSource,
+  CREATOR_FOUNDATION_TRANSITION_ACCEPTED_INPUTS,
   CREATOR_FOUNDATION_TRANSITION_IDENTITIES,
   CREATOR_FOUNDATION_TRANSITION_SQL_SHA256,
   main,
@@ -25,6 +28,12 @@ test("transition source contains only the pinned helper, two RPCs and four polic
   assert.equal(artifact.targetAccepted, false);
   assert.equal(artifact.applyAllowed, false);
   assert.equal(artifact.querySha256, querySha256);
+  assert.equal(artifact.acceptedInputs.referenceSha256, "0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c");
+  assert.equal(artifact.acceptedInputs.querySha256, "252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436");
+  assert.equal(artifact.acceptedInputs.providerContractSha256, "123fdda5c1a718ce643ea42471d6f56a4ee512178a0df1eb613910fbef046d26");
+  assert.equal(artifact.acceptedInputs.parentReferenceSqlSha256, "4f54b28202154baa756487b1df993a83ce36b1eee2fb08b75923ec98937df154");
+  assert.equal(artifact.acceptedInputs.roleProfileSha256, "32a4b7ca799afc2d3903b193a40f79f7d2a97291d40fac568637321cd3014f9d");
+  assert.deepEqual(artifact.acceptedInputs, CREATOR_FOUNDATION_TRANSITION_ACCEPTED_INPUTS);
   assert.equal(artifact.parentProfile, CREATOR_FOUNDATION_PARENT_PROFILE);
   assert.equal(artifact.roleProfile, creatorFoundationHostedPg17RoleProfile().profile);
   assert.deepEqual(artifact.sourcePins, Object.fromEntries(Object.entries(CREATOR_FOUNDATION_SOURCE_PINS).map(([name, pin]) => [name, {sha256: pin.sha256, gitBlob: pin.gitBlob}])));
@@ -62,7 +71,7 @@ test("source manifest and returned values are immutable across callers", () => {
   assert.equal(second.sourcePins.currentConflict.sha256, CREATOR_FOUNDATION_SOURCE_PINS.currentConflict.sha256);
 });
 
-test("planning requires a cryptographically bound LEGACY_EXACT classifier result", () => {
+test("planning cannot replace the repository classifier with a caller-selected result", () => {
   const valid = {
     snapshot: {schemaVersion: 1},
     referenceJson: "{}",
@@ -70,18 +79,7 @@ test("planning requires a cryptographically bound LEGACY_EXACT classifier result
     expectedQuerySha256: querySha256,
   };
   const classify = () => ({status: "LEGACY_EXACT", blockers: [], differingSections: [], applyAllowed: false, targetAccepted: false});
-  const plan = assertCreatorFoundationTransitionPreconditions(valid, {classify});
-  assert.equal(plan.classification.status, "LEGACY_EXACT");
-  assert.equal(plan.artifact.sqlSha256, sha256(plan.artifact.sql));
-  assert.equal(plan.applyAllowed, false);
-  assert.equal(plan.targetAccepted, false);
-
-  for (const status of ["CURRENT_EXACT", "DRIFT", "INCOMPLETE"]) {
-    assert.throws(
-      () => assertCreatorFoundationTransitionPreconditions(valid, {classify: () => ({status, blockers: ["blocked"], differingSections: ["functions"]})}),
-      new RegExp(`CREATOR_FOUNDATION_TRANSITION_ERROR=${status === "CURRENT_EXACT" ? "already_current" : "precondition_not_legacy_exact"}`, "u"),
-    );
-  }
+  assert.throws(() => assertCreatorFoundationTransitionPreconditions(valid, {classify}), /reference_pin/u);
 });
 
 test("planning rejects query drift, reference-pin drift and target-derived shortcuts before classification", () => {
@@ -108,5 +106,8 @@ test("CLI exposes only source verification and deterministic SQL generation", as
   assert.match(checked.output, /TRANSPORT=NONE/u);
   const generated = await main(["--sql"]);
   assert.equal(generated.output, buildCreatorFoundationTransitionSource().sql);
+  const executable = fileURLToPath(new URL("../scripts/operations/creator-foundation-transition-generator.mjs", import.meta.url));
+  const emitted = execFileSync(process.execPath, [executable, "--sql"]);
+  assert.equal(sha256(emitted), CREATOR_FOUNDATION_TRANSITION_SQL_SHA256);
   await assert.rejects(() => main(["--apply"]), /mode_invalid/u);
 });

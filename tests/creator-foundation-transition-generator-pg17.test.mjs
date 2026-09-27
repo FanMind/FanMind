@@ -17,6 +17,7 @@ import {
 import {
   assertCreatorFoundationTransitionPreconditions,
   buildCreatorFoundationTransitionSource,
+  CREATOR_FOUNDATION_TRANSITION_ACCEPTED_INPUTS,
 } from "../scripts/operations/creator-foundation-transition-generator.mjs";
 
 const enabled = process.env.FANMIND_CREATOR_PG17_REQUIRED === "true";
@@ -72,13 +73,13 @@ INSERT INTO public.creator_commercial_events(id,workspace_id,creator_id,contact_
 RESET "request.jwt.claim.sub";
 `;
 
-const dataFingerprintSql = `SELECT encode(digest(convert_to(jsonb_build_object(
+const dataFingerprintSql = `SELECT pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(jsonb_build_object(
   'creators',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.creators t),
   'voice',(SELECT jsonb_agg(to_jsonb(t) ORDER BY workspace_id,creator_id) FROM public.creator_voice_profiles t),
   'playbooks',(SELECT jsonb_agg(to_jsonb(t) ORDER BY workspace_id,creator_id) FROM public.creator_sales_playbooks t),
   'events',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.creator_commercial_events t),
   'profiles',(SELECT jsonb_agg(to_jsonb(t) ORDER BY workspace_id,contact_id) FROM public.contact_ai_profiles t)
-)::text,'UTF8'),'sha256'),'hex');`;
+)::text,'UTF8')),'hex');`;
 
 test("PG17 proves the bounded legacy-to-current transition, rollback and data preservation", {skip: !enabled}, () => {
   assert.equal(sql("SELECT current_setting('server_version_num')::integer / 10000;"), "17");
@@ -108,6 +109,7 @@ test("PG17 proves the bounded legacy-to-current transition, rollback and data pr
     const reference = buildCreatorFoundationReference({legacy, current, roleProfile, querySha256: digest(query)});
     const referenceJson = JSON.stringify(reference);
     const trustedReferenceSha256 = digest(referenceJson);
+    assert.equal(trustedReferenceSha256, CREATOR_FOUNDATION_TRANSITION_ACCEPTED_INPUTS.referenceSha256);
     const hosted = snapshot => {
       const copy = structuredClone(snapshot);
       copy.catalog.roles = structuredClone(roleProfile.roles);
@@ -150,6 +152,18 @@ test("PG17 proves the bounded legacy-to-current transition, rollback and data pr
       const changed = hosted(JSON.parse(sql(query, databases[2])));
       assert.throws(() => assertCreatorFoundationTransitionPreconditions({snapshot: changed, referenceJson, trustedReferenceSha256, expectedQuerySha256: digest(query)}), /precondition_not_legacy_exact/u);
       createFixture(databases[2], "legacy");
+    }
+
+    sql("CREATE ROLE creator_transition_unknown NOLOGIN; GRANT creator_transition_unknown TO postgres;");
+    try {
+      const observed = JSON.parse(sql(query, databases[2]));
+      const unknownRole = observed.catalog.roles.find(role => role.name === "creator_transition_unknown");
+      assert.ok(unknownRole, "catalog query must expose the unknown role");
+      const changed = hosted(observed);
+      changed.catalog.roles.push(unknownRole);
+      assert.throws(() => assertCreatorFoundationTransitionPreconditions({snapshot: changed, referenceJson, trustedReferenceSha256, expectedQuerySha256: digest(query)}), /precondition_not_legacy_exact/u);
+    } finally {
+      sql("REVOKE creator_transition_unknown FROM postgres; DROP ROLE IF EXISTS creator_transition_unknown;");
     }
   } finally {
     for (const database of databases) sql(`DROP DATABASE IF EXISTS ${database} WITH (FORCE);`);

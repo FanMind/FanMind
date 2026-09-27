@@ -26,8 +26,11 @@ It emits exactly one pinned helper definition with its ACL, the two pinned RPC
 replacements, and four `ALTER POLICY ... USING` statements. Its SQL SHA256 is
 `db69721ce1a3e81a82a0f101e3bd0bdbda1959b0f367a2ffa6413004dd3bb214`.
 There is deliberately no `--apply` mode or target transport. Forming a transition
-plan requires the fixed catalog-query hash, an independently SHA256-bound
-reference, and a fresh `LEGACY_EXACT` result from the classifier. `CURRENT_EXACT`,
+plan requires the fixed catalog-query hash, the independently accepted PR #1207
+reference SHA256 `0543eacab3872c71ec289100d62204fb2fd1660be242b14ae55bf007701b456c`,
+and a fresh `LEGACY_EXACT` result from the non-replaceable repository classifier. The
+manifest additionally binds the accepted source, provider, parent and role-profile
+digests before SQL bytes are emitted. `CURRENT_EXACT`,
 DRIFT/INCOMPLETE, Admin-CRM variants, unknown overloads/policies/role paths and
 caller-supplied target-derived expectations fail closed. A plan still reports
 `applyAllowed=false` and `targetAccepted=false`; protected target reconciliation

@@ -2,14 +2,15 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: IN_PROGRESS
+- Status: IN_PROGRESS; PR #1209 current published head `d7aebf7d749487e1e23a9f104f5869f86e84784d` is not accepted.
 - Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` (verified merge of PR #1208).
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927 (ACTIVE).
 - Remaining result: implement the repository-only, fail-closed generator/assertions wrapper that emits only the pinned Creator access helper, two RPC bodies and four policy USING replacements, plus a reproducible manifest and native PostgreSQL 17 proofs.
 - Expected files/contracts: `scripts/operations/creator-foundation-transition-generator.mjs`, focused unit/native tests, package/CI registration, the accepted profile/transition design and exact Project Memory readers. Contract: source/test artifacts only; no target/provider call, workflow dispatch, SQL APPLY, product-data write, runtime activation or deployment acceptance.
 - Acceptance criteria: (1) exact accepted source/query/profile pins are verified before generation; (2) output contains only the one helper, two RPC replacements and four policy changes; (3) mixed/current/unknown overload-policy-role/AdminCRM/profile drift fails closed; (4) native PG17 proves rollback after injected failures, unchanged data and required cross-workspace negatives; (5) exact-head CI plus one independent review pass with no open P0/P1/P2 before normal merge.
 - Negative/regression tests: corrupt pins/profile, mixed/already-current state, unexpected AdminCRM, unknown overload/policy/role path, injected failure after every transition step, preserved stored data and foreign-workspace/member denial.
-- Exact next step: add failing unit tests for the bounded generator API and its fixed fail-closed error classes, then implement the minimal deterministic generator before wiring native PG17 rollback/data-preservation proofs.
+- Completed so far: the bounded generator, unit/native regression suite and CI registration are published on PR #1209. Its first exact-head FanMind CI run `36281083473` failed because the fresh fixture database did not provide extension-local `digest`; review also found a duplicated CLI newline, caller-replaceable classification, incomplete accepted input pins and a missing unknown-role native negative. The first local correction commit `863ade1b701bffcf5f8c9028450460a74ed63c47` passed focused tests, Operations, lint and build, but its independent pre-publication review found one P1: the synthetic unknown role was not connected to the catalog's authority graph and therefore could not be observed. The corrected fixture grants that role to the seeded `postgres` principal, asserts the actual catalog row, then revokes and drops it. No target/provider/runtime mutation occurred.
+- Exact next step: repeat affected verification, publish all corrections together to the same PR, run exact-head CI including native PG17, request exactly one independent review of that changed head and merge only with zero open P0/P1/P2.
 - Completion stage: repository source acceptance only. Next integration after acceptance is a separately authorized exact-target observation/reference acceptance; transition execution/APPLY and learning/runtime acceptance remain distinct protected gates.
 
 ## FM-CREATOR-001 — bounded profile reconciliation and transition design
