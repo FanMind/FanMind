@@ -33,10 +33,10 @@ standing-authorized safe work
 
 ## Candidate evaluation
 
+- `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **EXECUTABLE** — standing-authorized safe work
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
 - `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: **DONE** — gate creator_foundation_transition_generator is ACCEPTED
-- `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **EXECUTABLE** — standing-authorized safe work
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
