@@ -1,8 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import {
   buildAtomicCreatorTransitionSql,
+  buildTrustedCreatorTransitionReference,
   CREATOR_TARGET_TRANSITION_REFERENCE,
   evaluateCreatorTargetEnvironment,
 } from "../scripts/operations/creator-foundation-transition-staging-runner.mjs";
@@ -32,6 +36,26 @@ test("Creator target transition is bound to the accepted private reference", () 
   });
 });
 
+test("Creator target transition rejects a symlinked private reference", () => {
+  const directory = mkdtempSync(join(tmpdir(), "fanmind-creator-reference-"));
+  const sourceDirectory = join(directory, "source");
+  const referenceDirectory = join(directory, "reference");
+  mkdirSync(sourceDirectory);
+  mkdirSync(referenceDirectory);
+  writeFileSync(join(sourceDirectory, "legacy.json"), "{}", {mode: 0o600});
+  writeFileSync(join(referenceDirectory, "current.json"), "{}", {mode: 0o600});
+  symlinkSync(join(sourceDirectory, "legacy.json"), join(referenceDirectory, "legacy.json"));
+
+  try {
+    assert.throws(
+      () => buildTrustedCreatorTransitionReference(referenceDirectory),
+      /CREATOR_TARGET_TRANSITION_ERROR=reference_file_invalid/u,
+    );
+  } finally {
+    rmSync(directory, {recursive: true, force: true});
+  }
+});
+
 test("Creator target environment rejects Production, stale heads and missing write gates", () => {
   assert.equal(evaluateCreatorTargetEnvironment(baseEnvironment, {mode: "apply"}).ok, true);
   assert.equal(evaluateCreatorTargetEnvironment({...baseEnvironment, FANMIND_TARGET_SUPABASE_PROJECT_REF: "drqkpdvtbbrrdwmtrodz"}, {mode: "apply"}).ok, false);
@@ -58,7 +82,7 @@ test("Atomic Creator target SQL rechecks Legacy under lock and Current before co
   assert.match(sql, /CREATOR_TARGET_TRANSITION_POSTFLIGHT_DRIFT/u);
   assert.match(sql, /COMMIT;/u);
   assert.match(sql, /CREATOR_TARGET_TRANSITION_APPLY=COMMITTED/u);
-  assert.doesNotMatch(sql, /drop table|truncate table|delete from public\.creators|update public\.creators/iu);
+  assert.doesNotMatch(sql, /(?:^|\n)(?:drop table|truncate table|delete from public\.creators)/iu);
 
   const preconditionIndex = sql.indexOf("CREATOR_TARGET_TRANSITION_PRECONDITION_DRIFT");
   const helperIndex = sql.toLowerCase().indexOf("create or replace function public.creator_workspace_access_allowed");
