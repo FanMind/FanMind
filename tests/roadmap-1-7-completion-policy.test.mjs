@@ -44,17 +44,19 @@ const markdownSection = (document, heading) => {
 
 const consumedGeneratorNextLineIsClosed = (line) => {
   const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
-  const negatedRestartOffsets = new Set();
-  const negatedRestartList =
-    /\b(?:do\s+not|don't|must\s+not|cannot|never)\s+(?:start|implement|reopen)\b(?:(?:\s+(?:and|or)\s+|\s*,\s*(?:(?:and|or)\s+)?)(?:start|implement|reopen)\b)*/giu;
-  for (const listMatch of line.matchAll(negatedRestartList)) {
-    for (const restartMatch of listMatch[0].matchAll(/\b(?:start|implement|reopen)\b/giu)) {
-      negatedRestartOffsets.add(listMatch.index + restartMatch.index);
-    }
+  const restartMentions = [];
+  for (const match of line.matchAll(/\b(?:start|implement|reopen)\b/giu)) {
+    const previous = restartMentions.at(-1);
+    const prefix = line.slice(0, match.index);
+    const connector = previous ? line.slice(previous.end, match.index) : "";
+    const directlyNegated = /\b(?:do\s+not|don't|must\s+not|cannot|never)\s*$/iu.test(prefix);
+    const continuesNegatedList =
+      previous?.negated === true && /^\s+(?:and|or)\s+$/iu.test(connector);
+    restartMentions.push({
+      end: match.index + match[0].length,
+      negated: directlyNegated || continuesNegatedList,
+    });
   }
-  const restartMentions = Array.from(line.matchAll(/\b(?:start|implement|reopen)\b/giu), (match) => ({
-    negated: negatedRestartOffsets.has(match.index),
-  }));
   const explicitlyNegatesRestart = restartMentions.some(({ negated }) => negated);
   const affirmativelyRestarts =
     restartMentions.some(({ negated }) => !negated) ||
@@ -287,6 +289,10 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
     assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next: Do not start or implement ${generatorId}`),
+      true,
+    );
+    assert.equal(
       consumedGeneratorNextLineIsClosed(`Next action: Do not wait; implement ${generatorId}`),
       false,
     );
@@ -304,7 +310,13 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     );
     assert.equal(
       consumedGeneratorNextLineIsClosed(`Next: Do not start, implement, or reopen ${generatorId}`),
-      true,
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next action: ${generatorId} ACCEPTED/CONSUMED; do not start, implement it instead`,
+      ),
+      false,
     );
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
