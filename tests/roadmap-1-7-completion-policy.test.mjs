@@ -130,16 +130,14 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     );
   const conflictingLifecycleState =
     "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
-  const generatorScopedLifecycleConflict = new RegExp(
-    `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+|also\\s+)?(?:accepted\\/consumed|done)\\b\\s*(?:,?\\s*(?:but|and)\\s*)?(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState}\\b`,
-    "iu",
-  ).test(line);
-  const subjectlessLifecycleConflict = new RegExp(
-    `(?:^|[.;]\\s*)(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:remains?|is|was|were)(?:\\s+still)?\\s+${conflictingLifecycleState})\\b`,
-    "iu",
-  ).test(remainingText);
-  const hasConflictingLifecycleState =
-    generatorScopedLifecycleConflict || subjectlessLifecycleConflict;
+  const directLifecycleConflictAfterCloseout = closedSpans.some(([, end]) => {
+    const tail = line.slice(end);
+    return new RegExp(
+      `^\\s*(?:[,.;:]\\s*)?(?:(?:but|and|yet|while)\\s+)?(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`,
+      "iu",
+    ).test(tail);
+  });
+  const hasConflictingLifecycleState = directLifecycleConflictAfterCloseout;
   const affirmativelyRestarts =
     leavesUnclassifiedGeneratorReference ||
     leavesUnclassifiedReopenDirective ||
@@ -235,6 +233,26 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
     ),
     true,
     "unrelated protected target lifecycle must not reopen the consumed generator",
+  );
+
+  for (const directConflict of [
+    `${consumedGeneratorId} is ACCEPTED/CONSUMED, yet remains ACTIVE`,
+    `${consumedGeneratorId} is ACCEPTED/CONSUMED while still unfinished`,
+    `superseded by the accepted/consumed ${consumedGeneratorId} source package but remains ACTIVE`,
+  ]) {
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(directConflict),
+      false,
+      directConflict,
+    );
+  }
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED. The separately authorized target transition; Status: ACTIVE.`,
+    ),
+    true,
+    "target-scoped Status: ACTIVE must not reopen the consumed generator",
   );
 
   const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
