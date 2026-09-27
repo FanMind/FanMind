@@ -200,6 +200,13 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(generatorReceipt.targetAccepted, false);
     assert.equal(generatorReceipt.applyAllowed, false);
     assert.equal(generatorReceipt.runtimeActivated, false);
+    const catalogLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26");
+    const preflightLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — Foundation reconciliation preflight — 2026-09-26");
+    const verifyLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — Confirmed-Chat VERIFY — 2026-09-26");
+    for (const section of [catalogLedger, preflightLedger, verifyLedger]) {
+      assert.match(section, /superseded by the accepted\/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209/u);
+      assert.doesNotMatch(section, /(?:Next step|Next): implement .*NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u);
+    }
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
