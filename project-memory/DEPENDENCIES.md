@@ -1,10 +1,11 @@
 ## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
-- Status: TODO; exact bounded repository continuation admitted and executable, but not started. It becomes IN_PROGRESS only with its own atomic exact-base start contract and lock.
+- Status: IN_PROGRESS; exact bounded repository continuation started from `a165f3c074e8e0eb2b24ea3882a3fd57db011939` under `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927`.
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Task: FM-CREATOR-001
 - Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
 - Completion contract: emit only the helper, two RPC bodies and four policy USING replacements; fail closed on every unsupported profile/pin/state; prove native rollback, negative isolation and unchanged data; publish a reproducible manifest through exact-head CI and independent review.
 - Boundary: repository source/tests only. No target/provider call, SQL APPLY, workflow dispatch, runtime activation or deployment acceptance. A later target-bound continuation requires a distinct protected action and current authorization.
+- Current blocker: PR #1209 head `d7aebf7d749487e1e23a9f104f5869f86e84784d` has failed required native CI and open review findings. Independent review of local correction `863ade1b701bffcf5f8c9028450460a74ed63c47` also rejected an unobservable isolated-role fixture; the same branch must prove the corrected core-PG17 fingerprint, exact CLI bytes, independently accepted input pins, non-replaceable classifier and membership-connected catalog-observed unknown-role negative before this dependency can be accepted.
 
 ## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001

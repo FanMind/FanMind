@@ -15,6 +15,7 @@ const requiredCiRoots = [
   "test:staging-stripe-catalog",
   "test:staging-stripe-webhook",
   "test:database-authorization:pg17",
+  "test:creator-foundation-transition",
 ];
 
 function referencedScripts(command) {

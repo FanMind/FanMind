@@ -153,7 +153,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(state.gates.creator_foundation_reconciliation_preflight.state, "ACCEPTED");
     assert.equal(state.gates.creator_foundation_staging_catalog.state, "RECONCILED");
     assert.equal(state.gates.creator_foundation_profile_transition_design.state, "ACCEPTED");
-    assert.equal(state.gates.creator_foundation_transition_generator.state, "TODO");
+    assert.equal(state.gates.creator_foundation_transition_generator.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_intelligence.state, "IN_PROGRESS");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.state, "RECONCILED");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
@@ -171,10 +171,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.ok(["REMOVED", "NOT_CREATED"].includes(receipt.cleanup.credentials));
     assert.ok(Object.values(receipt.counts).every(value => value === 0));
     const creatorLoop = markdownSection(openLoops, "## FM-LOOP-CREATOR-SOCIAL-20260910");
-    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED; bounded repository transition-generator work is TODO\/EXECUTABLE/u);
+    assert.match(creatorLoop, /- Exact next boundary: source preflight and profile-transition design are ACCEPTED\/CONSUMED; bounded repository transition-generator work is IN_PROGRESS/u);
     const generatorDependency = markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926");
-    assert.match(generatorDependency, /- Status: TODO; exact bounded repository continuation admitted and executable, but not started\./u);
-    assert.match(generatorDependency, /It becomes IN_PROGRESS only with its own atomic exact-base start contract and lock\./u);
+    assert.match(generatorDependency, /- Status: IN_PROGRESS; exact bounded repository continuation started from `a165f3c074e8e0eb2b24ea3882a3fd57db011939` under `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927`\./u);
     assert.match(profileDesign.instruction, /Completed and consumed repository source package/u);
     assert.match(profileDesign.instruction, /No target\/provider call, APPLY, target reference acceptance or runtime activation occurred/u);
     assert.match(profileDesign.instruction, /distinct protected action with current authorization and exact target binding/u);
@@ -195,7 +194,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     const acceptedEvidence = markdownSection(evidence, "## EV-CREATOR-FOUNDATION-PROFILE-TRANSITION-PR1207");
     assert.match(acceptedEvidence, /- Status: ACCEPTED; immutable repository source package, consumed\./u);
     assert.match(acceptedEvidence, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
-    assert.match(acceptedEvidence, /The transition generator is TODO\/EXECUTABLE but not started/u);
+    assert.match(acceptedEvidence, /The transition generator is IN_PROGRESS from exact base `a165f3c074e8e0eb2b24ea3882a3fd57db011939`/u);
     assert.ok(transitionGenerator);
     assert.equal(transitionGenerator.priority, 2);
     assert.equal(transitionGenerator.requires_owner, false);
@@ -204,9 +203,9 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(transitionGenerator.gate, "creator_foundation_transition_generator");
     assert.match(transitionGenerator.instruction, /fail closed on pin\/profile drift/u);
     assert.match(transitionGenerator.instruction, /No target\/provider call, workflow dispatch, SQL APPLY/u);
-    assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR TODO\/EXECUTABLE, NICHT GESTARTET/u);
-    assert.match(transitionDesign, /Diese Repository-Arbeit ist \*\*TODO\/EXECUTABLE, aber nicht gestartet\*\*/u);
-    assert.match(transitionDesign, /Nächste konkrete Source-Arbeit ist `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
+    assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE ACCEPTED; ÜBERGANGSGENERATOR IN_PROGRESS AUF EXACT BASE/u);
+    assert.match(transitionDesign, /Diese Repository-Arbeit ist \*\*IN_PROGRESS\*\*/u);
+    assert.match(transitionDesign, /Aktuelle konkrete Source-Arbeit ist `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);
     assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
     assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
     assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`/u);

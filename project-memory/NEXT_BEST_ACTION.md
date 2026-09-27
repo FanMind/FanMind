@@ -6,7 +6,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 - Phase 8 started: `true`
 - Selected action: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
 - Task: `FM-CREATOR-001`
-- Gate: `creator_foundation_transition_generator` (`TODO`)
+- Gate: `creator_foundation_transition_generator` (`IN_PROGRESS`)
 - Selection status: `EXECUTABLE`
 - Title: Begrenzten Creator-Foundation-Übergang fail-closed erzeugen und nativ beweisen
 
@@ -25,7 +25,7 @@ standing-authorized safe work
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
 - Worker slots reserved by active/ready work: `1`
-- Active task continuations reserving slots: `NONE`
+- Active task continuations reserving slots: `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.

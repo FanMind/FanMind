@@ -1,3 +1,9 @@
+## Creator Foundation transition generator review correction
+- Status: IN_PROGRESS; repository source/tests only. PR #1209 published head `d7aebf7d749487e1e23a9f104f5869f86e84784d` is blocked by failed native PG17 CI and open review findings.
+- Task/action: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.
+- Exact base/lock: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` / `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927` ACTIVE.
+- Correction prepared locally: replace extension-local `digest` with core PG17 SHA256, emit `--sql` bytes without a second newline, bind the independently accepted PR #1207 reference plus source/provider/parent/role digests, remove caller classifier replacement and add the unknown-role native negative. Independent review of local commit `863ade1b701bffcf5f8c9028450460a74ed63c47` found one P1 because the new role was not connected to the catalog authority graph; the fixture now grants it to seeded `postgres`, asserts the observed row, then revokes and drops it. Next: repeat affected verification, publish one combined same-PR update, run exact-head CI and one independent changed-head review. No target action is admitted.
+
 ## Creator source profile reconciliation and transition design accepted
 - Status: ACCEPTED; repository source package consumed.
 - Completion: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`. All eight exact-head workflows passed; FanMind CI run `36273161074` and native PG17 job `108490997482` passed. Independent exact-head review reported no P0/P1/P2/P3; all review threads are resolved. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.

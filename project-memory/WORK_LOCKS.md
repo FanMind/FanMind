@@ -1,3 +1,16 @@
+## LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Risk: R3
+- Status: ACTIVE
+- Holder: autonomous FanMind Builder
+- Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939`.
+- Scope: one serialized repository-only generator/assertions implementation with focused/native tests and reproducible manifest. It may emit only the accepted helper, two RPC bodies and four policy USING replacements from independently pinned source/profile inputs.
+- Parallel safety: all Creator Foundation generator, transition SQL, reconciliation profile/manifest, and related Project Memory work is serialized under this lock; no second worker or PR for the action.
+- Forbidden: target/provider/database calls, workflow dispatch, SQL APPLY, product-data writes, runtime activation, deployment/target acceptance, Production/Billing/Restore/Mobile mutation, secrets and direct main writes.
+- Release condition: source and tests on one exact head, native PG17 rollback/data-preservation/negative proof, reproducible manifest, all required exact-head checks, one independent review, zero open P0/P1/P2, normal merge and post-merge source verification.
+- Recovery: ordinary repository revert; no external cleanup because this scope performs no external mutation.
+
 ## LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
