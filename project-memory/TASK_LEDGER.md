@@ -1,5 +1,7 @@
 ## FM-CHATADMIN-003 — persistente Fans je Character — 2026-09-27
-- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED.
+- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED; source contract follow-up in PR #1222, draft, exact head `23f6c59644ffb2320ab489e3fa43a65683dd2c06`.
+- Merge follow-up: PR #1221 merged as `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; post-merge review-thread audit found open security-contract concerns, so the staging postflight is being hardened before any controlled staging use.
+- PR #1222 binds parent authority and the complete fan schema/RLS/RPC/privilege contract to read-only catalog checks; CI is still running and PG17 catalog execution remains required.
 - Lock: `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927` ACTIVE.
 - Result so far: V1-compatible default-off rollout, schema/RPC readiness gate, bounded fan pagination/context, provider `store:false`, retry-idempotent fan creation/confirmation and exact-one-row RPC normalization are implemented on the reachable local checkout.
 - Evidence: focused Policy/API/Disclosure/Delete/Roadmap tests and lint pass; Browser component execution is environment-blocked by missing Chromium and HTTP-403 browser download. GitHub conflict/check/thread/review state is not available because this checkout has no remote and the owner-provided head object is absent.
