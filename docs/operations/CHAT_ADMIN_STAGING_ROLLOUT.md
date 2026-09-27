@@ -1,5 +1,32 @@
 # ChatAdmin V1 — kontrollierter Staging-Rollout
 
+## Persistente Character-Fans (27. September 2026)
+
+Die additive Fan-Erweiterung besitzt einen eigenen, manuellen Staging-Kontrollpfad in
+`.github/workflows/chat-admin-fan-staging-migration.yml`. Dieser Pfad ist nicht Teil
+eines normalen Web-Deployments und darf Production nicht adressieren. Er bindet den
+Dispatch an den exakten aktuellen `main`-Commit, das geschützte Environment `staging`,
+den von Production verschiedenen API-/Supabase-/Datenbank-Target und TLS
+`verify-full`. `VERIFY` ist read-only. `APPLY` benötigt zusätzlich die exakte
+Bestätigung `apply-chat-admin-migration`, den Non-Production-Write-Acknowledge und
+wendet ausschließlich die checksum-gepinnte Datei
+`20260927200000_chat_admin_character_fans.sql` als deren eigene Transaktion an.
+
+Der Postflight akzeptiert keine bloßen Objektzahlen: Er prüft Fan-Tabelle und
+-Spalten, zusammengesetzte Foreign Keys, alle vier partiellen Unique-Indizes, RLS,
+die Fan-Policy, entzogene direkte Conversation-/Message-Schreibrechte, die drei
+atomaren RPCs, deren Rollenrechte und `security definer`/festen `search_path` sowie
+den Readiness-RPC. Ausgabe und Fehler bleiben auf feste Zustände begrenzt. Ein
+bereits vollständig verifiziertes Schema wird nicht erneut angewendet; ein partielles
+Schema blockiert fail-closed.
+
+Merge oder erfolgreiche lokale Checks autorisieren weder den Apply noch die
+Runtime-Aktivierung. Nach Merge ist zuerst der geschützte Apply auf dem dann
+aktuellen `main` durch einen Owner auszuführen. Die spätere Staging-Runtime-
+Aktivierung und synthetische Browser-Abnahme bleiben getrennte, evidence-gebundene
+Schritte; `FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED` bleibt bis dahin default-off
+und Production unverändert.
+
 Stand 26. September 2026: Das ChatAdmin-Schema ist auf Staging angewendet (Run `36235870895`); die getrennte synthetische DB/RLS-Abnahme ist bestanden (Run `36238536613`, Versuch 2). Beide Schritte sind verbraucht und werden nicht wiederholt. Der getrennte synthetische manuelle Staging-Anwendungsflow ist durch Run `36255475314`, Versuch 1, samt unabhängigem Cleanup-/Schema-/Session-/Production-Gegencheck abgenommen und verbraucht. Der historische DB-Workflow behält seinen begrenzten `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`-Output. Kein realer Workspace besitzt die Capability; Production-Aktivierung bleibt offen. ChatAdmin ist ausschließlich ein normaler Workspace Owner plus `chat_admin_multi_character=true`, niemals Platform Admin.
 
 ## Geschützter Ablauf

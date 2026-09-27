@@ -1,4 +1,10 @@
 ## ChatAdmin persistente Character-Fans — Repository-Implementierung, Staging ausstehend — 2026-09-27
+- Follow-up-Kontrollpfad vorbereitet: der dedizierte manuelle Workflow
+  `chat-admin-fan-staging-migration.yml` kann nur den checksum-gepinnten Fan-Vertrag
+  gegen das geschützte, von Production getrennte Staging-Ziel verifizieren oder nach
+  expliziter Owner-Freigabe einmalig anwenden. Der vollständige Katalog-/RLS-/RPC-
+  Postflight ist read-only und sanitized. Merge/PR oder lokale Evidence sind keine
+  Apply-Autorisierung; Runtime und Production bleiben unverändert/default-off.
 - Status: IMPLEMENTED_NOT_VERIFIED; Task `FM-CHATADMIN-003`, Lock `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`.
 - Sichtbarer Scope: Character-spezifische persistente Fans, minimales Fanwissen, Conversation-/Message-Verlauf, drei servergebundene KI-Vorschläge und bestätigte manuelle Antwort. Normale Creator/Contacts bleiben getrennt; kein Auto-Send.
 - Sicherheit: additive kontrollierte SQL-Quelle mit zusammengesetzten Workspace/Character/Fan-FKs, RLS, genau einer Conversation je Fan, direkten Message-/Conversation-Mutationen entzogen und atomaren revision-/status-/history-gebundenen RPCs. Disclosure und Account-Delete-Inventar enthalten Fans.
