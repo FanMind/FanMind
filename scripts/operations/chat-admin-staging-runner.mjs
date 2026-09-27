@@ -18,6 +18,17 @@ export const SQL_PATH =
 export const SQL_SHA256 =
   "36990f58521e3986542f5b9b206af93f9fa4a6e6439352b4b11ead7685e4275a";
 
+// Compare the actual function source with the checksum-pinned controlled SQL,
+// rather than accepting a function that merely contains a few expected tokens.
+const controlledSql = readFileSync(new URL(`../../${SQL_PATH}`, import.meta.url), "utf8");
+function expectedFunctionSource(name) {
+  const match = controlledSql.match(
+    new RegExp(`create function public\\.${name}\\([\\s\\S]*? as \\$\\$([\\s\\S]*?)\\$\\$;`, "u"),
+  );
+  if (!match) throw new Error(`missing controlled function: ${name}`);
+  return `'${match[1].replaceAll("'", "''")}'`;
+}
+
 export const CHAT_ADMIN_POSTFLIGHT_SQL = String.raw`\set ON_ERROR_STOP on
 begin;
 set transaction read only;
@@ -36,6 +47,7 @@ declare
   trigger_mismatch integer;
   identity_mismatch integer;
   function_body_mismatch integer;
+  exact_function_mismatch integer;
   base_function_mismatch integer;
   function_privilege_mismatch integer;
   table_privilege_mismatch integer;
@@ -195,11 +207,11 @@ begin
 
   select count(*) into trigger_mismatch
   from (
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
-    select 1 where not exists (select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal)
+    select 1 where not exists (select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal and tgenabled='O' and tgtype=5 and tgfoid=to_regprocedure('public.create_chat_admin_fan_conversation()') and tgqual is null)
   ) checks;
 
   select count(*) into identity_mismatch
@@ -212,7 +224,7 @@ begin
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname='public'
-    and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
+    and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
     and c.relrowsecurity;
 
   select count(*) into policy_valid
@@ -367,6 +379,21 @@ begin
     )
   ) checks;
 
+  with expected(name, body) as (values
+    ('require_chat_admin_fan_binding', ${expectedFunctionSource("require_chat_admin_fan_binding")}),
+    ('create_chat_admin_fan_conversation', ${expectedFunctionSource("create_chat_admin_fan_conversation")}),
+    ('create_chat_admin_fan', ${expectedFunctionSource("create_chat_admin_fan")}),
+    ('persist_chat_admin_generation', ${expectedFunctionSource("persist_chat_admin_generation")}),
+    ('persist_chat_admin_confirmed_reply', ${expectedFunctionSource("persist_chat_admin_confirmed_reply")}),
+    ('chat_admin_fan_schema_ready', ${expectedFunctionSource("chat_admin_fan_schema_ready")})
+  )
+  select count(*) into exact_function_mismatch
+  from expected e
+  where not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname=e.name and p.prosrc=e.body
+  );
+
   select count(*) into function_privilege_mismatch
   from (
     select 1 where not has_function_privilege('authenticated','public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','execute')
@@ -408,7 +435,7 @@ begin
     and has_function_privilege('authenticated','public.chat_admin_fan_schema_ready()','execute')
   then 0 else 1 end into readiness_mismatch;
 
-  if rls_enabled <> 3
+  if rls_enabled <> 5
     or base_policy_count <> 2
     or base_policy_valid <> 2
     or policy_count <> 3
@@ -419,6 +446,7 @@ begin
     or trigger_mismatch <> 0
     or identity_mismatch <> 0
     or function_body_mismatch <> 0
+    or exact_function_mismatch <> 0
     or base_function_mismatch <> 0
     or function_privilege_mismatch <> 0
     or table_privilege_mismatch <> 0
