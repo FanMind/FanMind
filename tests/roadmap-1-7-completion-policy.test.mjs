@@ -66,7 +66,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
       "giu",
     ),
     new RegExp(
-      `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+)?(?:accepted\\/consumed|done)\\b`,
+      `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+|also\\s+)?(?:accepted\\/consumed|done)\\b`,
       "giu",
     ),
   ];
@@ -133,6 +133,56 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
   return closedSpans.length > 0 && !affirmativelyRestarts && !leavesConflictingCompletionClaim;
 };
+
+const assertGeneratorCatalogInstructionsClosed = (catalog) => {
+  const catalogEntries = [
+    ...(catalog.actions ?? []),
+    ...(catalog.retired_actions ?? []),
+  ];
+  const generatorBearingEntries = catalogEntries.filter(
+    (action) =>
+      action.id === consumedGeneratorId ||
+      (typeof action.instruction === "string" && action.instruction.includes(consumedGeneratorId)),
+  );
+  assert.ok(generatorBearingEntries.length > 0);
+  for (const action of generatorBearingEntries) {
+    const instructionSentences = action.instruction.split(/(?<=[.!?])\s+/u);
+    const generatorSentences = instructionSentences.filter((sentence) =>
+      sentence.includes(consumedGeneratorId),
+    );
+    if (action.id === consumedGeneratorId && generatorSentences.length === 0) {
+      generatorSentences.push(
+        `${consumedGeneratorId} is ACCEPTED/CONSUMED; ${instructionSentences[0]}`,
+      );
+    }
+    assert.ok(generatorSentences.length > 0, action.id);
+    for (const sentence of generatorSentences) {
+      const closeoutClause = sentence.split(";")[0];
+      assert.equal(consumedGeneratorNextLineIsClosed(closeoutClause), true, sentence);
+    }
+    assert.doesNotMatch(
+      action.instruction,
+      /\b(?:start|restart|implement|re-?implement|reopen|rebuild|resume|continue)(?:s|ed|ing)?\s+(?:it|this|that|the\s+(?:same\s+|original\s+)?(?:work|implementation)|`?NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR\b`?)/iu,
+      action.instruction,
+    );
+  }
+};
+
+test("consumed generator closeout covers every catalog lifecycle instruction", () => {
+  const catalog = structuredClone(actionCatalog);
+  const profileDesignIndex = catalog.actions.findIndex(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  );
+  assert.notEqual(profileDesignIndex, -1);
+  const [profileDesign] = catalog.actions.splice(profileDesignIndex, 1);
+  profileDesign.instruction += " Reimplement it.";
+  catalog.retired_actions.push(profileDesign);
+
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(catalog),
+    /Reimplement it/u,
+  );
+});
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
@@ -227,7 +277,11 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
   const reconciliation = actionCatalog.actions.find((a) => a.id === reconciliationId);
   const catalogObservation = actionCatalog.actions.find((a) => a.id === catalogId);
   const profileDesign = actionCatalog.actions.find((a) => a.id === designId);
-  const transitionGenerator = actionCatalog.actions.find((a) => a.id === generatorId);
+  const transitionGenerator = [
+    ...actionCatalog.actions,
+    ...actionCatalog.retired_actions,
+  ].find((a) => a.id === generatorId);
+  assertGeneratorCatalogInstructionsClosed(actionCatalog);
   assert.equal(verify.priority, control || reconciliation ? 6 : 2);
   assert.equal(verify.requires_owner, true);
   assert.equal(verify.parallel_safe, false);
@@ -300,11 +354,8 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(freshness.status, "ACCEPTED");
     assert.match(freshness.source, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
   }
-
-  // The consumed-generator closeout is durable evidence, not a property of
-  // profileDesign remaining in the active action catalog. Keep these checks
-  // live across normal catalog retirement/removal.
-  {
+  // Permanent closeout invariants must survive active-catalog cleanup and the
+  // selection of later Creator actions.
     const generatorReceipt = JSON.parse(read("project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json"));
     assert.equal(generatorReceipt.status, "ACCEPTED");
     assert.equal(generatorReceipt.final_head, "176efc9bfaf84b75b72591abb6a4bcc453e4a58c");
@@ -393,31 +444,8 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
         assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
       }
     }
-    const generatorCatalogEntries = [
-      ...actionCatalog.actions,
-      ...(actionCatalog.retired_actions ?? []),
-    ].filter(
-      (action) =>
-        typeof action.instruction === "string" &&
-        (action.id === generatorId || action.instruction.includes(generatorId)),
-    );
-    assert.ok(generatorCatalogEntries.length > 0, "missing generator-bearing catalog instruction");
-    for (const action of generatorCatalogEntries) {
-      const catalogInstruction =
-        action.id === generatorId
-          ? `${generatorId} is ACCEPTED/CONSUMED; ${action.instruction}`
-          : action.instruction;
-      assert.equal(
-        consumedGeneratorNextLineIsClosed(catalogInstruction),
-        true,
-        `${action.id}: ${catalogInstruction}`,
-      );
-      assert.equal(
-        consumedGeneratorNextLineIsClosed(`${catalogInstruction} Reimplement it.`),
-        false,
-        `${action.id}: appended reopen directive must block`,
-      );
-    }
+    const catalogInstruction = `${generatorId} is ACCEPTED/CONSUMED; ${transitionGenerator.instruction}`;
+    assert.equal(consumedGeneratorNextLineIsClosed(`${catalogInstruction} Implement it again.`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next action: ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
@@ -602,29 +630,21 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.match(acceptedEvidence, /- Status: ACCEPTED; immutable repository source package, consumed\./u);
     assert.match(acceptedEvidence, /b323361cafc3829e470f6da611c7ab7d8c8664f6/u);
     assert.match(acceptedEvidence, /The transition generator is ACCEPTED\/CONSUMED by PR #1209/u);
-    if (transitionGenerator) {
-      assert.equal(transitionGenerator.priority, 2);
-      assert.equal(transitionGenerator.requires_owner, false);
-      assert.equal(transitionGenerator.parallel_safe, false);
-      assert.deepEqual(transitionGenerator.depends_on_actions, [designId]);
-      assert.equal(transitionGenerator.gate, "creator_foundation_transition_generator");
-      assert.match(transitionGenerator.instruction, /Completed and consumed repository source package/u);
-      assert.match(transitionGenerator.instruction, /No target\/provider call, target observation\/reference acceptance, SQL APPLY/u);
-    }
+    assert.ok(transitionGenerator);
+    assert.equal(transitionGenerator.priority, 2);
+    assert.equal(transitionGenerator.requires_owner, false);
+    assert.equal(transitionGenerator.parallel_safe, false);
+    assert.deepEqual(transitionGenerator.depends_on_actions, [designId]);
+    assert.equal(transitionGenerator.gate, "creator_foundation_transition_generator");
+    assert.match(transitionGenerator.instruction, /Completed and consumed repository source package/u);
+    assert.match(transitionGenerator.instruction, /No target\/provider call, target observation\/reference acceptance, SQL APPLY/u);
     assert.match(transitionDesign, /PROFIL-\/DESIGN-SOURCE UND ÜBERGANGSGENERATOR ACCEPTED\/CONSUMED/u);
     assert.match(transitionDesign, /`NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` ist als Repository-Source \*\*ACCEPTED\/CONSUMED\*\*/u);
     assert.doesNotMatch(transitionDesign, /Unabhängig freigegebener Hosted-Vertrag fehlt/u);
-    if (profileDesign) {
-      assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
-    }
-    if (transitionGenerator) {
-      assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: \*\*DONE\*\*/u);
-    }
+    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: \*\*DONE\*\*/u);
+    assert.match(nextAction, /- `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: \*\*DONE\*\*/u);
     assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
-  }
-  if (profileDesign) {
-    // Current profile-design catalog state was validated above.
-  } else if (catalogObservation) {
+  if (!profileDesign && catalogObservation) {
     assert.equal(catalogObservation.priority, 2);
     assert.equal(catalogObservation.requires_owner, true);
     assert.equal(catalogObservation.parallel_safe, false);
@@ -648,7 +668,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.match(catalogObservation.instruction, /No schema APPLY/u);
     assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-STAGING-CATALOG`/u);
     assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-  } else if (reconciliation) {
+  } else if (!profileDesign && reconciliation) {
     assert.equal(reconciliation.priority, 2);
     assert.equal(reconciliation.requires_owner, false);
     assert.deepEqual(reconciliation.depends_on_actions, [verifyId]);
@@ -661,7 +681,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.observed_result, "FOUNDATION_MISSING");
     assert.equal(state.gates.creator_confirmed_chat_staging_verify.workflow_conclusion, "failure");
     assert.match(reconciliation.instruction, /No target DDL/u);
-  } else {
+  } else if (!profileDesign) {
     assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
     assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
   }
