@@ -49,3 +49,37 @@ export function buildChatAdminCharacterContext(character, incomingMessage, fanLa
   };
   return JSON.stringify(context);
 }
+
+export function assertChatAdminFanInput(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new ChatAdminPolicyError("invalid_fan");
+  const bounded = (field, required = false, max = 4_000) => {
+    const value = input[field];
+    if (value == null || value === "") {
+      if (required) throw new ChatAdminPolicyError(`invalid_${field}`);
+      return null;
+    }
+    if (typeof value !== "string" || !value.trim() || value.length > max) throw new ChatAdminPolicyError(`invalid_${field}`);
+    return value.trim();
+  };
+  const status = input.status ?? "active";
+  if (!['active', 'inactive'].includes(status)) throw new ChatAdminPolicyError("invalid_fan_status");
+  return {
+    display_name: bounded("display_name", true, 120),
+    handle: bounded("handle", false, 120),
+    platform: bounded("platform", true, 40),
+    language: bounded("language", false, 40),
+    status,
+    summary: bounded("summary", false) ?? "",
+    notes: bounded("notes", false) ?? "",
+  };
+}
+
+export function buildChatAdminFanContext(character, fan, conversation, messages, incomingMessage) {
+  if (!fan || fan.workspace_id !== character.workspace_id || fan.character_id !== character.id || fan.status !== "active") throw new ChatAdminPolicyError("fan_unavailable");
+  if (!conversation || conversation.workspace_id !== character.workspace_id || conversation.character_id !== character.id || conversation.fan_id !== fan.id) throw new ChatAdminPolicyError("conversation_unavailable");
+  if (!Array.isArray(messages) || messages.some(message => message.workspace_id !== character.workspace_id || message.character_id !== character.id || message.fan_id !== fan.id || message.conversation_id !== conversation.id)) throw new ChatAdminPolicyError("message_context_mismatch");
+  const base = JSON.parse(buildChatAdminCharacterContext(character, incomingMessage));
+  base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, summary: fan.summary, notes: fan.notes };
+  base.conversation = { id: conversation.id, recent_messages: messages.slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at })) };
+  return JSON.stringify(base);
+}

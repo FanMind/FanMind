@@ -1272,9 +1272,17 @@ Impersonation- oder service-role-Rechte. Konfigurierte Platform Admins werden vo
 ChatAdmin-Anwendungsautorisierung auch bei sonst vorhandener Owner-Capability
 ausdrücklich abgewiesen. Normale Accounts bleiben bei genau einem
 Creator und einem Schreibstil; `creators.workspace_id UNIQUE` wird nicht geändert.
-V1 verarbeitet ausschließlich manuell eingefügte OnlyFans-Nachrichten und liefert
-kopierbare Entwürfe aus einer serverseitig autorisierten, revisionsgebundenen
-Character-Persona. Keine OnlyFans-Verbindung, kein Scraping und kein Auto-Send.
-Production/Staging-Apply, Freischaltung und Providerintegration sind nicht Teil
-dieses Source-Pakets. Der bestehende rote Backup-Freshness-Audit bleibt als
+Der additive, kontrolliert noch nicht angewendete Fan-Vertrag ergänzt persistente
+`chat_character_fans` mit minimalem Wissen (Zusammenfassung und Notizen) und
+bindet Conversations und Messages über zusammengesetzte Workspace-/Character-/
+Fan-Schlüssel. Die Oberfläche führt Character → dessen Fans → Fanwissen und
+Verlauf; tatsächlich manuell verwendete Antworten können als `confirmed_reply`
+gespeichert werden. Der Server lädt Character, exakte Revision, Fan, Conversation
+und Verlauf neu, bevor er genau drei Vorschläge ausgibt. Keine OnlyFans-Verbindung,
+kein Scraping und kein Auto-Send. Der Fan-Vertrag benötigt einen neuen geschützten
+Staging-Apply; Production-Aktivierung und Providerintegration sind nicht Teil
+dieses Source-Pakets. Die neue Oberfläche bleibt zusätzlich mit
+`FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=false` fail-closed, bis Schema,
+Postflight und Runtime-Aktivierung separat kontrolliert abgenommen sind. Der
+bestehende rote Backup-Freshness-Audit bleibt als
 getrennter Operations-Punkt offen und wurde nicht verändert.

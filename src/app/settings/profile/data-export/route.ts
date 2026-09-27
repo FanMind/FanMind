@@ -273,6 +273,7 @@ const SECTION_LABELS: Record<
   creator_confirmed_chat_learning: { de: "Bestätigte Chat-Lernevidenz", en: "Confirmed chat learning evidence" },
   chat_admin_capability: { de: "ChatAdmin-Workspace-Capability", en: "ChatAdmin Workspace capability" },
   chat_characters: { de: "ChatAdmin-Charaktere", en: "ChatAdmin characters" },
+  chat_character_fans: { de: "ChatAdmin-Fans und Fanwissen", en: "ChatAdmin fans and fan knowledge" },
   chat_character_conversations: { de: "Character-gebundene manuelle Chats", en: "Character-bound manual chats" },
   chat_character_messages: { de: "Character-gebundene Nachrichten und Entwürfe", en: "Character-bound messages and drafts" },
   pilot_inquiries: { de: "Eigene frühere Pilot-/Kontaktanfragen", en: "Own earlier pilot/contact inquiries" },

@@ -43,145 +43,50 @@ const characterA = {
   flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], status: "active", revision: 1, created_at: "2026-09-26T00:00:00Z", updated_at: "2026-09-26T00:00:00Z",
 };
 const characterB = { ...characterA, id: "10000000-0000-4000-8000-000000000002", display_name: "Synthetic Bea", bio: "Bea synthetic bio" };
-const drafts = ["Synthetic Anna reply one", "Synthetic Anna reply two", "Synthetic Anna reply three"];
+const fanA1={id:"30000000-0000-4000-8000-000000000001",character_id:characterA.id,display_name:"Fan A1",handle:"@a1",platform:"OnlyFans",language:"Deutsch",status:"active",summary:"A1 mag Katzen",notes:"A1 vertraulich",revision:1};
+const fanA2={...fanA1,id:"30000000-0000-4000-8000-000000000002",display_name:"Fan A2",handle:"@a2",summary:"A2 mag Hunde",notes:"A2 separat"};
+const fanB1={...fanA1,id:"30000000-0000-4000-8000-000000000003",character_id:characterB.id,display_name:"Fan B1",handle:"@b1",summary:"B1 Kontext",notes:"B1 separat"};
+const fansByCharacter={[characterA.id]:[fanA1,fanA2],[characterB.id]:[fanB1]};
+const conversationFor={
+ [fanA1.id]:{id:"40000000-0000-4000-8000-000000000001",workspace_id:characterA.workspace_id,character_id:characterA.id,fan_id:fanA1.id},
+ [fanA2.id]:{id:"40000000-0000-4000-8000-000000000002",workspace_id:characterA.workspace_id,character_id:characterA.id,fan_id:fanA2.id},
+ [fanB1.id]:{id:"40000000-0000-4000-8000-000000000003",workspace_id:characterA.workspace_id,character_id:characterB.id,fan_id:fanB1.id},
+};
+const historyFor={[fanA1.id]:[{id:"m-a1",direction:"confirmed_reply",content:"A1 history",created_at:"2026-09-27T00:00:00Z"}],[fanA2.id]:[],[fanB1.id]:[]};
+const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three"];
 let browser;
-before(async () => { browser = await chromium.launch({ headless: true, executablePath: process.env.CHATADMIN_TEST_BROWSER || undefined }); });
-after(async () => { await browser?.close(); });
-
-async function mount(t) {
-  const context = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] });
-  t.after(() => context.close());
-  const page = await context.newPage();
-  await page.route("**/*", (route) => {
-    assert.equal(route.request().url(), "http://localhost/chatadmin-client-test");
-    return route.fulfill({ contentType: "text/html", body: '<html><body><div id="root"></div></body></html>' });
-  });
-  await page.goto("http://localhost/chatadmin-client-test");
-  await page.evaluate(() => {
-    window.testRequests = [];
-    window.fetch = (url, options) => new Promise((resolve, reject) => {
-      if (!String(url).startsWith("/api/chatadmin/")) throw new Error("Unexpected network request");
-      // Intentionally ignore AbortSignal: cancellation alone is not a stale-result guard.
-      window.testRequests.push({ url, options, body: JSON.parse(options.body), resolve, reject });
-    });
-  });
-  await page.addScriptTag({ content: bundle });
-  await page.evaluate((characters) => window.mountCharacters(characters), [characterA, characterB]);
-  await expect(page.getByRole("heading", { name: "Synthetic Anna" })).toBeVisible();
-  return page;
+before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
+after(async()=>{await browser?.close();});
+async function mount(t){
+ const context=await browser.newContext({permissions:["clipboard-read","clipboard-write"]});t.after(()=>context.close());const page=await context.newPage();
+ await page.route("**/*",route=>route.fulfill({contentType:"text/html",body:'<html><body><div id="root"></div></body></html>'}));await page.goto("http://localhost/chatadmin-client-test");
+ await page.evaluate(({fansByCharacter,conversationFor,historyFor})=>{
+  window.testRequests=[];window.fixture={fansByCharacter,conversationFor,historyFor};
+  window.fetch=(raw,options={})=>{const url=String(raw);const method=options.method||"GET";const parsed=new URL(url,"http://localhost");
+   if(method==="GET"&&parsed.pathname==="/api/chatadmin/fans"){const fans=window.fixture.fansByCharacter[parsed.searchParams.get("character_id")]||[];return Promise.resolve(Response.json({fans}));}
+   if(method==="GET"&&parsed.pathname==="/api/chatadmin/conversations"){const fanId=parsed.searchParams.get("fan_id"),fan=Object.values(window.fixture.fansByCharacter).flat().find(v=>v.id===fanId);return Promise.resolve(Response.json({fan,conversation:window.fixture.conversationFor[fanId],messages:window.fixture.historyFor[fanId]||[]}));}
+   return new Promise((resolve,reject)=>window.testRequests.push({url,method,body:options.body?JSON.parse(options.body):null,resolve,reject}));
+  };
+ },{fansByCharacter,conversationFor,historyFor});
+ await page.addScriptTag({content:bundle});await page.evaluate(characters=>window.mountCharacters(characters),[characterA,characterB]);await expect(page.getByRole("button",{name:/Fan A1/})).toBeVisible();return page;
 }
-const card = (page, name) => page.getByRole("article").filter({ has: page.getByRole("heading", { name, exact: true }) });
-const copies = (page) => page.getByRole("button", { name: "Antwort kopieren", exact: true });
-async function generate(page, message = "Synthetic fan message") {
-  await page.getByLabel("Von OnlyFans kopierte Fan-Nachricht").fill(message);
-  await page.getByRole("button", { name: "Antwortvorschläge erzeugen", exact: true }).click();
-  await expect.poll(() => page.evaluate(() => window.testRequests.length)).toBeGreaterThan(0);
-}
-async function complete(page, index = 0, body = { replies: drafts, character_id: characterA.id, character_revision: 1, safety_note: "Manuell prüfen und einfügen." }, status = 200) {
-  await page.evaluate(async ({ index, body, status }) => {
-    window.testRequests[index].resolve(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  }, { index, body, status });
-}
+const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("heading",{name,exact:true})});
+const copies=page=>page.getByRole("button",{name:"Antwort kopieren",exact:true});
+async function openFan(page,name){await page.getByRole("button",{name:new RegExp(name)}).click();await expect(page.getByRole("heading",{name,exact:true})).toBeVisible();}
+async function generate(page,message="Synthetic fan message"){await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBeGreaterThan(0);}
+async function complete(page,index=0,overrides={},status=200){const request=await page.evaluate(index=>window.testRequests[index],index);const base={replies:drafts,character_id:request.body.character_id,character_revision:request.body.character_revision,fan_id:request.body.fan_id,conversation_id:request.body.conversation_id,safety_note:"Manuell prüfen."};await page.evaluate(async({index,body,status})=>{window.testRequests[index].resolve(new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json"}}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{index,body:{...base,...overrides},status});}
 
-test("copying three drafts uses the selected persona; selecting another clears fan context and drafts", async (t) => {
-  const page = await mount(t);
-  await page.getByLabel("Fan/Chat-Bezeichnung (optional)").fill("Synthetic Anna fan");
-  await generate(page);
-  assert.deepEqual(await page.evaluate(() => window.testRequests[0].body), { character_id: characterA.id, character_revision: 1, incoming_message: "Synthetic fan message", fan_label: "Synthetic Anna fan" });
-  await complete(page);
-  await expect(copies(page)).toHaveCount(3);
-  await copies(page).first().click();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), drafts[0]);
-  await card(page, "Synthetic Bea").getByRole("button", { name: "Auswählen" }).click();
-  await expect(copies(page)).toHaveCount(0);
-  await expect(page.getByLabel("Fan/Chat-Bezeichnung (optional)")).toHaveValue("");
-  await expect(page.getByLabel("Von OnlyFans kopierte Fan-Nachricht")).toHaveValue("");
-});
+test("Character A -> Fan A1 -> Conversation -> exactly three replies",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await expect(page.getByText("A1 mag Katzen",{exact:true})).toBeVisible();await expect(page.getByText("A1 history",{exact:true})).toBeVisible();await generate(page);const request=await page.evaluate(()=>window.testRequests[0].body);assert.match(request.generation_id,/^[0-9a-f-]{36}$/u);delete request.generation_id;assert.deepEqual(request,{character_id:characterA.id,character_revision:1,fan_id:fanA1.id,fan_revision:1,conversation_id:conversationFor[fanA1.id].id,incoming_message:"Synthetic fan message"});await complete(page);await expect(copies(page)).toHaveCount(3);});
+test("Fan A1 -> A2 clears drafts, knowledge and history",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await openFan(page,"Fan A2");await expect(copies(page)).toHaveCount(0);await expect(page.getByText("A2 mag Hunde",{exact:true})).toBeVisible();await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);await expect(page.getByText("A1 history",{exact:true})).toHaveCount(0);});
+test("Character A -> B replaces the complete fan context",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await card(page,"Synthetic Bea").getByRole("button",{name:"Auswählen"}).click();await expect(page.getByRole("button",{name:/Fan B1/})).toBeVisible();await expect(page.getByRole("button",{name:/Fan A1/})).toHaveCount(0);await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);});
+test("delayed generation is discarded after Character switch",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await card(page,"Synthetic Bea").getByRole("button",{name:"Auswählen"}).click();await complete(page);await expect(copies(page)).toHaveCount(0);});
+test("delayed generation is discarded after Fan switch",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await openFan(page,"Fan A2");await complete(page);await expect(copies(page)).toHaveCount(0);});
+test("editing a Character invalidates delayed generation",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await complete(page);await expect(copies(page)).toHaveCount(0);});
+for(const action of ["Deaktivieren","Löschen"])test(`${action} invalidates delayed generation`,async t=>{const page=await mount(t);page.on("dialog",d=>d.accept());await openFan(page,"Fan A1");await generate(page);await card(page,"Synthetic Anna").getByRole("button",{name:action}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);await complete(page);await expect(copies(page)).toHaveCount(0);const response=action==="Löschen"?{}:{character:{...characterA,status:"inactive",revision:2}};await page.evaluate(async({response,action})=>{window.testRequests[1].resolve(new Response(action==="Löschen"?null:JSON.stringify(response),{status:action==="Löschen"?204:200,headers:{"Content-Type":"application/json"}}));},{response,action});});
+for(const [label,wrong] of [["character_id",{character_id:characterB.id}],["character_revision",{character_revision:2}],["fan_id",{fan_id:fanA2.id}],["conversation_id",{conversation_id:conversationFor[fanA2.id].id}]])test(`wrong ${label} response is rejected`,async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page,0,wrong);await expect(copies(page)).toHaveCount(0);});
+test("changing inbound text invalidates old drafts and permits a fresh generation",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await page.getByLabel("Neue eingehende Fan-Nachricht").fill("Changed");await complete(page);await expect(copies(page)).toHaveCount(0);await generate(page,"Changed");await complete(page,1,{replies:["Fresh 1","Fresh 2","Fresh 3"]});await expect(page.getByText("Fresh 1",{exact:true})).toBeVisible();});
+test("network failure is visible and retry reuses its idempotency key without stale drafts",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await page.evaluate(()=>window.testRequests[0].reject(new Error("network")));await expect(page.getByRole("status")).toContainText("fehlgeschlagen");await expect(copies(page)).toHaveCount(0);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);const ids=await page.evaluate(()=>window.testRequests.map(request=>request.body.generation_id));assert.equal(ids[0],ids[1]);await complete(page,1);await expect(copies(page)).toHaveCount(3);});
+test("Fan creation uses the selected Character and opens its persisted Conversation",async t=>{const page=await mount(t);await page.getByRole("button",{name:"Fan hinzufügen"}).click();await page.getByLabel("Name",{exact:true}).fill("Fan Neu");await page.getByRole("button",{name:"Fan speichern"}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const body=await page.evaluate(()=>window.testRequests[0].body);assert.equal(body.character_id,characterA.id);const created={...fanA1,id:"30000000-0000-4000-8000-000000000009",workspace_id:characterA.workspace_id,display_name:"Fan Neu"};await page.evaluate(async created=>{window.fixture.fansByCharacter[created.character_id].push(created);window.fixture.conversationFor[created.id]={id:"40000000-0000-4000-8000-000000000009",workspace_id:created.workspace_id,character_id:created.character_id,fan_id:created.id};window.fixture.historyFor[created.id]=[];window.testRequests[0].resolve(Response.json({fan:created},{status:201}));},created);await expect(page.getByRole("heading",{name:"Fan Neu",exact:true})).toBeVisible();});
+test("manual confirmation is serialized against double clicks",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.evaluate(()=>{const buttons=[...document.querySelectorAll("button")].filter(button=>button.textContent==="Als manuell gesendet bestätigen");buttons[0].click();buttons[1].click();});await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),1);});
 
-test("a delayed response cannot reappear after switching away and back to the same character", async (t) => {
-  const page = await mount(t);
-  await generate(page);
-  await card(page, "Synthetic Bea").getByRole("button", { name: "Auswählen" }).click();
-  await card(page, "Synthetic Anna").getByRole("button", { name: "Auswählen" }).click();
-  await complete(page);
-  await expect(copies(page)).toHaveCount(0);
-});
-
-test("starting character editing invalidates a delayed reply", async (t) => {
-  const page = await mount(t);
-  await generate(page);
-  await card(page, "Synthetic Anna").getByRole("button", { name: "Bearbeiten" }).click();
-  await complete(page);
-  await expect(copies(page)).toHaveCount(0);
-});
-
-test("switching character editors replaces unsaved values with the correct persona", async (t) => {
-  const page = await mount(t);
-  await card(page, "Synthetic Anna").getByRole("button", { name: "Bearbeiten" }).click();
-  await page.getByLabel("Name", { exact: true }).fill("Unsaved Anna");
-  await card(page, "Synthetic Bea").getByRole("button", { name: "Bearbeiten" }).click();
-  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Synthetic Bea");
-  await expect(page.getByRole("textbox", { name: "Bio", exact: true })).toHaveValue("Bea synthetic bio");
-});
-
-test("a saved revision removes old drafts and the next request carries the new revision", async (t) => {
-  const page = await mount(t);
-  await generate(page);
-  await complete(page);
-  await card(page, "Synthetic Anna").getByRole("button", { name: "Bearbeiten" }).click();
-  await page.getByRole("button", { name: "Speichern", exact: true }).click();
-  await expect.poll(() => page.evaluate(() => window.testRequests.length)).toBe(2);
-  await complete(page, 1, { character: { ...characterA, revision: 2 } });
-  await expect(copies(page)).toHaveCount(0);
-  await generate(page, "Fresh synthetic message");
-  assert.equal(await page.evaluate(() => window.testRequests.at(-1).body.character_revision), 2);
-});
-
-for (const action of ["Deaktivieren", "Löschen"]) {
-  test(`a delayed reply cannot survive ${action}`, async (t) => {
-    const page = await mount(t);
-    page.on("dialog", (dialog) => dialog.accept());
-    await generate(page);
-    await card(page, "Synthetic Anna").getByRole("button", { name: action }).click();
-    await expect.poll(() => page.evaluate(() => window.testRequests.length)).toBe(2);
-    await complete(page);
-    await expect(copies(page)).toHaveCount(0);
-    await complete(page, 1, { character: { ...characterA, status: "inactive", revision: 2 } });
-    if (action === "Löschen") await card(page, "Synthetic Bea").getByRole("button", { name: "Auswählen" }).click();
-    await expect(copies(page)).toHaveCount(0);
-    if (action === "Deaktivieren") await expect(page.getByRole("button", { name: "Antwortvorschläge erzeugen", exact: true })).toBeDisabled();
-  });
-}
-
-for (const [name, metadata] of [["character", { character_id: characterB.id, character_revision: 1 }], ["revision", { character_id: characterA.id, character_revision: 2 }]]) {
-  test(`wrong ${name} response metadata never enables copying`, async (t) => {
-    const page = await mount(t);
-    await generate(page);
-    await complete(page, 0, { replies: drafts, ...metadata, safety_note: "Wrong response binding" });
-    await expect(copies(page)).toHaveCount(0);
-  });
-}
-
-test("changing the pasted message invalidates pending output and allows only fresh drafts", async (t) => {
-  const page = await mount(t);
-  await generate(page);
-  await page.getByLabel("Von OnlyFans kopierte Fan-Nachricht").fill("New synthetic fan message");
-  await complete(page);
-  await expect(copies(page)).toHaveCount(0);
-  await generate(page, "New synthetic fan message");
-  await complete(page, 1, { replies: ["Fresh one", "Fresh two", "Fresh three"], character_id: characterA.id, character_revision: 1, safety_note: "Manual only" });
-  await expect(copies(page)).toHaveCount(3);
-  await expect(page.getByText("Fresh one", { exact: true })).toBeVisible();
-});
-
-test("a pending generation is disabled and network failure allows retry with a visible error", async (t) => {
-  const page = await mount(t);
-  await generate(page);
-  const button = page.getByRole("button", { name: "Antwortvorschläge erzeugen", exact: true });
-  await expect(button).toBeDisabled();
-  await page.evaluate(() => window.testRequests[0].reject(new Error("Synthetic network failure")));
-  await expect(button).toBeEnabled();
-  await expect(page.getByRole("status")).toContainText("fehlgeschlagen");
-  await expect(copies(page)).toHaveCount(0);
-});
+test("delayed manual confirmation cannot reopen a previously selected Fan",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.getByRole("button",{name:"Als manuell gesendet bestätigen"}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);await openFan(page,"Fan A2");await page.evaluate(binding=>window.testRequests[1].resolve(Response.json({message:{id:"confirmed-a1",fan_id:binding.fanId,conversation_id:binding.conversationId}})),{fanId:fanA1.id,conversationId:conversationFor[fanA1.id].id});await expect(page.getByRole("heading",{name:"Fan A2",exact:true})).toBeVisible();await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);});

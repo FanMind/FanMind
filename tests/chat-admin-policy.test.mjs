@@ -16,6 +16,8 @@ import { CHAT_ADMIN_ACCEPTANCE_SQL } from "../scripts/operations/chat-admin-stag
 import {
   assertChatAdminCharacterInput,
   buildChatAdminCharacterContext,
+  assertChatAdminFanInput,
+  buildChatAdminFanContext,
 } from "../src/lib/chatAdminPolicy.mjs";
 
 const fixture = {
@@ -36,6 +38,18 @@ const fixture = {
   example_messages: ["Hey du 😊"],
   status: "active",
 };
+
+test("persistent fan context is bound to the exact Character, conversation and message history", () => {
+  const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+  const fan={...assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",summary:"mag Katzen",notes:"kein Druck"}),id:"fan-a",workspace_id:"workspace-a",character_id:"character-a"};
+  const conversation={id:"conversation-a",workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a"};
+  const messages=[{workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a",direction:"confirmed_reply",content:"Hi Sam",created_at:"2026-09-27T00:00:00Z"}];
+  const context=JSON.parse(buildChatAdminFanContext(character,fan,conversation,messages,"Hallo"));
+  assert.equal(context.fan.summary,"mag Katzen");assert.equal(context.conversation.recent_messages.length,1);
+  assert.throws(()=>buildChatAdminFanContext(character,{...fan,character_id:"character-b"},conversation,messages,"Hallo"),/fan_unavailable/);
+  assert.throws(()=>buildChatAdminFanContext(character,fan,{...conversation,fan_id:"fan-b"},messages,"Hallo"),/conversation_unavailable/);
+  assert.throws(()=>buildChatAdminFanContext(character,fan,conversation,[{...messages[0],fan_id:"fan-b"}],"Hallo"),/message_context_mismatch/);
+});
 
 const SHA = "a".repeat(40);
 const STAGING_REF = "stagingref0123456789";
@@ -149,6 +163,8 @@ test("ChatAdmin stays separate from Platform Admin and UI is capability-hidden",
   const admin = await readFile("src/lib/admin.ts", "utf8");
   assert.match(dashboard, /showChatAdmin \?/u);
   assert.match(page, /requireChatAdminCapability/u);
+  assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
+  assert.match(page, /Es werden keine Fan-Daten abgefragt oder geschrieben/u);
   assert.match(page, /notFound\(\)/u);
   assert.doesNotMatch(admin, /chat_admin_multi_character/u);
 });
@@ -367,4 +383,27 @@ test("workflow fails closed on mode mismatch, pins TLS and verifies schema befor
     workflow,
     /PGUSER: \$\{\{ format\('postgres\.\{0\}', vars\.FANMIND_STAGING_SUPABASE_PROJECT_REF\) \}\}/u,
   );
+});
+
+test("additive fan schema binds fan, conversation and messages by composite tenant keys", async () => {
+  const sql=await readFile(new URL("../supabase/controlled/20260927200000_chat_admin_character_fans.sql",import.meta.url),"utf8");
+  for(const contract of ["create table public.chat_character_fans","unique (workspace_id, character_id, id)","chat_character_conversations_one_per_fan","chat_character_conversations_fan_fk","chat_character_messages_fan_conversation_fk","require_chat_admin_fan_binding","fan_id is not null","generation_id uuid","chat_character_messages_generation_once","target_generation_id is null","persist_chat_admin_generation","coalesce(cardinality(suggested_contents),0) <> 3","return persisted","persist_chat_admin_confirmed_reply","revoke insert,update,delete","enable row level security"]) assert.ok(sql.includes(contract),`missing fan contract: ${contract}`);
+  assert.match(sql,/grant execute on function public\.persist_chat_admin_generation\([^;]+to authenticated;/i);
+});
+
+test("persistent fan runtime stays server-side default-off until controlled activation", async () => {
+  const [store, page, fans, conversations, replies] = await Promise.all([
+    readFile(new URL("../src/lib/chatAdmin.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/chatadmin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/fans/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/conversations/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/reply-suggestions/route.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED!=="true"/u);
+  assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
+  assert.match(store, /chat_character_fans\?workspace_id=eq\./u);
+  assert.match(store, /chat_character_conversations\?workspace_id=eq\./u);
+  assert.match(store, /chat_character_messages\?workspace_id=eq\./u);
+  for (const requiredColumn of ["fan_id", "generation_id", "sequence"]) assert.ok(store.includes(requiredColumn));
+  for (const route of [fans, conversations, replies]) assert.match(route, /requireChatAdminFanRuntime\(\)/u);
 });
