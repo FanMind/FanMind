@@ -6,4 +6,4 @@ export function assertChatAdminCharacterInput(input:unknown):ChatAdminCharacterI
 export function buildChatAdminCharacterContext(character:Record<string,unknown>,incomingMessage:unknown,fanLabel?:string):string;
 export type ChatAdminFanInput={display_name:string;handle:string|null;platform:string;language:string|null;status:"active"|"inactive";summary:string;notes:string};
 export function assertChatAdminFanInput(input:unknown):ChatAdminFanInput;
-export function buildChatAdminFanContext(character:Record<string,unknown>,fan:Record<string,unknown>,conversation:Record<string,unknown>,messages:Array<Record<string,unknown>>,incomingMessage:unknown):string;
+export function buildChatAdminFanContext(character:Record<string,unknown>,fan:Record<string,unknown>,conversation:Record<string,unknown>,messages:Array<Record<string,unknown>>,incomingMessage:unknown,maxChars?:number):string;

@@ -51,6 +51,18 @@ test("persistent fan context is bound to the exact Character, conversation and m
   assert.throws(()=>buildChatAdminFanContext(character,fan,conversation,[{...messages[0],fan_id:"fan-b"}],"Hallo"),/message_context_mismatch/);
 });
 
+test("persistent fan context retains newest complete history within the canonical limit", () => {
+  const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+  const fan={...assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",summary:"summary",notes:"notes"}),id:"fan-a",workspace_id:"workspace-a",character_id:"character-a",status:"active"};
+  const conversation={id:"conversation-a",workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a"};
+  const messages=Array.from({length:20},(_,index)=>({workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a",direction:"confirmed_reply",content:`message-${index}-${"x".repeat(200)}`,created_at:`2026-09-27T00:00:${String(index).padStart(2,"0")}Z`}));
+  const context=buildChatAdminFanContext(character,fan,conversation,messages,"Hallo",1800);
+  const parsed=JSON.parse(context);
+  assert.ok(context.length<=1800);
+  assert.match(parsed.conversation.recent_messages.at(-1).content,/message-19-/u);
+  assert.doesNotMatch(JSON.stringify(parsed.conversation.recent_messages),/message-0-/u);
+});
+
 const SHA = "a".repeat(40);
 const STAGING_REF = "stagingref0123456789";
 const PRODUCTION_REF = "prodref0123456789012";
@@ -387,7 +399,7 @@ test("workflow fails closed on mode mismatch, pins TLS and verifies schema befor
 
 test("additive fan schema binds fan, conversation and messages by composite tenant keys", async () => {
   const sql=await readFile(new URL("../supabase/controlled/20260927200000_chat_admin_character_fans.sql",import.meta.url),"utf8");
-  for(const contract of ["create table public.chat_character_fans","unique (workspace_id, character_id, id)","chat_character_conversations_one_per_fan","chat_character_conversations_fan_fk","chat_character_messages_fan_conversation_fk","require_chat_admin_fan_binding","fan_id is not null","generation_id uuid","chat_character_messages_generation_once","target_generation_id is null","persist_chat_admin_generation","coalesce(cardinality(suggested_contents),0) <> 3","return persisted","persist_chat_admin_confirmed_reply","revoke insert,update,delete","enable row level security"]) assert.ok(sql.includes(contract),`missing fan contract: ${contract}`);
+  for(const contract of ["create table public.chat_character_fans","unique (workspace_id, character_id, id)","unique (workspace_id, character_id, creation_id)","create_chat_admin_fan","chat_character_conversations_one_per_fan","chat_character_conversations_fan_fk","chat_character_messages_fan_conversation_fk","require_chat_admin_fan_binding","fan_id is not null","generation_id uuid","chat_character_messages_generation_once","chat_character_messages_confirmation_once","target_generation_id is null","persist_chat_admin_generation","coalesce(cardinality(suggested_contents),0) <> 3","return persisted","persist_chat_admin_confirmed_reply","target_confirmation_id","revoke insert,update,delete","enable row level security"]) assert.ok(sql.includes(contract),`missing fan contract: ${contract}`);
   assert.match(sql,/grant execute on function public\.persist_chat_admin_generation\([^;]+to authenticated;/i);
 });
 

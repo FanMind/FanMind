@@ -263,7 +263,7 @@ bleibt `creators.workspace_id UNIQUE` unangetastet. Die Capability
 `chat_admin_multi_character=true` ist unabhängig von Platform Admin,
 Admin-Allowlist, Admin-CRM und allen generischen Admin-RPCs.
 
-Der kontrollierte, in isoliertem Staging angewendete Vertrag ergänzt unter dem Workspace
+Der bereits akzeptierte **Character-only-Basisvertrag** ergänzt unter dem Workspace
 `chat_characters` sowie Character-gebundene Conversations und Messages. Alle
 Beziehungen tragen `workspace_id + character_id`; zusammengesetzte Fremdschlüssel,
 RLS, Owner-/Capability-Prüfung und Revisionen verhindern Vermischung. `public_age`
@@ -276,7 +276,7 @@ erzeugen, kopieren und bei OnlyFans selbst versenden. Es gibt keinen OnlyFans-
 Login, API-Aufruf, Scraper, Auto-Read oder Auto-Send. AI Usage/Cost nutzt das
 bestehende Event-System. `character_id + character_revision` werden ausgegeben,
 aber automatisches Lernen oder automatische Persona-Änderung bleiben deaktiviert.
-Der Staging-Schema-Apply und die DB/RLS-Abnahme sind abgeschlossen. Der geschützte
+Nur für diesen Character-only-Basisvertrag sind Staging-Schema-Apply und DB/RLS-Abnahme abgeschlossen. Der geschützte
 Manual-Flow `36255475314` vom 26. September 2026 hat auf Release
 `9652ae62928c70d8f39d8f184857a34fcd4de74f` zwei echte Generierungen mit jeweils drei
 Vorschlägen, Auswahl/Copy, Character-Wechsel und die negativen Zugriffs-,
@@ -287,3 +287,17 @@ und null verbleibende Sessions dieses Testlaufs. Die genaue Abnahme steht in
 Produktive Schema-/Capability-Aktivierung, reale Workspace-Freischaltung und die
 private Storage-Policy-Abnahme bleiben separate Schritte. Externes Senden war
 nicht Teil dieser Abnahme.
+
+Die neue persistente **Fan-Erweiterung** ist davon strikt getrennt und weiterhin
+unapplied. Sie ergänzt Fan-Zusammenfassung, Fan-Notizen, bounded Conversation-
+History, idempotente Fan-Erstellung und idempotente Bestätigung manuell gesendeter
+Antworten. Bei einer ausdrücklich ausgelösten Reply-Generierung können diese
+Fan-Daten zusammen mit Character und eingehender Nachricht innerhalb des
+kanonischen Eingabelimits serverseitig an OpenAI verarbeitet werden; die Anfrage
+setzt stets `store: false`. Die frühere Character-only-Acceptance ist ausdrücklich
+keine Acceptance dieser Erweiterung. Vor deren Aktivierung sind ein neuer
+checksum-/target-gebundener Schema-Apply, vollständiger RLS/Privilege-Postflight,
+rollback-only Staging-Acceptance, Runtime-Gate-Abnahme sowie Disclosure- und
+Löschabnahme auf genau diesem Ziel erforderlich. Normale Deploys wenden das SQL
+nicht an. Bis dahin bleibt die Fan-UI fail-closed und der akzeptierte V1-
+Character-only-Flow funktionsfähig.

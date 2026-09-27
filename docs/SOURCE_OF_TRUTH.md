@@ -1286,3 +1286,12 @@ dieses Source-Pakets. Die neue Oberfläche bleibt zusätzlich mit
 Postflight und Runtime-Aktivierung separat kontrolliert abgenommen sind. Der
 bestehende rote Backup-Freshness-Audit bleibt als
 getrennter Operations-Punkt offen und wurde nicht verändert.
+Fan-Zusammenfassung, Fan-Notizen, die jüngste vollständig in das kanonische
+Eingabelimit passende Nachrichtenhistorie und die neue eingehende Nachricht können
+dabei für den serverseitigen Reply-Vorschlag verarbeitet werden. Produktive
+Responses-API-Aufrufe setzen `store: false`. Die frühere Character-only-Abnahme
+belegt weder Fan-Schema noch Fan-Runtime; vor der separaten Fan-Aktivierung bleiben
+Schema-Apply, RLS/Privilege-Postflight, rollback-only Staging-Acceptance,
+Runtime-Gate sowie Disclosure-/Löschabnahme erforderlich. Ist das Fan-Gate aus
+oder das Schema nicht nachweislich vollständig, bleibt der bestehende V1-
+Character-Flow verfügbar und die Fan-UI fragt keine Fan-Daten ab.
