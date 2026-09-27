@@ -53,7 +53,7 @@ test("Atomic Creator target SQL rechecks Legacy under lock and Current before co
   assert.match(sql, /CREATOR_TARGET_TRANSITION_DATA_PRESENT/u);
   assert.match(sql, /CREATOR_TARGET_TRANSITION_RPC_ACTIVE/u);
   assert.match(sql, /CREATOR_TARGET_TRANSITION_PRECONDITION_DRIFT/u);
-  assert.match(sql, /create or replace function public\.creator_workspace_access_allowed\(uuid\)/iu);
+  assert.match(sql, /create or replace function public\.creator_workspace_access_allowed\([^)]*uuid[^)]*\)/iu);
   assert.match(sql, /alter policy creators_member_read on public\.creators/iu);
   assert.match(sql, /CREATOR_TARGET_TRANSITION_POSTFLIGHT_DRIFT/u);
   assert.match(sql, /COMMIT;/u);
