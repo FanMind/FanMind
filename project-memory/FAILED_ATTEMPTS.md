@@ -1,3 +1,11 @@
+## FM-FAIL-CHATADMIN-FAN-POSTFLIGHT-20260927
+- Date: 2026-09-27
+- Status: OPEN_RECONCILIATION
+- Task: FM-CHATADMIN-003 / issue #1219.
+- Evidence: PR #1221 merged at `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; post-merge review-thread audit identified unresolved exact policy, parent-authority-before-apply, RPC, index, constraint, trigger, table-column, column-grant and readiness-RPC contracts. No staging/production write occurred.
+- Correction: draft PR #1222 adds fail-closed parent-contract checks even for extension ABSENT and exact controlled-source/function/catalog verification. Its initial Project Memory Guard failed because the meaningful code change lacked a project-memory update; this record and FM-CR-034 are the required reconciliation.
+- Next: pass exact-head required CI and PG17, then reconcile all applicable review findings. Do not apply staging SQL or activate runtime as part of this source correction.
+
 ## FM-FAIL-CREATOR-TARGET-RECOVERY-SUDO-20260927
 - Date: 2026-09-27
 - Status: RECONCILED_FAIL_CLOSED
