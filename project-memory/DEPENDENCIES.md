@@ -15,7 +15,7 @@
 - Status: ACCEPTED
 - Requires: creator_foundation_reconciliation_preflight=ACCEPTED and action NBA-CREATOR-FOUNDATION-STAGING-CATALOG completed through its RECONCILED state.
 - Completion: Repository-only source dependency satisfied by PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`, exact-head green CI/native PG17 and independent review. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
-- Remaining dependency: Implement and accept NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR as repository-only source work. Any later target observation/reference acceptance or transition execution is a distinct protected action requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
+- Remaining dependency: the repository-only `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package is already ACCEPTED/CONSUMED by PR #1209 and is not a remaining dependency. Only a later target observation/reference acceptance or transition execution remains distinct protected work requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
 
 ## DEP-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
 - Task: FM-CREATOR-001

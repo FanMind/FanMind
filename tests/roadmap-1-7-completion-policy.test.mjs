@@ -200,12 +200,22 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     assert.equal(generatorReceipt.targetAccepted, false);
     assert.equal(generatorReceipt.applyAllowed, false);
     assert.equal(generatorReceipt.runtimeActivated, false);
-    const catalogLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26");
-    const preflightLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — Foundation reconciliation preflight — 2026-09-26");
-    const verifyLedger = markdownSection(taskLedger, "## FM-CREATOR-001 — Confirmed-Chat VERIFY — 2026-09-26");
-    for (const section of [catalogLedger, preflightLedger, verifyLedger]) {
-      assert.match(section, /superseded by the accepted\/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209/u);
-      assert.doesNotMatch(section, /(?:Next step|Next): implement .*NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u);
+    const currentCreatorReaders = [
+      markdownSection(taskLedger, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26"),
+      markdownSection(taskLedger, "## FM-CREATOR-001 — Foundation reconciliation preflight — 2026-09-26"),
+      markdownSection(taskLedger, "## FM-CREATOR-001 — Confirmed-Chat VERIFY — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Staging catalog observation — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Foundation reconciliation preflight — 2026-09-26"),
+      markdownSection(startedWork, "## FM-CREATOR-001 — bounded Confirmed-Chat VERIFY — 2026-09-26"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-STAGING-CATALOG-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-RECONCILIATION-20260926"),
+      markdownSection(executionReceipts, "## FM-EXEC-CREATOR-CONFIRMED-CHAT-VERIFY-20260926"),
+      markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+    ];
+    for (const section of currentCreatorReaders) {
+      assert.match(section, /(?:superseded by the accepted\/consumed .*PR #1209|already ACCEPTED\/CONSUMED by PR #1209)/u);
+      assert.doesNotMatch(section, /(?:Next integration|Next step|Next|Remaining dependency):[^\n]*(?:implement|start)[^\n]*NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/iu);
     }
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
