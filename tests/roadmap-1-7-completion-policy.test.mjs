@@ -131,7 +131,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   const conflictingLifecycleState =
     "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
   const generatorScopedLifecycleConflict = new RegExp(
-    `${consumedGeneratorReference}(?:(?![.;]).){0,180}\\b(?:remains?|is|was|were)(?:\\s+still)?\\s+${conflictingLifecycleState}\\b`,
+    `${consumedGeneratorReference}(?:(?![.;]).){0,180}\\b(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState}\\b`,
     "iu",
   ).test(line);
   const subjectlessLifecycleConflict = new RegExp(
