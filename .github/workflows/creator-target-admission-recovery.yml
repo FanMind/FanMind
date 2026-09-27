@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -63,6 +64,39 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
+      - name: Download and verify the accepted private PG17 reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="$RUNNER_TEMP/creator-admission-recovery-reference"
+          export FANMIND_CREATOR_TRANSITION_REFERENCE_DIR
+          echo "FANMIND_CREATOR_TRANSITION_REFERENCE_DIR=$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR" >> "$GITHUB_ENV"
+          mkdir -m 700 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from "node:fs";
+          const id = 10916053961;
+          const headers = {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json"};
+          let response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/artifacts/${id}`, {
+            headers, redirect: "error", signal: AbortSignal.timeout(15000),
+          });
+          if (!response.ok) throw new Error("reference_metadata_unavailable");
+          const meta = await response.json();
+          if (meta.id !== id || meta.expired || meta.name !== "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6" ||
+              meta.workflow_run?.id !== 36273161074 ||
+              meta.workflow_run?.head_sha !== "3cd67cedbcdc051be855d09de8d5ea3225179217" ||
+              meta.digest !== "sha256:c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c") throw new Error("reference_metadata_mismatch");
+          response = await fetch(meta.archive_download_url, {
+            headers, redirect: "follow", signal: AbortSignal.timeout(30000),
+          });
+          if (!response.ok) throw new Error("reference_download_failed");
+          writeFileSync(`${process.env.RUNNER_TEMP}/creator-admission-recovery-reference.zip`, Buffer.from(await response.arrayBuffer()), {mode: 0o600, flag: "wx"});
+          NODE
+          printf '%s  %s\n' 'c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c' "$RUNNER_TEMP/creator-admission-recovery-reference.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/creator-admission-recovery-reference.zip" -d "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
+          rm -f "$RUNNER_TEMP/creator-admission-recovery-reference.zip"
+          chmod 600 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"/*.json
+
       - name: Restore exact canonical RPC grants
         env:
           FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
@@ -81,3 +115,9 @@ jobs:
           chmod 600 "$PGPASSFILE"
           node scripts/operations/creator-foundation-transition-staging-runner.mjs --restore-admission
           rm -f "$PGPASSFILE"
+
+      - name: Remove private recovery evidence
+        if: ${{ always() }}
+        run: |
+          rm -rf "$RUNNER_TEMP/creator-admission-recovery-reference"
+          rm -f "$RUNNER_TEMP/fanmind-creator-admission-recovery.pgpass" "$RUNNER_TEMP/creator-admission-recovery-reference.zip"

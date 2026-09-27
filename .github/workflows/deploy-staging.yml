@@ -53,8 +53,8 @@ on:
 
 concurrency:
   # A protected chained caller holds the canonical lease for the complete operation.
-  # Only the non-user-selectable workflow_call event may use the child lease.
-  group: ${{ github.event_name == 'workflow_call' && format('fanmind-staging-deploy-chained-{0}', github.sha) || 'fanmind-staging-deploy' }}
+  # Reusable workflows inherit the caller's immutable workflow and event identity.
+  group: ${{ github.workflow == 'FanMind Creator Target Transition and Runtime' && github.event_name == 'issue_comment' && format('fanmind-staging-deploy-chained-{0}', github.sha) || 'fanmind-staging-deploy' }}
   cancel-in-progress: false
 
 permissions:

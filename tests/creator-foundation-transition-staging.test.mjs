@@ -151,7 +151,7 @@ test("Creator target safety is enforced even when Current is already exact", () 
 test("Creator RPC admission closes only after exact catalog proof and restores idempotently", () => {
   const current = {catalog: {tables: [], columns: [], constraints: [], indexes: [], policies: [], triggers: [], functions: []}};
   const close = buildCreatorRpcAdmissionCloseSql({current});
-  const restore = buildCreatorRpcAdmissionRestoreSql();
+  const restore = buildCreatorRpcAdmissionRestoreSql({current});
   assert.match(close, /pg_advisory_xact_lock/u);
   assert.match(close, /CREATOR_TARGET_TRANSITION_ADMISSION_SOURCE_DRIFT/u);
   assert.match(close, /revoke execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) from authenticated/iu);
@@ -160,5 +160,8 @@ test("Creator RPC admission closes only after exact catalog proof and restores i
   assert.match(close, /CREATOR_TARGET_TRANSITION_ADMISSION=CLOSED/u);
   assert.match(restore, /grant execute on function public\.save_creator_bundle\(uuid,uuid,integer,jsonb,jsonb,jsonb,boolean\) to authenticated/iu);
   assert.match(restore, /grant execute on function public\.record_creator_fan_review\(uuid,uuid,jsonb,jsonb\) to authenticated/iu);
+  assert.match(restore, /CREATOR_TARGET_TRANSITION_ADMISSION_RESTORE_SOURCE_DRIFT/u);
+  assert.match(restore, /CREATOR_TARGET_TRANSITION_ADMISSION_RESTORE_POSTFLIGHT_DRIFT/u);
+  assert.ok(restore.indexOf("CREATOR_TARGET_TRANSITION_ADMISSION_RESTORE_SOURCE_DRIFT") < restore.toLowerCase().indexOf("grant execute"));
   assert.match(restore, /CREATOR_TARGET_TRANSITION_ADMISSION=OPEN/u);
 });

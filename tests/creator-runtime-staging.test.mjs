@@ -66,7 +66,8 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.doesNotMatch(workflow, /deploy-staging\.yml\/dispatches/u);
   assert.match(deploy, /workflow_call:/u);
   assert.match(deploy, /reviewed_commit:[\s\S]*required: false/u);
-  assert.match(deploy, /github\.event_name == 'workflow_call'[\s\S]*fanmind-staging-deploy-chained-/u);
+  assert.match(deploy, /github\.workflow == 'FanMind Creator Target Transition and Runtime'[\s\S]*github\.event_name == 'issue_comment'[\s\S]*fanmind-staging-deploy-chained-/u);
+  assert.doesNotMatch(deploy, /github\.event_name == 'workflow_call'/u);
   assert.doesNotMatch(deploy, /inputs\.reviewed_commit != '' && format\('fanmind-staging-deploy-chained-/u);
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/u);
   assert.match(deploy, /REVIEWED_RELEASE_COMMIT[\s\S]*EXPECTED_RELEASE_COMMIT[\s\S]*Reviewed Staging release commit does not match/iu);
@@ -97,6 +98,10 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(recovery, /restore-creator-target-admission/u);
   assert.match(recovery, /creator-foundation-transition-staging-runner\.mjs --restore-admission/u);
   assert.match(recovery, /group: fanmind-staging-deploy/u);
+  assert.match(workflow, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-runtime-reference"/u);
+  assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-admission-recovery-reference"/u);
+  assert.match(workflow, /actions\/artifacts\/\$\{id\}/u);
+  assert.match(recovery, /actions\/artifacts\/\$\{id\}/u);
   assert.match(workflow, /trap 'rollback_flag \$\?' EXIT ERR/u);
   assert.match(workflow, /trap 'rollback_flag 130' INT/u);
   assert.match(workflow, /trap 'rollback_flag 143' TERM/u);
