@@ -4,27 +4,27 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE`
-- Task: `FM-REG-003`
-- Gate: `registration_admin_crm` (`IN_PROGRESS`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen
+- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
+- Task: `FM-CREATOR-001`
+- Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
+- Selection status: `EXECUTABLE`
+- Title: Creator Foundation auf Staging atomar überführen und Runtime aktivieren
 
 ## Instruction
 
-The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration.
+Current protected R4 action admitted under FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927. Finish the reviewed Staging-only runner/workflow source first. After exact-head CI/review and normal merge, consume one owner-authenticated issue #874 command bound to the resulting exact current main. Use only accepted private PR #1207 reference evidence and PR #1209 seven-step transition source; deploy exact main, require fresh LEGACY_EXACT plus four empty Creator tables and zero active Creator RPCs, recheck the full Legacy catalog under advisory/table locks, apply the exact transition atomically, prove CURRENT_EXACT before COMMIT, then separately enable the server-only Creator runtime flag on the isolated Staging host and prove authenticated synthetic GET /api/creators returns available:true with zero Creator rows. CURRENT_EXACT skips the database write. DRIFT/INCOMPLETE/unknown, Production binding, target data/activity, stale SHA/release/reference or runtime probe failure must stop fail-closed. Runtime failure restores only the previous Staging flag; never blindly reverse a successfully verified schema transition.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `0`
+- SAFE READY SET: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
+- Worker slots reserved by active/ready work: `1`
 - Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
@@ -36,6 +36,7 @@ owner/platform action required
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
 - `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` priority 2: **DONE** — gate creator_foundation_transition_generator is ACCEPTED
+- `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority 2: **EXECUTABLE** — standing-authorized safe work
 - `NBA-GOV-GODMODE-001` priority 3: **DONE** — gate governance_god_mode is ACCEPTED
 - `NBA-CHATADMIN-STAGING-APPLY` priority 4: **DONE** — gate chatadmin_staging_apply is ACCEPTED
 - `NBA-CHATADMIN-STAGING-ACCEPT` priority 5: **DONE** — gate chatadmin_staging_accept is ACCEPTED
