@@ -72,6 +72,7 @@ test("Creator runtime refuses stale already-enabled disk state before restart", 
 
 test("Creator protected workflow binds deploy, owner workspace, service unit and rollback", async () => {
   const workflow = await readFile(".github/workflows/creator-target-transition-runtime.yml", "utf8");
+  const diagnosis = await readFile(".github/workflows/creator-target-drift-diagnosis.yml", "utf8");
   const deploy = await readFile(".github/workflows/deploy-staging.yml", "utf8");
   const recovery = await readFile(".github/workflows/creator-target-admission-recovery.yml", "utf8");
 
@@ -97,6 +98,8 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
     workflow,
     /fanmind-creator-target-transition-runtime-consumed:FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 -->/u,
   );
+  assert.match(workflow, /Status: READY_NOW/u);
+  assert.ok(workflow.indexOf("Status: READY_NOW") < workflow.indexOf("fanmind-creator-target-transition-runtime-consumed"));
   assert.match(workflow, /creator\.canManage !== true/u);
   assert.match(workflow, /rest\/v1\/workspaces\?select=id%2Cowner_user_id/u);
   assert.match(workflow, /expectedWorkspace\.owner_user_id !== syntheticUserId/u);
@@ -143,6 +146,10 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   const internalAdmissionIndex = workflow.indexOf("Restore canonical Creator RPC admission only after runtime recovery");
   assert.ok(internalRecoveryIndex >= 0 && internalRecoveryIndex < internalAdmissionIndex);
   assert.match(recovery, /PERSISTENT_BACKUP=\/var\/www\/fanmind-staging\/\.creator-runtime-recovery\.env/u);
+  assert.match(recovery, /runtime_recovery_release_mismatch/u);
+  assert.match(recovery, /runtime_recovery_readback_failed/u);
+  assert.match(recovery, /creator\.available !== false/u);
+  assert.ok(recovery.indexOf("runtime_recovery_readback_failed") < recovery.indexOf('rm -f "$PERSISTENT_BACKUP"'));
   for (const source of [workflow, recovery]) {
     assert.doesNotMatch(source, /sudo (?:test|stat|cmp|install|rm)\b/u);
     assert.doesNotMatch(source, /sudo systemctl\b/u);
@@ -151,4 +158,15 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   const manualRuntimeIndex = recovery.indexOf("Restore persistent Creator runtime flag before RPC admission");
   const manualAdmissionIndex = recovery.indexOf("Restore exact canonical RPC grants");
   assert.ok(manualRuntimeIndex >= 0 && manualRuntimeIndex < manualAdmissionIndex);
+
+  assert.match(diagnosis, /run-creator-target-drift-diagnosis \(\[0-9a-f\]\{40\}\)/u);
+  assert.match(diagnosis, /github\.event\.comment\.user\.login == 'Bernds-tech'/u);
+  assert.match(diagnosis, /github\.event\.comment\.user\.id == 270165082/u);
+  assert.match(diagnosis, /fanmind-creator-target-drift-diagnosis-consumed:\$\{reviewed\}/u);
+  assert.match(diagnosis, /FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927/u);
+  assert.match(diagnosis, /creator-foundation-transition-staging-runner\.mjs --verify/u);
+  assert.match(diagnosis, /test "\$status" -eq 0 -o "\$status" -eq 2/u);
+  assert.doesNotMatch(diagnosis, /creator-foundation-transition-staging-runner\.mjs --apply/u);
+  assert.doesNotMatch(diagnosis, /deploy-staging\.yml/u);
+  assert.doesNotMatch(diagnosis, /FANMIND_ENABLE_NON_PRODUCTION_WRITES/u);
 });

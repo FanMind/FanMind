@@ -7,7 +7,8 @@
 - Secondary diagnostic defect: the transition output exposed only DRIFT and not the validated differing sections/blockers needed to determine the exact catalog mismatch without private artifacts.
 - Safety: SQL APPLY count 0, runtime activation count 0, Production mutation count 0. This is not target or runtime acceptance. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
 - Correction: use the Staging deploy user for a persistent recovery snapshot preserved by rsync, use `sudo -n` only for allowed systemctl commands, and emit only validated bounded drift tokens. Code and regressions remain one reviewed PR.
-- Do not repeat: do not rerun the consumed command, broaden passwordless sudo, log raw/private catalogs, or treat DRIFT/deploy success as APPLY/runtime acceptance. A new exact owner command is required only after the correction merges.
+- Review correction: the first PR head also attempted to request another transition command before resolving known DRIFT, used a global consumed marker, and let manual recovery reopen RPC admission after service-active only. The corrected head separates a read-only diagnosis command, scopes replay to exact main, requires current READY_NOW transition authorization, and proves exact release plus authenticated `available:false` before deleting recovery evidence or restoring grants.
+- Do not repeat: do not rerun the consumed transition command, request another transition while DRIFT is unresolved, broaden passwordless sudo, log raw/private catalogs, or treat DRIFT/deploy/service-active success as APPLY/runtime acceptance.
 
 ## FM-FAIL-CREATOR-TRANSITION-PG17-20260927
 - Date: 2026-09-27

@@ -81,9 +81,41 @@ jobs:
             node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
             sudo -n systemctl restart fanmind-staging.service
             sudo -n systemctl is-active --quiet fanmind-staging.service
+            node --input-type=module <<'NODE'
+            let versionOk = false;
+            for (let attempt = 0; attempt < 20; attempt++) {
+              try {
+                const response = await fetch("https://staging.fanmind.ch/api/version", {
+                  cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000),
+                });
+                const body = await response.json();
+                if (response.ok && body.application === "fanmind" &&
+                    body.runtimeEnvironment === "staging" &&
+                    body.releaseCommit === process.env.GITHUB_SHA) {
+                  versionOk = true; break;
+                }
+              } catch {}
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            if (!versionOk) throw new Error("runtime_recovery_release_mismatch");
+            const loginResponse = await fetch(`${process.env.FANMIND_STAGING_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+              method: "POST", redirect: "error", signal: AbortSignal.timeout(15000),
+              headers: {"Content-Type":"application/json", apikey: process.env.FANMIND_STAGING_SUPABASE_ANON_KEY},
+              body: JSON.stringify({email: process.env.FANMIND_STAGING_E2E_EMAIL, password: process.env.FANMIND_STAGING_E2E_PASSWORD}),
+            });
+            if (!loginResponse.ok) throw new Error("runtime_recovery_login_failed");
+            const token = (await loginResponse.json()).access_token;
+            if (typeof token !== "string" || token.length < 20) throw new Error("runtime_recovery_token_invalid");
+            const creatorResponse = await fetch("https://staging.fanmind.ch/api/creators", {
+              headers: {Authorization: `Bearer ${token}`}, cache: "no-store", redirect: "error",
+              signal: AbortSignal.timeout(15000),
+            });
+            const creator = await creatorResponse.json();
+            if (!creatorResponse.ok || creator.available !== false) throw new Error("runtime_recovery_readback_failed");
+            console.log("CREATOR_RUNTIME_STAGING_RECOVERED=PASS");
+            NODE
             rm -f "$BACKUP"
             rm -f "$PERSISTENT_BACKUP"
-            echo "CREATOR_RUNTIME_STAGING_RECOVERED=PASS"
           else
             echo "CREATOR_RUNTIME_STAGING_RECOVERY=no_persistent_backup"
           fi

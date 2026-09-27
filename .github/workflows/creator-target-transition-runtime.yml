@@ -61,9 +61,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ steps.command.outputs.reviewed_commit }}"
-          grep -Fq 'FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927' project-memory/AUTHORIZATIONS.md
-          grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' project-memory/AUTHORIZATIONS.md
-          grep -Fq 'Production is forbidden' project-memory/AUTHORIZATIONS.md
+          authorization="$(sed -n '/^## FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927$/,/^## /p' project-memory/AUTHORIZATIONS.md)"
+          grep -Fq -- '- Status: READY_NOW' <<< "$authorization"
+          grep -Fq 'FanMind Staging `vshyhvgcmrlagvfnvomc` only' <<< "$authorization"
+          grep -Fq 'Production is forbidden' <<< "$authorization"
 
       - name: Consume the protected owner command exactly once
         env:

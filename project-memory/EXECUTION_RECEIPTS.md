@@ -12,8 +12,8 @@
 - Protected attempt 1: issue #874 command comment `5856097930` was consumed by marker `5856099043`; run `36321009852` authenticated main `8bf23be6af739086354c58548ea43c3910c17ee1` and completed exact Staging deploy. Transition job `108624905760` classified DRIFT with `APPLY=not_requested`; runtime was skipped. Recovery job `108624950593` failed because ordinary file operations used sudo outside the runner's passwordless allowlist. SQL APPLY/runtime activation/Production mutation counts are zero.
 - Source correction: emit bounded validated drift sections/blockers, perform recovery-file operations as the deploy user, preserve the snapshot across deploy rsync, and reserve `sudo -n` for allowed service commands. Focused regressions cover both the diagnostic and privilege/persistence contracts.
 - Evidence receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
-- Still open: exact-head source tests/CI/independent review; normal merge; one new exact issue #874 owner command bound to then-current main; protected target transition/runtime execution; independent read-only countercheck; final single reconciliation.
-- Exact next step: complete the correction PR contract and merge only at zero P0/P1/P2. Do not replay the consumed command; the new protected run requires a new owner-authenticated exact-main command.
+- Still open: exact-head source tests/CI/independent review; normal merge; one exact-main owner-authenticated read-only drift diagnosis; reviewed drift remediation; only then a distinct fresh protected target transition/runtime authorization and execution; independent countercheck; final reconciliation.
+- Exact next step: complete the correction PR contract and merge only at zero P0/P1/P2. Do not request or replay a transition command while DRIFT remains unresolved.
 - Boundary: Staging only. No Production/customer/provider/Billing/Restore/Mobile mutation.
 
 ## FM-EXEC-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927
