@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { buildManualFlowSql } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { CHAT_ADMIN_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-staging-runner.mjs";
 
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled=process.env.FANMIND_CREATOR_PG17_REQUIRED==="true";
@@ -52,6 +53,16 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     insert into public.workspace_members values('${ids[0]}','${ids[2]}','owner'),('${ids[1]}','${ids[4]}','owner'),('${ids[0]}','${ids[3]}','member');`);
     sql(readFileSync(new URL("../supabase/controlled/20260920230000_chat_admin_multi_character.sql",import.meta.url),"utf8"));
     sql(readFileSync(new URL("../supabase/controlled/20260927200000_chat_admin_character_fans.sql",import.meta.url),"utf8"));
+    assert.match(sql(CHAT_ADMIN_POSTFLIGHT_SQL),/CHAT_ADMIN_SCHEMA_STATE=VERIFIED/u);
+    sql("alter table public.chat_characters disable row level security;");
+    assert.throws(()=>sql(CHAT_ADMIN_POSTFLIGHT_SQL),undefined,"postflight must reject disabled base-table RLS");
+    sql("alter table public.chat_characters enable row level security;");
+    sql("alter table public.chat_character_conversations disable trigger require_chat_admin_conversation_fan;");
+    assert.throws(()=>sql(CHAT_ADMIN_POSTFLIGHT_SQL),undefined,"postflight must reject disabled fan-binding triggers");
+    sql("alter table public.chat_character_conversations enable trigger require_chat_admin_conversation_fan;");
+    sql("grant insert (summary) on public.chat_character_fans to authenticated;");
+    assert.throws(()=>sql(CHAT_ADMIN_POSTFLIGHT_SQL),undefined,"postflight must reject column-level fan write grants");
+    sql("revoke insert (summary) on public.chat_character_fans from authenticated;");
     const fanCharacterId="bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb";
     const fanCreationId="cccccccc-3333-4333-8333-cccccccccccc";
     const fanGenerationId="dddddddd-4444-4444-8444-dddddddddddd";
