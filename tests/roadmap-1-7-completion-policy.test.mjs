@@ -44,9 +44,24 @@ const markdownSection = (document, heading) => {
 
 const consumedGeneratorNextLineIsClosed = (line) => {
   const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
-  const explicitlyNegatesRestart = /\b(?:do not|don't|must not|cannot|never)\b[^.]*\b(?:start|implement|reopen)\b/iu.test(line);
+  const restartMentions = [];
+  for (const match of line.matchAll(/\b(?:start|implement|reopen)\b/giu)) {
+    const previous = restartMentions.at(-1);
+    const prefix = line.slice(0, match.index);
+    const connector = previous ? line.slice(previous.end, match.index) : "";
+    const directlyNegated = /\b(?:do\s+not|don't|must\s+not|cannot|never)\s*$/iu.test(prefix);
+    const continuesNegatedList =
+      previous?.negated === true &&
+      /\b(?:and|or)\s*$/iu.test(connector) &&
+      !/[.;]|\b(?:but|however|then|yet)\b/iu.test(connector);
+    restartMentions.push({
+      end: match.index + match[0].length,
+      negated: directlyNegated || continuesNegatedList,
+    });
+  }
+  const explicitlyNegatesRestart = restartMentions.some(({ negated }) => negated);
   const affirmativelyRestarts =
-    /(?:^|:\s*)(?:Implement|Start|Reopen)\b/iu.test(line) ||
+    restartMentions.some(({ negated }) => !negated) ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
   return (recordsConsumedStatus || explicitlyNegatesRestart) && !affirmativelyRestarts;
 };
@@ -269,12 +284,22 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
           /NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u.test(line),
       );
       for (const line of generatorNextLines) {
-        assert.equal(consumedGeneratorNextLineIsClosed(line), true);
+        assert.equal(consumedGeneratorNextLineIsClosed(line), true, line);
       }
     }
     assert.equal(consumedGeneratorNextLineIsClosed(`Next action: ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
     assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(`Next action: Do not wait; implement ${generatorId}`),
+      false,
+    );
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next action: ${generatorId} ACCEPTED/CONSUMED; implement it again`,
+      ),
+      false,
+    );
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
