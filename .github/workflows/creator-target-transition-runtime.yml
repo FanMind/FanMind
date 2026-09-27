@@ -74,7 +74,9 @@ jobs:
           set -euo pipefail
           node --input-type=module <<'NODE'
           const api = "https://api.github.com/repos/FanMind/FanMind";
-          const marker = "<!-- fanmind-creator-target-transition-runtime-consumed:FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 -->";
+          const reviewed = process.env.REVIEWED_COMMIT ?? "";
+          if (!/^[0-9a-f]{40}$/u.test(reviewed)) throw new Error("reviewed_commit_invalid");
+          const marker = `<!-- fanmind-creator-target-transition-runtime-consumed:${reviewed} -->`;
           const headers = {
             Authorization: `Bearer ${process.env.GH_TOKEN}`,
             Accept: "application/vnd.github+json",

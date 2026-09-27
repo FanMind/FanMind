@@ -88,6 +88,15 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(deploy, /--exclude '\.creator-runtime-recovery\.env'/u);
 
   assert.match(workflow, /FANMIND_STAGING_E2E_WORKSPACE_ID: \$\{\{ vars\.FANMIND_STAGING_E2E_WORKSPACE_ID \}\}/u);
+  assert.match(
+    workflow,
+    /fanmind-creator-target-transition-runtime-consumed:\$\{reviewed\}/u,
+  );
+  assert.match(workflow, /comment\.body\?\.startsWith\(marker\)/u);
+  assert.doesNotMatch(
+    workflow,
+    /fanmind-creator-target-transition-runtime-consumed:FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 -->/u,
+  );
   assert.match(workflow, /creator\.canManage !== true/u);
   assert.match(workflow, /rest\/v1\/workspaces\?select=id%2Cowner_user_id/u);
   assert.match(workflow, /expectedWorkspace\.owner_user_id !== syntheticUserId/u);
