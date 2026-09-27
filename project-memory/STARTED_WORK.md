@@ -1,9 +1,10 @@
 ## FM-CREATOR-001 — PR #1210 post-merge closeout P2 correction — 2026-09-27
 - Task: FM-CREATOR-001
-- Action: bounded post-merge correction for PR #1210 lifecycle-closeout review findings.
+- Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
 - Risk: R3
 - Boundary: repository/test reconciliation only; no product/runtime/provider contract change.
 - Status: IN_PROGRESS.
+- Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (ACTIVE).
 - Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499` (verified merge of PR #1210).
 - Trigger/evidence: PR #1210 final head `27ed5ae56981df30a72151ded44b0c2657ddda76` had full exact-head CI green and merged as `63e6380cb75da80e9d5bd6b8d8892639a3127499`; the delayed exact-head review then reported valid P2s showing lifecycle conflict checks could start from protected-action spans and still depended on an incomplete connector list.
 - Remaining result: make the consumed-generator closeout regression subject-correct so lifecycle conflicts originate only from actual generator completion spans, while direct contradictory predicates remain fail-closed without treating separately authorized target status as generator status.
