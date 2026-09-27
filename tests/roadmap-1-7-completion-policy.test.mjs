@@ -123,15 +123,33 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     `\\b${actionVerbForm}\\b`,
     "iu",
   ).test(maskedLine.join(""));
+  const remainingText = maskedLine.join("");
   const leavesConflictingCompletionClaim =
-    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?)|(?:remains?|still|is|was|were)(?:\s+still)?\s+(?:incomplete|unfinished|pending|open|active|in[_\s-]?progress))\b/iu.test(
-      maskedLine.join(""),
+    /\b(?:superseded\s+by|accepted\/consumed|done|(?:not|never|cannot|can['’]t|won['’]t|must\s+not)(?:\s+[\p{L}'’/-]+){0,3}\s+(?:complete(?:d)?|finish(?:ed)?))\b/iu.test(
+      remainingText,
     );
+  const conflictingLifecycleState =
+    "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
+  const generatorScopedLifecycleConflict = new RegExp(
+    `${consumedGeneratorReference}(?:(?![.;]).){0,180}\\b(?:remains?|is|was|were)(?:\\s+still)?\\s+${conflictingLifecycleState}\\b`,
+    "iu",
+  ).test(line);
+  const subjectlessLifecycleConflict = new RegExp(
+    `(?:^|[.;]\\s*)(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:remains?|is|was|were)(?:\\s+still)?\\s+${conflictingLifecycleState})\\b`,
+    "iu",
+  ).test(remainingText);
+  const hasConflictingLifecycleState =
+    generatorScopedLifecycleConflict || subjectlessLifecycleConflict;
   const affirmativelyRestarts =
     leavesUnclassifiedGeneratorReference ||
     leavesUnclassifiedReopenDirective ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
-  return closedSpans.length > 0 && !affirmativelyRestarts && !leavesConflictingCompletionClaim;
+  return (
+    closedSpans.length > 0 &&
+    !affirmativelyRestarts &&
+    !leavesConflictingCompletionClaim &&
+    !hasConflictingLifecycleState
+  );
 };
 
 const assertGeneratorCatalogInstructionsClosed = (catalog) => {
@@ -139,9 +157,13 @@ const assertGeneratorCatalogInstructionsClosed = (catalog) => {
     ...(catalog.actions ?? []),
     ...(catalog.retired_actions ?? []),
   ];
+  const knownGeneratorDependentActionIds = new Set([
+    consumedGeneratorId,
+    "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ]);
   const generatorBearingEntries = catalogEntries.filter(
     (action) =>
-      action.id === consumedGeneratorId ||
+      knownGeneratorDependentActionIds.has(action.id) ||
       (typeof action.instruction === "string" && action.instruction.includes(consumedGeneratorId)),
   );
   assert.ok(generatorBearingEntries.length > 0);
@@ -171,6 +193,24 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
   assert.notEqual(profileDesignIndex, -1);
   const [profileDesign] = retiredProfileDesignCatalog.actions.splice(profileDesignIndex, 1);
   retiredProfileDesignCatalog.retired_actions.push(profileDesign);
+
+  const blankDependentInstruction = structuredClone(retiredProfileDesignCatalog);
+  blankDependentInstruction.retired_actions.find(
+    (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+  ).instruction = "   ";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(blankDependentInstruction),
+    /instruction must be non-empty/u,
+  );
+
+  const directActiveStatus = structuredClone(retiredProfileDesignCatalog);
+  directActiveStatus.actions.find(
+    (action) => action.id === consumedGeneratorId,
+  ).instruction += " Status: ACTIVE.";
+  assert.throws(
+    () => assertGeneratorCatalogInstructionsClosed(directActiveStatus),
+    /Status: ACTIVE/u,
+  );
 
   const blankGeneratorInstruction = structuredClone(retiredProfileDesignCatalog);
   blankGeneratorInstruction.actions.find(
@@ -221,7 +261,8 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
   const protectedTargetContinuation = structuredClone(retiredProfileDesignCatalog);
   protectedTargetContinuation.retired_actions.find(
     (action) => action.id === "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
-  ).instruction += " Continue this separately authorized target transition.";
+  ).instruction +=
+    " Continue this separately authorized target transition. The separately authorized target transition remains ACTIVE.";
   assert.doesNotThrow(
     () => assertGeneratorCatalogInstructionsClosed(protectedTargetContinuation),
   );
