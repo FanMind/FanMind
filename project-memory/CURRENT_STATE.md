@@ -1,3 +1,11 @@
+## Creator Target Transition + Runtime admitted — 2026-09-27
+- Status: IN_PROGRESS; current protected R4 action is `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`.
+- Authorization/lock: `FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` READY_NOW / `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927` ACTIVE.
+- Exact source base: `c4326090052b7ccda34f73744d62f814bc342abb`, after final Creator closeout PR #1212. PR #1207 reference/profile and PR #1209 seven-step generator remain accepted/consumed inputs, not work to repeat.
+- Current target evidence: FanMind Staging `vshyhvgcmrlagvfnvomc` ACTIVE_HEALTHY on PostgreSQL 17; current read-only preflight found four Creator table counts 0/0/0/0, zero active Creator RPC sessions, absent workspace-access helper/Admin-CRM helper and Legacy RPC/policy state. Production `drqkpdvtbbrrdwmtrodz` is distinct and excluded.
+- Active source scope: protected target runner, exact owner-command workflow, runtime flag controller and focused tests. No target write or runtime activation has occurred from this scope yet.
+- Next: exact-head CI/review/merge, then one issue #874 owner command bound to exact current main; protected workflow must deploy exact Staging release, apply only from full LEGACY_EXACT under same-transaction locks, prove CURRENT_EXACT before COMMIT, then enable the Staging Creator flag and prove authenticated `/api/creators available:true`. Runtime failure restores only the flag.
+
 ## Creator Foundation transition generator accepted
 - Status: ACCEPTED; repository source package consumed.
 - Task/action: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.
