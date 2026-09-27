@@ -51,6 +51,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       ('${ids[1]}','${ids[4]}','FanMind Staging Secondary E2E','{"staging_synthetic_fixture":true}','active','active');
     insert into public.workspace_members values('${ids[0]}','${ids[2]}','owner'),('${ids[1]}','${ids[4]}','owner'),('${ids[0]}','${ids[3]}','member');`);
     sql(readFileSync(new URL("../supabase/controlled/20260920230000_chat_admin_multi_character.sql",import.meta.url),"utf8"));
+    sql(readFileSync(new URL("../supabase/controlled/20260927200000_chat_admin_character_fans.sql",import.meta.url),"utf8"));
     sql(`update public.workspaces set test_access_flags='{}' where id='${ids[0]}';`);
     assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)));
     assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");

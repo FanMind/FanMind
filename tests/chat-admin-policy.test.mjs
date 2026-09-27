@@ -297,25 +297,30 @@ test("APPLY and ACCEPT require separate explicit write gates", () => {
 test("schema verifier checks definitions, composite tenant constraints and global uniqueness rather than counts", () => {
   assert.equal(
     SQL_SHA256,
-    "9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b",
+    "36990f58521e3986542f5b9b206af93f9fa4a6e6439352b4b11ead7685e4275a",
   );
   for (const token of [
     "set transaction read only",
     "ABSENT",
     "PARTIAL",
     "VERIFIED",
-    "chat_admin_capability_owner_read",
-    "chat_admin_characters_owner_all",
+    "chat_admin_fans_owner_all",
     "chat_admin_conversations_owner_all",
     "chat_admin_messages_owner_all",
+    "chat_admin_fan_schema_ready",
     "roles = '{authenticated}'::name[]",
     "pg_get_constraintdef",
     "foreignkeyworkspace_id,character_idreferenceschat_charactersworkspace_id,idondeletecascade",
-    "foreignkeyworkspace_id,character_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,idondeletecascade",
-    "one_chat_admin_workspace_global",
+    "foreignkeyworkspace_id,character_id,fan_idreferenceschat_character_fansworkspace_id,character_id,idondeletecascade",
+    "foreignkeyworkspace_id,character_id,fan_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,fan_id,idondeletecascade",
     "information_schema.table_privileges",
     "schema_mismatch",
     "format_type",
+    "chat_character_messages_generation_once",
+    "chat_character_messages_confirmation_once",
+    "require_chat_admin_message_fan",
+    "create_chat_admin_fan_conversation_after_insert",
+    "public.chat_admin_fan_schema_ready()",
     "has_function_privilege",
   ]) {
     assert.match(CHAT_ADMIN_POSTFLIGHT_SQL, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
