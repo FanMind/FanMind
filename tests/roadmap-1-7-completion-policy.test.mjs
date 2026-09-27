@@ -44,50 +44,49 @@ const markdownSection = (document, heading) => {
 };
 
 const consumedGeneratorNextLineIsClosed = (line) => {
-  const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
   const consumedGeneratorReference =
     `(?:\`?${consumedGeneratorId}\\b\`?|it\\b|(?:this|that|the)(?:\\s+(?:consumed|accepted\\/consumed))?\\s+(?:(?:transition\\s+)?generator|source(?:\\s+package)?)\\b)`;
-  const directlyTargetsConsumedGenerator = new RegExp(
-    `^\\s+(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?${consumedGeneratorReference}`,
-    "iu",
-  );
-  const restartMentions = [];
-  for (const match of line.matchAll(/\b(?:start|restart|implement|reopen|rebuild|resume)\b/giu)) {
-    const previous = restartMentions.at(-1);
-    const prefix = line.slice(0, match.index);
-    const connector = previous ? line.slice(previous.end, match.index) : "";
-    const directlyNegated = /\b(?:do\s+not|don't|must\s+not|cannot|never)\s*$/iu.test(prefix);
-    const connectedToPrevious = previous !== undefined && /^\s+(?:and|or)\s+$/iu.test(connector);
-    restartMentions.push({
-      connectedToPrevious,
-      end: match.index + match[0].length,
-      negated: directlyNegated || (previous?.negated === true && connectedToPrevious),
-      targetsConsumedGenerator: directlyTargetsConsumedGenerator.test(
-        line.slice(match.index + match[0].length),
-      ),
-    });
-  }
-  for (let groupStart = 0; groupStart < restartMentions.length;) {
-    let groupEnd = groupStart + 1;
-    while (groupEnd < restartMentions.length && restartMentions[groupEnd].connectedToPrevious) {
-      groupEnd += 1;
-    }
-    if (restartMentions.slice(groupStart, groupEnd).some(({ targetsConsumedGenerator }) => targetsConsumedGenerator)) {
-      for (let index = groupStart; index < groupEnd; index += 1) {
-        restartMentions[index].targetsConsumedGenerator = true;
+  const consumedGeneratorActionTarget =
+    `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?${consumedGeneratorReference}`;
+  const closedSpans = [];
+  const affirmativeCompletionPatterns = [
+    new RegExp(
+      `superseded\\s+by\\s+the\\s+accepted\\/consumed\\s+(?:source(?:\\s+package)?|${consumedGeneratorReference}(?:\\s+source\\s+package)?)`,
+      "giu",
+    ),
+    new RegExp(
+      `${consumedGeneratorReference}(?:\\s+source\\s+package)?\\s+(?:is\\s+)?(?:now\\s+|already\\s+)?(?:accepted\\/consumed|done)\\b`,
+      "giu",
+    ),
+  ];
+  for (const pattern of affirmativeCompletionPatterns) {
+    for (const match of line.matchAll(pattern)) {
+      const prefix = line.slice(0, match.index);
+      if (!/\b(?:not|never)\s*$/iu.test(prefix)) {
+        closedSpans.push([match.index, match.index + match[0].length]);
       }
     }
-    groupStart = groupEnd;
   }
-  const explicitlyNegatesRestart = restartMentions.some(
-    ({ negated, targetsConsumedGenerator }) => negated && targetsConsumedGenerator,
+  const reopeningVerb = "(?:start|restart|implement|reopen|rebuild|resume|continue)";
+  const explicitlyClosedDirective = new RegExp(
+    `\\b(?:do\\s+not|don't|must\\s+not|cannot|never)\\s+${reopeningVerb}(?:\\s+(?:and|or)\\s+${reopeningVerb})*\\s+${consumedGeneratorActionTarget}`,
+    "giu",
   );
+  for (const match of line.matchAll(explicitlyClosedDirective)) {
+    closedSpans.push([match.index, match.index + match[0].length]);
+  }
+  const maskedLine = [...line];
+  for (const [start, end] of closedSpans) {
+    maskedLine.fill(" ", start, end);
+  }
+  const leavesUnclassifiedGeneratorReference = new RegExp(
+    consumedGeneratorReference,
+    "iu",
+  ).test(maskedLine.join(""));
   const affirmativelyRestarts =
-    restartMentions.some(
-      ({ negated, targetsConsumedGenerator }) => !negated && targetsConsumedGenerator,
-    ) ||
+    leavesUnclassifiedGeneratorReference ||
     /requires its own exact-base start contract and lock before implementation/iu.test(line);
-  return (recordsConsumedStatus || explicitlyNegatesRestart) && !affirmativelyRestarts;
+  return closedSpans.length > 0 && !affirmativelyRestarts;
 };
 
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
@@ -372,7 +371,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       consumedGeneratorNextLineIsClosed(`Next: ${generatorId} is ACCEPTED/CONSUMED; resume it`),
       false,
     );
-    const reopeningVerbs = ["start", "restart", "implement", "reopen", "rebuild", "resume"];
+    const reopeningVerbs = ["start", "restart", "implement", "reopen", "rebuild", "resume", "continue"];
     const consumedGeneratorTargets = [
       generatorId,
       `\`${generatorId}\``,
@@ -398,6 +397,37 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
         );
       }
     }
+    for (const unfinishedStatus of [
+      "is not ACCEPTED/CONSUMED yet",
+      "is not yet ACCEPTED/CONSUMED",
+      "is not DONE",
+      "is never DONE",
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(`Next: ${generatorId} ${unfinishedStatus}`),
+        false,
+        unfinishedStatus,
+      );
+    }
+    for (const unclassifiedReopenDirective of [
+      `repeat ${generatorId}`,
+      "proceed with it",
+      `advance work on \`${generatorId}\``,
+    ]) {
+      assert.equal(
+        consumedGeneratorNextLineIsClosed(
+          `Next: ${generatorId} is ACCEPTED/CONSUMED; ${unclassifiedReopenDirective}`,
+        ),
+        false,
+        unclassifiedReopenDirective,
+      );
+    }
+    assert.equal(
+      consumedGeneratorNextLineIsClosed(
+        `Next: not superseded by the accepted/consumed ${generatorId} source package`,
+      ),
+      false,
+    );
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
