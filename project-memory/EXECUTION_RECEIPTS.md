@@ -2,16 +2,14 @@
 - Task: FM-CREATOR-001
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
 - Risk: R3
-- Status: IN_PROGRESS
-- Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (ACTIVE).
+- Status: ACCEPTED; consumed.
+- Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (RELEASED_MERGED_VERIFIED).
 - Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499`.
-- Completed so far: merged PR #1210 and its delayed exact-head review were reconciled; the valid post-merge lifecycle-scope findings were reproduced; PR #1211 was opened from exact main and the correction is implemented in one test file with canonical STARTED_WORK/lock/receipt tracking.
-- Still open: exact-head CI including PostgreSQL 17, Browser E2E and CodeQL; independent exact-head review; evidence-backed resolution of any blocking P0/P1/P2; normal merge and post-merge verification.
-- Exact next step: run the complete exact-head gates on PR #1211, process all current findings together, and merge only when the exact head is clean and mergeable.
-- Owner action needed: none.
-- Boundary: repository test/governance correction only. No target/provider/database call, SQL APPLY, deployment/runtime activation, customer mutation or external acceptance.
-- Recovery: ordinary repository revert; no external cleanup.
-
+- Completion: PR #1211 final head `e4cf6ee471efbc9ba270aeb7ccc84f8dab853b9c` passed Project Memory Guard/Quality/Status, God Mode, Landing Language, Browser E2E, CodeQL and FanMind CI including native PostgreSQL 17. Exact-head independent review reported no new findings; the P1 parser finding and P2 governance finding were evidence-backed resolved. Normal squash merge: `fe8d86ed92dafcc2b7d281f6e1bab39735e2d6b6`, 2026-09-27T09:30:55Z.
+- Result: post-merge Creator closeout invariants are reconciled and consumed on main. The source generator remains accepted/consumed; Creator aggregate remains IN_PROGRESS only for separately admitted target/runtime/provider/quality work.
+- Boundary: repository test/governance reconciliation only. No target/provider/database call, SQL APPLY, deployment/runtime activation, customer mutation or external acceptance.
+- Next: recompute current priorities. A Creator target transition may proceed only as a new exact protected R4 action with current owner authorization, exact Staging target binding, independent source/review/CI evidence and its own execution receipt.
+- No follow-up chain: the merge SHA of this final reconciliation record does not itself require another reconciliation receipt.
 ## FM-EXEC-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
