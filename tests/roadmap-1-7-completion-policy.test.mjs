@@ -9,16 +9,24 @@ const completion = readFileSync(
 );
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
+const agents = read("AGENTS.md");
+const sourceOfTruth = read("docs/SOURCE_OF_TRUTH.md");
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
+const executionPolicy = read("project-memory/EXECUTION_POLICY.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
+const deferredOwnerActions = read("project-memory/DEFERRED_OWNER_ACTIONS.md");
 const openLoops = read("project-memory/OPEN_LOOPS.md");
 const dependencies = read("project-memory/DEPENDENCIES.md");
 const currentState = read("project-memory/CURRENT_STATE.md");
+const deepAudit = read("project-memory/FANMIND_DEEP_AUDIT_2026-08-19.md");
+const finishline = read("project-memory/FANMIND_FINISHLINE.md");
+const finishlineState = read("project-memory/FINISHLINE_STATE.json");
 const executionReceipts = read("project-memory/EXECUTION_RECEIPTS.md");
 const workLocks = read("project-memory/WORK_LOCKS.md");
 const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
+const decisions = read("project-memory/DECISIONS.md");
 const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
@@ -212,10 +220,42 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       markdownSection(executionReceipts, "## FM-EXEC-CREATOR-FOUNDATION-RECONCILIATION-20260926"),
       markdownSection(executionReceipts, "## FM-EXEC-CREATOR-CONFIRMED-CHAT-VERIFY-20260926"),
       markdownSection(dependencies, "## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
+      markdownSection(workLocks, "## LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926"),
     ];
     for (const section of currentCreatorReaders) {
       assert.match(section, /(?:superseded by the accepted\/consumed .*PR #1209|already ACCEPTED\/CONSUMED by PR #1209)/u);
       assert.doesNotMatch(section, /(?:Next integration|Next step|Next|Remaining dependency):[^\n]*(?:implement|start)[^\n]*NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/iu);
+    }
+    const mandatoryPreflightReaders = [
+      agents,
+      sourceOfTruth,
+      executionPolicy,
+      currentState,
+      deepAudit,
+      finishline,
+      finishlineState,
+      nextAction,
+      deferredOwnerActions,
+      sessionHandoff,
+      startedWork,
+      workLocks,
+      openLoops,
+      taskLedger,
+      dependencies,
+      decisions,
+      executionReceipts,
+    ];
+    for (const reader of mandatoryPreflightReaders) {
+      const generatorNextLines = reader.split("\n").filter(
+        (line) =>
+          /(?:Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
+          /NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u.test(line),
+      );
+      for (const line of generatorNextLines) {
+        assert.match(line, /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed)/u);
+        assert.doesNotMatch(line, /(?:^|:\s*)(?:Implement|Start)\b/u);
+        assert.doesNotMatch(line, /requires its own exact-base start contract and lock before implementation/iu);
+      }
     }
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
