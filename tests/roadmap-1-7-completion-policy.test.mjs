@@ -58,6 +58,7 @@ const consumedGeneratorNextLineIsClosed = (line) => {
   const consumedGeneratorActionTarget =
     `(?:(?:work\\s+on|(?:the\\s+)?implementation\\s+of)\\s+)?(?:${consumedGeneratorReference}|${consumedGeneratorAnaphor})`;
   const closedSpans = [];
+  const completionSpans = [];
   const completionNegation =
     /\b(?:not|never|no\s+longer|cannot|(?:is|was|were|has|have|had|does|do|did|can|could|should|would|will|must)n['’]t|won['’]t)\b/iu;
   const affirmativeCompletionPatterns = [
@@ -74,7 +75,9 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     for (const match of line.matchAll(pattern)) {
       const clausePrefix = line.slice(0, match.index).split(/[.;]/u).at(-1) ?? "";
       if (!completionNegation.test(clausePrefix)) {
-        closedSpans.push([match.index, match.index + match[0].length]);
+        const span = [match.index, match.index + match[0].length];
+        completionSpans.push(span);
+        closedSpans.push(span);
       }
     }
   }
@@ -130,12 +133,22 @@ const consumedGeneratorNextLineIsClosed = (line) => {
     );
   const conflictingLifecycleState =
     "(?:incomplete|unfinished|pending|open|active|in[_\\s-]?progress)";
-  const directLifecycleConflictAfterCloseout = closedSpans.some(([, end]) => {
-    const tail = line.slice(end);
-    return new RegExp(
-      `^\\s*(?:[,.;:]\\s*)?(?:(?:but|and|yet|while)\\s+)?(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`,
-      "iu",
-    ).test(tail);
+  const directLifecycleConflictAfterCloseout = completionSpans.some(([, end]) => {
+    const tail = line
+      .slice(end)
+      .replace(/^\\s*[,.;:]?\\s*/u, "");
+    const lifecyclePredicate =
+      `(?:(?:status\\s*:\\s*)${conflictingLifecycleState}|(?:(?:remains?|is|was|were)(?:\\s+still)?|still)\\s+${conflictingLifecycleState})\\b`;
+    if (new RegExp(`^${lifecyclePredicate}`, "iu").test(tail)) return true;
+
+    const explicitSeparateSubject =
+      /^(?:the\\s+)?separately\\s+authorized\\s+target\\s+transition\\b|^Creator\\s+aggregate\\b/iu;
+    if (explicitSeparateSubject.test(tail)) return false;
+
+    const connectorOnlyPrefix =
+      /^(?:(?!the\\b|this\\b|that\\b|a\\b|an\\b|creator\\b|target\\b|transition\\b|generator\\b|source\\b|workspace\\b|action\\b|task\\b)[\\p{L}'’_-]+\\s+)*/iu;
+    const connectorPrefix = tail.match(connectorOnlyPrefix)?.[0] ?? "";
+    return new RegExp(`^${lifecyclePredicate}`, "iu").test(tail.slice(connectorPrefix.length));
   });
   const hasConflictingLifecycleState = directLifecycleConflictAfterCloseout;
   const affirmativelyRestarts =
@@ -253,6 +266,22 @@ test("consumed generator closeout covers every catalog lifecycle instruction", (
     ),
     true,
     "target-scoped Status: ACTIVE must not reopen the consumed generator",
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED. Continue the separately authorized target transition; Status: ACTIVE.`,
+    ),
+    true,
+    "protected target action span must not become a generator lifecycle subject",
+  );
+
+  assert.equal(
+    consumedGeneratorNextLineIsClosed(
+      `${consumedGeneratorId} is ACCEPTED/CONSUMED, though remains ACTIVE`,
+    ),
+    false,
+    "direct lifecycle contradiction must not depend on a connector allowlist",
   );
 
   const anaphoricReopen = structuredClone(retiredProfileDesignCatalog);
