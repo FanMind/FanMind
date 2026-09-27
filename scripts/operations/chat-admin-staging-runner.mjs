@@ -271,8 +271,8 @@ begin
   ) p
   where roles = '{authenticated}'::name[]
     and (
-      (policyname='chat_admin_capability_owner_read' and tablename='workspace_chat_admin_capabilities' and cmd='SELECT' and wc = '' and q like '%chat_admin_multi_character%' and q like '%granted_to_user_id=auth.uid%' and q like '%owner_user_id=auth.uid%')
-      or (policyname='chat_admin_characters_owner_all' and tablename='chat_characters' and cmd='ALL' and q like '%is_current_chat_admin_workspaceworkspace_id%' and wc like '%is_current_chat_admin_workspaceworkspace_id%' and wc like '%created_by_user_id=auth.uid%')
+      (policyname='chat_admin_capability_owner_read' and tablename='workspace_chat_admin_capabilities' and cmd='SELECT' and wc = '' and q in ('chat_admin_multi_characterandgranted_to_user_id=auth.uidandexistsselect1fromworkspaceswwherew.id=workspace_idandw.owner_user_id=auth.uid','chat_admin_multi_characterandgranted_to_user_id=auth.uidandexistsselect1fromworkspaceswwherew.id=workspace_chat_admin_capabilities.workspace_idandw.owner_user_id=auth.uid'))
+      or (policyname='chat_admin_characters_owner_all' and tablename='chat_characters' and cmd='ALL' and q='is_current_chat_admin_workspaceworkspace_id' and wc='is_current_chat_admin_workspaceworkspace_idandcreated_by_user_id=auth.uid')
     );
 
   select count(*) into policy_count
@@ -420,31 +420,21 @@ begin
     union all
     select 1 where has_function_privilege('anon','public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','execute')
     union all
-    select 1 where has_function_privilege('PUBLIC','public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','execute')
-    union all
     select 1 where not has_function_privilege('authenticated','public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])','execute')
     union all
     select 1 where has_function_privilege('anon','public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])','execute')
-    union all
-    select 1 where has_function_privilege('PUBLIC','public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])','execute')
     union all
     select 1 where not has_function_privilege('authenticated','public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)','execute')
     union all
     select 1 where has_function_privilege('anon','public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)','execute')
     union all
-    select 1 where has_function_privilege('PUBLIC','public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)','execute')
-    union all
     select 1 where not has_function_privilege('authenticated','public.chat_admin_fan_schema_ready()','execute')
     union all
     select 1 where has_function_privilege('anon','public.chat_admin_fan_schema_ready()','execute')
     union all
-    select 1 where has_function_privilege('PUBLIC','public.chat_admin_fan_schema_ready()','execute')
-    union all
     select 1 where not has_function_privilege('authenticated','public.is_current_chat_admin_workspace(uuid)','execute')
     union all
     select 1 where has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
-    union all
-    select 1 where has_function_privilege('PUBLIC','public.is_current_chat_admin_workspace(uuid)','execute')
   ) checks;
 
   select case when
