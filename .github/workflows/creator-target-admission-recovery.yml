@@ -1,10 +1,6 @@
 name: FanMind Creator Target Admission Recovery
 
 on:
-  workflow_run:
-    workflows:
-      - FanMind Creator Target Transition and Runtime
-    types: [completed]
   workflow_dispatch:
     inputs:
       reviewed_commit:
@@ -17,9 +13,7 @@ on:
         type: string
 
 concurrency:
-  # Recovery must not be displaced by an unrelated run waiting on a shared group.
-  # The SQL controller carries the Creator-specific advisory lock and exact catalog guard.
-  group: ${{ github.event_name == 'workflow_run' && format('fanmind-creator-admission-recovery-{0}', github.event.workflow_run.id) || format('fanmind-creator-admission-recovery-manual-{0}', github.run_id) }}
+  group: fanmind-staging-deploy
   cancel-in-progress: false
 
 permissions:
@@ -30,16 +24,10 @@ jobs:
   restore-admission:
     name: Restore canonical Creator RPC admission on Staging
     if: >-
-      ${{
-        (github.event_name == 'workflow_run' &&
-         github.event.workflow_run.head_branch == 'main' &&
-         github.event.workflow_run.conclusion != 'success') ||
-        (github.event_name == 'workflow_dispatch' &&
-         github.ref == 'refs/heads/main' &&
-         inputs.reviewed_commit == github.sha &&
-         inputs.confirmation == 'restore-creator-target-admission')
-      }}
-    runs-on: ubuntu-24.04
+      ${{ github.ref == 'refs/heads/main' &&
+          inputs.reviewed_commit == github.sha &&
+          inputs.confirmation == 'restore-creator-target-admission' }}
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
     environment: staging
     env:
       FANMIND_RUNTIME_ENVIRONMENT: staging
@@ -47,8 +35,8 @@ jobs:
       FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
-      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-      FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+      FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CREATOR_TRANSITION_RECOVERY_HEAD: ''
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
       FANMIND_CREATOR_TRANSITION_CONFIRM: restore-creator-target-admission
@@ -60,13 +48,44 @@ jobs:
       PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
       PGSSLMODE: verify-full
       PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      FANMIND_CREATOR_RUNTIME_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CREATOR_RUNTIME_CONFIRM: enable-creator-intelligence-staging
+      FANMIND_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_STAGING_SUPABASE_ANON_KEY: ${{ secrets.FANMIND_STAGING_SUPABASE_ANON_KEY }}
+      FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+      FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
     steps:
       - name: Checkout exact recovery control that closed admission
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ inputs.reviewed_commit }}
           persist-credentials: false
           fetch-depth: 1
+
+      - name: Restore persistent Creator runtime flag before RPC admission
+        run: |
+          set -euo pipefail
+          ENV_FILE=/var/www/fanmind-staging/.env.production
+          PERSISTENT_BACKUP=/var/lib/fanmind-staging/creator-runtime-recovery.env
+          test "$(git rev-parse HEAD)" = "$FANMIND_CREATOR_TRANSITION_REVIEWED_COMMIT"
+          sudo test -f /etc/systemd/system/fanmind-staging.service
+          sudo test ! -L /etc/systemd/system/fanmind-staging.service
+          sudo cmp --silent /etc/systemd/system/fanmind-staging.service "$GITHUB_WORKSPACE/ops/systemd/fanmind-staging.service"
+          if sudo test -e "$PERSISTENT_BACKUP"; then
+            test -f "$ENV_FILE" && test ! -L "$ENV_FILE" && test "$(stat -c '%a' "$ENV_FILE")" = 600
+            test "$(sudo stat -c '%U:%G:%a' "$PERSISTENT_BACKUP")" = root:root:600
+            BACKUP="$RUNNER_TEMP/fanmind-creator-runtime.backup"
+            test ! -e "$BACKUP" && test ! -L "$BACKUP"
+            sudo install -o "$(id -un)" -g "$(id -gn)" -m 600 "$PERSISTENT_BACKUP" "$BACKUP"
+            node scripts/operations/creator-runtime-staging.mjs restore "$BACKUP"
+            sudo systemctl restart fanmind-staging.service
+            sudo systemctl is-active --quiet fanmind-staging.service
+            rm -f "$BACKUP"
+            sudo rm -f "$PERSISTENT_BACKUP"
+            echo "CREATOR_RUNTIME_STAGING_RECOVERED=PASS"
+          else
+            echo "CREATOR_RUNTIME_STAGING_RECOVERY=no_persistent_backup"
+          fi
 
       - name: Download and verify the accepted private PG17 reference
         env:
