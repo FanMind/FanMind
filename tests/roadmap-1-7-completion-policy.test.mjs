@@ -42,6 +42,15 @@ const markdownSection = (document, heading) => {
   return document.slice(start, next === -1 ? undefined : next);
 };
 
+const consumedGeneratorNextLineIsClosed = (line) => {
+  const recordsConsumedStatus = /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed|\bDONE\b)/u.test(line);
+  const explicitlyNegatesRestart = /\b(?:do not|don't|must not|cannot|never)\b[^.]*\b(?:start|implement|reopen)\b/iu.test(line);
+  const affirmativelyRestarts =
+    /(?:^|:\s*)(?:Implement|Start|Reopen)\b/iu.test(line) ||
+    /requires its own exact-base start contract and lock before implementation/iu.test(line);
+  return (recordsConsumedStatus || explicitlyNegatesRestart) && !affirmativelyRestarts;
+};
+
 test("roadmap 1-7 completion keeps all four evidence classes explicit", () => {
   for (const heading of [
     "Code",
@@ -256,15 +265,16 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     for (const reader of mandatoryPreflightReaders) {
       const generatorNextLines = reader.split("\n").filter(
         (line) =>
-          /(?:Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
+          /(?:Next action|Next integration|Next step|Next|Remaining dependency):/iu.test(line) &&
           /NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR/u.test(line),
       );
       for (const line of generatorNextLines) {
-        assert.match(line, /(?:superseded|ACCEPTED\/CONSUMED|accepted\/consumed)/u);
-        assert.doesNotMatch(line, /(?:^|:\s*)(?:Implement|Start)\b/u);
-        assert.doesNotMatch(line, /requires its own exact-base start contract and lock before implementation/iu);
+        assert.equal(consumedGeneratorNextLineIsClosed(line), true);
       }
     }
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next action: ${generatorId}`), false);
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next: Implement ${generatorId}`), false);
+    assert.equal(consumedGeneratorNextLineIsClosed(`Next: Do not start ${generatorId}`), true);
     const generatorFreshness = evidenceFreshness.entries.find((entry) => entry.id === "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209");
     assert.ok(generatorFreshness);
     assert.equal(generatorFreshness.gate, "creator_foundation_transition_generator");
