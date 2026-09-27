@@ -12,7 +12,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_O
 
 ## Instruction
 
-Protected run 36321009852 consumed the original transition command on main 8bf23be6af739086354c58548ea43c3910c17ee1. Exact Staging deploy passed; classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations outside the runner sudo allowlist; no SQL APPLY, runtime activation or Production mutation occurred. The Builder must merge the bounded diagnostics/recovery correction with exact-head CI and review. After merge, FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 authorizes only one exact-main read-only classification. The Builder must review/remediate its proven differing sections before a distinct transition/runtime authorization may be requested.
+Protected run 36321009852 consumed the original transition command on main 8bf23be6af739086354c58548ea43c3910c17ee1. Exact Staging deploy passed; classification returned DRIFT, so APPLY was not requested and runtime was skipped. Recovery failed on file operations outside the runner sudo allowlist; no SQL APPLY, runtime activation or Production mutation occurred. Merge the bounded diagnostics/recovery correction with exact-head CI and review. Then FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 authorizes only one exact-main read-only classification. Review and remediate its proven differing sections before requesting a distinct transition/runtime authorization.
 
 ## Why this action
 
