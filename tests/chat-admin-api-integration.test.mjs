@@ -75,9 +75,10 @@ function harness(change) {
   const dependencies = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
+      requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
-      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => [],
       persistChatAdminGeneration: async () => undefined,
@@ -87,6 +88,7 @@ function harness(change) {
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
     "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: true }) },
     "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
+    "@/lib/aiExecutionPolicy.mjs": { AI_REPLY_INPUT_CHAR_LIMIT: 80_000 },
   };
   const exports = {};
   runInNewContext(code, {

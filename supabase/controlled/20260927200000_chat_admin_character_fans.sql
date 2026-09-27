@@ -13,6 +13,7 @@ create table public.chat_character_fans (
   status text not null default 'active' check (status in ('active','inactive')),
   summary text not null default '' check (char_length(summary) <= 4000),
   notes text not null default '' check (char_length(notes) <= 4000),
+  revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (workspace_id, character_id, id),
@@ -29,6 +30,7 @@ alter table public.chat_character_conversations add constraint chat_character_co
   references public.chat_character_fans(workspace_id, character_id, id) on delete cascade;
 
 alter table public.chat_character_messages add column fan_id uuid;
+alter table public.chat_character_messages add column sequence bigint generated always as identity;
 alter table public.chat_character_messages add constraint chat_character_messages_fan_conversation_fk
   foreign key (workspace_id, character_id, fan_id, conversation_id)
   references public.chat_character_conversations(workspace_id, character_id, fan_id, id) on delete cascade;
@@ -80,7 +82,7 @@ revoke insert,update,delete on table public.chat_character_conversations,public.
 
 create function public.persist_chat_admin_generation(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
-  target_conversation_id uuid, target_character_revision integer,
+  target_conversation_id uuid, target_character_revision integer, target_fan_revision integer,
   expected_history_ids uuid[], inbound_content text, suggested_contents text[]
 ) returns void language plpgsql security definer set search_path='' as $$
 begin
@@ -91,10 +93,10 @@ begin
   then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_characters c where c.workspace_id=target_workspace_id and c.id=target_character_id and c.status='active' and c.revision=target_character_revision for update;
   if not found then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
-  perform 1 from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.id=target_fan_id and f.status='active' for update;
+  perform 1 from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.id=target_fan_id and f.status='active' and f.revision=target_fan_revision for update;
   if not found then raise exception 'chat_admin_generation_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_character_conversations c where c.workspace_id=target_workspace_id and c.character_id=target_character_id and c.fan_id=target_fan_id and c.id=target_conversation_id for update;
-  if not found or coalesce(expected_history_ids,'{}'::uuid[]) <> coalesce((select array_agg(id order by created_at,id) from (select id,created_at from public.chat_character_messages where workspace_id=target_workspace_id and character_id=target_character_id and fan_id=target_fan_id and conversation_id=target_conversation_id order by created_at desc,id desc limit 20) recent),'{}'::uuid[]) then raise exception 'chat_admin_generation_context_changed' using errcode='40001'; end if;
+  if not found or coalesce(expected_history_ids,'{}'::uuid[]) <> coalesce((select array_agg(id order by sequence) from (select id,sequence from public.chat_character_messages where workspace_id=target_workspace_id and character_id=target_character_id and fan_id=target_fan_id and conversation_id=target_conversation_id order by sequence desc limit 20) recent),'{}'::uuid[]) then raise exception 'chat_admin_generation_context_changed' using errcode='40001'; end if;
   insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision)
     values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'fan_inbound',inbound_content,target_character_revision);
   insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision)
@@ -102,7 +104,7 @@ begin
 end $$;
 create function public.persist_chat_admin_confirmed_reply(
   target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
-  target_conversation_id uuid, target_character_revision integer, reply_content text
+  target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, reply_content text
 ) returns public.chat_character_messages language plpgsql security definer set search_path='' as $$
 declare saved public.chat_character_messages;
 begin
@@ -111,7 +113,7 @@ begin
   then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_characters c where c.workspace_id=target_workspace_id and c.id=target_character_id and c.status='active' and c.revision=target_character_revision for update;
   if not found then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
-  perform 1 from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.id=target_fan_id and f.status='active' for update;
+  perform 1 from public.chat_character_fans f where f.workspace_id=target_workspace_id and f.character_id=target_character_id and f.id=target_fan_id and f.status='active' and f.revision=target_fan_revision for update;
   if not found then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
   perform 1 from public.chat_character_conversations c where c.workspace_id=target_workspace_id and c.character_id=target_character_id and c.fan_id=target_fan_id and c.id=target_conversation_id for update;
   if not found then raise exception 'chat_admin_confirmed_reply_binding_invalid' using errcode='42501'; end if;
@@ -119,10 +121,10 @@ begin
   values(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,'confirmed_reply',reply_content,target_character_revision) returning * into saved;
   return saved;
 end $$;
-revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,uuid[],text,text[]) from public,anon,service_role;
-grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,uuid[],text,text[]) to authenticated;
-revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,text) from public,anon,service_role;
-grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,text) to authenticated;
+revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid[],text,text[]) from public,anon,service_role;
+grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid[],text,text[]) to authenticated;
+revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) from public,anon,service_role;
+grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,text) to authenticated;
 revoke all on function public.create_chat_admin_fan_conversation() from public,anon,authenticated,service_role;
 revoke all on function public.require_chat_admin_fan_binding() from public,anon,authenticated,service_role;
 commit;

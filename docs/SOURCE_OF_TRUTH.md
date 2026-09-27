@@ -1281,5 +1281,8 @@ gespeichert werden. Der Server lädt Character, exakte Revision, Fan, Conversati
 und Verlauf neu, bevor er genau drei Vorschläge ausgibt. Keine OnlyFans-Verbindung,
 kein Scraping und kein Auto-Send. Der Fan-Vertrag benötigt einen neuen geschützten
 Staging-Apply; Production-Aktivierung und Providerintegration sind nicht Teil
-dieses Source-Pakets. Der bestehende rote Backup-Freshness-Audit bleibt als
+dieses Source-Pakets. Die neue Oberfläche bleibt zusätzlich mit
+`FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=false` fail-closed, bis Schema,
+Postflight und Runtime-Aktivierung separat kontrolliert abgenommen sind. Der
+bestehende rote Backup-Freshness-Audit bleibt als
 getrennter Operations-Punkt offen und wurde nicht verändert.

@@ -163,6 +163,8 @@ test("ChatAdmin stays separate from Platform Admin and UI is capability-hidden",
   const admin = await readFile("src/lib/admin.ts", "utf8");
   assert.match(dashboard, /showChatAdmin \?/u);
   assert.match(page, /requireChatAdminCapability/u);
+  assert.match(page, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"/u);
+  assert.match(page, /Es werden keine Fan-Daten abgefragt oder geschrieben/u);
   assert.match(page, /notFound\(\)/u);
   assert.doesNotMatch(admin, /chat_admin_multi_character/u);
 });
@@ -385,6 +387,19 @@ test("workflow fails closed on mode mismatch, pins TLS and verifies schema befor
 
 test("additive fan schema binds fan, conversation and messages by composite tenant keys", async () => {
   const sql=await readFile(new URL("../supabase/controlled/20260927200000_chat_admin_character_fans.sql",import.meta.url),"utf8");
-  for(const contract of ["create table public.chat_character_fans","unique (workspace_id, character_id, id)","chat_character_conversations_one_per_fan","chat_character_conversations_fan_fk","chat_character_messages_fan_conversation_fk","require_chat_admin_fan_binding","fan_id is not null","persist_chat_admin_generation","coalesce(cardinality(suggested_contents),0) <> 3","persist_chat_admin_confirmed_reply","revoke insert,update,delete","enable row level security"]) assert.match(sql,new RegExp(contract.replace(/[()]/g,"\\$&")));
+  for(const contract of ["create table public.chat_character_fans","unique (workspace_id, character_id, id)","chat_character_conversations_one_per_fan","chat_character_conversations_fan_fk","chat_character_messages_fan_conversation_fk","require_chat_admin_fan_binding","fan_id is not null","persist_chat_admin_generation","coalesce(cardinality(suggested_contents),0) <> 3","persist_chat_admin_confirmed_reply","revoke insert,update,delete","enable row level security"]) assert.ok(sql.includes(contract),`missing fan contract: ${contract}`);
   assert.match(sql,/grant execute on function public\.persist_chat_admin_generation\([^;]+to authenticated;/i);
+});
+
+test("persistent fan runtime stays server-side default-off until controlled activation", async () => {
+  const [store, page, fans, conversations, replies] = await Promise.all([
+    readFile(new URL("../src/lib/chatAdmin.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/chatadmin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/fans/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/conversations/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/api/chatadmin/reply-suggestions/route.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED!=="true"/u);
+  assert.match(page, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"/u);
+  for (const route of [fans, conversations, replies]) assert.match(route, /requireChatAdminFanRuntime\(\)/u);
 });
