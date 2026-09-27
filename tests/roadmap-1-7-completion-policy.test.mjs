@@ -12,9 +12,12 @@ const actionCatalog = JSON.parse(read("project-memory/NEXT_BEST_ACTIONS.json"));
 const agents = read("AGENTS.md");
 const sourceOfTruth = read("docs/SOURCE_OF_TRUTH.md");
 const creatorDoc = read("docs/CREATOR_INTELLIGENCE.md");
+const protocol = read("project-memory/PROTOCOL.md");
 const executionPolicy = read("project-memory/EXECUTION_POLICY.md");
 const nextAction = read("project-memory/NEXT_BEST_ACTION.md");
 const deferredOwnerActions = read("project-memory/DEFERRED_OWNER_ACTIONS.md");
+const autoHandoff = read("project-memory/AUTO_HANDOFF.md");
+const ownerActionInbox = read("project-memory/OWNER_ACTION_INBOX.md");
 const openLoops = read("project-memory/OPEN_LOOPS.md");
 const dependencies = read("project-memory/DEPENDENCIES.md");
 const currentState = read("project-memory/CURRENT_STATE.md");
@@ -27,6 +30,7 @@ const taskLedger = read("project-memory/TASK_LEDGER.md");
 const sessionHandoff = read("project-memory/SESSION_HANDOFF.md");
 const startedWork = read("project-memory/STARTED_WORK.md");
 const decisions = read("project-memory/DECISIONS.md");
+const failedAttempts = read("project-memory/FAILED_ATTEMPTS.md");
 const transitionDesign = read("docs/operations/CREATOR_FOUNDATION_FORWARD_TRANSITION_DESIGN.md");
 const evidence = read("project-memory/EVIDENCE.md");
 const evidenceFreshness = JSON.parse(read("project-memory/EVIDENCE_FRESHNESS.json"));
@@ -229,6 +233,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
     const mandatoryPreflightReaders = [
       agents,
       sourceOfTruth,
+      protocol,
       executionPolicy,
       currentState,
       deepAudit,
@@ -236,6 +241,8 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       finishlineState,
       nextAction,
       deferredOwnerActions,
+      autoHandoff,
+      ownerActionInbox,
       sessionHandoff,
       startedWork,
       workLocks,
@@ -243,6 +250,7 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       taskLedger,
       dependencies,
       decisions,
+      failedAttempts,
       executionReceipts,
     ];
     for (const reader of mandatoryPreflightReaders) {
