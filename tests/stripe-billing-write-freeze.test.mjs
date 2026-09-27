@@ -242,7 +242,10 @@ test("Production URLs are rejected before any request", async () => {
 test("deploy and Apply share exclusion and Apply requires live proof before SQL", () => {
   const deploy = fs.readFileSync(".github/workflows/deploy-staging.yml", "utf8");
   const apply = fs.readFileSync(".github/workflows/stripe-billing-event-ledger-staging.yml", "utf8");
-  assert.match(deploy, /group: fanmind-staging-deploy\s+cancel-in-progress: false/u);
+  assert.match(
+    deploy,
+    /group: \$\{\{ inputs\.reviewed_commit != '' && format\('fanmind-staging-deploy-chained-\{0\}', inputs\.reviewed_commit\) \|\| 'fanmind-staging-deploy' \}\}\s+cancel-in-progress: false/u,
+  );
   assert.match(apply, /group: fanmind-staging-deploy\s+cancel-in-progress: false/u);
   assert.match(apply, /set -euo pipefail\s+node scripts\/operations\/staging-billing-freeze-control.mjs[\s\S]*--verify[^\n]+\n\s+npm run db:stripe-billing-ledger:apply/u);
   assert.ok(deploy.indexOf('--resolve') < deploy.indexOf('rsync --archive'));
