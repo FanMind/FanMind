@@ -1,11 +1,12 @@
 ## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
-- Status: IN_PROGRESS; exact bounded repository continuation started from `a165f3c074e8e0eb2b24ea3882a3fd57db011939` under `LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927`.
+- Status: ACCEPTED; exact bounded repository source continuation consumed.
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Task: FM-CREATOR-001
 - Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
 - Completion contract: emit only the helper, two RPC bodies and four policy USING replacements; fail closed on every unsupported profile/pin/state; prove native rollback, negative isolation and unchanged data; publish a reproducible manifest through exact-head CI and independent review.
 - Boundary: repository source/tests only. No target/provider call, SQL APPLY, workflow dispatch, runtime activation or deployment acceptance. A later target-bound continuation requires a distinct protected action and current authorization.
-- Current blocker: PR #1209 head `d7aebf7d749487e1e23a9f104f5869f86e84784d` has failed required native CI and open review findings. Independent review of local correction `863ade1b701bffcf5f8c9028450460a74ed63c47` also rejected an unobservable isolated-role fixture; the same branch must prove the corrected core-PG17 fingerprint, exact CLI bytes, independently accepted input pins, non-replaceable classifier and membership-connected catalog-observed unknown-role negative before this dependency can be accepted.
+- Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`; all nine exact-head workflows, native PG17 job `108523066296`, independent review and review-thread closure passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Remaining dependency: target observation/reference acceptance and any transition execution are not part of this accepted source dependency. They require a distinct protected action, current authorization and exact target binding. Creator aggregate remains IN_PROGRESS.
 
 ## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
 - Task: FM-CREATOR-001

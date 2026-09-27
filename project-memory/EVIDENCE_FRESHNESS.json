@@ -2,6 +2,19 @@
   "schema_version": 1,
   "entries": [
     {
+      "id": "EV-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209",
+      "gate": "creator_foundation_transition_generator",
+      "class": "immutable_commit",
+      "status": "ACCEPTED",
+      "observed_at": "2026-09-27T01:15:46Z",
+      "source": "Receipt project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json; reviewed source 176efc9bfaf84b75b72591abb6a4bcc453e4a58c; CI checkout 75fa8ceb2b21d91a8faf0aa53ac0d1a04e417243; artifact 10919937178; archive SHA256 4c23bc1f8ad4d0b2acae4090db8b775cc1e14926bb485c540629708f223a0035; manifest SHA256 c04f8d7a3ccdc2432a3d1576c6c9874674339b781a87debbfea5462139d4a722; merge 08fba825d1228d5b57ff0d145919b6bdb51d7504",
+      "revalidate_on": [
+        "referenced_commit_missing_or_superseded",
+        "creator_foundation_transition_contract_changed",
+        "reference_artifact_manifest_or_source_pin_changed"
+      ]
+    },
+    {
       "id": "EV-CREATOR-FOUNDATION-PROFILE-TRANSITION-PR1207",
       "gate": "creator_foundation_profile_transition_design",
       "class": "immutable_commit",

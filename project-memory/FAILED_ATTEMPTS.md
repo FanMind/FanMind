@@ -1,12 +1,13 @@
 ## FM-FAIL-CREATOR-TRANSITION-PG17-20260927
 - Date: 2026-09-27
-- Status: CORRECTION_IN_PROGRESS
+- Status: RESOLVED
 - Task: FM-CREATOR-001 / NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR.
 - Attempt: PR #1209 exact head `d7aebf7d749487e1e23a9f104f5869f86e84784d`, FanMind CI run `36281083473` / native PostgreSQL 17 job `108512884231`.
 - Result: repository-only checks passed, but the native fixture stopped before the transition proof because it called unavailable `digest(bytea, unknown)` without installing `pgcrypto`. Exact-head review also proved that `--sql` emitted an extra newline, the accepted parent/provider/profile pins were not independently frozen, and a caller could replace the precondition classifier.
 - Cause: the synthetic fixture used an extension function outside the workflow contract, while the artifact and precondition APIs trusted values derived from mutable current sources or a caller-supplied classifier.
 - Correction: use PostgreSQL 17 core `sha256`, connect the synthetic unknown role to a seeded authority principal and verify its actual catalog row, bind generation to the accepted PR #1207 reference and source-contract hashes, make classification non-injectable, and hash the exact CLI bytes. Code and tests stay in the same PR; a fresh exact-head CI and independent review are required before merge.
 - Do not repeat: do not install an unnecessary extension, weaken the native gate, reuse old-head green checks, or treat generated current-source hashes as immutable acceptance pins.
+- Resolution: PR #1209 correction head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c` passed FanMind CI `36284679968`, native PostgreSQL 17 job `108523066296`, exact-head independent review and all nine required workflows, then merged as `08fba825d1228d5b57ff0d145919b6bdb51d7504`. The historical failed head remains negative evidence and is not reclassified as success.
 
 ## FM-FAIL-CHATADMIN-ACCEPT-FIXTURE-20260926
 - Date: 2026-09-26

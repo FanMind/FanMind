@@ -657,3 +657,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Acceptance: workflow syntax/current-head CI clean; independent review has no blocking finding; no secret committed; missing configuration performs no external call; configured manual dispatch receives HTTP 202; later merge event wakes exactly one manager run for that merge SHA.
 - External prerequisite: published FanMind Workspace Manager API channel and scoped Workspace Agent access token. Repository implementation must not invent or commit either value.
 - Exclusions: no direct task-to-task ChatGPT control, no protected action authorization, no Product/DB/Staging/Production/provider mutation.
+## FM-CREATOR-001 — bounded Foundation transition generator — 2026-09-27
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Risk: R3
+- Status: ACCEPTED; repository source package consumed.
+- Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`; all nine exact-head workflows, FanMind CI `36284679968`, native PG17 job `108523066296`, independent exact-head review and zero open review threads passed.
+- Result: bounded fail-closed generator emits only the accepted helper, two RPCs and four policy changes; exact CLI bytes and source/profile/reference pins are fixed; native PG17 proves rollback after each injected step, unchanged data, exact Legacy-to-Current catalog and cross-workspace/direct-write/unknown-role negatives.
+- Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Boundary/next: repository source acceptance only. Creator aggregate remains IN_PROGRESS with `targetAccepted=false`, `applyAllowed=false`, `runtimeActivated=false`, `learningState=UNDETERMINED`. A target observation/reference acceptance or transition requires a distinct protected action, current authorization and exact target binding; do not repeat the consumed catalog observation unchanged.

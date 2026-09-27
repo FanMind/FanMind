@@ -1536,3 +1536,13 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Exact #1160 read-only runtime evidence: Production Audit `35777327823` reports `PRODUCTION_RUNTIME_VERIFIED=true`, `PRODUCTION_RELEASE=ae5a3bd2e8e75c9c9d4f55b821b2bbdaf1e452c6`, 8 healthy components, PM2 online, nginx active, local/public login HTTP 200. The complete audit remains red only for the already-open `production_audit_backup_latest_stale_or_empty` finding.
 - Interpretation: Bernd's explicit statement that he personally merged #1158 and #1160 is authoritative Owner evidence for those deliberate manual merges. GitHub confirms both merged states and exact merge SHAs, so both are `OWNER_ACCEPTED_MERGE`; do not reopen a missing pre-merge review/merge-authorization requirement solely for those already owner-accepted source/governance scopes. For #1160, the listed post-merge deploy/runtime observations are separately evidenced. This does not authorize any protected action or manufacture provider/Staging/Production facts not independently observed.
 - Reconciliation boundary: downstream canonical files must consume the actual merge/acceptance status without reopening or duplicating the merged source work. ChatAdmin APPLY remains separately owner/action-time gated; Creator privacy/delete/disclosure closure must remain evidence-driven.
+## RECEIPT-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-PR1209-20260927
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Risk: R3
+- Status: ACCEPTED; repository source package consumed.
+- Source: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`.
+- Verification: all nine exact-head workflows succeeded; FanMind CI `36284679968`, native PG17 job `108523066296`, truth/lint/Operations/build job `108523066366`, independent exact-head review and zero open review threads passed. Reference artifact `10919937178`, archive SHA256 `4c23bc1f8ad4d0b2acae4090db8b775cc1e14926bb485c540629708f223a0035`, manifest SHA256 `c04f8d7a3ccdc2432a3d1576c6c9874674339b781a87debbfea5462139d4a722`.
+- Boundary: source/test acceptance only. No target/provider call, target observation/reference acceptance, SQL APPLY, deployment acceptance, runtime activation, product-data write or aggregate Creator completion occurred.
+- Receipt file: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Next: only a distinct newly admitted protected target action with current authorization and exact target binding may observe/accept a target reference or execute the transition; no unchanged catalog retry is admitted.
