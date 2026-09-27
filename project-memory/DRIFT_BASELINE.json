@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-09-26",
-  "last_source_of_truth_review": "2026-09-26 FM-CHATADMIN-002 / PR #1193: source reader clarifies the existing never-Platform-Admin invariant. Actual shared application authorization now denies configured Platform Admin even when Owner/capability prerequisites would otherwise pass; executable bypass regressions reproduced RED then passed. This is source-only reconciliation, not target acceptance, Production activation or a refresh of runtime evidence. Other watched files and accepted boundaries remain unchanged.",
+  "captured": "2026-09-27",
+  "last_source_of_truth_review": "2026-09-27 FM-CHATADMIN-003 / PR #1216: source reader adds the controlled, still-unapplied persistent Character-fan contract and its default-off runtime boundary. Normal Creator semantics, prior ChatAdmin target acceptance and Production state remain unchanged; the new schema requires separate post-merge controlled Staging authorization.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "d7614edadde7261d0431c3cf6bb2e2fbbf880fbc",
+    "docs/SOURCE_OF_TRUTH.md": "f1a5a9745f85ed482b31d64104f5566dfa1431cb",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

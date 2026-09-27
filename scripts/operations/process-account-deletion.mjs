@@ -471,6 +471,7 @@ const WORKSPACE_DELETION_TABLES = [
   "creator_commercial_events",
   "workspace_chat_admin_capabilities",
   "chat_characters",
+  "chat_character_fans",
   "chat_character_conversations",
   "chat_character_messages",
 ];
@@ -484,6 +485,7 @@ const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
   "creator_commercial_events",
   "workspace_chat_admin_capabilities",
   "chat_characters",
+  "chat_character_fans",
   "chat_character_conversations",
   "chat_character_messages",
 ]);

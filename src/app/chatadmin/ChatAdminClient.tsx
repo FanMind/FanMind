@@ -5,79 +5,26 @@ import styles from "./chatadmin.module.css";
 const empty:Partial<ChatCharacter>={display_name:"",profile_image_path:null,public_age:18,bio:"",location:"",languages:["Deutsch"],personality:"",writing_style:"",emoji_style:"sparsam",sentence_style:"kurz und natürlich",typical_phrases:[],forbidden_phrases:[],flirt_style:"respektvoll und innerhalb der definierten Grenzen",sales_rules:"kein Druck, keine falschen Versprechen",example_messages:[],status:"active"};
 const lines=(value:string)=>value.split("\n").map(v=>v.trim()).filter(Boolean);
 function ChatAdminComposer({character}:{character:ChatCharacter}) {
- const [incoming,setIncoming]=useState("");
- const [fan,setFan]=useState("");
- const [replies,setReplies]=useState<string[]>([]);
- const [notice,setNotice]=useState("");
- const [pending,setPending]=useState(false);
- const requestVersion=useRef(0);
- const controller=useRef<AbortController|null>(null);
-
- useEffect(()=>()=>{
-  requestVersion.current+=1;
-  controller.current?.abort();
- },[]);
-
- function invalidate() {
-  requestVersion.current+=1;
-  controller.current?.abort();
-  controller.current=null;
-  setReplies([]);
-  setNotice("");
-  setPending(false);
- }
-
- async function generate() {
-  if(character.status!=="active"||!incoming.trim()||controller.current)return;
-  const version=++requestVersion.current;
-  const activeController=new AbortController();
-  controller.current=activeController;
-  setReplies([]);
-  setPending(true);
-  setNotice("Antwortvorschläge werden erzeugt …");
-  try {
-   const response=await fetch("/api/chatadmin/reply-suggestions",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({character_id:character.id,character_revision:character.revision,incoming_message:incoming,fan_label:fan}),
-    signal:activeController.signal,
-   });
-   const body=await response.json();
-   if(version!==requestVersion.current)return;
-   if(!response.ok){setNotice(`Anfrage abgewiesen: ${body.error}`);return;}
-   if(body.character_id!==character.id||body.character_revision!==character.revision||!Array.isArray(body.replies)||body.replies.length!==3||body.replies.some((reply:unknown)=>typeof reply!=="string"||!reply.trim())) {
-    throw new Error("invalid_reply_binding");
-   }
-   setReplies(body.replies);
-   setNotice(typeof body.safety_note==="string"?body.safety_note:"Antworten prüfen, kopieren und manuell einfügen.");
-  } catch {
-   if(version===requestVersion.current)setNotice("Antwortvorschläge fehlgeschlagen. Bitte erneut versuchen.");
-  } finally {
-   if(version===requestVersion.current){controller.current=null;setPending(false);}
-  }
- }
-
- async function copy(reply:string) {
-  const version=requestVersion.current;
-  try {
-   await navigator.clipboard.writeText(reply);
-   if(version===requestVersion.current)setNotice("Antwort kopiert. Bitte prüfen und manuell bei OnlyFans einfügen.");
-  } catch {
-   if(version===requestVersion.current)setNotice("Kopieren fehlgeschlagen. Bitte den Antworttext manuell auswählen und kopieren.");
-  }
- }
-
- return <section className={styles.composer}>
-  <p className={styles.eyebrow}>Manueller Copy-&-Open-Flow · {character.display_name}</p>
-  <h2>Nachricht manuell einfügen</h2>
-  <label>Fan/Chat-Bezeichnung (optional)<input value={fan} onChange={e=>{invalidate();setFan(e.target.value);}} maxLength={120}/></label>
-  <label>Von OnlyFans kopierte Fan-Nachricht<textarea value={incoming} onChange={e=>{invalidate();setIncoming(e.target.value);}} maxLength={4000}/></label>
-  <button onClick={generate} disabled={pending||character.status!=="active"||!incoming.trim()}>Antwortvorschläge erzeugen</button>
-  {character.status!=="active"&&<p>Dieser Character ist deaktiviert. Neue KI-Antworten sind gesperrt.</p>}
-  <div className={styles.replies}>{replies.map((reply,i)=><article key={i}><p>{reply}</p><button onClick={()=>copy(reply)}>Antwort kopieren</button></article>)}</div>
+ type Fan={id:string;character_id:string;display_name:string;handle:string|null;platform:string;language:string|null;status:"active"|"inactive";summary:string;notes:string;revision:number};
+ type Message={id:string;direction:"fan_inbound"|"suggested_reply"|"confirmed_reply";content:string;created_at:string};
+ const [fans,setFans]=useState<Fan[]>([]),[selectedFan,setSelectedFan]=useState<Fan|null>(null),[conversationId,setConversationId]=useState(""),[messages,setMessages]=useState<Message[]>([]);
+ const [editingFan,setEditingFan]=useState<Partial<Fan>|null>(null),[incoming,setIncoming]=useState(""),[replies,setReplies]=useState<string[]>([]),[notice,setNotice]=useState(""),[pending,setPending]=useState(false);
+ const requestVersion=useRef(0),fanRequestVersion=useRef(0),controller=useRef<AbortController|null>(null),confirmationPending=useRef(false),generationAttempt=useRef<{key:string;id:string}|null>(null);
+ async function loadFans(){const version=++fanRequestVersion.current;const response=await fetch(`/api/chatadmin/fans?character_id=${encodeURIComponent(character.id)}`,{cache:"no-store"});const body=await response.json();if(!response.ok)throw new Error(body.error);if(version===fanRequestVersion.current)setFans(body.fans);}
+ async function openFan(fan:Fan,reset=true){const version=++fanRequestVersion.current;if(reset){invalidate();setConversationId("");setMessages([]);setIncoming("");}setSelectedFan(fan);setEditingFan(null);const response=await fetch(`/api/chatadmin/conversations?character_id=${encodeURIComponent(character.id)}&fan_id=${encodeURIComponent(fan.id)}`,{cache:"no-store"});const body=await response.json();if(!response.ok)throw new Error(body.error);if(version!==fanRequestVersion.current||body.fan?.id!==fan.id||body.conversation?.fan_id!==fan.id)return;setSelectedFan(body.fan);setConversationId(body.conversation.id);setMessages(body.messages);}
+ useEffect(()=>{void loadFans().catch(()=>setNotice("Fans konnten nicht geladen werden."));return()=>{requestVersion.current+=1;fanRequestVersion.current+=1;controller.current?.abort();};},[character.id]);
+ function invalidate(){requestVersion.current+=1;controller.current?.abort();controller.current=null;generationAttempt.current=null;setReplies([]);setNotice("");setPending(false);}
+ async function saveFan(event:FormEvent<HTMLFormElement>){event.preventDefault();setPending(true);const fd=new FormData(event.currentTarget);const payload={...editingFan,character_id:character.id,display_name:String(fd.get("display_name")),handle:String(fd.get("handle")),platform:String(fd.get("platform")),language:String(fd.get("language")),summary:String(fd.get("summary")),notes:String(fd.get("notes")),status:editingFan?.status??"active"};try{const response=await fetch("/api/chatadmin/fans",{method:editingFan?.id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const body=await response.json();if(!response.ok){setNotice(`Speichern abgewiesen: ${body.error}`);return;}await loadFans();await openFan(body.fan);setNotice("Fan und Wissen gespeichert.");}catch{setNotice("Fan konnte nicht gespeichert werden.");}finally{setPending(false);}}
+ async function generate(){if(!selectedFan||!conversationId||character.status!=="active"||!incoming.trim()||controller.current)return;const version=++requestVersion.current;const activeController=new AbortController();controller.current=activeController;const attemptKey=[character.id,character.revision,selectedFan.id,selectedFan.revision,conversationId,incoming.trim()].join(":");if(generationAttempt.current?.key!==attemptKey)generationAttempt.current={key:attemptKey,id:crypto.randomUUID()};const generationId=generationAttempt.current.id;setReplies([]);setPending(true);setNotice("Antwortvorschläge werden erzeugt …");try{const response=await fetch("/api/chatadmin/reply-suggestions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({character_id:character.id,character_revision:character.revision,fan_id:selectedFan.id,fan_revision:selectedFan.revision,conversation_id:conversationId,generation_id:generationId,incoming_message:incoming}),signal:activeController.signal});const body=await response.json();if(version!==requestVersion.current)return;if(!response.ok){setNotice(`Anfrage abgewiesen: ${body.error}`);return;}if(body.character_id!==character.id||body.fan_id!==selectedFan.id||body.conversation_id!==conversationId||body.character_revision!==character.revision||!Array.isArray(body.replies)||body.replies.length!==3)throw new Error("invalid_reply_binding");generationAttempt.current=null;setReplies(body.replies);setIncoming("");setNotice(body.safety_note);await openFan(selectedFan,false);}catch{if(version===requestVersion.current)setNotice("Antwortvorschläge fehlgeschlagen. Bitte erneut versuchen.");}finally{if(version===requestVersion.current){controller.current=null;setPending(false);}}}
+ async function copy(reply:string){try{await navigator.clipboard.writeText(reply);setNotice("Antwort kopiert. Bitte manuell senden und danach als bestätigt speichern.");}catch{setNotice("Kopieren fehlgeschlagen.");}}
+ async function confirmReply(reply:string){if(!selectedFan||confirmationPending.current)return;const version=requestVersion.current;const confirmingFan=selectedFan;confirmationPending.current=true;setPending(true);try{const response=await fetch("/api/chatadmin/conversations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({character_id:character.id,character_revision:character.revision,fan_id:selectedFan.id,fan_revision:selectedFan.revision,conversation_id:conversationId,direction:"confirmed_reply",content:reply})});const body=await response.json();if(version!==requestVersion.current)return;if(!response.ok){setNotice(`Bestätigung abgewiesen: ${body.error}`);return;}if(body.message?.fan_id!==confirmingFan.id||body.message?.conversation_id!==conversationId)return;setReplies([]);await openFan(confirmingFan,false);setNotice("Manuell verwendete Antwort wurde bestätigt und gespeichert.");}finally{confirmationPending.current=false;if(version===requestVersion.current)setPending(false);}}
+ return <section className={styles.composer}><div className={styles.sectionTitle}><div><p className={styles.eyebrow}>Fans von {character.display_name}</p><h2>Persistente Fan-Kontexte</h2></div><button onClick={()=>setEditingFan({platform:"OnlyFans",status:"active",summary:"",notes:""})}>Fan hinzufügen</button></div>
+  <div className={styles.fanGrid}>{fans.map(fan=><button className={selectedFan?.id===fan.id?styles.fanSelected:styles.fanButton} key={fan.id} onClick={()=>void openFan(fan)}><strong>{fan.display_name}</strong><span>{fan.handle||fan.platform}</span></button>)}</div>
+  {editingFan&&<form className={styles.editor} onSubmit={saveFan}><h3>{editingFan.id?"Fan bearbeiten":"Fan hinzufügen"}</h3><fieldset disabled={pending}><label>Name<input name="display_name" defaultValue={editingFan.display_name}/></label><label>Handle (optional)<input name="handle" defaultValue={editingFan.handle??""}/></label><label>Plattform / Quelle<input name="platform" defaultValue={editingFan.platform}/></label><label>Sprache (optional)<input name="language" defaultValue={editingFan.language??""}/></label><label>Zusammenfassung / wichtige Fakten<textarea name="summary" defaultValue={editingFan.summary}/></label><label>Relevante Notizen<textarea name="notes" defaultValue={editingFan.notes}/></label></fieldset><div className={styles.actions}><button type="submit" disabled={pending}>Fan speichern</button><button type="button" onClick={()=>setEditingFan(null)}>Abbrechen</button></div></form>}
+  {selectedFan&&!editingFan&&<><div className={styles.sectionTitle}><div><p className={styles.eyebrow}>{selectedFan.platform}{selectedFan.handle?` · ${selectedFan.handle}`:""}</p><h2>{selectedFan.display_name}</h2></div><button onClick={()=>{invalidate();setEditingFan(selectedFan);}}>Fan bearbeiten</button></div><div className={styles.memory}><div><strong>Zusammenfassung / wichtige Fakten</strong><p>{selectedFan.summary||"Noch keine Zusammenfassung."}</p></div><div><strong>Relevante Notizen</strong><p>{selectedFan.notes||"Noch keine Notizen."}</p></div></div><div className={styles.history}><h3>Gesprächsverlauf</h3>{messages.length===0?<p>Noch keine Nachrichten.</p>:messages.map(message=><article key={message.id} data-direction={message.direction}><strong>{message.direction==="fan_inbound"?selectedFan.display_name:message.direction==="confirmed_reply"?"Manuell gesendet":"KI-Vorschlag"}</strong><p>{message.content}</p></article>)}</div><label>Neue eingehende Fan-Nachricht<textarea value={incoming} onChange={e=>{invalidate();setIncoming(e.target.value);}} maxLength={4000}/></label><button onClick={generate} disabled={pending||character.status!=="active"||!incoming.trim()}>3 KI-Antworten erzeugen</button>{character.status!=="active"&&<p>Dieser Character ist deaktiviert. Neue KI-Antworten sind gesperrt.</p>}<div className={styles.replies}>{replies.map((reply,i)=><article key={i}><p>{reply}</p><div className={styles.actions}><button disabled={pending} onClick={()=>void copy(reply)}>Antwort kopieren</button><button disabled={pending} onClick={()=>void confirmReply(reply)}>Als manuell gesendet bestätigen</button></div></article>)}</div></>}
   {notice&&<p role="status" className={styles.notice}>{notice}</p>}
  </section>;
 }
-
 export function ChatAdminClient({initialCharacters}:{initialCharacters:ChatCharacter[]}){
  const [characters,setCharacters]=useState(initialCharacters);const [selected,setSelected]=useState<ChatCharacter|null>(initialCharacters[0]??null);const [editing,setEditing]=useState<Partial<ChatCharacter>|null>(null);const [notice,setNotice]=useState("");
  const [mutating,setMutating]=useState(false);

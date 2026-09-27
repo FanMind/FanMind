@@ -1055,3 +1055,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Boundary: the released source lock does not authorize or prove a protected Staging VERIFY, SQL APPLY, runtime activation or any provider/customer/Billing/Restore/Mobile mutation.
 - Resume: never reopen this source-control lock merely because target evidence is still missing; acquire a separate exact protected-action lock only when that action is independently authorized.
 - Recovery: repository revert only; this lock mutated no external target.
+
+## LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
+- Task: FM-CHATADMIN-003
+- Status: ACTIVE
+- Risk: R3
+- Holder: Codex Cloud
+- Baseline: `dbb37855f3eca4a652193b2db1db983a70118eba`
+- Scope: exakt ein zusammenhängender Repository-Strang für persistente Character-Fans, deren Wissen, Conversation/Message-Bindung, UI und KI-Kontext.
+- Forbidden: Staging-/Production-APPLY, Capability-Aktivierung, echte Kundendaten, Social/OnlyFans-Zugriff, Auto-Send, Billing, Mobile oder Creator-Target-Transition.

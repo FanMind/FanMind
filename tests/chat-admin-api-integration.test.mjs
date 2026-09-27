@@ -9,6 +9,8 @@ import { WorkspaceAuthorizationError } from "../src/lib/workspaceAuthorizationPo
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const characterId = "22222222-2222-4222-8222-222222222222";
+const fanId = "44444444-4444-4444-8444-444444444444";
+const conversationId = "55555555-5555-4555-8555-555555555555";
 const userId = "33333333-3333-4333-8333-333333333333";
 const code = ts.transpileModule(readFileSync("src/app/api/chatadmin/reply-suggestions/route.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -69,26 +71,34 @@ function harness(change) {
     flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], profile_image_path: null,
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0 };
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, providerBody: null };
   const dependencies = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
+      requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
+      getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
+      listRecentChatMessages: async () => [],
+      getChatAdminGeneration: async () => [],
+      persistChatAdminGeneration: async (...args) => args.at(-1),
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => { calls.usage++; } },
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
     "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: true }) },
     "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
+    "@/lib/aiExecutionPolicy.mjs": { AI_REPLY_INPUT_CHAR_LIMIT: 80_000 },
   };
   const exports = {};
   runInNewContext(code, {
     exports, Response, Request, URL, AbortSignal, Date,
     process: { env: { OPENAI_API_KEY: "synthetic-no-provider" } },
     require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
-    fetch: async () => {
+    fetch: async (_url, init) => {
       calls.provider++;
+      calls.providerBody=JSON.parse(init.body);
       if (change === "revoke") revoked = true;
       if (change === "revision") character.revision++;
       if (change === "inactive") character.status = "inactive";
@@ -100,7 +110,7 @@ function harness(change) {
   });
   const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, incoming_message: "Hallo, wie geht es dir?", fan_label: "Synthetic Fan" }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: "Hallo, wie geht es dir?" }),
   });
   return { calls, route: exports.POST, request };
 }
@@ -109,6 +119,7 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   const h = harness(); const response = await h.route(h.request()); const body = await response.json();
   assert.equal(response.status, 200); assert.equal(body.replies.length, 3);
   assert.equal(body.character_id, characterId); assert.equal(body.character_revision, 1);
+  assert.equal(h.calls.providerBody.store, false);
 });
 for (const change of ["revoke", "revision", "inactive", "persona", "deleted", "workspace"]) {
   test(`actual ChatAdmin route discards provider output after ${change} changes during generation`, async () => {
