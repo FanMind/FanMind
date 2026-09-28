@@ -232,7 +232,8 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("revoke create on schema public from authenticated;");
 
-    sql("create role fanmind_chatadmin_schema_creator nologin; grant create on schema public to fanmind_chatadmin_schema_creator; grant fanmind_chatadmin_schema_creator to authenticated;");
+    sql("create role fanmind_chatadmin_schema_creator nologin; grant create on schema public to fanmind_chatadmin_schema_creator; grant fanmind_chatadmin_schema_creator to authenticated with inherit true;");
+    assert.equal(sql("select has_schema_privilege('authenticated','public','CREATE');").trim(),"t","the inherited grant must actually confer browser CREATE");
     assertPostflightRejectsPartial();
     restoreAndVerify("revoke fanmind_chatadmin_schema_creator from authenticated; revoke create on schema public from fanmind_chatadmin_schema_creator; drop role fanmind_chatadmin_schema_creator;");
 
