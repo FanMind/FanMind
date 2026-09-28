@@ -36,6 +36,7 @@ declare
   column_default_mismatch integer;
   rpc_contract_mismatch integer;
   constraint_mismatch integer;
+  foreign_key_trigger_mismatch integer;
   index_mismatch integer;
   trigger_mismatch integer;
   identity_mismatch integer;
@@ -44,6 +45,9 @@ declare
   base_function_mismatch integer;
   function_privilege_mismatch integer;
   table_privilege_mismatch integer;
+  base_table_privilege_mismatch integer;
+  protected_column_privilege_mismatch integer;
+  definer_owner_mismatch integer;
   fan_insert_grant_mismatch integer;
   authenticated_conversation_message_write_grant_mismatch integer;
   readiness_mismatch integer;
@@ -62,6 +66,20 @@ begin
   if base_present <> 5 then
     raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL';
   end if;
+
+  select count(*) into extension_markers
+  from (values
+    (to_regclass('public.chat_character_fans') is not null),
+    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_conversations' and column_name='fan_id')),
+    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='fan_id')),
+    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='sequence')),
+    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='generation_id')),
+    (to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null),
+    (to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null),
+    (to_regprocedure('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)') is not null),
+    (to_regprocedure('public.chat_admin_fan_schema_ready()') is not null)
+  ) as required(ok)
+  where ok;
 
   -- The parent ChatAdmin authority must be intact even when the fan extension is ABSENT.
   select count(*) into base_rls_enabled
@@ -108,19 +126,40 @@ begin
     or has_function_privilege('service_role','public.is_current_chat_admin_workspace(uuid)','execute')
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
-  select count(*) into extension_markers
-  from (values
-    (to_regclass('public.chat_character_fans') is not null),
-    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_conversations' and column_name='fan_id')),
-    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='fan_id')),
-    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='sequence')),
-    (exists(select 1 from information_schema.columns where table_schema='public' and table_name='chat_character_messages' and column_name='generation_id')),
-    (to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null),
-    (to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null),
-    (to_regprocedure('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)') is not null),
-    (to_regprocedure('public.chat_admin_fan_schema_ready()') is not null)
-  ) as required(ok)
-  where ok;
+  with expected(grantee, table_name, privilege_type, fan_absent_only) as (values
+    ('authenticated','workspace_chat_admin_capabilities','SELECT',false),
+    ('authenticated','chat_characters','SELECT',false),('authenticated','chat_characters','INSERT',false),
+    ('authenticated','chat_characters','UPDATE',false),('authenticated','chat_characters','DELETE',false),
+    ('authenticated','chat_character_conversations','SELECT',false),('authenticated','chat_character_conversations','INSERT',true),
+    ('authenticated','chat_character_conversations','UPDATE',true),('authenticated','chat_character_conversations','DELETE',true),
+    ('authenticated','chat_character_messages','SELECT',false),('authenticated','chat_character_messages','INSERT',true),
+    ('authenticated','chat_character_messages','UPDATE',true),('authenticated','chat_character_messages','DELETE',true),
+    ('service_role','workspace_chat_admin_capabilities','SELECT',false),('service_role','workspace_chat_admin_capabilities','INSERT',false),
+    ('service_role','workspace_chat_admin_capabilities','UPDATE',false),('service_role','workspace_chat_admin_capabilities','DELETE',false),
+    ('service_role','chat_characters','SELECT',false),('service_role','chat_characters','INSERT',false),
+    ('service_role','chat_characters','UPDATE',false),('service_role','chat_characters','DELETE',false),
+    ('service_role','chat_character_conversations','SELECT',false),('service_role','chat_character_conversations','INSERT',false),
+    ('service_role','chat_character_conversations','UPDATE',false),('service_role','chat_character_conversations','DELETE',false),
+    ('service_role','chat_character_messages','SELECT',false),('service_role','chat_character_messages','INSERT',false),
+    ('service_role','chat_character_messages','UPDATE',false),('service_role','chat_character_messages','DELETE',false)
+  ), actual as (
+    select grantee, table_name, privilege_type from information_schema.table_privileges
+    where table_schema='public'
+      and table_name in ('workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages')
+      and grantee in ('PUBLIC','anon','authenticated','service_role')
+  ), mismatch as (
+    (select grantee,table_name,privilege_type from expected where not fan_absent_only or extension_markers=0 except select * from actual)
+    union all (select * from actual except select grantee,table_name,privilege_type from expected where not fan_absent_only or extension_markers=0)
+  ) select count(*) into base_table_privilege_mismatch from mismatch;
+
+  select count(*) into protected_column_privilege_mismatch
+  from information_schema.column_privileges
+  where table_schema='public'
+    and table_name in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
+    and grantee in ('PUBLIC','anon','authenticated','service_role');
+
+  if base_table_privilege_mismatch<>0 or protected_column_privilege_mismatch<>0
+  then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   if extension_markers = 0 then
     raise notice 'CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT';
@@ -204,8 +243,14 @@ begin
       ('chat_character_fans','u','uniqueworkspace_id,character_id,id'),
       ('chat_character_fans','u','uniqueworkspace_id,character_id,creation_id'),
       ('chat_character_fans','f','foreignkeyworkspace_id,character_idreferenceschat_charactersworkspace_id,idondeletecascade'),
+      ('chat_character_fans','c','checkchar_lengthbtrimdisplay_name>=1andchar_lengthbtrimdisplay_name<=120'),
+      ('chat_character_fans','c','checkhandleisnullorchar_lengthbtrimhandle>=1andchar_lengthbtrimhandle<=120'),
+      ('chat_character_fans','c','checkchar_lengthbtrimplatform>=1andchar_lengthbtrimplatform<=40'),
+      ('chat_character_fans','c','checklanguageisnullorchar_lengthbtrimlanguage>=1andchar_lengthbtrimlanguage<=40'),
       ('chat_character_fans','c','checkrevision>0'),
       ('chat_character_fans','c','checkstatus=anyarray[''active'',''inactive'']'),
+      ('chat_character_fans','c','checkchar_lengthsummary<=4000'),
+      ('chat_character_fans','c','checkchar_lengthnotes<=4000'),
       ('chat_character_conversations','f','foreignkeyworkspace_id,character_id,fan_idreferenceschat_character_fansworkspace_id,character_id,idondeletecascade'),
       ('chat_character_messages','f','foreignkeyworkspace_id,character_id,fan_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,fan_id,idondeletecascade')
   ), actual as (
@@ -235,6 +280,19 @@ begin
       where conrelid='public.chat_character_fans'::regclass
         and convalidated and not condeferrable and not condeferred)=12
     then 0 else 1 end;
+
+  select count(*) into foreign_key_trigger_mismatch
+  from (values
+    ('chat_character_fans_workspace_id_character_id_fkey'::text),
+    ('chat_character_conversations_fan_fk'::text),
+    ('chat_character_messages_fan_conversation_fk'::text)
+  ) as required(constraint_name)
+  where not exists (
+    select 1 from pg_constraint c
+    where c.conname=required.constraint_name and c.contype='f' and c.convalidated
+      and (select count(*) from pg_trigger t where t.tgconstraint=c.oid and t.tgisinternal)=4
+      and not exists (select 1 from pg_trigger t where t.tgconstraint=c.oid and t.tgisinternal and t.tgenabled<>'O')
+  );
 
   with indexes as (
     select
@@ -510,6 +568,17 @@ begin
     or a.language_name<>e.language_name or a.volatility<>e.volatility
     or a.security_definer<>e.security_definer or not a.empty_search_path;
 
+  select count(*) into definer_owner_mismatch
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  where n.nspname='public'
+    and p.proname in ('create_chat_admin_fan_conversation','create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply')
+    and (not p.prosecdef or pg_get_userbyid(p.proowner)<>'postgres');
+  definer_owner_mismatch := definer_owner_mismatch + case
+    when (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public'
+        and p.proname in ('create_chat_admin_fan_conversation','create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply')
+        and p.prosecdef)=4 then 0 else 1 end;
+
   select count(*) into function_privilege_mismatch
   from (
     select 1 where not has_function_privilege('authenticated','public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','execute')
@@ -557,6 +626,7 @@ begin
     or schema_mismatch <> 0
     or column_default_mismatch <> 0
     or constraint_mismatch <> 0
+    or foreign_key_trigger_mismatch <> 0
     or index_mismatch <> 0
     or trigger_mismatch <> 0
     or identity_mismatch <> 0
@@ -566,6 +636,9 @@ begin
     or base_function_mismatch <> 0
     or function_privilege_mismatch <> 0
     or table_privilege_mismatch <> 0
+    or base_table_privilege_mismatch <> 0
+    or protected_column_privilege_mismatch <> 0
+    or definer_owner_mismatch <> 0
     or fan_insert_grant_mismatch <> 0
     or authenticated_conversation_message_write_grant_mismatch <> 0
     or readiness_mismatch <> 0

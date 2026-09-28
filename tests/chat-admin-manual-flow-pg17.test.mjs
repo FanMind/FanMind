@@ -121,5 +121,29 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
     assertPostflightRejectsPartial();
     sql("revoke insert (summary) on table public.chat_character_fans from authenticated;");
+
+    sql("grant insert (summary) on table public.chat_character_fans to service_role;");
+    assertPostflightRejectsPartial();
+    sql("revoke insert (summary) on table public.chat_character_fans from service_role;");
+
+    sql("revoke insert on table public.chat_characters from authenticated;");
+    assertPostflightRejectsPartial();
+    sql("grant insert on table public.chat_characters to authenticated;");
+
+    sql("grant delete on table public.workspace_chat_admin_capabilities to authenticated;");
+    assertPostflightRejectsPartial();
+    sql("revoke delete on table public.workspace_chat_admin_capabilities from authenticated;");
+
+    sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to authenticated;");
+    assertPostflightRejectsPartial();
+    sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres;");
+
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120); alter table public.chat_character_fans add constraint chat_character_fans_unrelated_check check (true);");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans drop constraint chat_character_fans_unrelated_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120);");
+
+    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='D' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
+    assertPostflightRejectsPartial();
+    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='O' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
   } finally {sql(`drop database ${database} with (force);`,"postgres");}
 });
