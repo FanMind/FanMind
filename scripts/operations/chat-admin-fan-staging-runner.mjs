@@ -136,7 +136,7 @@ begin
     where ns.nspname='public' and i.relname='one_chat_admin_workspace_global'
       and ix.indrelid='public.workspace_chat_admin_capabilities'::regclass
       and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive
-      and pg_get_indexdef(i.oid,0,true)='CREATE UNIQUE INDEX one_chat_admin_workspace_global ON public.workspace_chat_admin_capabilities USING btree (chat_admin_multi_character) WHERE chat_admin_multi_character'
+      and pg_get_indexdef(i.oid,0,true)='CREATE UNIQUE INDEX one_chat_admin_workspace_global ON public.workspace_chat_admin_capabilities USING btree ((chat_admin_multi_character)) WHERE chat_admin_multi_character'
   ) and (select count(*) from pg_index ix join pg_class i on i.oid=ix.indexrelid
     where ix.indrelid='public.workspace_chat_admin_capabilities'::regclass and ix.indisunique
       and pg_get_indexdef(i.oid,0,true) ilike '%where chat_admin_multi_character%')=1
