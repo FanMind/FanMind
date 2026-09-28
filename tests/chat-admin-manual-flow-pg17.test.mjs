@@ -185,6 +185,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_characters alter column revision type integer using revision::integer;");
 
+    sql("alter table public.chat_characters drop constraint chat_characters_revision_check; alter table public.chat_characters add constraint chat_characters_revision_check check (revision > 0) not valid;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters validate constraint chat_characters_revision_check;");
+
     sql("alter table public.chat_characters add constraint unexpected_chat_character_runtime_unique unique (revision,id);");
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_characters drop constraint unexpected_chat_character_runtime_unique;");
