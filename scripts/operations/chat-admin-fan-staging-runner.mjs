@@ -49,6 +49,8 @@ declare
   table_privilege_mismatch integer;
   base_table_privilege_mismatch integer;
   protected_column_privilege_mismatch integer;
+  schema_usage_mismatch integer;
+  parent_character_runtime_mismatch integer;
   definer_owner_mismatch integer;
   fan_insert_grant_mismatch integer;
   authenticated_conversation_message_write_grant_mismatch integer;
@@ -63,6 +65,7 @@ declare
   persistence_constraint_mismatch integer;
   persistence_default_mismatch integer;
   routine_acl_mismatch integer;
+  routine_grant_option_mismatch integer;
   fan_unique_index_mismatch integer;
   generated_column_mismatch integer;
   role_security_mismatch integer;
@@ -232,6 +235,10 @@ begin
 
   if base_table_privilege_mismatch<>0 or protected_column_privilege_mismatch<>0
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+  select count(*) into schema_usage_mismatch
+  from (values ('authenticated'::name),('service_role'::name)) as required(rolname)
+  where not has_schema_privilege(required.rolname,'public','USAGE');
+  if schema_usage_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   if extension_markers = 0 then
     raise notice 'CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT';
@@ -314,6 +321,20 @@ begin
     union all (select * from actual except select * from expected)
   )
   select count(*) into schema_mismatch from mismatch;
+
+  with expected(column_name,type_name,not_null) as (values
+    ('status','text',true),
+    ('revision','integer',true)
+  ), actual as (
+    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    join pg_attribute a on a.attrelid=c.oid
+    where n.nspname='public' and c.relname='chat_characters'
+      and a.attnum>0 and not a.attisdropped and a.attname in ('status','revision')
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
+  ) select count(*) into parent_character_runtime_mismatch from mismatch;
 
   with expected(column_name, default_expression) as (values
     ('id','gen_random_uuid()'),('workspace_id',''),('character_id',''),
@@ -416,9 +437,9 @@ begin
     join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
       and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
-      and con.convalidated and not con.condeferrable and not con.condeferred
   ), mismatch as (
-    select * from expected except select * from actual
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
   )
   select count(*) into constraint_mismatch from mismatch;
   constraint_mismatch := constraint_mismatch + (
@@ -847,6 +868,15 @@ begin
     union all (select * from actual except select * from expected)
   ) select count(*) into routine_acl_mismatch from mismatch;
 
+  select count(*) into routine_grant_option_mismatch
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
+  where n.nspname='public'
+    and p.proname in ('create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply','chat_admin_fan_schema_ready')
+    and acl.privilege_type='EXECUTE'
+    and acl.grantee<>p.proowner
+    and acl.is_grantable;
+
   select case when
     to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null
     and to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null
@@ -861,6 +891,7 @@ begin
     or policy_count <> 3
     or policy_valid <> 3
     or schema_mismatch <> 0
+    or parent_character_runtime_mismatch <> 0
     or column_default_mismatch <> 0
     or generated_column_mismatch <> 0
     or binding_default_mismatch <> 0
@@ -878,6 +909,8 @@ begin
     or base_function_mismatch <> 0
     or function_privilege_mismatch <> 0
     or routine_acl_mismatch <> 0
+    or routine_grant_option_mismatch <> 0
+    or schema_usage_mismatch <> 0
     or table_privilege_mismatch <> 0
     or base_table_privilege_mismatch <> 0
     or protected_column_privilege_mismatch <> 0

@@ -123,7 +123,8 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     'conversation_indexes',conversation_unique_index_mismatch,'extension_markers',extension_markers,
     'triggers',trigger_mismatch,'identity',identity_mismatch,'rewrite_rules',rewrite_rule_mismatch,
     'policy',policy_valid,'table_acl',table_privilege_mismatch,
-    'generated_columns',generated_column_mismatch,'fan_constraints',constraint_mismatch,
+    'generated_columns',generated_column_mismatch,'parent_character',parent_character_runtime_mismatch,
+    'routine_grant_options',routine_grant_option_mismatch,'schema_usage',schema_usage_mismatch,'fan_constraints',constraint_mismatch,
     'persistence_constraints',persistence_constraint_mismatch,
     'trigger_catalog', (select jsonb_agg(jsonb_build_object('name',tgname,'type',tgtype,'attrs',tgattr::text,'enabled',tgenabled,'fn',tgfoid::regprocedure::text,'qual',tgqual::text)) from pg_trigger where tgrelid in ('public.chat_character_fans'::regclass,'public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass) and not tgisinternal),
     'persistence_catalog', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',con.conname,'type',con.contype,'definition',pg_get_constraintdef(con.oid,true))) from pg_constraint con join pg_class c on c.oid=con.conrelid where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)),
@@ -147,133 +148,165 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       assert.notEqual(result.status, 0, "the postflight must reject the injected catalog drift");
       assert.match(`${result.stdout}${result.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
     };
+    const assertPostflightVerified = () => {
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.match(`${result.stdout}${result.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
+    };
+    const restoreAndVerify = (statement) => {
+      sql(statement);
+      assertPostflightVerified();
+    };
+
+    sql("alter table public.chat_characters alter column status drop not null;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters alter column status set not null;");
+
+    sql("alter table public.chat_characters alter column revision type bigint using revision::bigint;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters alter column revision type integer using revision::integer;");
+
+    sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((tstzrange(created_at, created_at + interval '1 second')) with &&);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
+
+    sql("grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to authenticated with grant option;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke grant option for execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from authenticated;");
+
+    sql("revoke usage on schema public from public, authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("grant usage on schema public to public, authenticated;");
 
     sql("alter table public.chat_characters disable row level security;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_characters enable row level security;");
+    restoreAndVerify("alter table public.chat_characters enable row level security;");
 
     sql("alter table public.chat_character_conversations disable trigger require_chat_admin_conversation_fan;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_conversations enable trigger require_chat_admin_conversation_fan;");
+    restoreAndVerify("alter table public.chat_character_conversations enable trigger require_chat_admin_conversation_fan;");
 
     sql("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (true) with check (true);");
     assertPostflightRejectsPartial();
-    sql("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
+    restoreAndVerify("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
 
     sql("alter index public.chat_character_conversations_one_per_fan rename to chat_character_conversations_one_per_fan_invalid;");
     assertPostflightRejectsPartial();
-    sql("alter index public.chat_character_conversations_one_per_fan_invalid rename to chat_character_conversations_one_per_fan;");
+    restoreAndVerify("alter index public.chat_character_conversations_one_per_fan_invalid rename to chat_character_conversations_one_per_fan;");
 
     sql("drop index public.one_chat_admin_workspace_global;");
     assertPostflightRejectsPartial();
-    sql("create unique index one_chat_admin_workspace_global on public.workspace_chat_admin_capabilities using btree (chat_admin_multi_character) where chat_admin_multi_character;");
+    restoreAndVerify("create unique index one_chat_admin_workspace_global on public.workspace_chat_admin_capabilities using btree (chat_admin_multi_character) where chat_admin_multi_character;");
 
     sql("create unique index unexpected_chat_message_content_unique on public.chat_character_messages(content);");
     assertPostflightRejectsPartial();
-    sql("drop index public.unexpected_chat_message_content_unique;");
+    restoreAndVerify("drop index public.unexpected_chat_message_content_unique;");
 
     sql("create unique index unexpected_chat_conversation_character_unique on public.chat_character_conversations(workspace_id,character_id);");
     assertPostflightRejectsPartial();
-    sql("drop index public.unexpected_chat_conversation_character_unique;");
+    restoreAndVerify("drop index public.unexpected_chat_conversation_character_unique;");
 
     sql("create unique index unexpected_chat_fan_character_unique on public.chat_character_fans(workspace_id,character_id);");
     assertPostflightRejectsPartial();
-    sql("drop index public.unexpected_chat_fan_character_unique;");
+    restoreAndVerify("drop index public.unexpected_chat_fan_character_unique;");
 
     sql("alter table public.chat_character_messages add column unexpected_required_column text not null default 'temporary';");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_messages drop column unexpected_required_column;");
+    restoreAndVerify("alter table public.chat_character_messages drop column unexpected_required_column;");
 
     sql("alter table public.chat_character_messages add constraint unexpected_message_direction_check check (direction <> 'suggested_reply');");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_messages drop constraint unexpected_message_direction_check;");
+    restoreAndVerify("alter table public.chat_character_messages drop constraint unexpected_message_direction_check;");
 
     sql("alter table public.chat_character_messages drop constraint chat_character_messages_direction_check; alter table public.chat_character_messages add constraint chat_character_messages_direction_check check (direction <> 'suggested_reply');");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_messages drop constraint chat_character_messages_direction_check; alter table public.chat_character_messages add constraint chat_character_messages_direction_check check (direction in ('fan_inbound','suggested_reply','confirmed_reply'));");
+    restoreAndVerify("alter table public.chat_character_messages drop constraint chat_character_messages_direction_check; alter table public.chat_character_messages add constraint chat_character_messages_direction_check check (direction in ('fan_inbound','suggested_reply','confirmed_reply'));");
 
     sql("alter table public.chat_character_messages set unlogged;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_messages set logged;");
+    restoreAndVerify("alter table public.chat_character_messages set logged;");
 
     sql("alter table public.chat_character_fans owner to authenticated;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_fans owner to postgres;");
+    restoreAndVerify("alter table public.chat_character_fans owner to postgres;");
 
     sql("alter role authenticated bypassrls;");
     try { assertPostflightRejectsPartial(); }
-    finally { sql("alter role authenticated nobypassrls;"); }
+    finally { restoreAndVerify("alter role authenticated nobypassrls;"); }
 
     sql("alter table public.chat_character_conversations alter column fan_id set default '00000000-0000-4000-8000-000000000001'::uuid;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_conversations alter column fan_id drop default;");
+    restoreAndVerify("alter table public.chat_character_conversations alter column fan_id drop default;");
 
     sql("alter table public.chat_character_messages alter column id drop default;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_messages alter column id set default gen_random_uuid();");
+    restoreAndVerify("alter table public.chat_character_messages alter column id set default gen_random_uuid();");
 
     sql("alter sequence public.chat_character_messages_sequence_seq increment by -1;");
     assertPostflightRejectsPartial();
-    sql("alter sequence public.chat_character_messages_sequence_seq increment by 1;");
+    restoreAndVerify("alter sequence public.chat_character_messages_sequence_seq increment by 1;");
 
     sql("alter sequence public.chat_character_messages_sequence_seq cache 2;");
     assertPostflightRejectsPartial();
-    sql("alter sequence public.chat_character_messages_sequence_seq cache 1;");
+    restoreAndVerify("alter sequence public.chat_character_messages_sequence_seq cache 1;");
 
     sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update of fan_id on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
     assertPostflightRejectsPartial();
-    sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+    restoreAndVerify("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
 
     sql("create rule unexpected_message_insert_ignore as on insert to public.chat_character_messages do instead nothing;");
     assertPostflightRejectsPartial();
-    sql("drop rule unexpected_message_insert_ignore on public.chat_character_messages;");
+    restoreAndVerify("drop rule unexpected_message_insert_ignore on public.chat_character_messages;");
 
     sql("create rule unexpected_fan_insert_ignore as on insert to public.chat_character_fans do instead nothing;");
     assertPostflightRejectsPartial();
-    sql("drop rule unexpected_fan_insert_ignore on public.chat_character_fans;");
+    restoreAndVerify("drop rule unexpected_fan_insert_ignore on public.chat_character_fans;");
 
     sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
     assertPostflightRejectsPartial();
-    sql("revoke insert (summary) on table public.chat_character_fans from authenticated;");
+    restoreAndVerify("revoke insert (summary) on table public.chat_character_fans from authenticated;");
 
     sql("grant insert (summary) on table public.chat_character_fans to service_role;");
     assertPostflightRejectsPartial();
-    sql("revoke insert (summary) on table public.chat_character_fans from service_role;");
+    restoreAndVerify("revoke insert (summary) on table public.chat_character_fans from service_role;");
 
     sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_table_reader') then create role fanmind_chatadmin_unexpected_table_reader nologin; end if; end $$; grant select on table public.chat_character_fans to fanmind_chatadmin_unexpected_table_reader;");
     assertPostflightRejectsPartial();
-    sql("revoke select on table public.chat_character_fans from fanmind_chatadmin_unexpected_table_reader; drop role fanmind_chatadmin_unexpected_table_reader;");
+    restoreAndVerify("revoke select on table public.chat_character_fans from fanmind_chatadmin_unexpected_table_reader; drop role fanmind_chatadmin_unexpected_table_reader;");
 
     sql("revoke insert on table public.chat_characters from authenticated;");
     assertPostflightRejectsPartial();
-    sql("grant insert on table public.chat_characters to authenticated;");
+    restoreAndVerify("grant insert on table public.chat_characters to authenticated;");
 
     sql("grant delete on table public.workspace_chat_admin_capabilities to authenticated;");
     assertPostflightRejectsPartial();
-    sql("revoke delete on table public.workspace_chat_admin_capabilities from authenticated;");
+    restoreAndVerify("revoke delete on table public.workspace_chat_admin_capabilities from authenticated;");
 
     sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to authenticated;");
     assertPostflightRejectsPartial();
-    sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres;");
+    restoreAndVerify("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres;");
 
     sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_executor') then create role fanmind_chatadmin_unexpected_executor nologin; end if; end $$; grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to fanmind_chatadmin_unexpected_executor;");
     assertPostflightRejectsPartial();
-    sql("revoke execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from fanmind_chatadmin_unexpected_executor; drop role fanmind_chatadmin_unexpected_executor;");
+    restoreAndVerify("revoke execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from fanmind_chatadmin_unexpected_executor; drop role fanmind_chatadmin_unexpected_executor;");
 
     sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120); alter table public.chat_character_fans add constraint chat_character_fans_unrelated_check check (true);");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans drop constraint chat_character_fans_unrelated_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120);");
+    restoreAndVerify("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans drop constraint chat_character_fans_unrelated_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120);");
 
     sql("alter table public.chat_character_fans add constraint unexpected_unvalidated_fan_check check (false) not valid;");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_fans drop constraint unexpected_unvalidated_fan_check;");
+    restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_unvalidated_fan_check;");
 
     sql("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans alter column status drop default; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text generated always as ('active'::text) stored not null; alter table public.chat_character_fans add constraint chat_character_fans_status_check check (status in ('active','inactive'));");
     assertPostflightRejectsPartial();
-    sql("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text not null default 'active' check (status in ('active','inactive'));");
+    restoreAndVerify("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text not null default 'active' check (status in ('active','inactive'));");
 
     sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='D' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
     assertPostflightRejectsPartial();
-    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='O' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
+    restoreAndVerify("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='O' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
   } finally {sql(`drop database ${database} with (force);`,"postgres");}
 });
