@@ -321,8 +321,8 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text not null default 'active' check (status in ('active','inactive'));");
 
-    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='D' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
+    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='D' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
     assertPostflightRejectsPartial();
-    restoreAndVerify("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='O' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
+    restoreAndVerify("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='O' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
   } finally {sql(`drop database ${database} with (force);`,"postgres");}
 });
