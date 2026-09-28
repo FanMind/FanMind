@@ -118,6 +118,22 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     sql("alter index public.chat_character_conversations_one_per_fan_invalid rename to chat_character_conversations_one_per_fan;");
 
+    sql("drop index public.one_chat_admin_workspace_global;");
+    assertPostflightRejectsPartial();
+    sql("create unique index one_chat_admin_workspace_global on public.workspace_chat_admin_capabilities using btree (chat_admin_multi_character) where chat_admin_multi_character;");
+
+    sql("create unique index unexpected_chat_message_content_unique on public.chat_character_messages(content);");
+    assertPostflightRejectsPartial();
+    sql("drop index public.unexpected_chat_message_content_unique;");
+
+    sql("alter table public.chat_character_conversations alter column fan_id set default '00000000-0000-4000-8000-000000000001'::uuid;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_conversations alter column fan_id drop default;");
+
+    sql("alter sequence public.chat_character_messages_sequence_seq increment by -1;");
+    assertPostflightRejectsPartial();
+    sql("alter sequence public.chat_character_messages_sequence_seq increment by 1;");
+
     sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
     assertPostflightRejectsPartial();
     sql("revoke insert (summary) on table public.chat_character_fans from authenticated;");

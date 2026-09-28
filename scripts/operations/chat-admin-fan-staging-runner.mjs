@@ -52,6 +52,9 @@ declare
   authenticated_conversation_message_write_grant_mismatch integer;
   readiness_mismatch integer;
   base_rls_enabled integer;
+  base_workspace_index_mismatch integer;
+  unique_message_index_mismatch integer;
+  binding_default_mismatch integer;
 begin
   select count(*) into base_present
   from (values
@@ -125,6 +128,20 @@ begin
     or has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('service_role','public.is_current_chat_admin_workspace(uuid)','execute')
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+
+  select case when exists (
+    select 1 from pg_index ix
+    join pg_class i on i.oid=ix.indexrelid
+    join pg_namespace ns on ns.oid=i.relnamespace
+    where ns.nspname='public' and i.relname='one_chat_admin_workspace_global'
+      and ix.indrelid='public.workspace_chat_admin_capabilities'::regclass
+      and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive
+      and pg_get_indexdef(i.oid,0,true)='CREATE UNIQUE INDEX one_chat_admin_workspace_global ON public.workspace_chat_admin_capabilities USING btree (chat_admin_multi_character) WHERE chat_admin_multi_character'
+  ) and (select count(*) from pg_index ix join pg_class i on i.oid=ix.indexrelid
+    where ix.indrelid='public.workspace_chat_admin_capabilities'::regclass and ix.indisunique
+      and pg_get_indexdef(i.oid,0,true) ilike '%where chat_admin_multi_character%')=1
+    then 0 else 1 end into base_workspace_index_mismatch;
+  if base_workspace_index_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   with expected(grantee, table_name, privilege_type, fan_absent_only) as (values
     ('authenticated','workspace_chat_admin_capabilities','SELECT',false),
@@ -239,6 +256,13 @@ begin
     (select count(*) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
      where n.nspname='public' and c.relname='chat_character_fans' and a.attnum>0 and not a.attisdropped) - 14
   );
+  select count(*) into binding_default_mismatch
+  from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
+  left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
+  where n.nspname='public'
+    and ((c.relname='chat_character_conversations' and a.attname='fan_id')
+      or (c.relname='chat_character_messages' and a.attname='fan_id'))
+    and (d.oid is not null or a.attgenerated<>'');
 
   with expected(table_name, contype, definition) as (
     values
@@ -341,6 +365,12 @@ begin
         and normalized = 'createuniqueindexchat_character_messages_confirmation_onceonpublic.chat_character_messagesusingbtree(workspace_id,character_id,fan_id,conversation_id,generation_id)where((direction=''confirmed_reply''::text)and(generation_idisnotnull))'
     )
   ) checks;
+  select count(*) into unique_message_index_mismatch
+  from pg_index ix join pg_class idx on idx.oid=ix.indexrelid
+  join pg_namespace ns on ns.oid=idx.relnamespace
+  where ns.nspname='public' and ix.indrelid='public.chat_character_messages'::regclass and ix.indisunique
+    and idx.relname not in ('chat_character_messages_pkey','chat_character_messages_generation_once','chat_character_messages_confirmation_once');
+  index_mismatch := index_mismatch + unique_message_index_mismatch;
 
   select count(*) into trigger_mismatch
   from (
@@ -358,6 +388,16 @@ begin
   where table_schema='public' and table_name='chat_character_messages' and column_name='sequence'
     and data_type='bigint' and is_identity='YES' and identity_generation='ALWAYS';
   identity_mismatch := case when identity_mismatch = 1 then 0 else 1 end;
+  identity_mismatch := identity_mismatch + case when exists (
+    select 1 from pg_class t join pg_namespace n on n.oid=t.relnamespace
+    join pg_attribute a on a.attrelid=t.oid and a.attname='sequence'
+    join pg_depend d on d.refobjid=t.oid and d.refobjsubid=a.attnum and d.classid='pg_class'::regclass and d.refclassid='pg_class'::regclass and d.deptype='i'
+    join pg_class seq on seq.oid=d.objid and seq.relkind='S'
+    join pg_sequence s on s.seqrelid=seq.oid
+    where n.nspname='public' and t.relname='chat_character_messages'
+      and s.seqincrement=1 and s.seqmin=1 and s.seqmax=9223372036854775807 and not s.seqcycle
+      and pg_get_serial_sequence('public.chat_character_messages','sequence')=seq.oid::regclass::text
+  ) then 0 else 1 end;
 
   select count(*) into rls_enabled
   from pg_class c
@@ -629,6 +669,7 @@ begin
     or policy_valid <> 3
     or schema_mismatch <> 0
     or column_default_mismatch <> 0
+    or binding_default_mismatch <> 0
     or constraint_mismatch <> 0
     or foreign_key_trigger_mismatch <> 0
     or index_mismatch <> 0

@@ -17,6 +17,10 @@ test("fan migration runner pins the only controlled SQL", () => {
   assert.match(POSTFLIGHT_SQL, /rpc_contract_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /column_default_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /chat_character_conversations_one_per_fan/u);
+  assert.match(POSTFLIGHT_SQL, /one_chat_admin_workspace_global/u);
+  assert.match(POSTFLIGHT_SQL, /unique_message_index_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /binding_default_mismatch/u);
+  assert.match(POSTFLIGHT_SQL, /seqincrement=1/u);
   assert.match(POSTFLIGHT_SQL, /authenticated_conversation_message_write_grant_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
   assert.doesNotMatch(POSTFLIGHT_SQL, /\bcommit\s*;/iu);
