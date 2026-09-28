@@ -21,6 +21,7 @@ test("fan migration runner pins the only controlled SQL", () => {
   assert.match(POSTFLIGHT_SQL, /unique_message_index_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /binding_default_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /seqincrement=1/u);
+  assert.match(POSTFLIGHT_SQL, /seqstart=1/u);
   assert.match(POSTFLIGHT_SQL, /authenticated_conversation_message_write_grant_mismatch/u);
   assert.match(POSTFLIGHT_SQL, /CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
   assert.doesNotMatch(POSTFLIGHT_SQL, /\bcommit\s*;/iu);

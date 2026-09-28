@@ -395,7 +395,7 @@ begin
     join pg_class seq on seq.oid=d.objid and seq.relkind='S'
     join pg_sequence s on s.seqrelid=seq.oid
     where n.nspname='public' and t.relname='chat_character_messages'
-      and s.seqincrement=1 and s.seqmin=1 and s.seqmax=9223372036854775807 and not s.seqcycle
+      and s.seqincrement=1 and s.seqstart=1 and s.seqmin=1 and s.seqmax=9223372036854775807 and not s.seqcycle
       and pg_get_serial_sequence('public.chat_character_messages','sequence')=seq.oid::regclass::text
   ) then 0 else 1 end;
 
