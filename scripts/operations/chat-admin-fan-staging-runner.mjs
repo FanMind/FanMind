@@ -172,6 +172,13 @@ begin
     or not has_function_privilege('authenticated','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('service_role','public.is_current_chat_admin_workspace(uuid)','execute')
+    or exists (
+      select 1 from pg_proc helper
+      cross join lateral aclexplode(coalesce(helper.proacl,acldefault('f',helper.proowner))) helper_acl
+      where helper.oid=to_regprocedure('public.is_current_chat_admin_workspace(uuid)')
+        and helper_acl.privilege_type='EXECUTE'
+        and helper_acl.grantee<>helper.proowner and helper_acl.is_grantable
+    )
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
   if table_owner_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
   select count(*) into role_security_mismatch
