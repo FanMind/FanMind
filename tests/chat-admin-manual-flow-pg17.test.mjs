@@ -201,10 +201,16 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("drop index public.unexpected_chat_character_predicate_unique;");
 
-    sql(`update public.chat_characters set status='active' where id='${ids[7]}';`);
+    sql(`insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values
+      ('${ids[6]}','${ids[0]}','${ids[2]}','Index test first',25,'','','','','','',''),
+      ('${ids[7]}','${ids[0]}','${ids[2]}','Index test second',25,'','','','','','','');`);
     assert.throws(()=>sql("create unique index concurrently unexpected_invalid_chat_character_status on public.chat_characters(status);"),"a failed concurrent unique build must leave an invalid index for catalog verification");
     assertPostflightRejectsPartial();
-    restoreAndVerify(`drop index concurrently public.unexpected_invalid_chat_character_status; update public.chat_characters set status='inactive' where id='${ids[7]}';`);
+    restoreAndVerify(`drop index concurrently public.unexpected_invalid_chat_character_status; delete from public.chat_characters where id in ('${ids[6]}','${ids[7]}');`);
+
+    sql("alter table public.chat_characters add constraint unexpected_character_revision_exclusion exclude using gist ((int4range(revision,revision,'[]')) with &&);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters drop constraint unexpected_character_revision_exclusion;");
 
     sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
     assertPostflightRejectsPartial();
@@ -221,6 +227,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("grant create on schema public to authenticated;");
     assertPostflightRejectsPartial();
     restoreAndVerify("revoke create on schema public from authenticated;");
+
+    sql("create role fanmind_chatadmin_schema_creator nologin; grant create on schema public to fanmind_chatadmin_schema_creator; grant fanmind_chatadmin_schema_creator to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke fanmind_chatadmin_schema_creator from authenticated; revoke create on schema public from fanmind_chatadmin_schema_creator; drop role fanmind_chatadmin_schema_creator;");
 
     sql(`grant create on database ${database} to authenticated; alter schema public owner to authenticated;`);
     assertPostflightRejectsPartial();
