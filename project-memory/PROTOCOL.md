@@ -84,6 +84,20 @@ As soon as substantive work begins:
 
 A stale lock is not free. Reconcile it against PRs, commits, receipts and started-work state before reuse.
 
+## Finishline freeze / anti-overengineering rule
+Once a task has an explicit acceptance contract and the agreed user-visible core flow is implemented, enter **FINISHLINE_FREEZE**.
+
+While frozen:
+1. Only defects that actually break an agreed acceptance criterion, a registered security/authority invariant, a required integration contract, or a current target/runtime acceptance may block completion.
+2. New theoretical edge cases, additional hardening layers, broader refactors, extra governance, new test dimensions, architectural cleanup and "while we are here" improvements go to backlog unless current evidence proves they are required by rule 1.
+3. A reviewer finding may block only when it is P0/P1, or a P2 that demonstrates a concrete violation of the agreed acceptance contract or a registered invariant. Other findings are documented for later and do not start another corrective PR chain.
+4. Do not create a new PR solely to add more controls after the current acceptance contract is satisfied. Re-open implementation only from fresh failing evidence.
+5. For MVP/product increments, the default closure path is: implement -> required checks -> one independent review/countercheck -> Staging/runtime owner-visible test where applicable -> close.
+6. Owner-visible usability is part of the finishline when the task is a user-facing feature. If the owner cannot reach or exercise the agreed flow, the feature is not complete.
+7. FINISHLINE_FREEZE never overrides an existing protected-action confirmation, Production/Billing/Restore/destructive boundary, tenant isolation, no-browser-service-role rule, no-auto-send rule, or any other registered invariant.
+
+The purpose of FINISHLINE_FREEZE is to prevent accepted scope from expanding through speculative controls while preserving all already-defined safety boundaries.
+
 ## Mandatory countercheck
 Before completion, merge or a success report:
 1. Re-read the goal and acceptance criteria.
