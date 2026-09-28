@@ -2,10 +2,11 @@
 - Date: 2026-09-27
 - Status: OPEN_RECONCILIATION
 - Task: FM-CHATADMIN-003 / issue #1219.
-- Evidence: PR #1221 merged at `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; post-merge review-thread audit identified unresolved exact policy, parent-authority-before-apply, RPC, index, constraint, trigger, table-column, column-grant and readiness-RPC contracts. No staging/production write occurred.
-- Correction: draft PR #1222 adds fail-closed parent-contract checks even for extension ABSENT and exact controlled-source/function/catalog verification. Its initial Project Memory Guard failed because the meaningful code change lacked a project-memory update; this record and FM-CR-034 are the required reconciliation.
-- Next: pass exact-head required CI and PG17, then reconcile all applicable review findings. Do not apply staging SQL or activate runtime as part of this source correction.
-
+- Original evidence: PR #1221 merged at `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; review-thread audit identified parent-authority, exact policy/RPC, index, constraint, trigger, column-grant and readiness-contract concerns. No Staging/Production write occurred.
+- Correction: PR #1222 hardens fail-closed parent checks and binds the fan catalog contract to controlled SQL. Its PG17 test now exercises positive VERIFIED plus negative PARTIAL outcomes for disabled base RLS, disabled trigger, weakened policy, missing required index and column INSERT privilege.
+- Verification: exact code/test head `06c1034ae4038f5f3b47fb3db421e04fc8ac5cb0`; all eight listed PR workflows succeeded, including PG17. Independent review remains pending and PR #1222 is Draft; therefore the merged #1221 findings are not considered closed yet.
+- Boundary: no Staging apply/runtime activation, Production mutation, provider/customer mutation or auto-send occurred.
+- Next: obtain independent exact-head review, resolve any findings, and reconcile only after review/merge. Keep issue #1219's protected Staging acceptance separate.
 ## FM-FAIL-CREATOR-TARGET-RECOVERY-SUDO-20260927
 - Date: 2026-09-27
 - Status: RECONCILED_FAIL_CLOSED
