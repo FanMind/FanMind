@@ -98,6 +98,10 @@ While frozen:
 
 The purpose of FINISHLINE_FREEZE is to prevent accepted scope from expanding through speculative controls while preserving all already-defined safety boundaries.
 
+**Default MVP closure path:** **Build -> one clean verification -> try it on Staging -> Owner sees/tests it -> done.**
+
+**Do not return to:** build -> verify -> invent another control -> harden again -> add another review/control layer -> repeat without a concrete failing acceptance criterion or invalidated required evidence.
+
 ## Mandatory countercheck
 Before completion, merge or a success report:
 1. Re-read the goal and acceptance criteria.
