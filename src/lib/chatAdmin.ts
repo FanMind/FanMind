@@ -18,6 +18,9 @@ async function rest<T>(path:string, init:RequestInit = {}):Promise<T> {
 }
 async function ensureStagingChatAdminCapability(workspaceId:string,userId:string):Promise<boolean> {
   if(process.env.FANMIND_RUNTIME_ENVIRONMENT!=="staging")return false;
+  const previewWorkspaceId=process.env.FANMIND_CHAT_ADMIN_PREVIEW_WORKSPACE_ID?.trim();
+  const previewUserId=process.env.FANMIND_CHAT_ADMIN_PREVIEW_USER_ID?.trim();
+  if(!previewWorkspaceId||!previewUserId||workspaceId!==previewWorkspaceId||userId!==previewUserId)return false;
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if(!serviceKey)return false;
   const url=new URL(getSupabaseRestUrl("workspace_chat_admin_capabilities"));
@@ -30,7 +33,7 @@ async function ensureStagingChatAdminCapability(workspaceId:string,userId:string
   });
   return response.ok;
 }
-function fanRuntimeEnabled():boolean {
+export function isChatAdminFanRuntimeEnabled():boolean {
   return process.env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"||process.env.FANMIND_RUNTIME_ENVIRONMENT==="staging";
 }
 export async function requireChatAdminCapability() {
@@ -47,9 +50,9 @@ export async function requireChatAdminCapability() {
   return context;
 }
 export async function hasChatAdminCapability():Promise<boolean> { try { await requireChatAdminCapability(); return true; } catch { return false; } }
-export function requireChatAdminFanRuntime() { if(!fanRuntimeEnabled()) throw new WorkspaceAuthorizationError("ChatAdmin-Fans sind nicht aktiviert.","resource_forbidden"); }
+export function requireChatAdminFanRuntime() { if(!isChatAdminFanRuntimeEnabled()) throw new WorkspaceAuthorizationError("ChatAdmin-Fans sind nicht aktiviert.","resource_forbidden"); }
 export async function hasChatAdminFanSchema(workspaceId:string):Promise<boolean> {
-  if(!fanRuntimeEnabled())return false;
+  if(!isChatAdminFanRuntimeEnabled())return false;
   const workspace=encodeURIComponent(workspaceId);
   try {
     const results=await Promise.all([
