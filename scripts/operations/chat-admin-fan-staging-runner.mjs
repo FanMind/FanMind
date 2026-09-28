@@ -270,7 +270,7 @@ begin
       select con.conname::text,
         regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
       from pg_constraint con cross join runtime_columns
-      where con.conrelid='public.chat_characters'::regclass and con.contype='c'
+      where con.conrelid='public.chat_characters'::regclass
         and con.conkey && runtime_columns.attnums
     ), mismatch as (
       (select * from expected except select * from actual)
