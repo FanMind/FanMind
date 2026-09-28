@@ -185,6 +185,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_characters alter column revision type integer using revision::integer;");
 
+    sql("alter table public.chat_characters add constraint unexpected_chat_character_runtime_unique unique (revision,id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters drop constraint unexpected_chat_character_runtime_unique;");
+
     sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
