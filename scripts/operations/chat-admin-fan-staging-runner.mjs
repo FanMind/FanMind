@@ -240,6 +240,45 @@ begin
   where not has_schema_privilege(required.rolname,'public','USAGE');
   if schema_usage_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
+  with expected(column_name,type_name,not_null,default_norm,generated) as (values
+    ('status','text',true,'''active''::text',''),
+    ('revision','integer',true,'1','')
+  ), actual as (
+    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull,
+      regexp_replace(lower(coalesce(pg_get_expr(ad.adbin,ad.adrelid),'')),'[[:space:]]+','','g'),
+      a.attgenerated::text
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    join pg_attribute a on a.attrelid=c.oid
+    left join pg_attrdef ad on ad.adrelid=c.oid and ad.adnum=a.attnum
+    where n.nspname='public' and c.relname='chat_characters'
+      and a.attnum>0 and not a.attisdropped and a.attname in ('status','revision')
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
+  ) select count(*) into parent_character_runtime_mismatch from mismatch;
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    with expected(constraint_name,definition) as (values
+      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']'),
+      ('chat_characters_revision_check','checkrevision>0')
+    ), runtime_columns as (
+      select array_agg(a.attnum::smallint) as attnums
+      from pg_attribute a join pg_class c on c.oid=a.attrelid
+      join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and c.relname='chat_characters'
+        and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
+    ), actual as (
+      select con.conname::text,
+        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
+      from pg_constraint con cross join runtime_columns
+      where con.conrelid='public.chat_characters'::regclass and con.contype='c'
+        and con.conkey && runtime_columns.attnums
+    ), mismatch as (
+      (select * from expected except select * from actual)
+      union all (select * from actual except select * from expected)
+    ) select count(*) from mismatch
+  );
+  if parent_character_runtime_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+
   if extension_markers = 0 then
     raise notice 'CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT';
     return;
@@ -321,37 +360,6 @@ begin
     union all (select * from actual except select * from expected)
   )
   select count(*) into schema_mismatch from mismatch;
-
-  with expected(column_name,type_name,not_null,default_norm,generated) as (values
-    ('status','text',true,'''active''::text',''),
-    ('revision','integer',true,'1','')
-  ), actual as (
-    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull,
-      regexp_replace(lower(coalesce(pg_get_expr(ad.adbin,ad.adrelid),'')),'[[:space:]]+','','g'),
-      a.attgenerated::text
-    from pg_class c join pg_namespace n on n.oid=c.relnamespace
-    join pg_attribute a on a.attrelid=c.oid
-    left join pg_attrdef ad on ad.adrelid=c.oid and ad.adnum=a.attnum
-    where n.nspname='public' and c.relname='chat_characters'
-      and a.attnum>0 and not a.attisdropped and a.attname in ('status','revision')
-  ), mismatch as (
-    (select * from expected except select * from actual)
-    union all (select * from actual except select * from expected)
-  ) select count(*) into parent_character_runtime_mismatch from mismatch;
-  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
-    with expected(constraint_name,definition) as (values
-      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']'),
-      ('chat_characters_revision_check','checkrevision>0')
-    ), actual as (
-      select con.conname::text,
-        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
-      from pg_constraint con where con.conrelid='public.chat_characters'::regclass
-        and con.conname in ('chat_characters_status_check','chat_characters_revision_check')
-    ), mismatch as (
-      (select * from expected except select * from actual)
-      union all (select * from actual except select * from expected)
-    ) select count(*) from mismatch
-  );
 
   with expected(column_name, default_expression) as (values
     ('id','gen_random_uuid()'),('workspace_id',''),('character_id',''),
