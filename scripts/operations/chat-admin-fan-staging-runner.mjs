@@ -161,6 +161,7 @@ begin
       where n.nspname='public' and p.proname='is_current_chat_admin_workspace'
         and pg_get_function_identity_arguments(p.oid)='target_workspace_id uuid'
         and pg_get_function_result(p.oid)='boolean' and l.lanname='sql' and p.provolatile='s'
+        and pg_get_userbyid(p.proowner)='postgres'
         and not p.prosecdef and coalesce(p.proconfig,'{}')=array['search_path=""']::text[]
         and regexp_replace(lower(btrim(p.prosrc)), '[[:space:]]+', '', 'g')=
           'selectexists(select1frompublic.workspace_chat_admin_capabilitiescjoinpublic.workspaceswonw.id=c.workspace_idwherec.workspace_id=target_workspace_idandc.chat_admin_multi_characterandc.granted_to_user_id=auth.uid()andw.owner_user_id=auth.uid());'
@@ -238,6 +239,14 @@ begin
   select count(*) into schema_usage_mismatch
   from (values ('authenticated'::name),('service_role'::name)) as required(rolname)
   where not has_schema_privilege(required.rolname,'public','USAGE');
+  schema_usage_mismatch := schema_usage_mismatch + (
+    select count(*) from pg_namespace ns
+    cross join lateral aclexplode(coalesce(ns.nspacl,acldefault('n',ns.nspowner))) acl
+    where ns.nspname='public' and acl.grantee<>ns.nspowner
+      and (acl.is_grantable or (acl.privilege_type='CREATE' and acl.grantee in (
+        0,(select oid from pg_roles where rolname='anon'),(select oid from pg_roles where rolname='authenticated')
+      )))
+  );
   if schema_usage_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   with expected(column_name,type_name,not_null,default_norm,generated) as (values
@@ -276,6 +285,16 @@ begin
       (select * from expected except select * from actual)
       union all (select * from actual except select * from expected)
     ) select count(*) from mismatch
+  );
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    select count(distinct ix.indexrelid)
+    from pg_index ix
+    join pg_attribute a on a.attrelid=ix.indrelid
+    cross join lateral unnest(ix.indkey) with ordinality key_column(attnum,position)
+    where ix.indrelid='public.chat_characters'::regclass
+      and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive
+      and key_column.position<=ix.indnkeyatts and key_column.attnum=a.attnum
+      and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
   );
   if parent_character_runtime_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
@@ -842,6 +861,12 @@ begin
       where n.nspname='public'
         and p.proname in ('create_chat_admin_fan_conversation','create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply')
         and p.prosecdef)=4 then 0 else 1 end;
+  definer_owner_mismatch := definer_owner_mismatch + (
+    select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='is_current_chat_admin_workspace'
+      and pg_get_function_identity_arguments(p.oid)='target_workspace_id uuid'
+      and pg_get_userbyid(p.proowner)<>'postgres'
+  );
 
   select count(*) into function_privilege_mismatch
   from (
