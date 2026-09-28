@@ -322,19 +322,36 @@ begin
   )
   select count(*) into schema_mismatch from mismatch;
 
-  with expected(column_name,type_name,not_null) as (values
-    ('status','text',true),
-    ('revision','integer',true)
+  with expected(column_name,type_name,not_null,default_norm,generated) as (values
+    ('status','text',true,'''active''::text',''),
+    ('revision','integer',true,'1','')
   ), actual as (
-    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull
+    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull,
+      regexp_replace(lower(coalesce(pg_get_expr(ad.adbin,ad.adrelid),'')),'[[:space:]]+','','g'),
+      a.attgenerated::text
     from pg_class c join pg_namespace n on n.oid=c.relnamespace
     join pg_attribute a on a.attrelid=c.oid
+    left join pg_attrdef ad on ad.adrelid=c.oid and ad.adnum=a.attnum
     where n.nspname='public' and c.relname='chat_characters'
       and a.attnum>0 and not a.attisdropped and a.attname in ('status','revision')
   ), mismatch as (
     (select * from expected except select * from actual)
     union all (select * from actual except select * from expected)
   ) select count(*) into parent_character_runtime_mismatch from mismatch;
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    with expected(constraint_name,definition) as (values
+      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']'),
+      ('chat_characters_revision_check','checkrevision>0')
+    ), actual as (
+      select con.conname::text,
+        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
+      from pg_constraint con where con.conrelid='public.chat_characters'::regclass
+        and con.conname in ('chat_characters_status_check','chat_characters_revision_check')
+    ), mismatch as (
+      (select * from expected except select * from actual)
+      union all (select * from actual except select * from expected)
+    ) select count(*) from mismatch
+  );
 
   with expected(column_name, default_expression) as (values
     ('id','gen_random_uuid()'),('workspace_id',''),('character_id',''),
@@ -436,7 +453,11 @@ begin
     join pg_class c on c.oid = con.conrelid
     join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
-      and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
+      and (
+        c.relname='chat_character_fans'
+        or (c.relname='chat_character_conversations' and con.conname='chat_character_conversations_fan_fk')
+        or (c.relname='chat_character_messages' and con.conname='chat_character_messages_fan_conversation_fk')
+      )
   ), mismatch as (
     (select * from expected except select * from actual)
     union all (select * from actual except select * from expected)
@@ -872,7 +893,7 @@ begin
   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
   cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
   where n.nspname='public'
-    and p.proname in ('create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply','chat_admin_fan_schema_ready')
+    and p.proname in ('create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply','chat_admin_fan_schema_ready','create_chat_admin_fan_conversation','require_chat_admin_fan_binding','is_current_chat_admin_workspace')
     and acl.privilege_type='EXECUTE'
     and acl.grantee<>p.proowner
     and acl.is_grantable;
