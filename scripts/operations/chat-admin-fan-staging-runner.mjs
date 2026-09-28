@@ -61,6 +61,9 @@ declare
   persistence_mismatch integer;
   conversation_unique_index_mismatch integer;
   persistence_constraint_mismatch integer;
+  persistence_default_mismatch integer;
+  routine_acl_mismatch integer;
+  fan_unique_index_mismatch integer;
   role_security_mismatch integer;
   rewrite_rule_mismatch integer;
 begin
@@ -88,7 +91,12 @@ begin
     (to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null),
     (to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null),
     (to_regprocedure('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)') is not null),
-    (to_regprocedure('public.chat_admin_fan_schema_ready()') is not null)
+    (to_regprocedure('public.chat_admin_fan_schema_ready()') is not null),
+    (to_regprocedure('public.require_chat_admin_fan_binding()') is not null),
+    (to_regprocedure('public.create_chat_admin_fan_conversation()') is not null),
+    (exists(select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal)),
+    (exists(select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal)),
+    (exists(select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal))
   ) as required(ok)
   where ok;
 
@@ -225,7 +233,7 @@ begin
     return;
   end if;
 
-  if extension_markers <> 9 then
+  if extension_markers <> 14 then
     raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL';
   end if;
 
@@ -335,6 +343,39 @@ begin
       or (c.relname='chat_character_messages' and a.attname='fan_id'))
     and (d.oid is not null or a.attgenerated<>'');
 
+  with expected(table_name,column_name,default_expression) as (values
+    ('chat_character_conversations','id','gen_random_uuid()'),
+    ('chat_character_conversations','workspace_id',''),
+    ('chat_character_conversations','character_id',''),
+    ('chat_character_conversations','fan_reference',''),
+    ('chat_character_conversations','created_at','now()'),
+    ('chat_character_conversations','updated_at','now()'),
+    ('chat_character_conversations','fan_id',''),
+    ('chat_character_messages','id','gen_random_uuid()'),
+    ('chat_character_messages','workspace_id',''),
+    ('chat_character_messages','character_id',''),
+    ('chat_character_messages','conversation_id',''),
+    ('chat_character_messages','direction',''),
+    ('chat_character_messages','content',''),
+    ('chat_character_messages','character_revision',''),
+    ('chat_character_messages','created_at','now()'),
+    ('chat_character_messages','fan_id',''),
+    ('chat_character_messages','sequence',''),
+    ('chat_character_messages','generation_id','')
+  ), actual as (
+    select c.relname::text,a.attname::text,
+      coalesce(regexp_replace(lower(pg_get_expr(d.adbin,d.adrelid)), '[[:space:]()]', '', 'g'),'')
+    from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
+    left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
+    where n.nspname='public' and c.relname in ('chat_character_conversations','chat_character_messages')
+      and a.attnum>0 and not a.attisdropped
+  ), mismatch as (
+    (select table_name,column_name,regexp_replace(lower(default_expression), '[[:space:]()]', '', 'g') from expected
+      except select * from actual)
+    union all
+    (select * from actual except select table_name,column_name,regexp_replace(lower(default_expression), '[[:space:]()]', '', 'g') from expected)
+  ) select count(*) into persistence_default_mismatch from mismatch;
+
   with expected(table_name, contype, definition) as (
     values
       ('chat_character_fans','p','primarykeyid'),
@@ -379,19 +420,20 @@ begin
         and contype in ('p','u','f','c')
         and convalidated and not condeferrable and not condeferred)=12
     then 0 else 1 end;
-  with expected(table_name,constraint_name,contype) as (values
-    ('chat_character_conversations','chat_character_conversations_pkey','p'),
-    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_id_key','u'),
-    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_fkey','f'),
-    ('chat_character_conversations','chat_character_conversations_fan_fk','f'),
-    ('chat_character_messages','chat_character_messages_pkey','p'),
-    ('chat_character_messages','chat_character_messages_direction_check','c'),
-    ('chat_character_messages','chat_character_messages_content_check','c'),
-    ('chat_character_messages','chat_character_messages_character_revision_check','c'),
-    ('chat_character_messages','chat_character_messages_workspace_id_character_id_conversation_id_fkey','f'),
-    ('chat_character_messages','chat_character_messages_fan_conversation_fk','f')
+  with expected(table_name,constraint_name,contype,definition) as (values
+    ('chat_character_conversations','chat_character_conversations_pkey','p','primarykeyid'),
+    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_id_key','u','uniqueworkspace_id,character_id,id'),
+    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_fkey','f','foreignkeyworkspace_id,character_idreferenceschat_charactersworkspace_id,idondeletecascade'),
+    ('chat_character_conversations','chat_character_conversations_fan_fk','f','foreignkeyworkspace_id,character_id,fan_idreferenceschat_character_fansworkspace_id,character_id,idondeletecascade'),
+    ('chat_character_messages','chat_character_messages_pkey','p','primarykeyid'),
+    ('chat_character_messages','chat_character_messages_direction_check','c','checkdirection=anyarray[''fan_inbound'',''suggested_reply'',''confirmed_reply'']'),
+    ('chat_character_messages','chat_character_messages_content_check','c','checkchar_lengthcontent>=1andchar_lengthcontent<=4000'),
+    ('chat_character_messages','chat_character_messages_character_revision_check','c','checkcharacter_revision>0'),
+    ('chat_character_messages','chat_character_messages_workspace_id_character_id_conversation_','f','foreignkeyworkspace_id,character_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,idondeletecascade'),
+    ('chat_character_messages','chat_character_messages_fan_conversation_fk','f','foreignkeyworkspace_id,character_id,fan_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,fan_id,idondeletecascade')
   ), actual as (
-    select c.relname::text,con.conname::text,con.contype::text
+    select c.relname::text,con.conname::text,con.contype::text,
+      regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
     from pg_constraint con join pg_class c on c.oid=con.conrelid
     where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
   ), mismatch as (
@@ -475,12 +517,17 @@ begin
   where ix.indrelid='public.chat_character_conversations'::regclass and ix.indisunique
     and idx.relname not in ('chat_character_conversations_pkey','chat_character_conversations_workspace_id_character_id_id_key','chat_character_conversations_one_per_fan','chat_character_conversations_fan_identity');
   index_mismatch := index_mismatch + conversation_unique_index_mismatch;
+  select count(*) into fan_unique_index_mismatch
+  from pg_index ix join pg_class idx on idx.oid=ix.indexrelid
+  where ix.indrelid='public.chat_character_fans'::regclass and ix.indisunique
+    and idx.relname not in ('chat_character_fans_pkey','chat_character_fans_workspace_id_character_id_id_key','chat_character_fans_workspace_id_character_id_creation_id_key');
+  index_mismatch := index_mismatch + fan_unique_index_mismatch;
 
   select count(*) into trigger_mismatch
   from (
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and array_length(tgattr::smallint[],1) is null and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='0' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and array_length(tgattr::smallint[],1) is null and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='0' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
     select 1 where not exists (select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal and tgenabled='O' and tgtype=5 and tgfoid=to_regprocedure('public.create_chat_admin_fan_conversation()') and tgqual is null)
     union all
@@ -758,6 +805,29 @@ begin
     select 1 where has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
   ) checks;
 
+  with expected(signature,grantee) as (values
+    ('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','postgres'),
+    ('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)','authenticated'),
+    ('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])','postgres'),
+    ('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])','authenticated'),
+    ('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)','postgres'),
+    ('public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)','authenticated'),
+    ('public.chat_admin_fan_schema_ready()','postgres'),
+    ('public.chat_admin_fan_schema_ready()','authenticated'),
+    ('public.create_chat_admin_fan_conversation()','postgres'),
+    ('public.require_chat_admin_fan_binding()','postgres'),
+    ('public.is_current_chat_admin_workspace(uuid)','postgres'),
+    ('public.is_current_chat_admin_workspace(uuid)','authenticated')
+  ), actual as (
+    select e.signature,case when acl.grantee=0 then 'PUBLIC' else pg_get_userbyid(acl.grantee) end
+    from expected e join pg_proc p on p.oid=to_regprocedure(e.signature)
+    cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
+    where acl.privilege_type='EXECUTE'
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
+  ) select count(*) into routine_acl_mismatch from mismatch;
+
   select case when
     to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null
     and to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null
@@ -774,6 +844,7 @@ begin
     or schema_mismatch <> 0
     or column_default_mismatch <> 0
     or binding_default_mismatch <> 0
+    or persistence_default_mismatch <> 0
     or constraint_mismatch <> 0
     or persistence_constraint_mismatch <> 0
     or rewrite_rule_mismatch <> 0
@@ -786,6 +857,7 @@ begin
     or rpc_contract_mismatch <> 0
     or base_function_mismatch <> 0
     or function_privilege_mismatch <> 0
+    or routine_acl_mismatch <> 0
     or table_privilege_mismatch <> 0
     or base_table_privilege_mismatch <> 0
     or protected_column_privilege_mismatch <> 0
