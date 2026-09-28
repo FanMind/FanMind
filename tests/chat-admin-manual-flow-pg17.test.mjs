@@ -189,6 +189,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_characters drop constraint unexpected_chat_character_runtime_unique;");
 
+    sql("create unique index unexpected_chat_character_status_unique on public.chat_characters(status,id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_character_status_unique;");
+
     sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
@@ -200,6 +204,14 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("revoke usage on schema public from public, authenticated;");
     assertPostflightRejectsPartial();
     restoreAndVerify("grant usage on schema public to public, authenticated;");
+
+    sql("grant create on schema public to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke create on schema public from authenticated;");
+
+    sql("alter function public.is_current_chat_admin_workspace(uuid) owner to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter function public.is_current_chat_admin_workspace(uuid) owner to postgres; grant execute on function public.is_current_chat_admin_workspace(uuid) to authenticated;");
 
     sql("alter table public.chat_characters disable row level security;");
     assertPostflightRejectsPartial();
