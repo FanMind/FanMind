@@ -219,7 +219,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
 
     sql(`grant create on database ${database} to authenticated; alter schema public owner to authenticated;`);
     assertPostflightRejectsPartial();
-    restoreAndVerify(`alter schema public owner to postgres; revoke create on database ${database} from authenticated;`);
+    restoreAndVerify(`alter schema public owner to pg_database_owner; revoke create on database ${database} from authenticated;`);
 
     sql("alter function public.is_current_chat_admin_workspace(uuid) owner to authenticated;");
     assertPostflightRejectsPartial();
