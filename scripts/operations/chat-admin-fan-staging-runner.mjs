@@ -153,10 +153,13 @@ begin
   ) select count(*) into base_table_privilege_mismatch from mismatch;
 
   select count(*) into protected_column_privilege_mismatch
-  from information_schema.column_privileges
-  where table_schema='public'
-    and table_name in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
-    and grantee in ('PUBLIC','anon','authenticated','service_role');
+  from pg_attribute a
+  join pg_class c on c.oid=a.attrelid
+  join pg_namespace n on n.oid=c.relnamespace
+  cross join lateral aclexplode(a.attacl) column_acl
+  where n.nspname='public' and a.attnum>0 and not a.attisdropped
+    and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
+    and (column_acl.grantee=0 or column_acl.grantee in (select oid from pg_roles where rolname in ('anon','authenticated','service_role')));
 
   if base_table_privilege_mismatch<>0 or protected_column_privilege_mismatch<>0
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
@@ -278,6 +281,7 @@ begin
   constraint_mismatch := constraint_mismatch + case
     when (select count(*) from pg_constraint
       where conrelid='public.chat_character_fans'::regclass
+        and contype in ('p','u','f','c')
         and convalidated and not condeferrable and not condeferred)=12
     then 0 else 1 end;
 
