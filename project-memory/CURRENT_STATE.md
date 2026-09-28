@@ -1,3 +1,9 @@
+## ChatAdmin fan extension — base verifier compatibility fix in PR #1226 — 2026-09-28
+- Concrete Staging evidence: fan VERIFY run `36482878011` returned `ABSENT`; protected fan APPLY run `36482988371` then succeeded with `CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED` on exact main `d80b9d0e82ffa87823dc75d0b2b0659ccd5ae5e1`.
+- The subsequent legacy ChatAdmin ACCEPT run `36483145385` failed before acceptance because `db:chat-admin:verify` still exact-matched the pre-fan schema and returned `CHAT_ADMIN_STAGING_ERROR=schema_partial`.
+- PR #1226 is the bounded finishline correction: VERIFY mode may reuse the canonical fan verifier only when it returns exact `CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED`; base APPLY behavior is unchanged.
+- No new schema, hardening dimension, Production change or unrelated scope is included. After merge: deploy/test on Staging, make the owner-visible ChatAdmin path reachable, run the agreed Character -> Fan -> message -> 3 suggestions -> manual confirmation/history flow, then close.
+
 ## ChatAdmin persistente Character-Fans — Repository-Implementierung, Staging ausstehend — 2026-09-27
 - Follow-up-Kontrollpfad vorbereitet: der dedizierte manuelle Workflow
   `chat-admin-fan-staging-migration.yml` kann nur den checksum-gepinnten Fan-Vertrag
