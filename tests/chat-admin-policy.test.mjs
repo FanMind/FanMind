@@ -374,6 +374,21 @@ test("storage contract safely rejects malformed paths and binds both old and upd
   assert.doesNotMatch(sql, /insert into storage\.buckets/iu);
 });
 
+test("base ChatAdmin verifier reuses the canonical fan verifier only for a verified installed fan extension", async () => {
+  const runner = await readFile(
+    "scripts/operations/chat-admin-staging-runner.mjs",
+    "utf8",
+  );
+  assert.match(
+    runner,
+    /mode === "verify"[\s\S]*chat-admin-fan-staging-runner\.mjs[\s\S]*CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u,
+  );
+  assert.doesNotMatch(
+    runner,
+    /mode === "apply"[\s\S]*chat-admin-fan-staging-runner\.mjs/u,
+  );
+});
+
 test("workflow fails closed on mode mismatch, pins TLS and verifies schema before ACCEPT", async () => {
   const workflow = await readFile(
     ".github/workflows/chat-admin-staging-rollout.yml",
