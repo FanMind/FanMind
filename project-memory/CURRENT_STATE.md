@@ -1,3 +1,9 @@
+## ChatAdmin Staging Owner Preview — simplified finishline — 2026-09-28
+- The fan schema is already installed and verified on Staging by run `36482988371` on exact main `d80b9d0e82ffa87823dc75d0b2b0659ccd5ae5e1`.
+- The legacy pre-fan ACCEPT workflow is not part of the current finishline; adapting that obsolete layer was stopped.
+- Current bounded change: only on `FANMIND_RUNTIME_ENVIRONMENT=staging`, an authenticated non-Platform-Admin Workspace Owner may have the existing ChatAdmin capability row server-side provisioned for that same Workspace/User, and the fan runtime is enabled for the owner-visible Staging trial. Production remains capability- and flag-gated exactly as before.
+- Finishline: deploy to Staging -> Owner opens `/chatadmin` -> Character -> Fan -> message -> exactly 3 suggestions -> copy/manual confirmation -> persistent history. If that works, close ChatAdmin and move on.
+
 ## ChatAdmin persistente Character-Fans — Repository-Implementierung, Staging ausstehend — 2026-09-27
 - Follow-up-Kontrollpfad vorbereitet: der dedizierte manuelle Workflow
   `chat-admin-fan-staging-migration.yml` kann nur den checksum-gepinnten Fan-Vertrag
