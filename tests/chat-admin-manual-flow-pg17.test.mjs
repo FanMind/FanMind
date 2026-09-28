@@ -123,6 +123,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     'conversation_indexes',conversation_unique_index_mismatch,'extension_markers',extension_markers,
     'triggers',trigger_mismatch,'identity',identity_mismatch,'rewrite_rules',rewrite_rule_mismatch,
     'policy',policy_valid,'table_acl',table_privilege_mismatch,
+    'generated_columns',generated_column_mismatch,'fan_constraints',constraint_mismatch,
+    'persistence_constraints',persistence_constraint_mismatch,
+    'trigger_catalog', (select jsonb_agg(jsonb_build_object('name',tgname,'type',tgtype,'attrs',tgattr::text,'enabled',tgenabled,'fn',tgfoid::regprocedure::text,'qual',tgqual::text)) from pg_trigger where tgrelid in ('public.chat_character_fans'::regclass,'public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass) and not tgisinternal),
+    'persistence_catalog', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',con.conname,'type',con.contype,'definition',pg_get_constraintdef(con.oid,true))) from pg_constraint con join pg_class c on c.oid=con.conrelid where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)),
     'column_acl',protected_column_privilege_mismatch,
     'authenticated_writes',authenticated_conversation_message_write_grant_mismatch);
   if rls_enabled <> 5`,
@@ -235,6 +239,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("grant insert (summary) on table public.chat_character_fans to service_role;");
     assertPostflightRejectsPartial();
     sql("revoke insert (summary) on table public.chat_character_fans from service_role;");
+
+    sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_table_reader') then create role fanmind_chatadmin_unexpected_table_reader nologin; end if; end $$; grant select on table public.chat_character_fans to fanmind_chatadmin_unexpected_table_reader;");
+    assertPostflightRejectsPartial();
+    sql("revoke select on table public.chat_character_fans from fanmind_chatadmin_unexpected_table_reader; drop role fanmind_chatadmin_unexpected_table_reader;");
 
     sql("revoke insert on table public.chat_characters from authenticated;");
     assertPostflightRejectsPartial();

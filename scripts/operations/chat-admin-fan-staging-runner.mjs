@@ -208,10 +208,14 @@ begin
     ('service_role','chat_character_messages','SELECT',false),('service_role','chat_character_messages','INSERT',false),
     ('service_role','chat_character_messages','UPDATE',false),('service_role','chat_character_messages','DELETE',false)
   ), actual as (
-    select grantee, table_name, privilege_type from information_schema.table_privileges
-    where table_schema='public'
-      and table_name in ('workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages')
-      and grantee in ('PUBLIC','anon','authenticated','service_role')
+    select case when acl.grantee=0 then 'PUBLIC' else pg_get_userbyid(acl.grantee) end as grantee,
+      c.relname as table_name,
+      case when acl.is_grantable then acl.privilege_type||' GRANT OPTION' else acl.privilege_type end as privilege_type
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    cross join lateral aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) acl
+    where n.nspname='public'
+      and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages')
+      and acl.grantee<>c.relowner
   ), mismatch as (
     (select grantee,table_name,privilege_type from expected where not fan_absent_only or extension_markers=0 except select * from actual)
     union all (select * from actual except select grantee,table_name,privilege_type from expected where not fan_absent_only or extension_markers=0)
@@ -224,7 +228,7 @@ begin
   cross join lateral aclexplode(a.attacl) column_acl
   where n.nspname='public' and a.attnum>0 and not a.attisdropped
     and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
-    and (column_acl.grantee=0 or column_acl.grantee in (select oid from pg_roles where rolname in ('anon','authenticated','service_role')));
+    and column_acl.grantee<>c.relowner;
 
   if base_table_privilege_mismatch<>0 or protected_column_privilege_mismatch<>0
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
@@ -639,11 +643,14 @@ begin
       ('service_role', 'chat_character_messages', 'UPDATE'),
       ('service_role', 'chat_character_messages', 'DELETE')
   ), actual as (
-    select grantee, table_name, privilege_type
-    from information_schema.table_privileges
-    where table_schema='public'
-      and table_name in ('chat_character_fans','chat_character_conversations','chat_character_messages')
-      and grantee in ('PUBLIC','anon','authenticated','service_role')
+    select case when acl.grantee=0 then 'PUBLIC' else pg_get_userbyid(acl.grantee) end as grantee,
+      c.relname as table_name,
+      case when acl.is_grantable then acl.privilege_type||' GRANT OPTION' else acl.privilege_type end as privilege_type
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    cross join lateral aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) acl
+    where n.nspname='public'
+      and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
+      and acl.grantee<>c.relowner
   ), mismatch as (
     (select * from expected except select * from actual)
     union all
@@ -855,6 +862,7 @@ begin
     or policy_valid <> 3
     or schema_mismatch <> 0
     or column_default_mismatch <> 0
+    or generated_column_mismatch <> 0
     or binding_default_mismatch <> 0
     or persistence_default_mismatch <> 0
     or constraint_mismatch <> 0
