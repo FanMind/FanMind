@@ -93,5 +93,33 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     });
     assert.equal(postflight.status, 0, postflight.stderr || postflight.stdout);
     assert.match(`${postflight.stdout}${postflight.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
+    const assertPostflightRejectsPartial = () => {
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      assert.notEqual(result.status, 0, "the postflight must reject the injected catalog drift");
+      assert.match(`${result.stdout}${result.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    };
+
+    sql("alter table public.chat_characters disable row level security;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_characters enable row level security;");
+
+    sql("alter table public.chat_character_conversations disable trigger require_chat_admin_conversation_fan;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_conversations enable trigger require_chat_admin_conversation_fan;");
+
+    sql("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (true) with check (true);");
+    assertPostflightRejectsPartial();
+    sql("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
+
+    sql("alter index public.chat_character_conversations_one_per_fan rename to chat_character_conversations_one_per_fan_invalid;");
+    assertPostflightRejectsPartial();
+    sql("alter index public.chat_character_conversations_one_per_fan_invalid rename to chat_character_conversations_one_per_fan;");
+
+    sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
+    assertPostflightRejectsPartial();
+    sql("revoke insert (summary) on table public.chat_character_fans from authenticated;");
   } finally {sql(`drop database ${database} with (force);`,"postgres");}
 });
