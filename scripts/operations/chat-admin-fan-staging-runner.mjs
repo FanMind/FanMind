@@ -445,7 +445,7 @@ begin
     ('chat_character_messages','chat_character_messages_direction_check','c','checkdirection=anyarray[''fan_inbound'',''suggested_reply'',''confirmed_reply'']'),
     ('chat_character_messages','chat_character_messages_content_check','c','checkchar_lengthcontent>=1andchar_lengthcontent<=4000'),
     ('chat_character_messages','chat_character_messages_character_revision_check','c','checkcharacter_revision>0'),
-    ('chat_character_messages','chat_character_messages_workspace_id_character_id_conversation_','f','foreignkeyworkspace_id,character_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,idondeletecascade'),
+    ('chat_character_messages','chat_character_messages_workspace_id_character_id_conversa_fkey','f','foreignkeyworkspace_id,character_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,idondeletecascade'),
     ('chat_character_messages','chat_character_messages_fan_conversation_fk','f','foreignkeyworkspace_id,character_id,fan_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,fan_id,idondeletecascade')
   ), actual as (
     select c.relname::text,con.conname::text,con.contype::text,
@@ -541,9 +541,9 @@ begin
 
   select count(*) into trigger_mismatch
   from (
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='0' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='0' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgattr::text='' and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
     select 1 where not exists (select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal and tgenabled='O' and tgtype=5 and tgfoid=to_regprocedure('public.create_chat_admin_fan_conversation()') and tgqual is null)
     union all
