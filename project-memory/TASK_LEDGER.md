@@ -1,8 +1,8 @@
 ## FM-CHATADMIN-003 — persistente Fans je Character — 2026-09-27
-- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED for the end-to-end feature; repository postflight correction is CI-VERIFIED on PR #1222 head `06c1034ae4038f5f3b47fb3db421e04fc8ac5cb0`.
+- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED for the end-to-end feature; repository postflight correction remains IN_PROGRESS pending resolution of the latest independent review findings and exact-head gates.
 - PR #1221 merged as `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; the follow-up audit found postflight contract gaps. PR #1222 hardens parent authorization and verifies the controlled fan schema contract.
-- Exact-head checks on `06c1034`: FanMind CI (including native PostgreSQL 17), CodeQL, Browser E2E, Project Memory Guard/Quality/Status, God Mode and Landing Language CI all succeeded. The PostgreSQL 17 test proves VERIFIED and rejection as PARTIAL for disabled base RLS, disabled fan trigger, weakened fan policy, renamed required index and column-level INSERT grant.
-- Review state: PR #1222 remains Draft; no reviews or inline threads are present. Independent exact-head review is pending.
+- Evidence boundary: earlier CI results apply only to the commits named by those runs and are not carried forward to later edits. The final follow-up must pass all required workflows, including native PostgreSQL 17, on its exact reviewed head.
+- Review state: PR #1222 is open; independent exact-head review findings are being reconciled.
 - Lock: `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927` ACTIVE.
 - Feature status remains IMPLEMENTED_NOT_VERIFIED until the controlled Staging apply, schema/runtime acceptance and cleanup required by issue #1219 are separately authorized and completed.
 - Boundary: this repository-only correction did not mutate Staging, Production, provider or customer data and did not activate runtime or auto-send.

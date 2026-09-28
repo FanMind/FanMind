@@ -30,6 +30,8 @@ declare
   rls_enabled integer;
   base_policy_count integer;
   base_policy_valid integer;
+  base_persistence_policy_count integer;
+  base_persistence_policy_valid integer;
   policy_count integer;
   policy_valid integer;
   schema_mismatch integer;
@@ -55,6 +57,12 @@ declare
   base_workspace_index_mismatch integer;
   unique_message_index_mismatch integer;
   binding_default_mismatch integer;
+  table_owner_mismatch integer;
+  persistence_mismatch integer;
+  conversation_unique_index_mismatch integer;
+  persistence_constraint_mismatch integer;
+  role_security_mismatch integer;
+  rewrite_rule_mismatch integer;
 begin
   select count(*) into base_present
   from (values
@@ -111,6 +119,30 @@ begin
        and wc='is_current_chat_admin_workspaceworkspace_idandcreated_by_user_id=auth.uid')
     );
 
+  select count(*) into base_persistence_policy_count
+  from pg_policies
+  where schemaname='public' and tablename in ('chat_character_conversations','chat_character_messages');
+
+  select count(*) into base_persistence_policy_valid
+  from (
+    select policyname,permissive,tablename,cmd,roles,
+      regexp_replace(replace(lower(coalesce(qual,'')), 'public.', ''), '[[:space:]()]', '', 'g') as q,
+      regexp_replace(replace(lower(coalesce(with_check,'')), 'public.', ''), '[[:space:]()]', '', 'g') as wc
+    from pg_policies where schemaname='public'
+      and tablename in ('chat_character_conversations','chat_character_messages')
+  ) p
+  where roles='{authenticated}'::name[] and permissive='PERMISSIVE' and cmd='ALL'
+    and q='is_current_chat_admin_workspaceworkspace_id'
+    and wc='is_current_chat_admin_workspaceworkspace_id'
+    and ((tablename='chat_character_conversations' and policyname='chat_admin_conversations_owner_all')
+      or (tablename='chat_character_messages' and policyname='chat_admin_messages_owner_all'));
+
+  select count(*) into table_owner_mismatch
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public'
+    and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_conversations','chat_character_messages')
+    and c.relowner<>(select oid from pg_roles where rolname='postgres');
+
   select count(*) into base_function_mismatch from (
     select 1 where not exists (
       select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang
@@ -127,6 +159,12 @@ begin
     or not has_function_privilege('authenticated','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('service_role','public.is_current_chat_admin_workspace(uuid)','execute')
+  then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+  if table_owner_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+  select count(*) into role_security_mismatch
+  from pg_roles where rolname='authenticated' and (rolsuper or rolbypassrls);
+  if role_security_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+  if extension_markers=0 and (base_persistence_policy_count<>2 or base_persistence_policy_valid<>2)
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   select case when exists (
@@ -191,8 +229,34 @@ begin
     raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL';
   end if;
 
+  select count(*) into table_owner_mismatch
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public'
+    and c.relname in ('workspace_chat_admin_capabilities','chat_characters','chat_character_fans','chat_character_conversations','chat_character_messages')
+    and c.relowner<>(select oid from pg_roles where rolname='postgres');
+  select count(*) into persistence_mismatch
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public'
+    and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
+    and c.relpersistence<>'p';
+  persistence_mismatch := persistence_mismatch + case when exists (
+    select 1 from pg_class t join pg_namespace n on n.oid=t.relnamespace
+    join pg_attribute a on a.attrelid=t.oid and a.attname='sequence'
+    join pg_depend d on d.refobjid=t.oid and d.refobjsubid=a.attnum and d.classid='pg_class'::regclass and d.refclassid='pg_class'::regclass and d.deptype='i'
+    join pg_class seq on seq.oid=d.objid and seq.relkind='S'
+    where n.nspname='public' and t.relname='chat_character_messages' and seq.relpersistence<>'p'
+  ) then 1 else 0 end;
+  if table_owner_mismatch<>0 or persistence_mismatch<>0
+  then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+
   with expected(table_name, column_name, type_name, not_null) as (
     values
+      ('chat_character_conversations','id','uuid',true),
+      ('chat_character_conversations','workspace_id','uuid',true),
+      ('chat_character_conversations','character_id','uuid',true),
+      ('chat_character_conversations','fan_reference','text',true),
+      ('chat_character_conversations','created_at','timestamp with time zone',true),
+      ('chat_character_conversations','updated_at','timestamp with time zone',true),
       ('chat_character_fans','id','uuid',true),
       ('chat_character_fans','workspace_id','uuid',true),
       ('chat_character_fans','character_id','uuid',true),
@@ -208,6 +272,14 @@ begin
       ('chat_character_fans','created_at','timestamp with time zone',true),
       ('chat_character_fans','updated_at','timestamp with time zone',true),
       ('chat_character_conversations','fan_id','uuid',false),
+      ('chat_character_messages','id','uuid',true),
+      ('chat_character_messages','workspace_id','uuid',true),
+      ('chat_character_messages','character_id','uuid',true),
+      ('chat_character_messages','conversation_id','uuid',true),
+      ('chat_character_messages','direction','text',true),
+      ('chat_character_messages','content','text',true),
+      ('chat_character_messages','character_revision','integer',true),
+      ('chat_character_messages','created_at','timestamp with time zone',true),
       ('chat_character_messages','fan_id','uuid',false),
       ('chat_character_messages','sequence','bigint',true),
       ('chat_character_messages','generation_id','uuid',false)
@@ -224,11 +296,9 @@ begin
       and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
       and a.attnum > 0
       and not a.attisdropped
-      and a.attname in ('id','workspace_id','character_id','display_name','handle','platform','language','status','summary','notes','creation_id','revision','created_at','updated_at','fan_id','sequence','generation_id')
   ), mismatch as (
     (select * from expected except select * from actual)
-    union all
-    (select * from actual where table_name='chat_character_fans' and column_name in ('id','workspace_id','character_id','display_name','handle','platform','language','status','summary','notes','creation_id','revision','created_at','updated_at') except select * from expected where table_name='chat_character_fans')
+    union all (select * from actual except select * from expected)
   )
   select count(*) into schema_mismatch from mismatch;
 
@@ -309,6 +379,34 @@ begin
         and contype in ('p','u','f','c')
         and convalidated and not condeferrable and not condeferred)=12
     then 0 else 1 end;
+  with expected(table_name,constraint_name,contype) as (values
+    ('chat_character_conversations','chat_character_conversations_pkey','p'),
+    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_id_key','u'),
+    ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_fkey','f'),
+    ('chat_character_conversations','chat_character_conversations_fan_fk','f'),
+    ('chat_character_messages','chat_character_messages_pkey','p'),
+    ('chat_character_messages','chat_character_messages_direction_check','c'),
+    ('chat_character_messages','chat_character_messages_content_check','c'),
+    ('chat_character_messages','chat_character_messages_character_revision_check','c'),
+    ('chat_character_messages','chat_character_messages_workspace_id_character_id_conversation_id_fkey','f'),
+    ('chat_character_messages','chat_character_messages_fan_conversation_fk','f')
+  ), actual as (
+    select c.relname::text,con.conname::text,con.contype::text
+    from pg_constraint con join pg_class c on c.oid=con.conrelid
+    where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
+  ) select count(*) into persistence_constraint_mismatch from mismatch;
+  persistence_constraint_mismatch := persistence_constraint_mismatch + (
+    select count(*) from pg_constraint con
+    where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
+      and (not con.convalidated or con.condeferrable or con.condeferred)
+  );
+  select count(*) into rewrite_rule_mismatch
+  from pg_rewrite r join pg_class c on c.oid=r.ev_class
+  where c.oid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
+    and r.rulename<>'_RETURN';
 
   select count(*) into foreign_key_trigger_mismatch
   from (values
@@ -372,12 +470,17 @@ begin
   where ns.nspname='public' and ix.indrelid='public.chat_character_messages'::regclass and ix.indisunique
     and idx.relname not in ('chat_character_messages_pkey','chat_character_messages_generation_once','chat_character_messages_confirmation_once');
   index_mismatch := index_mismatch + unique_message_index_mismatch;
+  select count(*) into conversation_unique_index_mismatch
+  from pg_index ix join pg_class idx on idx.oid=ix.indexrelid
+  where ix.indrelid='public.chat_character_conversations'::regclass and ix.indisunique
+    and idx.relname not in ('chat_character_conversations_pkey','chat_character_conversations_workspace_id_character_id_id_key','chat_character_conversations_one_per_fan','chat_character_conversations_fan_identity');
+  index_mismatch := index_mismatch + conversation_unique_index_mismatch;
 
   select count(*) into trigger_mismatch
   from (
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and array_length(tgattr::smallint[],1) is null and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
-    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
+    select 1 where not exists (select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal and tgenabled='O' and tgtype=23 and array_length(tgattr::smallint[],1) is null and tgfoid=to_regprocedure('public.require_chat_admin_fan_binding()') and tgqual is null)
     union all
     select 1 where not exists (select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal and tgenabled='O' and tgtype=5 and tgfoid=to_regprocedure('public.create_chat_admin_fan_conversation()') and tgqual is null)
     union all
@@ -396,7 +499,7 @@ begin
     join pg_class seq on seq.oid=d.objid and seq.relkind='S'
     join pg_sequence s on s.seqrelid=seq.oid
     where n.nspname='public' and t.relname='chat_character_messages'
-      and s.seqincrement=1 and s.seqstart=1 and s.seqmin=1 and s.seqmax=9223372036854775807 and not s.seqcycle
+      and s.seqincrement=1 and s.seqstart=1 and s.seqmin=1 and s.seqmax=9223372036854775807 and s.seqcache=1 and not s.seqcycle
       and pg_get_serial_sequence('public.chat_character_messages','sequence')::regclass=seq.oid
   ) then 0 else 1 end;
 
@@ -672,6 +775,8 @@ begin
     or column_default_mismatch <> 0
     or binding_default_mismatch <> 0
     or constraint_mismatch <> 0
+    or persistence_constraint_mismatch <> 0
+    or rewrite_rule_mismatch <> 0
     or foreign_key_trigger_mismatch <> 0
     or index_mismatch <> 0
     or trigger_mismatch <> 0

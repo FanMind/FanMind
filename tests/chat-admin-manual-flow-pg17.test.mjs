@@ -84,6 +84,19 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.equal(sql("select count(*) from public.workspaces;").trim(),"2");
     assert.equal(sql("select count(*) from auth.users;").trim(),"4");
 
+    const absentPostflight=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.equal(absentPostflight.status,0,absentPostflight.stderr||absentPostflight.stdout);
+    assert.match(`${absentPostflight.stdout}${absentPostflight.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
+    sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (true) with check (true);");
+    const baselinePolicy=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(baselinePolicy.status,0,"ABSENT must require the parent conversation owner policy");
+    assert.match(`${baselinePolicy.stdout}${baselinePolicy.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
+
     // Exercise the exact fan migration and its read-only catalog verifier on native PG17.
     const fanSql = readFileSync(new URL(`../${FAN_SQL_PATH}`, import.meta.url), "utf8");
     sql(fanSql);
@@ -126,6 +139,30 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     sql("drop index public.unexpected_chat_message_content_unique;");
 
+    sql("create unique index unexpected_chat_conversation_character_unique on public.chat_character_conversations(workspace_id,character_id);");
+    assertPostflightRejectsPartial();
+    sql("drop index public.unexpected_chat_conversation_character_unique;");
+
+    sql("alter table public.chat_character_messages add column unexpected_required_column text not null default 'temporary';");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_messages drop column unexpected_required_column;");
+
+    sql("alter table public.chat_character_messages add constraint unexpected_message_direction_check check (direction <> 'suggested_reply');");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_messages drop constraint unexpected_message_direction_check;");
+
+    sql("alter table public.chat_character_messages set unlogged;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_messages set logged;");
+
+    sql("alter table public.chat_character_fans owner to authenticated;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_fans owner to postgres;");
+
+    sql("alter role authenticated bypassrls;");
+    assertPostflightRejectsPartial();
+    sql("alter role authenticated nobypassrls;");
+
     sql("alter table public.chat_character_conversations alter column fan_id set default '00000000-0000-4000-8000-000000000001'::uuid;");
     assertPostflightRejectsPartial();
     sql("alter table public.chat_character_conversations alter column fan_id drop default;");
@@ -133,6 +170,18 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("alter sequence public.chat_character_messages_sequence_seq increment by -1;");
     assertPostflightRejectsPartial();
     sql("alter sequence public.chat_character_messages_sequence_seq increment by 1;");
+
+    sql("alter sequence public.chat_character_messages_sequence_seq cache 2;");
+    assertPostflightRejectsPartial();
+    sql("alter sequence public.chat_character_messages_sequence_seq cache 1;");
+
+    sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update of fan_id on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+    assertPostflightRejectsPartial();
+    sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+
+    sql("create rule unexpected_message_insert_ignore as on insert to public.chat_character_messages do instead nothing;");
+    assertPostflightRejectsPartial();
+    sql("drop rule unexpected_message_insert_ignore on public.chat_character_messages;");
 
     sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
     assertPostflightRejectsPartial();
