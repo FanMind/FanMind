@@ -49,6 +49,8 @@ declare
   table_privilege_mismatch integer;
   base_table_privilege_mismatch integer;
   protected_column_privilege_mismatch integer;
+  schema_usage_mismatch integer;
+  parent_character_runtime_mismatch integer;
   definer_owner_mismatch integer;
   fan_insert_grant_mismatch integer;
   authenticated_conversation_message_write_grant_mismatch integer;
@@ -63,6 +65,7 @@ declare
   persistence_constraint_mismatch integer;
   persistence_default_mismatch integer;
   routine_acl_mismatch integer;
+  routine_grant_option_mismatch integer;
   fan_unique_index_mismatch integer;
   generated_column_mismatch integer;
   role_security_mismatch integer;
@@ -158,6 +161,7 @@ begin
       where n.nspname='public' and p.proname='is_current_chat_admin_workspace'
         and pg_get_function_identity_arguments(p.oid)='target_workspace_id uuid'
         and pg_get_function_result(p.oid)='boolean' and l.lanname='sql' and p.provolatile='s'
+        and pg_get_userbyid(p.proowner)='postgres'
         and not p.prosecdef and coalesce(p.proconfig,'{}')=array['search_path=""']::text[]
         and regexp_replace(lower(btrim(p.prosrc)), '[[:space:]]+', '', 'g')=
           'selectexists(select1frompublic.workspace_chat_admin_capabilitiescjoinpublic.workspaceswonw.id=c.workspace_idwherec.workspace_id=target_workspace_idandc.chat_admin_multi_characterandc.granted_to_user_id=auth.uid()andw.owner_user_id=auth.uid());'
@@ -168,6 +172,13 @@ begin
     or not has_function_privilege('authenticated','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('anon','public.is_current_chat_admin_workspace(uuid)','execute')
     or has_function_privilege('service_role','public.is_current_chat_admin_workspace(uuid)','execute')
+    or exists (
+      select 1 from pg_proc helper
+      cross join lateral aclexplode(coalesce(helper.proacl,acldefault('f',helper.proowner))) helper_acl
+      where helper.oid=to_regprocedure('public.is_current_chat_admin_workspace(uuid)')
+        and helper_acl.privilege_type='EXECUTE'
+        and helper_acl.grantee<>helper.proowner and helper_acl.is_grantable
+    )
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
   if table_owner_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
   select count(*) into role_security_mismatch
@@ -232,6 +243,98 @@ begin
 
   if base_table_privilege_mismatch<>0 or protected_column_privilege_mismatch<>0
   then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+  select count(*) into schema_usage_mismatch
+  from (values ('authenticated'::name),('service_role'::name)) as required(rolname)
+  where not has_schema_privilege(required.rolname,'public','USAGE');
+  schema_usage_mismatch := schema_usage_mismatch + (
+    select count(*) from pg_namespace
+    where nspname='public' and nspowner not in (
+      (select oid from pg_roles where rolname='postgres'),
+      (select oid from pg_roles where rolname='pg_database_owner')
+    )
+  );
+  schema_usage_mismatch := schema_usage_mismatch + (
+    select count(*) from pg_namespace ns
+    cross join lateral aclexplode(coalesce(ns.nspacl,acldefault('n',ns.nspowner))) acl
+    where ns.nspname='public' and acl.grantee<>ns.nspowner
+      and (acl.is_grantable or (acl.privilege_type='CREATE' and acl.grantee in (
+        0,(select oid from pg_roles where rolname='anon'),(select oid from pg_roles where rolname='authenticated')
+      )))
+  );
+  schema_usage_mismatch := schema_usage_mismatch + case
+    when has_schema_privilege('authenticated','public','CREATE') then 1 else 0 end;
+  schema_usage_mismatch := schema_usage_mismatch + case
+    when has_schema_privilege('anon','public','CREATE') then 1 else 0 end;
+  if schema_usage_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
+
+  with expected(column_name,type_name,not_null,default_norm,generated) as (values
+    ('status','text',true,'''active''::text',''),
+    ('revision','integer',true,'1','')
+  ), actual as (
+    select a.attname::text,format_type(a.atttypid,a.atttypmod)::text,a.attnotnull,
+      regexp_replace(lower(coalesce(pg_get_expr(ad.adbin,ad.adrelid),'')),'[[:space:]]+','','g'),
+      a.attgenerated::text
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    join pg_attribute a on a.attrelid=c.oid
+    left join pg_attrdef ad on ad.adrelid=c.oid and ad.adnum=a.attnum
+    where n.nspname='public' and c.relname='chat_characters'
+      and a.attnum>0 and not a.attisdropped and a.attname in ('status','revision')
+  ), mismatch as (
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
+  ) select count(*) into parent_character_runtime_mismatch from mismatch;
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    with expected(constraint_name,definition,validated) as (values
+      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']',true),
+      ('chat_characters_revision_check','checkrevision>0',true)
+    ), runtime_columns as (
+      select array_agg(a.attnum::smallint) as attnums
+      from pg_attribute a join pg_class c on c.oid=a.attrelid
+      join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and c.relname='chat_characters'
+        and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
+    ), actual as (
+      select con.conname::text,
+        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g'),
+        con.convalidated
+      from pg_constraint con cross join runtime_columns
+      where con.conrelid='public.chat_characters'::regclass
+        and (
+          con.conkey && runtime_columns.attnums
+          or (con.contype='x' and exists (
+            select 1 from pg_index exclusion_index
+            where exclusion_index.indexrelid=con.conindid
+              and (
+                coalesce(pg_get_expr(exclusion_index.indexprs,exclusion_index.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+                or coalesce(pg_get_expr(exclusion_index.indpred,exclusion_index.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+              )
+          ))
+        )
+    ), mismatch as (
+      (select * from expected except select * from actual)
+      union all (select * from actual except select * from expected)
+    ) select count(*) from mismatch
+  );
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    select count(distinct ix.indexrelid)
+    from pg_index ix
+    join pg_attribute a on a.attrelid=ix.indrelid
+    cross join lateral unnest(ix.indkey) with ordinality key_column(attnum,position)
+    where ix.indrelid='public.chat_characters'::regclass
+      and ix.indisunique
+      and key_column.position<=ix.indnkeyatts and key_column.attnum=a.attnum
+      and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
+  );
+  parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
+    select count(*) from pg_index ix
+    where ix.indrelid='public.chat_characters'::regclass
+      and ix.indisunique
+      and (
+        coalesce(pg_get_expr(ix.indexprs,ix.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+        or coalesce(pg_get_expr(ix.indpred,ix.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+      )
+  );
+  if parent_character_runtime_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   if extension_markers = 0 then
     raise notice 'CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT';
@@ -415,10 +518,14 @@ begin
     join pg_class c on c.oid = con.conrelid
     join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
-      and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
-      and con.convalidated and not con.condeferrable and not con.condeferred
+      and (
+        c.relname='chat_character_fans'
+        or (c.relname='chat_character_conversations' and con.conname='chat_character_conversations_fan_fk')
+        or (c.relname='chat_character_messages' and con.conname='chat_character_messages_fan_conversation_fk')
+      )
   ), mismatch as (
-    select * from expected except select * from actual
+    (select * from expected except select * from actual)
+    union all (select * from actual except select * from expected)
   )
   select count(*) into constraint_mismatch from mismatch;
   constraint_mismatch := constraint_mismatch + (
@@ -792,6 +899,12 @@ begin
       where n.nspname='public'
         and p.proname in ('create_chat_admin_fan_conversation','create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply')
         and p.prosecdef)=4 then 0 else 1 end;
+  definer_owner_mismatch := definer_owner_mismatch + (
+    select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='is_current_chat_admin_workspace'
+      and pg_get_function_identity_arguments(p.oid)='target_workspace_id uuid'
+      and pg_get_userbyid(p.proowner)<>'postgres'
+  );
 
   select count(*) into function_privilege_mismatch
   from (
@@ -847,6 +960,15 @@ begin
     union all (select * from actual except select * from expected)
   ) select count(*) into routine_acl_mismatch from mismatch;
 
+  select count(*) into routine_grant_option_mismatch
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
+  where n.nspname='public'
+    and p.proname in ('create_chat_admin_fan','persist_chat_admin_generation','persist_chat_admin_confirmed_reply','chat_admin_fan_schema_ready','create_chat_admin_fan_conversation','require_chat_admin_fan_binding','is_current_chat_admin_workspace')
+    and acl.privilege_type='EXECUTE'
+    and acl.grantee<>p.proowner
+    and acl.is_grantable;
+
   select case when
     to_regprocedure('public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)') is not null
     and to_regprocedure('public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])') is not null
@@ -861,6 +983,7 @@ begin
     or policy_count <> 3
     or policy_valid <> 3
     or schema_mismatch <> 0
+    or parent_character_runtime_mismatch <> 0
     or column_default_mismatch <> 0
     or generated_column_mismatch <> 0
     or binding_default_mismatch <> 0
@@ -878,6 +1001,8 @@ begin
     or base_function_mismatch <> 0
     or function_privilege_mismatch <> 0
     or routine_acl_mismatch <> 0
+    or routine_grant_option_mismatch <> 0
+    or schema_usage_mismatch <> 0
     or table_privilege_mismatch <> 0
     or base_table_privilege_mismatch <> 0
     or protected_column_privilege_mismatch <> 0
