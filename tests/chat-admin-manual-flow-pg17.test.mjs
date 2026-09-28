@@ -97,6 +97,22 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.match(`${baselinePolicy.stdout}${baselinePolicy.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
     sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
 
+    sql("alter table public.chat_characters alter column status drop default;");
+    const absentParentDefault=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(absentParentDefault.status,0,"ABSENT must reject parent runtime drift before APPLY");
+    assert.match(`${absentParentDefault.stdout}${absentParentDefault.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter table public.chat_characters alter column status set default 'active';");
+
+    sql("alter table public.chat_characters add constraint unexpected_chat_character_revision_check check (revision < 3);");
+    const absentParentConstraint=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(absentParentConstraint.status,0,"ABSENT must reject unexpected parent runtime constraints");
+    assert.match(`${absentParentConstraint.stdout}${absentParentConstraint.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter table public.chat_characters drop constraint unexpected_chat_character_revision_check;");
+
     sql("create function public.require_chat_admin_fan_binding() returns trigger language plpgsql as $$begin return new; end$$; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
     const orphanedFanObjects=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
       input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
@@ -169,7 +185,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_characters alter column revision type integer using revision::integer;");
 
-    sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((tstzrange(created_at, created_at + interval '1 second')) with &&);");
+    sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
 
