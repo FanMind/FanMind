@@ -64,6 +64,7 @@ declare
   persistence_default_mismatch integer;
   routine_acl_mismatch integer;
   fan_unique_index_mismatch integer;
+  generated_column_mismatch integer;
   role_security_mismatch integer;
   rewrite_rule_mismatch integer;
 begin
@@ -335,6 +336,10 @@ begin
     (select count(*) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
      where n.nspname='public' and c.relname='chat_character_fans' and a.attnum>0 and not a.attisdropped) - 14
   );
+  select count(*) into generated_column_mismatch
+  from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relname='chat_character_fans'
+    and a.attnum>0 and not a.attisdropped and a.attgenerated<>'';
   select count(*) into binding_default_mismatch
   from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
   left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
@@ -409,11 +414,17 @@ begin
       and c.relname in ('chat_character_fans','chat_character_conversations','chat_character_messages')
       and con.convalidated and not con.condeferrable and not con.condeferred
   ), mismatch as (
-    select * from expected
-    except
-    select * from actual
+    select * from expected except select * from actual
   )
   select count(*) into constraint_mismatch from mismatch;
+  constraint_mismatch := constraint_mismatch + (
+    select count(*) from pg_constraint
+    where conrelid='public.chat_character_fans'::regclass and contype in ('p','u','f','c')
+      and (not convalidated or condeferrable or condeferred)
+  );
+  constraint_mismatch := constraint_mismatch + case
+    when (select count(*) from pg_constraint where conrelid='public.chat_character_fans'::regclass and contype in ('p','u','f','c'))=12
+    then 0 else 1 end;
   constraint_mismatch := constraint_mismatch + case
     when (select count(*) from pg_constraint
       where conrelid='public.chat_character_fans'::regclass
@@ -423,6 +434,7 @@ begin
   with expected(table_name,constraint_name,contype,definition) as (values
     ('chat_character_conversations','chat_character_conversations_pkey','p','primarykeyid'),
     ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_id_key','u','uniqueworkspace_id,character_id,id'),
+    ('chat_character_conversations','chat_character_conversations_fan_reference_check','c','checkchar_lengthbtrimfan_reference>=1andchar_lengthbtrimfan_reference<=120'),
     ('chat_character_conversations','chat_character_conversations_workspace_id_character_id_fkey','f','foreignkeyworkspace_id,character_idreferenceschat_charactersworkspace_id,idondeletecascade'),
     ('chat_character_conversations','chat_character_conversations_fan_fk','f','foreignkeyworkspace_id,character_id,fan_idreferenceschat_character_fansworkspace_id,character_id,idondeletecascade'),
     ('chat_character_messages','chat_character_messages_pkey','p','primarykeyid'),
@@ -447,7 +459,7 @@ begin
   );
   select count(*) into rewrite_rule_mismatch
   from pg_rewrite r join pg_class c on c.oid=r.ev_class
-  where c.oid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
+  where c.oid in ('public.chat_character_fans'::regclass,'public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)
     and r.rulename<>'_RETURN';
 
   select count(*) into foreign_key_trigger_mismatch

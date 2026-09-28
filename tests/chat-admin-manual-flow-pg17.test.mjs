@@ -224,6 +224,10 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     sql("drop rule unexpected_message_insert_ignore on public.chat_character_messages;");
 
+    sql("create rule unexpected_fan_insert_ignore as on insert to public.chat_character_fans do instead nothing;");
+    assertPostflightRejectsPartial();
+    sql("drop rule unexpected_fan_insert_ignore on public.chat_character_fans;");
+
     sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
     assertPostflightRejectsPartial();
     sql("revoke insert (summary) on table public.chat_character_fans from authenticated;");
@@ -251,6 +255,14 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120); alter table public.chat_character_fans add constraint chat_character_fans_unrelated_check check (true);");
     assertPostflightRejectsPartial();
     sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans drop constraint chat_character_fans_unrelated_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120);");
+
+    sql("alter table public.chat_character_fans add constraint unexpected_unvalidated_fan_check check (false) not valid;");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_fans drop constraint unexpected_unvalidated_fan_check;");
+
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans alter column status drop default; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text generated always as ('active'::text) stored not null; alter table public.chat_character_fans add constraint chat_character_fans_status_check check (status in ('active','inactive'));");
+    assertPostflightRejectsPartial();
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text not null default 'active' check (status in ('active','inactive'));");
 
     sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger set tgenabled='D' where oid=(select t.oid from pg_trigger t join pg_constraint c on c.oid=t.tgconstraint where c.conname='chat_character_conversations_fan_fk' and t.tgisinternal limit 1);");
     assertPostflightRejectsPartial();
