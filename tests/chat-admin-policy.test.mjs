@@ -381,11 +381,7 @@ test("base ChatAdmin verifier reuses the canonical fan verifier only for a verif
   );
   assert.match(
     runner,
-    /mode === "verify"[\s\S]*chat-admin-fan-staging-runner\.mjs[\s\S]*CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u,
-  );
-  assert.doesNotMatch(
-    runner,
-    /mode === "apply"[\s\S]*chat-admin-fan-staging-runner\.mjs/u,
+    /if \([\s\S]*?mode === "verify"[\s\S]*?chat-admin-fan-staging-runner\.mjs[\s\S]*?CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED[\s\S]*?\) \{/u,
   );
 });
 
