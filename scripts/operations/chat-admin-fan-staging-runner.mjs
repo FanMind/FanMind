@@ -96,7 +96,7 @@ begin
     (to_regprocedure('public.create_chat_admin_fan_conversation()') is not null),
     (exists(select 1 from pg_trigger where tgname='require_chat_admin_conversation_fan' and tgrelid='public.chat_character_conversations'::regclass and not tgisinternal)),
     (exists(select 1 from pg_trigger where tgname='require_chat_admin_message_fan' and tgrelid='public.chat_character_messages'::regclass and not tgisinternal)),
-    (exists(select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid='public.chat_character_fans'::regclass and not tgisinternal))
+    (exists(select 1 from pg_trigger where tgname='create_chat_admin_fan_conversation_after_insert' and tgrelid=to_regclass('public.chat_character_fans') and not tgisinternal))
   ) as required(ok)
   where ok;
 
