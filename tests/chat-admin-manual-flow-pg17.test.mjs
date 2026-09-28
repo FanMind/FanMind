@@ -231,7 +231,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
 
     sql("alter table public.chat_character_fans owner to authenticated;");
     assertPostflightRejectsPartial();
-    restoreAndVerify("alter table public.chat_character_fans owner to postgres;");
+    restoreAndVerify("alter table public.chat_character_fans owner to postgres; grant select,update,delete on table public.chat_character_fans to authenticated,service_role;");
 
     sql("alter role authenticated bypassrls;");
     try { assertPostflightRejectsPartial(); }
@@ -287,7 +287,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
 
     sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to authenticated;");
     assertPostflightRejectsPartial();
-    restoreAndVerify("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres;");
+    restoreAndVerify("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres; grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) to authenticated;");
 
     sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_executor') then create role fanmind_chatadmin_unexpected_executor nologin; end if; end $$; grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to fanmind_chatadmin_unexpected_executor;");
     assertPostflightRejectsPartial();
