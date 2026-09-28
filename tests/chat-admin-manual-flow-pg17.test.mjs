@@ -104,7 +104,26 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
       stdio: ["pipe", "pipe", "pipe"],
     });
-    assert.equal(postflight.status, 0, postflight.stderr || postflight.stdout);
+    let diagnostics = "";
+    if (postflight.status !== 0) {
+      const diagnosticSql = FAN_POSTFLIGHT_SQL.replace(
+        "  if rls_enabled <> 5",
+        `  raise notice 'CHAT_ADMIN_FAN_DIAGNOSTIC=%', jsonb_build_object(
+    'schema',schema_mismatch,'owner',table_owner_mismatch,'persistence',persistence_mismatch,
+    'constraints',persistence_constraint_mismatch,'conversation_indexes',conversation_unique_index_mismatch,
+    'triggers',trigger_mismatch,'identity',identity_mismatch,'rewrite_rules',rewrite_rule_mismatch,
+    'policy',policy_valid,'table_acl',table_privilege_mismatch,
+    'column_acl',protected_column_privilege_mismatch,
+    'authenticated_writes',authenticated_conversation_message_write_grant_mismatch);
+  if rls_enabled <> 5`,
+      );
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: diagnosticSql, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      diagnostics = `${result.stdout}${result.stderr}`;
+    }
+    assert.equal(postflight.status, 0, `${postflight.stderr || postflight.stdout}${diagnostics}`);
     assert.match(`${postflight.stdout}${postflight.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
     const assertPostflightRejectsPartial = () => {
       const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
