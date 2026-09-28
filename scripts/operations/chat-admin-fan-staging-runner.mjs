@@ -241,7 +241,10 @@ begin
   where not has_schema_privilege(required.rolname,'public','USAGE');
   schema_usage_mismatch := schema_usage_mismatch + (
     select count(*) from pg_namespace
-    where nspname='public' and nspowner<>(select oid from pg_roles where rolname='postgres')
+    where nspname='public' and nspowner not in (
+      (select oid from pg_roles where rolname='postgres'),
+      (select oid from pg_roles where rolname='pg_database_owner')
+    )
   );
   schema_usage_mismatch := schema_usage_mismatch + (
     select count(*) from pg_namespace ns
