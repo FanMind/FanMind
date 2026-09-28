@@ -1,4 +1,4 @@
-# Execution Policy v5
+# Execution Policy v6
 
 Mandatory default for substantive FanMind agent/Codex/automation work.
 
@@ -6,6 +6,13 @@ Mandatory default for substantive FanMind agent/Codex/automation work.
 Read `AGENTS.md` and relevant project-memory sources including current state, task ledger, change requests, decisions, failed attempts, open loops, dependencies, evidence, do-not-assume, handoff/status, authorizations, STARTED_WORK, WORK_LOCKS, EXECUTION_RECEIPTS, RECONCILIATION, QUALITY_CONTROL, ASSUMPTIONS and CONTRADICTIONS. Verify actual branch/head, PR/CI/security/workflow state, runtime/target state and prior attempts.
 
 Assign `Risk: R1|R2|R3|R4`; uncertainty defaults upward. Record and freshly verify critical assumptions, especially Production/Staging/restore target, runner, migration, deployment commit, Stripe/provider, external approvals and mobile build/signing state. Define success evidence, negative/fail-closed evidence and recovery expectations for R3/R4 state-changing work.
+
+## Frozen task contract and convergence
+Before DELIVERY, apply `TASK_CONVERGENCE_POLICY.md`: freeze measurable acceptance criteria, evidence quorum, scope and explicit out-of-scope boundaries. Once DELIVERY begins, new findings may not silently expand the task. Non-blocking adjacent findings become FOLLOW_UP, TECH_DEBT, BUG_SEPARATE or ENHANCEMENT.
+
+Every repair cycle must produce a material delta. Two consecutive no-progress cycles stop the current strategy. The same failing criterion/root-cause hypothesis may be attempted at most three times; thereafter transition to BLOCKED, RECONCILIATION_REQUIRED or a separately scoped diagnostic task.
+
+When every frozen criterion and required quorum passes, stop the task and close it. Countercheck/Supervisor work verifies existing criteria and may not invent new completion requirements.
 
 ## Started-work rule
 As soon as substantive work begins, record it in STARTED_WORK with Risk, acquire/update the Task-ID lock and open an execution receipt. Unfinished restore/mobile/AI/billing/social/security/infra work remains visible until explicitly closed, superseded or transferred with exact next step.
