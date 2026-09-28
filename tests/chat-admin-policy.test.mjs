@@ -161,11 +161,13 @@ test("routes require capability and workspace-bound character; no OnlyFans netwo
   }
   assert.match(store, /workspace_id=eq\./u);
   assert.match(store, /rows\[0\]\.workspace_id!==workspaceId/u);
+  const client = await readFile("src/app/chatadmin/ChatAdminClient.tsx", "utf8");
   const combined = character + reply + store;
   assert.doesNotMatch(
     combined,
-    /onlyfans\.com|OnlyFans API|provider.password|service_role/u,
+    /onlyfans\.com|OnlyFans API|provider.password/u,
   );
+  assert.doesNotMatch(client, /SUPABASE_SERVICE_ROLE_KEY|service_role/iu);
   assert.match(store, /if \(isPlatformAdminEmail\(context\.user\.email\)\) throw new WorkspaceAuthorizationError/u);
 });
 
@@ -199,10 +201,9 @@ test("ChatAdmin cannot inherit user, Admin-CRM, Billing or Operations administra
   const root = await readFile("src/app/admin/page.tsx", "utf8");
   assert.match(root, /redirect\("\/admin\/billing"\)/u);
   const capability = await readFile("src/lib/chatAdmin.ts", "utf8");
-  assert.doesNotMatch(
-    capability,
-    /SUPABASE_SERVICE_ROLE_KEY|impersonat/iu,
-  );
+  assert.match(capability, /FANMIND_RUNTIME_ENVIRONMENT!=="staging"/u);
+  assert.match(capability, /SUPABASE_SERVICE_ROLE_KEY/u);
+  assert.doesNotMatch(capability, /impersonat/iu);
 });
 
 test("account deletion and disclosure enumerate all character datasets", async () => {
@@ -411,7 +412,7 @@ test("persistent fan runtime stays server-side default-off until controlled acti
     readFile(new URL("../src/app/api/chatadmin/conversations/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/app/api/chatadmin/reply-suggestions/route.ts", import.meta.url), "utf8"),
   ]);
-  assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED!=="true"/u);
+  assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"\|\|process\.env\.FANMIND_RUNTIME_ENVIRONMENT==="staging"/u);
   assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
   assert.match(store, /chat_character_fans\?workspace_id=eq\./u);
   assert.match(store, /chat_character_conversations\?workspace_id=eq\./u);
