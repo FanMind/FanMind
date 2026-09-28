@@ -137,8 +137,9 @@ begin
     where ns.nspname='public' and i.relname='one_chat_admin_workspace_global'
       and ix.indrelid='public.workspace_chat_admin_capabilities'::regclass
       and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive and am.amname='btree'
-      and regexp_replace(lower(pg_get_indexdef(i.oid,0,true)), '[[:space:]()]', '', 'g')
-        ='createuniqueindexone_chat_admin_workspace_globalonpublic.workspace_chat_admin_capabilitiesusingbtreechat_admin_multi_characterwherechat_admin_multi_character'
+      and right(regexp_replace(lower(pg_get_indexdef(i.oid,0,true)), '[[:space:]()]', '', 'g'),
+        length('usingbtreechat_admin_multi_characterwherechat_admin_multi_character'))
+        ='usingbtreechat_admin_multi_characterwherechat_admin_multi_character'
   )
     then 0 else 1 end into base_workspace_index_mismatch;
   if base_workspace_index_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
