@@ -85,7 +85,7 @@ As soon as substantive work begins:
 A stale lock is not free. Reconcile it against PRs, commits, receipts and started-work state before reuse.
 
 ## Finishline freeze / anti-overengineering rule
-Once a task has an explicit acceptance contract and the agreed user-visible core flow is implemented, enter **FINISHLINE_FREEZE**.
+Once a task has an explicit acceptance contract and its agreed bounded implementation scope is implemented (including the user-visible core flow when the task is user-facing), enter **FINISHLINE_FREEZE**.
 
 While frozen:
 1. Only defects that actually break an agreed acceptance criterion, a registered security/authority invariant, a required integration contract, or a current target/runtime acceptance may block completion.
