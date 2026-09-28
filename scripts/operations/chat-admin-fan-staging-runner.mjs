@@ -254,6 +254,10 @@ begin
         0,(select oid from pg_roles where rolname='anon'),(select oid from pg_roles where rolname='authenticated')
       )))
   );
+  schema_usage_mismatch := schema_usage_mismatch + case
+    when has_schema_privilege('authenticated','public','CREATE') then 1 else 0 end;
+  schema_usage_mismatch := schema_usage_mismatch + case
+    when has_schema_privilege('anon','public','CREATE') then 1 else 0 end;
   if schema_usage_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
   with expected(column_name,type_name,not_null,default_norm,generated) as (values
@@ -287,7 +291,17 @@ begin
         regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
       from pg_constraint con cross join runtime_columns
       where con.conrelid='public.chat_characters'::regclass
-        and con.conkey && runtime_columns.attnums
+        and (
+          con.conkey && runtime_columns.attnums
+          or (con.contype='x' and exists (
+            select 1 from pg_index exclusion_index
+            where exclusion_index.indexrelid=con.conindid
+              and (
+                coalesce(pg_get_expr(exclusion_index.indexprs,exclusion_index.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+                or coalesce(pg_get_expr(exclusion_index.indpred,exclusion_index.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
+              )
+          ))
+        )
     ), mismatch as (
       (select * from expected except select * from actual)
       union all (select * from actual except select * from expected)
