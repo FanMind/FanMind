@@ -277,9 +277,9 @@ begin
     union all (select * from actual except select * from expected)
   ) select count(*) into parent_character_runtime_mismatch from mismatch;
   parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
-    with expected(constraint_name,definition) as (values
-      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']'),
-      ('chat_characters_revision_check','checkrevision>0')
+    with expected(constraint_name,definition,validated) as (values
+      ('chat_characters_status_check','checkstatus=anyarray[''active'',''inactive'']',true),
+      ('chat_characters_revision_check','checkrevision>0',true)
     ), runtime_columns as (
       select array_agg(a.attnum::smallint) as attnums
       from pg_attribute a join pg_class c on c.oid=a.attrelid
@@ -288,7 +288,8 @@ begin
         and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
     ), actual as (
       select con.conname::text,
-        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g')
+        regexp_replace(replace(replace(lower(pg_get_constraintdef(con.oid,true)),'public.',''),'::text',''),'[[:space:]()]','','g'),
+        con.convalidated
       from pg_constraint con cross join runtime_columns
       where con.conrelid='public.chat_characters'::regclass
         and (
