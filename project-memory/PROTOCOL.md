@@ -3,11 +3,11 @@
 This directory is the operational memory for FanMind. It complements code, tests, Git history and canonical product documentation; it does not replace them.
 
 ## Mandatory execution policy
-`EXECUTION_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `LEGACY_ISSUE_RECONCILIATION.json`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
+`EXECUTION_POLICY.md`, `TASK_CONVERGENCE_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `LEGACY_ISSUE_RECONCILIATION.json`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
 
 ## Mandatory preflight
 Before substantive code, infrastructure, configuration, workflow or product-state work:
-1. Read `AGENTS.md`, `docs/SOURCE_OF_TRUTH.md`, `EXECUTION_POLICY.md`, `CURRENT_STATE.md`, `FANMIND_DEEP_AUDIT_2026-08-19.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `SESSION_HANDOFF.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `TASK_LEDGER.md`, `DEPENDENCIES.md` and `DECISIONS.md`.
+1. Read `AGENTS.md`, `docs/SOURCE_OF_TRUTH.md`, `EXECUTION_POLICY.md`, `TASK_CONVERGENCE_POLICY.md`, `CURRENT_STATE.md`, `FANMIND_DEEP_AUDIT_2026-08-19.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `SESSION_HANDOFF.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `TASK_LEDGER.md`, `DEPENDENCIES.md` and `DECISIONS.md`.
 2. Run/inspect `scripts/fanmind_drift_preflight.py` before relying on prior acceptance for watched truth/workflow files.
 3. Run/inspect `scripts/fanmind_evidence_freshness.py` before relying on mutable runtime/provider/admin evidence.
 4. If the requested/current task is owner-deferred, do not ask again by default. Run `scripts/fanmind_next_best_action.py` and continue with the selected `parallel_safe` task unless the owner explicitly resumes the deferred action.
@@ -18,6 +18,7 @@ Before substantive code, infrastructure, configuration, workflow or product-stat
 9. For #642/#643/#644 or work derived from their historical checkboxes, read and validate `LEGACY_ISSUE_RECONCILIATION.json`; never treat them as a zero-state independently of #874 and the retained-gate map.
 10. Search existing task/change IDs before creating new work.
 11. Assign Risk `R1`–`R4`, record critical assumptions, define expected scope and define the evidence/quorum that will prove success before implementation.
+12. Freeze the task acceptance contract under `TASK_CONVERGENCE_POLICY.md` before DELIVERY begins. New findings outside that contract become deferred follow-up work and must not silently enlarge the running task.
 
 ## Owner-declared merge evidence
 - If Bernd explicitly states that he personally merged a specific FanMind pull request, that statement is authoritative Owner evidence for the actor, intent and deliberate acceptance of that manual merge.
@@ -83,6 +84,15 @@ As soon as substantive work begins:
 - keep unfinished work visible until explicitly closed or superseded.
 
 A stale lock is not free. Reconcile it against PRs, commits, receipts and started-work state before reuse.
+
+## Task convergence / anti-loop contract
+- `TASK_CONVERGENCE_POLICY.md` is mandatory for Builder, Supervisor, Navigator and Manager execution.
+- A task acceptance contract is frozen at the start of DELIVERY.
+- New findings do not expand the running task unless they are strictly required by an existing criterion or by a verified regression/security contradiction caused by the task.
+- Two consecutive cycles without material progress trigger `NO_PROGRESS`; the same strategy must stop.
+- The same failure/root-cause hypothesis has a maximum of three repair attempts. After that, transition to `BLOCKED`, `RECONCILIATION_REQUIRED` or a separately scoped diagnostic task.
+- Once the frozen acceptance contract and required quorum pass, the task is DONE. Supervisors may verify the contract but may not add new completion requirements.
+- Repeated unchanged preflight/state must return `NO_CHANGE`; repeated reading/checking is not progress.
 
 ## Mandatory countercheck
 Before completion, merge or a success report:
