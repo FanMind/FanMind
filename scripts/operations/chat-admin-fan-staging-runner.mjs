@@ -136,12 +136,10 @@ begin
     join pg_am am on am.oid=i.relam
     where ns.nspname='public' and i.relname='one_chat_admin_workspace_global'
       and ix.indrelid='public.workspace_chat_admin_capabilities'::regclass
-      and ix.indisunique and not ix.indisprimary and ix.indisvalid and ix.indisready and ix.indislive
-      and ix.indnkeyatts=1 and ix.indnatts=1 and am.amname='btree'
-      and regexp_replace(lower(pg_get_expr(ix.indexprs,ix.indrelid,true)), '[[:space:]()]', '', 'g')='chat_admin_multi_character'
-      and regexp_replace(lower(pg_get_expr(ix.indpred,ix.indrelid,true)), '[[:space:]()]', '', 'g')='chat_admin_multi_character'
-  ) and (select count(*) from pg_index ix
-    where ix.indrelid='public.workspace_chat_admin_capabilities'::regclass and ix.indisunique)=2
+      and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive and am.amname='btree'
+      and regexp_replace(lower(pg_get_indexdef(i.oid,0,true)), '[[:space:]()]', '', 'g')
+        ='createuniqueindexone_chat_admin_workspace_globalonpublic.workspace_chat_admin_capabilitiesusingbtreechat_admin_multi_characterwherechat_admin_multi_character'
+  )
     then 0 else 1 end into base_workspace_index_mismatch;
   if base_workspace_index_mismatch<>0 then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
 
