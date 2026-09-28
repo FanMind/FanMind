@@ -299,14 +299,14 @@ begin
     join pg_attribute a on a.attrelid=ix.indrelid
     cross join lateral unnest(ix.indkey) with ordinality key_column(attnum,position)
     where ix.indrelid='public.chat_characters'::regclass
-      and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive
+      and ix.indisunique and ix.indisready and ix.indislive
       and key_column.position<=ix.indnkeyatts and key_column.attnum=a.attnum
       and a.attname in ('status','revision') and a.attnum>0 and not a.attisdropped
   );
   parent_character_runtime_mismatch := parent_character_runtime_mismatch + (
     select count(*) from pg_index ix
     where ix.indrelid='public.chat_characters'::regclass
-      and ix.indisunique and ix.indisvalid and ix.indisready and ix.indislive
+      and ix.indisunique and ix.indisready and ix.indislive
       and (
         coalesce(pg_get_expr(ix.indexprs,ix.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
         or coalesce(pg_get_expr(ix.indpred,ix.indrelid),'') ~* '(^|[^[:alnum:]_])(status|revision)([^[:alnum:]_]|$)'
