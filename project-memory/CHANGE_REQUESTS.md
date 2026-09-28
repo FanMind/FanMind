@@ -1,3 +1,12 @@
+## FM-CR-034 — Harden the merged ChatAdmin fan postflight
+- Date: 2026-09-27
+- Status: IN_PROGRESS
+- Related task: FM-CHATADMIN-003 / issue #1219.
+- Source: owner requested complete merge-readiness/security review; PR #1221 merged before its unresolved inline contract findings were reconciled.
+- Scope: repository-only read-only verification hardening for parent ChatAdmin authority and the controlled fan SQL catalog contract (RLS, grants, policies, indexes, constraints, triggers, RPC identities/source and idempotent boundaries).
+- Acceptance: exact-head required CI and PostgreSQL 17 contract execution pass; exact review threads/findings reconciled; no staging/production mutation.
+- Boundary: staging APPLY, runtime activation, fan/provider/customer mutation, production schema/data mutation and auto-send remain outside scope.
+
 ## FM-CR-033 — Finish Meta initial import and Creator Staging
 - Bounded source/schema/JWT/revision/PDF package ACCEPTED by #1105-#1108 / 34629009649; full Creator/Social remains open for actual deployed flag, enabled UI, full deletion, real quality/learning and provider acceptance. See FM-EV-CREATOR-FOUNDATION-20260911 and its mutable freshness entry.
 - CI follow-through includes the compatible Expo SDK57 patch alignment required by the current Mobile gate and the Creator approval/ACL review corrections before Staging Apply; no Android/store feature activation.

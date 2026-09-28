@@ -1,11 +1,11 @@
 ## FM-CHATADMIN-003 — persistente Fans je Character — 2026-09-27
-- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED.
+- Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED for the end-to-end feature; repository postflight correction remains IN_PROGRESS pending resolution of the latest independent review findings and exact-head gates.
+- PR #1221 merged as `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; the follow-up audit found postflight contract gaps. PR #1222 hardens parent authorization and verifies the controlled fan schema contract.
+- Evidence boundary: earlier CI results apply only to the commits named by those runs and are not carried forward to later edits. The final follow-up must pass all required workflows, including native PostgreSQL 17, on its exact reviewed head.
+- Review state: PR #1222 is open; independent exact-head review findings are being reconciled.
 - Lock: `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927` ACTIVE.
-- Result so far: V1-compatible default-off rollout, schema/RPC readiness gate, bounded fan pagination/context, provider `store:false`, retry-idempotent fan creation/confirmation and exact-one-row RPC normalization are implemented on the reachable local checkout.
-- Evidence: focused Policy/API/Disclosure/Delete/Roadmap tests and lint pass; Browser component execution is environment-blocked by missing Chromium and HTTP-403 browser download. GitHub conflict/check/thread/review state is not available because this checkout has no remote and the owner-provided head object is absent.
-- Next: publish only to existing PR #1216, run the required exact-head gates once, resolve real remaining findings, request exactly one final review and close only after mergeable=true, all required checks green and P1/P2=0.
-- Boundary: repository source only; no Staging/Production apply, runtime activation, provider/customer mutation, auto-send or Billing mutation.
-
+- Feature status remains IMPLEMENTED_NOT_VERIFIED until the controlled Staging apply, schema/runtime acceptance and cleanup required by issue #1219 are separately authorized and completed.
+- Boundary: this repository-only correction did not mutate Staging, Production, provider or customer data and did not activate runtime or auto-send.
 ## FM-CREATOR-001 — Creator Target Transition + Runtime — 2026-09-27
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk/Status: R4 / IN_PROGRESS
