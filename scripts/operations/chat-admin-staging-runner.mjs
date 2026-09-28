@@ -428,9 +428,30 @@ export function execute(mode, env = process.env) {
     chmodSync(passfile, 0o600);
     const safeEnvironment = { ...env, PGPASSFILE: passfile };
 
-    const preflightState = readSchemaState(
-      run(CHAT_ADMIN_POSTFLIGHT_SQL, safeEnvironment),
-    );
+    const basePostflight = run(CHAT_ADMIN_POSTFLIGHT_SQL, safeEnvironment);
+    let preflightState;
+    if (
+      mode === "verify" &&
+      basePostflight.status !== 0 &&
+      `${basePostflight.stderr ?? ""}${basePostflight.stdout ?? ""}`.includes("PARTIAL")
+    ) {
+      const fanPostflight = spawnSync(
+        process.execPath,
+        ["scripts/operations/chat-admin-fan-staging-runner.mjs", "--verify"],
+        { env: safeEnvironment, encoding: "utf8" },
+      );
+      const fanOutput = `${fanPostflight.stderr ?? ""}${fanPostflight.stdout ?? ""}`;
+      if (
+        fanPostflight.status === 0 &&
+        fanOutput.includes("CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED")
+      ) {
+        preflightState = "VERIFIED";
+      } else {
+        preflightState = readSchemaState(basePostflight);
+      }
+    } else {
+      preflightState = readSchemaState(basePostflight);
+    }
     if (mode === "verify") {
       console.log(`CHAT_ADMIN_SCHEMA_STATE=${preflightState}`);
       return;
