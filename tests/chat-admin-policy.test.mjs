@@ -202,6 +202,9 @@ test("ChatAdmin cannot inherit user, Admin-CRM, Billing or Operations administra
   assert.match(root, /redirect\("\/admin\/billing"\)/u);
   const capability = await readFile("src/lib/chatAdmin.ts", "utf8");
   assert.match(capability, /FANMIND_RUNTIME_ENVIRONMENT!=="staging"/u);
+  assert.match(capability, /FANMIND_CHAT_ADMIN_PREVIEW_WORKSPACE_ID/u);
+  assert.match(capability, /FANMIND_CHAT_ADMIN_PREVIEW_USER_ID/u);
+  assert.match(capability, /workspaceId!==previewWorkspaceId\|\|userId!==previewUserId/u);
   assert.match(capability, /SUPABASE_SERVICE_ROLE_KEY/u);
   assert.doesNotMatch(capability, /impersonat/iu);
 });
@@ -413,6 +416,7 @@ test("persistent fan runtime stays server-side default-off until controlled acti
     readFile(new URL("../src/app/api/chatadmin/reply-suggestions/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"\|\|process\.env\.FANMIND_RUNTIME_ENVIRONMENT==="staging"/u);
+  assert.match(replies, /isChatAdminFanRuntimeEnabled\(\)/u);
   assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
   assert.match(store, /chat_character_fans\?workspace_id=eq\./u);
   assert.match(store, /chat_character_conversations\?workspace_id=eq\./u);
