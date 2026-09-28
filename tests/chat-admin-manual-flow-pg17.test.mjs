@@ -201,6 +201,11 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assertPostflightRejectsPartial();
     restoreAndVerify("drop index public.unexpected_chat_character_predicate_unique;");
 
+    sql(`update public.chat_characters set status='active' where id='${ids[7]}';`);
+    assert.throws(()=>sql("create unique index concurrently unexpected_invalid_chat_character_status on public.chat_characters(status);"),"a failed concurrent unique build must leave an invalid index for catalog verification");
+    assertPostflightRejectsPartial();
+    restoreAndVerify(`drop index concurrently public.unexpected_invalid_chat_character_status; update public.chat_characters set status='inactive' where id='${ids[7]}';`);
+
     sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
     assertPostflightRejectsPartial();
     restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
