@@ -89,6 +89,18 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     });
     assert.equal(absentPostflight.status,0,absentPostflight.stderr||absentPostflight.stdout);
     assert.match(`${absentPostflight.stdout}${absentPostflight.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
+    sql("grant execute on function public.is_current_chat_admin_workspace(uuid) to authenticated with grant option;");
+    const parentHelperGrantOption=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(parentHelperGrantOption.status,0,"ABSENT must reject grant option on the parent authority helper");
+    assert.match(`${parentHelperGrantOption.stdout}${parentHelperGrantOption.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("revoke grant option for execute on function public.is_current_chat_admin_workspace(uuid) from authenticated;");
+    const parentHelperRestored=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.equal(parentHelperRestored.status,0,parentHelperRestored.stderr||parentHelperRestored.stdout);
+    assert.match(`${parentHelperRestored.stdout}${parentHelperRestored.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
     sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (true) with check (true);");
     const baselinePolicy=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
       input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
