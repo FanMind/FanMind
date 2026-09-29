@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime } from "@/lib/chatAdmin";
+import { getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime } from "@/lib/chatAdmin";
 import { buildChatAdminCharacterContext, buildChatAdminFanContext, ChatAdminPolicyError } from "@/lib/chatAdminPolicy.mjs";
 import { getFanMindAiModel, recordAiUsageEvent } from "@/lib/aiUsage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
@@ -11,7 +11,7 @@ export async function POST(request:NextRequest){
  if(!isTrustedFanMindMutationRequest(request))return NextResponse.json({error:"untrusted_origin"},{status:403});
  let workspaceId="",userId="",inputChars=0;let usageRecorded=false;const model=getFanMindAiModel(),started=Date.now();
  try{
-  const fanMode=process.env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true";if(fanMode)requireChatAdminFanRuntime();const {workspace,user}=await requireChatAdminCapability();workspaceId=workspace.id;userId=user.id;
+  const fanMode=isChatAdminFanRuntimeEnabled();if(fanMode)requireChatAdminFanRuntime();const {workspace,user}=await requireChatAdminCapability();workspaceId=workspace.id;userId=user.id;
   const parsed=await readBoundedJsonRequest(request,16_000);if(!parsed.ok||!parsed.value||typeof parsed.value!=="object")return NextResponse.json({error:"invalid_body"},{status:400});
   const body=parsed.value as Record<string,unknown>;if(typeof body.character_id!=="string"||!Number.isInteger(body.character_revision))return NextResponse.json({error:"invalid_context_binding"},{status:400});
   if(fanMode&&(typeof body.fan_id!=="string"||typeof body.conversation_id!=="string"||typeof body.generation_id!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(body.generation_id)))return NextResponse.json({error:"invalid_context_binding"},{status:400});

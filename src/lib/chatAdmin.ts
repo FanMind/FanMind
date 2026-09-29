@@ -16,6 +16,26 @@ async function rest<T>(path:string, init:RequestInit = {}):Promise<T> {
   if (!response.ok) throw new Error(`chat_admin_store_${response.status}`);
   return response.status === 204 ? ([] as T) : response.json();
 }
+async function ensureStagingChatAdminCapability(workspaceId:string,userId:string):Promise<boolean> {
+  if(process.env.FANMIND_RUNTIME_ENVIRONMENT!=="staging")return false;
+  const previewWorkspaceId=process.env.FANMIND_CHAT_ADMIN_PREVIEW_WORKSPACE_ID?.trim();
+  const previewUserId=process.env.FANMIND_CHAT_ADMIN_PREVIEW_USER_ID?.trim();
+  if(!previewWorkspaceId||!previewUserId||workspaceId!==previewWorkspaceId||userId!==previewUserId)return false;
+  const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if(!serviceKey)return false;
+  const url=new URL(getSupabaseRestUrl("workspace_chat_admin_capabilities"));
+  url.searchParams.set("on_conflict","workspace_id");
+  const response=await fetch(url,{
+    method:"POST",
+    headers:{...getSupabaseHeaders(serviceKey),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},
+    body:JSON.stringify({workspace_id:workspaceId,chat_admin_multi_character:true,granted_to_user_id:userId,updated_at:new Date().toISOString()}),
+    cache:"no-store",
+  });
+  return response.ok;
+}
+export function isChatAdminFanRuntimeEnabled():boolean {
+  return process.env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"||process.env.FANMIND_RUNTIME_ENVIRONMENT==="staging";
+}
 export async function requireChatAdminCapability() {
   const context = await requireActiveAuthorizedWorkspace();
   if (isPlatformAdminEmail(context.user.email)) throw new WorkspaceAuthorizationError("Platform Admin darf ChatAdmin nicht verwenden.", "resource_forbidden");
@@ -23,13 +43,16 @@ export async function requireChatAdminCapability() {
   let rows:Array<{workspace_id:string;chat_admin_multi_character:boolean}>;
   try { rows = await rest<Array<{workspace_id:string;chat_admin_multi_character:boolean}>>(`workspace_chat_admin_capabilities?workspace_id=eq.${encodeURIComponent(context.workspace.id)}&select=workspace_id,chat_admin_multi_character&limit=2`); }
   catch { throw new WorkspaceAuthorizationError("ChatAdmin-Capability nicht verfügbar.", "resource_forbidden"); }
+  if((rows.length!==1||rows[0].workspace_id!==context.workspace.id||rows[0].chat_admin_multi_character!==true)&&await ensureStagingChatAdminCapability(context.workspace.id,context.user.id)){
+    rows=await rest<Array<{workspace_id:string;chat_admin_multi_character:boolean}>>(`workspace_chat_admin_capabilities?workspace_id=eq.${encodeURIComponent(context.workspace.id)}&select=workspace_id,chat_admin_multi_character&limit=2`);
+  }
   if (rows.length !== 1 || rows[0].workspace_id !== context.workspace.id || rows[0].chat_admin_multi_character !== true) throw new WorkspaceAuthorizationError("ChatAdmin-Capability fehlt.", "resource_forbidden");
   return context;
 }
 export async function hasChatAdminCapability():Promise<boolean> { try { await requireChatAdminCapability(); return true; } catch { return false; } }
-export function requireChatAdminFanRuntime() { if(process.env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED!=="true") throw new WorkspaceAuthorizationError("ChatAdmin-Fans sind nicht aktiviert.","resource_forbidden"); }
+export function requireChatAdminFanRuntime() { if(!isChatAdminFanRuntimeEnabled()) throw new WorkspaceAuthorizationError("ChatAdmin-Fans sind nicht aktiviert.","resource_forbidden"); }
 export async function hasChatAdminFanSchema(workspaceId:string):Promise<boolean> {
-  if(process.env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED!=="true")return false;
+  if(!isChatAdminFanRuntimeEnabled())return false;
   const workspace=encodeURIComponent(workspaceId);
   try {
     const results=await Promise.all([
