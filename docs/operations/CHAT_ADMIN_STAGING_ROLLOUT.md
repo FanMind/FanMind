@@ -20,14 +20,15 @@ den Readiness-RPC. Ausgabe und Fehler bleiben auf feste Zustände begrenzt. Ein
 bereits vollständig verifiziertes Schema wird nicht erneut angewendet; ein partielles
 Schema blockiert fail-closed.
 
-Merge oder erfolgreiche lokale Checks autorisieren weder den Apply noch die
-Runtime-Aktivierung. Nach Merge ist zuerst der geschützte Apply auf dem dann
-aktuellen `main` durch einen Owner auszuführen. Die spätere Staging-Runtime-
-Aktivierung und synthetische Browser-Abnahme bleiben getrennte, evidence-gebundene
-Schritte; `FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED` bleibt bis dahin default-off
-und Production unverändert.
+Merge oder erfolgreiche lokale Checks autorisieren weder den Apply noch eine
+Production-Aktivierung. Das Fan-Schema ist auf Staging bereits verifiziert und wird
+nicht erneut angewendet. Mit dem Owner-Preview aus PR #1228 darf ausschließlich auf
+`staging` der exakt konfigurierte Preview-Workspace/-User serverseitig die bestehende
+ChatAdmin-Capability erhalten; derselbe Staging-Modus aktiviert dort den persistenten
+Fan-Runtime-Pfad auch ohne den Production-Flag. Production bleibt unverändert
+Capability-/Flag-gated und default-off.
 
-Stand 26. September 2026: Das ChatAdmin-Schema ist auf Staging angewendet (Run `36235870895`); die getrennte synthetische DB/RLS-Abnahme ist bestanden (Run `36238536613`, Versuch 2). Beide Schritte sind verbraucht und werden nicht wiederholt. Der getrennte synthetische manuelle Staging-Anwendungsflow ist durch Run `36255475314`, Versuch 1, samt unabhängigem Cleanup-/Schema-/Session-/Production-Gegencheck abgenommen und verbraucht. Der historische DB-Workflow behält seinen begrenzten `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`-Output. Kein realer Workspace besitzt die Capability; Production-Aktivierung bleibt offen. ChatAdmin ist ausschließlich ein normaler Workspace Owner plus `chat_admin_multi_character=true`, niemals Platform Admin.
+Stand 29. September 2026: Das ChatAdmin-Schema ist auf Staging angewendet (Run `36235870895`); die getrennte synthetische DB/RLS-Abnahme ist bestanden (Run `36238536613`, Versuch 2). Beide Schritte sind verbraucht und werden nicht wiederholt. Der getrennte synthetische manuelle Staging-Anwendungsflow ist durch Run `36255475314`, Versuch 1, samt unabhängigem Cleanup-/Schema-/Session-/Production-Gegencheck abgenommen und verbraucht. Der historische DB-Workflow behält seinen begrenzten `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`-Output. PR #1228 ergänzt ausschließlich den owner-sichtbaren Staging-Preview: nur der über `FANMIND_CHAT_ADMIN_PREVIEW_WORKSPACE_ID` und `FANMIND_CHAT_ADMIN_PREVIEW_USER_ID` exakt konfigurierte normale Workspace Owner kann auf Staging die Capability serverseitig erhalten und den persistenten Fan-Flow sehen. Beliebige andere Staging-Owner, Platform Admin und Production erhalten daraus keine Freigabe. ChatAdmin bleibt ausschließlich ein normaler Workspace Owner plus `chat_admin_multi_character=true`, niemals Platform Admin.
 
 ## Geschützter Ablauf
 
