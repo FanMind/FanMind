@@ -17,6 +17,10 @@ alter table public.ai_capacity_ledger_events
     'reconciliation_adjustment'
   ));
 
+create unique index if not exists ai_capacity_grants_workspace_period_unique
+  on public.ai_capacity_grants (workspace_id, billing_period_key)
+  where grant_kind = 'included_period';
+
 create or replace function public.ai_capacity_grant_credit(
   p_workspace_id uuid,
   p_grant_kind text,
@@ -64,6 +68,27 @@ begin
   perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));
 
   select *
+    into v_policy
+    from public.ai_capacity_admin_policy
+   where singleton_id = 1
+   for share;
+
+  if not found then
+    raise exception using errcode = '23514', message = 'ai_capacity_policy_missing';
+  end if;
+  if v_policy.revision is distinct from p_expected_policy_revision then
+    raise exception using errcode = '40001', message = 'ai_capacity_policy_revision_conflict';
+  end if;
+  if not v_policy.global_capacity_enabled or v_policy.emergency_spend_freeze then
+    raise exception using errcode = '23514', message = 'ai_capacity_admission_closed';
+  end if;
+  if (p_quality_mode = 'fast' and not v_policy.fast_enabled)
+     or (p_quality_mode = 'balanced' and not v_policy.balanced_enabled)
+     or (p_quality_mode = 'premium' and not v_policy.premium_enabled) then
+    raise exception using errcode = '23514', message = 'ai_capacity_quality_mode_disabled';
+  end if;
+
+  select *
     into v_existing
     from public.ai_capacity_grants
    where workspace_id = p_workspace_id
@@ -80,6 +105,18 @@ begin
       raise exception using errcode = '23505', message = 'ai_capacity_grant_idempotency_conflict';
     end if;
     return v_existing.id;
+  end if;
+
+  if p_grant_kind = 'included_period' then
+    select *
+      into v_existing
+      from public.ai_capacity_grants
+     where workspace_id = p_workspace_id
+       and grant_kind = 'included_period'
+       and billing_period_key = p_billing_period_key;
+    if found then
+      raise exception using errcode = '23505', message = 'ai_capacity_included_period_idempotency_conflict';
+    end if;
   end if;
 
   insert into public.ai_capacity_grants (
@@ -120,11 +157,19 @@ create or replace function public.ai_capacity_reserve(
   p_billing_period_key text,
   p_package_id text,
   p_quality_mode text,
-  p_reserved_eur_microcents bigint
+  p_reserved_eur_microcents bigint,
+  p_expected_policy_revision bigint,
+  p_provider text,
+  p_model text,
+  p_pricing_version text,
+  p_fx_version text,
+  p_metadata jsonb default '{}'::jsonb
 )
 returns table (
   reservation_id uuid,
-  reserved_eur_microcents bigint
+  reserved_eur_microcents bigint,
+  state text,
+  created boolean
 )
 language plpgsql
 security definer
@@ -138,6 +183,7 @@ declare
   v_available bigint;
   v_take bigint;
   v_grant record;
+  v_policy public.ai_capacity_admin_policy%rowtype;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
@@ -148,7 +194,13 @@ begin
      or p_package_id not in ('capacity_99','capacity_199','capacity_312')
      or p_quality_mode not in ('fast','balanced','premium')
      or p_reserved_eur_microcents is null
-     or p_reserved_eur_microcents <= 0 then
+     or p_reserved_eur_microcents <= 0
+     or p_expected_policy_revision is null
+     or p_expected_policy_revision < 1
+     or p_provider is null or btrim(p_provider) = ''
+     or p_model is null or btrim(p_model) = ''
+     or p_pricing_version is null or btrim(p_pricing_version) = ''
+     or p_fx_version is null or btrim(p_fx_version) = '' then
     raise exception using errcode = '22023', message = 'ai_capacity_reservation_invalid';
   end if;
 
@@ -167,7 +219,10 @@ begin
        or v_existing.reserved_eur_microcents is distinct from p_reserved_eur_microcents then
       raise exception using errcode = '23505', message = 'ai_capacity_reservation_idempotency_conflict';
     end if;
-    return query select v_existing.id, v_existing.reserved_eur_microcents;
+    if v_existing.state <> 'reserved' then
+      raise exception using errcode = '23514', message = 'ai_capacity_generation_not_replayable';
+    end if;
+    return query select v_existing.id, v_existing.reserved_eur_microcents, v_existing.state, false;
     return;
   end if;
 
@@ -212,7 +267,7 @@ begin
           g.grant_kind = 'included_period'
           and g.billing_period_key = p_billing_period_key
           and g.package_id = p_package_id
-          and (g.expires_at is null or g.expires_at > statement_timestamp())
+          and g.period_end > statement_timestamp()
         )
         or (
           g.grant_kind = 'purchased'
@@ -239,10 +294,12 @@ begin
 
     insert into public.ai_capacity_ledger_events (
       workspace_id, reservation_id, generation_key, event_type,
-      bucket_kind, grant_id, amount_eur_microcents
+      bucket_kind, grant_id, amount_eur_microcents,
+      provider, model, pricing_version, fx_version, metadata
     ) values (
       p_workspace_id, v_reservation_id, p_generation_key, 'reservation_created',
-      v_grant.grant_kind, v_grant.id, v_take
+      v_grant.grant_kind, v_grant.id, v_take,
+      p_provider, p_model, p_pricing_version, p_fx_version, coalesce(p_metadata, '{}'::jsonb)
     );
 
     v_remaining := v_remaining - v_take;
@@ -252,13 +309,13 @@ begin
     raise exception using errcode = '23514', message = 'ai_capacity_insufficient_balance';
   end if;
 
-  return query select v_reservation_id, p_reserved_eur_microcents;
+  return query select v_reservation_id, p_reserved_eur_microcents, 'reserved'::text, true;
 end
 $function$;
 
-revoke all on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint)
+revoke all on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)
   from public, anon, authenticated;
-grant execute on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint)
+grant execute on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)
   to service_role;
 
 create or replace function public.ai_capacity_settle(
@@ -292,6 +349,7 @@ declare
   v_settle bigint;
   v_release bigint;
   v_allocation record;
+  v_reconciliation public.ai_capacity_ledger_events%rowtype;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
@@ -332,7 +390,38 @@ begin
     return;
   end if;
 
-  if v_reservation.state not in ('reserved','indeterminate','reconciliation_required') then
+  if v_reservation.state = 'reconciliation_required' then
+    select *
+      into v_reconciliation
+      from public.ai_capacity_ledger_events
+     where reservation_id = v_reservation.id
+       and event_type = 'reservation_reconciliation_required'
+     order by occurred_at, id
+     limit 1;
+
+    if not found then
+      raise exception using errcode = '23514', message = 'ai_capacity_reconciliation_evidence_missing';
+    end if;
+
+    if v_reconciliation.amount_eur_microcents is distinct from p_actual_eur_microcents
+       or v_reconciliation.provider is distinct from p_provider
+       or v_reconciliation.model is distinct from p_model
+       or v_reconciliation.input_tokens is distinct from p_input_tokens
+       or v_reconciliation.cached_input_tokens is distinct from p_cached_input_tokens
+       or v_reconciliation.cache_write_tokens is distinct from p_cache_write_tokens
+       or v_reconciliation.output_tokens is distinct from p_output_tokens
+       or v_reconciliation.reasoning_tokens is distinct from p_reasoning_tokens
+       or v_reconciliation.pricing_version is distinct from p_pricing_version
+       or v_reconciliation.fx_version is distinct from p_fx_version then
+      raise exception using errcode = '23505', message = 'ai_capacity_reconciliation_idempotency_conflict';
+    end if;
+
+    return query
+      select v_reservation.id, 'reconciliation_required'::text, null::bigint, 0::bigint;
+    return;
+  end if;
+
+  if v_reservation.state not in ('reserved','indeterminate') then
     raise exception using errcode = '23514', message = 'ai_capacity_settlement_state_invalid';
   end if;
 
@@ -587,7 +676,8 @@ returns table (
   consumed_eur_microcents bigint,
   held_eur_microcents bigint,
   available_eur_microcents bigint,
-  remaining_percent integer
+  remaining_percent integer,
+  has_capacity_history boolean
 )
 language sql
 stable
@@ -602,7 +692,11 @@ as $function$
     from public.ai_capacity_grants g
     where g.workspace_id = p_workspace_id
       and g.reversed_eur_microcents < g.granted_eur_microcents
-      and (g.expires_at is null or g.expires_at > statement_timestamp())
+      and (
+        (g.grant_kind = 'included_period' and g.period_end > statement_timestamp())
+        or
+        (g.grant_kind = 'purchased' and (g.expires_at is null or g.expires_at > statement_timestamp()))
+      )
   ),
   usage_by_grant as (
     select
@@ -642,7 +736,12 @@ as $function$
         * 100::numeric
         / total_granted::numeric
       )::integer
-    end as remaining_percent
+    end as remaining_percent,
+    exists (
+      select 1 from public.ai_capacity_grants h where h.workspace_id = p_workspace_id
+      union all
+      select 1 from public.ai_capacity_reservations r where r.workspace_id = p_workspace_id
+    ) as has_capacity_history
   from totals
 $function$;
 
