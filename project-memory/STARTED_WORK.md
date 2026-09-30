@@ -1125,9 +1125,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: continue with the reserve/settle lifecycle increment below.
 
 
-## FM-AI-001 / FM-CR-051 — AI Capacity reserve/settle runtime foundation — 2026-09-30
+## FM-AI-001 / FM-CR-052 — AI Capacity reserve/settle runtime foundation — 2026-09-30
 - Task: FM-AI-001
-- Change request: FM-CR-051
+- Change request: FM-CR-052
 - Status: IN_PROGRESS
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930`.
