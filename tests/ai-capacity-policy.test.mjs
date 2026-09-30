@@ -153,3 +153,18 @@ test("malformed admin policy is rejected and cannot enable capacity", () => {
   });
   assert.deepEqual(result, { allowed: false, reason: "admin_policy_invalid" });
 });
+
+
+test("undefined budget values are rejected", () => {
+  const base = enabledPolicy();
+  assert.throws(
+    () => normalizeAiCapacityAdminPolicy({
+      ...base,
+      includedBudgetEurMicrocents: {
+        ...base.includedBudgetEurMicrocents,
+        capacity_312: undefined,
+      },
+    }),
+    { name: "TypeError", message: "invalid_ai_capacity_admin_policy" },
+  );
+});
