@@ -137,3 +137,37 @@ test("wrong origin and initially stale revision never call the provider", async 
   assert.equal((await h.route(h.request(2))).status, 409);
   assert.equal(h.calls.provider, 0);
 });
+
+test("actual Fan route deletes only the revision-bound Fan in the authorized workspace", async () => {
+  const compiled = ts.transpileModule(readFileSync("src/app/api/chatadmin/fans/route.ts", "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const calls = [];
+  const route = {};
+  runInNewContext(compiled, {
+    exports: route, Response, Request, URL,
+    require(name) {
+      const dependencies = {
+        "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
+        "@/lib/chatAdmin": {
+          createChatFan: async () => {}, listChatFans: async () => [], updateChatFan: async () => {},
+          requireChatAdminFanRuntime: () => undefined,
+          requireChatAdminCapability: async () => ({ workspace: { id: workspaceId } }),
+          deleteChatFan: async (...args) => { calls.push(args); },
+        },
+        "@/lib/chatAdminPolicy.mjs": chatPolicy,
+        "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
+        "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
+      };
+      assert.ok(Object.hasOwn(dependencies, name), name);
+      return dependencies[name];
+    },
+  });
+  assert.equal(typeof route.DELETE, "function");
+  const response = await route.DELETE(new Request("https://fanmind.invalid/api/chatadmin/fans", {
+    method: "DELETE", headers: { origin: "https://fanmind.invalid", "content-type": "application/json" },
+    body: JSON.stringify({ character_id: characterId, id: fanId, revision: 3 }),
+  }));
+  assert.equal(response.status, 204);
+  assert.deepEqual(calls, [[workspaceId, characterId, fanId, 3]]);
+});
