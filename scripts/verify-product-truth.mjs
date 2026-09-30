@@ -1282,13 +1282,18 @@ requireText(
 );
 requireText(
   "src/config/aiTiers.mjs",
-  'monthlyAddOnCents: 10000',
-  "Die zentrale KI-Tier-Policy muss KI Plus mit 100 €/Monat führen.",
+  "basic: 9900",
+  "Die zentrale Paket-Policy muss das 99-Euro-Grundpaket führen.",
 );
 requireText(
   "src/config/aiTiers.mjs",
-  'monthlyAddOnCents: 20000',
-  "Die zentrale KI-Tier-Policy muss KI Ultra mit 200 €/Monat führen.",
+  "pro: 19900",
+  "Die zentrale Paket-Policy muss das 199-Euro-Grundpaket führen.",
+);
+requireText(
+  "src/config/aiTiers.mjs",
+  "core: 31200",
+  "Die zentrale Paket-Policy muss das 312-Euro-Grundpaket führen.",
 );
 requireText(
   "src/config/aiTiers.mjs",
