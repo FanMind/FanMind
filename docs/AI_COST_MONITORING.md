@@ -92,6 +92,8 @@ Optional können Cents gespeichert werden:
 
 Solange keine exakten Provider-Usage-Werte gespeichert werden, ist das nur eine Schätzung. Im Adminbereich muss dann `geschätzt` angezeigt werden.
 
+**Abgrenzung zum akzeptierten AI-Capacity-Billing-v2-Ziel:** Diese Cent-/Token-Schätzung bleibt ausschließlich Observability/Monitoring für den heutigen Legacy-Betrieb. Sie ist **keine** abrechnungsfähige Kapazitätsbuchung. Capacity v2 rechnet in festen EUR-Microcents (1 EUR = 100.000.000 Microcents), verwendet keine Floating-Point-Ledgerwerte und rundet nicht pro AI-Call auf Cent. Fehlen für einen erfolgreichen oder unbestimmten Provider-Call vertrauenswürdige abrechnungsrelevante Usage-/Preis-/FX-Daten, darf die Monitoring-Schätzung den Billing-Ledger nicht ersetzen: die konservative Reservierung bleibt `INDETERMINATE`/`RECONCILIATION_REQUIRED`, bis sie idempotent geklärt ist. Maßgeblich ist `docs/operations/AI_CAPACITY_BILLING_V2.md`.
+
 ## 4. Preis-Konfiguration
 
 Empfohlene server-only Konfiguration:
@@ -165,6 +167,9 @@ Input und Output entspricht.
 
 Fehlen diese Werte, sind sie ungültig oder entsteht der Fehler vor einer
 Provider-Antwort, schätzt FanMind weiterhin:
+
+Dieser Fallback darf ausschließlich die bestehende Kosten-/Usage-Anzeige speisen. Er darf im Capacity-v2-Ledger niemals als tatsächlich abgerechnete Providerkosten verbucht werden.
+
 
 `estimated_tokens = ceil(text_length / 4)`
 
