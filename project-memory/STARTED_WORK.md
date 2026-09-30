@@ -1085,7 +1085,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Status: IN_PROGRESS.
-- Risk: R4.
+- Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
 - Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
 - Completed so far: base design recorded; review-required R4 boundary, authoritative package resolver, fixed-precision EUR accounting/FX provenance, subscription-period identity, two-phase reserve/settle/release/reconcile lifecycle, split-bucket allocation, malformed-usage fail-closed behavior and top-up reversal lifecycle added; README and Source of Truth now distinguish accepted target from active legacy billing.
