@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   AI_TIER_CONFIG,
+  FANMIND_BASE_PACKAGE_MONTHLY_CENTS,
   assertAiTierPolicy,
   evaluateAiTierReadiness,
   formatAiTierPrice,
@@ -14,23 +15,23 @@ import {
   resolveWorkspaceAiTierEntitlement,
 } from "../src/config/aiTiers.mjs";
 
-test("approved AI tier prices and package totals remain stable", () => {
+test("approved base package prices remain 99/199/312 and legacy AI tiers add no surcharge", () => {
+  assert.deepEqual(FANMIND_BASE_PACKAGE_MONTHLY_CENTS, { basic: 9900, pro: 19900, core: 31200 });
   assert.equal(AI_TIER_CONFIG.standard.monthlyAddOnCents, 0);
-  assert.equal(AI_TIER_CONFIG.plus.monthlyAddOnCents, 10000);
-  assert.equal(AI_TIER_CONFIG.ultra.monthlyAddOnCents, 20000);
-
+  assert.equal(AI_TIER_CONFIG.plus.monthlyAddOnCents, 0);
+  assert.equal(AI_TIER_CONFIG.ultra.monthlyAddOnCents, 0);
   assert.equal(getAiTierTotalMonthlyCents("standard", 31200), 31200);
-  assert.equal(getAiTierTotalMonthlyCents("plus", 31200), 41200);
-  assert.equal(getAiTierTotalMonthlyCents("ultra", 31200), 51200);
+  assert.equal(getAiTierTotalMonthlyCents("plus", 31200), 31200);
+  assert.equal(getAiTierTotalMonthlyCents("ultra", 31200), 31200);
 });
 
-test("KI Standard remains included and Plus/Ultra remain separate add-ons", () => {
+test("legacy AI tier IDs no longer create separate paid add-ons", () => {
   assert.equal(AI_TIER_CONFIG.standard.includedInBase, true);
-  assert.equal(AI_TIER_CONFIG.plus.includedInBase, false);
-  assert.equal(AI_TIER_CONFIG.ultra.includedInBase, false);
+  assert.equal(AI_TIER_CONFIG.plus.includedInBase, true);
+  assert.equal(AI_TIER_CONFIG.ultra.includedInBase, true);
   assert.equal(formatAiTierPrice("standard"), "im Basispaket enthalten");
-  assert.equal(formatAiTierPrice("plus"), "+100 €/Monat");
-  assert.equal(formatAiTierPrice("ultra"), "+200 €/Monat");
+  assert.equal(formatAiTierPrice("plus"), "im Basispaket enthalten");
+  assert.equal(formatAiTierPrice("ultra"), "im Basispaket enthalten");
 });
 
 test("AI tiers use the approved server-side 50/100/150 conversation context", () => {
