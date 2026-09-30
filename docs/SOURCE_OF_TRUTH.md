@@ -96,6 +96,8 @@ Dieses Dokument ist die fachliche Source of Truth für FanMind. README, AGENTS.m
 
 Owner-Entscheidung FM-DEC-026 ersetzt das künftige kundenbezogene KI-Plus/Ultra-Produktmodell durch drei Grundpakete zu **99 / 199 / 312 EUR** mit jeweils enthaltenem monatlichem AI-Kostenbudget. Die exakten enthaltenen Budgets bleiben bewusst offen, bis reale FanMind-Nutzung und aktuelle Providerpreise ausgewertet sind. Nutzer können künftig **Schnell / Ausgewogen / Premium** wählen; intern wird anhand tatsächlicher Modell-, Token- und Providerkosten abgerechnet. Inkludierte Kapazität verfällt mit dem autoritativen Abrechnungszeitraum, separat gekaufte Kapazität wird getrennt geführt. AI-Top-ups zielen auf ungefähr 33 % Bruttomarge.
 
+Owner-Fortsetzung 30. September 2026: **Für keines der neuen 99-/199-/312-EUR-Pakete wird eine einmalige Einrichtungs-/Setupgebühr verlangt.** Im Stripe-Live-Katalog wurden eigenständige Capacity-v2-Monatspreise für 99, 199 und 312 EUR angelegt. Die historischen 990-EUR-Setup-/Pilot-Produkte sowie das historische Starter-312-Produkt wurden für Neugeschäft deaktiviert; bestehende Referenzen bleiben nur als Legacy-/Migrationsnachweis erhalten.
+
 Diese Entscheidung ist **Zielmodell, nicht aktuelle Production-Aktivierung**. Bestehende Starter-/KI-Standard-/KI-Plus-/KI-Ultra-Quellen, Stripe-IDs und Verträge bleiben bis zur kontrollierten Migration gültige Legacy-/Migrationsbasis. Es erfolgt weder automatische Kundenmigration noch Aktivierung neuer Preise oder Top-ups. Maßgeblich für die Implementierung ist `docs/operations/AI_CAPACITY_BILLING_V2.md`; die registrierte R4-Grenze `FM-CONTRACT-AI-BILLING-001` / `FM-IGATE-AI-BILLING-001` bleibt bindend.
 
 ## 1. Produktdefinition
