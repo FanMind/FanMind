@@ -707,7 +707,7 @@ const pricingPlans = [
     tone: "blue",
     featured: false,
     status: "Aktiv",
-    features: ["Ein produktiver Workspace", "Kontakte/Fans und manuelle Kontaktpflege", "CSV-Import, Notizen und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "KI Standard enthalten", "KI Plus +100 €/Monat · KI Ultra +200 €/Monat", "Kein automatischer Versand"],
+    features: ["Ein produktiver Workspace", "Kontakte/Fans und manuelle Kontaktpflege", "CSV-Import, Notizen und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "monatliche AI-Kapazität vorgesehen", "Schnell · Ausgewogen · Premium", "Kein automatischer Versand"],
   },
   {
     icon: "◎",
@@ -722,7 +722,7 @@ const pricingPlans = [
     tone: "green",
     featured: true,
     status: "Aktiv",
-    features: ["Ein produktiver Workspace", "Setup ohne separate Setup-Gebühr", "Kontakte/Fans, CSV-Import und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "KI Standard enthalten", "KI Plus +100 €/Monat · KI Ultra +200 €/Monat", "Externe Integrationen nur Beta/Roadmap"],
+    features: ["Ein produktiver Workspace", "Setup ohne separate Setup-Gebühr", "Kontakte/Fans, CSV-Import und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "monatliche AI-Kapazität vorgesehen", "Schnell · Ausgewogen · Premium", "Externe Integrationen nur Beta/Roadmap"],
   },
   {
     icon: "◷",
