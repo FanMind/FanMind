@@ -374,8 +374,8 @@ export default async function AiUsageSettingsPage() {
               <section className={styles.noticeCard} aria-labelledby="ai-plan-title">
                 <div>
                   <p className={styles.eyebrow}>{text(locale, "Paketlogik", "Package logic")}</p>
-                  <h3 id="ai-plan-title">{text(locale, "KI Standard ist enthalten", "AI Standard is included")}</h3>
-                  <p>{text(locale, "KI Plus und KI Ultra bleiben bis zur Freigabe von Preisen, Modellklassen, Kontingenten und Billing als Coming Soon gekennzeichnet. Für alle Stufen gilt: FanMind sendet nicht automatisch; der Mensch prüft und sendet final selbst.", "AI Plus and AI Ultra remain marked Coming Soon until pricing, model classes, quotas and billing are approved. For every tier, FanMind does not send automatically; a human reviews and sends the final message.")}</p>
+                  <h3 id="ai-plan-title">{text(locale, "AI-Kapazität im Grundpaket", "AI capacity included in the base package")}</h3>
+                  <p>{text(locale, "FanMind führt den KI-Verbrauch als AI-Kapazität. Die drei Grundpakete 99 / 199 / 312 € erhalten ein monatliches Budget; die exakten enthaltenen Werte werden erst nach realer Verbrauchsauswertung festgelegt. Schnell, Ausgewogen und Premium bestimmen die Modellqualität und damit den Verbrauch. Nachkaufbare Kapazität folgt später separat. FanMind sendet nicht automatisch; der Mensch prüft und sendet final selbst.", "FanMind tracks AI usage as AI capacity. The 99 / 199 / 312 EUR base packages receive a monthly budget; exact included amounts are set only after real usage evaluation. Fast, Balanced and Premium determine model quality and therefore consumption. Additional capacity will be available separately later. FanMind does not send automatically; a human reviews and sends the final message.")}</p>
                 </div>
                 <Link className={styles.packageLink} href="/settings/package">{text(locale, "Paket ansehen", "View package")}</Link>
               </section>
