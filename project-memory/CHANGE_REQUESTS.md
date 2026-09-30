@@ -544,3 +544,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: make the desktop Creator-Building workspace consume the available viewport height and let the conversation history flex into that space while leaving the composer/actions below it; keep the existing compact mobile history cap.
 - Boundary: layout-only CSS change; no chat persistence, AI generation, Fan/Character authority, billing, provider, database or external-platform behavior changes.
 - Acceptance: desktop conversation history is materially taller on large screens, retains its own scroll when needed, composer remains reachable below it, and mobile retains the bounded layout.
+
+
+## FM-CR-055 — Creator-Building auto-scroll to latest message
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Follow-up to the taller conversation pane: a long conversation should open at the newest message rather than forcing the creator to scroll down manually.
+- Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
+- Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
+- Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
