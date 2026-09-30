@@ -46,7 +46,9 @@ export async function prepareAiCapacityReservation(input: {
   if (!quality) throw new Error("ai_capacity_quality_mode_unavailable");
 
   const admin = await getAiCapacityAdminState();
-  if (!admin.installed) throw new Error("ai_capacity_schema_not_ready");
+  if (!admin.installed || !Number.isSafeInteger(admin.revision) || Number(admin.revision) < 1) {
+    throw new Error("ai_capacity_schema_not_ready");
+  }
 
   const admission = resolveAiCapacityUsageAdmission({
     billingContractVersion: "capacity_v2",
@@ -75,7 +77,24 @@ export async function prepareAiCapacityReservation(input: {
     packageId: input.packageId,
     qualityMode: input.qualityMode,
     reservedEurMicrocents: estimate.reservedEurMicrocents,
+    expectedPolicyRevision: Number(admin.revision),
+    provider: "openai",
+    model: quality.model,
+    pricingVersion: estimate.pricingVersion,
+    fxVersion: estimate.fxVersion,
+    metadata: {
+      serviceTier: quality.serviceTier,
+      reasoningEffort: quality.reasoningEffort,
+      occurredAt: input.occurredAt,
+      eurPerUsdNanos: input.fx.eurPerUsdNanos,
+      estimatedInputTokens: input.estimatedInputTokens,
+      maxOutputTokens: input.maxOutputTokens,
+    },
   });
+
+  if (!reservation.created) {
+    throw new Error("ai_capacity_generation_already_reserved");
+  }
 
   return {
     reservationId: reservation.reservationId,
@@ -96,14 +115,23 @@ export async function settlePreparedAiCapacityReservation(input: {
   occurredAt: string;
   metadata?: Record<string, unknown>;
 }) {
-  const settlement = calculateOpenAiSettlementCost({
-    model: input.prepared.model,
-    serviceTier: input.prepared.serviceTier,
-    occurredAt: input.occurredAt,
-    providerUsage: input.providerUsage,
-    eurPerUsdNanos: input.prepared.eurPerUsdNanos,
-    fxVersion: input.prepared.fxVersion,
-  });
+  let settlement;
+  try {
+    settlement = calculateOpenAiSettlementCost({
+      model: input.prepared.model,
+      serviceTier: input.prepared.serviceTier,
+      occurredAt: input.occurredAt,
+      providerUsage: input.providerUsage,
+      eurPerUsdNanos: input.prepared.eurPerUsdNanos,
+      fxVersion: input.prepared.fxVersion,
+    });
+  } catch (error) {
+    await markAiCapacityIndeterminate(
+      input.prepared.reservationId,
+      "provider_usage_or_pricing_unavailable_after_generation",
+    );
+    throw error;
+  }
 
   if (settlement.pricingVersion !== input.prepared.pricingVersion) {
     await markAiCapacityIndeterminate(
