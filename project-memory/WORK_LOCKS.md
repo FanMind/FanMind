@@ -1120,7 +1120,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-053
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4
 - Holder: ChatGPT
 - Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
@@ -1128,3 +1128,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: live Stripe readback, exact-head CI/security/governance, fail-closed activation state and independent review.
 - Recovery: Stripe Products can be reactivated; source can be reverted. No customer migration or top-up sale is authorized here.
+
+## LOCK-FM-AI-CAPACITY-BUDGETS-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-054
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`.
+- Scope: repository-only Capacity-v2 package budget constants/defaults/types/tests and truth reconciliation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: exact-head CI/security/governance, fail-closed activation tests and one independent exact-head review.
+- Recovery: source revert only; no Staging/Production/provider/customer mutation is authorized by this lock.
