@@ -192,6 +192,32 @@ No mode may bypass:
 - cost logging;
 - provider/model allowlists.
 
+## Platform-Admin control contract
+
+The AI-capacity product is server-owned and must be operable from the existing FanMind Platform-Admin area without editing environment variables or customer records by hand.
+
+Admin controls are split into global and package policy. Every mutation requires Platform-Admin authorization, same-origin protection, immutable audit evidence and server-side validation.
+
+Required controls:
+- global AI-capacity admission: on/off for new capacity-backed usage;
+- Fast, Balanced and Premium modes: independently on/off, with at least one allowed mode required before capacity-backed AI can be enabled;
+- top-up sales: on/off independently from ordinary included-capacity usage;
+- each base package (EUR 99 / 199 / 312): independently on/off for new commercial admission;
+- included AI budget for each package: configurable only after the budget value is owner-approved; unset remains fail-closed;
+- top-up products/amounts: separately enabled only after price, margin, Tax and Stripe lifecycle gates pass;
+- emergency spend freeze: blocks new reservations immediately without deleting balances, usage history or existing commercial records.
+
+Semantics:
+- switching a package off stops new admission; it does not silently cancel or rewrite existing subscriptions;
+- switching top-ups off stops new purchases but does not erase already purchased capacity;
+- switching a quality mode off prevents new reservations in that mode but never rewrites settled generations;
+- global/emergency off blocks new AI reservations while preserving ledger and reconciliation state;
+- no Admin switch may bypass Legal/Tax, Stripe, package-entitlement, balance, model allowlist or Staging/Production activation gates;
+- every Admin change records actor, timestamp, previous value, new value and policy revision;
+- browser-provided package IDs, balances, prices, provider models or monetary amounts are never trusted directly.
+
+The first implementation may prepare these controls and persistence default-off. Production activation remains a separate protected action.
+
 ## Activation gates
 
 Do not activate real paid capacity/top-ups until all are true:
