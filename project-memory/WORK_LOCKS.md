@@ -1,3 +1,14 @@
+## LOCK-FM-AI-001-CAPACITY-MODEL-20260930
+- Task: FM-AI-001
+- Risk: R3
+- Status: ACTIVE
+- Holder: interactive ChatGPT session
+- Branch: billing/ai-capacity-model-20260930
+- Scope: repository-only commercial-model cleanup and preparation for monthly AI budget / purchased-capacity accounting.
+- Allowed: code/docs/tests and controlled unapplied database design needed for the new model.
+- Forbidden: Stripe live/test resource mutation, payment/refund, Production/Staging SQL APPLY, Product/Price deletion, destructive historical data cleanup, Tax activation, automatic paid-tier activation or direct main writes.
+- Release condition: exact diff matches the frozen acceptance contract, required tests/CI and one independent review pass, no blocking P1/P2, normal merge.
+
 ## LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
