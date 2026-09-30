@@ -172,3 +172,11 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Source: Bernd explicitly set the order: ChatAdmin completion -> Creator Intelligence -> free Admin-CRM access -> synthetic Admin-CRM lifecycle acceptance -> Social and Sales.
 - Effect: prioritize the authorized ChatAdmin manual Staging flow over the previously earlier Admin-CRM owner action. Complete existing accepted free access without re-registration/regrant; retain the distinct synthetic lifecycle before additional real grants.
 - Boundary: priority does not close any gate, revive consumed broad Creator work, invent provider/legal evidence or resume Mobile. Derive any next Creator engineering increment as a bounded task from existing requirements after ChatAdmin; remaining protected actions retain exact target controls.
+
+## FM-DEC-026 — AI Capacity Billing v2
+- Date: 2026-09-30
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: FanMind base packages are EUR 99 / 199 / 312 and each contains a monthly AI cost budget. Customer-selectable AI modes are Fast, Balanced and Premium. The former KI Plus +100 / KI Ultra +200 product model is superseded by purchasable AI capacity. Internal consumption is based on actual model/token/provider cost. Included monthly capacity expires; separately purchased capacity survives the monthly reset under a separately defined validity rule; included capacity is consumed first. Top-ups target approximately 33% gross margin.
+- Open parameter: exact included AI budgets for the three packages remain intentionally unset pending measured FanMind usage and current provider pricing.
+- Boundary: this decision does not activate Production payments, top-ups, tax treatment, Stripe changes or migrate existing customers. Existing Plus/Ultra source/data may be reused for migration but no longer defines the target customer product model.
+- Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
