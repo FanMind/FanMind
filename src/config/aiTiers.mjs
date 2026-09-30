@@ -58,8 +58,9 @@ export const AI_TIER_CONFIG = Object.freeze({
   }),
   plus: freezeTier({
     id: "plus",
-    name: "KI Plus",
-    monthlyAddOnCents: 10000,
+    name: "Legacy KI Plus",
+    monthlyAddOnCents: 0,
+    legacyCompatibilityOnly: true,
     includedInBase: false,
     publicStatus: "Coming Soon",
     billingStatus: "not_configured",
@@ -71,7 +72,7 @@ export const AI_TIER_CONFIG = Object.freeze({
     monthlyTokenLimit: null,
     contextMessageLimit: AI_TIER_CONTEXT_MESSAGE_LIMITS.plus,
     description:
-      "Kostenpflichtige Erweiterung mit leistungsstärkerer KI, mehr Nutzung und größerem Gesprächskontext.",
+      "Technischer Legacy-Kompatibilitätszustand. Kein verkaufbares FanMind-Produkt mehr.",
     features: [
       "leistungsstärkere Modellklasse nach Freigabe",
       "höheres KI-Kontingent nach Freigabe",
@@ -81,8 +82,9 @@ export const AI_TIER_CONFIG = Object.freeze({
   }),
   ultra: freezeTier({
     id: "ultra",
-    name: "KI Ultra",
-    monthlyAddOnCents: 20000,
+    name: "Legacy KI Ultra",
+    monthlyAddOnCents: 0,
+    legacyCompatibilityOnly: true,
     includedInBase: false,
     publicStatus: "Coming Soon",
     billingStatus: "not_configured",
@@ -94,7 +96,7 @@ export const AI_TIER_CONFIG = Object.freeze({
     monthlyTokenLimit: null,
     contextMessageLimit: AI_TIER_CONTEXT_MESSAGE_LIMITS.ultra,
     description:
-      "Premium-Erweiterung mit der stärksten freigegebenen KI, den höchsten Kontingenten und erweitertem Funktionsumfang.",
+      "Technischer Legacy-Kompatibilitätszustand. Kein verkaufbares FanMind-Produkt mehr.",
     features: [
       "stärkste freigegebene Modellklasse nach Freigabe",
       "höchstes KI-Kontingent nach Freigabe",
@@ -113,6 +115,7 @@ export function getAiTierConfig(tierId) {
 export function formatAiTierPrice(tierOrId) {
   const tier = typeof tierOrId === "string" ? getAiTierConfig(tierOrId) : tierOrId;
   if (tier.includedInBase) return "im Basispaket enthalten";
+  if (tier.legacyCompatibilityOnly === true) return "nicht mehr als Produkt buchbar";
   return `+${tier.monthlyAddOnCents / 100} €/Monat`;
 }
 
@@ -120,7 +123,11 @@ export function getAiTierTotalMonthlyCents(tierId, baseMonthlyFeeCents) {
   if (!Number.isInteger(baseMonthlyFeeCents) || baseMonthlyFeeCents < 0) {
     throw new Error("baseMonthlyFeeCents must be a non-negative integer");
   }
-  return baseMonthlyFeeCents + getAiTierConfig(tierId).monthlyAddOnCents;
+  const tier = getAiTierConfig(tierId);
+  if (tier.legacyCompatibilityOnly === true) {
+    throw new Error("legacy_ai_tier_has_no_commercial_price");
+  }
+  return baseMonthlyFeeCents + tier.monthlyAddOnCents;
 }
 
 function isPositiveInteger(value) {
@@ -440,8 +447,8 @@ export function assertAiTierPolicy() {
   if (!standard.includedInBase || standard.monthlyAddOnCents !== 0) {
     throw new Error("KI Standard must remain included in the base package");
   }
-  if (plus.monthlyAddOnCents !== 10000 || ultra.monthlyAddOnCents !== 20000) {
-    throw new Error("KI Plus/Ultra prices do not match the approved commercial truth");
+  if (plus.monthlyAddOnCents !== 0 || ultra.monthlyAddOnCents !== 0 || plus.legacyCompatibilityOnly !== true || ultra.legacyCompatibilityOnly !== true) {
+    throw new Error("Legacy Plus/Ultra must not expose a commercial add-on price");
   }
   if (
     standard.contextMessageLimit !== 50 ||
