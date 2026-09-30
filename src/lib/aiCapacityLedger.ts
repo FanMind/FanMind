@@ -8,6 +8,8 @@ export type AiCapacityQualityMode = "fast" | "balanced" | "premium";
 export type AiCapacityReserveResult = {
   reservationId: string;
   reservedEurMicrocents: number;
+  state: "reserved";
+  created: boolean;
 };
 
 export type AiCapacitySettleResult = {
@@ -23,6 +25,7 @@ export type AiCapacityBalanceSnapshot = {
   heldEurMicrocents: number;
   availableEurMicrocents: number;
   remainingPercent: number | null;
+  hasCapacityHistory: boolean;
 };
 
 function serviceKey(): string | null {
@@ -62,12 +65,20 @@ async function postRpc<T>(name: string, body: Record<string, unknown>): Promise<
       "ai_capacity_grant_invalid",
       "ai_capacity_included_grant_invalid",
       "ai_capacity_grant_idempotency_conflict",
+      "ai_capacity_included_period_idempotency_conflict",
       "ai_capacity_reservation_invalid",
       "ai_capacity_reservation_idempotency_conflict",
+      "ai_capacity_generation_not_replayable",
+      "ai_capacity_policy_missing",
+      "ai_capacity_policy_revision_conflict",
+      "ai_capacity_admission_closed",
+      "ai_capacity_quality_mode_disabled",
       "ai_capacity_insufficient_balance",
       "ai_capacity_settlement_invalid",
       "ai_capacity_reservation_missing",
       "ai_capacity_settlement_idempotency_conflict",
+      "ai_capacity_reconciliation_idempotency_conflict",
+      "ai_capacity_reconciliation_evidence_missing",
       "ai_capacity_settlement_state_invalid",
       "ai_capacity_actual_exceeds_reservation",
       "ai_capacity_allocation_incomplete",
@@ -121,6 +132,12 @@ export async function reserveAiCapacity(input: {
   packageId: AiCapacityPackageId;
   qualityMode: AiCapacityQualityMode;
   reservedEurMicrocents: number;
+  expectedPolicyRevision: number;
+  provider: "openai";
+  model: string;
+  pricingVersion: string;
+  fxVersion: string;
+  metadata?: Record<string, unknown>;
 }): Promise<AiCapacityReserveResult> {
   if (!positiveSafeInteger(input.reservedEurMicrocents)) {
     throw new TypeError("ai_capacity_reservation_amount_invalid");
@@ -128,6 +145,8 @@ export async function reserveAiCapacity(input: {
   const payload = await postRpc<Array<{
     reservation_id?: unknown;
     reserved_eur_microcents?: unknown;
+    state?: unknown;
+    created?: unknown;
   }>>("ai_capacity_reserve", {
     p_workspace_id: input.workspaceId,
     p_generation_key: input.generationKey,
@@ -135,18 +154,28 @@ export async function reserveAiCapacity(input: {
     p_package_id: input.packageId,
     p_quality_mode: input.qualityMode,
     p_reserved_eur_microcents: input.reservedEurMicrocents,
+    p_expected_policy_revision: input.expectedPolicyRevision,
+    p_provider: input.provider,
+    p_model: input.model,
+    p_pricing_version: input.pricingVersion,
+    p_fx_version: input.fxVersion,
+    p_metadata: input.metadata ?? {},
   });
   const row = payload[0];
   if (
     !row ||
     typeof row.reservation_id !== "string" ||
-    !positiveSafeInteger(Number(row.reserved_eur_microcents))
+    !positiveSafeInteger(Number(row.reserved_eur_microcents)) ||
+    row.state !== "reserved" ||
+    typeof row.created !== "boolean"
   ) {
     throw new Error("ai_capacity_reservation_response_invalid");
   }
   return {
     reservationId: row.reservation_id,
     reservedEurMicrocents: Number(row.reserved_eur_microcents),
+    state: "reserved",
+    created: row.created,
   };
 }
 
@@ -246,6 +275,7 @@ export async function getAiCapacityBalanceSnapshot(
     held_eur_microcents?: unknown;
     available_eur_microcents?: unknown;
     remaining_percent?: unknown;
+    has_capacity_history?: unknown;
   }>>("ai_capacity_balance_snapshot", {
     p_workspace_id: workspaceId,
   });
@@ -260,6 +290,7 @@ export async function getAiCapacityBalanceSnapshot(
   if (
     !row ||
     values.some((value) => !nonNegativeSafeInteger(value)) ||
+    typeof row.has_capacity_history !== "boolean" ||
     (row.remaining_percent !== null &&
       (!Number.isInteger(Number(row.remaining_percent)) ||
         Number(row.remaining_percent) < 0 ||
@@ -275,5 +306,6 @@ export async function getAiCapacityBalanceSnapshot(
     availableEurMicrocents: values[3],
     remainingPercent:
       row.remaining_percent === null ? null : Number(row.remaining_percent),
+    hasCapacityHistory: row.has_capacity_history,
   };
 }
