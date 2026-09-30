@@ -42,7 +42,8 @@ export const DEFAULT_AI_CAPACITY_ADMIN_POLICY = Object.freeze({
 });
 
 function exactPositiveIntegerOrNull(value) {
-  if (value == null) return null;
+  if (value === null) return null;
+  if (value === undefined) return undefined;
   return Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
