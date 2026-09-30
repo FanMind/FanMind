@@ -804,16 +804,15 @@ Starter-Abos können unter `/settings/package` sicher zum Vertragsende gekündig
 | Agency | Coming Soon / auf Anfrage | nicht als Vollversion freigeschaltet |
 | Enterprise / Custom | später | individuelle Prüfung |
 
-### KI-Leistungsstufen
+### AI-Kapazitätsmodell
 
-KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
-
-- **KI Standard** ist im Starter-Basispaket enthalten.
-- **KI Plus** kostet zusätzlich 100 €/Monat und bleibt bis zur Freigabe der Modelle, Kontingente und Billing-Items Coming Soon.
-- **KI Ultra** kostet zusätzlich 200 €/Monat und bleibt bis zur Freigabe der Modelle, Kontingente und Billing-Items Coming Soon.
-- FanMind Core umfasst einen Creator/Workspace, KI Standard und zehn
-  Social-/Kommunikations-Connections. Je weitere fünf Connections sind als
-  getrenntes Add-on für 49 €/Monat vorgesehen.
+- FanMind verwendet künftig Grundpakete zu **99 / 199 / 312 €/Monat**.
+- Jedes Grundpaket enthält ein monatliches **AI-Kostenbudget**. Die exakten enthaltenen Budgets bleiben bis zur Auswertung realer FanMind-Nutzung bewusst offen und dürfen nicht erfunden werden.
+- Nutzer wählen **Schnell / Ausgewogen / Premium**; höherwertige Modelle verbrauchen die verfügbare Kapazität entsprechend schneller.
+- Der interne Verbrauch wird anhand der tatsächlichen Provider-/Modell-/Tokenkosten geführt.
+- Das inkludierte Monatsbudget verfällt am Monatsende. Nachgekaufte AI-Kapazität wird erst danach verbraucht; ihre konkrete Gültigkeitsdauer ist noch festzulegen.
+- AI-Kapazitäts-Top-ups werden mit ungefähr **33 % Ziel-Bruttomarge** kalkuliert.
+- Das frühere Produktmodell **KI Plus +100 €/Monat / KI Ultra +200 €/Monat ist abgeschafft**. Bestehende Plus/Ultra-Tabellen, Ledger und Eventpfade gelten nur noch als Legacy-Kompatibilitätsbestand für kontrollierte Migration; sie dürfen nicht als aktuelles Angebot oder Aktivierungsziel verwendet werden.
 - Agency bleibt Coming Soon. Selbstzahlende Creator werden der Agentur nicht
   nochmals verrechnet. Bei Agenturzahlung gelten ein Hub zu 312 €/Monat plus
   Creator-Lizenzen mit 0 % für 1-4, 5 % für 5-9, 10 % für 10-19 und 15 % ab
