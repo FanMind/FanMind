@@ -168,7 +168,7 @@ test("routes require capability and workspace-bound character; no OnlyFans netwo
     /onlyfans\.com|OnlyFans API|provider.password/u,
   );
   assert.doesNotMatch(client, /SUPABASE_SERVICE_ROLE_KEY|service_role/iu);
-  assert.match(store, /if \(isPlatformAdminEmail\(context\.user\.email\)\) throw new WorkspaceAuthorizationError/u);
+  assert.doesNotMatch(store, /isPlatformAdminEmail/u);
 });
 
 test("ChatAdmin stays separate from Platform Admin and UI is capability-hidden", async () => {
@@ -416,6 +416,8 @@ test("persistent fan runtime stays server-side default-off until controlled acti
     readFile(new URL("../src/app/api/chatadmin/reply-suggestions/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(store, /FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED==="true"\|\|process\.env\.FANMIND_RUNTIME_ENVIRONMENT==="staging"/u);
+  const productionDeploy = await readFile(new URL("../.github/workflows/deploy-fanmind.yml", import.meta.url), "utf8");
+  assert.match(productionDeploy, /export FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=true/u);
   assert.match(replies, /isChatAdminFanRuntimeEnabled\(\)/u);
   assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
   assert.match(store, /chat_character_fans\?workspace_id=eq\./u);
