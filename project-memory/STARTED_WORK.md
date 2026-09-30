@@ -1086,11 +1086,23 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
-- Status: IN_PROGRESS.
+- Status: ACCEPTED.
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
 - Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
 - Completed so far: base design recorded; review-required R4 boundary, authoritative package resolver, fixed-precision EUR accounting/FX provenance, subscription-period identity, two-phase reserve/settle/release/reconcile lifecycle, split-bucket allocation, malformed-usage fail-closed behavior and top-up reversal lifecycle added; README and Source of Truth now distinguish accepted target from active legacy billing. Owner-requested Platform-Admin controls are now part of the frozen contract: global capacity admission, independent Fast/Balanced/Premium switches, per-package 99/199/312 admission, top-up sales, approved package budgets and emergency spend freeze, all audited/default-off and unable to bypass activation gates.
-- Still open: exact-head CI and fresh independent review; resolve any remaining concrete review findings. Implementation of database/Stripe/admin toggles remains a later bounded increment after this contract PR is accepted.
-- Owner action needed: none for this repository-only reconciliation.
-- Exact next step: run/inspect exact-head checks and fresh review on PR #1230; merge only when required checks are green and blocking review findings are zero.
+- Completion: PR #1230 merged as `2266e13429d4f09da2176f96c61f2b3db85b34f1`. The accepted v2 contract is now on main; no Production billing, Stripe, Supabase or customer state was activated.
+- Owner action needed: none for this completed contract reconciliation.
+- Exact next step: continue with the separate dormant policy/runtime foundation below.
+
+
+## FM-AI-001 / FM-CR-047 — AI Capacity policy foundation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-047
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930`.
+- Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1` after accepted PR #1230.
+- Scope: repository-only dormant Capacity-v2 policy module and tests: exact 99/199/312 package identities, Fast/Balanced/Premium mode identities, legacy-v1/capacity-v2 discriminator, default-off Platform-Admin policy state and fail-closed admission resolution. No schema, Admin UI mutation, Stripe, provider, Production or customer migration.
+- Acceptance: explicit tests prove no capacity-v2 admission for legacy, unknown package/mode, unset budgets, disabled package/mode, global disabled state or emergency freeze; target package prices remain 99/199/312 EUR and budgets stay unset rather than invented.
+- Recovery: repository revert only; no external state changes.
