@@ -180,7 +180,8 @@
     "chat-admin:manual-flow:run": "node scripts/operations/chat-admin-manual-flow-staging.mjs --run",
     "chat-admin:manual-flow:cleanup": "node scripts/operations/chat-admin-manual-flow-staging.mjs --cleanup",
     "test:e2e:chatadmin-staging": "playwright test --config=playwright.chatadmin-staging.config.mts",
-    "test:chat-admin-manual-flow": "node --test tests/chat-admin-manual-flow.test.mjs"
+    "test:chat-admin-manual-flow": "node --test tests/chat-admin-manual-flow.test.mjs",
+    "test:ai-capacity-policy": "node --test tests/ai-capacity-policy.test.mjs"
   },
   "dependencies": {
     "next": "16.3.4",
