@@ -430,6 +430,17 @@ function WorkspaceDetails({
       showAdminArea,
       workspace.role,
     );
+  const savedViewsWithChatAdmin = showChatAdmin
+    ? [
+        ...savedViews,
+        {
+          label: "Creator-Chat",
+          href: "/chatadmin",
+          icon: "ai" as const,
+          active: false,
+        },
+      ]
+    : savedViews;
   const workInboxItems = getWorkInboxItems(contacts, followups);
   const newMessageItems = getNewMessageItems(contacts, unseenMessages);
   const workspaceKpis = getWorkspaceKpiStatsFromContacts(
@@ -445,7 +456,7 @@ function WorkspaceDetails({
       planStatus={wt(locale, planStatus)}
       mainNavigation={mainNavigation}
       settingsNavigation={settingsNavigation}
-      savedViews={savedViews}
+      savedViews={savedViewsWithChatAdmin}
       header={{
         title: wt(locale, pageTitle),
         subtitle: pageSubtitle,
@@ -462,12 +473,6 @@ function WorkspaceDetails({
       logoutAction={logout}
       locale={locale}
     >
-      {showChatAdmin ? (
-        <section className={styles.fallbackCard} aria-label="ChatAdmin Sonderfunktion">
-          <div><p className={styles.eyebrow}>Owner-Exception</p><h2>ChatAdmin</h2><p>Getrennte Characters verwalten und manuell eingefügte OnlyFans-Nachrichten als Antwortentwürfe bearbeiten. Keine Provider-Verbindung und kein Auto-Send.</p></div>
-          <Link href="/chatadmin">ChatAdmin öffnen</Link>
-        </section>
-      ) : null}
       <section
         className={styles.crmGrid}
         aria-label={wt(locale, "Arbeits-Eingang")}
