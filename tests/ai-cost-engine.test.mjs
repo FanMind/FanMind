@@ -1,3 +1,4 @@
+import "./ai-capacity-policy.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";

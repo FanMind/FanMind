@@ -1069,7 +1069,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-046
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4
 - Holder: ChatGPT
 - Acquired: 2026-09-30
@@ -1077,3 +1077,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: exact-head diff, product/project-memory checks, required GitHub CI, independent exact-head review, zero unresolved blocking P0/P1/P2.
 - Recovery: revert PR #1230 source changes; active billing remains unchanged until a separately authorized activation increment.
+
+
+## LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-047
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1`.
+- Scope: dormant repository-only capacity package/mode/admin admission policy plus focused tests. No Supabase/Stripe/provider/Production/customer mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: focused positive/negative tests, exact-head FanMind CI/CodeQL/Browser/God Mode/Project Memory and independent review before merge.
+- Recovery: ordinary source revert; active legacy billing remains untouched.
