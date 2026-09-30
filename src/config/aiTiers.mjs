@@ -1,4 +1,13 @@
 export const AI_TIER_IDS = Object.freeze(["standard", "plus", "ultra"]);
+
+// Transitional storage IDs remain for compatibility while the commercial model
+// moves from paid AI add-ons to three base packages. No new Plus/Ultra surcharge
+// may be derived from these legacy IDs.
+export const FANMIND_BASE_PACKAGE_MONTHLY_CENTS = Object.freeze({
+  basic: 9900,
+  pro: 19900,
+  core: 31200,
+});
 export const AI_TIER_CONTEXT_MESSAGE_LIMITS = Object.freeze({
   standard: 50,
   plus: 100,
@@ -58,11 +67,11 @@ export const AI_TIER_CONFIG = Object.freeze({
   }),
   plus: freezeTier({
     id: "plus",
-    name: "KI Plus",
-    monthlyAddOnCents: 10000,
-    includedInBase: false,
-    publicStatus: "Coming Soon",
-    billingStatus: "not_configured",
+    name: "KI Ausgewogen",
+    monthlyAddOnCents: 0,
+    includedInBase: true,
+    publicStatus: "Kompatibilitätsstufe",
+    billingStatus: "included",
     automaticallyBookable: false,
     addOnReferralDiscountEligible: false,
     automaticSendingEnabled: false,
@@ -81,11 +90,11 @@ export const AI_TIER_CONFIG = Object.freeze({
   }),
   ultra: freezeTier({
     id: "ultra",
-    name: "KI Ultra",
-    monthlyAddOnCents: 20000,
-    includedInBase: false,
-    publicStatus: "Coming Soon",
-    billingStatus: "not_configured",
+    name: "KI Premium",
+    monthlyAddOnCents: 0,
+    includedInBase: true,
+    publicStatus: "Kompatibilitätsstufe",
+    billingStatus: "included",
     automaticallyBookable: false,
     addOnReferralDiscountEligible: false,
     automaticSendingEnabled: false,
@@ -440,8 +449,11 @@ export function assertAiTierPolicy() {
   if (!standard.includedInBase || standard.monthlyAddOnCents !== 0) {
     throw new Error("KI Standard must remain included in the base package");
   }
-  if (plus.monthlyAddOnCents !== 10000 || ultra.monthlyAddOnCents !== 20000) {
-    throw new Error("KI Plus/Ultra prices do not match the approved commercial truth");
+  if (plus.monthlyAddOnCents !== 0 || ultra.monthlyAddOnCents !== 0) {
+    throw new Error("Legacy AI tiers must not carry separate monthly surcharges");
+  }
+  if (FANMIND_BASE_PACKAGE_MONTHLY_CENTS.basic !== 9900 || FANMIND_BASE_PACKAGE_MONTHLY_CENTS.pro !== 19900 || FANMIND_BASE_PACKAGE_MONTHLY_CENTS.core !== 31200) {
+    throw new Error("Base package prices must remain 99/199/312 EUR monthly");
   }
   if (
     standard.contextMessageLimit !== 50 ||
