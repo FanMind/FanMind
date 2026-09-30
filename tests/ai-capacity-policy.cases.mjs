@@ -47,7 +47,7 @@ test("default admin policy keeps capacity v2 fully fail closed", () => {
       packageId: "capacity_99",
       qualityMode: "fast",
     }).reason,
-    "capacity_disabled",
+    "included_budget_unset",
   );
 });
 
@@ -69,7 +69,7 @@ test("usage switches fail closed independently", () => {
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "missing", qualityMode: "fast", adminPolicy: base }).reason, "package_unknown");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "missing", adminPolicy: base }).reason, "quality_mode_unknown");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, emergencySpendFreeze: true } }).reason, "emergency_spend_freeze");
-  assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, qualityModeEnabled: { ...base.qualityModeEnabled, fast: false } } }).reason, "quality_mode_disabled");
+  assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, qualityModeEnabled: { ...base.qualityModeEnabled, fast: false, balanced: true } } }).reason, "quality_mode_disabled");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, includedBudgetEurMicrocents: { ...base.includedBudgetEurMicrocents, capacity_99: null } } }).reason, "included_budget_unset");
 });
 
@@ -167,4 +167,22 @@ test("undefined budget values are rejected", () => {
     }),
     { name: "TypeError", message: "invalid_ai_capacity_admin_policy" },
   );
+});
+
+
+test("sales admission remains independent from usage freeze switches", () => {
+  const base = enabledPolicy();
+  for (const policy of [
+    { ...base, globalCapacityEnabled: false },
+    { ...base, emergencySpendFreeze: true },
+  ]) {
+    assert.equal(
+      resolveAiCapacitySalesAdmission({
+        billingContractVersion: "capacity_v2",
+        packageId: "capacity_99",
+        adminPolicy: policy,
+      }).allowed,
+      true,
+    );
+  }
 });
