@@ -52,7 +52,13 @@ const conversationFor={
  [fanA2.id]:{id:"40000000-0000-4000-8000-000000000002",workspace_id:characterA.workspace_id,character_id:characterA.id,fan_id:fanA2.id},
  [fanB1.id]:{id:"40000000-0000-4000-8000-000000000003",workspace_id:characterA.workspace_id,character_id:characterB.id,fan_id:fanB1.id},
 };
-const historyFor={[fanA1.id]:[{id:"m-a1",direction:"confirmed_reply",content:"A1 history",created_at:"2026-09-27T00:00:00Z"}],[fanA2.id]:[],[fanB1.id]:[]};
+const historyFor={[fanA1.id]:[
+ {id:"m-a1",direction:"confirmed_reply",content:"A1 history",created_at:"2026-09-27T00:00:00Z"},
+ {id:"m-inbound",direction:"fan_inbound",content:"Latest fan message",created_at:"2026-09-27T00:01:00Z"},
+ {id:"m-suggestion-1",direction:"suggested_reply",content:"Stored suggestion one",created_at:"2026-09-27T00:01:01Z"},
+ {id:"m-suggestion-2",direction:"suggested_reply",content:"Stored suggestion two",created_at:"2026-09-27T00:01:02Z"},
+ {id:"m-suggestion-3",direction:"suggested_reply",content:"Stored suggestion three",created_at:"2026-09-27T00:01:03Z"},
+],[fanA2.id]:[],[fanB1.id]:[]};
 const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three"];
 let browser;
 before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
@@ -79,6 +85,8 @@ async function generate(page,message="Synthetic fan message"){await page.getByLa
 async function complete(page,index=0,overrides={},status=200){const request=await page.evaluate(index=>window.testRequests[index],index);const base={replies:drafts,character_id:request.body.character_id,character_revision:request.body.character_revision,fan_id:request.body.fan_id,conversation_id:request.body.conversation_id,safety_note:"Manuell prüfen."};await page.evaluate(async({index,body,status})=>{window.testRequests[index].resolve(new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json"}}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{index,body:{...base,...overrides},status});}
 
 test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Charaktere"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
+
+test("stored AI suggestions stay collapsed behind the latest inbound fan message",async t=>{const page=await mount(t);await openFan(page,"Fan A1");const toggle=page.getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true});await expect(toggle).toBeVisible();await expect(page.getByText("Latest fan message",{exact:true})).toBeVisible();await expect(page.getByText("Stored suggestion one",{exact:true})).toHaveCount(0);await toggle.click();await expect(page.getByText("Stored suggestion one",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"3 KI-Vorschläge einklappen",exact:true})).toBeVisible();});
 
 test("Character A -> Fan A1 -> Conversation -> exactly three replies",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await expect(page.getByText("A1 mag Katzen",{exact:true})).toBeVisible();await expect(page.getByText("A1 history",{exact:true})).toBeVisible();await generate(page);const request=await page.evaluate(()=>window.testRequests[0].body);assert.match(request.generation_id,/^[0-9a-f-]{36}$/u);delete request.generation_id;assert.deepEqual(request,{character_id:characterA.id,character_revision:1,fan_id:fanA1.id,fan_revision:1,conversation_id:conversationFor[fanA1.id].id,incoming_message:"Synthetic fan message"});await complete(page);await expect(copies(page)).toHaveCount(3);});
 test("Fan A1 -> A2 clears drafts, knowledge and history",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await openFan(page,"Fan A2");await expect(copies(page)).toHaveCount(0);await expect(page.getByText("A2 mag Hunde",{exact:true})).toBeVisible();await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);await expect(page.getByText("A1 history",{exact:true})).toHaveCount(0);});

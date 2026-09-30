@@ -479,3 +479,13 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Task: FM-AI-001
 - Risk: R4
 - Scope: repository-only source for default-off AI Capacity persistence and Platform-Admin controls; no database apply or external activation.
+
+## FM-CR-049 — Creator-Building collapsible AI suggestions
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: rename the Owner-only ChatAdmin page heading to `Creator-Building`; group each stored suggestion sequence under its preceding inbound Fan message; place one accessible `▼`/`▲` control directly left of that message; keep stored suggestions collapsed when a Fan is opened and open the newest group once immediately after generation.
+- Acceptance: Fan and confirmed messages remain visible; the toggle exposes and hides exactly the associated AI suggestions; actionable copies follow the newest expanded group; Character/Fan/workspace authority, persistence, manual confirmation and no-auto-send boundaries remain unchanged.
+- Evidence: focused ChatAdmin/API suite 31/31, ESLint 0 errors, production build and diff check passed locally. PR #1240 exact-head Browser E2E, CI, CodeQL and Project Memory checks remain the publication gates.
+- Preflight: accepted-state drift passed. Evidence freshness passed with only unrelated already-open Restore, Mobile, Meta/Security, AI/Billing and older ChatAdmin/Creator evidence revalidation notices; none is used to support this bounded UI conclusion.
