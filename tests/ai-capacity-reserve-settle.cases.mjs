@@ -32,8 +32,8 @@ test("builds conservative OpenAI reservation from pinned catalog and explicit FX
     eurPerUsdNanos: EUR_USD_090_NANOS,
     fxVersion: FX_VERSION,
   });
-  assert.equal(result.providerUsdMicros, 1_100);
-  assert.equal(result.reservedEurMicrocents, 99_000);
+  assert.equal(result.providerUsdMicros, 1_225);
+  assert.equal(result.reservedEurMicrocents, 110_250);
   assert.equal(result.pricingVersion, "openai-2026-09-30-gpt6-standard-v1");
   assert.equal(result.fxVersion, FX_VERSION);
 });
@@ -96,9 +96,14 @@ test("reserve/settle SQL is service-role-only, idempotent and preserves indeterm
   assert.match(sql, /ai_capacity_reservation_idempotency_conflict/u);
   assert.match(sql, /ai_capacity_settlement_idempotency_conflict/u);
   assert.match(sql, /ai_capacity_insufficient_balance/u);
-  assert.match(sql, /state in \('reserved','indeterminate','reconciliation_required'\)/u);
+  assert.match(sql, /ai_capacity_generation_not_replayable/u);
+  assert.match(sql, /ai_capacity_policy_revision_conflict/u);
+  assert.match(sql, /ai_capacity_admission_closed/u);
+  assert.match(sql, /g\.period_end > statement_timestamp\(\)/u);
+  assert.match(sql, /provider, model, pricing_version, fx_version, metadata/u);
+  assert.match(sql, /ai_capacity_reconciliation_idempotency_conflict/u);
   assert.match(sql, /reservation_reconciliation_required/u);
-  assert.match(sql, /reservation_reconciliation_required/u);
+  assert.match(sql, /ai_capacity_grants_workspace_period_unique/u);
   assert.match(sql, /revoke all on function public\.ai_capacity_reserve[\s\S]*public, anon, authenticated/u);
   assert.match(sql, /grant execute on function public\.ai_capacity_reserve[\s\S]*to service_role/u);
 });
@@ -119,7 +124,31 @@ test("capacity usage UI exposes only percentage and explicitly has no free reser
   assert.match(page, /AI-Kapazität/u);
   assert.match(page, /Verbleibendes Kontingent/u);
   assert.match(page, /remainingPercent/u);
+  assert.match(page, /hasCapacityHistory/u);
   assert.match(page, /keine kostenlose oder gedrosselte Reserve/u);
   assert.match(page, /Premium verbraucht die Kapazität deutlich schneller/u);
   assert.doesNotMatch(page, /kostenlose Reserve verfügbar/u);
+});
+
+
+test("reservation estimate covers worst-case cache-write cost", () => {
+  const result = estimateOpenAiReservationCost({
+    model: "gpt-6-luna",
+    serviceTier: "standard",
+    occurredAt: "2026-09-30T12:00:00.000Z",
+    estimatedInputTokens: 1_000,
+    maxOutputTokens: 0,
+    eurPerUsdNanos: EUR_USD_090_NANOS,
+    fxVersion: FX_VERSION,
+  });
+  assert.equal(result.providerUsdMicros, 225);
+  assert.equal(result.reservedEurMicrocents, 20_250);
+});
+
+test("runtime source marks malformed post-provider usage indeterminate before propagating", () => {
+  const runtime = fs.readFileSync("src/lib/aiCapacityRuntime.ts", "utf8");
+  assert.match(runtime, /provider_usage_or_pricing_unavailable_after_generation/u);
+  assert.match(runtime, /markAiCapacityIndeterminate/u);
+  assert.match(runtime, /expectedPolicyRevision/u);
+  assert.match(runtime, /ai_capacity_generation_already_reserved/u);
 });
