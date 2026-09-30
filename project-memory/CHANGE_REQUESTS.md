@@ -449,3 +449,12 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Third review follow-through: timestamp-less comments sort after provider-timestamped history, and each manual comment-sync request is bounded to 100 processed comments / 8 seconds of persistence work. Partial progress stores an opaque, non-secret continuation marker in the existing server-written comment-status field and the UI renders only a friendly continuation state; no schema/DB migration is introduced.
 - Fourth review follow-through: completed comment sync retains a provider-timestamp high-water in existing `last_comment_fetch_at` while pending/error state remains separate in `last_comment_fetch_error`; later syncs start at the high-water (inclusive for same-timestamp dedupe safety) instead of replaying the full history. Top-level Page feed reads are bounded to the 25 most recent posts without failing merely because older feed pages exist; comment-edge pagination remains strict and separately capped.
 - Final current-head review follow-through: Facebook callback origin must match the configured active FanMind app outside the explicit local fixture; manual comment syncs are connection-scoped single-flight; imported comments are ordered oldest-first so provider timestamps cannot regress conversation recency.
+
+## FM-CR-046 — AI Capacity Billing v2
+- Date: 2026-09-30
+- Status: ACCEPTED_FOR_IMPLEMENTATION
+- Risk: R3
+- Source: Owner replaces the customer-facing KI Plus/Ultra add-on model with package-bound AI capacity.
+- Contract: EUR 99/199/312 base packages; monthly included AI cost budget per package (exact values deliberately open); Fast/Balanced/Premium quality modes; actual provider/model/token cost accounting; included capacity expires monthly; purchased capacity survives reset with explicit validity; included bucket consumed before purchased bucket; top-ups target about 33% gross margin.
+- Boundary: no Production payment/top-up activation, no invented package budgets, no automatic customer migration, and no Legal/Tax acceptance is implied.
+- Implementation: reuse existing cost/usage infrastructure and replace Plus/Ultra product semantics with an atomic workspace/month capacity ledger, reset and top-up lifecycle. Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
