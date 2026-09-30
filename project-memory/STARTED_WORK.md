@@ -1099,7 +1099,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-047 — AI Capacity policy foundation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-047
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930`.
 - Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1` after accepted PR #1230.
@@ -1107,3 +1107,18 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: explicit tests prove no capacity-v2 admission for legacy, unknown package/mode, unset budgets, disabled package/mode, global disabled state or emergency freeze; target package prices remain 99/199/312 EUR and budgets stay unset rather than invented.
 - Recovery: repository revert only; no external state changes.
 - Exact next step: fix the current PR #1235 review findings and required checks on the same branch; merge only after the final head is green and reviewed.
+
+
+## FM-AI-001 / FM-CR-049 — Versioned OpenAI price catalog — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-049
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-OPENAI-PRICE-CATALOG-20260930`.
+- Baseline: exact main `16b4833cfb6148980091e61b959eb9d64a18a382` after merged PR #1239.
+- Scope: repository-only versioned OpenAI provider-price catalog plus stable FanMind quality-mode mapping for communication analysis and reply generation. Schnell maps to GPT-6 Luna, Ausgewogen to GPT-6.1 Sol, Premium to GPT-6 Astra; all current profiles use Standard processing and explicit reasoning effort.
+- Price source: official OpenAI model/pricing documentation observed 2026-09-30; short/long context split at >272,000 input tokens; exact provider price is stored as integer USD micro-units.
+- Acceptance: catalog is versioned, every active model has short/long price entries, cost engine resolves catalog entries fail-closed, unsupported processing/regional pricing is rejected, required CI/security/governance and independent review pass.
+- Boundaries: no Production/Staging/Supabase mutation, no provider call, no customer migration, no Capacity-v2 activation and no package AI-budget decision.
+- Recovery: source revert only.
+- Exact next step: converge one PR for the catalog and cost-engine source; Reserve/Settle/Release runtime wiring remains the next separate increment.
