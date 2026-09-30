@@ -460,3 +460,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Contract: EUR 99/199/312 base packages; monthly included AI cost budget per package (exact values deliberately open); Fast/Balanced/Premium quality modes; actual provider/model/token cost accounting; included capacity expires monthly; purchased capacity survives reset with explicit validity; included bucket consumed before purchased bucket; top-ups target about 33% gross margin.
 - Boundary: no Production payment/top-up activation, no invented package budgets, no automatic customer migration, and no Legal/Tax acceptance is implied.
 - Implementation: reuse existing cost/usage infrastructure and replace Plus/Ultra product semantics with an atomic workspace/month capacity ledger, reset and top-up lifecycle. Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
+
+
+## FM-CR-047 — AI Capacity policy foundation
+- Date: 2026-09-30
+- Status: ACCEPTED_FOR_IMPLEMENTATION
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continued implementation after PR #1230 established the accepted Capacity-v2 contract.
+- Scope: dormant repository-only capacity package/mode/admin admission policy with exact 99/199/312 EUR package identities, Fast/Balanced/Premium modes, legacy-v1/capacity-v2 discrimination and default-off fail-closed controls.
+- Boundaries: no Supabase schema/apply, no Stripe/provider call, no Production activation, no real customer migration and no invented included AI budget.
+- Acceptance: focused positive/negative tests plus exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review.
