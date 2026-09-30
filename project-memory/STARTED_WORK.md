@@ -1112,7 +1112,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-050 — Versioned OpenAI price catalog — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-050
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R4
 - Work lock: `LOCK-FM-OPENAI-PRICE-CATALOG-20260930`.
 - Baseline: exact main `04abce0305f4bf9ca2816e30fc672ea9298a3f68`.
@@ -1121,4 +1121,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: every active model has short/long price entries, cost engine resolves catalog entries fail-closed, unsupported processing/regional pricing is rejected, required CI/security/governance and independent review pass.
 - Boundaries: no Production/Staging/Supabase mutation, no provider call, no customer migration, no Capacity-v2 activation and no package AI-budget decision.
 - Recovery: source revert only.
-- Exact next step: converge one PR for catalog and cost-engine source; Reserve/Settle/Release runtime wiring remains the next separate increment.
+- Completion: PR #1242 merged as `83d1191e534684c32229aaf35ac56e1bd4c927d3`; versioned OpenAI pricing and Schnell/Ausgewogen/Premium mapping are on main.
+- Exact next step: continue with the reserve/settle lifecycle increment below.
+
+
+## FM-AI-001 / FM-CR-052 — AI Capacity reserve/settle runtime foundation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-052
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930`.
+- Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3` after merged PR #1242.
+- Scope: repository-only atomic Capacity-v2 grant/reserve/settle/release/indeterminate SQL RPCs, server-only ledger adapter, exact OpenAI-to-EUR capacity accounting with explicit versioned FX input, runtime coordinator, docs and required tests.
+- Acceptance: included-period-before-purchased ordering, workspace-serialized reservations, idempotent grant/generation keys, actual-usage settlement, unused release, indeterminate hold, over-reservation reconciliation-required persistence, no estimated usage settlement, exact-head required CI/security/governance and independent review.
+- Customer display decision: show remaining AI capacity only as a percentage; both analysis and reply generation consume the same pool. 25%/10% may warn. At 0% new Capacity-v2 AI reservations are denied. No free/throttled reserve and no automatic downgrade.
+- Boundaries: no Production/Staging schema APPLY, no productive AI route switch, no provider call, no customer migration, no package AI-budget decision, no Stripe/top-up activation.
+- Recovery: source revert only; existing Production AI and billing remain unchanged.
+- Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.

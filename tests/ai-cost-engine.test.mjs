@@ -1,3 +1,4 @@
+import "./ai-capacity-reserve-settle.cases.mjs";
 import "./openai-price-catalog.cases.mjs";
 import "./ai-capacity-policy.cases.mjs";
 import assert from "node:assert/strict";

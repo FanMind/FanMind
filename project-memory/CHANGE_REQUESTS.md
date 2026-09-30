@@ -493,7 +493,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-050 — Versioned OpenAI price catalog
 - Date: 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Source: owner requested official OpenAI pricing as the cost basis and clarified the FanMind modes: Premium uses the strongest suitable approved model, Ausgewogen a middle model, Schnell the fastest/lower-cost model for communication analysis and replies.
@@ -511,3 +511,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Deletion contract: the authorized same-origin DELETE targets one workspace/Character/Fan/revision tuple; the existing database cascade removes that Fan's conversation and messages. A browser confirmation is required before the request.
 - Acceptance: the conversation starts at the top of the right pane; all Fan controls remain reachable from the row menu; inactive state remains visible and blocks new generation; no Character, workspace, manual-send or external-platform boundary changes.
 - Evidence: focused ChatAdmin/API suite 32/32, ESLint 0 errors, production build and diff check passed locally. PR current-head Browser E2E, CI, CodeQL and Project Memory checks remain publication gates.
+
+## FM-CR-052 — AI Capacity reserve/settle runtime foundation
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continuation immediately after merged versioned OpenAI price catalog #1242.
+- Scope: atomic included/purchased grant allocation, reserve, actual-usage settle, release, indeterminate/reconciliation handling, explicit versioned FX conversion, server-only adapter/runtime coordinator and required tests.
+- Boundaries: repository-only; no Staging/Production APPLY, productive route switch, provider call, customer migration, package-budget decision or Stripe/top-up activation.
+- Acceptance: exact-head CI/security/governance, independent review and fail-closed evidence for missing usage/FX, insufficient balance, idempotency conflicts and actual cost above reserve.
+- No-free-reserve owner clarification: customer capacity is displayed as remaining percent; both analysis and reply generation use the same pool; 0% blocks all new Capacity-v2 AI reservations until paid additional capacity or the next billing-period grant. No free/throttled fallback and no automatic downgrade.

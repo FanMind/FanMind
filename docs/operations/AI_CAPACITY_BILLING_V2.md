@@ -281,3 +281,17 @@ The provider-cost resolver distinguishes short and long context at OpenAI's
 published >272,000 input-token boundary and returns exact integer USD
 micro-units. This catalog becomes the provider price source for the subsequent
 Reserve -> Settle/Release -> capacity-consumption runtime increment.
+
+
+## Customer capacity display and exhaustion behavior
+
+The customer-facing balance is shown as **remaining AI capacity in percent**. FanMind does not expose raw token balances as the primary commercial meter because Schnell, Ausgewogen and Premium have materially different provider costs for the same token count.
+
+- 100% means the full currently active spendable Capacity-v2 balance is available.
+- Reserved, indeterminate and reconciliation-required amounts are treated as unavailable until released or settled.
+- Included and purchased capacity are combined for the visible percentage, while the ledger keeps their accounting buckets separate.
+- The percentage is rounded down so FanMind never overstates remaining capacity.
+- The same percentage pool funds both communication analysis and reply generation.
+- The user's selected quality mode determines how quickly the percentage falls because actual provider cost is charged.
+
+**There is no free or throttled reserve.** At 0%, new Capacity-v2 AI reservations are denied. The user must either obtain additional paid capacity or wait for the next authoritative billing-period grant. FanMind does not silently downgrade Premium/Ausgewogen to Schnell at exhaustion and does not continue AI work for free.
