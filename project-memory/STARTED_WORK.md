@@ -1134,6 +1134,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3` after merged PR #1242.
 - Scope: repository-only atomic Capacity-v2 grant/reserve/settle/release/indeterminate SQL RPCs, server-only ledger adapter, exact OpenAI-to-EUR capacity accounting with explicit versioned FX input, runtime coordinator, docs and required tests.
 - Acceptance: included-period-before-purchased ordering, workspace-serialized reservations, idempotent grant/generation keys, actual-usage settlement, unused release, indeterminate hold, over-reservation reconciliation-required persistence, no estimated usage settlement, exact-head required CI/security/governance and independent review.
+- Customer display decision: show remaining AI capacity only as a percentage; both analysis and reply generation consume the same pool. 25%/10% may warn. At 0% new Capacity-v2 AI reservations are denied. No free/throttled reserve and no automatic downgrade.
 - Boundaries: no Production/Staging schema APPLY, no productive AI route switch, no provider call, no customer migration, no package AI-budget decision, no Stripe/top-up activation.
 - Recovery: source revert only; existing Production AI and billing remain unchanged.
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
