@@ -1146,4 +1146,5 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
 - Completed so far: live Stripe Capacity-v2 EUR 99/199/312 prices created; legacy 312/setup/pilot Products retired from new sale; repository branch records zero setup fee and Capacity-v2 env mapping.
 - Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
+- Exact next step: fix only current PR #1245 validation findings, obtain one clean exact-head CI/review, then merge; do not start Capacity-v2 activation from this source task.
 - Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
