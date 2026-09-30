@@ -74,7 +74,7 @@ const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("he
 const copies=page=>page.getByRole("button",{name:"Antwort kopieren",exact:true});
 async function openFan(page,name){await page.getByRole("button",{name:new RegExp(name)}).click();await expect(page.getByRole("heading",{name,exact:true})).toBeVisible();}
 async function selectCharacter(page,name){await card(page,name).getByRole("button").first().click();}
-async function manageCharacter(page,name){await card(page,name).getByRole("button",{name:`${name} verwalten`}).click();}
+async function manageCharacter(page,name){await card(page,name).locator("summary").click();}
 async function generate(page,message="Synthetic fan message"){await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBeGreaterThan(0);}
 async function complete(page,index=0,overrides={},status=200){const request=await page.evaluate(index=>window.testRequests[index],index);const base={replies:drafts,character_id:request.body.character_id,character_revision:request.body.character_revision,fan_id:request.body.fan_id,conversation_id:request.body.conversation_id,safety_note:"Manuell prüfen."};await page.evaluate(async({index,body,status})=>{window.testRequests[index].resolve(new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json"}}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{index,body:{...base,...overrides},status});}
 
