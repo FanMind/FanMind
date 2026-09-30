@@ -1,4 +1,6 @@
 # FanMind
+> **Billing-Zielmodell (30.09.2026):** FM-DEC-026 akzeptiert künftig drei FanMind-Grundpakete zu **99 / 199 / 312 EUR** mit monatlicher AI-Kapazität sowie **Schnell / Ausgewogen / Premium**. Das frühere kundenbezogene KI-Plus/Ultra-Modell ist damit als Zielmodell superseded. **Noch nicht Production-aktiviert:** bestehende Starter-/Plus-/Ultra-Preise, Stripe-IDs und Verträge bleiben bis zur kontrollierten Migration Legacy-/Migrationsbasis. Exakte AI-Budgets sind bewusst offen. Siehe `docs/operations/AI_CAPACITY_BILLING_V2.md`.
+
 
 ## Admin-CRM-Zugang
 

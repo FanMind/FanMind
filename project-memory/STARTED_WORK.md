@@ -1081,3 +1081,16 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Completed locally: fokussierte Policy/API/Disclosure/Delete/Roadmap-Tests und Lint. Browser-Harness ist angepasst, seine Ausführung bleibt nach fehlendem Binary und HTTP-403-Download blockiert. Offen: Build/weitere lokale Gates, bestehendes-PR-Publishing, genau ein vollständiger GitHub-Gate-Lauf und exakte unabhängige Review. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
 - Exact next step: bestehenden PR #1216 korrigieren, auf dem finalen aktuellen Head FanMind CI, CodeQL, Browser E2E, God Mode und Project Memory grün nachweisen, danach die unabhängige Review ohne P1/P2 und ohne blockierende Threads abschließen und erst dann normal mergen. Ein kontrollierter Staging-Apply bleibt bis nach dem Source-Merge getrennt und nicht autorisiert.
 - Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.
+
+
+## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-046
+- Status: IN_PROGRESS.
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
+- Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
+- Completed so far: base design recorded; review-required R4 boundary, authoritative package resolver, fixed-precision EUR accounting/FX provenance, subscription-period identity, two-phase reserve/settle/release/reconcile lifecycle, split-bucket allocation, malformed-usage fail-closed behavior and top-up reversal lifecycle added; README and Source of Truth now distinguish accepted target from active legacy billing. Owner-requested Platform-Admin controls are now part of the frozen contract: global capacity admission, independent Fast/Balanced/Premium switches, per-package 99/199/312 admission, top-up sales, approved package budgets and emergency spend freeze, all audited/default-off and unable to bypass activation gates.
+- Still open: exact-head CI and fresh independent review; resolve any remaining concrete review findings. Implementation of database/Stripe/admin toggles remains a later bounded increment after this contract PR is accepted.
+- Owner action needed: none for this repository-only reconciliation.
+- Exact next step: run/inspect exact-head checks and fresh review on PR #1230; merge only when required checks are green and blocking review findings are zero.
