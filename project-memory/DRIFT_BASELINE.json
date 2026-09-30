@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-09-30",
-  "last_source_of_truth_review": "2026-09-30 FM-AI-001/FM-CR-051: reconcile Capacity-v2 reserve/settle lifecycle plus customer percentage meter and explicit no-free-reserve exhaustion behavior; no Production/Staging activation.",
+  "last_source_of_truth_review": "2026-09-30 FM-AI-001/FM-CR-051: reconcile Capacity-v2 reserve/settle lifecycle, percentage customer meter and explicit no-free-reserve exhaustion behavior; repository-only, no target activation.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "55eff594c67dcc51d6d2e1eb13d6093d7648e7a4",
+    "docs/SOURCE_OF_TRUTH.md": "aaa16dbeb6a6af4ca7102bf4f037407d3f2a9829",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
