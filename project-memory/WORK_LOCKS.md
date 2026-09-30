@@ -1107,7 +1107,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930
 - Task: FM-AI-001
-- Change request: FM-CR-051
+- Change request: FM-CR-052
 - Status: ACTIVE
 - Risk: R4
 - Holder: ChatGPT
