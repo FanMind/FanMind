@@ -1131,7 +1131,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-AI-CAPACITY-BUDGETS-20260930
 - Task: FM-AI-001
-- Change request: FM-CR-054
+- Change request: FM-CR-056
 - Status: ACTIVE
 - Risk: R4
 - Holder: ChatGPT
@@ -1139,4 +1139,17 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: repository-only Capacity-v2 package budget constants/defaults/types/tests and truth reconciliation.
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: exact-head CI/security/governance, fail-closed activation tests and one independent exact-head review.
-- Recovery: source revert only; no Staging/Production/provider/customer mutation is authorized by this lock.
+- Recovery: source revert plus reversible Staging budget reset; no Production/provider/customer activation is authorized by this lock.
+
+
+## LOCK-FM-AI-CAPACITY-STAGING-BUDGET-SEED-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-057
+- Status: RELEASED_COUNTERCHECKED
+- Risk: R4
+- Holder: ChatGPT
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Scope: owner-authorized budget-only Staging policy seed and read-only/rollback-only fail-closed countercheck; no runtime/package-sales/top-up activation.
+- Result: policy revision 2 contains EUR 15 / 30 / 50 budgets; activation switches remain off, emergency freeze remains on; browser roles have no policy/grant SELECT access; no ledger customer data exists.
+- Blocker: reserve/settle RPC source must be fixed/reviewed before Staging ledger APPLY.
+- Recovery: set only the three budget columns back to NULL with all activation switches still off; no customer state was created.
