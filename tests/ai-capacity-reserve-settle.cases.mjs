@@ -102,3 +102,24 @@ test("reserve/settle SQL is service-role-only, idempotent and preserves indeterm
   assert.match(sql, /revoke all on function public\.ai_capacity_reserve[\s\S]*public, anon, authenticated/u);
   assert.match(sql, /grant execute on function public\.ai_capacity_reserve[\s\S]*to service_role/u);
 });
+
+
+test("capacity percentage snapshot is server-only and counts held reservations as unavailable", () => {
+  const sql = fs.readFileSync("supabase/controlled/ai_capacity_reserve_settle.sql", "utf8");
+  assert.match(sql, /create or replace function public\.ai_capacity_balance_snapshot/u);
+  assert.match(sql, /state in \('reserved','indeterminate','reconciliation_required'\)/u);
+  assert.match(sql, /greatest\(0::bigint, total_granted - consumed - held\)/u);
+  assert.match(sql, /floor\([\s\S]*\* 100::numeric[\s\S]*\/ total_granted::numeric/u);
+  assert.match(sql, /revoke all on function public\.ai_capacity_balance_snapshot\(uuid\)[\s\S]*public, anon, authenticated/u);
+  assert.match(sql, /grant execute on function public\.ai_capacity_balance_snapshot\(uuid\)[\s\S]*to service_role/u);
+});
+
+test("capacity usage UI exposes only percentage and explicitly has no free reserve", () => {
+  const page = fs.readFileSync("src/app/settings/ai-usage/page.tsx", "utf8");
+  assert.match(page, /AI-Kapazität/u);
+  assert.match(page, /Verbleibendes Kontingent/u);
+  assert.match(page, /remainingPercent/u);
+  assert.match(page, /keine kostenlose oder gedrosselte Reserve/u);
+  assert.match(page, /Premium verbraucht die Kapazität deutlich schneller/u);
+  assert.doesNotMatch(page, /kostenlose Reserve verfügbar/u);
+});
