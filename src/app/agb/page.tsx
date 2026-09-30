@@ -242,9 +242,9 @@ const sections: TermsSection[] = [
           <li><strong>Starter Flex:</strong> 990 € einmalige Einrichtung + 312 €/Monat; jederzeit zum Ende des laufenden, bereits bezahlten Abrechnungsmonats kündbar.</li>
           <li><strong>Starter 12 Monate:</strong> 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach Verlängerung um jeweils einen Monat.</li>
           <li><strong>Bestehende Daily-Verträge:</strong> 0 € Setup + 1 €/Tag; tägliche Abrechnung, täglich zum Ende des bereits bezahlten Abrechnungstags kündbar; kein Referral-Rabatt. Dies ist kein öffentliches Angebot.</li>
-          <li><strong>KI Standard:</strong> in der Starter-Grundgebühr enthalten.</li>
-          <li><strong>KI Plus:</strong> zusätzlich 100 €/Monat.</li>
-          <li><strong>KI Ultra:</strong> zusätzlich 200 €/Monat.</li>
+          <li><strong>KI-Kapazität:</strong> jedes FanMind-Grundpaket enthält ein monatliches KI-Kostenbudget; die konkrete enthaltene Höhe wird vor produktiver Aktivierung anhand realer Nutzung festgelegt.</li>
+          <li><strong>KI-Qualität:</strong> Schnell, Ausgewogen oder Premium; höherwertige Modelle verbrauchen die verfügbare Kapazität entsprechend schneller.</li>
+          <li><strong>Zusatzkapazität:</strong> kann separat nachgekauft werden. Die früheren KI-Plus-/KI-Ultra-Aufpreise sind kein aktuelles Produktmodell mehr.</li>
           <li><strong>Growth / Agency:</strong> Coming Soon, auf Anfrage oder individuelles Angebot.</li>
         </ul>
         <p>
