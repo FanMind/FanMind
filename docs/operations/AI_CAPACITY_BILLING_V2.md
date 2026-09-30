@@ -254,3 +254,30 @@ Do not activate real paid capacity/top-ups until all are true:
 - no automatic conversion of existing customers;
 - no deletion of historical Plus/Ultra records needed for audit/migration;
 - no client-side token/cost authority.
+
+
+## Versioned OpenAI provider price catalog
+
+FanMind now pins provider model selection and OpenAI token prices in
+`src/config/openAiPriceCatalog.mjs`; the human-readable source record is
+`docs/operations/OPENAI_PRICE_CATALOG.md`.
+
+Current customer-mode mapping is:
+- Schnell -> `gpt-6-luna` with low reasoning;
+- Ausgewogen -> `gpt-6.1-sol` with medium reasoning;
+- Premium -> `gpt-6-astra` with max reasoning.
+
+These labels are stable customer concepts; model IDs are versioned server-side
+implementation details. Premium means the strongest suitable model explicitly
+approved in the current FanMind catalog version, never an unpinned provider
+`latest` alias. A later better model requires a reviewed catalog-version
+change before Premium moves.
+
+All three profiles currently use OpenAI Standard processing. FanMind "Schnell"
+must not be confused with OpenAI Fast processing. Unsupported processing tiers,
+regional uplifts or missing price versions fail closed.
+
+The provider-cost resolver distinguishes short and long context at OpenAI's
+published >272,000 input-token boundary and returns exact integer USD
+micro-units. This catalog becomes the provider price source for the subsequent
+Reserve -> Settle/Release -> capacity-consumption runtime increment.
