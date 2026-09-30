@@ -354,7 +354,9 @@ begin
       p_pricing_version, p_fx_version, coalesce(p_metadata, '{}'::jsonb)
     );
 
-    raise exception using errcode = '23514', message = 'ai_capacity_actual_exceeds_reservation';
+    return query
+      select v_reservation.id, 'reconciliation_required'::text, null::bigint, 0::bigint;
+    return;
   end if;
 
   v_remaining := p_actual_eur_microcents;
