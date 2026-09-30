@@ -225,7 +225,7 @@ export default async function AiUsageSettingsPage() {
           <CreatorSettings locale={locale} />
           <AiPromptSettings locale={locale} singleWritingStyle={creatorIntelligenceEnabled()} />
 
-          {capacitySnapshot && capacitySnapshot.totalGrantedEurMicrocents > 0 ? (
+          {capacitySnapshot?.hasCapacityHistory ? (
             <section className={styles.thresholdCard} aria-labelledby="ai-capacity-title">
               <div className={styles.cardHeader}>
                 <div>
