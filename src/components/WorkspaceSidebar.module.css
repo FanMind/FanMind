@@ -176,14 +176,14 @@
 
 .navList {
   display: grid;
-  gap: 6px;
-  padding: 12px 0 2px;
+  gap: 4px;
+  padding: 10px 0 2px;
 }
 
 .navList + .navList {
-  margin-top: 10px;
+  margin-top: 8px;
   border-top: 1px solid rgba(148, 163, 184, 0.1);
-  padding-top: 14px;
+  padding-top: 12px;
 }
 
 .savedViews {
@@ -222,7 +222,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   width: 100%;
-  min-height: 44px;
+  min-height: 40px;
   border: 1px solid transparent;
   border-radius: 13px;
   padding: 0;
@@ -275,7 +275,7 @@
 .navIconSlot {
   display: grid;
   width: var(--sidebar-icon-rail);
-  height: 44px;
+  height: 40px;
   place-items: center;
 }
 
