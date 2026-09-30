@@ -1,3 +1,13 @@
+## FM-AI-001 — AI capacity commercial-model migration — 2026-09-30
+- Risk: R3
+- Status: IN_PROGRESS
+- Branch: billing/ai-capacity-model-20260930
+- Scope: replace the obsolete Plus/Ultra commercial product model with 99/199/312 base packages, monthly AI cost budgets, Schnell/Ausgewogen/Premium quality selection and later AI-capacity top-ups. Preserve useful usage/cost/Billing-ledger machinery while retiring Plus/Ultra as a sellable/activatable product.
+- Fixed acceptance contract: (1) no current product surface or canonical truth advertises +100/+200 Plus/Ultra; (2) exact included AI budgets remain unset; (3) actual provider/model/token cost remains the internal accounting basis; (4) included monthly capacity expires, then purchased top-up capacity is consumed; (5) top-up target gross margin is about 33%; (6) no live Stripe/Production mutation; (7) legacy technical state is preserved only where deletion would destroy migration/history evidence.
+- Completed so far: added canonical aiCapacityPlans configuration and tests; retired commercial Plus/Ultra pricing in aiTiers compatibility config; updated Source of Truth, AGENTS, AGB, roadmap, referral docs and workspace AI-usage copy.
+- Still open: reconcile remaining public/canonical Plus/Ultra references, add the repository-only wallet/ledger preparation or explicitly retain only the minimal compatibility bridge, run exact-head CI/review, and merge normally.
+- Recovery: ordinary branch/PR revert only; no provider/database/customer mutation has occurred.
+
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
