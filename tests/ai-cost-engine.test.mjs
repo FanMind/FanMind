@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";
+import { calculateFanMindBillableCostMicros, calculateFanMindBillableUsageMicros, calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";
 
 const price = { inputPerMillionMicros: 10_000_000, cachedInputPerMillionMicros: 2_000_000, cacheWritePerMillionMicros: 12_000_000, outputPerMillionMicros: 30_000_000 };
 
@@ -61,4 +61,16 @@ test("worst-case reservation blocks before an exhausted budget", () => {
   const result = evaluateMonthlyAiBudget({ usage: { totalTokens: 90, providerCostMicros: 20, requests: 2 }, reservation: { totalTokens: 11, providerCostMicros: 1, requests: 1 }, limits: { monthlyTokenLimit: 100, monthlyProviderCostLimitMicros: 100, monthlyRequestLimit: 10 } });
   assert.equal(result.allowed, false);
   assert.equal(result.level, "hard_limit");
+});
+
+
+test("applies the canonical 33 percent FanMind markup to exact provider cost", () => {
+  assert.equal(calculateFanMindBillableCostMicros(10_000), 13_300);
+  assert.equal(calculateFanMindBillableCostMicros(1), 2);
+  assert.throws(() => calculateFanMindBillableCostMicros(-1), /invalid_provider_cost/);
+});
+
+test("derives billable AI usage from the exact categorized provider cost", () => {
+  const providerCost = calculateProviderCostMicros({ usage: { inputTokens: 1_000, cachedInputTokens: 400, cacheWriteTokens: 100, outputTokens: 200 }, price });
+  assert.equal(calculateFanMindBillableUsageMicros({ usage: { inputTokens: 1_000, cachedInputTokens: 400, cacheWriteTokens: 100, outputTokens: 200 }, price }), Math.ceil(providerCost * 1.33));
 });
