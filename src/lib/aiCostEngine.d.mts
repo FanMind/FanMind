@@ -1,5 +1,9 @@
 export type AiProviderUsage = { inputTokens: number; cachedInputTokens: number; cacheWriteTokens: number; outputTokens: number };
 export type AiProviderPrice = { inputPerMillionMicros: number; cachedInputPerMillionMicros: number; cacheWritePerMillionMicros: number; outputPerMillionMicros: number };
+export const FANMIND_AI_COST_MARKUP_NUMERATOR: 133;
+export const FANMIND_AI_COST_MARKUP_DENOMINATOR: 100;
 export function calculateProviderCostMicros(input: { usage: AiProviderUsage; price: AiProviderPrice }): number;
+export function calculateFanMindBillableCostMicros(providerCostMicros: number): number;
+export function calculateFanMindBillableUsageMicros(input: { usage: AiProviderUsage; price: AiProviderPrice }): number;
 export function resolveVersionedProviderPrice(input: { catalog: Array<AiProviderPrice & { model: string; serviceTier: string; effectiveFrom: string; effectiveUntil?: string | null }>; model: string; serviceTier: string; occurredAt: string }): (AiProviderPrice & { model: string; serviceTier: string; effectiveFrom: string; effectiveUntil?: string | null }) | null;
 export function evaluateMonthlyAiBudget(input: { usage: { totalTokens: number; providerCostMicros: number; requests: number }; reservation: { totalTokens: number; providerCostMicros: number; requests: number }; limits?: { monthlyTokenLimit?: number | null; monthlyProviderCostLimitMicros?: number | null; monthlyRequestLimit?: number | null }; warningRatio?: number }): { configured: boolean; allowed: boolean; level: "unconfigured" | "normal" | "warning" | "hard_limit"; usageRatio: number | null };
