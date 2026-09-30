@@ -1332,3 +1332,12 @@ Reserve -> Settle/Release -> Guthabenverbrauch-Implementierung. Legacy
 ENV-basierte Kostenschätzungen bleiben reine Observability und dürfen den
 Capacity-v2-Ledger nicht setteln. Maßgeblich:
 `docs/operations/OPENAI_PRICE_CATALOG.md`.
+
+
+## AI Capacity v2 · Verbrauchsanzeige und Null-Prozent-Verhalten — 30. September 2026
+
+AI-Kapazität wird kundenbezogen als **verbleibender Prozentwert** angezeigt, nicht als primäres Tokenkontingent. Schnell, Ausgewogen und Premium greifen auf dasselbe Capacity-v2-Guthaben zu; wegen unterschiedlicher realer Providerkosten sinkt die Anzeige je nach gewählter Qualitätsstufe unterschiedlich schnell. Kommunikationsanalyse und Antworterstellung verbrauchen denselben Pool.
+
+Reservierte sowie indeterminate/reconciliation-required Beträge gelten bis zur Freigabe oder Abrechnung als nicht verfügbar. Die Anzeige wird konservativ abgerundet.
+
+Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Capacity-v2-KI-Aufrufe werden gesperrt, bis zusätzliche bezahlte Kapazität verfügbar ist oder der nächste autoritative Abrechnungszeitraum neues inkludiertes Guthaben gewährt. Es erfolgt kein automatisches Downgrade auf Schnell, um die Sperre zu umgehen.
