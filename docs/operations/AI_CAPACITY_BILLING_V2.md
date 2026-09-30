@@ -244,6 +244,16 @@ Semantics:
 
 The first implementation may prepare these controls and persistence default-off. Production activation remains a separate protected action.
 
+## Isolated Staging checkpoint — 2026-09-30
+
+FanMind Staging `vshyhvgcmrlagvfnvomc` already contained the Capacity-v2 policy/grant/reservation/ledger tables and activation-guard columns. The owner-authorized budget-only seed set the policy to EUR 15 / 30 / 50 for capacity_99 / capacity_199 / capacity_312 and advanced the policy revision from 1 to 2.
+
+This checkpoint did **not** activate Capacity-v2. Global capacity, all package-sales switches, Fast/Balanced/Premium, top-ups and all runtime/package-sales/top-up activation-ready flags remained false; emergency spend freeze remained true. No grants, reservations or ledger events were created. Anon/authenticated retain no direct SELECT privilege on the policy or grants.
+
+Rollback-only negative checks proved that attempts to enable runtime, package sales or top-ups are rejected by the respective activation guards while readiness flags are false.
+
+The reserve/settle RPC lifecycle is still not installed on Staging. Current main `supabase/controlled/ai_capacity_reserve_settle.sql` was inspected before APPLY and found to reference policy variables inside `ai_capacity_grant_credit` that are not declared in that function. Therefore ledger APPLY is blocked until that source defect is fixed and reviewed; no unchanged APPLY is permitted.
+
 ## Activation gates
 
 Do not activate real paid capacity/top-ups until all are true:
