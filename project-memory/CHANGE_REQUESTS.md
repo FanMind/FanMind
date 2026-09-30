@@ -533,3 +533,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Repository scope: introduce Capacity-v2 Stripe env slots, remove setup-fee dependency from legacy checkout compatibility, set legacy setup terms to zero, and reconcile canonical product truth.
 - Boundary: no package AI-budget invention, no automatic customer migration, no Capacity-v2 sales activation, no top-up activation and no Legal/Tax acceptance.
 - Acceptance: exact-head CI/security/governance and independent review; public/product truth contains no new setup-fee promise; remaining activation gates continue fail-closed.
+
+
+## FM-CR-054 — Creator-Building taller conversation pane
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Owner requested that the unused vertical space in the desktop Creator-Building be used for the conversation instead of ending the chat at the previous 39vh cap.
+- Scope: make the desktop Creator-Building workspace consume the available viewport height and let the conversation history flex into that space while leaving the composer/actions below it; keep the existing compact mobile history cap.
+- Boundary: layout-only CSS change; no chat persistence, AI generation, Fan/Character authority, billing, provider, database or external-platform behavior changes.
+- Acceptance: desktop conversation history is materially taller on large screens, retains its own scroll when needed, composer remains reachable below it, and mobile retains the bounded layout.
