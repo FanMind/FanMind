@@ -1,3 +1,12 @@
+## FM-DEC-025 — AI capacity replaces Plus/Ultra product model
+- Date: 2026-09-30
+- Status: CONFIRMED
+- Decision owner: Bernd
+- Decision: FanMind uses base packages at 99 / 199 / 312 EUR per month. Each package contains a monthly AI cost budget. Customers may choose Schnell / Ausgewogen / Premium; actual provider/model/token cost is accounted internally and higher quality consumes capacity faster.
+- Supersedes: the commercial KI Plus +100 EUR/month and KI Ultra +200 EUR/month add-on model. Existing Plus/Ultra schema, Stripe-test resources, ledgers and lifecycle code are legacy compatibility/migration evidence only and must not be presented or activated as the current product.
+- Capacity rules: included monthly capacity expires at month end; purchased top-up capacity is consumed afterward and retains a separately defined validity. Top-ups target approximately 33% gross margin. Exact included budgets and exact top-up validity remain deliberately unset until real usage/cost evidence supports them.
+- Boundary: repository preparation does not authorize live Stripe mutation, real payment, Production Billing activation, Tax approval or destructive deletion of historical ledger/schema evidence.
+
 ## FM-DEC-021 — Mobile only after company registration
 - Date: 2026-09-19
 - Status: ACCEPTED
