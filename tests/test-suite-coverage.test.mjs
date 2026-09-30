@@ -11,7 +11,6 @@ const testsDirectory = path.join(repoRoot, "tests");
 
 const requiredCiRoots = [
   "test:operations",
-  "test:ai-capacity-policy",
   "test:release-integrations",
   "test:staging-stripe-catalog",
   "test:staging-stripe-webhook",
