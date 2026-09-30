@@ -11,6 +11,12 @@ Integration gate: FM-IGATE-AI-BILLING-001
 FanMind replaces the former customer-facing AI Plus/Ultra add-on model with package-bound AI capacity.
 
 - Base packages: EUR 99 / EUR 199 / EUR 312.
+- Setup / installation fee: EUR 0 for every Capacity-v2 base package. The former one-time setup/pilot products are retired for new business.
+- Live Stripe catalog prepared on 2026-09-30:
+  - capacity_99 -> `price_1ULRNOAOA7p70TO9Y8Vf6J3d`
+  - capacity_199 -> `price_1ULRNVAOA7p70TO9obAZlCZM`
+  - capacity_312 -> `price_1ULRRQAOA7p70TO9Y7UWOP2g`
+  These Price objects are catalog inputs only until the remaining activation gates are accepted.
 - Every package contains a monthly AI cost budget. Exact included budget values remain intentionally unset until measured FanMind usage and current provider pricing are reviewed.
 - User-selectable quality modes: Fast, Balanced, Premium.
 - Usage is charged internally from actual model/token/provider cost, not request count.
@@ -40,6 +46,8 @@ Until the v2 activation gates below are satisfied:
 ## Migration boundary
 
 Existing Standard/Plus/Ultra source is migration input, not the new product contract. It must not be deleted blindly.
+
+The historical 990-EUR Pilot/Setup and Starter-Setup products and the historical Starter 312-EUR product were retired from new sale in Stripe on 2026-09-30 by marking their Products inactive. Existing subscription/audit references remain migration evidence and are not rewritten.
 
 Reuse:
 - server-side model/price resolution;
