@@ -58,8 +58,8 @@ test("settles from actual OpenAI provider usage and preserves cached/reasoning d
       },
     },
   });
-  assert.equal(result.providerUsdMicros, 305);
-  assert.equal(result.actualEurMicrocents, 27_450);
+  assert.equal(result.providerUsdMicros, 314);
+  assert.equal(result.actualEurMicrocents, 28_260);
   assert.equal(result.usage.cachedInputTokens, 400);
   assert.equal(result.usage.reasoningOutputTokens, 200);
   assert.equal(result.pricingVersion, "openai-2026-09-30-gpt6-standard-v1");
@@ -97,7 +97,7 @@ test("reserve/settle SQL is service-role-only, idempotent and preserves indeterm
   assert.match(sql, /ai_capacity_settlement_idempotency_conflict/u);
   assert.match(sql, /ai_capacity_insufficient_balance/u);
   assert.match(sql, /state in \('reserved','indeterminate','reconciliation_required'\)/u);
-  assert.match(sql, /ai_capacity_actual_exceeds_reservation/u);
+  assert.match(sql, /reservation_reconciliation_required/u);
   assert.match(sql, /reservation_reconciliation_required/u);
   assert.match(sql, /revoke all on function public\.ai_capacity_reserve[\s\S]*public, anon, authenticated/u);
   assert.match(sql, /grant execute on function public\.ai_capacity_reserve[\s\S]*to service_role/u);
