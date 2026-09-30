@@ -17,6 +17,14 @@ export type AiCapacitySettleResult = {
   releasedEurMicrocents: number;
 };
 
+export type AiCapacityBalanceSnapshot = {
+  totalGrantedEurMicrocents: number;
+  consumedEurMicrocents: number;
+  heldEurMicrocents: number;
+  availableEurMicrocents: number;
+  remainingPercent: number | null;
+};
+
 function serviceKey(): string | null {
   return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
 }
@@ -226,4 +234,46 @@ export async function markAiCapacityIndeterminate(
     p_reservation_id: reservationId,
     p_reason: reason,
   });
+}
+
+
+export async function getAiCapacityBalanceSnapshot(
+  workspaceId: string,
+): Promise<AiCapacityBalanceSnapshot> {
+  const payload = await postRpc<Array<{
+    total_granted_eur_microcents?: unknown;
+    consumed_eur_microcents?: unknown;
+    held_eur_microcents?: unknown;
+    available_eur_microcents?: unknown;
+    remaining_percent?: unknown;
+  }>>("ai_capacity_balance_snapshot", {
+    p_workspace_id: workspaceId,
+  });
+
+  const row = payload[0];
+  const values = [
+    Number(row?.total_granted_eur_microcents),
+    Number(row?.consumed_eur_microcents),
+    Number(row?.held_eur_microcents),
+    Number(row?.available_eur_microcents),
+  ];
+  if (
+    !row ||
+    values.some((value) => !nonNegativeSafeInteger(value)) ||
+    (row.remaining_percent !== null &&
+      (!Number.isInteger(Number(row.remaining_percent)) ||
+        Number(row.remaining_percent) < 0 ||
+        Number(row.remaining_percent) > 100))
+  ) {
+    throw new Error("ai_capacity_balance_response_invalid");
+  }
+
+  return {
+    totalGrantedEurMicrocents: values[0],
+    consumedEurMicrocents: values[1],
+    heldEurMicrocents: values[2],
+    availableEurMicrocents: values[3],
+    remainingPercent:
+      row.remaining_percent === null ? null : Number(row.remaining_percent),
+  };
 }
