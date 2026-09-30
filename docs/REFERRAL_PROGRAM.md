@@ -113,7 +113,7 @@ Ein geworbener Kunde zählt nur, wenn alle Bedingungen erfüllt sind:
 Standardregel:
 
 - Der Rabatt gilt ausschließlich auf die Starter-Grundgebühr von 312 €/Monat.
-- Einmalige Einrichtung, KI Plus, KI Ultra und andere Add-ons sind nicht rabattfähig.
+- Einmalige Einrichtung, nachgekaufte AI-Kapazität und andere Add-ons sind nicht rabattfähig.
 - Rabatte werden nicht bar ausgezahlt.
 - Nicht genutzte Rabatte werden nicht in Guthaben umgewandelt.
 - Rabatt kann nicht unter 0 € fallen.
