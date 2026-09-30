@@ -50,10 +50,11 @@ test("actual authority permits a normal Owner with the explicit capability", asy
   assert.equal(h.calls.capability, 1);
 });
 for (const email of ["platform-admin@fanmind.invalid", " PLATFORM-ADMIN@FANMIND.INVALID "]) {
-  test(`actual authority rejects configured Platform Admin despite Owner role and available capability (${email.trim()})`, async () => {
+  test(`actual authority permits configured Platform Admin only through Owner role and explicit capability (${email.trim()})`, async () => {
     const h = authorityHarness(email);
-    await assert.rejects(h.authority.requireChatAdminCapability(), error => error instanceof WorkspaceAuthorizationError && error.code === "resource_forbidden");
-    assert.equal(await h.authority.hasChatAdminCapability(), false);
+    assert.equal(await h.authority.requireChatAdminCapability(), h.context);
+    assert.equal(await h.authority.hasChatAdminCapability(), true);
+    assert.equal(h.calls.capability, 2);
   });
 }
 test("actual authority rejects a Member even when the capability store would return a grant", async () => {
