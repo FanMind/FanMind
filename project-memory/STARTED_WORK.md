@@ -1106,3 +1106,4 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Scope: repository-only dormant Capacity-v2 policy module and tests: exact 99/199/312 package identities, Fast/Balanced/Premium mode identities, legacy-v1/capacity-v2 discriminator, default-off Platform-Admin policy state and fail-closed admission resolution. No schema, Admin UI mutation, Stripe, provider, Production or customer migration.
 - Acceptance: explicit tests prove no capacity-v2 admission for legacy, unknown package/mode, unset budgets, disabled package/mode, global disabled state or emergency freeze; target package prices remain 99/199/312 EUR and budgets stay unset rather than invented.
 - Recovery: repository revert only; no external state changes.
+- Exact next step: fix the current PR #1235 review findings and required checks on the same branch; merge only after the final head is green and reviewed.
