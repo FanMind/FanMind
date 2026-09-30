@@ -283,8 +283,8 @@ export const roadmapPhases: RoadmapPhase[] = [
     tone: "violet",
     availability: "later",
     items: [
-      { label: "KI Plus", state: "later", status: "bezahlte Erweiterung" },
-      { label: "KI Ultra", state: "later", status: "Premium-Erweiterung" },
+      { label: "AI-Kapazität", state: "later", status: "monatliches Budget je Grundpaket" },
+      { label: "AI-Kapazität nachkaufen", state: "later", status: "Top-up nach Freigabe" },
       { label: "Prompt-Bibliothek", state: "later", status: "Roadmap" },
       { label: "Fan-spezifische Prompts", state: "later", status: "Roadmap" },
       { label: "Automationen nur als geprüfte Erinnerungen", state: "later", status: "Kein Auto-Senden" },
