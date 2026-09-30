@@ -471,3 +471,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: dormant repository-only capacity package/mode/admin admission policy with exact 99/199/312 EUR package identities, Fast/Balanced/Premium modes, legacy-v1/capacity-v2 discrimination and default-off fail-closed controls.
 - Boundaries: no Supabase schema/apply, no Stripe/provider call, no Production activation, no real customer migration and no invented included AI budget.
 - Acceptance: focused positive/negative tests plus exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review.
+
+
+## FM-CR-048 — AI Capacity ledger/Admin persistence
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Scope: repository-only source for default-off AI Capacity persistence and Platform-Admin controls; no database apply or external activation.
