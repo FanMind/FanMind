@@ -45,6 +45,7 @@ export class WebsiteChatServiceError extends Error {
     | "session_unavailable"
     | "message_invalid"
     | "handoff_invalid"
+    | "assistant_unavailable"
     | "persistence_unavailable";
 
   constructor(code: WebsiteChatServiceError["code"]) {
@@ -279,4 +280,154 @@ export async function createWebsiteChatVisitorSession(input: {
   if (!response?.ok) throw new WebsiteChatServiceError("persistence_unavailable");
 
   return { token, expiresAt: expiresAt.toISOString(), consentVersion: installation.consent_version };
+}
+
+
+type WebsiteChatSessionRow = {
+  id: string;
+  installation_id: string;
+  workspace_id: string;
+  origin: string;
+  expires_at: string;
+  revoked_at: string | null;
+};
+
+type WebsiteChatReceiptRow = {
+  contact_id: string;
+  conversation_id: string;
+  message_id: string;
+};
+
+type WebsiteChatConversationMessage = {
+  id: string;
+  direction: "inbound" | "outbound" | "note";
+  content: string;
+  created_at: string;
+  external_message_id: string | null;
+};
+
+export type WebsiteChatAssistantContext = {
+  workspaceId: string;
+  contactId: string;
+  conversationId: string;
+  incomingMessageId: string;
+  clientMessageId: string;
+  origin: string;
+  messages: Array<{ direction: "inbound" | "outbound"; content: string }>;
+};
+
+export async function resolveWebsiteChatAssistantContext(input: {
+  publicInstallationId: unknown;
+  origin: unknown;
+  sessionToken: unknown;
+  clientMessageId: unknown;
+}): Promise<WebsiteChatAssistantContext> {
+  const { serviceKey, sessionSecret } = serviceConfiguration();
+  const resolved = await resolveWebsiteChatInstallation(input);
+  let visitorSubjectHash: string;
+  let clientMessageId: string;
+  try {
+    visitorSubjectHash = hashWebsiteChatSessionToken({
+      token: input.sessionToken,
+      secret: sessionSecret,
+    });
+    clientMessageId = requireWebsiteChatClientMessageId(input.clientMessageId);
+  } catch {
+    throw new WebsiteChatServiceError("session_unavailable");
+  }
+
+  const sessions = await fetchRows<WebsiteChatSessionRow>(
+    `website_chat_visitor_sessions?select=id,installation_id,workspace_id,origin,expires_at,revoked_at&installation_id=eq.${encodeURIComponent(resolved.installation.id)}&workspace_id=eq.${encodeURIComponent(resolved.installation.workspace_id)}&origin=eq.${encodeURIComponent(resolved.origin)}&visitor_subject_hash=eq.${encodeURIComponent(visitorSubjectHash)}&order=created_at.desc&limit=1`,
+    serviceKey,
+  );
+  const session = sessions[0];
+  if (!session || session.revoked_at || Date.parse(session.expires_at) <= Date.now()) {
+    throw new WebsiteChatServiceError("session_unavailable");
+  }
+
+  const receipts = await fetchRows<WebsiteChatReceiptRow>(
+    `website_chat_message_receipts?select=contact_id,conversation_id,message_id&session_id=eq.${encodeURIComponent(session.id)}&client_message_id=eq.${encodeURIComponent(clientMessageId)}&limit=1`,
+    serviceKey,
+  );
+  const receipt = receipts[0];
+  if (!receipt) throw new WebsiteChatServiceError("message_invalid");
+
+  const history = await fetchRows<WebsiteChatConversationMessage>(
+    `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(session.workspace_id)}&conversation_id=eq.${encodeURIComponent(receipt.conversation_id)}&order=created_at.desc&limit=16`,
+    serviceKey,
+  );
+  const messages = history
+    .reverse()
+    .filter((message) => message.direction === "inbound" || message.direction === "outbound")
+    .map((message) => ({ direction: message.direction as "inbound" | "outbound", content: message.content.slice(0, 4000) }));
+
+  return {
+    workspaceId: session.workspace_id,
+    contactId: receipt.contact_id,
+    conversationId: receipt.conversation_id,
+    incomingMessageId: receipt.message_id,
+    clientMessageId,
+    origin: resolved.origin,
+    messages,
+  };
+}
+
+export async function persistWebsiteChatAssistantReply(input: {
+  context: WebsiteChatAssistantContext;
+  reply: unknown;
+}) {
+  const { serviceKey } = serviceConfiguration();
+  let content: string;
+  try {
+    content = normalizeWebsiteChatMessage(input.reply);
+  } catch {
+    throw new WebsiteChatServiceError("assistant_unavailable");
+  }
+  const externalMessageId = `website-ai:${input.context.clientMessageId}`;
+  const existing = await fetchRows<WebsiteChatConversationMessage>(
+    `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(input.context.workspaceId)}&conversation_id=eq.${encodeURIComponent(input.context.conversationId)}&external_message_id=eq.${encodeURIComponent(externalMessageId)}&limit=1`,
+    serviceKey,
+  );
+  if (existing[0]?.content) {
+    return { reply: existing[0].content, duplicate: true as const };
+  }
+
+  const response = await fetch(getSupabaseRestUrl("conversation_messages"), {
+    method: "POST",
+    headers: { ...getSupabaseHeaders(serviceKey), Prefer: "return=representation" },
+    body: JSON.stringify({
+      workspace_id: input.context.workspaceId,
+      conversation_id: input.context.conversationId,
+      contact_id: input.context.contactId,
+      direction: "outbound",
+      message_type: "form",
+      source_platform: "website-chat",
+      source_url: input.context.origin,
+      reply_target_url: input.context.origin,
+      external_message_id: externalMessageId,
+      author_label: "FanMind KI",
+      content,
+    }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => null);
+  if (!response?.ok) throw new WebsiteChatServiceError("persistence_unavailable");
+
+  await fetch(
+    `${getSupabaseRestUrl("conversations")}?id=eq.${encodeURIComponent(input.context.conversationId)}&workspace_id=eq.${encodeURIComponent(input.context.workspaceId)}`,
+    {
+      method: "PATCH",
+      headers: { ...getSupabaseHeaders(serviceKey), Prefer: "return=minimal" },
+      body: JSON.stringify({
+        last_outbound_at: new Date().toISOString(),
+        last_message_preview: content.slice(0, 240),
+        ai_status: "ready",
+        next_step: "Website-Gespräch beobachten",
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    },
+  ).catch(() => null);
+
+  return { reply: content, duplicate: false as const };
 }
