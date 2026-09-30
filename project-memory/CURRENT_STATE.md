@@ -1,3 +1,10 @@
+## ChatAdmin Production Owner Preview — bounded rollout — 2026-09-30
+- Owner requested the already-accepted ChatAdmin flow be made available on official Production for the existing internal Admin-CRM owner Workspace only.
+- Production Supabase was verified to lack the ChatAdmin schema before rollout. The accepted controlled base and fan SQL from exact main `973a7991ac476f807ec19bc2063fd807e486c2f1` were applied successfully on 2026-09-30.
+- Exactly one Production Workspace capability is enabled. Normal users remain without ChatAdmin capability; no public rollout and no auto-send.
+- PR #1229 removes the unrelated Platform-Admin hard denial while preserving owner + explicit capability checks, and exports `FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=true` in Production deploy so the already capability-gated fan runtime can operate.
+- Finishline for this rollout: required existing PR gates green -> merge #1229 -> automatic Production deploy succeeds -> owner later opens `https://fanmind.ch/chatadmin` with the internal owner account and performs the same Character -> Fan -> message -> exactly 3 suggestions -> copy/manual confirmation -> persistent history check.
+
 ## ChatAdmin Staging Owner Preview — simplified finishline — 2026-09-28
 - The fan schema is already installed and verified on Staging by run `36482988371` on exact main `d80b9d0e82ffa87823dc75d0b2b0659ccd5ae5e1`.
 - The legacy pre-fan ACCEPT workflow is not part of the current finishline; adapting that obsolete layer was stopped.
