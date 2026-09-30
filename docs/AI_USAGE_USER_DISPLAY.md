@@ -17,15 +17,13 @@ Angezeigt werden:
 
 ## Keine erfundene Kontingentlogik
 
-Solange keine verbindlichen KI-Standard-, Plus- oder Ultra-Kontingente beschlossen wurden, zeigt FanMind ausdrücklich:
+Solange die exakten enthaltenen AI-Budgets der 99-/199-/312-€-Pakete noch nicht anhand realer Nutzung freigegeben wurden, zeigt FanMind ausdrücklich:
 
-- kein vertragliches Kontingent aktiv;
-- keine automatische Sperre aktiv;
-- keine automatische Nachberechnung;
-- Tokenwerte sind Schätzwerte;
-- Soft-Hinweisgrenzen dienen nur der Orientierung.
-
-Die Anzeige darf nicht mit Begriffen wie „Restguthaben“, „harte Grenze“ oder „zusätzliche Kosten“ arbeiten, solange diese Produkt- und Billing-Logik nicht freigegeben ist.
+- AI-Kapazität wird gemessen, aber noch kein vertraglicher Restbetrag behauptet;
+- keine automatische Sperre oder Nachberechnung aus unfertigen Budgets;
+- interne Provider-/Modell-/Tokenkosten bleiben serverseitig;
+- Schnell / Ausgewogen / Premium ist eine Qualitätswahl, keine separate Plus/Ultra-Buchung;
+- nachgekaufte Kapazität wird erst nach finaler Top-up-Preis-/Gültigkeitsfreigabe angezeigt.
 
 ## Optionale serverseitige Soft-Hinweise
 
@@ -55,6 +53,6 @@ und erzeugen keine Nachberechnung.
 - Die Nutzeransicht zeigt keine internen Kostenwerte.
 - Der Service-Role-Key bleibt ausschließlich serverseitig.
 
-## Spätere KI Plus/Ultra-Freigabe
+## Spätere AI-Kapazitätsfreigabe
 
-Erst nach einer schriftlichen Entscheidung zu Preisen, Modellen, Kontingenten, Wechsel/Kündigung und Billing dürfen aus Soft-Hinweisen verbindliche Paketgrenzen werden. Bis dahin bleiben KI Plus und KI Ultra als Coming Soon markiert.
+Verbindliche Restkapazität wird erst angezeigt, wenn die enthaltenen Monatsbudgets, Top-up-Preise und Top-up-Gültigkeit freigegeben sowie atomare Monats-/Top-up-Verbuchung abgenommen sind. Das frühere KI-Plus-/KI-Ultra-Produktmodell wird nicht reaktiviert.
