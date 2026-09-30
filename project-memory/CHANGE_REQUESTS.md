@@ -501,3 +501,13 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Current mapping: Schnell = `gpt-6-luna`/low, Ausgewogen = `gpt-6.1-sol`/medium, Premium = `gpt-6-astra`/max; Standard processing only.
 - Boundaries: no external activation, no runtime provider switching yet, no package-budget decision, no Stripe/Tax/customer mutation.
 - Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
+
+## FM-CR-051 — Fan row action menu and compact conversation
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: remove the selected-Fan header, edit button and permanently visible facts/notes cards from the conversation pane; add a three-dot action menu to each Fan row with profile editing, focused notes/facts editing, activation/deactivation and revision-bound deletion.
+- Deletion contract: the authorized same-origin DELETE targets one workspace/Character/Fan/revision tuple; the existing database cascade removes that Fan's conversation and messages. A browser confirmation is required before the request.
+- Acceptance: the conversation starts at the top of the right pane; all Fan controls remain reachable from the row menu; inactive state remains visible and blocks new generation; no Character, workspace, manual-send or external-platform boundary changes.
+- Evidence: focused ChatAdmin/API suite 32/32, ESLint 0 errors, production build and diff check passed locally. PR current-head Browser E2E, CI, CodeQL and Project Memory checks remain publication gates.
