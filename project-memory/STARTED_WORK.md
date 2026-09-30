@@ -1140,11 +1140,22 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
 
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930` — RELEASED_MERGED_VERIFIED.
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Completion: PR #1245 final head `f7c9eb9b9b991733410cc0d3159745b7612a82b2` merged as `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`; Stripe Capacity-v2 EUR 99/199/312 catalog exists, legacy 312/setup/pilot/AI Plus/Ultra products are retired from new sale, and setup fee is 0 EUR for new Capacity-v2 packages.
+- Boundary: no Capacity-v2 package sales/runtime/top-up activation or customer migration was performed by #1245.
+- Exact next step: consumed; continue only with FM-CR-054 budget implementation and later separately authorized Staging activation work.
+- Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
+
+## FM-AI-001 / FM-CR-054 — Capacity-v2 approved budgets — 2026-09-30
 - Status: IN_PROGRESS
 - Risk: R4
-- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930`.
-- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
-- Completed so far: live Stripe Capacity-v2 EUR 99/199/312 prices created; legacy 312/setup/pilot Products retired from new sale; repository branch records zero setup fee and Capacity-v2 env mapping.
-- Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
-- Exact next step: fix only current PR #1245 validation findings, obtain one clean exact-head CI/review, then merge; do not start Capacity-v2 activation from this source task.
-- Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
+- Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
+- Completed so far: owner-approved EUR 15 / 30 / 50 budgets encoded in canonical policy, controlled-schema defaults and tests; no target mutation.
+- Still open: exact-head CI, independent review and merge.
+- Exact next step: converge this budget-only PR; after merge, separately plan/execute isolated Staging Capacity-v2 schema verification/apply/negative acceptance before any runtime or package-sales activation.
+- Owner action needed: none for repository implementation; later protected Staging/Production actions retain their distinct authorization boundary.
+- Recovery: repository revert only; no customer or provider state is changed by this task.
