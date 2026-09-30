@@ -1,6 +1,5 @@
 import { BillingCheckoutButton } from "@/components/BillingCheckoutButton";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
-import { AI_TIER_IDS, formatAiTierPrice, getAiTierConfig } from "@/config/aiTiers.mjs";
 import {
   getBillingCheckoutActionLabel,
   shouldShowBillingCheckoutAction,
@@ -118,21 +117,22 @@ const BASE_PACKAGE_CARDS: PackageCard[] = [
   },
 ];
 
-const AI_ADD_ON_CARDS: AddOnCard[] = AI_TIER_IDS.map((tierId) => {
-  const tier = getAiTierConfig(tierId);
-  return {
-    key: `ai_${tier.id}`,
-    name: tier.name,
-    purpose: tier.description,
-    status: tier.publicStatus,
-    price: formatAiTierPrice(tier),
-    features: [...tier.features],
-    showComingSoonMark: tier.publicStatus === "Coming Soon",
-  };
-});
-
 const ADD_ON_CARDS: AddOnCard[] = [
-  ...AI_ADD_ON_CARDS,
+  {
+    key: "ai_capacity_topup",
+    name: "AI-Kapazität nachkaufen",
+    purpose:
+      "Zusätzliche AI-Kapazität nach Verbrauch des monatlich enthaltenen Budgets. Preis und Gültigkeit werden vor Aktivierung separat freigegeben.",
+    status: "Coming Soon",
+    price: "noch nicht freigegeben",
+    features: [
+      "Verbrauch nach tatsächlichen Provider-/Modell-/Tokenkosten",
+      "erst Monatsbudget, danach Zusatzkapazität",
+      "ca. 33 % Ziel-Bruttomarge",
+      "keine automatische Sendung",
+    ],
+    showComingSoonMark: true,
+  },
   {
     key: "reach_analysis",
     name: "Reichweitenanalyse",
@@ -601,9 +601,11 @@ export function PackageSettingsSection({
         <div>
           <p className={profileStyles.invoiceLabel}>Zusatzpakete / Add-ons</p>
           <p className={profileStyles.invoiceValue}>
-            KI Standard ist im Basispaket enthalten. KI Plus und KI Ultra sind
-            separat berechnete Erweiterungen und bleiben bis zur Preis-,
-            Kontingent- und Billing-Freigabe als Coming Soon markiert.
+            Die Grundpakete 99 / 199 / 312 € erhalten ein monatliches
+            AI-Kostenbudget. Die exakten enthaltenen Budgets werden erst anhand
+            realer Nutzung festgelegt. Schnell, Ausgewogen und Premium sind
+            Qualitätsstufen; zusätzliche AI-Kapazität wird später separat
+            nachkaufbar.
           </p>
         </div>
       </div>
