@@ -24,7 +24,7 @@ export const DEFAULT_AI_CAPACITY_ADMIN_POLICY = Object.freeze({
   globalCapacityEnabled: false,
   emergencySpendFreeze: true,
   topUpSalesEnabled: false,
-  packageEnabled: Object.freeze({
+  packageSalesEnabled: Object.freeze({
     capacity_99: false,
     capacity_199: false,
     capacity_312: false,
@@ -60,9 +60,9 @@ export function normalizeAiCapacityAdminPolicy(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new TypeError("invalid_ai_capacity_admin_policy");
   }
-  const packageEnabled = booleanRecord(input.packageEnabled, AI_CAPACITY_PACKAGE_IDS);
+  const packageSalesEnabled = booleanRecord(input.packageSalesEnabled, AI_CAPACITY_PACKAGE_IDS);
   const qualityModeEnabled = booleanRecord(input.qualityModeEnabled, AI_CAPACITY_QUALITY_MODES);
-  if (!packageEnabled || !qualityModeEnabled) {
+  if (!packageSalesEnabled || !qualityModeEnabled) {
     throw new TypeError("invalid_ai_capacity_admin_policy");
   }
   for (const field of ["globalCapacityEnabled", "emergencySpendFreeze", "topUpSalesEnabled"]) {
@@ -75,27 +75,32 @@ export function normalizeAiCapacityAdminPolicy(input = {}) {
   }
   const budgets = {};
   for (const packageId of AI_CAPACITY_PACKAGE_IDS) {
+    if (!Object.prototype.hasOwnProperty.call(input.includedBudgetEurMicrocents, packageId)) {
+      throw new TypeError("invalid_ai_capacity_admin_policy");
+    }
     const normalized = exactPositiveIntegerOrNull(input.includedBudgetEurMicrocents[packageId]);
     if (normalized === undefined) {
       throw new TypeError("invalid_ai_capacity_admin_policy");
     }
     budgets[packageId] = normalized;
   }
+  if (input.globalCapacityEnabled && !Object.values(qualityModeEnabled).some(Boolean)) {
+    throw new TypeError("invalid_ai_capacity_admin_policy");
+  }
   return Object.freeze({
     globalCapacityEnabled: input.globalCapacityEnabled,
     emergencySpendFreeze: input.emergencySpendFreeze,
     topUpSalesEnabled: input.topUpSalesEnabled,
-    packageEnabled,
+    packageSalesEnabled,
     qualityModeEnabled,
     includedBudgetEurMicrocents: Object.freeze(budgets),
   });
 }
 
-export function resolveAiCapacityAdmission({
+function resolveCommonCapacityPolicy({
   billingContractVersion,
   packageId,
-  qualityMode,
-  adminPolicy = DEFAULT_AI_CAPACITY_ADMIN_POLICY,
+  adminPolicy,
 } = {}) {
   if (!AI_BILLING_CONTRACT_VERSIONS.includes(billingContractVersion)) {
     return Object.freeze({ allowed: false, reason: "billing_contract_unknown" });
@@ -106,10 +111,6 @@ export function resolveAiCapacityAdmission({
   if (!AI_CAPACITY_PACKAGE_IDS.includes(packageId)) {
     return Object.freeze({ allowed: false, reason: "package_unknown" });
   }
-  if (!AI_CAPACITY_QUALITY_MODES.includes(qualityMode)) {
-    return Object.freeze({ allowed: false, reason: "quality_mode_unknown" });
-  }
-
   let policy;
   try {
     policy = normalizeAiCapacityAdminPolicy(adminPolicy);
@@ -123,12 +124,6 @@ export function resolveAiCapacityAdmission({
   if (policy.emergencySpendFreeze) {
     return Object.freeze({ allowed: false, reason: "emergency_spend_freeze" });
   }
-  if (!policy.packageEnabled[packageId]) {
-    return Object.freeze({ allowed: false, reason: "package_disabled" });
-  }
-  if (!policy.qualityModeEnabled[qualityMode]) {
-    return Object.freeze({ allowed: false, reason: "quality_mode_disabled" });
-  }
   const includedBudgetEurMicrocents = policy.includedBudgetEurMicrocents[packageId];
   if (includedBudgetEurMicrocents == null) {
     return Object.freeze({ allowed: false, reason: "included_budget_unset" });
@@ -138,9 +133,56 @@ export function resolveAiCapacityAdmission({
     allowed: true,
     reason: "allowed",
     packageId,
-    qualityMode,
     monthlyPriceCents: AI_CAPACITY_PACKAGES[packageId].monthlyPriceCents,
     includedBudgetEurMicrocents,
     topUpSalesEnabled: policy.topUpSalesEnabled,
+    packageSalesEnabled: policy.packageSalesEnabled[packageId],
+    policy,
   });
 }
+
+export function resolveAiCapacityUsageAdmission({
+  billingContractVersion,
+  packageId,
+  qualityMode,
+  adminPolicy = DEFAULT_AI_CAPACITY_ADMIN_POLICY,
+} = {}) {
+  if (!AI_CAPACITY_QUALITY_MODES.includes(qualityMode)) {
+    return Object.freeze({ allowed: false, reason: "quality_mode_unknown" });
+  }
+  const common = resolveCommonCapacityPolicy({ billingContractVersion, packageId, adminPolicy });
+  if (!common.allowed) return common;
+  if (!common.policy.qualityModeEnabled[qualityMode]) {
+    return Object.freeze({ allowed: false, reason: "quality_mode_disabled" });
+  }
+  return Object.freeze({
+    allowed: true,
+    reason: "allowed",
+    packageId,
+    qualityMode,
+    monthlyPriceCents: common.monthlyPriceCents,
+    includedBudgetEurMicrocents: common.includedBudgetEurMicrocents,
+    topUpSalesEnabled: common.topUpSalesEnabled,
+  });
+}
+
+export function resolveAiCapacitySalesAdmission({
+  billingContractVersion,
+  packageId,
+  adminPolicy = DEFAULT_AI_CAPACITY_ADMIN_POLICY,
+} = {}) {
+  const common = resolveCommonCapacityPolicy({ billingContractVersion, packageId, adminPolicy });
+  if (!common.allowed) return common;
+  if (!common.packageSalesEnabled) {
+    return Object.freeze({ allowed: false, reason: "package_sales_disabled" });
+  }
+  return Object.freeze({
+    allowed: true,
+    reason: "allowed",
+    packageId,
+    monthlyPriceCents: common.monthlyPriceCents,
+    includedBudgetEurMicrocents: common.includedBudgetEurMicrocents,
+  });
+}
+
+export const resolveAiCapacityAdmission = resolveAiCapacityUsageAdmission;
