@@ -4,6 +4,8 @@ Stand: Juli 2026
 
 Dieses Dokument beschreibt das geplante Referral-Programm. Es ist eine Produkt-/Billing-Roadmap und darf erst als aktiv verkauft oder automatisiert werden, wenn Tracking, Billing-Verrechnung, Missbrauchsschutz sowie rechtliche/steuerliche Prüfung abgeschlossen sind.
 
+> **AI-Capacity-Billing-v2-Abgrenzung (30.09.2026):** Die nachstehenden 312-EUR-Starter-Regeln beschreiben weiterhin ausschließlich den bestehenden/Legacy-v1-Vertrag. Für das akzeptierte Zielmodell mit 99 / 199 / 312 EUR ist die Referral-Berechtigung je Paket noch nicht festgelegt. Deshalb sind Capacity-v2-Pakete und AI-Kapazitäts-Top-ups bis zu einer ausdrücklichen Owner-Entscheidung **nicht referral-rabattfähig**. Der gleiche Zahlenwert 312 EUR darf nicht automatisch die Legacy-Starter-Regel auf das neue 312-EUR-Paket übertragen. Eine spätere Freigabe muss Paket für Paket dokumentiert und Billing/Legal gemeinsam aktualisiert werden.
+
 ## 1. Kernidee
 
 FanMind startet ein zeitlich bzw. wachstumsbasiert begrenztes Referral-Programm. Nicht nur die ersten 100 Nutzer bekommen diese Chance. Stattdessen läuft die Aktion, bis FanMind global `2.000` aktive zahlende FanMind-Kunden/Workspaces erreicht.
