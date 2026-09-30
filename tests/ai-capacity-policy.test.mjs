@@ -5,6 +5,7 @@ import {
   DEFAULT_AI_CAPACITY_ADMIN_POLICY,
   normalizeAiCapacityAdminPolicy,
   resolveAiCapacityAdmission,
+  resolveAiCapacitySalesAdmission,
 } from "../src/lib/aiCapacityPolicy.mjs";
 
 function enabledPolicy(overrides = {}) {
@@ -13,8 +14,8 @@ function enabledPolicy(overrides = {}) {
     globalCapacityEnabled: true,
     emergencySpendFreeze: false,
     topUpSalesEnabled: false,
-    packageEnabled: {
-      ...DEFAULT_AI_CAPACITY_ADMIN_POLICY.packageEnabled,
+    packageSalesEnabled: {
+      ...DEFAULT_AI_CAPACITY_ADMIN_POLICY.packageSalesEnabled,
       capacity_99: true,
     },
     qualityModeEnabled: {
@@ -63,14 +64,39 @@ test("legacy and unknown billing contracts never enter capacity v2", () => {
   }
 });
 
-test("package, mode, budget and emergency switches fail closed independently", () => {
+test("usage switches fail closed independently", () => {
   const base = enabledPolicy();
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "missing", qualityMode: "fast", adminPolicy: base }).reason, "package_unknown");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "missing", adminPolicy: base }).reason, "quality_mode_unknown");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, emergencySpendFreeze: true } }).reason, "emergency_spend_freeze");
-  assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, packageEnabled: { ...base.packageEnabled, capacity_99: false } } }).reason, "package_disabled");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, qualityModeEnabled: { ...base.qualityModeEnabled, fast: false } } }).reason, "quality_mode_disabled");
   assert.equal(resolveAiCapacityAdmission({ billingContractVersion: "capacity_v2", packageId: "capacity_99", qualityMode: "fast", adminPolicy: { ...base, includedBudgetEurMicrocents: { ...base.includedBudgetEurMicrocents, capacity_99: null } } }).reason, "included_budget_unset");
+});
+
+test("new-sales package switch does not cancel already-entitled usage", () => {
+  const policy = enabledPolicy({
+    packageSalesEnabled: {
+      ...DEFAULT_AI_CAPACITY_ADMIN_POLICY.packageSalesEnabled,
+      capacity_99: false,
+    },
+  });
+  assert.equal(
+    resolveAiCapacityAdmission({
+      billingContractVersion: "capacity_v2",
+      packageId: "capacity_99",
+      qualityMode: "fast",
+      adminPolicy: policy,
+    }).allowed,
+    true,
+  );
+  assert.equal(
+    resolveAiCapacitySalesAdmission({
+      billingContractVersion: "capacity_v2",
+      packageId: "capacity_99",
+      adminPolicy: policy,
+    }).reason,
+    "package_sales_disabled",
+  );
 });
 
 test("admission succeeds only with explicit capacity-v2 package, mode and approved budget", () => {
@@ -89,6 +115,29 @@ test("admission succeeds only with explicit capacity-v2 package, mode and approv
     includedBudgetEurMicrocents: 500_000_000,
     topUpSalesEnabled: true,
   });
+});
+
+test("globally enabled policy requires at least one quality mode", () => {
+  const invalid = enabledPolicy({
+    qualityModeEnabled: { fast: false, balanced: false, premium: false },
+  });
+  assert.throws(
+    () => normalizeAiCapacityAdminPolicy(invalid),
+    { name: "TypeError", message: "invalid_ai_capacity_admin_policy" },
+  );
+});
+
+test("missing budget keys are rejected instead of becoming null", () => {
+  const base = enabledPolicy();
+  const { capacity_312: omitted, ...partialBudgets } = base.includedBudgetEurMicrocents;
+  assert.equal(omitted, null);
+  assert.throws(
+    () => normalizeAiCapacityAdminPolicy({
+      ...base,
+      includedBudgetEurMicrocents: partialBudgets,
+    }),
+    { name: "TypeError", message: "invalid_ai_capacity_admin_policy" },
+  );
 });
 
 test("malformed admin policy is rejected and cannot enable capacity", () => {
