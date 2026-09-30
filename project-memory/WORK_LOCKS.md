@@ -1082,7 +1082,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-047
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R4
 - Holder: ChatGPT
 - Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1`.
@@ -1090,3 +1090,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: focused positive/negative tests, exact-head FanMind CI/CodeQL/Browser/God Mode/Project Memory and independent review before merge.
 - Recovery: ordinary source revert; active legacy billing remains untouched.
+
+
+## LOCK-FM-OPENAI-PRICE-CATALOG-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-049
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `16b4833cfb6148980091e61b959eb9d64a18a382`.
+- Scope: repository-only OpenAI price catalog, FanMind quality-mode mapping, cost-engine integration, docs and tests. No external mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: official OpenAI price/model sources, exact-head required CI/security/governance, fail-closed negative tests and independent review.
+- Recovery: source revert only; active Production billing/runtime unchanged.
