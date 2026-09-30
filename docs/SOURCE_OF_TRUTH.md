@@ -1301,3 +1301,34 @@ Schema-Apply, RLS/Privilege-Postflight, rollback-only Staging-Acceptance,
 Runtime-Gate sowie Disclosure-/Löschabnahme erforderlich. Ist das Fan-Gate aus
 oder das Schema nicht nachweislich vollständig, bleibt der bestehende V1-
 Character-Flow verfügbar und die Fan-UI fragt keine Fan-Daten ab.
+
+
+## AI Capacity v2 · OpenAI-Preiskatalog und Qualitätsmodi — 30. September 2026
+
+Für Capacity v2 sind **Schnell**, **Ausgewogen** und **Premium** stabile
+FanMind-Produktmodi. Die konkrete OpenAI-Modellauswahl ist serverseitig und
+versioniert:
+
+- Schnell -> `gpt-6-luna`, Reasoning `low`;
+- Ausgewogen -> `gpt-6.1-sol`, Reasoning `medium`;
+- Premium -> `gpt-6-astra`, Reasoning `max`.
+
+Premium bedeutet das stärkste für FanMind ausdrücklich freigegebene Modell der
+aktuellen Katalogversion. Es wird kein unkontrolliertes `latest`-Alias
+verwendet; ein später besser geeignetes Modell benötigt eine neue geprüfte
+Katalogversion.
+
+Der aktuelle Preis-Snapshot
+`openai-2026-09-30-gpt6-standard-v1` speichert die offiziellen
+OpenAI-Standardpreise serverseitig in integerbasierten USD-Microeinheiten und
+unterscheidet Short-/Long-Context an der veröffentlichten Grenze von mehr als
+272.000 Input-Tokens. FanMind "Schnell" ist nicht OpenAI "Fast mode"; alle drei
+aktuellen Profile verwenden Standard processing. Nicht katalogisierte
+Processing-Tiers, regionale Aufschläge oder fehlende Preisversionen schlagen
+fail-closed.
+
+Der Katalog ist die Provider-Kostenbasis für die nachfolgende
+Reserve -> Settle/Release -> Guthabenverbrauch-Implementierung. Legacy
+ENV-basierte Kostenschätzungen bleiben reine Observability und dürfen den
+Capacity-v2-Ledger nicht setteln. Maßgeblich:
+`docs/operations/OPENAI_PRICE_CATALOG.md`.
