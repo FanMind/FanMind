@@ -1064,3 +1064,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; Owner-Head `248c923232c8a55356bf601d11d475372568039a` mangels Remote/Objekt nicht verifiziert.
 - Scope: exakt ein zusammenhängender Repository-Strang für persistente Character-Fans, deren Wissen, Conversation/Message-Bindung, UI und KI-Kontext.
 - Forbidden: Staging-/Production-APPLY, Capability-Aktivierung, echte Kundendaten, Social/OnlyFans-Zugriff, Auto-Send, Billing, Mobile oder Creator-Target-Transition.
+
+
+## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
+- Task: FM-AI-001 / FM-CR-046
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Acquired: 2026-09-30
+- Scope: repository-only AI Capacity Billing v2 contract and canonical truth reconciliation on PR #1230. No Production/Stripe/Supabase/customer mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: exact-head diff, product/project-memory checks, required GitHub CI, independent exact-head review, zero unresolved blocking P0/P1/P2.
+- Recovery: revert PR #1230 source changes; active billing remains unchanged until a separately authorized activation increment.
