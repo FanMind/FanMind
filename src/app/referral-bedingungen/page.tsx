@@ -95,7 +95,7 @@ const sections: ReferralSection[] = [
           <li>5 % je aktivem, zahlendem geworbenem Workspace</li>
           <li>maximal 20 aktive Empfehlungen beziehungsweise 100 %</li>
           <li>Rabatt ausschließlich auf die Starter-Grundgebühr von 312 €/Monat</li>
-          <li>kein Rabatt auf Einrichtung, KI Plus, KI Ultra, Connections oder Agency-Erweiterungen</li>
+          <li>kein Rabatt auf Einrichtung, nachgekaufte AI-Kapazität, Connections oder Agency-Erweiterungen</li>
           <li>Referral und Agency-Mengenrabatt sind nicht kombinierbar</li>
           <li>keine Barauszahlung, keine Übertragung und kein negativer Betrag</li>
         </ul>
@@ -200,7 +200,7 @@ export default function ReferralTermsPage() {
             <span>✓ Nur B2B-Kunden</span>
             <span>✓ Keine Barauszahlung</span>
             <span>✓ Kein negativer Rechnungsbetrag</span>
-            <span>✓ Keine Rabatte auf KI-Add-ons</span>
+            <span>✓ Keine Rabatte auf AI-Kapazitäts-Top-ups</span>
           </div>
         </header>
 
