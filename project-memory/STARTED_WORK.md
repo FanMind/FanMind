@@ -1138,3 +1138,12 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Boundaries: no Production/Staging schema APPLY, no productive AI route switch, no provider call, no customer migration, no package AI-budget decision, no Stripe/top-up activation.
 - Recovery: source revert only; existing Production AI and billing remain unchanged.
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
+
+## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930`.
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Completed so far: live Stripe Capacity-v2 EUR 99/199/312 prices created; legacy 312/setup/pilot Products retired from new sale; repository branch records zero setup fee and Capacity-v2 env mapping.
+- Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
+- Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
