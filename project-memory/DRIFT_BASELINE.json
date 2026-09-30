@@ -4,7 +4,7 @@
   "captured": "2026-09-30",
   "last_source_of_truth_review": "2026-09-30 FM-AI-001/FM-CR-052: reconcile Capacity-v2 reserve/settle lifecycle, percentage customer meter and explicit no-free-reserve exhaustion behavior; repository-only, no target activation.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "a725903313030f24549c47a05e33e0f31cf3488a",
+    "docs/SOURCE_OF_TRUTH.md": "06f33b8fd75a513b184e3a77ce05cfbabd9e67c4",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
