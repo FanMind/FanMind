@@ -453,7 +453,9 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 ## FM-CR-046 — AI Capacity Billing v2
 - Date: 2026-09-30
 - Status: ACCEPTED_FOR_IMPLEMENTATION
-- Risk: R3
+- Risk: R4
+- Contract: FM-CONTRACT-AI-BILLING-001
+- Integration gate: FM-IGATE-AI-BILLING-001
 - Source: Owner replaces the customer-facing KI Plus/Ultra add-on model with package-bound AI capacity.
 - Contract: EUR 99/199/312 base packages; monthly included AI cost budget per package (exact values deliberately open); Fast/Balanced/Premium quality modes; actual provider/model/token cost accounting; included capacity expires monthly; purchased capacity survives reset with explicit validity; included bucket consumed before purchased bucket; top-ups target about 33% gross margin.
 - Boundary: no Production payment/top-up activation, no invented package budgets, no automatic customer migration, and no Legal/Tax acceptance is implied.
