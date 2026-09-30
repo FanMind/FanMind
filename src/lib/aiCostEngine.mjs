@@ -1,5 +1,11 @@
 const INTEGER_FIELDS = ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens"];
 
+// Commercial owner decision: billable FanMind AI value is the exact OpenAI
+// provider cost plus a 33% markup. Keep this server-side and integer-based so
+// pricing never depends on UI copy or floating-point money arithmetic.
+export const FANMIND_AI_COST_MARKUP_NUMERATOR = 133;
+export const FANMIND_AI_COST_MARKUP_DENOMINATOR = 100;
+
 function exactNonNegativeInteger(value) {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
@@ -32,6 +38,21 @@ export function calculateProviderCostMicros({ usage, price }) {
     normalized.cacheWriteTokens * rates.cacheWriteTokens +
     normalized.outputTokens * rates.outputTokens;
   return Math.ceil(numerator / 1_000_000);
+}
+
+export function calculateFanMindBillableCostMicros(providerCostMicros) {
+  const normalized = exactNonNegativeInteger(providerCostMicros);
+  if (normalized === null) throw new TypeError("invalid_provider_cost");
+  return Math.ceil(
+    (normalized * FANMIND_AI_COST_MARKUP_NUMERATOR) /
+      FANMIND_AI_COST_MARKUP_DENOMINATOR,
+  );
+}
+
+export function calculateFanMindBillableUsageMicros({ usage, price }) {
+  return calculateFanMindBillableCostMicros(
+    calculateProviderCostMicros({ usage, price }),
+  );
 }
 
 export function resolveVersionedProviderPrice({ catalog, model, serviceTier, occurredAt }) {
