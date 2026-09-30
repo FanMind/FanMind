@@ -493,7 +493,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-050 — Versioned OpenAI price catalog
 - Date: 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Source: owner requested official OpenAI pricing as the cost basis and clarified the FanMind modes: Premium uses the strongest suitable approved model, Ausgewogen a middle model, Schnell the fastest/lower-cost model for communication analysis and replies.
@@ -501,3 +501,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Current mapping: Schnell = `gpt-6-luna`/low, Ausgewogen = `gpt-6.1-sol`/medium, Premium = `gpt-6-astra`/max; Standard processing only.
 - Boundaries: no external activation, no runtime provider switching yet, no package-budget decision, no Stripe/Tax/customer mutation.
 - Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
+
+
+## FM-CR-051 — AI Capacity reserve/settle runtime foundation
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continuation immediately after merged versioned OpenAI price catalog #1242.
+- Scope: atomic included/purchased grant allocation, reserve, actual-usage settle, release, indeterminate/reconciliation handling, explicit versioned FX conversion, server-only adapter/runtime coordinator and required tests.
+- Boundaries: repository-only; no Staging/Production APPLY, productive route switch, provider call, customer migration, package-budget decision or Stripe/top-up activation.
+- Acceptance: exact-head CI/security/governance, independent review and fail-closed evidence for missing usage/FX, insufficient balance, idempotency conflicts and actual cost above reserve.
