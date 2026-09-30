@@ -59,3 +59,16 @@ There is no default FX rate. Missing FX or missing provider usage fails closed.
 - Production Capacity-v2 schema/activation gates remain off.
 
 The next bounded increment may wire this coordinator into productive AI routes only for explicitly resolved `capacity_v2` Workspaces after Staging acceptance.
+
+
+## Customer percentage display
+
+The server-side balance snapshot exposes only the data needed to derive the customer meter:
+
+`remaining_percent = floor(spendable_active_capacity * 100 / active_capacity)`
+
+Spendable capacity excludes settled consumption and currently held reservations, including indeterminate and reconciliation-required reservations. The display therefore cannot claim money that is already committed to an in-flight or unresolved provider call.
+
+The customer UI shows this as **AI-Kapazität: N %**. Raw provider prices, token categories and internal monetary values remain server/accounting details.
+
+At 25% and 10% the UI may warn that capacity is running low. At 0%, AI is blocked. There is no free or throttled fallback reserve and no automatic downgrade to a cheaper model.
