@@ -34,6 +34,8 @@ Until the v2 activation gates below are satisfied:
 - no AI-capacity top-up is sold;
 - no package-budget value is invented;
 - existing paid subscriptions keep their current contractual treatment.
+- every Workspace is resolved through an immutable billing-contract discriminator (`legacy_v1` or `capacity_v2`); absence/ambiguity fails closed and never auto-migrates a legacy subscription.
+- `legacy_v1` continues to use the existing Starter/Plus/Ultra resolver until that exact Workspace is explicitly migrated; `capacity_v2` alone may use the 99/199/312 capacity resolver.
 
 ## Migration boundary
 
@@ -93,6 +95,8 @@ Rules:
 - upgrades/downgrades do not retroactively rewrite settled usage;
 - proration or mid-period allowance changes remain disabled until an explicit policy is owner-approved and tested;
 - duplicate reset/grant workers cannot create duplicate allowance.
+- a reservation remains permanently bound to the exact originating period grant even when settlement/reconciliation happens after `period_end`; it may settle/release only against that originating grant and can never debit the next period's included allowance.
+- expiry prevents new reservations from an old included grant but does not erase or invalidate already-created reservations or their reconciliation duty.
 
 ## Two-phase reservation and settlement
 
@@ -191,6 +195,16 @@ No mode may bypass:
 - capacity reservation;
 - cost logging;
 - provider/model allowlists.
+
+## Referral coexistence
+
+The existing referral program remains a legacy-v1 commercial rule while the capacity-v2 package mapping is introduced.
+
+- `legacy_v1` keeps the current documented Starter referral treatment until separately changed.
+- No EUR 99/199/312 capacity-v2 base package is referral-discount eligible by inference.
+- Capacity-v2 referral eligibility is **UNDECIDED / default-off** until the Owner explicitly maps eligibility for each target package and the Referral/Billing/Legal readers are reconciled.
+- AI capacity top-ups are not referral-discount eligible unless a later explicit decision says otherwise.
+- The package resolver must never reuse the legacy EUR-312 referral rule for capacity-v2 merely because one target package has the same numeric price.
 
 ## Platform-Admin control contract
 
