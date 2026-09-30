@@ -1084,6 +1084,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-046
 - Status: IN_PROGRESS.
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
