@@ -385,3 +385,21 @@ einer server-eigenen Autorisierungsquelle.
       Billing-/Stripe-/Subscription-/Testzugangsfelder mit Owner-JWT negativ
       abgenommen.
 - [x] `README.md`, `AGENTS.md` und `docs/SOURCE_OF_TRUTH.md` bleiben synchron.
+
+
+## 10. Versionierter OpenAI-Preiskatalog
+
+Für Capacity v2 gilt nicht mehr eine frei gepflegte ENV-Schätzung als
+abrechnungsfähige Preisquelle. Der versionierte serverseitige Katalog liegt in
+`src/config/openAiPriceCatalog.mjs` und ist unter
+`docs/operations/OPENAI_PRICE_CATALOG.md` dokumentiert.
+
+Aktuelle Modellauswahl:
+- Schnell: `gpt-6-luna`;
+- Ausgewogen: `gpt-6.1-sol`;
+- Premium: `gpt-6-astra`.
+
+Der Legacy-Observability-Pfad in `aiUsage.ts` darf seine ENV-basierten
+Schätzwerte weiterhin für Anzeige/Monitoring verwenden. Diese Schätzwerte
+dürfen den Capacity-v2-Ledger niemals setteln. Capacity v2 verwendet den
+versionierten Preis, echte Provider-Usage und integerbasierte Geldwerte.

@@ -1,3 +1,5 @@
+import { resolveOpenAiCatalogPrice } from "../config/openAiPriceCatalog.mjs";
+
 const INTEGER_FIELDS = ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens"];
 
 function exactNonNegativeInteger(value) {
@@ -32,6 +34,30 @@ export function calculateProviderCostMicros({ usage, price }) {
     normalized.cacheWriteTokens * rates.cacheWriteTokens +
     normalized.outputTokens * rates.outputTokens;
   return Math.ceil(numerator / 1_000_000);
+}
+
+export function calculateOpenAiProviderCostMicros({
+  usage,
+  model,
+  serviceTier = "standard",
+  occurredAt,
+  regionalProcessing = false,
+}) {
+  if (!usage) throw new TypeError("usage_required");
+  const inputTokens = exactNonNegativeInteger(usage.inputTokens);
+  if (inputTokens === null) throw new TypeError("invalid_usage");
+  const price = resolveOpenAiCatalogPrice({
+    model,
+    serviceTier,
+    occurredAt,
+    inputTokens,
+    regionalProcessing,
+  });
+  if (!price) throw new TypeError("openai_price_unavailable");
+  return Object.freeze({
+    costMicros: calculateProviderCostMicros({ usage, price }),
+    price,
+  });
 }
 
 export function resolveVersionedProviderPrice({ catalog, model, serviceTier, occurredAt }) {

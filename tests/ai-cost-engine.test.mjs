@@ -1,7 +1,8 @@
+import "./openai-price-catalog.cases.mjs";
 import "./ai-capacity-policy.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";
+import { calculateOpenAiProviderCostMicros, calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";
 
 const price = { inputPerMillionMicros: 10_000_000, cachedInputPerMillionMicros: 2_000_000, cacheWritePerMillionMicros: 12_000_000, outputPerMillionMicros: 30_000_000 };
 
@@ -62,4 +63,39 @@ test("worst-case reservation blocks before an exhausted budget", () => {
   const result = evaluateMonthlyAiBudget({ usage: { totalTokens: 90, providerCostMicros: 20, requests: 2 }, reservation: { totalTokens: 11, providerCostMicros: 1, requests: 1 }, limits: { monthlyTokenLimit: 100, monthlyProviderCostLimitMicros: 100, monthlyRequestLimit: 10 } });
   assert.equal(result.allowed, false);
   assert.equal(result.level, "hard_limit");
+});
+
+
+test("calculates provider cost from pinned OpenAI catalog", () => {
+  const result = calculateOpenAiProviderCostMicros({
+    model: "gpt-6-luna",
+    serviceTier: "standard",
+    occurredAt: "2026-09-30T12:00:00.000Z",
+    usage: {
+      inputTokens: 1_000_000,
+      cachedInputTokens: 0,
+      cacheWriteTokens: 0,
+      outputTokens: 1_000_000,
+    },
+  });
+  assert.equal(result.costMicros, 950_000);
+  assert.equal(result.price.catalogVersion, "openai-2026-09-30-gpt6-standard-v1");
+  assert.equal(result.price.model, "gpt-6-luna");
+});
+
+test("OpenAI cost calculation fails closed when a price entry is unavailable", () => {
+  assert.throws(
+    () => calculateOpenAiProviderCostMicros({
+      model: "gpt-6-astra",
+      serviceTier: "fast",
+      occurredAt: "2026-09-30T12:00:00.000Z",
+      usage: {
+        inputTokens: 10,
+        cachedInputTokens: 0,
+        cacheWriteTokens: 0,
+        outputTokens: 10,
+      },
+    }),
+    { name: "TypeError", message: "openai_price_unavailable" },
+  );
 });
