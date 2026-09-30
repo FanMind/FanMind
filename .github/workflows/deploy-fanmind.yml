@@ -67,6 +67,8 @@ jobs:
           fi
           RELEASE_COMMIT="$EXPECTED_RELEASE_COMMIT"
           export FANMIND_RELEASE_COMMIT="$RELEASE_COMMIT"
+          # ChatAdmin fan runtime is still capability-gated in the database; Production has exactly one enabled workspace.
+          export FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=true
 
           ISOLATED_DEPLOY_ENABLED="false"
           if grep -Eq '^[[:space:]]*FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY[[:space:]]*=[[:space:]]*true[[:space:]]*$' .env.production; then
