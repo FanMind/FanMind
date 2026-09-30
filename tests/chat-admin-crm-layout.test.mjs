@@ -60,3 +60,22 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
   assert.match(html, /aria-label="Gespräch"/);
   assert.doesNotMatch(html, /Revision 7/);
 });
+
+test("ChatAdmin groups stored AI suggestions under their inbound fan message", () => {
+  const { groupChatMessages } = loadClient();
+  assert.equal(typeof groupChatMessages, "function");
+  assert.deepEqual(groupChatMessages([
+    { id: "confirmed", direction: "confirmed_reply", content: "Hallo", created_at: "2026-09-30T10:00:00Z" },
+    { id: "inbound", direction: "fan_inbound", content: "Wie geht es dir?", created_at: "2026-09-30T10:01:00Z" },
+    { id: "suggestion-1", direction: "suggested_reply", content: "Gut", created_at: "2026-09-30T10:01:01Z" },
+    { id: "suggestion-2", direction: "suggested_reply", content: "Sehr gut", created_at: "2026-09-30T10:01:02Z" },
+    { id: "suggestion-3", direction: "suggested_reply", content: "Bestens", created_at: "2026-09-30T10:01:03Z" },
+  ]), [
+    { message: { id: "confirmed", direction: "confirmed_reply", content: "Hallo", created_at: "2026-09-30T10:00:00Z" }, suggestions: [] },
+    { message: { id: "inbound", direction: "fan_inbound", content: "Wie geht es dir?", created_at: "2026-09-30T10:01:00Z" }, suggestions: [
+      { id: "suggestion-1", direction: "suggested_reply", content: "Gut", created_at: "2026-09-30T10:01:01Z" },
+      { id: "suggestion-2", direction: "suggested_reply", content: "Sehr gut", created_at: "2026-09-30T10:01:02Z" },
+      { id: "suggestion-3", direction: "suggested_reply", content: "Bestens", created_at: "2026-09-30T10:01:03Z" },
+    ] },
+  ]);
+});
