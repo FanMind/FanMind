@@ -1,3 +1,4 @@
+import "./openai-price-catalog.cases.mjs";
 import "./ai-capacity-policy.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
