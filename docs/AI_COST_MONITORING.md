@@ -82,6 +82,8 @@ Entitlement-Nachweis verwendet werden.
 
 Keine Provider-Preise hart im UI verdrahten. Preise ändern sich. Modellpreise müssen serverseitig konfigurierbar sein.
 
+Verbindliche kommerzielle Bewertungsregel: Für abrechnungsfähige KI-Nutzung ist die Kostenbasis der exakt aufgelöste OpenAI-Providerpreis des tatsächlich verwendeten Modells und Service-Tiers für die vom Provider gemeldeten Tokenkategorien. FanMind bewertet diese Kosten mit einem Aufschlag von 33 Prozent: `fanmind_billable_cost = ceil(provider_cost * 133 / 100)`. Zeichenlängen-Schätzungen und Ereignisse ohne eindeutig auflösbare Provider-Usage plus Preisversion bleiben reine Observability und dürfen keine abrechnungsfähige Belastung erzeugen.
+
 Formel:
 
 `estimated_cost = input_tokens / 1_000_000 * input_price_per_1m_tokens + output_tokens / 1_000_000 * output_price_per_1m_tokens`
