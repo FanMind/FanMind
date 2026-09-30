@@ -14,23 +14,25 @@ import {
   resolveWorkspaceAiTierEntitlement,
 } from "../src/config/aiTiers.mjs";
 
-test("approved AI tier prices and package totals remain stable", () => {
+test("legacy Plus/Ultra no longer expose commercial add-on prices", () => {
   assert.equal(AI_TIER_CONFIG.standard.monthlyAddOnCents, 0);
-  assert.equal(AI_TIER_CONFIG.plus.monthlyAddOnCents, 10000);
-  assert.equal(AI_TIER_CONFIG.ultra.monthlyAddOnCents, 20000);
+  assert.equal(AI_TIER_CONFIG.plus.monthlyAddOnCents, 0);
+  assert.equal(AI_TIER_CONFIG.ultra.monthlyAddOnCents, 0);
+  assert.equal(AI_TIER_CONFIG.plus.legacyCompatibilityOnly, true);
+  assert.equal(AI_TIER_CONFIG.ultra.legacyCompatibilityOnly, true);
 
   assert.equal(getAiTierTotalMonthlyCents("standard", 31200), 31200);
-  assert.equal(getAiTierTotalMonthlyCents("plus", 31200), 41200);
-  assert.equal(getAiTierTotalMonthlyCents("ultra", 31200), 51200);
+  assert.throws(() => getAiTierTotalMonthlyCents("plus", 31200), /legacy_ai_tier_has_no_commercial_price/u);
+  assert.throws(() => getAiTierTotalMonthlyCents("ultra", 31200), /legacy_ai_tier_has_no_commercial_price/u);
 });
 
-test("KI Standard remains included and Plus/Ultra remain separate add-ons", () => {
+test("legacy Plus/Ultra remain technical compatibility states only", () => {
   assert.equal(AI_TIER_CONFIG.standard.includedInBase, true);
   assert.equal(AI_TIER_CONFIG.plus.includedInBase, false);
   assert.equal(AI_TIER_CONFIG.ultra.includedInBase, false);
   assert.equal(formatAiTierPrice("standard"), "im Basispaket enthalten");
-  assert.equal(formatAiTierPrice("plus"), "+100 €/Monat");
-  assert.equal(formatAiTierPrice("ultra"), "+200 €/Monat");
+  assert.equal(formatAiTierPrice("plus"), "nicht mehr als Produkt buchbar");
+  assert.equal(formatAiTierPrice("ultra"), "nicht mehr als Produkt buchbar");
 });
 
 test("AI tiers use the approved server-side 50/100/150 conversation context", () => {
