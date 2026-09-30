@@ -119,12 +119,6 @@ function resolveCommonCapacityPolicy({
     return Object.freeze({ allowed: false, reason: "admin_policy_invalid" });
   }
 
-  if (!policy.globalCapacityEnabled) {
-    return Object.freeze({ allowed: false, reason: "capacity_disabled" });
-  }
-  if (policy.emergencySpendFreeze) {
-    return Object.freeze({ allowed: false, reason: "emergency_spend_freeze" });
-  }
   const includedBudgetEurMicrocents = policy.includedBudgetEurMicrocents[packageId];
   if (includedBudgetEurMicrocents == null) {
     return Object.freeze({ allowed: false, reason: "included_budget_unset" });
@@ -153,6 +147,12 @@ export function resolveAiCapacityUsageAdmission({
   }
   const common = resolveCommonCapacityPolicy({ billingContractVersion, packageId, adminPolicy });
   if (!common.allowed) return common;
+  if (!common.policy.globalCapacityEnabled) {
+    return Object.freeze({ allowed: false, reason: "capacity_disabled" });
+  }
+  if (common.policy.emergencySpendFreeze) {
+    return Object.freeze({ allowed: false, reason: "emergency_spend_freeze" });
+  }
   if (!common.policy.qualityModeEnabled[qualityMode]) {
     return Object.freeze({ allowed: false, reason: "quality_mode_disabled" });
   }
