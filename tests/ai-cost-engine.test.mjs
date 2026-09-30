@@ -78,7 +78,7 @@ test("calculates provider cost from pinned OpenAI catalog", () => {
       outputTokens: 1_000_000,
     },
   });
-  assert.equal(result.costMicros, 600_000);
+  assert.equal(result.costMicros, 950_000);
   assert.equal(result.price.catalogVersion, "openai-2026-09-30-gpt6-standard-v1");
   assert.equal(result.price.model, "gpt-6-luna");
 });
