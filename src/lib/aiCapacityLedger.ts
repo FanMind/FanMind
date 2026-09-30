@@ -188,6 +188,9 @@ export async function settleAiCapacity(input: {
   });
 
   const row = payload[0];
+  if (row?.state === "reconciliation_required") {
+    throw new Error("ai_capacity_reconciliation_required");
+  }
   if (
     !row ||
     typeof row.reservation_id !== "string" ||
