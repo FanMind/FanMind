@@ -78,7 +78,7 @@ test("current tier readiness is explicit and fail-closed", () => {
     assert.equal(readiness.ready, false);
     assert.equal(readiness.automaticallyBookable, false);
     assert.ok(readiness.blockers.includes("public_status"));
-    assert.ok(readiness.blockers.includes("billing_status"));
+    assert.ok(!readiness.blockers.includes("billing_status"));
     assert.ok(readiness.blockers.includes("booking_flag"));
     assert.ok(readiness.blockers.includes("model_class"));
     assert.ok(readiness.blockers.includes("monthly_request_limit"));
@@ -359,7 +359,7 @@ test("current Plus and Ultra entitlements remain blocked by canonical readiness"
     assert.equal(entitlement.fellBackToStandard, true);
     assert.deepEqual(entitlement.fallbackReasons, ["tier_readiness"]);
     assert.ok(entitlement.readinessBlockers.includes("public_status"));
-    assert.ok(entitlement.readinessBlockers.includes("billing_status"));
+    assert.ok(!entitlement.readinessBlockers.includes("billing_status"));
     assert.ok(entitlement.readinessBlockers.includes("booking_flag"));
     assert.ok(entitlement.readinessBlockers.includes("model_class"));
     assert.doesNotMatch(JSON.stringify(entitlement), /DO_NOT_PRINT/u);
