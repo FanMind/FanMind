@@ -503,7 +503,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
 
 
-## FM-CR-051 — AI Capacity reserve/settle runtime foundation
+## FM-CR-052 — AI Capacity reserve/settle runtime foundation
 - Date: 2026-09-30
 - Status: IN_PROGRESS
 - Task: FM-AI-001
