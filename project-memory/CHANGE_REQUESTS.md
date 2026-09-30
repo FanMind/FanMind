@@ -464,7 +464,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-047 — AI Capacity policy foundation
 - Date: 2026-09-30
-- Status: ACCEPTED_FOR_IMPLEMENTATION
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Source: owner requested continued implementation after PR #1230 established the accepted Capacity-v2 contract.
@@ -475,7 +475,19 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-048 — AI Capacity ledger/Admin persistence
 - Date: 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Scope: repository-only source for default-off AI Capacity persistence and Platform-Admin controls; no database apply or external activation.
+
+
+## FM-CR-049 — Versioned OpenAI price catalog
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested official OpenAI pricing as the cost basis and clarified the FanMind modes: Premium uses the strongest suitable approved model, Ausgewogen a middle model, Schnell the fastest/lower-cost model for communication analysis and replies.
+- Scope: versioned provider-price catalog, stable mode-to-model policy, exact cost-engine resolver, canonical docs and tests.
+- Current mapping: Schnell = `gpt-6-luna`/low, Ausgewogen = `gpt-6.1-sol`/medium, Premium = `gpt-6-astra`/max; Standard processing only.
+- Boundaries: no external activation, no runtime provider switching yet, no package-budget decision, no Stripe/Tax/customer mutation.
+- Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
