@@ -64,7 +64,7 @@ export function estimateOpenAiReservationCost({
     usage: {
       inputTokens,
       cachedInputTokens: 0,
-      cacheWriteTokens: 0,
+      cacheWriteTokens: inputTokens,
       outputTokens,
     },
   });
