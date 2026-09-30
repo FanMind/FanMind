@@ -578,4 +578,77 @@ revoke all on function public.ai_capacity_mark_indeterminate(uuid,text)
 grant execute on function public.ai_capacity_mark_indeterminate(uuid,text)
   to service_role;
 
+
+create or replace function public.ai_capacity_balance_snapshot(
+  p_workspace_id uuid
+)
+returns table (
+  total_granted_eur_microcents bigint,
+  consumed_eur_microcents bigint,
+  held_eur_microcents bigint,
+  available_eur_microcents bigint,
+  remaining_percent integer
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public, pg_temp
+set row_security = off
+as $function$
+  with active_grants as (
+    select
+      g.id,
+      greatest(0::bigint, g.granted_eur_microcents - g.reversed_eur_microcents) as active_amount
+    from public.ai_capacity_grants g
+    where g.workspace_id = p_workspace_id
+      and g.reversed_eur_microcents < g.granted_eur_microcents
+      and (g.expires_at is null or g.expires_at > statement_timestamp())
+  ),
+  usage_by_grant as (
+    select
+      a.grant_id,
+      coalesce(sum(
+        case when r.state = 'settled'
+          then coalesce(a.settled_eur_microcents, a.reserved_eur_microcents)
+          else 0 end
+      ),0)::bigint as consumed,
+      coalesce(sum(
+        case when r.state in ('reserved','indeterminate','reconciliation_required')
+          then a.reserved_eur_microcents
+          else 0 end
+      ),0)::bigint as held
+    from public.ai_capacity_reservation_allocations a
+    join public.ai_capacity_reservations r on r.id = a.reservation_id
+    join active_grants g on g.id = a.grant_id
+    group by a.grant_id
+  ),
+  totals as (
+    select
+      coalesce(sum(g.active_amount),0)::bigint as total_granted,
+      coalesce(sum(coalesce(u.consumed,0)),0)::bigint as consumed,
+      coalesce(sum(coalesce(u.held,0)),0)::bigint as held
+    from active_grants g
+    left join usage_by_grant u on u.grant_id = g.id
+  )
+  select
+    total_granted,
+    consumed,
+    held,
+    greatest(0::bigint, total_granted - consumed - held) as available,
+    case
+      when total_granted <= 0 then null
+      else floor(
+        greatest(0::numeric, (total_granted - consumed - held)::numeric)
+        * 100::numeric
+        / total_granted::numeric
+      )::integer
+    end as remaining_percent
+  from totals
+$function$;
+
+revoke all on function public.ai_capacity_balance_snapshot(uuid)
+  from public, anon, authenticated;
+grant execute on function public.ai_capacity_balance_snapshot(uuid)
+  to service_role;
+
 commit;
