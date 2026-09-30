@@ -109,8 +109,8 @@ const sections: PaymentSection[] = [
     content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist während der manuell freigegebenen internen Beta ein kostenpflichtiges Zahlungsmodell und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
   },
   {
-    title: "KI-Stufen und Referral-Rabatte",
-    content: <p>KI Standard ist in der Starter-Grundgebühr von 312 €/Monat enthalten. KI Plus kostet zusätzlich 100 €/Monat, KI Ultra zusätzlich 200 €/Monat. Referral-Rabatte gelten ausschließlich auf die Starter-Grundgebühr von 312 €. Einrichtungsgebühren und KI-Add-ons sind nicht rabattfähig.</p>,
+    title: "AI-Kapazität und Referral-Rabatte",
+    content: <p>FanMind stellt das frühere KI-Plus-/KI-Ultra-Aufpreismodell ein. Die vorgesehenen Grundpakete zu 99 / 199 / 312 € enthalten jeweils ein monatliches AI-Kostenbudget; die exakten enthaltenen Budgets werden vor produktiver Aktivierung anhand realer Nutzung festgelegt. Schnell, Ausgewogen und Premium bestimmen die verwendete Qualitätsstufe und damit den Verbrauch. Nachgekaufte AI-Kapazität ist ein separates Add-on und nicht referral-rabattfähig.</p>,
   },
   {
     title: "Growth und Agency",
