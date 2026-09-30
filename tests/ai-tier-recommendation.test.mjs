@@ -20,8 +20,8 @@ test("AI tier recommendation is advisory and cannot activate paid tiers", () => 
   assert.equal(assertAiTierRecommendationPolicy(), true);
 
   for (const tierId of ["plus", "ultra"]) {
-    assert.equal(AI_TIER_CONFIG[tierId].publicStatus, "Coming Soon");
-    assert.equal(AI_TIER_CONFIG[tierId].billingStatus, "not_configured");
+    assert.equal(AI_TIER_CONFIG[tierId].publicStatus, "Kompatibilitätsstufe");
+    assert.equal(AI_TIER_CONFIG[tierId].billingStatus, "included");
     assert.equal(AI_TIER_CONFIG[tierId].automaticallyBookable, false);
     assert.equal(AI_TIER_CONFIG[tierId].modelClass, null);
     assert.equal(AI_TIER_CONFIG[tierId].monthlyRequestLimit, null);
