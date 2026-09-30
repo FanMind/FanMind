@@ -32,14 +32,14 @@ export function getCommercialTerms(commercialOption: ProductiveCommercialOption)
     case "pilot_only":
       return {
         commercialOption,
-        setupFeeCents: 99000,
+        setupFeeCents: 0,
         monthlyFeeCents: 0,
         commitmentMonths: 0,
       };
     case "starter_paid_setup":
       return {
         commercialOption,
-        setupFeeCents: 99000,
+        setupFeeCents: 0,
         monthlyFeeCents: 31200,
         commitmentMonths: 0,
       };
