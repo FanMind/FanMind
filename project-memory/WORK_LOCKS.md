@@ -1116,3 +1116,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: lifecycle/idempotency/fail-closed tests, exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review before merge.
 - Recovery: source revert only; Production remains on current legacy AI/billing path.
+
+## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-053
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Scope: Stripe catalog retirement/new Capacity-v2 base prices plus repository commercial-truth/env/legacy-compatibility reconciliation. No Capacity-v2 customer activation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: live Stripe readback, exact-head CI/security/governance, fail-closed activation state and independent review.
+- Recovery: Stripe Products can be reactivated; source can be reverted. No customer migration or top-up sale is authorized here.

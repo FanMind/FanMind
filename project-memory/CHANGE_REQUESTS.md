@@ -522,3 +522,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Boundaries: repository-only; no Staging/Production APPLY, productive route switch, provider call, customer migration, package-budget decision or Stripe/top-up activation.
 - Acceptance: exact-head CI/security/governance, independent review and fail-closed evidence for missing usage/FX, insufficient balance, idempotency conflicts and actual cost above reserve.
 - No-free-reserve owner clarification: customer capacity is displayed as remaining percent; both analysis and reply generation use the same pool; 0% blocks all new Capacity-v2 AI reservations until paid additional capacity or the next billing-period grant. No free/throttled fallback and no automatic downgrade.
+
+## FM-CR-053 — Capacity-v2 Stripe catalog cutover and setup-fee retirement
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner requested the old 312-EUR and one-time setup/pilot catalog to be retired and confirmed that FanMind will no longer charge any one-time setup fee.
+- Stripe evidence: live Capacity-v2 prices exist for EUR 99, 199 and 312; legacy Starter 312 and both 990-EUR setup/pilot Products were marked inactive for new sale. Existing references remain migration/audit evidence.
+- Repository scope: introduce Capacity-v2 Stripe env slots, remove setup-fee dependency from legacy checkout compatibility, set legacy setup terms to zero, and reconcile canonical product truth.
+- Boundary: no package AI-budget invention, no automatic customer migration, no Capacity-v2 sales activation, no top-up activation and no Legal/Tax acceptance.
+- Acceptance: exact-head CI/security/governance and independent review; public/product truth contains no new setup-fee promise; remaining activation gates continue fail-closed.
