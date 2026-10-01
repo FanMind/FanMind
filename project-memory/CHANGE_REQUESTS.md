@@ -555,3 +555,13 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
 - Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
 - Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+## FM-CR-056 — Creator-Building fixed shell with three scroll panes
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Owner marked the three desktop columns and requested removal of the outer page scrollbar so the Creator-Building window remains stationary.
+- Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the existing flowing mobile layout and latest-message positioning.
+- Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
+- Acceptance: desktop has no outer page scrollbar from Creator-Building content; each of the three marked columns can scroll independently; the conversation still opens at the newest content; mobile keeps its bounded responsive behavior.

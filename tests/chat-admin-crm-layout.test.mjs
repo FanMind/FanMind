@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync("src/app/chatadmin/ChatAdminClient.tsx", "utf8");
+const styles = readFileSync("src/app/chatadmin/chatadmin.module.css", "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -59,6 +60,14 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
   assert.match(html, /aria-label="Fans von Arela Voss"/);
   assert.match(html, /aria-label="Gespräch"/);
   assert.doesNotMatch(html, /Revision 7/);
+});
+
+test("Creator-Building keeps the desktop shell fixed with three independent scroll panes", () => {
+  assert.match(styles, /\.page\{height:100dvh;min-height:0;overflow:hidden/u);
+  assert.match(styles, /\.characterList,\.fanList\{min-height:0;flex:1 1 auto;overflow-y:auto/u);
+  assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow-y:auto/u);
+  assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
+  assert.match(source, /ref=\{conversationPaneRef\}/u);
 });
 
 test("ChatAdmin groups stored AI suggestions under their inbound fan message", () => {
