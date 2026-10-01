@@ -487,7 +487,7 @@ export async function POST(request: NextRequest) {
       const workspaceResolution = await resolveWorkspaceId(object, event.type);
       const paymentIntentId = stringField(object, "payment_intent");
       const grantKey = stripeAiTopupGrantKey(paymentIntentId);
-      if (workspaceResolution.status !== "resolved" || !grantKey) throw new StripeWebhookRetryableError();
+      if (workspaceResolution.status !== "found" || !grantKey) throw new StripeWebhookRetryableError();
       await grantAiCapacityCredit({
         workspaceId: workspaceResolution.workspaceId,
         grantKind: "purchased",
@@ -672,7 +672,7 @@ export async function POST(request: NextRequest) {
       const grantKey = stripeAiTopupGrantKey(paymentIntentId);
       if (grantKey) {
         const workspaceResolution = await resolveWorkspaceId(object, event.type);
-        if (workspaceResolution.status !== "resolved" || !event.id) {
+        if (workspaceResolution.status !== "found" || !event.id) {
           throw new StripeWebhookRetryableError();
         }
         await reversePurchasedAiCapacity({
