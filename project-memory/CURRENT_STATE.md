@@ -1,3 +1,9 @@
+## Stripe AI capacity top-ups and purchase reversals — repository implementation — 2026-10-01
+- Status: IN_PROGRESS; PR #1252 implements fixed EUR 10/25/50/100 AI-capacity top-ups with PaymentIntent-based idempotent grants and atomic purchase reversals.
+- Refund/dispute handling targets the original PaymentIntent grant and withdraws only unused purchased AI capacity; already consumed/bound capacity remains unchanged.
+- Required CI ownership now includes tests/stripe-ai-topup-policy.test.mjs. Production build, lint, Stripe policy checks, Browser E2E, CodeQL and God Mode Gate were green on the prior head; fresh required checks must pass on the updated head before merge.
+- Boundary: PR remains Draft/write-frozen until all required checks are green; no Production billing mutation or deployment is authorized by this repository change.
+
 ## ChatAdmin Production Owner Preview — bounded rollout — 2026-09-30
 - Owner requested the already-accepted ChatAdmin flow be made available on official Production for the existing internal Admin-CRM owner Workspace only.
 - Production Supabase was verified to lack the ChatAdmin schema before rollout. The accepted controlled base and fan SQL from exact main `973a7991ac476f807ec19bc2063fd807e486c2f1` were applied successfully on 2026-09-30.
