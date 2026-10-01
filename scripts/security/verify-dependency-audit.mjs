@@ -23,6 +23,7 @@ const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@expo/local-build-cache-provider",
   "@expo/metro-config",
   "@expo/prebuild-config",
+  "brace-expansion",
   "decode-uri-component",
   "expo",
   "expo-router",
