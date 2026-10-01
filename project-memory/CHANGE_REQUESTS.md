@@ -555,3 +555,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
 - Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
 - Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+
+## FM-CR-056 — FanMind Website AI dialogue foundation
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Risk: R3
+- Task: FM-WEB-001
+- Source: Owner clarified that Creator-Building is an internal Admin-only Creator construction/training surface while FanMind is the customer product for external Creators, and requested continued work on the embeddable Website AI assistant.
+- Scope: preserve that product boundary; add a default-off Website AI reply route authenticated by verified installation + origin + signed visitor session + persisted inbound receipt; reuse FanMind model/usage accounting and Workspace company prompt; persist an idempotent AI outbound into the same CRM conversation; let widget 1.2 render visitor/AI bubbles while retaining human handoff fallback.
+- Boundary: no Production activation, no Creator-Building dependency, no autonomous sales claims, no email sending, no external channel send, no package migration. FANMIND_WEBSITE_CHAT_AI_ENABLED remains false by default.
+- Acceptance: existing one-way message ingestion continues when AI is disabled/unavailable; AI cannot answer without a valid stored inbound receipt in the same Website session; generated output is stored in the same Workspace/contact/conversation and repeated client-message requests reuse the prior outbound rather than creating a second reply; CRM human handoff remains available.

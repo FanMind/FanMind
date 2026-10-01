@@ -180,3 +180,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Open parameter: exact included AI budgets for the three packages remain intentionally unset pending measured FanMind usage and current provider pricing.
 - Boundary: this decision does not activate Production payments, top-ups, tax treatment, Stripe changes or migrate existing customers. Existing Plus/Ultra source/data may be reused for migration but no longer defines the target customer product model.
 - Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
+
+
+## FM-DEC-027
+- Date: 2026-09-30
+- Status: DECIDED
+- Decision: Creator-Building and FanMind are separate product surfaces. Creator-Building is an internal Admin-only environment used by FanMind operators to create, configure and train Creator personas. FanMind is the customer product used by external Creators to manage their own Fans, conversations, Fan Intelligence, Sales Assistance, purchases, follow-ups and channels. Features may share underlying intelligence services and data contracts, but customer-facing FanMind workflows must not be implemented as Creator-Building UI or depend on its Admin-only access path.
+- Website AI boundary: the embeddable Website AI assistant belongs to FanMind, not Creator-Building. It uses the customer Workspace, Website installation/session and CRM conversation boundary.
