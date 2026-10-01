@@ -25,3 +25,17 @@ test("grant key is stable per Stripe PaymentIntent", () => {
   assert.equal(stripeAiTopupGrantKey("pi_123"), "stripe:payment_intent:pi_123");
   assert.equal(stripeAiTopupGrantKey("bad"), null);
 });
+
+
+test("refund and dispute resolve to the same purchased grant for a PaymentIntent", () => {
+  const paymentIntentId = "pi_topup_123";
+  const grantKey = stripeAiTopupGrantKey(paymentIntentId);
+  assert.equal(grantKey, "stripe:payment_intent:pi_topup_123");
+  assert.equal(stripeAiTopupGrantKey(paymentIntentId), grantKey);
+});
+
+test("invalid PaymentIntent cannot target a purchased grant for reversal", () => {
+  for (const value of [undefined, null, "", "ch_123", "re_123", "dp_123"]) {
+    assert.equal(stripeAiTopupGrantKey(value), null);
+  }
+});
