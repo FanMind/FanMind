@@ -29,6 +29,8 @@ import {
   stripeWebhookReferenceLookupValues,
 } from "@/lib/stripeWorkspacePolicy.mjs";
 import { isHandledStripeWebhookEventType } from "@/lib/stripeWebhookEventPolicy.mjs";
+import { grantAiCapacityCredit } from "@/lib/aiCapacityLedger";
+import { resolveStripeAiTopup, stripeAiTopupGrantKey } from "@/lib/stripeAiTopupPolicy.mjs";
 
 type StripeObject = Record<string, unknown>;
 type StripeEvent = {
@@ -475,6 +477,26 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const paid = stringField(object, "payment_status") === "paid";
+    const metadata = objectField(object, "metadata");
+    const topup = paid ? resolveStripeAiTopup({
+      topupKey: stringField(metadata, "topup_key"),
+      currency: stringField(object, "currency"),
+      amountTotalCents: numberField(object, "amount_total"),
+    }) : null;
+    if (topup) {
+      const workspaceResolution = await resolveWorkspaceId(object, event.type);
+      const paymentIntentId = stringField(object, "payment_intent");
+      const grantKey = stripeAiTopupGrantKey(paymentIntentId);
+      if (workspaceResolution.status !== "resolved" || !grantKey) throw new StripeWebhookRetryableError();
+      await grantAiCapacityCredit({
+        workspaceId: workspaceResolution.workspaceId,
+        grantKind: "purchased",
+        grantKey,
+        expiresAt: null,
+        grantedEurMicrocents: topup.creditEurMicrocents,
+        metadata: { stripe_payment_intent_id: paymentIntentId, stripe_checkout_session_id: stringField(object, "id"), topup_key: topup.key, sale_amount_cents: topup.saleAmountCents },
+      });
+    }
     await update({
       billing_status: paid ? "active" : "pending_sepa_mandate",
       billing_last_payment_at: paid ? now : undefined,
