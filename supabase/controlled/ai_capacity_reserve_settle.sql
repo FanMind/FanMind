@@ -668,6 +668,106 @@ grant execute on function public.ai_capacity_mark_indeterminate(uuid,text)
   to service_role;
 
 
+
+create or replace function public.ai_capacity_reverse_purchase(
+  p_workspace_id uuid,
+  p_grant_key text,
+  p_reversal_key text,
+  p_reason text,
+  p_metadata jsonb default '{}'::jsonb
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+set row_security = off
+as $function$
+declare
+  v_grant public.ai_capacity_grants%rowtype;
+  v_consumed bigint;
+  v_held bigint;
+  v_available bigint;
+  v_existing bigint;
+begin
+  if auth.role() is distinct from 'service_role' then
+    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
+  end if;
+  if p_workspace_id is null
+     or p_grant_key is null or btrim(p_grant_key) = ''
+     or p_reversal_key is null or btrim(p_reversal_key) = ''
+     or p_reason is null or btrim(p_reason) = '' then
+    raise exception using errcode = '22023', message = 'ai_capacity_reversal_invalid';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));
+
+  select amount_eur_microcents
+    into v_existing
+    from public.ai_capacity_ledger_events
+   where workspace_id = p_workspace_id
+     and event_type = 'purchase_reversal'
+     and metadata ->> 'reversal_key' = p_reversal_key
+   limit 1;
+  if found then
+    return v_existing;
+  end if;
+
+  select *
+    into v_grant
+    from public.ai_capacity_grants
+   where workspace_id = p_workspace_id
+     and grant_kind = 'purchased'
+     and grant_key = p_grant_key
+   for update;
+
+  if not found then
+    raise exception using errcode = 'P0002', message = 'ai_capacity_purchase_grant_missing';
+  end if;
+
+  select
+    coalesce(sum(case when r.state = 'settled'
+      then coalesce(a.settled_eur_microcents, a.reserved_eur_microcents)
+      else 0 end), 0)::bigint,
+    coalesce(sum(case when r.state in ('reserved','indeterminate','reconciliation_required')
+      then a.reserved_eur_microcents
+      else 0 end), 0)::bigint
+    into v_consumed, v_held
+    from public.ai_capacity_reservation_allocations a
+    join public.ai_capacity_reservations r on r.id = a.reservation_id
+   where a.grant_id = v_grant.id;
+
+  v_available := greatest(
+    0::bigint,
+    v_grant.granted_eur_microcents - v_grant.reversed_eur_microcents - v_consumed - v_held
+  );
+
+  if v_available > 0 then
+    update public.ai_capacity_grants
+       set reversed_eur_microcents = reversed_eur_microcents + v_available
+     where id = v_grant.id;
+  end if;
+
+  insert into public.ai_capacity_ledger_events (
+    workspace_id, event_type, bucket_kind, grant_id, amount_eur_microcents, metadata
+  ) values (
+    p_workspace_id, 'purchase_reversal', 'purchased', v_grant.id, v_available,
+    coalesce(p_metadata, '{}'::jsonb) || jsonb_build_object(
+      'reversal_key', p_reversal_key,
+      'reason', left(p_reason, 120),
+      'grant_key', p_grant_key
+    )
+  );
+
+  return v_available;
+end
+$function$;
+
+revoke all on function public.ai_capacity_reverse_purchase(uuid,text,text,text,jsonb)
+  from public, anon, authenticated;
+grant execute on function public.ai_capacity_reverse_purchase(uuid,text,text,text,jsonb)
+  to service_role;
+
+
 create or replace function public.ai_capacity_balance_snapshot(
   p_workspace_id uuid
 )
