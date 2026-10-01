@@ -183,7 +183,7 @@
     "test:chat-admin-manual-flow": "node --test tests/chat-admin-manual-flow.test.mjs"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "next": "16.3.8",
     "pdfnative": "1.6.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -195,7 +195,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.3.8",
     "typescript": "^5"
   },
   "overrides": {
@@ -203,7 +203,7 @@
     "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
     "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
     "nanoid@<3.3.18": "3.3.18",
-    "next@16.3.4": {
+    "next@16.3.8": {
       "postcss": "8.5.23",
       "sharp": "0.35.4"
     }
