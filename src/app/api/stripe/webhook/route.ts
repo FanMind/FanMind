@@ -29,7 +29,7 @@ import {
   stripeWebhookReferenceLookupValues,
 } from "@/lib/stripeWorkspacePolicy.mjs";
 import { isHandledStripeWebhookEventType } from "@/lib/stripeWebhookEventPolicy.mjs";
-import { grantAiCapacityCredit } from "@/lib/aiCapacityLedger";
+import { grantAiCapacityCredit, reversePurchasedAiCapacity } from "@/lib/aiCapacityLedger";
 import { resolveStripeAiTopup, stripeAiTopupGrantKey } from "@/lib/stripeAiTopupPolicy.mjs";
 
 type StripeObject = Record<string, unknown>;
@@ -667,6 +667,27 @@ export async function POST(request: NextRequest) {
       event.type === "charge.refunded" ||
       event.type === "charge.dispute.created" ||
       refundStatus === "succeeded";
+    if (refundSucceeded) {
+      const paymentIntentId = stripeId(object.payment_intent);
+      const grantKey = stripeAiTopupGrantKey(paymentIntentId);
+      if (grantKey) {
+        const workspaceResolution = await resolveWorkspaceId(object, event.type);
+        if (workspaceResolution.status !== "resolved" || !event.id) {
+          throw new StripeWebhookRetryableError();
+        }
+        await reversePurchasedAiCapacity({
+          workspaceId: workspaceResolution.workspaceId,
+          grantKey,
+          reversalKey: `stripe:event:${event.id}`,
+          reason: event.type === "charge.dispute.created" ? "dispute" : "refund",
+          metadata: {
+            stripe_event_id: event.id,
+            stripe_payment_intent_id: paymentIntentId,
+            stripe_refund_or_dispute_id: stringField(object, "id"),
+          },
+        });
+      }
+    }
     await update(
       {
         stripe_customer_id: stringField(object, "customer"),
