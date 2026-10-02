@@ -1,6 +1,11 @@
 name: FanMind Read-only Production Audit
 
 on:
+  workflow_run:
+    workflows: ["Deploy FanMind"]
+    types: [completed]
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
       confirmation:
@@ -24,14 +29,19 @@ jobs:
     name: Verify installed Production runtime without writes
     if: >-
       ${{
-        github.ref == 'refs/heads/main' &&
-        inputs.confirmation == 'run-read-only-production-audit'
+        (github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main') ||
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main' &&
+          inputs.confirmation == 'run-read-only-production-audit')
       }}
     runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
     environment: production
     timeout-minutes: 15
     env:
-      EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+      EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
     steps:
       - name: Run installed root-owned audit and verify redacted result
