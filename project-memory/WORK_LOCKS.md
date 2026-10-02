@@ -1128,3 +1128,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
 - Evidence plan: live Stripe readback, exact-head CI/security/governance, fail-closed activation state and independent review.
 - Recovery: Stripe Products can be reactivated; source can be reverted. No customer migration or top-up sale is authorized here.
+
+
+## LOCK-FM-PR1246-MEMORY-20261002
+- Task: FM-AI-001
+- Change request: FM-CR-053
+- Status: RELEASED_COUNTERCHECKED
+- Risk: R1
+- Holder: Codex
+- Acquired: 2026-10-02
+- Scope: PR #1246 documentation-only evidence in STARTED_WORK, WORK_LOCKS and EXECUTION_RECEIPTS; no reuse or release of the separate catalog-cutover lock.
+- Evidence: local focused tests 64/64 and unchanged Guard fail-before/pass-after; new-head GitHub verification remains the publication check.
+- Evidence plan: exact diff, focused billing regressions, Guard failure-before/pass-after and new-head GitHub Guard.
+- Recovery: revert this memory-only commit; no external state or source restoration required.

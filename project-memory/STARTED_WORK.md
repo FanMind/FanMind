@@ -1148,3 +1148,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
 - Exact next step: fix only current PR #1245 validation findings, obtain one clean exact-head CI/review, then merge; do not start Capacity-v2 activation from this source task.
 - Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
+
+
+## FM-AI-001 / FM-CR-053 — PR #1246 memory follow-up — 2026-10-02
+- Status: COUNTERCHECKED
+- Risk: R1
+- Scope: documentation-only evidence for the existing R4 billing cleanup; no additional source change or activation acceptance.
+- Work lock: `LOCK-FM-PR1246-MEMORY-20261002`.
+- Completed so far: verified head `d719d144fad1913aa80591b4a1adc4e4f05c9958`, main `ef45319b51023df7fd850e6fb719e0612011af00`, unchanged cleanup files since base, and Guard failure 36755186044.
+- Verification: focused tests 64/64; unchanged Guard shell steps reject original missing-memory diff and pass updated tree against original base and current main; memory quality/drift/diff checks passed.
+- Still open / exact next step: verify GitHub Guard on the published memory head; PR remains unmerged and broader R4 gates remain open.
+- Exact next step: publish this memory-only commit and verify its GitHub Guard; no merge.
+- Owner action needed: none for this memory follow-up; existing R4 activation gates remain separate.
