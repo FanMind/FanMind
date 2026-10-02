@@ -1140,11 +1140,35 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
 
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930` — RELEASED_MERGED_VERIFIED.
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Completion: PR #1245 final head `f7c9eb9b9b991733410cc0d3159745b7612a82b2` merged as `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`; Stripe Capacity-v2 EUR 99/199/312 catalog exists, legacy 312/setup/pilot/AI Plus/Ultra products are retired from new sale, and setup fee is 0 EUR for new Capacity-v2 packages.
+- Boundary: no Capacity-v2 package sales/runtime/top-up activation or customer migration was performed by #1245.
+- Exact next step: consumed; continue only with FM-CR-056 budget implementation and later separately authorized Staging activation work.
+- Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
+
+## FM-AI-001 / FM-CR-056 — Capacity-v2 approved budgets — 2026-09-30
 - Status: IN_PROGRESS
 - Risk: R4
-- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930`.
-- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
-- Completed so far: live Stripe Capacity-v2 EUR 99/199/312 prices created; legacy 312/setup/pilot Products retired from new sale; repository branch records zero setup fee and Capacity-v2 env mapping.
-- Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
-- Exact next step: fix only current PR #1245 validation findings, obtain one clean exact-head CI/review, then merge; do not start Capacity-v2 activation from this source task.
-- Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
+- Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
+- Completed so far: owner-approved EUR 15 / 30 / 50 budgets encoded in canonical policy, controlled-schema defaults, Admin/reader surfaces and tests. Staging policy was independently seeded to revision 2 with those three values; runtime/sales/top-up/mode/activation-ready flags stayed off and emergency freeze stayed on.
+- Countercheck: activation-guard negatives passed; anon/authenticated policy/grant SELECT privileges are absent; no grants/reservations/ledger events were created.
+- Still open: exact-head CI, independent review and merge. Full ledger Staging acceptance is separately blocked because reserve/settle RPCs are not installed and the current main controlled reserve/settle SQL has a compile-blocking source defect.
+- Exact next step: converge this budget PR; then fix/review the reserve/settle SQL defect as a separate bounded source task before any Staging ledger APPLY.
+- Owner action needed: none for repository implementation; Production activation remains separately protected.
+- Recovery: Staging budget values can be restored to NULL while activation remains off; source changes are revertible.
+
+
+## FM-AI-001 / FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck — 2026-09-30
+- Status: COUNTERCHECKED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-STAGING-BUDGET-SEED-20260930` — RELEASED_COUNTERCHECKED.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: budget seed 15 / 30 / 50 EUR committed at policy revision 2 with one audit event; runtime/package-sales/top-up/modes/activation-ready all remain disabled, emergency freeze remains enabled.
+- Negative proof: guarded activation attempts were rejected; browser roles have no policy/grant SELECT privileges; zero grants/reservations/ledger events remain.
+- Blocker discovered: reserve/settle RPCs are absent on Staging. Applying current main `supabase/controlled/ai_capacity_reserve_settle.sql` unchanged is blocked because `ai_capacity_grant_credit` references undeclared policy variables. Do not apply until separately fixed/reviewed.
+- Exact next step: source-fix the controlled reserve/settle SQL, then perform a fresh Staging ledger APPLY + rollback-only lifecycle acceptance.
+- Recovery: budget-only seed is reversible without enabling any runtime or sales switch.

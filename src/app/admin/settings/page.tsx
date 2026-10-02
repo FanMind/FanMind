@@ -100,21 +100,21 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
             <div className={styles.statusList}>
               <label className={styles.field}>99 € Paket · neues Geschäft
                 <input type="checkbox" name="package_99_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_99} disabled={!aiCapacity.installed} />
-                <input className={styles.input} name="budget_99_eur" inputMode="decimal" placeholder="AI-Budget in EUR · noch offen" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_99)} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_99_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 15" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_99)} disabled={!aiCapacity.installed} />
               </label>
               <label className={styles.field}>199 € Paket · neues Geschäft
                 <input type="checkbox" name="package_199_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_199} disabled={!aiCapacity.installed} />
-                <input className={styles.input} name="budget_199_eur" inputMode="decimal" placeholder="AI-Budget in EUR · noch offen" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_199)} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_199_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 30" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_199)} disabled={!aiCapacity.installed} />
               </label>
               <label className={styles.field}>312 € Paket · neues Geschäft
                 <input type="checkbox" name="package_312_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_312} disabled={!aiCapacity.installed} />
-                <input className={styles.input} name="budget_312_eur" inputMode="decimal" placeholder="AI-Budget in EUR · noch offen" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_312)} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_312_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 50" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_312)} disabled={!aiCapacity.installed} />
               </label>
             </div>
             <button className={styles.buttonPrimary} type="submit" disabled={!aiCapacity.installed}>AI-Capacity-Einstellungen speichern</button>
           </form>
           <p className={styles.muted}>
-            Die Budgetwerte bleiben bewusst leer, bis sie anhand realer FanMind-Nutzung festgelegt werden. Ein Merge dieses Codes wendet das Supabase-Schema nicht an und aktiviert keine Zahlung, kein Top-up und keine Capacity-v2-Kundennutzung.
+            Die Startbudgets sind auf 15 / 30 / 50 € für die Pakete 99 / 199 / 312 festgelegt. Ein Merge dieses Codes wendet das Supabase-Schema nicht an und aktiviert keine Zahlung, kein Top-up und keine Capacity-v2-Kundennutzung.
           </p>
         </section>
 
