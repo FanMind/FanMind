@@ -1,3 +1,10 @@
+## Production read-only audit trigger reconciliation — 2026-10-02
+- Status: IN_PROGRESS; repository regression repair for FM-OPS-001.
+- Evidence: current main Production audit workflow had lost the canonical automatic triggers while the runbook and regression test still require an audit after successful Deploy FanMind plus the daily 04:17 UTC audit window.
+- Correction: restore workflow_run for successful main Deploy FanMind and schedule cron 17 4 * * *, while retaining the manual main-only confirmation/exact-commit path and installed root-owned no-checkout audit execution.
+- Boundary: repository/workflow source only. This change does not itself dispatch the Production audit, deploy, mutate Production, alter customer data, billing, Supabase, Stripe, Restore or Mobile state.
+- Acceptance: exact-head CI must prove the Production audit contract; normal review/merge remains separate from any runtime acceptance.
+
 ## Stripe AI capacity top-ups and purchase reversals — repository implementation — 2026-10-01
 - Status: IN_PROGRESS; PR #1252 implements fixed EUR 10/25/50/100 AI-capacity top-ups with PaymentIntent-based idempotent grants and atomic purchase reversals.
 - Refund/dispute handling targets the original PaymentIntent grant and withdraws only unused purchased AI capacity; already consumed/bound capacity remains unchanged.
