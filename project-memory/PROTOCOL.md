@@ -5,19 +5,17 @@ This directory is the operational memory for FanMind. It complements code, tests
 ## Mandatory execution policy
 `EXECUTION_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `LEGACY_ISSUE_RECONCILIATION.json`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
 
-## Mandatory preflight
-Before substantive code, infrastructure, configuration, workflow or product-state work:
-1. Read `AGENTS.md`, `docs/SOURCE_OF_TRUTH.md`, `EXECUTION_POLICY.md`, `CURRENT_STATE.md`, `FANMIND_DEEP_AUDIT_2026-08-19.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `SESSION_HANDOFF.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `TASK_LEDGER.md`, `DEPENDENCIES.md` and `DECISIONS.md`.
-2. Run/inspect `scripts/fanmind_drift_preflight.py` before relying on prior acceptance for watched truth/workflow files.
-3. Run/inspect `scripts/fanmind_evidence_freshness.py` before relying on mutable runtime/provider/admin evidence.
-4. If the requested/current task is owner-deferred, do not ask again by default. Run `scripts/fanmind_next_best_action.py` and continue with the selected `parallel_safe` task unless the owner explicitly resumes the deferred action.
-5. For Restore work also read `RESTORE_STATE_MACHINE.md` and the canonical Restore runbook before acting.
-6. For provider, Mobile, billing, legal or other external work read `EXTERNAL_ACCEPTANCE.md` and do not infer acceptance from repository evidence alone.
-7. Search `FAILED_ATTEMPTS.md`, `DO_NOT_ASSUME.md`, `ASSUMPTIONS.md`, `CONTRADICTIONS.md` and `CHANGE_REQUESTS.md` for the intended area, error, assumption and prior approach.
-8. Check actual branch/head, recent commits/PRs, current CI/security/supply-chain/runtime/provider state and central finishline #874.
-9. For #642/#643/#644 or work derived from their historical checkboxes, read and validate `LEGACY_ISSUE_RECONCILIATION.json`; never treat them as a zero-state independently of #874 and the retained-gate map.
-10. Search existing task/change IDs before creating new work.
-11. Assign Risk `R1`–`R4`, record critical assumptions, define expected scope and define the evidence/quorum that will prove success before implementation.
+## Adaptive preflight
+`EXECUTION_POLICY.md` defines the required preflight by risk.
+
+- R1 reads only the current scope/head and directly relevant source needed to make the bounded change safely.
+- R2 reads current main plus relevant decisions, dependencies and project-state sources for the affected area.
+- R3/R4 retain the full project-state, failed-attempt, evidence, target, authorization and external-acceptance preflight appropriate to the protected boundary.
+- Restore/provider/Mobile/Billing/legal/protected Production work keeps its domain-specific mandatory readers and target checks.
+- Historical legacy-issue reconciliation remains required when work derives from #642/#643/#644.
+- Always assign Risk R1-R4 before implementation; if scope expands, escalate rather than continuing under an undersized path.
+
+Do not require the complete legacy preflight merely because a task is substantive if the task is an R1/R2 repository-only change with no protected boundary.
 
 ## Owner-declared merge evidence
 - If Bernd explicitly states that he personally merged a specific FanMind pull request, that statement is authoritative Owner evidence for the actor, intent and deliberate acceptance of that manual merge.
@@ -76,11 +74,12 @@ Further unrelated Phase 8 work and Team/roles/multi-workspace features remain la
 6. If nothing safe is executable, surface the earliest unresolved owner action instead of inventing work.
 
 ## Started-work and lock rule
-As soon as substantive work begins:
-- create or refresh its `STARTED_WORK.md` entry;
-- acquire/update its Task-ID lock in `WORK_LOCKS.md`;
-- record completed-so-far, still-open, exact-next-step and owner-action-needed fields;
-- keep unfinished work visible until explicitly closed or superseded.
+Use started-work/locks according to Execution Policy v6.
+
+- R1: no STARTED_WORK, WORK_LOCK or receipt by default.
+- R2: use them only when coordination, concurrency, durable project state or a meaningful handoff requires it.
+- R3/R4: explicit started-work, lock and receipt handling remains mandatory.
+- Any task that escalates into a protected boundary adopts the higher-risk coordination requirements before crossing that boundary.
 
 A stale lock is not free. Reconcile it against PRs, commits, receipts and started-work state before reuse.
 
@@ -170,11 +169,12 @@ Contract/schema/API/AI-context/Billing/disclosure/Social changes require consume
 FanMind orchestration is state-driven, never clock-order-driven. Scheduled Builder, Supervisor, Navigator and Owner Manager runs are fallback/reconciliation opportunities, not ordering guarantees.
 
 - A task may be woken by a repository event, a manual trigger or its normal schedule.
-- Every wake-up must start with the complete mandatory preflight and a fresh current-state scan.
+- Every wake-up must classify the bounded task first and then run the minimum sufficient R1/R2 preflight or the full R3/R4 preflight defined by Execution Policy v6.
 - Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
-- Cross-run coordination happens through canonical Project Memory, current GitHub/runtime/provider evidence, STARTED_WORK, WORK_LOCKS, DEPENDENCIES, receipts and handoffs.
+- Cross-run coordination uses canonical Project Memory only when the task changes durable state or requires coordination; GitHub remains the detailed history for ordinary R1/R2 code changes.
 - A merge event may wake the FanMind Workspace Manager through `.github/workflows/fanmind-manager-event-dispatch.yml`, but it never authorizes a protected action.
-- The manager must recompute the SAFE READY SET from current evidence, preserve the default three-worker limit, serialize uncertainty and return NO_CHANGE when nothing safe is executable.
+- The default orchestration is one active Workspace Builder/Manager run at a time. It recomputes the SAFE READY SET from current evidence, selects exactly one bounded task, serializes uncertainty and returns NO_CHANGE when nothing safe is executable.
+- Separate Planner/Guardian/Supervisor/Navigator runs are not default workers; use them only when the active risk class or contract explicitly requires independent planning/evidence/review.
 - The hourly Builder remains a fallback if an event is missed, delayed, disabled or rejected.
 - Event retries must be idempotent; repeated unchanged state must not create receipt/PR churn.
 - Configuration and activation details live in `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md`.

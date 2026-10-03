@@ -188,3 +188,28 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Accounting values: 1 EUR = 100,000,000 EUR microcents; therefore the canonical ledger values are 1,500,000,000 / 3,000,000,000 / 5,000,000,000 EUR microcents.
 - Scope: these values satisfy the previously open package-budget decision in FM-DEC-026. They do not by themselves activate package sales, AI runtime, top-ups, customer migration or Production.
 - Review rule: later budget changes require a new explicit decision and apply prospectively to future authoritative billing periods; settled historical usage is not rewritten.
+
+
+## FM-DEC-028 — Zero-Friction autonomous development
+- Date: 2026-10-02
+- Status: ACTIVE
+- Source: Bernd explicitly approved the adaptive R1-R4 execution model and the initial FanMind Workspace Builder permissions/boundaries.
+- Decision: FanMind uses risk-proportional execution. R1 MICRO uses the zero-friction repository path without mandatory Planner, separate Guardian, full Project-Memory preflight, lock/receipt or broad unrelated CI. R2 STANDARD uses targeted project context, relevant CI and a short countercheck; Planner/Guardian are conditional. R3 CONTROLLED and R4 PROTECTED retain the stronger evidence, recovery, authorization and protected-boundary controls.
+- One-task rule: every autonomous run handles exactly one bounded task and then stops. A second independent task requires a new run/trigger.
+- Project Memory rule: Git is the detailed code-change history. Project Memory records durable project truth: status, architecture/product decisions, blockers, significant failed approaches, lasting dependencies, runtime/provider facts, authorization boundaries and next actions. Ordinary R1/R2 commit history is not duplicated there.
+- Builder permissions: GitHub read/write for development with write actions still subject to configured confirmation controls; Supabase only where development requires it; no unrestricted Production, Billing/payment, secret/credential, destructive-data or provider-permission authority.
+- Build-until-boundary: safe repository engineering may proceed autonomously through implementation, tests, diff, PR and CI up to a protected boundary. Crossing Staging/Production APPLY, payment activation, destructive mutation, provider activation, signing/store or equivalent protected actions requires the applicable R3/R4 process and current authorization.
+- Supersedes: the universal full-preflight/lock/receipt interpretation of Execution Policy v5 and Project Memory Protocol v7 for ordinary R1/R2 repository work. It does not weaken any existing protected Production/Billing/Restore/destructive/Auth/RLS/tenant-isolation/no-auto-send boundary.
+- Canonical implementation: `project-memory/EXECUTION_POLICY.md` v6 and `docs/operations/FANMIND_WORKSPACE_BUILDER.md`.
+
+
+## FM-DEC-029 — Token-efficient single-agent orchestration and autonomous green merge
+- Date: 2026-10-03
+- Status: ACTIVE
+- Source: Bernd explicitly chose the higher-autonomy model after validating the Workspace Builder in real runs.
+- Decision: Normal FanMind automation defaults to one Workspace Builder/Manager run that sequentially performs task selection, planning, implementation, relevant verification and the ordinary R1/R2 countercheck. Separate Planner/Supervisor/Navigator/Guardian agents are not mandatory default workers and are invoked only when the applicable risk class or contract requires true independence.
+- Merge rule: for R1/R2 repository work, the Builder may autonomously merge when all checks required for the affected scope are green, the PR is mergeable, the final diff matches the bounded task, no unresolved review/countercheck blocker remains and no Protected Boundary is crossed. Green required CI is the default merge signal; unrelated/non-applicable checks are not added as extra blockers.
+- Post-merge rule: verify the new main, reconcile only durable project/task/lock/next-action state that changed, then end the run. One run still handles exactly one bounded development task.
+- Protected-state boundary: a merge never authorizes Production deployment, payment/Billing activation, provider activation, secrets/credentials, permission grants, destructive/irreversible data actions, Restore writes or other R3/R4 protected actions.
+- Efficiency intent: reduce repeated context loading and token cost by keeping ordinary work in one agent/run while preserving independent evidence only where it materially changes risk.
+- Repository continuity: implementation decisions, durable state changes, blockers and next actions are recorded in Project Memory; ordinary commit history stays in Git.
