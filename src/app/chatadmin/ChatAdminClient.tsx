@@ -5,21 +5,22 @@ import styles from "./chatadmin.module.css";
 const empty:Partial<ChatCharacter>={display_name:"",profile_image_path:null,public_age:18,bio:"",location:"",languages:["Deutsch"],personality:"",writing_style:"",emoji_style:"sparsam",sentence_style:"kurz und natürlich",typical_phrases:[],forbidden_phrases:[],flirt_style:"respektvoll und innerhalb der definierten Grenzen",sales_rules:"kein Druck, keine falschen Versprechen",example_messages:[],status:"active"};
 const lines=(value:string)=>value.split("\n").map(v=>v.trim()).filter(Boolean);
 const CHARACTER_VALIDATION_ERRORS:Record<string,{field:string|null;message:string}>={
- invalid_display_name:{field:"display_name",message:"Name muss ausgefüllt sein."},
+ invalid_display_name:{field:"display_name",message:"Name muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  public_age_must_be_adult:{field:"public_age",message:"Öffentliches Alter muss zwischen 18 und 99 liegen."},
- invalid_bio:{field:"bio",message:"Bio muss ausgefüllt sein."},
+ invalid_bio:{field:"bio",message:"Bio muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  invalid_languages:{field:"languages",message:"Sprachen enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
  invalid_profile_image_path:{field:"profile_image_path",message:"Die private Bildreferenz ist kein gültiger FanMind-Storage-Pfad."},
- invalid_personality:{field:"personality",message:"Persönlichkeit muss ausgefüllt sein."},
- invalid_writing_style:{field:"writing_style",message:"Schreibstil → Stil muss ausgefüllt sein."},
- invalid_emoji_style:{field:"emoji_style",message:"Emoji-Stil muss ausgefüllt sein."},
- invalid_sentence_style:{field:"sentence_style",message:"Satzstil muss ausgefüllt sein."},
+ invalid_personality:{field:"personality",message:"Persönlichkeit muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
+ invalid_writing_style:{field:"writing_style",message:"Schreibstil → Stil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
+ invalid_emoji_style:{field:"emoji_style",message:"Emoji-Stil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
+ invalid_sentence_style:{field:"sentence_style",message:"Satzstil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  invalid_typical_phrases:{field:"typical_phrases",message:"Typische Phrasen enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
  invalid_forbidden_phrases:{field:"forbidden_phrases",message:"No-Gos enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
  invalid_example_messages:{field:"example_messages",message:"Beispiele enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
- invalid_flirt_style:{field:"flirt_style",message:"Flirt-/Kommunikationsstil muss ausgefüllt sein."},
- invalid_sales_rules:{field:"sales_rules",message:"Verkaufsregeln müssen ausgefüllt sein."},
+ invalid_flirt_style:{field:"flirt_style",message:"Flirt-/Kommunikationsstil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
+ invalid_sales_rules:{field:"sales_rules",message:"Verkaufsregeln müssen ausgefüllt sein und dürfen höchstens 4.000 Zeichen enthalten."},
  invalid_character:{field:null,message:"Die Character-Daten sind unvollständig oder ungültig."},
+ payload_too_large:{field:null,message:"Die Character-Daten sind insgesamt zu lang. Bitte kürze mehrere Eingaben und speichere erneut."},
 };
 function characterValidationError(code:unknown){return typeof code==="string"?CHARACTER_VALIDATION_ERRORS[code]??null:null;}
 function LegacyChatAdminComposer({character}:{character:ChatCharacter}) {
@@ -75,7 +76,7 @@ export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true}:{init
   await mutate(async()=>{
    const response=await fetch("/api/chatadmin/characters",{method:editing?.id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
    const body=await response.json();
-   if(!response.ok){const validation=characterValidationError(body.error);if(validation){setInvalidField(validation.field);setValidationMessage(validation.message);setNotice("Speichern nicht möglich: Bitte korrigiere das rot markierte Feld.");}else{setInvalidField(null);setValidationMessage("");setNotice("Speichern nicht möglich. Bitte Seite neu laden und erneut versuchen.");}return;}
+   if(!response.ok){const validation=characterValidationError(body.error);if(validation){setInvalidField(validation.field);setValidationMessage(validation.message);setNotice(validation.field?"Speichern nicht möglich: Bitte korrigiere das rot markierte Feld.":"Speichern nicht möglich: Bitte prüfe und kürze die Eingaben.");}else{setInvalidField(null);setValidationMessage("");setNotice("Speichern nicht möglich. Bitte Seite neu laden und erneut versuchen.");}return;}
    setCharacters(current=>editing?.id?current.map(v=>v.id===body.character.id?body.character:v):[...current,body.character]);
    setSelected(body.character);
    setEditing(null);
