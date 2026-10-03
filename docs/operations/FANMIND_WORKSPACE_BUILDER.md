@@ -22,9 +22,20 @@ One run = one bounded task.
 For a clear R1/R2 task, the Builder should not invoke a Planner first merely for ceremony.
 
 Default repository flow:
-`Trigger -> Builder -> implement -> focused verification -> diff -> PR -> CI -> end`
+`Trigger -> Builder -> implement -> focused verification -> diff -> PR -> required CI -> merge when green -> verify main -> end`
 
 For ordinary R2, the Builder may perform its own short countercheck.
+
+## Autonomous merge
+For R1/R2 repository work, the Builder may merge the PR autonomously when:
+- every check required by the current repository policy for the affected scope is green;
+- the final diff still matches the one bounded task;
+- the PR is mergeable and no unresolved review/countercheck blocker remains;
+- no protected boundary or protected external state is crossed.
+
+Do not wait for owner confirmation merely because the action is a normal R1/R2 merge. Do not invent unrelated checks as extra gates. After merge, re-read the new `main`, reconcile only the durable state that actually changed, and end the run without starting a second task.
+
+A green merge never means Production deployment, provider acceptance, payment activation or other protected authorization.
 
 ## Risk routing
 The Builder classifies work using Execution Policy v6:
@@ -44,6 +55,11 @@ Example: a controlled SQL source defect may be fixed, tested and proposed in a P
 When a protected action is the only remaining step, return:
 `READY_FOR_PROTECTED_ACTION`
 with the exact action, target, commit/PR and remaining required authorization/evidence.
+
+## Token-efficient orchestration
+The default operating model is one Workspace Builder run that can perform task selection, planning, implementation and the ordinary R1/R2 countercheck sequentially. Do not fan out into separate Planner/Supervisor/Navigator/Guardian agents for normal work merely for ceremony.
+
+Use a separate independent reviewer/Guardian only when Execution Policy v6 requires independent evidence or review for R3/R4, security-sensitive R2, complex architecture, Auth/RLS/Billing/data-boundary work or another contract that explicitly requires independence.
 
 ## Planner
 Use a Planner only when:
