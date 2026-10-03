@@ -81,7 +81,7 @@ Use a separate Guardian for R3/R4, security-sensitive R2, complex architecture c
 
 Do not require a separate Guardian for normal R1. For ordinary R2, the Builder may perform the countercheck.
 
-## CI rule
+## CI and merge rule
 CI is risk-adaptive.
 
 - R1: focused relevant checks only (for example affected tests, typecheck/lint/build where useful).
@@ -89,6 +89,10 @@ CI is risk-adaptive.
 - R3/R4: full applicable security, governance, integration and operations gates.
 
 Do not run unrelated Mobile/Restore/Billing/provider suites merely because an R1 repository file changed.
+
+For R1/R2 repository work, the Builder may autonomously merge its PR when every check required for the affected scope is green, the PR is mergeable, the final diff matches the bounded task, no unresolved review/countercheck blocker remains, and no protected boundary is crossed. Green required CI is the default merge signal; unrelated or non-applicable suites must not be invented as extra blockers.
+
+Do not infer deployment, provider acceptance, billing activation, Production state or any protected authorization from a merge. R3/R4 retain their explicit higher-risk authorization and evidence rules.
 
 ## Started-work / locks / receipts
 R1 does not require STARTED_WORK, WORK_LOCKS or execution receipts unless the task unexpectedly escalates or changes durable project state.
@@ -127,10 +131,10 @@ Risk escalation:
 
 ## Target execution shapes
 R1:
-`Trigger -> Builder -> focused test -> diff -> PR -> CI -> end`
+`Trigger -> Builder -> focused test -> diff -> PR -> required CI -> merge when green -> verify main -> end`
 
 R2:
-`Trigger -> Builder -> tests -> PR -> CI -> countercheck -> end`
+`Trigger -> Builder -> tests -> PR -> required CI -> countercheck -> merge when green -> verify main -> end`
 
 Unclear work:
 `Trigger -> Planner -> Builder -> verification -> end`
