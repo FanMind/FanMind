@@ -1,3 +1,8 @@
+## AI capacity consumption-order acceptance — repository test — 2026-10-02
+- Status: IN_PROGRESS under existing AI billing lifecycle reconciliation; PR #1254 adds one repository-only regression test for the canonical Capacity-v2 invariant that active included-period capacity is consumed before separately purchased top-up capacity.
+- Scope: test-only evidence against the existing controlled reserve/settle SQL; no Staging, Production, Stripe, Supabase, provider, customer-data or runtime mutation.
+- Acceptance: exact PR head must pass the existing AI-capacity operations suite and Project Memory guard. Any unrelated baseline CI failure on current main remains separate and must not be misclassified as caused by this test.
+
 ## Stripe AI capacity top-ups and purchase reversals — repository implementation — 2026-10-01
 - Status: IN_PROGRESS; PR #1252 implements fixed EUR 10/25/50/100 AI-capacity top-ups with PaymentIntent-based idempotent grants and atomic purchase reversals.
 - Refund/dispute handling targets the original PaymentIntent grant and withdraws only unused purchased AI capacity; already consumed/bound capacity remains unchanged.
