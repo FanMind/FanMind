@@ -173,7 +173,8 @@ FanMind orchestration is state-driven, never clock-order-driven. Scheduled Build
 - Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
 - Cross-run coordination uses canonical Project Memory only when the task changes durable state or requires coordination; GitHub remains the detailed history for ordinary R1/R2 code changes.
 - A merge event may wake the FanMind Workspace Manager through `.github/workflows/fanmind-manager-event-dispatch.yml`, but it never authorizes a protected action.
-- The manager must recompute the SAFE READY SET from current evidence, preserve the default three-worker limit, serialize uncertainty and return NO_CHANGE when nothing safe is executable.
+- The default orchestration is one active Workspace Builder/Manager run at a time. It recomputes the SAFE READY SET from current evidence, selects exactly one bounded task, serializes uncertainty and returns NO_CHANGE when nothing safe is executable.
+- Separate Planner/Guardian/Supervisor/Navigator runs are not default workers; use them only when the active risk class or contract explicitly requires independent planning/evidence/review.
 - The hourly Builder remains a fallback if an event is missed, delayed, disabled or rejected.
 - Event retries must be idempotent; repeated unchanged state must not create receipt/PR churn.
 - Configuration and activation details live in `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md`.
