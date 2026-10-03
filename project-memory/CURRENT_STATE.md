@@ -1,3 +1,11 @@
+## Mobile supply-chain deferral boundary — repository evidence — 2026-10-02
+- Status: IN_PROGRESS on branch `fix/mobile-audit-deferral-20261002`.
+- Owner decision: FM-DEC-021 keeps remaining Mobile work deferred until company registration.
+- Source evidence: commits `7f579dafd35e120c616b431efeadfc07e68d74a9` and `6b9d65e51e9d72a9c02459e776a6e073671552c0` separate Mobile audit enforcement from Root/Web enforcement.
+- Boundary: Root/Web dependency policy remains fail-closed. Mobile audit still runs and reports policy failures under explicit `deferred-owner` enforcement, but deferred Mobile findings do not block unrelated Web/Ops/AI-Billing work.
+- No Mobile dependency, vulnerability threshold, reviewed-package allowlist, signed build, provider state, Production runtime or customer data was changed.
+- Acceptance remains OPEN until exact-head tests/CI prove the boundary. Do not merge based on this note alone.
+
 ## Stripe AI capacity top-ups and purchase reversals — repository implementation — 2026-10-01
 - Status: IN_PROGRESS; PR #1252 implements fixed EUR 10/25/50/100 AI-capacity top-ups with PaymentIntent-based idempotent grants and atomic purchase reversals.
 - Refund/dispute handling targets the original PaymentIntent grant and withdraws only unused purchased AI capacity; already consumed/bound capacity remains unchanged.
