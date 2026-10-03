@@ -15,6 +15,14 @@ test("ChatAdmin maps server validation to a human message and a field marker", a
   assert.doesNotMatch(characterSave, /Speichern abgewiesen: \$\{body\.error\}/);
 });
 
+test("Character PATCH preserves bounded-body validation reasons", async () => {
+  const route = await readFile("src/app/api/chatadmin/characters/route.ts", "utf8");
+  const patch = route.slice(route.indexOf("export async function PATCH"), route.indexOf("export async function DELETE"));
+  assert.ok(patch.length > 0);
+  assert.match(patch, /if\(!body\.ok\)return NextResponse\.json\(\{error:body\.reason\}/);
+  assert.doesNotMatch(patch, /!body\.ok\|\|/);
+});
+
 test("ChatAdmin validation styles mark every character input class in red", async () => {
   const [layout, css] = await Promise.all([
     readFile("src/app/chatadmin/layout.tsx", "utf8"),
