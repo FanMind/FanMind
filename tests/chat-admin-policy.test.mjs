@@ -173,9 +173,16 @@ test("routes require capability and workspace-bound character; no OnlyFans netwo
 
 test("ChatAdmin stays separate from Platform Admin and UI is capability-hidden", async () => {
   const dashboard = await readFile("src/app/dashboard/page.tsx", "utf8");
+  const sidebar = await readFile("src/components/WorkspaceSidebar.module.css", "utf8");
   const page = await readFile("src/app/chatadmin/page.tsx", "utf8");
   const admin = await readFile("src/lib/admin.ts", "utf8");
-  assert.match(dashboard, /showChatAdmin \?/u);
+  assert.match(
+    dashboard,
+    /showChatAdmin[\s\S]*label: "Creator-Chat"[\s\S]*href: "\/chatadmin"/u,
+  );
+  assert.doesNotMatch(dashboard, /ChatAdmin Sonderfunktion|ChatAdmin öffnen/u);
+  assert.match(sidebar, /\.navList \{[\s\S]*gap: 4px/u);
+  assert.match(sidebar, /\.navItem,[\s\S]*min-height: 40px/u);
   assert.match(page, /requireChatAdminCapability/u);
   assert.match(page, /hasChatAdminFanSchema\(workspace\.id\)/u);
   assert.match(page, /Es werden keine Fan-Daten abgefragt oder geschrieben/u);

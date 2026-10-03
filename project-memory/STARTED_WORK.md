@@ -1081,3 +1081,94 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Completed locally: fokussierte Policy/API/Disclosure/Delete/Roadmap-Tests und Lint. Browser-Harness ist angepasst, seine Ausführung bleibt nach fehlendem Binary und HTTP-403-Download blockiert. Offen: Build/weitere lokale Gates, bestehendes-PR-Publishing, genau ein vollständiger GitHub-Gate-Lauf und exakte unabhängige Review. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
 - Exact next step: bestehenden PR #1216 korrigieren, auf dem finalen aktuellen Head FanMind CI, CodeQL, Browser E2E, God Mode und Project Memory grün nachweisen, danach die unabhängige Review ohne P1/P2 und ohne blockierende Threads abschließen und erst dann normal mergen. Ein kontrollierter Staging-Apply bleibt bis nach dem Source-Merge getrennt und nicht autorisiert.
 - Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.
+
+
+## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-046
+- Status: ACCEPTED.
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
+- Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
+- Completed so far: base design recorded; review-required R4 boundary, authoritative package resolver, fixed-precision EUR accounting/FX provenance, subscription-period identity, two-phase reserve/settle/release/reconcile lifecycle, split-bucket allocation, malformed-usage fail-closed behavior and top-up reversal lifecycle added; README and Source of Truth now distinguish accepted target from active legacy billing. Owner-requested Platform-Admin controls are now part of the frozen contract: global capacity admission, independent Fast/Balanced/Premium switches, per-package 99/199/312 admission, top-up sales, approved package budgets and emergency spend freeze, all audited/default-off and unable to bypass activation gates.
+- Completion: PR #1230 merged as `2266e13429d4f09da2176f96c61f2b3db85b34f1`. The accepted v2 contract is now on main; no Production billing, Stripe, Supabase or customer state was activated.
+- Owner action needed: none for this completed contract reconciliation.
+- Exact next step: continue with the separate dormant policy/runtime foundation below.
+
+
+## FM-AI-001 / FM-CR-047 — AI Capacity policy foundation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-047
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930`.
+- Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1` after accepted PR #1230.
+- Scope: repository-only dormant Capacity-v2 policy module and tests: exact 99/199/312 package identities, Fast/Balanced/Premium mode identities, legacy-v1/capacity-v2 discriminator, default-off Platform-Admin policy state and fail-closed admission resolution. No schema, Admin UI mutation, Stripe, provider, Production or customer migration.
+- Acceptance: explicit tests prove no capacity-v2 admission for legacy, unknown package/mode, unset budgets, disabled package/mode, global disabled state or emergency freeze; target package prices remain 99/199/312 EUR and budgets stay unset rather than invented.
+- Recovery: repository revert only; no external state changes.
+- Exact next step: fix the current PR #1235 review findings and required checks on the same branch; merge only after the final head is green and reviewed.
+
+
+## FM-AI-001 / FM-CR-050 — Versioned OpenAI price catalog — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-050
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-OPENAI-PRICE-CATALOG-20260930`.
+- Baseline: exact main `04abce0305f4bf9ca2816e30fc672ea9298a3f68`.
+- Scope: repository-only versioned OpenAI provider-price catalog plus stable FanMind quality-mode mapping for communication analysis and reply generation. Schnell maps to GPT-6 Luna, Ausgewogen to GPT-6.1 Sol, Premium to GPT-6 Astra; all current profiles use Standard processing with explicit reasoning effort.
+- Price source: official OpenAI model/pricing documentation observed 2026-09-30; short/long context split at >272,000 input tokens; exact provider prices stored as integer USD micro-units.
+- Acceptance: every active model has short/long price entries, cost engine resolves catalog entries fail-closed, unsupported processing/regional pricing is rejected, required CI/security/governance and independent review pass.
+- Boundaries: no Production/Staging/Supabase mutation, no provider call, no customer migration, no Capacity-v2 activation and no package AI-budget decision.
+- Recovery: source revert only.
+- Completion: PR #1242 merged as `83d1191e534684c32229aaf35ac56e1bd4c927d3`; versioned OpenAI pricing and Schnell/Ausgewogen/Premium mapping are on main.
+- Exact next step: continue with the reserve/settle lifecycle increment below.
+
+
+## FM-AI-001 / FM-CR-052 — AI Capacity reserve/settle runtime foundation — 2026-09-30
+- Task: FM-AI-001
+- Change request: FM-CR-052
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930`.
+- Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3` after merged PR #1242.
+- Scope: repository-only atomic Capacity-v2 grant/reserve/settle/release/indeterminate SQL RPCs, server-only ledger adapter, exact OpenAI-to-EUR capacity accounting with explicit versioned FX input, runtime coordinator, docs and required tests.
+- Acceptance: included-period-before-purchased ordering, workspace-serialized reservations, idempotent grant/generation keys, actual-usage settlement, unused release, indeterminate hold, over-reservation reconciliation-required persistence, no estimated usage settlement, exact-head required CI/security/governance and independent review.
+- Customer display decision: show remaining AI capacity only as a percentage; both analysis and reply generation consume the same pool. 25%/10% may warn. At 0% new Capacity-v2 AI reservations are denied. No free/throttled reserve and no automatic downgrade.
+- Boundaries: no Production/Staging schema APPLY, no productive AI route switch, no provider call, no customer migration, no package AI-budget decision, no Stripe/top-up activation.
+- Recovery: source revert only; existing Production AI and billing remain unchanged.
+- Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
+
+## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930` — RELEASED_MERGED_VERIFIED.
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Completion: PR #1245 final head `f7c9eb9b9b991733410cc0d3159745b7612a82b2` merged as `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`; Stripe Capacity-v2 EUR 99/199/312 catalog exists, legacy 312/setup/pilot/AI Plus/Ultra products are retired from new sale, and setup fee is 0 EUR for new Capacity-v2 packages.
+- Boundary: no Capacity-v2 package sales/runtime/top-up activation or customer migration was performed by #1245.
+- Exact next step: consumed; continue only with FM-CR-056 budget implementation and later separately authorized Staging activation work.
+- Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
+
+## FM-AI-001 / FM-CR-056 — Capacity-v2 approved budgets — 2026-09-30
+- Status: IN_PROGRESS
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
+- Completed so far: owner-approved EUR 15 / 30 / 50 budgets encoded in canonical policy, controlled-schema defaults, Admin/reader surfaces and tests. Staging policy was independently seeded to revision 2 with those three values; runtime/sales/top-up/mode/activation-ready flags stayed off and emergency freeze stayed on.
+- Countercheck: activation-guard negatives passed; anon/authenticated policy/grant SELECT privileges are absent; no grants/reservations/ledger events were created.
+- Still open: exact-head CI, independent review and merge. Full ledger Staging acceptance is separately blocked because reserve/settle RPCs are not installed and the current main controlled reserve/settle SQL has a compile-blocking source defect.
+- Exact next step: converge this budget PR; then fix/review the reserve/settle SQL defect as a separate bounded source task before any Staging ledger APPLY.
+- Owner action needed: none for repository implementation; Production activation remains separately protected.
+- Recovery: Staging budget values can be restored to NULL while activation remains off; source changes are revertible.
+
+
+## FM-AI-001 / FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck — 2026-09-30
+- Status: COUNTERCHECKED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-STAGING-BUDGET-SEED-20260930` — RELEASED_COUNTERCHECKED.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: budget seed 15 / 30 / 50 EUR committed at policy revision 2 with one audit event; runtime/package-sales/top-up/modes/activation-ready all remain disabled, emergency freeze remains enabled.
+- Negative proof: guarded activation attempts were rejected; browser roles have no policy/grant SELECT privileges; zero grants/reservations/ledger events remain.
+- Blocker discovered: reserve/settle RPCs are absent on Staging. Applying current main `supabase/controlled/ai_capacity_reserve_settle.sql` unchanged is blocked because `ai_capacity_grant_credit` references undeclared policy variables. Do not apply until separately fixed/reviewed.
+- Exact next step: source-fix the controlled reserve/settle SQL, then perform a fresh Staging ledger APPLY + rollback-only lifecycle acceptance.
+- Recovery: budget-only seed is reversible without enabling any runtime or sales switch.

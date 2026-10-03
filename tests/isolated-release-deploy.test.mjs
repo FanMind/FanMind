@@ -269,6 +269,10 @@ test("PM2 production contract uses one rolling cluster worker on the stable rele
   );
   assert.equal(config.apps[0].env.FANMIND_RUNTIME_ENVIRONMENT, "production");
   assert.equal(config.apps[0].env.FANMIND_RELEASE_COMMIT, "a".repeat(40));
+  assert.equal(
+    config.apps[0].env.FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED,
+    "true",
+  );
 });
 
 test("legacy migration is followed by a delete-free rolling release in an executed harness", async (t) => {

@@ -1064,3 +1064,92 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; Owner-Head `248c923232c8a55356bf601d11d475372568039a` mangels Remote/Objekt nicht verifiziert.
 - Scope: exakt ein zusammenhängender Repository-Strang für persistente Character-Fans, deren Wissen, Conversation/Message-Bindung, UI und KI-Kontext.
 - Forbidden: Staging-/Production-APPLY, Capability-Aktivierung, echte Kundendaten, Social/OnlyFans-Zugriff, Auto-Send, Billing, Mobile oder Creator-Target-Transition.
+
+
+## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-046
+- Status: RELEASED_MERGED_VERIFIED
+- Risk: R4
+- Holder: ChatGPT
+- Acquired: 2026-09-30
+- Scope: repository-only AI Capacity Billing v2 contract and canonical truth reconciliation on PR #1230. No Production/Stripe/Supabase/customer mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: exact-head diff, product/project-memory checks, required GitHub CI, independent exact-head review, zero unresolved blocking P0/P1/P2.
+- Recovery: revert PR #1230 source changes; active billing remains unchanged until a separately authorized activation increment.
+
+
+## LOCK-FM-AI-CAPACITY-POLICY-FOUNDATION-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-047
+- Status: RELEASED_MERGED_VERIFIED
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `2266e13429d4f09da2176f96c61f2b3db85b34f1`.
+- Scope: dormant repository-only capacity package/mode/admin admission policy plus focused tests. No Supabase/Stripe/provider/Production/customer mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: focused positive/negative tests, exact-head FanMind CI/CodeQL/Browser/God Mode/Project Memory and independent review before merge.
+- Recovery: ordinary source revert; active legacy billing remains untouched.
+
+
+## LOCK-FM-OPENAI-PRICE-CATALOG-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-050
+- Status: RELEASED_MERGED_VERIFIED
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `04abce0305f4bf9ca2816e30fc672ea9298a3f68`.
+- Scope: repository-only OpenAI price catalog, FanMind quality-mode mapping, cost-engine integration, docs and tests. No external mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: official OpenAI price/model sources, exact-head required CI/security/governance, fail-closed negative tests and independent review.
+- Recovery: source revert only; active Production billing/runtime unchanged.
+
+
+## LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-052
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3`.
+- Scope: repository-only Capacity-v2 reserve/settle/release SQL, server adapters/accounting/runtime coordinator, docs and tests. No target apply or provider/customer mutation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: lifecycle/idempotency/fail-closed tests, exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review before merge.
+- Recovery: source revert only; Production remains on current legacy AI/billing path.
+
+## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-053
+- Status: RELEASED_MERGED_VERIFIED
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Scope: Stripe catalog retirement/new Capacity-v2 base prices plus repository commercial-truth/env/legacy-compatibility reconciliation. No Capacity-v2 customer activation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: live Stripe readback, exact-head CI/security/governance, fail-closed activation state and independent review.
+- Recovery: Stripe Products can be reactivated; source can be reverted. No customer migration or top-up sale is authorized here.
+
+## LOCK-FM-AI-CAPACITY-BUDGETS-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-056
+- Status: ACTIVE
+- Risk: R4
+- Holder: ChatGPT
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`.
+- Scope: repository-only Capacity-v2 package budget constants/defaults/types/tests and truth reconciliation.
+- Contract/gate: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001.
+- Evidence plan: exact-head CI/security/governance, fail-closed activation tests and one independent exact-head review.
+- Recovery: source revert plus reversible Staging budget reset; no Production/provider/customer activation is authorized by this lock.
+
+
+## LOCK-FM-AI-CAPACITY-STAGING-BUDGET-SEED-20260930
+- Task: FM-AI-001
+- Change request: FM-CR-057
+- Status: RELEASED_COUNTERCHECKED
+- Risk: R4
+- Holder: ChatGPT
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Scope: owner-authorized budget-only Staging policy seed and read-only/rollback-only fail-closed countercheck; no runtime/package-sales/top-up activation.
+- Result: policy revision 2 contains EUR 15 / 30 / 50 budgets; activation switches remain off, emergency freeze remains on; browser roles have no policy/grant SELECT access; no ledger customer data exists.
+- Blocker: reserve/settle RPC source must be fixed/reviewed before Staging ledger APPLY.
+- Recovery: set only the three budget columns back to NULL with all activation switches still off; no customer state was created.

@@ -199,13 +199,13 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "starter",
     name: "Starter",
     badge: "Produktiver MVP-Workspace",
-    priceLabel: "Starter Flex: 990 € Setup + 312 €/Monat · zum Monatsende kündbar; Starter 12 Monate: 0 € Setup + 312 €/Monat · 12 Monate Mindestlaufzeit, danach monatlich",
+    priceLabel: "Legacy Starter: 0 € Setup + 312 €/Monat · Capacity-v2 Ziel: 99 / 199 / 312 €/Monat, jeweils ohne Einrichtungsgebühr",
     mode: "production",
     maxProfiles: 1,
     maxContacts: 1000,
     contactsLabel: "bis 1.000 Kontakte",
     description:
-      "Produktiver Workspace für ein Profil mit zwei Starter-Optionen: Starter Flex mit 990 € Setup plus 312 €/Monat und Kündigung zum Ende des bezahlten Monats; Starter 12 Monate mit 0 € Setup plus 312 €/Monat, 12 Monaten Mindestlaufzeit und anschließender monatlicher Verlängerung.",
+      "Produktiver Workspace für ein Profil. Neue Capacity-v2 Pakete kosten 99 / 199 / 312 € pro Monat und haben keine Einrichtungsgebühr. Der bestehende Starter-Pfad bleibt nur als Legacy-/Migrationsbasis erhalten, bis Capacity-v2 kontrolliert aktiviert ist.",
     primaryAction: "Starter wählen",
     upgradePlan: "growth",
     featureConfig: featureConfig({

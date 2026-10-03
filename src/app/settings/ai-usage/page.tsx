@@ -20,6 +20,7 @@ import {
   type WorkspaceAiUsageIndicator,
 } from "@/lib/workspaceAiUsage";
 import { getWorkspaceNavigation } from "@/lib/workspaceNavigation";
+import { getAiCapacityBalanceSnapshot } from "@/lib/aiCapacityLedger";
 import { AccountTabs } from "../AccountTabs";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
 import { getWorkspaceKpiStatsFromContacts } from "@/lib/workspaceKpiStats";
@@ -159,10 +160,11 @@ export default async function AiUsageSettingsPage() {
   if (preActivationRedirect) redirect(preActivationRedirect);
   if (isWorkspaceBillingSuspended(workspace)) redirect("/billing/suspended");
 
-  const [contactsResult, followupResult, usageResult] = await Promise.all([
+  const [contactsResult, followupResult, usageResult, capacitySnapshot] = await Promise.all([
     getWorkspaceContacts(workspace.id),
     getOpenFollowupCount(workspace.id),
     getWorkspaceAiUsageSummary(workspace.id),
+    getAiCapacityBalanceSnapshot(workspace.id).catch(() => null),
   ]);
 
   const contactCount = getWorkspaceKpiStatsFromContacts(
@@ -222,6 +224,56 @@ export default async function AiUsageSettingsPage() {
 
           <CreatorSettings locale={locale} />
           <AiPromptSettings locale={locale} singleWritingStyle={creatorIntelligenceEnabled()} />
+
+          {capacitySnapshot?.hasCapacityHistory ? (
+            <section className={styles.thresholdCard} aria-labelledby="ai-capacity-title">
+              <div className={styles.cardHeader}>
+                <div>
+                  <p className={styles.eyebrow}>{text(locale, "AI-Kapazität", "AI capacity")}</p>
+                  <h3 id="ai-capacity-title">{text(locale, "Verbleibendes Kontingent", "Remaining capacity")}</h3>
+                </div>
+                <strong>{capacitySnapshot.remainingPercent ?? 0} %</strong>
+              </div>
+              <div
+                className={styles.progressTrack}
+                role="progressbar"
+                aria-label={text(locale, "Verbleibende AI-Kapazität", "Remaining AI capacity")}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={capacitySnapshot.remainingPercent ?? 0}
+              >
+                <div
+                  className={styles.progressValue}
+                  style={{ width: `${capacitySnapshot.remainingPercent ?? 0}%` }}
+                />
+              </div>
+              <p className={styles.disclaimer}>
+                {(capacitySnapshot.remainingPercent ?? 0) === 0
+                  ? text(
+                      locale,
+                      "Die AI-Kapazität ist aufgebraucht. Es gibt keine kostenlose oder gedrosselte Reserve. Weitere KI-Aktionen sind erst nach zusätzlicher Kapazität oder im nächsten Abrechnungszeitraum möglich.",
+                      "AI capacity is exhausted. There is no free or throttled reserve. Further AI actions require additional capacity or the next billing period.",
+                    )
+                  : (capacitySnapshot.remainingPercent ?? 0) <= 10
+                    ? text(
+                        locale,
+                        "Nur noch höchstens 10 % AI-Kapazität verfügbar. Premium verbraucht die Kapazität deutlich schneller als Ausgewogen oder Schnell.",
+                        "At most 10% AI capacity remains. Premium consumes capacity significantly faster than Balanced or Fast.",
+                      )
+                    : (capacitySnapshot.remainingPercent ?? 0) <= 25
+                      ? text(
+                          locale,
+                          "Weniger als ein Viertel der AI-Kapazität ist verfügbar. Die gewählte KI-Stufe bestimmt, wie schnell das Restkontingent sinkt.",
+                          "Less than one quarter of AI capacity remains. The selected AI quality level determines how quickly the remaining capacity is consumed.",
+                        )
+                      : text(
+                          locale,
+                          "Die Anzeige basiert auf dem tatsächlich noch verfügbaren AI-Kostenbudget. Schnell, Ausgewogen und Premium greifen auf dasselbe Kontingent zu und verbrauchen es entsprechend ihrer realen Providerkosten unterschiedlich schnell.",
+                          "The display is based on the actual remaining AI cost budget. Fast, Balanced and Premium share the same capacity and consume it at different rates according to their real provider cost.",
+                        )}
+              </p>
+            </section>
+          ) : null}
 
           {usageResult.error || !summary || !indicator || !indicatorText ? (
             <section className={styles.noticeCard} aria-labelledby="ai-usage-unavailable-title">

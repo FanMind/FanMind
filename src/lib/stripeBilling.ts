@@ -107,7 +107,9 @@ export function getStripeConfigStatus(): StripeConfigStatus {
   const hasWebhookSecret = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const hasPilotPrice = Boolean(process.env.STRIPE_PRICE_PILOT_SETUP);
   const hasStarterSetupPrice = Boolean(process.env.STRIPE_PRICE_STARTER_SETUP);
-  const hasStarterMonthlyPrice = Boolean(process.env.STRIPE_PRICE_STARTER_MONTHLY);
+  const hasStarterMonthlyPrice = Boolean(
+    process.env.STRIPE_PRICE_CAPACITY_312 || process.env.STRIPE_PRICE_STARTER_MONTHLY,
+  );
   const hasGrowthMonthlyPrice = Boolean(process.env.STRIPE_PRICE_GROWTH_MONTHLY);
   const hasAgencyMonthlyPrice = Boolean(process.env.STRIPE_PRICE_AGENCY_MONTHLY);
   const hasInternalDailyTestPrice = Boolean(
@@ -140,7 +142,6 @@ export function getStripeConfigStatus(): StripeConfigStatus {
       hasSecretKey &&
       hasWebhookSecret &&
       hasAppUrl &&
-      hasStarterSetupPrice &&
       hasStarterMonthlyPrice &&
       tax.ready,
     readyForWebhook: hasSecretKey && hasWebhookSecret,
@@ -164,15 +165,16 @@ export function resolveCheckoutPlan(
   if (planId === "pilot" && commercialOption === "pilot_only") return null;
 
   if (planId === "starter" && commercialOption === "starter_paid_setup") {
-    const setupPrice = process.env.STRIPE_PRICE_STARTER_SETUP;
-    const monthlyPrice = process.env.STRIPE_PRICE_STARTER_MONTHLY;
-    return setupPrice && monthlyPrice
+    const monthlyPrice =
+      process.env.STRIPE_PRICE_CAPACITY_312 ||
+      process.env.STRIPE_PRICE_STARTER_MONTHLY;
+    return monthlyPrice
       ? {
           planId,
           commercialOption,
           mode: "subscription",
-          priceIds: [setupPrice, monthlyPrice],
-          setupFeeCents: 99000,
+          priceIds: [monthlyPrice],
+          setupFeeCents: 0,
           monthlyFeeCents: 31200,
           commitmentMonths: 0,
           paymentCollectionMethod: "card",
@@ -184,7 +186,9 @@ export function resolveCheckoutPlan(
     planId === "starter" &&
     commercialOption === "starter_no_setup_commitment"
   ) {
-    const monthlyPrice = process.env.STRIPE_PRICE_STARTER_MONTHLY;
+    const monthlyPrice =
+      process.env.STRIPE_PRICE_CAPACITY_312 ||
+      process.env.STRIPE_PRICE_STARTER_MONTHLY;
     return monthlyPrice
       ? {
           planId,

@@ -1,6 +1,7 @@
 import { requirePlatformAdmin } from "@/lib/admin";
 import { isPaymentTermsActivationEnabled } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { getPublicDailyBetaStatusFromServer } from "@/lib/runtimeProductSettings";
+import { formatMicrocentsAsEur, getAiCapacityAdminState } from "@/lib/aiCapacityAdmin";
 import { isInternalDailyTestWorkspaceProvisioningReady } from "@/lib/supabase/server";
 import { getStripeConfigStatus } from "@/lib/stripeBilling";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
@@ -9,7 +10,7 @@ import { AdminTabs } from "@/app/admin/billing/AdminTabs";
 import styles from "@/app/admin/billing/adminBilling.module.css";
 
 type AdminSettingsPageProps = {
-  searchParams: Promise<{ daily_test_plan?: string | string[] }>;
+  searchParams: Promise<{ daily_test_plan?: string | string[]; ai_capacity?: string | string[] }>;
 };
 
 export default async function AdminSettingsPage({ searchParams }: AdminSettingsPageProps) {
@@ -19,11 +20,15 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
   const stripeReady = isInternalDailyTestStripeReady(getStripeConfigStatus());
   const billingRuntimeReady = isInternalDailyTestBillingRuntimeReady();
   const betaStatus = await getPublicDailyBetaStatusFromServer();
+  const aiCapacity = await getAiCapacityAdminState();
   const admissionReady = termsReady && provisioningReady && stripeReady && billingRuntimeReady;
   const params = await searchParams;
   const result = Array.isArray(params.daily_test_plan)
     ? params.daily_test_plan[0]
     : params.daily_test_plan;
+  const aiResult = Array.isArray(params.ai_capacity)
+    ? params.ai_capacity[0]
+    : params.ai_capacity;
 
   return (
     <AdminBillingShell
@@ -48,6 +53,71 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
                     : "Daily-Beta ist für neue Anmeldungen ausgeschaltet. Bestehende Daily-Abos laufen weiter."}
           </p>
         ) : null}
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div>
+              <span className={styles.eyebrow}>AI Capacity v2</span>
+              <h2>99 / 199 / 312 € · Admin-Steuerung</h2>
+              <p className={styles.cardSubtitle}>
+                Server-only Policy für Schnell, Ausgewogen, Premium, Paketfreigaben, Zusatzkapazität und Not-Aus. Ohne kontrollierten Datenbank-Rollout bleibt alles wirkungslos und fail-closed.
+              </p>
+            </div>
+            <span className={aiCapacity.installed ? styles.badgeOk : styles.badgeWarn}>
+              {aiCapacity.installed ? "Schema bereit" : "Rollout ausstehend"}
+            </span>
+          </div>
+          {aiResult ? (
+            <p className={aiResult === "updated" ? styles.badgeOk : styles.badgeWarn}>
+              {aiResult === "updated"
+                ? "AI-Capacity-Einstellungen wurden revisionssicher gespeichert."
+                : aiResult === "conflict"
+                  ? "Die Einstellungen wurden parallel geändert. Bitte neu laden und erneut speichern."
+                  : aiResult === "not_ready"
+                    ? "AI-Capacity-Schema ist noch nicht kontrolliert ausgerollt."
+                    : aiResult === "invalid"
+                      ? "Die AI-Capacity-Einstellungen sind unvollständig oder ungültig."
+                      : "AI-Capacity-Einstellungen konnten nicht gespeichert werden."}
+            </p>
+          ) : null}
+          <div className={styles.statusList}>
+            <div className={styles.statusItem}><span>Kapazitäts-Runtime</span><strong>{aiCapacity.policy.globalCapacityEnabled ? "Ein" : "Aus"}</strong></div>
+            <div className={styles.statusItem}><span>Not-Aus</span><strong>{aiCapacity.policy.emergencySpendFreeze ? "Aktiv" : "Inaktiv"}</strong></div>
+            <div className={styles.statusItem}><span>Top-up-Verkauf</span><strong>{aiCapacity.policy.topUpSalesEnabled ? "Ein" : "Aus"}</strong></div>
+            <div className={styles.statusItem}><span>Revision</span><strong>{aiCapacity.revision ?? "—"}</strong></div>
+          </div>
+          <form action="/api/admin/settings/ai-capacity" method="post" className={styles.formGrid}>
+            <input type="hidden" name="revision" value={aiCapacity.revision ?? ""} />
+            <label className={styles.checkboxLabel}><input type="checkbox" name="global_capacity_enabled" defaultChecked={aiCapacity.policy.globalCapacityEnabled} disabled={!aiCapacity.installed} /> Capacity-v2-Nutzung global freigeben</label>
+            <label className={styles.checkboxLabel}><input type="checkbox" name="emergency_spend_freeze" defaultChecked={aiCapacity.policy.emergencySpendFreeze} disabled={!aiCapacity.installed} /> Not-Aus für neue AI-Reservierungen</label>
+            <label className={styles.checkboxLabel}><input type="checkbox" name="top_up_sales_enabled" defaultChecked={aiCapacity.policy.topUpSalesEnabled} disabled={!aiCapacity.installed} /> Zusatzkapazität verkaufen</label>
+
+            <div className={styles.statusList}>
+              <label className={styles.checkboxLabel}><input type="checkbox" name="fast_enabled" defaultChecked={aiCapacity.policy.qualityModeEnabled.fast} disabled={!aiCapacity.installed} /> Schnell</label>
+              <label className={styles.checkboxLabel}><input type="checkbox" name="balanced_enabled" defaultChecked={aiCapacity.policy.qualityModeEnabled.balanced} disabled={!aiCapacity.installed} /> Ausgewogen</label>
+              <label className={styles.checkboxLabel}><input type="checkbox" name="premium_enabled" defaultChecked={aiCapacity.policy.qualityModeEnabled.premium} disabled={!aiCapacity.installed} /> Premium</label>
+            </div>
+
+            <div className={styles.statusList}>
+              <label className={styles.field}>99 € Paket · neues Geschäft
+                <input type="checkbox" name="package_99_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_99} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_99_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 15" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_99)} disabled={!aiCapacity.installed} />
+              </label>
+              <label className={styles.field}>199 € Paket · neues Geschäft
+                <input type="checkbox" name="package_199_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_199} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_199_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 30" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_199)} disabled={!aiCapacity.installed} />
+              </label>
+              <label className={styles.field}>312 € Paket · neues Geschäft
+                <input type="checkbox" name="package_312_sales_enabled" defaultChecked={aiCapacity.policy.packageSalesEnabled.capacity_312} disabled={!aiCapacity.installed} />
+                <input className={styles.input} name="budget_312_eur" inputMode="decimal" placeholder="AI-Budget in EUR · Startwert 50" defaultValue={formatMicrocentsAsEur(aiCapacity.policy.includedBudgetEurMicrocents.capacity_312)} disabled={!aiCapacity.installed} />
+              </label>
+            </div>
+            <button className={styles.buttonPrimary} type="submit" disabled={!aiCapacity.installed}>AI-Capacity-Einstellungen speichern</button>
+          </form>
+          <p className={styles.muted}>
+            Die Startbudgets sind auf 15 / 30 / 50 € für die Pakete 99 / 199 / 312 festgelegt. Ein Merge dieses Codes wendet das Supabase-Schema nicht an und aktiviert keine Zahlung, kein Top-up und keine Capacity-v2-Kundennutzung.
+          </p>
+        </section>
+
         <section className={styles.card}>
           <div className={styles.cardHeader}>
             <div>

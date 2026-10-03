@@ -172,3 +172,19 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Source: Bernd explicitly set the order: ChatAdmin completion -> Creator Intelligence -> free Admin-CRM access -> synthetic Admin-CRM lifecycle acceptance -> Social and Sales.
 - Effect: prioritize the authorized ChatAdmin manual Staging flow over the previously earlier Admin-CRM owner action. Complete existing accepted free access without re-registration/regrant; retain the distinct synthetic lifecycle before additional real grants.
 - Boundary: priority does not close any gate, revive consumed broad Creator work, invent provider/legal evidence or resume Mobile. Derive any next Creator engineering increment as a bounded task from existing requirements after ChatAdmin; remaining protected actions retain exact target controls.
+
+## FM-DEC-026 — AI Capacity Billing v2
+- Date: 2026-09-30
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: FanMind base packages are EUR 99 / 199 / 312 and each contains a monthly AI cost budget. Customer-selectable AI modes are Fast, Balanced and Premium. The former KI Plus +100 / KI Ultra +200 product model is superseded by purchasable AI capacity. Internal consumption is based on actual model/token/provider cost. Included monthly capacity expires; separately purchased capacity survives the monthly reset under a separately defined validity rule; included capacity is consumed first. Top-ups target approximately 33% gross margin.
+- Superseded open parameter: the exact included AI budgets were initially left unset; FM-DEC-027 now fixes the starting values at EUR 15 / 30 / 50 for capacity_99 / capacity_199 / capacity_312.
+- Boundary: this decision does not activate Production payments, top-ups, tax treatment, Stripe changes or migrate existing customers. Existing Plus/Ultra source/data may be reused for migration but no longer defines the target customer product model.
+- Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
+
+## FM-DEC-027 — Capacity-v2 included AI budgets
+- Date: 2026-09-30
+- Status: DECIDED
+- Decision: The starting included AI cost budgets per authoritative billing period are EUR 15 for capacity_99, EUR 30 for capacity_199 and EUR 50 for capacity_312.
+- Accounting values: 1 EUR = 100,000,000 EUR microcents; therefore the canonical ledger values are 1,500,000,000 / 3,000,000,000 / 5,000,000,000 EUR microcents.
+- Scope: these values satisfy the previously open package-budget decision in FM-DEC-026. They do not by themselves activate package sales, AI runtime, top-ups, customer migration or Production.
+- Review rule: later budget changes require a new explicit decision and apply prospectively to future authoritative billing periods; settled historical usage is not rewritten.

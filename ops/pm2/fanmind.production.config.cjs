@@ -29,6 +29,7 @@ module.exports = {
         NODE_ENV: "production",
         FANMIND_RUNTIME_ENVIRONMENT: "production",
         FANMIND_RELEASE_COMMIT: releaseCommit,
+        FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED: "true",
       },
     },
   ],

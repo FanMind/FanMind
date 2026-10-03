@@ -92,6 +92,16 @@ Stand: 16. August 2026
 
 Dieses Dokument ist die fachliche Source of Truth für FanMind. README, AGENTS.md, Landingpage, Pricing, Legal-Texte, Datenbank-Dokumentation, Roadmap und Codex-Tasks müssen mit diesem Stand synchron bleiben.
 
+## AI-Kapazitätsmodell v2 — akzeptiertes Ziel, noch nicht produktiv aktiviert — 30. September 2026
+
+Owner-Entscheidung FM-DEC-026 ersetzt das künftige kundenbezogene KI-Plus/Ultra-Produktmodell durch drei Grundpakete zu **99 / 199 / 312 EUR** mit jeweils enthaltenem monatlichem AI-Kostenbudget. Owner-Fortsetzung vom 30. September 2026 setzt die Startbudgets verbindlich auf **15 / 30 / 50 EUR** AI-Kostenbudget je autoritativem Abrechnungszeitraum für die Pakete 99 / 199 / 312. Nutzer können künftig **Schnell / Ausgewogen / Premium** wählen; intern wird anhand tatsächlicher Modell-, Token- und Providerkosten abgerechnet. Inkludierte Kapazität verfällt mit dem autoritativen Abrechnungszeitraum, separat gekaufte Kapazität wird getrennt geführt. AI-Top-ups zielen auf ungefähr 33 % Bruttomarge.
+
+Owner-Fortsetzung 30. September 2026: **Für keines der neuen 99-/199-/312-EUR-Pakete wird eine einmalige Einrichtungs-/Setupgebühr verlangt.** Im Stripe-Live-Katalog wurden eigenständige Capacity-v2-Monatspreise für 99, 199 und 312 EUR angelegt. Die historischen 990-EUR-Setup-/Pilot-Produkte sowie das historische Starter-312-Produkt wurden für Neugeschäft deaktiviert; bestehende Referenzen bleiben nur als Legacy-/Migrationsnachweis erhalten.
+
+Isolierter Staging-Stand vom 30. September 2026: Die Capacity-v2-Policy enthält die freigegebenen **15 / 30 / 50 EUR** Budgets bei Revision 2. Runtime, Paketverkauf, Qualitätsmodi, Top-ups und alle drei Activation-Ready-Schalter bleiben aus; Emergency Freeze bleibt an. Es wurden keine Grants, Reservations oder Ledger-Events erzeugt. Der Reserve/Settle-RPC-Rollout bleibt blockiert, weil die aktuell kontrollierte SQL-Quelle vor APPLY einen Compile-Defekt in `ai_capacity_grant_credit` zeigt; sie wurde deshalb nicht auf Staging angewendet.
+
+Diese Entscheidung ist **Zielmodell, nicht aktuelle Production-Aktivierung**. Bestehende Starter-/KI-Standard-/KI-Plus-/KI-Ultra-Quellen, Stripe-IDs und Verträge bleiben bis zur kontrollierten Migration gültige Legacy-/Migrationsbasis. Es erfolgt weder automatische Kundenmigration noch Aktivierung neuer Preise oder Top-ups. Maßgeblich für die Implementierung ist `docs/operations/AI_CAPACITY_BILLING_V2.md`; die registrierte R4-Grenze `FM-CONTRACT-AI-BILLING-001` / `FM-IGATE-AI-BILLING-001` bleibt bindend.
+
 ## 1. Produktdefinition
 
 FanMind ist ein KI-gestütztes CRM und Copy-&-Open-Kommunikationssystem für Fan- und Kontaktbeziehungen.
@@ -1295,3 +1305,43 @@ Schema-Apply, RLS/Privilege-Postflight, rollback-only Staging-Acceptance,
 Runtime-Gate sowie Disclosure-/Löschabnahme erforderlich. Ist das Fan-Gate aus
 oder das Schema nicht nachweislich vollständig, bleibt der bestehende V1-
 Character-Flow verfügbar und die Fan-UI fragt keine Fan-Daten ab.
+
+
+## AI Capacity v2 · OpenAI-Preiskatalog und Qualitätsmodi — 30. September 2026
+
+Für Capacity v2 sind **Schnell**, **Ausgewogen** und **Premium** stabile
+FanMind-Produktmodi. Die konkrete OpenAI-Modellauswahl ist serverseitig und
+versioniert:
+
+- Schnell -> `gpt-6-luna`, Reasoning `low`;
+- Ausgewogen -> `gpt-6.1-sol`, Reasoning `medium`;
+- Premium -> `gpt-6-astra`, Reasoning `max`.
+
+Premium bedeutet das stärkste für FanMind ausdrücklich freigegebene Modell der
+aktuellen Katalogversion. Es wird kein unkontrolliertes `latest`-Alias
+verwendet; ein später besser geeignetes Modell benötigt eine neue geprüfte
+Katalogversion.
+
+Der aktuelle Preis-Snapshot
+`openai-2026-09-30-gpt6-standard-v1` speichert die offiziellen
+OpenAI-Standardpreise serverseitig in integerbasierten USD-Microeinheiten und
+unterscheidet Short-/Long-Context an der veröffentlichten Grenze von mehr als
+272.000 Input-Tokens. FanMind "Schnell" ist nicht OpenAI "Fast mode"; alle drei
+aktuellen Profile verwenden Standard processing. Nicht katalogisierte
+Processing-Tiers, regionale Aufschläge oder fehlende Preisversionen schlagen
+fail-closed.
+
+Der Katalog ist die Provider-Kostenbasis für die nachfolgende
+Reserve -> Settle/Release -> Guthabenverbrauch-Implementierung. Legacy
+ENV-basierte Kostenschätzungen bleiben reine Observability und dürfen den
+Capacity-v2-Ledger nicht setteln. Maßgeblich:
+`docs/operations/OPENAI_PRICE_CATALOG.md`.
+
+
+## AI Capacity v2 · Verbrauchsanzeige und Null-Prozent-Verhalten — 30. September 2026
+
+AI-Kapazität wird kundenbezogen als **verbleibender Prozentwert** angezeigt, nicht als primäres Tokenkontingent. Schnell, Ausgewogen und Premium greifen auf dasselbe Capacity-v2-Guthaben zu; wegen unterschiedlicher realer Providerkosten sinkt die Anzeige je nach gewählter Qualitätsstufe unterschiedlich schnell. Kommunikationsanalyse und Antworterstellung verbrauchen denselben Pool.
+
+Reservierte sowie indeterminate/reconciliation-required Beträge gelten bis zur Freigabe oder Abrechnung als nicht verfügbar. Die Anzeige wird konservativ abgerundet.
+
+Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Capacity-v2-KI-Aufrufe werden gesperrt, bis zusätzliche bezahlte Kapazität verfügbar ist oder der nächste autoritative Abrechnungszeitraum neues inkludiertes Guthaben gewährt. Es erfolgt kein automatisches Downgrade auf Schnell, um die Sperre zu umgehen.

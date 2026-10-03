@@ -64,9 +64,8 @@ jobs:
           fi
 
           jq -n \
-            --arg conversation_key "fanmind-manager-main" \
             --arg input "${input}" \
-            '{conversation_key:$conversation_key,input:$input}' > payload.json
+            '{input:$input}' > payload.json
           echo "event_key=${event_key}" >> "${GITHUB_OUTPUT}"
 
       - name: Trigger FanMind Workspace Manager
@@ -86,12 +85,17 @@ jobs:
             "https://api.chatgpt.com/v1/workspace_agents/${AGENT_TRIGGER_ID}/trigger" \
             --header "Authorization: Bearer ${AGENT_ACCESS_TOKEN}" \
             --header "Content-Type: application/json" \
-            --header "OpenAI-Beta: workspace_agent_runs=v1" \
-            --header "Idempotency-Key: ${IDEMPOTENCY_KEY}" \
             --data-binary @payload.json)"
 
           if [[ "${status}" != "202" ]]; then
             echo "::error title=FanMind manager dispatch rejected::Workspace Agent API returned HTTP ${status}."
+            echo "### Workspace Agent API diagnostic" >> "${GITHUB_STEP_SUMMARY}"
+            echo "- HTTP status: \`${status}\`" >> "${GITHUB_STEP_SUMMARY}"
+            echo "- Response body:" >> "${GITHUB_STEP_SUMMARY}"
+            echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
+            head -c 2000 "${response_file}" >> "${GITHUB_STEP_SUMMARY}"
+            echo >> "${GITHUB_STEP_SUMMARY}"
+            echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
             rm -f "${response_file}" payload.json
             exit 1
           fi

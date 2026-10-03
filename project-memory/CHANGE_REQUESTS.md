@@ -449,3 +449,132 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Third review follow-through: timestamp-less comments sort after provider-timestamped history, and each manual comment-sync request is bounded to 100 processed comments / 8 seconds of persistence work. Partial progress stores an opaque, non-secret continuation marker in the existing server-written comment-status field and the UI renders only a friendly continuation state; no schema/DB migration is introduced.
 - Fourth review follow-through: completed comment sync retains a provider-timestamp high-water in existing `last_comment_fetch_at` while pending/error state remains separate in `last_comment_fetch_error`; later syncs start at the high-water (inclusive for same-timestamp dedupe safety) instead of replaying the full history. Top-level Page feed reads are bounded to the 25 most recent posts without failing merely because older feed pages exist; comment-edge pagination remains strict and separately capped.
 - Final current-head review follow-through: Facebook callback origin must match the configured active FanMind app outside the explicit local fixture; manual comment syncs are connection-scoped single-flight; imported comments are ordered oldest-first so provider timestamps cannot regress conversation recency.
+
+## FM-CR-046 — AI Capacity Billing v2
+- Date: 2026-09-30
+- Status: ACCEPTED_FOR_IMPLEMENTATION
+- Risk: R4
+- Contract: FM-CONTRACT-AI-BILLING-001
+- Integration gate: FM-IGATE-AI-BILLING-001
+- Source: Owner replaces the customer-facing KI Plus/Ultra add-on model with package-bound AI capacity.
+- Contract: EUR 99/199/312 base packages; monthly included AI cost budget per package (exact values deliberately open); Fast/Balanced/Premium quality modes; actual provider/model/token cost accounting; included capacity expires monthly; purchased capacity survives reset with explicit validity; included bucket consumed before purchased bucket; top-ups target about 33% gross margin.
+- Boundary: no Production payment/top-up activation, no invented package budgets, no automatic customer migration, and no Legal/Tax acceptance is implied.
+- Implementation: reuse existing cost/usage infrastructure and replace Plus/Ultra product semantics with an atomic workspace/month capacity ledger, reset and top-up lifecycle. Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
+
+
+## FM-CR-047 — AI Capacity policy foundation
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continued implementation after PR #1230 established the accepted Capacity-v2 contract.
+- Scope: dormant repository-only capacity package/mode/admin admission policy with exact 99/199/312 EUR package identities, Fast/Balanced/Premium modes, legacy-v1/capacity-v2 discrimination and default-off fail-closed controls.
+- Boundaries: no Supabase schema/apply, no Stripe/provider call, no Production activation, no real customer migration and no invented included AI budget.
+- Acceptance: focused positive/negative tests plus exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review.
+
+
+## FM-CR-048 — AI Capacity ledger/Admin persistence
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Scope: repository-only source for default-off AI Capacity persistence and Platform-Admin controls; no database apply or external activation.
+
+## FM-CR-049 — Creator-Building collapsible AI suggestions
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: rename the Owner-only ChatAdmin page heading to `Creator-Building`; group each stored suggestion sequence under its preceding inbound Fan message; place one accessible `▼`/`▲` control directly left of that message; keep stored suggestions collapsed when a Fan is opened and open the newest group once immediately after generation.
+- Acceptance: Fan and confirmed messages remain visible; the toggle exposes and hides exactly the associated AI suggestions; actionable copies follow the newest expanded group; Character/Fan/workspace authority, persistence, manual confirmation and no-auto-send boundaries remain unchanged.
+- Evidence: focused ChatAdmin/API suite 31/31, ESLint 0 errors, production build and diff check passed locally. PR #1240 exact-head Browser E2E, CI, CodeQL and Project Memory checks remain the publication gates.
+- Preflight: accepted-state drift passed. Evidence freshness passed with only unrelated already-open Restore, Mobile, Meta/Security, AI/Billing and older ChatAdmin/Creator evidence revalidation notices; none is used to support this bounded UI conclusion.
+
+
+## FM-CR-050 — Versioned OpenAI price catalog
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested official OpenAI pricing as the cost basis and clarified the FanMind modes: Premium uses the strongest suitable approved model, Ausgewogen a middle model, Schnell the fastest/lower-cost model for communication analysis and replies.
+- Scope: versioned provider-price catalog, stable mode-to-model policy, exact cost-engine resolver, canonical docs and tests.
+- Current mapping: Schnell = `gpt-6-luna`/low, Ausgewogen = `gpt-6.1-sol`/medium, Premium = `gpt-6-astra`/max; Standard processing only.
+- Boundaries: no external activation, no runtime provider switching yet, no package-budget decision, no Stripe/Tax/customer mutation.
+- Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
+
+## FM-CR-051 — Fan row action menu and compact conversation
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: remove the selected-Fan header, edit button and permanently visible facts/notes cards from the conversation pane; add a three-dot action menu to each Fan row with profile editing, focused notes/facts editing, activation/deactivation and revision-bound deletion.
+- Deletion contract: the authorized same-origin DELETE targets one workspace/Character/Fan/revision tuple; the existing database cascade removes that Fan's conversation and messages. A browser confirmation is required before the request.
+- Acceptance: the conversation starts at the top of the right pane; all Fan controls remain reachable from the row menu; inactive state remains visible and blocks new generation; no Character, workspace, manual-send or external-platform boundary changes.
+- Evidence: focused ChatAdmin/API suite 32/32, ESLint 0 errors, production build and diff check passed locally. PR current-head Browser E2E, CI, CodeQL and Project Memory checks remain publication gates.
+
+## FM-CR-052 — AI Capacity reserve/settle runtime foundation
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continuation immediately after merged versioned OpenAI price catalog #1242.
+- Scope: atomic included/purchased grant allocation, reserve, actual-usage settle, release, indeterminate/reconciliation handling, explicit versioned FX conversion, server-only adapter/runtime coordinator and required tests.
+- Boundaries: repository-only; no Staging/Production APPLY, productive route switch, provider call, customer migration, package-budget decision or Stripe/top-up activation.
+- Acceptance: exact-head CI/security/governance, independent review and fail-closed evidence for missing usage/FX, insufficient balance, idempotency conflicts and actual cost above reserve.
+- No-free-reserve owner clarification: customer capacity is displayed as remaining percent; both analysis and reply generation use the same pool; 0% blocks all new Capacity-v2 AI reservations until paid additional capacity or the next billing-period grant. No free/throttled fallback and no automatic downgrade.
+
+## FM-CR-053 — Capacity-v2 Stripe catalog cutover and setup-fee retirement
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner requested the old 312-EUR and one-time setup/pilot catalog to be retired and confirmed that FanMind will no longer charge any one-time setup fee.
+- Stripe evidence: live Capacity-v2 prices exist for EUR 99, 199 and 312; legacy Starter 312 and both 990-EUR setup/pilot Products were marked inactive for new sale. Existing references remain migration/audit evidence.
+- Repository scope: introduce Capacity-v2 Stripe env slots, remove setup-fee dependency from legacy checkout compatibility, set legacy setup terms to zero, and reconcile canonical product truth.
+- Boundary: no package AI-budget invention, no automatic customer migration, no Capacity-v2 sales activation, no top-up activation and no Legal/Tax acceptance.
+- Acceptance: exact-head CI/security/governance and independent review; public/product truth contains no new setup-fee promise; remaining activation gates continue fail-closed.
+
+
+## FM-CR-054 — Creator-Building taller conversation pane
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Owner requested that the unused vertical space in the desktop Creator-Building be used for the conversation instead of ending the chat at the previous 39vh cap.
+- Scope: make the desktop Creator-Building workspace consume the available viewport height and let the conversation history flex into that space while leaving the composer/actions below it; keep the existing compact mobile history cap.
+- Boundary: layout-only CSS change; no chat persistence, AI generation, Fan/Character authority, billing, provider, database or external-platform behavior changes.
+- Acceptance: desktop conversation history is materially taller on large screens, retains its own scroll when needed, composer remains reachable below it, and mobile retains the bounded layout.
+
+
+## FM-CR-055 — Creator-Building auto-scroll to latest message
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Follow-up to the taller conversation pane: a long conversation should open at the newest message rather than forcing the creator to scroll down manually.
+- Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
+- Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
+- Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+
+## FM-CR-056 — Apply owner-approved Capacity-v2 package budgets
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner approved 15 / 30 / 50 EUR included AI cost budgets for the 99 / 199 / 312 EUR Capacity-v2 packages.
+- Scope: encode canonical package budgets in server policy, seed the controlled policy schema with those values, update reader/admin surfaces, types/tests and canonical truth.
+- Boundary: no Production activation, no customer migration and no top-up sale.
+- Acceptance: exact-head CI/security/governance, independent exact-head review, and fail-closed runtime/package-sales/top-up switches remain off.
+
+## FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck
+- Date: 2026-09-30
+- Status: COUNTERCHECKED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner explicitly requested continuing with the isolated-Staging Capacity-v2 budget/RLS/negative acceptance step.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: policy revision advanced 1 -> 2 with EUR 15 / 30 / 50 budgets; one audit row `ai_capacity_staging_budget_seed` / `FM-DEC-027`; global runtime, all package-sales switches, all quality modes, top-ups and all three activation-ready flags remained false, emergency freeze remained true.
+- Negative evidence: runtime/package-sales/top-up activation attempts were transactionally rejected by their activation guards; anon/authenticated have no SELECT privilege on policy/grants; grants/reservations/ledger-events remained 0.
+- Open blocker: reserve/settle RPCs are not installed on Staging. The current controlled reserve/settle SQL on main contains an actual source defect in `ai_capacity_grant_credit` (policy variables referenced there without declarations) and cannot be applied unchanged. Fix and review that source separately before any Staging ledger APPLY.
+- Boundary: no Production mutation, no AI runtime activation, no package-sale activation, no top-up sale, no customer migration.
