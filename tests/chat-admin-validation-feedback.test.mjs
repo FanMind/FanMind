@@ -8,7 +8,11 @@ test("ChatAdmin maps server validation to a human message and a field marker", a
   assert.match(source, /setInvalidField\(validation\.field\)/);
   assert.match(source, /data-invalid-field=\{invalidField\?\?undefined\}/);
   assert.match(source, /role="alert"/);
-  assert.doesNotMatch(source, /Speichern abgewiesen: \$\{body\.error\}/);
+  assert.match(source, /invalid_bio:\{field:"bio",message:"Bio muss ausgefüllt sein und darf höchstens 4\.000 Zeichen enthalten\."/);
+  assert.match(source, /payload_too_large:\{field:null,message:"Die Character-Daten sind insgesamt zu lang\./);
+  const characterSave = source.slice(source.indexOf(" async function save("), source.indexOf(" async function deactivate("));
+  assert.ok(characterSave.length > 0);
+  assert.doesNotMatch(characterSave, /Speichern abgewiesen: \$\{body\.error\}/);
 });
 
 test("ChatAdmin validation styles mark every character input class in red", async () => {
