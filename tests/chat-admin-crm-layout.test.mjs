@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync("src/app/chatadmin/ChatAdminClient.tsx", "utf8");
+const styles = readFileSync("src/app/chatadmin/chatadmin.module.css", "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -61,6 +62,14 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
   assert.doesNotMatch(html, /Revision 7/);
 });
 
+test("Creator-Building keeps the desktop shell fixed with three independent scroll panes", () => {
+  assert.match(styles, /\.page\{height:100dvh;min-height:0;overflow:hidden/u);
+  assert.match(styles, /\.characterList,\.fanList\{min-height:0;flex:1 1 auto;overflow-y:auto/u);
+  assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow-y:auto/u);
+  assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
+  assert.match(source, /ref=\{conversationPaneRef\}/u);
+});
+
 test("ChatAdmin groups stored AI suggestions under their inbound fan message", () => {
   const { groupChatMessages } = loadClient();
   assert.equal(typeof groupChatMessages, "function");
@@ -78,4 +87,38 @@ test("ChatAdmin groups stored AI suggestions under their inbound fan message", (
       { id: "suggestion-3", direction: "suggested_reply", content: "Bestens", created_at: "2026-09-30T10:01:03Z" },
     ] },
   ]);
+});
+
+
+test("ChatAdmin maps server validation to actionable field feedback", () => {
+  assert.match(source, /invalid_writing_style:\{field:"writing_style",message:"Schreibstil/);
+  assert.match(source, /setInvalidField\(validation\.field\)/);
+  assert.match(source, /data-invalid-field=\{invalidField\?\?undefined\}/);
+  assert.match(source, /role="alert"/);
+  assert.match(source, /invalid_bio:\{field:"bio",message:"Bio muss ausgefüllt sein und darf höchstens 4\.000 Zeichen enthalten\."/);
+  assert.match(source, /payload_too_large:\{field:null,message:"Die Character-Daten sind insgesamt zu lang\./);
+  const characterSave = source.slice(source.indexOf(" async function save("), source.indexOf(" async function deactivate("));
+  assert.ok(characterSave.length > 0);
+  assert.doesNotMatch(characterSave, /Speichern abgewiesen: \$\{body\.error\}/);
+});
+
+test("Character PATCH preserves bounded-body validation reasons", () => {
+  const route = readFileSync("src/app/api/chatadmin/characters/route.ts", "utf8");
+  const patch = route.slice(route.indexOf("export async function PATCH"), route.indexOf("export async function DELETE"));
+  assert.ok(patch.length > 0);
+  assert.match(patch, /if\(!body\.ok\)return NextResponse\.json\(\{error:body\.reason\}/);
+  assert.doesNotMatch(patch, /!body\.ok\|\|/);
+});
+
+test("ChatAdmin validation styles mark every character input in red", () => {
+  const layout = readFileSync("src/app/chatadmin/layout.tsx", "utf8");
+  const css = readFileSync("src/app/chatadmin/validation.module.css", "utf8");
+  assert.match(layout, /validation\.module\.css/);
+  for (const field of [
+    "display_name","public_age","bio","languages","profile_image_path","personality",
+    "writing_style","emoji_style","sentence_style","typical_phrases","forbidden_phrases",
+    "example_messages","flirt_style","sales_rules",
+  ]) assert.match(css, new RegExp(`data-invalid-field="${field}"`));
+  assert.match(css, /#fb7185/);
+  assert.match(css, /\[role="alert"\]/);
 });

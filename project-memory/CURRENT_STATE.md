@@ -3,6 +3,13 @@
 - Scope: test-only evidence against the existing controlled reserve/settle SQL; no Staging, Production, Stripe, Supabase, provider, customer-data or runtime mutation.
 - Acceptance: exact PR head must pass the existing AI-capacity operations suite and Project Memory guard. Any unrelated baseline CI failure on current main remains separate and must not be misclassified as caused by this test.
 
+## Mobile supply-chain deferral boundary — repository evidence — 2026-10-04
+- Status: ACCEPTED on main `405865fc9d2b8304a41095ebe4d0ca9045f8ba09`.
+- Owner decision: FM-DEC-021 keeps remaining Mobile work deferred until company registration.
+- Durable state: Root/Web dependency policy remains fail-closed. Mobile audit still runs and reports policy failures under explicit `deferred-owner` enforcement, but deferred Mobile findings do not block unrelated Web/Ops/AI-Billing work. The canonical read-only Production audit again runs after successful main deploys and daily at 04:17 UTC while retaining its manual exact-commit path and installed root-owned/no-checkout execution.
+- Evidence: PR #1256 final head `862b789d19c3a9a4791cdc44133e490a266f029d` contained current main, passed all nine required CI/security/governance checks with zero unresolved review threads, and squash-merged as `405865fc9d2b8304a41095ebe4d0ca9045f8ba09`.
+- Boundary: no Mobile dependency, vulnerability threshold, reviewed-package allowlist, signed build, provider state, Production runtime, customer data or protected external state changed.
+
 ## Stripe AI capacity top-ups and purchase reversals — repository implementation — 2026-10-01
 - Status: IN_PROGRESS; PR #1252 implements fixed EUR 10/25/50/100 AI-capacity top-ups with PaymentIntent-based idempotent grants and atomic purchase reversals.
 - Refund/dispute handling targets the original PaymentIntent grant and withdraws only unused purchased AI capacity; already consumed/bound capacity remains unchanged.

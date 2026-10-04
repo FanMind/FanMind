@@ -15,6 +15,7 @@ const MOBILE_REVIEW_EXPIRES_AT = "2026-10-02T20:06:29.000Z";
 const MOBILE_REVIEW_HIGH_MAXIMUM = 4;
 const MOBILE_REVIEW_MODERATE_MAXIMUM = 14;
 const MOBILE_REVIEW_LOW_MAXIMUM = 0;
+const MOBILE_ENFORCEMENT_MODES = Object.freeze(["strict", "deferred-owner"]);
 const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@expo/cli",
   "@expo/config",
@@ -70,7 +71,11 @@ function evaluateDependencyAudit({
   mobilePayload,
   rootManifest,
   now = new Date(),
+  mobileEnforcement = "strict",
 }) {
+  if (!MOBILE_ENFORCEMENT_MODES.includes(mobileEnforcement)) {
+    throw new Error("mobile_enforcement_mode_invalid");
+  }
   const root = auditMetadata(rootPayload);
   const mobile = auditMetadata(mobilePayload);
   const rootNames = vulnerabilityNames(rootPayload);
@@ -153,7 +158,9 @@ function evaluateDependencyAudit({
   }
 
   return {
-    ok: rootOk && mobileOk,
+    ok: rootOk && (mobileEnforcement === "strict" ? mobileOk : true),
+    mobilePolicyOk: mobileOk,
+    mobileEnforcement,
     root: {
       ...root,
       packages: rootNames,
@@ -214,10 +221,12 @@ async function main() {
     await readFile(resolve(rootDirectory, "package.json"), "utf8"),
   );
 
+  const mobileEnforcement = parseArgument("--mobile-enforcement", "strict");
   const evaluation = evaluateDependencyAudit({
     rootPayload: runNpmAudit(rootDirectory, { omitDev: true }),
     mobilePayload: runNpmAudit(mobileDirectory),
     rootManifest,
+    mobileEnforcement,
   });
 
   const report = {
@@ -236,6 +245,7 @@ async function main() {
       reviewedMobilePackages: REVIEWED_MOBILE_PACKAGES,
       mobileReviewedAt: MOBILE_REVIEWED_AT,
       mobileReviewExpiresAt: MOBILE_REVIEW_EXPIRES_AT,
+      mobileEnforcement,
     },
     result: evaluation,
     advisoryDetailsIncluded: false,
@@ -263,6 +273,8 @@ async function main() {
       evaluation.mobile.reviewRequired ? "mobile_only" : "no"
     }`,
   );
+  console.log(`DEPENDENCY_AUDIT_MOBILE_ENFORCEMENT=${evaluation.mobileEnforcement}`);
+  console.log(`DEPENDENCY_AUDIT_MOBILE_POLICY_RESULT=${evaluation.mobilePolicyOk ? "success" : "failed"}`);
   console.log(`DEPENDENCY_AUDIT_RESULT=${evaluation.ok ? "success" : "failed"}`);
 
   if (!evaluation.ok) {
