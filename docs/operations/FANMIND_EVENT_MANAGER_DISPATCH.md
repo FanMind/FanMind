@@ -7,7 +7,7 @@ FanMind must not depend on nominal ChatGPT task start times. The canonical Proje
 ## Architecture
 
 1. A pull request is merged into `main`.
-2. `.github/workflows/fanmind-manager-event-dispatch.yml` runs.
+2. `.github/workflows/fanmind-manager-event-dispatch.yml` reads the complete changed-file list. A merge that changes only `project-memory/ORCHESTRATOR_RESULT.json` is recorded and does not dispatch another manager run; product-only and mixed changes still dispatch. Missing or incomplete file evidence is never treated as receipt-only.
 3. If configured, the workflow sends a narrow wake-up event to the published FanMind Workspace Manager through the ChatGPT Workspace Agents API.
 4. The manager classifies the bounded work against current `main` and applies Execution Policy v6: minimum sufficient R1/R2 preflight for ordinary repository work, full R3/R4 preflight for protected work. It recomputes the safe executable task instead of assuming the merge itself is the task.
 5. The existing hourly Builder remains the fallback if an event is missed, the API is unavailable or the dispatcher is not configured.
@@ -41,7 +41,7 @@ The published manager should use the existing FanMind Builder/Manager instructio
 
 ## Idempotency and loops
 
-Merge events use an idempotency key bound to PR number and merge SHA. Retrying the same merge should not enqueue duplicate agent work. A manager-created follow-up PR may intentionally create a later merge event; anti-loop rules in Project Memory remain authoritative and must stop no-change receipt churn.
+Merge events use an idempotency key bound to PR number and merge SHA. Retrying the same merge should not enqueue duplicate agent work. A terminal receipt-only merge is suppressed at the dispatcher. A manager-created follow-up PR with any other changed file intentionally creates a later merge event; anti-loop rules in Project Memory remain authoritative for all other churn.
 
 ## Security boundary
 
