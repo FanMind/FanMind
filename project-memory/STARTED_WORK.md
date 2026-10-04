@@ -1,3 +1,14 @@
+## FM-CI-PR1256-20261004 — restore PR #1256 exact-head CI
+- Date: 2026-10-04
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-CI-PR1256-20261004
+- Baseline: current main `72cf742fb56799fbb74b9b565119645a7dc86ebe`; PR #1256 head `6729ea921b9ec2e31d18f1918b72d9f60685fbd3`.
+- Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
+- Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
+- Acceptance: focused Production-audit contract, full exact-head required CI/security/governance checks, diff countercheck and independent review. This run does not merge.
+- Recovery: repository revert only; no external state is changed by this source update.
+
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
