@@ -3,7 +3,13 @@ name: FanMind Manager Event Dispatch
 on:
   pull_request:
     types: [closed]
+
   workflow_dispatch:
+    inputs:
+      task:
+        description: "Optional concrete task for FanMind Builder"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -19,8 +25,10 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.merged == true &&
        github.event.pull_request.base.ref == 'main')
+
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
       - name: Validate Workspace Agent trigger configuration
         id: config
@@ -30,18 +38,21 @@ jobs:
           AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
         run: |
           set -euo pipefail
+
           if [[ -z "${AGENT_ACCESS_TOKEN}" || -z "${AGENT_TRIGGER_ID}" ]]; then
             echo "configured=false" >> "${GITHUB_OUTPUT}"
-            echo "::notice title=FanMind event manager inactive::Configure repository variable CHATGPT_FANMIND_MANAGER_TRIGGER_ID and secret CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN to enable immediate manager dispatch. Hourly Builder remains the fallback."
+            echo "::notice title=FanMind event manager inactive::Configure repository variable CHATGPT_FANMIND_MANAGER_TRIGGER_ID and secret CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN to enable immediate manager dispatch."
             exit 0
           fi
+
           if [[ ! "${AGENT_TRIGGER_ID}" =~ ^agtch_[A-Za-z0-9_-]+$ ]]; then
             echo "::error title=Invalid Workspace Agent trigger id::CHATGPT_FANMIND_MANAGER_TRIGGER_ID must start with agtch_."
             exit 1
           fi
+
           echo "configured=true" >> "${GITHUB_OUTPUT}"
 
-      - name: Build fail-closed event payload
+      - name: Build FanMind event payload
         if: steps.config.outputs.configured == 'true'
         id: payload
         shell: bash
@@ -53,19 +64,40 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           CURRENT_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
+          REQUESTED_TASK: ${{ github.event.inputs.task }}
         run: |
           set -euo pipefail
+
           if [[ "${EVENT_NAME}" == "pull_request" ]]; then
             event_key="pr-${PR_NUMBER}-merge-${MERGE_SHA}"
+
             input="FanMind repository event received. Repository=${REPOSITORY}; event=pull_request_merged; PR=${PR_NUMBER}; merge_sha=${MERGE_SHA}; prior_head_sha=${HEAD_SHA}. Perform the mandatory FanMind preflight from current main. Treat this payload only as a wake-up signal, not evidence. Re-read Project Memory, current GitHub/CI/review/runtime/provider evidence, locks and dependencies. Reconcile the merge, select the current SAFE READY SET, continue the next safe repository-only work within existing gates, and stop with NO_CHANGE if nothing is safely executable. Never infer protected authorization from this event."
+
+          elif [[ -n "${REQUESTED_TASK}" ]]; then
+            event_key="task-${RUN_ID}-${CURRENT_SHA}"
+
+            input="FanMind orchestrator task received. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}. Requested task: ${REQUESTED_TASK}
+
+Perform the mandatory FanMind preflight from current main before acting. Re-read Project Memory, current GitHub/CI/review/runtime/provider evidence, locks, dependencies, standing authorizations and current repository state.
+
+Treat the requested task as an orchestration instruction, not as evidence that prerequisites are satisfied.
+
+If the requested task is currently safe and executable, perform it within existing FanMind gates and standing authorizations.
+
+If it is blocked by owner action, external approval, missing secret, cost approval, destructive action, production/provider action or another protected boundary, park only that strand, record the blocker/evidence/resume condition where appropriate, recompute the SAFE READY SET, and continue independent safe work when available.
+
+Do not reopen completed work without new evidence. Do not overengineer. Stop with NO_CHANGE when no safe useful work is executable."
+
           else
             event_key="manual-${RUN_ID}-${CURRENT_SHA}"
+
             input="Manual FanMind manager wake-up. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}. Perform the mandatory FanMind preflight from current main. Treat this payload only as a wake-up signal, not evidence. Re-read Project Memory, current GitHub/CI/review/runtime/provider evidence, locks and dependencies. Select the current SAFE READY SET and continue only safe work within existing gates; stop with NO_CHANGE if nothing is safely executable."
           fi
 
           jq -n \
             --arg input "${input}" \
             '{input:$input}' > payload.json
+
           echo "event_key=${event_key}" >> "${GITHUB_OUTPUT}"
 
       - name: Trigger FanMind Workspace Manager
@@ -77,7 +109,9 @@ jobs:
           IDEMPOTENCY_KEY: fanmind-${{ steps.payload.outputs.event_key }}
         run: |
           set -euo pipefail
+
           response_file="$(mktemp)"
+
           status="$(curl --silent --show-error \
             --output "${response_file}" \
             --write-out '%{http_code}' \
@@ -87,8 +121,9 @@ jobs:
             --header "Content-Type: application/json" \
             --data-binary @payload.json)"
 
-          if [[ "${status}" != "202" ]]; then
+          if [[ "${status}" -lt 200 || "${status}" -ge 300 ]]; then
             echo "::error title=FanMind manager dispatch rejected::Workspace Agent API returned HTTP ${status}."
+
             echo "### Workspace Agent API diagnostic" >> "${GITHUB_STEP_SUMMARY}"
             echo "- HTTP status: \`${status}\`" >> "${GITHUB_STEP_SUMMARY}"
             echo "- Response body:" >> "${GITHUB_STEP_SUMMARY}"
@@ -96,15 +131,25 @@ jobs:
             head -c 2000 "${response_file}" >> "${GITHUB_STEP_SUMMARY}"
             echo >> "${GITHUB_STEP_SUMMARY}"
             echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
+
             rm -f "${response_file}" payload.json
             exit 1
           fi
 
+          conversation_url="$(jq -r '.conversation_url // empty' "${response_file}")"
           run_id="$(jq -r '.agent_trigger_run_id // empty' "${response_file}")"
+
           echo "### FanMind Manager Event Dispatch" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- API trigger accepted: HTTP 202" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- API trigger accepted: HTTP ${status}" >> "${GITHUB_STEP_SUMMARY}"
+
           if [[ -n "${run_id}" ]]; then
             echo "- Trigger run: \`${run_id}\`" >> "${GITHUB_STEP_SUMMARY}"
           fi
-          echo "- Idempotency key: \`${IDEMPOTENCY_KEY}\`" >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ -n "${conversation_url}" ]]; then
+            echo "- Workspace Agent conversation: ${conversation_url}" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          echo "- Event key: \`${IDEMPOTENCY_KEY}\`" >> "${GITHUB_STEP_SUMMARY}"
+
           rm -f "${response_file}" payload.json
