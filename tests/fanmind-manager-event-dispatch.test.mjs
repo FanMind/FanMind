@@ -57,6 +57,6 @@ test("workflow is explicit Orchestrator-only dispatch with mandatory correlation
   assert.match(workflow, /REQUESTED_TASK: \$\{\{ inputs\.task \}\}/u);
   assert.match(workflow, /REQUESTED_TASK_ID: \$\{\{ inputs\.task_id \}\}/u);
   assert.match(workflow, /sole authority for selecting the next independent FanMind task/u);
-  assert.match(workflow, /do not select, start, continue, or substitute another independent roadmap task/u);
+  assert.match(workflow, /Do not select, start, continue, or substitute another independent roadmap task/u);
   assert.doesNotMatch(workflow, /gh api --paginate --slurp/u);
 });
