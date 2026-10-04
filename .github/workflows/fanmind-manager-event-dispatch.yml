@@ -31,7 +31,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Checkout merged source
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Classify merged PR files
+        if: github.event_name == 'pull_request'
+        id: pr_files
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPECTED_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        run: |
+          set -euo pipefail
+          files="${RUNNER_TEMP}/fanmind-manager-pr-files.json"
+          if ! gh api --paginate --slurp "/repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" > "${files}"; then
+            echo "receipt_only=false" >> "${GITHUB_OUTPUT}"
+            echo "classification=uncertain" >> "${GITHUB_OUTPUT}"
+            echo "::warning title=PR file classification unavailable::Dispatch remains enabled because the complete changed-file set could not be read."
+            exit 0
+          fi
+          node scripts/orchestration/classify-manager-pr-files.mjs \
+            --expected "${EXPECTED_CHANGED_FILES}" < "${files}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record receipt-only suppression
+        if: steps.pr_files.outputs.receipt_only == 'true'
+        shell: bash
+        run: echo "Receipt-only merge detected; Workspace Manager dispatch suppressed." >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Record uncertain file classification
+        if: steps.pr_files.outputs.classification == 'uncertain'
+        shell: bash
+        run: echo "::warning title=Incomplete PR file evidence::Workspace Manager dispatch remains enabled."
+
       - name: Validate Workspace Agent trigger configuration
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          steps.pr_files.outputs.receipt_only != 'true'
         id: config
         shell: bash
         env:
