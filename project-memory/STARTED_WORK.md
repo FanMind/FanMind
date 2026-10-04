@@ -7,6 +7,7 @@
 - Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
 - Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
 - Acceptance: focused Production-audit contract, full exact-head required CI/security/governance checks, diff countercheck and independent review. This run does not merge.
+- Exact next step: obtain the fresh exact-head required check set for PR #1256, countercheck the full diff, record the result and release or update the lock; do not merge in this CI-resolution run.
 - Recovery: repository revert only; no external state is changed by this source update.
 
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
