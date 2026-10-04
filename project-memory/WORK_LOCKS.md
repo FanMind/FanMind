@@ -1,3 +1,13 @@
+## LOCK-FM-CI-PR1256-20261004
+- Task: FM-CI-PR1256-20261004
+- Status: ACTIVE
+- Risk: R3
+- Holder: FanMind Builder scheduled run 2026-10-04
+- Branch/PR: `fix/mobile-audit-deferral-20261002` / #1256
+- Scope: exact FanMind CI failure `37028636158` / job `110909577917`; restore only the canonical Production read-only audit triggers already isolated in PR #1255 and obtain fresh exact-head evidence.
+- Boundary: no workflow dispatch, merge, deployment, Production write, dependency mutation or protected external action.
+- Recovery: repository revert only.
+
 ## LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
