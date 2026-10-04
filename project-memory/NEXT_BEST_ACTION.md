@@ -25,7 +25,7 @@ owner/platform action required
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
 - Worker slots reserved by active/ready work: `3`
-- Active task continuations reserving slots: `TASK:FM-CI-PR1256-20261004`, `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`
+- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`, `TASK:FM-CI-PR1256-20261004`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
