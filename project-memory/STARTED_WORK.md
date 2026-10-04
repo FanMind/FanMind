@@ -1,15 +1,3 @@
-## FM-CI-PR1256-20261004 — restore PR #1256 exact-head CI
-- Date: 2026-10-04
-- Status: IN_PROGRESS
-- Risk: R3
-- Lock: LOCK-FM-CI-PR1256-20261004
-- Baseline: current main `72cf742fb56799fbb74b9b565119645a7dc86ebe`; PR #1256 head `6729ea921b9ec2e31d18f1918b72d9f60685fbd3`.
-- Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
-- Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
-- Acceptance: focused Production-audit contract, full exact-head required CI/security/governance checks, diff countercheck and independent review. This run does not merge.
-- Exact next step: obtain the fresh exact-head required check set for PR #1256, countercheck the full diff, record the result and release or update the lock; do not merge in this CI-resolution run.
-- Recovery: repository revert only; no external state is changed by this source update.
-
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
@@ -1184,3 +1172,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Blocker discovered: reserve/settle RPCs are absent on Staging. Applying current main `supabase/controlled/ai_capacity_reserve_settle.sql` unchanged is blocked because `ai_capacity_grant_credit` references undeclared policy variables. Do not apply until separately fixed/reviewed.
 - Exact next step: source-fix the controlled reserve/settle SQL, then perform a fresh Staging ledger APPLY + rollback-only lifecycle acceptance.
 - Recovery: budget-only seed is reversible without enabling any runtime or sales switch.
+
+## FM-CI-PR1256-20261004 — restore PR #1256 exact-head CI
+- Date: 2026-10-04
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-CI-PR1256-20261004
+- Baseline: current main `72cf742fb56799fbb74b9b565119645a7dc86ebe`; PR #1256 head `6729ea921b9ec2e31d18f1918b72d9f60685fbd3`.
+- Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
+- Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
+- Acceptance: focused Production-audit contract, full exact-head required CI/security/governance checks, diff countercheck and independent review. This run does not merge.
+- Exact next step: obtain the fresh exact-head required check set for PR #1256, countercheck the full diff, record the result and release or update the lock; do not merge in this CI-resolution run.
+- Recovery: repository revert only; no external state is changed by this source update.
