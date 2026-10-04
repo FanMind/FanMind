@@ -1140,23 +1140,48 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
 
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
+- Status: ACCEPTED
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930` — RELEASED_MERGED_VERIFIED.
+- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
+- Completion: PR #1245 final head `f7c9eb9b9b991733410cc0d3159745b7612a82b2` merged as `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`; Stripe Capacity-v2 EUR 99/199/312 catalog exists, legacy 312/setup/pilot/AI Plus/Ultra products are retired from new sale, and setup fee is 0 EUR for new Capacity-v2 packages.
+- Boundary: no Capacity-v2 package sales/runtime/top-up activation or customer migration was performed by #1245.
+- Exact next step: consumed; continue only with FM-CR-056 budget implementation and later separately authorized Staging activation work.
+- Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
+
+## FM-AI-001 / FM-CR-056 — Capacity-v2 approved budgets — 2026-09-30
 - Status: IN_PROGRESS
 - Risk: R4
-- Work lock: `LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930`.
-- Baseline: exact main `c6f07661b021786211ed7f5d4bcfbaf7ef1a4607`.
-- Completed so far: live Stripe Capacity-v2 EUR 99/199/312 prices created; legacy 312/setup/pilot Products retired from new sale; repository branch records zero setup fee and Capacity-v2 env mapping.
-- Still open: PR CI/review/merge; later package-budget decision, Staging/Production activation gates and explicit Production authorization remain separate.
-- Exact next step: fix only current PR #1245 validation findings, obtain one clean exact-head CI/review, then merge; do not start Capacity-v2 activation from this source task.
-- Recovery: reactivate retired legacy Products if catalog rollback is required; source changes revert independently. Existing subscriptions are not migrated by this task.
+- Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
+- Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
+- Completed so far: owner-approved EUR 15 / 30 / 50 budgets encoded in canonical policy, controlled-schema defaults, Admin/reader surfaces and tests. Staging policy was independently seeded to revision 2 with those three values; runtime/sales/top-up/mode/activation-ready flags stayed off and emergency freeze stayed on.
+- Countercheck: activation-guard negatives passed; anon/authenticated policy/grant SELECT privileges are absent; no grants/reservations/ledger events were created.
+- Still open: exact-head CI, independent review and merge. Full ledger Staging acceptance is separately blocked because reserve/settle RPCs are not installed and the current main controlled reserve/settle SQL has a compile-blocking source defect.
+- Exact next step: converge this budget PR; then fix/review the reserve/settle SQL defect as a separate bounded source task before any Staging ledger APPLY.
+- Owner action needed: none for repository implementation; Production activation remains separately protected.
+- Recovery: Staging budget values can be restored to NULL while activation remains off; source changes are revertible.
 
 
-## FM-AI-001 / FM-CR-053 — PR #1246 memory follow-up — 2026-10-02
+## FM-AI-001 / FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck — 2026-09-30
 - Status: COUNTERCHECKED
-- Risk: R1
-- Scope: documentation-only evidence for the existing R4 billing cleanup; no additional source change or activation acceptance.
-- Work lock: `LOCK-FM-PR1246-MEMORY-20261002`.
-- Completed so far: verified head `d719d144fad1913aa80591b4a1adc4e4f05c9958`, main `ef45319b51023df7fd850e6fb719e0612011af00`, unchanged cleanup files since base, and Guard failure 36755186044.
-- Verification: focused tests 64/64; unchanged Guard shell steps reject original missing-memory diff and pass updated tree against original base and current main; memory quality/drift/diff checks passed.
-- Still open / exact next step: verify GitHub Guard on the published memory head; PR remains unmerged and broader R4 gates remain open.
-- Exact next step: publish this memory-only commit and verify its GitHub Guard; no merge.
-- Owner action needed: none for this memory follow-up; existing R4 activation gates remain separate.
+- Risk: R4
+- Work lock: `LOCK-FM-AI-CAPACITY-STAGING-BUDGET-SEED-20260930` — RELEASED_COUNTERCHECKED.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: budget seed 15 / 30 / 50 EUR committed at policy revision 2 with one audit event; runtime/package-sales/top-up/modes/activation-ready all remain disabled, emergency freeze remains enabled.
+- Negative proof: guarded activation attempts were rejected; browser roles have no policy/grant SELECT privileges; zero grants/reservations/ledger events remain.
+- Blocker discovered: reserve/settle RPCs are absent on Staging. Applying current main `supabase/controlled/ai_capacity_reserve_settle.sql` unchanged is blocked because `ai_capacity_grant_credit` references undeclared policy variables. Do not apply until separately fixed/reviewed.
+- Exact next step: source-fix the controlled reserve/settle SQL, then perform a fresh Staging ledger APPLY + rollback-only lifecycle acceptance.
+- Recovery: budget-only seed is reversible without enabling any runtime or sales switch.
+
+## FM-CI-PR1256-20261004 — restore PR #1256 exact-head CI
+- Date: 2026-10-04
+- Status: VERIFIED
+- Risk: R3
+- Lock: LOCK-FM-CI-PR1256-20261004 — RELEASED_CI_FIXED
+- Baseline: current main `72cf742fb56799fbb74b9b565119645a7dc86ebe`; PR #1256 head `6729ea921b9ec2e31d18f1918b72d9f60685fbd3`.
+- Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
+- Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
+- Result: exact head `aa8be0864e9c008c66e90092e50a57b68f11ec14` passed FanMind CI, Supply Chain Security, Browser E2E, CodeQL, Landing Language, God Mode and all Project Memory checks. The failed Production-audit contract subtest now passes; the Mobile deferral remains explicit and reported.
+- Countercheck: full PR diff remains repository/CI-only. Falsifier: any exact-head failure in the Production-audit contract or Root/Web dependency enforcement would reopen this fix; neither occurred.
+- Exact next step: PR #1256 still needs its normal independent review and merge decision. This CI-resolution run does not merge.
+- Recovery: repository revert only; no external state was changed by this source update.

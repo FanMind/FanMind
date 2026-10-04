@@ -1,6 +1,6 @@
 # Countercheck Policy
 
-The second-pass verification must be independent from the implementation pass.
+Countercheck depth and separation follow Execution Policy v6. R1/R2 require a distinct second-pass verification; the same Builder may perform it unless the affected contract, security boundary or architecture risk requires a separate reviewer. R3/R4 require an independent reviewer/evidence path.
 
 ## Independent evidence
 Use at least one evidence source different from the one used to claim success. Task text or PR description alone is never sufficient.
@@ -23,10 +23,10 @@ Execution receipts must record implementation evidence and countercheck evidence
 Any disagreement between project memory, Git/PR, CI, runtime, protected environment or device evidence becomes `RECONCILIATION_REQUIRED`; do not guess or average. Resolve from current verified evidence.
 
 ## Completion gate
-A clean completion claim requires current-commit evidence, independent countercheck evidence, no unresolved reconciliation finding, no stale active lock, no untracked started work/open loop/dependency and the required negative/regression check. Red governance/security/supply-chain checks remain blocking.
+A clean completion claim requires current-commit evidence, the countercheck separation required for the assigned risk, no unresolved reconciliation finding, no stale active lock that applies to the task, no untracked required coordination/open loop/dependency and the required negative/regression check. Applicable red governance/security/supply-chain checks remain blocking.
 
 ## God Mode adversarial countercheck
-For substantive R2+ scope, independently identify affected `FM-CONTRACT-*` and `FM-IGATE-*` records and actively search for the relevant break paths: tenant leak, authority escalation, browser service-role use, race/TOCTOU, stale revision, partial schema/orphan data, wrong target, idempotency/retry failure, rollback failure and cross-module contract drift.
+For R2 scope that affects a registered contract/integration boundary, and for all applicable R3/R4 scope, identify affected `FM-CONTRACT-*` and `FM-IGATE-*` records and actively search for the relevant break paths: tenant leak, authority escalation, browser service-role use, race/TOCTOU, stale revision, partial schema/orphan data, wrong target, idempotency/retry failure, rollback failure and cross-module contract drift.
 
 For R3/R4, use at least one bounded negative/mutation proof that would turn red if the protection were intentionally broken when technically safe. A test is weak if it stays green after the relevant guard is deliberately violated.
 

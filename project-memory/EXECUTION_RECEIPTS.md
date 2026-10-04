@@ -1,3 +1,16 @@
+## RECEIPT-FM-CI-PR1256-20261004
+- Task: FM-CI-PR1256-20261004
+- Status: VERIFIED
+- Risk: R3
+- Branch/PR: `fix/mobile-audit-deferral-20261002` / #1256
+- Failure evidence: run `37028636158`, job `110909577917`; single failing subtest `permanent Production audit runs installed root-owned code only` rejects the missing `workflow_run` trigger. The separate Supply Chain check on this head already passes.
+- Planned correction: apply only PR #1255's reviewed `.github/workflows/production-readonly-audit.yml` patch; preserve manual exact-commit execution and root-owned/no-checkout behavior.
+- Success evidence: exact head `aa8be0864e9c008c66e90092e50a57b68f11ec14`; FanMind CI `37174078883`, Supply Chain `37174078897`, Browser E2E `37174078876`, CodeQL `37174078841`, Landing Language `37174078937`, God Mode `37174078971`, Project Memory Guard `37174078900`, Quality `37174078887` and Status `37174078865` all passed.
+- Countercheck: complete eight-file PR diff is repository/CI-only; the Production audit remains read-only, installed-root-owned and no-checkout. The manager regression now asserts presence without depending on unrelated continuation ordering.
+- Falsifier: an exact-head Operations failure for the Production-audit contract or a Root/Web dependency-audit bypass would disprove the fix; neither was observed.
+- Negative evidence: no dispatch, deploy, Production mutation, secret read, dependency change, merge or protected external action.
+- Lock: LOCK-FM-CI-PR1256-20261004 RELEASED_CI_FIXED.
+
 ## FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
@@ -1572,15 +1585,3 @@ A receipt is required for meaningful code/config/infra/governance work. Never in
 - Boundary: source/test acceptance only. No target/provider call, target observation/reference acceptance, SQL APPLY, deployment acceptance, runtime activation, product-data write or aggregate Creator completion occurred.
 - Receipt file: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
 - Next: only a distinct newly admitted protected target action with current authorization and exact target binding may observe/accept a target reference or execute the transition; no unchanged catalog retry is admitted.
-
-
-## PR #1246 — legacy setup runtime cleanup memory evidence — 2026-10-02
-- Task/change: FM-AI-001 / FM-CR-053; follow-up Risk: R1 (documentation only); underlying billing boundary remains R4.
-- Status: COUNTERCHECKED (local memory follow-up only); lock: `LOCK-FM-PR1246-MEMORY-20261002`.
-- Authorization: Owner requested the smallest protocol-compliant memory follow-up, focused verification and no merge.
-- Baselines: PR source head `d719d144fad1913aa80591b4a1adc4e4f05c9958`; current main `ef45319b51023df7fd850e6fb719e0612011af00`; merge base `8045d1e06c4f98234fdbc0e86db11e4b9d82610c`. GitHub confirms mergeable, 2 ahead/4 behind. The four main commits do not modify either cleanup file; main still contains both removed status fields. No rebase/main merge is needed.
-- Implementation evidence: PR removes unused `hasPilotPrice`/`hasStarterSetupPrice` type, environment reads and output fields from `src/lib/stripeBilling.ts`, plus retired `STRIPE_PRICE_PILOT_SETUP`/`STRIPE_PRICE_STARTER_SETUP` slots from `.env.example`. Capacity-v2 zero-setup truth and recurring `STRIPE_PRICE_STARTER_MONTHLY` compatibility remain; no remaining status-field consumers were found.
-- Countercheck evidence: the three unchanged Guard shell steps return [0,1,0] for original head against original base (missing-memory negative proof), and [0,0,0] for the updated tree against both original base and current main. Existing focused tests passed 64/64: `node --test tests/customer-billing-policy.test.mjs tests/stripe-client-conformance.test.mjs tests/staging-stripe-catalog-readiness.test.mjs tests/stripe-billing-write-freeze.test.mjs tests/payment-terms-submission.test.mjs`. Staging/migration setup references remain in `.env.staging.example` and `stagingStripeCatalogPolicy.mjs`.
-- Falsification checked: an active consumer of either removed status field, a main change to either cleanup file, a changed functional blob in this follow-up, or a failing Guard/test would invalidate the conclusion; none was observed locally. New-head GitHub Guard is still to be verified after publication; the seven successful original-head workflows are historical evidence only.
-- Preflight: drift preflight and memory quality passed; evidence freshness passed with existing revalidation notices. No historical mutable runtime/provider evidence is used to accept activation. Existing assumptions, external/deferred gates and finishline stay open.
-- Boundary/recovery: only three append-only memory entries; no workflow/source/dependency changes, Stripe/provider call, migration, customer migration, Staging/Production activation or merge. Repository revert is the recovery path. This receipt does not close FM-CR-053 or FM-IGATE-AI-BILLING-001.

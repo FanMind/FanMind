@@ -86,6 +86,8 @@ async function postRpc<T>(name: string, body: Record<string, unknown>): Promise<
       "ai_capacity_release_state_invalid",
       "ai_capacity_indeterminate_invalid",
       "ai_capacity_indeterminate_state_invalid",
+      "ai_capacity_reversal_invalid",
+      "ai_capacity_purchase_grant_missing",
     ].find((code) => text.includes(code));
     throw new Error(known ?? (response.status === 404 ? "ai_capacity_schema_not_installed" : "ai_capacity_rpc_failed"));
   }
@@ -123,6 +125,31 @@ export async function grantAiCapacityCredit(input: {
   const id = Array.isArray(value) ? value[0] : value;
   if (typeof id !== "string" || !id) throw new Error("ai_capacity_grant_response_invalid");
   return id;
+}
+
+
+export async function reversePurchasedAiCapacity(input: {
+  workspaceId: string;
+  grantKey: string;
+  reversalKey: string;
+  reason: "refund" | "dispute";
+  metadata?: Record<string, unknown>;
+}): Promise<number> {
+  if (!input.grantKey || !input.reversalKey) {
+    throw new TypeError("ai_capacity_reversal_invalid");
+  }
+  const value = await postRpc<number | number[]>("ai_capacity_reverse_purchase", {
+    p_workspace_id: input.workspaceId,
+    p_grant_key: input.grantKey,
+    p_reversal_key: input.reversalKey,
+    p_reason: input.reason,
+    p_metadata: input.metadata ?? {},
+  });
+  const amount = Number(Array.isArray(value) ? value[0] : value);
+  if (!nonNegativeSafeInteger(amount)) {
+    throw new Error("ai_capacity_reversal_response_invalid");
+  }
+  return amount;
 }
 
 export async function reserveAiCapacity(input: {
