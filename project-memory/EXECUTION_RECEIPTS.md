@@ -1,3 +1,14 @@
+## RECEIPT-FM-CI-PR1256-20261004
+- Task: FM-CI-PR1256-20261004
+- Status: IN_PROGRESS
+- Risk: R3
+- Branch/PR: `fix/mobile-audit-deferral-20261002` / #1256
+- Failure evidence: run `37028636158`, job `110909577917`; single failing subtest `permanent Production audit runs installed root-owned code only` rejects the missing `workflow_run` trigger. The separate Supply Chain check on this head already passes.
+- Planned correction: apply only PR #1255's reviewed `.github/workflows/production-readonly-audit.yml` patch; preserve manual exact-commit execution and root-owned/no-checkout behavior.
+- Success evidence: focused contract pass plus a fresh complete exact-head required check set and independent diff/review countercheck.
+- Negative evidence: no dispatch, deploy, Production mutation, secret read, dependency change or protected external action.
+- Lock: LOCK-FM-CI-PR1256-20261004 ACTIVE.
+
 ## FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
