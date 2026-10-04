@@ -5,8 +5,8 @@ import test from "node:test";
 import { scanWorkflowPolicy } from "../scripts/verify-actions-pinned.mjs";
 
 const CODEQL_V4_37_7_SHA = "ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd";
-const SETUP_JAVA_V5_7_0_SHA =
-  "b6effb05e454b25005698d916606bdc6ffcbf961";
+const SETUP_JAVA_V6_0_1_SHA =
+  "de7274f081f381c8f8158605e0321c36c376e2e6";
 const HOSTED_CHECKOUT_V7_0_1_SHA =
   "3d3c42e5aac5ba805825da76410c181273ba90b1";
 const PG17_SERVICE_IMAGE =
@@ -349,24 +349,24 @@ test("CodeQL init and analyze use the same reviewed v4.37.7 commit and minimal p
   assert.doesNotMatch(reader, /4\.37\.6/u);
 });
 
-test("native CI and supply-chain reader use the reviewed setup-java v5.7.0 commit", async () => {
+test("native CI and supply-chain reader use the reviewed setup-java v6.0.1 commit", async () => {
   const [workflow, reader] = await Promise.all([
     readFile(".github/workflows/ci-mobile-native.yml", "utf8"),
     readFile("docs/security/SUPPLY_CHAIN.md", "utf8"),
   ]);
   const setupJavaMatch = workflow.match(
-    /actions\/setup-java@([0-9a-f]{40})\s+#\s+v5\.7\.0/u,
+    /actions\/setup-java@([0-9a-f]{40})\s+#\s+v6\.0\.1/u,
   );
 
-  assert.equal(setupJavaMatch?.[1], SETUP_JAVA_V5_7_0_SHA);
+  assert.equal(setupJavaMatch?.[1], SETUP_JAVA_V6_0_1_SHA);
   assert.match(
     reader,
     new RegExp(
-      `actions/setup-java[^\\n]+${SETUP_JAVA_V5_7_0_SHA}[^\\n]+v5\\.7\\.0`,
+      `actions/setup-java[^\\n]+${SETUP_JAVA_V6_0_1_SHA}[^\\n]+v6\\.0\\.1`,
       "u",
     ),
   );
-  assert.doesNotMatch(reader, /v5\.6\.0/u);
+  assert.doesNotMatch(reader, /v6\.0\.0/u);
 });
 
 test("dependency audit and CycloneDX SBOM gates are persistent and short-lived", async () => {
