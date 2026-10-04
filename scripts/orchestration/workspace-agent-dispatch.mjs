@@ -1,4 +1,4 @@
-import { appendFile, readFile } from "node:fs/promises";
+import { appendFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const API_ORIGIN = "https://api.chatgpt.com";
@@ -231,7 +231,10 @@ export async function runWorkspaceAgentDispatch({
 
 async function main() {
   const existingRunId = process.env.EXISTING_TRIGGER_RUN_ID ?? "";
-  const payload = existingRunId ? "" : await readFile(process.env.PAYLOAD_FILE, "utf8");
+  const payloadInput = existingRunId
+    ? ""
+    : Buffer.from(process.env.PAYLOAD_INPUT_BASE64 ?? "", "base64").toString("utf8");
+  const payload = existingRunId ? "" : JSON.stringify({ input: payloadInput });
   let persistedLineCount = 0;
   const result = await runWorkspaceAgentDispatch({
     token: process.env.AGENT_ACCESS_TOKEN,

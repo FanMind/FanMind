@@ -184,7 +184,11 @@ test("GET fetch and body-read failures preserve accepted metadata as PENDING", a
         assert.equal(accepted.length, 1);
         assert.match(accepted[0].join("\n"), /apirun_preserved/u);
         if (mode === "accepted-post") {
-          assert.match(accepted[0].join("\n"), /chatgpt\.com\/g\/g-test\/c\/preserved/u);
+          assert.ok(
+            accepted[0]
+              .join("\n")
+              .includes("https://chatgpt.com/g/g-test/c/preserved"),
+          );
           assert.deepEqual(calls.map((call) => call.options.method), ["POST", "GET"]);
         } else {
           assert.deepEqual(calls.map((call) => call.options.method), ["GET"]);
@@ -236,5 +240,7 @@ test("workflow exposes bounded probe and GET-only modes without raw dumps", asyn
   assert.match(workflow, /Do not use repository or provider tools/u);
   assert.match(workflow, /Do not create a result receipt or any file/u);
   assert.match(workflow, /workspace-agent-dispatch\.mjs/u);
+  assert.match(workflow, /PAYLOAD_INPUT_BASE64:/u);
+  assert.doesNotMatch(workflow, /PAYLOAD_FILE:|payload\.json/u);
   assert.doesNotMatch(workflow, /head -c|Response body:/u);
 });
