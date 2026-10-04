@@ -525,7 +525,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-053 — Capacity-v2 Stripe catalog cutover and setup-fee retirement
 - Date: 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Source: Owner requested the old 312-EUR and one-time setup/pilot catalog to be retired and confirmed that FanMind will no longer charge any one-time setup fee.
@@ -556,12 +556,25 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
 - Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
 
-## FM-CR-056 — Creator-Building fixed shell with three scroll panes
+
+## FM-CR-056 — Apply owner-approved Capacity-v2 package budgets
 - Date: 2026-09-30
-- Status: SOURCE_COMPLETE_PENDING_PR_CI
-- Risk: R1
-- Task: FM-CHATADMIN-002
-- Source: Owner marked the three desktop columns and requested removal of the outer page scrollbar so the Creator-Building window remains stationary.
-- Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the existing flowing mobile layout and latest-message positioning.
-- Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
-- Acceptance: desktop has no outer page scrollbar from Creator-Building content; each of the three marked columns can scroll independently; the conversation still opens at the newest content; mobile keeps its bounded responsive behavior.
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner approved 15 / 30 / 50 EUR included AI cost budgets for the 99 / 199 / 312 EUR Capacity-v2 packages.
+- Scope: encode canonical package budgets in server policy, seed the controlled policy schema with those values, update reader/admin surfaces, types/tests and canonical truth.
+- Boundary: no Production activation, no customer migration and no top-up sale.
+- Acceptance: exact-head CI/security/governance, independent exact-head review, and fail-closed runtime/package-sales/top-up switches remain off.
+
+## FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck
+- Date: 2026-09-30
+- Status: COUNTERCHECKED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner explicitly requested continuing with the isolated-Staging Capacity-v2 budget/RLS/negative acceptance step.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: policy revision advanced 1 -> 2 with EUR 15 / 30 / 50 budgets; one audit row `ai_capacity_staging_budget_seed` / `FM-DEC-027`; global runtime, all package-sales switches, all quality modes, top-ups and all three activation-ready flags remained false, emergency freeze remained true.
+- Negative evidence: runtime/package-sales/top-up activation attempts were transactionally rejected by their activation guards; anon/authenticated have no SELECT privilege on policy/grants; grants/reservations/ledger-events remained 0.
+- Open blocker: reserve/settle RPCs are not installed on Staging. The current controlled reserve/settle SQL on main contains an actual source defect in `ai_capacity_grant_credit` (policy variables referenced there without declarations) and cannot be applied unchanged. Fix and review that source separately before any Staging ledger APPLY.
+- Boundary: no Production mutation, no AI runtime activation, no package-sale activation, no top-up sale, no customer migration.

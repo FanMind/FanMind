@@ -29,6 +29,8 @@ import {
   stripeWebhookReferenceLookupValues,
 } from "@/lib/stripeWorkspacePolicy.mjs";
 import { isHandledStripeWebhookEventType } from "@/lib/stripeWebhookEventPolicy.mjs";
+import { grantAiCapacityCredit, reversePurchasedAiCapacity } from "@/lib/aiCapacityLedger";
+import { resolveStripeAiTopup, stripeAiTopupGrantKey } from "@/lib/stripeAiTopupPolicy.mjs";
 
 type StripeObject = Record<string, unknown>;
 type StripeEvent = {
@@ -475,6 +477,26 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const paid = stringField(object, "payment_status") === "paid";
+    const metadata = objectField(object, "metadata");
+    const topup = paid ? resolveStripeAiTopup({
+      topupKey: stringField(metadata, "topup_key"),
+      currency: stringField(object, "currency"),
+      amountTotalCents: numberField(object, "amount_total"),
+    }) : null;
+    if (topup) {
+      const workspaceResolution = await resolveWorkspaceId(object, event.type);
+      const paymentIntentId = stringField(object, "payment_intent");
+      const grantKey = stripeAiTopupGrantKey(paymentIntentId);
+      if (workspaceResolution.status !== "found" || !grantKey) throw new StripeWebhookRetryableError();
+      await grantAiCapacityCredit({
+        workspaceId: workspaceResolution.workspaceId,
+        grantKind: "purchased",
+        grantKey,
+        expiresAt: null,
+        grantedEurMicrocents: topup.creditEurMicrocents,
+        metadata: { stripe_payment_intent_id: paymentIntentId, stripe_checkout_session_id: stringField(object, "id"), topup_key: topup.key, sale_amount_cents: topup.saleAmountCents },
+      });
+    }
     await update({
       billing_status: paid ? "active" : "pending_sepa_mandate",
       billing_last_payment_at: paid ? now : undefined,
@@ -645,6 +667,27 @@ export async function POST(request: NextRequest) {
       event.type === "charge.refunded" ||
       event.type === "charge.dispute.created" ||
       refundStatus === "succeeded";
+    if (refundSucceeded) {
+      const paymentIntentId = stripeId(object.payment_intent);
+      const grantKey = stripeAiTopupGrantKey(paymentIntentId);
+      if (grantKey) {
+        const workspaceResolution = await resolveWorkspaceId(object, event.type);
+        if (workspaceResolution.status !== "found" || !event.id) {
+          throw new StripeWebhookRetryableError();
+        }
+        await reversePurchasedAiCapacity({
+          workspaceId: workspaceResolution.workspaceId,
+          grantKey,
+          reversalKey: `stripe:event:${event.id}`,
+          reason: event.type === "charge.dispute.created" ? "dispute" : "refund",
+          metadata: {
+            stripe_event_id: event.id,
+            stripe_payment_intent_id: paymentIntentId,
+            stripe_refund_or_dispute_id: stringField(object, "id"),
+          },
+        });
+      }
+    }
     await update(
       {
         stripe_customer_id: stringField(object, "customer"),

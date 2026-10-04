@@ -55,7 +55,7 @@ There is no default FX rate. Missing FX or missing provider usage fails closed.
 `src/lib/aiCapacityRuntime.ts` coordinates admission, pricing, reservation and settlement. It is intentionally not imported by the existing productive AI routes in this increment because:
 
 - Capacity-v2 customer package entitlement is not yet the active Production contract;
-- exact included package budgets are still unset;
+- exact included package budgets are owner-approved at EUR 15 / 30 / 50 for capacity_99 / capacity_199 / capacity_312;
 - Production Capacity-v2 schema/activation gates remain off.
 
 The next bounded increment may wire this coordinator into productive AI routes only for explicitly resolved `capacity_v2` Workspaces after Staging acceptance.

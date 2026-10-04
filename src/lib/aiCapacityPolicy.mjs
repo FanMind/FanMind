@@ -6,17 +6,17 @@ export const AI_CAPACITY_PACKAGES = Object.freeze({
   capacity_99: Object.freeze({
     id: "capacity_99",
     monthlyPriceCents: 9_900,
-    includedBudgetEurMicrocents: null,
+    includedBudgetEurMicrocents: 1_500_000_000,
   }),
   capacity_199: Object.freeze({
     id: "capacity_199",
     monthlyPriceCents: 19_900,
-    includedBudgetEurMicrocents: null,
+    includedBudgetEurMicrocents: 3_000_000_000,
   }),
   capacity_312: Object.freeze({
     id: "capacity_312",
     monthlyPriceCents: 31_200,
-    includedBudgetEurMicrocents: null,
+    includedBudgetEurMicrocents: 5_000_000_000,
   }),
 });
 
@@ -35,9 +35,9 @@ export const DEFAULT_AI_CAPACITY_ADMIN_POLICY = Object.freeze({
     premium: false,
   }),
   includedBudgetEurMicrocents: Object.freeze({
-    capacity_99: null,
-    capacity_199: null,
-    capacity_312: null,
+    capacity_99: AI_CAPACITY_PACKAGES.capacity_99.includedBudgetEurMicrocents,
+    capacity_199: AI_CAPACITY_PACKAGES.capacity_199.includedBudgetEurMicrocents,
+    capacity_312: AI_CAPACITY_PACKAGES.capacity_312.includedBudgetEurMicrocents,
   }),
 });
 
