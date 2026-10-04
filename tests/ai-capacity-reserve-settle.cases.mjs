@@ -155,6 +155,10 @@ test("runtime source marks malformed post-provider usage indeterminate before pr
 
 test("capacity reservations consume included-period credit before purchased top-up credit", () => {
   const sql = fs.readFileSync("supabase/controlled/ai_capacity_reserve_settle.sql", "utf8");
-  assert.match(sql, /order by[\s\S]*case g\.grant_kind when 'included_period' then 0 else 1 end[\s\S]*g\.created_at[\s\S]*g\.id/u);
-  assert.match(sql, /g\.grant_kind = 'included_period'[\s\S]*g\.period_end > statement_timestamp\(\)[\s\S]*g\.grant_kind = 'purchased'[\s\S]*g\.expires_at is null or g\.expires_at > statement_timestamp\(\)/u);
+  const reserveStart = sql.indexOf("create or replace function public.ai_capacity_reserve(");
+  const settleStart = sql.indexOf("create or replace function public.ai_capacity_settle(");
+  assert.ok(reserveStart >= 0 && settleStart > reserveStart);
+  const reserveSql = sql.slice(reserveStart, settleStart);
+  assert.match(reserveSql, /order by[\s\S]*case g\.grant_kind when 'included_period' then 0 else 1 end[\s\S]*g\.created_at[\s\S]*g\.id/u);
+  assert.match(reserveSql, /g\.grant_kind = 'included_period'[\s\S]*g\.period_end > statement_timestamp\(\)[\s\S]*g\.grant_kind = 'purchased'[\s\S]*g\.expires_at is null or g\.expires_at > statement_timestamp\(\)/u);
 });
