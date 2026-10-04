@@ -4,12 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "One concrete bounded task selected by FanMind Orchestrator"
-        required: true
+        description: "One concrete bounded task selected by FanMind Orchestrator (normal dispatch only)"
+        required: false
         type: string
       task_id:
-        description: "Unique orchestrator correlation id"
+        description: "Unique orchestrator or diagnostic correlation id"
         required: true
+        type: string
+      diagnostic_probe_id:
+        description: "Fresh no-write API probe id; mutually exclusive with task and existing_run_id"
+        required: false
+        type: string
+      existing_run_id:
+        description: "Existing apirun_ id for GET-only status follow-up; never starts a run"
+        required: false
         type: string
 
 permissions:
@@ -24,6 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Checkout dispatch source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Validate Workspace Agent trigger configuration
         id: config
         shell: bash
@@ -32,6 +43,8 @@ jobs:
           AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
           REQUESTED_TASK: ${{ inputs.task }}
           REQUESTED_TASK_ID: ${{ inputs.task_id }}
+          DIAGNOSTIC_PROBE_ID: ${{ inputs.diagnostic_probe_id }}
+          EXISTING_TRIGGER_RUN_ID: ${{ inputs.existing_run_id }}
         run: |
           set -euo pipefail
           if [[ -z "${AGENT_ACCESS_TOKEN}" || -z "${AGENT_TRIGGER_ID}" ]]; then
@@ -42,53 +55,62 @@ jobs:
             echo "::error title=Invalid Workspace Agent trigger id::CHATGPT_FANMIND_MANAGER_TRIGGER_ID must start with agtch_."
             exit 1
           fi
-          if [[ -z "${REQUESTED_TASK}" || -z "${REQUESTED_TASK_ID}" ]]; then
-            echo "::error title=Invalid orchestrator task::Both task and task_id are mandatory."
+          if [[ ! "${REQUESTED_TASK_ID}" =~ ^[A-Za-z0-9][A-Za-z0-9._:-]{2,159}$ ]]; then
+            echo "::error title=Invalid dispatch correlation::task_id must be a safe identifier between 3 and 160 characters."
             exit 1
           fi
+          modes=0
+          [[ -n "${REQUESTED_TASK}" ]] && modes=$((modes + 1))
+          [[ -n "${DIAGNOSTIC_PROBE_ID}" ]] && modes=$((modes + 1))
+          [[ -n "${EXISTING_TRIGGER_RUN_ID}" ]] && modes=$((modes + 1))
+          if [[ "${modes}" -ne 1 ]]; then
+            echo "::error title=Invalid dispatch mode::Provide exactly one of task, diagnostic_probe_id, or existing_run_id."
+            exit 1
+          fi
+          if [[ -n "${DIAGNOSTIC_PROBE_ID}" && ! "${DIAGNOSTIC_PROBE_ID}" =~ ^probe-[A-Za-z0-9][A-Za-z0-9_-]{7,79}$ ]]; then
+            echo "::error title=Invalid diagnostic probe id::Use a fresh probe- identifier between 14 and 86 characters."
+            exit 1
+          fi
+          if [[ -n "${EXISTING_TRIGGER_RUN_ID}" && ! "${EXISTING_TRIGGER_RUN_ID}" =~ ^apirun_[A-Za-z0-9_-]+$ ]]; then
+            echo "::error title=Invalid Workspace Agent run id::existing_run_id must start with apirun_."
+            exit 1
+          fi
+          event_key="${DIAGNOSTIC_PROBE_ID:-${REQUESTED_TASK_ID}}"
+          echo "idempotency_key=fanmind-builder-${event_key}" >> "${GITHUB_OUTPUT}"
 
       - name: Build bounded Builder payload
         id: payload
+        if: ${{ inputs.existing_run_id == '' }}
         shell: bash
         env:
           REPOSITORY: ${{ github.repository }}
           CURRENT_SHA: ${{ github.sha }}
           REQUESTED_TASK: ${{ inputs.task }}
           REQUESTED_TASK_ID: ${{ inputs.task_id }}
+          DIAGNOSTIC_PROBE_ID: ${{ inputs.diagnostic_probe_id }}
         run: |
           set -euo pipefail
-          input="FanMind Orchestrator assigned exactly one bounded task. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}; task_id=${REQUESTED_TASK_ID}. TASK: ${REQUESTED_TASK}. The Orchestrator is the sole authority for selecting the next independent FanMind task. Perform the mandatory risk-adaptive FanMind preflight for this task only. You may diagnose and repair blockers only when they are inside this same bounded task. Do not select, start, continue, or substitute another independent roadmap task. If this task reaches a protected boundary or cannot safely continue, stop this task as BLOCKED with the exact blocker and resume condition; do not choose replacement work. Do not overengineer or reopen completed work without new evidence. MANDATORY RETURN: publish one terminal result for exactly task_id=${REQUESTED_TASK_ID} according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md. Trigger acceptance is not completion."
+          if [[ -n "${DIAGNOSTIC_PROBE_ID}" ]]; then
+            input="Reply with exactly FANMIND_BUILDER_API_PROBE_OK:${DIAGNOSTIC_PROBE_ID} and then stop. Do not use repository or provider tools. Do not make product or external writes. Do not create a result receipt or any file."
+          else
+            input="FanMind Orchestrator assigned exactly one bounded task. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}; task_id=${REQUESTED_TASK_ID}. TASK: ${REQUESTED_TASK}. The Orchestrator is the sole authority for selecting the next independent FanMind task. Perform the mandatory risk-adaptive FanMind preflight for this task only. You may diagnose and repair blockers only when they are inside this same bounded task. Do not select, start, continue, or substitute another independent roadmap task. If this task reaches a protected boundary or cannot safely continue, stop this task as BLOCKED with the exact blocker and resume condition; do not choose replacement work. Do not overengineer or reopen completed work without new evidence. MANDATORY RETURN: publish one terminal result for exactly task_id=${REQUESTED_TASK_ID} according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md. Trigger acceptance is not completion."
+          fi
           jq -n --arg input "${input}" '{input:$input}' > payload.json
-          echo "task_id=${REQUESTED_TASK_ID}" >> "${GITHUB_OUTPUT}"
 
-      - name: Trigger FanMind Builder
+      - name: Trigger or inspect FanMind Builder
         shell: bash
         env:
           AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
           AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
-        run: |
-          set -euo pipefail
-          response_file="$(mktemp)"
-          status="$(curl --silent --show-error --output "${response_file}" --write-out '%{http_code}' --request POST "https://api.chatgpt.com/v1/workspace_agents/${AGENT_TRIGGER_ID}/trigger" --header "Authorization: Bearer ${AGENT_ACCESS_TOKEN}" --header "Content-Type: application/json" --data-binary @payload.json)"
-          if [[ "${status}" -lt 200 || "${status}" -ge 300 ]]; then
-            echo "::error title=FanMind Builder dispatch rejected::Workspace Agent API returned HTTP ${status}."
-            echo "### FanMind Builder API diagnostic" >> "${GITHUB_STEP_SUMMARY}"
-            echo "- HTTP status: \`${status}\`" >> "${GITHUB_STEP_SUMMARY}"
-            echo "- Task ID: \`${{ steps.payload.outputs.task_id }}\`" >> "${GITHUB_STEP_SUMMARY}"
-            echo "- Response body:" >> "${GITHUB_STEP_SUMMARY}"
-            echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
-            head -c 2000 "${response_file}" >> "${GITHUB_STEP_SUMMARY}"
-            echo >> "${GITHUB_STEP_SUMMARY}"
-            echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
-            rm -f "${response_file}" payload.json
-            exit 1
-          fi
-          conversation_url="$(jq -r '.conversation_url // empty' "${response_file}")"
-          trigger_run_id="$(jq -r '.agent_trigger_run_id // empty' "${response_file}")"
-          echo "### FanMind Orchestrator -> Builder Dispatch" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- API trigger accepted: HTTP ${status}" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- Task ID: \`${{ steps.payload.outputs.task_id }}\`" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- Acceptance is not completion; completion requires the matching result receipt on current main." >> "${GITHUB_STEP_SUMMARY}"
-          if [[ -n "${trigger_run_id}" ]]; then echo "- Trigger run: \`${trigger_run_id}\`" >> "${GITHUB_STEP_SUMMARY}"; fi
-          if [[ -n "${conversation_url}" ]]; then echo "- Workspace Agent conversation: ${conversation_url}" >> "${GITHUB_STEP_SUMMARY}"; fi
-          rm -f "${response_file}" payload.json
+          REQUESTED_TASK_ID: ${{ inputs.task_id }}
+          EXISTING_TRIGGER_RUN_ID: ${{ inputs.existing_run_id }}
+          IDEMPOTENCY_KEY: ${{ steps.config.outputs.idempotency_key }}
+          PAYLOAD_FILE: payload.json
+          POLL_ATTEMPTS: "12"
+          POLL_INTERVAL_MS: "10000"
+        run: node scripts/orchestration/workspace-agent-dispatch.mjs
+
+      - name: Remove dispatch payload
+        if: ${{ always() }}
+        shell: bash
+        run: rm -f payload.json

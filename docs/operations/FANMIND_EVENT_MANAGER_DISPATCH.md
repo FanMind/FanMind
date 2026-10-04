@@ -1,52 +1,62 @@
-# FanMind event-driven manager dispatch
+# FanMind Orchestrator Builder dispatch
 
 ## Purpose
 
-FanMind must not depend on nominal ChatGPT task start times. The canonical Project Memory, current GitHub state, locks and dependencies remain the coordination plane. The event dispatcher is only a low-latency wake-up path.
+`.github/workflows/fanmind-manager-event-dispatch.yml` is the manual, correlated API start path from the FanMind Orchestrator to the published FanMind Builder. It accepts exactly one normal bounded task, one no-write diagnostic probe, or one GET-only follow-up for an existing API run.
 
-## Architecture
-
-1. A pull request is merged into `main`.
-2. `.github/workflows/fanmind-manager-event-dispatch.yml` reads the complete changed-file list. A merge that changes only `project-memory/ORCHESTRATOR_RESULT.json` is recorded and does not dispatch another manager run; product-only and mixed changes still dispatch. Missing or incomplete file evidence is never treated as receipt-only.
-3. If configured, the workflow sends a narrow wake-up event to the published FanMind Workspace Manager through the ChatGPT Workspace Agents API.
-4. The manager classifies the bounded work against current `main` and applies Execution Policy v6: minimum sufficient R1/R2 preflight for ordinary repository work, full R3/R4 preflight for protected work. It recomputes the safe executable task instead of assuming the merge itself is the task.
-5. The existing hourly Builder remains the fallback if an event is missed, the API is unavailable or the dispatcher is not configured.
-
-The event payload is never project evidence. It contains only enough immutable GitHub metadata to identify the wake-up event. Every project-state claim must be re-read from canonical sources and current connected evidence.
+The trigger payload is not project evidence. A normal Builder run must re-read current canonical state and return the task-correlated result required by the Orchestrator contract.
 
 ## Required configuration
 
 Repository variable:
 
-- `CHATGPT_FANMIND_MANAGER_TRIGGER_ID`: published Workspace Agent API channel ID in `agtch_...` format.
+- `CHATGPT_FANMIND_MANAGER_TRIGGER_ID`: the existing published Workspace Agent API channel ID in `agtch_...` format.
 
 Repository secret:
 
-- `CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN`: Workspace Agent access token with permission to trigger that published manager.
+- `CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN`: the existing Workspace Agent access token permitted to trigger that published channel.
 
-If either value is absent, the workflow exits successfully with a notice and performs no external call. This preserves the scheduled Builder as the operational fallback and avoids breaking repository CI before the external trigger is provisioned.
+Neither value may be printed, copied to an artifact, replaced, or inferred from diagnostics. Missing or malformed configuration fails before any API request.
 
-## Manager contract
+## Modes
 
-The published manager should use the existing FanMind Builder/Manager instructions and must:
+Exactly one mode is valid for each workflow invocation:
 
-- classify risk first and run the minimum sufficient preflight required by Execution Policy v6;
-- treat the trigger payload as a wake-up signal only;
-- always re-read current GitHub main/PR/CI state; read Project Memory, runtime/provider evidence, STARTED_WORK, WORK_LOCKS and DEPENDENCIES only to the extent required by the classified task and risk;
-- recompute the SAFE READY SET rather than assuming the triggering PR determines the next task;
-- default to one active Workspace Builder/Manager; if a separately justified task set is explicitly parallelized, never exceed three independent workers;
-- serialize any uncertain overlap;
-- never infer Owner/protected/environment authorization from a merge event;
-- return NO_CHANGE rather than manufacturing work when nothing is safely executable.
+- Normal dispatch: `task` and the mandatory unique `task_id` are present.
+- No-write probe: `diagnostic_probe_id` and `task_id` are present; `task` and `existing_run_id` are empty.
+- GET-only follow-up: `existing_run_id` and `task_id` are present; `task` and `diagnostic_probe_id` are empty.
 
-## Idempotency and loops
+The no-write probe builds only this instruction:
 
-Merge events use an idempotency key bound to PR number and merge SHA. Retrying the same merge should not enqueue duplicate agent work. A terminal receipt-only merge is suppressed at the dispatcher. A manager-created follow-up PR with any other changed file intentionally creates a later merge event; anti-loop rules in Project Memory remain authoritative for all other churn.
+```text
+Reply with exactly FANMIND_BUILDER_API_PROBE_OK:<probe-id> and then stop. Do not use repository or provider tools. Do not make product or external writes. Do not create a result receipt or any file.
+```
+
+Its success requires both the terminal API status `completed` and that exact correlated confirmation in the linked ChatGPT conversation. API acceptance or `completed` without the chat confirmation is insufficient.
+
+## API and diagnostic contract
+
+The POST is issued once with `OpenAI-Beta: workspace_agent_runs=v1`. A task-bound `Idempotency-Key` identifies that one logical dispatch; the workflow performs no automatic POST retry. A successful start must return a valid `agent_trigger_run_id` (`apirun_...`).
+
+The workflow then polls `GET /v1/workspace_agents/{agtch_id}/runs/{apirun_id}` within a fixed budget. `completed` and `failed` are terminal. `queued`, `in_progress`, and `suspended` remain nonterminal. Exhausting the budget produces `PENDING`, preserves the run ID, and is not reported as failure. Continue only through the GET-only mode; never repeat the POST merely because polling ended.
+
+HTTP start failures are reported as `HTTP_START_ERROR`. A terminal API run failure is reported separately as `DISPATCH_FAILED`, `RUN_FAILED`, or `FAILED` according to the allowlisted `error.code`. GET transport/API failures are `STATUS_HTTP_ERROR` and do not trigger another POST.
+
+Diagnostics retain only:
+
+- HTTP status;
+- validated `agent_trigger_run_id`, terminal/nonterminal status and ChatGPT conversation URL;
+- bounded `error.code` and `error.message`;
+- bounded values for `x-request-id`, `openai-request-id`, `x-correlation-id`, and `traceparent`.
+
+Raw response bodies and unrestricted headers are never logged. Authorization, cookies, tokens, credentials, unknown response fields, and non-JSON bodies are discarded.
+
+## Current incident evidence
+
+Reference run `37229083406` / job `111514744249` reached the single POST and received HTTP 409. The published API documents 409 as a channel/agent-not-runnable start rejection. The retained evidence does not include an allowlisted API error code or request correlation ID, so the exact reason for this instance is not yet proven.
+
+The prior path omitted `OpenAI-Beta: workspace_agent_runs=v1`, did not poll the run endpoint, and copied up to 2,000 raw response bytes into the job summary. The missing beta header is proven to prevent reliable `apirun_...` acquisition and follow-up diagnosis; it is not evidence that the header omission caused the 409. Remaining hypotheses, to be separated by one reviewed no-write probe, include channel publication/runnability state and token-to-channel access state. No token, channel, agent, permission, or secret change is justified before that evidence exists.
 
 ## Security boundary
 
-The access token is stored only as a GitHub Actions secret and is never written to Project Memory, workflow summaries or logs. The API trigger does not itself authorize Staging/Production/database/provider/payment/destructive actions.
-
-## Activation check
-
-After the external Workspace Agent is published and both configuration values exist, run the workflow manually once. A successful dispatch reports HTTP 202. Then merge one normal bounded PR and confirm one event dispatch occurs. The manager must independently re-read current state before acting.
+The API trigger grants no Staging, Production, database, provider, payment, destructive, credential, or permission authority. The diagnostic probe must not use tools or produce repository receipts/files. Merging this repository change does not authorize or perform a live API POST; the one-time probe remains a separate reviewed action.

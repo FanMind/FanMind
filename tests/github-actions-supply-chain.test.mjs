@@ -301,13 +301,13 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     hostedWorkflows.find((workflow) => workflow.file === CHAT_ADMIN_FAN_STAGING_WORKFLOW)?.checkoutShas,
     [HOSTED_CHECKOUT_V7_0_1_SHA],
   );
-  assert.equal(hostedWorkflows.length, 70);
+  assert.equal(hostedWorkflows.length, 71);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    77,
+    78,
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
