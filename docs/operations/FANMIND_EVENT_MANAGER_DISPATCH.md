@@ -34,7 +34,7 @@ The published manager should use the existing FanMind Builder/Manager instructio
 - treat the trigger payload as a wake-up signal only;
 - always re-read current GitHub main/PR/CI state; read Project Memory, runtime/provider evidence, STARTED_WORK, WORK_LOCKS and DEPENDENCIES only to the extent required by the classified task and risk;
 - recompute the SAFE READY SET rather than assuming the triggering PR determines the next task;
-- honor the default maximum of three independent workers;
+- default to one active Workspace Builder/Manager; if a separately justified task set is explicitly parallelized, never exceed three independent workers;
 - serialize any uncertain overlap;
 - never infer Owner/protected/environment authorization from a merge event;
 - return NO_CHANGE rather than manufacturing work when nothing is safely executable.
