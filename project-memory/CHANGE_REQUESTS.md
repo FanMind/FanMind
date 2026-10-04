@@ -578,3 +578,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Negative evidence: runtime/package-sales/top-up activation attempts were transactionally rejected by their activation guards; anon/authenticated have no SELECT privilege on policy/grants; grants/reservations/ledger-events remained 0.
 - Open blocker: reserve/settle RPCs are not installed on Staging. The current controlled reserve/settle SQL on main contains an actual source defect in `ai_capacity_grant_credit` (policy variables referenced there without declarations) and cannot be applied unchanged. Fix and review that source separately before any Staging ledger APPLY.
 - Boundary: no Production mutation, no AI runtime activation, no package-sale activation, no top-up sale, no customer migration.
+
+
+## FM-CR-058 — Creator-Building fixed shell with three scroll panes
+- Date: 2026-10-04
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: continuation of open PR #1251 after integrating current main; the earlier branch-local FM-CR-056 identifier now belongs to the accepted Capacity-v2 budget task on main and is not reused.
+- Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the flowing mobile layout and latest-message positioning.
+- Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database, provider or external-platform behavior changes.
+- Acceptance: desktop has no outer page scrollbar from Creator-Building content; all three panes scroll independently; conversation opens at newest content; mobile remains responsive; exact-head relevant CI passes.
