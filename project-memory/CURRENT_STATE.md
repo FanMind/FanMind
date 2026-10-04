@@ -1,3 +1,8 @@
+## AI capacity consumption-order acceptance — repository test — 2026-10-02
+- Status: IN_PROGRESS under existing AI billing lifecycle reconciliation; PR #1254 adds one repository-only regression test for the canonical Capacity-v2 invariant that active included-period capacity is consumed before separately purchased top-up capacity.
+- Scope: test-only evidence against the existing controlled reserve/settle SQL; no Staging, Production, Stripe, Supabase, provider, customer-data or runtime mutation.
+- Acceptance: exact PR head must pass the existing AI-capacity operations suite and Project Memory guard. Any unrelated baseline CI failure on current main remains separate and must not be misclassified as caused by this test.
+
 ## Mobile supply-chain deferral boundary — repository evidence — 2026-10-04
 - Status: ACCEPTED on main `405865fc9d2b8304a41095ebe4d0ca9045f8ba09`.
 - Owner decision: FM-DEC-021 keeps remaining Mobile work deferred until company registration.
