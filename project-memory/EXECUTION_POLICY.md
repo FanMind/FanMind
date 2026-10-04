@@ -5,7 +5,7 @@ Mandatory default for substantive FanMind agent/Codex/automation work.
 ## Core principle
 Process cost must be proportional to actual risk. FanMind uses adaptive execution paths instead of one maximum-governance path for every change.
 
-Every autonomous run handles exactly one bounded task and then stops. A later independent task requires a new run.
+Every autonomous Builder run handles exactly one bounded task assigned by the FanMind Orchestrator and then stops. A later independent task requires a new Orchestrator decision and a new run. The Builder never selects the next independent roadmap task.
 
 ## Risk routing
 
@@ -122,7 +122,9 @@ Never bypass a real red security/governance/integration gate that applies to the
 Unrelated gates do not become blockers merely because they exist elsewhere in FanMind.
 
 ## Autonomy
-The Builder continues without unnecessary owner confirmation while scope remains clear, risk does not cross a protected boundary, no contradictory evidence appears and no new owner decision is required.
+The FanMind Orchestrator is the sole task-selection and prioritization authority. It reads current repository/Project Memory/roadmap/evidence, selects the next bounded safe task, assigns a unique task_id, waits for a matching terminal result, verifies it, reconciles state, and only then selects another independent task.
+
+The Builder continues autonomously only inside the one bounded task it received, without unnecessary owner confirmation while that scope remains clear, risk does not cross a protected boundary, no contradictory evidence appears and no new owner decision is required. It may repair blockers that are part of that same task. If blocked, it reports BLOCKED and stops; it must not select substitute or unrelated work.
 
 Risk escalation:
 - R1 -> R2 when scope becomes non-trivial.

@@ -45,14 +45,18 @@ test("incomplete or malformed enumeration is uncertain and never receipt-only", 
   }
 });
 
-test("workflow preserves manual dispatch and gates only receipt-only merges", async () => {
+test("workflow is explicit Orchestrator-only dispatch with mandatory correlation", async () => {
   const workflow = await readFile(
     new URL("../.github/workflows/fanmind-manager-event-dispatch.yml", import.meta.url),
     "utf8",
   );
-  assert.match(workflow, /github\.event_name == 'workflow_dispatch' \|\|\n\s+steps\.pr_files\.outputs\.receipt_only != 'true'/u);
-  assert.match(workflow, /REQUESTED_TASK: \$\{\{ github\.event\.inputs\.task \}\}/u);
-  assert.match(workflow, /REQUESTED_TASK_ID: \$\{\{ github\.event\.inputs\.task_id \}\}/u);
-  assert.match(workflow, /gh api --paginate --slurp/u);
-  assert.match(workflow, /Incomplete PR file evidence[\s\S]*dispatch remains enabled/u);
+  assert.match(workflow, /workflow_dispatch:/u);
+  assert.doesNotMatch(workflow, /pull_request:/u);
+  assert.match(workflow, /task:[\s\S]*required: true/u);
+  assert.match(workflow, /task_id:[\s\S]*required: true/u);
+  assert.match(workflow, /REQUESTED_TASK: \$\{\{ inputs\.task \}\}/u);
+  assert.match(workflow, /REQUESTED_TASK_ID: \$\{\{ inputs\.task_id \}\}/u);
+  assert.match(workflow, /sole authority for selecting the next independent FanMind task/u);
+  assert.match(workflow, /Do not select, start, continue, or substitute another independent roadmap task/u);
+  assert.doesNotMatch(workflow, /gh api --paginate --slurp/u);
 });
