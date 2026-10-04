@@ -15,7 +15,7 @@ Aktuell geprüfte Pins:
 | `actions/checkout` auf GitHub-gehosteten Runnern | `3d3c42e5aac5ba805825da76410c181273ba90b1` | `v7.0.1` |
 | `actions/checkout` auf `fanmind-restore` | `11d5960a326750d5838078e36cf38b85af677262` | `v4` |
 | `actions/setup-node` | `820762786026740c76f36085b0efc47a31fe5020` | `v7.0.0` |
-| `actions/setup-java` | `b6effb05e454b25005698d916606bdc6ffcbf961` | `v5.7.0` |
+| `actions/setup-java` | `de7274f081f381c8f8158605e0321c36c376e2e6` | `v6.0.1` |
 | `actions/upload-artifact` | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` | `v7.0.1` |
 | `github/codeql-action` | `ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd` | `v4.37.7` |
 
