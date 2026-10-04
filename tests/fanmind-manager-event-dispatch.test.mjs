@@ -11,6 +11,17 @@ import { runWorkspaceAgentDispatch } from "../scripts/orchestration/workspace-ag
 const file = (filename) => ({ filename });
 const jsonResponse = (status, body, headers = {}) =>
   new Response(JSON.stringify(body), { status, headers });
+const unreadableResponse = () => ({
+  status: 200,
+  headers: new Headers(),
+  body: {
+    getReader: () => ({
+      read: async () => {
+        throw new Error("synthetic body read failure");
+      },
+    }),
+  },
+});
 const common = {
   token: "test-token-never-logged",
   triggerId: "agtch_test",
@@ -136,6 +147,52 @@ test("terminal API errors distinguish dispatch_failed and run_failed", async () 
     assert.equal(result.result, expected);
     assert.equal(result.exitCode, 1);
     assert.match(result.summary.join("\n"), new RegExp(code, "u"));
+  }
+});
+
+test("GET fetch and body-read failures preserve accepted metadata as PENDING", async (t) => {
+  for (const mode of ["accepted-post", "get-only"]) {
+    for (const failure of ["fetch", "body-read"]) {
+      await t.test(`${mode}: ${failure}`, async () => {
+        const calls = [];
+        const accepted = [];
+        const responses =
+          mode === "accepted-post"
+            ? [
+                jsonResponse(202, {
+                  conversation_url: "https://chatgpt.com/g/g-test/c/preserved",
+                  agent_trigger_run_id: "apirun_preserved",
+                }),
+              ]
+            : [];
+        const result = await runWorkspaceAgentDispatch({
+          ...common,
+          existingRunId: mode === "get-only" ? "apirun_preserved" : "",
+          pollAttempts: 2,
+          persistAccepted: async (lines) => accepted.push(lines),
+          fetchImpl: async (url, options) => {
+            calls.push({ url, options });
+            if (responses.length > 0) return responses.shift();
+            if (failure === "fetch") throw new TypeError("synthetic fetch failure");
+            return unreadableResponse();
+          },
+        });
+
+        assert.equal(result.result, "PENDING");
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.runId, "apirun_preserved");
+        assert.equal(accepted.length, 1);
+        assert.match(accepted[0].join("\n"), /apirun_preserved/u);
+        if (mode === "accepted-post") {
+          assert.match(accepted[0].join("\n"), /chatgpt\.com\/g\/g-test\/c\/preserved/u);
+          assert.deepEqual(calls.map((call) => call.options.method), ["POST", "GET"]);
+        } else {
+          assert.deepEqual(calls.map((call) => call.options.method), ["GET"]);
+        }
+        assert.ok(calls.at(-1).options.signal instanceof AbortSignal);
+        assert.match(result.summary.join("\n"), /no POST was retried/u);
+      });
+    }
   }
 });
 

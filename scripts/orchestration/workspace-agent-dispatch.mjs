@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { appendFile, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const API_ORIGIN = "https://api.chatgpt.com";
@@ -110,8 +110,10 @@ export async function runWorkspaceAgentDispatch({
   idempotencyKey = "",
   pollAttempts = 12,
   pollIntervalMs = 10_000,
+  getTimeoutMs = 15_000,
   fetchImpl = globalThis.fetch,
   sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
+  persistAccepted = async () => {},
 }) {
   if (!cleanIdentifier(triggerId, /^agtch_[A-Za-z0-9_-]+$/u)) {
     throw new Error("invalid trigger id");
@@ -121,6 +123,9 @@ export async function runWorkspaceAgentDispatch({
   }
   if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1 || pollAttempts > 60) {
     throw new Error("invalid polling budget");
+  }
+  if (!Number.isSafeInteger(getTimeoutMs) || getTimeoutMs < 1_000 || getTimeoutMs > 60_000) {
+    throw new Error("invalid GET timeout");
   }
 
   const summary = ["### FanMind Builder API diagnostic", `- Task ID: \`${cleanText(taskId, 200)}\``];
@@ -162,21 +167,32 @@ export async function runWorkspaceAgentDispatch({
 
   writeSummaryLine(summary, `- Trigger run: \`${runId}\``);
   if (conversationUrl) writeSummaryLine(summary, `- Workspace Agent conversation: ${conversationUrl}`);
+  await persistAccepted([...summary]);
 
   for (let attempt = 1; attempt <= pollAttempts; attempt += 1) {
     if (attempt > 1) await sleep(pollIntervalMs);
-    const response = await fetchImpl(
-      `${API_ORIGIN}/v1/workspace_agents/${triggerId}/runs/${runId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "OpenAI-Beta": BETA_HEADER,
+    let response;
+    let diagnostic;
+    try {
+      response = await fetchImpl(
+        `${API_ORIGIN}/v1/workspace_agents/${triggerId}/runs/${runId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "OpenAI-Beta": BETA_HEADER,
+          },
+          redirect: "error",
+          signal: AbortSignal.timeout(getTimeoutMs),
         },
-        redirect: "error",
-      },
-    );
-    const diagnostic = await diagnoseResponse(response);
+      );
+      diagnostic = await diagnoseResponse(response);
+    } catch {
+      writeSummaryLine(summary, "- Result: `PENDING`");
+      writeSummaryLine(summary, "- Last status check: bounded GET transport/body-read failure.");
+      writeSummaryLine(summary, "- The accepted run ID remains valid for GET-only continuation; no POST was retried.");
+      return { exitCode: 0, result: "PENDING", runId, conversationUrl, summary };
+    }
     if (response.status < 200 || response.status >= 300) {
       writeSummaryLine(summary, "- Result: `STATUS_HTTP_ERROR`");
       addHttpDiagnostic(summary, diagnostic);
@@ -216,6 +232,7 @@ export async function runWorkspaceAgentDispatch({
 async function main() {
   const existingRunId = process.env.EXISTING_TRIGGER_RUN_ID ?? "";
   const payload = existingRunId ? "" : await readFile(process.env.PAYLOAD_FILE, "utf8");
+  let persistedLineCount = 0;
   const result = await runWorkspaceAgentDispatch({
     token: process.env.AGENT_ACCESS_TOKEN,
     triggerId: process.env.AGENT_TRIGGER_ID,
@@ -225,10 +242,16 @@ async function main() {
     idempotencyKey: process.env.IDEMPOTENCY_KEY ?? "",
     pollAttempts: Number(process.env.POLL_ATTEMPTS ?? 12),
     pollIntervalMs: Number(process.env.POLL_INTERVAL_MS ?? 10_000),
+    getTimeoutMs: Number(process.env.GET_TIMEOUT_MS ?? 15_000),
+    persistAccepted: async (lines) => {
+      await appendFile(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
+      persistedLineCount = lines.length;
+    },
   });
-  await import("node:fs/promises").then(({ appendFile }) =>
-    appendFile(process.env.GITHUB_STEP_SUMMARY, `${result.summary.join("\n")}\n`),
-  );
+  const remaining = result.summary.slice(persistedLineCount);
+  if (remaining.length > 0) {
+    await appendFile(process.env.GITHUB_STEP_SUMMARY, `${remaining.join("\n")}\n`);
+  }
   process.exitCode = result.exitCode;
 }
 

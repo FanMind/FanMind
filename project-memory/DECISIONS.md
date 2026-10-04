@@ -217,6 +217,6 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 ## FM-DEC-030 — Diagnosable Workspace Agent Builder dispatch
 - Date: 2026-10-04
 - Status: PROPOSED
-- Decision: The FanMind Orchestrator-to-Builder API path uses one task/probe-bound, redirect-fail-closed POST with `OpenAI-Beta: workspace_agent_runs=v1`, bounded allowlisted diagnostics and bounded GET polling. Only `completed` and `failed` are terminal; polling exhaustion is `PENDING` and may continue only through GET-only status checks without repeating the POST.
+- Decision: The FanMind Orchestrator-to-Builder API path uses one task/probe-bound, redirect-fail-closed POST with `OpenAI-Beta: workspace_agent_runs=v1`, bounded allowlisted diagnostics and bounded GET polling. Accepted run metadata is persisted before polling. Only `completed` and `failed` are terminal; polling exhaustion and bounded GET transport/body-read failures are `PENDING` and may continue only through GET-only status checks without repeating the POST.
 - Probe boundary: the first live verification is one separately reviewed no-write probe that requests only an exact fresh probe confirmation and forbids tools, external/product writes, receipts and files. Success requires terminal API status plus the correlated chat confirmation.
 - Evidence boundary: run `37229083406` proves HTTP 409 but not its instance-specific cause. The prior missing beta header is a proven diagnosis defect, not a proven 409 cause; no channel, token, secret, permission or provider change is authorized by this decision.

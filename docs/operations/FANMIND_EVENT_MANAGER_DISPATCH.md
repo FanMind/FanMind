@@ -38,9 +38,9 @@ Its success requires both the terminal API status `completed` and that exact cor
 
 The POST is issued once with `OpenAI-Beta: workspace_agent_runs=v1`. A task-bound `Idempotency-Key` identifies that one logical dispatch; the workflow performs no automatic POST retry. A successful start must return a valid `agent_trigger_run_id` (`apirun_...`).
 
-The workflow then polls `GET /v1/workspace_agents/{agtch_id}/runs/{apirun_id}` within a fixed budget. `completed` and `failed` are terminal. `queued`, `in_progress`, and `suspended` remain nonterminal. Exhausting the budget produces `PENDING`, preserves the run ID, and is not reported as failure. Continue only through the GET-only mode; never repeat the POST merely because polling ended.
+The accepted run ID and conversation URL are written to the diagnostic summary before the first status poll. The workflow then polls `GET /v1/workspace_agents/{agtch_id}/runs/{apirun_id}` within fixed per-request and total budgets. `completed` and `failed` are terminal. `queued`, `in_progress`, and `suspended` remain nonterminal. Exhausting the budget or encountering a bounded GET transport/body-read failure produces `PENDING`, preserves the run ID, and is not reported as run failure. Continue only through the GET-only mode; never repeat the POST merely because polling ended or a GET failed.
 
-HTTP start failures are reported as `HTTP_START_ERROR`. A terminal API run failure is reported separately as `DISPATCH_FAILED`, `RUN_FAILED`, or `FAILED` according to the allowlisted `error.code`. GET transport/API failures are `STATUS_HTTP_ERROR` and do not trigger another POST.
+HTTP start failures are reported as `HTTP_START_ERROR`. A terminal API run failure is reported separately as `DISPATCH_FAILED`, `RUN_FAILED`, or `FAILED` according to the allowlisted `error.code`. A received non-success GET response is `STATUS_HTTP_ERROR`; a GET transport/body-read exception is `PENDING`. Neither triggers another POST.
 
 Diagnostics retain only:
 

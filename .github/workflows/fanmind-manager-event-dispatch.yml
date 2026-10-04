@@ -108,6 +108,7 @@ jobs:
           PAYLOAD_FILE: payload.json
           POLL_ATTEMPTS: "12"
           POLL_INTERVAL_MS: "10000"
+          GET_TIMEOUT_MS: "15000"
         run: node scripts/orchestration/workspace-agent-dispatch.mjs
 
       - name: Remove dispatch payload
