@@ -1,3 +1,16 @@
+## RECEIPT-FM-CI-PR1256-20261004
+- Task: FM-CI-PR1256-20261004
+- Status: VERIFIED
+- Risk: R3
+- Branch/PR: `fix/mobile-audit-deferral-20261002` / #1256
+- Failure evidence: run `37028636158`, job `110909577917`; single failing subtest `permanent Production audit runs installed root-owned code only` rejects the missing `workflow_run` trigger. The separate Supply Chain check on this head already passes.
+- Planned correction: apply only PR #1255's reviewed `.github/workflows/production-readonly-audit.yml` patch; preserve manual exact-commit execution and root-owned/no-checkout behavior.
+- Success evidence: exact head `aa8be0864e9c008c66e90092e50a57b68f11ec14`; FanMind CI `37174078883`, Supply Chain `37174078897`, Browser E2E `37174078876`, CodeQL `37174078841`, Landing Language `37174078937`, God Mode `37174078971`, Project Memory Guard `37174078900`, Quality `37174078887` and Status `37174078865` all passed.
+- Countercheck: complete eight-file PR diff is repository/CI-only; the Production audit remains read-only, installed-root-owned and no-checkout. The manager regression now asserts presence without depending on unrelated continuation ordering.
+- Falsifier: an exact-head Operations failure for the Production-audit contract or a Root/Web dependency-audit bypass would disprove the fix; neither was observed.
+- Negative evidence: no dispatch, deploy, Production mutation, secret read, dependency change, merge or protected external action.
+- Lock: LOCK-FM-CI-PR1256-20261004 RELEASED_CI_FIXED.
+
 ## FM-EXEC-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
