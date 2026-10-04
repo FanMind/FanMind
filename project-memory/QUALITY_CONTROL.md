@@ -1,4 +1,4 @@
-# Project Memory Quality Control v5
+# Project Memory Quality Control v6
 
 Mandatory controls and countercontrols for FanMind product, infrastructure and operations work.
 
@@ -12,7 +12,7 @@ Every substantive task records `Risk: R1|R2|R3|R4` before implementation. Unknow
 
 ## Completion quorum
 - R1: scope/diff check + one evidence class.
-- R2: implementation evidence + independent countercheck + relevant regression/negative-path check.
+- R2: implementation evidence + relevant verification + a distinct second-pass countercheck and regression/negative-path check. A separate reviewer is required only when the affected contract, security boundary or architecture risk requires true independence.
 - R3: at least two independent evidence classes, current CI/test evidence, dependency/assumption reconciliation and rollback/recovery plan for state-changing work.
 - R4: all applicable FanMind CI/security/supply-chain/operations gates green, at least two independent evidence classes, exact commit/target-bound runtime or staging evidence, rollback/recovery plan, negative/fail-closed proof, and any protected-boundary approval still required by existing FanMind policy.
 
@@ -49,7 +49,7 @@ Before declaring a FanMind milestone/phase complete, reconcile all related tasks
 
 
 ## God Mode v1 overlay
-For substantive R2+ work, current Project Memory must also identify affected `FM-CONTRACT-*` and `FM-IGATE-*` records when applicable. A local/module success does not close an integration gate.
+For R2 work that affects a registered contract or integration boundary, the relevant `FM-CONTRACT-*` and `FM-IGATE-*` records must be identified. R3/R4 retain this requirement for every applicable boundary. A local/module success does not close an integration gate.
 
 Before a release or protected activation can be treated as technically clear:
 - all required applicable `SYSTEM_INVARIANTS.json` entries must be `ENFORCED`;
