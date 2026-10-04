@@ -1175,12 +1175,13 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CI-PR1256-20261004 — restore PR #1256 exact-head CI
 - Date: 2026-10-04
-- Status: IN_PROGRESS
+- Status: VERIFIED
 - Risk: R3
-- Lock: LOCK-FM-CI-PR1256-20261004
+- Lock: LOCK-FM-CI-PR1256-20261004 — RELEASED_CI_FIXED
 - Baseline: current main `72cf742fb56799fbb74b9b565119645a7dc86ebe`; PR #1256 head `6729ea921b9ec2e31d18f1918b72d9f60685fbd3`.
 - Concrete failure: FanMind CI run `37028636158`, job `110909577917`, Operations tests fail only because `.github/workflows/production-readonly-audit.yml` lacks the canonical successful-main-deploy and daily triggers required by `tests/production-readonly-audit.test.mjs`.
 - Scope: copy the already reviewed workflow-only correction from PR #1255 onto PR #1256 so one exact head can prove both mutually blocking CI-policy fixes. No dispatch, deploy, Production mutation, Mobile dependency change, provider, Billing, Supabase, Restore or customer-data action.
-- Acceptance: focused Production-audit contract, full exact-head required CI/security/governance checks, diff countercheck and independent review. This run does not merge.
-- Exact next step: obtain the fresh exact-head required check set for PR #1256, countercheck the full diff, record the result and release or update the lock; do not merge in this CI-resolution run.
-- Recovery: repository revert only; no external state is changed by this source update.
+- Result: exact head `aa8be0864e9c008c66e90092e50a57b68f11ec14` passed FanMind CI, Supply Chain Security, Browser E2E, CodeQL, Landing Language, God Mode and all Project Memory checks. The failed Production-audit contract subtest now passes; the Mobile deferral remains explicit and reported.
+- Countercheck: full PR diff remains repository/CI-only. Falsifier: any exact-head failure in the Production-audit contract or Root/Web dependency enforcement would reopen this fix; neither occurred.
+- Exact next step: PR #1256 still needs its normal independent review and merge decision. This CI-resolution run does not merge.
+- Recovery: repository revert only; no external state was changed by this source update.
