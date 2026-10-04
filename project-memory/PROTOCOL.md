@@ -179,3 +179,13 @@ FanMind orchestration is state-driven, never clock-order-driven. Scheduled Build
 - The hourly Builder remains a fallback if an event is missed, delayed, disabled or rejected.
 - Event retries must be idempotent; repeated unchanged state must not create receipt/PR churn.
 - Configuration and activation details live in `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md`.
+
+
+## FanMind Orchestrator single-authority contract
+- The FanMind Orchestrator is the single decision point for new independent work. It owns roadmap/state inspection, prioritization, SAFE READY SET selection, task scoping, task_id assignment, result verification and the next-task decision.
+- The FanMind Builder is an execution worker. It executes exactly the bounded task_id it receives. It may diagnose and repair problems inside that task, but it does not choose another roadmap task, continue unrelated work, or replace a blocked task with a different one.
+- Repository merge events are evidence for the Orchestrator to reconcile; they are not authority for the Builder to self-select new work. The Builder dispatch workflow is manual workflow_dispatch only and requires both task and task_id.
+- HTTP/API trigger acceptance is only a dispatch receipt. Completion requires a terminal result with the exact task_id, verified by the Orchestrator against current repository truth.
+- The Orchestrator must not dispatch a second independent Builder task while a prior task is unresolved unless an explicit, proven non-overlapping parallel-work rule permits it. Default orchestration is serial to minimize duplicate work and cost.
+- A Builder BLOCKED result returns control to the Orchestrator. The Orchestrator decides whether to repair, park, request Owner Action, or choose an independent safe task.
+- Protected Production/Billing/provider/destructive/secret/legal boundaries remain governed by their existing authorization rules; Orchestrator authority does not bypass them.
