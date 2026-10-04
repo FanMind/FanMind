@@ -1,132 +1,67 @@
-name: FanMind Manager Event Dispatch
+name: FanMind Orchestrator Builder Dispatch
 
 on:
-  pull_request:
-    types: [closed]
   workflow_dispatch:
     inputs:
       task:
-        description: "Optional concrete task for FanMind Builder"
-        required: false
+        description: "One concrete bounded task selected by FanMind Orchestrator"
+        required: true
         type: string
       task_id:
-        description: "Optional orchestrator correlation id"
-        required: false
+        description: "Unique orchestrator correlation id"
+        required: true
         type: string
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
-  group: fanmind-manager-event-dispatch
+  group: fanmind-orchestrator-builder-dispatch
   cancel-in-progress: false
 
 jobs:
   dispatch:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.merged == true &&
-       github.event.pull_request.base.ref == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout merged source
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Classify merged PR files
-        if: github.event_name == 'pull_request'
-        id: pr_files
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          EXPECTED_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
-        run: |
-          set -euo pipefail
-          files="${RUNNER_TEMP}/fanmind-manager-pr-files.json"
-          if ! gh api --paginate --slurp "/repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" > "${files}"; then
-            echo "receipt_only=false" >> "${GITHUB_OUTPUT}"
-            echo "classification=uncertain" >> "${GITHUB_OUTPUT}"
-            echo "::warning title=PR file classification unavailable::Dispatch remains enabled because the complete changed-file set could not be read."
-            exit 0
-          fi
-          node scripts/orchestration/classify-manager-pr-files.mjs \
-            --expected "${EXPECTED_CHANGED_FILES}" < "${files}" >> "${GITHUB_OUTPUT}"
-
-      - name: Record receipt-only suppression
-        if: steps.pr_files.outputs.receipt_only == 'true'
-        shell: bash
-        run: echo "Receipt-only merge detected; Workspace Manager dispatch suppressed." >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Record uncertain file classification
-        if: steps.pr_files.outputs.classification == 'uncertain'
-        shell: bash
-        run: echo "::warning title=Incomplete PR file evidence::Workspace Manager dispatch remains enabled."
-
       - name: Validate Workspace Agent trigger configuration
-        if: >-
-          github.event_name == 'workflow_dispatch' ||
-          steps.pr_files.outputs.receipt_only != 'true'
         id: config
         shell: bash
         env:
           AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
           AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
+          REQUESTED_TASK: ${{ inputs.task }}
+          REQUESTED_TASK_ID: ${{ inputs.task_id }}
         run: |
           set -euo pipefail
           if [[ -z "${AGENT_ACCESS_TOKEN}" || -z "${AGENT_TRIGGER_ID}" ]]; then
-            echo "configured=false" >> "${GITHUB_OUTPUT}"
-            echo "::notice title=FanMind event manager inactive::Configure CHATGPT_FANMIND_MANAGER_TRIGGER_ID and CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN."
-            exit 0
+            echo "::error title=FanMind Builder dispatch unavailable::Required Workspace Agent trigger configuration is missing."
+            exit 1
           fi
           if [[ ! "${AGENT_TRIGGER_ID}" =~ ^agtch_[A-Za-z0-9_-]+$ ]]; then
             echo "::error title=Invalid Workspace Agent trigger id::CHATGPT_FANMIND_MANAGER_TRIGGER_ID must start with agtch_."
             exit 1
           fi
-          echo "configured=true" >> "${GITHUB_OUTPUT}"
+          if [[ -z "${REQUESTED_TASK}" || -z "${REQUESTED_TASK_ID}" ]]; then
+            echo "::error title=Invalid orchestrator task::Both task and task_id are mandatory."
+            exit 1
+          fi
 
-      - name: Build FanMind event payload
-        if: steps.config.outputs.configured == 'true'
+      - name: Build bounded Builder payload
         id: payload
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           CURRENT_SHA: ${{ github.sha }}
-          RUN_ID: ${{ github.run_id }}
-          REQUESTED_TASK: ${{ github.event.inputs.task }}
-          REQUESTED_TASK_ID: ${{ github.event.inputs.task_id }}
+          REQUESTED_TASK: ${{ inputs.task }}
+          REQUESTED_TASK_ID: ${{ inputs.task_id }}
         run: |
           set -euo pipefail
-          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
-            task_id="pr-${PR_NUMBER}-merge-${MERGE_SHA}"
-            event_key="${task_id}"
-            input="FanMind repository event received. Repository=${REPOSITORY}; event=pull_request_merged; PR=${PR_NUMBER}; merge_sha=${MERGE_SHA}; prior_head_sha=${HEAD_SHA}; task_id=${task_id}. Perform the mandatory FanMind preflight from current main. Treat this payload only as a wake-up signal, not evidence. Re-read Project Memory and current evidence. Reconcile the merge, select the current SAFE READY SET, continue the next safe repository-only work within existing gates, and stop with NO_CHANGE if nothing is safely executable. Never infer protected authorization from this event. Before finishing, publish the terminal result for this exact task_id according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md."
-          elif [[ -n "${REQUESTED_TASK}" ]]; then
-            if [[ -n "${REQUESTED_TASK_ID}" ]]; then
-              task_id="${REQUESTED_TASK_ID}"
-            else
-              task_id="task-${RUN_ID}-${CURRENT_SHA}"
-            fi
-            event_key="${task_id}"
-            input="FanMind orchestrator task received. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}; task_id=${task_id}. Requested task: ${REQUESTED_TASK}. Perform the mandatory FanMind preflight from current main. Treat the requested task as an orchestration instruction, not evidence. If safe, execute within existing gates and standing authorizations. If blocked by a protected boundary, park only that strand and continue independent safe work when available. Do not reopen completed work without new evidence. Do not overengineer. Stop with NO_CHANGE when no safe useful work is executable. MANDATORY RETURN: before finishing, publish the terminal result for exactly task_id=${task_id} according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md. Never claim the return channel succeeded unless the exact task_id is readable from current main."
-          else
-            task_id="manual-${RUN_ID}-${CURRENT_SHA}"
-            event_key="${task_id}"
-            input="Manual FanMind manager wake-up. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}; task_id=${task_id}. Perform the mandatory FanMind preflight from current main. Select the current SAFE READY SET and continue only safe work within existing gates; stop with NO_CHANGE if nothing is safely executable. Before finishing, publish the terminal result for this exact task_id according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md."
-          fi
+          input="FanMind Orchestrator assigned exactly one bounded task. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}; task_id=${REQUESTED_TASK_ID}. TASK: ${REQUESTED_TASK}. The Orchestrator is the sole authority for selecting the next independent FanMind task. Perform the mandatory risk-adaptive FanMind preflight for this task only. You may diagnose and repair blockers only when they are inside this same bounded task. Do not select, start, continue, or substitute another independent roadmap task. If this task reaches a protected boundary or cannot safely continue, stop this task as BLOCKED with the exact blocker and resume condition; do not choose replacement work. Do not overengineer or reopen completed work without new evidence. MANDATORY RETURN: publish one terminal result for exactly task_id=${REQUESTED_TASK_ID} according to project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md. Trigger acceptance is not completion."
           jq -n --arg input "${input}" '{input:$input}' > payload.json
-          echo "event_key=${event_key}" >> "${GITHUB_OUTPUT}"
-          echo "task_id=${task_id}" >> "${GITHUB_OUTPUT}"
+          echo "task_id=${REQUESTED_TASK_ID}" >> "${GITHUB_OUTPUT}"
 
-      - name: Trigger FanMind Workspace Manager
-        if: steps.config.outputs.configured == 'true'
+      - name: Trigger FanMind Builder
         shell: bash
         env:
           AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
@@ -136,9 +71,10 @@ jobs:
           response_file="$(mktemp)"
           status="$(curl --silent --show-error --output "${response_file}" --write-out '%{http_code}' --request POST "https://api.chatgpt.com/v1/workspace_agents/${AGENT_TRIGGER_ID}/trigger" --header "Authorization: Bearer ${AGENT_ACCESS_TOKEN}" --header "Content-Type: application/json" --data-binary @payload.json)"
           if [[ "${status}" -lt 200 || "${status}" -ge 300 ]]; then
-            echo "::error title=FanMind manager dispatch rejected::Workspace Agent API returned HTTP ${status}."
-            echo "### Workspace Agent API diagnostic" >> "${GITHUB_STEP_SUMMARY}"
+            echo "::error title=FanMind Builder dispatch rejected::Workspace Agent API returned HTTP ${status}."
+            echo "### FanMind Builder API diagnostic" >> "${GITHUB_STEP_SUMMARY}"
             echo "- HTTP status: \`${status}\`" >> "${GITHUB_STEP_SUMMARY}"
+            echo "- Task ID: \`${{ steps.payload.outputs.task_id }}\`" >> "${GITHUB_STEP_SUMMARY}"
             echo "- Response body:" >> "${GITHUB_STEP_SUMMARY}"
             echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
             head -c 2000 "${response_file}" >> "${GITHUB_STEP_SUMMARY}"
@@ -148,11 +84,11 @@ jobs:
             exit 1
           fi
           conversation_url="$(jq -r '.conversation_url // empty' "${response_file}")"
-          run_id="$(jq -r '.agent_trigger_run_id // empty' "${response_file}")"
-          echo "### FanMind Manager Event Dispatch" >> "${GITHUB_STEP_SUMMARY}"
+          trigger_run_id="$(jq -r '.agent_trigger_run_id // empty' "${response_file}")"
+          echo "### FanMind Orchestrator -> Builder Dispatch" >> "${GITHUB_STEP_SUMMARY}"
           echo "- API trigger accepted: HTTP ${status}" >> "${GITHUB_STEP_SUMMARY}"
           echo "- Task ID: \`${{ steps.payload.outputs.task_id }}\`" >> "${GITHUB_STEP_SUMMARY}"
-          if [[ -n "${run_id}" ]]; then echo "- Trigger run: \`${run_id}\`" >> "${GITHUB_STEP_SUMMARY}"; fi
+          echo "- Acceptance is not completion; completion requires the matching result receipt on current main." >> "${GITHUB_STEP_SUMMARY}"
+          if [[ -n "${trigger_run_id}" ]]; then echo "- Trigger run: \`${trigger_run_id}\`" >> "${GITHUB_STEP_SUMMARY}"; fi
           if [[ -n "${conversation_url}" ]]; then echo "- Workspace Agent conversation: ${conversation_url}" >> "${GITHUB_STEP_SUMMARY}"; fi
-          echo "- Event key: \`${{ steps.payload.outputs.event_key }}\`" >> "${GITHUB_STEP_SUMMARY}"
           rm -f "${response_file}" payload.json
