@@ -184,10 +184,9 @@ test("GET fetch and body-read failures preserve accepted metadata as PENDING", a
         assert.equal(accepted.length, 1);
         assert.match(accepted[0].join("\n"), /apirun_preserved/u);
         if (mode === "accepted-post") {
-          assert.ok(
-            accepted[0]
-              .join("\n")
-              .includes("https://chatgpt.com/g/g-test/c/preserved"),
+          assert.equal(
+            accepted[0].at(-1),
+            "- Workspace Agent conversation: https://chatgpt.com/g/g-test/c/preserved",
           );
           assert.deepEqual(calls.map((call) => call.options.method), ["POST", "GET"]);
         } else {
