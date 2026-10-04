@@ -41,7 +41,7 @@ jobs:
 
           if [[ -z "${AGENT_ACCESS_TOKEN}" || -z "${AGENT_TRIGGER_ID}" ]]; then
             echo "configured=false" >> "${GITHUB_OUTPUT}"
-            echo "::notice title=FanMind event manager inactive::Configure repository variable CHATGPT_FANMIND_MANAGER_TRIGGER_ID and secret CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN to enable immediate manager dispatch."
+            echo "::notice title=FanMind event manager inactive::Configure CHATGPT_FANMIND_MANAGER_TRIGGER_ID and CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN."
             exit 0
           fi
 
@@ -76,17 +76,35 @@ jobs:
           elif [[ -n "${REQUESTED_TASK}" ]]; then
             event_key="task-${RUN_ID}-${CURRENT_SHA}"
 
-            input="FanMind orchestrator task received. Repository=${REPOSITORY}; current_workflow_sha=${CURRENT_SHA}. Requested task: ${REQUESTED_TASK}
+            input="$(cat <<EOF
+          FanMind orchestrator task received.
+          Repository=${REPOSITORY}
+          current_workflow_sha=${CURRENT_SHA}
 
-Perform the mandatory FanMind preflight from current main before acting. Re-read Project Memory, current GitHub/CI/review/runtime/provider evidence, locks, dependencies, standing authorizations and current repository state.
+          Requested task:
+          ${REQUESTED_TASK}
 
-Treat the requested task as an orchestration instruction, not as evidence that prerequisites are satisfied.
+          Perform the mandatory FanMind preflight from current main before acting.
+          Re-read Project Memory, current GitHub/CI/review/runtime/provider evidence,
+          locks, dependencies, standing authorizations and current repository state.
 
-If the requested task is currently safe and executable, perform it within existing FanMind gates and standing authorizations.
+          Treat the requested task as an orchestration instruction, not as evidence
+          that prerequisites are satisfied.
 
-If it is blocked by owner action, external approval, missing secret, cost approval, destructive action, production/provider action or another protected boundary, park only that strand, record the blocker/evidence/resume condition where appropriate, recompute the SAFE READY SET, and continue independent safe work when available.
+          If the requested task is currently safe and executable, perform it within
+          existing FanMind gates and standing authorizations.
 
-Do not reopen completed work without new evidence. Do not overengineer. Stop with NO_CHANGE when no safe useful work is executable."
+          If it is blocked by owner action, external approval, missing secret,
+          cost approval, destructive action, production/provider action or another
+          protected boundary, park only that strand, record the blocker/evidence/
+          resume condition where appropriate, recompute the SAFE READY SET, and
+          continue independent safe work when available.
+
+          Do not reopen completed work without new evidence.
+          Do not overengineer.
+          Stop with NO_CHANGE when no safe useful work is executable.
+          EOF
+          )"
 
           else
             event_key="manual-${RUN_ID}-${CURRENT_SHA}"
@@ -106,7 +124,6 @@ Do not reopen completed work without new evidence. Do not overengineer. Stop wit
         env:
           AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
           AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
-          IDEMPOTENCY_KEY: fanmind-${{ steps.payload.outputs.event_key }}
         run: |
           set -euo pipefail
 
@@ -150,6 +167,6 @@ Do not reopen completed work without new evidence. Do not overengineer. Stop wit
             echo "- Workspace Agent conversation: ${conversation_url}" >> "${GITHUB_STEP_SUMMARY}"
           fi
 
-          echo "- Event key: \`${IDEMPOTENCY_KEY}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Event key: \`${{ steps.payload.outputs.event_key }}\`" >> "${GITHUB_STEP_SUMMARY}"
 
           rm -f "${response_file}" payload.json
