@@ -14,7 +14,7 @@
 - Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
 - Boundary: Draft PR only. No merge, auto-merge, deploy, live API trigger, controlled live check, SQL, host, provider, secret, permission or protected-state action is authorized.
 - Closeout: this task cannot publish `COMPLETED` until a later separately authorized merge/canonical receipt and controlled check exist. Current delivery stops at reviewable Draft PR.
-- Next step: complete exact-head required CI, God Mode and independent countercheck on the Draft PR, then stop pending separate Owner authorization for merge and the controlled side-effect-free check.
+- Exact next step: complete exact-head required CI, God Mode and independent countercheck on the Draft PR, then stop pending separate Owner authorization for merge and the controlled side-effect-free check.
 
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
