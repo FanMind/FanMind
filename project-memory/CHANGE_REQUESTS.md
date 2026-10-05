@@ -589,3 +589,6 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the flowing mobile layout and latest-message positioning.
 - Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database, provider or external-platform behavior changes.
 - Acceptance: desktop has no outer page scrollbar from Creator-Building content; all three panes scroll independently; conversation opens at newest content; mobile remains responsive; exact-head relevant CI passes.
+
+## Root React dependency coupling — 2026-10-05
+- Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
