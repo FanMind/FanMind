@@ -65,7 +65,7 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
 test("Creator-Building keeps the desktop shell fixed with three independent scroll panes", () => {
   assert.match(styles, /\.page\{height:100dvh;min-height:0;overflow:hidden/u);
   assert.match(styles, /\.characterList,\.fanList\{min-height:0;flex:1 1 auto;overflow-y:auto/u);
-  assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow-y:auto/u);
+  assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow:hidden/u);\n  assert.match(styles, /\.conversationScroll\{min-height:0;flex:1 1 auto;overflow-y:auto/u);\n  assert.match(styles, /\.messageComposer\{flex:0 0 auto/u);
   assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
   assert.match(source, /ref=\{conversationPaneRef\}/u);
 });
