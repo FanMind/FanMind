@@ -117,26 +117,120 @@ def _balanced_literal(text: str, start: int, opening: str, closing: str) -> str:
 def _top_level_objects(text: str) -> list[str]:
     objects: list[str] = []
     index = 0
+    quote: str | None = None
+    escaped = False
+    line_comment = False
+    block_comment = False
     while index < len(text):
-        if text[index] == "{":
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if line_comment:
+            line_comment = char != "\n"
+        elif block_comment:
+            if char == "*" and following == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char in {'"', "'", "`"}:
+            quote = char
+        elif char == "/" and following == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and following == "*":
+            block_comment = True
+            index += 1
+        elif char == "{":
             block = _balanced_literal(text, index, "{", "}")
             objects.append(block)
             index += len(block)
-        else:
-            index += 1
+            continue
+        index += 1
     return objects
 
 
+def _ts_property_value_start(block: str, name: str) -> int | None:
+    quote: str | None = None
+    escaped = False
+    line_comment = False
+    block_comment = False
+    brace_depth = 0
+    square_depth = 0
+    index = 0
+    while index < len(block):
+        char = block[index]
+        following = block[index + 1] if index + 1 < len(block) else ""
+        if line_comment:
+            line_comment = char != "\n"
+        elif block_comment:
+            if char == "*" and following == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char in {'"', "'", "`"}:
+            quote = char
+        elif char == "/" and following == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and following == "*":
+            block_comment = True
+            index += 1
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}":
+            brace_depth -= 1
+        elif char == "[":
+            square_depth += 1
+        elif char == "]":
+            square_depth -= 1
+        elif brace_depth == 1 and square_depth == 0 and (char.isalpha() or char == "_"):
+            end = index + 1
+            while end < len(block) and (block[end].isalnum() or block[end] == "_"):
+                end += 1
+            cursor = end
+            while cursor < len(block) and block[cursor].isspace():
+                cursor += 1
+            if block[index:end] == name and cursor < len(block) and block[cursor] == ":":
+                cursor += 1
+                while cursor < len(block) and block[cursor].isspace():
+                    cursor += 1
+                return cursor
+            index = end - 1
+        index += 1
+    return None
+
+
 def _ts_string_property(block: str, name: str, *, required: bool = True) -> str:
-    match = re.search(
-        rf'(?:^|[{{,])\s*{re.escape(name)}:\s*"((?:\\.|[^"\\])*)"\s*,?',
-        block,
-    )
-    if not match:
+    start = _ts_property_value_start(block, name)
+    if start is None:
         if required:
             raise ValueError(f"roadmap_property_missing:{name}")
         return ""
-    return json.loads(f'"{match.group(1)}"')
+    if start >= len(block) or block[start] != '"':
+        raise ValueError(f"roadmap_property_not_string:{name}")
+    index = start + 1
+    escaped = False
+    while index < len(block):
+        char = block[index]
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == '"':
+            return json.loads(block[start:index + 1])
+        index += 1
+    raise ValueError(f"roadmap_property_string_unterminated:{name}")
 
 
 def product_roadmap_open_items(text: str) -> list[dict]:
@@ -159,10 +253,11 @@ def product_roadmap_open_items(text: str) -> list[dict]:
             raise ValueError(f"roadmap_phase_availability_invalid:{availability}")
         if availability != "upcoming":
             continue
-        items_match = re.search(r"(?m)^\s*items:\s*\[", phase_block)
-        if not items_match:
+        items_start = _ts_property_value_start(phase_block, "items")
+        if items_start is None:
             raise ValueError(f"roadmap_items_missing:{number_text}")
-        items_start = phase_block.find("[", items_match.start())
+        if items_start >= len(phase_block) or phase_block[items_start] != "[":
+            raise ValueError(f"roadmap_items_not_array:{number_text}")
         items_literal = _balanced_literal(phase_block, items_start, "[", "]")
         for item_block in _top_level_objects(items_literal[1:-1]):
             state = _ts_string_property(item_block, "state")
@@ -2160,11 +2255,18 @@ def run_product_roadmap_contract_tests() -> None:
 export type RoadmapPhase = { number: string; items: Array<{ label: string }> };
 const translatedDuplicates = [{ label: "Translated decoy", state: "planned" }];
 export const roadmapPhases: RoadmapPhase[] = [
+  // TODO: { provider state is still external }
+  // { label: "not a real phase", state: "progress" }
+  /* { label: "also not a phase", state: "planned" } */
   {
     number: "01",
+    title: "Phase {one}",
     availability: "upcoming",
     items: [
-      { label: "Alpha", state: "progress", status: "Blocked" },
+      // { label: "not a real task", state: "progress" }
+      // TODO: { provider state is still external }
+      /* { label: "also not a task", state: "planned" } */
+      { label: "Alpha", /* prior value, state: "done" */ state: "progress", status: "Blocked {externally}, state: \\\"done\\\"" },
       {
         label: "Beta",
         state: "partial",
@@ -2176,16 +2278,25 @@ export const roadmapPhases: RoadmapPhase[] = [
   },
   { number: "02", availability: "done", items: [{ label: "Done phase", state: "planned" }] },
   { number: "03", availability: "later", items: [{ label: "Later phase", state: "progress" }] },
+  { number: "04", availability: "upcoming", items: [{ label: "Gamma", state: "planned", status: "Single line" }] },
 ] satisfies RoadmapPhase[];
 export const translations = { Alpha: "Translated Alpha" };
 '''
     parsed = product_roadmap_open_items(source)
     assert parsed == [
-        {"phase": 1, "label": "Alpha", "state": "progress", "status": "Blocked"},
+        {
+            "phase": 1,
+            "label": "Alpha",
+            "state": "progress",
+            "status": 'Blocked {externally}, state: "done"',
+        },
         {"phase": 1, "label": "Beta", "state": "partial", "status": "Safe later work"},
+        {"phase": 4, "label": "Gamma", "state": "planned", "status": "Single line"},
     ]
+    phase_one = [item for item in parsed if item["phase"] == 1]
 
-    canonical = product_roadmap_open_items(PRODUCT_ROADMAP_PATH.read_text(encoding="utf-8"))
+    canonical_source = PRODUCT_ROADMAP_PATH.read_text(encoding="utf-8")
+    canonical = product_roadmap_open_items(canonical_source)
     assert len(canonical) == 26
     assert {item["label"] for item in canonical} >= {
         "Facebook",
@@ -2196,6 +2307,19 @@ export const translations = { Alpha: "Translated Alpha" };
         "CSV-Import für Segmente nutzen",
     }
     assert "Einbettbarer Website-KI-Assistent" not in {item["label"] for item in canonical}
+    commented_canonical = canonical_source.replace(
+        '      { label: "Facebook", state: "progress", status: "Anbindung und Abnahme in Arbeit" },',
+        '      // { label: "not a real task", state: "progress" }\n'
+        '      // TODO: { provider state is still external }\n'
+        '      /* { label: "also not a task", state: "planned" } */\n'
+        '      { label: "Facebook", /* prior value, state: "done" */ state: "progress", '
+        'status: "Anbindung {extern} und Abnahme in Arbeit" },',
+        1,
+    )
+    commented = product_roadmap_open_items(commented_canonical)
+    assert len(commented) == 26
+    assert commented[0]["label"] == "Facebook"
+    assert commented[0]["status"] == "Anbindung {extern} und Abnahme in Arbeit"
 
     canonical_catalog = load_json(CATALOG_PATH)
     canonical_state = load_json(STATE_PATH)
@@ -2228,7 +2352,7 @@ export const translations = { Alpha: "Translated Alpha" };
     assert decision["action_id"] == "ROADMAP-SAFE"
     gap = {"phase": 1, "label": "True gap", "state": "planned", "status": ""}
     reconciliation = reconcile_product_roadmap(
-        parsed + [gap], state, catalog, deferred, manager
+        phase_one + [gap], state, catalog, deferred, manager
     )
     assert [item["label"] for item in reconciliation["mapped"]] == ["Alpha", "Beta"]
     assert reconciliation["mapped"][0]["actions"][0]["status"] == "DEFERRED_BY_OWNER"
@@ -2287,7 +2411,7 @@ export const translations = { Alpha: "Translated Alpha" };
         catalog,
         deferred,
         requested_limit=1,
-        roadmap_items=parsed + [gap],
+        roadmap_items=phase_one + [gap],
     )
     assert "## Product-roadmap reconciliation" in rendered
     assert "`ROADMAP-OWNER` (DEFERRED_BY_OWNER)" in rendered
