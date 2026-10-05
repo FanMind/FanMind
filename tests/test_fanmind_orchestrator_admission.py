@@ -1307,20 +1307,189 @@ class AdmissionTests(unittest.TestCase):
             MODULE.canonical_task_envelope(candidate)
         )
         result = MODULE.dispatch_if_admitted(
-            self.decision(
-                handoff=candidate,
-                owner_binding={
-                    "authorized": False,
-                    "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
-                },
-            ),
+            self.decision(handoff=candidate),
             lambda _payload: self.fail("conflicting owner task must not send"),
         )
         self.assertEqual(0, result["sent"])
         self.assertEqual(
-            "owner_active_lock_conflict_or_stale_parallel_proof",
+            "owner_started_work_identity_missing_or_duplicate",
             result["decision"]["blocker"],
         )
+
+    def test_completed_a_allows_fresh_owner_authorized_b_without_main_registration(self):
+        current_main = "2dcdf7a6473f5465a3539a1467e1de7f4afe5825"
+        previous = json.loads(MODULE.RECEIPT_PATH.read_text(encoding="utf-8"))
+        lock_text = MODULE.selector.WORK_LOCKS_PATH.read_text(encoding="utf-8")
+        active_locks = sorted(
+            block.splitlines()[0].strip()
+            for block in MODULE._blocks(lock_text)
+            if block.splitlines()
+            and block.splitlines()[0].strip().startswith("LOCK-")
+            and "- Status: ACTIVE" in block
+        )
+        owner_prose = (
+            "@codex please address the current compile-blocking defect in the "
+            "Capacity-v2 reserve/settle SQL identified in this PR. Keep the fix "
+            "narrowly scoped to placing the policy validation in the reserve "
+            "function where its variables are valid, update focused regression "
+            "tests, and do not perform any Staging or Production apply."
+        )
+        authority = {
+            "kind": "github_issue_comment",
+            "repository": "FanMind/FanMind",
+            "comment_id": 5951802005,
+            "pull_request_number": 1248,
+            "author_login": "Bernds-tech",
+            "author_id": 270165082,
+            "created_at": "2026-10-02T11:53:54Z",
+            "updated_at": "2026-10-02T11:53:54Z",
+            "url": "https://github.com/FanMind/FanMind/pull/1248#issuecomment-5951802005",
+            "body_sha256": hashlib.sha256(owner_prose.encode()).hexdigest(),
+        }
+        candidate = {
+            "agent_context": "FanMind Builder",
+            "schema_version": 1,
+            "handoff_id": "owner-fresh-task-b-001",
+            "state": "PREPARED",
+            "task_id": "fresh-owner-task-b-001",
+            "previous_task_id": previous["task_id"],
+            "source": "OWNER_DIRECT",
+            "selection_basis": "EXPLICIT_OWNER_TASK",
+            "owner_authorized_at": authority["updated_at"],
+            "owner_authority": authority,
+            "goal": "Fix the compile-blocking Capacity-v2 reserve/settle SQL defect.",
+            "scope": {
+                "files": [
+                    "supabase/controlled/ai_capacity_reserve_settle.sql",
+                    "focused reserve/settle regression tests",
+                ],
+                "contracts": ["policy validation remains in the reserve function"],
+            },
+            "acceptance": ["focused reserve/settle regression tests pass"],
+            "risk": "R3",
+            "required_checks": ["FanMind CI"],
+            "runtime_requirement": {"required": False},
+            "forbidden": ["Staging apply", "Production apply", "workflow dispatch"],
+            "non_overlapping_active_locks": active_locks,
+            "prepared_main_sha": current_main,
+            "previous_result_disposition": "ACCEPTED_COMPLETION",
+        }
+        candidate["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(candidate)
+        )
+        composer = MODULE.render_builder_input(MODULE.canonical_task_envelope(candidate))
+        accepted = previous["accepted_handoff"]
+        source = previous["source_acceptance"]
+
+        class FakeClient:
+            repository = "FanMind/FanMind"
+
+            def __init__(self, *, author="Bernds-tech", body=owner_prose):
+                self.author = author
+                self.body = body
+
+            def get(self, path):
+                if path == "issues/comments/5951802005":
+                    return {
+                        "id": 5951802005,
+                        "user": {"login": self.author, "id": 270165082},
+                        "author_association": "MEMBER",
+                        "created_at": authority["created_at"],
+                        "updated_at": authority["updated_at"],
+                        "html_url": authority["url"],
+                        "issue_url": "https://api.github.com/repos/FanMind/FanMind/issues/1248",
+                        "body": self.body,
+                    }
+                if path == "commits/main":
+                    return {"sha": current_main}
+                if path.startswith("compare/"):
+                    return {"status": "ahead"}
+                if path == f"pulls/{source['pr_number']}":
+                    return {
+                        "number": source["pr_number"],
+                        "head": {"sha": source["head_sha"]},
+                        "merge_commit_sha": source["merge_sha"],
+                        "merged_at": previous["completed_at"],
+                        "base": {"ref": "main"},
+                    }
+                if path.startswith("actions/runs?head_sha="):
+                    return source_workflow_history(
+                        {name: "success" for name in accepted["required_checks"]},
+                        head_sha=source["head_sha"],
+                    )
+                if path.startswith("actions/workflows/"):
+                    return {"total_count": 0, "workflow_runs": []}
+                raise AssertionError(f"unexpected GitHub path: {path}")
+
+        kwargs = {
+            "requested_task_id": candidate["task_id"],
+            "requested_handoff_id": candidate["handoff_id"],
+            "requested_previous_task_id": candidate["previous_task_id"],
+            "requested_payload_sha256": candidate["payload_sha256"],
+            "composer_input": composer,
+            "local_head": current_main,
+        }
+        self.assertNotIn(candidate["task_id"], MODULE.selector.STARTED_WORK_PATH.read_text())
+        self.assertNotIn(candidate["task_id"], lock_text)
+        prepared = MODULE.check_with_github(
+            candidate,
+            previous,
+            {"state": "PARALLEL_ACTIVE", "executable": False, "safe_ready_set": []},
+            FakeClient(),
+            **kwargs,
+        )
+        self.assertEqual("PREPARED_ONLY", prepared["decision"])
+        self.assertFalse(prepared["send_authorized"])
+
+        wrong_owner = MODULE.check_with_github(
+            candidate,
+            previous,
+            {"state": "NONE", "executable": False, "safe_ready_set": []},
+            FakeClient(author="untrusted-caller"),
+            **kwargs,
+        )
+        self.assertEqual("owner_github_evidence_mismatch:author_login", wrong_owner["blocker"])
+
+        changed = copy.deepcopy(candidate)
+        changed["scope"]["files"].append("src/unapproved.py")
+        changed_composer = MODULE.render_builder_input(MODULE.canonical_task_envelope(changed))
+        changed_result = MODULE.check_with_github(
+            changed,
+            previous,
+            {"state": "NONE", "executable": False, "safe_ready_set": []},
+            FakeClient(),
+            **{
+                **kwargs,
+                "composer_input": changed_composer,
+            },
+        )
+        self.assertEqual("handoff_payload_digest_mismatch", changed_result["blocker"])
+
+        changed_evidence = MODULE.check_with_github(
+            candidate,
+            previous,
+            {"state": "NONE", "executable": False, "safe_ready_set": []},
+            FakeClient(body=owner_prose + " Edited later."),
+            **kwargs,
+        )
+        self.assertEqual("owner_github_evidence_content_changed", changed_evidence["blocker"])
+
+        collision = lock_text + "\n## LOCK-NEW-COLLISION\n- Status: ACTIVE\n"
+        evidence = {
+            **authority,
+            "author_association": "MEMBER",
+            "body": owner_prose,
+        }
+        self.assertEqual(
+            "owner_active_lock_conflict_or_stale_parallel_proof",
+            MODULE._owner_direct_github_binding(candidate, evidence, collision)["reason"],
+        )
+        with self.assertRaisesRegex(MODULE.AdmissionError, "owner_github_evidence_manual_only"):
+            MODULE._check_selection(
+                candidate,
+                {"state": "NONE", "executable": False, "safe_ready_set": []},
+                {"owner_authority": evidence},
+            )
 
     def test_owner_direct_binding_comes_from_started_work_and_active_locks(self):
         candidate = handoff()
@@ -1370,6 +1539,45 @@ class AdmissionTests(unittest.TestCase):
             "owner_active_lock_conflict_or_stale_parallel_proof",
             MODULE._owner_direct_binding(candidate, started, stale)["reason"],
         )
+
+    def test_final_payload_digest_binds_owner_evidence_fresh_main_and_contract(self):
+        candidate = handoff()
+        prose = "Existing bounded Owner instruction."
+        candidate.update(
+            {
+                "source": "OWNER_DIRECT",
+                "selection_basis": "EXPLICIT_OWNER_TASK",
+                "owner_authorized_at": "2026-10-05T14:20:00Z",
+                "non_overlapping_active_locks": ["LOCK-OTHER"],
+                "owner_authority": {
+                    "kind": "github_issue_comment",
+                    "repository": "FanMind/FanMind",
+                    "comment_id": 123,
+                    "pull_request_number": 1248,
+                    "author_login": "Bernds-tech",
+                    "author_id": 270165082,
+                    "created_at": "2026-10-05T14:20:00Z",
+                    "updated_at": "2026-10-05T14:20:00Z",
+                    "url": "https://github.com/FanMind/FanMind/pull/1248#issuecomment-123",
+                    "body_sha256": hashlib.sha256(prose.encode()).hexdigest(),
+                },
+            }
+        )
+        for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256"):
+            candidate.pop(key)
+        first = MODULE.envelope_digest(MODULE.canonical_task_envelope(candidate))
+        for mutation in ("main", "contract", "evidence"):
+            changed = copy.deepcopy(candidate)
+            if mutation == "main":
+                changed["prepared_main_sha"] = "f" * 40
+            elif mutation == "contract":
+                changed["acceptance"].append("new criterion")
+            else:
+                changed["owner_authority"]["body_sha256"] = "0" * 64
+            self.assertNotEqual(
+                first,
+                MODULE.envelope_digest(MODULE.canonical_task_envelope(changed)),
+            )
 
     def test_consumed_owner_only_unready_or_conflicting_selector_is_not_executable(self):
         for state in ("NONE", "OWNER_ACTION_REQUIRED", "DEFERRED_BY_OWNER", "PARALLEL_ACTIVE"):

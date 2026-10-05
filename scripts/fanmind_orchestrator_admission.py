@@ -24,6 +24,10 @@ RECEIPT_PATH = PM / "ORCHESTRATOR_RESULT.json"
 TERMINAL_RESULTS = {"COMPLETED", "BLOCKED", "FAILED", "NO_CHANGE"}
 SENDABLE_HANDOFF_STATE = "PREPARED"
 AGENT_CONTEXT = "FanMind Builder"
+OWNER_GITHUB_LOGIN = "Bernds-tech"
+OWNER_GITHUB_ID = 270165082
+OWNER_REPOSITORY = "FanMind/FanMind"
+OWNER_AUTHORITY_KIND = "github_issue_comment"
 IDENTITY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 LEGACY_WORKFLOW_RUN_BOUNDARY = 37234276748
 RUNTIME_CLI_EVIDENCE_KIND = "authorized_cli_test"
@@ -146,6 +150,49 @@ def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
         if len(set(locks)) != len(locks):
             raise AdmissionError("duplicate:handoff.non_overlapping_active_locks")
         envelope["non_overlapping_active_locks"] = sorted(locks)
+        authority = handoff.get("owner_authority")
+        if authority is not None:
+            if not isinstance(authority, dict):
+                raise AdmissionError("missing_or_invalid:handoff.owner_authority")
+            if authority.get("kind") != OWNER_AUTHORITY_KIND:
+                raise AdmissionError("unsupported:handoff.owner_authority.kind")
+            comment_id = authority.get("comment_id")
+            if type(comment_id) is not int or comment_id < 1:
+                raise AdmissionError("missing_or_invalid:handoff.owner_authority.comment_id")
+            pull_request_number = authority.get("pull_request_number")
+            if type(pull_request_number) is not int or pull_request_number < 1:
+                raise AdmissionError(
+                    "missing_or_invalid:handoff.owner_authority.pull_request_number"
+                )
+            body_sha256 = authority.get("body_sha256")
+            if not isinstance(body_sha256, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", body_sha256
+            ):
+                raise AdmissionError("missing_or_invalid:handoff.owner_authority.body_sha256")
+            envelope["owner_authority"] = {
+                "kind": OWNER_AUTHORITY_KIND,
+                "repository": _required_text(
+                    authority.get("repository"), "handoff.owner_authority.repository"
+                ),
+                "comment_id": comment_id,
+                "pull_request_number": pull_request_number,
+                "author_login": _required_text(
+                    authority.get("author_login"), "handoff.owner_authority.author_login"
+                ),
+                "author_id": authority.get("author_id"),
+                "created_at": _required_text(
+                    authority.get("created_at"), "handoff.owner_authority.created_at"
+                ),
+                "updated_at": _required_text(
+                    authority.get("updated_at"), "handoff.owner_authority.updated_at"
+                ),
+                "url": _required_text(
+                    authority.get("url"), "handoff.owner_authority.url"
+                ),
+                "body_sha256": body_sha256,
+            }
+            if type(envelope["owner_authority"]["author_id"]) is not int:
+                raise AdmissionError("missing_or_invalid:handoff.owner_authority.author_id")
     semantic_identity = {
         "goal": envelope["goal"],
         "scope": envelope["scope"],
@@ -425,10 +472,69 @@ def _owner_direct_binding(
     return {"authorized": True, "reason": "", "own_lock": own_lock}
 
 
+def _owner_direct_github_binding(
+    handoff: dict[str, Any],
+    evidence: dict[str, Any] | None,
+    locks_text: str,
+) -> dict[str, Any]:
+    authority = handoff.get("owner_authority")
+    if not isinstance(authority, dict):
+        return {"authorized": False, "reason": "owner_github_authority_missing"}
+    if not isinstance(evidence, dict):
+        return {"authorized": False, "reason": "owner_github_evidence_missing"}
+    expected = {key: value for key, value in authority.items() if key != "body_sha256"}
+    expected["author_association"] = "MEMBER"
+    for key, value in expected.items():
+        if evidence.get(key) != value:
+            return {
+                "authorized": False,
+                "reason": f"owner_github_evidence_mismatch:{key}",
+            }
+    if authority.get("repository") != OWNER_REPOSITORY:
+        return {"authorized": False, "reason": "owner_github_repository_mismatch"}
+    expected_url = (
+        f"https://github.com/{OWNER_REPOSITORY}/pull/"
+        f"{authority.get('pull_request_number')}#issuecomment-{authority.get('comment_id')}"
+    )
+    if authority.get("url") != expected_url:
+        return {"authorized": False, "reason": "owner_github_source_mismatch"}
+    if authority.get("author_login") != OWNER_GITHUB_LOGIN:
+        return {"authorized": False, "reason": "owner_github_author_identity_mismatch"}
+    if authority.get("author_id") != OWNER_GITHUB_ID:
+        return {"authorized": False, "reason": "owner_github_author_identity_mismatch"}
+    if authority.get("updated_at") != handoff.get("owner_authorized_at"):
+        return {"authorized": False, "reason": "owner_github_evidence_timestamp_mismatch"}
+    body = evidence.get("body")
+    if not isinstance(body, str) or not body.strip():
+        return {"authorized": False, "reason": "owner_github_evidence_body_unreadable"}
+    body_digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    if body_digest != authority.get("body_sha256"):
+        return {"authorized": False, "reason": "owner_github_evidence_content_changed"}
+    lock_blocks = {
+        block.splitlines()[0].strip(): block
+        for block in _blocks(locks_text)
+        if block.splitlines() and block.splitlines()[0].strip().startswith("LOCK-")
+    }
+    active_locks = {
+        lock_id
+        for lock_id, block in lock_blocks.items()
+        if "- Status: ACTIVE" in block
+    }
+    declared = set(handoff.get("non_overlapping_active_locks") or [])
+    if declared != active_locks:
+        return {
+            "authorized": False,
+            "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
+        }
+    return {"authorized": True, "reason": ""}
+
+
 def _check_selection(
     handoff: dict[str, Any],
     selector_decision: dict[str, Any],
-    owner_binding: dict[str, Any] | None = None,
+    github_truth: dict[str, Any],
+    *,
+    allow_manual_owner_evidence: bool = False,
 ) -> None:
     source = handoff["source"]
     if source == "CATALOG":
@@ -470,8 +576,15 @@ def _check_selection(
         _required_text(handoff.get("owner_authorized_at"), "handoff.owner_authorized_at")
         if handoff.get("selection_basis") != "EXPLICIT_OWNER_TASK":
             raise AdmissionError("owner_direct_selection_basis_required")
-        binding = owner_binding
-        if binding is None:
+        if handoff.get("owner_authority") is not None:
+            if not allow_manual_owner_evidence:
+                raise AdmissionError("owner_github_evidence_manual_only")
+            binding = _owner_direct_github_binding(
+                handoff,
+                github_truth.get("owner_authority"),
+                selector.WORK_LOCKS_PATH.read_text(encoding="utf-8"),
+            )
+        else:
             binding = _owner_direct_binding(
                 handoff,
                 selector.STARTED_WORK_PATH.read_text(encoding="utf-8"),
@@ -492,8 +605,8 @@ def evaluate_admission(
     requested_previous_task_id: str | None = None,
     composer_input: str | None = None,
     requested_payload_sha256: str | None = None,
-    owner_binding: dict[str, Any] | None = None,
     require_current_run: bool = True,
+    allow_manual_owner_evidence: bool = False,
 ) -> dict[str, Any]:
     try:
         if handoff.get("schema_version") != 1:
@@ -555,7 +668,12 @@ def evaluate_admission(
             github_truth,
             require_current_run=require_current_run,
         )
-        _check_selection(handoff, selector_decision, owner_binding)
+        _check_selection(
+            handoff,
+            selector_decision,
+            github_truth,
+            allow_manual_owner_evidence=allow_manual_owner_evidence,
+        )
         return {
             "decision": "SEND",
             "task_id": handoff["task_id"],
@@ -805,7 +923,44 @@ def collect_github_truth(
         "previous_handoff_source": "",
         "current_handoff_matches": False,
         "current_run_attempt": None,
+        "owner_authority": None,
     }
+    authority = handoff.get("owner_authority")
+    if handoff.get("source") == "OWNER_DIRECT" and isinstance(authority, dict):
+        comment_id = authority.get("comment_id")
+        if type(comment_id) is not int or comment_id < 1:
+            raise AdmissionError("missing_or_invalid:handoff.owner_authority.comment_id")
+        comment = client.get(f"issues/comments/{comment_id}")
+        user = comment.get("user") if isinstance(comment, dict) else None
+        truth["owner_authority"] = {
+            "kind": OWNER_AUTHORITY_KIND,
+            "repository": client.repository,
+            "comment_id": comment.get("id") if isinstance(comment, dict) else None,
+            "pull_request_number": (
+                int(match.group(1))
+                if isinstance(comment, dict)
+                and isinstance(comment.get("issue_url"), str)
+                and (match := re.fullmatch(
+                    rf"https://api\.github\.com/repos/{re.escape(client.repository)}/issues/(\d+)",
+                    comment["issue_url"],
+                ))
+                else None
+            ),
+            "author_login": user.get("login") if isinstance(user, dict) else None,
+            "author_id": user.get("id") if isinstance(user, dict) else None,
+            "author_association": (
+                comment.get("author_association") if isinstance(comment, dict) else None
+            ),
+            "created_at": comment.get("created_at") if isinstance(comment, dict) else None,
+            "updated_at": comment.get("updated_at") if isinstance(comment, dict) else None,
+            "url": comment.get("html_url") if isinstance(comment, dict) else None,
+            "body_sha256": (
+                hashlib.sha256(comment["body"].encode("utf-8")).hexdigest()
+                if isinstance(comment, dict) and isinstance(comment.get("body"), str)
+                else None
+            ),
+            "body": comment.get("body") if isinstance(comment, dict) else None,
+        }
     source = receipt.get("source_acceptance")
     if receipt.get("status") == "COMPLETED" and isinstance(source, dict):
         pr = client.get(f"pulls/{source.get('pr_number')}")
@@ -993,7 +1148,6 @@ def check_with_github(
     requested_payload_sha256: str,
     composer_input: str,
     current_run_id: str = "",
-    owner_binding: dict[str, Any] | None = None,
     local_head: str | None = None,
 ) -> dict[str, Any]:
     if local_head != handoff.get("prepared_main_sha"):
@@ -1019,8 +1173,8 @@ def check_with_github(
         requested_previous_task_id=requested_previous_task_id,
         requested_payload_sha256=requested_payload_sha256,
         composer_input=composer_input,
-        owner_binding=owner_binding,
         require_current_run=False,
+        allow_manual_owner_evidence=True,
     )
     if decision.get("decision") == "SEND":
         return {
