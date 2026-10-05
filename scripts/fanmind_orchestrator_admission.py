@@ -893,6 +893,11 @@ def collect_github_truth(
 ) -> dict[str, Any]:
     main = client.get("commits/main")
     observed_main = _required_text(main.get("sha"), "github.main.sha")
+    canonical_receipt = client.file_json(
+        "project-memory/ORCHESTRATOR_RESULT.json", ref=observed_main
+    )
+    if canonical_receipt != receipt:
+        raise AdmissionError("github_receipt_not_canonical_at_observed_main")
     compare = client.get(f"compare/{receipt.get('main_sha')}...{observed_main}")
     reachable = compare.get("status") in {"ahead", "identical"}
     truth: dict[str, Any] = {
