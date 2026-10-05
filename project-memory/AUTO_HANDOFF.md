@@ -5,9 +5,9 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Next action status: `OWNER_ACTION_REQUIRED`
-- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
+- Next action: `NBA-FANS-EXACT-TAG-FILTER`
+- Next action status: `EXECUTABLE`
+- Next action title: Exakten Tag-Filter in der normalen Fans-Liste liefern
 
 ## Finishline gates
 
@@ -35,6 +35,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - `creator_foundation_profile_transition_design`: `ACCEPTED`
 - `creator_foundation_transition_generator`: `ACCEPTED`
 - `creator_foundation_target_transition_runtime`: `IN_PROGRESS`
+- `fans_exact_tag_filter`: `IN_PROGRESS`
 
 ## Deferred owner actions
 
