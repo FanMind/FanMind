@@ -1223,5 +1223,5 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Runtime requirement: {"required":false}
 - Acceptance: parse the complete canonical TypeScript roadmap without execution; reconcile active unfinished items only through explicit existing-catalog mappings; retain done/later/protected/dependency/lock/failure/replay gates; permit an independently safe mapped later action only through the existing selector; expose genuine unmapped items only as non-executable planning gaps; preserve one-or-zero dispatch and workflow transport boundaries.
 - Boundaries: no merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, Owner-comment fabrication, roadmap product-state rewrite, second planner/queue/registry or second task.
+- Exact next step: obtain terminal green applicable exact-head CI, hand the exact head and evidence to the Parent for the required independent countercheck, then stop before merge.
 - Recovery: normal reviewed repository revert only; no external state is changed.
-
