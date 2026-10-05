@@ -4,7 +4,7 @@ import {
   filterFanGroupsByTag,
   getFansListHref,
   normalizeFanTag,
-} from "../src/app/fans/filtering";
+} from "../src/app/fans/filtering.mjs";
 
 const groups = [
   { id: "anna", name: "Anna", platforms: ["instagram"], tags: ["VIP", "Newsletter"] },

@@ -1,25 +1,22 @@
-export type FanTagContact = {
-  status?: string | null;
-  tags?: string[] | null;
-};
+/**
+ * @typedef {{ status?: string | null, tags?: string[] | null }} FanTagContact
+ * @typedef {{ tags: string[] }} FanTagGroup
+ * @typedef {{
+ *   channel?: string,
+ *   searchQuery?: string,
+ *   tag?: string,
+ *   locale?: string,
+ * }} FansListHrefOptions
+ */
 
-export type FanTagGroup = {
-  tags: string[];
-};
-
-export type FansListHrefOptions = {
-  channel?: string;
-  searchQuery?: string;
-  tag?: string;
-  locale?: string;
-};
-
-export function normalizeFanTag(value: string | null | undefined): string {
+/** @param {string | null | undefined} value */
+export function normalizeFanTag(value) {
   return value?.trim().toLowerCase() ?? "";
 }
 
-export function getAvailableFanTags(contacts: FanTagContact[]): string[] {
-  const tagsByKey = new Map<string, string>();
+/** @param {FanTagContact[]} contacts */
+export function getAvailableFanTags(contacts) {
+  const tagsByKey = new Map();
 
   for (const contact of contacts) {
     if (contact.status?.trim().toLowerCase() === "archived") {
@@ -40,10 +37,13 @@ export function getAvailableFanTags(contacts: FanTagContact[]): string[] {
   );
 }
 
-export function filterFanGroupsByTag<T extends FanTagGroup>(
-  groups: T[],
-  activeTag: string,
-): T[] {
+/**
+ * @template {FanTagGroup} T
+ * @param {T[]} groups
+ * @param {string} activeTag
+ * @returns {T[]}
+ */
+export function filterFanGroupsByTag(groups, activeTag) {
   const normalizedTag = normalizeFanTag(activeTag);
   if (!normalizedTag) {
     return groups;
@@ -54,12 +54,13 @@ export function filterFanGroupsByTag<T extends FanTagGroup>(
   );
 }
 
+/** @param {FansListHrefOptions} options */
 export function getFansListHref({
   channel = "all",
   searchQuery = "",
   tag = "",
   locale = "de",
-}: FansListHrefOptions): string {
+} = {}) {
   const params = new URLSearchParams();
   if (channel !== "all") {
     params.set("channel", channel);

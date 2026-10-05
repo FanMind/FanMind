@@ -6,7 +6,7 @@ import {
   getAvailableFanTags,
   getFansListHref,
   normalizeFanTag,
-} from "../src/app/fans/filtering.ts";
+} from "../src/app/fans/filtering.mjs";
 
 test("normalizes and compares tags exactly without substring matches", () => {
   const groups = [

@@ -38,7 +38,7 @@ import {
   getAvailableFanTags,
   getFansListHref,
   normalizeFanTag,
-} from "./filtering";
+} from "./filtering.mjs";
 
 type FansWorkspaceProps = {
   workspace: WorkspaceDashboardRow;

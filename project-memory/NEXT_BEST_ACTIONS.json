@@ -495,7 +495,7 @@
         "files": [
           "src/app/fans/page.tsx",
           "src/app/fans/fans.module.css",
-          "src/app/fans/filtering.ts",
+          "src/app/fans/filtering.mjs",
           "tests/fans-tag-filter.test.mjs",
           "e2e/fans-tag-filter.spec.ts",
           "package.json",
