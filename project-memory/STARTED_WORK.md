@@ -1,3 +1,20 @@
+## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
+- Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
+- Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
+- Orchestrator task_id: fanmind-orchestrator-method-20261005-01
+- Payload digest: afd81674ade4d64ad85b225cc17e77ab83d1086f016661fda503ec320e11c02a
+- Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
+- Source: explicit Owner task, not a roadmap-catalog selection.
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
+- Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
+- Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
+- Parallel safety: governance-only and explicitly non-overlapping with the active ChatAdmin Character/Fans and Capacity reserve/settle/budget scopes; those locks, source areas and target boundaries remain untouched.
+- Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
+- Boundary: Draft PR only. No merge, auto-merge, deploy, live API trigger, controlled live check, SQL, host, provider, secret, permission or protected-state action is authorized.
+- Closeout: this task cannot publish `COMPLETED` until a later separately authorized merge/canonical receipt and controlled check exist. Current delivery stops at reviewable Draft PR.
+
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME

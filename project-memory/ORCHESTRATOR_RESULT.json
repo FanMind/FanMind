@@ -1,17 +1,25 @@
 {
-  "task_id": "backup-worker-safe-error-codes-20261005T1010Z",
-  "status": "COMPLETED",
-  "summary": "The bounded backup-worker safe error-code classification was implemented, independently reviewed, verified, and merged as PR #1274. This receipt closes only that repository task; it does not claim that the Backup root cause or current Backup freshness is resolved.",
+  "schema_version": 2,
+  "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
+  "payload_sha256": "afd81674ade4d64ad85b225cc17e77ab83d1086f016661fda503ec320e11c02a",
+  "task_id": "fanmind-orchestrator-method-20261005-01",
+  "status": "BLOCKED",
+  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge, canonical publication and the separately authorized side-effect-free check have not occurred.",
   "evidence": [
-    "PR #1274 final reviewed head e7a1cca30cc3475f788f2dd502b1d9df385b428d was based on 5fdf472206a92b5da277b998e8fac84008a04f0c and changed exactly three files with 116 additions and zero deletions. Independent countercheck was PASS with no review threads or comments.",
-    "The focused backup-worker test passed 34 of 34 tests. All eight triggered exact-head workflow runs succeeded, including FanMind CI run 37296066092; the reviewed check rollup contained 13 successful checks.",
-    "PR #1274 was merged with SHA guard at 2026-10-05T10:37:28Z as main commit bef82c2294128bfd93dea4fe23af9de830ed7afb.",
-    "Automatic push-triggered Production deployment run 37297765679 succeeded on exact merge bef82c2294128bfd93dea4fe23af9de830ed7afb; job 111722957885 completed at 2026-10-05T10:39:07Z with 14 public smoke routes successful and release-switch sampling at 6 samples with zero non-200 responses.",
-    "Automatic readiness run 37297941140 succeeded with 18 checks and read the same live release. No manual deployment, readiness, audit, Backup, Restore, worker, host, SQL, SSH, provider, secret, credential, access, or schedule action was started by this task.",
-    "Automatic read-only audit run 37297941162 failed only on production_audit_backup_latest_stale_or_empty: database was 394.14 hours old and full was 537.14 hours old, while storage and server_config were within-threshold and non-empty. It verified PRODUCTION_RUNTIME_VERIFIED=true, the same release, and all eight health components healthy. The Backup root cause and current Backup freshness remain open and unproven.",
-    "The earlier BLOCKED handoff correctly reported that publication was not authorized at that time; the later explicit receipt-only publication authorization resolved only that evidence blocker and did not expand any protected boundary."
+    "The Owner-direct handoff identity, task_id, previous task_id and payload digest are recorded independently in STARTED_WORK.md and WORK_LOCKS.md.",
+    "The implementation reuses the existing selector, started-work/lock state and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
+    "Focused Python behavior tests spy the transport and prove invalid receipt/evidence, unresolved prior work, duplicate state, active/unready/owner-only selection, scope or boundary tampering and stale composer content result in zero sends.",
+    "The existing workflow remains manual workflow_dispatch only, checks out fresh main and runs admission before the existing Workspace Agent POST. Its permissions remain read-only and lifecycle concurrency waits for the matching typed closeout.",
+    "No merge, auto-merge, deployment, live API trigger, controlled live check, SQL, host, provider, secret, credential, permission or protected-state action was performed."
   ],
-  "blocker": "",
-  "completed_at": "2026-10-05T10:37:28Z",
-  "main_sha": "bef82c2294128bfd93dea4fe23af9de830ed7afb"
+  "blocker": "Merge/canonical publication and the required controlled side-effect-free check are outside the authorization for this run.",
+  "resume_condition": "After exact-head required CI, God Mode and independent countercheck pass, the Owner separately authorizes merge; then the Orchestrator performs the separately approved check-only run and publishes a matching COMPLETED receipt only if its evidence passes.",
+  "completed_at": "2026-10-05T11:13:43Z",
+  "main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
+  "source_acceptance": null,
+  "runtime_evidence": {
+    "required": true,
+    "status": "NOT_RUN",
+    "scope": "One separately authorized side-effect-free Orchestrator check-only run after merge/readiness."
+  }
 }
