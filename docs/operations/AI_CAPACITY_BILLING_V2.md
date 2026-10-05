@@ -17,7 +17,11 @@ FanMind replaces the former customer-facing AI Plus/Ultra add-on model with pack
   - capacity_199 -> `price_1ULRNVAOA7p70TO9obAZlCZM`
   - capacity_312 -> `price_1ULRRQAOA7p70TO9Y7UWOP2g`
   These Price objects are catalog inputs only until the remaining activation gates are accepted.
-- Every package contains a monthly AI cost budget. Exact included budget values remain intentionally unset until measured FanMind usage and current provider pricing are reviewed.
+- Every package contains an owner-approved monthly AI cost budget for the authoritative billing period:
+  - EUR 99 package -> EUR 15 included AI cost budget;
+  - EUR 199 package -> EUR 30 included AI cost budget;
+  - EUR 312 package -> EUR 50 included AI cost budget.
+  These are starting commercial allowances and may be reviewed later from measured billing-grade usage without retroactively rewriting settled periods.
 - User-selectable quality modes: Fast, Balanced, Premium.
 - Usage is charged internally from actual model/token/provider cost, not request count.
 - Included monthly capacity expires at the end of the authoritative subscription billing period and is never carried forward.
@@ -38,7 +42,7 @@ Until the v2 activation gates below are satisfied:
 - no Production package is changed to EUR 99/199/312;
 - no Plus/Ultra customer is automatically migrated;
 - no AI-capacity top-up is sold;
-- no package-budget value is invented;
+- package budgets use only the owner-approved EUR 15 / 30 / 50 values;
 - existing paid subscriptions keep their current contractual treatment.
 - every Workspace is resolved through an immutable billing-contract discriminator (`legacy_v1` or `capacity_v2`); absence/ambiguity fails closed and never auto-migrates a legacy subscription.
 - `legacy_v1` continues to use the existing Starter/Plus/Ultra resolver until that exact Workspace is explicitly migrated; `capacity_v2` alone may use the 99/199/312 capacity resolver.
@@ -240,10 +244,20 @@ Semantics:
 
 The first implementation may prepare these controls and persistence default-off. Production activation remains a separate protected action.
 
+## Isolated Staging checkpoint — 2026-09-30
+
+FanMind Staging `vshyhvgcmrlagvfnvomc` already contained the Capacity-v2 policy/grant/reservation/ledger tables and activation-guard columns. The owner-authorized budget-only seed set the policy to EUR 15 / 30 / 50 for capacity_99 / capacity_199 / capacity_312 and advanced the policy revision from 1 to 2.
+
+This checkpoint did **not** activate Capacity-v2. Global capacity, all package-sales switches, Fast/Balanced/Premium, top-ups and all runtime/package-sales/top-up activation-ready flags remained false; emergency spend freeze remained true. No grants, reservations or ledger events were created. Anon/authenticated retain no direct SELECT privilege on the policy or grants.
+
+Rollback-only negative checks proved that attempts to enable runtime, package sales or top-ups are rejected by the respective activation guards while readiness flags are false.
+
+The reserve/settle RPC lifecycle is still not installed on Staging. Current main `supabase/controlled/ai_capacity_reserve_settle.sql` was inspected before APPLY and found to reference policy variables inside `ai_capacity_grant_credit` that are not declared in that function. Therefore ledger APPLY is blocked until that source defect is fixed and reviewed; no unchanged APPLY is permitted.
+
 ## Activation gates
 
 Do not activate real paid capacity/top-ups until all are true:
-- exact included budgets for EUR 99/199/312 are owner-approved from measured usage;
+- exact included budgets for EUR 99/199/312 are owner-approved (EUR 15 / 30 / 50 respectively);
 - current provider pricing and FX basis are pinned server-side;
 - authoritative package/Price resolver is implemented and lifecycle-aware;
 - atomic reserve/settle/release/reconcile ledger passes concurrency and idempotency tests;

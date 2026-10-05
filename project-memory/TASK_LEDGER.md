@@ -685,3 +685,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Result: bounded fail-closed generator emits only the accepted helper, two RPCs and four policy changes; exact CLI bytes and source/profile/reference pins are fixed; native PG17 proves rollback after each injected step, unchanged data, exact Legacy-to-Current catalog and cross-workspace/direct-write/unknown-role negatives.
 - Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
 - Boundary/next: repository source acceptance only. Creator aggregate remains IN_PROGRESS with `targetAccepted=false`, `applyAllowed=false`, `runtimeActivated=false`, `learningState=UNDETERMINED`. A target observation/reference acceptance or transition requires a distinct protected action, current authorization and exact target binding; do not repeat the consumed catalog observation unchanged.
+
+
+## FM-CHATADMIN-SCROLL-20261004 — fixed composer with isolated conversation scroll
+- Status: IMPLEMENTED_FOR_PR; Risk: R1; PR: #1267.
+- Goal/result: On desktop, only the ChatAdmin conversation/history and generated reply area scrolls; the “Neue eingehende Fan-Nachricht” composer and “3 KI-Antworten erzeugen” action remain fixed and visible. Mobile retains document-flow behavior.
+- Scope: client layout only in ChatAdmin plus regression coverage; no API, database, authorization, AI-provider, billing, send, staging or production mutation.
+- Verification: Browser E2E passed on the original PR head. Operations regression was updated to assert the intentional .conversationScroll boundary instead of the superseded .conversationPane scroll rule. Current-head CI and Project Memory Guard must pass before merge.

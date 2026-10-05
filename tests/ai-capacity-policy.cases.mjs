@@ -31,14 +31,15 @@ function enabledPolicy(overrides = {}) {
   };
 }
 
-test("target package prices are exactly 99, 199 and 312 EUR while budgets remain unset", () => {
+test("target package prices and approved included budgets are canonical", () => {
   assert.deepEqual(
     Object.fromEntries(Object.entries(AI_CAPACITY_PACKAGES).map(([id, value]) => [id, value.monthlyPriceCents])),
     { capacity_99: 9_900, capacity_199: 19_900, capacity_312: 31_200 },
   );
-  for (const value of Object.values(AI_CAPACITY_PACKAGES)) {
-    assert.equal(value.includedBudgetEurMicrocents, null);
-  }
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(AI_CAPACITY_PACKAGES).map(([id, value]) => [id, value.includedBudgetEurMicrocents])),
+    { capacity_99: 1_500_000_000, capacity_199: 3_000_000_000, capacity_312: 5_000_000_000 },
+  );
 });
 
 test("default admin policy keeps capacity v2 fully fail closed", () => {
@@ -48,7 +49,7 @@ test("default admin policy keeps capacity v2 fully fail closed", () => {
       packageId: "capacity_99",
       qualityMode: "fast",
     }).reason,
-    "included_budget_unset",
+    "capacity_disabled",
   );
 });
 
@@ -131,7 +132,7 @@ test("globally enabled policy requires at least one quality mode", () => {
 test("missing budget keys are rejected instead of becoming null", () => {
   const base = enabledPolicy();
   const { capacity_312: omitted, ...partialBudgets } = base.includedBudgetEurMicrocents;
-  assert.equal(omitted, null);
+  assert.equal(omitted, 5_000_000_000);
   assert.throws(
     () => normalizeAiCapacityAdminPolicy({
       ...base,
@@ -195,6 +196,9 @@ test("capacity persistence source is default-off and browser inaccessible", () =
   assert.match(sql, /emergency_spend_freeze boolean not null default true/u);
   assert.match(sql, /revoke all on table public\.ai_capacity_admin_policy from public, anon, authenticated/u);
   assert.match(sql, /grant select on table public\.ai_capacity_admin_policy to service_role/u);
+  assert.match(sql, /package_99_budget_eur_microcents bigint default 1500000000/u);
+  assert.match(sql, /package_199_budget_eur_microcents bigint default 3000000000/u);
+  assert.match(sql, /package_312_budget_eur_microcents bigint default 5000000000/u);
 });
 
 test("capacity ledger persistence is append-only and tenant keyed", () => {

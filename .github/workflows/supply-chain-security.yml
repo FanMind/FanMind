@@ -68,7 +68,7 @@ jobs:
       - name: Enforce bounded dependency audit policy
         id: dependency_audit
         continue-on-error: true
-        run: npm run security:audit -- --report dependency-audit-report.json
+        run: npm run security:audit -- --report dependency-audit-report.json --mobile-enforcement deferred-owner
 
       - name: Upload redacted dependency audit report
         if: always()

@@ -7,9 +7,9 @@ FanMind must not depend on nominal ChatGPT task start times. The canonical Proje
 ## Architecture
 
 1. A pull request is merged into `main`.
-2. `.github/workflows/fanmind-manager-event-dispatch.yml` runs.
+2. `.github/workflows/fanmind-manager-event-dispatch.yml` reads the complete changed-file list. A merge that changes only `project-memory/ORCHESTRATOR_RESULT.json` is recorded and does not dispatch another manager run; product-only and mixed changes still dispatch. Missing or incomplete file evidence is never treated as receipt-only.
 3. If configured, the workflow sends a narrow wake-up event to the published FanMind Workspace Manager through the ChatGPT Workspace Agents API.
-4. The manager re-runs the full FanMind preflight against current `main`, reconciles actual evidence, recomputes the SAFE READY SET and continues safe work.
+4. The manager classifies the bounded work against current `main` and applies Execution Policy v6: minimum sufficient R1/R2 preflight for ordinary repository work, full R3/R4 preflight for protected work. It recomputes the safe executable task instead of assuming the merge itself is the task.
 5. The existing hourly Builder remains the fallback if an event is missed, the API is unavailable or the dispatcher is not configured.
 
 The event payload is never project evidence. It contains only enough immutable GitHub metadata to identify the wake-up event. Every project-state claim must be re-read from canonical sources and current connected evidence.
@@ -30,18 +30,18 @@ If either value is absent, the workflow exits successfully with a notice and per
 
 The published manager should use the existing FanMind Builder/Manager instructions and must:
 
-- run the complete mandatory preflight on every trigger;
+- classify risk first and run the minimum sufficient preflight required by Execution Policy v6;
 - treat the trigger payload as a wake-up signal only;
-- re-read current GitHub main, PR/CI/review state, Project Memory, runtime/provider evidence, STARTED_WORK, WORK_LOCKS and DEPENDENCIES;
+- always re-read current GitHub main/PR/CI state; read Project Memory, runtime/provider evidence, STARTED_WORK, WORK_LOCKS and DEPENDENCIES only to the extent required by the classified task and risk;
 - recompute the SAFE READY SET rather than assuming the triggering PR determines the next task;
-- honor the default maximum of three independent workers;
+- default to one active Workspace Builder/Manager; if a separately justified task set is explicitly parallelized, never exceed three independent workers;
 - serialize any uncertain overlap;
 - never infer Owner/protected/environment authorization from a merge event;
 - return NO_CHANGE rather than manufacturing work when nothing is safely executable.
 
 ## Idempotency and loops
 
-Merge events use an idempotency key bound to PR number and merge SHA. Retrying the same merge should not enqueue duplicate agent work. A manager-created follow-up PR may intentionally create a later merge event; anti-loop rules in Project Memory remain authoritative and must stop no-change receipt churn.
+Merge events use an idempotency key bound to PR number and merge SHA. Retrying the same merge should not enqueue duplicate agent work. A terminal receipt-only merge is suppressed at the dispatcher. A manager-created follow-up PR with any other changed file intentionally creates a later merge event; anti-loop rules in Project Memory remain authoritative for all other churn.
 
 ## Security boundary
 

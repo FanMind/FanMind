@@ -11,9 +11,9 @@ create table if not exists public.ai_capacity_admin_policy (
   fast_enabled boolean not null default false,
   balanced_enabled boolean not null default false,
   premium_enabled boolean not null default false,
-  package_99_budget_eur_microcents bigint,
-  package_199_budget_eur_microcents bigint,
-  package_312_budget_eur_microcents bigint,
+  package_99_budget_eur_microcents bigint default 1500000000,
+  package_199_budget_eur_microcents bigint default 3000000000,
+  package_312_budget_eur_microcents bigint default 5000000000,
   revision bigint not null default 1 check (revision > 0),
   updated_at timestamptz not null default statement_timestamp(),
   updated_by_user_id uuid,
@@ -25,8 +25,13 @@ create table if not exists public.ai_capacity_admin_policy (
   )
 );
 
-insert into public.ai_capacity_admin_policy (singleton_id)
-values (1)
+insert into public.ai_capacity_admin_policy (
+  singleton_id,
+  package_99_budget_eur_microcents,
+  package_199_budget_eur_microcents,
+  package_312_budget_eur_microcents
+)
+values (1, 1500000000, 3000000000, 5000000000)
 on conflict (singleton_id) do nothing;
 
 alter table public.ai_capacity_admin_policy enable row level security;

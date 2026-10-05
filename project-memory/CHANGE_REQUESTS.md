@@ -525,7 +525,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-053 — Capacity-v2 Stripe catalog cutover and setup-fee retirement
 - Date: 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Task: FM-AI-001
 - Risk: R4
 - Source: Owner requested the old 312-EUR and one-time setup/pilot catalog to be retired and confirmed that FanMind will no longer charge any one-time setup fee.
@@ -555,6 +555,40 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
 - Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
 - Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+
+## FM-CR-056 — Apply owner-approved Capacity-v2 package budgets
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner approved 15 / 30 / 50 EUR included AI cost budgets for the 99 / 199 / 312 EUR Capacity-v2 packages.
+- Scope: encode canonical package budgets in server policy, seed the controlled policy schema with those values, update reader/admin surfaces, types/tests and canonical truth.
+- Boundary: no Production activation, no customer migration and no top-up sale.
+- Acceptance: exact-head CI/security/governance, independent exact-head review, and fail-closed runtime/package-sales/top-up switches remain off.
+
+## FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck
+- Date: 2026-09-30
+- Status: COUNTERCHECKED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner explicitly requested continuing with the isolated-Staging Capacity-v2 budget/RLS/negative acceptance step.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: policy revision advanced 1 -> 2 with EUR 15 / 30 / 50 budgets; one audit row `ai_capacity_staging_budget_seed` / `FM-DEC-027`; global runtime, all package-sales switches, all quality modes, top-ups and all three activation-ready flags remained false, emergency freeze remained true.
+- Negative evidence: runtime/package-sales/top-up activation attempts were transactionally rejected by their activation guards; anon/authenticated have no SELECT privilege on policy/grants; grants/reservations/ledger-events remained 0.
+- Open blocker: reserve/settle RPCs are not installed on Staging. The current controlled reserve/settle SQL on main contains an actual source defect in `ai_capacity_grant_credit` (policy variables referenced there without declarations) and cannot be applied unchanged. Fix and review that source separately before any Staging ledger APPLY.
+- Boundary: no Production mutation, no AI runtime activation, no package-sale activation, no top-up sale, no customer migration.
+
+
+## FM-CR-058 — Creator-Building fixed shell with three scroll panes
+- Date: 2026-10-04
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: continuation of open PR #1251 after integrating current main; the earlier branch-local FM-CR-056 identifier now belongs to the accepted Capacity-v2 budget task on main and is not reused.
+- Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the flowing mobile layout and latest-message positioning.
+- Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database, provider or external-platform behavior changes.
+- Acceptance: desktop has no outer page scrollbar from Creator-Building content; all three panes scroll independently; conversation opens at newest content; mobile remains responsive; exact-head relevant CI passes.
 
 ## Root React dependency coupling — 2026-10-05
 - Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.

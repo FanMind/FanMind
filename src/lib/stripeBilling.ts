@@ -56,8 +56,6 @@ export type StripeConfigStatus = {
   invoiceNote: string | null;
   hasSecretKey: boolean;
   hasWebhookSecret: boolean;
-  hasPilotPrice: boolean;
-  hasStarterSetupPrice: boolean;
   hasStarterMonthlyPrice: boolean;
   hasGrowthMonthlyPrice: boolean;
   hasAgencyMonthlyPrice: boolean;
@@ -105,8 +103,6 @@ export function getStripeConfigStatus(): StripeConfigStatus {
   const taxMode = tax.taxMode;
   const hasSecretKey = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasWebhookSecret = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
-  const hasPilotPrice = Boolean(process.env.STRIPE_PRICE_PILOT_SETUP);
-  const hasStarterSetupPrice = Boolean(process.env.STRIPE_PRICE_STARTER_SETUP);
   const hasStarterMonthlyPrice = Boolean(
     process.env.STRIPE_PRICE_CAPACITY_312 || process.env.STRIPE_PRICE_STARTER_MONTHLY,
   );
@@ -128,8 +124,6 @@ export function getStripeConfigStatus(): StripeConfigStatus {
     invoiceNote: tax.ready ? STRIPE_TAX_INVOICE_NOTE : null,
     hasSecretKey,
     hasWebhookSecret,
-    hasPilotPrice,
-    hasStarterSetupPrice,
     hasStarterMonthlyPrice,
     hasGrowthMonthlyPrice,
     hasAgencyMonthlyPrice,
