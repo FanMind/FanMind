@@ -1,3 +1,9 @@
+## FM-LOOP-BACKUP-AUDIT-DIAGNOSTICS-20261005
+- Task: `backup-audit-failure-diagnostics-20261005T0758Z`; Status: IMPLEMENTED_FOR_PR; Risk: R2.
+- Evidence: Production Audit run `37278363646`, job `111660398229`, failed at 2026-10-05T07:33:06Z with collector exit 0 and `production_audit_backup_latest_stale_or_empty`; the separately verified runtime/release subset passed on exact main `27d78f3c45b9f17e29c5222f47402007bea2ec37`.
+- Source result: backup-latest validation failures publish only an allowlisted per-type classification, safe numeric age/size when available, and the existing age threshold. Missing, invalid, stale and empty states remain fail-closed and distinguishable; raw inventory, filenames, paths, credentials and unchecked values are never published or retained.
+- Boundary/next: this repository correction does not identify or repair the Backup worker/root cause and does not prove current Production backup freshness. After reviewed source publication, any installed diagnostic observation or Backup remediation is a separate exact-release Operations decision; no live audit, backup or Restore is authorized by this entry.
+
 ## Creator Target Transition + Runtime — owner-gated drift diagnosis — 2026-09-27
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Status: IN_PROGRESS overall; repository correction merged, protected diagnosis OWNER_ACTION_REQUIRED, Builder worker paused.

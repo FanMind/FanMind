@@ -1119,6 +1119,111 @@ test("actual workflow keeps backup and runtime validation failures fail-closed a
   assert.equal(malformed.code, 1);
 });
 
+test("actual workflow publishes only allowlisted backup failure diagnostics", async (t) => {
+  const valid = validAuditOutput();
+  const cases = [
+    {
+      name: "stale",
+      source: valid.replace(
+        /^BACKUP_LATEST=database.*$/mu,
+        "BACKUP_LATEST=database|file=/private/RAW_SECRET_CANARY.age|age_hours=36.01|size_bytes=1000|pair=complete",
+      ),
+      code: "backup_latest_stale_or_empty",
+      diagnostic: "database|classification=stale|age_hours=36.01|size_bytes=1000|max_age_hours=36",
+    },
+    {
+      name: "empty",
+      source: valid.replace(
+        /^BACKUP_LATEST=storage.*$/mu,
+        "BACKUP_LATEST=storage|file=/private/RAW_SECRET_CANARY.age|age_hours=11.25|size_bytes=0|pair=complete",
+      ),
+      code: "backup_latest_stale_or_empty",
+      diagnostic: "storage|classification=empty|age_hours=11.25|size_bytes=0|max_age_hours=36",
+    },
+    {
+      name: "collector missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=missing|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "unknown missing marker",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|unknown",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "malformed missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing|credential=RAW_SECRET_CANARY",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "invalid values",
+      source: valid.replace(
+        /^BACKUP_LATEST=full.*$/mu,
+        "BACKUP_LATEST=full|file=/private/RAW_SECRET_CANARY.age|age_hours=RAW_SECRET_CANARY|size_bytes=999999999999999999999|pair=complete",
+      ),
+      code: "backup_latest_age_invalid",
+      diagnostic: "full|classification=invalid_age_and_size|age_hours=unavailable|size_bytes=unavailable|max_age_hours=192",
+    },
+    {
+      name: "manipulated fields",
+      source: valid.replace(
+        /^BACKUP_LATEST=database.*$/mu,
+        "BACKUP_LATEST=database|file=/private/RAW_SECRET_CANARY.age|age_hours=36.01|age_hours=RAW_SECRET_CANARY|size_bytes=1000|pair=complete|credential=RAW_SECRET_CANARY",
+      ),
+      code: "backup_latest_age_invalid",
+      diagnostic: "database|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+  ];
+
+  for (const candidate of cases) {
+    const result = await runAuditWorkflow(t, candidate.source, 0);
+    assert.equal(result.code, 1, candidate.name);
+    assert.match(
+      result.stdout,
+      new RegExp(
+        `^PRODUCTION_AUDIT_FAILURE_CODE=production_audit_${candidate.code}$`,
+        "mu",
+      ),
+      candidate.name,
+    );
+    assert.match(
+      result.stdout,
+      new RegExp(
+        `^PRODUCTION_BACKUP_DIAGNOSTIC=${candidate.diagnostic}$`,
+        "mu",
+      ),
+      candidate.name,
+    );
+    assert.equal(
+      result.stdout.match(/^PRODUCTION_BACKUP_DIAGNOSTIC=/gmu)?.length,
+      4,
+      candidate.name,
+    );
+    assert.doesNotMatch(
+      result.stdout,
+      /RAW_SECRET_CANARY|\/private\/|file=|pair=|credential=/u,
+      candidate.name,
+    );
+    assert.doesNotMatch(
+      result.stdout,
+      /^PRODUCTION_AUDIT_VERIFIED=true$/mu,
+      candidate.name,
+    );
+  }
+});
+
 test("runtime subset rejects release drift and an omitted eighth health component", () => {
   assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput({ LIVE_RELEASE: "b".repeat(40) }), expectedCommit), /release_drift/u);
   assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput().replace("HEALTH_COMPONENT=email_config:healthy\n", ""), expectedCommit), /health_components_unhealthy/u);

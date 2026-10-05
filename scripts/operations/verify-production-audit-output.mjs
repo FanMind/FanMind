@@ -20,6 +20,18 @@ const BACKUP_MAX_AGE_HOURS = Object.freeze({
   server_config: 36,
   full: 192,
 });
+const BACKUP_LATEST_FAILURE_CODES = new Set([
+  "production_audit_backup_latest_invalid",
+  "production_audit_backup_latest_age_invalid",
+  "production_audit_backup_latest_stale_or_empty",
+  "production_audit_backup_latest_missing",
+]);
+const BACKUP_LATEST_PROPERTIES = new Set([
+  "file",
+  "pair",
+  "age_hours",
+  "size_bytes",
+]);
 
 class ProductionAuditError extends Error {}
 
@@ -153,6 +165,127 @@ function backupSummary(values) {
       },
     ]),
   );
+}
+
+export function productionBackupDiagnostics(source) {
+  const values = parseProductionAuditOutput(source);
+  const entriesByType = new Map(
+    Object.keys(BACKUP_MAX_AGE_HOURS).map((type) => [type, []]),
+  );
+
+  for (const value of values.get("BACKUP_LATEST") ?? []) {
+    const [type, ...segments] = value.split("|");
+    if (entriesByType.has(type)) entriesByType.get(type).push(segments);
+  }
+
+  return Object.entries(BACKUP_MAX_AGE_HOURS).map(([type, maxAgeHours]) => {
+    const entries = entriesByType.get(type);
+    if (entries.length === 0) {
+      return {
+        type,
+        ageHours: null,
+        sizeBytes: null,
+        maxAgeHours,
+        classification: "missing",
+      };
+    }
+    if (entries.length !== 1) {
+      return {
+        type,
+        ageHours: null,
+        sizeBytes: null,
+        maxAgeHours,
+        classification: "invalid_record",
+      };
+    }
+    if (entries[0].length === 1 && entries[0][0] === "missing") {
+      return {
+        type,
+        ageHours: null,
+        sizeBytes: null,
+        maxAgeHours,
+        classification: "missing",
+      };
+    }
+
+    const properties = new Map();
+    let invalidRecord = false;
+    for (const segment of entries[0]) {
+      const separator = segment.indexOf("=");
+      const key = separator > 0 ? segment.slice(0, separator) : "";
+      if (
+        separator <= 0 ||
+        !BACKUP_LATEST_PROPERTIES.has(key) ||
+        properties.has(key)
+      ) {
+        invalidRecord = true;
+        continue;
+      }
+      properties.set(key, segment.slice(separator + 1));
+    }
+    if (
+      invalidRecord ||
+      properties.size !== BACKUP_LATEST_PROPERTIES.size ||
+      !properties.get("file") ||
+      properties.get("pair") !== "complete"
+    ) {
+      return {
+        type,
+        ageHours: null,
+        sizeBytes: null,
+        maxAgeHours,
+        classification: "invalid_record",
+      };
+    }
+
+    const ageValue = properties.get("age_hours");
+    const ageHours = /^\d+(?:\.\d+)?$/u.test(ageValue)
+      ? Number(ageValue)
+      : null;
+    const safeAgeHours =
+      ageHours !== null && Number.isFinite(ageHours) ? ageHours : null;
+    const sizeValue = properties.get("size_bytes");
+    const sizeBytes = /^\d+$/u.test(sizeValue) ? Number(sizeValue) : null;
+    const safeSizeBytes =
+      sizeBytes !== null && Number.isSafeInteger(sizeBytes) ? sizeBytes : null;
+
+    let classification = "within_threshold_nonempty";
+    if (safeAgeHours === null && safeSizeBytes === null) {
+      classification = "invalid_age_and_size";
+    } else if (safeAgeHours === null) {
+      classification = "invalid_age";
+    } else if (safeSizeBytes === null) {
+      classification = "invalid_size";
+    } else if (safeAgeHours > maxAgeHours && safeSizeBytes === 0) {
+      classification = "stale_and_empty";
+    } else if (safeAgeHours > maxAgeHours) {
+      classification = "stale";
+    } else if (safeSizeBytes === 0) {
+      classification = "empty";
+    }
+
+    return {
+      type,
+      ageHours: safeAgeHours,
+      sizeBytes: safeSizeBytes,
+      maxAgeHours,
+      classification,
+    };
+  });
+}
+
+export function printProductionBackupDiagnostics(diagnostics) {
+  for (const diagnostic of diagnostics) {
+    const ageHours =
+      diagnostic.ageHours === null
+        ? "unavailable"
+        : diagnostic.ageHours.toFixed(2);
+    const sizeBytes =
+      diagnostic.sizeBytes === null ? "unavailable" : diagnostic.sizeBytes;
+    console.log(
+      `PRODUCTION_BACKUP_DIAGNOSTIC=${diagnostic.type}|classification=${diagnostic.classification}|age_hours=${ageHours}|size_bytes=${sizeBytes}|max_age_hours=${diagnostic.maxAgeHours}`,
+    );
+  }
 }
 
 export function verifyProductionRuntimeOutput(source, expectedCommit) {
@@ -394,6 +527,11 @@ async function main() {
     console.log("PRODUCTION_AUDIT_VERIFIED=false");
     const code = error instanceof ProductionAuditError ? error.message : "production_audit_output_unavailable";
     console.log(`PRODUCTION_AUDIT_FAILURE_CODE=${code}`);
+    if (BACKUP_LATEST_FAILURE_CODES.has(code)) {
+      try {
+        printProductionBackupDiagnostics(productionBackupDiagnostics(source));
+      } catch {}
+    }
     let stage = Number(auditExitCode) === 0 ? "validation" : "unknown";
     try {
       const reported = single(parseProductionAuditOutput(source), "AUDIT_FAILED_STAGE");
