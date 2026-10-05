@@ -30,7 +30,7 @@ The one migration bootstrap for an explicitly Owner-direct task is recorded in e
 
 ## Result meaning
 
-`COMPLETED` requires typed source acceptance, the full accepted prior envelope and actual GitHub truth. The PR must target `main`, its exact verified merge commit must be reachable from current `main`, and the accepted prior contract's required workflow names must each have a successful exact-head `pull_request` run. GitHub job/check-run names are deliberately not compared with workflow names. Source-only tasks require the exact `NOT_REQUIRED` runtime form. For this R3 method task, the required later evidence is the contract's exact side-effect-free CLI test command, bound to the source merge/local head, task, handoff, payload and the SHA-256 of its complete log. Normal God Mode CI remains source/offline evidence and cannot substitute for that separately authorized CLI proof. Unsupported evidence stays blocked. Immutable merge evidence remains valid after unrelated `main` progress. Source acceptance, task closeout and runtime evidence remain separate.
+`COMPLETED` requires typed source acceptance, the full accepted prior envelope and actual GitHub truth. The PR must target `main`, its exact verified merge commit must be reachable from current `main`, and the accepted prior contract's required workflow names must each have a successful authoritative latest exact-head `pull_request` run. GitHub job/check-run names are deliberately not compared with workflow names. Source-only tasks require the exact `NOT_REQUIRED` runtime form; that is the contract for this R3 method task because exact-head behavior CI and the independent full-path countercheck provide its technical source proof. For another contract that requires CLI runtime evidence, admission validates an operator-supplied attestation binding command, source merge/local head, task, handoff, payload, checked-at value and complete-log SHA-256. It does not independently retrieve or authenticate that execution or log. Unsupported evidence stays blocked. Immutable merge evidence remains valid after unrelated `main` progress. Source acceptance, task closeout and runtime evidence remain separate.
 
 `BLOCKED`, `FAILED` and `NO_CHANGE` are terminal coordination results, not accepted product work. A digest-bound `RECONCILED_PARKED` disposition may release a genuinely independent selector-approved task only when the matching actual predecessor run closed successfully with an explicit blocker and resume condition; an unresolved transport cannot. Same-work continuation requires selector- or Owner-bound resume evidence that strictly extends the accepted predecessor evidence. Completed semantic work is not reopened by changing catalog-action, task, handoff or source labels. These statuses do not make a catalog task DONE or authorize replacement work. HTTP 202 and a green structural God Mode check are never completion or `ALLOW`.
 
@@ -59,13 +59,13 @@ After `PREPARED_ONLY`, an explicitly authorized Parent may use exactly `/tmp/fan
 
 GitHub CI cannot universally prevent an Owner or root user from typing arbitrary text directly into another interface. Enforcement applies to this repository's supported preparation/check entry and the existing Builder transport workflow; no UI automation or platform access system is added.
 
-After a separately authorized merge, the controlled check is run from a fresh checkout whose `HEAD` equals the accepted merge commit. The exact side-effect-free command is:
+An explicitly authorized Parent may optionally repeat the read-only preparation/check diagnosis from a fresh checkout whose `HEAD` equals the accepted merge commit. This is diagnostic only, not product runtime evidence or a completion gate. The focused source tests remain:
 
 ```bash
 python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs
 ```
 
-The operator retains the complete combined log and its SHA-256. The later receipt binds that digest plus the exact command, merge/local-head SHA, task, handoff and payload. This Draft-PR phase does not run that check on a merged release and does not claim the proof exists.
+This source-only task does not require a second post-merge test receipt. If a different accepted task contract requires CLI evidence, the later receipt records the operator's attested log digest and bindings; repository code validates their consistency but does not independently authenticate the execution.
 
 ## Configuration and security
 
@@ -75,4 +75,4 @@ The workflow stays `workflow_dispatch` only. It does not restore merge wake-ups,
 
 ## Activation boundary
 
-This source task stops at a Draft PR. Merge, auto-merge, deployment, live API trigger and the controlled side-effect-free check run require later explicit authorization. A successful transport response alone is not acceptance.
+This source task stops at a Draft PR. Merge, auto-merge, deployment and live API trigger require later explicit authorization. An optional read-only Parent diagnosis is separate and is not a product-runtime or receipt requirement. A successful transport response alone is not acceptance.

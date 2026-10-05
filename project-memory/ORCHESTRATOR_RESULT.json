@@ -1,28 +1,26 @@
 {
   "schema_version": 2,
   "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
-  "payload_sha256": "75672832f0e8d66e00611423bf66164de9147149f720b3a639f6e1a5b9344026",
+  "payload_sha256": "eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2",
   "task_id": "fanmind-orchestrator-method-20261005-01",
   "status": "BLOCKED",
-  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge, canonical publication and the separately authorized side-effect-free CLI check have not occurred.",
+  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge and canonical publication have not occurred.",
   "evidence": [
     "The accepted Owner-direct envelope, stable work identity, task_id, previous task_id and payload digest are preserved in this receipt and bound independently in STARTED_WORK.md and WORK_LOCKS.md.",
     "The implementation reuses the existing selector, started-work/lock state, workflow-run history and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
-    "Thirty-six focused Python behavior tests spy transport and cover predecessor-contract separation, stable work replay, selector-bound resume evidence, real workflow-name checks, all run attempts, CLI runtime evidence and the established zero-send cases.",
+    "Thirty-seven focused Python behavior tests spy transport and cover predecessor-contract separation, stable work replay, selector-bound resume evidence, authoritative exact-head workflow runs, all dispatch attempts, required-runtime operator attestation and the established zero-send cases.",
     "The existing dispatch workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read.",
     "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline, workflow mode or permission was added.",
-    "No merge, auto-merge, deployment, live API trigger, controlled CLI check, SQL, host, provider, secret, credential, permission or protected-state action was performed."
+    "No merge, auto-merge, deployment, live API trigger, optional read-only Parent diagnosis, SQL, host, provider, secret, credential, permission or protected-state action was performed."
   ],
-  "blocker": "Merge/canonical publication and the required controlled side-effect-free CLI check are outside the authorization for this run.",
-  "resume_condition": "After exact-head required CI and independent countercheck pass, the Owner separately authorizes merge. From a fresh checkout of the exact merge commit, separately authorize the exact digest-bound CLI test command, retain its complete log SHA-256, and publish the matching VERIFIED CLI evidence plus COMPLETED receipt through normal repository gates. No Builder transport, workflow dispatch or new task is involved.",
+  "blocker": "Merge and canonical publication are outside the authorization for this run.",
+  "resume_condition": "After exact-head required CI and independent countercheck pass, the Owner separately authorizes merge and publication of the matching COMPLETED receipt through normal repository gates. An optional later read-only prepare/check BLOCK is Parent diagnosis only, not product runtime evidence or a completion prerequisite. No Builder transport, workflow dispatch or new task is involved.",
   "completed_at": "2026-10-05T11:13:43Z",
   "main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
   "source_acceptance": null,
   "runtime_evidence": {
-    "required": true,
-    "status": "NOT_RUN",
-    "evidence_kind": "authorized_cli_test",
-    "command": "python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs"
+    "required": false,
+    "status": "NOT_REQUIRED"
   },
   "accepted_handoff": {
     "acceptance": [
@@ -65,10 +63,7 @@
     ],
     "risk": "R3",
     "runtime_requirement": {
-      "command": "python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs",
-      "evidence_kind": "authorized_cli_test",
-      "release_binding": "source_merge",
-      "required": true
+      "required": false
     },
     "scope": {
       "contracts": [

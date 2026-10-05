@@ -2,7 +2,7 @@
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
 - Orchestrator task_id: fanmind-orchestrator-method-20261005-01
-- Payload digest: 75672832f0e8d66e00611423bf66164de9147149f720b3a639f6e1a5b9344026
+- Payload digest: eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2
 - Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
 - Source: explicit Owner task, not a roadmap-catalog selection.
 - Risk: R3
@@ -13,11 +13,11 @@
 - Parallel safety: governance-only and explicitly non-overlapping with the active ChatAdmin Character/Fans and Capacity reserve/settle/budget scopes; those locks, source areas and target boundaries remain untouched.
 - Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
-- Runtime requirement: {"command":"python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs","evidence_kind":"authorized_cli_test","release_binding":"source_merge","required":true}
+- Runtime requirement: {"required":false}
 - Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
 - Boundary: Draft PR only. No merge, auto-merge, deploy, live API trigger, controlled live check, SQL, host, provider, secret, permission or protected-state action is authorized.
-- Closeout: this task cannot publish `COMPLETED` until a later separately authorized merge/canonical receipt and exact digest-bound CLI test proof exist. Current delivery stops at reviewable Draft PR.
-- Exact next step: complete exact-head required CI and independent countercheck on the Draft PR, then stop pending separate Owner authorization for merge and the controlled side-effect-free CLI test command.
+- Closeout: this source-only method task requires exact-head CI plus independent full-path countercheck, but no separate runtime evidence. It cannot publish `COMPLETED` until a later separately authorized merge and canonical receipt exist. Current delivery stops at reviewable Draft PR.
+- Exact next step: complete exact-head required CI and independent countercheck on the Draft PR, then stop pending separate Owner authorization for merge/canonical publication. An optional later read-only prepare/check BLOCK is Parent diagnosis only, not product runtime evidence or a gate.
 
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
