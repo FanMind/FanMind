@@ -263,6 +263,64 @@ test('backup worker persists and logs only fixed error codes', () => {
     worker.backupWorkerErrorCode(new Error('invalid_checksum_file')),
     'invalid_checksum_file',
   );
+  const safeDatabaseErrorCodes = [
+    'authorization_container_recovery_invariant_invalid',
+    'authorization_core_grant_matrix_invalid',
+    'authorization_extension_class_unsupported',
+    'authorization_extension_contract_invariant_invalid',
+    'authorization_extension_recovery_invariant_invalid',
+    'authorization_psql_start_failed',
+    'authorization_query_failed',
+    'authorization_query_output_invalid',
+    'authorization_query_timeout',
+    'authorization_security_definer_boundary_invalid',
+    'authorization_snapshot_close_failed',
+    'authorization_snapshot_closed',
+    'authorization_snapshot_id_invalid',
+    'backup_database_ca_changed_during_read',
+    'backup_database_ca_invalid',
+    'backup_database_ca_path_invalid',
+    'backup_database_ca_read_failed',
+    'backup_database_passfile_changed_during_read',
+    'backup_database_passfile_invalid',
+    'backup_database_passfile_path_invalid',
+    'backup_database_passfile_read_failed',
+    'database_authorization_toc_missing',
+  ];
+  for (const errorCode of safeDatabaseErrorCodes) {
+    assert.equal(
+      worker.backupWorkerErrorCode(new Error(errorCode)),
+      errorCode,
+    );
+    assert.equal(
+      worker.backupWorkerErrorCode(
+        Object.assign(new Error('opaque database failure'), { code:errorCode }),
+      ),
+      errorCode,
+    );
+  }
+  const unsafeDatabaseErrorCodes = [
+    'authorization_unknown_failure',
+    'authorization_query_failed ',
+    ' authorization_query_failed',
+    'authorization_query_failed\\npostgres detail',
+    'authorization_query_failed:https://private.example/customer',
+    'authorization_query_failed:/private/backups/customer.dump',
+    'authorization_query_failed token=live-secret',
+    'pg_dump: error: connection to server failed',
+  ];
+  for (const unsafeErrorCode of unsafeDatabaseErrorCodes) {
+    assert.equal(
+      worker.backupWorkerErrorCode(new Error(unsafeErrorCode)),
+      'backup_worker_failed',
+    );
+    assert.equal(
+      worker.backupWorkerErrorCode(
+        Object.assign(new Error('opaque database failure'), { code:unsafeErrorCode }),
+      ),
+      'backup_worker_failed',
+    );
+  }
   assert.equal(
     worker.backupWorkerErrorCode(new Error('supabase_503')),
     'supabase_request_failed',
