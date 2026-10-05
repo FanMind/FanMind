@@ -341,7 +341,7 @@ test('backup worker persists and logs only fixed error codes', () => {
   );
   assert.equal(
     worker.backupWorkerErrorCode(
-      Object.assign(new Error('token=live-secret\\npassword=private'), {
+      Object.assign(new Error('token=live-secret password=private'), {
         code:'authorization_query_failed',
       }),
     ),
