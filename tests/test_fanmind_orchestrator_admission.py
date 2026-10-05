@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import importlib.util
@@ -64,6 +65,49 @@ def handoff() -> dict:
         MODULE.canonical_task_envelope(value)
     )
     return value
+
+
+def owner_handoff() -> dict:
+    value = handoff()
+    value.update(
+        {
+            "source": "OWNER_DIRECT",
+            "selection_basis": "EXPLICIT_OWNER_TASK",
+            "owner_authorized_at": "2026-10-05T10:59:00Z",
+            "non_overlapping_active_locks": ["LOCK-OTHER"],
+            "owner_authorization": {
+                "kind": "github_issue_comment_v1",
+                "issue_number": 874,
+                "comment_id": 9001,
+                "body_sha256": "0" * 64,
+                "updated_at": "2026-10-05T10:59:00Z",
+            },
+        }
+    )
+    for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256"):
+        value.pop(key)
+    body = MODULE.render_owner_authorization(MODULE.canonical_task_envelope(value))
+    value["owner_authorization"]["body_sha256"] = hashlib.sha256(
+        body.encode("utf-8")
+    ).hexdigest()
+    value["payload_sha256"] = MODULE.envelope_digest(
+        MODULE.canonical_task_envelope(value)
+    )
+    return value
+
+
+def owner_comment(value: dict, *, association: str = "OWNER", body: str | None = None) -> dict:
+    return {
+        "id": value["owner_authorization"]["comment_id"],
+        "issue_url": "https://api.github.com/repos/FanMind/FanMind/issues/874",
+        "author_association": association,
+        "body": body or MODULE.render_owner_authorization(
+            MODULE.canonical_task_envelope(value)
+        ),
+        "created_at": value["owner_authorized_at"],
+        "updated_at": value["owner_authorization"]["updated_at"],
+        "user": {"login": "Bernds-tech"},
+    }
 
 
 def previous_handoff() -> dict:
@@ -277,6 +321,188 @@ class AdmissionTests(unittest.TestCase):
             receipt(),
             ready(),
             object(),
+            **{**kwargs, "local_head": "d" * 40},
+        )
+        self.assertEqual("local_head_not_prepared_main", stale["blocker"])
+
+    def test_completed_a_owner_authorized_b_prepares_without_repository_registration(self):
+        prepared = owner_handoff()
+        previous = receipt()
+        authorization_comment = owner_comment(prepared)
+        previous_title = (
+            "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
+            + previous["payload_sha256"]
+        )
+
+        class Client(MODULE.GitHubClient):
+            def __init__(
+                self,
+                *,
+                association="OWNER",
+                login="Bernds-tech",
+                main_sha=None,
+                unresolved=False,
+                extra_lock=False,
+            ):
+                super().__init__("FanMind/FanMind")
+                self.association = association
+                self.login = login
+                self.main_sha = main_sha or prepared["prepared_main_sha"]
+                self.unresolved = unresolved
+                self.extra_lock = extra_lock
+
+            def get(self, path):
+                if path == "commits/main":
+                    return {"sha": self.main_sha}
+                if path.startswith("compare/"):
+                    return {"status": "ahead"}
+                if path == "pulls/123":
+                    return {
+                        "number": 123,
+                        "head": {"sha": "c" * 40},
+                        "merge_commit_sha": "a" * 40,
+                        "merged_at": "2026-10-05T10:00:00Z",
+                        "base": {"ref": "main"},
+                    }
+                if path.startswith("actions/runs?head_sha="):
+                    return source_workflow_history()
+                if path.startswith("actions/workflows/"):
+                    return {
+                        "total_count": 1,
+                        "workflow_runs": [{
+                            "id": 499,
+                            "run_attempt": 1,
+                            "display_title": previous_title,
+                            "status": "in_progress" if self.unresolved else "completed",
+                            "conclusion": None if self.unresolved else "success",
+                        }],
+                    }
+                if path == "actions/runs/499/attempts/1/jobs?per_page=100&page=1":
+                    return {
+                        "total_count": 1,
+                        "jobs": [{"steps": [
+                            {"name": "Admit prepared handoff", "conclusion": "success"},
+                            {
+                                "name": "Transport exactly one admitted handoff",
+                                "status": "in_progress" if self.unresolved else "completed",
+                                "conclusion": None if self.unresolved else "success",
+                            },
+                        ]}],
+                    }
+                if path.startswith("contents/project-memory/WORK_LOCKS.md?ref="):
+                    locks = "## LOCK-OTHER\n- Status: ACTIVE\n"
+                    if self.extra_lock:
+                        locks += "## LOCK-COLLISION\n- Status: ACTIVE\n"
+                    return {"content": base64.b64encode(locks.encode()).decode()}
+                if path == "issues/comments/9001":
+                    return {
+                        **authorization_comment,
+                        "author_association": self.association,
+                        "user": {"login": self.login},
+                    }
+                raise AssertionError(f"unexpected path: {path}")
+
+        selector_state = {
+            "state": "PARALLEL_ACTIVE",
+            "executable": False,
+            "safe_ready_set": [],
+        }
+        kwargs = {
+            "requested_task_id": prepared["task_id"],
+            "requested_handoff_id": prepared["handoff_id"],
+            "requested_previous_task_id": prepared["previous_task_id"],
+            "requested_payload_sha256": prepared["payload_sha256"],
+            "composer_input": MODULE.render_builder_input(
+                MODULE.canonical_task_envelope(prepared)
+            ),
+            "local_head": prepared["prepared_main_sha"],
+        }
+        accepted = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(), **kwargs
+        )
+        self.assertEqual("PREPARED_ONLY", accepted["decision"])
+        self.assertFalse(accepted["send_authorized"])
+        transport_calls = []
+        self.assertEqual(
+            0,
+            MODULE.dispatch_if_admitted(
+                accepted,
+                lambda payload: transport_calls.append(payload),
+            )["sent"],
+        )
+        self.assertEqual([], transport_calls)
+
+        rejected_authority = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(association="COLLABORATOR"), **kwargs
+        )
+        self.assertEqual(
+            "owner_authorization_not_repository_owner",
+            rejected_authority["blocker"],
+        )
+        rejected_login = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(login="DifferentUser"), **kwargs
+        )
+        self.assertEqual("owner_authorization_login_mismatch", rejected_login["blocker"])
+        unresolved = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(unresolved=True), **kwargs
+        )
+        self.assertEqual(
+            "previous_handoff_not_terminal_and_reconciled",
+            unresolved["blocker"],
+        )
+        collision = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(extra_lock=True), **kwargs
+        )
+        self.assertEqual(
+            "owner_active_lock_conflict_or_stale_parallel_proof", collision["blocker"]
+        )
+
+        changed = copy.deepcopy(prepared)
+        changed["goal"] = "A changed task that the Owner comment did not authorize."
+        changed["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(changed)
+        )
+        changed_result = MODULE.check_with_github(
+            changed,
+            previous,
+            selector_state,
+            Client(),
+            **{
+                **kwargs,
+                "requested_payload_sha256": changed["payload_sha256"],
+                "composer_input": MODULE.render_builder_input(
+                    MODULE.canonical_task_envelope(changed)
+                ),
+            },
+        )
+        self.assertEqual(
+            "owner_authorization_contract_mismatch",
+            changed_result["blocker"],
+        )
+
+        wrong_digest = MODULE.check_with_github(
+            prepared,
+            previous,
+            selector_state,
+            Client(),
+            **{**kwargs, "requested_payload_sha256": "f" * 64},
+        )
+        self.assertEqual("requested_payload_digest_mismatch", wrong_digest["blocker"])
+
+        remote_stale = MODULE.check_with_github(
+            prepared,
+            previous,
+            selector_state,
+            Client(main_sha="d" * 40),
+            **kwargs,
+        )
+        self.assertEqual("handoff_main_is_stale", remote_stale["blocker"])
+
+        stale = MODULE.check_with_github(
+            prepared,
+            previous,
+            selector_state,
+            Client(),
             **{**kwargs, "local_head": "d" * 40},
         )
         self.assertEqual("local_head_not_prepared_main", stale["blocker"])
@@ -1291,28 +1517,22 @@ class AdmissionTests(unittest.TestCase):
                 )
 
     def test_owner_direct_requires_existing_identity_and_current_lock_proof(self):
-        candidate = handoff()
-        candidate.update(
-            {
-                "source": "OWNER_DIRECT",
-                "selection_basis": "EXPLICIT_OWNER_TASK",
-                "owner_authorized_at": "2026-10-05T10:59:00Z",
-                "non_overlapping_active_locks": ["LOCK-OTHER"],
-            }
+        candidate = owner_handoff()
+        missing = copy.deepcopy(candidate)
+        missing.pop("owner_authorization")
+        self.assertEqual(
+            "missing_or_invalid:handoff.owner_authorization",
+            self.decision(handoff=missing)["blocker"],
         )
-        candidate.pop("catalog_action_id")
-        candidate.pop("roadmap_task")
-        candidate.pop("catalog_contract_sha256")
-        candidate["payload_sha256"] = MODULE.envelope_digest(
-            MODULE.canonical_task_envelope(candidate)
-        )
+        observed = truth()
+        observed["owner_binding"] = {
+            "authorized": False,
+            "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
+        }
         result = MODULE.dispatch_if_admitted(
             self.decision(
                 handoff=candidate,
-                owner_binding={
-                    "authorized": False,
-                    "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
-                },
+                github_truth=observed,
             ),
             lambda _payload: self.fail("conflicting owner task must not send"),
         )
@@ -1322,53 +1542,34 @@ class AdmissionTests(unittest.TestCase):
             result["decision"]["blocker"],
         )
 
-    def test_owner_direct_binding_comes_from_started_work_and_active_locks(self):
-        candidate = handoff()
-        candidate.update(
-            {
-                "source": "OWNER_DIRECT",
-                "selection_basis": "EXPLICIT_OWNER_TASK",
-                "owner_authorized_at": "2026-10-05T10:59:00Z",
-                "non_overlapping_active_locks": ["LOCK-OTHER"],
-            }
+    def test_owner_direct_binding_comes_from_owner_comment_and_active_locks(self):
+        candidate = owner_handoff()
+        draft = copy.deepcopy(candidate)
+        draft.pop("owner_authorization")
+        draft.pop("owner_authorized_at")
+        self.assertEqual(
+            MODULE.render_owner_authorization(
+                MODULE.canonical_task_envelope(candidate)
+            ),
+            MODULE.owner_authorization_template(draft),
         )
-        for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256"):
-            candidate.pop(key)
-        candidate["payload_sha256"] = MODULE.envelope_digest(
-            MODULE.canonical_task_envelope(candidate)
-        )
-        checks = ", ".join(sorted(candidate["required_checks"]))
-        runtime = json.dumps(
-            candidate["runtime_requirement"], sort_keys=True, separators=(",", ":")
-        )
-        started = f"""## Owner task
-- Orchestrator handoff: {candidate['handoff_id']}
-- Orchestrator task_id: {candidate['task_id']}
-- Payload digest: {candidate['payload_sha256']}
-- Previous task_id: {candidate['previous_task_id']}
-- Source: explicit Owner task, not a roadmap-catalog selection.
-- Status: IN_PROGRESS
-- Work lock: LOCK-OWNER
-- Non-overlapping active locks: LOCK-OTHER
-- Required checks: {checks}
-- Runtime requirement: {runtime}
-"""
-        locks = f"""## LOCK-OWNER
-- Status: ACTIVE
-- Holder: FanMind Builder task `{candidate['task_id']}`
-- Non-overlapping active locks: LOCK-OTHER
-- Required checks: {checks}
-- Runtime requirement: {runtime}
-## LOCK-OTHER
+        locks = """## LOCK-OTHER
 - Status: ACTIVE
 """
+        class Client:
+            def get(self, path):
+                self_path = f"issues/comments/{candidate['owner_authorization']['comment_id']}"
+                if path == self_path:
+                    return owner_comment(candidate)
+                raise AssertionError(f"unexpected path: {path}")
+
         self.assertTrue(
-            MODULE._owner_direct_binding(candidate, started, locks)["authorized"]
+            MODULE._owner_direct_binding(candidate, Client(), locks)["authorized"]
         )
         stale = locks + "## LOCK-NEW\n- Status: ACTIVE\n"
         self.assertEqual(
             "owner_active_lock_conflict_or_stale_parallel_proof",
-            MODULE._owner_direct_binding(candidate, started, stale)["reason"],
+            MODULE._owner_direct_binding(candidate, Client(), stale)["reason"],
         )
 
     def test_consumed_owner_only_unready_or_conflicting_selector_is_not_executable(self):
@@ -1453,16 +1654,8 @@ class AdmissionTests(unittest.TestCase):
         )
 
     def test_owner_direct_handoff_never_masquerades_as_catalog_work(self):
-        candidate = handoff()
-        candidate.update(
-            {
-                "source": "OWNER_DIRECT",
-                "catalog_action_id": "NBA-NEXT",
-                "selection_basis": "EXPLICIT_OWNER_TASK",
-                "owner_authorized_at": "2026-10-05T10:59:00Z",
-                "non_overlapping_active_locks": [],
-            }
-        )
+        candidate = owner_handoff()
+        candidate["catalog_action_id"] = "NBA-NEXT"
         candidate["payload_sha256"] = MODULE.envelope_digest(
             MODULE.canonical_task_envelope(candidate)
         )

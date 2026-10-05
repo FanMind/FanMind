@@ -26,7 +26,7 @@ Before a send, admission boundedly paginates the complete workflow-run history a
 
 The one rollout boundary is actual legacy workflow run `37234276748` (2026-10-04T21:00:06Z), the newest of 20 observed manual runs whose pre-method title was only `FanMind Orchestrator Builder Dispatch`. Unstructured identities are ignored only at or below that immutable run ID. Any unstructured newer run blocks. This compatibility constant is not a Latest-Handoff record and is never updated per dispatch.
 
-The one migration bootstrap for an explicitly Owner-direct task is recorded in existing `STARTED_WORK.md` and `WORK_LOCKS.md` with the same identity fields, required-check/runtime contract and exact set of active locks explicitly proven non-overlapping by the Owner task. Caller labels or a timestamp alone grant nothing. A stale, missing or duplicate binding fails closed. No per-handoff commit to `main`, contents-write permission, new token scope, plugin, registry or second queue is introduced.
+Each explicitly Owner-direct task uses an existing GitHub issue comment by the canonically identified FanMind Owner account `Bernds-tech` as its authenticated authorization evidence. `owner-authorization-template` renders the exact comment body from the bounded task, handoff identity, fresh prepared-main SHA, checks/runtime contract and complete set of active locks declared non-overlapping. After the Owner posts that body, its repository-scoped comment ID, created/updated timestamps and body digest are bound into the prepared envelope. `check` retrieves the comment and canonical `WORK_LOCKS.md` from the observed main through the existing public GitHub GET client; the authenticated comment author must be exactly `Bernds-tech` with the organization-member/owner association, match the issue and exact body, and the declared active-lock set must still equal canonical state. Caller labels, arbitrary timestamps, injected truth or dirty local records grant nothing. A future Owner-account change requires a normal reviewed source update; it cannot be supplied in a handoff. No per-handoff commit to `main`, contents-write permission, new token scope, plugin, registry or second queue is introduced.
 
 ## Result meaning
 
@@ -36,11 +36,18 @@ The one migration bootstrap for an explicitly Owner-direct task is recorded in e
 
 ## Manual boundary
 
-The supported manual path uses `prepare`, then `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` performs the same live public GitHub reads, verifies exact local/current-main binding and rejects any residual text. A successful result is `PREPARED_ONLY` with `send_authorized=false`: it is validation, not a reservation or automatic send grant. Existing read-only rights cannot atomically reserve an out-of-workflow manual send.
+The supported manual path uses `owner-authorization-template` for an Owner-direct task, then `prepare`, then `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` performs the same live public GitHub reads, verifies the authenticated Owner comment, canonical active locks, exact local/current-main binding and rejects any residual text. A successful result is `PREPARED_ONLY` with `send_authorized=false`: it is validation, not a reservation or automatic send grant. Existing read-only rights cannot atomically reserve an out-of-workflow manual send.
 
 From an exact fresh checkout, the usable sequence is:
 
 ```bash
+python3 scripts/fanmind_orchestrator_admission.py owner-authorization-template \
+  --handoff /tmp/fanmind-handoff.json > /tmp/fanmind-owner-authorization.txt
+
+# The repository Owner posts exactly that text to the chosen existing GitHub issue.
+# Record the returned issue/comment IDs, created_at/updated_at and body SHA-256
+# in handoff.owner_authorization; set owner_authorized_at=created_at.
+
 python3 scripts/fanmind_orchestrator_admission.py prepare \
   --handoff /tmp/fanmind-handoff.json \
   --composer-output /tmp/fanmind-builder-input.txt
