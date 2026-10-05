@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
+import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +23,7 @@ SPEC.loader.exec_module(MODULE)
 
 def handoff() -> dict:
     value = {
+        "agent_context": "FanMind Builder",
         "schema_version": 1,
         "handoff_id": "handoff-next-001",
         "state": "PREPARED",
@@ -35,6 +39,8 @@ def handoff() -> dict:
         },
         "acceptance": ["focused test passes", "exact-head checks pass"],
         "risk": "R2",
+        "required_checks": ["FanMind CI", "God Mode"],
+        "runtime_requirement": {"required": False},
         "forbidden": [
             "Production mutation",
             "database apply",
@@ -42,7 +48,18 @@ def handoff() -> dict:
             "secret or permission mutation",
         ],
         "prepared_main_sha": "b" * 40,
+        "previous_result_disposition": "ACCEPTED_COMPLETION",
     }
+    contract = {
+        "goal": value["goal"],
+        "scope": value["scope"],
+        "acceptance": value["acceptance"],
+        "required_checks": value["required_checks"],
+        "runtime_requirement": value["runtime_requirement"],
+    }
+    value["catalog_contract_sha256"] = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
     value["payload_sha256"] = MODULE.envelope_digest(
         MODULE.canonical_task_envelope(value)
     )
@@ -84,11 +101,16 @@ def truth() -> dict:
             "head_sha": "c" * 40,
             "merge_sha": "a" * 40,
             "merged": True,
+            "base": "main",
         },
+        "source_merge_reachable": True,
         "checks": {"FanMind CI": "success", "God Mode": "success"},
         "matching_dispatches": [],
         "previous_handoff_matches": True,
         "previous_handoff_source": "workflow_run",
+        "current_handoff_matches": True,
+        "current_run_attempt": 1,
+        "runtime_run": None,
     }
 
 
@@ -99,7 +121,26 @@ def ready() -> dict:
         "action_id": "NBA-NEXT",
         "task": "FM-NEXT-001",
         "safe_ready_set": ["NBA-NEXT"],
+        "task_contract": {
+            "goal": "Deliver one bounded repository-only change.",
+            "scope": {
+                "files": ["src/next.py"],
+                "contracts": ["FM-CONTRACT-NEXT-001"],
+            },
+            "acceptance": ["focused test passes", "exact-head checks pass"],
+            "required_checks": ["FanMind CI", "God Mode"],
+            "runtime_requirement": {"required": False},
+        },
     }
+
+
+def current_receipt(status: str = "COMPLETED") -> dict:
+    value = receipt(status)
+    prepared = handoff()
+    value["task_id"] = prepared["task_id"]
+    value["handoff_id"] = prepared["handoff_id"]
+    value["payload_sha256"] = prepared["payload_sha256"]
+    return value
 
 
 class AdmissionTests(unittest.TestCase):
@@ -138,6 +179,41 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(0, result["sent"])
         self.assertEqual([], calls)
 
+    def test_foreign_agent_context_is_rejected_not_normalized(self):
+        prepared = handoff()
+        prepared["agent_context"] = "DifferentAgent"
+        self.assertEqual("agent_context_mismatch", self.decision(handoff=prepared)["blocker"])
+
+    def test_manual_check_is_fresh_but_never_a_consuming_send_admission(self):
+        prepared = handoff()
+        exact = MODULE.render_builder_input(MODULE.canonical_task_envelope(prepared))
+        kwargs = {
+            "requested_task_id": prepared["task_id"],
+            "requested_handoff_id": prepared["handoff_id"],
+            "requested_previous_task_id": prepared["previous_task_id"],
+            "requested_payload_sha256": prepared["payload_sha256"],
+            "composer_input": exact,
+            "local_head": prepared["prepared_main_sha"],
+        }
+        with mock.patch.object(MODULE, "collect_github_truth", return_value=truth()):
+            first = MODULE.check_with_github(
+                prepared, receipt(), ready(), object(), **kwargs
+            )
+            second = MODULE.check_with_github(
+                prepared, receipt(), ready(), object(), **kwargs
+            )
+        self.assertEqual("manual_transport_reservation_unavailable", first["blocker"])
+        self.assertEqual("manual_transport_reservation_unavailable", second["blocker"])
+
+        stale = MODULE.check_with_github(
+            prepared,
+            receipt(),
+            ready(),
+            object(),
+            **{**kwargs, "local_head": "d" * 40},
+        )
+        self.assertEqual("local_head_not_prepared_main", stale["blocker"])
+
     def test_main_may_advance_after_immutable_previous_merge(self):
         decision = self.decision()
         self.assertEqual("SEND", decision["decision"])
@@ -152,14 +228,66 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(0, result["sent"])
         self.assertEqual("duplicate_dispatch_same_state", result["decision"]["blocker"])
 
+    def test_rerun_attempt_never_posts_again(self):
+        observed = truth()
+        observed["current_run_attempt"] = 2
+        result = MODULE.dispatch_if_admitted(
+            self.decision(github_truth=observed),
+            lambda _payload: self.fail("rerun must not call transport"),
+        )
+        self.assertEqual(0, result["sent"])
+        self.assertEqual(
+            "workflow_rerun_requires_reconciliation", result["decision"]["blocker"]
+        )
+
     def test_non_completed_results_preserve_their_real_meaning(self):
         for status in ("BLOCKED", "FAILED", "NO_CHANGE"):
             with self.subTest(status=status):
                 decision = self.decision(receipt=receipt(status))
                 self.assertEqual("BLOCK", decision["decision"])
                 self.assertEqual(
-                    f"previous_result_not_completed:{status}", decision["blocker"]
+                    f"previous_result_not_reconciled:{status}", decision["blocker"]
                 )
+
+    def test_reconciled_parked_result_allows_only_independent_safe_followup(self):
+        prepared = handoff()
+        prepared["previous_result_disposition"] = "RECONCILED_PARKED"
+        prepared["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(prepared)
+        )
+        observed = truth()
+        observed["latest_previous_handoff"] = {
+            "status": "completed",
+            "conclusion": "success",
+            "transport_state": "TRANSPORT_ACCEPTED",
+        }
+        allowed = self.decision(
+            handoff=prepared,
+            receipt=receipt("BLOCKED"),
+            github_truth=observed,
+        )
+        self.assertEqual("SEND", allowed["decision"])
+
+        observed["latest_previous_handoff"]["conclusion"] = "failure"
+        blocked = self.decision(
+            handoff=prepared,
+            receipt=receipt("BLOCKED"),
+            github_truth=observed,
+        )
+        self.assertEqual("previous_result_unresolved:BLOCKED", blocked["blocker"])
+
+    def test_new_handoff_id_does_not_reopen_terminal_same_task(self):
+        prepared = handoff()
+        prepared["previous_task_id"] = prepared["task_id"]
+        prepared["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(prepared)
+        )
+        previous = receipt()
+        previous["task_id"] = prepared["task_id"]
+        self.assertEqual(
+            "task_identity_already_terminal",
+            self.decision(handoff=prepared, receipt=previous)["blocker"],
+        )
 
     def test_missing_wrong_or_untyped_result_sends_nothing(self):
         cases = []
@@ -241,6 +369,7 @@ class AdmissionTests(unittest.TestCase):
                 requested_previous_task_id="previous-task-001",
                 requested_payload_sha256=prepared["payload_sha256"],
                 composer_input=exact,
+                local_head="b" * 40,
             )
 
         decision = self.decision(
@@ -266,6 +395,7 @@ class AdmissionTests(unittest.TestCase):
                         "head": {"sha": "c" * 40},
                         "merge_commit_sha": "a" * 40,
                         "merged_at": "2026-10-05T10:00:00Z",
+                        "base": {"ref": "main"},
                     }
                 if path.startswith("commits/") and path.endswith("check-runs?per_page=100"):
                     return {
@@ -276,6 +406,7 @@ class AdmissionTests(unittest.TestCase):
                     }
                 if path.startswith("actions/workflows/"):
                     return {
+                        "total_count": 2,
                         "workflow_runs": [
                             {
                                 "id": 499,
@@ -293,6 +424,34 @@ class AdmissionTests(unittest.TestCase):
                             },
                         ]
                     }
+                if path == "actions/runs/500":
+                    return {
+                        "id": 500,
+                        "display_title": "Orchestrator handoff handoff-next-001 task next-task-001 digest "
+                        + current["payload_sha256"],
+                        "event": "workflow_dispatch",
+                        "path": ".github/workflows/fanmind-manager-event-dispatch.yml",
+                        "run_attempt": 1,
+                    }
+                if path in {
+                    "actions/runs/499/jobs?per_page=100",
+                    "actions/runs/498/jobs?per_page=100",
+                }:
+                    return {
+                        "total_count": 1,
+                        "jobs": [
+                            {
+                                "steps": [
+                                    {"name": "Admit prepared handoff", "conclusion": "success"},
+                                    {
+                                        "name": "Transport exactly one admitted handoff",
+                                        "status": "completed",
+                                        "conclusion": "success",
+                                    },
+                                ]
+                            }
+                        ],
+                    }
                 self.fail(f"unexpected path: {path}")
 
         observed = MODULE.collect_github_truth(
@@ -306,6 +465,94 @@ class AdmissionTests(unittest.TestCase):
             self.decision(github_truth=observed)["blocker"],
         )
 
+    def test_rejected_pretransport_run_is_not_previous_handoff_but_bad_title_blocks(self):
+        prepared = handoff()
+        previous = receipt()
+
+        class FakeClient:
+            bad_title = False
+
+            def get(self, path):
+                if path == "commits/main":
+                    return {"sha": "b" * 40}
+                if path.startswith("compare/"):
+                    return {"status": "ahead"}
+                if path == "pulls/123":
+                    return {
+                        "number": 123,
+                        "head": {"sha": "c" * 40},
+                        "merge_commit_sha": "a" * 40,
+                        "merged_at": "2026-10-05T10:00:00Z",
+                        "base": {"ref": "main"},
+                    }
+                if path.startswith("commits/"):
+                    return {
+                        "check_runs": [
+                            {"name": "FanMind CI", "conclusion": "success"},
+                            {"name": "God Mode", "conclusion": "success"},
+                        ]
+                    }
+                if path.startswith("actions/workflows/"):
+                    title = (
+                        "unreadable latest identity"
+                        if self.bad_title
+                        else "Orchestrator handoff rejected task rejected-task digest " + "e" * 64
+                    )
+                    return {
+                        "total_count": 2,
+                        "workflow_runs": [
+                            {"id": 499, "display_title": title, "created_at": "2026-10-05T11:00:00Z"},
+                            {
+                                "id": 498,
+                                "display_title": "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
+                                + "f" * 64,
+                                "created_at": "2026-10-05T10:00:00Z",
+                                "status": "completed",
+                                "conclusion": "success",
+                            },
+                        ],
+                    }
+                if path == "actions/runs/500":
+                    return {
+                        "id": 500,
+                        "display_title": "Orchestrator handoff handoff-next-001 task next-task-001 digest "
+                        + prepared["payload_sha256"],
+                        "event": "workflow_dispatch",
+                        "path": ".github/workflows/fanmind-manager-event-dispatch.yml",
+                        "run_attempt": 1,
+                    }
+                if path == "actions/runs/499/jobs?per_page=100":
+                    return {
+                        "total_count": 1,
+                        "jobs": [{"steps": [
+                            {"name": "Admit prepared handoff", "conclusion": "failure"},
+                            {"name": "Transport exactly one admitted handoff", "conclusion": "skipped"},
+                        ]}],
+                    }
+                if path == "actions/runs/498/jobs?per_page=100":
+                    return {
+                        "total_count": 1,
+                        "jobs": [{"steps": [
+                            {"name": "Admit prepared handoff", "conclusion": "success"},
+                            {"name": "Transport exactly one admitted handoff", "conclusion": "success"},
+                        ]}],
+                    }
+                self.fail(f"unexpected path: {path}")
+
+        client = FakeClient()
+        observed = MODULE.collect_github_truth(
+            client, prepared, previous, current_run_id="500"
+        )
+        self.assertTrue(observed["previous_handoff_matches"])
+        self.assertEqual("498", observed["latest_previous_handoff"]["run_id"])
+        client.bad_title = True
+        with self.assertRaisesRegex(
+            MODULE.AdmissionError, "github_workflow_run_identity_unreadable"
+        ):
+            MODULE.collect_github_truth(
+                client, prepared, previous, current_run_id="500"
+            )
+
     def test_actual_pr_head_merge_and_checks_are_bound(self):
         wrong_head = truth()
         wrong_head["previous_pr"]["head_sha"] = "e" * 40
@@ -318,6 +565,175 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(
             "required_check_not_success:God Mode",
             self.decision(github_truth=red)["blocker"],
+        )
+
+    def test_pr_must_merge_to_main_and_exact_merge_must_be_reachable(self):
+        wrong_base = truth()
+        wrong_base["previous_pr"]["base"] = "release"
+        unreachable = truth()
+        unreachable["source_merge_reachable"] = False
+        self.assertEqual(
+            "github_pr_evidence_mismatch:base",
+            self.decision(github_truth=wrong_base)["blocker"],
+        )
+        self.assertEqual(
+            "source_merge_not_reachable_from_main",
+            self.decision(github_truth=unreachable)["blocker"],
+        )
+
+    def test_receipt_cannot_shrink_task_required_checks(self):
+        candidate = receipt()
+        candidate["source_acceptance"]["required_checks"] = ["FanMind CI"]
+        self.assertEqual(
+            "receipt_required_checks_mismatch_task_contract",
+            self.decision(receipt=candidate)["blocker"],
+        )
+
+    def test_runtime_requirement_is_bound_to_task_and_actual_release(self):
+        prepared = handoff()
+        prepared["runtime_requirement"] = {
+            "required": True,
+            "allowed_workflow": "FanMind Readiness",
+            "release_binding": "source_merge",
+        }
+        prepared["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(prepared)
+        )
+        candidate = receipt()
+        candidate["runtime_evidence"] = {"required": True, "status": "NOT_RUN"}
+        observed = truth()
+        self.assertEqual(
+            "required_runtime_evidence_not_verified",
+            self.decision(
+                handoff=prepared, receipt=candidate, github_truth=observed
+            )["blocker"],
+        )
+        candidate["runtime_evidence"] = {
+            "required": True,
+            "status": "VERIFIED",
+            "run_id": 900,
+        }
+        self.assertEqual(
+            "github_runtime_evidence_missing",
+            self.decision(
+                handoff=prepared, receipt=candidate, github_truth=observed
+            )["blocker"],
+        )
+        observed["runtime_run"] = {
+            "id": 900,
+            "name": "FanMind Readiness",
+            "head_sha": "e" * 40,
+            "conclusion": "success",
+        }
+        self.assertEqual(
+            "github_runtime_evidence_mismatch:head_sha",
+            self.decision(
+                handoff=prepared, receipt=candidate, github_truth=observed
+            )["blocker"],
+        )
+
+    def test_closeout_binds_current_identity_separately_from_previous_task(self):
+        prepared = handoff()
+        candidate = current_receipt()
+        observed = truth()
+        result = MODULE.evaluate_closeout(prepared, candidate, observed)
+        self.assertEqual("TERMINAL", result["decision"])
+        self.assertEqual("next-task-001", result["task_id"])
+
+        for status in ("COMPLETED", "BLOCKED", "FAILED", "NO_CHANGE"):
+            with self.subTest(status=status):
+                wrong = current_receipt(status)
+                wrong["handoff_id"] = "wrong-handoff"
+                self.assertEqual(
+                    "closeout_handoff_id_mismatch",
+                    MODULE.evaluate_closeout(prepared, wrong, observed)["blocker"],
+                )
+                wrong = current_receipt(status)
+                wrong["payload_sha256"] = "0" * 64
+                self.assertEqual(
+                    "closeout_payload_digest_mismatch",
+                    MODULE.evaluate_closeout(prepared, wrong, observed)["blocker"],
+                )
+
+    def test_owner_direct_requires_existing_identity_and_current_lock_proof(self):
+        candidate = handoff()
+        candidate.update(
+            {
+                "source": "OWNER_DIRECT",
+                "selection_basis": "EXPLICIT_OWNER_TASK",
+                "owner_authorized_at": "2026-10-05T10:59:00Z",
+                "non_overlapping_active_locks": ["LOCK-OTHER"],
+            }
+        )
+        candidate.pop("catalog_action_id")
+        candidate.pop("roadmap_task")
+        candidate.pop("catalog_contract_sha256")
+        candidate["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(candidate)
+        )
+        result = MODULE.dispatch_if_admitted(
+            self.decision(
+                handoff=candidate,
+                owner_binding={
+                    "authorized": False,
+                    "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
+                },
+            ),
+            lambda _payload: self.fail("conflicting owner task must not send"),
+        )
+        self.assertEqual(0, result["sent"])
+        self.assertEqual(
+            "owner_active_lock_conflict_or_stale_parallel_proof",
+            result["decision"]["blocker"],
+        )
+
+    def test_owner_direct_binding_comes_from_started_work_and_active_locks(self):
+        candidate = handoff()
+        candidate.update(
+            {
+                "source": "OWNER_DIRECT",
+                "selection_basis": "EXPLICIT_OWNER_TASK",
+                "owner_authorized_at": "2026-10-05T10:59:00Z",
+                "non_overlapping_active_locks": ["LOCK-OTHER"],
+            }
+        )
+        for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256"):
+            candidate.pop(key)
+        candidate["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(candidate)
+        )
+        checks = ", ".join(sorted(candidate["required_checks"]))
+        runtime = json.dumps(
+            candidate["runtime_requirement"], sort_keys=True, separators=(",", ":")
+        )
+        started = f"""## Owner task
+- Orchestrator handoff: {candidate['handoff_id']}
+- Orchestrator task_id: {candidate['task_id']}
+- Payload digest: {candidate['payload_sha256']}
+- Previous task_id: {candidate['previous_task_id']}
+- Source: explicit Owner task, not a roadmap-catalog selection.
+- Status: IN_PROGRESS
+- Work lock: LOCK-OWNER
+- Non-overlapping active locks: LOCK-OTHER
+- Required checks: {checks}
+- Runtime requirement: {runtime}
+"""
+        locks = f"""## LOCK-OWNER
+- Status: ACTIVE
+- Holder: FanMind Builder task `{candidate['task_id']}`
+- Non-overlapping active locks: LOCK-OTHER
+- Required checks: {checks}
+- Runtime requirement: {runtime}
+## LOCK-OTHER
+- Status: ACTIVE
+"""
+        self.assertTrue(
+            MODULE._owner_direct_binding(candidate, started, locks)["authorized"]
+        )
+        stale = locks + "## LOCK-NEW\n- Status: ACTIVE\n"
+        self.assertEqual(
+            "owner_active_lock_conflict_or_stale_parallel_proof",
+            MODULE._owner_direct_binding(candidate, started, stale)["reason"],
         )
 
     def test_consumed_owner_only_unready_or_conflicting_selector_is_not_executable(self):
@@ -367,6 +783,35 @@ class AdmissionTests(unittest.TestCase):
             "handoff_payload_digest_mismatch", self.decision(handoff=candidate)["blocker"]
         )
         candidate = handoff()
+        candidate["catalog_action_id"] = "NBA-RELABELLED"
+        self.assertEqual(
+            "handoff_payload_digest_mismatch", self.decision(handoff=candidate)["blocker"]
+        )
+
+    def test_invalid_identity_cannot_disappear_from_run_title_parser(self):
+        candidate = handoff()
+        candidate["handoff_id"] = "handoff with spaces"
+        self.assertEqual("invalid_identity:handoff.handoff_id", self.decision(handoff=candidate)["blocker"])
+
+    def test_missing_or_incomplete_workflow_history_is_fail_closed(self):
+        class Client:
+            def __init__(self, value):
+                self.value = value
+
+            def get(self, _path):
+                return self.value
+
+        for value, blocker in (
+            ({}, "github_workflow_run_history_unreadable"),
+            (
+                {"total_count": 2, "workflow_runs": [{"id": 1}]},
+                "github_workflow_run_history_incomplete",
+            ),
+        ):
+            with self.subTest(blocker=blocker):
+                with self.assertRaisesRegex(MODULE.AdmissionError, blocker):
+                    MODULE._complete_workflow_run_history(Client(value))
+        candidate = handoff()
         candidate["forbidden"].remove("database apply")
         self.assertEqual(
             "handoff_payload_digest_mismatch", self.decision(handoff=candidate)["blocker"]
@@ -380,6 +825,7 @@ class AdmissionTests(unittest.TestCase):
                 "catalog_action_id": "NBA-NEXT",
                 "selection_basis": "EXPLICIT_OWNER_TASK",
                 "owner_authorized_at": "2026-10-05T10:59:00Z",
+                "non_overlapping_active_locks": [],
             }
         )
         candidate["payload_sha256"] = MODULE.envelope_digest(

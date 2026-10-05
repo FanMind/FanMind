@@ -8,18 +8,19 @@
   "evidence": [
     "The Owner-direct handoff identity, task_id, previous task_id and payload digest are recorded independently in STARTED_WORK.md and WORK_LOCKS.md.",
     "The implementation reuses the existing selector, started-work/lock state and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
-    "Focused Python behavior tests spy the transport and prove invalid receipt/evidence, unresolved prior work, duplicate state, active/unready/owner-only selection, scope or boundary tampering and stale composer content result in zero sends.",
-    "The existing workflow remains manual workflow_dispatch only, checks out fresh main and runs admission before the existing Workspace Agent POST. Its permissions remain read-only and lifecycle concurrency waits for the matching typed closeout.",
+    "Thirty-one focused Python behavior tests spy transport and prove invalid receipt/evidence, unresolved or parked prior work, reruns, incomplete run history, duplicate/terminal task identity, active/unready/owner-only selection, PR-base/merge/check/runtime mismatches, scope/context tampering and stale composer content result in zero sends.",
+    "The existing workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read and lifecycle concurrency waits for matching typed closeout.",
+    "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline or permission was added.",
     "No merge, auto-merge, deployment, live API trigger, controlled live check, SQL, host, provider, secret, credential, permission or protected-state action was performed."
   ],
   "blocker": "Merge/canonical publication and the required controlled side-effect-free check are outside the authorization for this run.",
-  "resume_condition": "After exact-head required CI, God Mode and independent countercheck pass, the Owner separately authorizes merge; then the Orchestrator performs the separately approved check-only run and publishes a matching COMPLETED receipt only if its evidence passes.",
+  "resume_condition": "After exact-head required CI, God Mode and independent countercheck pass, the Owner separately authorizes merge. Bind the merge commit as the source release, separately authorize one side-effect-free FanMind God Mode Gate workflow_dispatch on that exact merge, verify its successful actual run, then publish a matching COMPLETED receipt through normal repository gates. No Builder transport or new task is involved in that check-only closeout.",
   "completed_at": "2026-10-05T11:13:43Z",
   "main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
   "source_acceptance": null,
   "runtime_evidence": {
     "required": true,
     "status": "NOT_RUN",
-    "scope": "One separately authorized side-effect-free Orchestrator check-only run after merge/readiness."
+    "scope": "One separately authorized side-effect-free FanMind God Mode Gate workflow_dispatch on the exact source merge after merge/readiness; no Builder transport."
   }
 }

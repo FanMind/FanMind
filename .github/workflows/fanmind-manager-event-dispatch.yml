@@ -51,14 +51,28 @@ jobs:
           printf '%s' "${HANDOFF_BASE64}" | base64 --decode > "${RUNNER_TEMP}/fanmind-handoff.json"
           test -s "${RUNNER_TEMP}/fanmind-handoff.json"
 
-      - name: Admit and trigger exactly one prepared handoff
+      - name: Admit prepared handoff
         env:
-          AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
-          AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
           REQUESTED_HANDOFF_ID: ${{ inputs.handoff_id }}
           REQUESTED_TASK_ID: ${{ inputs.task_id }}
           REQUESTED_PREVIOUS_TASK_ID: ${{ inputs.previous_task_id }}
           REQUESTED_PAYLOAD_SHA256: ${{ inputs.payload_sha256 }}
+        run: |
+          set -euo pipefail
+          python3 scripts/fanmind_orchestrator_admission.py admit \
+            --handoff "${RUNNER_TEMP}/fanmind-handoff.json" \
+            --handoff-id "${REQUESTED_HANDOFF_ID}" \
+            --task-id "${REQUESTED_TASK_ID}" \
+            --previous-task-id "${REQUESTED_PREVIOUS_TASK_ID}" \
+            --payload-sha256 "${REQUESTED_PAYLOAD_SHA256}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --current-run-id "${GITHUB_RUN_ID}" \
+            --output "${RUNNER_TEMP}/fanmind-builder-input.txt"
+
+      - name: Transport exactly one admitted handoff
+        env:
+          AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_WORKSPACE_AGENT_ACCESS_TOKEN }}
+          AGENT_TRIGGER_ID: ${{ vars.CHATGPT_FANMIND_MANAGER_TRIGGER_ID }}
         run: |
           set -euo pipefail
           if [[ -z "${AGENT_ACCESS_TOKEN}" || -z "${AGENT_TRIGGER_ID}" ]]; then
@@ -69,14 +83,8 @@ jobs:
             echo "::error title=Invalid Workspace Agent trigger id::CHATGPT_FANMIND_MANAGER_TRIGGER_ID must start with agtch_."
             exit 1
           fi
-          python3 scripts/fanmind_orchestrator_admission.py dispatch \
-            --handoff "${RUNNER_TEMP}/fanmind-handoff.json" \
-            --handoff-id "${REQUESTED_HANDOFF_ID}" \
-            --task-id "${REQUESTED_TASK_ID}" \
-            --previous-task-id "${REQUESTED_PREVIOUS_TASK_ID}" \
-            --payload-sha256 "${REQUESTED_PAYLOAD_SHA256}" \
-            --repository "${GITHUB_REPOSITORY}" \
-            --current-run-id "${GITHUB_RUN_ID}" \
+          python3 scripts/fanmind_orchestrator_admission.py transport \
+            --input "${RUNNER_TEMP}/fanmind-builder-input.txt" \
             --agent-trigger-id "${AGENT_TRIGGER_ID}" \
             --agent-token "${AGENT_ACCESS_TOKEN}"
 
@@ -86,5 +94,6 @@ jobs:
           python3 scripts/fanmind_orchestrator_admission.py await-closeout \
             --handoff "${RUNNER_TEMP}/fanmind-handoff.json" \
             --repository "${GITHUB_REPOSITORY}" \
+            --current-run-id "${GITHUB_RUN_ID}" \
             --timeout-seconds 21000 \
             --poll-seconds 600

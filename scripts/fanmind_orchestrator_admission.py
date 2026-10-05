@@ -24,6 +24,7 @@ RECEIPT_PATH = PM / "ORCHESTRATOR_RESULT.json"
 TERMINAL_RESULTS = {"COMPLETED", "BLOCKED", "FAILED", "NO_CHANGE"}
 SENDABLE_HANDOFF_STATE = "PREPARED"
 AGENT_CONTEXT = "FanMind Builder"
+IDENTITY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 
 class AdmissionError(ValueError):
@@ -56,8 +57,17 @@ def _required_string_list(value: Any, name: str) -> list[str]:
     return [item.strip() for item in value]
 
 
+def _required_identity(value: Any, name: str) -> str:
+    text = _required_text(value, name)
+    if not IDENTITY_PATTERN.fullmatch(text):
+        raise AdmissionError(f"invalid_identity:{name}")
+    return text
+
+
 def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
-    task_id = _required_text(handoff.get("task_id"), "handoff.task_id")
+    if handoff.get("agent_context") != AGENT_CONTEXT:
+        raise AdmissionError("agent_context_mismatch")
+    task_id = _required_identity(handoff.get("task_id"), "handoff.task_id")
     source = _required_text(handoff.get("source"), "handoff.source")
     if source not in {"CATALOG", "OWNER_DIRECT"}:
         raise AdmissionError("invalid:handoff.source")
@@ -69,20 +79,64 @@ def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
     envelope = {
         "agent_context": AGENT_CONTEXT,
         "task_id": task_id,
-        "handoff_id": _required_text(handoff.get("handoff_id"), "handoff.handoff_id"),
+        "handoff_id": _required_identity(handoff.get("handoff_id"), "handoff.handoff_id"),
         "source": source,
         "goal": _required_text(handoff.get("goal"), "handoff.goal"),
         "scope": scope,
         "acceptance": _required_string_list(handoff.get("acceptance"), "handoff.acceptance"),
         "risk": _required_text(handoff.get("risk"), "handoff.risk"),
+        "required_checks": _required_string_list(
+            handoff.get("required_checks"), "handoff.required_checks"
+        ),
         "forbidden": _required_string_list(handoff.get("forbidden"), "handoff.forbidden"),
-        "previous_task_id": _required_text(
+        "previous_task_id": _required_identity(
             handoff.get("previous_task_id"), "handoff.previous_task_id"
         ),
         "prepared_main_sha": _required_text(
             handoff.get("prepared_main_sha"), "handoff.prepared_main_sha"
         ),
+        "previous_result_disposition": _required_text(
+            handoff.get("previous_result_disposition"),
+            "handoff.previous_result_disposition",
+        ),
     }
+    runtime = handoff.get("runtime_requirement")
+    if not isinstance(runtime, dict) or not isinstance(runtime.get("required"), bool):
+        raise AdmissionError("missing_or_invalid:handoff.runtime_requirement")
+    envelope["runtime_requirement"] = {"required": runtime["required"]}
+    if runtime["required"]:
+        envelope["runtime_requirement"]["allowed_workflow"] = _required_text(
+            runtime.get("allowed_workflow"), "handoff.runtime_requirement.allowed_workflow"
+        )
+        if runtime.get("release_binding") != "source_merge":
+            raise AdmissionError("invalid:handoff.runtime_requirement.release_binding")
+        envelope["runtime_requirement"]["release_binding"] = "source_merge"
+    if source == "CATALOG":
+        envelope["catalog_action_id"] = _required_text(
+            handoff.get("catalog_action_id"), "handoff.catalog_action_id"
+        )
+        envelope["roadmap_task"] = _required_text(
+            handoff.get("roadmap_task"), "handoff.roadmap_task"
+        )
+        envelope["catalog_contract_sha256"] = _required_text(
+            handoff.get("catalog_contract_sha256"),
+            "handoff.catalog_contract_sha256",
+        )
+    else:
+        envelope["selection_basis"] = _required_text(
+            handoff.get("selection_basis"), "handoff.selection_basis"
+        )
+        envelope["owner_authorized_at"] = _required_text(
+            handoff.get("owner_authorized_at"), "handoff.owner_authorized_at"
+        )
+        locks = handoff.get("non_overlapping_active_locks")
+        if not isinstance(locks, list) or any(
+            not isinstance(item, str) or not item.startswith("LOCK-") for item in locks
+        ):
+            raise AdmissionError("missing_or_invalid:handoff.non_overlapping_active_locks")
+        if len(set(locks)) != len(locks):
+            raise AdmissionError("duplicate:handoff.non_overlapping_active_locks")
+        envelope["non_overlapping_active_locks"] = sorted(locks)
     return envelope
 
 
@@ -126,7 +180,7 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
     _required_string_list(receipt.get("evidence"), "receipt.evidence")
     _required_text(receipt.get("completed_at"), "receipt.completed_at")
     _required_text(receipt.get("main_sha"), "receipt.main_sha")
-    if status in {"BLOCKED", "FAILED"}:
+    if status in {"BLOCKED", "FAILED", "NO_CHANGE"}:
         _required_text(receipt.get("blocker"), "receipt.blocker")
         _required_text(receipt.get("resume_condition"), "receipt.resume_condition")
     if status == "COMPLETED":
@@ -146,7 +200,11 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
 
 
 def _check_github_truth(
-    handoff: dict[str, Any], receipt: dict[str, Any], truth: dict[str, Any]
+    handoff: dict[str, Any],
+    receipt: dict[str, Any],
+    truth: dict[str, Any],
+    *,
+    require_current_run: bool = True,
 ) -> None:
     observed_main = _required_text(truth.get("observed_main_sha"), "truth.observed_main_sha")
     if observed_main != handoff.get("prepared_main_sha"):
@@ -157,6 +215,22 @@ def _check_github_truth(
         raise AdmissionError("receipt_main_not_reachable")
     if truth.get("previous_handoff_matches") is not True:
         raise AdmissionError("previous_handoff_identity_missing_or_mismatched")
+    if require_current_run:
+        if truth.get("current_handoff_matches") is not True:
+            raise AdmissionError("current_workflow_run_identity_missing_or_mismatched")
+        if truth.get("current_run_attempt") != 1:
+            raise AdmissionError("workflow_rerun_requires_reconciliation")
+    _check_source_acceptance(handoff, receipt, truth)
+    duplicates = truth.get("matching_dispatches")
+    if not isinstance(duplicates, list):
+        raise AdmissionError("github_dispatch_evidence_missing")
+    if duplicates:
+        raise AdmissionError("duplicate_dispatch_same_state")
+
+
+def _check_source_acceptance(
+    handoff: dict[str, Any], receipt: dict[str, Any], truth: dict[str, Any]
+) -> None:
     if receipt["status"] == "COMPLETED":
         source = receipt["source_acceptance"]
         pr = truth.get("previous_pr")
@@ -167,21 +241,42 @@ def _check_github_truth(
             "head_sha": source["head_sha"],
             "merge_sha": source["merge_sha"],
             "merged": True,
+            "base": "main",
         }
         for key, value in expected.items():
             if pr.get(key) != value:
                 raise AdmissionError(f"github_pr_evidence_mismatch:{key}")
+        if truth.get("source_merge_reachable") is not True:
+            raise AdmissionError("source_merge_not_reachable_from_main")
+        expected_checks = handoff.get("required_checks")
+        if source.get("required_checks") != expected_checks:
+            raise AdmissionError("receipt_required_checks_mismatch_task_contract")
         checks = truth.get("checks")
         if not isinstance(checks, dict):
             raise AdmissionError("github_check_evidence_missing")
-        for name in source["required_checks"]:
+        for name in expected_checks:
             if checks.get(name) != "success":
                 raise AdmissionError(f"required_check_not_success:{name}")
-    duplicates = truth.get("matching_dispatches")
-    if not isinstance(duplicates, list):
-        raise AdmissionError("github_dispatch_evidence_missing")
-    if duplicates:
-        raise AdmissionError("duplicate_dispatch_same_state")
+        requirement = handoff.get("runtime_requirement")
+        runtime = receipt.get("runtime_evidence")
+        if requirement.get("required") is False:
+            if runtime != {"required": False, "status": "NOT_REQUIRED"}:
+                raise AdmissionError("runtime_evidence_must_be_not_required")
+        else:
+            if runtime.get("required") is not True or runtime.get("status") != "VERIFIED":
+                raise AdmissionError("required_runtime_evidence_not_verified")
+            observed = truth.get("runtime_run")
+            if not isinstance(observed, dict):
+                raise AdmissionError("github_runtime_evidence_missing")
+            runtime_expected = {
+                "id": runtime.get("run_id"),
+                "name": requirement.get("allowed_workflow"),
+                "head_sha": source.get("merge_sha"),
+                "conclusion": "success",
+            }
+            for key, value in runtime_expected.items():
+                if observed.get(key) != value:
+                    raise AdmissionError(f"github_runtime_evidence_mismatch:{key}")
 
 
 def _selector_inputs() -> tuple[dict, dict, set[str], set[str], list[dict], set[str]]:
@@ -214,7 +309,75 @@ def _selector_inputs() -> tuple[dict, dict, set[str], set[str], list[dict], set[
     return state, catalog, deferred, active_tasks, active_slots, failed
 
 
-def _check_selection(handoff: dict[str, Any], selector_decision: dict[str, Any]) -> None:
+def _blocks(text: str) -> list[str]:
+    return re.split(r"(?m)^## ", text)[1:]
+
+
+def _owner_direct_binding(
+    handoff: dict[str, Any], started_text: str, locks_text: str
+) -> dict[str, Any]:
+    task_id = str(handoff.get("task_id"))
+    started_matches = [
+        block
+        for block in _blocks(started_text)
+        if re.search(rf"(?m)^- Orchestrator task_id:\s*{re.escape(task_id)}\s*$", block)
+    ]
+    if len(started_matches) != 1:
+        return {"authorized": False, "reason": "owner_started_work_identity_missing_or_duplicate"}
+    started = started_matches[0]
+    required_started = (
+        f"- Orchestrator handoff: {handoff.get('handoff_id')}",
+        f"- Payload digest: {handoff.get('payload_sha256')}",
+        f"- Previous task_id: {handoff.get('previous_task_id')}",
+        "- Source: explicit Owner task, not a roadmap-catalog selection.",
+        "- Status: IN_PROGRESS",
+    )
+    if not all(marker in started for marker in required_started):
+        return {"authorized": False, "reason": "owner_started_work_identity_mismatch"}
+    lock_match = re.search(r"(?m)^- Work lock:\s*(LOCK-[A-Z0-9_-]+)\s*$", started)
+    if not lock_match:
+        return {"authorized": False, "reason": "owner_work_lock_missing"}
+    own_lock = lock_match.group(1)
+    lock_blocks = {
+        block.splitlines()[0].strip(): block
+        for block in _blocks(locks_text)
+        if block.splitlines() and block.splitlines()[0].strip().startswith("LOCK-")
+    }
+    lock = lock_blocks.get(own_lock)
+    if (
+        lock is None
+        or "- Status: ACTIVE" not in lock
+        or f"FanMind Builder task `{task_id}`" not in lock
+    ):
+        return {"authorized": False, "reason": "owner_work_lock_identity_mismatch"}
+    active_locks = {
+        lock_id
+        for lock_id, block in lock_blocks.items()
+        if "- Status: ACTIVE" in block and lock_id != own_lock
+    }
+    declared = set(handoff.get("non_overlapping_active_locks") or [])
+    structured_line = "- Non-overlapping active locks: " + ", ".join(sorted(declared))
+    if structured_line not in started or structured_line not in lock:
+        return {"authorized": False, "reason": "owner_parallel_scope_binding_missing"}
+    checks_line = "- Required checks: " + ", ".join(sorted(handoff.get("required_checks") or []))
+    runtime_line = "- Runtime requirement: " + json.dumps(
+        handoff.get("runtime_requirement"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    if any(line not in started or line not in lock for line in (checks_line, runtime_line)):
+        return {"authorized": False, "reason": "owner_acceptance_contract_binding_missing"}
+    if declared != active_locks:
+        return {"authorized": False, "reason": "owner_active_lock_conflict_or_stale_parallel_proof"}
+    return {"authorized": True, "reason": "", "own_lock": own_lock}
+
+
+def _check_selection(
+    handoff: dict[str, Any],
+    selector_decision: dict[str, Any],
+    owner_binding: dict[str, Any] | None = None,
+) -> None:
     source = handoff["source"]
     if source == "CATALOG":
         action_id = _required_text(handoff.get("catalog_action_id"), "handoff.catalog_action_id")
@@ -226,12 +389,42 @@ def _check_selection(handoff: dict[str, Any], selector_decision: dict[str, Any])
             raise AdmissionError("selector_task_mismatch")
         if selector_decision.get("safe_ready_set") != [action_id]:
             raise AdmissionError("selector_not_exactly_one")
+        task_contract = selector_decision.get("task_contract")
+        if not isinstance(task_contract, dict):
+            raise AdmissionError("catalog_dispatch_contract_missing")
+        expected_contract = {
+            "goal": handoff.get("goal"),
+            "scope": handoff.get("scope"),
+            "acceptance": handoff.get("acceptance"),
+            "required_checks": handoff.get("required_checks"),
+            "runtime_requirement": handoff.get("runtime_requirement"),
+        }
+        if task_contract != expected_contract:
+            raise AdmissionError("catalog_dispatch_contract_mismatch")
+        canonical = json.dumps(
+            task_contract, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        )
+        expected_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        if handoff.get("catalog_contract_sha256") != expected_hash:
+            raise AdmissionError("catalog_contract_digest_mismatch")
     else:
-        if handoff.get("catalog_action_id") is not None:
+        if any(
+            handoff.get(key) is not None
+            for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256")
+        ):
             raise AdmissionError("owner_direct_must_not_claim_catalog_action")
         _required_text(handoff.get("owner_authorized_at"), "handoff.owner_authorized_at")
         if handoff.get("selection_basis") != "EXPLICIT_OWNER_TASK":
             raise AdmissionError("owner_direct_selection_basis_required")
+        binding = owner_binding
+        if binding is None:
+            binding = _owner_direct_binding(
+                handoff,
+                selector.STARTED_WORK_PATH.read_text(encoding="utf-8"),
+                selector.WORK_LOCKS_PATH.read_text(encoding="utf-8"),
+            )
+        if binding.get("authorized") is not True:
+            raise AdmissionError(str(binding.get("reason") or "owner_direct_not_authorized"))
 
 
 def evaluate_admission(
@@ -245,6 +438,8 @@ def evaluate_admission(
     requested_previous_task_id: str | None = None,
     composer_input: str | None = None,
     requested_payload_sha256: str | None = None,
+    owner_binding: dict[str, Any] | None = None,
+    require_current_run: bool = True,
 ) -> dict[str, Any]:
     try:
         if handoff.get("schema_version") != 1:
@@ -268,10 +463,31 @@ def evaluate_admission(
         validate_typed_receipt(receipt)
         if handoff.get("previous_task_id") != receipt.get("task_id"):
             raise AdmissionError("previous_task_id_receipt_mismatch")
-        if receipt["status"] != "COMPLETED":
-            raise AdmissionError(f"previous_result_not_completed:{receipt['status']}")
-        _check_github_truth(handoff, receipt, github_truth)
-        _check_selection(handoff, selector_decision)
+        if handoff.get("task_id") == receipt.get("task_id"):
+            raise AdmissionError("task_identity_already_terminal")
+        disposition = handoff.get("previous_result_disposition")
+        if receipt["status"] == "COMPLETED":
+            if disposition != "ACCEPTED_COMPLETION":
+                raise AdmissionError("completed_previous_result_not_accepted")
+        else:
+            if disposition != "RECONCILED_PARKED":
+                raise AdmissionError(f"previous_result_not_reconciled:{receipt['status']}")
+            latest = github_truth.get("latest_previous_handoff")
+            if not isinstance(latest, dict) or any(
+                (
+                    latest.get("status") != "completed",
+                    latest.get("conclusion") != "success",
+                    latest.get("transport_state") != "TRANSPORT_ACCEPTED",
+                )
+            ):
+                raise AdmissionError(f"previous_result_unresolved:{receipt['status']}")
+        _check_github_truth(
+            handoff,
+            receipt,
+            github_truth,
+            require_current_run=require_current_run,
+        )
+        _check_selection(handoff, selector_decision, owner_binding)
         return {
             "decision": "SEND",
             "task_id": handoff["task_id"],
@@ -300,15 +516,18 @@ def evaluate_closeout(
         validate_typed_receipt(receipt)
         if receipt.get("task_id") != handoff.get("task_id"):
             raise AdmissionError("closeout_task_id_mismatch")
+        if receipt.get("handoff_id") != handoff.get("handoff_id"):
+            raise AdmissionError("closeout_handoff_id_mismatch")
+        if receipt.get("payload_sha256") != handoff.get("payload_sha256"):
+            raise AdmissionError("closeout_payload_digest_mismatch")
+        if github_truth.get("current_handoff_matches") is not True:
+            raise AdmissionError("current_workflow_run_identity_missing_or_mismatched")
         if github_truth.get("main_readable") is not True:
             raise AdmissionError("github_main_unreadable")
         if github_truth.get("receipt_main_reachable") is not True:
             raise AdmissionError("receipt_main_not_reachable")
         if receipt.get("status") == "COMPLETED":
-            closeout_truth = dict(github_truth)
-            closeout_truth["observed_main_sha"] = handoff.get("prepared_main_sha")
-            closeout_truth["matching_dispatches"] = []
-            _check_github_truth(handoff, receipt, closeout_truth)
+            _check_source_acceptance(handoff, receipt, github_truth)
         return {
             "decision": "TERMINAL",
             "task_id": receipt["task_id"],
@@ -363,6 +582,65 @@ class GitHubClient:
         return parsed
 
 
+def _complete_workflow_run_history(client: GitHubClient) -> list[dict[str, Any]]:
+    collected: list[dict[str, Any]] = []
+    expected_total: int | None = None
+    for page in range(1, 11):
+        value = client.get(
+            "actions/workflows/fanmind-manager-event-dispatch.yml/runs"
+            f"?event=workflow_dispatch&per_page=100&page={page}"
+        )
+        page_runs = value.get("workflow_runs") if isinstance(value, dict) else None
+        total = value.get("total_count") if isinstance(value, dict) else None
+        if not isinstance(page_runs, list) or not isinstance(total, int) or total < 0:
+            raise AdmissionError("github_workflow_run_history_unreadable")
+        if expected_total is None:
+            expected_total = total
+            if total > 1000:
+                raise AdmissionError("github_workflow_run_history_unbounded")
+        elif total != expected_total:
+            raise AdmissionError("github_workflow_run_history_changed_during_read")
+        if any(not isinstance(run, dict) for run in page_runs):
+            raise AdmissionError("github_workflow_run_history_unreadable")
+        collected.extend(page_runs)
+        if len(page_runs) < 100:
+            if len(collected) != expected_total:
+                raise AdmissionError("github_workflow_run_history_incomplete")
+            return collected
+    raise AdmissionError("github_workflow_run_history_incomplete")
+
+
+def _transport_state(client: GitHubClient, run: dict[str, Any]) -> str:
+    run_id = run.get("id")
+    jobs = client.get(f"actions/runs/{run_id}/jobs?per_page=100")
+    entries = jobs.get("jobs") if isinstance(jobs, dict) else None
+    total = jobs.get("total_count") if isinstance(jobs, dict) else None
+    if not isinstance(entries, list) or not isinstance(total, int) or total != len(entries):
+        raise AdmissionError("github_workflow_job_history_incomplete")
+    steps = [
+        step
+        for job in entries
+        if isinstance(job, dict)
+        for step in job.get("steps", [])
+        if isinstance(step, dict)
+    ]
+    admit = next((step for step in steps if step.get("name") == "Admit prepared handoff"), None)
+    transport = next(
+        (step for step in steps if step.get("name") == "Transport exactly one admitted handoff"),
+        None,
+    )
+    if transport and transport.get("conclusion") == "skipped":
+        return "REJECTED_BEFORE_TRANSPORT"
+    if transport and transport.get("conclusion") == "success":
+        return "TRANSPORT_ACCEPTED"
+    if transport and (
+        transport.get("status") in {"queued", "in_progress"}
+        or transport.get("conclusion") in {"failure", "cancelled", "timed_out"}
+    ):
+        return "TRANSPORT_UNRESOLVED"
+    raise AdmissionError("github_workflow_transport_state_unreadable")
+
+
 def collect_github_truth(
     client: GitHubClient,
     handoff: dict[str, Any],
@@ -378,11 +656,15 @@ def collect_github_truth(
         "observed_main_sha": observed_main,
         "main_readable": True,
         "receipt_main_reachable": reachable,
+        "source_merge_reachable": False,
         "previous_pr": None,
         "checks": {},
+        "runtime_run": None,
         "matching_dispatches": [],
         "previous_handoff_matches": False,
         "previous_handoff_source": "",
+        "current_handoff_matches": False,
+        "current_run_attempt": None,
     }
     source = receipt.get("source_acceptance")
     if receipt.get("status") == "COMPLETED" and isinstance(source, dict):
@@ -392,6 +674,12 @@ def collect_github_truth(
             "head_sha": (pr.get("head") or {}).get("sha"),
             "merge_sha": pr.get("merge_commit_sha"),
             "merged": bool(pr.get("merged_at")),
+            "base": (pr.get("base") or {}).get("ref"),
+        }
+        merge_compare = client.get(f"compare/{source.get('merge_sha')}...{observed_main}")
+        truth["source_merge_reachable"] = merge_compare.get("status") in {
+            "ahead",
+            "identical",
         }
         check_runs = client.get(f"commits/{source.get('head_sha')}/check-runs?per_page=100")
         truth["checks"] = {
@@ -399,9 +687,22 @@ def collect_github_truth(
             for item in check_runs.get("check_runs", [])
             if isinstance(item, dict) and item.get("name")
         }
-    runs = client.get(
-        "actions/workflows/fanmind-manager-event-dispatch.yml/runs?event=workflow_dispatch&per_page=100"
-    )
+        requirement = handoff.get("runtime_requirement")
+        runtime = receipt.get("runtime_evidence")
+        if (
+            isinstance(requirement, dict)
+            and requirement.get("required") is True
+            and isinstance(runtime, dict)
+            and isinstance(runtime.get("run_id"), int)
+        ):
+            runtime_run = client.get(f"actions/runs/{runtime['run_id']}")
+            truth["runtime_run"] = {
+                "id": runtime_run.get("id"),
+                "name": runtime_run.get("name"),
+                "head_sha": runtime_run.get("head_sha"),
+                "conclusion": runtime_run.get("conclusion"),
+            }
+    workflow_runs = _complete_workflow_run_history(client)
     current_marker = (
         f"Orchestrator handoff {handoff.get('handoff_id')} task "
         f"{handoff.get('task_id')} digest {handoff.get('payload_sha256')}"
@@ -409,10 +710,25 @@ def collect_github_truth(
     run_pattern = re.compile(
         r"^Orchestrator handoff (?P<handoff>\S+) task (?P<task>\S+) digest (?P<digest>[0-9a-f]{64})$"
     )
+    if current_run_id:
+        current_run = client.get(f"actions/runs/{current_run_id}")
+        current_title = str(current_run.get("display_title") or current_run.get("name") or "")
+        current_identity = run_pattern.fullmatch(current_title)
+        truth["current_run_attempt"] = current_run.get("run_attempt")
+        truth["current_handoff_matches"] = bool(
+            current_identity
+            and str(current_run.get("id")) == current_run_id
+            and current_run.get("event") == "workflow_dispatch"
+            and current_run.get("path")
+            == ".github/workflows/fanmind-manager-event-dispatch.yml"
+            and current_identity.group("handoff") == handoff.get("handoff_id")
+            and current_identity.group("task") == handoff.get("task_id")
+            and current_identity.group("digest") == handoff.get("payload_sha256")
+        )
     prior_runs = sorted(
         (
             run
-            for run in runs.get("workflow_runs", [])
+            for run in workflow_runs
             if str(run.get("id")) != current_run_id
         ),
         key=lambda run: (
@@ -425,15 +741,21 @@ def collect_github_truth(
     for run in prior_runs:
         title = str(run.get("display_title") or run.get("name") or "")
         match = run_pattern.fullmatch(title)
-        if match:
-            structured_runs.append((run, match.groupdict()))
+        if not match:
+            raise AdmissionError("github_workflow_run_identity_unreadable")
+        transport_state = _transport_state(client, run)
+        if transport_state == "REJECTED_BEFORE_TRANSPORT":
+            continue
+        structured_runs.append((run, match.groupdict(), transport_state))
+        break
     if structured_runs:
-        latest_run, identity = structured_runs[0]
+        latest_run, identity, transport_state = structured_runs[0]
         truth["latest_previous_handoff"] = {
             **identity,
             "run_id": str(latest_run.get("id")),
             "status": latest_run.get("status"),
             "conclusion": latest_run.get("conclusion"),
+            "transport_state": transport_state,
         }
         truth["previous_handoff_matches"] = (
             identity["handoff"] == receipt.get("handoff_id")
@@ -458,8 +780,9 @@ def collect_github_truth(
             "status": run.get("status"),
             "conclusion": run.get("conclusion"),
         }
-        for run in prior_runs
-        if current_marker == str(run.get("display_title") or run.get("name") or "")
+        for run, identity, transport_state in structured_runs
+        if current_marker
+        == f"Orchestrator handoff {identity['handoff']} task {identity['task']} digest {identity['digest']}"
         and run.get("status") in {"queued", "in_progress", "completed"}
     ]
     return truth
@@ -506,11 +829,23 @@ def check_with_github(
     requested_payload_sha256: str,
     composer_input: str,
     current_run_id: str = "",
+    owner_binding: dict[str, Any] | None = None,
+    local_head: str | None = None,
 ) -> dict[str, Any]:
+    if local_head != handoff.get("prepared_main_sha"):
+        return {
+            "decision": "BLOCK",
+            "task_id": handoff.get("task_id"),
+            "handoff_id": handoff.get("handoff_id"),
+            "payload_sha256": handoff.get("payload_sha256"),
+            "builder_input": "",
+            "blocker": "local_head_not_prepared_main",
+            "resume_condition": "Check out the exact freshly observed prepared main before repeating preparation validation.",
+        }
     truth = collect_github_truth(
         client, handoff, receipt, current_run_id=current_run_id
     )
-    return evaluate_admission(
+    decision = evaluate_admission(
         handoff,
         receipt,
         truth,
@@ -520,7 +855,18 @@ def check_with_github(
         requested_previous_task_id=requested_previous_task_id,
         requested_payload_sha256=requested_payload_sha256,
         composer_input=composer_input,
+        owner_binding=owner_binding,
+        require_current_run=False,
     )
+    if decision.get("decision") == "SEND":
+        return {
+            **decision,
+            "decision": "BLOCK",
+            "builder_input": "",
+            "blocker": "manual_transport_reservation_unavailable",
+            "resume_condition": "Use the repository workflow_dispatch path, which owns lifecycle concurrency and durable run correlation.",
+        }
+    return decision
 
 
 def send_builder(api_url: str, token: str, builder_input: str) -> dict[str, Any]:
@@ -542,7 +888,7 @@ def send_builder(api_url: str, token: str, builder_input: str) -> dict[str, Any]
 
 def _current_selector_decision() -> dict[str, Any]:
     state, catalog, deferred, active_tasks, active_slots, failed = _selector_inputs()
-    return selector.dispatch_decision(
+    decision = selector.dispatch_decision(
         state,
         catalog,
         deferred,
@@ -550,6 +896,35 @@ def _current_selector_decision() -> dict[str, Any]:
         active_tasks=active_tasks,
         active_slots=active_slots,
     )
+    if decision.get("executable") is True:
+        action = next(
+            (
+                item
+                for item in catalog.get("actions", [])
+                if item.get("id") == decision.get("action_id")
+            ),
+            None,
+        )
+        if isinstance(action, dict) and all(
+            key in action
+            for key in (
+                "dispatch_goal",
+                "dispatch_scope",
+                "dispatch_acceptance",
+                "dispatch_required_checks",
+                "dispatch_runtime_requirement",
+            )
+        ):
+            decision["task_contract"] = {
+                "goal": action["dispatch_goal"],
+                "scope": action["dispatch_scope"],
+                "acceptance": action["dispatch_acceptance"],
+                "required_checks": action["dispatch_required_checks"],
+                "runtime_requirement": action["dispatch_runtime_requirement"],
+            }
+        else:
+            decision["task_contract"] = None
+    return decision
 
 
 def _local_head() -> str:
@@ -596,13 +971,42 @@ def main() -> int:
     dispatch.add_argument("--agent-token", required=True)
     dispatch.add_argument("--current-run-id", default="")
 
+    admit = sub.add_parser("admit")
+    admit.add_argument("--handoff", type=Path, required=True)
+    admit.add_argument("--receipt", type=Path, default=RECEIPT_PATH)
+    admit.add_argument("--task-id", required=True)
+    admit.add_argument("--handoff-id", required=True)
+    admit.add_argument("--previous-task-id", required=True)
+    admit.add_argument("--payload-sha256", required=True)
+    admit.add_argument("--repository", required=True)
+    admit.add_argument("--current-run-id", required=True)
+    admit.add_argument("--output", type=Path, required=True)
+
+    transport = sub.add_parser("transport")
+    transport.add_argument("--input", type=Path, required=True)
+    transport.add_argument("--agent-trigger-id", required=True)
+    transport.add_argument("--agent-token", required=True)
+
     closeout = sub.add_parser("await-closeout")
     closeout.add_argument("--handoff", type=Path, required=True)
     closeout.add_argument("--repository", required=True)
     closeout.add_argument("--timeout-seconds", type=int, default=21000)
     closeout.add_argument("--poll-seconds", type=int, default=600)
+    closeout.add_argument("--current-run-id", required=True)
 
     args = parser.parse_args()
+    if args.command == "transport":
+        payload = args.input.read_text(encoding="utf-8")
+        if not payload:
+            raise AdmissionError("admitted_transport_payload_missing")
+        response = send_builder(
+            f"https://api.chatgpt.com/v1/workspace_agents/{args.agent_trigger_id}/trigger",
+            args.agent_token,
+            payload,
+        )
+        print(json.dumps({"sent": 1, "response": response}, sort_keys=True))
+        return 0
+
     handoff = _read_json(args.handoff)
     if args.command == "prepare":
         envelope = canonical_task_envelope(handoff)
@@ -629,7 +1033,12 @@ def main() -> int:
                     print(json.dumps(result, sort_keys=True), flush=True)
                     time.sleep(args.poll_seconds)
                     continue
-                truth = collect_github_truth(client, handoff, current_receipt)
+                truth = collect_github_truth(
+                    client,
+                    handoff,
+                    current_receipt,
+                    current_run_id=args.current_run_id,
+                )
                 result = evaluate_closeout(handoff, current_receipt, truth)
                 if result["decision"] == "TERMINAL":
                     print(json.dumps(result, sort_keys=True))
@@ -644,6 +1053,9 @@ def main() -> int:
     receipt = _read_json(args.receipt)
     selector_decision = _current_selector_decision()
     if args.command == "check":
+        if _local_head() != handoff.get("prepared_main_sha"):
+            print(json.dumps({"decision": "BLOCK", "blocker": "local_head_not_prepared_main"}))
+            return 1
         composer = args.composer_input.read_text(encoding="utf-8")
         decision = check_with_github(
             handoff,
@@ -656,6 +1068,7 @@ def main() -> int:
             requested_payload_sha256=args.payload_sha256,
             composer_input=composer,
             current_run_id=args.current_run_id,
+            local_head=_local_head(),
         )
         print(json.dumps(decision, sort_keys=True))
         return 0 if decision["decision"] == "SEND" else 1
@@ -664,6 +1077,27 @@ def main() -> int:
         print(json.dumps({"decision": "BLOCK", "blocker": "local_head_not_prepared_main"}))
         return 1
     client = GitHubClient(args.repository)
+    if args.command == "admit":
+        truth = collect_github_truth(
+            client, handoff, receipt, current_run_id=args.current_run_id
+        )
+        decision = evaluate_admission(
+            handoff,
+            receipt,
+            truth,
+            selector_decision,
+            requested_task_id=args.task_id,
+            requested_handoff_id=args.handoff_id,
+            requested_previous_task_id=args.previous_task_id,
+            requested_payload_sha256=args.payload_sha256,
+        )
+        if decision["decision"] != "SEND":
+            decision.pop("builder_input", None)
+            print(json.dumps(decision, sort_keys=True))
+            return 1
+        args.output.write_text(decision["builder_input"], encoding="utf-8")
+        print(json.dumps({"decision": "ADMITTED", "sent": 0}, sort_keys=True))
+        return 0
     result = dispatch_with_github(
         handoff,
         receipt,

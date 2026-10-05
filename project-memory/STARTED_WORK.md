@@ -11,6 +11,9 @@
 - Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
 - Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
 - Parallel safety: governance-only and explicitly non-overlapping with the active ChatAdmin Character/Fans and Capacity reserve/settle/budget scopes; those locks, source areas and target boundaries remain untouched.
+- Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
+- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
+- Runtime requirement: {"allowed_workflow":"FanMind God Mode Gate","release_binding":"source_merge","required":true}
 - Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
 - Boundary: Draft PR only. No merge, auto-merge, deploy, live API trigger, controlled live check, SQL, host, provider, secret, permission or protected-state action is authorized.
 - Closeout: this task cannot publish `COMPLETED` until a later separately authorized merge/canonical receipt and controlled check exist. Current delivery stops at reviewable Draft PR.
