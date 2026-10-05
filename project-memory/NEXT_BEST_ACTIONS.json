@@ -496,6 +496,7 @@
           "src/app/fans/page.tsx",
           "src/app/fans/fans.module.css",
           "src/app/fans/filtering.mjs",
+          "src/lib/landingEnglishCopySupplement.ts",
           "tests/fans-tag-filter.test.mjs",
           "e2e/fans-tag-filter.spec.ts",
           "package.json",
@@ -506,7 +507,8 @@
           "project-memory/WORK_LOCKS.md",
           "project-memory/DRIFT_BASELINE.json",
           "project-memory/CURRENT_STATE.md",
-          "project-memory/FINISHLINE_STATE.json"
+          "project-memory/FINISHLINE_STATE.json",
+          "project-memory/AUTO_HANDOFF.md"
         ],
         "directories": [],
         "modules": [
@@ -525,7 +527,8 @@
           "project-memory/WORK_LOCKS.md",
           "project-memory/DRIFT_BASELINE.json",
           "project-memory/CURRENT_STATE.md",
-          "project-memory/FINISHLINE_STATE.json"
+          "project-memory/FINISHLINE_STATE.json",
+          "project-memory/AUTO_HANDOFF.md"
         ],
         "ci": [
           "tests/fans-tag-filter.test.mjs",
