@@ -341,6 +341,7 @@ class AdmissionTests(unittest.TestCase):
                 association="OWNER",
                 login="Bernds-tech",
                 main_sha=None,
+                bootstrap_previous=False,
                 unresolved=False,
                 extra_lock=False,
             ):
@@ -348,6 +349,7 @@ class AdmissionTests(unittest.TestCase):
                 self.association = association
                 self.login = login
                 self.main_sha = main_sha or prepared["prepared_main_sha"]
+                self.bootstrap_previous = bootstrap_previous
                 self.unresolved = unresolved
                 self.extra_lock = extra_lock
 
@@ -367,6 +369,8 @@ class AdmissionTests(unittest.TestCase):
                 if path.startswith("actions/runs?head_sha="):
                     return source_workflow_history()
                 if path.startswith("actions/workflows/"):
+                    if self.bootstrap_previous:
+                        return {"total_count": 0, "workflow_runs": []}
                     return {
                         "total_count": 1,
                         "workflow_runs": [{
@@ -394,6 +398,15 @@ class AdmissionTests(unittest.TestCase):
                     if self.extra_lock:
                         locks += "## LOCK-COLLISION\n- Status: ACTIVE\n"
                     return {"content": base64.b64encode(locks.encode()).decode()}
+                if path.startswith("contents/project-memory/STARTED_WORK.md?ref="):
+                    started = "\n".join(
+                        (
+                            f"- Orchestrator handoff: {previous['handoff_id']}",
+                            f"- Orchestrator task_id: {previous['task_id']}",
+                            f"- Payload digest: {previous['payload_sha256']}",
+                        )
+                    )
+                    return {"content": base64.b64encode(started.encode()).decode()}
                 if path == "issues/comments/9001":
                     return {
                         **authorization_comment,
@@ -431,6 +444,14 @@ class AdmissionTests(unittest.TestCase):
             )["sent"],
         )
         self.assertEqual([], transport_calls)
+        bootstrapped = MODULE.check_with_github(
+            prepared,
+            previous,
+            selector_state,
+            Client(bootstrap_previous=True),
+            **kwargs,
+        )
+        self.assertEqual("PREPARED_ONLY", bootstrapped["decision"])
 
         rejected_authority = MODULE.check_with_github(
             prepared, previous, selector_state, Client(association="COLLABORATOR"), **kwargs

@@ -1013,7 +1013,9 @@ def collect_github_truth(
         )
         truth["previous_handoff_source"] = "latest_workflow_run"
     else:
-        started = selector.STARTED_WORK_PATH.read_text(encoding="utf-8")
+        started = client.file_text(
+            "project-memory/STARTED_WORK.md", ref=observed_main
+        )
         bootstrap_markers = (
             f"- Orchestrator handoff: {receipt.get('handoff_id')}",
             f"- Orchestrator task_id: {receipt.get('task_id')}",
