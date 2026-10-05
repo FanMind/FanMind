@@ -50,7 +50,7 @@ owner/platform action required
 - `NBA-CREATOR-FOUNDATION-STAGING-CATALOG` priority 13: **DONE** — gate creator_foundation_staging_catalog is RECONCILED
 - `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: **DONE** — gate creator_foundation_profile_transition_design is ACCEPTED
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL
@@ -65,8 +65,8 @@ owner/platform action required
 - Phase 5 · Echte Registrierung vollständig abnehmen: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` (OWNER_ACTION_REQUIRED)
 - Phase 5 · KI-/Billing-Gesamtabnahme: `NBA-AI-LIFECYCLE-RECONCILE` (ACTIVE)
 - Phase 5 · Security- und Meta-Abnahme: `NBA-SECURITY-PROTECTED` (OWNER_ACTION_REQUIRED)
-- Phase 6 · Google-Play-Test & Geräteabnahme: `NBA-MOBILE-READONLY` (OWNER_ACTION_REQUIRED)
-- Phase 6 · Push für Follow-up-Erinnerungen: `NBA-MOBILE-READONLY` (OWNER_ACTION_REQUIRED)
+- Phase 6 · Google-Play-Test & Geräteabnahme: `NBA-MOBILE-READONLY` (DEFERRED_BY_OWNER)
+- Phase 6 · Push für Follow-up-Erinnerungen: `NBA-MOBILE-READONLY` (DEFERRED_BY_OWNER)
 - Phase 7 · TikTok: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
 - Phase 7 · X / Twitter: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
 - Phase 7 · OnlyFans: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)

@@ -20,28 +20,6 @@
 - Postflight boundary: automatic deploy/readiness confirmed the exact live revision. The read-only audit retained only the known stale database/full-backup blocker; this source closeout does not claim backup cause/freshness, overall product acceptance or a manual live action.
 - Exact next step: none for this task. Do not reopen it or keep a Builder slot reserved. Any independent work requires a new Orchestrator decision; backup remediation remains separate.
 
-## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
-- Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
-- Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
-- Orchestrator task_id: fanmind-orchestrator-method-20261005-01
-- Payload digest: eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2
-- Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
-- Source: explicit Owner task, not a roadmap-catalog selection.
-- Risk: R3
-- Status: ACCEPTED; source method merged and canonical receipt prepared for publication.
-- Work lock: LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
-- Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
-- Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
-- Parallel safety: governance-only and explicitly non-overlapping with the active ChatAdmin Character/Fans and Capacity reserve/settle/budget scopes; those locks, source areas and target boundaries remain untouched.
-- Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
-- Runtime requirement: {"required":false}
-- Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
-- Completion: PR #1276 final head `111d462a8b3d50d7d7e2acc94c27b61c11f74c70` passed all nine required exact-head workflows and independent final countercheck, then merged with SHA guard as `c5e194273585a0d0d57cf0da832c531dc02f01c4` at 2026-10-05T12:34:38Z. This PR prepares the canonical receipt with `runtime_evidence={required:false,status:NOT_REQUIRED}`; publication occurs only if this closeout PR is merged.
-- Prior boundary: the preceding `BLOCKED` receipt was correct while merge and canonical publication remained unauthorized; it is historical evidence, not an unresolved product or runtime blocker.
-- Postflight boundary: automatic deploy/readiness confirmed the exact live revision. The read-only audit retained only the known stale database/full-backup blocker; this source closeout does not claim backup cause/freshness, overall product acceptance or a manual live action.
-- Exact next step: none for this task. Do not reopen it or keep a Builder slot reserved. Any independent work requires a new Orchestrator decision; backup remediation remains separate.
-
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
@@ -1229,3 +1207,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Countercheck: full PR diff remains repository/CI-only. Falsifier: any exact-head failure in the Production-audit contract or Root/Web dependency enforcement would reopen this fix; neither occurred.
 - Exact next step: PR #1256 still needs its normal independent review and merge decision. This CI-resolution run does not merge.
 - Recovery: repository revert only; no external state was changed by this source update.
+
+## FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005 — roadmap/catalog reconciliation in PR #1280
+- Task: FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Orchestrator handoff: owner-fanmind-product-roadmap-continuation-20261005-01
+- Orchestrator task_id: fanmind-product-roadmap-continuation-20261005-01
+- Source: one-time direct authenticated Chat authorization for exact Draft PR #1280, explicitly approved by the Owner at 2026-10-05T16:31:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, machine admission, workflow reservation or a schema-valid canonical accepted_handoff.
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR #1280 starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
+- Scope: continue only PR #1280; repair and complete `scripts/fanmind_next_best_action.py`, add truthful roadmap references to `project-memory/NEXT_BEST_ACTIONS.json`, regenerate `project-memory/NEXT_BEST_ACTION.md`, retain the existing bounded `project-memory/PROTOCOL.md` update and add only this task's minimum coordination evidence.
+- Parallel safety: repository-only selector/catalog/Project-Memory scope. It does not modify or assume authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`, their source/runtime scope, or any protected target.
+- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, Project Memory Guard, Project Memory Quality, Project Memory Status. Supply Chain Security is included only if the final changed-file scope triggers it.
+- Runtime requirement: {"required":false}
+- Acceptance: parse the complete canonical TypeScript roadmap without execution; reconcile active unfinished items only through explicit existing-catalog mappings; retain done/later/protected/dependency/lock/failure/replay gates; permit an independently safe mapped later action only through the existing selector; expose genuine unmapped items only as non-executable planning gaps; preserve one-or-zero dispatch and workflow transport boundaries.
+- Boundaries: no merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, Owner-comment fabrication, roadmap product-state rewrite, second planner/queue/registry or second task.
+- Recovery: normal reviewed repository revert only; no external state is changed.
+

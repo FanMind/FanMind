@@ -14,22 +14,6 @@
 - Boundary: automatic deploy/readiness confirmed the exact live revision; read-only audit retained the known stale database/full-backup blocker. No manual workflow/API dispatch, live check, database, backup, restore, host, provider, secret, permission or branch-protection action is included or authorized by this release.
 - Recovery: any source regression uses a separately reviewed repository revert. Receipt publication itself performs no external mutation; preserve the independent backup blocker rather than reopening this lock.
 
-## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
-- Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
-- Status: RELEASED_MERGED_VERIFIED
-- Risk: R3
-- Holder: FanMind Builder task `fanmind-orchestrator-method-20261005-01`
-- Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
-- Scope: `.github/workflows/fanmind-manager-event-dispatch.yml`, `scripts/fanmind_orchestrator_admission.py`, the serial dispatch view of `scripts/fanmind_next_best_action.py`, focused tests, directly affected orchestration docs/protocol and this task's coordination records.
-- Parallel safety: explicit non-overlap with `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` and `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; do not edit or assume authority over those scopes.
-- Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
-- Runtime requirement: {"required":false}
-- Forbidden: contents-write permission, per-handoff repository/main writes, merge/auto-merge, live workflow/API dispatch, deploy, Production/Staging/database/provider/Billing/secret/permission/branch-protection mutation or a second planning/queue system.
-- Release: PR #1276 final head `111d462a8b3d50d7d7e2acc94c27b61c11f74c70` passed all nine required exact-head workflows and independent final countercheck, then merged as `c5e194273585a0d0d57cf0da832c531dc02f01c4`; this closeout PR prepares the matching canonical source-only `COMPLETED` receipt with runtime `NOT_REQUIRED`, effective only after publication on `main`.
-- Boundary: automatic deploy/readiness confirmed the exact live revision; read-only audit retained the known stale database/full-backup blocker. No manual workflow/API dispatch, live check, database, backup, restore, host, provider, secret, permission or branch-protection action is included or authorized by this release.
-- Recovery: any source regression uses a separately reviewed repository revert. Receipt publication itself performs no external mutation; preserve the independent backup blocker rather than reopening this lock.
-
 ## LOCK-FM-CI-PR1256-20261004
 - Task: FM-CI-PR1256-20261004
 - Status: RELEASED_CI_FIXED
@@ -1196,3 +1180,18 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Result: policy revision 2 contains EUR 15 / 30 / 50 budgets; activation switches remain off, emergency freeze remains on; browser roles have no policy/grant SELECT access; no ledger customer data exists.
 - Blocker: reserve/settle RPC source must be fixed/reviewed before Staging ledger APPLY.
 - Recovery: set only the three budget columns back to NULL with all activation switches still off; no customer state was created.
+
+## LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Task: FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Status: ACTIVE
+- Risk: R3
+- Holder: FanMind Builder task `fanmind-product-roadmap-continuation-20261005-01`
+- Branch/PR: `fix/orchestrator-product-roadmap-continuation-20261005` / #1280
+- Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
+- Source: one-time direct authenticated Chat authorization for exact PR #1280, Owner-approved at 2026-10-05T16:31:00Z; no GitHub comment, PREPARED_ONLY result, machine admission or workflow reservation is claimed.
+- Scope: existing next-best-action selector, explicit roadmap references in its existing catalog, focused embedded contract tests, generated next-action view, directly affected protocol text and this task's coordination records only. `src/config/roadmap.ts` is read-only input.
+- Parallel safety: no overlap or authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; their files, runtimes and protected actions remain untouched.
+- Forbidden: merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, source-roadmap relabeling, new planner/queue/registry/authorization route and any second task.
+- Release condition: exact final head passes every applicable existing PR workflow and the Parent's independent countercheck; Parent owns merge and subsequent roadmap reevaluation.
+- Recovery: normal reviewed repository revert only; no external cleanup is required.
+
