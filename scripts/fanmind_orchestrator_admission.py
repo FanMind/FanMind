@@ -822,7 +822,7 @@ def collect_github_truth(
             "identical",
         }
         source_runs = _complete_source_workflow_runs(client, source.get("head_sha"))
-        workflow_checks: dict[str, str] = {}
+        latest_workflow_runs: dict[str, dict[str, Any]] = {}
         for item in source_runs:
             if (
                 item.get("event") != "pull_request"
@@ -831,10 +831,26 @@ def collect_github_truth(
             ):
                 raise AdmissionError("github_source_workflow_identity_mismatch")
             name = item["name"]
-            conclusion = item.get("conclusion")
-            if workflow_checks.get(name) != "success":
-                workflow_checks[name] = conclusion
-        truth["workflow_checks"] = workflow_checks
+            current = latest_workflow_runs.get(name)
+            order_key = (
+                str(item.get("run_started_at") or item.get("created_at") or ""),
+                int(item.get("id") or 0),
+                int(item.get("run_attempt") or 0),
+            )
+            current_key = (
+                str(
+                    (current or {}).get("run_started_at")
+                    or (current or {}).get("created_at")
+                    or ""
+                ),
+                int((current or {}).get("id") or 0),
+                int((current or {}).get("run_attempt") or 0),
+            )
+            if current is None or order_key > current_key:
+                latest_workflow_runs[name] = item
+        truth["workflow_checks"] = {
+            name: run.get("conclusion") for name, run in latest_workflow_runs.items()
+        }
     workflow_runs = _complete_workflow_run_history(client)
     current_marker = (
         f"Orchestrator handoff {handoff.get('handoff_id')} task "

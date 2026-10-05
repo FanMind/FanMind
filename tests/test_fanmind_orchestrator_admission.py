@@ -933,6 +933,152 @@ class AdmissionTests(unittest.TestCase):
             self.decision(github_truth=red)["blocker"],
         )
 
+    def test_latest_exact_head_workflow_run_controls_full_dispatch_chain(self):
+        prepared = handoff()
+        previous = receipt()
+        previous_title = (
+            "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
+            + previous["payload_sha256"]
+        )
+        current_title = (
+            "Orchestrator handoff handoff-next-001 task next-task-001 digest "
+            + prepared["payload_sha256"]
+        )
+
+        class Client:
+            def __init__(self, newest_status, newest_conclusion):
+                self.newest_status = newest_status
+                self.newest_conclusion = newest_conclusion
+
+            def get(self, path):
+                if path == "commits/main":
+                    return {"sha": "b" * 40}
+                if path in {
+                    "compare/" + "a" * 40 + "..." + "b" * 40,
+                }:
+                    return {"status": "ahead"}
+                if path == "pulls/123":
+                    return {
+                        "number": 123,
+                        "head": {"sha": "c" * 40},
+                        "merge_commit_sha": "a" * 40,
+                        "merged_at": "2026-10-05T10:00:00Z",
+                        "base": {"ref": "main"},
+                    }
+                if path.startswith("actions/runs?head_sha="):
+                    return {
+                        "total_count": 3,
+                        "workflow_runs": [
+                            {
+                                "id": 1202,
+                                "run_attempt": 1,
+                                "name": "FanMind CI",
+                                "event": "pull_request",
+                                "head_sha": "c" * 40,
+                                "created_at": "2026-10-05T11:02:00Z",
+                                "status": self.newest_status,
+                                "conclusion": self.newest_conclusion,
+                            },
+                            {
+                                "id": 1201,
+                                "run_attempt": 1,
+                                "name": "FanMind God Mode Gate",
+                                "event": "pull_request",
+                                "head_sha": "c" * 40,
+                                "created_at": "2026-10-05T11:01:00Z",
+                                "status": "completed",
+                                "conclusion": "success",
+                            },
+                            {
+                                "id": 1200,
+                                "run_attempt": 1,
+                                "name": "FanMind CI",
+                                "event": "pull_request",
+                                "head_sha": "c" * 40,
+                                "created_at": "2026-10-05T11:00:00Z",
+                                "status": "completed",
+                                "conclusion": "success",
+                            },
+                        ],
+                    }
+                if path.startswith("actions/workflows/"):
+                    return {
+                        "total_count": 2,
+                        "workflow_runs": [
+                            {
+                                "id": 500,
+                                "run_attempt": 1,
+                                "display_title": current_title,
+                                "created_at": "2026-10-05T12:00:00Z",
+                                "status": "in_progress",
+                                "conclusion": None,
+                            },
+                            {
+                                "id": 499,
+                                "run_attempt": 1,
+                                "display_title": previous_title,
+                                "created_at": "2026-10-05T10:00:00Z",
+                                "status": "completed",
+                                "conclusion": "success",
+                            },
+                        ],
+                    }
+                if path == "actions/runs/500":
+                    return {
+                        "id": 500,
+                        "run_attempt": 1,
+                        "display_title": current_title,
+                        "event": "workflow_dispatch",
+                        "path": ".github/workflows/fanmind-manager-event-dispatch.yml",
+                    }
+                if path == "actions/runs/499/attempts/1/jobs?per_page=100&page=1":
+                    return {
+                        "total_count": 1,
+                        "jobs": [
+                            {
+                                "steps": [
+                                    {
+                                        "name": "Admit prepared handoff",
+                                        "conclusion": "success",
+                                    },
+                                    {
+                                        "name": "Transport exactly one admitted handoff",
+                                        "status": "completed",
+                                        "conclusion": "success",
+                                    },
+                                ]
+                            }
+                        ],
+                    }
+                self.fail(f"unexpected path: {path}")
+
+        for status, conclusion, expected_sends in (
+            ("completed", "success", 1),
+            ("completed", "failure", 0),
+            ("in_progress", None, 0),
+        ):
+            with self.subTest(status=status, conclusion=conclusion):
+                calls = []
+                result = MODULE.dispatch_with_github(
+                    prepared,
+                    previous,
+                    ready(),
+                    Client(status, conclusion),
+                    lambda payload: calls.append(payload) or {"status": 202},
+                    requested_task_id=prepared["task_id"],
+                    requested_handoff_id=prepared["handoff_id"],
+                    requested_previous_task_id=prepared["previous_task_id"],
+                    requested_payload_sha256=prepared["payload_sha256"],
+                    current_run_id="500",
+                )
+                self.assertEqual(expected_sends, result["sent"])
+                self.assertEqual(expected_sends, len(calls))
+                if expected_sends == 0:
+                    self.assertEqual(
+                        "required_check_not_success:FanMind CI",
+                        result["decision"]["blocker"],
+                    )
+
     def test_pr_must_merge_to_main_and_exact_merge_must_be_reachable(self):
         wrong_base = truth()
         wrong_base["previous_pr"]["base"] = "release"
