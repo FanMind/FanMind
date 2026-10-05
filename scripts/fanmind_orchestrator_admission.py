@@ -31,6 +31,15 @@ RUNTIME_CLI_COMMAND = (
     "python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && "
     "node --test tests/fanmind-manager-event-dispatch.test.mjs"
 )
+OWNER_AUTHORIZATION_KIND = "github_issue_comment_v1"
+OWNER_REPOSITORY = "FanMind/FanMind"
+OWNER_GITHUB_LOGIN = "Bernds-tech"
+OWNER_GITHUB_ID = 270165082
+LEGACY_OWNER_RECEIPT_IDENTITY = (
+    "fanmind-orchestrator-method-20261005-01",
+    "owner-fanmind-orchestrator-method-20261005-01",
+    "eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2",
+)
 
 
 class AdmissionError(ValueError):
@@ -70,7 +79,9 @@ def _required_identity(value: Any, name: str) -> str:
     return text
 
 
-def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
+def canonical_task_envelope(
+    handoff: dict[str, Any], *, allow_legacy_owner_binding: bool = False
+) -> dict[str, Any]:
     if handoff.get("agent_context") != AGENT_CONTEXT:
         raise AdmissionError("agent_context_mismatch")
     task_id = _required_identity(handoff.get("task_id"), "handoff.task_id")
@@ -146,6 +157,77 @@ def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
         if len(set(locks)) != len(locks):
             raise AdmissionError("duplicate:handoff.non_overlapping_active_locks")
         envelope["non_overlapping_active_locks"] = sorted(locks)
+        authorization = handoff.get("owner_authorization")
+        if authorization is None and allow_legacy_owner_binding:
+            authorization = None
+        elif not isinstance(authorization, dict):
+            raise AdmissionError("missing_or_invalid:handoff.owner_authorization")
+        if authorization is None:
+            pass
+        elif authorization.get("kind") != OWNER_AUTHORIZATION_KIND:
+            raise AdmissionError("invalid:handoff.owner_authorization.kind")
+        else:
+            source_kind = authorization.get("source_kind")
+            source_number = authorization.get("source_number")
+            comment_id = authorization.get("comment_id")
+            body_sha256 = authorization.get("body_sha256")
+            if source_kind not in {"issue", "pull_request"}:
+                raise AdmissionError("invalid:handoff.owner_authorization.source_kind")
+            if type(source_number) is not int or source_number < 1:
+                raise AdmissionError("invalid:handoff.owner_authorization.source_number")
+            if type(comment_id) is not int or comment_id < 1:
+                raise AdmissionError("invalid:handoff.owner_authorization.comment_id")
+            if not isinstance(body_sha256, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", body_sha256
+            ):
+                raise AdmissionError("invalid:handoff.owner_authorization.body_sha256")
+            envelope["owner_authorization"] = {
+                "kind": OWNER_AUTHORIZATION_KIND,
+                "repository": _required_text(
+                    authorization.get("repository"),
+                    "handoff.owner_authorization.repository",
+                ),
+                "source_kind": source_kind,
+                "source_number": source_number,
+                "comment_id": comment_id,
+                "html_url": _required_text(
+                    authorization.get("html_url"),
+                    "handoff.owner_authorization.html_url",
+                ),
+                "author_login": _required_text(
+                    authorization.get("author_login"),
+                    "handoff.owner_authorization.author_login",
+                ),
+                "author_id": authorization.get("author_id"),
+                "author_association": _required_text(
+                    authorization.get("author_association"),
+                    "handoff.owner_authorization.author_association",
+                ),
+                "body_sha256": body_sha256,
+                "created_at": _required_text(
+                    authorization.get("created_at"),
+                    "handoff.owner_authorization.created_at",
+                ),
+                "updated_at": _required_text(
+                    authorization.get("updated_at"),
+                    "handoff.owner_authorization.updated_at",
+                ),
+            }
+            if envelope["owner_authorization"]["repository"] != OWNER_REPOSITORY:
+                raise AdmissionError("invalid:handoff.owner_authorization.repository")
+            if envelope["owner_authorization"]["author_login"] != OWNER_GITHUB_LOGIN:
+                raise AdmissionError("invalid:handoff.owner_authorization.author_login")
+            if envelope["owner_authorization"]["author_id"] != OWNER_GITHUB_ID:
+                raise AdmissionError("invalid:handoff.owner_authorization.author_id")
+            if envelope["owner_authorization"]["author_association"] not in {
+                "MEMBER",
+                "OWNER",
+            }:
+                raise AdmissionError(
+                    "invalid:handoff.owner_authorization.author_association"
+                )
+            if envelope["owner_authorization"]["created_at"] != envelope["owner_authorized_at"]:
+                raise AdmissionError("owner_authorization_created_at_mismatch")
     semantic_identity = {
         "goal": envelope["goal"],
         "scope": envelope["scope"],
@@ -209,7 +291,15 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
     accepted = receipt.get("accepted_handoff")
     if not isinstance(accepted, dict):
         raise AdmissionError("typed_receipt_accepted_handoff_required")
-    accepted_envelope = canonical_task_envelope(accepted)
+    identity = (
+        receipt.get("task_id"),
+        receipt.get("handoff_id"),
+        receipt.get("payload_sha256"),
+    )
+    accepted_envelope = canonical_task_envelope(
+        accepted,
+        allow_legacy_owner_binding=identity == LEGACY_OWNER_RECEIPT_IDENTITY,
+    )
     if accepted_envelope.get("task_id") != receipt.get("task_id"):
         raise AdmissionError("receipt_accepted_handoff_task_mismatch")
     if accepted_envelope.get("handoff_id") != receipt.get("handoff_id"):
@@ -237,7 +327,15 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
 
 def _accepted_handoff(receipt: dict[str, Any]) -> dict[str, Any]:
     validate_typed_receipt(receipt)
-    return canonical_task_envelope(receipt["accepted_handoff"])
+    identity = (
+        receipt.get("task_id"),
+        receipt.get("handoff_id"),
+        receipt.get("payload_sha256"),
+    )
+    return canonical_task_envelope(
+        receipt["accepted_handoff"],
+        allow_legacy_owner_binding=identity == LEGACY_OWNER_RECEIPT_IDENTITY,
+    )
 
 
 def _check_github_truth(
@@ -257,6 +355,16 @@ def _check_github_truth(
         raise AdmissionError("receipt_main_not_reachable")
     if truth.get("previous_handoff_matches") is not True:
         raise AdmissionError("previous_handoff_identity_missing_or_mismatched")
+    if truth.get("previous_handoff_source") == "latest_workflow_run":
+        latest = truth.get("latest_previous_handoff")
+        if not isinstance(latest, dict) or any(
+            (
+                latest.get("status") != "completed",
+                latest.get("conclusion") != "success",
+                latest.get("transport_state") != "TRANSPORT_ACCEPTED",
+            )
+        ):
+            raise AdmissionError("previous_handoff_not_terminal_and_reconciled")
     if require_current_run:
         if truth.get("current_handoff_matches") is not True:
             raise AdmissionError("current_workflow_run_identity_missing_or_mismatched")
@@ -362,73 +470,95 @@ def _blocks(text: str) -> list[str]:
 
 
 def _owner_direct_binding(
-    handoff: dict[str, Any], started_text: str, locks_text: str
+    handoff: dict[str, Any], client: "GitHubClient", locks_text: str
 ) -> dict[str, Any]:
-    task_id = str(handoff.get("task_id"))
-    started_matches = [
-        block
-        for block in _blocks(started_text)
-        if re.search(rf"(?m)^- Orchestrator task_id:\s*{re.escape(task_id)}\s*$", block)
-    ]
-    if len(started_matches) != 1:
-        return {"authorized": False, "reason": "owner_started_work_identity_missing_or_duplicate"}
-    started = started_matches[0]
-    required_started = (
-        f"- Orchestrator handoff: {handoff.get('handoff_id')}",
-        f"- Payload digest: {handoff.get('payload_sha256')}",
-        f"- Previous task_id: {handoff.get('previous_task_id')}",
-        "- Source: explicit Owner task, not a roadmap-catalog selection.",
-        "- Status: IN_PROGRESS",
+    envelope = canonical_task_envelope(handoff)
+    authorization = envelope["owner_authorization"]
+    if client.repository != OWNER_REPOSITORY:
+        return {"authorized": False, "reason": "owner_authorization_repository_mismatch"}
+    comment = client.get(f"issues/comments/{authorization['comment_id']}")
+    if not isinstance(comment, dict):
+        return {"authorized": False, "reason": "owner_authorization_comment_unreadable"}
+    issue_url = (
+        f"https://api.github.com/repos/{OWNER_REPOSITORY}/issues/"
+        f"{authorization['source_number']}"
     )
-    if not all(marker in started for marker in required_started):
-        return {"authorized": False, "reason": "owner_started_work_identity_mismatch"}
-    lock_match = re.search(r"(?m)^- Work lock:\s*(LOCK-[A-Z0-9_-]+)\s*$", started)
-    if not lock_match:
-        return {"authorized": False, "reason": "owner_work_lock_missing"}
-    own_lock = lock_match.group(1)
+    source_path = "pull" if authorization["source_kind"] == "pull_request" else "issues"
+    html_url = (
+        f"https://github.com/{OWNER_REPOSITORY}/{source_path}/"
+        f"{authorization['source_number']}#issuecomment-{authorization['comment_id']}"
+    )
+    if (
+        comment.get("id") != authorization["comment_id"]
+        or comment.get("issue_url") != issue_url
+        or comment.get("html_url") != html_url
+        or authorization["html_url"] != html_url
+    ):
+        return {
+            "authorized": False,
+            "reason": "owner_authorization_comment_identity_mismatch",
+        }
+    user = comment.get("user")
+    if (
+        not isinstance(user, dict)
+        or user.get("login") != OWNER_GITHUB_LOGIN
+        or user.get("login") != authorization["author_login"]
+    ):
+        return {"authorized": False, "reason": "owner_authorization_login_mismatch"}
+    if user.get("id") != OWNER_GITHUB_ID or user.get("id") != authorization["author_id"]:
+        return {"authorized": False, "reason": "owner_authorization_user_id_mismatch"}
+    if comment.get("author_association") != authorization["author_association"]:
+        return {
+            "authorized": False,
+            "reason": "owner_authorization_author_association_mismatch",
+        }
+    body = comment.get("body")
+    created_at = comment.get("created_at")
+    updated_at = comment.get("updated_at")
+    if (
+        not isinstance(body, str)
+        or not isinstance(created_at, str)
+        or not isinstance(updated_at, str)
+    ):
+        return {"authorized": False, "reason": "owner_authorization_comment_unreadable"}
+    if (
+        created_at != authorization["created_at"]
+        or created_at != envelope.get("owner_authorized_at")
+        or updated_at != authorization["updated_at"]
+    ):
+        return {"authorized": False, "reason": "owner_authorization_timestamp_mismatch"}
+    if (
+        hashlib.sha256(body.encode("utf-8")).hexdigest()
+        != authorization["body_sha256"]
+    ):
+        return {"authorized": False, "reason": "owner_authorization_body_digest_mismatch"}
     lock_blocks = {
         block.splitlines()[0].strip(): block
         for block in _blocks(locks_text)
         if block.splitlines() and block.splitlines()[0].strip().startswith("LOCK-")
     }
-    lock = lock_blocks.get(own_lock)
-    if (
-        lock is None
-        or "- Status: ACTIVE" not in lock
-        or f"FanMind Builder task `{task_id}`" not in lock
-    ):
-        return {"authorized": False, "reason": "owner_work_lock_identity_mismatch"}
     active_locks = {
         lock_id
         for lock_id, block in lock_blocks.items()
-        if "- Status: ACTIVE" in block and lock_id != own_lock
+        if "- Status: ACTIVE" in block
     }
     declared = set(handoff.get("non_overlapping_active_locks") or [])
-    structured_line = "- Non-overlapping active locks: " + ", ".join(sorted(declared))
-    if structured_line not in started or structured_line not in lock:
-        return {"authorized": False, "reason": "owner_parallel_scope_binding_missing"}
-    checks_line = "- Required checks: " + ", ".join(sorted(handoff.get("required_checks") or []))
-    runtime_line = "- Runtime requirement: " + json.dumps(
-        handoff.get("runtime_requirement"),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=True,
-    )
-    if any(line not in started or line not in lock for line in (checks_line, runtime_line)):
-        return {"authorized": False, "reason": "owner_acceptance_contract_binding_missing"}
-    if handoff.get("resume_evidence") is not None:
-        resume_line = "- Resume evidence: " + ", ".join(handoff["resume_evidence"])
-        if resume_line not in started or resume_line not in lock:
-            return {"authorized": False, "reason": "owner_resume_evidence_binding_missing"}
     if declared != active_locks:
         return {"authorized": False, "reason": "owner_active_lock_conflict_or_stale_parallel_proof"}
-    return {"authorized": True, "reason": "", "own_lock": own_lock}
+    return {
+        "authorized": True,
+        "reason": "",
+        "owner_login": OWNER_GITHUB_LOGIN,
+        "comment_id": authorization["comment_id"],
+    }
 
 
 def _check_selection(
     handoff: dict[str, Any],
     selector_decision: dict[str, Any],
     owner_binding: dict[str, Any] | None = None,
+    *,
+    allow_manual_owner_evidence: bool = False,
 ) -> None:
     source = handoff["source"]
     if source == "CATALOG":
@@ -470,13 +600,12 @@ def _check_selection(
         _required_text(handoff.get("owner_authorized_at"), "handoff.owner_authorized_at")
         if handoff.get("selection_basis") != "EXPLICIT_OWNER_TASK":
             raise AdmissionError("owner_direct_selection_basis_required")
-        binding = owner_binding
-        if binding is None:
-            binding = _owner_direct_binding(
-                handoff,
-                selector.STARTED_WORK_PATH.read_text(encoding="utf-8"),
-                selector.WORK_LOCKS_PATH.read_text(encoding="utf-8"),
-            )
+        if not allow_manual_owner_evidence:
+            raise AdmissionError("owner_direct_manual_check_only")
+        binding = owner_binding or {
+            "authorized": False,
+            "reason": "owner_authorization_evidence_missing",
+        }
         if binding.get("authorized") is not True:
             raise AdmissionError(str(binding.get("reason") or "owner_direct_not_authorized"))
 
@@ -493,6 +622,7 @@ def evaluate_admission(
     composer_input: str | None = None,
     requested_payload_sha256: str | None = None,
     owner_binding: dict[str, Any] | None = None,
+    allow_manual_owner_evidence: bool = False,
     require_current_run: bool = True,
 ) -> dict[str, Any]:
     try:
@@ -555,7 +685,12 @@ def evaluate_admission(
             github_truth,
             require_current_run=require_current_run,
         )
-        _check_selection(handoff, selector_decision, owner_binding)
+        _check_selection(
+            handoff,
+            selector_decision,
+            owner_binding or github_truth.get("owner_binding"),
+            allow_manual_owner_evidence=allow_manual_owner_evidence,
+        )
         return {
             "decision": "SEND",
             "task_id": handoff["task_id"],
@@ -648,6 +783,13 @@ class GitHubClient:
         if not isinstance(parsed, dict):
             raise AdmissionError(f"github_file_not_object:{path}")
         return parsed
+
+    def file_text(self, path: str, ref: str = "main") -> str:
+        value = self.get(f"contents/{path}?ref={ref}")
+        try:
+            return base64.b64decode(value["content"], validate=False).decode("utf-8")
+        except (KeyError, ValueError, UnicodeDecodeError) as exc:
+            raise AdmissionError(f"github_file_unreadable:{path}:{exc}") from exc
 
 
 def _complete_workflow_run_history(client: GitHubClient) -> list[dict[str, Any]]:
@@ -788,9 +930,15 @@ def collect_github_truth(
     receipt: dict[str, Any],
     *,
     current_run_id: str = "",
+    include_manual_owner_evidence: bool = False,
 ) -> dict[str, Any]:
     main = client.get("commits/main")
     observed_main = _required_text(main.get("sha"), "github.main.sha")
+    canonical_receipt = client.file_json(
+        "project-memory/ORCHESTRATOR_RESULT.json", ref=observed_main
+    )
+    if canonical_receipt != receipt:
+        raise AdmissionError("github_receipt_not_canonical_at_observed_main")
     compare = client.get(f"compare/{receipt.get('main_sha')}...{observed_main}")
     reachable = compare.get("status") in {"ahead", "identical"}
     truth: dict[str, Any] = {
@@ -939,7 +1087,9 @@ def collect_github_truth(
         )
         truth["previous_handoff_source"] = "latest_workflow_run"
     else:
-        started = selector.STARTED_WORK_PATH.read_text(encoding="utf-8")
+        started = client.file_text(
+            "project-memory/STARTED_WORK.md", ref=observed_main
+        )
         bootstrap_markers = (
             f"- Orchestrator handoff: {receipt.get('handoff_id')}",
             f"- Orchestrator task_id: {receipt.get('task_id')}",
@@ -949,6 +1099,11 @@ def collect_github_truth(
             truth["previous_handoff_matches"] = True
             truth["previous_handoff_source"] = "started_work_bootstrap"
     truth["matching_dispatches"] = matching_dispatches
+    if handoff.get("source") == "OWNER_DIRECT" and include_manual_owner_evidence:
+        locks_text = client.file_text(
+            "project-memory/WORK_LOCKS.md", ref=observed_main
+        )
+        truth["owner_binding"] = _owner_direct_binding(handoff, client, locks_text)
     return truth
 
 
@@ -993,7 +1148,6 @@ def check_with_github(
     requested_payload_sha256: str,
     composer_input: str,
     current_run_id: str = "",
-    owner_binding: dict[str, Any] | None = None,
     local_head: str | None = None,
 ) -> dict[str, Any]:
     if local_head != handoff.get("prepared_main_sha"):
@@ -1007,7 +1161,11 @@ def check_with_github(
             "resume_condition": "Check out the exact freshly observed prepared main before repeating preparation validation.",
         }
     truth = collect_github_truth(
-        client, handoff, receipt, current_run_id=current_run_id
+        client,
+        handoff,
+        receipt,
+        current_run_id=current_run_id,
+        include_manual_owner_evidence=True,
     )
     decision = evaluate_admission(
         handoff,
@@ -1019,7 +1177,8 @@ def check_with_github(
         requested_previous_task_id=requested_previous_task_id,
         requested_payload_sha256=requested_payload_sha256,
         composer_input=composer_input,
-        owner_binding=owner_binding,
+        owner_binding=truth.get("owner_binding"),
+        allow_manual_owner_evidence=True,
         require_current_run=False,
     )
     if decision.get("decision") == "SEND":
