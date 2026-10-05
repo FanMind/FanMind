@@ -71,7 +71,11 @@ Further unrelated Phase 8 work and Team/roles/multi-workspace features remain la
 3. Selected Social engineering may proceed under FM-DEC-015; real provider activation and Sales Handoff retain their explicit acceptance prerequisites.
 4. Never auto-select payment, destructive retention, protected Production mutation, legal acceptance, credentials/signing or provider activation merely because it is next in sequence.
 5. When the owner explicitly resumes a deferred action, remove/update its deferred status; the selector must restore its original finishline priority.
-6. If nothing safe is executable, surface the earliest unresolved owner action instead of inventing work.
+6. If nothing safe is executable after reconciling the complete active product roadmap, surface the earliest unresolved owner action instead of inventing work.
+7. The canonical product roadmap in `src/config/roadmap.ts` is an input to Orchestrator planning, not merely a UI display. When the current finishline action is owner/platform-blocked, the Orchestrator must inspect unfinished product-roadmap items in already-active phases and continue with an independent repository-safe item when it can be mapped into the existing action catalog with explicit scope, prerequisites and `parallel_safe=true`. It must not create a second queue or bypass the existing selector.
+8. A blocked roadmap item does not stop unrelated safe roadmap progress. Firmendaten, credentials, provider/legal approval, Production/Billing/Restore/destructive actions and other protected boundaries remain blocked until their existing authorization is satisfied; the Orchestrator skips around them only for non-overlapping safe work.
+9. After every accepted/closed task, the Orchestrator immediately recomputes finishline state, active product-roadmap gaps and the SAFE READY SET and selects the next eligible bounded task. Waiting for a fresh Owner "weiter"/"go" is not a valid idle state when such work exists.
+10. `SAFE READY SET: NONE` is valid only after the selector has reconciled unfinished items from the active product-roadmap phases against the existing action catalog, active locks, dependencies and protected boundaries. An unmapped unfinished roadmap item must be surfaced as a planning gap for bounded catalog reconciliation rather than being silently treated as no work.
 
 ## Started-work and lock rule
 Use started-work/locks according to Execution Policy v6.
