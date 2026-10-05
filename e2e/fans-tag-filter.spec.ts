@@ -31,6 +31,7 @@ test("combined tag filter preserves URL state across navigation", async ({ page 
     await route.fulfill({
       contentType: "text/html",
       body: `<!doctype html>
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>body{font:16px sans-serif;margin:16px}form{display:flex;flex-wrap:wrap;gap:8px;max-width:100%}table{width:100%}</style>
         <form method="get" action="/fans">
