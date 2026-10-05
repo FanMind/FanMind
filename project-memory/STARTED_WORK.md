@@ -2,7 +2,7 @@
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
 - Orchestrator task_id: fanmind-orchestrator-method-20261005-01
-- Payload digest: 2df0b21cb08a010a5dd46455f9cfd08e3b7ed25dd175af9bc12a4452d09742a1
+- Payload digest: 75672832f0e8d66e00611423bf66164de9147149f720b3a639f6e1a5b9344026
 - Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
 - Source: explicit Owner task, not a roadmap-catalog selection.
 - Risk: R3

@@ -147,8 +147,6 @@ def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
             raise AdmissionError("duplicate:handoff.non_overlapping_active_locks")
         envelope["non_overlapping_active_locks"] = sorted(locks)
     semantic_identity = {
-        "source": source,
-        "catalog_action_id": envelope.get("catalog_action_id"),
         "goal": envelope["goal"],
         "scope": envelope["scope"],
         "acceptance": envelope["acceptance"],
@@ -528,10 +526,13 @@ def evaluate_admission(
         )
         if same_work and receipt["status"] == "COMPLETED":
             raise AdmissionError("work_identity_already_accepted")
-        if same_work and receipt["status"] != "COMPLETED" and not envelope.get(
-            "resume_evidence"
-        ):
-            raise AdmissionError("same_work_resume_evidence_required")
+        if same_work and receipt["status"] != "COMPLETED":
+            current_resume = set(envelope.get("resume_evidence") or [])
+            previous_resume = set(previous_envelope.get("resume_evidence") or [])
+            if not current_resume:
+                raise AdmissionError("same_work_resume_evidence_required")
+            if not current_resume > previous_resume:
+                raise AdmissionError("same_work_new_resume_evidence_required")
         disposition = handoff.get("previous_result_disposition")
         if receipt["status"] == "COMPLETED":
             if disposition != "ACCEPTED_COMPLETION":

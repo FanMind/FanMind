@@ -397,7 +397,48 @@ class AdmissionTests(unittest.TestCase):
             )["blocker"],
         )
 
-    def test_new_handoff_id_does_not_reopen_terminal_same_task(self):
+        repeated = copy.deepcopy(prepared)
+        repeated["handoff_id"] = "handoff-repeated-resume"
+        repeated["task_id"] = "repeated-resume-task"
+        repeated["previous_task_id"] = prepared["task_id"]
+        repeated["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(repeated)
+        )
+        repeated_receipt = receipt_for_handoff(prepared, "BLOCKED")
+        self.assertEqual(
+            "same_work_new_resume_evidence_required",
+            self.decision(
+                handoff=repeated,
+                receipt=repeated_receipt,
+                github_truth=observed,
+                selector_decision=selector_decision,
+                requested_task_id=repeated["task_id"],
+            )["blocker"],
+        )
+
+        repeated["resume_evidence"].append("verified upstream revision 8")
+        repeated_contract = copy.deepcopy(contract)
+        repeated_contract["resume_evidence"] = repeated["resume_evidence"]
+        repeated["catalog_contract_sha256"] = hashlib.sha256(
+            json.dumps(repeated_contract, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        repeated["payload_sha256"] = MODULE.envelope_digest(
+            MODULE.canonical_task_envelope(repeated)
+        )
+        repeated_ready = copy.deepcopy(selector_decision)
+        repeated_ready["task_contract"] = repeated_contract
+        self.assertEqual(
+            "SEND",
+            self.decision(
+                handoff=repeated,
+                receipt=repeated_receipt,
+                github_truth=observed,
+                selector_decision=repeated_ready,
+                requested_task_id=repeated["task_id"],
+            )["decision"],
+        )
+
+    def test_new_catalog_action_task_and_handoff_ids_do_not_reopen_completed_work(self):
         prepared = handoff()
         accepted = handoff()
         accepted.update(
@@ -405,6 +446,8 @@ class AdmissionTests(unittest.TestCase):
                 "handoff_id": "handoff-accepted-same-work",
                 "task_id": "accepted-same-work-task",
                 "previous_task_id": "older-task",
+                "catalog_action_id": "NBA-ACCEPTED-OLD-ID",
+                "roadmap_task": "FM-ACCEPTED-OLD-ID",
             }
         )
         accepted["payload_sha256"] = MODULE.envelope_digest(
