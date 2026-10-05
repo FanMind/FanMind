@@ -26,7 +26,9 @@ Before a send, admission boundedly paginates the complete workflow-run history a
 
 The one rollout boundary is actual legacy workflow run `37234276748` (2026-10-04T21:00:06Z), the newest of 20 observed manual runs whose pre-method title was only `FanMind Orchestrator Builder Dispatch`. Unstructured identities are ignored only at or below that immutable run ID. Any unstructured newer run blocks. This compatibility constant is not a Latest-Handoff record and is never updated per dispatch.
 
-Each explicitly Owner-direct task uses an existing GitHub issue comment by the canonically identified FanMind Owner account `Bernds-tech` as its authenticated authorization evidence. `owner-authorization-template` renders the exact comment body from the bounded task, handoff identity, fresh prepared-main SHA, checks/runtime contract and complete set of active locks declared non-overlapping. After the Owner posts that body, its repository-scoped comment ID, created/updated timestamps and body digest are bound into the prepared envelope. `check` retrieves the comment and canonical `WORK_LOCKS.md` from the observed main through the existing public GitHub GET client; the authenticated comment author must be exactly `Bernds-tech` with the organization-member/owner association, match the issue and exact body, and the declared active-lock set must still equal canonical state. Caller labels, arbitrary timestamps, injected truth or dirty local records grant nothing. A future Owner-account change requires a normal reviewed source update; it cannot be supplied in a handoff. No per-handoff commit to `main`, contents-write permission, new token scope, plugin, registry or second queue is introduced.
+Each explicitly Owner-direct manual preparation uses an existing GitHub issue or pull-request comment by the canonically identified FanMind Owner account `Bernds-tech` as its authenticated authorization evidence. The prepared envelope binds the repository, source kind and number, comment ID and URL, fixed author login and numeric user ID, author association, created/updated timestamps and body SHA-256 alongside the complete proposed task contract. `check` retrieves that exact comment and canonical `WORK_LOCKS.md` from the observed main through the existing public GitHub GET client. The retrieved identity, source, timestamps and body digest must still equal the bound snapshot, and the declared active-lock set must still equal canonical state. Caller labels, arbitrary timestamps, injected truth or dirty local records grant nothing. A future Owner-account change requires a normal reviewed source update; it cannot be supplied in a handoff. No new Owner comment, per-handoff commit to `main`, contents-write permission, token scope, plugin, registry or second queue is required.
+
+Natural-language authorization is not falsely treated as a machine-provable scope theorem. Before preparation, the explicitly authorized Parent must compare the original Owner prose with the proposed goal, scope, acceptance, required checks and forbidden boundaries and confirm that the prose covers exactly that bounded task. `prepare` then binds both the unchanged evidence snapshot and that complete contract into the final fresh-main envelope and digest. The code verifies identity and immutability; the Parent owns and documents the semantic comparison. Missing, foreign, unreadable or changed evidence remains fail-closed.
 
 ## Result meaning
 
@@ -36,17 +38,16 @@ Each explicitly Owner-direct task uses an existing GitHub issue comment by the c
 
 ## Manual boundary
 
-The supported manual path uses `owner-authorization-template` for an Owner-direct task, then `prepare`, then `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` performs the same live public GitHub reads, verifies the authenticated Owner comment, canonical active locks, exact local/current-main binding and rejects any residual text. A successful result is `PREPARED_ONLY` with `send_authorized=false`: it is validation, not a reservation or automatic send grant. Existing read-only rights cannot atomically reserve an out-of-workflow manual send.
+The supported Owner-direct path is manual only: after the Parent's semantic comparison, populate `handoff.owner_authorization` from the existing GitHub comment snapshot, run `prepare`, then run `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` repeats the live public GitHub reads, verifies the authenticated Owner comment, canonical active locks, exact local/current-main binding and rejects any residual text. A successful result is `PREPARED_ONLY` with `send_authorized=false`: it is validation, not a reservation or automatic send grant. Existing read-only rights cannot atomically reserve an out-of-workflow manual send. The workflow-facing `admit` and `dispatch` commands do not enable this manual evidence mode and reject Owner-direct handoffs; the automatic transport boundary is unchanged.
 
 From an exact fresh checkout, the usable sequence is:
 
 ```bash
-python3 scripts/fanmind_orchestrator_admission.py owner-authorization-template \
-  --handoff /tmp/fanmind-handoff.json > /tmp/fanmind-owner-authorization.txt
-
-# The repository Owner posts exactly that text to the chosen existing GitHub issue.
-# Record the returned issue/comment IDs, created_at/updated_at and body SHA-256
-# in handoff.owner_authorization; set owner_authorized_at=created_at.
+# Read the already-existing Owner comment through GitHub and record its repository,
+# source kind/number, comment ID/URL, author login/ID/association,
+# created_at/updated_at and body SHA-256 in handoff.owner_authorization.
+# Set owner_authorized_at=created_at. The Parent verifies that the original prose
+# covers the proposed bounded contract; this path never posts an Owner comment.
 
 python3 scripts/fanmind_orchestrator_admission.py prepare \
   --handoff /tmp/fanmind-handoff.json \

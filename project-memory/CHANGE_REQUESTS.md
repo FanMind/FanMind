@@ -592,3 +592,5 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## Root React dependency coupling — 2026-10-05
 - Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
+
+2026-10-05 — Orchestrator authorization: New Owner-direct manual preparations bind an unchanged authenticated existing Owner-comment snapshot and the complete fresh-main task contract; the authorized Parent remains responsible for confirming that the original prose semantically covers that bounded contract, while the accepted historical COMPLETED receipt remains valid. Evidence: the first post-acceptance reuse exposed the circular new-task main-registration requirement; the bounded source correction and A-completed-to-B-prepared regression are pending exact-head CI and review in Draft PR #1278.

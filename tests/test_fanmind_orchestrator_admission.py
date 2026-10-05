@@ -21,6 +21,14 @@ MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
+OWNER_AUTHORIZATION_BODY = (
+    "@codex please address the current compile-blocking defect in the Capacity-v2 "
+    "reserve/settle SQL identified in this PR. Keep the fix narrowly scoped to "
+    "placing the policy validation in the reserve function where its variables are "
+    "valid, update focused regression tests, and do not perform any Staging or "
+    "Production apply."
+)
+
 
 def handoff() -> dict:
     value = {
@@ -73,41 +81,71 @@ def owner_handoff() -> dict:
         {
             "source": "OWNER_DIRECT",
             "selection_basis": "EXPLICIT_OWNER_TASK",
-            "owner_authorized_at": "2026-10-05T10:59:00Z",
+            "owner_authorized_at": "2026-10-02T11:53:54Z",
             "non_overlapping_active_locks": ["LOCK-OTHER"],
+            "goal": "Correct the compile-blocking Capacity-v2 reserve policy validation.",
+            "scope": {
+                "files": ["supabase/migrations/20260930120000_ai_capacity_runtime.sql"],
+                "tests": ["tests/ai-capacity-runtime-sql.test.mjs"],
+            },
+            "acceptance": [
+                "policy validation is placed where reserve variables are valid",
+                "focused regression tests pass",
+            ],
             "owner_authorization": {
                 "kind": "github_issue_comment_v1",
-                "issue_number": 874,
-                "comment_id": 9001,
-                "body_sha256": "0" * 64,
-                "updated_at": "2026-10-05T10:59:00Z",
+                "repository": "FanMind/FanMind",
+                "source_kind": "pull_request",
+                "source_number": 1248,
+                "comment_id": 5951802005,
+                "html_url": "https://github.com/FanMind/FanMind/pull/1248#issuecomment-5951802005",
+                "author_login": "Bernds-tech",
+                "author_id": 270165082,
+                "author_association": "MEMBER",
+                "body_sha256": hashlib.sha256(
+                    OWNER_AUTHORIZATION_BODY.encode("utf-8")
+                ).hexdigest(),
+                "created_at": "2026-10-02T11:53:54Z",
+                "updated_at": "2026-10-02T11:53:54Z",
             },
         }
     )
     for key in ("catalog_action_id", "roadmap_task", "catalog_contract_sha256"):
         value.pop(key)
-    body = MODULE.render_owner_authorization(MODULE.canonical_task_envelope(value))
-    value["owner_authorization"]["body_sha256"] = hashlib.sha256(
-        body.encode("utf-8")
-    ).hexdigest()
     value["payload_sha256"] = MODULE.envelope_digest(
         MODULE.canonical_task_envelope(value)
     )
     return value
 
 
-def owner_comment(value: dict, *, association: str = "OWNER", body: str | None = None) -> dict:
+def owner_comment(
+    value: dict,
+    *,
+    association: str = "MEMBER",
+    body: str | None = None,
+    login: str = "Bernds-tech",
+    user_id: int = 270165082,
+) -> dict:
     return {
         "id": value["owner_authorization"]["comment_id"],
-        "issue_url": "https://api.github.com/repos/FanMind/FanMind/issues/874",
+        "issue_url": "https://api.github.com/repos/FanMind/FanMind/issues/1248",
+        "html_url": value["owner_authorization"]["html_url"],
         "author_association": association,
-        "body": body or MODULE.render_owner_authorization(
-            MODULE.canonical_task_envelope(value)
-        ),
+        "body": OWNER_AUTHORIZATION_BODY if body is None else body,
         "created_at": value["owner_authorized_at"],
         "updated_at": value["owner_authorization"]["updated_at"],
-        "user": {"login": "Bernds-tech"},
+        "user": {"login": login, "id": user_id},
     }
+
+
+def with_canonical_receipt(client, value: dict):
+    def file_json(path: str, ref: str = "main") -> dict:
+        if path != "project-memory/ORCHESTRATOR_RESULT.json" or ref != "b" * 40:
+            raise AssertionError(f"unexpected canonical receipt read: {path}@{ref}")
+        return copy.deepcopy(value)
+
+    client.file_json = file_json
+    return client
 
 
 def previous_handoff() -> dict:
@@ -341,7 +379,6 @@ class AdmissionTests(unittest.TestCase):
     def test_completed_a_owner_authorized_b_prepares_without_repository_registration(self):
         prepared = owner_handoff()
         previous = receipt()
-        authorization_comment = owner_comment(prepared)
         previous_title = (
             "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
             + previous["payload_sha256"]
@@ -351,20 +388,31 @@ class AdmissionTests(unittest.TestCase):
             def __init__(
                 self,
                 *,
-                association="OWNER",
+                association="MEMBER",
                 login="Bernds-tech",
+                user_id=270165082,
+                comment_body=None,
                 main_sha=None,
                 bootstrap_previous=False,
                 unresolved=False,
                 extra_lock=False,
+                canonical_receipt=None,
             ):
                 super().__init__("FanMind/FanMind")
                 self.association = association
                 self.login = login
+                self.user_id = user_id
+                self.comment_body = comment_body
                 self.main_sha = main_sha or prepared["prepared_main_sha"]
                 self.bootstrap_previous = bootstrap_previous
                 self.unresolved = unresolved
                 self.extra_lock = extra_lock
+                self.canonical_receipt = previous if canonical_receipt is None else canonical_receipt
+
+            def file_json(self, path, ref="main"):
+                if path != "project-memory/ORCHESTRATOR_RESULT.json" or ref != self.main_sha:
+                    raise AssertionError(f"unexpected canonical receipt read: {path}@{ref}")
+                return copy.deepcopy(self.canonical_receipt)
 
             def get(self, path):
                 if path == "commits/main":
@@ -420,12 +468,14 @@ class AdmissionTests(unittest.TestCase):
                         )
                     )
                     return {"content": base64.b64encode(started.encode()).decode()}
-                if path == "issues/comments/9001":
-                    return {
-                        **authorization_comment,
-                        "author_association": self.association,
-                        "user": {"login": self.login},
-                    }
+                if path == "issues/comments/5951802005":
+                    return owner_comment(
+                        prepared,
+                        association=self.association,
+                        body=self.comment_body,
+                        login=self.login,
+                        user_id=self.user_id,
+                    )
                 raise AssertionError(f"unexpected path: {path}")
 
         selector_state = {
@@ -457,6 +507,39 @@ class AdmissionTests(unittest.TestCase):
             )["sent"],
         )
         self.assertEqual([], transport_calls)
+        automatic_truth = truth()
+        automatic_truth["owner_binding"] = {
+            "authorized": True,
+            "reason": "",
+        }
+        automatic = MODULE.evaluate_admission(
+            prepared,
+            previous,
+            automatic_truth,
+            selector_state,
+            requested_task_id=prepared["task_id"],
+            requested_handoff_id=prepared["handoff_id"],
+            requested_previous_task_id=prepared["previous_task_id"],
+            requested_payload_sha256=prepared["payload_sha256"],
+        )
+        self.assertEqual("owner_direct_manual_check_only", automatic["blocker"])
+        self.assertEqual(
+            0,
+            MODULE.dispatch_if_admitted(
+                automatic,
+                lambda _payload: self.fail("manual Owner evidence must not enter transport"),
+            )["sent"],
+        )
+        with self.assertRaisesRegex(
+            MODULE.AdmissionError, "github_receipt_not_canonical_at_observed_main"
+        ):
+            MODULE.check_with_github(
+                prepared,
+                previous,
+                selector_state,
+                Client(canonical_receipt={}),
+                **kwargs,
+            )
         bootstrapped = MODULE.check_with_github(
             prepared,
             previous,
@@ -470,13 +553,29 @@ class AdmissionTests(unittest.TestCase):
             prepared, previous, selector_state, Client(association="COLLABORATOR"), **kwargs
         )
         self.assertEqual(
-            "owner_authorization_not_repository_owner",
+            "owner_authorization_author_association_mismatch",
             rejected_authority["blocker"],
         )
         rejected_login = MODULE.check_with_github(
             prepared, previous, selector_state, Client(login="DifferentUser"), **kwargs
         )
         self.assertEqual("owner_authorization_login_mismatch", rejected_login["blocker"])
+        rejected_user_id = MODULE.check_with_github(
+            prepared, previous, selector_state, Client(user_id=123), **kwargs
+        )
+        self.assertEqual(
+            "owner_authorization_user_id_mismatch", rejected_user_id["blocker"]
+        )
+        changed_comment = MODULE.check_with_github(
+            prepared,
+            previous,
+            selector_state,
+            Client(comment_body=OWNER_AUTHORIZATION_BODY + " changed"),
+            **kwargs,
+        )
+        self.assertEqual(
+            "owner_authorization_body_digest_mismatch", changed_comment["blocker"]
+        )
         unresolved = MODULE.check_with_github(
             prepared, previous, selector_state, Client(unresolved=True), **kwargs
         )
@@ -492,10 +591,7 @@ class AdmissionTests(unittest.TestCase):
         )
 
         changed = copy.deepcopy(prepared)
-        changed["goal"] = "A changed task that the Owner comment did not authorize."
-        changed["payload_sha256"] = MODULE.envelope_digest(
-            MODULE.canonical_task_envelope(changed)
-        )
+        changed["goal"] = "Changed after preparation."
         changed_result = MODULE.check_with_github(
             changed,
             previous,
@@ -503,14 +599,10 @@ class AdmissionTests(unittest.TestCase):
             Client(),
             **{
                 **kwargs,
-                "requested_payload_sha256": changed["payload_sha256"],
-                "composer_input": MODULE.render_builder_input(
-                    MODULE.canonical_task_envelope(changed)
-                ),
             },
         )
         self.assertEqual(
-            "owner_authorization_contract_mismatch",
+            "handoff_payload_digest_mismatch",
             changed_result["blocker"],
         )
 
@@ -887,7 +979,10 @@ class AdmissionTests(unittest.TestCase):
                 self.fail(f"unexpected path: {path}")
 
         observed = MODULE.collect_github_truth(
-            FakeClient(), current, previous, current_run_id="500"
+            with_canonical_receipt(FakeClient(), previous),
+            current,
+            previous,
+            current_run_id="500",
         )
         self.assertEqual(
             {"FanMind CI": "success", "FanMind God Mode Gate": "success"},
@@ -974,7 +1069,7 @@ class AdmissionTests(unittest.TestCase):
                     }
                 self.fail(f"unexpected path: {path}")
 
-        client = FakeClient()
+        client = with_canonical_receipt(FakeClient(), previous)
         observed = MODULE.collect_github_truth(
             client, prepared, previous, current_run_id=current_run_id
         )
@@ -1101,7 +1196,10 @@ class AdmissionTests(unittest.TestCase):
             MODULE, "_complete_workflow_run_history", return_value=history
         ):
             observed = MODULE.collect_github_truth(
-                Client(), current, previous, current_run_id="500"
+                with_canonical_receipt(Client(), previous),
+                current,
+                previous,
+                current_run_id="500",
             )
         result = MODULE.dispatch_if_admitted(
             self.decision(github_truth=observed),
@@ -1174,7 +1272,10 @@ class AdmissionTests(unittest.TestCase):
             MODULE, "_transport_state", return_value="TRANSPORT_ACCEPTED"
         ):
             observed = MODULE.collect_github_truth(
-                Client(), prepared, previous, current_run_id=str(current_id)
+                with_canonical_receipt(Client(), previous),
+                prepared,
+                previous,
+                current_run_id=str(current_id),
             )
         self.assertTrue(observed["previous_handoff_matches"])
         self.assertEqual(1, len(observed["matching_dispatches"]))
@@ -1329,7 +1430,7 @@ class AdmissionTests(unittest.TestCase):
                     prepared,
                     previous,
                     ready(),
-                    Client(status, conclusion),
+                    with_canonical_receipt(Client(status, conclusion), previous),
                     lambda payload: calls.append(payload) or {"status": 202},
                     requested_task_id=prepared["task_id"],
                     requested_handoff_id=prepared["handoff_id"],
@@ -1356,11 +1457,14 @@ class AdmissionTests(unittest.TestCase):
                         prepared,
                         previous,
                         ready(),
-                        Client(
-                            "completed",
-                            "success",
-                            newest_attempt=newest_attempt,
-                            newest_id=newest_id,
+                        with_canonical_receipt(
+                            Client(
+                                "completed",
+                                "success",
+                                newest_attempt=newest_attempt,
+                                newest_id=newest_id,
+                            ),
+                            previous,
                         ),
                         lambda payload: calls.append(payload) or {"status": 202},
                         requested_task_id=prepared["task_id"],
@@ -1560,37 +1664,30 @@ class AdmissionTests(unittest.TestCase):
         )
         observed = truth()
         observed["owner_binding"] = {
-            "authorized": False,
-            "reason": "owner_active_lock_conflict_or_stale_parallel_proof",
+            "authorized": True,
+            "reason": "",
         }
         result = MODULE.dispatch_if_admitted(
             self.decision(
                 handoff=candidate,
                 github_truth=observed,
             ),
-            lambda _payload: self.fail("conflicting owner task must not send"),
+            lambda _payload: self.fail("injected Owner evidence must not send"),
         )
         self.assertEqual(0, result["sent"])
         self.assertEqual(
-            "owner_active_lock_conflict_or_stale_parallel_proof",
+            "owner_direct_manual_check_only",
             result["decision"]["blocker"],
         )
 
     def test_owner_direct_binding_comes_from_owner_comment_and_active_locks(self):
         candidate = owner_handoff()
-        draft = copy.deepcopy(candidate)
-        draft.pop("owner_authorization")
-        draft.pop("owner_authorized_at")
-        self.assertEqual(
-            MODULE.render_owner_authorization(
-                MODULE.canonical_task_envelope(candidate)
-            ),
-            MODULE.owner_authorization_template(draft),
-        )
         locks = """## LOCK-OTHER
 - Status: ACTIVE
 """
         class Client:
+            repository = "FanMind/FanMind"
+
             def get(self, path):
                 self_path = f"issues/comments/{candidate['owner_authorization']['comment_id']}"
                 if path == self_path:
@@ -1604,6 +1701,12 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(
             "owner_active_lock_conflict_or_stale_parallel_proof",
             MODULE._owner_direct_binding(candidate, Client(), stale)["reason"],
+        )
+        wrong_repository = Client()
+        wrong_repository.repository = "Other/Repository"
+        self.assertEqual(
+            "owner_authorization_repository_mismatch",
+            MODULE._owner_direct_binding(candidate, wrong_repository, locks)["reason"],
         )
 
     def test_consumed_owner_only_unready_or_conflicting_selector_is_not_executable(self):
