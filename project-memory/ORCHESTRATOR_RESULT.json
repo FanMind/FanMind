@@ -8,7 +8,7 @@
   "evidence": [
     "The Owner-direct handoff identity, task_id, previous task_id and payload digest are recorded independently in STARTED_WORK.md and WORK_LOCKS.md.",
     "The implementation reuses the existing selector, started-work/lock state and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
-    "Thirty-one focused Python behavior tests spy transport and prove invalid receipt/evidence, unresolved or parked prior work, reruns, incomplete run history, duplicate/terminal task identity, active/unready/owner-only selection, PR-base/merge/check/runtime mismatches, scope/context tampering and stale composer content result in zero sends.",
+    "Thirty-three focused Python behavior tests spy transport and prove invalid receipt/evidence, unresolved or parked prior work, reruns, incomplete run history, ambiguous skipped transport, older duplicate/terminal task identity, active/unready/owner-only selection, PR-base/merge/check/runtime mismatches, scope/context tampering and stale composer content result in zero sends.",
     "The existing workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read and lifecycle concurrency waits for matching typed closeout.",
     "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline or permission was added.",
     "No merge, auto-merge, deployment, live API trigger, controlled live check, SQL, host, provider, secret, credential, permission or protected-state action was performed."

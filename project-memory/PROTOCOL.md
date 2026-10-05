@@ -168,7 +168,7 @@ Contract/schema/API/AI-context/Billing/disclosure/Social changes require consume
 
 FanMind orchestration is state-driven, never clock-order-driven. Scheduled Builder, Supervisor, Navigator and Owner Manager runs are fallback/reconciliation opportunities, not ordering guarantees.
 
-- A Builder task may be dispatched only by the manual Orchestrator workflow. The digest-bound command-line path prepares and validates but cannot atomically reserve or authorize an out-of-workflow send with the existing read-only rights.
+- Automated Builder transport may be dispatched only by the manual Orchestrator workflow. The digest-bound command-line path returns `PREPARED_ONLY`/`send_authorized=false`; an already explicitly authorized Parent may use that exact content through the existing manual Builder path and must serialize/reconcile it procedurally because read-only validation cannot atomically reserve the out-of-workflow send.
 - Every wake-up must classify the bounded task first and then run the minimum sufficient R1/R2 preflight or the full R3/R4 preflight defined by Execution Policy v6.
 - Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
 - Cross-run coordination uses canonical Project Memory only when the task changes durable state or requires coordination; GitHub remains the detailed history for ordinary R1/R2 code changes.

@@ -25,6 +25,7 @@ TERMINAL_RESULTS = {"COMPLETED", "BLOCKED", "FAILED", "NO_CHANGE"}
 SENDABLE_HANDOFF_STATE = "PREPARED"
 AGENT_CONTEXT = "FanMind Builder"
 IDENTITY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+LEGACY_WORKFLOW_RUN_BOUNDARY = 37234276748
 
 
 class AdmissionError(ValueError):
@@ -630,7 +631,11 @@ def _transport_state(client: GitHubClient, run: dict[str, Any]) -> str:
         None,
     )
     if transport and transport.get("conclusion") == "skipped":
-        return "REJECTED_BEFORE_TRANSPORT"
+        if admit and admit.get("conclusion") == "success":
+            return "TRANSPORT_UNRESOLVED"
+        if admit and admit.get("conclusion") in {"failure", "skipped"}:
+            return "REJECTED_BEFORE_TRANSPORT"
+        raise AdmissionError("github_workflow_transport_state_unreadable")
     if transport and transport.get("conclusion") == "success":
         return "TRANSPORT_ACCEPTED"
     if transport and (
@@ -738,16 +743,36 @@ def collect_github_truth(
         reverse=True,
     )
     structured_runs = []
+    matching_dispatches = []
     for run in prior_runs:
         title = str(run.get("display_title") or run.get("name") or "")
         match = run_pattern.fullmatch(title)
         if not match:
+            run_id = run.get("id")
+            if isinstance(run_id, int) and run_id <= LEGACY_WORKFLOW_RUN_BOUNDARY:
+                continue
             raise AdmissionError("github_workflow_run_identity_unreadable")
+        identity = match.groupdict()
+        marker_matches = current_marker == (
+            f"Orchestrator handoff {identity['handoff']} task {identity['task']} "
+            f"digest {identity['digest']}"
+        )
+        if structured_runs and not marker_matches:
+            continue
         transport_state = _transport_state(client, run)
         if transport_state == "REJECTED_BEFORE_TRANSPORT":
             continue
-        structured_runs.append((run, match.groupdict(), transport_state))
-        break
+        if not structured_runs:
+            structured_runs.append((run, identity, transport_state))
+        if marker_matches:
+            matching_dispatches.append(
+                {
+                    "id": str(run.get("id")),
+                    "status": run.get("status"),
+                    "conclusion": run.get("conclusion"),
+                    "transport_state": transport_state,
+                }
+            )
     if structured_runs:
         latest_run, identity, transport_state = structured_runs[0]
         truth["latest_previous_handoff"] = {
@@ -774,17 +799,7 @@ def collect_github_truth(
         if all(item in started for item in bootstrap_markers):
             truth["previous_handoff_matches"] = True
             truth["previous_handoff_source"] = "started_work_bootstrap"
-    truth["matching_dispatches"] = [
-        {
-            "id": str(run.get("id")),
-            "status": run.get("status"),
-            "conclusion": run.get("conclusion"),
-        }
-        for run, identity, transport_state in structured_runs
-        if current_marker
-        == f"Orchestrator handoff {identity['handoff']} task {identity['task']} digest {identity['digest']}"
-        and run.get("status") in {"queued", "in_progress", "completed"}
-    ]
+    truth["matching_dispatches"] = matching_dispatches
     return truth
 
 
@@ -861,10 +876,11 @@ def check_with_github(
     if decision.get("decision") == "SEND":
         return {
             **decision,
-            "decision": "BLOCK",
+            "decision": "PREPARED_ONLY",
             "builder_input": "",
-            "blocker": "manual_transport_reservation_unavailable",
-            "resume_condition": "Use the repository workflow_dispatch path, which owns lifecycle concurrency and durable run correlation.",
+            "send_authorized": False,
+            "blocker": "",
+            "resume_condition": "An explicitly authorized Parent may use the exact prepared composer content through the existing manual Builder path, then must reconcile it serially; this check creates no reservation or automatic send authority.",
         }
     return decision
 
@@ -1071,7 +1087,7 @@ def main() -> int:
             local_head=_local_head(),
         )
         print(json.dumps(decision, sort_keys=True))
-        return 0 if decision["decision"] == "SEND" else 1
+        return 0 if decision["decision"] in {"SEND", "PREPARED_ONLY"} else 1
 
     if _local_head() != handoff.get("prepared_main_sha"):
         print(json.dumps({"decision": "BLOCK", "blocker": "local_head_not_prepared_main"}))

@@ -24,6 +24,8 @@ Automated handoff correlation is the existing GitHub workflow-run record, not a 
 
 Before a send, admission boundedly paginates the complete workflow-run history. Missing totals, incomplete pages, unreadable identities or job-step evidence block. Actual job steps distinguish a rejected pre-transport reservation from a run whose transport was accepted or became ambiguous; only the latter becomes authoritative predecessor/duplicate evidence. A GitHub rerun (`run_attempt != 1`) never posts again. Global non-cancelling concurrency covers the Builder lifecycle; timeout, cancellation or job failure after transport remains unresolved and fail-closed.
 
+The one rollout boundary is actual legacy workflow run `37234276748` (2026-10-04T21:00:06Z), the newest of 20 observed manual runs whose pre-method title was only `FanMind Orchestrator Builder Dispatch`. Unstructured identities are ignored only at or below that immutable run ID. Any unstructured newer run blocks. This compatibility constant is not a Latest-Handoff record and is never updated per dispatch.
+
 The one migration bootstrap for an explicitly Owner-direct task is recorded in existing `STARTED_WORK.md` and `WORK_LOCKS.md` with the same identity fields, required-check/runtime contract and exact set of active locks explicitly proven non-overlapping by the Owner task. Caller labels or a timestamp alone grant nothing. A stale, missing or duplicate binding fails closed. No per-handoff commit to `main`, contents-write permission, new token scope, plugin, registry or second queue is introduced.
 
 ## Result meaning
@@ -34,7 +36,26 @@ The one migration bootstrap for an explicitly Owner-direct task is recorded in e
 
 ## Manual boundary
 
-The supported manual path uses `prepare`, then `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` performs the same live public GitHub reads, verifies exact local/current-main binding and rejects any residual text. It is deliberately preparation/validation only and always returns `manual_transport_reservation_unavailable` instead of granting a send. Existing read-only rights cannot atomically reserve an out-of-workflow manual POST; the lifecycle-safe send path is the repository `workflow_dispatch` job.
+The supported manual path uses `prepare`, then `check --repository FanMind/FanMind` with the exact prepared composer file and identities emitted by preparation. `check` performs the same live public GitHub reads, verifies exact local/current-main binding and rejects any residual text. A successful result is `PREPARED_ONLY` with `send_authorized=false`: it is validation, not a reservation or automatic send grant. Existing read-only rights cannot atomically reserve an out-of-workflow manual send.
+
+From an exact fresh checkout, the usable sequence is:
+
+```bash
+python3 scripts/fanmind_orchestrator_admission.py prepare \
+  --handoff /tmp/fanmind-handoff.json \
+  --composer-output /tmp/fanmind-builder-input.txt
+
+python3 scripts/fanmind_orchestrator_admission.py check \
+  --handoff /tmp/fanmind-handoff.json \
+  --repository FanMind/FanMind \
+  --handoff-id '<prepared-handoff-id>' \
+  --task-id '<prepared-task-id>' \
+  --previous-task-id '<prepared-previous-task-id>' \
+  --payload-sha256 '<prepare-output-sha256>' \
+  --composer-input /tmp/fanmind-builder-input.txt
+```
+
+After `PREPARED_ONLY`, an explicitly authorized Parent may use exactly `/tmp/fanmind-builder-input.txt` through the existing manual Builder path, including while the Workspace Agent trigger API remains unavailable. That procedural route does not gain workflow concurrency or automatic deduplication: the Parent must keep it serial, preserve the prepared identity and reconcile the matching receipt/GitHub truth before any independent work. The repository workflow remains the only transport boundary automatically enforced by this code.
 
 GitHub CI cannot universally prevent an Owner or root user from typing arbitrary text directly into another interface. Enforcement applies to this repository's supported preparation/check entry and the existing Builder transport workflow; no UI automation or platform access system is added.
 

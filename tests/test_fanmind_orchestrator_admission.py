@@ -202,8 +202,10 @@ class AdmissionTests(unittest.TestCase):
             second = MODULE.check_with_github(
                 prepared, receipt(), ready(), object(), **kwargs
             )
-        self.assertEqual("manual_transport_reservation_unavailable", first["blocker"])
-        self.assertEqual("manual_transport_reservation_unavailable", second["blocker"])
+        self.assertEqual("PREPARED_ONLY", first["decision"])
+        self.assertEqual("PREPARED_ONLY", second["decision"])
+        self.assertFalse(first["send_authorized"])
+        self.assertFalse(second["send_authorized"])
 
         stale = MODULE.check_with_github(
             prepared,
@@ -468,6 +470,9 @@ class AdmissionTests(unittest.TestCase):
     def test_rejected_pretransport_run_is_not_previous_handoff_but_bad_title_blocks(self):
         prepared = handoff()
         previous = receipt()
+        current_run_id = str(MODULE.LEGACY_WORKFLOW_RUN_BOUNDARY + 3)
+        rejected_run_id = MODULE.LEGACY_WORKFLOW_RUN_BOUNDARY + 2
+        accepted_run_id = MODULE.LEGACY_WORKFLOW_RUN_BOUNDARY + 1
 
         class FakeClient:
             bad_title = False
@@ -501,9 +506,9 @@ class AdmissionTests(unittest.TestCase):
                     return {
                         "total_count": 2,
                         "workflow_runs": [
-                            {"id": 499, "display_title": title, "created_at": "2026-10-05T11:00:00Z"},
+                            {"id": rejected_run_id, "display_title": title, "created_at": "2026-10-05T11:00:00Z"},
                             {
-                                "id": 498,
+                                "id": accepted_run_id,
                                 "display_title": "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
                                 + "f" * 64,
                                 "created_at": "2026-10-05T10:00:00Z",
@@ -512,16 +517,16 @@ class AdmissionTests(unittest.TestCase):
                             },
                         ],
                     }
-                if path == "actions/runs/500":
+                if path == f"actions/runs/{current_run_id}":
                     return {
-                        "id": 500,
+                        "id": int(current_run_id),
                         "display_title": "Orchestrator handoff handoff-next-001 task next-task-001 digest "
                         + prepared["payload_sha256"],
                         "event": "workflow_dispatch",
                         "path": ".github/workflows/fanmind-manager-event-dispatch.yml",
                         "run_attempt": 1,
                     }
-                if path == "actions/runs/499/jobs?per_page=100":
+                if path == f"actions/runs/{rejected_run_id}/jobs?per_page=100":
                     return {
                         "total_count": 1,
                         "jobs": [{"steps": [
@@ -529,7 +534,7 @@ class AdmissionTests(unittest.TestCase):
                             {"name": "Transport exactly one admitted handoff", "conclusion": "skipped"},
                         ]}],
                     }
-                if path == "actions/runs/498/jobs?per_page=100":
+                if path == f"actions/runs/{accepted_run_id}/jobs?per_page=100":
                     return {
                         "total_count": 1,
                         "jobs": [{"steps": [
@@ -541,17 +546,102 @@ class AdmissionTests(unittest.TestCase):
 
         client = FakeClient()
         observed = MODULE.collect_github_truth(
-            client, prepared, previous, current_run_id="500"
+            client, prepared, previous, current_run_id=current_run_id
         )
         self.assertTrue(observed["previous_handoff_matches"])
-        self.assertEqual("498", observed["latest_previous_handoff"]["run_id"])
+        self.assertEqual(str(accepted_run_id), observed["latest_previous_handoff"]["run_id"])
         client.bad_title = True
         with self.assertRaisesRegex(
             MODULE.AdmissionError, "github_workflow_run_identity_unreadable"
         ):
             MODULE.collect_github_truth(
-                client, prepared, previous, current_run_id="500"
+                client, prepared, previous, current_run_id=current_run_id
             )
+
+    def test_admitted_then_skipped_transport_remains_unresolved(self):
+        class Client:
+            def get(self, _path):
+                return {
+                    "total_count": 1,
+                    "jobs": [{"steps": [
+                        {"name": "Admit prepared handoff", "conclusion": "success"},
+                        {"name": "Transport exactly one admitted handoff", "conclusion": "skipped"},
+                    ]}],
+                }
+
+        self.assertEqual(
+            "TRANSPORT_UNRESOLVED",
+            MODULE._transport_state(Client(), {"id": 1}),
+        )
+
+    def test_older_duplicate_is_found_behind_newer_valid_predecessor(self):
+        prepared = handoff()
+        previous = receipt()
+        current_id = MODULE.LEGACY_WORKFLOW_RUN_BOUNDARY + 30
+        history = [
+            {
+                "id": current_id,
+                "display_title": "Orchestrator handoff handoff-next-001 task next-task-001 digest "
+                + prepared["payload_sha256"],
+                "created_at": "2026-10-05T12:00:00Z",
+            },
+            {
+                "id": current_id - 1,
+                "display_title": "Orchestrator handoff handoff-previous-001 task previous-task-001 digest "
+                + "f" * 64,
+                "created_at": "2026-10-05T11:00:00Z",
+                "status": "completed",
+                "conclusion": "success",
+            },
+            {
+                "id": current_id - 2,
+                "display_title": "Orchestrator handoff handoff-next-001 task next-task-001 digest "
+                + prepared["payload_sha256"],
+                "created_at": "2026-10-05T10:00:00Z",
+                "status": "completed",
+                "conclusion": "success",
+            },
+        ]
+
+        class Client:
+            def get(self, path):
+                if path == "commits/main":
+                    return {"sha": "b" * 40}
+                if path.startswith("compare/"):
+                    return {"status": "ahead"}
+                if path == "pulls/123":
+                    return {
+                        "number": 123,
+                        "head": {"sha": "c" * 40},
+                        "merge_commit_sha": "a" * 40,
+                        "merged_at": "2026-10-05T10:00:00Z",
+                        "base": {"ref": "main"},
+                    }
+                if path.startswith("commits/"):
+                    return {"check_runs": [
+                        {"name": "FanMind CI", "conclusion": "success"},
+                        {"name": "God Mode", "conclusion": "success"},
+                    ]}
+                if path == f"actions/runs/{current_id}":
+                    return {
+                        **history[0],
+                        "event": "workflow_dispatch",
+                        "path": ".github/workflows/fanmind-manager-event-dispatch.yml",
+                        "run_attempt": 1,
+                    }
+                self.fail(f"unexpected path: {path}")
+
+        with mock.patch.object(
+            MODULE, "_complete_workflow_run_history", return_value=history
+        ), mock.patch.object(
+            MODULE, "_transport_state", return_value="TRANSPORT_ACCEPTED"
+        ):
+            observed = MODULE.collect_github_truth(
+                Client(), prepared, previous, current_run_id=str(current_id)
+            )
+        self.assertTrue(observed["previous_handoff_matches"])
+        self.assertEqual(1, len(observed["matching_dispatches"]))
+        self.assertEqual(str(current_id - 2), observed["matching_dispatches"][0]["id"])
 
     def test_actual_pr_head_merge_and_checks_are_bound(self):
         wrong_head = truth()
