@@ -240,7 +240,7 @@ export function productionBackupDiagnostics(source) {
     const safeSizeBytes =
       sizeBytes !== null && Number.isSafeInteger(sizeBytes) ? sizeBytes : null;
 
-    let classification = "healthy";
+    let classification = "within_threshold_nonempty";
     if (safeAgeHours === null && safeSizeBytes === null) {
       classification = "invalid_age_and_size";
     } else if (safeAgeHours === null) {
