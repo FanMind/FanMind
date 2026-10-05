@@ -16,6 +16,7 @@ STARTED_WORK_PATH = PM / "STARTED_WORK.md"
 WORK_LOCKS_PATH = PM / "WORK_LOCKS.md"
 FAILED_ATTEMPTS_PATH = PM / "FAILED_ATTEMPTS.md"
 OUTPUT_PATH = PM / "NEXT_BEST_ACTION.md"
+PRODUCT_ROADMAP_PATH = ROOT / "src" / "config" / "roadmap.ts"
 
 ACCEPTED_STATES = {"ACCEPTED", "PRODUCTION_CONFIRMED"}
 OWNER_BLOCKING_STATES = {"DEFERRED_BY_OWNER", "OWNER_ACTION_REQUIRED"}
@@ -67,6 +68,41 @@ PARALLEL_SCOPE_KEYS = (
 
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def product_roadmap_open_items(text: str) -> list[dict]:
+    """Return unfinished items from active product-roadmap phases.
+
+    This intentionally reads the canonical TypeScript roadmap without evaluating it.
+    Only phases marked done are excluded; later phases stay visible but are not treated
+    as current continuation work until their availability becomes upcoming.
+    """
+    items: list[dict] = []
+    for block in re.split(r'(?=\\n  \\{\\n    number: \\"\\d+\\")', text):
+        number = re.search(r'number: \\"(\\d+)\\"', block)
+        availability = re.search(r'availability: \\"(done|upcoming|later)\\"', block)
+        if not number or not availability or availability.group(1) != "upcoming":
+            continue
+        phase = int(number.group(1))
+        for match in re.finditer(
+            r'\\{ label: \\"([^\\"]+)\\", state: \\"(progress|partial|planned|later)\\"(?:, status: \\"([^\\"]*)\\")? \\}',
+            block,
+        ):
+            state = match.group(2)
+            if state == "later":
+                continue
+            items.append({
+                "phase": phase,
+                "label": match.group(1),
+                "state": state,
+                "status": match.group(3) or "",
+            })
+    return items
+
+
+def roadmap_reconciliation_required(manager: dict, roadmap_items: list[dict]) -> bool:
+    """A blocked technical queue is not an honest no-work result while active roadmap work exists."""
+    return not manager.get("safe_ready_set") and bool(roadmap_items)
 
 
 def deferred_owner_ids(text: str) -> set[str]:
@@ -2107,7 +2143,7 @@ def main() -> int:
 
     if args.manager_check:
         try:
-            run_manager_contract_tests()
+            run_manager_contract_tests()\n            run_product_roadmap_contract_tests()
         except (AssertionError, ValueError) as exc:
             print(f"FANMIND_BUILDER_MANAGER_RESULT=failed:{exc}")
             return 1
@@ -2160,7 +2196,7 @@ def main() -> int:
         print("FANMIND_NEXT_ACTION=NONE")
         print("FANMIND_NEXT_ACTION_STATUS=NONE")
 
-    print("FANMIND_SAFE_READY_SET=" + json.dumps(manager["safe_ready_set"], separators=(",", ":")))
+    print("FANMIND_PRODUCT_ROADMAP_OPEN=" + json.dumps(roadmap_items, ensure_ascii=False, separators=(",", ":")))\n    print("FANMIND_ROADMAP_RECONCILIATION_REQUIRED=" + ("true" if roadmap_reconciliation_required(manager, roadmap_items) else "false"))\n    print("FANMIND_SAFE_READY_SET=" + json.dumps(manager["safe_ready_set"], separators=(",", ":")))
     print(f"FANMIND_WORKER_LIMIT={manager['worker_limit']}")
     print(f"FANMIND_WORKER_USED={manager['worker_used']}")
     print(
