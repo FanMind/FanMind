@@ -1,6 +1,6 @@
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: FanMind Builder task `fanmind-orchestrator-method-20261005-01`
 - Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
@@ -10,8 +10,9 @@
 - Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
 - Runtime requirement: {"required":false}
 - Forbidden: contents-write permission, per-handoff repository/main writes, merge/auto-merge, live workflow/API dispatch, deploy, Production/Staging/database/provider/Billing/secret/permission/branch-protection mutation or a second planning/queue system.
-- Release condition: focused behavior tests, actual pre-transport workflow integration, required exact-head CI/God Mode, independent countercheck with no blocking P0/P1/P2 and a reviewable Draft PR. Merge and live check remain separately authorized.
-- Recovery: close/revert the Draft PR; no external state has changed.
+- Release: PR #1276 final head `111d462a8b3d50d7d7e2acc94c27b61c11f74c70` passed all nine required exact-head workflows and independent final countercheck, then merged as `c5e194273585a0d0d57cf0da832c531dc02f01c4`; this closeout PR prepares the matching canonical source-only `COMPLETED` receipt with runtime `NOT_REQUIRED`, effective only after publication on `main`.
+- Boundary: automatic deploy/readiness confirmed the exact live revision; read-only audit retained the known stale database/full-backup blocker. No manual workflow/API dispatch, live check, database, backup, restore, host, provider, secret, permission or branch-protection action is included or authorized by this release.
+- Recovery: any source regression uses a separately reviewed repository revert. Receipt publication itself performs no external mutation; preserve the independent backup blocker rather than reopening this lock.
 
 ## LOCK-FM-CI-PR1256-20261004
 - Task: FM-CI-PR1256-20261004
