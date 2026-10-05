@@ -1,3 +1,18 @@
+## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
+- Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
+- Status: ACTIVE
+- Risk: R3
+- Holder: FanMind Builder task `fanmind-orchestrator-method-20261005-01`
+- Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
+- Scope: `.github/workflows/fanmind-manager-event-dispatch.yml`, `scripts/fanmind_orchestrator_admission.py`, the serial dispatch view of `scripts/fanmind_next_best_action.py`, focused tests, directly affected orchestration docs/protocol and this task's coordination records.
+- Parallel safety: explicit non-overlap with `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` and `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; do not edit or assume authority over those scopes.
+- Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
+- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
+- Runtime requirement: {"required":false}
+- Forbidden: contents-write permission, per-handoff repository/main writes, merge/auto-merge, live workflow/API dispatch, deploy, Production/Staging/database/provider/Billing/secret/permission/branch-protection mutation or a second planning/queue system.
+- Release condition: focused behavior tests, actual pre-transport workflow integration, required exact-head CI/God Mode, independent countercheck with no blocking P0/P1/P2 and a reviewable Draft PR. Merge and live check remain separately authorized.
+- Recovery: close/revert the Draft PR; no external state has changed.
+
 ## LOCK-FM-CI-PR1256-20261004
 - Task: FM-CI-PR1256-20261004
 - Status: RELEASED_CI_FIXED

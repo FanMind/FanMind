@@ -1,17 +1,96 @@
 {
-  "task_id": "backup-worker-safe-error-codes-20261005T1010Z",
-  "status": "COMPLETED",
-  "summary": "The bounded backup-worker safe error-code classification was implemented, independently reviewed, verified, and merged as PR #1274. This receipt closes only that repository task; it does not claim that the Backup root cause or current Backup freshness is resolved.",
+  "schema_version": 2,
+  "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
+  "payload_sha256": "eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2",
+  "task_id": "fanmind-orchestrator-method-20261005-01",
+  "status": "BLOCKED",
+  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge and canonical publication have not occurred.",
   "evidence": [
-    "PR #1274 final reviewed head e7a1cca30cc3475f788f2dd502b1d9df385b428d was based on 5fdf472206a92b5da277b998e8fac84008a04f0c and changed exactly three files with 116 additions and zero deletions. Independent countercheck was PASS with no review threads or comments.",
-    "The focused backup-worker test passed 34 of 34 tests. All eight triggered exact-head workflow runs succeeded, including FanMind CI run 37296066092; the reviewed check rollup contained 13 successful checks.",
-    "PR #1274 was merged with SHA guard at 2026-10-05T10:37:28Z as main commit bef82c2294128bfd93dea4fe23af9de830ed7afb.",
-    "Automatic push-triggered Production deployment run 37297765679 succeeded on exact merge bef82c2294128bfd93dea4fe23af9de830ed7afb; job 111722957885 completed at 2026-10-05T10:39:07Z with 14 public smoke routes successful and release-switch sampling at 6 samples with zero non-200 responses.",
-    "Automatic readiness run 37297941140 succeeded with 18 checks and read the same live release. No manual deployment, readiness, audit, Backup, Restore, worker, host, SQL, SSH, provider, secret, credential, access, or schedule action was started by this task.",
-    "Automatic read-only audit run 37297941162 failed only on production_audit_backup_latest_stale_or_empty: database was 394.14 hours old and full was 537.14 hours old, while storage and server_config were within-threshold and non-empty. It verified PRODUCTION_RUNTIME_VERIFIED=true, the same release, and all eight health components healthy. The Backup root cause and current Backup freshness remain open and unproven.",
-    "The earlier BLOCKED handoff correctly reported that publication was not authorized at that time; the later explicit receipt-only publication authorization resolved only that evidence blocker and did not expand any protected boundary."
+    "The accepted Owner-direct envelope, stable work identity, task_id, previous task_id and payload digest are preserved in this receipt and bound independently in STARTED_WORK.md and WORK_LOCKS.md.",
+    "The implementation reuses the existing selector, started-work/lock state, workflow-run history and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
+    "Thirty-seven focused Python behavior tests spy transport and cover predecessor-contract separation, stable work replay, selector-bound resume evidence, authoritative exact-head workflow runs, all dispatch attempts, required-runtime operator attestation and the established zero-send cases.",
+    "The existing dispatch workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read.",
+    "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline, workflow mode or permission was added.",
+    "No merge, auto-merge, deployment, live API trigger, optional read-only Parent diagnosis, SQL, host, provider, secret, credential, permission or protected-state action was performed."
   ],
-  "blocker": "",
-  "completed_at": "2026-10-05T10:37:28Z",
-  "main_sha": "bef82c2294128bfd93dea4fe23af9de830ed7afb"
+  "blocker": "Merge and canonical publication are outside the authorization for this run.",
+  "resume_condition": "After exact-head required CI and independent countercheck pass, the Owner separately authorizes merge and publication of the matching COMPLETED receipt through normal repository gates. An optional later read-only prepare/check BLOCK is Parent diagnosis only, not product runtime evidence or a completion prerequisite. No Builder transport, workflow dispatch or new task is involved.",
+  "completed_at": "2026-10-05T11:13:43Z",
+  "main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
+  "source_acceptance": null,
+  "runtime_evidence": {
+    "required": false,
+    "status": "NOT_REQUIRED"
+  },
+  "accepted_handoff": {
+    "acceptance": [
+      "Bind fresh main, one bounded task contract, authoritative predecessor identity, typed receipt and actual GitHub truth.",
+      "Block unresolved or contradictory prior work while preserving immutable accepted merge evidence and distinct source, task and runtime evidence.",
+      "Select exactly one truly ready task or none without executable owner fallback, duplicate or overlapping work.",
+      "Enforce admission before workflow transport and expose honest manual preparation-only validation.",
+      "Prove null sends for invalid evidence and exactly one send only for fully admitted work with real behavior tests.",
+      "Bind exact-head CI and independent review, then stop at the Draft PR boundary."
+    ],
+    "agent_context": "FanMind Builder",
+    "forbidden": [
+      "merge or auto-merge",
+      "deployment or live workflow/API dispatch",
+      "Production, database, Billing or provider mutation",
+      "secret, credential, permission or branch-protection mutation",
+      "second planner, queue or per-handoff main write"
+    ],
+    "goal": "Integrate the proven FanMind work, decision and control method as one executable, tested Orchestrator admission and closeout stage.",
+    "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
+    "non_overlapping_active_locks": [
+      "LOCK-FM-AI-CAPACITY-BUDGETS-20260930",
+      "LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930",
+      "LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927"
+    ],
+    "owner_authorized_at": "2026-10-05",
+    "prepared_main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
+    "previous_result_disposition": "ACCEPTED_COMPLETION",
+    "previous_task_id": "backup-worker-safe-error-codes-20261005T1010Z",
+    "required_checks": [
+      "FanMind Browser E2E",
+      "FanMind CI",
+      "FanMind CodeQL",
+      "FanMind God Mode Gate",
+      "FanMind Landing Language CI",
+      "FanMind Supply Chain Security",
+      "Project Memory Guard",
+      "Project Memory Quality",
+      "Project Memory Status"
+    ],
+    "risk": "R3",
+    "runtime_requirement": {
+      "required": false
+    },
+    "scope": {
+      "contracts": [
+        "single admission and closeout boundary",
+        "existing selector and coordination records",
+        "manual preparation validation boundary"
+      ],
+      "files": [
+        ".github/workflows/fanmind-manager-event-dispatch.yml",
+        ".github/workflows/fanmind-god-mode-gate.yml",
+        "scripts/fanmind_orchestrator_admission.py",
+        "scripts/fanmind_next_best_action.py",
+        "tests/test_fanmind_orchestrator_admission.py",
+        "tests/fanmind-manager-event-dispatch.test.mjs",
+        "tests/github-actions-supply-chain.test.mjs",
+        "docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md",
+        "project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md",
+        "project-memory/ORCHESTRATOR_RESULT.json",
+        "project-memory/PROTOCOL.md",
+        "project-memory/STARTED_WORK.md",
+        "project-memory/WORK_LOCKS.md",
+        "project-memory/NEXT_BEST_ACTION.md"
+      ]
+    },
+    "selection_basis": "EXPLICIT_OWNER_TASK",
+    "source": "OWNER_DIRECT",
+    "task_id": "fanmind-orchestrator-method-20261005-01",
+    "work_identity_sha256": "80f80e37d748fe6b800e619be0b302a7fdfe76998151697a0d600b8f3d1a4e2e"
+  }
 }

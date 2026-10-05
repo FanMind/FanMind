@@ -168,24 +168,26 @@ Contract/schema/API/AI-context/Billing/disclosure/Social changes require consume
 
 FanMind orchestration is state-driven, never clock-order-driven. Scheduled Builder, Supervisor, Navigator and Owner Manager runs are fallback/reconciliation opportunities, not ordering guarantees.
 
-- A task may be woken by a repository event, a manual trigger or its normal schedule.
+- Automated Builder transport may be dispatched only by the manual Orchestrator workflow. The digest-bound command-line path returns `PREPARED_ONLY`/`send_authorized=false`; an already explicitly authorized Parent may use that exact content through the existing manual Builder path and must serialize/reconcile it procedurally because read-only validation cannot atomically reserve the out-of-workflow send.
 - Every wake-up must classify the bounded task first and then run the minimum sufficient R1/R2 preflight or the full R3/R4 preflight defined by Execution Policy v6.
 - Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
 - Cross-run coordination uses canonical Project Memory only when the task changes durable state or requires coordination; GitHub remains the detailed history for ordinary R1/R2 code changes.
-- A merge event may wake the FanMind Workspace Manager through `.github/workflows/fanmind-manager-event-dispatch.yml`, but it never authorizes a protected action.
-- A merge that changes only `project-memory/ORCHESTRATOR_RESULT.json` is terminal coordination and must not dispatch another manager run. Product-only and mixed-file merges still wake the manager; incomplete file evidence is never classified as receipt-only.
-- The default orchestration is one active Workspace Builder/Manager run at a time. It recomputes the SAFE READY SET from current evidence, selects exactly one bounded task, serializes uncertainty and returns NO_CHANGE when nothing safe is executable.
+- `.github/workflows/fanmind-manager-event-dispatch.yml` is manual `workflow_dispatch` only. No merge, receipt publication or schedule wakes it, and the Builder never self-selects from a repository event.
+- Before transport, the executable admission gate binds fresh main, one prepared task envelope and current first-attempt workflow run, authoritative prior actual transport identity, the typed result receipt, actual GitHub main-targeted PR/check/merge truth, any contract-required runtime attestation and the existing selector's one-or-zero serial decision.
+- The default orchestration is one active Workspace Builder/Manager run at a time. Existing explicitly parallel-safe, non-overlapping analysis remains available, but each dispatch admits exactly one envelope and uncertainty returns zero sends.
 - Separate Planner/Guardian/Supervisor/Navigator runs are not default workers; use them only when the active risk class or contract explicitly requires independent planning/evidence/review.
-- The hourly Builder remains a fallback if an event is missed, delayed, disabled or rejected.
-- Event retries must be idempotent; repeated unchanged state must not create receipt/PR churn.
+- Repeated, rerun or concurrent admission of the same handoff/task/digest is idempotently blocked from transport; a terminal task identity is not reopened by changing only its handoff ID, and unchanged state must not create receipt/PR churn.
 - Configuration and activation details live in `docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md`.
 
 
 ## FanMind Orchestrator single-authority contract
 - The FanMind Orchestrator is the single decision point for new independent work. It owns roadmap/state inspection, prioritization, SAFE READY SET selection, task scoping, task_id assignment, result verification and the next-task decision.
 - The FanMind Builder is an execution worker. It executes exactly the bounded task_id it receives. It may diagnose and repair problems inside that task, but it does not choose another roadmap task, continue unrelated work, or replace a blocked task with a different one.
-- Repository merge events are evidence for the Orchestrator to reconcile; they are not authority for the Builder to self-select new work. The Builder dispatch workflow is manual workflow_dispatch only and requires both task and task_id.
-- HTTP/API trigger acceptance is only a dispatch receipt. Completion requires a terminal result with the exact task_id, verified by the Orchestrator against current repository truth.
+- Repository merge events are evidence for reconciliation only; they never dispatch or authorize Builder work. The workflow accepts one exact prepared envelope and rejects free task prose; the command-line manual check remains non-consuming preparation only.
+- HTTP/API trigger acceptance is only a transport receipt. Completion requires a typed terminal result with the exact handoff ID, payload digest and task ID, verified against the independent prior handoff identity and current GitHub truth.
+- The typed result preserves its full accepted handoff contract. Admission evaluates the prior task's required workflow names and runtime requirement from that prior contract, never from the new handoff; exact-head workflow runs, not their internal job names, satisfy source checks.
+- Every relevant workflow-run attempt is reconciled. A later rejected rerun never erases an earlier accepted or ambiguous transport, and incomplete attempt history blocks.
+- When an accepted contract requires the Orchestrator CLI check, the receipt's command, complete-log SHA-256, checked-at value and merge/task/handoff/payload binding are a validated operator attestation. Repository admission does not independently retrieve or authenticate that execution. Source-only contracts may use `NOT_REQUIRED`; no new workflow mode is implied.
 - The Orchestrator must not dispatch a second independent Builder task while a prior task is unresolved unless an explicit, proven non-overlapping parallel-work rule permits it. Default orchestration is serial to minimize duplicate work and cost.
-- A Builder BLOCKED result returns control to the Orchestrator. The Orchestrator decides whether to repair, park, request Owner Action, or choose an independent safe task.
+- BLOCKED, FAILED and NO_CHANGE preserve their real terminal meaning and never mark the underlying product task accepted. A new independent dispatch requires a digest-bound `RECONCILED_PARKED` disposition, matching successfully closed actual run, explicit blocker/resume condition and normal selector/admission independence; unresolved transport remains blocking.
 - Protected Production/Billing/provider/destructive/secret/legal boundaries remain governed by their existing authorization rules; Orchestrator authority does not bypass them.

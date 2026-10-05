@@ -808,6 +808,78 @@ def select_from_manager(
     return None, classified
 
 
+def dispatch_decision(
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    *,
+    failed_action_ids: set[str] | None = None,
+    active_tasks: set[str] | None = None,
+    active_slots: list[dict] | None = None,
+) -> dict:
+    """Return the single serial dispatch candidate, or an explicit no-send state.
+
+    The manager can still describe explicitly parallel-safe work. Transport admission is
+    deliberately serial by default and consumes only the first manager-approved action.
+    Owner-only fallbacks remain visible but are never executable candidates.
+    """
+    manager = build_safe_ready_set(
+        state,
+        catalog,
+        deferred,
+        requested_limit=1,
+        failed_action_ids=failed_action_ids,
+        active_tasks=active_tasks,
+        active_slots=active_slots,
+    )
+    classified = classified_actions(
+        state,
+        catalog,
+        deferred,
+        failed_action_ids=failed_action_ids,
+    )
+    new_ready = [
+        action_id
+        for action_id in manager["safe_ready_set"]
+        if action_id not in set(manager["active_continuations"])
+    ]
+    if new_ready:
+        action_id = new_ready[0]
+        action = _action_index(catalog).get(action_id)
+        if action is None:
+            raise ValueError(f"manager_selected_unknown_action:{action_id}")
+        return {
+            "state": "READY",
+            "executable": True,
+            "action_id": action_id,
+            "task": action["task"],
+            "safe_ready_set": [action_id],
+            "manager": manager,
+        }
+
+    for action, status, reason in classified:
+        if status in OWNER_BLOCKING_STATES:
+            return {
+                "state": status,
+                "executable": False,
+                "action_id": action["id"],
+                "task": action["task"],
+                "reason": reason,
+                "safe_ready_set": [],
+                "manager": manager,
+            }
+
+    state_name = "PARALLEL_ACTIVE" if manager["worker_used"] else "NONE"
+    return {
+        "state": state_name,
+        "executable": False,
+        "action_id": None,
+        "task": None,
+        "safe_ready_set": [],
+        "manager": manager,
+    }
+
+
 def _synthetic_state(action_ids: list[str], *, accepted: set[str] | None = None) -> dict:
     accepted_ids = accepted or set()
     gates = {
