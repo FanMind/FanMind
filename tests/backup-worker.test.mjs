@@ -324,6 +324,39 @@ test('backup worker persists and logs only fixed error codes', () => {
     );
   }
   assert.equal(
+    worker.backupWorkerErrorCode(
+      Object.assign(new Error('authorization_query_timeout'), {
+        code:'authorization_query_failed',
+      }),
+    ),
+    'authorization_query_failed',
+  );
+  assert.equal(
+    worker.backupWorkerErrorCode(
+      Object.assign(new Error('authorization_query_timeout'), {
+        code:'authorization_unknown_failure',
+      }),
+    ),
+    'authorization_query_timeout',
+  );
+  assert.equal(
+    worker.backupWorkerErrorCode(
+      Object.assign(new Error('token=live-secret\\npassword=private'), {
+        code:'authorization_query_failed',
+      }),
+    ),
+    'authorization_query_failed',
+  );
+  assert.equal(
+    worker.backupWorkerErrorCode(
+      Object.assign(new Error('raw postgres detail'), {
+        code:'authorization_unknown_failure',
+      }),
+      'backup_claim_failed',
+    ),
+    'backup_claim_failed',
+  );
+  assert.equal(
     worker.backupWorkerErrorCode(new Error('supabase_503')),
     'supabase_request_failed',
   );
