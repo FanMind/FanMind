@@ -6,7 +6,7 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNE
 - Phase 8 started: `true`
 - Selected action: `NBA-FANS-EXACT-TAG-FILTER`
 - Task: `FM-FANS-EXACT-TAG-FILTER-20261005`
-- Gate: `fans_exact_tag_filter` (`UNKNOWN`)
+- Gate: `fans_exact_tag_filter` (`IN_PROGRESS`)
 - Selection status: `EXECUTABLE`
 - Title: Exakten Tag-Filter in der normalen Fans-Liste liefern
 

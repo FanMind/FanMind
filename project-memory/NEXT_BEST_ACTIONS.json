@@ -504,7 +504,9 @@
           "project-memory/NEXT_BEST_ACTION.md",
           "project-memory/STARTED_WORK.md",
           "project-memory/WORK_LOCKS.md",
-          "project-memory/DRIFT_BASELINE.json"
+          "project-memory/DRIFT_BASELINE.json",
+          "project-memory/CURRENT_STATE.md",
+          "project-memory/FINISHLINE_STATE.json"
         ],
         "directories": [],
         "modules": [
@@ -521,7 +523,9 @@
           "project-memory/NEXT_BEST_ACTION.md",
           "project-memory/STARTED_WORK.md",
           "project-memory/WORK_LOCKS.md",
-          "project-memory/DRIFT_BASELINE.json"
+          "project-memory/DRIFT_BASELINE.json",
+          "project-memory/CURRENT_STATE.md",
+          "project-memory/FINISHLINE_STATE.json"
         ],
         "ci": [
           "tests/fans-tag-filter.test.mjs",

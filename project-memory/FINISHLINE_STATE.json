@@ -166,6 +166,13 @@
       "state": "IN_PROGRESS",
       "required_for_sales": false,
       "evidence": "PR #1214 final head 9ad10f2600d9b0b829f052287f81a202ef933383 merged normally as current main bc85493f8fc25ff90c965208bd20c7dc64641158, accepting the bounded drift-diagnostics/recovery source correction. Protected attempt 1 run 36321009852 on prior main deployed Staging, classified DRIFT, requested no APPLY and skipped runtime; SQL APPLY/runtime/Production mutation counts remain zero. The next step is owner-gated read-only diagnosis command run-creator-target-drift-diagnosis <then-current-main-sha>; reviewed remediation and a distinct fresh transition/runtime authorization are required before any later target mutation."
+    },
+    "fans_exact_tag_filter": {
+      "task": "FM-FANS-EXACT-TAG-FILTER-20261005",
+      "risk": "R2",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false,
+      "evidence": "Owner-approved repository-only implementation is active under task fanmind-fans-exact-tag-filter-20261005-01 from exact main 0522dda1f67946a5e1860f654ad10687c3ad0d31. Acceptance requires reviewed source, focused exact-match/URL/browser tests and applicable exact-head PR CI; no merge, runtime or Production acceptance is claimed."
     }
   },
   "sales_required_states": [
