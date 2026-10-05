@@ -555,3 +555,6 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
 - Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
 - Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+## Root React dependency coupling — 2026-10-05
+- Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
