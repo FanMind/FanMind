@@ -1183,7 +1183,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
 - Task: FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
-- Status: ACTIVE
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: FanMind Builder task `fanmind-product-roadmap-continuation-20261005-01`
 - Branch/PR: `fix/orchestrator-product-roadmap-continuation-20261005` / #1280
@@ -1192,6 +1192,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: existing next-best-action selector, explicit roadmap references in its existing catalog, focused embedded contract tests, generated next-action view, directly affected protocol text and this task's coordination records only. `src/config/roadmap.ts` is read-only input.
 - Parallel safety: no overlap or authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; their files, runtimes and protected actions remain untouched.
 - Forbidden: merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, source-roadmap relabeling, new planner/queue/registry/authorization route and any second task.
-- Release condition: exact final head passes every applicable existing PR workflow and the Parent's independent countercheck; Parent owns merge and subsequent roadmap reevaluation.
+- Release evidence: PR #1280 final head `f495667394afc3cc6e3092d17f4cf23f510ff25e` passed all eight applicable exact-head workflows and two independent counterchecks, including the corrected parser-family recheck, then merged normally as exact main `01b27631d394025db6b2204cf96aa1b62f2453f8` at `2026-10-05T17:07:13Z`.
+- Postflight observation: Deploy `37346036758`, Readiness `37346205856` and read-only Audit `37346205878` observed the exact release; only the known backup-freshness finding remains. No protected or manual live action was taken.
+- Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
 
