@@ -166,6 +166,7 @@ def source_workflow_history(
         "workflow_runs": [
             {
                 "id": 1000 + index,
+                "run_attempt": 1,
                 "name": name,
                 "event": "pull_request",
                 "head_sha": head_sha,
@@ -946,9 +947,10 @@ class AdmissionTests(unittest.TestCase):
         )
 
         class Client:
-            def __init__(self, newest_status, newest_conclusion):
+            def __init__(self, newest_status, newest_conclusion, newest_attempt=1):
                 self.newest_status = newest_status
                 self.newest_conclusion = newest_conclusion
+                self.newest_attempt = newest_attempt
 
             def get(self, path):
                 if path == "commits/main":
@@ -971,7 +973,7 @@ class AdmissionTests(unittest.TestCase):
                         "workflow_runs": [
                             {
                                 "id": 1202,
-                                "run_attempt": 1,
+                                "run_attempt": self.newest_attempt,
                                 "name": "FanMind CI",
                                 "event": "pull_request",
                                 "head_sha": "c" * 40,
@@ -995,7 +997,7 @@ class AdmissionTests(unittest.TestCase):
                                 "name": "FanMind CI",
                                 "event": "pull_request",
                                 "head_sha": "c" * 40,
-                                "created_at": "2026-10-05T11:00:00Z",
+                                "run_started_at": "2026-10-05T12:00:00Z",
                                 "status": "completed",
                                 "conclusion": "success",
                             },
@@ -1078,6 +1080,24 @@ class AdmissionTests(unittest.TestCase):
                         "required_check_not_success:FanMind CI",
                         result["decision"]["blocker"],
                     )
+
+        calls = []
+        with self.assertRaisesRegex(
+            MODULE.AdmissionError, "github_source_workflow_authority_unreadable"
+        ):
+            MODULE.dispatch_with_github(
+                prepared,
+                previous,
+                ready(),
+                Client("completed", "success", newest_attempt="1"),
+                lambda payload: calls.append(payload) or {"status": 202},
+                requested_task_id=prepared["task_id"],
+                requested_handoff_id=prepared["handoff_id"],
+                requested_previous_task_id=prepared["previous_task_id"],
+                requested_payload_sha256=prepared["payload_sha256"],
+                current_run_id="500",
+            )
+        self.assertEqual([], calls)
 
     def test_pr_must_merge_to_main_and_exact_merge_must_be_reachable(self):
         wrong_base = truth()

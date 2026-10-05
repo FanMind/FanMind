@@ -830,19 +830,23 @@ def collect_github_truth(
                 or not isinstance(item.get("name"), str)
             ):
                 raise AdmissionError("github_source_workflow_identity_mismatch")
+            run_id = item.get("id")
+            run_attempt = item.get("run_attempt")
+            status = item.get("status")
+            conclusion = item.get("conclusion")
+            if (
+                not isinstance(run_id, int)
+                or run_id < 1
+                or not isinstance(run_attempt, int)
+                or run_attempt < 1
+                or not isinstance(status, str)
+                or (conclusion is not None and not isinstance(conclusion, str))
+            ):
+                raise AdmissionError("github_source_workflow_authority_unreadable")
             name = item["name"]
             current = latest_workflow_runs.get(name)
-            order_key = (
-                str(item.get("run_started_at") or item.get("created_at") or ""),
-                int(item.get("id") or 0),
-                int(item.get("run_attempt") or 0),
-            )
+            order_key = (run_id, run_attempt)
             current_key = (
-                str(
-                    (current or {}).get("run_started_at")
-                    or (current or {}).get("created_at")
-                    or ""
-                ),
                 int((current or {}).get("id") or 0),
                 int((current or {}).get("run_attempt") or 0),
             )
