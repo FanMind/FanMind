@@ -1141,10 +1141,31 @@ test("actual workflow publishes only allowlisted backup failure diagnostics", as
       diagnostic: "storage|classification=empty|age_hours=11.25|size_bytes=0|max_age_hours=36",
     },
     {
-      name: "missing",
-      source: valid.replace(/^BACKUP_LATEST=server_config.*\n/mu, ""),
-      code: "backup_latest_missing",
+      name: "collector missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing",
+      ),
+      code: "backup_latest_invalid",
       diagnostic: "server_config|classification=missing|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "unknown missing marker",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|unknown",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "malformed missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing|credential=RAW_SECRET_CANARY",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
     },
     {
       name: "invalid values",
