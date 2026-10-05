@@ -1180,3 +1180,18 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Result: policy revision 2 contains EUR 15 / 30 / 50 budgets; activation switches remain off, emergency freeze remains on; browser roles have no policy/grant SELECT access; no ledger customer data exists.
 - Blocker: reserve/settle RPC source must be fixed/reviewed before Staging ledger APPLY.
 - Recovery: set only the three budget columns back to NULL with all activation switches still off; no customer state was created.
+
+## LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Task: FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Status: ACTIVE
+- Risk: R3
+- Holder: FanMind Builder task `fanmind-product-roadmap-continuation-20261005-01`
+- Branch/PR: `fix/orchestrator-product-roadmap-continuation-20261005` / #1280
+- Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
+- Source: one-time direct authenticated Chat authorization for exact PR #1280, Owner-approved at 2026-10-05T16:31:00Z; no GitHub comment, PREPARED_ONLY result, machine admission or workflow reservation is claimed.
+- Scope: existing next-best-action selector, explicit roadmap references in its existing catalog, focused embedded contract tests, generated next-action view, directly affected protocol text and this task's coordination records only. `src/config/roadmap.ts` is read-only input.
+- Parallel safety: no overlap or authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; their files, runtimes and protected actions remain untouched.
+- Forbidden: merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, source-roadmap relabeling, new planner/queue/registry/authorization route and any second task.
+- Release condition: exact final head passes every applicable existing PR workflow and the Parent's independent countercheck; Parent owns merge and subsequent roadmap reevaluation.
+- Recovery: normal reviewed repository revert only; no external cleanup is required.
+

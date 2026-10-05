@@ -1207,3 +1207,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Countercheck: full PR diff remains repository/CI-only. Falsifier: any exact-head failure in the Production-audit contract or Root/Web dependency enforcement would reopen this fix; neither occurred.
 - Exact next step: PR #1256 still needs its normal independent review and merge decision. This CI-resolution run does not merge.
 - Recovery: repository revert only; no external state was changed by this source update.
+
+## FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005 — roadmap/catalog reconciliation in PR #1280
+- Task: FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Orchestrator handoff: owner-fanmind-product-roadmap-continuation-20261005-01
+- Orchestrator task_id: fanmind-product-roadmap-continuation-20261005-01
+- Source: one-time direct authenticated Chat authorization for exact Draft PR #1280, explicitly approved by the Owner at 2026-10-05T16:31:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, machine admission, workflow reservation or a schema-valid canonical accepted_handoff.
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
+- Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR #1280 starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
+- Scope: continue only PR #1280; repair and complete `scripts/fanmind_next_best_action.py`, add truthful roadmap references to `project-memory/NEXT_BEST_ACTIONS.json`, regenerate `project-memory/NEXT_BEST_ACTION.md`, retain the existing bounded `project-memory/PROTOCOL.md` update and add only this task's minimum coordination evidence.
+- Parallel safety: repository-only selector/catalog/Project-Memory scope. It does not modify or assume authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`, their source/runtime scope, or any protected target.
+- Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, Project Memory Guard, Project Memory Quality, Project Memory Status. Supply Chain Security is included only if the final changed-file scope triggers it.
+- Runtime requirement: {"required":false}
+- Acceptance: parse the complete canonical TypeScript roadmap without execution; reconcile active unfinished items only through explicit existing-catalog mappings; retain done/later/protected/dependency/lock/failure/replay gates; permit an independently safe mapped later action only through the existing selector; expose genuine unmapped items only as non-executable planning gaps; preserve one-or-zero dispatch and workflow transport boundaries.
+- Boundaries: no merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, Owner-comment fabrication, roadmap product-state rewrite, second planner/queue/registry or second task.
+- Exact next step: obtain terminal green applicable exact-head CI, hand the exact head and evidence to the Parent for the required independent countercheck, then stop before merge.
+- Recovery: normal reviewed repository revert only; no external state is changed.
