@@ -4,28 +4,28 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNE
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
-- Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
+- Selected action: `NBA-FANS-EXACT-TAG-FILTER`
+- Task: `FM-FANS-EXACT-TAG-FILTER-20261005`
+- Gate: `fans_exact_tag_filter` (`UNKNOWN`)
+- Selection status: `EXECUTABLE`
+- Title: Exakten Tag-Filter in der normalen Fans-Liste liefern
 
 ## Instruction
 
-PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
+Implement only the Owner-approved exact tag filter on the normal /fans list. Reuse already loaded active-contact tags, preserve grouping and compose with search/channel/locale URL state. Archived contacts, substring matches, notes and similarly named fans must not create tag matches. This is a bounded Phase 15 partial slice, not segment/list completion and not send authority.
 
 ## Why this action
 
-owner/platform action required
+standing-authorized safe work
 
 ## Builder manager
 
 - Default worker limit: `3`
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
-- SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `2`
-- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`
+- SAFE READY SET: `NBA-FANS-EXACT-TAG-FILTER`
+- Worker slots reserved by active/ready work: `3`
+- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`, `NBA-FANS-EXACT-TAG-FILTER`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -53,6 +53,7 @@ owner/platform action required
 - `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
+- `NBA-FANS-EXACT-TAG-FILTER` priority 50: **EXECUTABLE** — standing-authorized safe work
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL
 
 ## Product-roadmap reconciliation
@@ -72,6 +73,7 @@ owner/platform action required
 - Phase 7 · OnlyFans: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
 - Phase 7 · Creator-Profile & getrenntes Fanwissen: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` (OWNER_ACTION_REQUIRED)
 - Phase 7 · Kaufdaten & Lernen aus bestätigten Chats: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` (OWNER_ACTION_REQUIRED)
+- Phase 15 · Filter & Tags: `NBA-FANS-EXACT-TAG-FILTER` (ACTIVE)
 - Planning/catalog gaps (never executable or send-authorized):
   - Phase 7 · Creator Intelligence & Sales Assistance (progress; Phase 7b · jetzt in Arbeit)
   - Phase 7 · Eigene Creator-Stimmen & automatischer Creator-Kontext (progress; Strukturierte Profile · Umsetzung begonnen)
@@ -82,7 +84,6 @@ owner/platform action required
   - Phase 10 · Keine Vollanalytics als Live-Suite (planned; Ehrlich)
   - Phase 15 · Segment-Ansichten (planned; Vorbereitet)
   - Phase 15 · Listenlogik (planned; In Arbeit)
-  - Phase 15 · Filter & Tags (planned; In Arbeit)
   - Phase 15 · CSV-Import für Segmente nutzen (planned; Nächster Schritt)
 - Reconciliation reads canonical roadmap truth and existing catalog gates; it does not create actions, reservations or transport authority.
 

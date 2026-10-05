@@ -33,6 +33,12 @@ import {
   type PlatformValue,
 } from "./import/csv";
 import styles from "./fans.module.css";
+import {
+  filterFanGroupsByTag,
+  getAvailableFanTags,
+  getFansListHref,
+  normalizeFanTag,
+} from "./filtering";
 
 type FansWorkspaceProps = {
   workspace: WorkspaceDashboardRow;
@@ -47,6 +53,7 @@ type FansWorkspaceProps = {
   conversationMessagesError?: string;
   unseenMessagesError?: string;
   activeChannel: PlatformValue | "all";
+  activeTag: string;
   searchQuery: string;
   notice?: string;
   activePlatformsNotice?: string;
@@ -65,6 +72,7 @@ type FansPageProps = {
     error?: string | string[];
     lang?: string | string[];
     q?: string | string[];
+    tag?: string | string[];
   }>;
 };
 
@@ -119,6 +127,7 @@ function FansWorkspace({
   conversationMessagesError,
   unseenMessagesError,
   activeChannel,
+  activeTag,
   searchQuery,
   notice,
   activePlatformsNotice,
@@ -144,8 +153,10 @@ function FansWorkspace({
     unseenMessages,
     conversationMessages,
   );
+  const tagOptions = getAvailableFanTags(contacts);
   const channelFilteredFanGroups = filterFanGroupsByChannel(fanGroups, activeChannel);
-  const visibleFanGroups = filterFanGroupsBySearch(channelFilteredFanGroups, searchQuery);
+  const tagFilteredFanGroups = filterFanGroupsByTag(channelFilteredFanGroups, activeTag);
+  const visibleFanGroups = filterFanGroupsBySearch(tagFilteredFanGroups, searchQuery);
 
   return (
     <WorkspaceShell
@@ -171,6 +182,7 @@ function FansWorkspace({
         searchValue: searchQuery,
         hiddenSearchParams: {
           ...(activeChannel !== "all" ? { channel: activeChannel } : {}),
+          ...(activeTag ? { tag: activeTag } : {}),
           ...(locale === "en" ? { lang: locale } : {}),
         },
       }}
@@ -234,7 +246,21 @@ function FansWorkspace({
           {fanGroups.length ? (
             <>
               <div className={styles.listToolbar}>
-                <ChannelFilters activeChannel={activeChannel} searchQuery={searchQuery} locale={locale} />
+                <div className={styles.filterControls}>
+                  <ChannelFilters
+                    activeChannel={activeChannel}
+                    activeTag={activeTag}
+                    searchQuery={searchQuery}
+                    locale={locale}
+                  />
+                  <TagFilter
+                    activeChannel={activeChannel}
+                    activeTag={activeTag}
+                    searchQuery={searchQuery}
+                    tagOptions={tagOptions}
+                    locale={locale}
+                  />
+                </div>
                 {memberReadOnly ? null : (
                   <Link className={styles.importLink} href="/fans/import">
                     {wt(locale, "CSV importieren")}
@@ -251,8 +277,14 @@ function FansWorkspace({
                 <div className={dashboardStyles.emptyState}>
                   <strong>Keine Fans gefunden.</strong>
                   <p>
-                    Passe Suche oder Kanalfilter an, um wieder Fans zu sehen.
+                    Passe Suche, Kanal- oder Tagfilter an, um wieder Fans zu sehen.
                   </p>
+                  <Link
+                    className={dashboardStyles.secondaryButton}
+                    href={getFansListHref({ locale })}
+                  >
+                    Alle Filter zurücksetzen
+                  </Link>
                 </div>
               )}
             </>
@@ -375,10 +407,12 @@ function FansWorkspace({
 
 function ChannelFilters({
   activeChannel,
+  activeTag,
   searchQuery,
   locale,
 }: {
   activeChannel: PlatformValue | "all";
+  activeTag: string;
   searchQuery: string;
   locale: FanMindLanguage;
 }) {
@@ -386,7 +420,12 @@ function ChannelFilters({
     <nav className={styles.channelFilters} aria-label="Kanalfilter">
       {channelFilters.map((filter) => {
         const isActive = filter.value === activeChannel;
-        const href = getFansListHref(filter.value, searchQuery, locale);
+        const href = getFansListHref({
+          channel: filter.value,
+          searchQuery,
+          tag: activeTag,
+          locale,
+        });
 
         return (
           <Link
@@ -406,25 +445,87 @@ function ChannelFilters({
   );
 }
 
-function getFansListHref(
-  channel: PlatformValue | "all",
-  searchQuery: string,
-  locale: FanMindLanguage,
-): string {
-  const params = new URLSearchParams();
+function TagFilter({
+  activeChannel,
+  activeTag,
+  searchQuery,
+  tagOptions,
+  locale,
+}: {
+  activeChannel: PlatformValue | "all";
+  activeTag: string;
+  searchQuery: string;
+  tagOptions: string[];
+  locale: FanMindLanguage;
+}) {
+  const selectedTag = tagOptions.find(
+    (tag) => normalizeFanTag(tag) === normalizeFanTag(activeTag),
+  );
+  const unknownTag = Boolean(activeTag && !selectedTag);
+  const hasActiveFilters =
+    activeChannel !== "all" || Boolean(searchQuery.trim()) || Boolean(activeTag);
 
-  if (channel !== "all") {
-    params.set("channel", channel);
-  }
-  if (searchQuery.trim()) {
-    params.set("q", searchQuery.trim());
-  }
-  if (locale === "en") {
-    params.set("lang", locale);
-  }
-
-  const queryString = params.toString();
-  return queryString ? `/fans?${queryString}#fans-list` : "/fans#fans-list";
+  return (
+    <div className={styles.tagFilterWrap}>
+      <form className={styles.tagFilter} action="/fans#fans-list" method="get">
+        <label htmlFor="fans-tag-filter">{wt(locale, "Tag")}</label>
+        <select
+          aria-describedby={unknownTag ? "fans-tag-filter-status" : undefined}
+          aria-invalid={unknownTag || undefined}
+          defaultValue={selectedTag ?? ""}
+          disabled={!tagOptions.length}
+          id="fans-tag-filter"
+          name="tag"
+        >
+          <option value="">{wt(locale, "Alle Tags")}</option>
+          {tagOptions.map((tag) => (
+            <option key={normalizeFanTag(tag)} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </select>
+        {activeChannel !== "all" ? (
+          <input name="channel" type="hidden" value={activeChannel} />
+        ) : null}
+        {searchQuery.trim() ? (
+          <input name="q" type="hidden" value={searchQuery.trim()} />
+        ) : null}
+        {locale === "en" ? <input name="lang" type="hidden" value={locale} /> : null}
+        <button
+          className={dashboardStyles.secondaryButton}
+          disabled={!tagOptions.length}
+          type="submit"
+        >
+          {wt(locale, "Tag anwenden")}
+        </button>
+      </form>
+      {activeTag ? (
+        <Link
+          className={styles.filterResetLink}
+          href={getFansListHref({
+            channel: activeChannel,
+            searchQuery,
+            locale,
+          })}
+        >
+          {wt(locale, "Tag zurücksetzen")}
+        </Link>
+      ) : null}
+      {hasActiveFilters ? (
+        <Link className={styles.filterResetLink} href={getFansListHref({ locale })}>
+          {wt(locale, "Alle Filter zurücksetzen")}
+        </Link>
+      ) : null}
+      {unknownTag ? (
+        <p className={styles.filterStatus} id="fans-tag-filter-status" role="status">
+          {wt(locale, "Der ausgewählte Tag ist für aktive Fans nicht verfügbar.")}
+        </p>
+      ) : null}
+      {!tagOptions.length && !unknownTag ? (
+        <p className={styles.filterStatus}>{wt(locale, "Keine Tags vorhanden.")}</p>
+      ) : null}
+    </div>
+  );
 }
 
 function FansTable({
@@ -1232,7 +1333,11 @@ export default async function FansPage({ searchParams }: FansPageProps) {
   const queryParam = Array.isArray(resolvedSearchParams?.q)
     ? resolvedSearchParams?.q[0]
     : resolvedSearchParams?.q;
+  const tagParam = Array.isArray(resolvedSearchParams?.tag)
+    ? resolvedSearchParams?.tag[0]
+    : resolvedSearchParams?.tag;
   const activeChannel = getActiveChannel(channelParam);
+  const activeTag = tagParam?.trim() ?? "";
   const searchQuery = queryParam?.trim() ?? "";
   const { data, error: userError } = await getSupabaseServerUser();
 
@@ -1284,6 +1389,7 @@ export default async function FansPage({ searchParams }: FansPageProps) {
           conversationMessagesError={conversationMessagesResult?.error?.message}
           unseenMessagesError={unseenMessagesResult?.error?.message}
           activeChannel={activeChannel}
+          activeTag={activeTag}
           searchQuery={searchQuery}
           notice={noticeParam}
           activePlatformsNotice={activeNoticeParam}
