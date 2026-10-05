@@ -1,26 +1,101 @@
 {
   "schema_version": 2,
   "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
-  "payload_sha256": "afd81674ade4d64ad85b225cc17e77ab83d1086f016661fda503ec320e11c02a",
+  "payload_sha256": "2df0b21cb08a010a5dd46455f9cfd08e3b7ed25dd175af9bc12a4452d09742a1",
   "task_id": "fanmind-orchestrator-method-20261005-01",
   "status": "BLOCKED",
-  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge, canonical publication and the separately authorized side-effect-free check have not occurred.",
+  "summary": "The executable Orchestrator admission/closeout method is prepared for exact-head review in a Draft PR. The overall task is not complete because merge, canonical publication and the separately authorized side-effect-free CLI check have not occurred.",
   "evidence": [
-    "The Owner-direct handoff identity, task_id, previous task_id and payload digest are recorded independently in STARTED_WORK.md and WORK_LOCKS.md.",
-    "The implementation reuses the existing selector, started-work/lock state and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
-    "Thirty-three focused Python behavior tests spy transport and prove invalid receipt/evidence, unresolved or parked prior work, reruns, incomplete run history, ambiguous skipped transport, older duplicate/terminal task identity, active/unready/owner-only selection, PR-base/merge/check/runtime mismatches, scope/context tampering and stale composer content result in zero sends.",
-    "The existing workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read and lifecycle concurrency waits for matching typed closeout.",
-    "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline or permission was added.",
-    "No merge, auto-merge, deployment, live API trigger, controlled live check, SQL, host, provider, secret, credential, permission or protected-state action was performed."
+    "The accepted Owner-direct envelope, stable work identity, task_id, previous task_id and payload digest are preserved in this receipt and bound independently in STARTED_WORK.md and WORK_LOCKS.md.",
+    "The implementation reuses the existing selector, started-work/lock state, workflow-run history and canonical receipt; no second planner, queue, Latest-Handoff registry or per-handoff main write was added.",
+    "Thirty-six focused Python behavior tests spy transport and cover predecessor-contract separation, stable work replay, selector-bound resume evidence, real workflow-name checks, all run attempts, CLI runtime evidence and the established zero-send cases.",
+    "The existing dispatch workflow remains manual workflow_dispatch only, checks out fresh main, separates admission from transport, and binds closeout to the current actual run/task/handoff/digest. Its permissions remain contents: read.",
+    "The focused Python suite is registered in the existing FanMind God Mode Gate adversarial-test step; no new pipeline, workflow mode or permission was added.",
+    "No merge, auto-merge, deployment, live API trigger, controlled CLI check, SQL, host, provider, secret, credential, permission or protected-state action was performed."
   ],
-  "blocker": "Merge/canonical publication and the required controlled side-effect-free check are outside the authorization for this run.",
-  "resume_condition": "After exact-head required CI, God Mode and independent countercheck pass, the Owner separately authorizes merge. Bind the merge commit as the source release, separately authorize one side-effect-free FanMind God Mode Gate workflow_dispatch on that exact merge, verify its successful actual run, then publish a matching COMPLETED receipt through normal repository gates. No Builder transport or new task is involved in that check-only closeout.",
+  "blocker": "Merge/canonical publication and the required controlled side-effect-free CLI check are outside the authorization for this run.",
+  "resume_condition": "After exact-head required CI and independent countercheck pass, the Owner separately authorizes merge. From a fresh checkout of the exact merge commit, separately authorize the exact digest-bound CLI test command, retain its complete log SHA-256, and publish the matching VERIFIED CLI evidence plus COMPLETED receipt through normal repository gates. No Builder transport, workflow dispatch or new task is involved.",
   "completed_at": "2026-10-05T11:13:43Z",
   "main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
   "source_acceptance": null,
   "runtime_evidence": {
     "required": true,
     "status": "NOT_RUN",
-    "scope": "One separately authorized side-effect-free FanMind God Mode Gate workflow_dispatch on the exact source merge after merge/readiness; no Builder transport."
+    "evidence_kind": "authorized_cli_test",
+    "command": "python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs"
+  },
+  "accepted_handoff": {
+    "acceptance": [
+      "Bind fresh main, one bounded task contract, authoritative predecessor identity, typed receipt and actual GitHub truth.",
+      "Block unresolved or contradictory prior work while preserving immutable accepted merge evidence and distinct source, task and runtime evidence.",
+      "Select exactly one truly ready task or none without executable owner fallback, duplicate or overlapping work.",
+      "Enforce admission before workflow transport and expose honest manual preparation-only validation.",
+      "Prove null sends for invalid evidence and exactly one send only for fully admitted work with real behavior tests.",
+      "Bind exact-head CI and independent review, then stop at the Draft PR boundary."
+    ],
+    "agent_context": "FanMind Builder",
+    "forbidden": [
+      "merge or auto-merge",
+      "deployment or live workflow/API dispatch",
+      "Production, database, Billing or provider mutation",
+      "secret, credential, permission or branch-protection mutation",
+      "second planner, queue or per-handoff main write"
+    ],
+    "goal": "Integrate the proven FanMind work, decision and control method as one executable, tested Orchestrator admission and closeout stage.",
+    "handoff_id": "owner-fanmind-orchestrator-method-20261005-01",
+    "non_overlapping_active_locks": [
+      "LOCK-FM-AI-CAPACITY-BUDGETS-20260930",
+      "LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930",
+      "LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927"
+    ],
+    "owner_authorized_at": "2026-10-05",
+    "prepared_main_sha": "26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e",
+    "previous_result_disposition": "ACCEPTED_COMPLETION",
+    "previous_task_id": "backup-worker-safe-error-codes-20261005T1010Z",
+    "required_checks": [
+      "FanMind Browser E2E",
+      "FanMind CI",
+      "FanMind CodeQL",
+      "FanMind God Mode Gate",
+      "FanMind Landing Language CI",
+      "FanMind Supply Chain Security",
+      "Project Memory Guard",
+      "Project Memory Quality",
+      "Project Memory Status"
+    ],
+    "risk": "R3",
+    "runtime_requirement": {
+      "command": "python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs",
+      "evidence_kind": "authorized_cli_test",
+      "release_binding": "source_merge",
+      "required": true
+    },
+    "scope": {
+      "contracts": [
+        "single admission and closeout boundary",
+        "existing selector and coordination records",
+        "manual preparation validation boundary"
+      ],
+      "files": [
+        ".github/workflows/fanmind-manager-event-dispatch.yml",
+        ".github/workflows/fanmind-god-mode-gate.yml",
+        "scripts/fanmind_orchestrator_admission.py",
+        "scripts/fanmind_next_best_action.py",
+        "tests/test_fanmind_orchestrator_admission.py",
+        "tests/fanmind-manager-event-dispatch.test.mjs",
+        "tests/github-actions-supply-chain.test.mjs",
+        "docs/operations/FANMIND_EVENT_MANAGER_DISPATCH.md",
+        "project-memory/ORCHESTRATOR_RESULT_PROTOCOL.md",
+        "project-memory/ORCHESTRATOR_RESULT.json",
+        "project-memory/PROTOCOL.md",
+        "project-memory/STARTED_WORK.md",
+        "project-memory/WORK_LOCKS.md",
+        "project-memory/NEXT_BEST_ACTION.md"
+      ]
+    },
+    "selection_basis": "EXPLICIT_OWNER_TASK",
+    "source": "OWNER_DIRECT",
+    "task_id": "fanmind-orchestrator-method-20261005-01",
+    "work_identity_sha256": "3974b079d988e8d5704613367028bc1df2fc100734762b3b7e50840a95bcafe7"
   }
 }

@@ -8,7 +8,7 @@
 - Parallel safety: explicit non-overlap with `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` and `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`; do not edit or assume authority over those scopes.
 - Non-overlapping active locks: LOCK-FM-AI-CAPACITY-BUDGETS-20260930, LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930, LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
-- Runtime requirement: {"allowed_workflow":"FanMind God Mode Gate","release_binding":"source_merge","required":true}
+- Runtime requirement: {"command":"python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs","evidence_kind":"authorized_cli_test","release_binding":"source_merge","required":true}
 - Forbidden: contents-write permission, per-handoff repository/main writes, merge/auto-merge, live workflow/API dispatch, deploy, Production/Staging/database/provider/Billing/secret/permission/branch-protection mutation or a second planning/queue system.
 - Release condition: focused behavior tests, actual pre-transport workflow integration, required exact-head CI/God Mode, independent countercheck with no blocking P0/P1/P2 and a reviewable Draft PR. Merge and live check remain separately authorized.
 - Recovery: close/revert the Draft PR; no external state has changed.

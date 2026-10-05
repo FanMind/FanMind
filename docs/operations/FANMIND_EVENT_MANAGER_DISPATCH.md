@@ -22,7 +22,7 @@ The selector retains its explicit parallel-safe analysis. Dispatch consumes one 
 
 Automated handoff correlation is the existing GitHub workflow-run record, not a new repository queue or Latest-Handoff file. The run title preserves `handoff_id`, `task_id` and payload digest independently of the result receipt. The receipt must later repeat all three values.
 
-Before a send, admission boundedly paginates the complete workflow-run history. Missing totals, incomplete pages, unreadable identities or job-step evidence block. Actual job steps distinguish a rejected pre-transport reservation from a run whose transport was accepted or became ambiguous; only the latter becomes authoritative predecessor/duplicate evidence. A GitHub rerun (`run_attempt != 1`) never posts again. Global non-cancelling concurrency covers the Builder lifecycle; timeout, cancellation or job failure after transport remains unresolved and fail-closed.
+Before a send, admission boundedly paginates the complete workflow-run history and every attempt's complete job history. Missing totals, incomplete pages, unreadable identities or job-step evidence block. Actual job steps distinguish a rejected pre-transport reservation from a run whose transport was accepted or became ambiguous; only the latter becomes authoritative predecessor/duplicate evidence. A GitHub rerun (`run_attempt != 1`) never posts again, and a rejected later attempt cannot hide a POST from an earlier attempt. Global non-cancelling concurrency covers the Builder lifecycle; timeout, cancellation or job failure after transport remains unresolved and fail-closed.
 
 The one rollout boundary is actual legacy workflow run `37234276748` (2026-10-04T21:00:06Z), the newest of 20 observed manual runs whose pre-method title was only `FanMind Orchestrator Builder Dispatch`. Unstructured identities are ignored only at or below that immutable run ID. Any unstructured newer run blocks. This compatibility constant is not a Latest-Handoff record and is never updated per dispatch.
 
@@ -30,7 +30,7 @@ The one migration bootstrap for an explicitly Owner-direct task is recorded in e
 
 ## Result meaning
 
-`COMPLETED` requires typed source acceptance and actual GitHub truth. The PR must target `main`, its exact verified merge commit must be reachable from current `main`, and its required checks must exactly equal the digest-bound task contract. Required runtime evidence is verified against an actual successful allowed workflow run on the same merge release; source-only tasks require the exact `NOT_REQUIRED` form. Immutable merge evidence remains valid after unrelated `main` progress. Source acceptance, task closeout and runtime evidence remain separate.
+`COMPLETED` requires typed source acceptance, the full accepted prior envelope and actual GitHub truth. The PR must target `main`, its exact verified merge commit must be reachable from current `main`, and the accepted prior contract's required workflow names must each have a successful exact-head `pull_request` run. GitHub job/check-run names are deliberately not compared with workflow names. Source-only tasks require the exact `NOT_REQUIRED` runtime form. For this R3 method task, the required later evidence is the contract's exact side-effect-free CLI test command, bound to the source merge/local head, task, handoff, payload and the SHA-256 of its complete log. Normal God Mode CI remains source/offline evidence and cannot substitute for that separately authorized CLI proof. Unsupported evidence stays blocked. Immutable merge evidence remains valid after unrelated `main` progress. Source acceptance, task closeout and runtime evidence remain separate.
 
 `BLOCKED`, `FAILED` and `NO_CHANGE` are terminal coordination results, not accepted product work. A digest-bound `RECONCILED_PARKED` disposition may release a genuinely independent selector-approved task only when the matching actual predecessor run closed successfully with an explicit blocker and resume condition; an unresolved transport cannot. A terminal task identity is not reopened merely by changing the handoff ID. These statuses do not make a catalog task DONE or authorize replacement work. HTTP 202 and a green structural God Mode check are never completion or `ALLOW`.
 
@@ -58,6 +58,14 @@ python3 scripts/fanmind_orchestrator_admission.py check \
 After `PREPARED_ONLY`, an explicitly authorized Parent may use exactly `/tmp/fanmind-builder-input.txt` through the existing manual Builder path, including while the Workspace Agent trigger API remains unavailable. That procedural route does not gain workflow concurrency or automatic deduplication: the Parent must keep it serial, preserve the prepared identity and reconcile the matching receipt/GitHub truth before any independent work. The repository workflow remains the only transport boundary automatically enforced by this code.
 
 GitHub CI cannot universally prevent an Owner or root user from typing arbitrary text directly into another interface. Enforcement applies to this repository's supported preparation/check entry and the existing Builder transport workflow; no UI automation or platform access system is added.
+
+After a separately authorized merge, the controlled check is run from a fresh checkout whose `HEAD` equals the accepted merge commit. The exact side-effect-free command is:
+
+```bash
+python3 -m unittest -v tests/test_fanmind_orchestrator_admission.py && node --test tests/fanmind-manager-event-dispatch.test.mjs
+```
+
+The operator retains the complete combined log and its SHA-256. The later receipt binds that digest plus the exact command, merge/local-head SHA, task, handoff and payload. This Draft-PR phase does not run that check on a merged release and does not claim the proof exists.
 
 ## Configuration and security
 
