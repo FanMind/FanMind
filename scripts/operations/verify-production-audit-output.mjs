@@ -198,6 +198,15 @@ export function productionBackupDiagnostics(source) {
         classification: "invalid_record",
       };
     }
+    if (entries[0].length === 1 && entries[0][0] === "missing") {
+      return {
+        type,
+        ageHours: null,
+        sizeBytes: null,
+        maxAgeHours,
+        classification: "missing",
+      };
+    }
 
     const properties = new Map();
     let invalidRecord = false;
