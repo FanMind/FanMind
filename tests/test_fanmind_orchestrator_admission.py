@@ -273,6 +273,19 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(1, len(calls))
         self.assertIn('"task_id":"next-task-001"', calls[0])
 
+    def test_published_legacy_owner_receipt_remains_readable_only_by_exact_identity(self):
+        published = json.loads(
+            (ROOT / "project-memory" / "ORCHESTRATOR_RESULT.json").read_text()
+        )
+        MODULE.validate_typed_receipt(published)
+        changed = copy.deepcopy(published)
+        changed["task_id"] = "different-task"
+        with self.assertRaisesRegex(
+            MODULE.AdmissionError,
+            "missing_or_invalid:handoff.owner_authorization",
+        ):
+            MODULE.validate_typed_receipt(changed)
+
     def test_manual_composer_rejects_residual_text_with_zero_sends(self):
         prepared = handoff()
         exact = MODULE.render_builder_input(MODULE.canonical_task_envelope(prepared))

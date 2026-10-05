@@ -34,6 +34,11 @@ RUNTIME_CLI_COMMAND = (
 OWNER_AUTHORIZATION_KIND = "github_issue_comment_v1"
 OWNER_AUTHORIZATION_PREFIX = "FanMind OWNER_DIRECT authorization v1\n"
 OWNER_GITHUB_LOGIN = "Bernds-tech"
+LEGACY_OWNER_RECEIPT_IDENTITY = (
+    "fanmind-orchestrator-method-20261005-01",
+    "owner-fanmind-orchestrator-method-20261005-01",
+    "eb7b0f9ce7455f874ba235b5a229f529d3e63301c9bc39116cb74b7857b6c2b2",
+)
 
 
 class AdmissionError(ValueError):
@@ -73,7 +78,9 @@ def _required_identity(value: Any, name: str) -> str:
     return text
 
 
-def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
+def canonical_task_envelope(
+    handoff: dict[str, Any], *, allow_legacy_owner_binding: bool = False
+) -> dict[str, Any]:
     if handoff.get("agent_context") != AGENT_CONTEXT:
         raise AdmissionError("agent_context_mismatch")
     task_id = _required_identity(handoff.get("task_id"), "handoff.task_id")
@@ -150,31 +157,36 @@ def canonical_task_envelope(handoff: dict[str, Any]) -> dict[str, Any]:
             raise AdmissionError("duplicate:handoff.non_overlapping_active_locks")
         envelope["non_overlapping_active_locks"] = sorted(locks)
         authorization = handoff.get("owner_authorization")
-        if not isinstance(authorization, dict):
+        if authorization is None and allow_legacy_owner_binding:
+            authorization = None
+        elif not isinstance(authorization, dict):
             raise AdmissionError("missing_or_invalid:handoff.owner_authorization")
-        if authorization.get("kind") != OWNER_AUTHORIZATION_KIND:
+        if authorization is None:
+            pass
+        elif authorization.get("kind") != OWNER_AUTHORIZATION_KIND:
             raise AdmissionError("invalid:handoff.owner_authorization.kind")
-        issue_number = authorization.get("issue_number")
-        comment_id = authorization.get("comment_id")
-        body_sha256 = authorization.get("body_sha256")
-        if type(issue_number) is not int or issue_number < 1:
-            raise AdmissionError("invalid:handoff.owner_authorization.issue_number")
-        if type(comment_id) is not int or comment_id < 1:
-            raise AdmissionError("invalid:handoff.owner_authorization.comment_id")
-        if not isinstance(body_sha256, str) or not re.fullmatch(
-            r"[0-9a-f]{64}", body_sha256
-        ):
-            raise AdmissionError("invalid:handoff.owner_authorization.body_sha256")
-        envelope["owner_authorization"] = {
-            "kind": OWNER_AUTHORIZATION_KIND,
-            "issue_number": issue_number,
-            "comment_id": comment_id,
-            "body_sha256": body_sha256,
-            "updated_at": _required_text(
-                authorization.get("updated_at"),
-                "handoff.owner_authorization.updated_at",
-            ),
-        }
+        else:
+            issue_number = authorization.get("issue_number")
+            comment_id = authorization.get("comment_id")
+            body_sha256 = authorization.get("body_sha256")
+            if type(issue_number) is not int or issue_number < 1:
+                raise AdmissionError("invalid:handoff.owner_authorization.issue_number")
+            if type(comment_id) is not int or comment_id < 1:
+                raise AdmissionError("invalid:handoff.owner_authorization.comment_id")
+            if not isinstance(body_sha256, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", body_sha256
+            ):
+                raise AdmissionError("invalid:handoff.owner_authorization.body_sha256")
+            envelope["owner_authorization"] = {
+                "kind": OWNER_AUTHORIZATION_KIND,
+                "issue_number": issue_number,
+                "comment_id": comment_id,
+                "body_sha256": body_sha256,
+                "updated_at": _required_text(
+                    authorization.get("updated_at"),
+                    "handoff.owner_authorization.updated_at",
+                ),
+            }
     semantic_identity = {
         "goal": envelope["goal"],
         "scope": envelope["scope"],
@@ -265,7 +277,15 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
     accepted = receipt.get("accepted_handoff")
     if not isinstance(accepted, dict):
         raise AdmissionError("typed_receipt_accepted_handoff_required")
-    accepted_envelope = canonical_task_envelope(accepted)
+    identity = (
+        receipt.get("task_id"),
+        receipt.get("handoff_id"),
+        receipt.get("payload_sha256"),
+    )
+    accepted_envelope = canonical_task_envelope(
+        accepted,
+        allow_legacy_owner_binding=identity == LEGACY_OWNER_RECEIPT_IDENTITY,
+    )
     if accepted_envelope.get("task_id") != receipt.get("task_id"):
         raise AdmissionError("receipt_accepted_handoff_task_mismatch")
     if accepted_envelope.get("handoff_id") != receipt.get("handoff_id"):
@@ -293,7 +313,15 @@ def validate_typed_receipt(receipt: dict[str, Any]) -> None:
 
 def _accepted_handoff(receipt: dict[str, Any]) -> dict[str, Any]:
     validate_typed_receipt(receipt)
-    return canonical_task_envelope(receipt["accepted_handoff"])
+    identity = (
+        receipt.get("task_id"),
+        receipt.get("handoff_id"),
+        receipt.get("payload_sha256"),
+    )
+    return canonical_task_envelope(
+        receipt["accepted_handoff"],
+        allow_legacy_owner_binding=identity == LEGACY_OWNER_RECEIPT_IDENTITY,
+    )
 
 
 def _check_github_truth(
