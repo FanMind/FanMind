@@ -1,15 +1,17 @@
 {
-  "task_id": "backup-audit-failure-diagnostics-20261005T0758Z",
+  "task_id": "backup-worker-safe-error-codes-20261005T1010Z",
   "status": "COMPLETED",
-  "summary": "The bounded backup-audit failure diagnostics repair was implemented, verified, and merged as PR #1270. The canonical result is reconciled to the accepted main state; this receipt does not claim that current Production backup freshness is healthy.",
+  "summary": "The bounded backup-worker safe error-code classification was implemented, independently reviewed, verified, and merged as PR #1274. This receipt closes only that repository task; it does not claim that the Backup root cause or current Backup freshness is resolved.",
   "evidence": [
-    "PR #1270 was merged to main on 2026-10-05T09:46:29Z.",
-    "Merged main commit 483ff3f00b698b10fde46b13926f1ae614f13693 contains the bounded diagnostics repair.",
-    "PR #1270 recorded eight commits and final Builder countercheck PASS with zero unresolved review threads.",
-    "The PR verification records FanMind CI, CodeQL, Browser E2E, Landing Language CI, Project Memory Guard, Project Memory Quality, Project Memory Status, and FanMind God Mode Gate passing on the final reviewed head.",
-    "Current main subsequently advanced to c1c49d63c5afb6c6e9dd8275647eb32483eddc8c through an unrelated dependency merge; that does not invalidate the immutable accepted merge evidence for task backup-audit-failure-diagnostics-20261005T0758Z."
+    "PR #1274 final reviewed head e7a1cca30cc3475f788f2dd502b1d9df385b428d was based on 5fdf472206a92b5da277b998e8fac84008a04f0c and changed exactly three files with 116 additions and zero deletions. Independent countercheck was PASS with no review threads or comments.",
+    "The focused backup-worker test passed 34 of 34 tests. All eight triggered exact-head workflow runs succeeded, including FanMind CI run 37296066092; the reviewed check rollup contained 13 successful checks.",
+    "PR #1274 was merged with SHA guard at 2026-10-05T10:37:28Z as main commit bef82c2294128bfd93dea4fe23af9de830ed7afb.",
+    "Automatic push-triggered Production deployment run 37297765679 succeeded on exact merge bef82c2294128bfd93dea4fe23af9de830ed7afb; job 111722957885 completed at 2026-10-05T10:39:07Z with 14 public smoke routes successful and release-switch sampling at 6 samples with zero non-200 responses.",
+    "Automatic readiness run 37297941140 succeeded with 18 checks and read the same live release. No manual deployment, readiness, audit, Backup, Restore, worker, host, SQL, SSH, provider, secret, credential, access, or schedule action was started by this task.",
+    "Automatic read-only audit run 37297941162 failed only on production_audit_backup_latest_stale_or_empty: database was 394.14 hours old and full was 537.14 hours old, while storage and server_config were within-threshold and non-empty. It verified PRODUCTION_RUNTIME_VERIFIED=true, the same release, and all eight health components healthy. The Backup root cause and current Backup freshness remain open and unproven.",
+    "The earlier BLOCKED handoff correctly reported that publication was not authorized at that time; the later explicit receipt-only publication authorization resolved only that evidence blocker and did not expand any protected boundary."
   ],
   "blocker": "",
-  "completed_at": "2026-10-05T09:46:29Z",
-  "main_sha": "483ff3f00b698b10fde46b13926f1ae614f13693"
+  "completed_at": "2026-10-05T10:37:28Z",
+  "main_sha": "bef82c2294128bfd93dea4fe23af9de830ed7afb"
 }
