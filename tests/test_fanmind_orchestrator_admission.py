@@ -947,10 +947,13 @@ class AdmissionTests(unittest.TestCase):
         )
 
         class Client:
-            def __init__(self, newest_status, newest_conclusion, newest_attempt=1):
+            def __init__(
+                self, newest_status, newest_conclusion, newest_attempt=1, newest_id=1202
+            ):
                 self.newest_status = newest_status
                 self.newest_conclusion = newest_conclusion
                 self.newest_attempt = newest_attempt
+                self.newest_id = newest_id
 
             def get(self, path):
                 if path == "commits/main":
@@ -972,7 +975,7 @@ class AdmissionTests(unittest.TestCase):
                         "total_count": 3,
                         "workflow_runs": [
                             {
-                                "id": 1202,
+                                "id": self.newest_id,
                                 "run_attempt": self.newest_attempt,
                                 "name": "FanMind CI",
                                 "event": "pull_request",
@@ -1058,6 +1061,7 @@ class AdmissionTests(unittest.TestCase):
             ("completed", "success", 1),
             ("completed", "failure", 0),
             ("in_progress", None, 0),
+            ("in_progress", "success", 0),
         ):
             with self.subTest(status=status, conclusion=conclusion):
                 calls = []
@@ -1081,23 +1085,31 @@ class AdmissionTests(unittest.TestCase):
                         result["decision"]["blocker"],
                     )
 
-        calls = []
-        with self.assertRaisesRegex(
-            MODULE.AdmissionError, "github_source_workflow_authority_unreadable"
-        ):
-            MODULE.dispatch_with_github(
-                prepared,
-                previous,
-                ready(),
-                Client("completed", "success", newest_attempt="1"),
-                lambda payload: calls.append(payload) or {"status": 202},
-                requested_task_id=prepared["task_id"],
-                requested_handoff_id=prepared["handoff_id"],
-                requested_previous_task_id=prepared["previous_task_id"],
-                requested_payload_sha256=prepared["payload_sha256"],
-                current_run_id="500",
-            )
-        self.assertEqual([], calls)
+        for newest_id, newest_attempt in ((1202, "1"), (1202, True), (True, 1)):
+            with self.subTest(newest_id=newest_id, newest_attempt=newest_attempt):
+                calls = []
+                with self.assertRaisesRegex(
+                    MODULE.AdmissionError,
+                    "github_source_workflow_authority_unreadable",
+                ):
+                    MODULE.dispatch_with_github(
+                        prepared,
+                        previous,
+                        ready(),
+                        Client(
+                            "completed",
+                            "success",
+                            newest_attempt=newest_attempt,
+                            newest_id=newest_id,
+                        ),
+                        lambda payload: calls.append(payload) or {"status": 202},
+                        requested_task_id=prepared["task_id"],
+                        requested_handoff_id=prepared["handoff_id"],
+                        requested_previous_task_id=prepared["previous_task_id"],
+                        requested_payload_sha256=prepared["payload_sha256"],
+                        current_run_id="500",
+                    )
+                self.assertEqual([], calls)
 
     def test_pr_must_merge_to_main_and_exact_merge_must_be_reachable(self):
         wrong_base = truth()

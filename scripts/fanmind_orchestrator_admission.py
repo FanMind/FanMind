@@ -835,9 +835,9 @@ def collect_github_truth(
             status = item.get("status")
             conclusion = item.get("conclusion")
             if (
-                not isinstance(run_id, int)
+                type(run_id) is not int
                 or run_id < 1
-                or not isinstance(run_attempt, int)
+                or type(run_attempt) is not int
                 or run_attempt < 1
                 or not isinstance(status, str)
                 or (conclusion is not None and not isinstance(conclusion, str))
@@ -853,7 +853,8 @@ def collect_github_truth(
             if current is None or order_key > current_key:
                 latest_workflow_runs[name] = item
         truth["workflow_checks"] = {
-            name: run.get("conclusion") for name, run in latest_workflow_runs.items()
+            name: run.get("conclusion") if run.get("status") == "completed" else None
+            for name, run in latest_workflow_runs.items()
         }
     workflow_runs = _complete_workflow_run_history(client)
     current_marker = (
