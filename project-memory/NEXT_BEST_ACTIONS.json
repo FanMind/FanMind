@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27",
+  "updated": "2026-10-05",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -39,6 +39,9 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Echte Registrierung vollständig abnehmen" }
+      ],
       "instruction": "The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration."
     },
     {
@@ -57,6 +60,9 @@
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Vollständiger Restore-Test" }
       ],
       "instruction": "Owner resumed Restore completion on 2026-09-08. DB_POSTCHECKED and repository Storage preparation/controller are accepted. Obtain the exact distinct disposable Storage target/cost decision and artifact/commit/bucket/cleanup authorization; prior local-only choice did not authorize a provider target. Never repeat database Restore or use Production/FanMind Staging as target."
     },
@@ -77,6 +83,9 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Security- und Meta-Abnahme" }
+      ],
       "instruction": "Production trigger hardening is complete: Apply 34496892707 and independent Verify 34497099991 passed on 9a6e9d01; fresh Supabase advisors removed all five related warnings. Do not repeat the Apply or ask for its approval again. Leaked-password protection is now enabled and independently verified on Production and Staging (FM-EV-041); do not activate or request it again. Continue only the bounded Staging RPC exception review; Meta external acceptance remains separate. Do not invent browser policies or infer whole-gate completion."
     },
     {
@@ -94,6 +103,10 @@
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 6, "label": "Google-Play-Test & Geräteabnahme" },
+        { "phase": 6, "label": "Push für Follow-up-Erinnerungen" }
       ],
       "instruction": "FM-DEC-021 supersedes the prior Creator/Social-based Android timing. Preserve all existing Mobile artifacts and accepted evidence, but do not start any remaining Mobile/Handy activity until company registration is complete AND the owner explicitly resumes Mobile. This includes no new signed build, device acceptance, Push completion/provider delivery, Play tester cohort, Store production request, iOS signing or TestFlight. Creator/Social completion alone never resumes Mobile.",
       "deferred_owner_id": "FM-MOB-OWNER-CREATOR-SOCIAL-20260910"
@@ -115,6 +128,9 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
+      "roadmap_items": [
+        { "phase": 5, "label": "KI-/Billing-Gesamtabnahme" }
+      ],
       "instruction": "Owner resumed KI/Billing and confirmed existing prices complete on 2026-09-08. Staging deploy 34267819029 and Stripe Test webhook readiness 34268317761 passed. AI acceptance 34268214078 failed before DB access because two API-origin bindings were missing; review the bounded workflow fix, then merge/deploy exact new main and obtain a fresh rollback-only acceptance. Historical general Billing Apply/capture/canonical acceptance remains complete. Continue only remaining product/private/provider/Legal/Production gates; no live payment, repricing or paid-tier activation."
     },
     {
@@ -133,6 +149,9 @@
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 3, "label": "Technische & rechtliche Prüfung" }
       ],
       "instruction": "FM-EV-023 completes the bounded 2026-08-26 technical read-only reconciliation; mutable Staging freshness is tracked by EV-META-STAGING-FOUNDATION-20260826. Do not rerun its workflows merely for closeout or repeat Production activation/deploy. After expiry/invalidation or before a later Meta Staging database action, use a new lock and shared rollout-state-first verification. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
     },
@@ -174,6 +193,9 @@
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
       ],
+      "roadmap_items": [
+        { "phase": 3, "label": "WhatsApp" }
+      ],
       "instruction": "External Meta account work only (Phase 3): reuse existing owner authorization for the FanMind Facebook/Instagram app and separately scoped WhatsApp Business resources, obtain missing access through secure personal sign-in, and establish each Creator's own consent, allowed callback/scopes and real Meta provider evidence for Facebook, Instagram and the separately gated WhatsApp foundation. EXT-META-CREATOR-APP-20260911, EXT-WHATSAPP and FM-SOC3-OWNER-APP-20260911 remain OPEN/OWNER_ACTION_REQUIRED. Missing credentials/consent/third-party approval cannot be supplied by repository tests or another Creator. Never ask for passwords or tokens in chat. No live payment, automatic sending or Production activation is implied. The dormant WhatsApp implementation is not activated by this queue; its approved credentials/permissions and Staging/E2E/revocation/reconnect/tenant/idempotency evidence are still required. TikTok/X work is tracked independently under NBA-PHASE7-EXTERNAL and phase7_social.",
       "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
     },
@@ -193,6 +215,11 @@
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 7, "label": "TikTok" },
+        { "phase": 7, "label": "X / Twitter" },
+        { "phase": 7, "label": "OnlyFans" }
       ],
       "instruction": "External Phase 7 gate work, covering EXT-TIKTOK-X-PILOT-20260911, EXT-TIKTOK, EXT-X, EXT-DISCORD and EXT-ONLYFANS. Start with the currently selected TikTok/X app access, per-Creator consent, callbacks/scopes, actual X budget and real positive/negative provider evidence using existing authorization. Read each external control's current status first; preserve any completed channel and advance only the remaining controls, never request completed TikTok/X work again merely because phase7_social is PARTIAL. Discord remains later under the owner decision: retain its open control without starting it or asking for early activation. OnlyFans retains the manual handoff; direct access requires actual official/contractual feasibility evidence. This action represents the whole Phase 7 gate, not only TikTok/X, and completes when that aggregate gate is accepted. Missing implementation remains open under its tasks and a bounded engineering action can use existing authorization. Installed Social schema is preserved; current target evidence needs revalidation. No password/token in chat, payment, automatic send or Production activation is implied.",
       "external_controls": [
@@ -218,6 +245,10 @@
       "done_states": [
         "ACCEPTED",
         "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 3, "label": "Facebook" },
+        { "phase": 3, "label": "Instagram" }
       ],
       "instruction": "FM-CR-045 is PRODUCTION_CONFIRMED by canonical PR #1138 (final head cea0d43108187a4dcd2510f17798f250d4a3c429, merge ccfe0ccef743e889d4ea16d454282cf66e465ed9), Production Deploy 35450031498, Production Audit 35450097882 and Public Go-Live Readiness 35450097892. Do not repeat its placeholder/OAuth fail-closed source work. The remaining step is owner/provider-controlled secure configuration of the real central Meta App ID/secret, exact FanMind callback, token-encryption key and matching permissions, followed by the bounded Facebook connection/inbound proof. No secrets in chat/Git; Instagram follows only after Facebook acceptance. Payment, automatic send and Mobile stay deferred.",
       "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
@@ -432,6 +463,10 @@
       ],
       "done_states": [
         "ACCEPTED"
+      ],
+      "roadmap_items": [
+        { "phase": 7, "label": "Creator-Profile & getrenntes Fanwissen" },
+        { "phase": 7, "label": "Kaufdaten & Lernen aus bestätigten Chats" }
       ],
       "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
       "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"

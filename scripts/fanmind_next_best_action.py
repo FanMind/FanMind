@@ -70,39 +70,177 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def product_roadmap_open_items(text: str) -> list[dict]:
-    """Return unfinished items from active product-roadmap phases.
+def _balanced_literal(text: str, start: int, opening: str, closing: str) -> str:
+    """Return one balanced TS literal while ignoring strings and comments."""
+    if start < 0 or start >= len(text) or text[start] != opening:
+        raise ValueError("roadmap_literal_start_invalid")
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    line_comment = False
+    block_comment = False
+    index = start
+    while index < len(text):
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if line_comment:
+            line_comment = char != "\n"
+        elif block_comment:
+            if char == "*" and following == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char in {'"', "'", "`"}:
+            quote = char
+        elif char == "/" and following == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and following == "*":
+            block_comment = True
+            index += 1
+        elif char == opening:
+            depth += 1
+        elif char == closing:
+            depth -= 1
+            if depth == 0:
+                return text[start:index + 1]
+        index += 1
+    raise ValueError("roadmap_literal_unterminated")
 
-    This intentionally reads the canonical TypeScript roadmap without evaluating it.
-    Only phases marked done are excluded; later phases stay visible but are not treated
-    as current continuation work until their availability becomes upcoming.
-    """
+
+def _top_level_objects(text: str) -> list[str]:
+    objects: list[str] = []
+    index = 0
+    while index < len(text):
+        if text[index] == "{":
+            block = _balanced_literal(text, index, "{", "}")
+            objects.append(block)
+            index += len(block)
+        else:
+            index += 1
+    return objects
+
+
+def _ts_string_property(block: str, name: str, *, required: bool = True) -> str:
+    match = re.search(
+        rf'(?:^|[{{,])\s*{re.escape(name)}:\s*"((?:\\.|[^"\\])*)"\s*,?',
+        block,
+    )
+    if not match:
+        if required:
+            raise ValueError(f"roadmap_property_missing:{name}")
+        return ""
+    return json.loads(f'"{match.group(1)}"')
+
+
+def product_roadmap_open_items(text: str) -> list[dict]:
+    """Parse unfinished items in active phases without evaluating TypeScript."""
+    declaration = re.search(
+        r"(?m)^export const roadmapPhases(?:\s*:[^=]+)?\s*=\s*\[",
+        text,
+    )
+    if not declaration:
+        raise ValueError("roadmap_phases_declaration_missing")
+    array_start = declaration.end() - 1
+    phases_literal = _balanced_literal(text, array_start, "[", "]")
     items: list[dict] = []
-    for block in re.split(r'(?=\\n  \\{\\n    number: \\"\\d+\\")', text):
-        number = re.search(r'number: \\"(\\d+)\\"', block)
-        availability = re.search(r'availability: \\"(done|upcoming|later)\\"', block)
-        if not number or not availability or availability.group(1) != "upcoming":
+    for phase_block in _top_level_objects(phases_literal[1:-1]):
+        number_text = _ts_string_property(phase_block, "number")
+        availability = _ts_string_property(phase_block, "availability")
+        if not number_text.isdigit():
+            raise ValueError(f"roadmap_phase_number_invalid:{number_text}")
+        if availability not in {"done", "upcoming", "later"}:
+            raise ValueError(f"roadmap_phase_availability_invalid:{availability}")
+        if availability != "upcoming":
             continue
-        phase = int(number.group(1))
-        for match in re.finditer(
-            r'\\{ label: \\"([^\\"]+)\\", state: \\"(progress|partial|planned|later)\\"(?:, status: \\"([^\\"]*)\\")? \\}',
-            block,
-        ):
-            state = match.group(2)
-            if state == "later":
+        items_match = re.search(r"(?m)^\s*items:\s*\[", phase_block)
+        if not items_match:
+            raise ValueError(f"roadmap_items_missing:{number_text}")
+        items_start = phase_block.find("[", items_match.start())
+        items_literal = _balanced_literal(phase_block, items_start, "[", "]")
+        for item_block in _top_level_objects(items_literal[1:-1]):
+            state = _ts_string_property(item_block, "state")
+            if state not in {"done", "progress", "partial", "planned", "later"}:
+                raise ValueError(f"roadmap_item_state_invalid:{state}")
+            if state in {"done", "later"}:
                 continue
             items.append({
-                "phase": phase,
-                "label": match.group(1),
+                "phase": int(number_text),
+                "label": _ts_string_property(item_block, "label"),
                 "state": state,
-                "status": match.group(3) or "",
+                "status": _ts_string_property(item_block, "status", required=False),
             })
     return items
 
 
-def roadmap_reconciliation_required(manager: dict, roadmap_items: list[dict]) -> bool:
-    """A blocked technical queue is not an honest no-work result while active roadmap work exists."""
-    return not manager.get("safe_ready_set") and bool(roadmap_items)
+def reconcile_product_roadmap(
+    roadmap_items: list[dict],
+    state: dict,
+    catalog: dict,
+    deferred: set[str],
+    manager: dict,
+    *,
+    failed_action_ids: set[str] | None = None,
+) -> dict:
+    """Bind roadmap items to catalog truth without creating executable work."""
+    mapping: dict[tuple[int, str], list[dict]] = {}
+    for action in catalog.get("actions", []):
+        for reference in action.get("roadmap_items", []):
+            phase = reference.get("phase")
+            label = reference.get("label")
+            if not isinstance(phase, int) or not isinstance(label, str) or not label:
+                raise ValueError(f"roadmap_mapping_invalid:{action.get('id', 'UNKNOWN')}")
+            mapping.setdefault((phase, label), []).append(action)
+
+    classified = {
+        action["id"]: (status, reason)
+        for action, status, reason in classified_actions(
+            state,
+            catalog,
+            deferred,
+            failed_action_ids=failed_action_ids,
+        )
+    }
+    ready = set(manager.get("safe_ready_set", []))
+    active = set(manager.get("active_continuations", []))
+    dependency_blocks = {
+        item["id"]: item["reason"] for item in manager.get("blocked_dependencies", [])
+    }
+    serialized = {
+        item["id"]: item["reason"] for item in manager.get("serialized_due_to_conflict", [])
+    }
+    mapped: list[dict] = []
+    gaps: list[dict] = []
+    for item in roadmap_items:
+        actions = mapping.get((item["phase"], item["label"]), [])
+        if not actions:
+            gaps.append(item)
+            continue
+        action_states = []
+        for action in actions:
+            action_id = action["id"]
+            status, reason = classified[action_id]
+            if action_id in active:
+                status, reason = "ACTIVE", "active continuation"
+            elif action_id in ready:
+                status, reason = "READY", "existing manager safe ready set"
+            elif action_id in dependency_blocks:
+                status, reason = "WAITING_ACTION_DEPENDENCY", dependency_blocks[action_id]
+            elif action_id in serialized:
+                status, reason = "SERIALIZED", serialized[action_id]
+            action_states.append({"action_id": action_id, "status": status, "reason": reason})
+        mapped.append({**item, "actions": action_states})
+    return {"mapped": mapped, "planning_gaps": gaps}
+
+
+def roadmap_reconciliation_required(reconciliation: dict) -> bool:
+    return bool(reconciliation.get("planning_gaps"))
 
 
 def deferred_owner_ids(text: str) -> set[str]:
@@ -2017,6 +2155,145 @@ def run_manager_contract_tests() -> None:
     assert "scope_unknown" in result["serialized_due_to_conflict"][0]["reason"]
 
 
+def run_product_roadmap_contract_tests() -> None:
+    source = '''
+export type RoadmapPhase = { number: string; items: Array<{ label: string }> };
+const translatedDuplicates = [{ label: "Translated decoy", state: "planned" }];
+export const roadmapPhases: RoadmapPhase[] = [
+  {
+    number: "01",
+    availability: "upcoming",
+    items: [
+      { label: "Alpha", state: "progress", status: "Blocked" },
+      {
+        label: "Beta",
+        state: "partial",
+        status: "Safe later work",
+      },
+      { label: "Done item", state: "done" },
+      { label: "Deferred item", state: "later" },
+    ],
+  },
+  { number: "02", availability: "done", items: [{ label: "Done phase", state: "planned" }] },
+  { number: "03", availability: "later", items: [{ label: "Later phase", state: "progress" }] },
+] satisfies RoadmapPhase[];
+export const translations = { Alpha: "Translated Alpha" };
+'''
+    parsed = product_roadmap_open_items(source)
+    assert parsed == [
+        {"phase": 1, "label": "Alpha", "state": "progress", "status": "Blocked"},
+        {"phase": 1, "label": "Beta", "state": "partial", "status": "Safe later work"},
+    ]
+
+    canonical = product_roadmap_open_items(PRODUCT_ROADMAP_PATH.read_text(encoding="utf-8"))
+    assert len(canonical) == 26
+    assert {item["label"] for item in canonical} >= {
+        "Facebook",
+        "Vollständiger Restore-Test",
+        "Google-Play-Test & Geräteabnahme",
+        "Creator Intelligence & Sales Assistance",
+        "Geprüfte Kampagnen-Entwürfe",
+        "CSV-Import für Segmente nutzen",
+    }
+    assert "Einbettbarer Website-KI-Assistent" not in {item["label"] for item in canonical}
+
+    canonical_catalog = load_json(CATALOG_PATH)
+    canonical_state = load_json(STATE_PATH)
+    canonical_manager = build_safe_ready_set(canonical_state, canonical_catalog, set())
+    canonical_reconciliation = reconcile_product_roadmap(
+        canonical,
+        canonical_state,
+        canonical_catalog,
+        set(),
+        canonical_manager,
+    )
+    canonical_mapped = {item["label"]: item for item in canonical_reconciliation["mapped"]}
+    canonical_gaps = {item["label"] for item in canonical_reconciliation["planning_gaps"]}
+    assert canonical_mapped["Vollständiger Restore-Test"]["actions"][0]["status"] == "OWNER_ACTION_REQUIRED"
+    assert canonical_mapped["Creator-Profile & getrenntes Fanwissen"]["actions"][0]["action_id"] == "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME"
+    assert {"Geprüfte Kampagnen-Entwürfe", "Segment-Ansichten"} <= canonical_gaps
+
+    owner = _action("ROADMAP-OWNER", 0, requires_owner=True)
+    owner["deferred_owner_id"] = "ROADMAP-OWNER-DEFERRED"
+    owner["roadmap_items"] = [{"phase": 1, "label": "Alpha"}]
+    safe = _action("ROADMAP-SAFE", 1)
+    safe["roadmap_items"] = [{"phase": 1, "label": "Beta"}]
+    catalog = {"actions": [owner, safe]}
+    state = _synthetic_state([owner["id"], safe["id"]])
+    deferred = {"ROADMAP-OWNER-DEFERRED"}
+    manager = build_safe_ready_set(state, catalog, deferred, requested_limit=1)
+    assert manager["safe_ready_set"] == ["ROADMAP-SAFE"]
+    decision = dispatch_decision(state, catalog, deferred)
+    assert decision["state"] == "READY"
+    assert decision["action_id"] == "ROADMAP-SAFE"
+    gap = {"phase": 1, "label": "True gap", "state": "planned", "status": ""}
+    reconciliation = reconcile_product_roadmap(
+        parsed + [gap], state, catalog, deferred, manager
+    )
+    assert [item["label"] for item in reconciliation["mapped"]] == ["Alpha", "Beta"]
+    assert reconciliation["mapped"][0]["actions"][0]["status"] == "DEFERRED_BY_OWNER"
+    assert reconciliation["mapped"][1]["actions"][0]["status"] == "READY"
+    assert [item["label"] for item in reconciliation["planning_gaps"]] == ["True gap"]
+    assert roadmap_reconciliation_required(reconciliation)
+    # This is the no-grant guard: an unmapped label cannot become a dispatch identity.
+    assert decision["action_id"] in _action_index(catalog)
+    assert "True gap" not in _action_index(catalog)
+
+    predecessor = _action("ROADMAP-PREDECESSOR", 0, requires_owner=True)
+    dependent = _action("ROADMAP-DEPENDENT", 1, depends_on_actions=[predecessor["id"]])
+    dependent["roadmap_items"] = [{"phase": 1, "label": "Beta"}]
+    dependency_catalog = {"actions": [predecessor, dependent]}
+    dependency_state = _synthetic_state([predecessor["id"], dependent["id"]])
+    dependency_manager = build_safe_ready_set(dependency_state, dependency_catalog, set())
+    dependency_reconciliation = reconcile_product_roadmap(
+        [parsed[1]], dependency_state, dependency_catalog, set(), dependency_manager
+    )
+    assert dependency_reconciliation["mapped"][0]["actions"][0]["status"] == "WAITING_ACTION_DEPENDENCY"
+
+    accepted = _action("ROADMAP-ACCEPTED", 0)
+    accepted["roadmap_items"] = [{"phase": 1, "label": "Alpha"}]
+    accepted_catalog = {"actions": [accepted]}
+    accepted_state = _synthetic_state([accepted["id"]], accepted={accepted["id"]})
+    accepted_manager = build_safe_ready_set(accepted_state, accepted_catalog, set())
+    accepted_reconciliation = reconcile_product_roadmap(
+        [parsed[0]], accepted_state, accepted_catalog, set(), accepted_manager
+    )
+    assert accepted_reconciliation["mapped"][0]["actions"][0]["status"] == "DONE"
+    assert not accepted_reconciliation["planning_gaps"]
+
+    running = _action("ROADMAP-RUNNING", 0, scope=_scope("shared"))
+    overlapping = _action("ROADMAP-OVERLAP", 1, scope=_scope("shared"))
+    overlapping["roadmap_items"] = [{"phase": 1, "label": "Beta"}]
+    overlap_catalog = {"actions": [running, overlapping]}
+    overlap_state = _synthetic_state([running["id"], overlapping["id"]])
+    overlap_manager = build_safe_ready_set(
+        overlap_state,
+        overlap_catalog,
+        set(),
+        active_slots=[{
+            "tasks": {running["task"]},
+            "action": running["id"],
+            "status": "IN_PROGRESS",
+            "status_conflict": False,
+        }],
+    )
+    overlap_reconciliation = reconcile_product_roadmap(
+        [parsed[1]], overlap_state, overlap_catalog, set(), overlap_manager
+    )
+    assert overlap_reconciliation["mapped"][0]["actions"][0]["status"] == "SERIALIZED"
+
+    rendered = render(
+        state,
+        catalog,
+        deferred,
+        requested_limit=1,
+        roadmap_items=parsed + [gap],
+    )
+    assert "## Product-roadmap reconciliation" in rendered
+    assert "`ROADMAP-OWNER` (DEFERRED_BY_OWNER)" in rendered
+    assert "True gap" in rendered
+
+
 def render(
     state: dict,
     catalog: dict,
@@ -2026,6 +2303,7 @@ def render(
     active_slots: list[dict] | None = None,
     requested_limit: int | None = None,
     failed_action_ids: set[str] | None = None,
+    roadmap_items: list[dict] | None = None,
 ) -> str:
     manager = build_safe_ready_set(
         state,
@@ -2043,10 +2321,19 @@ def render(
         manager,
         failed_action_ids=failed_action_ids,
     )
+    reconciliation = reconcile_product_roadmap(
+        roadmap_items or [],
+        state,
+        catalog,
+        deferred,
+        manager,
+        failed_action_ids=failed_action_ids,
+    )
     lines = [
         "# FanMind Next Best Action",
         "",
-        "Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_OWNER_ACTIONS.md`.",
+        "Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, "
+        "`DEFERRED_OWNER_ACTIONS.md` and `src/config/roadmap.ts`.",
         "",
         f"- Sales ready: `{str(bool(state.get('sales_ready'))).lower()}`",
         f"- Phase 8 started: `{str(bool(state.get('phase8_started'))).lower()}`",
@@ -2116,6 +2403,30 @@ def render(
             f"- `{action['id']}` priority {action['priority']}: **{status}** — {reason}"
         )
 
+    lines += ["", "## Product-roadmap reconciliation", ""]
+    if reconciliation["mapped"]:
+        for item in reconciliation["mapped"]:
+            actions = "; ".join(
+                f"`{action['action_id']}` ({action['status']})"
+                for action in item["actions"]
+            )
+            lines.append(f"- Phase {item['phase']} · {item['label']}: {actions}")
+    else:
+        lines.append("- Mapped active unfinished items: `NONE`")
+    if reconciliation["planning_gaps"]:
+        lines.append("- Planning/catalog gaps (never executable or send-authorized):")
+        for item in reconciliation["planning_gaps"]:
+            lines.append(
+                f"  - Phase {item['phase']} · {item['label']} "
+                f"({item['state']}; {item['status'] or 'no status'})"
+            )
+    else:
+        lines.append("- Planning/catalog gaps: `NONE`")
+    lines.append(
+        "- Reconciliation reads canonical roadmap truth and existing catalog gates; "
+        "it does not create actions, reservations or transport authority."
+    )
+
     lines += [
         "",
         "## Selection safety rules",
@@ -2143,7 +2454,8 @@ def main() -> int:
 
     if args.manager_check:
         try:
-            run_manager_contract_tests()\n            run_product_roadmap_contract_tests()
+            run_manager_contract_tests()
+            run_product_roadmap_contract_tests()
         except (AssertionError, ValueError) as exc:
             print(f"FANMIND_BUILDER_MANAGER_RESULT=failed:{exc}")
             return 1
@@ -2157,6 +2469,7 @@ def main() -> int:
     started_text = STARTED_WORK_PATH.read_text(encoding="utf-8") if STARTED_WORK_PATH.exists() else ""
     locks_text = WORK_LOCKS_PATH.read_text(encoding="utf-8") if WORK_LOCKS_PATH.exists() else ""
     failed_text = FAILED_ATTEMPTS_PATH.read_text(encoding="utf-8") if FAILED_ATTEMPTS_PATH.exists() else ""
+    roadmap_items = product_roadmap_open_items(PRODUCT_ROADMAP_PATH.read_text(encoding="utf-8"))
     active_tasks = active_task_ids(started_text, locks_text)
     active_slots = active_work_slots(started_text, locks_text)
     failed_action_ids = persisted_failed_action_ids(failed_text, catalog, state)
@@ -2182,6 +2495,14 @@ def main() -> int:
         manager,
         failed_action_ids=failed_action_ids,
     )
+    reconciliation = reconcile_product_roadmap(
+        roadmap_items,
+        state,
+        catalog,
+        deferred,
+        manager,
+        failed_action_ids=failed_action_ids,
+    )
     if selected:
         status, _ = classify(
             selected,
@@ -2196,7 +2517,13 @@ def main() -> int:
         print("FANMIND_NEXT_ACTION=NONE")
         print("FANMIND_NEXT_ACTION_STATUS=NONE")
 
-    print("FANMIND_PRODUCT_ROADMAP_OPEN=" + json.dumps(roadmap_items, ensure_ascii=False, separators=(",", ":")))\n    print("FANMIND_ROADMAP_RECONCILIATION_REQUIRED=" + ("true" if roadmap_reconciliation_required(manager, roadmap_items) else "false"))\n    print("FANMIND_SAFE_READY_SET=" + json.dumps(manager["safe_ready_set"], separators=(",", ":")))
+    print("FANMIND_PRODUCT_ROADMAP_OPEN=" + json.dumps(roadmap_items, ensure_ascii=False, separators=(",", ":")))
+    print("FANMIND_PRODUCT_ROADMAP_RECONCILIATION=" + json.dumps(reconciliation, ensure_ascii=False, separators=(",", ":")))
+    print(
+        "FANMIND_ROADMAP_RECONCILIATION_REQUIRED="
+        + ("true" if roadmap_reconciliation_required(reconciliation) else "false")
+    )
+    print("FANMIND_SAFE_READY_SET=" + json.dumps(manager["safe_ready_set"], separators=(",", ":")))
     print(f"FANMIND_WORKER_LIMIT={manager['worker_limit']}")
     print(f"FANMIND_WORKER_USED={manager['worker_used']}")
     print(
@@ -2216,6 +2543,7 @@ def main() -> int:
         active_slots=active_slots,
         requested_limit=args.worker_limit,
         failed_action_ids=failed_action_ids,
+        roadmap_items=roadmap_items,
     )
     if args.write:
         OUTPUT_PATH.write_text(rendered, encoding="utf-8")

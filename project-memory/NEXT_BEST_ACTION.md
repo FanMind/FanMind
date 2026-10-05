@@ -1,6 +1,6 @@
 # FanMind Next Best Action
 
-Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json` and `DEFERRED_OWNER_ACTIONS.md`.
+Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNER_ACTIONS.md` and `src/config/roadmap.ts`.
 
 - Sales ready: `false`
 - Phase 8 started: `true`
@@ -24,8 +24,8 @@ owner/platform action required
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `2`
-- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`
+- Worker slots reserved by active/ready work: `3`
+- Active task continuations reserving slots: `TASK:FM-CHATADMIN-003`, `NBA-AI-LIFECYCLE-RECONCILE`, `TASK:FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
@@ -50,10 +50,41 @@ owner/platform action required
 - `NBA-CREATOR-FOUNDATION-STAGING-CATALOG` priority 13: **DONE** — gate creator_foundation_staging_catalog is RECONCILED
 - `NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN` priority 14: **DONE** — gate creator_foundation_profile_transition_design is ACCEPTED
 - `NBA-SECURITY-PROTECTED` priority 15: **OWNER_ACTION_REQUIRED** — owner/platform action required
-- `NBA-MOBILE-READONLY` priority 20: **DEFERRED_BY_OWNER** — FM-MOB-OWNER-CREATOR-SOCIAL-20260910
+- `NBA-MOBILE-READONLY` priority 20: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-AI-LIFECYCLE-RECONCILE` priority 30: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-META-TECHNICAL-RECONCILE` priority 40: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-SALES-HANDOFF` priority 80: **WAITING_PREREQUISITE** — restore=PARTIAL, mobile=IMPLEMENTED_NOT_VERIFIED, ai_billing=PARTIAL, meta_security=PARTIAL, phase3_social=PARTIAL, phase7_social=PARTIAL
+
+## Product-roadmap reconciliation
+
+- Phase 3 · Facebook: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` (OWNER_ACTION_REQUIRED)
+- Phase 3 · Instagram: `NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT` (OWNER_ACTION_REQUIRED)
+- Phase 3 · WhatsApp: `NBA-CREATOR-SOCIAL-EXTERNAL` (OWNER_ACTION_REQUIRED)
+- Phase 3 · Technische & rechtliche Prüfung: `NBA-META-TECHNICAL-RECONCILE` (OWNER_ACTION_REQUIRED)
+- Phase 5 · Vollständiger Restore-Test: `NBA-RESTORE-STORAGE-R4-AUTH` (OWNER_ACTION_REQUIRED)
+- Phase 5 · Echte Registrierung vollständig abnehmen: `NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE` (OWNER_ACTION_REQUIRED)
+- Phase 5 · KI-/Billing-Gesamtabnahme: `NBA-AI-LIFECYCLE-RECONCILE` (ACTIVE)
+- Phase 5 · Security- und Meta-Abnahme: `NBA-SECURITY-PROTECTED` (OWNER_ACTION_REQUIRED)
+- Phase 6 · Google-Play-Test & Geräteabnahme: `NBA-MOBILE-READONLY` (OWNER_ACTION_REQUIRED)
+- Phase 6 · Push für Follow-up-Erinnerungen: `NBA-MOBILE-READONLY` (OWNER_ACTION_REQUIRED)
+- Phase 7 · TikTok: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
+- Phase 7 · X / Twitter: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
+- Phase 7 · OnlyFans: `NBA-PHASE7-EXTERNAL` (OWNER_ACTION_REQUIRED)
+- Phase 7 · Creator-Profile & getrenntes Fanwissen: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` (OWNER_ACTION_REQUIRED)
+- Phase 7 · Kaufdaten & Lernen aus bestätigten Chats: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` (OWNER_ACTION_REQUIRED)
+- Planning/catalog gaps (never executable or send-authorized):
+  - Phase 7 · Creator Intelligence & Sales Assistance (progress; Phase 7b · jetzt in Arbeit)
+  - Phase 7 · Eigene Creator-Stimmen & automatischer Creator-Kontext (progress; Strukturierte Profile · Umsetzung begonnen)
+  - Phase 7 · Sales Playbooks & Gesprächssteuerung (progress; Angebotsregeln und Gesprächszustände in Arbeit)
+  - Phase 9 · Geprüfte Kampagnen-Entwürfe (planned; Geplant)
+  - Phase 9 · Manuelle Freigabe (planned; Pflicht)
+  - Phase 9 · Kein Auto-Senden (planned; Guardrail)
+  - Phase 10 · Keine Vollanalytics als Live-Suite (planned; Ehrlich)
+  - Phase 15 · Segment-Ansichten (planned; Vorbereitet)
+  - Phase 15 · Listenlogik (planned; In Arbeit)
+  - Phase 15 · Filter & Tags (planned; In Arbeit)
+  - Phase 15 · CSV-Import für Segmente nutzen (planned; Nächster Schritt)
+- Reconciliation reads canonical roadmap truth and existing catalog gates; it does not create actions, reservations or transport authority.
 
 ## Selection safety rules
 
