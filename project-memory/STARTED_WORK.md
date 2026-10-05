@@ -6,7 +6,7 @@
 - Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
 - Source: explicit Owner task, not a roadmap-catalog selection.
 - Risk: R3
-- Status: IN_PROGRESS
+- Status: ACCEPTED; source method merged and canonical receipt prepared for publication.
 - Work lock: LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
 - Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
@@ -15,9 +15,10 @@
 - Required checks: FanMind Browser E2E, FanMind CI, FanMind CodeQL, FanMind God Mode Gate, FanMind Landing Language CI, FanMind Supply Chain Security, Project Memory Guard, Project Memory Quality, Project Memory Status
 - Runtime requirement: {"required":false}
 - Acceptance: the six Owner criteria for `fanmind-orchestrator-method-20261005-01`, including exact previous-handoff identity, typed receipt/GitHub truth, one-or-zero selection, pre-transport enforcement, zero-send negatives, exact-head CI/God Mode and independent countercheck.
-- Boundary: Draft PR only. No merge, auto-merge, deploy, live API trigger, controlled live check, SQL, host, provider, secret, permission or protected-state action is authorized.
-- Closeout: this source-only method task requires exact-head CI plus independent full-path countercheck, but no separate runtime evidence. It cannot publish `COMPLETED` until a later separately authorized merge and canonical receipt exist. Current delivery stops at reviewable Draft PR.
-- Exact next step: complete exact-head required CI and independent countercheck on the Draft PR, then stop pending separate Owner authorization for merge/canonical publication. An optional later read-only prepare/check BLOCK is Parent diagnosis only, not product runtime evidence or a gate.
+- Completion: PR #1276 final head `111d462a8b3d50d7d7e2acc94c27b61c11f74c70` passed all nine required exact-head workflows and independent final countercheck, then merged with SHA guard as `c5e194273585a0d0d57cf0da832c531dc02f01c4` at 2026-10-05T12:34:38Z. This PR prepares the canonical receipt with `runtime_evidence={required:false,status:NOT_REQUIRED}`; publication occurs only if this closeout PR is merged.
+- Prior boundary: the preceding `BLOCKED` receipt was correct while merge and canonical publication remained unauthorized; it is historical evidence, not an unresolved product or runtime blocker.
+- Postflight boundary: automatic deploy/readiness confirmed the exact live revision. The read-only audit retained only the known stale database/full-backup blocker; this source closeout does not claim backup cause/freshness, overall product acceptance or a manual live action.
+- Exact next step: none for this task. Do not reopen it or keep a Builder slot reserved. Any independent work requires a new Orchestrator decision; backup remediation remains separate.
 
 ## FM-CREATOR-001 — Creator Foundation Target Transition + Runtime — 2026-09-27
 - Task: FM-CREATOR-001
