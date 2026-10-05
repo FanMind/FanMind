@@ -1197,7 +1197,6 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
 
-
 ## LOCK-FM-FANS-EXACT-TAG-FILTER-20261005
 - Task: FM-FANS-EXACT-TAG-FILTER-20261005
 - Action: NBA-FANS-EXACT-TAG-FILTER
