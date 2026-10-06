@@ -62,13 +62,16 @@ export function assertChatAdminFanInput(input) {
     return value.trim();
   };
   const status = input.status ?? "active";
+  const customerTier = input.customer_tier ?? "red";
   if (!['active', 'inactive'].includes(status)) throw new ChatAdminPolicyError("invalid_fan_status");
+  if (!['red', 'blue', 'yellow', 'green'].includes(customerTier)) throw new ChatAdminPolicyError("invalid_customer_tier");
   return {
     display_name: bounded("display_name", true, 120),
     handle: bounded("handle", false, 120),
     platform: bounded("platform", true, 40),
     language: bounded("language", false, 40),
     status,
+    customer_tier: customerTier,
     summary: bounded("summary", false) ?? "",
     notes: bounded("notes", false) ?? "",
   };
