@@ -79,7 +79,7 @@ export function buildChatAdminFanContext(character, fan, conversation, messages,
   if (!conversation || conversation.workspace_id !== character.workspace_id || conversation.character_id !== character.id || conversation.fan_id !== fan.id) throw new ChatAdminPolicyError("conversation_unavailable");
   if (!Array.isArray(messages) || messages.some(message => message.workspace_id !== character.workspace_id || message.character_id !== character.id || message.fan_id !== fan.id || message.conversation_id !== conversation.id)) throw new ChatAdminPolicyError("message_context_mismatch");
   const base = JSON.parse(buildChatAdminCharacterContext(character, incomingMessage));
-  base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, summary: fan.summary, notes: fan.notes };
+  base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, summary: fan.summary, notes: fan.notes, memory: fan.memory ?? null };
   base.conversation = { id: conversation.id, recent_messages: [] };
   const candidates = messages.slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at }));
   // Prefer the newest complete turns. Never cut a message in the middle: if the
