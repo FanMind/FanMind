@@ -5,7 +5,7 @@ import {
   type FanAnalysisActionState,
   type FanAnalysisFailureReason,
 } from "@/app/fans/[id]/analysisActions";
-import { readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
+import {\n  isTrustedFanMindMutationRequest,\n  readBoundedJsonRequest,\n} from "@/lib/httpMutationPolicy.mjs";
 import {
   BearerAccessTokenError,
   getOptionalBearerAccessToken,
