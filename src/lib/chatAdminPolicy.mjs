@@ -1,6 +1,17 @@
 export const CHAT_ADMIN_CAPABILITY = "chat_admin_multi_character";
 export const CHAT_ADMIN_MAX_TEXT = 4_000;
 
+export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
+  "Erzeuge exakt drei kurze Antwortvorschläge in dieser Reihenfolge: empfohlen/natürlich, weicher/spielerischer, stärker/direkter.",
+  "Verstehe zuerst Bedeutung, kommunikative Absicht und Ton der aktuellen Nachricht im Zusammenhang mit Character, Fanprofil, gelernten Angaben und gespeichertem Gesprächsverlauf. Reagiere nicht nur auf einzelne Schlüsselwörter.",
+  "Alle drei Varianten beantworten die konkrete Nachricht und passen zur bisherigen Beziehungsdynamik. Eine stärkere Variante bleibt in derselben Character-Stimme und überschreitet keine Grenze.",
+  "Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung. Character-Grenzen, Fanbeziehung und Verlauf bestimmen den Ton.",
+  "Weise eine Bitte nicht lediglich wegen ihrer Formulierung zurück. Wenn eine Grenze nötig ist, beantworte trotzdem die eigentliche Bitte klar und im Character-Kontext.",
+  "Nutze Character-Preise oder Angebote nur, wenn sie ausdrücklich in den gelieferten Verkaufsregeln stehen. Erfinde keine Preise, Rabatte, Verfügbarkeit oder Zusagen.",
+  "Nutze ausschließlich die serverseitig geladene Persona und den gebundenen Fan-/Gesprächskontext. Erfinde keine Identitäts- oder Fan-Fakten und beachte alle No-Gos.",
+  "Der Mensch kopiert und sendet selbst. Es gibt keinen automatischen Versand.",
+].join("\n");
+
 export class ChatAdminPolicyError extends Error {
   constructor(code) {
     super(code);
@@ -92,4 +103,19 @@ export function buildChatAdminFanContext(character, fan, conversation, messages,
     if (JSON.stringify(base).length > maxChars) { base.conversation.recent_messages.shift(); break; }
   }
   return JSON.stringify(base);
+}
+
+export function assertChatAdminReplySemantics(replies, incomingMessage) {
+  if (!Array.isArray(replies) || replies.length !== 3 || replies.some((reply) => typeof reply !== "string" || !reply.trim())) {
+    throw new ChatAdminPolicyError("invalid_provider_output");
+  }
+  const incoming = typeof incomingMessage === "string" ? incomingMessage : "";
+  const requestsImages = /\b(?:fotos?|bilder?)\b/iu.test(incoming) && /\b(?:will|möchte|haben|schick|zeig)\w*\b/iu.test(incoming);
+  if (!requestsImages) return replies;
+  const etiquetteOnly = /(?:nett(?:er)? formuliert|charmanter|höflicher|anständig(?:er)? fragen)/iu;
+  const addressesRequest = /\b(?:fotos?|bilder?|content|set|schick|zeig|bekomm|mache|grenze|nicht|nein|gern)\w*\b/iu;
+  if (replies.some((reply) => etiquetteOnly.test(reply) && !addressesRequest.test(reply))) {
+    throw new ChatAdminPolicyError("reply_ignores_message_intent");
+  }
+  return replies;
 }

@@ -82,7 +82,7 @@ function harness(change) {
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
-      listRecentChatMessages: async () => [],
+      listRecentChatMessages: async () => [{ id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" }],
       getChatAdminGeneration: async () => [],
       persistChatAdminGeneration: async (...args) => args.at(-1),
     },
@@ -122,6 +122,11 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(response.status, 200); assert.equal(body.replies.length, 3);
   assert.equal(body.character_id, characterId); assert.equal(body.character_revision, 1);
   assert.equal(h.calls.providerBody.store, false);
+  assert.equal(h.calls.providerBody.input[0].content, chatPolicy.CHAT_ADMIN_REPLY_INSTRUCTIONS);
+  const suppliedContext = JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(suppliedContext.fan.summary, "mag kurze Antworten");
+  assert.equal(suppliedContext.fan.notes, "kein Druck");
+  assert.equal(suppliedContext.conversation.recent_messages[0].content, "Unser letzter Insider");
 });
 for (const change of ["revoke", "revision", "inactive", "persona", "deleted", "workspace"]) {
   test(`actual ChatAdmin route discards provider output after ${change} changes during generation`, async () => {
