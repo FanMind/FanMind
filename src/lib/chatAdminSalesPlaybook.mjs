@@ -33,7 +33,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const activeOffers = normalized.offers.filter((offer) => offer.active);
   const requested = category ? activeOffers.find((offer) => offer.category === category && !offer.requiresConfirmation) ?? null : null;
   return {
-    playbook: { ...normalized, offers: activeOffers },
+    playbook: { ...normalized, offers: requested ? [requested] : [] },
     requestedOffer: requested ? {
       id: requested.id,
       name: requested.name,
