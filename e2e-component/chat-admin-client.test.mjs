@@ -43,7 +43,7 @@ const characterA = {
   flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], status: "active", revision: 1, created_at: "2026-09-26T00:00:00Z", updated_at: "2026-09-26T00:00:00Z",
 };
 const characterB = { ...characterA, id: "10000000-0000-4000-8000-000000000002", display_name: "Synthetic Bea", bio: "Bea synthetic bio" };
-const fanA1={id:"30000000-0000-4000-8000-000000000001",character_id:characterA.id,display_name:"Fan A1",handle:"@a1",platform:"OnlyFans",language:"Deutsch",status:"active",summary:"A1 mag Katzen",notes:"A1 vertraulich",revision:1};
+const fanA1={id:"30000000-0000-4000-8000-000000000001",character_id:characterA.id,display_name:"Fan A1",handle:"@a1",platform:"OnlyFans",language:"Deutsch",status:"active",customer_tier:"blue",summary:"A1 mag Katzen",notes:"A1 vertraulich",revision:1};
 const fanA2={...fanA1,id:"30000000-0000-4000-8000-000000000002",display_name:"Fan A2",handle:"@a2",summary:"A2 mag Hunde",notes:"A2 separat"};
 const fanB1={...fanA1,id:"30000000-0000-4000-8000-000000000003",character_id:characterB.id,display_name:"Fan B1",handle:"@b1",summary:"B1 Kontext",notes:"B1 separat"};
 const fansByCharacter={[characterA.id]:[fanA1,fanA2],[characterB.id]:[fanB1]};
@@ -109,3 +109,25 @@ test("switching from edit to add resets uncontrolled Fan fields",async t=>{const
 test("manual confirmation is serialized against double clicks",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.evaluate(()=>{const buttons=[...document.querySelectorAll("button")].filter(button=>button.textContent==="Als manuell gesendet bestätigen");buttons[0].click();buttons[1].click();});await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),1);const confirmation=await page.evaluate(()=>window.testRequests.find(r=>r.url==="/api/chatadmin/conversations").body);assert.match(confirmation.confirmation_id,/^[0-9a-f-]{36}$/u);});
 
 test("delayed manual confirmation cannot reopen a previously selected Fan",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.getByRole("button",{name:"Als manuell gesendet bestätigen"}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);await openFan(page,"Fan A2");await page.evaluate(binding=>window.testRequests[1].resolve(Response.json({message:{id:"confirmed-a1",fan_id:binding.fanId,conversation_id:binding.conversationId}})),{fanId:fanA1.id,conversationId:conversationFor[fanA1.id].id});await expect(page.getByRole("region",{name:"Gespräch mit Fan A2",exact:true})).toBeVisible();await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);});
+
+
+test("Fan customer classification is editable and remains independent from technical active status",async t=>{
+ const page=await mount(t);
+ await openFan(page,"Fan A1");
+ await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();
+ await page.getByRole("button",{name:"Bearbeiten",exact:true}).click();
+ await expect(page.locator('select[name="customer_tier"]')).toHaveValue("blue");
+ await page.locator('select[name="customer_tier"]').selectOption("green");
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0]);
+ assert.equal(request.method,"PATCH");
+ assert.equal(request.body.customer_tier,"green");
+ assert.equal(request.body.status,"active");
+ await page.evaluate(async fan=>{
+   Object.assign(window.fixture.fansByCharacter[fan.character_id].find(item=>item.id===fan.id),fan);
+   window.testRequests[0].resolve(Response.json({fan}));
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ },{...fanA1,customer_tier:"green",revision:2});
+ await expect(page.getByTitle("Kundenstatus: green")).toHaveCount(1);
+});
