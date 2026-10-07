@@ -102,6 +102,22 @@ test("duplicate stable evidence identifiers fail closed", () => {
   assert.throws(() => summarizeConfirmedChatLearning([firstPurchase, secondPurchase], expected, options), /duplicate_purchase_event_id/);
 });
 
+test("summary exposes confirmed outcome evidence by reply variant without inventing attribution", () => {
+  const linkedPurchase = record({ purchase: purchase(attribution()) });
+  const summary = summarizeConfirmedChatLearning([linkedPurchase], expected, options);
+  assert.deepEqual(summary.variants.recommended, {
+    confirmedOutbounds: 1,
+    linkedReactions: 0,
+    linkedPurchases: 1,
+    purchaseRate: 1,
+  });
+  assert.equal(summary.preferredPurchaseVariant, "recommended");
+
+  const unknown = summarizeConfirmedChatLearning([record()], expected, options);
+  assert.equal(unknown.variants.recommended.linkedPurchases, 0);
+  assert.equal(unknown.preferredPurchaseVariant, null);
+});
+
 test("controlled persistence keeps proposal origin server-only and evidence tenant-bound", async () => {
   const sql = await readFile(path.join(repoRoot, "supabase/controlled/20260923023000_creator_confirmed_chat_learning.sql"), "utf8");
   assert.match(sql, /create table public\.creator_confirmed_chat_learning/u);
