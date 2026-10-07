@@ -10,7 +10,7 @@ const lines=(value:string)=>value.split("\n").map(v=>v.trim()).filter(Boolean);
 const priceValue=(minor:number|undefined)=>minor===undefined?"":(minor/100).toFixed(2);
 function salesPlaybookFromForm(fd:FormData,current:CreatorPlaybook|undefined):CreatorPlaybook {
  const base=current??defaultChatAdminSalesPlaybook();
- const managed=new Set(CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>definition.category));
+ const managed=new Set<string>(CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>definition.category));
  const offers:CreatorOffer[]=base.offers.filter(offer=>!managed.has(offer.category));
  for(const definition of CHAT_ADMIN_OFFER_CATEGORIES){
   const recommended=String(fd.get(`offer_${definition.id}_recommended`)??"").trim();
