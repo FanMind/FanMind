@@ -116,8 +116,8 @@ test("Fan customer classification is editable and remains independent from techn
  await openFan(page,"Fan A1");
  await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();
  await page.getByRole("button",{name:"Bearbeiten",exact:true}).click();
- await expect(page.getByLabel("Kundenstatus",{exact:true})).toHaveValue("blue");
- await page.getByLabel("Kundenstatus",{exact:true}).selectOption("green");
+ await expect(page.locator('select[name="customer_tier"]')).toHaveValue("blue");
+ await page.locator('select[name="customer_tier"]').selectOption("green");
  await page.getByRole("button",{name:"Speichern",exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  const request=await page.evaluate(()=>window.testRequests[0]);
