@@ -72,8 +72,9 @@ test("Creator-Building keeps the desktop shell fixed with three independent scro
   assert.match(styles, /\.characterEditor\{max-height:none;overflow:visible/u);
   assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
   assert.match(source, /ref=\{conversationPaneRef\}/u);
-  assert.match(source, /Kommunikation, Angebote und Character-Preise/u);
-  assert.match(source, /Verkaufsregeln, Angebote und Preise/u);
+  assert.match(source, /Kommunikation und Verkaufsregeln/u);
+  assert.match(source, /Character-Angebote und Preise/u);
+  for (const offer of ["Foto","Video","Privates Foto","Privates Video"]) assert.match(source, new RegExp(`name:"${offer}"`, "u"));
 });
 
 test("extended learning refreshes the canonical fan analysis before CRM reply generation", () => {

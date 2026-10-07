@@ -70,6 +70,7 @@ function harness(change) {
     location: null, languages: ["Deutsch"], personality: "freundlich", writing_style: "kurz",
     emoji_style: "sparsam", sentence_style: "kurz", typical_phrases: [], forbidden_phrases: [],
     flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], profile_image_path: null,
+    sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, providerBody: null };
@@ -112,7 +113,7 @@ function harness(change) {
   });
   const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: "Hallo, wie geht es dir?" }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: "Ich will ein privates Foto von dir." }),
   });
   return { calls, route: exports.POST, request };
 }
@@ -127,6 +128,8 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(suppliedContext.fan.summary, "mag kurze Antworten");
   assert.equal(suppliedContext.fan.notes, "kein Druck");
   assert.equal(suppliedContext.conversation.recent_messages[0].content, "Unser letzter Insider");
+  assert.equal(suppliedContext.sales_playbook.requested_offer.category,"private_photo");
+  assert.equal(suppliedContext.sales_playbook.requested_offer.recommendedPriceMinor,2500);
 });
 for (const change of ["revoke", "revision", "inactive", "persona", "deleted", "workspace"]) {
   test(`actual ChatAdmin route discards provider output after ${change} changes during generation`, async () => {

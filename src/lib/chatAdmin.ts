@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { getSupabaseHeaders, getSupabaseRestUrl, SUPABASE_ACCESS_TOKEN_COOKIE } from "@/lib/supabase/config";
 import { requireActiveAuthorizedWorkspace, WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
+import type { CreatorPlaybook } from "@/lib/creatorIntelligencePolicy.mjs";
 
-export type ChatCharacter = { id:string; workspace_id:string; display_name:string; profile_image_path:string|null; public_age:number; bio:string; location:string|null; languages:string[]; personality:string; writing_style:string; emoji_style:string; sentence_style:string; typical_phrases:string[]; forbidden_phrases:string[]; flirt_style:string; sales_rules:string; example_messages:string[]; status:"active"|"inactive"; revision:number; created_at:string; updated_at:string };
+export type ChatCharacter = { id:string; workspace_id:string; display_name:string; profile_image_path:string|null; public_age:number; bio:string; location:string|null; languages:string[]; personality:string; writing_style:string; emoji_style:string; sentence_style:string; typical_phrases:string[]; forbidden_phrases:string[]; flirt_style:string; sales_rules:string; sales_playbook?:CreatorPlaybook; example_messages:string[]; status:"active"|"inactive"; revision:number; created_at:string; updated_at:string };
 export type ChatCharacterFan = { id:string; workspace_id:string; character_id:string; display_name:string; handle:string|null; platform:string; language:string|null; status:"active"|"inactive"; customer_tier:"red"|"blue"|"yellow"|"green"; summary:string; notes:string; revision:number; created_at:string; updated_at:string };
 export type ChatCharacterConversation = { id:string; workspace_id:string; character_id:string; fan_id:string; fan_reference:string; created_at:string; updated_at:string };
 export type ChatCharacterMessage = { id:string; workspace_id:string; character_id:string; fan_id:string; conversation_id:string; generation_id:string|null; direction:"fan_inbound"|"suggested_reply"|"confirmed_reply"; content:string; character_revision:number; sequence:number; created_at:string };
@@ -60,6 +61,13 @@ export async function hasChatAdminFanSchema(workspaceId:string):Promise<boolean>
       rest<boolean>("rpc/chat_admin_fan_schema_ready",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
     ]);
     return results[3]===true;
+  }
+  catch { return false; }
+}
+export async function hasChatAdminStructuredOffersSchema(workspaceId:string):Promise<boolean> {
+  try {
+    await rest(`chat_characters?workspace_id=eq.${encodeURIComponent(workspaceId)}&select=sales_playbook&limit=0`);
+    return true;
   }
   catch { return false; }
 }

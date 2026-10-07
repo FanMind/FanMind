@@ -1,3 +1,5 @@
+import { assertChatAdminReplyPrices, defaultChatAdminSalesPlaybook, normalizeChatAdminSalesPlaybook, resolveChatAdminRequestedOffer } from "./chatAdminSalesPlaybook.mjs";
+
 export const CHAT_ADMIN_CAPABILITY = "chat_admin_multi_character";
 export const CHAT_ADMIN_MAX_TEXT = 4_000;
 
@@ -7,7 +9,8 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
   "Alle drei Varianten beantworten die konkrete Nachricht und passen zur bisherigen Beziehungsdynamik. Eine stärkere Variante bleibt in derselben Character-Stimme und überschreitet keine Grenze.",
   "Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung. Character-Grenzen, Fanbeziehung und Verlauf bestimmen den Ton.",
   "Weise eine Bitte nicht lediglich wegen ihrer Formulierung zurück. Wenn eine Grenze nötig ist, beantworte trotzdem die eigentliche Bitte klar und im Character-Kontext.",
-  "Nutze Character-Preise oder Angebote nur, wenn sie ausdrücklich in den gelieferten Verkaufsregeln stehen. Erfinde keine Preise, Rabatte, Verfügbarkeit oder Zusagen.",
+  "Nutze Angebote und Preise ausschließlich aus sales_playbook.requested_offer. Wenn requested_offer null ist, nenne keinen Preis und erfinde kein Angebot, keinen Rabatt, keine Verfügbarkeit oder Zusage.",
+  "Wenn requested_offer vorhanden ist, darf nur dessen recommendedPriceMinor in dessen Währung genannt werden. Mindest-/Höchstpreis und Rabattgrenze sind Grenzen, keine alternativen Preise.",
   "Nutze ausschließlich die serverseitig geladene Persona und den gebundenen Fan-/Gesprächskontext. Erfinde keine Identitäts- oder Fan-Fakten und beachte alle No-Gos.",
   "Der Mensch kopiert und sendet selbst. Es gibt keinen automatischen Versand.",
 ].join("\n");
@@ -37,7 +40,7 @@ export function assertChatAdminCharacterInput(input) {
   if (input.profile_image_path != null && (typeof input.profile_image_path !== "string" || !/^chat-characters\/[0-9a-f-]+\/[0-9a-f-]+\/[A-Za-z0-9._-]+$/u.test(input.profile_image_path))) {
     throw new ChatAdminPolicyError("invalid_profile_image_path");
   }
-  return {
+  const result = {
     display_name: input.display_name.trim(), profile_image_path: input.profile_image_path ?? null,
     public_age: input.public_age, bio: input.bio.trim(), location: typeof input.location === "string" && input.location.trim() ? input.location.trim() : null,
     languages: input.languages.map((v) => v.trim()), personality: input.personality.trim(), writing_style: input.writing_style.trim(),
@@ -45,16 +48,23 @@ export function assertChatAdminCharacterInput(input) {
     forbidden_phrases: input.forbidden_phrases.map((v) => v.trim()), flirt_style: input.flirt_style.trim(), sales_rules: input.sales_rules.trim(),
     example_messages: input.example_messages.map((v) => v.trim()), status: input.status === "inactive" ? "inactive" : "active",
   };
+  if (Object.hasOwn(input, "sales_playbook")) {
+    try { result.sales_playbook = normalizeChatAdminSalesPlaybook(input.sales_playbook); }
+    catch { throw new ChatAdminPolicyError("invalid_sales_playbook"); }
+  }
+  return result;
 }
 
 export function buildChatAdminCharacterContext(character, incomingMessage, fanLabel = "") {
   if (!character || character.status !== "active" || !Number.isInteger(character.revision) || character.revision < 1) throw new ChatAdminPolicyError("character_unavailable");
   if (typeof incomingMessage !== "string" || !incomingMessage.trim() || incomingMessage.length > CHAT_ADMIN_MAX_TEXT) throw new ChatAdminPolicyError("invalid_incoming_message");
+  const salesPlaybook = resolveChatAdminRequestedOffer(character.sales_playbook ?? defaultChatAdminSalesPlaybook(), incomingMessage);
   const context = {
     character_id: character.id, character_revision: character.revision,
     persona: { display_name: character.display_name, public_age: character.public_age, bio: character.bio, location: character.location, languages: character.languages, personality: character.personality },
     style: { writing: character.writing_style, emoji: character.emoji_style, sentences: character.sentence_style, typical_phrases: character.typical_phrases, forbidden_phrases: character.forbidden_phrases },
     rules: { flirt: character.flirt_style, sales: character.sales_rules, examples: character.example_messages },
+    sales_playbook: { ...salesPlaybook.playbook, requested_offer: salesPlaybook.requestedOffer },
     fan: fanLabel ? { user_provided_label: fanLabel.slice(0, 120) } : null,
     incoming_message: incomingMessage.trim(),
   };
@@ -105,12 +115,14 @@ export function buildChatAdminFanContext(character, fan, conversation, messages,
   return JSON.stringify(base);
 }
 
-export function assertChatAdminReplySemantics(replies, incomingMessage) {
+export function assertChatAdminReplySemantics(replies, incomingMessage, requestedOffer = null) {
   if (!Array.isArray(replies) || replies.length !== 3 || replies.some((reply) => typeof reply !== "string" || !reply.trim())) {
     throw new ChatAdminPolicyError("invalid_provider_output");
   }
   const incoming = typeof incomingMessage === "string" ? incomingMessage : "";
   const requestsImages = /\b(?:fotos?|bilder?)\b/iu.test(incoming) && /\b(?:will|möchte|haben|schick|zeig)\w*\b/iu.test(incoming);
+  try { assertChatAdminReplyPrices(replies, requestedOffer); }
+  catch { throw new ChatAdminPolicyError("reply_price_not_permitted"); }
   if (!requestsImages) return replies;
   const etiquetteOnly = /(?:nett(?:er)? formuliert|charmanter|höflicher|anständig(?:er)? fragen)/iu;
   const addressesRequest = /\b(?:fotos?|bilder?|content|set|schick|zeig|bekomm|mache|grenze|nicht|nein|gern)\w*\b/iu;
