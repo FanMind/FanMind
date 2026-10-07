@@ -5,7 +5,10 @@ import {
   type FanAnalysisActionState,
   type FanAnalysisFailureReason,
 } from "@/app/fans/[id]/analysisActions";
-import {\n  isTrustedFanMindMutationRequest,\n  readBoundedJsonRequest,\n} from "@/lib/httpMutationPolicy.mjs";
+import {
+  isTrustedFanMindMutationRequest,
+  readBoundedJsonRequest,
+} from "@/lib/httpMutationPolicy.mjs";
 import {
   BearerAccessTokenError,
   getOptionalBearerAccessToken,
@@ -53,8 +56,11 @@ export async function POST(request: NextRequest) {
     }
     return jsonError("Mobile Sitzung konnte nicht geprüft werden.", 401);
   }
-  if (!accessToken) {
-    return jsonError("Die Fan-Analyse benötigt eine angemeldete Mobile Sitzung.", 401);
+  if (!accessToken && !isTrustedFanMindMutationRequest(request)) {
+    return jsonError(
+      "Die Fan-Analyse muss aus dem angemeldeten FanMind-Bereich erfolgen.",
+      403,
+    );
   }
 
   const parsedBody = await readBoundedJsonRequest(
