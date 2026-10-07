@@ -14,10 +14,12 @@ import {
 } from "../scripts/operations/chat-admin-staging-runner.mjs";
 import { CHAT_ADMIN_ACCEPTANCE_SQL } from "../scripts/operations/chat-admin-staging-acceptance.mjs";
 import {
+  assertChatAdminReplySemantics,
   assertChatAdminCharacterInput,
   buildChatAdminCharacterContext,
   assertChatAdminFanInput,
   buildChatAdminFanContext,
+  CHAT_ADMIN_REPLY_INSTRUCTIONS,
 } from "../src/lib/chatAdminPolicy.mjs";
 
 const fixture = {
@@ -61,6 +63,33 @@ test("persistent fan context retains newest complete history within the canonica
   assert.ok(context.length<=1800);
   assert.match(parsed.conversation.recent_messages.at(-1).content,/message-19-/u);
   assert.doesNotMatch(JSON.stringify(parsed.conversation.recent_messages),/message-0-/u);
+});
+
+test("reply strategy requires semantic intent, relationship context and three bounded variants", () => {
+  for (const expected of [
+    /Bedeutung, kommunikative Absicht und Ton/u,
+    /Fanprofil, gelernten Angaben und gespeichertem Gesprächsverlauf/u,
+    /empfohlen\/natürlich, weicher\/spielerischer, stärker\/direkter/u,
+    /Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung/u,
+    /Character-Preise oder Angebote nur, wenn sie ausdrücklich/u,
+  ]) assert.match(CHAT_ADMIN_REPLY_INSTRUCTIONS, expected);
+});
+
+test("image-request regression rejects an etiquette-only deflection but keeps contextual boundaries", () => {
+  const incoming = "Du geile Sau, ich will Fotos/Bilder von dir haben.";
+  assert.throws(
+    () => assertChatAdminReplySemantics([
+      "So nett formuliert wäre schon charmanter.",
+      "Erzähl mir, was du suchst.",
+      "Welche Bilder meinst du?",
+    ], incoming),
+    /reply_ignores_message_intent/u,
+  );
+  assert.deepEqual(assertChatAdminReplySemantics([
+    "Fotos können wir gern besprechen – welches Set interessiert dich?",
+    "Heißer Einstieg. Sag mir spielerisch, welche Bilder du sehen möchtest.",
+    "Direkt verstanden: Bilder ja, aber nur innerhalb meiner Grenzen.",
+  ], incoming).length, 3);
 });
 
 const SHA = "a".repeat(40);

@@ -68,8 +68,21 @@ test("Creator-Building keeps the desktop shell fixed with three independent scro
   assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow:hidden/u);
   assert.match(styles, /\.conversationScroll\{min-height:0;flex:1 1 auto;overflow-y:auto/u);
   assert.match(styles, /\.messageComposer\{flex:0 0 auto/u);
+  assert.match(styles, /\.characterEditor\{min-height:0;max-height:calc\(100% - 32px\);overflow-y:auto;overscroll-behavior:contain/u);
+  assert.match(styles, /\.characterEditor\{max-height:none;overflow:visible/u);
   assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
   assert.match(source, /ref=\{conversationPaneRef\}/u);
+  assert.match(source, /Kommunikation, Angebote und Character-Preise/u);
+  assert.match(source, /Verkaufsregeln, Angebote und Preise/u);
+});
+
+test("extended learning refreshes the canonical fan analysis before CRM reply generation", () => {
+  const suggestions = readFileSync("src/app/fans/[id]/AiReplySuggestions.tsx", "utf8");
+  const analysis = suggestions.indexOf('fetch("/api/ai/fan-analysis"');
+  const reply = suggestions.indexOf('fetch("/api/ai/reply-suggestions"');
+  assert.ok(analysis > 0 && reply > analysis);
+  assert.match(suggestions.slice(analysis, reply), /contactId: contact\.contactId/u);
+  assert.match(suggestions.slice(analysis, reply), /\.catch\(\(\) => undefined\)/u);
 });
 
 test("ChatAdmin groups stored AI suggestions under their inbound fan message", () => {
@@ -89,6 +102,20 @@ test("ChatAdmin groups stored AI suggestions under their inbound fan message", (
       { id: "suggestion-3", direction: "suggested_reply", content: "Bestens", created_at: "2026-09-30T10:01:03Z" },
     ] },
   ]);
+});
+
+test("the combined action keeps confirmed suggestions marked as used", () => {
+  const { usedSuggestionIds } = loadClient();
+  const used = usedSuggestionIds([
+    { id: "inbound", direction: "fan_inbound", content: "Fotos?", created_at: "2026-10-07T10:00:00Z" },
+    { id: "suggestion-1", direction: "suggested_reply", content: "Antwort A", created_at: "2026-10-07T10:00:01Z" },
+    { id: "suggestion-2", direction: "suggested_reply", content: "Antwort B", created_at: "2026-10-07T10:00:02Z" },
+    { id: "confirmed", direction: "confirmed_reply", content: "Antwort B", created_at: "2026-10-07T10:01:00Z" },
+  ]);
+  assert.deepEqual([...used], ["suggestion-2"]);
+  assert.match(source, /Kopieren und verwenden/u);
+  assert.doesNotMatch(source, /Als manuell gesendet bestätigen/u);
+  assert.match(source, /Verwendeter KI-Vorschlag/u);
 });
 
 

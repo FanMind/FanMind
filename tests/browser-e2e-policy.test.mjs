@@ -79,7 +79,7 @@ test("local provider fixture is loopback-only, acknowledged and fail-closed", as
   assert.doesNotMatch(source, /0\.0\.0\.0|https:\/\//u);
 });
 
-test("regular-user browser proof exercises real routes and permits only a synthetic AI response", async () => {
+test("regular-user browser proof exercises real routes and permits only bounded synthetic AI responses", async () => {
   const source = await read("e2e-core-flow/regular-user-core-flow.spec.ts");
 
   for (const route of [
@@ -90,11 +90,13 @@ test("regular-user browser proof exercises real routes and permits only a synthe
   ]) {
     assert.match(source, new RegExp(`page\\.goto\\("${route}"\\)`, "u"));
   }
-  assert.equal(source.match(/route\.fulfill\(/gu)?.length, 1);
-  assert.match(
-    source,
-    /requestUrl\.pathname === "\/api\/ai\/reply-suggestions"/u,
-  );
+  assert.equal(source.match(/route\.fulfill\(/gu)?.length, 2);
+  for (const path of ["fan-analysis", "reply-suggestions"]) {
+    assert.match(
+      source,
+      new RegExp(`requestUrl\\.pathname === "\\/api\\/ai\\/${path}"`, "u"),
+    );
+  }
   assert.match(source, /ancestor::article\[1\]/u);
   assert.match(
     source,
