@@ -71,7 +71,7 @@ test("reply strategy requires semantic intent, relationship context and three bo
     /Fanprofil, gelernten Angaben und gespeichertem Gesprächsverlauf/u,
     /empfohlen\/natürlich, weicher\/spielerischer, stärker\/direkter/u,
     /Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung/u,
-    /Character-Preise oder Angebote nur, wenn sie ausdrücklich/u,
+    /Angebote und Preise ausschließlich aus sales_playbook\.requested_offer/u,
   ]) assert.match(CHAT_ADMIN_REPLY_INSTRUCTIONS, expected);
 });
 
