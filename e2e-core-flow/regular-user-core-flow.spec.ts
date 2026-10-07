@@ -107,6 +107,7 @@ test("regular Gerhard journey stays workspace-scoped and human controlled", asyn
   const unexpectedRequests: string[] = [];
   const failedResponses: string[] = [];
   const pageErrors: string[] = [];
+  let analysisRequests = 0;
   let aiRequests = 0;
   page.on("pageerror", (error) => pageErrors.push(error.name));
   page.on("response", (response) => {
@@ -124,6 +125,18 @@ test("regular Gerhard journey stays workspace-scoped and human controlled", asyn
   });
   await context.route("**/*", async (route) => {
     const requestUrl = new URL(route.request().url());
+    if (
+      requestUrl.origin === APP_ORIGIN &&
+      requestUrl.pathname === "/api/ai/fan-analysis"
+    ) {
+      analysisRequests += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, message: "Analyse aktualisiert." }),
+      });
+      return;
+    }
     if (
       requestUrl.origin === APP_ORIGIN &&
       requestUrl.pathname === "/api/ai/reply-suggestions"
@@ -197,6 +210,7 @@ test("regular Gerhard journey stays workspace-scoped and human controlled", asyn
     await expect(page.getByText(label, { exact: true })).toBeVisible();
   }
   await expect(page.getByText(SAFETY_NOTE)).toBeVisible();
+  expect(analysisRequests).toBe(1);
   expect(aiRequests).toBe(1);
 
   const firstSuggestion = page
