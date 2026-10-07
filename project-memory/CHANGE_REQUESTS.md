@@ -594,3 +594,14 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
 
 2026-10-05 — Orchestrator authorization: New Owner-direct manual preparations bind an unchanged authenticated existing Owner-comment snapshot and the complete fresh-main task contract; the authorized Parent remains responsible for confirming that the original prose semantically covers that bounded contract, while the accepted historical COMPLETED receipt remains valid. Evidence: the first post-acceptance reuse exposed the circular new-task main-registration requirement; bounded correction PR #1278 final head `0bdb2e1de89307b47564da76d67e2b75c9c4111f` passed all eight applicable exact-head workflows and two independent counterchecks, then merged normally as `f7c1606c07006d95884fb81992c0a30f28b47904` at `2026-10-05T14:57:52Z`; automatic deploy, readiness and audit confirmed that live revision, with only the pre-existing stale database/full-backup evidence still open.
+
+
+## FM-CR-059 — ChatAdmin manual customer color tier
+- Date: 2026-10-06
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Source: Owner requested a manual customer classification in ChatAdmin, visually represented by red/new customer, blue/regular customer, yellow/premium customer and green/VIP while keeping technical active/inactive status separate.
+- Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
+- Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
+- Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
