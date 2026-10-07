@@ -37,6 +37,8 @@ test("private photo intent resolves only the bound Character price",()=>{
  assert.equal(context.sales_playbook.requested_offer.category,"private_photo");
  assert.equal(context.sales_playbook.requested_offer.recommendedPriceMinor,2500);
  assert.equal(context.sales_playbook.requested_offer.currency,"EUR");
+ assert.deepEqual(context.sales_playbook.offers.map(item=>item.category),["private_photo"]);
+ assert.doesNotMatch(JSON.stringify(context.sales_playbook),/4000/u);
 });
 
 test("different Characters retain different prices and foreign workspace context fails closed",()=>{
@@ -48,7 +50,9 @@ test("different Characters retain different prices and foreign workspace context
 });
 
 test("missing offers expose no price and provider prices must match the selected Character offer exactly",()=>{
- assert.equal(resolveChatAdminRequestedOffer(defaultChatAdminSalesPlaybook(),"Ich will ein privates Foto").requestedOffer,null);
+ const missing=resolveChatAdminRequestedOffer(defaultChatAdminSalesPlaybook(),"Ich will ein privates Foto");
+ assert.equal(missing.requestedOffer,null);
+ assert.deepEqual(missing.playbook.offers,[]);
  const confirmation=playbook();confirmation.offers=confirmation.offers.map(item=>item.category==="private_photo"?{...item,requiresConfirmation:true}:item);
  assert.equal(resolveChatAdminRequestedOffer(confirmation,"Ich will ein privates Foto").requestedOffer,null);
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 25 EUR","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
