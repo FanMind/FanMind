@@ -482,7 +482,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-049 — Creator-Building collapsible AI suggestions
 - Date: 2026-09-30
-- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Status: IMPLEMENTED_PENDING_PR_CI
 - Risk: R2
 - Task: FM-CHATADMIN-002
 - Scope: rename the Owner-only ChatAdmin page heading to `Creator-Building`; group each stored suggestion sequence under its preceding inbound Fan message; place one accessible `▼`/`▲` control directly left of that message; keep stored suggestions collapsed when a Fan is opened and open the newest group once immediately after generation.
