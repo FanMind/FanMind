@@ -1105,7 +1105,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
 - Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
 - Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
-- Next: repair task-related CI/review findings on the same PR, obtain all exact-head gates and targeted independent countercheck, then stop before any separately authorized schema apply.
+- Exact next step: repair task-related CI/review findings on the same PR, obtain all exact-head gates and targeted independent countercheck, then stop before any separately authorized schema apply.
 - Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
@@ -1229,4 +1229,3 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Postflight observation: exact release `01b27631d394025db6b2204cf96aa1b62f2453f8` passed Deploy `37346036758` / job `111884709317` (14 smoke routes, six switch samples, `non_200=0`) and Readiness `37346205856` / job `111885279544` (18 checks). Read-only Audit `37346205878` / job `111885280518` confirmed the exact release and eight healthy components; only the pre-existing `production_audit_backup_latest_stale_or_empty` finding remains. No manual live action occurred.
 - Closeout: this final post-merge record consumes the task and requires no further receipt PR merely to record this closeout's SHA. The Parent owns any later, separately admitted roadmap selection.
 - Recovery: normal reviewed repository revert only; no external state is changed.
-
