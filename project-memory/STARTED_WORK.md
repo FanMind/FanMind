@@ -1092,19 +1092,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
 
-## FM-CHATADMIN-003 — persistente Fans je Character
-- Date: 2026-09-27
-- Status: IMPLEMENTED_NOT_VERIFIED
+## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
+- Date: 2026-10-07
+- Status: IN_PROGRESS
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Owner: Codex Cloud
-- Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; kein Git-Remote vorhanden. Der Owner-Head `248c923232c8a55356bf601d11d475372568039a` ist lokal nicht erreichbar, daher bleiben GitHub-Konflikte/Threads/Checks/Review unbestätigt.
-- Scope: additiver kontrollierter ChatAdmin-Fan-/Conversation-/Message-Vertrag, Owner-only API, sichtbare Character→Fan→Wissen/Verlauf UI, exakt servergebundener KI-Kontext und negative Isolationstests. Keine normale Creator-Semantik, kein Auto-Send, kein Provider-/Production-/Staging-Write.
-- Completed locally: fokussierte Policy/API/Disclosure/Delete/Roadmap-Tests und Lint. Browser-Harness ist angepasst, seine Ausführung bleibt nach fehlendem Binary und HTTP-403-Download blockiert. Offen: Build/weitere lokale Gates, bestehendes-PR-Publishing, genau ein vollständiger GitHub-Gate-Lauf und exakte unabhängige Review. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
-- Exact next step: bestehenden PR #1216 korrigieren, auf dem finalen aktuellen Head FanMind CI, CodeQL, Browser E2E, God Mode und Project Memory grün nachweisen, danach die unabhängige Review ohne P1/P2 und ohne blockierende Threads abschließen und erst dann normal mergen. Ein kontrollierter Staging-Apply bleibt bis nach dem Source-Merge getrennt und nicht autorisiert.
-- Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.
-
-
+- Owner: FanMind Builder
+- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
+- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
+- Scope: repair the regression between #1099 structured Creator offers and the later multi-Character ChatAdmin without creating a price table or replacing `sales_rules`; add Foto, Video, privates Foto and privates Video, persistence/reload, bound AI context and price-hallucination rejection.
+- Root cause: #1099 binds one `creator_sales_playbooks` row to the single `creators` row per Workspace. #1145 introduced independent multi-Character rows and copied only free-text sales rules. Directly sharing the one Creator playbook would mix Character prices.
+- Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
+- Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
+- Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
+- Next: repair task-related CI/review findings on the same PR, obtain all exact-head gates and targeted independent countercheck, then stop before any separately authorized schema apply.
+- Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
@@ -1227,3 +1229,4 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Postflight observation: exact release `01b27631d394025db6b2204cf96aa1b62f2453f8` passed Deploy `37346036758` / job `111884709317` (14 smoke routes, six switch samples, `non_200=0`) and Readiness `37346205856` / job `111885279544` (18 checks). Read-only Audit `37346205878` / job `111885280518` confirmed the exact release and eight healthy components; only the pre-existing `production_audit_backup_latest_stale_or_empty` finding remains. No manual live action occurred.
 - Closeout: this final post-merge record consumes the task and requires no further receipt PR merely to record this closeout's SHA. The Parent owns any later, separately admitted roadmap selection.
 - Recovery: normal reviewed repository revert only; no external state is changed.
+
