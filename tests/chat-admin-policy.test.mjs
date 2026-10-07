@@ -433,3 +433,30 @@ test("persistent fan runtime stays server-side default-off until controlled acti
   for (const requiredColumn of ["fan_id", "generation_id", "sequence"]) assert.ok(store.includes(requiredColumn));
   for (const route of [fans, conversations, replies]) assert.match(route, /requireChatAdminFanRuntime\(\)/u);
 });
+
+
+test("manual customer tier is bounded to four classes and stays independent from technical Fan status", async () => {
+  for (const customer_tier of ["red", "blue", "yellow", "green"]) {
+    const active = assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",status:"active",customer_tier,summary:"",notes:""});
+    const inactive = assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",status:"inactive",customer_tier,summary:"",notes:""});
+    assert.equal(active.customer_tier, customer_tier);
+    assert.equal(inactive.customer_tier, customer_tier);
+    assert.equal(active.status, "active");
+    assert.equal(inactive.status, "inactive");
+  }
+  assert.equal(assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",summary:"",notes:""}).customer_tier, "red");
+  assert.throws(
+    () => assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",customer_tier:"purple",summary:"",notes:""}),
+    /invalid_customer_tier/,
+  );
+
+  const sql = await readFile(
+    "supabase/controlled/20261007102000_chat_admin_customer_tier.sql",
+    "utf8",
+  );
+  assert.match(sql, /customer_tier text not null default 'red'/u);
+  assert.match(sql, /customer_tier in \('red','blue','yellow','green'\)/u);
+  assert.match(sql, /saved\.status <> coalesce\(fan_data->>'status','active'\)/u);
+  assert.match(sql, /saved\.customer_tier <> coalesce\(fan_data->>'customer_tier','red'\)/u);
+  assert.match(sql, /status,customer_tier,summary,notes/u);
+});
