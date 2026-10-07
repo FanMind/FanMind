@@ -225,6 +225,23 @@ export function summarizeConfirmedChatLearning(records, expected, options = {}) 
   const confirmed = normalized.filter((record) => record.outbound !== null);
   const reactionKnown = confirmed.filter((record) => record.reaction !== null).length;
   const purchaseKnown = confirmed.filter((record) => record.purchase !== null).length;
+  const variants = Object.fromEntries(VARIANTS.map((variant) => {
+    const selected = confirmed.filter((record) => record.proposal.selectedVariant === variant);
+    const linkedPurchases = selected.filter((record) => record.purchase !== null).length;
+    const linkedReactions = selected.filter((record) => record.reaction !== null).length;
+    return [variant, {
+      confirmedOutbounds: selected.length,
+      linkedReactions,
+      linkedPurchases,
+      purchaseRate: selected.length === 0 ? null : Number((linkedPurchases / selected.length).toFixed(4)),
+    }];
+  }));
+  const purchaseLeaders = VARIANTS
+    .filter((variant) => variants[variant].linkedPurchases > 0)
+    .sort((left, right) =>
+      variants[right].linkedPurchases - variants[left].linkedPurchases ||
+      variants[right].purchaseRate - variants[left].purchaseRate ||
+      VARIANTS.indexOf(left) - VARIANTS.indexOf(right));
   return {
     proposals: normalized.length,
     confirmedOutbounds: confirmed.length,
@@ -235,5 +252,7 @@ export function summarizeConfirmedChatLearning(records, expected, options = {}) 
       : Number((confirmed.reduce((sum, record) => sum + record.metrics.editRatio, 0) / confirmed.length).toFixed(4)),
     linkedReactions: reactionKnown,
     linkedPurchases: purchaseKnown,
+    variants,
+    preferredPurchaseVariant: purchaseLeaders.length === 0 ? null : purchaseLeaders[0],
   };
 }
