@@ -110,6 +110,25 @@ test("only an explicitly requested, active, preapproved offer gets its server-ow
   assert.equal(deriveCreatorStrategy({ playbook, commercial: { ...reviewed, requestedOfferId: "invented" }, now }).offer, null);
 });
 
+test("sales profile gives each reply variant bounded strategy guidance", () => {
+  const playbook = { ...bundle().playbook, offers: [offer()] };
+  const selling = deriveCreatorStrategy({ playbook, commercial: reviewed, now });
+  assert.equal(selling.objective, "present_confirmed_offer");
+  assert.match(selling.variantGuidance.recommended, /permitted offer/i);
+  assert.match(selling.variantGuidance.softer, /gently/i);
+  assert.match(selling.variantGuidance.stronger, /do not add urgency/i);
+
+  const fatigue = deriveCreatorStrategy({ playbook, commercial: { ...reviewed, offerFatigue: 80 }, now });
+  assert.equal(fatigue.objective, "reduce_sales_pressure");
+  assert.equal(fatigue.sellNow, false);
+  assert.match(fatigue.variantGuidance.recommended, /avoid steering toward a sale/i);
+  assert.match(fatigue.variantGuidance.stronger, /do not sell/i);
+
+  const aftercare = deriveCreatorStrategy({ playbook, commercial: reviewed, events: [event("purchase", { amount_minor: 25000 })], now });
+  assert.equal(aftercare.objective, "care_after_purchase");
+  assert.equal(aftercare.sellNow, false);
+});
+
 test("all three intensities retain the same voice and free text cannot supply prices", () => {
   const context = buildCreatorReplyContext(rows());
   const options = ["Hey, wie war dein Tag?", "Wenn du magst, erzähl mir davon.", "Was war heute dein Highlight?"].map((text) => ({ text }));
