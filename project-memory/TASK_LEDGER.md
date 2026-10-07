@@ -699,3 +699,9 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Goal/result: Preserve the existing `Antwort kopieren` and `Als manuell gesendet bestätigen` actions while marking the matching confirmed AI suggestion in conversation history as `Verwendeter KI-Vorschlag`.
 - Scope: ChatAdmin client presentation/derived state only. Builds on current `main`; does not restore the conflicting combined-button flow from #1283 and does not alter customer classification, extended learning, sales strategy, composer scroll behavior, API, database, authorization, AI-provider, billing, send, Staging or Production behavior.
 - Verification: Project Memory Guard required this ledger update because the PR contains a meaningful repository change. FanMind CI and Browser E2E must pass on the updated PR head before merge.
+
+## FM-CREATOR-BUILDING-REGRESSIONS-20261007 — restore integrated Creator-Building flow
+- Status: IMPLEMENTED_FOR_PR; Risk: R2; PR: #1289.
+- Goal/result: Restore independent Character-editor scrolling and reachability of Character-bound offer/price rules; combine copy and existing manual-confirmation in one action; make existing Character, Fan, learned preference and conversation context drive three semantically relevant reply strategies.
+- Scope: Repository-only UI, prompt, validation and regression tests. Reuses Character `sales_rules`, canonical fan analysis, the existing confirmation path and used-suggestion marker; no new learning store, schema, database apply, external send, Production, Billing, Stripe, provider or social-platform mutation.
+- Verification: Focused policy, syntax and whitespace checks passed locally. Exact-head FanMind CI, Browser E2E, CodeQL and Project Memory checks remain required before merge.
