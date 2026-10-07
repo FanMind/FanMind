@@ -321,10 +321,12 @@ Grenzen und serverseitige Normalisierung verwenden unverändert das kanonische
 Preis-Tabelle. `sales_rules` bleibt ausschließlich ergänzender Regeltext.
 
 Der Reply-Kontext lädt das Playbook nur zusammen mit dem bereits Workspace- und
-Character-gebundenen `chat_characters`-Datensatz. Aktive Angebote werden
-übermittelt; eine erkannte Anfrage wird serverseitig auf Foto, Video, privates
-Foto oder privates Video abgebildet. Ein bestätigungspflichtiges, inaktives oder
-fehlendes Angebot liefert kein freigegebenes `requested_offer`. Providertexte
+Character-gebundenen `chat_characters`-Datensatz. Eine erkannte Anfrage wird
+serverseitig auf Foto, Video, privates Foto oder privates Video abgebildet; nur
+dieses aktive, nicht bestätigungspflichtige Angebot wird mit seinem Preis an die
+KI übermittelt. Andere Character-Preise bleiben außerhalb des Prompts. Ein
+bestätigungspflichtiges, inaktives oder fehlendes Angebot liefert weder Offer-
+Preiswerte noch ein freigegebenes `requested_offer`. Providertexte
 mit einem Preis werden nach der Generierung verworfen, wenn Betrag oder Währung
 nicht exakt dem empfohlenen Preis dieses freigegebenen Offers entsprechen.
 
