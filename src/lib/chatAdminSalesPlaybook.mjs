@@ -49,8 +49,8 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 }
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
-  const monetary = /(?:(?:\\p{Sc}|\\b[A-Z]{3}\\b|\\b(?:Euro|Dollar|Pfund|Franken)\\b)\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b[A-Z]{3}\\b|\\b(?:Euro|Dollar|Pfund|Franken)\\b))/giu;
-  const barePrice = /\\b(?:für(?:\\s+dich)?|kostet?|preis(?:\\s+liegt)?(?:\\s+bei)?|nur)\\s+\\d+(?:[.,]\\d{1,2})?\\b/iu;
+  const monetary = /(?:(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
+  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
   for (const reply of replies) {
     const matches = [...reply.matchAll(monetary)].map((match) => match[0]);
     if (matches.length === 0 && barePrice.test(reply)) throw new Error("reply_price_not_permitted");
