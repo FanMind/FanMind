@@ -139,6 +139,18 @@ export function AiReplySuggestions({
     setIsLoading(true);
 
     try {
+      // Extended learning: refresh the derived communication profile from the
+      // latest stored conversation before composing new reply suggestions.
+      // Learning is best-effort so an analysis outage never blocks manual replies.
+      await fetch("/api/ai/fan-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: contact.contactId,
+          analysisMode: "standard",
+        }),
+      }).catch(() => null);
+
       const response = await fetch("/api/ai/reply-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
