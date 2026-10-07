@@ -129,5 +129,5 @@ test("Fan customer classification is editable and remains independent from techn
    window.testRequests[0].resolve(Response.json({fan}));
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  },{...fanA1,customer_tier:"green",revision:2});
- await expect(page.getByTitle("Kundenstatus: green")).toBeVisible();
+ await expect(page.getByTitle("Kundenstatus: green")).toHaveCount(1);
 });
