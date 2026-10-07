@@ -49,8 +49,8 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 }
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
-  const monetary = /(?:(?:[€$£]|(?:EUR|USD|GBP|CHF)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:€|\$|£|(?:EUR|USD|GBP|CHF)\b))/giu;
-  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
+  const monetary = /(?:(?:\\p{Sc}|\\b[A-Z]{3}\\b|\\b(?:Euro|Dollar|Pfund|Franken)\\b)\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b[A-Z]{3}\\b|\\b(?:Euro|Dollar|Pfund|Franken)\\b))/giu;
+  const barePrice = /\\b(?:für(?:\\s+dich)?|kostet?|preis(?:\\s+liegt)?(?:\\s+bei)?|nur)\\s+\\d+(?:[.,]\\d{1,2})?\\b/iu;
   for (const reply of replies) {
     const matches = [...reply.matchAll(monetary)].map((match) => match[0]);
     if (matches.length === 0 && barePrice.test(reply)) throw new Error("reply_price_not_permitted");
@@ -61,11 +61,15 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
     for (const match of matches) {
       const number = match.match(/\d+(?:[.,]\d{1,2})?/u)?.[0];
       const amountMinor = number ? Math.round(Number(number.replace(",", ".")) * 100) : NaN;
-      const symbolMatches = currency === "EUR" ? match.includes("€") || /EUR/iu.test(match)
-        : currency === "USD" ? match.includes("$") || /USD/iu.test(match)
-        : currency === "GBP" ? match.includes("£") || /GBP/iu.test(match)
-        : currency === "CHF" ? /CHF/iu.test(match)
-        : false;
+      const currencyWord = currency === "EUR" ? /(?:EUR|Euro)/iu
+        : currency === "USD" ? /(?:USD|Dollar)/iu
+        : currency === "GBP" ? /(?:GBP|Pfund)/iu
+        : currency === "CHF" ? /(?:CHF|Franken)/iu
+        : new RegExp(`\\b${currency}\\b`, "iu");
+      const symbolMatches = currencyWord.test(match)
+        || (currency === "EUR" && match.includes("€"))
+        || (currency === "USD" && match.includes("$"))
+        || (currency === "GBP" && match.includes("£"));
       if (amountMinor !== expected || !symbolMatches) throw new Error("reply_price_not_permitted");
     }
   }
