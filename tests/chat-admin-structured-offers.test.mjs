@@ -54,6 +54,7 @@ test("missing offers expose no price and provider prices must match the selected
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 25 EUR","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  const requested=resolveChatAdminRequestedOffer(playbook(),"Ich will ein privates Foto").requestedOffer;
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Ein privates Foto bekommst du für 25 EUR.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25,00 €.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
  assert.throws(()=>assertChatAdminReplySemantics(["Für 30 EUR gehört es dir.","Gern","Klar"],"Ich will ein privates Foto",requested),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["Für dich nur 25.","Gern","Klar"],"Ich will ein privates Foto",requested),/reply_price_not_permitted/u);
 });
