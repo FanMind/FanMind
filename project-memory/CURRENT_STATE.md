@@ -705,3 +705,10 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - PR #1143 wurde als `027d5a21ac41daae0331a0af2f9685d3729b2039` gemergt. Seine Codex-Review enthielt danach noch ein P1 (Account Delete nach Ownership-Transfer) und zwei P2 (Auth-Felder im vollständigen Disclosure; Meta-Catch-up-Queue vor Contact Delete).
 - Der neue kleine Hotfix ist die einzige kanonische Follow-up-Korrektur. Er behandelt `request.workspace_id` als historischen, weiterhin exakt an den Nutzer gebundenen Kontext, exportiert nur eine bounded credential-freie Auth-Projektion und bereitet die atomare service-role-only Queue-/Contact-Delete-RPC checksum-gebunden vor. Kein Staging-/Production-Apply.
 - Creator Delete/Privacy/Disclosure bleibt bis zu Hotfix-Review, grünen Current-Head-Checks und Merge nicht vollständig akzeptiert/geschlossen. `FM-CREATOR-001` bleibt `IN_PROGRESS`.
+
+
+## Adminchat sales reply strategy - 2026-10-07
+- PR #1286 extends the existing reviewed Creator commercial strategy with bounded objectives and separate guidance for Recommended, Softer and Stronger reply suggestions.
+- Sales hold, recent-purchase aftercare, offer fatigue and offer cooldown remain fail-closed. When sellNow is false, no variant may sell, negotiate, add urgency or invent an offer.
+- Sales-forward guidance remains limited to an explicitly requested, active, preapproved server-owned offer. Prices remain outside model free text and sending remains manual.
+- Focused policy tests cover permitted-offer guidance, fatigue suppression and aftercare suppression. Repository policy/tests only; no database, provider or Production mutation.
