@@ -692,3 +692,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Goal/result: On desktop, only the ChatAdmin conversation/history and generated reply area scrolls; the “Neue eingehende Fan-Nachricht” composer and “3 KI-Antworten erzeugen” action remain fixed and visible. Mobile retains document-flow behavior.
 - Scope: client layout only in ChatAdmin plus regression coverage; no API, database, authorization, AI-provider, billing, send, staging or production mutation.
 - Verification: Browser E2E passed on the original PR head. Operations regression was updated to assert the intentional .conversationScroll boundary instead of the superseded .conversationPane scroll rule. Current-head CI and Project Memory Guard must pass before merge.
+
+
+## FM-CHATADMIN-USED-SUGGESTION-20261007 — mark confirmed AI suggestion as used
+- Status: IMPLEMENTED_FOR_PR; Risk: R1; PR: #1288.
+- Goal/result: Preserve the existing `Antwort kopieren` and `Als manuell gesendet bestätigen` actions while marking the matching confirmed AI suggestion in conversation history as `Verwendeter KI-Vorschlag`.
+- Scope: ChatAdmin client presentation/derived state only. Builds on current `main`; does not restore the conflicting combined-button flow from #1283 and does not alter customer classification, extended learning, sales strategy, composer scroll behavior, API, database, authorization, AI-provider, billing, send, Staging or Production behavior.
+- Verification: Project Memory Guard required this ledger update because the PR contains a meaningful repository change. FanMind CI and Browser E2E must pass on the updated PR head before merge.
