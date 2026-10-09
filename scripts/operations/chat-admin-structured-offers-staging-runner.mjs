@@ -154,10 +154,16 @@ function fail(code) {
   throw new Error(`CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=${code}`);
 }
 
-function run(sql, env) {
+function run(sql, env, extraArguments = []) {
   return spawnSync(
     "psql",
-    ["--no-password", "--no-psqlrc", "--quiet", "--set=ON_ERROR_STOP=1"],
+    [
+      "--no-password",
+      "--no-psqlrc",
+      "--quiet",
+      "--set=ON_ERROR_STOP=1",
+      ...extraArguments,
+    ],
     { env, input: sql, encoding: "utf8" },
   );
 }
@@ -170,12 +176,20 @@ function state(result) {
   fail("schema_state_unknown");
 }
 
+export function parseCharacterCount(output) {
+  const count = String(output ?? "").trim();
+  if (!/^\d+$/u.test(count)) fail("row_count_invalid");
+  return count;
+}
+
 function characterCount(env) {
-  const result=run("\\set ON_ERROR_STOP on\nbegin;\nset transaction read only;\nselect count(*) from public.chat_characters;\nrollback;",env);
+  const result=run(
+    "\\set ON_ERROR_STOP on\nbegin;\nset transaction read only;\nselect count(*) from public.chat_characters;\nrollback;",
+    env,
+    ["--tuples-only", "--no-align"],
+  );
   if(result.status!==0)fail("row_count_failed");
-  const match=String(result.stdout??"").match(/(?:^|\\n)\\s*(\\d+)\\s*(?:\\n|$)/u);
-  if(!match)fail("row_count_invalid");
-  return match[1];
+  return parseCharacterCount(result.stdout);
 }
 
 export function execute(mode, env=process.env) {
