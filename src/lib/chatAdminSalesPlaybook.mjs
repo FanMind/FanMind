@@ -55,18 +55,19 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const isoCurrency = "(?:AED|AFN|ALL|AMD|ANG|AOA|ARS|AUD|AWG|AZN|BAM|BBD|BDT|BGN|BHD|BIF|BMD|BND|BOB|BOV|BRL|BSD|BTN|BWP|BYN|BZD|CAD|CDF|CHE|CHF|CHW|CLF|CLP|CNY|COP|COU|CRC|CUC|CUP|CVE|CZK|DJF|DKK|DOP|DZD|EGP|ERN|ETB|EUR|FJD|FKP|GBP|GEL|GHS|GIP|GMD|GNF|GTQ|GYD|HKD|HNL|HRK|HTG|HUF|IDR|ILS|INR|IQD|IRR|ISK|JMD|JOD|JPY|KES|KGS|KHR|KMF|KPW|KRW|KWD|KYD|KZT|LAK|LBP|LKR|LRD|LSL|LYD|MAD|MDL|MGA|MKD|MMK|MNT|MOP|MRU|MUR|MVR|MWK|MXN|MXV|MYR|MZN|NAD|NGN|NIO|NOK|NPR|NZD|OMR|PAB|PEN|PGK|PHP|PKR|PLN|PYG|QAR|RON|RSD|RUB|RWF|SAR|SBD|SCR|SDG|SEK|SGD|SHP|SLE|SLL|SOS|SRD|SSP|STN|SVC|SYP|SZL|THB|TJS|TMT|TND|TOP|TRY|TTD|TWD|TZS|UAH|UGX|USD|USN|UYI|UYU|UYW|UZS|VED|VES|VND|VUV|WST|XAF|XAG|XAU|XBA|XBB|XBC|XBD|XCD|XCG|XDR|XOF|XPD|XPF|XPT|XSU|XTS|XUA|XXX|YER|ZAR|ZMW|ZWL)";
   const supportedIsoCurrency = "(?:EUR|CHF|USD|GBP)";
+  const nonWordIsoCurrency = `(?!(?:ALL|BAM|BOB|CUP|GEL|MAD|PEN|TOP|TRY)\\b)${isoCurrency}`;
   const namedCurrency = "(?:Euro(?:s)?|Dollar(?:s)?|Pfund|Pounds?|Franken|Fr\\.)";
   const standaloneNamedCurrency = "(?:Euro(?:s)?|Dollar(?:s)?|Pfund|Pounds?|Franken)";
   const currencyMarker = new RegExp(`(?:\\p{Sc}|\\b${supportedIsoCurrency}\\b|\\b${standaloneNamedCurrency}(?=\\s|$|[.!?]))`, "iu");
-  const uppercaseIsoMarker = new RegExp(`\\b${isoCurrency}\\b`, "u");
   const namedMonetary = new RegExp(`(?:(?:\\p{Sc}|\\b${namedCurrency})\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b${namedCurrency}))`, "giu");
-  const isoMonetary = new RegExp(`(?:\\b${isoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${isoCurrency}\\b)`, "giu");
+  const supportedIsoMonetary = new RegExp(`(?:\\b${supportedIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${supportedIsoCurrency}\\b)`, "giu");
+  const otherIsoMonetary = new RegExp(`(?:\\b${nonWordIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${nonWordIsoCurrency}\\b)`, "gu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?(?=\s*(?:[.!?]|$))/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
-    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
+    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(supportedIsoMonetary), ...reply.matchAll(otherIsoMonetary)].map((match) => match[0]);
     const unmatched = matches.reduce((text, match) => text.replace(match, " "), reply);
-    if (currencyMarker.test(unmatched) || uppercaseIsoMarker.test(unmatched) || barePrice.test(unmatched) || priceNotation.test(unmatched)) throw new Error("reply_price_not_permitted");
+    if (currencyMarker.test(unmatched) || barePrice.test(unmatched) || priceNotation.test(unmatched)) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
     if (!requestedOffer) throw new Error("reply_price_not_permitted");
     const expected = requestedOffer.recommendedPriceMinor;
