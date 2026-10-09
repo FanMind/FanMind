@@ -49,13 +49,15 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 }
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
-  const currencyMarker = /\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b/iu;
-  const monetary = /(?:(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
+  const namedCurrency = /\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b/iu;
+  const isoCurrency = /\b[A-Z]{3}\b/u;
+  const namedMonetary = /(?:(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
+  const isoMonetary = /(?:\b[A-Z]{3}\b\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*\b[A-Z]{3}\b)/gu;
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|-)(?=\s|$|[!?])/u;
   for (const reply of replies) {
-    const matches = [...reply.matchAll(monetary)].map((match) => match[0]);
-    if (matches.length === 0 && (barePrice.test(reply) || currencyMarker.test(reply) || priceNotation.test(reply))) throw new Error("reply_price_not_permitted");
+    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
+    if (matches.length === 0 && (barePrice.test(reply) || namedCurrency.test(reply) || isoCurrency.test(reply) || priceNotation.test(reply))) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
     if (!requestedOffer) throw new Error("reply_price_not_permitted");
     const expected = requestedOffer.recommendedPriceMinor;
