@@ -86,7 +86,7 @@ Freigabe nach der aktuellen Execution Policy.
 
 Der einzige Apply-Vertrag ist
 `supabase/controlled/20261007190000_chat_admin_structured_offers.sql` mit SHA-256
-`5f81312e005b9bb3975a66c1c15d3b01b5ec5277ba974273691fcf7c265a67e4`.
+`01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421`.
 Kein `supabase db push`, keine generische Migration und kein anderer SQL-Text ist
 zulässig.
 
