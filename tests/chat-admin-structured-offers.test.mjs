@@ -75,6 +75,8 @@ test("missing offers expose no price and provider prices must match the selected
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["This is top.","Fr. Müller ist nett.","Klar"],"Tell me more",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Let's try 2 playful ideas.","All 2 photos are ready.","Top 3 ideas work."],"Tell me more",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["ALL GOOD","BAM 2 ideas","2 CUP portions"],"Tell me more",null));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["I know 2 cop friends.","Rub 2 spots gently.","Send one SOS message."],"Tell me more",null));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Use one mop.","Klar","Gern"],"Tell me more",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Für dich 2 Fotos.","Das gilt für 2 Tage.","Nur 1 Nachricht."],"Wie sieht es aus?",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Für dich 2 private Fotos.","Das gilt für 2 schöne Tage.","Nur 1 kurze Nachricht."],"Wie sieht es aus?",null));
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet fünfundzwanzig EUR","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
