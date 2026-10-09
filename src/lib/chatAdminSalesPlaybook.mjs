@@ -57,7 +57,9 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|-)(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
-    if (matches.length === 0 && (barePrice.test(reply) || namedCurrency.test(reply) || isoCurrency.test(reply) || priceNotation.test(reply))) throw new Error("reply_price_not_permitted");
+    const hasWrittenIsoPrice = isoWrittenMonetary.test(reply);
+    isoWrittenMonetary.lastIndex = 0;
+    if (matches.length === 0 && (barePrice.test(reply) || namedCurrency.test(reply) || hasWrittenIsoPrice || priceNotation.test(reply))) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
     if (!requestedOffer) throw new Error("reply_price_not_permitted");
     const expected = requestedOffer.recommendedPriceMinor;
