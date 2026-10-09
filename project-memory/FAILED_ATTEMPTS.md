@@ -434,3 +434,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Offline migration checksum/contract/foundation-source checks passed; reviewed Staging source state installed. Actual query failed at16:07:56.0581882Z with verify_query_failed. Dedicated private passfile cleanup succeeded; no APPLY, fixture or runtime activation was requested.
 - Independent exact full SQL reproduction fails P0001 creator_learning_foundation_missing, inline_code_block line61. At16:09:35.118261Z public.creator_workspace_access_allowed(uuid) is absent, while the other five presence-checked foundation objects exist. Source verifier SHA2567e798de615d0d9a2c290deae26950cec154ec51e655a02555f24293b2d4d416c; generated query SHA25632079c5863e01295d380491ba6e332952f04a6219875d5d9caf3ef82a2f0f174.
 - No ABSENT/INSTALLED learning-schema result is established. Diagnose all remaining exact foundation contracts and the helper's source/rollout history before defining any separate corrective package. Do not weaken the verifier, retry unchanged, apply learning SQL or repeat consumed historical Creator installation.
+
+## FM-FAIL-CHATADMIN-STRUCTURED-OFFERS-ROW-COUNT-20261009
+- Date: 2026-10-09
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: FM-CHATADMIN-003 structured Character offers Staging activation.
+- Attempt: controlled Staging APPLY run 37945920397 on exact main `7a2fe438748b6940220d03562213548011c5bec5`; the pinned SQL contract passed at SHA-256 `01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421`.
+- Failure/cause: the pre-APPLY read-only `select count(*) from public.chat_characters` parser used a double-escaped regular expression and could not match normal psql count output, producing `row_count_invalid`. The failure occurred before the migration subprocess and its transaction/COMMIT; prior VERIFY 37945577760 established schema state `ABSENT`.
+- Correction boundary: PR #1292 makes only the count output deterministic and adds fail-closed regression coverage. No Staging retry, Production access, SQL contract change or product behavior change is included.
+- Exact next step: complete exact-head CI and independent R3 countercheck, merge only under the applicable authorization, then run a fresh read-only VERIFY bound to the new current main before any separately authorized APPLY.
+- Do not repeat: never rerun the failed APPLY or infer a numeric Character count from the discarded pre-fix stdout.

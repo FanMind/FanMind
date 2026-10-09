@@ -154,10 +154,16 @@ function fail(code) {
   throw new Error(`CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=${code}`);
 }
 
-function run(sql, env) {
+function run(sql, env, extraArguments = []) {
   return spawnSync(
     "psql",
-    ["--no-password", "--no-psqlrc", "--quiet", "--set=ON_ERROR_STOP=1"],
+    [
+      "--no-password",
+      "--no-psqlrc",
+      "--quiet",
+      "--set=ON_ERROR_STOP=1",
+      ...extraArguments,
+    ],
     { env, input: sql, encoding: "utf8" },
   );
 }
@@ -170,20 +176,36 @@ function state(result) {
   fail("schema_state_unknown");
 }
 
+export function parseCharacterCount(output) {
+  const count = String(output ?? "").trim();
+  if (!/^\d+$/u.test(count)) fail("row_count_invalid");
+  return count;
+}
+
+export function validateSqlSource(source, mode) {
+  if(createHash("sha256").update(source).digest("hex")!==SQL_SHA256)fail("checksum_mismatch");
+  if(mode==="apply"&&!/^begin;[\s\S]*commit;\s*$/u.test(source.trim().replace(/^--.*$/gmu,"").trim()))fail("transaction_contract");
+}
+
+export function validateApplyStartState(before) {
+  if(before!=="ABSENT")fail(before==="VERIFIED"?"apply_requires_absent_schema":"schema_partial");
+}
+
 function characterCount(env) {
-  const result=run("\\set ON_ERROR_STOP on\nbegin;\nset transaction read only;\nselect count(*) from public.chat_characters;\nrollback;",env);
+  const result=run(
+    "\\set ON_ERROR_STOP on\nbegin;\nset transaction read only;\nselect count(*) from public.chat_characters;\nrollback;",
+    env,
+    ["--tuples-only", "--no-align"],
+  );
   if(result.status!==0)fail("row_count_failed");
-  const match=String(result.stdout??"").match(/(?:^|\\n)\\s*(\\d+)\\s*(?:\\n|$)/u);
-  if(!match)fail("row_count_invalid");
-  return match[1];
+  return parseCharacterCount(result.stdout);
 }
 
 export function execute(mode, env=process.env) {
   const policyMode=mode==="apply"?"migration":"schema";
   if(!evaluateChatAdminStagingControlEnvironment(env,{mode:policyMode}).ok)fail("environment_invalid");
   const source=readFileSync(SQL_PATH,"utf8");
-  if(createHash("sha256").update(source).digest("hex")!==SQL_SHA256)fail("checksum_mismatch");
-  if(mode==="apply"&&!/^begin;[\s\S]*commit;\s*$/u.test(source.trim().replace(/^--.*$/gmu,"").trim()))fail("transaction_contract");
+  validateSqlSource(source,mode);
 
   const directory=mkdtempSync(join(tmpdir(),"fanmind-chat-admin-structured-offers-"));
   try{
@@ -194,9 +216,10 @@ export function execute(mode, env=process.env) {
     const before=state(run(POSTFLIGHT_SQL,safeEnv));
     if(mode==="verify"){
       console.log(`CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=${before}`);
+      console.log(`CHAT_ADMIN_STRUCTURED_OFFERS_ROW_COUNT=${characterCount(safeEnv)}`);
       return;
     }
-    if(before!=="ABSENT")fail(before==="VERIFIED"?"apply_requires_absent_schema":"schema_partial");
+    validateApplyStartState(before);
     const rowsBefore=characterCount(safeEnv);
     if(run(source,safeEnv).status!==0)fail("apply_failed");
     const after=state(run(POSTFLIGHT_SQL,safeEnv));
