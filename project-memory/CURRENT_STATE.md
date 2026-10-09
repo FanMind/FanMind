@@ -1,3 +1,5 @@
+2026-10-09 — Durable dependency: PR #1291 head `00127ed33dd048c27639cefbce8eac9f2e619d7f` removes the Root/Web supply-chain blocker by resolving `sharp` 0.35.5 and `source-map-js` 1.2.2; current `main` remains unchanged until merge, while FM-DEC-021 Mobile findings stay reported under `deferred-owner` and out of this Web fix. Evidence: FanMind Supply Chain Security run `37939640159` passed with Root total/high/critical `0/0/0` and separately reported Mobile `35` total (`1` critical, `23` high, `11` moderate).
+
 ## AI capacity consumption-order acceptance — repository test — 2026-10-02
 - Status: IN_PROGRESS under existing AI billing lifecycle reconciliation; PR #1254 adds one repository-only regression test for the canonical Capacity-v2 invariant that active included-period capacity is consumed before separately purchased top-up capacity.
 - Scope: test-only evidence against the existing controlled reserve/settle SQL; no Staging, Production, Stripe, Supabase, provider, customer-data or runtime mutation.
