@@ -49,11 +49,13 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 }
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
+  const currencyMarker = /\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b/iu;
   const monetary = /(?:(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b[A-Z]{3}\b|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
+  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|-)(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(monetary)].map((match) => match[0]);
-    if (matches.length === 0 && barePrice.test(reply)) throw new Error("reply_price_not_permitted");
+    if (matches.length === 0 && (barePrice.test(reply) || currencyMarker.test(reply) || priceNotation.test(reply))) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
     if (!requestedOffer) throw new Error("reply_price_not_permitted");
     const expected = requestedOffer.recommendedPriceMinor;
