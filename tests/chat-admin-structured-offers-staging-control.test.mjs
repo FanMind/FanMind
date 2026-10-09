@@ -86,10 +86,10 @@ test("structured offers APPLY permits only a clean schema and preserves fail-clo
     "scripts/operations/chat-admin-structured-offers-staging-runner.mjs",
     "utf8",
   );
-  assert.match(runner, /before!==\"ABSENT\"/u);
+  assert.match(runner, /before!=="ABSENT"/u);
   assert.match(runner, /apply_requires_absent_schema/u);
   assert.match(runner, /schema_partial/u);
-  assert.match(runner, /after!==\"VERIFIED\"/u);
+  assert.match(runner, /after!=="VERIFIED"/u);
   assert.match(runner, /row_count_changed/u);
 });
 
