@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   execute,
+  parseCharacterCount,
   POSTFLIGHT_SQL,
   SQL_PATH,
   SQL_SHA256,
@@ -59,4 +60,106 @@ test("structured offers workflow is manual, exact-main, staging-only and product
   assert.match(workflow, /db:chat-admin-offers:apply/u);
   assert.doesNotMatch(workflow, /environment: production/u);
   assert.doesNotMatch(workflow, /supabase db push/u);
+});
+
+
+test("structured offers row count parser accepts the controlled psql shape only", () => {
+  assert.equal(parseCharacterCount("7\n"), "7");
+  assert.equal(parseCharacterCount("  0  \n"), "0");
+  assert.throws(
+    () => parseCharacterCount(" count\n-------\n     7\n(1 row)\n"),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=row_count_invalid/u,
+  );
+  assert.throws(
+    () => parseCharacterCount("7\n8\n"),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=row_count_invalid/u,
+  );
+  const runner = readFileSync(
+    "scripts/operations/chat-admin-structured-offers-staging-runner.mjs",
+    "utf8",
+  );
+  assert.match(runner, /\["--tuples-only", "--no-align"\]/u);
+});
+
+test("structured offers APPLY permits only a clean schema and preserves fail-closed states", () => {
+  const runner = readFileSync(
+    "scripts/operations/chat-admin-structured-offers-staging-runner.mjs",
+    "utf8",
+  );
+  assert.match(runner, /before!==\"ABSENT\"/u);
+  assert.match(runner, /apply_requires_absent_schema/u);
+  assert.match(runner, /schema_partial/u);
+  assert.match(runner, /after!==\"VERIFIED\"/u);
+  assert.match(runner, /row_count_changed/u);
+});
+
+function stagingEnvironment(overrides = {}) {
+  const commit = "a".repeat(40);
+  return {
+    FANMIND_RUNTIME_ENVIRONMENT: "staging",
+    NEXT_PUBLIC_APP_URL: "https://staging.fanmind.ch",
+    FANMIND_TARGET_API_ORIGIN: "https://staging.fanmind.ch",
+    FANMIND_PRODUCTION_API_ORIGIN: "https://fanmind.ch",
+    NEXT_PUBLIC_SUPABASE_URL: "https://vshyhvgcmrlagvfnvomc.supabase.co",
+    FANMIND_TARGET_SUPABASE_PROJECT_REF: "vshyhvgcmrlagvfnvomc",
+    FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: "drqkpdvtbbrrdwmtrodz",
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_SHA: commit,
+    FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: commit,
+    PGHOST: "aws-0-eu-central-1.pooler.supabase.com",
+    FANMIND_TARGET_DB_HOST: "aws-0-eu-central-1.pooler.supabase.com",
+    FANMIND_PRODUCTION_DB_HOST: "db.drqkpdvtbbrrdwmtrodz.supabase.co",
+    PGPORT: "5432",
+    PGDATABASE: "postgres",
+    PGUSER: "postgres.vshyhvgcmrlagvfnvomc",
+    PGSSLMODE: "verify-full",
+    PGSSLROOTCERT: "/tmp/config/certificates/supabase-root-2021-ca.crt",
+    FANMIND_ENABLE_NON_PRODUCTION_WRITES: "false",
+    FANMIND_NON_PRODUCTION_WRITE_ACK: "",
+    FANMIND_CHAT_ADMIN_SCHEMA_CONFIRM: "verify-chat-admin-schema",
+    ...overrides,
+  };
+}
+
+test("structured offers runner rejects production and mismatched target identity before database access", () => {
+  assert.throws(
+    () => execute("verify", stagingEnvironment({
+      FANMIND_RUNTIME_ENVIRONMENT: "production",
+      NEXT_PUBLIC_APP_URL: "https://fanmind.ch",
+      FANMIND_TARGET_API_ORIGIN: "https://fanmind.ch",
+    })),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=environment_invalid/u,
+  );
+  assert.throws(
+    () => execute("verify", stagingEnvironment({
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: "drqkpdvtbbrrdwmtrodz",
+    })),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=environment_invalid/u,
+  );
+  assert.throws(
+    () => execute("verify", stagingEnvironment({
+      FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: "b".repeat(40),
+    })),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=environment_invalid/u,
+  );
+});
+
+test("structured offers VERIFY stays read-only and APPLY requires its exact confirmation", () => {
+  assert.match(POSTFLIGHT_SQL, /set transaction read only/u);
+  const workflow = readFileSync(
+    ".github/workflows/chat-admin-structured-offers-staging-migration.yml",
+    "utf8",
+  );
+  assert.match(workflow, /if: \$\{\{ inputs\.mode == 'VERIFY' \}\}/u);
+  assert.match(workflow, /FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'/u);
+  assert.match(workflow, /APPLY:apply-chat-admin-structured-offers/u);
+  assert.throws(
+    () => execute("apply", stagingEnvironment({
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: "true",
+      FANMIND_NON_PRODUCTION_WRITE_ACK: "I_UNDERSTAND_NON_PRODUCTION_ONLY",
+      FANMIND_CHAT_ADMIN_SCHEMA_CONFIRM: "",
+      FANMIND_CHAT_ADMIN_MIGRATION_CONFIRM: "wrong-confirmation",
+    })),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=environment_invalid/u,
+  );
 });
