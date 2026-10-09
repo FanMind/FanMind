@@ -322,7 +322,7 @@ export const roadmapPhases: RoadmapPhase[] = [
     items: [
       { label: "Segment-Ansichten", state: "planned", status: "Vorbereitet" },
       { label: "Listenlogik", state: "planned", status: "In Arbeit" },
-      { label: "Filter & Tags", state: "planned", status: "In Arbeit" },
+      { label: "Filter & Tags", state: "progress", status: "Exakter Tag-Filter für Fans in Arbeit; weitere Filter und Segmente bleiben offen" },
       { label: "CSV-Import für Segmente nutzen", state: "planned", status: "Nächster Schritt" },
     ],
   },

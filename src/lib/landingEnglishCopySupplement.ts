@@ -195,6 +195,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   Vorbereitet: "Prepared",
   Listenlogik: "List logic",
   "Filter & Tags": "Filters & tags",
+  "Exakter Tag-Filter für Fans in Arbeit; weitere Filter und Segmente bleiben offen":
+    "Exact fan tag filter in progress; additional filters and segments remain open",
   "Analytics & Reichweitenerkennung": "Analytics & reach detection",
   "Performance-Signale": "Performance signals",
   "Fan-/Kanal-Reichweite erkennen": "Detect fan/channel reach",

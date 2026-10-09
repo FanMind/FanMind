@@ -1227,3 +1227,21 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Postflight observation: exact release `01b27631d394025db6b2204cf96aa1b62f2453f8` passed Deploy `37346036758` / job `111884709317` (14 smoke routes, six switch samples, `non_200=0`) and Readiness `37346205856` / job `111885279544` (18 checks). Read-only Audit `37346205878` / job `111885280518` confirmed the exact release and eight healthy components; only the pre-existing `production_audit_backup_latest_stale_or_empty` finding remains. No manual live action occurred.
 - Closeout: this final post-merge record consumes the task and requires no further receipt PR merely to record this closeout's SHA. The Parent owns any later, separately admitted roadmap selection.
 - Recovery: normal reviewed repository revert only; no external state is changed.
+
+## FM-FANS-EXACT-TAG-FILTER-20261005 — exact tag filter for the normal Fans list
+- Task: FM-FANS-EXACT-TAG-FILTER-20261005
+- Orchestrator handoff: owner-fanmind-fans-exact-tag-filter-20261005-01
+- Orchestrator task_id: fanmind-fans-exact-tag-filter-20261005-01
+- Action: NBA-FANS-EXACT-TAG-FILTER
+- Source: one-time direct authenticated Chat authorization for this exact tag-filter scope, explicitly approved by the Owner at 2026-10-05T19:08:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, automatic admission, workflow reservation or a schema-valid canonical accepted_handoff; the earlier #1280 exception is not reused.
+- Risk: R2
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-FANS-EXACT-TAG-FILTER-20261005
+- Baseline: exact main `0522dda1f67946a5e1860f654ad10687c3ad0d31`; #1281 is merged and its #1280 continuity receipt is the actual serial predecessor.
+- Scope: normal `/fans` list only; exact normalized active-contact tag options/filtering, composition with existing search/channel/locale URL state, focused pure behavior and synthetic browser tests, and the minimum Phase 15 catalog/truth/coordination reconciliation.
+- Parallel safety: repository-only Fans page/helper/test and bounded Project Memory paths. No overlap or authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`, their source/runtime scopes or protected targets.
+- Acceptance: exact trim/case-insensitive tag equality without substring/name/note matches; grouped active contacts contribute all tags; archived contacts contribute none; tag/search/channel/locale compose through URL navigation and reset behavior; unknown tags fail closed to no results; authorization and data access remain unchanged.
+- Required checks: focused Node behavior tests, synthetic Playwright desktop/mobile coverage, lint/build/truth/memory controls, and every applicable exact-head PR workflow.
+- Boundaries: no merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, contact mutation, import redevelopment, new dependency, helper/schema/transport change, second task or aggregate Phase 15 completion.
+- Exact next step: implement and test this bounded slice, publish one Draft PR from exact main, wait for applicable exact-head CI and hand the exact head to the Parent for independent countercheck; stop before merge.
+- Recovery: normal reviewed repository revert only; no external state is changed.

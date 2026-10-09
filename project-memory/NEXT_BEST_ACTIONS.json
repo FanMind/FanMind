@@ -470,6 +470,75 @@
       ],
       "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
       "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
+    },
+    {
+      "id": "NBA-FANS-EXACT-TAG-FILTER",
+      "priority": 50,
+      "task": "FM-FANS-EXACT-TAG-FILTER-20261005",
+      "gate": "fans_exact_tag_filter",
+      "title": "Exakten Tag-Filter in der normalen Fans-Liste liefern",
+      "requires_owner": false,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "roadmap_items": [
+        {
+          "phase": 15,
+          "label": "Filter & Tags"
+        }
+      ],
+      "parallel_scope": {
+        "files": [
+          "src/app/fans/page.tsx",
+          "src/app/fans/fans.module.css",
+          "src/app/fans/filtering.mjs",
+          "src/lib/landingEnglishCopySupplement.ts",
+          "tests/fans-tag-filter.test.mjs",
+          "e2e/fans-tag-filter.spec.ts",
+          "package.json",
+          "src/config/roadmap.ts",
+          "project-memory/NEXT_BEST_ACTIONS.json",
+          "project-memory/NEXT_BEST_ACTION.md",
+          "project-memory/STARTED_WORK.md",
+          "project-memory/WORK_LOCKS.md",
+          "project-memory/DRIFT_BASELINE.json",
+          "project-memory/CURRENT_STATE.md",
+          "project-memory/FINISHLINE_STATE.json",
+          "project-memory/AUTO_HANDOFF.md"
+        ],
+        "directories": [],
+        "modules": [
+          "fans-list-tag-filter"
+        ],
+        "contracts": [
+          "exact-normalized-tag-match",
+          "fans-filter-url-state"
+        ],
+        "database": [],
+        "apis": [],
+        "project_memory": [
+          "project-memory/NEXT_BEST_ACTIONS.json",
+          "project-memory/NEXT_BEST_ACTION.md",
+          "project-memory/STARTED_WORK.md",
+          "project-memory/WORK_LOCKS.md",
+          "project-memory/DRIFT_BASELINE.json",
+          "project-memory/CURRENT_STATE.md",
+          "project-memory/FINISHLINE_STATE.json",
+          "project-memory/AUTO_HANDOFF.md"
+        ],
+        "ci": [
+          "tests/fans-tag-filter.test.mjs",
+          "e2e/fans-tag-filter.spec.ts"
+        ],
+        "runtime": [],
+        "provider": [],
+        "environment": []
+      },
+      "instruction": "Implement only the Owner-approved exact tag filter on the normal /fans list. Reuse already loaded active-contact tags, preserve grouping and compose with search/channel/locale URL state. Archived contacts, substring matches, notes and similarly named fans must not create tag matches. This is a bounded Phase 15 partial slice, not segment/list completion and not send authority."
     }
   ],
   "retired_actions": [

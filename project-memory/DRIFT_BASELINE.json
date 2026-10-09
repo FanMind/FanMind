@@ -2,10 +2,10 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-09-30",
-  "last_source_of_truth_review": "2026-09-30 FM-AI-001/FM-CR-052: reconcile Capacity-v2 reserve/settle lifecycle, percentage customer meter and explicit no-free-reserve exhaustion behavior; repository-only, no target activation.",
+  "last_source_of_truth_review": "2026-10-05 FM-FANS-EXACT-TAG-FILTER-20261005: mark only the bounded normal /fans exact-tag-filter slice as Phase 15 progress; segment views, list logic and aggregate Phase 15 completion remain open.",
   "watched_files": {
     "docs/SOURCE_OF_TRUTH.md": "06f33b8fd75a513b184e3a77ce05cfbabd9e67c4",
-    "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
+    "src/config/roadmap.ts": "f8ed37ad08f988fd73e0e5ff732a280a7ce66abf",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

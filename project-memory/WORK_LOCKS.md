@@ -1197,3 +1197,17 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
 
+## LOCK-FM-FANS-EXACT-TAG-FILTER-20261005
+- Task: FM-FANS-EXACT-TAG-FILTER-20261005
+- Action: NBA-FANS-EXACT-TAG-FILTER
+- Status: ACTIVE
+- Risk: R2
+- Holder: FanMind Builder task `fanmind-fans-exact-tag-filter-20261005-01`
+- Branch: `feat/fans-exact-tag-filter-20261005`
+- Baseline: exact main `0522dda1f67946a5e1860f654ad10687c3ad0d31`.
+- Source: one-time direct authenticated Chat authorization for this exact task, Owner-approved at `2026-10-05T19:08:00Z`; no GitHub comment, PREPARED_ONLY result, automatic admission or workflow reservation is claimed.
+- Scope: `src/app/fans/page.tsx`, directly affected Fans styles, one small pure filter/URL helper, focused Node/Playwright tests, package test registration, and minimum Phase 15 catalog/truth/coordination records.
+- Parallel safety: scope is disjoint from the three existing ChatAdmin/AI Capacity locks and changes no database, API, runtime, provider, environment, permission, secret or protected target.
+- Forbidden: merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, contact mutation, import redevelopment, helper/schema/transport change and any second task.
+- Release condition: exact final head passes every applicable PR workflow and the Parent's independent countercheck; Parent owns merge and at most one non-recursive closeout.
+- Recovery: normal reviewed repository revert only; no external cleanup is required.
