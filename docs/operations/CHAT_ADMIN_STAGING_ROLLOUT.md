@@ -71,3 +71,54 @@ Normale Creator, `creators.workspace_id UNIQUE`, normale Reply Suggestions, Regi
 Der Lauf auf `0a368095790cf6ff297d6735569c4edb03186efb` bereitete seine synthetische Fixture vor, scheiterte dann aber vor ChatAdmin-Navigation und KI-Erzeugung: Alle elf tatsächlichen Job-Umgebungsbeobachtungen der Owner-ID enthalten ein nachgestelltes U+000D; der damalige Browser verglich die rohe ID unmittelbar nach dem Login, während der SQL-Runner normalisierte. Zwei unabhängige Reproduktionen mit den historischen Helfern bestätigen den zwingenden Assertion-Abbruch und anschließenden Logout beider Sessions. Frische Tabellen-/Usage-/Session-Zählungen sind null; der vollständige Schema- und Production-Gegencheck ist bestanden.
 
 Der Originalbeleg behält `inFlightUncertain=true` als historische Beobachtung. Die separate Reconciliation in `project-memory/receipts/chat-admin-manual-flow-36250479400-1-reconciliation.json` schließt die Unsicherheit durch diesen Ablaufnachweis. Der Fehllauf zählt ausdrücklich nicht als erfolgreiche manuelle Abnahme. Die spätere korrigierte Abnahme wurde nach Review, CI, Merge und exakter Bereitstellung durch Lauf `36255475314` erfolgreich abgeschlossen und unabhängig gegengeprüft; die frühere fehlgeschlagene Ausführung bleibt unverändert ein Fehllauf.
+
+## Strukturierte Character-Angebote (Oktober 2026)
+
+Die additive Spalte `chat_characters.sales_playbook` hat einen eigenen kontrollierten
+Staging-Pfad. Ziel ist ausschließlich FanMind Staging unter
+`https://staging.fanmind.ch` und Supabase-Projekt `vshyhvgcmrlagvfnvomc`.
+Production `drqkpdvtbbrrdwmtrodz` ist ausgeschlossen. Der Workflow
+`.github/workflows/chat-admin-structured-offers-staging-migration.yml` darf nur
+manuell auf dem exakten, reviewten aktuellen `main`-Commit im geschützten Environment
+`staging` laufen. Bereits verbrauchte ChatAdmin-Autorisierungen gelten nicht für
+diese Migration; VERIFY oder APPLY benötigen eine frische, ziel- und commitgebundene
+Freigabe nach der aktuellen Execution Policy.
+
+Der einzige Apply-Vertrag ist
+`supabase/controlled/20261007190000_chat_admin_structured_offers.sql` mit SHA-256
+`01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421`.
+Kein `supabase db push`, keine generische Migration und kein anderer SQL-Text ist
+zulässig.
+
+### Preflight und Apply
+
+1. `VERIFY` mit Bestätigung `verify-chat-admin-structured-offers` prüft read-only:
+   exakter aktueller `main`-Commit, Staging-/Production-Trennung, TLS `verify-full`,
+   bestehende Character-Tabelle mit RLS, Owner und exakter Workspace-Policy sowie den
+   Zustand `ABSENT`, `PARTIAL` oder `VERIFIED`. `PARTIAL` blockiert.
+2. Vor APPLY muss die verantwortliche Person eine aktuelle Staging-Backup- und
+   Restore-Bereitschaft nach der kanonischen Operations-Policy bestätigen. Fehlende
+   oder veraltete Recovery-Evidence blockiert; dieser Workflow behauptet selbst kein
+   Provider-Backup.
+3. `APPLY` mit Bestätigung `apply-chat-admin-structured-offers` ist eine getrennt
+   autorisierte Protected Action. Sie ist nur aus `ABSENT` zulässig, führt exakt die
+   gepinnte Transaktion aus und prüft danach Typ, NOT NULL, kanonischen Default,
+   Größen-/Objekt-Constraint, Kommentar, ACLs, gültige Zeilen sowie eine unveränderte
+   Anzahl von Character-Zeilen. Bereits `VERIFIED` wird nicht erneut angewendet.
+4. Nach erfolgreichem Apply folgen auf dem exakt bereitgestellten Commit synthetische
+   Anwendungstests: vier Angebotskategorien speichern und neu laden, Character- und
+   Workspace-Isolation, korrektes Offer im Reply-Kontext und fehlender Preis ohne
+   erfundenen Betrag. Diese Anwendungstests sind keine Erlaubnis für reale Fan-Daten
+   oder externe Nachrichten.
+
+### Recovery und Rollback
+
+Ein SQL-Fehler rollt durch die eingeschlossene Transaktion automatisch vollständig
+zurück; der Postflight muss danach wieder `ABSENT` oder den zuvor verifizierten
+Zustand melden. Nach einem erfolgreichen Commit ist die Spalte additiv und besitzt
+einen rückwärtskompatiblen Default. Bei einem Anwendungsfehler wird zuerst die
+Anwendung auf den letzten bekannten Commit zurückgesetzt; die ungenutzte Spalte darf
+bestehen bleiben. Ein `drop column`, Restore Write oder sonstiger destruktiver
+Rollback ist ein neues geschütztes Arbeitspaket und benötigt vorab Dateninventar,
+aktuelle Backup-/Restore-Evidence, eigenen SQL-Vertrag und eigene Autorisierung.
+

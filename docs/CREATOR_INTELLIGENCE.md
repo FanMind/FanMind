@@ -301,3 +301,37 @@ rollback-only Staging-Acceptance, Runtime-Gate-Abnahme sowie Disclosure- und
 Löschabnahme auf genau diesem Ziel erforderlich. Normale Deploys wenden das SQL
 nicht an. Bis dahin bleibt die Fan-UI fail-closed und der akzeptierte V1-
 Character-only-Flow funktionsfähig.
+
+## Strukturierte Angebote im Creator-Building
+
+PR #1099 führte `creator_sales_playbooks.rules` mit strukturierten `offers` für
+genau einen `creators`-Datensatz pro Workspace ein. Der spätere ChatAdmin-Umbau
+aus #1145 führte dagegen mehrere `chat_characters` pro Workspace ein und
+übernahm nur `sales_rules` als Freitext. Eine direkte Wiederverwendung derselben
+Tabellenzeile ist deshalb nicht zulässig: `creators` besitzt `unique
+(workspace_id)` und `creator_sales_playbooks` ist per zusammengesetztem
+Fremdschlüssel an diesen einzelnen Creator gebunden. Mehrere ChatAdmin-
+Characters würden sonst Preise teilen oder gegenseitig überschreiben.
+
+Der kontrollierte Vertrag
+`supabase/controlled/20261007190000_chat_admin_structured_offers.sql` ergänzt
+daher genau den bestehenden Character-Datensatz um `sales_playbook`. Inhalt,
+Grenzen und serverseitige Normalisierung verwenden unverändert das kanonische
+`CreatorPlaybook`-/`CreatorOffer`-Modell aus #1099; es entsteht keine zweite
+Preis-Tabelle. `sales_rules` bleibt ausschließlich ergänzender Regeltext.
+
+Der Reply-Kontext lädt das Playbook nur zusammen mit dem bereits Workspace- und
+Character-gebundenen `chat_characters`-Datensatz. Eine erkannte Anfrage wird
+serverseitig auf Foto, Video, privates Foto oder privates Video abgebildet; nur
+dieses aktive, nicht bestätigungspflichtige Angebot wird mit seinem Preis an die
+KI übermittelt. Andere Character-Preise bleiben außerhalb des Prompts. Ein
+bestätigungspflichtiges, inaktives oder fehlendes Angebot liefert weder Offer-
+Preiswerte noch ein freigegebenes `requested_offer`. Providertexte
+mit einem Preis werden nach der Generierung verworfen, wenn Betrag oder Währung
+nicht exakt dem empfohlenen Preis dieses freigegebenen Offers entsprechen.
+
+Die Schemaerkennung ist fail-closed: Vor dem kontrollierten Apply bleibt die
+bisherige Character-Oberfläche ohne strukturierte Preisfelder funktionsfähig.
+Nach dem Apply werden dieselben Felder automatisch über den bestehenden
+Character-GET/POST/PATCH-Pfad gespeichert und erneut geladen. Ein normaler
+Deploy wendet das kontrollierte SQL niemals an.

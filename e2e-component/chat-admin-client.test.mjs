@@ -33,7 +33,7 @@ const bundle = `(() => {
     if (!cache[name]) { cache[name] = {exports: {}}; modules[name](cache[name], cache[name].exports, require); }
     return cache[name].exports;
   }
-  window.mountCharacters = (characters) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters}));
+  window.mountCharacters = (characters) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled: true}));
 })();`;
 
 const characterA = {
@@ -41,6 +41,7 @@ const characterA = {
   display_name: "Synthetic Anna", profile_image_path: null, public_age: 24, bio: "Anna synthetic bio", location: "", languages: ["Deutsch"],
   personality: "ruhig", writing_style: "klar", emoji_style: "sparsam", sentence_style: "kurz", typical_phrases: [], forbidden_phrases: [],
   flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], status: "active", revision: 1, created_at: "2026-09-26T00:00:00Z", updated_at: "2026-09-26T00:00:00Z",
+  sales_playbook:{positioning:"",minimumHoursBetweenOffers:48,aftercareHours:48,contentBoundaries:[],confirmationRequired:[],noGos:[],offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}]},
 };
 const characterB = { ...characterA, id: "10000000-0000-4000-8000-000000000002", display_name: "Synthetic Bea", bio: "Bea synthetic bio" };
 const fanA1={id:"30000000-0000-4000-8000-000000000001",character_id:characterA.id,display_name:"Fan A1",handle:"@a1",platform:"OnlyFans",language:"Deutsch",status:"active",customer_tier:"blue",summary:"A1 mag Katzen",notes:"A1 vertraulich",revision:1};
@@ -80,11 +81,13 @@ const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("he
 const copies=page=>page.getByRole("button",{name:"Kopieren und verwenden",exact:true});
 async function openFan(page,name){await page.getByRole("button",{name:`${name} öffnen`,exact:true}).click();await expect(page.getByRole("region",{name:`Gespräch mit ${name}`,exact:true})).toBeVisible();}
 async function selectCharacter(page,name){await card(page,name).getByRole("button").first().click();}
-async function manageCharacter(page,name){await card(page,name).locator("summary").click();}
+async function manageCharacter(page,name){const menu=card(page,name).locator("details");if(!await menu.evaluate(node=>node.open))await menu.locator("summary").click();}
 async function generate(page,message="Synthetic fan message"){await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBeGreaterThan(0);}
 async function complete(page,index=0,overrides={},status=200){const request=await page.evaluate(index=>window.testRequests[index],index);const base={replies:drafts,character_id:request.body.character_id,character_revision:request.body.character_revision,fan_id:request.body.fan_id,conversation_id:request.body.conversation_id,safety_note:"Manuell prüfen."};await page.evaluate(async({index,body,status})=>{window.testRequests[index].resolve(new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json"}}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{index,body:{...base,...overrides},status});}
 
 test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Charaktere"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
+
+test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
 
 test("Fan actions live in the Fan-row menu while the conversation header and memory cards stay hidden",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await expect(page.getByRole("button",{name:"Fan bearbeiten"})).toHaveCount(0);await expect(page.getByText("Wichtige Fakten",{exact:true})).toHaveCount(0);await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();for(const action of ["Bearbeiten","Notizen und Fakten","Deaktivieren","Löschen"])await expect(page.getByRole("button",{name:action,exact:true})).toBeVisible();});
 

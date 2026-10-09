@@ -1,9 +1,34 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatCharacter } from "@/lib/chatAdmin";
+import type { CreatorOffer, CreatorPlaybook } from "@/lib/creatorIntelligencePolicy.mjs";
 import styles from "./chatadmin.module.css";
+const CHAT_ADMIN_OFFER_CATEGORIES=[{id:"photo",name:"Foto",category:"photo"},{id:"video",name:"Video",category:"video"},{id:"private_photo",name:"Privates Foto",category:"private_photo"},{id:"private_video",name:"Privates Video",category:"private_video"}] as const;
+const defaultChatAdminSalesPlaybook=():CreatorPlaybook=>({positioning:"",offers:[],minimumHoursBetweenOffers:48,aftercareHours:48,contentBoundaries:[],confirmationRequired:[],noGos:[]});
 const empty:Partial<ChatCharacter>={display_name:"",profile_image_path:null,public_age:18,bio:"",location:"",languages:["Deutsch"],personality:"",writing_style:"",emoji_style:"sparsam",sentence_style:"kurz und natürlich",typical_phrases:[],forbidden_phrases:[],flirt_style:"respektvoll und innerhalb der definierten Grenzen",sales_rules:"kein Druck, keine falschen Versprechen",example_messages:[],status:"active"};
 const lines=(value:string)=>value.split("\n").map(v=>v.trim()).filter(Boolean);
+const priceValue=(minor:number|undefined)=>minor===undefined?"":(minor/100).toFixed(2);
+function salesPlaybookFromForm(fd:FormData,current:CreatorPlaybook|undefined):CreatorPlaybook {
+ const base=current??defaultChatAdminSalesPlaybook();
+ const managed=new Set<string>(CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>definition.category));
+ const offers:CreatorOffer[]=base.offers.filter(offer=>!managed.has(offer.category));
+ for(const definition of CHAT_ADMIN_OFFER_CATEGORIES){
+  const recommended=String(fd.get(`offer_${definition.id}_recommended`)??"").trim();
+  if(!recommended)continue;
+  const previous=base.offers.find(offer=>offer.category===definition.category);
+  const toMinor=(field:string,fallback:string)=>Math.round(Number(String(fd.get(field)??"").trim()||fallback.replace(",","."))*100);
+  const recommendedMinor=toMinor(`offer_${definition.id}_recommended`,recommended);
+  offers.push({
+   id:definition.id,name:definition.name,category:definition.category,description:previous?.description??"",
+   currency:String(fd.get(`offer_${definition.id}_currency`)??previous?.currency??"EUR"),
+   minimumPriceMinor:toMinor(`offer_${definition.id}_minimum`,recommended),recommendedPriceMinor:recommendedMinor,
+   maximumPriceMinor:toMinor(`offer_${definition.id}_maximum`,recommended),maximumDiscountPercent:previous?.maximumDiscountPercent??0,
+   delivery:previous?.delivery??"",exclusivity:previous?.exclusivity??"",
+   active:fd.has(`offer_${definition.id}_active`),requiresConfirmation:fd.has(`offer_${definition.id}_confirmation`),
+  });
+ }
+ return {...base,offers};
+}
 const CHARACTER_VALIDATION_ERRORS:Record<string,{field:string|null;message:string}>={
  invalid_display_name:{field:"display_name",message:"Name muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  public_age_must_be_adult:{field:"public_age",message:"Öffentliches Alter muss zwischen 18 und 99 liegen."},
@@ -19,6 +44,7 @@ const CHARACTER_VALIDATION_ERRORS:Record<string,{field:string|null;message:strin
  invalid_example_messages:{field:"example_messages",message:"Beispiele enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
  invalid_flirt_style:{field:"flirt_style",message:"Flirt-/Kommunikationsstil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  invalid_sales_rules:{field:"sales_rules",message:"Verkaufsregeln müssen ausgefüllt sein und dürfen höchstens 4.000 Zeichen enthalten."},
+ invalid_sales_playbook:{field:null,message:"Angebotspreise sind ungültig. Prüfe Währung sowie Mindest-, empfohlenen und Höchstpreis."},
  invalid_character:{field:null,message:"Die Character-Daten sind unvollständig oder ungültig."},
  payload_too_large:{field:null,message:"Die Character-Daten sind insgesamt zu lang. Bitte kürze mehrere Eingaben und speichere erneut."},
 };
@@ -92,7 +118,14 @@ function ChatAdminComposer({character}:{character:ChatCharacter}) {
   </section>
  </div>;
 }
-export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true}:{initialCharacters:ChatCharacter[];fanRuntimeEnabled?:boolean}){
+function StructuredOfferFields({playbook}:{playbook:CreatorPlaybook|undefined}){
+ const value=playbook??defaultChatAdminSalesPlaybook();
+ return <fieldset><legend>Character-Angebote und Preise</legend><p className={styles.fieldHint}>Leere Preise bleiben unveröffentlicht. Die KI darf nur aktive Angebote dieses Characters verwenden.</p><div className={styles.offerGrid}>{CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>{
+  const offer=value.offers.find(item=>item.category===definition.category);
+  return <section className={styles.offerEditor} key={definition.id}><h3>{definition.name}</h3><label>Währung<select name={`offer_${definition.id}_currency`} defaultValue={offer?.currency??"EUR"}><option>EUR</option><option>CHF</option><option>USD</option><option>GBP</option></select></label><label>Empfohlener Preis<input name={`offer_${definition.id}_recommended`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.recommendedPriceMinor)}/></label><label>Mindestpreis<input name={`offer_${definition.id}_minimum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.minimumPriceMinor)}/></label><label>Höchstpreis<input name={`offer_${definition.id}_maximum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.maximumPriceMinor)}/></label><label className={styles.checkLabel}><input name={`offer_${definition.id}_active`} type="checkbox" defaultChecked={offer?.active??true}/> Angebot aktiv</label><label className={styles.checkLabel}><input name={`offer_${definition.id}_confirmation`} type="checkbox" defaultChecked={offer?.requiresConfirmation??false}/> Vor Verwendung bestätigen</label></section>;
+ })}</div></fieldset>;
+}
+export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true,structuredOffersEnabled=false}:{initialCharacters:ChatCharacter[];fanRuntimeEnabled?:boolean;structuredOffersEnabled?:boolean}){
  const [characters,setCharacters]=useState(initialCharacters);const [selected,setSelected]=useState<ChatCharacter|null>(initialCharacters[0]??null);const [editing,setEditing]=useState<Partial<ChatCharacter>|null>(null);const [notice,setNotice]=useState("");const [invalidField,setInvalidField]=useState<string|null>(null);const [validationMessage,setValidationMessage]=useState("");
  const [mutating,setMutating]=useState(false);
  const mutationPending=useRef(false);
@@ -110,7 +143,7 @@ export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true}:{init
   setInvalidField(null);setValidationMessage("");
   const fd=new FormData(event.currentTarget);
   const image=String(fd.get("profile_image_path")).trim();
-  const payload={...editing,display_name:String(fd.get("display_name")),profile_image_path:image||null,public_age:Number(fd.get("public_age")),bio:String(fd.get("bio")),location:String(fd.get("location")),languages:lines(String(fd.get("languages"))),personality:String(fd.get("personality")),writing_style:String(fd.get("writing_style")),emoji_style:String(fd.get("emoji_style")),sentence_style:String(fd.get("sentence_style")),typical_phrases:lines(String(fd.get("typical_phrases"))),forbidden_phrases:lines(String(fd.get("forbidden_phrases"))),flirt_style:String(fd.get("flirt_style")),sales_rules:String(fd.get("sales_rules")),example_messages:lines(String(fd.get("example_messages"))),status:editing?.status??"active"};
+  const payload={...editing,display_name:String(fd.get("display_name")),profile_image_path:image||null,public_age:Number(fd.get("public_age")),bio:String(fd.get("bio")),location:String(fd.get("location")),languages:lines(String(fd.get("languages"))),personality:String(fd.get("personality")),writing_style:String(fd.get("writing_style")),emoji_style:String(fd.get("emoji_style")),sentence_style:String(fd.get("sentence_style")),typical_phrases:lines(String(fd.get("typical_phrases"))),forbidden_phrases:lines(String(fd.get("forbidden_phrases"))),flirt_style:String(fd.get("flirt_style")),sales_rules:String(fd.get("sales_rules")),...(structuredOffersEnabled?{sales_playbook:salesPlaybookFromForm(fd,editing?.sales_playbook)}:{}),example_messages:lines(String(fd.get("example_messages"))),status:editing?.status??"active"};
   await mutate(async()=>{
    const response=await fetch("/api/chatadmin/characters",{method:editing?.id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
    const body=await response.json();
@@ -148,7 +181,16 @@ export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true}:{init
    <div className={styles.characterList}>{characters.map(c=><article className={`${styles.characterCard} ${selected?.id===c.id?styles.characterSelected:""}`} key={c.id}><button className={styles.characterSelect} disabled={mutating} onClick={()=>{setNotice("");setEditing(null);setSelected(c);}}><span className={styles.avatar}>{c.display_name.slice(0,1).toUpperCase()}</span><span><h3>{c.display_name}</h3><small>{c.public_age} · {c.status==="active"?"Aktiv":"Inaktiv"}</small></span></button><details className={styles.characterMenu}><summary aria-label={`${c.display_name} verwalten`}>•••</summary><div><button disabled={mutating} onClick={()=>{setNotice("");setInvalidField(null);setValidationMessage("");setEditing(c);}}>Bearbeiten</button>{c.status==="active"&&<button disabled={mutating} onClick={()=>deactivate(c)}>Deaktivieren</button>}<button disabled={mutating} className={styles.danger} onClick={()=>remove(c)}>Löschen</button></div></details></article>)}</div>
   </nav>
   <main className={styles.workspaceMain}>
-   {editing&&<form key={`${editing.id??"new"}:${editing.revision??0}`} className={`${styles.editor} ${styles.characterEditor}`} data-invalid-field={invalidField??undefined} onInput={event=>{const target=event.target as HTMLInputElement|HTMLTextAreaElement;if(target.name===invalidField){setInvalidField(null);setValidationMessage("");setNotice("");}}} onSubmit={save}><div className={styles.paneHeader}><h2>{editing.id?"Charakter bearbeiten":"Charakter hinzufügen"}</h2></div><fieldset disabled={mutating}><legend>Identität</legend><label>Name<input name="display_name" defaultValue={editing.display_name}/></label><label>Öffentliches Alter<input name="public_age" type="number" min="18" max="99" defaultValue={editing.public_age}/></label><label>Bio<textarea name="bio" defaultValue={editing.bio}/></label><label>Ort (optional)<input name="location" defaultValue={editing.location??""}/></label><label>Sprachen, eine pro Zeile<textarea name="languages" defaultValue={editing.languages?.join("\n")}/></label><label>Private Bildreferenz (bestehender FanMind Storage-Pfad)<input name="profile_image_path" defaultValue={editing.profile_image_path??""} placeholder="chat-characters/workspace-id/character-id/datei.jpg"/></label></fieldset><fieldset disabled={mutating}><legend>Persönlichkeit</legend><textarea name="personality" defaultValue={editing.personality}/></fieldset><fieldset disabled={mutating}><legend>Schreibstil</legend><label>Stil<textarea name="writing_style" defaultValue={editing.writing_style}/></label><label>Emoji-Stil<input name="emoji_style" defaultValue={editing.emoji_style}/></label><label>Satzstil<input name="sentence_style" defaultValue={editing.sentence_style}/></label><label>Typische Phrasen<textarea name="typical_phrases" defaultValue={editing.typical_phrases?.join("\n")}/></label><label>No-Gos<textarea name="forbidden_phrases" defaultValue={editing.forbidden_phrases?.join("\n")}/></label></fieldset><fieldset disabled={mutating}><legend>Beispiele</legend><textarea name="example_messages" defaultValue={editing.example_messages?.join("\n")}/></fieldset><fieldset disabled={mutating}><legend>Kommunikation, Angebote und Character-Preise</legend><label>Flirt-/Kommunikationsstil<textarea name="flirt_style" defaultValue={editing.flirt_style}/></label><label>Verkaufsregeln, Angebote und Preise<textarea name="sales_rules" defaultValue={editing.sales_rules}/></label><small>Character-spezifische Angebote und Preisgrenzen hier eindeutig mit Währung festhalten. Diese Angaben sind keine FanMind-Abo- oder Stripe-Preise.</small></fieldset>{validationMessage&&<p className={styles.validationError} role="alert">{validationMessage}</p>}<div className={styles.actions}><button disabled={mutating} type="submit">Speichern</button><button className={styles.secondaryButton} disabled={mutating} type="button" onClick={()=>{setInvalidField(null);setValidationMessage("");setEditing(null);}}>Abbrechen</button></div></form>}
+   {editing&&<form key={`${editing.id??"new"}:${editing.revision??0}`} className={`${styles.editor} ${styles.characterEditor}`} data-invalid-field={invalidField??undefined} onInput={event=>{const target=event.target as HTMLInputElement|HTMLTextAreaElement;if(target.name===invalidField){setInvalidField(null);setValidationMessage("");setNotice("");}}} onSubmit={save}>
+    <div className={styles.paneHeader}><h2>{editing.id?"Charakter bearbeiten":"Charakter hinzufügen"}</h2></div>
+    <fieldset disabled={mutating}><legend>Identität</legend><label>Name<input name="display_name" defaultValue={editing.display_name}/></label><label>Öffentliches Alter<input name="public_age" type="number" min="18" max="99" defaultValue={editing.public_age}/></label><label>Bio<textarea name="bio" defaultValue={editing.bio}/></label><label>Ort (optional)<input name="location" defaultValue={editing.location??""}/></label><label>Sprachen, eine pro Zeile<textarea name="languages" defaultValue={editing.languages?.join("\n")}/></label><label>Private Bildreferenz (bestehender FanMind Storage-Pfad)<input name="profile_image_path" defaultValue={editing.profile_image_path??""} placeholder="chat-characters/workspace-id/character-id/datei.jpg"/></label></fieldset>
+    <fieldset disabled={mutating}><legend>Persönlichkeit</legend><textarea name="personality" defaultValue={editing.personality}/></fieldset>
+    <fieldset disabled={mutating}><legend>Schreibstil</legend><label>Stil<textarea name="writing_style" defaultValue={editing.writing_style}/></label><label>Emoji-Stil<input name="emoji_style" defaultValue={editing.emoji_style}/></label><label>Satzstil<input name="sentence_style" defaultValue={editing.sentence_style}/></label><label>Typische Phrasen<textarea name="typical_phrases" defaultValue={editing.typical_phrases?.join("\n")}/></label><label>No-Gos<textarea name="forbidden_phrases" defaultValue={editing.forbidden_phrases?.join("\n")}/></label></fieldset>
+    <fieldset disabled={mutating}><legend>Beispiele</legend><textarea name="example_messages" defaultValue={editing.example_messages?.join("\n")}/></fieldset>
+    <fieldset disabled={mutating}><legend>Kommunikation und Verkaufsregeln</legend><label>Flirt-/Kommunikationsstil<textarea name="flirt_style" defaultValue={editing.flirt_style}/></label><label>Zusätzliche Verkaufsregeln<textarea name="sales_rules" defaultValue={editing.sales_rules}/></label><small>Hier stehen zusätzliche Regeln und Grenzen. Strukturierte Character-Preise werden getrennt gepflegt und sind keine FanMind-Abo- oder Stripe-Preise.</small></fieldset>
+    {structuredOffersEnabled&&<StructuredOfferFields playbook={editing.sales_playbook}/>}
+    {validationMessage&&<p className={styles.validationError} role="alert">{validationMessage}</p>}<div className={styles.actions}><button disabled={mutating} type="submit">Speichern</button><button className={styles.secondaryButton} disabled={mutating} type="button" onClick={()=>{setInvalidField(null);setValidationMessage("");setEditing(null);}}>Abbrechen</button></div>
+   </form>}
    {selected&&!editing&&!mutating&&(fanRuntimeEnabled?<ChatAdminComposer key={`${selected.id}:${selected.revision}:${selected.status}`} character={selected}/>:<LegacyChatAdminComposer key={`${selected.id}:${selected.revision}:${selected.status}`} character={selected}/>)}
    {!selected&&!editing&&<div className={styles.emptyConversation}><h2>Charakter auswählen</h2><p>Wähle links einen Charakter oder lege einen neuen an.</p></div>}
    {notice&&<p role="status" className={styles.notice}>{notice}</p>}

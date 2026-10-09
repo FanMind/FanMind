@@ -21,6 +21,8 @@ const RESTORE_HOST_WORKFLOW = "restore-drill-host-readiness.yml";
 const STAGING_PROVISION_WORKFLOW = "provision-staging-host.yml";
 const STAGING_BILLING_CAPTURE_WORKFLOW = "staging-billing-capture.yml";
 const CHAT_ADMIN_FAN_STAGING_WORKFLOW = "chat-admin-fan-staging-migration.yml";
+const CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_WORKFLOW =
+  "chat-admin-structured-offers-staging-migration.yml";
 const ORCHESTRATOR_DISPATCH_WORKFLOW = "fanmind-manager-event-dispatch.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
 const CREATOR_TARGET_RUNTIME_WORKFLOW = "creator-target-transition-runtime.yml";
@@ -303,16 +305,22 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     [HOSTED_CHECKOUT_V7_0_1_SHA],
   );
   assert.deepEqual(
+    hostedWorkflows.find(
+      (workflow) => workflow.file === CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_WORKFLOW,
+    )?.checkoutShas,
+    [HOSTED_CHECKOUT_V7_0_1_SHA],
+  );
+  assert.deepEqual(
     hostedWorkflows.find((workflow) => workflow.file === ORCHESTRATOR_DISPATCH_WORKFLOW)?.checkoutShas,
     [HOSTED_CHECKOUT_V7_0_1_SHA],
   );
-  assert.equal(hostedWorkflows.length, 71);
+  assert.equal(hostedWorkflows.length, 72);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    78,
+    79,
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

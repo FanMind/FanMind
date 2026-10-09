@@ -1085,14 +1085,17 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Task: FM-CHATADMIN-003
-- Status: ACTIVE
+- Status: ACTIVE_SOURCE_PR
 - Risk: R3
-- Holder: Codex Cloud
-- Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; Owner-Head `248c923232c8a55356bf601d11d475372568039a` mangels Remote/Objekt nicht verifiziert.
-- Scope: exakt ein zusammenhängender Repository-Strang für persistente Character-Fans, deren Wissen, Conversation/Message-Bindung, UI und KI-Kontext.
-- Forbidden: Staging-/Production-APPLY, Capability-Aktivierung, echte Kundendaten, Social/OnlyFans-Zugriff, Auto-Send, Billing, Mobile oder Creator-Target-Transition.
-
-
+- Holder: FanMind Builder, owner-requested structured Character-offer repair 2026-10-07.
+- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
+- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
+- Scope: continue the existing serialized ChatAdmin Character/Fan scope only for restoration of the canonical #1099 CreatorPlaybook/CreatorOffer shape per `chat_characters`, Editor/API/reload, Character-bound reply context, no-price-hallucination guards, controlled additive SQL and focused/native/browser regressions.
+- Architecture boundary: `creator_sales_playbooks` remains the one-Creator-per-Workspace store. Its `rules` JSON shape and validator are reused, but its row cannot safely back multiple ChatAdmin Characters because `creators` has `unique(workspace_id)` and the playbook FK is Creator-bound. The ChatAdmin Character row is the sole price source for that Character; no price table is added and `sales_rules` remains supplemental text.
+- Required checks: focused policy/API/UI tests, TypeScript, lint, build, Browser E2E, native PostgreSQL 17, all applicable exact-head CI/security/governance gates and targeted independent countercheck.
+- Forbidden: Staging-/Production-APPLY, capability/runtime activation, real customer/Creator/Fan mutation, Social/OnlyFans access, automatic send, Billing/Stripe, provider/secret/permission changes, Creator target transition or merge without a distinct applicable authorization.
+- Recovery: before any later apply, preserve a target-bound preflight and rollback that removes only `chat_characters.sales_playbook` and its check constraint if and only if no dependent runtime has been activated; repository recovery is a reviewed revert. This source run performs no external mutation.
+- Release condition: exact final PR head passes required checks and independent countercheck. Source completion does not authorize or prove any database apply or Production runtime availability.
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-046
@@ -1196,4 +1199,5 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Postflight observation: Deploy `37346036758`, Readiness `37346205856` and read-only Audit `37346205878` observed the exact release; only the known backup-freshness finding remains. No protected or manual live action was taken.
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
+
 
