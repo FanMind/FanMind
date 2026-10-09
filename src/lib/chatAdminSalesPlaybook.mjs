@@ -50,10 +50,11 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const namedCurrency = /\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b/iu;
+  const isoCurrency = "(?:AED|AFN|ALL|AMD|ANG|AOA|ARS|AUD|AWG|AZN|BAM|BBD|BDT|BGN|BHD|BIF|BMD|BND|BOB|BOV|BRL|BSD|BTN|BWP|BYN|BZD|CAD|CDF|CHE|CHF|CHW|CLF|CLP|CNY|COP|COU|CRC|CUC|CUP|CVE|CZK|DJF|DKK|DOP|DZD|EGP|ERN|ETB|EUR|FJD|FKP|GBP|GEL|GHS|GIP|GMD|GNF|GTQ|GYD|HKD|HNL|HRK|HTG|HUF|IDR|ILS|INR|IQD|IRR|ISK|JMD|JOD|JPY|KES|KGS|KHR|KMF|KPW|KRW|KWD|KYD|KZT|LAK|LBP|LKR|LRD|LSL|LYD|MAD|MDL|MGA|MKD|MMK|MNT|MOP|MRU|MUR|MVR|MWK|MXN|MXV|MYR|MZN|NAD|NGN|NIO|NOK|NPR|NZD|OMR|PAB|PEN|PGK|PHP|PKR|PLN|PYG|QAR|RON|RSD|RUB|RWF|SAR|SBD|SCR|SDG|SEK|SGD|SHP|SLE|SLL|SOS|SRD|SSP|STN|SVC|SYP|SZL|THB|TJS|TMT|TND|TOP|TRY|TTD|TWD|TZS|UAH|UGX|USD|USN|UYI|UYU|UYW|UZS|VED|VES|VND|VUV|WST|XAF|XAG|XAU|XBA|XBB|XBC|XBD|XCD|XCG|XDR|XOF|XPD|XPF|XPT|XSU|XTS|XUA|XXX|YER|ZAR|ZMW|ZWL)";
   const writtenNumber = "(?:zwei|drei|vier|f(?:ü|ue)nf|sechs|sieben|acht|neun|zehn|elf|zw(?:ö|oe)lf|dreizehn|vierzehn|f(?:ü|ue)nfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|f(?:ü|ue)nfzig|sechzig|siebzig|achtzig|neunzig|hundert|tausend)[\\p{L}-]*";
-  const namedMonetary = /(?:(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
-  const isoMonetary = /(?:\b[A-Z]{3}\b\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*\b[A-Z]{3}\b)/gu;
-  const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+[A-Z]{3}\\b|\\b[A-Z]{3}\\s+${writtenNumber}\\b)`, "gu");
+  const namedMonetary = /(?:(?:\\p{Sc}|\\b(?:Euro|Dollar|Pfund|Franken)\\b)\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b(?:Euro|Dollar|Pfund|Franken)\\b))/giu;
+  const isoMonetary = new RegExp(`(?:\\b${isoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${isoCurrency}\\b)`, "gu");
+  const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${isoCurrency}\\b|\\b${isoCurrency}\\s+${writtenNumber}\\b)`, "gu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
