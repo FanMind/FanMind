@@ -67,6 +67,7 @@ test("missing offers expose no price and provider prices must match the selected
  assert.throws(()=>assertChatAdminReplySemantics(["100 jpy","hundred jpy","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["That costs 100 rub.","Das kostet 100 cop.","That costs one hundred rub."],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["Für 25 RUB gehört es dir.","100 COP","RUB 100"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
+ assert.throws(()=>assertChatAdminReplySemantics(["Für 25 TRY gehört es dir.","Price: 25 TRY","Nur 25 ALL."],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet hundert JPY.","That costs one hundred JPY.","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet fünfundzwanzig Euro","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 25.-","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
