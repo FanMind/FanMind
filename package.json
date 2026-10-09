@@ -187,7 +187,7 @@
     "pdfnative": "1.6.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "stripe": "22.4.0"
+    "stripe": "23.0.0"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
