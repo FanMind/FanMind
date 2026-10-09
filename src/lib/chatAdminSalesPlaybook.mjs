@@ -1,5 +1,7 @@
 import { defaultCreatorBundle, normalizeCreatorBundle } from "./creatorIntelligencePolicy.mjs";
 
+export const CHAT_ADMIN_OFFER_CURRENCIES = Object.freeze(["EUR", "CHF", "USD", "GBP"]);
+
 export const CHAT_ADMIN_OFFER_CATEGORIES = Object.freeze([
   Object.freeze({ id: "photo", name: "Foto", category: "photo" }),
   Object.freeze({ id: "video", name: "Video", category: "video" }),
@@ -16,7 +18,9 @@ export function normalizeChatAdminSalesPlaybook(value) {
   bundle.persona.displayName = "ChatAdmin validation";
   bundle.voice.tone = "ChatAdmin validation";
   bundle.playbook = value;
-  return normalizeCreatorBundle(bundle).playbook;
+  const normalized = normalizeCreatorBundle(bundle).playbook;
+  if (normalized.offers.some((offer) => !CHAT_ADMIN_OFFER_CURRENCIES.includes(offer.currency))) throw new Error("unsupported_chat_admin_currency");
+  return normalized;
 }
 
 export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
@@ -55,7 +59,7 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const namedMonetary = /(?:(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
   const isoMonetary = new RegExp(`(?:\\b${isoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${isoCurrency}\\b)`, "gu");
   const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${isoCurrency}\\b|\\b${isoCurrency}\\s+${writtenNumber}\\b)`, "gu");
-  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
+  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b(?!\s*(?:fotos?|bilder?|videos?|clips?|nachrichten?|tage?|stunden?|wochen?|monate?|jahre?|mal|stücke?|sets?)\b)/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
