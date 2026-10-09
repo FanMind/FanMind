@@ -50,11 +50,12 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
 
 export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const namedCurrency = /\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b/iu;
-  const isoCurrency = /\b[A-Z]{3}\b/u;
+  const writtenNumber = "(?:zwei|drei|vier|f(?:ü|ue)nf|sechs|sieben|acht|neun|zehn|elf|zw(?:ö|oe)lf|dreizehn|vierzehn|f(?:ü|ue)nfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|f(?:ü|ue)nfzig|sechzig|siebzig|achtzig|neunzig|hundert|tausend)[\\p{L}-]*";
   const namedMonetary = /(?:(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
   const isoMonetary = /(?:\b[A-Z]{3}\b\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*\b[A-Z]{3}\b)/gu;
+  const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+[A-Z]{3}\\b|\\b[A-Z]{3}\\s+${writtenNumber}\\b)`, "gu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
-  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|-)(?=\s|$|[!?])/u;
+  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,-]|–|—)-?(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
     const hasWrittenIsoPrice = isoWrittenMonetary.test(reply);
