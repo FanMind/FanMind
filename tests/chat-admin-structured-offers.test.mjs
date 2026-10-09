@@ -22,6 +22,11 @@ for(const definition of CHAT_ADMIN_OFFER_CATEGORIES)test(`${definition.name} pri
  assert.equal(saved.recommendedPriceMinor,prices[definition.category]);
 });
 
+test("ChatAdmin accepts only the four two-decimal currencies exposed by the editor",()=>{
+ const unsupported=playbook();unsupported.offers[0]={...unsupported.offers[0],currency:"JPY"};
+ assert.throws(()=>normalizeChatAdminSalesPlaybook(unsupported),/unsupported_chat_admin_currency/u);
+});
+
 test("Character validation persists structured offers separately from supplemental sales rules",()=>{
  const input=character();delete input.id;delete input.workspace_id;delete input.revision;
  const saved=assertChatAdminCharacterInput(input);
@@ -63,6 +68,7 @@ test("missing offers expose no price and provider prices must match the selected
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Ich schicke dir 1 Nachricht.","Gern","Klar"],"Wie viele Nachrichten?",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Du bist VIP für mich.","Gern","Klar"],"Was denkst du über mich?",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Wir sind VIP 1.","USA 1 ist weit.","Klar"],"Erzähl mir etwas",null));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Für dich 2 Fotos.","Das gilt für 2 Tage.","Nur 1 Nachricht."],"Wie sieht es aus?",null));
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet fünfundzwanzig EUR","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  const requested=resolveChatAdminRequestedOffer(playbook(),"Ich will ein privates Foto").requestedOffer;
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Ein privates Foto bekommst du für 25 EUR.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
