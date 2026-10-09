@@ -55,7 +55,7 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const isoMonetary = /(?:\b[A-Z]{3}\b\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*\b[A-Z]{3}\b)/gu;
   const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+[A-Z]{3}\\b|\\b[A-Z]{3}\\s+${writtenNumber}\\b)`, "gu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b/iu;
-  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,-]|–|—)-?(?=\s|$|[!?])/u;
+  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
     const hasWrittenIsoPrice = isoWrittenMonetary.test(reply);
