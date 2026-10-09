@@ -62,12 +62,14 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const currencyMarker = new RegExp(`(?:\\p{Sc}|\\b${supportedIsoCurrency}\\b|\\b${standaloneNamedCurrency}(?=\\s|$|[.!?]))`, "iu");
   const namedMonetary = new RegExp(`(?:(?:\\p{Sc}|\\b${namedCurrency})\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b${namedCurrency}))`, "giu");
   const supportedIsoMonetary = new RegExp(`(?:\\b${supportedIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${supportedIsoCurrency}\\b)`, "giu");
-  const otherIsoMonetary = new RegExp(`(?:\\b${nonWordIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${nonWordIsoCurrency}\\b)`, "giu");
-  const writtenIsoMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${nonWordIsoCurrency}\\b|\\b${nonWordIsoCurrency}\\s+${writtenNumber}\\b)`, "giu");
+  const otherIsoMonetary = new RegExp(`(?:\\b${nonWordIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${nonWordIsoCurrency}\\b)`, "gu");
+  const writtenIsoMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${nonWordIsoCurrency}\\b|\\b${nonWordIsoCurrency}\\s+${writtenNumber}\\b)`, "gu");
+  const priceContext = "(?:kostet?|preis(?:\\s+liegt)?(?:\\s+bei)?|für(?:\\s+dich)?|costs?|price(?:\\s+is)?|for(?:\\s+you)?|only|nur)";
+  const contextualOtherIsoMonetary = new RegExp(`\\b${priceContext}\\s+(?:(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*)\\s+${nonWordIsoCurrency}|${nonWordIsoCurrency}\\s+(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*))\\b`, "giu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?(?=\s*(?:[.!?]|$))/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
-    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(supportedIsoMonetary), ...reply.matchAll(otherIsoMonetary), ...reply.matchAll(writtenIsoMonetary)].map((match) => match[0]);
+    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(supportedIsoMonetary), ...reply.matchAll(otherIsoMonetary), ...reply.matchAll(writtenIsoMonetary), ...reply.matchAll(contextualOtherIsoMonetary)].map((match) => match[0]);
     const unmatched = matches.reduce((text, match) => text.replace(match, " "), reply);
     if (currencyMarker.test(unmatched) || barePrice.test(unmatched) || priceNotation.test(unmatched)) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
