@@ -58,8 +58,8 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const currencyMarker = new RegExp(`(?:\\p{Sc}|\\b${isoCurrency}\\b|\\b${namedCurrency}(?=\\s|$|[.!?]))`, "iu");
   const namedMonetary = new RegExp(`(?:(?:\\p{Sc}|\\b${namedCurrency})\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\p{Sc}|\\b${namedCurrency}))`, "giu");
   const isoMonetary = new RegExp(`(?:\\b${isoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${isoCurrency}\\b)`, "giu");
-  const barePrice = /\\b(?:für(?:\\s+dich)?|kostet?|preis(?:\\s+liegt)?(?:\\s+bei)?|nur)\\s+\\d+(?:[.,]\\d{1,2})?(?=\\s*(?:[.!?]|$))/iu;
-  const priceNotation = /\\b\\d+(?:[.,]\\d{1,2})?\\s*(?:[.,]-|[-–—])(?=\\s|$|[!?])/u;
+  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?(?=\s*(?:[.!?]|$))/iu;
+  const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
     const unmatched = matches.reduce((text, match) => text.replace(match, " "), reply);
