@@ -59,7 +59,7 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const namedMonetary = /(?:(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b)\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\p{Sc}|\b(?:Euro|Dollar|Pfund|Franken)\b))/giu;
   const isoMonetary = new RegExp(`(?:\\b${isoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${isoCurrency}\\b)`, "gu");
   const isoWrittenMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${isoCurrency}\\b|\\b${isoCurrency}\\s+${writtenNumber}\\b)`, "gu");
-  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b(?!\s*(?:fotos?|bilder?|videos?|clips?|nachrichten?|tage?|stunden?|wochen?|monate?|jahre?|mal|stücke?|sets?)\b)/iu;
+  const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?\b(?!\s*(?:fotos?|bilder?|videos?|clips?|nachricht(?:en)?|tage?|stunden?|wochen?|monate?|jahre?|mal|stücke?|sets?)\b)/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
     const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(isoMonetary)].map((match) => match[0]);
