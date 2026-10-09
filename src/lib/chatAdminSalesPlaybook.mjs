@@ -67,11 +67,13 @@ export function assertChatAdminReplyPrices(replies, requestedOffer) {
   const canonicalIsoMonetary = new RegExp(`(?:\\b${canonicalNumericIsoCurrency}\\b\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*\\b${canonicalNumericIsoCurrency}\\b)`, "gu");
   const writtenIsoMonetary = new RegExp(`(?:\\b${writtenNumber}\\s+${nonWordIsoCurrency}\\b|\\b${nonWordIsoCurrency}\\s+${writtenNumber}\\b)`, "giu");
   const strongPriceContext = "(?:kostet?|preis(?:\\s+liegt)?(?:\\s+bei)?|costs?|price(?:\\s+is)?)";
-  const contextualIsoMonetary = new RegExp(`\\b${strongPriceContext}\\s+(?:(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*)\\s+${isoCurrency}|${isoCurrency}\\s+(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*))\\b`, "giu");
+  const weakPriceContext = "(?:für(?:\\s+dich)?|for(?:\\s+you)?|only|nur)";
+  const contextualIsoMonetary = new RegExp(`\\b${strongPriceContext}\\s*:?\\s+(?:(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*)\\s+${isoCurrency}|${isoCurrency}\\s+(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*))\\b`, "giu");
+  const weakContextualCanonicalIsoMonetary = new RegExp(`\\b${weakPriceContext}\\s+(?:(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*)\\s+${isoCurrency}|${isoCurrency}\\s+(?:\\d+(?:[.,]\\d{1,2})?|${writtenNumber}(?:\\s+${writtenNumber})*))\\b`, "gu");
   const barePrice = /\b(?:für(?:\s+dich)?|kostet?|preis(?:\s+liegt)?(?:\s+bei)?|nur)\s+\d+(?:[.,]\d{1,2})?(?=\s*(?:[.!?]|$))/iu;
   const priceNotation = /\b\d+(?:[.,]\d{1,2})?\s*(?:[.,]-|[-–—])(?=\s|$|[!?])/u;
   for (const reply of replies) {
-    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(supportedIsoMonetary), ...reply.matchAll(canonicalIsoMonetary), ...reply.matchAll(otherIsoMonetary), ...reply.matchAll(writtenIsoMonetary), ...reply.matchAll(contextualIsoMonetary)].map((match) => match[0]);
+    const matches = [...reply.matchAll(namedMonetary), ...reply.matchAll(supportedIsoMonetary), ...reply.matchAll(canonicalIsoMonetary), ...reply.matchAll(otherIsoMonetary), ...reply.matchAll(writtenIsoMonetary), ...reply.matchAll(contextualIsoMonetary), ...reply.matchAll(weakContextualCanonicalIsoMonetary)].map((match) => match[0]);
     const unmatched = matches.reduce((text, match) => text.replace(match, " "), reply);
     if (currencyMarker.test(unmatched) || barePrice.test(unmatched) || priceNotation.test(unmatched)) throw new Error("reply_price_not_permitted");
     if (matches.length === 0) continue;
