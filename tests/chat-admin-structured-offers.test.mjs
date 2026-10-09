@@ -71,8 +71,18 @@ test("missing offers expose no price and provider prices must match the selected
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Für dich 2 Fotos.","Das gilt für 2 Tage.","Nur 1 Nachricht."],"Wie sieht es aus?",null));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Für dich 2 private Fotos.","Das gilt für 2 schöne Tage.","Nur 1 kurze Nachricht."],"Wie sieht es aus?",null));
  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet fünfundzwanzig EUR","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
+ assert.throws(()=>assertChatAdminReplySemantics(["Ich nehme 30 eur.","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
+ assert.throws(()=>assertChatAdminReplySemantics(["That costs twenty EUR.","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
+ assert.throws(()=>assertChatAdminReplySemantics(["Das kostet einundzwanzig EUR.","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
+ assert.throws(()=>assertChatAdminReplySemantics(["Das sind 30 euros.","Gern","Klar"],"Ich will ein privates Foto",null),/reply_price_not_permitted/u);
  const requested=resolveChatAdminRequestedOffer(playbook(),"Ich will ein privates Foto").requestedOffer;
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Ein privates Foto bekommst du für 25 EUR.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Ein privates Foto bekommst du für 25 eur.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das sind 25 euros.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
+ assert.throws(()=>assertChatAdminReplySemantics(["Ich nehme 30 eur.","Gern","Klar"],"Ich will ein privates Foto",requested),/reply_price_not_permitted/u);
+ const chf=playbook();chf.offers=chf.offers.map(item=>item.category==="private_photo"?{...item,currency:"CHF"}:item);
+ const requestedChf=resolveChatAdminRequestedOffer(chf,"Ich will ein privates Foto").requestedOffer;
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet Fr. 25.","Gern","Klar"],"Ich will ein privates Foto",requestedChf));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25,00 €.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25 Euro.","Das kann ich dir anbieten.","Sehr gern."],"Ich will ein privates Foto",requested));
  assert.throws(()=>assertChatAdminReplySemantics(["Für 25 JPY gehört es dir.","Gern","Klar"],"Ich will ein privates Foto",requested),/reply_price_not_permitted/u);
