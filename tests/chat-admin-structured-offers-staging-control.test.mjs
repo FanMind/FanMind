@@ -9,6 +9,8 @@ import {
   POSTFLIGHT_SQL,
   SQL_PATH,
   SQL_SHA256,
+  validateApplyStartState,
+  validateSqlSource,
 } from "../scripts/operations/chat-admin-structured-offers-staging-runner.mjs";
 
 test("structured offers runner pins the only controlled SQL and exact schema contract", () => {
@@ -82,15 +84,31 @@ test("structured offers row count parser accepts the controlled psql shape only"
 });
 
 test("structured offers APPLY permits only a clean schema and preserves fail-closed states", () => {
+  assert.doesNotThrow(() => validateApplyStartState("ABSENT"));
+  assert.throws(
+    () => validateApplyStartState("VERIFIED"),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=apply_requires_absent_schema/u,
+  );
+  assert.throws(
+    () => validateApplyStartState("PARTIAL"),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=schema_partial/u,
+  );
+
   const runner = readFileSync(
     "scripts/operations/chat-admin-structured-offers-staging-runner.mjs",
     "utf8",
   );
-  assert.match(runner, /before!=="ABSENT"/u);
-  assert.match(runner, /apply_requires_absent_schema/u);
-  assert.match(runner, /schema_partial/u);
   assert.match(runner, /after!=="VERIFIED"/u);
   assert.match(runner, /row_count_changed/u);
+});
+
+test("structured offers runner rejects a changed SQL contract", () => {
+  const source = readFileSync(SQL_PATH, "utf8");
+  assert.doesNotThrow(() => validateSqlSource(source, "apply"));
+  assert.throws(
+    () => validateSqlSource(`${source}\n`, "apply"),
+    /CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_ERROR=checksum_mismatch/u,
+  );
 });
 
 function stagingEnvironment(overrides = {}) {
