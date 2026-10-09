@@ -153,6 +153,14 @@ test("structured offers VERIFY stays read-only and APPLY requires its exact conf
   assert.match(workflow, /if: \$\{\{ inputs\.mode == 'VERIFY' \}\}/u);
   assert.match(workflow, /FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'/u);
   assert.match(workflow, /APPLY:apply-chat-admin-structured-offers/u);
+  const runner = readFileSync(
+    "scripts/operations/chat-admin-structured-offers-staging-runner.mjs",
+    "utf8",
+  );
+  assert.match(
+    runner,
+    /CHAT_ADMIN_STRUCTURED_OFFERS_ROW_COUNT=\$\{characterCount\(safeEnv\)\}/u,
+  );
   assert.throws(
     () => execute("apply", stagingEnvironment({
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: "true",
