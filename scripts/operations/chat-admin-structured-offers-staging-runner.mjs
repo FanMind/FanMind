@@ -208,6 +208,7 @@ export function execute(mode, env=process.env) {
     const before=state(run(POSTFLIGHT_SQL,safeEnv));
     if(mode==="verify"){
       console.log(`CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=${before}`);
+      console.log(`CHAT_ADMIN_STRUCTURED_OFFERS_ROW_COUNT=${characterCount(safeEnv)}`);
       return;
     }
     if(before!=="ABSENT")fail(before==="VERIFIED"?"apply_requires_absent_schema":"schema_partial");
