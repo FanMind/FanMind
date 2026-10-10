@@ -129,6 +129,28 @@ jobs:
           grep -Fq 'Verify return code: 0 (ok)' "$WORK_DIR/handshake"
           echo "STAGING_TLS_CHAIN=verified"
 
+      - name: Verify with a real external browser
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          test -n "$BROWSER"
+          BROWSER_OUTPUT="$(mktemp)"
+          trap 'rm -f "$BROWSER_OUTPUT"' EXIT
+
+          timeout 30 "$BROWSER" \
+            --headless \
+            --no-sandbox \
+            --disable-gpu \
+            --dump-dom \
+            "https://$STAGING_HOST/api/version" >"$BROWSER_OUTPUT"
+          ! grep -Eq 'ERR_CERT|ERR_FAILED|error-code' "$BROWSER_OUTPUT"
+          grep -Fq "$EXPECTED_RELEASE_COMMIT" "$BROWSER_OUTPUT"
+
+          echo "STAGING_EXTERNAL_BROWSER_TLS=verified"
+          echo "STAGING_EXTERNAL_BROWSER_RELEASE_COMMIT=$EXPECTED_RELEASE_COMMIT"
+
       - name: Verify public HTTPS endpoints and exact release
         shell: bash
         run: |
