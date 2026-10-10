@@ -1,3 +1,17 @@
+## LOCK-FM-STAGING-DEMO-START-DIAG-20261010
+- Task: FM-STAGING-DEMO-START-DIAG-20261010
+- Status: BLOCKED
+- Risk: R3
+- Holder: FanMind Builder interactive run 2026-10-10
+- Baseline: exact main `61cf98f29f48d88b7112c06461b94cd255428b4f`.
+- Scope: one bounded, anonymous Staging-only diagnostic for `POST /api/demo/start`, bound to the exact deployed release through `/api/version`; record only HTTP status and an allowlisted error code.
+- Expected fail-closed result: HTTP `503` with `public_demo_disabled`; the reviewed route returns before Auth-user, Workspace, rate-limit, Supabase or Billing writes.
+- Forbidden: Production access or mutation, credentials, response-body/cookie logging, database or host mutation, environment changes, deploy, Demo activation, Billing/Stripe, customer data and any second task.
+- Evidence: source and versioned Staging provisioning prove `FANMIND_PUBLIC_DEMO_ENABLED=false`; the route's fail-closed contract is HTTP `503` / `public_demo_disabled` before target writes. Live confirmation is unavailable: workspace proxy returned CONNECT 403, direct TCP was unreachable, and connector-authored PR events produced no Actions run.
+- Blocker: no configured read-only Staging host/database capability and no workflow-dispatch capability. Do not activate until the demo schema/RPC/RLS contract, rate-limit configuration and cleanup timer/service are verified.
+- Resume condition: execute the reviewed bounded diagnostic from an externally connected runner, then perform the controlled Staging-only preflight if and only if it confirms the disabled result and all activation prerequisites.
+- Recovery: ordinary branch/PR abandonment; no probe reached Staging, no cookie was retained and no target resource was created.
+
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Status: RELEASED_MERGED_VERIFIED
