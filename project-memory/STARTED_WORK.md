@@ -2,12 +2,14 @@
 - Task: FM-STAGING-DEMO-START-DIAG-20261010
 - Source: explicit Owner task.
 - Risk: R3
-- Status: IN_PROGRESS
+- Status: BLOCKED
 - Work lock: LOCK-FM-STAGING-DEMO-START-DIAG-20261010
 - Baseline: exact main and deployed Staging release `61cf98f29f48d88b7112c06461b94cd255428b4f`.
 - Scope: reproduce only the public Demo-start blocker on `https://staging.fanmind.ch` with an anonymous, fail-closed request after exact release verification; emit only request label, status and allowlisted error code.
 - Acceptance: determine the actual route/status/code and the source/config cause without Auth-user, Workspace, database, host, deploy, Billing or Production mutation.
+- Result: repository source/config identifies the intentional disabled gate before Auth-user, Workspace, rate-limit, Supabase and Billing work. Live confirmation could not be obtained because the workspace proxy returned CONNECT 403, direct TCP was unreachable, and connector-authored PR events produced no Actions run.
 - Boundary: any environment activation, service restart, schema APPLY, credential/secret inspection or protected external-state change is excluded and requires a separate controlled preflight after prerequisites are verified.
+- Exact next step: from an authorized externally connected runner, verify release `61cf98f29f48d88b7112c06461b94cd255428b4f` and capture only status plus allowlisted code from one anonymous `POST /api/demo/start`; if `503/public_demo_disabled` is confirmed, verify the five demo RPCs/table RLS, rate-limit configuration and cleanup timer/service read-only before any controlled Staging activation.
 
 ## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
