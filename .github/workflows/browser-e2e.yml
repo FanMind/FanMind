@@ -124,3 +124,67 @@ jobs:
           if-no-files-found: warn
           include-hidden-files: false
           retention-days: 7
+
+  staging-demo-start-diagnostic:
+    name: Bounded Staging Demo-start diagnostic
+    if: github.event_name == 'pull_request' && github.head_ref == 'diag/staging-demo-start-20261010'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      STAGING_ORIGIN: https://staging.fanmind.ch
+      EXPECTED_RELEASE_COMMIT: 61cf98f29f48d88b7112c06461b94cd255428b4f
+    steps:
+      - name: Bind diagnostic to exact Staging release
+        shell: bash
+        run: |
+          set -euo pipefail
+          body_file="$(mktemp)"
+          trap 'rm -f "$body_file"' EXIT
+          curl --fail --silent --show-error \
+            --connect-timeout 15 --max-time 30 \
+            --output "$body_file" \
+            "$STAGING_ORIGIN/api/version"
+          actual_commit="$(
+            node -e '
+              const fs = require("node:fs");
+              const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              if (
+                value?.application !== "fanmind" ||
+                value?.runtimeEnvironment !== "staging" ||
+                typeof value?.releaseCommit !== "string"
+              ) process.exit(1);
+              process.stdout.write(value.releaseCommit.toLowerCase());
+            ' "$body_file"
+          )"
+          test "$actual_commit" = "$EXPECTED_RELEASE_COMMIT"
+          echo "STAGING_RELEASE_COMMIT=$actual_commit"
+
+      - name: Reproduce disabled Demo start without target writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          body_file="$(mktemp)"
+          trap 'rm -f "$body_file"' EXIT
+          status="$(
+            curl --silent --show-error \
+              --connect-timeout 15 --max-time 30 \
+              --output "$body_file" \
+              --write-out "%{http_code}" \
+              --request POST \
+              --header "Origin: $STAGING_ORIGIN" \
+              --header "Content-Type: application/json" \
+              --data '{"locale":"de"}' \
+              "$STAGING_ORIGIN/api/demo/start"
+          )"
+          code="$(
+            node -e '
+              const fs = require("node:fs");
+              const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              if (value?.code !== "public_demo_disabled") process.exit(1);
+              process.stdout.write(value.code);
+            ' "$body_file"
+          )"
+          echo "DEMO_START_REQUEST=POST_/api/demo/start"
+          echo "HTTP_STATUS=$status"
+          echo "ERROR_CODE=$code"
+          test "$status" = "503"
