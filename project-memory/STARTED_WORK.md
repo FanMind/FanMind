@@ -1,3 +1,14 @@
+## FM-STAGING-DEMO-START-DIAG-20261010 — bounded Staging Demo-start diagnosis
+- Task: FM-STAGING-DEMO-START-DIAG-20261010
+- Source: explicit Owner task.
+- Risk: R3
+- Status: IN_PROGRESS
+- Work lock: LOCK-FM-STAGING-DEMO-START-DIAG-20261010
+- Baseline: exact main and deployed Staging release `61cf98f29f48d88b7112c06461b94cd255428b4f`.
+- Scope: reproduce only the public Demo-start blocker on `https://staging.fanmind.ch` with an anonymous, fail-closed request after exact release verification; emit only request label, status and allowlisted error code.
+- Acceptance: determine the actual route/status/code and the source/config cause without Auth-user, Workspace, database, host, deploy, Billing or Production mutation.
+- Boundary: any environment activation, service restart, schema APPLY, credential/secret inspection or protected external-state change is excluded and requires a separate controlled preflight after prerequisites are verified.
+
 ## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
