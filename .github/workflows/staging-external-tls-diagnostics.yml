@@ -62,7 +62,41 @@ jobs:
           openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -subject -issuer -serial -dates -fingerprint -sha256
           openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -checkhost "$STAGING_HOST"
           openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -checkend 604800
-          openssl verify             -CAfile /etc/ssl/certs/ca-certificates.crt             -untrusted "$WORK_DIR/certificate-2.pem"             "$WORK_DIR/certificate-1.pem"
+          LEAF_ISSUER="$(
+            openssl x509 -in "$WORK_DIR/certificate-1.pem" -noout -issuer -nameopt RFC2253 \
+              | sed 's/^issuer=//'
+          )"
+          LEAF_FINGERPRINT="$(
+            openssl x509 -in "$WORK_DIR/certificate-1.pem" -noout -fingerprint -sha256
+          )"
+          : >"$WORK_DIR/untrusted.pem"
+          ISSUER_CERTIFICATE=""
+          for certificate in "$WORK_DIR"/certificate-*.pem; do
+            CERTIFICATE_FINGERPRINT="$(
+              openssl x509 -in "$certificate" -noout -fingerprint -sha256
+            )"
+            CERTIFICATE_SUBJECT="$(
+              openssl x509 -in "$certificate" -noout -subject -nameopt RFC2253 \
+                | sed 's/^subject=//'
+            )"
+            CERTIFICATE_ISSUER="$(
+              openssl x509 -in "$certificate" -noout -issuer -nameopt RFC2253 \
+                | sed 's/^issuer=//'
+            )"
+            echo "STAGING_TLS_CHAIN_MEMBER=$CERTIFICATE_SUBJECT <- $CERTIFICATE_ISSUER"
+            if [ "$CERTIFICATE_FINGERPRINT" != "$LEAF_FINGERPRINT" ]; then
+              cat "$certificate" >>"$WORK_DIR/untrusted.pem"
+            fi
+            if [ "$CERTIFICATE_SUBJECT" = "$LEAF_ISSUER" ]; then
+              ISSUER_CERTIFICATE="$certificate"
+            fi
+          done
+          test -s "$WORK_DIR/untrusted.pem"
+          test -n "$ISSUER_CERTIFICATE"
+          openssl verify \
+            -CAfile /etc/ssl/certs/ca-certificates.crt \
+            -untrusted "$WORK_DIR/untrusted.pem" \
+            "$WORK_DIR/certificate-1.pem"
 
           if grep -Fq 'OCSP response: no response sent' "$WORK_DIR/handshake"; then
             echo "STAGING_TLS_OCSP_STAPLING=absent"
@@ -87,7 +121,7 @@ jobs:
             esac
             echo "STAGING_TLS_OCSP_RESPONDER=present"
             OCSP_HOST="$(node -e 'console.log(new URL(process.argv[1]).host)' "$OCSP_URI")"
-            openssl ocsp               -issuer "$WORK_DIR/certificate-2.pem"               -cert "$WORK_DIR/certificate-1.pem"               -url "$OCSP_URI"               -header Host="$OCSP_HOST"               -no_nonce               -CAfile /etc/ssl/certs/ca-certificates.crt               -resp_text >"$WORK_DIR/ocsp" 2>&1
+            openssl ocsp               -issuer "$ISSUER_CERTIFICATE"               -cert "$WORK_DIR/certificate-1.pem"               -url "$OCSP_URI"               -header Host="$OCSP_HOST"               -no_nonce               -CAfile /etc/ssl/certs/ca-certificates.crt               -resp_text >"$WORK_DIR/ocsp" 2>&1
             grep -Fq ': good' "$WORK_DIR/ocsp"
             echo "STAGING_TLS_OCSP_RESPONDER_STATUS=good"
           fi
