@@ -1201,3 +1201,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
 
 
+
+
+## LOCK-FM-STAGING-TLS-OCSP-20261010
+- Task: FM-STAGING-TLS-OCSP-20261010
+- Status: ACTIVE
+- Risk: R3
+- Holder: FanMind Builder
+- Baseline: exact main `61cf98f29f48d88b7112c06461b94cd255428b4f`; Staging release is independently bound to the same commit by Deploy run `37977099722`.
+- Target: only the public TLS boundary for `staging.fanmind.ch` on the isolated Staging vHost. Production is forbidden.
+- Scope: read-only external certificate/chain/OCSP/DNS/endpoint diagnosis; then only the smallest reviewed Staging nginx/Certbot correction justified by that evidence.
+- Forbidden: Production, application/product behavior, schema/APPLY, Billing/Stripe, Mobile, Social/provider activation, secrets, permissions and any unrelated deployment.
+- Evidence plan: GitHub-hosted external TLS probe, exact public certificate metadata, chain validation, stapling/responder result, endpoint/release verification, focused policy tests and independent countercheck.
+- Recovery: preserve the current certificate and vHost before any separately authorized host change; validate `nginx -t`; on failed external verification restore only the prior Staging vHost/certificate selection and reload nginx. The application release commit must remain unchanged.
