@@ -1,0 +1,123 @@
+name: FanMind Staging External TLS Diagnostics
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/staging-external-tls-diagnostics.yml'
+      - '.github/workflows/enable-staging-tls.yml'
+      - '.github/workflows/provision-staging-host.yml'
+      - 'ops/nginx/**'
+      - 'scripts/operations/verify-staging-nginx-whatsapp-boundary.awk'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-external-tls-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  external-tls:
+    name: Verify public Staging certificate, OCSP and release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      STAGING_HOST: staging.fanmind.ch
+      EXPECTED_RELEASE_COMMIT: 61cf98f29f48d88b7112c06461b94cd255428b4f
+    steps:
+      - name: Probe public DNS, certificate chain and OCSP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WORK_DIR="$(mktemp -d)"
+          trap 'rm -rf "$WORK_DIR"' EXIT
+
+          getent ahostsv4 "$STAGING_HOST"             | awk '$2 == "STREAM" {print "STAGING_TLS_IPV4=" $1}'
+          if getent ahostsv6 "$STAGING_HOST" >"$WORK_DIR/ipv6"; then
+            awk '$2 == "STREAM" {print "STAGING_TLS_IPV6=" $1}' "$WORK_DIR/ipv6"
+          else
+            echo "STAGING_TLS_IPV6=absent"
+          fi
+
+          openssl s_client             -connect "$STAGING_HOST:443"             -servername "$STAGING_HOST"             -showcerts             -status             -verify_return_error             </dev/null >"$WORK_DIR/handshake" 2>&1
+
+          awk -v directory="$WORK_DIR" '
+            /-----BEGIN CERTIFICATE-----/ {
+              certificate += 1
+              output = directory "/certificate-" certificate ".pem"
+            }
+            output != "" { print > output }
+            /-----END CERTIFICATE-----/ {
+              close(output)
+              output = ""
+            }
+          ' "$WORK_DIR/handshake"
+
+          CERTIFICATE_COUNT="$(find "$WORK_DIR" -name 'certificate-*.pem' -type f | wc -l)"
+          echo "STAGING_TLS_CHAIN_CERTIFICATES=$CERTIFICATE_COUNT"
+          test "$CERTIFICATE_COUNT" -ge 2
+
+          openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -subject -issuer -serial -dates -fingerprint -sha256
+          openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -checkhost "$STAGING_HOST"
+          openssl x509 -in "$WORK_DIR/certificate-1.pem"             -noout -checkend 604800
+          openssl verify             -CAfile /etc/ssl/certs/ca-certificates.crt             -untrusted "$WORK_DIR/certificate-2.pem"             "$WORK_DIR/certificate-1.pem"
+
+          if grep -Fq 'OCSP response: no response sent' "$WORK_DIR/handshake"; then
+            echo "STAGING_TLS_OCSP_STAPLING=absent"
+          elif grep -Fq 'Cert Status: good' "$WORK_DIR/handshake"             && grep -Fq 'Response verify OK' "$WORK_DIR/handshake"; then
+            echo "STAGING_TLS_OCSP_STAPLING=good"
+          else
+            echo "STAGING_TLS_OCSP_STAPLING=invalid"
+            sed -n '/OCSP response:/,/---/p' "$WORK_DIR/handshake"
+            exit 1
+          fi
+
+          OCSP_URI="$(openssl x509 -in "$WORK_DIR/certificate-1.pem" -noout -ocsp_uri)"
+          if [ -z "$OCSP_URI" ]; then
+            echo "STAGING_TLS_OCSP_RESPONDER=absent"
+          else
+            case "$OCSP_URI" in
+              http://*|https://*) ;;
+              *)
+                echo "Unexpected OCSP responder scheme." >&2
+                exit 1
+                ;;
+            esac
+            echo "STAGING_TLS_OCSP_RESPONDER=present"
+            OCSP_HOST="$(node -e 'console.log(new URL(process.argv[1]).host)' "$OCSP_URI")"
+            openssl ocsp               -issuer "$WORK_DIR/certificate-2.pem"               -cert "$WORK_DIR/certificate-1.pem"               -url "$OCSP_URI"               -header Host="$OCSP_HOST"               -no_nonce               -CAfile /etc/ssl/certs/ca-certificates.crt               -resp_text >"$WORK_DIR/ocsp" 2>&1
+            grep -Fq ': good' "$WORK_DIR/ocsp"
+            echo "STAGING_TLS_OCSP_RESPONDER_STATUS=good"
+          fi
+
+          grep -Fq 'Verify return code: 0 (ok)' "$WORK_DIR/handshake"
+          echo "STAGING_TLS_CHAIN=verified"
+
+      - name: Verify public HTTPS endpoints and exact release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE_URL="https://$STAGING_HOST"
+          ROOT_STATUS="$(curl --fail --silent --show-error --output /dev/null             --write-out '%{http_code}' "$BASE_URL/")"
+          VERSION_BODY="$(curl --fail --silent --show-error "$BASE_URL/api/version")"
+          HEALTH_STATUS="$(curl --silent --show-error --output /dev/null             --write-out '%{http_code}' "$BASE_URL/api/health")"
+
+          test "$ROOT_STATUS" = "200"
+          VERSION_COMMIT="$(node -e '
+            const payload = JSON.parse(process.argv[1]);
+            const value = payload.commit ?? payload.releaseCommit ?? payload.gitCommit;
+            if (typeof value !== "string") process.exit(1);
+            process.stdout.write(value);
+          ' "$VERSION_BODY")"
+          test "$VERSION_COMMIT" = "$EXPECTED_RELEASE_COMMIT"
+          case "$HEALTH_STATUS" in
+            200|207) ;;
+            *) exit 1 ;;
+          esac
+
+          echo "STAGING_EXTERNAL_ROOT_HTTP=$ROOT_STATUS"
+          echo "STAGING_EXTERNAL_VERSION_COMMIT=$VERSION_COMMIT"
+          echo "STAGING_EXTERNAL_HEALTH_HTTP=$HEALTH_STATUS"
