@@ -444,3 +444,12 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Correction boundary: PR #1292 makes only the count output deterministic and adds fail-closed regression coverage. No Staging retry, Production access, SQL contract change or product behavior change is included.
 - Exact next step: complete exact-head CI and independent R3 countercheck, merge only under the applicable authorization, then run a fresh read-only VERIFY bound to the new current main before any separately authorized APPLY.
 - Do not repeat: never rerun the failed APPLY or infer a numeric Character count from the discarded pre-fix stdout.
+
+
+## FM-FAIL-STAGING-DEMO-DISABLED-DIAGNOSTIC-20261010
+- Date: 2026-10-10
+- Status: READ_ONLY_DIAGNOSTIC_PENDING
+- Task: Staging-only authenticated ChatAdmin acceptance prerequisite.
+- Evidence: deployed Staging release `61cf98f29f48d88b7112c06461b94cd255428b4f` has public Demo start disabled by configuration; the bounded diagnostic is intentionally read-only and expects `POST /api/demo/start` to fail closed with HTTP 503 / `public_demo_disabled`.
+- Change boundary: add only a manually dispatchable GitHub Actions diagnostic bound to that exact Staging release. No deploy, DB/schema write, Billing action, secret access, Production change, or enabling of public Demo.
+- Next action: after required CI, merge the bounded diagnostic workflow, run it manually on main, and use its evidence to decide the separate controlled Staging-only prerequisite verification. Do not enable Demo or bypass the fail-closed guard from this task.
