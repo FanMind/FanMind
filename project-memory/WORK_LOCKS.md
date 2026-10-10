@@ -1,3 +1,14 @@
+## LOCK-FM-STAGING-DEMO-START-DIAG-20261010
+- Task: FM-STAGING-DEMO-START-DIAG-20261010
+- Status: IN_PROGRESS
+- Risk: R3
+- Holder: FanMind Builder interactive run 2026-10-10
+- Baseline: exact main `61cf98f29f48d88b7112c06461b94cd255428b4f`.
+- Scope: one bounded, anonymous Staging-only diagnostic for `POST /api/demo/start`, bound to the exact deployed release through `/api/version`; record only HTTP status and an allowlisted error code.
+- Expected fail-closed result: HTTP `503` with `public_demo_disabled`; the reviewed route returns before Auth-user, Workspace, rate-limit, Supabase or Billing writes.
+- Forbidden: Production access or mutation, credentials, response-body/cookie logging, database or host mutation, environment changes, deploy, Demo activation, Billing/Stripe, customer data and any second task.
+- Recovery: ordinary branch/PR abandonment; the probe retains no cookie jar and the expected disabled path creates no target resource.
+
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Status: RELEASED_MERGED_VERIFIED
