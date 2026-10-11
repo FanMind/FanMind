@@ -73,10 +73,21 @@ test("all three browser suggestions require exact numeric offer evidence",()=>{
   assert.throws(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Doch für 71 EUR","Dazu kann ich nichts anbieten"],null),/unavailable_offer_price/u);
 });
 
-test("the authenticated browser keeps state authority and origin negatives",()=>{
+test("the authenticated browser keeps state authority, UI deactivation and origin negatives",()=>{
   const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
   for(const evidence of ["stale_character_revision","character_unavailable","untrusted_origin","secondaryReply","resource_forbidden"])assert.ok(source.includes(evidence),`missing browser negative: ${evidence}`);
-  assert.ok(source.includes('patchCharacter(page,characterA,"inactive")'));
+  for(const evidence of [
+    'getByRole("button",{name:"Deaktivieren",exact:true}).click()',
+    'getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(3)',
+    'getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true})).toHaveCount(3)',
+    'getByLabel("Neue eingehende Fan-Nachricht").fill("Synthetische Nachricht an deaktivierten Character B")',
+    'getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeDisabled()',
+    'getByText("Vorschlag 1",{exact:true})).toHaveCount(0)',
+    'getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(0)',
+  ])assert.ok(source.includes(evidence),`missing browser UI deactivation evidence: ${evidence}`);
+  assert.ok(source.includes('id:id("CHARACTER_B_ID"),status:"inactive",revision:revisionB+1'));
+  assert.ok(source.includes('character_id:id("CHARACTER_B_ID"),character_revision:inactiveCharacter.revision,fan_id:runId("FAN_B_ID")'));
+  assert.ok(!source.includes('patchCharacter(page,characterA,"inactive")'));
   assert.ok(source.includes('patchCharacter(page,inactiveCharacter,"active")'));
 });
 
