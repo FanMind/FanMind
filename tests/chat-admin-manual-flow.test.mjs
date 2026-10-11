@@ -64,12 +64,20 @@ test("the browser entry assertion matches the rendered page source",()=>{
 
 test("all three browser suggestions require exact numeric offer evidence",()=>{
   assert.deepEqual(monetaryEvidence("EUR 10,00 statt 110 EUR"),[{currency:"EUR",minor:1000},{currency:"EUR",minor:11000}]);
+  assert.deepEqual(monetaryEvidence("EUR 999"),[{currency:"EUR",minor:99900}]);
   assert.doesNotThrow(()=>assertReplyPriceEvidence(["Foto für 10 EUR","EUR 10,00 für das Foto","Das Foto kostet €10"],{currency:"EUR",minor:1000}));
   assert.throws(()=>assertReplyPriceEvidence(["Foto für 10 EUR","Foto für 110 EUR","Foto für 10 EUR"],{currency:"EUR",minor:1000}),/offer_price_mismatch/u);
   assert.throws(()=>assertReplyPriceEvidence(["Video für 20 EUR","Character B Video für 61 EUR","Video für 20 EUR"],{currency:"EUR",minor:2000}),/offer_price_mismatch/u);
   assert.throws(()=>assertReplyPriceEvidence(["Privates Foto für 25 EUR","Privates Foto für 999 EUR","Privates Foto für 25 EUR"],{currency:"EUR",minor:2500}),/offer_price_mismatch/u);
   assert.doesNotThrow(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Dieses Angebot ist nicht verfügbar","Dazu kann ich nichts anbieten"],null));
   assert.throws(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Doch für 71 EUR","Dazu kann ich nichts anbieten"],null),/unavailable_offer_price/u);
+});
+
+test("the authenticated browser keeps state authority and origin negatives",()=>{
+  const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  for(const evidence of ["stale_character_revision","character_unavailable","untrusted_origin","secondaryReply","resource_forbidden"])assert.ok(source.includes(evidence),`missing browser negative: ${evidence}`);
+  assert.ok(source.includes('patchCharacter(page,characterA,"inactive")'));
+  assert.ok(source.includes('patchCharacter(page,inactiveCharacter,"active")'));
 });
 
 test("browser and SQL share strict fixture UUID normalization for the observed trailing carriage return",()=>{
@@ -87,6 +95,9 @@ test("browser diagnostics reject private payloads and the parent never forwards 
   try {
     initializeBrowserDiagnostic(current,"probe");
     assert.throws(()=>requireSuccessfulProbe(current));
+    for(const stage of ["semantic_isolation","inactive_offer"]){updateBrowserDiagnostic(current,"probe",{stage});assert.equal(readBrowserDiagnostic(current,"probe").stage,stage);}
+    const diagnosticSource=readFileSync(new URL("../e2e-chatadmin-staging/browser-diagnostic.mjs",import.meta.url),"utf8");
+    assert.match(diagnosticSource,/"\.\/offer-evidence\.mjs"/u);
     for(const patch of [{stage:"private-password"},{url:"https://private.invalid"},{status:"private-token"},{sessionCleanup:"private-response"}])assert.throws(()=>updateBrowserDiagnostic(current,"probe",patch));
     updateBrowserDiagnostic(current,"probe",{stage:"admin_token",status:"4xx"});
     assert.deepEqual(formatBrowserDiagnostic(current,"probe"),["CHAT_ADMIN_MANUAL_MODE=probe","CHAT_ADMIN_MANUAL_STAGE=admin_token","CHAT_ADMIN_MANUAL_OUTCOME=running","CHAT_ADMIN_MANUAL_HTTP=4xx","CHAT_ADMIN_MANUAL_NETWORK=none","CHAT_ADMIN_MANUAL_SESSION_CLEANUP=not_started"]);
