@@ -1107,9 +1107,10 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
 - Scope: update only the existing authenticated ChatAdmin manual-flow workflow, real Staging Playwright flow, run-bound recovery/prepare/verify/cleanup/absence runner, focused tests, rollout runbook and minimum coordination records for the four-offer end acceptance.
 - Prior state: #1290/#1292 source and the successful Structured-Offers VERIFY/APPLY/deploy runs on `61cf98f29f48d88b7112c06461b94cd255428b4f` are consumed prerequisites. The old `FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926` is consumed and cannot authorize a new execution.
+- Authorization state: Owner instruction at 2026-10-11T13:26:00Z explicitly consumed the previously stated later Staging-acceptance permission. No probe, acceptance, deploy, database or live call is authorized by this lock or by historical evidence.
 - Required checks: focused contract/negative tests, syntax, TypeScript, lint, build, Browser E2E, applicable CI/security/governance gates, complete diff inspection and a separate R3 countercheck on the final Draft-PR head.
 - Forbidden: merge/auto-merge, workflow dispatch, deployment, Staging/Production/database/provider/customer write, live test, secrets/credentials/permissions, external message send, new queue or general orchestrator.
-- Protected next action: after merge and an exact reviewed-main Staging deployment, a human-controlled run may use only `mode=acceptance`, `confirmation=run-chat-admin-manual-flow` and `reviewed_commit=<that exact deployed main SHA>` in protected `staging`. Missing fixture values, schema, release or access remain `BLOCKED`.
+- Protected next action: after source prerequisites, independent R3 review, normal merge and exact reviewed-main Staging deployment are separately complete, obtain a new exactly bounded Owner authorization before any run. Only that fresh authorization may permit `mode=acceptance`, `confirmation=run-chat-admin-manual-flow` and `reviewed_commit=<that exact deployed main SHA>` in protected `staging`; missing authorization, fixture values, schema, release or access remain `BLOCKED`.
 - Recovery: repository recovery is a reviewed revert. A later live run must upload its sanitized exact recovery binding before mutation, remove only run-bound synthetic rows, retain interrupted receipts and prove independent absence before acceptance.
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
@@ -1214,5 +1215,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Postflight observation: Deploy `37346036758`, Readiness `37346205856` and read-only Audit `37346205878` observed the exact release; only the known backup-freshness finding remains. No protected or manual live action was taken.
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
-
 
