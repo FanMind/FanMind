@@ -1084,18 +1084,18 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: repository revert only; this lock mutated no external target.
 
 ## LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Task: FM-CHATADMIN-003
+- Task: FM-ADMINCHAT-STAGING-HARNESS-20261011-01
 - Status: ACTIVE_SOURCE_PR
 - Risk: R3
-- Holder: FanMind Builder, owner-requested structured Character-offer repair 2026-10-07.
-- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
-- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
-- Scope: continue the existing serialized ChatAdmin Character/Fan scope only for restoration of the canonical #1099 CreatorPlaybook/CreatorOffer shape per `chat_characters`, Editor/API/reload, Character-bound reply context, no-price-hallucination guards, controlled additive SQL and focused/native/browser regressions.
-- Architecture boundary: `creator_sales_playbooks` remains the one-Creator-per-Workspace store. Its `rules` JSON shape and validator are reused, but its row cannot safely back multiple ChatAdmin Characters because `creators` has `unique(workspace_id)` and the playbook FK is Creator-bound. The ChatAdmin Character row is the sole price source for that Character; no price table is added and `sales_rules` remains supplemental text.
-- Required checks: focused policy/API/UI tests, TypeScript, lint, build, Browser E2E, native PostgreSQL 17, all applicable exact-head CI/security/governance gates and targeted independent countercheck.
-- Forbidden: Staging-/Production-APPLY, capability/runtime activation, real customer/Creator/Fan mutation, Social/OnlyFans access, automatic send, Billing/Stripe, provider/secret/permission changes, Creator target transition or merge without a distinct applicable authorization.
-- Recovery: before any later apply, preserve a target-bound preflight and rollback that removes only `chat_characters.sales_playbook` and its check constraint if and only if no dependent runtime has been activated; repository recovery is a reviewed revert. This source run performs no external mutation.
-- Release condition: exact final PR head passes required checks and independent countercheck. Source completion does not authorize or prove any database apply or Production runtime availability.
+- Holder: FanMind Builder, secretary-coordinated bounded repository task 2026-10-11.
+- Baseline: exact main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
+- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR pending publication.
+- Reconciliation: the prior source owner #1290 and migration repair #1292 are merged. Staging VERIFY `37972471467`, APPLY `37972797299` and deploy `37977099722` on `61cf98f29f48d88b7112c06461b94cd255428b4f` are successful historical evidence, not active writers or authority for this run.
+- Scope: update only the existing authenticated manual Staging acceptance harness for four Character-bound offer categories, two marker-bound synthetic fans, persisted conversations/messages/used markers, tenant isolation, bounded recovery/cleanup/absence and directly affected tests/runbook/receipt.
+- Required checks: focused harness and negative tests, TypeScript, lint, build, Browser E2E, native PostgreSQL 17, all applicable exact-head CI/security/governance gates, then independent R3 countercheck.
+- Forbidden: merge/auto-merge, workflow dispatch, deployment, live browser/SQL/database action, Production contact, real customer data, Social/OnlyFans access, automatic send, provider/secret/credential/permission change, CONNECT403 workaround or a second task.
+- Recovery: reviewed repository revert only in this source run. A later separately authorized Staging acceptance must retain its uploaded marker/ID/time-bound recovery receipt and exact scoped cleanup/absence proof.
+- Release condition: Draft PR at exact tested head with known CI, then terminal handoff for independent R3 countercheck. Source completion does not claim a live Staging acceptance or Production inclusion.
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-046

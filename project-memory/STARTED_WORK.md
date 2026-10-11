@@ -1092,21 +1092,19 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
 
-## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
-- Date: 2026-10-07
+## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — Vier-Angebote-Staging-Harness
+- Date: 2026-10-11
 - Status: IN_PROGRESS
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Owner: FanMind Builder
-- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
-- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
-- Scope: repair the regression between #1099 structured Creator offers and the later multi-Character ChatAdmin without creating a price table or replacing `sales_rules`; add Foto, Video, privates Foto and privates Video, persistence/reload, bound AI context and price-hallucination rejection.
-- Root cause: #1099 binds one `creator_sales_playbooks` row to the single `creators` row per Workspace. #1145 introduced independent multi-Character rows and copied only free-text sales rules. Directly sharing the one Creator playbook would mix Character prices.
-- Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
-- Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
-- Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
-- Exact next step: repair task-related CI/review findings on the same PR, obtain all exact-head gates and targeted independent countercheck, then stop before any separately authorized schema apply.
-- Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
+- Owner: FanMind Builder under the Owner's bounded secretary coordination.
+- Baseline: exact main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
+- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR pending publication.
+- Prior completion: #1290/#1292 are merged; Staging schema runs `37972471467` and `37972797299` plus deploy `37977099722` succeeded on `61cf98f29f48d88b7112c06461b94cd255428b4f`. They are not repeated.
+- Scope: repository-only upgrade of the existing authenticated manual Staging flow to persist two separate synthetic fans, cover all four offers on each Character, generate exactly three bound suggestions for three messages, persist two used replies across reload, reject foreign/invented prices and prove scoped cleanup/absence without requiring globally empty tables.
+- Boundary: no merge, dispatch, deploy, live test, database, Production, credentials/secrets/permissions, provider or real-fan action. The consumed `FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926` is not reused.
+- Exact next step: publish the Draft PR, obtain exact-head CI, then stop for independent R3 countercheck. A later authorized Staging run requires merged/deployed SHA equality and the unchanged workflow gates.
+- Recovery: source revert only; later runtime recovery is marker/ID/start-time bound and must retain the pre-mutation artifact until independent absence confirmation.
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046

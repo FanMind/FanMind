@@ -52,5 +52,8 @@ export function chatAdminRequestAllowed(url,method,{appOrigin,supabaseOrigin,mod
   if(["GET","HEAD","OPTIONS"].includes(method))return true;
   return (url.origin===supabaseOrigin&&method==="POST"&&["/auth/v1/token","/auth/v1/logout"].includes(url.pathname)) ||
     (url.origin===appOrigin&&((method==="POST"&&url.pathname==="/api/auth/session") ||
-    (mode==='acceptance'&&((method==="POST"&&url.pathname==="/api/chatadmin/reply-suggestions")||(method==="PATCH"&&url.pathname==="/api/chatadmin/characters")))));
+    (mode==='acceptance'&&(
+      (method==="PATCH"&&url.pathname==="/api/chatadmin/characters")||
+      (method==="POST"&&["/api/chatadmin/fans","/api/chatadmin/reply-suggestions","/api/chatadmin/conversations"].includes(url.pathname))
+    ))));
 }

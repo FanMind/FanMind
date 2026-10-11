@@ -9,6 +9,8 @@ if(target!=="https://staging.fanmind.ch" || env.FANMIND_TARGET_API_ORIGIN!==targ
    !/^[0-9a-f]{40}$/u.test(env.GITHUB_SHA ?? "") || env.GITHUB_SHA!==env.FANMIND_CHAT_ADMIN_REVIEWED_COMMIT ||
    env.NEXT_PUBLIC_SUPABASE_URL!==`https://${ref}.supabase.co` ||
    !["probe","acceptance"].includes(env.FANMIND_CHAT_ADMIN_BROWSER_MODE??"") ||
+   env.FANMIND_CHAT_ADMIN_TASK_ID!=="FM-ADMINCHAT-STAGING-HARNESS-20261011-01" ||
+   (env.FANMIND_CHAT_ADMIN_BROWSER_MODE==="acceptance"&&!/^[0-9a-f]{32}$/u.test(env.FANMIND_CHAT_ADMIN_ACCEPTANCE_MARKER??"")) ||
    !/^[a-z0-9]{8,64}$/u.test(ref) || !/^[a-z0-9]{8,64}$/u.test(production) || ref===production ||
    env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM!=="run-chat-admin-manual-flow" ||
    env.FANMIND_ENABLE_NON_PRODUCTION_WRITES!=="true" || env.FANMIND_NON_PRODUCTION_WRITE_ACK!=="I_UNDERSTAND_NON_PRODUCTION_ONLY") {

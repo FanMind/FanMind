@@ -1,138 +1,69 @@
-import { test, expect, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
+import { test, expect, type APIRequestContext, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "./network-boundary.mjs";
 import { updateBrowserDiagnostic } from "./browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "./fixture-identity.mjs";
+import { CHAT_ADMIN_ACCEPTANCE_OFFERS, CHAT_ADMIN_ACCEPTANCE_REQUESTS, chatAdminAcceptanceFanName, chatAdminAcceptancePriceValue } from "./offer-fixture.mjs";
 
-const APP="https://staging.fanmind.ch";
-const SUPABASE=process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const MODE=process.env.FANMIND_CHAT_ADMIN_BROWSER_MODE as "probe"|"acceptance";
+const APP="https://staging.fanmind.ch",SUPABASE=process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const MODE=process.env.FANMIND_CHAT_ADMIN_BROWSER_MODE as "probe"|"acceptance",MARKER=process.env.FANMIND_CHAT_ADMIN_ACCEPTANCE_MARKER!;
 const mark=(stage:string)=>updateBrowserDiagnostic(process.env,MODE,{stage,status:"none"});
 const noteStatus=(status:number)=>updateBrowserDiagnostic(process.env,MODE,{status:status>=200&&status<600?`${Math.floor(status/100)}xx`:"other"});
 const id=(key:string)=>canonicalChatAdminFixtureId(process.env[`FANMIND_CHAT_ADMIN_${key}`]);
 type Session={token:string;anon:string};
 async function direct(request:APIRequestContext,url:string,options:Parameters<APIRequestContext["fetch"]>[1]={}) {
-  if(![APP,SUPABASE].includes(new URL(url).origin))throw Error("chat_admin_manual_direct_origin");
-  if(MODE==="probe"&&!chatAdminRequestAllowed(new URL(url),options.method??'GET',{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_probe_write");
-  return request.fetch(url,{...options,maxRedirects:0,timeout:45_000});
+ if(![APP,SUPABASE].includes(new URL(url).origin))throw Error("chat_admin_manual_direct_origin");
+ if(MODE==="probe"&&!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_probe_write");
+ return request.fetch(url,{...options,maxRedirects:0,timeout:45_000});
 }
-
-async function boundary(context:BrowserContext) {
-  const violations=await installChatAdminNetworkBoundary(context,{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE,onViolation:network=>updateBrowserDiagnostic(process.env,MODE,{network})});
-  return {check:()=>expect(violations()).toBe(0),stop:()=>violations.stop()};
+async function boundary(context:BrowserContext){const violations=await installChatAdminNetworkBoundary(context,{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE,onViolation:network=>updateBrowserDiagnostic(process.env,MODE,{network})});return{check:()=>expect(violations()).toBe(0),stop:()=>violations.stop()};}
+async function login(page:Page,remember:(session:Session)=>void,actor:"owner"|"secondary"|"admin"="owner"):Promise<Session>{
+ const prefix=actor==="admin"?"FANMIND_STAGING_ADMIN_E2E":actor==="secondary"?"FANMIND_STAGING_E2E_SECONDARY":"FANMIND_STAGING_E2E";
+ mark(`${actor}_login_page`);await page.goto("/login");mark(`${actor}_login_form`);await page.getByRole("textbox",{name:"E-Mail",exact:true}).fill(process.env[`${prefix}_EMAIL`]!);await page.locator('input[name="password"]').fill(process.env[`${prefix}_PASSWORD`]!);
+ const pending=page.waitForResponse(response=>{const url=new URL(response.url());return url.origin===SUPABASE&&url.pathname==="/auth/v1/token"&&url.searchParams.get("grant_type")==="password";});
+ mark(`${actor}_token`);await page.getByRole("button",{name:/Einloggen/u}).click();const response=await pending;noteStatus(response.status());expect(response.ok()).toBe(true);const payload=await response.json(),session={token:payload.access_token as string,anon:response.request().headers().apikey};
+ if(session.token)remember(session);mark(`${actor}_identity`);expect(payload.user?.id).toBe(id(actor==="admin"?"PLATFORM_ADMIN_ID":actor==="secondary"?"FOREIGN_OWNER_ID":"OWNER_ID"));mark(`${actor}_dashboard`);await expect(page).toHaveURL(/\/dashboard(?:\?|$)/u);return session;
 }
-
-async function login(page:Page,remember:(session:Session)=>void,actor:"owner"|"secondary"|"admin"="owner"):Promise<Session> {
-  const prefix=actor==="admin"?"FANMIND_STAGING_ADMIN_E2E":actor==="secondary"?"FANMIND_STAGING_E2E_SECONDARY":"FANMIND_STAGING_E2E";
-  mark(`${actor}_login_page`);
-  await page.goto("/login");
-  mark(`${actor}_login_form`);
-  await page.getByRole("textbox",{name:"E-Mail",exact:true}).fill(process.env[`${prefix}_EMAIL`]!);
-  await page.locator('input[name="password"]').fill(process.env[`${prefix}_PASSWORD`]!);
-  const pending=page.waitForResponse(response=>{
-    const url=new URL(response.url());return url.origin===SUPABASE&&url.pathname==="/auth/v1/token"&&url.searchParams.get("grant_type")==="password";
-  });
-  mark(`${actor}_token`);
-  await page.getByRole("button",{name:/Einloggen/u}).click();
-  const response=await pending;noteStatus(response.status());expect(response.ok()).toBe(true);
-  const payload=await response.json();
-  const session={token:payload.access_token as string,anon:response.request().headers().apikey};
-  // Retain a newly created Auth session before any assertion/navigation can fail.
-  if(typeof session.token==="string"&&session.token)remember(session);
-  mark(`${actor}_identity`);
-  expect(payload.user?.id).toBe(id(actor==="admin"?"PLATFORM_ADMIN_ID":actor==="secondary"?"FOREIGN_OWNER_ID":"OWNER_ID"));
-  expect(typeof payload.access_token).toBe("string");
-  mark(`${actor}_dashboard`);await expect(page).toHaveURL(/\/dashboard(?:\?|$)/u);
-  return session;
+async function logout(context:BrowserContext,session:Session){const result=await direct(context.request,`${SUPABASE}/auth/v1/logout?scope=local`,{method:"POST",headers:{apikey:session.anon,Authorization:`Bearer ${session.token}`}});expect(result.ok()).toBe(true);await result.dispose();await context.clearCookies();}
+async function post(page:Page,path:string,body:object){return direct(page.request,`${APP}${path}`,{method:"POST",headers:{Origin:APP,"Content-Type":"application/json"},data:body});}
+const characterCard=(page:Page,name:string)=>page.locator("article").filter({has:page.getByRole("heading",{name,exact:true})});
+async function selectCharacter(page:Page,name:string){await characterCard(page,name).locator("button").first().click();}
+async function editOffers(page:Page,name:string,persona:"a"|"b"){
+ await characterCard(page,name).getByLabel(`${name} verwalten`).click();await characterCard(page,name).getByRole("button",{name:"Bearbeiten",exact:true}).click();
+ const form=page.locator("form").filter({has:page.getByRole("heading",{name:"Charakter bearbeiten",exact:true})});
+ for(const offer of CHAT_ADMIN_ACCEPTANCE_OFFERS[persona]){const section=form.locator("section").filter({has:page.getByRole("heading",{name:offer.name,exact:true})});await section.getByLabel("Währung").selectOption(offer.currency);await section.getByLabel("Mindestpreis").fill(chatAdminAcceptancePriceValue(offer.minimumPriceMinor));await section.getByLabel("Empfohlener Preis").fill(chatAdminAcceptancePriceValue(offer.recommendedPriceMinor));await section.getByLabel("Höchstpreis").fill(chatAdminAcceptancePriceValue(offer.maximumPriceMinor));await section.getByLabel("Angebot aktiv").check();}
+ const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/characters"&&response.request().method()==="PATCH");mark(`offers_${persona}_save`);await form.getByRole("button",{name:"Speichern",exact:true}).click();const response=await pending;noteStatus(response.status());expect(response.ok()).toBe(true);const payload=await response.json();expect(payload.character.id).toBe(id(`CHARACTER_${persona.toUpperCase()}_ID`));expect(payload.character.revision).toBe(2);
+ await page.reload();mark(`offers_${persona}_reload`);await expect(characterCard(page,name)).toBeVisible();await characterCard(page,name).getByLabel(`${name} verwalten`).click();await characterCard(page,name).getByRole("button",{name:"Bearbeiten",exact:true}).click();const reloaded=page.locator("form").filter({has:page.getByRole("heading",{name:"Charakter bearbeiten",exact:true})});
+ for(const offer of CHAT_ADMIN_ACCEPTANCE_OFFERS[persona]){const section=reloaded.locator("section").filter({has:page.getByRole("heading",{name:offer.name,exact:true})});await expect(section.getByLabel("Währung")).toHaveValue(offer.currency);await expect(section.getByLabel("Mindestpreis")).toHaveValue(chatAdminAcceptancePriceValue(offer.minimumPriceMinor));await expect(section.getByLabel("Empfohlener Preis")).toHaveValue(chatAdminAcceptancePriceValue(offer.recommendedPriceMinor));await expect(section.getByLabel("Höchstpreis")).toHaveValue(chatAdminAcceptancePriceValue(offer.maximumPriceMinor));}await reloaded.getByRole("button",{name:"Abbrechen",exact:true}).click();
 }
-async function logout(context:BrowserContext,session:Session) {
-  const result=await direct(context.request,`${SUPABASE}/auth/v1/logout?scope=local`,{method:"POST",headers:{apikey:session.anon,Authorization:`Bearer ${session.token}`}});
-  expect(result.ok()).toBe(true);await context.clearCookies();
+async function createFan(page:Page,characterName:string,persona:"a"|"b"){
+ const fanName=chatAdminAcceptanceFanName(persona.toUpperCase(),MARKER);await page.getByLabel("Fan hinzufügen").click();const form=page.locator("form").filter({has:page.getByRole("heading",{name:"Neuen Fan anlegen",exact:true})});await form.getByLabel("Name",{exact:true}).fill(fanName);await form.getByLabel("Handle (optional)").fill(`fm-${persona}-${MARKER.slice(0,12)}`);await form.getByLabel("Plattform / Quelle").fill("Synthetic staging acceptance");await form.getByLabel("Sprache (optional)").fill("Deutsch");await form.getByLabel("Kundenstatus").selectOption(persona==="a"?"blue":"green");await form.getByLabel("Zusammenfassung / wichtige Fakten").fill(`Nur synthetische Daten ${MARKER}`);await form.getByLabel("Relevante Notizen").fill(`Taskgebunden ${characterName} ${MARKER}`);
+ const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/fans"&&response.request().method()==="POST");mark(`fan_${persona}_create`);await form.getByRole("button",{name:"Speichern",exact:true}).click();const response=await pending;noteStatus(response.status());expect(response.status()).toBe(201);const payload=await response.json();expect(payload.fan.character_id).toBe(id(`CHARACTER_${persona.toUpperCase()}_ID`));expect(payload.fan.display_name).toBe(fanName);await expect(page.getByLabel(`${fanName} öffnen`)).toBeVisible();return fanName;
 }
-async function api(page:Page,path:string,body:object) {
-  return direct(page.request,`${APP}${path}`,{method:"POST",headers:{Origin:APP,"Content-Type":"application/json"},data:body});
+const pricePattern=(amount:number,currency:string)=>{const value=chatAdminAcceptancePriceValue(amount).replace(".", "[.,]"),whole=String(Math.trunc(amount/100));return new RegExp(`(?:${currency}\\s*(?:${value}|${whole})|(?:${value}|${whole})\\s*${currency})`,"iu");};
+const prices=Object.values(CHAT_ADMIN_ACCEPTANCE_OFFERS).flat().flatMap(offer=>[offer.minimumPriceMinor,offer.recommendedPriceMinor,offer.maximumPriceMinor].map(amount=>({amount,currency:offer.currency})));
+async function generate(page:Page,persona:"a"|"b",message:string,expected?:{amount:number;currency:string}){
+ await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/reply-suggestions"&&response.request().method()==="POST");mark(`persona_${persona}_request`);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();const response=await pending;mark(`persona_${persona}_response`);noteStatus(response.status());expect(response.status()).toBe(200);const payload=await response.json();expect(payload.character_id).toBe(id(`CHARACTER_${persona.toUpperCase()}_ID`));expect(payload.character_revision).toBe(2);expect(Array.isArray(payload.replies)&&payload.replies.length===3&&payload.replies.every((value:unknown)=>typeof value==="string"&&value.trim())).toBe(true);
+ const text=String(payload.replies.join("\n")).replaceAll(" "," ");if(expected){expect(text).toMatch(pricePattern(expected.amount,expected.currency));for(const foreign of prices.filter(price=>price.amount!==expected.amount||price.currency!==expected.currency))expect(text).not.toMatch(pricePattern(foreign.amount,foreign.currency));}else expect(text).not.toMatch(/(?:EUR|CHF|USD|GBP|€|\$|£)\s*\d|\d\s*(?:EUR|CHF|USD|GBP|€|\$|£)/iu);
+ const uses=page.getByRole("button",{name:"Kopieren und verwenden",exact:true});await expect(uses).toHaveCount(3);return{payload,uses};
 }
-async function generate(page:Page,characterId:string,revision:number) {
-  const persona=characterId===id("CHARACTER_A_ID")?"persona_a":"persona_b";
-  await page.getByLabel("Fan/Chat-Bezeichnung (optional)").fill("Synthetischer Fan");
-  await page.getByLabel("Von OnlyFans kopierte Fan-Nachricht").fill("Hallo, ich wünsche dir einen schönen entspannten Nachmittag. Wie war dein Tag?");
-  const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/reply-suggestions"&&response.request().method()==="POST");
-  mark(`${persona}_request`);await page.getByRole("button",{name:"Antwortvorschläge erzeugen",exact:true}).click();
-  const response=await pending;mark(`${persona}_response`);noteStatus(response.status());expect(response.status()).toBe(200);
-  const payload=await response.json();expect(payload.character_id).toBe(characterId);expect(payload.character_revision).toBe(revision);
-  expect(Array.isArray(payload.replies)&&payload.replies.length===3&&payload.replies.every((v:unknown)=>typeof v==="string"&&v.trim().length>0)).toBe(true);
-  const copies=page.getByRole("button",{name:"Antwort kopieren",exact:true});await expect(copies).toHaveCount(3);
-  mark(`${persona}_copy`);const selected=await copies.first().locator("..").locator("p").innerText();
-  await copies.first().click();expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(selected);
-  await expect(page.getByRole("status")).toContainText(/manuell|selbst/u);
+async function useAndReload(page:Page,persona:"a"|"b",characterName:string,fanName:string,uses:Locator){
+ const selected=await uses.first().locator("xpath=ancestor::article").locator("p").innerText();mark(`persona_${persona}_copy`);const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/conversations"&&response.request().method()==="POST");await uses.first().click();const response=await pending;expect(response.status()).toBe(201);expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(selected);await expect(page.getByRole("status")).toContainText("als verwendet gespeichert");
+ await page.reload();mark(`persona_${persona}_reload`);await selectCharacter(page,characterName);await page.getByLabel(`${fanName} öffnen`).click();await page.getByLabel("3 KI-Vorschläge anzeigen").last().click();const used=page.locator('article[data-used="true"]').filter({hasText:selected});await expect(used.getByText("Verwendeter KI-Vorschlag",{exact:true})).toBeVisible();await expect(used.getByText(selected,{exact:true})).toBeVisible();
 }
-
-test("protected synthetic ChatAdmin application flow and authority negatives",async({browser,page})=>{
-  mark("browser_context");
-  const ownerBoundary=await boundary(page.context());
-  const secondaryContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
-  const adminContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
-  const anonymousContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"});
-  const secondaryPage=await secondaryContext.newPage();const secondaryBoundary=await boundary(secondaryContext);
-  const adminPage=await adminContext.newPage();const adminBoundary=await boundary(adminContext);
-  let ownerSession:Session|undefined,secondarySession:Session|undefined,adminSession:Session|undefined;
-  let flowCompleted=false;
-  try {
-    mark("version");const version=await direct(page.request,`${APP}/api/version`);noteStatus(version.status());expect(version.ok()).toBe(true);
-    const state=await version.json();expect(state.runtimeEnvironment).toBe("staging");expect(state.releaseCommit).toBe(process.env.GITHUB_SHA);
-    mark("anonymous");const anonymous=await direct(anonymousContext.request,`${APP}/api/chatadmin/characters`);noteStatus(anonymous.status());expect(anonymous.status()).toBe(401);
-    adminSession=await login(adminPage,session=>{adminSession=session;},"admin");
-    // This route checks the live FANMIND_ADMIN_EMAILS, proving this is an actual
-    // platform admin before its ChatAdmin denial is counted. No admin writes.
-    mark("admin_authority");const adminProof=await direct(adminPage.request,`${APP}/api/admin/notifications`);noteStatus(adminProof.status());expect(adminProof.status()).toBe(200);await adminProof.dispose();
-    mark("admin_denial");const adminDenied=await direct(adminPage.request,`${APP}/api/chatadmin/characters`);noteStatus(adminDenied.status());expect(adminDenied.status()).toBe(403);
-    ownerSession=await login(page,session=>{ownerSession=session;});
-    if(MODE==="probe") {
-      secondarySession=await login(secondaryPage,session=>{secondarySession=session;},"secondary");
-    } else {
-    mark("chatadmin_page");await page.goto("/chatadmin");await expect(page.getByRole("heading",{name:"ChatAdmin",exact:true})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"FM Synthetic Foreign Character",exact:true})).toHaveCount(0);
-    const a=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character A",exact:true})});
-    const b=page.locator("article").filter({has:page.getByRole("heading",{name:"FM Synthetic Character B",exact:true})});
-    await a.getByRole("button",{name:"Auswählen",exact:true}).click();
-    await generate(page,id("CHARACTER_A_ID"),1);
-    mark("persona_switch");
-    await b.getByRole("button",{name:"Auswählen",exact:true}).click();
-    await expect(page.getByRole("button",{name:"Antwort kopieren",exact:true})).toHaveCount(0);
-    await expect(page.getByLabel("Von OnlyFans kopierte Fan-Nachricht")).toHaveValue("");
-    await expect(page.getByLabel("Fan/Chat-Bezeichnung (optional)")).toHaveValue("");
-    await generate(page,id("CHARACTER_B_ID"),1);
-    mark("negatives");
-    const stale=await api(page,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:999,incoming_message:"Synthetisch"});expect(stale.status()).toBe(409);
-    // The committed fixture uses this otherwise unused UUID for an existing
-    // Character owned by the second synthetic Workspace, without its capability.
-    const foreignCharacterId=id("CONVERSATION_B_ID");
-    const foreign=await api(page,"/api/chatadmin/reply-suggestions",{character_id:foreignCharacterId,character_revision:1,incoming_message:"Synthetisch"});expect(foreign.status()).toBe(403);expect(await foreign.json()).toEqual({error:"resource_forbidden"});
-    const ownerForeignRead=await direct(page.request,`${SUPABASE}/rest/v1/chat_characters?id=eq.${foreignCharacterId}&select=id`,{headers:{apikey:ownerSession.anon,Authorization:`Bearer ${ownerSession.token}`}});expect(ownerForeignRead.ok()).toBe(true);expect(await ownerForeignRead.json()).toEqual([]);
-    await b.getByRole("button",{name:"Deaktivieren",exact:true}).click();
-    await expect(page.getByRole("button",{name:"Antwortvorschläge erzeugen",exact:true})).toBeDisabled();
-    await expect(page.getByRole("button",{name:"Antwort kopieren",exact:true})).toHaveCount(0);
-    const inactive=await api(page,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_B_ID"),character_revision:2,incoming_message:"Synthetisch"});expect(inactive.status()).toBe(400);
-    const untrusted=await direct(page.request,`${APP}/api/chatadmin/characters`,{method:"POST",headers:{Origin:"https://example.invalid"},data:{}});expect(untrusted.status()).toBe(403);
-    secondarySession=await login(secondaryPage,session=>{secondarySession=session;},"secondary");
-    const denied=await direct(secondaryPage.request,`${APP}/api/chatadmin/characters`);expect(denied.status()).toBe(403);
-    const deniedReply=await api(secondaryPage,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:1,incoming_message:"Synthetisch"});expect(deniedReply.status()).toBe(403);
-    const directRead=await direct(secondaryPage.request,`${SUPABASE}/rest/v1/chat_characters?select=id`,{headers:{apikey:secondarySession.anon,Authorization:`Bearer ${secondarySession.token}`}});expect(directRead.ok()).toBe(true);expect(await directRead.json()).toEqual([]);
-    }
-    flowCompleted=true;
-  } catch(error) {
-    updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw error;
-  } finally {
-    const cleanup=[];if(ownerSession)cleanup.push(logout(page.context(),ownerSession));if(secondarySession)cleanup.push(logout(secondaryContext,secondarySession));if(adminSession)cleanup.push(logout(adminContext,adminSession));
-    const results=await Promise.allSettled(cleanup);
-    const boundaries=[ownerBoundary,secondaryBoundary,adminBoundary];
-    const drains=await Promise.allSettled(boundaries.map(item=>item.stop()));
-    const closures=await Promise.allSettled([page.context(),secondaryContext,anonymousContext,adminContext].map(context=>context.close()));
-    const finalDrains=await Promise.allSettled(boundaries.map(item=>item.stop()));
-    if(results.some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"failed",outcome:"failed"});throw Error("chat_admin_manual_session_cleanup");}
-    updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"passed"});
-    if([...drains,...closures,...finalDrains].some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw Error("chat_admin_manual_boundary_cleanup");}
-    if(flowCompleted)mark("network_check");
-    ownerBoundary.check();secondaryBoundary.check();adminBoundary.check();
-  }
-  mark("complete");updateBrowserDiagnostic(process.env,MODE,{outcome:"passed"});
+test("protected synthetic ChatAdmin persisted offer flow and authority negatives",async({browser,page})=>{
+ mark("browser_context");const ownerBoundary=await boundary(page.context()),secondaryContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"}),adminContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"}),anonymousContext=await browser.newContext({baseURL:APP,serviceWorkers:"block"}),secondaryPage=await secondaryContext.newPage(),adminPage=await adminContext.newPage(),secondaryBoundary=await boundary(secondaryContext),adminBoundary=await boundary(adminContext);let ownerSession:Session|undefined,secondarySession:Session|undefined,adminSession:Session|undefined,flowCompleted=false;
+ try{
+  mark("version");const version=await direct(page.request,`${APP}/api/version`);noteStatus(version.status());expect(version.ok()).toBe(true);const state=await version.json();expect(state.runtimeEnvironment).toBe("staging");expect(state.releaseCommit).toBe(process.env.GITHUB_SHA);mark("anonymous");const anonymous=await direct(anonymousContext.request,`${APP}/api/chatadmin/characters`);expect(anonymous.status()).toBe(401);
+  adminSession=await login(adminPage,session=>{adminSession=session;},"admin");mark("admin_authority");const adminProof=await direct(adminPage.request,`${APP}/api/admin/notifications`);expect(adminProof.status()).toBe(200);await adminProof.dispose();mark("admin_denial");expect((await direct(adminPage.request,`${APP}/api/chatadmin/characters`)).status()).toBe(403);ownerSession=await login(page,session=>{ownerSession=session;});
+  if(MODE==="probe")secondarySession=await login(secondaryPage,session=>{secondarySession=session;},"secondary");else{
+   mark("chatadmin_page");await page.goto("/chatadmin");await expect(page.getByRole("heading",{name:"ChatAdmin",exact:true})).toBeVisible();await expect(page.getByRole("heading",{name:"FM Synthetic Foreign Character",exact:true})).toHaveCount(0);await editOffers(page,"FM Synthetic Character A","a");await editOffers(page,"FM Synthetic Character B","b");
+   await selectCharacter(page,"FM Synthetic Character A");const fanA=await createFan(page,"FM Synthetic Character A","a"),a=await generate(page,"a",CHAT_ADMIN_ACCEPTANCE_REQUESTS.a,{amount:2200,currency:"CHF"});await useAndReload(page,"a","FM Synthetic Character A",fanA,a.uses);await generate(page,"a",CHAT_ADMIN_ACCEPTANCE_REQUESTS.noOffer);
+   mark("persona_switch");await selectCharacter(page,"FM Synthetic Character B");await expect(page.getByLabel(`${fanA} öffnen`)).toHaveCount(0);const fanB=await createFan(page,"FM Synthetic Character B","b"),b=await generate(page,"b",CHAT_ADMIN_ACCEPTANCE_REQUESTS.b,{amount:8200,currency:"EUR"});await useAndReload(page,"b","FM Synthetic Character B",fanB,b.uses);
+   mark("isolation");await selectCharacter(page,"FM Synthetic Character A");await expect(page.getByLabel(`${fanB} öffnen`)).toHaveCount(0);await page.getByLabel(`${fanA} öffnen`).click();await expect(page.getByText(CHAT_ADMIN_ACCEPTANCE_REQUESTS.a,{exact:true})).toBeVisible();
+   mark("negatives");const stale=await post(page,"/api/chatadmin/reply-suggestions",{character_id:id("CHARACTER_A_ID"),character_revision:999,fan_id:id("CONVERSATION_A_ID"),conversation_id:id("CONVERSATION_A_ID"),generation_id:crypto.randomUUID(),incoming_message:"Synthetisch"});expect(stale.status()).toBe(409);const foreignCharacterId=id("CONVERSATION_B_ID"),foreign=await post(page,"/api/chatadmin/reply-suggestions",{character_id:foreignCharacterId,character_revision:1,fan_id:id("CONVERSATION_A_ID"),conversation_id:id("CONVERSATION_A_ID"),generation_id:crypto.randomUUID(),incoming_message:"Synthetisch"});expect(foreign.status()).toBe(403);expect(await foreign.json()).toEqual({error:"resource_forbidden"});
+   const foreignRead=await direct(page.request,`${SUPABASE}/rest/v1/chat_characters?id=eq.${foreignCharacterId}&select=id`,{headers:{apikey:ownerSession.anon,Authorization:`Bearer ${ownerSession.token}`}});expect(await foreignRead.json()).toEqual([]);const untrusted=await direct(page.request,`${APP}/api/chatadmin/characters`,{method:"POST",headers:{Origin:"https://example.invalid"},data:{}});expect(untrusted.status()).toBe(403);secondarySession=await login(secondaryPage,session=>{secondarySession=session;},"secondary");expect((await direct(secondaryPage.request,`${APP}/api/chatadmin/characters`)).status()).toBe(403);const directRead=await direct(secondaryPage.request,`${SUPABASE}/rest/v1/chat_characters?select=id`,{headers:{apikey:secondarySession.anon,Authorization:`Bearer ${secondarySession.token}`}});expect(await directRead.json()).toEqual([]);
+  }flowCompleted=true;
+ }catch(error){updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw error;}finally{
+  const cleanup=[];if(ownerSession)cleanup.push(logout(page.context(),ownerSession));if(secondarySession)cleanup.push(logout(secondaryContext,secondarySession));if(adminSession)cleanup.push(logout(adminContext,adminSession));const results=await Promise.allSettled(cleanup),boundaries=[ownerBoundary,secondaryBoundary,adminBoundary],drains=await Promise.allSettled(boundaries.map(item=>item.stop())),closures=await Promise.allSettled([page.context(),secondaryContext,anonymousContext,adminContext].map(context=>context.close())),finalDrains=await Promise.allSettled(boundaries.map(item=>item.stop()));if(results.some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"failed",outcome:"failed"});throw Error("chat_admin_manual_session_cleanup");}updateBrowserDiagnostic(process.env,MODE,{sessionCleanup:"passed"});if([...drains,...closures,...finalDrains].some(result=>result.status==="rejected")){updateBrowserDiagnostic(process.env,MODE,{outcome:"failed"});throw Error("chat_admin_manual_boundary_cleanup");}if(flowCompleted)mark("network_check");ownerBoundary.check();secondaryBoundary.check();adminBoundary.check();
+ }mark("complete");updateBrowserDiagnostic(process.env,MODE,{outcome:"passed"});
 });

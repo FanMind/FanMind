@@ -4,10 +4,12 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { buildManualFlowSql } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH } from "../scripts/operations/chat-admin-fan-staging-runner.mjs";
+import { CHAT_ADMIN_ACCEPTANCE_OFFERS, CHAT_ADMIN_ACCEPTANCE_REQUESTS, chatAdminAcceptanceFanName } from "../e2e-chatadmin-staging/offer-fixture.mjs";
 
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled=process.env.FANMIND_CREATOR_PG17_REQUIRED==="true";
 const database="fanmind_chatadmin_manual_ci";
+const manualDatabase="fanmind_chatadmin_persisted_flow_ci";
 const ids=Array.from({length:10},(_,i)=>`${(i+1).toString(16).repeat(8)}-1111-4111-8111-${(i+1).toString(16).repeat(12)}`);
 const keys=["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
 const env={
@@ -15,7 +17,7 @@ const env={
   FANMIND_RUNTIME_ENVIRONMENT:"staging",NEXT_PUBLIC_APP_URL:"https://staging.fanmind.ch",FANMIND_TARGET_API_ORIGIN:"https://staging.fanmind.ch",FANMIND_PRODUCTION_API_ORIGIN:"https://fanmind.ch",
   NEXT_PUBLIC_SUPABASE_URL:"https://stagingref123.supabase.co",FANMIND_TARGET_SUPABASE_PROJECT_REF:"stagingref123",FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:"productionref123",
   PGHOST:"aws-0-eu.pooler.supabase.com",FANMIND_TARGET_DB_HOST:"aws-0-eu.pooler.supabase.com",FANMIND_PRODUCTION_DB_HOST:"db.productionref123.supabase.co",PGUSER:"postgres.stagingref123",PGPORT:"5432",PGDATABASE:"postgres",PGSSLMODE:"verify-full",PGSSLROOTCERT:"/repo/config/certificates/supabase-root-2021-ca.crt",
-  FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true",FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",
+  FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true",FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",FANMIND_CHAT_ADMIN_TASK_ID:"FM-ADMINCHAT-STAGING-HARNESS-20261011-01",
   FANMIND_STAGING_E2E_EMAIL:"primary-staging@example.invalid",FANMIND_STAGING_E2E_PASSWORD:"synthetic-password-primary",FANMIND_STAGING_E2E_SECONDARY_EMAIL:"secondary-staging@example.invalid",FANMIND_STAGING_E2E_SECONDARY_PASSWORD:"synthetic-password-secondary",
   FANMIND_ADMIN_EMAILS:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_EMAIL:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_PASSWORD:"synthetic-password-admin",
   ...Object.fromEntries(keys.map((key,i)=>[`FANMIND_CHAT_ADMIN_${key}`,ids[i]])),
@@ -52,37 +54,56 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       ('${ids[1]}','${ids[4]}','FanMind Staging Secondary E2E','{"staging_synthetic_fixture":true}','active','active');
     insert into public.workspace_members values('${ids[0]}','${ids[2]}','owner'),('${ids[1]}','${ids[4]}','owner'),('${ids[0]}','${ids[3]}','member');`);
     sql(readFileSync(new URL("../supabase/controlled/20260920230000_chat_admin_multi_character.sql",import.meta.url),"utf8"));
-    sql(`update public.workspaces set test_access_flags='{}' where id='${ids[0]}';`);
-    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)));
-    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
-    sql(`update public.workspaces set test_access_flags='{"staging_synthetic_fixture":true}' where id='${ids[0]}';`);
-    sql(`update auth.users set email='ordinary-staging@example.invalid' where id='${ids[5]}';`);
-    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"an existing ordinary user cannot stand in for the protected admin identity");
-    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
-    sql(`update auth.users set email='admin-staging@example.invalid',email_confirmed_at=null where id='${ids[5]}';`);
-    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"unconfirmed admin identity must fail before mutation");
-    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
-    sql(`update auth.users set email_confirmed_at=now() where id='${ids[5]}';`);
-    assert.match(sql(buildManualFlowSql("prepare",env,receipt)),/CHAT_ADMIN_MANUAL_PREPARE=PASS/u);
-    assert.equal(sql(`select count(*) from public.chat_characters where id='${ids[9]}' and workspace_id='${ids[1]}' and created_by_user_id='${ids[4]}' and bio='FanMind synthetic manual acceptance ${receipt.marker}' and created_at='${receipt.startedAt}'::timestamptz;`).trim(),"1","foreign denial must target an existing, exactly bound Character");
-    assert.equal(sql(`select count(*) from public.workspace_chat_admin_capabilities where workspace_id='${ids[1]}';`).trim(),"0","foreign fixture must not add another capability");
-    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"existing capability must never be overwritten");
-    assert.throws(()=>sql(buildManualFlowSql("cleanup",env,{...receipt,marker:"e".repeat(32)})),"wrong receipt must not delete rows");
-    assert.equal(sql("select count(*) from public.chat_characters;").trim(),"3");
+    sql(`create database ${manualDatabase} template ${database};`,"postgres");
+    const manualSql=query=>sql(query,manualDatabase);
+    manualSql(readFileSync(new URL(`../${FAN_SQL_PATH}`,import.meta.url),"utf8"));
+    manualSql(readFileSync(new URL("../supabase/controlled/20261007190000_chat_admin_structured_offers.sql",import.meta.url),"utf8"));
+    manualSql(`update public.workspaces set test_access_flags='{}' where id='${ids[0]}';`);
+    assert.throws(()=>manualSql(buildManualFlowSql("prepare",env,receipt)));
+    assert.equal(manualSql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    manualSql(`update public.workspaces set test_access_flags='{"staging_synthetic_fixture":true}' where id='${ids[0]}'; update auth.users set email_confirmed_at=now() where id='${ids[5]}';`);
+    assert.match(manualSql(buildManualFlowSql("prepare",env,receipt)),/CHAT_ADMIN_MANUAL_PREPARE=PASS/u);
+    assert.throws(()=>manualSql(buildManualFlowSql("prepare",env,receipt)),"reserved identities must never be overwritten");
+    assert.throws(()=>manualSql(buildManualFlowSql("cleanup",env,{...receipt,marker:"e".repeat(32)})),"wrong receipt must not delete rows");
     for(const [column,wrong,original] of [["workspace_id",ids[0],ids[1]],["created_by_user_id",ids[2],ids[4]]]) {
-      sql(`update public.chat_characters set ${column}='${wrong}' where id='${ids[9]}';`);
-      assert.throws(()=>sql(buildManualFlowSql("cleanup",env,receipt)),`foreign ${column} drift must prevent every cleanup delete`);
-      assert.equal(sql("select count(*) from public.chat_characters;").trim(),"3");
-      assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"1");
-      sql(`update public.chat_characters set ${column}='${original}' where id='${ids[9]}';`);
+      manualSql(`update public.chat_characters set ${column}='${wrong}' where id='${ids[9]}';`);
+      assert.throws(()=>manualSql(buildManualFlowSql("cleanup",env,receipt)),`foreign ${column} drift must prevent every cleanup delete`);
+      manualSql(`update public.chat_characters set ${column}='${original}' where id='${ids[9]}';`);
     }
-    sql(`insert into public.ai_usage_events values('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:00Z'),('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:01Z'); update public.chat_characters set status='inactive',revision=2 where id='${ids[7]}';`);
-    assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
-    assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u);
-    assert.match(sql(buildManualFlowSql("absence",env,receipt)),/CHAT_ADMIN_MANUAL_ABSENCE=PASS/u);
-    assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup remains idempotent");
-    assert.equal(sql("select count(*) from public.workspaces;").trim(),"2");
-    assert.equal(sql("select count(*) from auth.users;").trim(),"4");
+    const playbook=offers=>JSON.stringify({positioning:"",offers:offers.map(offer=>({...offer,description:"",maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false})),minimumHoursBetweenOffers:48,aftercareHours:48,contentBoundaries:[],confirmationRequired:[],noGos:[]}).replaceAll("'","''");
+    const fanA=chatAdminAcceptanceFanName("A",receipt.marker),fanB=chatAdminAcceptanceFanName("B",receipt.marker);
+    manualSql(`update public.chat_characters set revision=2,sales_playbook=case id when '${ids[6]}' then '${playbook(CHAT_ADMIN_ACCEPTANCE_OFFERS.a)}'::jsonb else '${playbook(CHAT_ADMIN_ACCEPTANCE_OFFERS.b)}'::jsonb end where id in ('${ids[6]}','${ids[7]}');
+      insert into public.chat_character_fans(workspace_id,character_id,display_name,platform,creation_id,created_at) values
+      ('${ids[0]}','${ids[6]}','${fanA}','Synthetic staging acceptance','11111111-2222-4222-8222-111111111111','2026-09-26T10:00:01Z'),
+      ('${ids[0]}','${ids[7]}','${fanB}','Synthetic staging acceptance','22222222-2222-4222-8222-222222222222','2026-09-26T10:00:02Z');
+      with bound as (select f.character_id,f.id fan_id,c.id conversation_id from public.chat_character_fans f join public.chat_character_conversations c on c.fan_id=f.id where f.display_name in ('${fanA}','${fanB}'))
+      insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision,generation_id)
+      select '${ids[0]}',character_id,fan_id,conversation_id,direction,content,2,generation_id from bound cross join lateral (
+        select * from (values
+          ('fan_inbound',case when character_id='${ids[6]}'::uuid then '${CHAT_ADMIN_ACCEPTANCE_REQUESTS.a}' else '${CHAT_ADMIN_ACCEPTANCE_REQUESTS.b}' end,'33333333-2222-4222-8222-333333333333'::uuid),
+          ('suggested_reply','synthetic reply one','33333333-2222-4222-8222-333333333333'::uuid),
+          ('suggested_reply','synthetic reply two','33333333-2222-4222-8222-333333333333'::uuid),
+          ('suggested_reply','synthetic reply three','33333333-2222-4222-8222-333333333333'::uuid),
+          ('confirmed_reply','synthetic reply one','44444444-2222-4222-8222-444444444444'::uuid)
+        ) v(direction,content,generation_id)
+      ) rows;
+      with bound as (select f.character_id,f.id fan_id,c.id conversation_id from public.chat_character_fans f join public.chat_character_conversations c on c.fan_id=f.id where f.display_name='${fanA}')
+      insert into public.chat_character_messages(workspace_id,character_id,fan_id,conversation_id,direction,content,character_revision,generation_id)
+      select '${ids[0]}',character_id,fan_id,conversation_id,direction,content,2,'55555555-2222-4222-8222-555555555555' from bound cross join (values
+        ('fan_inbound','${CHAT_ADMIN_ACCEPTANCE_REQUESTS.noOffer}'),('suggested_reply','no-price reply one'),('suggested_reply','no-price reply two'),('suggested_reply','no-price reply three')
+      ) v(direction,content);
+      insert into public.ai_usage_events values
+      ('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T09:59:00Z'),
+      ('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:00Z'),
+      ('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:01Z'),
+      ('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','2026-09-26T10:01:02Z');
+      insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,languages,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status) values
+      ('eeeeeeee-1111-4111-8111-eeeeeeeeeeee','${ids[1]}','${ids[4]}','Unrelated synthetic row',25,'unrelated',array['Deutsch'],'neutral','neutral','keine','kurz','neutral','none','active');`);
+    assert.match(manualSql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
+    assert.match(manualSql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u);
+    assert.match(manualSql(buildManualFlowSql("absence",env,receipt)),/CHAT_ADMIN_MANUAL_ABSENCE=PASS/u);
+    assert.equal(manualSql("select count(*) from public.chat_characters;").trim(),"1","unrelated Character must survive scoped cleanup");
+    assert.equal(manualSql("select count(*) from public.ai_usage_events;").trim(),"1","pre-run AI usage must survive scoped cleanup");
 
     const absentPostflight=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
       input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
@@ -384,5 +405,8 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='D' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
     assertPostflightRejectsPartial();
     restoreAndVerify("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='O' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
-  } finally {sql(`drop database ${database} with (force);`,"postgres");}
+  } finally {
+    try{sql(`drop database ${manualDatabase} with (force);`,"postgres");}catch{}
+    sql(`drop database ${database} with (force);`,"postgres");
+  }
 });

@@ -7,13 +7,21 @@ import { isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAdminStagingControlPolicy.mjs";
 import { CHAT_ADMIN_POSTFLIGHT_SQL, SQL_PATH, SQL_SHA256 } from "./chat-admin-staging-runner.mjs";
+import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH, SQL_SHA256 as FAN_SQL_SHA256 } from "./chat-admin-fan-staging-runner.mjs";
+import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH, SQL_SHA256 as OFFERS_SQL_SHA256 } from "./chat-admin-structured-offers-staging-runner.mjs";
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME } from "../../src/lib/stagingSyntheticFixturePolicy.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, formatBrowserDiagnostic, requireSuccessfulProbe } from "../../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture-identity.mjs";
+import { CHAT_ADMIN_ACCEPTANCE_OFFERS, CHAT_ADMIN_ACCEPTANCE_REQUESTS, chatAdminAcceptanceFanName } from "../../e2e-chatadmin-staging/offer-fixture.mjs";
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
+export const MANUAL_FLOW_TASK_ID = "FM-ADMINCHAT-STAGING-HARNESS-20261011-01";
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
-const TABLES = ["workspace_chat_admin_capabilities", "chat_characters", "chat_character_conversations", "chat_character_messages"];
+const SCHEMA_CONTRACTS = [
+  [SQL_PATH,SQL_SHA256,CHAT_ADMIN_POSTFLIGHT_SQL,"CHAT_ADMIN_SCHEMA_STATE=VERIFIED"],
+  [FAN_SQL_PATH,FAN_SQL_SHA256,FAN_POSTFLIGHT_SQL,"CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED"],
+  [OFFERS_SQL_PATH,OFFERS_SQL_SHA256,OFFERS_POSTFLIGHT_SQL,"CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED"],
+];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
 const literal = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const identities = (env) => Object.fromEntries(ID_KEYS.map(key => [key, canonicalChatAdminFixtureId(env[`FANMIND_CHAT_ADMIN_${key}`])]));
@@ -28,7 +36,8 @@ export function validateManualFlowEnvironment(env) {
   if (!policy.ok || env.NEXT_PUBLIC_APP_URL !== "https://staging.fanmind.ch" ||
       env.FANMIND_ENABLE_NON_PRODUCTION_WRITES !== "true" ||
       env.FANMIND_NON_PRODUCTION_WRITE_ACK !== "I_UNDERSTAND_NON_PRODUCTION_ONLY" ||
-      env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM !== MANUAL_FLOW_CONFIRMATION) fail("boundary");
+      env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM !== MANUAL_FLOW_CONFIRMATION ||
+      env.FANMIND_CHAT_ADMIN_TASK_ID !== MANUAL_FLOW_TASK_ID) fail("boundary");
   const ids = identities(env);
   if (new Set(Object.values(ids)).size !== ID_KEYS.length) fail("fixture_identity");
   const emails = [env.FANMIND_STAGING_E2E_EMAIL,env.FANMIND_STAGING_E2E_SECONDARY_EMAIL];
@@ -81,25 +90,29 @@ export function buildManualFlowSql(mode, env, receipt) {
   if (!['prepare','verify','cleanup','absence'].includes(mode) || !/^[0-9a-f]{32}$/u.test(receipt.marker ?? '') || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt ?? '')) fail('receipt');
   const ws=literal(ids.STAGING_WORKSPACE_ID), owner=literal(ids.OWNER_ID);
   const a=literal(ids.CHARACTER_A_ID), b=literal(ids.CHARACTER_B_ID), started=literal(receipt.startedAt);
-  // This manual flow creates no conversations. Reuse its reserved second UUID
-  // for a real foreign Character without adding or rotating fixture identities.
   const foreignCharacter=literal(ids.CONVERSATION_B_ID), second=literal(ids.SECOND_WORKSPACE_ID), foreignOwner=literal(ids.FOREIGN_OWNER_ID);
   const marker=literal(`FanMind synthetic manual acceptance ${receipt.marker}`);
+  const fanA=literal(chatAdminAcceptanceFanName('A',receipt.marker)),fanB=literal(chatAdminAcceptanceFanName('B',receipt.marker));
   const ownedCharacters=`((id in (${a}::uuid,${b}::uuid) and workspace_id=${ws}::uuid and created_by_user_id=${owner}::uuid) or (id=${foreignCharacter}::uuid and workspace_id=${second}::uuid and created_by_user_id=${foreignOwner}::uuid)) and bio=${marker} and created_at = ${started}::timestamptz and profile_image_path is null`;
   const usage=`workspace_id=${ws}::uuid and user_id=${owner}::uuid and feature = 'chat_admin_reply' and source_route='/api/chatadmin/reply-suggestions'`;
-  const empty=TABLES.map(table=>`exists(select 1 from public.${table})`).join(' or ');
+  const ownedFans=`workspace_id=${ws}::uuid and ((character_id=${a}::uuid and display_name=${fanA}) or (character_id=${b}::uuid and display_name=${fanB})) and created_at >= ${started}::timestamptz`;
+  const ownedConversations=`workspace_id=${ws}::uuid and character_id in (${a}::uuid,${b}::uuid) and created_at>=${started}::timestamptz`;
+  const ownedMessages=`workspace_id=${ws}::uuid and character_id in (${a}::uuid,${b}::uuid) and created_at>=${started}::timestamptz`;
+  const offerChecks=Object.entries(CHAT_ADMIN_ACCEPTANCE_OFFERS).map(([persona,offers])=>offers.map(offer=>`exists(select 1 from jsonb_array_elements(c.sales_playbook->'offers') o where o->>'category'=${literal(offer.category)} and o->>'currency'=${literal(offer.currency)} and (o->>'minimumPriceMinor')::int=${offer.minimumPriceMinor} and (o->>'recommendedPriceMinor')::int=${offer.recommendedPriceMinor} and (o->>'maximumPriceMinor')::int=${offer.maximumPriceMinor} and (o->>'active')::boolean)`).join(' and ')).map((check,index)=>`exists(select 1 from public.chat_characters c where c.id=${index===0?a:b}::uuid and jsonb_array_length(c.sales_playbook->'offers')=4 and ${check})`).join(' and ');
   const common=`\\set ON_ERROR_STOP on\nbegin;\nset local lock_timeout='5s';\nset local statement_timeout='30s';\n`;
   const contract=fixtureContract(env,ids);
   const owned=`
-  if exists(select 1 from public.workspace_chat_admin_capabilities where not(workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at = ${started}::timestamptz)) or
-     exists(select 1 from public.chat_characters where not(${ownedCharacters})) or
-     exists(select 1 from public.chat_character_conversations) or exists(select 1 from public.chat_character_messages) or
-     exists(select 1 from public.ai_usage_events where ${usage} and created_at < ${started}::timestamptz)
+  if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and not(chat_admin_multi_character and created_at=${started}::timestamptz)) or
+     exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid) and not(${ownedCharacters})) or
+     exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB}) and not(${ownedFans}))
      then raise exception 'cleanup_identity_drift'; end if;`;
   if(mode==='prepare')return `${common}
-lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
+lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_fans, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
 do $guard$ begin ${contract}
-  if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'fixture_not_empty'; end if;
+  if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid) or
+     exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or
+     exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) or
+     exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz) then raise exception 'fixture_collision'; end if;
 end $guard$;
 insert into public.workspace_chat_admin_capabilities(workspace_id,granted_to_user_id,chat_admin_multi_character,created_at,updated_at) values(${ws}::uuid,${owner}::uuid,true,${started}::timestamptz,${started}::timestamptz);
 insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,languages,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status,created_at,updated_at) values
@@ -109,31 +122,53 @@ insert into public.chat_characters(id,workspace_id,created_by_user_id,display_na
 commit;
 select 'CHAT_ADMIN_MANUAL_PREPARE=PASS';`;
   if(mode==='cleanup')return `${common}
-lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
+lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_fans, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
 do $guard$ begin ${contract} ${owned} end $guard$;
 delete from public.ai_usage_events where ${usage} and created_at >= ${started}::timestamptz;
+delete from public.chat_character_messages where ${ownedMessages};
+delete from public.chat_character_conversations where ${ownedConversations};
+delete from public.chat_character_fans where ${ownedFans};
 delete from public.chat_characters where ${ownedCharacters};
 delete from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and created_at = ${started}::timestamptz;
-do $empty$ begin if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'cleanup_incomplete'; end if; end $empty$;
+do $empty$ begin if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid) or exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) or exists(select 1 from public.chat_character_conversations where ${ownedConversations}) or exists(select 1 from public.chat_character_messages where ${ownedMessages}) or exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz) then raise exception 'cleanup_incomplete'; end if; end $empty$;
 commit;
 select 'CHAT_ADMIN_MANUAL_CLEANUP=PASS';`;
   if(mode==='absence')return `${common}set transaction read only;
-do $empty$ begin if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'cleanup_incomplete'; end if; end $empty$;
+do $empty$ begin if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid) or exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) or exists(select 1 from public.chat_character_conversations where ${ownedConversations}) or exists(select 1 from public.chat_character_messages where ${ownedMessages}) or exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz) then raise exception 'cleanup_incomplete'; end if; end $empty$;
 rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  if (select count(*) from public.chat_characters) <> 3 or (select count(*) from public.workspace_chat_admin_capabilities) <> 1 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz) <> 2 then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.chat_characters where ${ownedCharacters}) <> 3 or
+     (select count(*) from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at=${started}::timestamptz) <> 1 or
+     (select count(*) from public.chat_character_fans where ${ownedFans}) <> 2 or
+     (select count(*) from public.chat_character_fans where ${ownedFans} and character_id=${a}::uuid and display_name=${fanA}) <> 1 or
+     (select count(*) from public.chat_character_fans where ${ownedFans} and character_id=${b}::uuid and display_name=${fanB}) <> 1 or
+     (select count(*) from public.chat_character_conversations where ${ownedConversations}) <> 2 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages}) <> 14 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages} and character_id=${a}::uuid) <> 9 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages} and character_id=${b}::uuid) <> 5 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages} and direction='fan_inbound') <> 3 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages} and direction='suggested_reply') <> 9 or
+     (select count(*) from public.chat_character_messages where ${ownedMessages} and direction='confirmed_reply') <> 2 or
+     not exists(select 1 from public.chat_characters where id=${a}::uuid and revision=2 and status='active') or not exists(select 1 from public.chat_characters where id=${b}::uuid and revision=2 and status='active') or
+     not ${offerChecks} or
+     not exists(select 1 from public.chat_character_messages where ${ownedMessages} and character_id=${a}::uuid and direction='fan_inbound' and content=${literal(CHAT_ADMIN_ACCEPTANCE_REQUESTS.a)}) or
+     not exists(select 1 from public.chat_character_messages where ${ownedMessages} and character_id=${a}::uuid and direction='fan_inbound' and content=${literal(CHAT_ADMIN_ACCEPTANCE_REQUESTS.noOffer)}) or
+     not exists(select 1 from public.chat_character_messages where ${ownedMessages} and character_id=${b}::uuid and direction='fan_inbound' and content=${literal(CHAT_ADMIN_ACCEPTANCE_REQUESTS.b)}) or
+     exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages.replaceAll('chat_character_messages.','confirmed.')} and confirmed.direction='confirmed_reply' and not exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) or
+     (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz) <> 3 or exists(select 1 from public.ai_usage_events where ${usage} and status<>'ok' and created_at>=${started}::timestamptz)
+     then raise exception 'runtime_effect_missing'; end if;
 end $guard$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub',${owner},true);
-do $owner$ begin if (select count(*) from public.chat_characters) <> 2 or exists(select 1 from public.chat_characters where id=${foreignCharacter}::uuid) then raise exception 'owner_character_isolation'; end if; end $owner$;
+do $owner$ begin if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) <> 2 or (select count(*) from public.chat_character_fans where display_name in (${fanA},${fanB})) <> 2 or (select count(*) from public.chat_character_conversations where ${ownedConversations}) <> 2 or (select count(*) from public.chat_character_messages where ${ownedMessages}) <> 14 then raise exception 'owner_isolation'; end if; end $owner$;
 select set_config('request.jwt.claim.sub',${literal(ids.MEMBER_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'member_read_allowed'; end if; end $denied$;
+do $denied$ begin if exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) then raise exception 'member_read_allowed'; end if; end $denied$;
 select set_config('request.jwt.claim.sub',${literal(ids.FOREIGN_OWNER_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'foreign_read_allowed'; end if; end $denied$;
+do $foreign$ begin if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) <> 1 or exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) then raise exception 'foreign_isolation'; end if; end $foreign$;
 select set_config('request.jwt.claim.sub',${literal(ids.PLATFORM_ADMIN_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'admin_read_allowed'; end if; end $denied$;
+do $denied$ begin if exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where display_name in (${fanA},${fanB})) then raise exception 'admin_read_allowed'; end if; end $denied$;
 rollback;
 select 'CHAT_ADMIN_MANUAL_VERIFY=PASS';`;
 }
@@ -167,9 +202,11 @@ function sqlMode(mode,env,receipt,emit=true) {
   if(emit)console.log(`CHAT_ADMIN_MANUAL_${mode.toUpperCase()}=PASS`);
 }
 function schema(env) {
-  if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');
-  const output=database(CHAT_ADMIN_POSTFLIGHT_SQL,env);
-  if(!/(?:^|\n)(?:NOTICE:\s*)?CHAT_ADMIN_SCHEMA_STATE=VERIFIED(?:\r?\n|$)/u.test(output)||output.includes('CHAT_ADMIN_SCHEMA_STATE=ABSENT'))fail('schema');
+  for(const [path,digest,sql,success] of SCHEMA_CONTRACTS){
+    if(createHash('sha256').update(readFileSync(path)).digest('hex')!==digest)fail('schema_checksum');
+    const output=database(sql,env);
+    if(!output.split(/\r?\n/u).some(line=>line.trim().replace(/^NOTICE:\s*/u,'')===success)||output.includes('STATE=ABSENT'))fail('schema');
+  }
 }
 
 export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
@@ -205,12 +242,12 @@ function recoveryBinding(receipt) {
   // Explicit allowlist: never archive environment, credentials, emails or responses.
   // The immutable snapshot cannot know how an interrupted future request finished.
   const ids=Object.fromEntries(ID_KEYS.filter(key=>key!=='PLATFORM_ADMIN_ID').map(key=>[key,receipt.ids[key]]));
-  return {schemaVersion:1,sha:receipt.sha,target:receipt.target,run:receipt.run,attempt:receipt.attempt,ids,marker:receipt.marker,startedAt:receipt.startedAt,inFlightUncertain:true};
+  return {schemaVersion:2,taskId:MANUAL_FLOW_TASK_ID,sha:receipt.sha,target:receipt.target,run:receipt.run,attempt:receipt.attempt,ids,marker:receipt.marker,startedAt:receipt.startedAt,inFlightUncertain:true};
 }
 export function reserveManualFlowReceipt(env) {
   validateManualFlowEnvironment(env);
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID??'')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT??''))fail('run_identity');
-  const receipt={sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),marker:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),inFlightUncertain:false,mutationAttempted:false};
+  const receipt={taskId:MANUAL_FLOW_TASK_ID,sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),marker:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),inFlightUncertain:false,mutationAttempted:false};
   // Reservation is local only. No prepare/cleanup SQL may run before durable upload.
   for(const [path,value] of [[receiptPath(env),receipt],[recoveryPath(env),recoveryBinding(receipt)]]) {
     const fd=openSync(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
@@ -221,7 +258,7 @@ export function reserveManualFlowReceipt(env) {
 function loadReceipt(env) {
   const bytes=privateRead(receiptPath(env));let receipt;
   try {receipt=JSON.parse(bytes.toString('utf8'));} finally {bytes.fill(0);}
-  if(receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||typeof receipt.inFlightUncertain!=='boolean'||typeof receipt.mutationAttempted!=='boolean'||! /^[0-9a-f]{32}$/u.test(receipt.marker??'')||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt??''))fail('receipt_binding');
+  if(receipt.taskId!==MANUAL_FLOW_TASK_ID||receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||typeof receipt.inFlightUncertain!=='boolean'||typeof receipt.mutationAttempted!=='boolean'||! /^[0-9a-f]{32}$/u.test(receipt.marker??'')||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt??''))fail('receipt_binding');
   return receipt;
 }
 export function authorizeReservedManualFlow(env) {
@@ -264,7 +301,7 @@ function cleanup(env) {
 
 async function main() {
   const mode=process.argv[2];if(process.argv.length!==3||!['--check','--probe','--reserve','--run','--cleanup'].includes(mode))fail('mode');
-  if(mode==='--check'){if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
+  if(mode==='--check'){for(const [path,digest] of SCHEMA_CONTRACTS)if(createHash('sha256').update(readFileSync(path)).digest('hex')!==digest)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
   const env=process.env;validateManualFlowEnvironment(env);
   if(mode==='--cleanup'){cleanup(env);return;}
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID ?? '')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT ?? ''))fail('run_identity');
@@ -279,7 +316,7 @@ async function main() {
     prepare:async()=>{await verifyManualFlowRelease(env);sqlMode('prepare',env,receipt);},
     run:async()=>{
       receipt.inFlightUncertain=true;updateReceipt(env,receipt);
-      runManualBrowser(env,'acceptance');
+      runManualBrowser({...env,FANMIND_CHAT_ADMIN_ACCEPTANCE_MARKER:receipt.marker},'acceptance');
       receipt.inFlightUncertain=false;updateReceipt(env,receipt);
     },
     verify:async()=>{await verifyManualFlowRelease(env);sqlMode('verify',env,receipt);},
