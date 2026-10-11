@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 export const REQUIRED_MAIN_PUSH_WORKFLOWS = Object.freeze([
@@ -345,10 +344,7 @@ async function main() {
   if (!input.repository || !input.token) fail("github_context_missing");
   const manifest = await collectEvidence(input);
   const { body, sha256 } = serializeManifest(manifest);
-  const output = process.env.FANMIND_RELEASE_MANIFEST_PATH;
-  if (!output) fail("manifest_path_missing");
-  await mkdir(dirname(output), { recursive: true });
-  await writeFile(output, body, { mode: 0o600 });
+  await writeFile("fanmind-production-release-control.json", body, { mode: 0o600 });
   if (process.env.GITHUB_OUTPUT) {
     await writeFile(
       process.env.GITHUB_OUTPUT,

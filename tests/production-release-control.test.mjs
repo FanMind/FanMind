@@ -342,6 +342,8 @@ test("an adversarial requested commit cannot supply the release-control program"
   assert.match(workflow, /test "\$REQUESTED_RELEASE_COMMIT" = "\$GITHUB_SHA"/u);
   assert.match(workflow, /ref: \$\{\{ github\.sha \}\}/u);
   assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.client_payload\.release_commit \}\}/u);
+  assert.doesNotMatch(trustedControl, /FANMIND_RELEASE_MANIFEST_PATH/u);
+  assert.match(trustedControl, /writeFile\("fanmind-production-release-control\.json"/u);
   assert.equal(trees.get(input.triggerCommit), trustedControl);
   assert.notEqual(trees.get(input.triggerCommit), trees.get(attackerCommit));
   blocked(

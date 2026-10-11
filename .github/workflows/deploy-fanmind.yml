@@ -57,14 +57,13 @@ jobs:
           FANMIND_RELEASE_CONFIRMATION: ${{ github.event.client_payload.confirmation }}
           FANMIND_AUTHORIZATION_COMMENT_ID: ${{ github.event.client_payload.authorization_comment_id }}
           FANMIND_RECOVERY_AUDIT_RUN_ID: ${{ github.event.client_payload.recovery_audit_run_id }}
-          FANMIND_RELEASE_MANIFEST_PATH: ${{ runner.temp }}/fanmind-production-release-control.json
         run: node scripts/operations/production-release-control.mjs
 
       - name: Store sanitized release-control manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fanmind-production-release-control-${{ steps.control.outputs.release_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/fanmind-production-release-control.json
+          path: ${{ github.workspace }}/fanmind-production-release-control.json
           if-no-files-found: error
           retention-days: 30
 
