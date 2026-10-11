@@ -89,10 +89,11 @@ test("the authenticated browser keeps state authority, UI deactivation and origi
   assert.ok(source.includes('character_id:id("CHARACTER_B_ID"),character_revision:inactiveCharacter.revision,fan_id:runId("FAN_B_ID")'));
   const deactivated=source.indexOf('const inactiveCharacter=await deactivateCharacter(page,"FM Synthetic Character B")');
   const remounted=source.indexOf('toContainText("Inaktiv")',deactivated);
+  const fanReady=source.indexOf('getByRole("button",{name:"FM Synthetic Fan B öffnen",exact:true})).toBeVisible()',deactivated);
   const cleared=source.indexOf('getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(0)',remounted);
   const reopened=source.indexOf('await openFan(page,"FM Synthetic Fan B")',deactivated);
   const changedInput=source.indexOf('getByLabel("Neue eingehende Fan-Nachricht").fill("Synthetische Nachricht an deaktivierten Character B")',deactivated);
-  assert.ok(deactivated>=0&&deactivated<remounted&&remounted<cleared&&cleared<reopened&&reopened<changedInput,"current actions must clear on the inactive remount before openFan or input invalidation");
+  assert.ok(deactivated>=0&&deactivated<remounted&&remounted<fanReady&&fanReady<cleared&&cleared<reopened&&reopened<changedInput,"current actions must clear on the ready inactive remount before openFan or input invalidation");
   assert.ok(!source.includes('patchCharacter(page,characterA,"inactive")'));
   assert.ok(source.includes('patchCharacter(page,inactiveCharacter,"active")'));
 });
