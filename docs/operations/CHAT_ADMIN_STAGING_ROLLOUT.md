@@ -54,7 +54,7 @@ Die bestehenden zehn geschützten Fixture-UUIDs werden im Runner und Browser gem
 
 Beim Beenden meldet der Browser alle erfassten Sessions ab, blockiert neue erlaubte Browser-Anfragen und wartet auf bereits gestartete Route-Handler. Erst danach werden die Kontexte geschlossen und die endgültigen Netzwerk-Zähler geprüft. Die Boundary bleibt bis zum Schließen installiert; echte Transport-, Redirect-, Origin- und Write-Fehler bleiben Abnahmefehler. Ein früherer fehlgeschlagener Probe wird durch diese Korrektur nicht nachträglich akzeptiert.
 
-Der damalige, inzwischen verbrauchte Runner prüfte Schema, genaue synthetische Identitäten und Workspace-Zuordnung, verlangte dabei aber noch global leere ChatAdmin-Tabellen. Der unten beschriebene Vier-Angebote-Vertrag ersetzt ausschließlich diese globale Leerheitsannahme durch laufgebundene Identitäten. Ein privater laufgebundener Receipt wird vor dem Commit der temporären Capability, zwei eigenen Characters und eines tatsächlich vorhandenen Fremd-Characters gespeichert. Ein separater Recovery-Beleg mit ausschließlich synthetischen IDs, Marker, Zeit-, Run- und Commit-Bindung muss zuvor erfolgreich als kurzlebiges GitHub-Artefakt gesichert sein; fehlgeschlagene Sicherung sperrt jede Fixture-Mutation. Die echte Browser-Oberfläche meldet sich an, erzeugt für die eigenen Characters A/B jeweils drei echte KI-Vorschläge, prüft Copy und Context-Wechsel und übt anonyme, fremde, inaktive, falsche Revision und Origin-Negativpfade. Der Fremd-Character gehört exakt dem zweiten synthetischen Workspace; sein Zugriff wird aus der Capability-berechtigten primären Session abgewiesen. Member-/Admin-/Tenant-RLS wird zusätzlich direkt geprüft. Die Admin-ID muss zur geschützten Admin-Testidentität und konfigurierten Allowlist gehören; eine echte Admin-Session bestätigt den Admin-Zugriff und die getrennte ChatAdmin-Sperre. Die gemeinsame Anwendungs-Autorisierung weist Platform Admin anhand von `FANMIND_ADMIN_EMAILS` ausdrücklich ab, auch wenn Owner-Rolle und eine Capability sonst vorliegen würden; ausführbare Tests gegen die tatsächliche Autorisierung prüfen diese Kombination.
+Der aktuelle Runner prüft Schema, genaue synthetische Identitäten, Workspace-Zuordnung und Kollisionen ausschließlich im reservierten Fixture-Baum; global leere ChatAdmin-Tabellen sind keine Voraussetzung. Ein privater laufgebundener Receipt wird vor dem Commit der temporären Capability, zwei eigenen Characters und eines tatsächlich vorhandenen Fremd-Characters gespeichert. Ein separater Recovery-Beleg mit ausschließlich synthetischen IDs, Marker, Zeit-, Run- und Commit-Bindung muss zuvor erfolgreich als kurzlebiges GitHub-Artefakt gesichert sein; fehlgeschlagene Sicherung sperrt jede Fixture-Mutation. Die echte Browser-Oberfläche meldet sich an, erzeugt für die eigenen Characters A/B jeweils drei echte KI-Vorschläge, prüft Copy und Context-Wechsel und übt anonyme, fremde, inaktive, falsche Revision und Origin-Negativpfade. Der Fremd-Character gehört exakt dem zweiten synthetischen Workspace; sein Zugriff wird aus der Capability-berechtigten primären Session abgewiesen. Member-/Admin-/Tenant-RLS wird zusätzlich direkt geprüft. Die Admin-ID muss zur geschützten Admin-Testidentität und konfigurierten Allowlist gehören; eine echte Admin-Session bestätigt den Admin-Zugriff und die getrennte ChatAdmin-Sperre. Die gemeinsame Anwendungs-Autorisierung weist Platform Admin anhand von `FANMIND_ADMIN_EMAILS` ausdrücklich ab, auch wenn Owner-Rolle und eine Capability sonst vorliegen würden; ausführbare Tests gegen die tatsächliche Autorisierung prüfen diese Kombination.
 
 Fixture, Capability und die eindeutig zugeordneten ChatAdmin-Usage-Zeilen werden auch bei Fehlern nur nach Identitätsprüfung entfernt; fremde Daten führen zum Abbruch. Erfolgreiche Abnahme benötigt `CHAT_ADMIN_MANUAL_BROWSER=PASS`, `CHAT_ADMIN_MANUAL_VERIFY=PASS`, `CHAT_ADMIN_MANUAL_CLEANUP=PASS`, `CHAT_ADMIN_MANUAL_ABSENCE=PASS` und `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS` sowie unabhängigen Gegencheck. Abgebrochene oder unklare laufende Requests dürfen keine vollständige Cleanup-/Abnahmebehauptung erzeugen. HMAC-basierte Rate-Limit-Telemetrie bleibt unter ihrer normalen TTL und ist kein langlebiger Fixture-Datensatz. Browser-Traces, Screenshots, Videos, private Antworten und Credentials werden nicht als CI-Artefakte veröffentlicht. Der einzige veröffentlichte Recovery-Beleg enthält keine E-Mail, Passwörter, Tokens oder Nachrichten. Bei rotem/abgebrochenem Lauf diesen Beleg aus genau diesem Run sichern und vor Ablauf der Aufbewahrung geschützt anhand der gebundenen Identitäten gegenprüfen. Unklare laufende Requests benötigen eigenständige Prüfung; `inFlightUncertain` darf nicht nur für ein grünes Ergebnis umgeschrieben werden.
 
@@ -79,19 +79,29 @@ Die neue Acceptance-Fixture ist an Task, Run, Versuch, Commit, Ziel, Marker und
 Startzeit gebunden. Sie legt genau zwei eigene Characters, je einen getrennten Fan
 und eine Conversation sowie einen zweiten Workspace-Character für Tenant-Negative
 an. Der Browser speichert bei beiden Characters alle vier Kategorien Foto, Video,
-Privates Foto und Privates Video mit unterschiedlichen EUR-Preisen, lädt die echte
-Seite neu und liest die Werte erneut über den Serverpfad. Danach erzeugt er fünf
-persistierte Batches mit jeweils exakt drei Vorschlägen: vier Kategorien über beide
-Characters und einen erfundenen `999 EUR`-Negativfall. Ein Character-/Fan-fremder
-Offer-Aufruf muss vor Provider-Nutzung scheitern. Ein Vorschlag wird über
+Privates Foto und Privates Video mit unterschiedlichen EUR-Preisen, deaktiviert das
+private Foto von Character B, lädt die echte Seite neu und liest Preise sowie
+Aktivstatus erneut über den Serverpfad. Danach erzeugt er sieben persistierte
+Batches mit jeweils exakt drei Vorschlägen: vier aktive Kategorien über beide
+Characters, einen erfundenen `999 EUR`-Preisfall, einen gültig an Character A/Fan A
+gebundenen semantischen Versuch, das abweichende Videoangebot von Character B zu
+verwenden, und den tatsächlich deaktivierten Angebot-/Preisfall. Jeder einzelne der
+drei Vorschläge muss ausschließlich den numerisch geparsten, servergebundenen Preis
+enthalten; beim deaktivierten Angebot darf keiner einen Preis nennen. Dadurch kann
+`10 EUR` insbesondere nicht durch `110 EUR` erfüllt werden. Ein zusätzlich
+Character-/Fan-fremder Aufruf muss vor Provider-Nutzung scheitern. Ein Vorschlag wird über
 `Kopieren und verwenden` bestätigt; nach echtem Reload muss die persistente
 `Verwendeter KI-Vorschlag`-Markierung sichtbar sein. Es gibt keine HTML-Attrappe
 und keinen externen OnlyFans-/Social-Send.
 
 Prepare, Verify, Cleanup und Absence verlangen keine global leeren Tabellen mehr.
 Sie adressieren nur die reservierten Capability-, Character-, Fan-, Conversation-
-und laufgebundenen Message-/AI-Usage-Identitäten. Cleanup löscht diese Datensätze
-in Abhängigkeitsreihenfolge; fremde Zeilen sind weder Löschziel noch Erfolgshindernis.
+und laufgebundenen Message-/AI-Usage-Identitäten. Vor jedem DELETE prüft Cleanup
+zusätzlich alle Fans, Conversations und Messages unter den reservierten Characters.
+Ein fremdes Kind am selben Parent bricht die gesamte Transaktion ab und bleibt auch
+bei Cleanup-Retry erhalten; erst nach unabhängiger Beseitigung dieser Kollision darf
+das exakte Receipt-Cleanup fortfahren. Fremde Zeilen außerhalb des reservierten
+Fixture-Baums sind weder Löschziel noch Erfolgshindernis.
 Der abschließende read-only Absenznachweis umfasst zusätzlich die seit Start für die
 drei Testidentitäten angelegten Auth-Sessions. Ein unterbrochener Request behält
 `inFlightUncertain=true`: begrenztes exaktes Cleanup darf versucht werden, aber der
@@ -163,4 +173,3 @@ Anwendung auf den letzten bekannten Commit zurückgesetzt; die ungenutzte Spalte
 bestehen bleiben. Ein `drop column`, Restore Write oder sonstiger destruktiver
 Rollback ist ein neues geschütztes Arbeitspaket und benötigt vorab Dateninventar,
 aktuelle Backup-/Restore-Evidence, eigenen SQL-Vertrag und eigene Autorisierung.
-
