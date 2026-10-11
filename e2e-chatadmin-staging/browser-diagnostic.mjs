@@ -3,13 +3,13 @@ import { constants, openSync, closeSync, fstatSync, readFileSync, writeFileSync,
 import { isAbsolute, join } from "node:path";
 
 const MODES=["probe","acceptance"];
-const STAGES=["browser_launch","browser_context","version","anonymous","admin_login_page","admin_login_form","admin_token","admin_identity","admin_dashboard","admin_authority","admin_denial","owner_login_page","owner_login_form","owner_token","owner_identity","owner_dashboard","secondary_login_page","secondary_login_form","secondary_token","secondary_identity","secondary_dashboard","chatadmin_page","offers_a_save","offers_a_reload","offers_b_save","offers_b_reload","fan_a_create","persona_a_request","persona_a_response","persona_a_copy","persona_a_reload","persona_a_negative_request","persona_a_negative_response","persona_switch","fan_b_create","persona_b_request","persona_b_response","persona_b_copy","persona_b_reload","isolation","negatives","network_check","complete"];
+const STAGES=["browser_launch","browser_context","version","anonymous","admin_login_page","admin_login_form","admin_token","admin_identity","admin_dashboard","admin_authority","admin_denial","owner_login_page","owner_login_form","owner_token","owner_identity","owner_dashboard","secondary_login_page","secondary_login_form","secondary_token","secondary_identity","secondary_dashboard","chatadmin_page","offers_save","offers_reload","persona_a_request","persona_a_response","persona_a_copy","confirmation_reload","invented_price","persona_switch","persona_b_request","persona_b_response","persona_b_copy","foreign_offer","negatives","network_check","complete"];
 const OPTIONS={stage:STAGES,outcome:["running","passed","failed"],status:["none","2xx","3xx","4xx","5xx","other"],network:["none","origin","write","redirect","transport"],sessionCleanup:["not_started","passed","failed"]};
 const FIELDS=["version","run","attempt","sha","target","source","mode",...Object.keys(OPTIONS)];
 const fail=()=>{throw Error("CHAT_ADMIN_MANUAL_FLOW_ERROR=browser_diagnostic");};
 function sourceDigest() {
   const hash=createHash("sha256");
-  for(const file of ["./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./offer-fixture.mjs","./manual-flow.spec.mts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
+  for(const file of ["./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./manual-flow.spec.mts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
   return hash.digest("hex");
 }
 function binding(env,mode) {

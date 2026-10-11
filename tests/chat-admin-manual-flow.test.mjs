@@ -11,11 +11,11 @@ import {
   completeManualFlowCleanup,
   reserveManualFlowReceipt, authorizeReservedManualFlow,
   runManualBrowser, runManualFlowProbe,
+  createManualFlowReceiptDataIds,
 } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, requireSuccessfulProbe, formatBrowserDiagnostic } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../e2e-chatadmin-staging/fixture-identity.mjs";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "../e2e-chatadmin-staging/network-boundary.mjs";
-import { CHAT_ADMIN_ACCEPTANCE_OFFERS, chatAdminAcceptanceFanName, chatAdminAcceptancePriceValue } from "../e2e-chatadmin-staging/offer-fixture.mjs";
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
 const keys = ["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
@@ -61,18 +61,6 @@ test("browser and SQL share strict fixture UUID normalization for the observed t
   assert.throws(()=>validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:`${env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID}\r`}),/fixture_identity/u);
 });
 
-test("offer fixtures are complete, Character-distinct and marker-bound",()=>{
-  for(const offers of Object.values(CHAT_ADMIN_ACCEPTANCE_OFFERS)){
-    assert.deepEqual(offers.map(offer=>offer.category),["photo","video","private_photo","private_video"]);
-    for(const offer of offers)assert.ok(offer.minimumPriceMinor<offer.recommendedPriceMinor&&offer.recommendedPriceMinor<offer.maximumPriceMinor);
-  }
-  const prices=Object.values(CHAT_ADMIN_ACCEPTANCE_OFFERS).flat().flatMap(offer=>[offer.minimumPriceMinor,offer.recommendedPriceMinor,offer.maximumPriceMinor]);
-  assert.equal(new Set(prices).size,prices.length);
-  assert.equal(chatAdminAcceptanceFanName("A","f".repeat(32)),`FM Synthetic Fan A ${"f".repeat(32)}`);
-  assert.equal(chatAdminAcceptancePriceValue(2200),"22.00");
-  assert.throws(()=>chatAdminAcceptanceFanName("A","shared-name"));
-});
-
 test("browser diagnostics reject private payloads and the parent never forwards raw Playwright output",()=>{
   const directory=mkdtempSync(join(tmpdir(),"chatadmin-diagnostic-test-"));
   const current={...env,RUNNER_TEMP:directory,GITHUB_RUN_ID:"12345",GITHUB_RUN_ATTEMPT:"1"};
@@ -116,17 +104,15 @@ test("teardown never hides writes that acceptance mode would normally allow",asy
   const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"acceptance"};
   let handler,fetches=0,aborts=0;const reasons=[];
   const boundary=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
-  for(const [path,method] of [["/api/chatadmin/characters","PATCH"],["/api/chatadmin/fans","POST"],["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/conversations","POST"]])assert.equal(chatAdminRequestAllowed(new URL(path,targets.appOrigin),method,targets),true);
-  assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/fans",targets.appOrigin),"DELETE",targets),false);
   await boundary.stop();
-  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/fans","POST"],["/api/chatadmin/conversations","POST"]])await handler({
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"]])await handler({
     request:()=>({url:()=>`${targets.appOrigin}${path}`,method:()=>method}),
     fetch:async()=>{fetches++;},abort:async()=>{aborts++;},
   });
   assert.equal(fetches,0,"teardown must never forward a write");
-  assert.equal(aborts,4);
-  assert.equal(boundary(),4,"acceptance-authorized writes remain violations once teardown starts");
-  assert.deepEqual(reasons,["write","write","write","write"]);
+  assert.equal(aborts,2);
+  assert.equal(boundary(),2,"acceptance-authorized writes remain violations once teardown starts");
+  assert.deepEqual(reasons,["write","write"]);
 });
 
 test("probe dispatch calls only release verification and the browser probe without preparing fixtures",async()=>{
@@ -147,7 +133,7 @@ test("manual flow accepts only its exact protected Staging request", () => {
     {FANMIND_TARGET_SUPABASE_PROJECT_REF:"productionref123"},
     {FANMIND_ENABLE_NON_PRODUCTION_WRITES:"false"}, {FANMIND_NON_PRODUCTION_WRITE_ACK:""},
     {FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-acceptance"},
-    {FANMIND_CHAT_ADMIN_TASK_ID:"FM-ADMINCHAT-OTHER"},
+    {FANMIND_CHAT_ADMIN_TASK_ID:"FM-OTHER-TASK"},
     {FANMIND_CHAT_ADMIN_CHARACTER_B_ID:ids[6]}, {PGSSLMODE:"require"}, {PGPASSWORD:"secret"},
     {FANMIND_ADMIN_EMAILS:"stale-admin@example.invalid"}, {FANMIND_STAGING_ADMIN_E2E_EMAIL:env.FANMIND_STAGING_E2E_EMAIL},
     {FANMIND_STAGING_ADMIN_E2E_PASSWORD:""},
@@ -173,9 +159,9 @@ test("reservation is sanitized and cannot authorize mutation without the uploade
   try {
     reserveManualFlowReceipt(current);
     const archived=JSON.parse(readFileSync(recovery,"utf8"));
-    assert.deepEqual(Object.keys(archived),["schemaVersion","taskId","sha","target","run","attempt","ids","marker","startedAt","inFlightUncertain"]);
+    assert.deepEqual(Object.keys(archived),["schemaVersion","taskId","sha","target","run","attempt","ids","dataIds","marker","startedAt","inFlightUncertain"]);
     assert.equal(archived.schemaVersion,2);
-    assert.equal(archived.taskId,env.FANMIND_CHAT_ADMIN_TASK_ID);
+    assert.equal(archived.taskId,"FM-ADMINCHAT-STAGING-HARNESS-20261011-01");
     assert.equal(archived.inFlightUncertain,true,"durable snapshot must require independent reconciliation after interruption");
     assert.deepEqual(Object.keys(archived.ids),keys.filter(key=>key!=="PLATFORM_ADMIN_ID"));
     assert.doesNotMatch(JSON.stringify(archived),new RegExp(ids[5],"u"));
@@ -224,31 +210,46 @@ test("interrupted server requests cannot produce absence proof or retire the rec
   assert.deepEqual(calls.slice(1),[["remove",true],["verify"],["forget"]]);
 });
 
-test("persisted fixtures and cleanup are marker/actor/target bound without global deletion", () => {
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
+test("committed fixtures and cleanup are marker/actor/target bound without upsert or schema changes", () => {
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32))};
   const prepare=buildManualFlowSql("prepare",env,receipt);
   const cleanup=buildManualFlowSql("cleanup",env,receipt);
   assert.match(prepare,/fanmind_staging_fixture_version/u);
   assert.match(prepare,/staging_synthetic_fixture/u);
-  assert.match(prepare,/fixture_collision/u);
+  assert.match(prepare,/fixture_identity_occupied/u);
   assert.match(prepare,/chat_character_fans/u);
+  assert.match(prepare,/FM Synthetic Fan A/u);
   assert.match(prepare,/lock table/u);
   assert.doesNotMatch(prepare,/\b(upsert|on conflict|create table|alter table|truncate)\b/iu);
-  assert.doesNotMatch(prepare,/exists\(select 1 from public\.chat_character_messages\)\s+or/u);
   assert.match(cleanup,/cleanup_identity_drift/u);
   assert.match(cleanup,/cleanup_incomplete/u);
-  assert.match(cleanup,/delete from public\.chat_character_messages where/u);
-  assert.match(cleanup,/delete from public\.chat_character_conversations where/u);
-  assert.match(cleanup,/delete from public\.chat_character_fans where/u);
-  assert.doesNotMatch(cleanup,/delete from public\.chat_character_messages\s*;/u);
   assert.match(cleanup,/created_at = '2026-09-26T10:00:00.000Z'/u);
   assert.match(cleanup,/feature = 'chat_admin_reply'/u);
+  assert.match(cleanup,/delete from public.chat_character_messages where/u);
+  assert.match(cleanup,/delete from public.chat_character_conversations where/u);
+  assert.match(cleanup,/delete from public.chat_character_fans where/u);
+  assert.match(buildManualFlowSql("absence",env,receipt),/auth\.sessions/u);
+  assert.doesNotMatch(cleanup,/auth\.sessions/u,"session residue must fail the independent absence proof without rolling back bounded data cleanup");
+  assert.doesNotMatch(prepare,/exists\(select 1 from public\.chat_characters\)(?:\s|\)|or)/u,"unrelated rows must not block a run");
+  assert.doesNotMatch(cleanup,/delete from public\.chat_(?:characters|character_fans|character_conversations|character_messages);/u,"cleanup must always carry an exact predicate");
   assert.throws(()=>buildManualFlowSql("cleanup",env,{...receipt,marker:"'; delete"}));
 });
 
+test("foreign rows are preserved while exact fixture collisions and interrupted cleanup fail closed",()=>{
+  const marker="e".repeat(32),receipt={marker,startedAt:"2026-10-11T12:00:00.000Z",dataIds:createManualFlowReceiptDataIds(marker)};
+  const prepare=buildManualFlowSql("prepare",env,receipt),cleanup=buildManualFlowSql("cleanup",env,receipt),absence=buildManualFlowSql("absence",env,receipt);
+  assert.doesNotMatch(prepare,/from public\.chat_character_fans\)/u);
+  assert.match(prepare,/id in \('[0-9a-f-]+'::uuid,'[0-9a-f-]+'::uuid\)/u);
+  assert.match(cleanup,/cleanup_identity_drift/u);
+  assert.match(absence,/created_at>='2026-10-11T12:00:00.000Z'::timestamptz/u);
+  const calls=[];
+  assert.throws(()=>completeManualFlowCleanup({receipt:{inFlightUncertain:true},remove:emit=>calls.push(emit),verify:()=>assert.fail("absence must not be claimed"),forget:()=>assert.fail("receipt must survive")}),/inflight_reconciliation_required/u);
+  assert.deepEqual(calls,[false]);
+});
+
 test("foreign denial uses an existing character with exact second-workspace cleanup ownership", () => {
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
-  const foreignId=env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID;
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32))};
+  const foreignId=receipt.dataIds.FOREIGN_CHARACTER_ID;
   const second=env.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID;
   const foreignOwner=env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID;
   const prepare=buildManualFlowSql("prepare",env,receipt);
@@ -259,19 +260,8 @@ test("foreign denial uses an existing character with exact second-workspace clea
   assert.ok(deletion?.includes(`id='${foreignId}'::uuid and workspace_id='${second}'::uuid and created_by_user_id='${foreignOwner}'::uuid`));
   assert.match(deletion,/bio='FanMind synthetic manual acceptance f{32}' and created_at = '2026-09-26T10:00:00.000Z'/u);
   const verify=buildManualFlowSql("verify",env,receipt);
-  assert.match(verify,/count\(\*\) from public\.chat_character_messages[^;]+<> 14/u);
-  assert.match(verify,/count\(\*\) from public\.ai_usage_events[^;]+<> 3/u);
-  assert.match(verify,/owner_isolation/u);
-});
-
-test("verify binds all four offer categories, both fans, persisted use and foreign isolation",()=>{
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
-  const verify=buildManualFlowSql("verify",env,receipt);
-  for(const category of ["photo","video","private_photo","private_video"])assert.ok(verify.includes(`o->>'category'='${category}'`));
-  assert.match(verify,/FM Synthetic Fan A f{32}/u);assert.match(verify,/FM Synthetic Fan B f{32}/u);
-  assert.match(verify,/direction='confirmed_reply'/u);
-  assert.match(verify,/suggested\.content=confirmed\.content/u);
-  assert.match(verify,/foreign_isolation/u);
+  assert.match(verify,/count\(\*\) from public.chat_characters where/u);
+  assert.match(verify,/owner_character_isolation/u);
 });
 
 test("workflow uploads only the bounded recovery receipt before writes and always retries exact receipt cleanup", () => {

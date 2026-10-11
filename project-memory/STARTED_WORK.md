@@ -1092,19 +1092,36 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
 
-## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — Vier-Angebote-Staging-Harness
-- Date: 2026-10-11
-- Status: IN_PROGRESS
+## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
+- Date: 2026-10-07
+- Status: ACCEPTED; source merged, prior Structured-Offers Staging prerequisites completed.
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Owner: FanMind Builder under the Owner's bounded secretary coordination.
-- Baseline: exact main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
-- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR #1296; implementation head before receipt `53d120758c8bcbd68b269fdcb28c3ec3e4ab7002`.
-- Prior completion: #1290/#1292 are merged; Staging schema runs `37972471467` and `37972797299` plus deploy `37977099722` succeeded on `61cf98f29f48d88b7112c06461b94cd255428b4f`. They are not repeated.
-- Scope: repository-only upgrade of the existing authenticated manual Staging flow to persist two separate synthetic fans, cover all four offers on each Character, generate exactly three bound suggestions for three messages, persist two used replies across reload, reject foreign/invented prices and prove scoped cleanup/absence without requiring globally empty tables.
-- Boundary: no merge, dispatch, deploy, live test, database, Production, credentials/secrets/permissions, provider or real-fan action. The consumed `FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926` is not reused.
-- Exact next step: publish the Draft PR, obtain exact-head CI, then stop for independent R3 countercheck. A later authorized Staging run requires merged/deployed SHA equality and the unchanged workflow gates.
-- Recovery: source revert only; later runtime recovery is marker/ID/start-time bound and must retain the pre-mutation artifact until independent absence confirmation.
+- Owner: FanMind Builder
+- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
+- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
+- Scope: repair the regression between #1099 structured Creator offers and the later multi-Character ChatAdmin without creating a price table or replacing `sales_rules`; add Foto, Video, privates Foto and privates Video, persistence/reload, bound AI context and price-hallucination rejection.
+- Root cause: #1099 binds one `creator_sales_playbooks` row to the single `creators` row per Workspace. #1145 introduced independent multi-Character rows and copied only free-text sales rules. Directly sharing the one Creator playbook would mix Character prices.
+- Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
+- Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
+- Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
+- Completion: PR #1290 final head `48ae5ded06e18a466a5844d3d807db3a723a59f6` merged as `7a2fe438748b6940220d03562213548011c5bec5`; #1292 merged as `61cf98f29f48d88b7112c06461b94cd255428b4f`. Structured-Offers VERIFY `37972471467`, APPLY `37972797299` and Staging deploy `37977099722` succeeded on that exact release. The later four-offer authenticated browser acceptance remains distinct and unexecuted.
+- Exact next step: do not reopen this writer. Continue only through the separate `FM-ADMINCHAT-STAGING-HARNESS-20261011-01` preparation and its later independently authorized exact-head Staging action.
+- Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
+
+## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
+- Date: 2026-10-11
+- Status: IMPLEMENTED_FOR_DRAFT_PR
+- Risk: R3
+- Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
+- Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
+- Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`; no open PR overlaps this ChatAdmin harness scope.
+- Scope: repository-only upgrade of the existing authenticated manual-flow harness for two Characters, two isolated Fans, all four structured offer categories, distinct prices, actual server persistence/reload, five persisted three-suggestion generations, Copy-and-use persistence, invented/foreign-offer negatives and exact bounded recovery/cleanup/absence.
+- Gates retained: probe/acceptance mode, exact current-main reviewed commit, `run-chat-admin-manual-flow`, protected `staging`, target/Production separation, TLS, network boundary and `fanmind-chat-admin-staging-write` serialization.
+- Boundary: no merge, dispatch, deploy, live test, database/Production/provider/customer write, credential/secret/permission change or external send. The completed runs on `61cf98f...` are prerequisites, not evidence of this new browser acceptance.
+- Evidence plan: focused static/behavioral negatives, exact SQL predicates for foreign-data preservation and interrupted runs, full exact-head CI/typecheck/lint/build/browser gates, diff inspection and independent R3 countercheck. Local dependency-backed Playwright/typecheck may remain unavailable under `CONNECT/registry 403`; CI must provide that evidence before handoff is considered countercheck-ready.
+- Recovery: reviewed repository revert only for this source task. Any later Staging run uses its pre-mutation recovery artifact and cannot claim absence while `inFlightUncertain=true`.
+- Exact next step: publish one Draft PR and await final-head CI plus independent R3 countercheck. Do not merge or dispatch the workflow in this run.
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
