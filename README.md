@@ -719,8 +719,8 @@ Der auf Production aktive isolierte Release-Pfad:
    Kernrouten und eine lückenlose `200`-Verfügbarkeitsprobe;
 6. rollt bei einem Fehler auf das zuvor aktive Release zurück.
 
-Der frühere In-Place-Pfad ist nur noch ein ausdrücklich deaktivierbarer
-Notfall-Fallback. Der verbindliche Ablauf und die Rollback-Grenzen stehen in
+Der frühere In-Place-Pfad ist entfernt; ein Release bricht ab, wenn der
+isolierte Pfad nicht aktiviert ist. Der verbindliche Ablauf und die Rollback-Grenzen stehen in
 `docs/operations/ISOLATED_RELEASE_DEPLOY.md`.
 
 Nach jedem erfolgreichen Production-Deploy sowie täglich um 04:17 UTC läuft

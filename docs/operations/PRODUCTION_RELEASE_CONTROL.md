@@ -6,15 +6,15 @@ Status: repository preparation only. No Production release is authorized or acti
 
 Merging to `main` and releasing to Production are separate operations. Staging remains on its existing `deploy-staging.yml` path and is not called by the Production workflow. In particular, the protected Creator target transition, database transition, runtime activation and recovery chain remains manual and unchanged.
 
-`Deploy FanMind` has no `push` trigger. It accepts only a manual dispatch on the exact current `main` commit. A GitHub-hosted authorization job completes all repository and evidence checks before the `production` environment or the self-hosted `fanmind-prod` runner is requested. A risk input and confirmation text are metadata and typo guards; neither grants authorization.
+`Deploy FanMind` has no `push` or `workflow_dispatch` trigger. It accepts only the typed `fanmind-production-release` `repository_dispatch`, whose workflow definition and `GITHUB_SHA` come from the default branch. Before checkout, an inline bootstrap checks the event type, action, repository, `main` ref and equality of requested release SHA with `GITHUB_SHA`. Checkout then uses only `github.sha`; the requested target can never supply the control program. A GitHub-hosted authorization job completes all repository and evidence checks before the `production` environment or the self-hosted `fanmind-prod` runner is requested. A risk value and confirmation text are metadata and typo guards; neither grants authorization.
 
 The gate requires all of the following:
 
 - `FANMIND_PRODUCTION_RELEASE_GATE_ENABLED` is exactly `true` and `FANMIND_PRODUCTION_OWNER_LOGIN` is configured as repository variables;
-- the requested commit is the workflow's exact dispatch SHA and the current `main` SHA;
+- the requested commit is the trusted default-branch event SHA and the current `main` SHA;
 - the commit has exactly one merged `main` pull request;
 - the final PR head has an independent approval and no reviewer's current state is `CHANGES_REQUESTED`;
-- all nine repository PR workflows are complete and successful on the exact reviewed PR head, and every applicable workflow on the exact `main` push is complete and successful: `FanMind Browser E2E`, `FanMind CodeQL`, `FanMind God Mode Gate`, and `FanMind Supply Chain Security`;
+- all nine repository PR workflows are complete and successful on the exact reviewed PR head, and every applicable workflow on the exact `main` push is complete and successful: `FanMind Browser E2E`, `FanMind CodeQL`, `FanMind God Mode Gate`, and `FanMind Supply Chain Security`; every run is matched to GitHub's current workflow ID and canonical path, and the highest run number/latest attempt is authoritative;
 - the configured owner authored an exact issue comment binding task ID, release SHA, risk and `authorization=approve`;
 - a successful read-only Production audit is at most 48 hours old, has its exact commit-bound receipt and names the same commit currently returned by Production `/api/version`;
 - the `production` environment gate is approved; and
@@ -49,7 +49,7 @@ The first cutover needs a separately approved platform window. Before merge, the
 1. establish a Production change freeze and verify that no Production deployment is permitted during the window;
 2. enumerate and resolve every queued, waiting and running `Deploy FanMind` run, including rerunnable historical runs that still target `[self-hosted, fanmind-prod, exoscale, linux, x64]`;
 3. prevent the old runner registration or host identity from accepting historical workflow jobs. Removing GitHub secrets is insufficient because the current runner has local `.env.production`, `sudo`, PM2 and systemd access;
-4. verify the `production` environment has the required independent reviewer, self-review prevention, `main`-only deployment branch policy and no bypass path available to the dispatcher; these settings are currently unproven;
+4. verify the `production` environment has the required independent reviewer, self-review prevention, `main`-only deployment branch policy and no bypass path available to the release initiator; these settings are currently unproven;
 5. keep `FANMIND_PRODUCTION_RELEASE_GATE_ENABLED` absent or not `true` and configure the exact owner login only after the control and environment settings have been independently checked;
 6. obtain a fresh successful read-only audit and validate current backup/recovery evidence; and
 7. independently approve the exact cutover commit and confirm all applicable PR checks are successful.
@@ -60,7 +60,7 @@ There is no purely repository-side guarantee that an old rerun cannot reach an a
 
 ## Dispatch contract after activation
 
-A later, separately authorized release dispatch must select `main` at the exact release SHA and provide `release_commit`, `task_id`, `risk`, `authorization_comment_id`, `recovery_audit_run_id` and confirmation `release-production`. Missing, stale, mismatched or failed evidence stops on the GitHub-hosted job. A successful `Deploy FanMind` run always means the Production job ran; there is no successful no-op route that could spuriously trigger the read-only audit or final go-live readiness workflows.
+A later, separately authorized GitHub API `repository_dispatch` must use event type `fanmind-production-release` and provide `release_commit`, `task_id`, `risk`, `authorization_comment_id`, `recovery_audit_run_id` and confirmation `release-production` in `client_payload`. The event always loads the workflow from the default branch; the release SHA must equal that event's exact `main` SHA. Missing, stale, mismatched or failed evidence stops on the GitHub-hosted job. A successful `Deploy FanMind` run always means the Production job ran; there is no successful no-op route that could spuriously trigger the read-only audit or final go-live readiness workflows.
 
 The follow-up audit and readiness workflows bind their target to the successful deployment run's `head_sha`. Scheduled audits resolve the actually installed release from `/api/version`, so `main` may advance without falsely claiming that unreleased code is deployed.
 
@@ -68,4 +68,5 @@ References:
 
 - GitHub workflow version and event SHA/ref semantics: https://docs.github.com/en/actions/concepts/workflows-and-actions/workflows
 - Reruns retain the original `GITHUB_SHA` and `GITHUB_REF`: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs
+- `repository_dispatch` runs only when the workflow exists on the default branch and uses the last default-branch commit: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#repository_dispatch
 - Environment protection is evaluated before a job is sent to a runner: https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments

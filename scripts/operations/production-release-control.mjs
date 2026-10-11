@@ -4,21 +4,18 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const REQUIRED_MAIN_PUSH_WORKFLOWS = Object.freeze([
-  "FanMind Browser E2E",
-  "FanMind CodeQL",
-  "FanMind God Mode Gate",
-  "FanMind Supply Chain Security",
+  { name: "FanMind Browser E2E", path: ".github/workflows/browser-e2e.yml" },
+  { name: "FanMind CodeQL", path: ".github/workflows/codeql.yml" },
+  { name: "FanMind God Mode Gate", path: ".github/workflows/fanmind-god-mode-gate.yml" },
+  { name: "FanMind Supply Chain Security", path: ".github/workflows/supply-chain-security.yml" },
 ]);
 export const REQUIRED_PULL_REQUEST_WORKFLOWS = Object.freeze([
-  "FanMind CI",
-  "FanMind Browser E2E",
-  "FanMind CodeQL",
-  "FanMind God Mode Gate",
-  "FanMind Supply Chain Security",
-  "FanMind Landing Language CI",
-  "Project Memory Guard",
-  "Project Memory Quality",
-  "Project Memory Status",
+  { name: "FanMind CI", path: ".github/workflows/ci-fanmind.yml" },
+  ...REQUIRED_MAIN_PUSH_WORKFLOWS,
+  { name: "FanMind Landing Language CI", path: ".github/workflows/landing-language-ci.yml" },
+  { name: "Project Memory Guard", path: ".github/workflows/project-memory-guard.yml" },
+  { name: "Project Memory Quality", path: ".github/workflows/project-memory-quality.yml" },
+  { name: "Project Memory Status", path: ".github/workflows/project-memory-status.yml" },
 ]);
 
 const SHA = /^[0-9a-f]{40}$/u;
@@ -34,7 +31,9 @@ function fail(code) {
 
 export function validateRequest(input) {
   if (input.gateEnabled !== "true") fail("gate_not_enabled");
-  if (input.eventName !== "workflow_dispatch") fail("event_not_dispatch");
+  if (input.eventName !== "repository_dispatch") fail("event_not_repository_dispatch");
+  if (input.eventAction !== "fanmind-production-release") fail("event_action_invalid");
+  if (input.repository !== "FanMind/FanMind") fail("repository_invalid");
   if (input.ref !== "refs/heads/main") fail("ref_not_main");
   if (!SHA.test(input.releaseCommit ?? "")) fail("release_commit_invalid");
   if (input.releaseCommit !== input.triggerCommit) fail("trigger_commit_mismatch");
@@ -88,44 +87,71 @@ export function requireIndependentReview(reviews, pull) {
   return approval;
 }
 
-function requireCi(runs, commit, event, required, headBranch) {
+function requireCi(runs, commit, event, required, identities, headBranch) {
   const selected = [];
-  for (const workflowName of required) {
+  for (const expected of required) {
+    const identity = identities.find(
+      (workflow) => workflow.name === expected.name && workflow.path === expected.path,
+    );
+    if (!identity || !Number.isSafeInteger(identity.id) || identity.id <= 0) {
+      fail(`ci_workflow_identity_missing:${expected.name}`);
+    }
+    if (identity.state !== "active") fail(`ci_workflow_inactive:${expected.name}`);
     const candidates = runs
       .filter(
         (run) =>
-          run.name === workflowName &&
+          run.workflow_id === identity.id &&
+          run.path === expected.path &&
+          run.name === expected.name &&
           run.event === event &&
           (!headBranch || run.head_branch === headBranch) &&
-          run.head_sha === commit,
+          run.head_sha === commit &&
+          Number.isSafeInteger(run.run_number) &&
+          run.run_number > 0 &&
+          Number.isSafeInteger(run.run_attempt) &&
+          run.run_attempt > 0,
       )
-      .sort((left, right) => (right.run_attempt ?? 0) - (left.run_attempt ?? 0));
+      .sort(
+        (left, right) =>
+          right.run_number - left.run_number ||
+          right.run_attempt - left.run_attempt ||
+          right.id - left.id,
+      );
     const run = candidates[0];
-    if (!run) fail(`ci_missing:${workflowName}`);
+    if (!run) fail(`ci_missing:${expected.name}`);
     if (run.status !== "completed" || run.conclusion !== "success") {
-      fail(`ci_not_successful:${workflowName}`);
+      fail(`ci_not_successful:${expected.name}`);
     }
-    selected.push({ name: run.name, run_id: run.id, run_attempt: run.run_attempt });
+    selected.push({
+      name: run.name,
+      path: run.path,
+      workflow_id: run.workflow_id,
+      run_id: run.id,
+      run_number: run.run_number,
+      run_attempt: run.run_attempt,
+    });
   }
   return selected;
 }
 
-export function requireMainPushCi(runs, releaseCommit) {
+export function requireMainPushCi(runs, releaseCommit, identities) {
   return requireCi(
     runs,
     releaseCommit,
     "push",
     REQUIRED_MAIN_PUSH_WORKFLOWS,
+    identities,
     "main",
   );
 }
 
-export function requirePullRequestCi(runs, reviewedHead) {
+export function requirePullRequestCi(runs, reviewedHead, identities) {
   return requireCi(
     runs,
     reviewedHead,
     "pull_request",
     REQUIRED_PULL_REQUEST_WORKFLOWS,
+    identities,
   );
 }
 
@@ -222,13 +248,25 @@ export async function collectEvidence(
 
   const pulls = await api(`/commits/${input.releaseCommit}/pulls`);
   const pull = selectMergedPullRequest(pulls, input.releaseCommit);
-  const [reviews, mainRunPage, prRunPage, comment, auditRun, artifactPage] = await Promise.all([
+  const workflowDefinitions = [
+    ...new Map(
+      [...REQUIRED_MAIN_PUSH_WORKFLOWS, ...REQUIRED_PULL_REQUEST_WORKFLOWS].map(
+        (workflow) => [workflow.path, workflow],
+      ),
+    ).values(),
+  ];
+  const [reviews, mainRunPage, prRunPage, comment, auditRun, artifactPage, identities] = await Promise.all([
     api(`/pulls/${pull.number}/reviews?per_page=100`),
     api(`/actions/runs?head_sha=${input.releaseCommit}&event=push&per_page=100`),
     api(`/actions/runs?head_sha=${pull.head.sha}&event=pull_request&per_page=100`),
     api(`/issues/comments/${input.authorizationCommentId}`),
     api(`/actions/runs/${input.recoveryAuditRunId}`),
     api(`/actions/runs/${input.recoveryAuditRunId}/artifacts?per_page=100`),
+    Promise.all(
+      workflowDefinitions.map((workflow) =>
+        api(`/actions/workflows/${encodeURIComponent(workflow.path.split("/").at(-1))}`),
+      ),
+    ),
   ]);
   if (reviews.length >= 100) fail("review_evidence_pagination_required");
   if ((mainRunPage.total_count ?? 0) > (mainRunPage.workflow_runs?.length ?? 0)) {
@@ -241,8 +279,16 @@ export async function collectEvidence(
     fail("audit_artifact_pagination_required");
   }
   const approval = requireIndependentReview(reviews, pull);
-  const mainCi = requireMainPushCi(mainRunPage.workflow_runs ?? [], input.releaseCommit);
-  const pullRequestCi = requirePullRequestCi(prRunPage.workflow_runs ?? [], pull.head.sha);
+  const mainCi = requireMainPushCi(
+    mainRunPage.workflow_runs ?? [],
+    input.releaseCommit,
+    identities,
+  );
+  const pullRequestCi = requirePullRequestCi(
+    prRunPage.workflow_runs ?? [],
+    pull.head.sha,
+    identities,
+  );
   const authorization = requireOwnerAuthorization(comment, {
     ...input,
     mergedAt: pull.merged_at,
@@ -284,6 +330,7 @@ async function main() {
     gateEnabled: process.env.FANMIND_PRODUCTION_RELEASE_GATE_ENABLED,
     ownerLogin: process.env.FANMIND_PRODUCTION_OWNER_LOGIN,
     eventName: process.env.GITHUB_EVENT_NAME,
+    eventAction: process.env.FANMIND_RELEASE_EVENT_ACTION,
     ref: process.env.GITHUB_REF,
     triggerCommit: process.env.GITHUB_SHA,
     releaseCommit: process.env.FANMIND_RELEASE_COMMIT,

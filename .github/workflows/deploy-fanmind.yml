@@ -1,33 +1,8 @@
 name: Deploy FanMind
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_commit:
-        description: Exact 40-character main commit to release
-        required: true
-        type: string
-      task_id:
-        description: Bound FM task identifier
-        required: true
-        type: string
-      risk:
-        description: Reviewed risk class; this value never grants authorization
-        required: true
-        type: choice
-        options: [R1, R2, R3, R4]
-      authorization_comment_id:
-        description: Exact owner authorization issue-comment ID
-        required: true
-        type: string
-      recovery_audit_run_id:
-        description: Fresh successful read-only Production audit run ID
-        required: true
-        type: string
-      confirmation:
-        description: Type release-production
-        required: true
-        type: string
+  repository_dispatch:
+    types: [fanmind-production-release]
 
 concurrency:
   group: fanmind-production-deploy
@@ -49,10 +24,24 @@ jobs:
       manifest_sha256: ${{ steps.control.outputs.manifest_sha256 }}
       rollback_commit: ${{ steps.control.outputs.rollback_commit }}
     steps:
-      - name: Checkout exact requested main revision
+      - name: Reject untrusted event context before checkout
+        env:
+          EXPECTED_REPOSITORY: FanMind/FanMind
+          EVENT_ACTION: ${{ github.event.action }}
+          REQUESTED_RELEASE_COMMIT: ${{ github.event.client_payload.release_commit }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "repository_dispatch"
+          test "$EVENT_ACTION" = "fanmind-production-release"
+          test "$GITHUB_REPOSITORY" = "$EXPECTED_REPOSITORY"
+          test "$GITHUB_REF" = "refs/heads/main"
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$REQUESTED_RELEASE_COMMIT" = "$GITHUB_SHA"
+
+      - name: Checkout trusted default-branch control revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.release_commit }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Verify owner authorization, review, CI and recovery evidence
@@ -61,12 +50,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           FANMIND_PRODUCTION_RELEASE_GATE_ENABLED: ${{ vars.FANMIND_PRODUCTION_RELEASE_GATE_ENABLED }}
           FANMIND_PRODUCTION_OWNER_LOGIN: ${{ vars.FANMIND_PRODUCTION_OWNER_LOGIN }}
-          FANMIND_RELEASE_COMMIT: ${{ inputs.release_commit }}
-          FANMIND_RELEASE_TASK_ID: ${{ inputs.task_id }}
-          FANMIND_RELEASE_RISK: ${{ inputs.risk }}
-          FANMIND_RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
-          FANMIND_AUTHORIZATION_COMMENT_ID: ${{ inputs.authorization_comment_id }}
-          FANMIND_RECOVERY_AUDIT_RUN_ID: ${{ inputs.recovery_audit_run_id }}
+          FANMIND_RELEASE_EVENT_ACTION: ${{ github.event.action }}
+          FANMIND_RELEASE_COMMIT: ${{ github.event.client_payload.release_commit }}
+          FANMIND_RELEASE_TASK_ID: ${{ github.event.client_payload.task_id }}
+          FANMIND_RELEASE_RISK: ${{ github.event.client_payload.risk }}
+          FANMIND_RELEASE_CONFIRMATION: ${{ github.event.client_payload.confirmation }}
+          FANMIND_AUTHORIZATION_COMMENT_ID: ${{ github.event.client_payload.authorization_comment_id }}
+          FANMIND_RECOVERY_AUDIT_RUN_ID: ${{ github.event.client_payload.recovery_audit_run_id }}
           FANMIND_RELEASE_MANIFEST_PATH: ${{ runner.temp }}/fanmind-production-release-control.json
         run: node scripts/operations/production-release-control.mjs
 
@@ -257,8 +247,8 @@ jobs:
           RELEASE_COMMIT: ${{ needs.authorize-release.outputs.release_commit }}
           ROLLBACK_COMMIT: ${{ needs.authorize-release.outputs.rollback_commit }}
           MANIFEST_SHA256: ${{ needs.authorize-release.outputs.manifest_sha256 }}
-          TASK_ID: ${{ inputs.task_id }}
-          RISK: ${{ inputs.risk }}
+          TASK_ID: ${{ github.event.client_payload.task_id }}
+          RISK: ${{ github.event.client_payload.risk }}
         run: |
           set -euo pipefail
           RECEIPT="$RUNNER_TEMP/fanmind-production-release-result.json"
