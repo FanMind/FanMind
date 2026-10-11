@@ -407,7 +407,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     const offersB={...offersA,positioning:"B",offers:[
       {id:"photo",name:"Foto",category:"photo",description:"",currency:"EUR",minimumPriceMinor:5100,recommendedPriceMinor:5100,maximumPriceMinor:5100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
       {id:"video",name:"Video",category:"video",description:"",currency:"EUR",minimumPriceMinor:6100,recommendedPriceMinor:6100,maximumPriceMinor:6100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
-      {id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:7100,recommendedPriceMinor:7100,maximumPriceMinor:7100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:7100,recommendedPriceMinor:7100,maximumPriceMinor:7100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:false,requiresConfirmation:false},
       {id:"private_video",name:"Privates Video",category:"private_video",description:"",currency:"EUR",minimumPriceMinor:9100,recommendedPriceMinor:9100,maximumPriceMinor:9100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
     ]};
     sql(`update public.chat_characters set sales_playbook='${JSON.stringify(offersA)}'::jsonb,revision=2 where id='${ids[6]}';
@@ -417,9 +417,11 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     const batches=[
       [ids[6],fanA,ids[8],"10101010-1010-4010-8010-101010101010","Foto fuer 10 EUR",["Foto A kostet 10 EUR","Gern das Foto fuer 10 EUR","Ich kann dir das Foto fuer 10 EUR senden"]],
       [ids[6],fanA,ids[8],"20202020-2020-4020-8020-202020202020","Privates Foto fuer 25 EUR",["Privates Foto A kostet 25 EUR","Das private Foto gibt es fuer 25 EUR","Gern fuer 25 EUR"]],
-      [ids[6],fanA,ids[8],"30303030-3030-4030-8030-303030303030","Erfundenes Angebot fuer 999 EUR",["Ich bleibe beim gespeicherten Foto fuer 10 EUR","Das private Foto kostet 25 EUR","Ein Video kostet 20 EUR"]],
-      [ids[7],fanB,ids[9],"40404040-4040-4040-8040-404040404040","Video fuer 61 EUR",["Video B kostet 61 EUR","Gern das Video fuer 61 EUR","Ich sende das Video fuer 61 EUR"]],
-      [ids[7],fanB,ids[9],"50505050-5050-4050-8050-505050505050","Privates Video fuer 91 EUR",["Privates Video B kostet 91 EUR","Das private Video gibt es fuer 91 EUR","Gern fuer 91 EUR"]],
+      [ids[6],fanA,ids[8],"30303030-3030-4030-8030-303030303030","Privates Foto mit erfundenem Preis 999 EUR",["Das private Foto kostet 25 EUR","Gern das private Foto fuer 25 EUR","Ich biete das private Foto fuer 25 EUR an"]],
+      [ids[6],fanA,ids[8],"40404040-4040-4040-8040-404040404040","Character B Video fuer 61 EUR",["Mein Video kostet 20 EUR","Gern mein Video fuer 20 EUR","Ich biete mein Video fuer 20 EUR an"]],
+      [ids[7],fanB,ids[9],"50505050-5050-4050-8050-505050505050","Video fuer 61 EUR",["Video B kostet 61 EUR","Gern das Video fuer 61 EUR","Ich sende das Video fuer 61 EUR"]],
+      [ids[7],fanB,ids[9],"60606060-6060-4060-8060-606060606060","Privates Video fuer 91 EUR",["Privates Video B kostet 91 EUR","Das private Video gibt es fuer 91 EUR","Gern fuer 91 EUR"]],
+      [ids[7],fanB,ids[9],"70707070-7070-4070-8070-707070707070","Deaktiviertes privates Foto fuer 71 EUR",["Dazu ist kein aktives Angebot gespeichert","Dieses Angebot ist nicht verfügbar","Ich kann dazu nichts anbieten"]],
     ];
     for(const [character,fan,conversation,generation,inbound,suggestions] of batches) {
       sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
@@ -428,13 +430,24 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
           '${inbound}',array[${suggestions.map((value)=>`'${value}'`).join(",")}]); commit;`);
     }
     sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
-      select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,1,'60606060-6060-4060-8060-606060606060','Foto A kostet 10 EUR'); commit;
+      select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,1,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
       insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
-      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,5) ordinal;
-      insert into public.ai_usage_events values('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','2026-09-26T10:00:06Z');`);
+      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,7) ordinal;
+      insert into public.ai_usage_events values('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','2026-09-26T10:00:08Z');`);
     assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
 
-    sql(`insert into auth.sessions(user_id,created_at) values('${ids[2]}','2026-09-26T10:00:07Z');`);
+    const attachedFan="dddddddd-dddd-4ddd-8ddd-dddddddddddd",attachedCreation="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    sql(`insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,status,summary,notes,creation_id)
+      values('${attachedFan}','${ids[0]}','${ids[6]}','Foreign same-parent fan','OnlyFans','active','','not owned by receipt','${attachedCreation}');`);
+    assert.equal(sql(`select count(*) from public.chat_character_conversations where fan_id='${attachedFan}';`).trim(),"1","fan trigger must create a same-parent conversation");
+    for(let attempt=1;attempt<=2;attempt+=1){
+      assert.throws(()=>sql(buildManualFlowSql("cleanup",env,receipt)),`cleanup attempt ${attempt} must fail closed on a foreign same-parent child`);
+      assert.equal(sql(`select count(*) from public.chat_character_fans where id='${attachedFan}' and character_id='${ids[6]}';`).trim(),"1","failed cleanup must preserve the foreign fan");
+      assert.equal(sql(`select count(*) from public.chat_character_conversations where fan_id='${attachedFan}';`).trim(),"1","failed cleanup must preserve the trigger-created conversation");
+      assert.equal(sql(`select count(*) from public.chat_characters where id='${ids[6]}';`).trim(),"1","failed cleanup must preserve the reserved parent and all receipt rows");
+    }
+    sql(`delete from public.chat_character_fans where id='${attachedFan}';`);
+    sql(`insert into auth.sessions(user_id,created_at) values('${ids[2]}','2026-09-26T10:00:09Z');`);
     assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup must commit even while session absence still fails");
     assert.throws(()=>sql(buildManualFlowSql("absence",env,receipt)),"independent absence must reject a run-bound session");
     sql(`delete from auth.sessions where user_id='${ids[2]}' and created_at>='${receipt.startedAt}'::timestamptz;`);
