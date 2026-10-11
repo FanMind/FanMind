@@ -1051,27 +1051,83 @@ async function runWithResult(command, args, options) {
   }
 }
 
-async function runAuditWorkflow(t, output, exitCode) {
+async function runAuditWorkflow(t, output, exitCode, {
+  eventName = "workflow_dispatch",
+  expected = expectedCommit,
+  versionPayload = JSON.stringify({
+    application: "fanmind",
+    runtimeEnvironment: "production",
+    releaseCommit: expectedCommit,
+  }),
+} = {}) {
   const root = await mkdtemp(join(tmpdir(), "fanmind-audit-workflow-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const runnerTemp = join(root, "runner");
+  const bin = join(root, "bin");
   await mkdir(runnerTemp);
+  await mkdir(bin);
   const audit = join(root, "audit.sh");
+  const liveLookupLog = join(root, "live-lookup.log");
   await writeFile(audit, '#!/bin/bash\nprintf "%s" "$AUDIT_TEST_OUTPUT"\nprintf "%s\\n" "RAW_SECRET_CANARY" >&2\nexit "$AUDIT_TEST_EXIT"\n', { mode: 0o700 });
+  await writeFile(
+    join(bin, "curl"),
+    '#!/bin/bash\nprintf "called\\n" >> "$AUDIT_TEST_LIVE_LOOKUP_LOG"\nprintf "%s" "$AUDIT_TEST_VERSION_PAYLOAD"\n',
+    { mode: 0o700 },
+  );
   const workflow = yaml.load(await readFile(".github/workflows/production-readonly-audit.yml", "utf8"));
   // Execute the actual production step, substituting only its installed paths.
   const step = workflow.jobs.audit.steps[0].run
     .replaceAll("/usr/local/lib/fanmind-audit/read-only-production-audit.sh", '"$AUDIT_TEST_SCRIPT"')
     .replaceAll("/usr/local/lib/fanmind-audit/verify-production-audit-output.mjs", '"$AUDIT_TEST_VERIFIER"');
   const result = await runWithResult("bash", ["-euo", "pipefail", "-c", step], {
-    env: { ...process.env, RUNNER_TEMP: runnerTemp, EXPECTED_COMMIT: expectedCommit,
-      AUDIT_TEST_SCRIPT: audit, AUDIT_TEST_VERIFIER: resolve("scripts/operations/verify-production-audit-output.mjs"),
-      AUDIT_TEST_OUTPUT: output, AUDIT_TEST_EXIT: String(exitCode) },
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      GITHUB_EVENT_NAME: eventName,
+      RUNNER_TEMP: runnerTemp,
+      EXPECTED_COMMIT: expected,
+      AUDIT_TEST_SCRIPT: audit,
+      AUDIT_TEST_VERIFIER: resolve("scripts/operations/verify-production-audit-output.mjs"),
+      AUDIT_TEST_OUTPUT: output,
+      AUDIT_TEST_EXIT: String(exitCode),
+      AUDIT_TEST_LIVE_LOOKUP_LOG: liveLookupLog,
+      AUDIT_TEST_VERSION_PAYLOAD: versionPayload,
+    },
   });
   assert.deepEqual(await readdir(runnerTemp), [], "both private files must be removed");
   assert.doesNotMatch(result.stdout + result.stderr, /RAW_SECRET_CANARY/u);
-  return result;
+  const liveLookupCount = await readFile(liveLookupLog, "utf8")
+    .then(value => value.trim().split("\n").filter(Boolean).length)
+    .catch(error => {
+      if (error.code === "ENOENT") return 0;
+      throw error;
+    });
+  return { ...result, liveLookupCount };
 }
+
+test("manual and workflow-run audits reject missing or invalid commits before live lookup", async (t) => {
+  for (const eventName of ["workflow_dispatch", "workflow_run"]) {
+    for (const expected of ["", "not-a-commit"]) {
+      const result = await runAuditWorkflow(t, validAuditOutput(), 0, {
+        eventName,
+        expected,
+      });
+      assert.equal(result.code, 1, `${eventName} must reject ${expected || "missing commit"}`);
+      assert.equal(result.liveLookupCount, 0, `${eventName} must not query Production`);
+      assert.match(result.stderr, /Expected Production commit is invalid\./u);
+    }
+  }
+});
+
+test("scheduled audit resolves the live Production commit exactly once", async (t) => {
+  const result = await runAuditWorkflow(t, validAuditOutput(), 0, {
+    eventName: "schedule",
+    expected: "",
+  });
+  assert.equal(result.code, 0);
+  assert.equal(result.liveLookupCount, 1);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+});
 
 test("actual workflow preserves successful full audit and measured runtime versions", async (t) => {
   const result = await runAuditWorkflow(t, validAuditOutput(), 0);
@@ -1458,7 +1514,7 @@ test("permanent Production audit runs installed root-owned code only", async () 
   );
   assert.match(
     auditWorkflow.jobs.audit.steps[0].run,
-    /if \[ -z "\$EXPECTED_COMMIT" \]; then[\s\S]*https:\/\/fanmind\.ch\/api\/version/u,
+    /if \[ -z "\$EXPECTED_COMMIT" \]; then[\s\S]*GITHUB_EVENT_NAME:-[\s\S]*!= "schedule"[\s\S]*https:\/\/fanmind\.ch\/api\/version/u,
   );
 
   assert.match(workflow, /workflow_run:[\s\S]*Deploy FanMind/u);
