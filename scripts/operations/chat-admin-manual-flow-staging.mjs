@@ -15,6 +15,7 @@ import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
 export const MANUAL_FLOW_TASK_ID = "FM-ADMINCHAT-STAGING-HARNESS-20261011-01";
+export const MANUAL_BROWSER_TIMEOUT_MS = 420_000;
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
 const DATA_ID_KEYS = ["FAN_A_ID","FAN_B_ID","FAN_A_CREATION_ID","FAN_B_CREATION_ID","FOREIGN_CHARACTER_ID"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
@@ -97,19 +98,23 @@ export function buildManualFlowSql(mode, env, receipt) {
   const ownedFans=`((id=${fanA}::uuid and character_id=${a}::uuid and creation_id=${creationA}::uuid and display_name='FM Synthetic Fan A') or (id=${fanB}::uuid and character_id=${b}::uuid and creation_id=${creationB}::uuid and display_name='FM Synthetic Fan B')) and workspace_id=${ws}::uuid and platform='OnlyFans' and notes=${marker} and created_at=${started}::timestamptz`;
   const ownedConversations=`((id=${conversationA}::uuid and character_id=${a}::uuid and fan_id=${fanA}::uuid) or (id=${conversationB}::uuid and character_id=${b}::uuid and fan_id=${fanB}::uuid)) and workspace_id=${ws}::uuid and created_at=${started}::timestamptz`;
   const ownedMessages=`workspace_id=${ws}::uuid and ((character_id=${a}::uuid and fan_id=${fanA}::uuid and conversation_id=${conversationA}::uuid) or (character_id=${b}::uuid and fan_id=${fanB}::uuid and conversation_id=${conversationB}::uuid)) and created_at>=${started}::timestamptz`;
+  const reservedCharacters=`${a}::uuid,${b}::uuid,${foreignCharacter}::uuid`;
+  const childFans=`character_id in (${reservedCharacters})`;
+  const childConversations=`character_id in (${reservedCharacters}) or fan_id in (${fanA}::uuid,${fanB}::uuid)`;
+  const childMessages=`character_id in (${reservedCharacters}) or fan_id in (${fanA}::uuid,${fanB}::uuid) or conversation_id in (${conversationA}::uuid,${conversationB}::uuid)`;
   const usage=`workspace_id=${ws}::uuid and user_id=${owner}::uuid and feature = 'chat_admin_reply' and source_route='/api/chatadmin/reply-suggestions'`;
   const sessions=`user_id in (${owner}::uuid,${foreignOwner}::uuid,${literal(ids.PLATFORM_ADMIN_ID)}::uuid) and created_at>=${started}::timestamptz`;
-  const occupied=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid)) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid))`;
-  const dataResidue=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid)) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid)) or exists(select 1 from public.chat_character_messages where ${ownedMessages}) or exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz)`;
+  const occupied=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${reservedCharacters})) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) or exists(select 1 from public.chat_character_messages where ${childMessages})`;
+  const dataResidue=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${reservedCharacters})) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) or exists(select 1 from public.chat_character_messages where ${childMessages}) or exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz)`;
   const residue=`${dataResidue} or exists(select 1 from auth.sessions where ${sessions})`;
   const common=`\\set ON_ERROR_STOP on\nbegin;\nset local lock_timeout='5s';\nset local statement_timeout='30s';\n`;
   const contract=fixtureContract(env,ids);
   const owned=`
   if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and not(granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at=${started}::timestamptz)) or
      exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid) and not(${ownedCharacters})) or
-     exists(select 1 from public.chat_character_fans where (id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid)) and not(${ownedFans})) or
-     exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid) and not(${ownedConversations})) or
-     exists(select 1 from public.chat_character_messages where (fan_id in (${fanA}::uuid,${fanB}::uuid) or conversation_id in (${conversationA}::uuid,${conversationB}::uuid)) and not(${ownedMessages}))
+     exists(select 1 from public.chat_character_fans where (id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) and not(${ownedFans})) or
+     exists(select 1 from public.chat_character_conversations where (id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) and not(${ownedConversations})) or
+     exists(select 1 from public.chat_character_messages where (${childMessages}) and not(${ownedMessages}))
      then raise exception 'cleanup_identity_drift'; end if;`;
   if(mode==='prepare')return `${common}
 lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_fans, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
@@ -145,7 +150,7 @@ rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>21 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>5 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>1 then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>29 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>7 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>1 then raise exception 'runtime_effect_missing'; end if;
   if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid) and jsonb_array_length(sales_playbook->'offers')=4)<>2 or not exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages} and confirmed.direction='confirmed_reply' and exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) then raise exception 'persisted_offer_or_confirmation_missing'; end if;
 end $guard$;
 set local role authenticated;
@@ -205,7 +210,7 @@ export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) 
   const browserEnv={...env,FANMIND_CHAT_ADMIN_BROWSER_MODE:mode};for(const key of Object.keys(browserEnv))if(key.startsWith('PG')||key.includes('DB_PASSWORD')||key.includes('SERVICE_ROLE'))delete browserEnv[key];
   let passed=false;
   try {
-    const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:240_000,maxBuffer:1024*1024});
+    const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:MANUAL_BROWSER_TIMEOUT_MS,maxBuffer:1024*1024});
     const diagnostic=readBrowserDiagnostic(env,mode);
     passed=!result.error&&result.status===0&&diagnostic.stage==='complete'&&diagnostic.outcome==='passed'&&diagnostic.network==='none'&&diagnostic.sessionCleanup==='passed';
   } catch {
