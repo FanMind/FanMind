@@ -19,6 +19,10 @@ import {
   savedAppDiagnostic, readSavedAppDiagnostic, startupDiagnostic, bootNodeDiagnostic,
 } from "../scripts/operations/production-boot-readiness.mjs";
 import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import {
+  requiredEvidence,
+  validateReleaseRequest,
+} from "../scripts/operations/production-release-preflight.mjs";
 
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
@@ -1422,6 +1426,8 @@ test("permanent Production audit runs installed root-owned code only", async () 
   assert.match(workflow, /schedule:[\s\S]*17 4 \* \* \*/u);
   assert.match(workflow, /github\.ref == 'refs\/heads\/main'/u);
   assert.match(workflow, /run-read-only-production-audit/u);
+  assert.match(workflow, /https:\/\/fanmind\.ch\/api\/version/u);
+  assert.doesNotMatch(workflow, /workflow_run\.head_sha|\|\| github\.sha/u);
   assert.match(workflow, /runs-on: \[self-hosted, fanmind-prod, exoscale, linux, x64\]/u);
   assert.match(workflow, /environment: production/u);
   assert.match(
@@ -1468,6 +1474,111 @@ test("permanent Production audit runs installed root-owned code only", async () 
   );
   assert.match(runbook, /checkt keinen Repository-Code aus/u);
   assert.match(runbook, /kein Audit-Artefakt hochgeladen/u);
+});
+
+test("Production deployment is detached from main and evidence-gated", async () => {
+  const [deployment, ci, staging, readiness, audit] = await Promise.all([
+    readFile(".github/workflows/deploy-fanmind.yml", "utf8"),
+    readFile(".github/workflows/ci-fanmind.yml", "utf8"),
+    readFile(".github/workflows/deploy-staging.yml", "utf8"),
+    readFile(".github/workflows/final-go-live-readiness.yml", "utf8"),
+    readFile(".github/workflows/production-readonly-audit.yml", "utf8"),
+  ]);
+  const trigger = deployment.slice(0, deployment.indexOf("\nconcurrency:"));
+
+  assert.match(trigger, /workflow_dispatch:/u);
+  assert.doesNotMatch(trigger, /\bpush:|\bworkflow_call:|\bworkflow_run:|\bschedule:/u);
+  assert.match(trigger, /deployment_mode:[\s\S]*release[\s\S]*rollback/u);
+  assert.match(trigger, /release_commit:[\s\S]*required: true/u);
+  assert.match(trigger, /deploy-fanmind-production or rollback-fanmind-production/u);
+  assert.match(deployment, /actions: read[\s\S]*contents: read/u);
+  assert.match(deployment, /preflight:[\s\S]*runs-on: ubuntu-24\.04/u);
+  assert.match(deployment, /production-release-preflight\.mjs/u);
+  assert.match(deployment, /needs: preflight[\s\S]*environment:[\s\S]*name: production/u);
+  assert.match(deployment, /EXPECTED_RELEASE_COMMIT: \$\{\{ needs\.preflight\.outputs\.release_commit \}\}/u);
+
+  assert.match(ci, /push:[\s\S]*branches:[\s\S]*- main/u);
+  assert.match(staging, /workflow_call:[\s\S]*workflow_dispatch:/u);
+  assert.match(staging, /environment: staging/u);
+  assert.doesNotMatch(staging, /environment: production/u);
+  assert.match(readiness, /workflow_run:[\s\S]*Deploy FanMind/u);
+  assert.match(audit, /workflow_run:[\s\S]*Deploy FanMind/u);
+});
+
+test("Production release evidence distinguishes releases from rollbacks", () => {
+  const releaseCommit = "a".repeat(40);
+  const mainCommit = "b".repeat(40);
+
+  assert.deepEqual(
+    validateReleaseRequest({
+      mode: "release",
+      confirmation: "deploy-fanmind-production",
+      releaseCommit,
+      mainCommit: releaseCommit,
+      compareStatus: "identical",
+    }),
+    { ok: true, errors: [] },
+  );
+  assert.equal(
+    validateReleaseRequest({
+      mode: "release",
+      confirmation: "deploy-fanmind-production",
+      releaseCommit,
+      mainCommit,
+      compareStatus: "ahead",
+    }).ok,
+    false,
+  );
+  assert.equal(
+    validateReleaseRequest({
+      mode: "rollback",
+      confirmation: "rollback-fanmind-production",
+      releaseCommit,
+      mainCommit,
+      compareStatus: "ahead",
+    }).ok,
+    true,
+  );
+  assert.equal(
+    validateReleaseRequest({
+      mode: "rollback",
+      confirmation: "rollback-fanmind-production",
+      releaseCommit,
+      mainCommit,
+      compareStatus: "diverged",
+    }).ok,
+    false,
+  );
+
+  const run = (name, overrides = {}) => ({
+    id: name.length,
+    name,
+    head_sha: releaseCommit,
+    conclusion: "success",
+    event: "push",
+    head_branch: "main",
+    ...overrides,
+  });
+  assert.equal(
+    requiredEvidence(
+      [run("FanMind CI"), run("FanMind CodeQL")],
+      "release",
+      releaseCommit,
+    ).ok,
+    true,
+  );
+  assert.equal(
+    requiredEvidence(
+      [run("FanMind CodeQL"), run("Deploy FanMind")],
+      "rollback",
+      releaseCommit,
+    ).ok,
+    true,
+  );
+  assert.equal(
+    requiredEvidence([run("FanMind CodeQL")], "release", releaseCommit).ok,
+    false,
+  );
 });
 
 test("production audit uses stable timer properties instead of localized timer columns", async () => {

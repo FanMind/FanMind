@@ -41,13 +41,20 @@ jobs:
     environment: production
     timeout-minutes: 15
     env:
-      EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || '' }}
 
     steps:
       - name: Run installed root-owned audit and verify redacted result
         shell: bash
         run: |
           set -euo pipefail
+
+          if [ -z "$EXPECTED_COMMIT" ]; then
+            EXPECTED_COMMIT="$(
+              curl -fsS --max-time 15 https://fanmind.ch/api/version |
+                python3 -c 'import json,sys; print(json.load(sys.stdin).get("releaseCommit", ""))'
+            )"
+          fi
 
           if [[ ! "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Expected Production commit is invalid." >&2

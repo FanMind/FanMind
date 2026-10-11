@@ -17,21 +17,30 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Environment file on server: `/var/www/fanmind/.env.production`
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
+- A merge or push to `main` never authorizes or starts a Production deployment.
+- Production deployment is manual, exact-SHA-bound, evidence-gated and protected by the GitHub `production` environment.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-The deployment workflow deploys `main` on the Exoscale server with:
+After the protected workflow has validated the requested release, the Exoscale
+runner deploys that exact commit with:
 
 ```bash
 cd /var/www/fanmind
 git fetch --prune origin main
-RELEASE_COMMIT="$(git rev-parse origin/main)"
+RELEASE_COMMIT="<validated-40-character-main-commit>"
 export FANMIND_RELEASE_COMMIT="$RELEASE_COMMIT"
 FANMIND_SOURCE_DIR=/var/www/fanmind \
   bash scripts/operations/deploy-isolated-release.sh "$RELEASE_COMMIT"
 ```
+
+Normal releases require the exact current `main` SHA plus successful
+`FanMind CI` and `FanMind CodeQL` push runs on that SHA. Rollback targets
+must be ancestors of current `main` and must have successful historical
+`Deploy FanMind` and `FanMind CodeQL` evidence. See
+`docs/operations/CONTROLLED_RELEASES.md`.
 
 Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase keys, OpenAI keys, Stripe keys, runner tokens, and snapshot URLs out of GitHub.
 

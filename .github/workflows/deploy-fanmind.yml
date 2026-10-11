@@ -1,21 +1,67 @@
 name: Deploy FanMind
 
+run-name: >-
+  Deploy FanMind Production / ${{ inputs.deployment_mode }} /
+  ${{ inputs.release_commit }}
+
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      deployment_mode:
+        description: 'Deploy current main or roll back to a previously deployed main ancestor'
+        required: true
+        default: release
+        type: choice
+        options:
+          - release
+          - rollback
+      release_commit:
+        description: 'Exact 40-character commit to deploy'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type deploy-fanmind-production or rollback-fanmind-production'
+        required: true
+        type: string
 
 concurrency:
   group: fanmind-production-deploy
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
+  preflight:
+    name: Bind release and verify immutable evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      release_commit: ${{ steps.release.outputs.release_commit }}
+      deployment_mode: ${{ steps.release.outputs.deployment_mode }}
+    steps:
+      - name: Checkout deployment control from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify requested release and required evidence
+        id: release
+        env:
+          FANMIND_DEPLOYMENT_MODE: ${{ inputs.deployment_mode }}
+          FANMIND_PRODUCTION_CONFIRMATION: ${{ inputs.confirmation }}
+          FANMIND_RELEASE_COMMIT: ${{ inputs.release_commit }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/operations/production-release-preflight.mjs
+
   deploy:
     name: Deploy to Exoscale production
+    needs: preflight
+    environment:
+      name: production
+      url: https://fanmind.ch
     runs-on:
       - self-hosted
       - fanmind-prod
@@ -26,7 +72,8 @@ jobs:
     steps:
       - name: Deploy on fanmind-prod-01
         env:
-          EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          EXPECTED_RELEASE_COMMIT: ${{ needs.preflight.outputs.release_commit }}
+          DEPLOYMENT_MODE: ${{ needs.preflight.outputs.deployment_mode }}
         run: |
           set -euo pipefail
 
@@ -62,7 +109,7 @@ jobs:
             git fetch --no-tags origin "$EXPECTED_RELEASE_COMMIT"
           fi
           if ! git merge-base --is-ancestor "$EXPECTED_RELEASE_COMMIT" origin/main; then
-            echo "Production accepts only the triggering commit when it is reachable from origin/main." >&2
+            echo "Production accepts only an evidence-verified commit reachable from origin/main." >&2
             exit 1
           fi
           RELEASE_COMMIT="$EXPECTED_RELEASE_COMMIT"
@@ -225,4 +272,10 @@ jobs:
             echo "Webhook retention timer installed but intentionally not enabled before migration verification."
           fi
 
+          {
+            echo "## FanMind Production deployment"
+            echo "- mode: $DEPLOYMENT_MODE"
+            echo "- release commit: $RELEASE_COMMIT"
+            echo "- target: https://fanmind.ch"
+          } >> "$GITHUB_STEP_SUMMARY"
           echo "FanMind deployment finished successfully at $RELEASE_COMMIT."
