@@ -35,6 +35,7 @@ permissions:
 jobs:
   preflight:
     name: Bind release and verify immutable evidence
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
@@ -52,6 +53,7 @@ jobs:
         env:
           FANMIND_DEPLOYMENT_MODE: ${{ inputs.deployment_mode }}
           FANMIND_PRODUCTION_CONFIRMATION: ${{ inputs.confirmation }}
+          FANMIND_PRODUCTION_CONTROL_COMMIT: ${{ github.sha }}
           FANMIND_RELEASE_COMMIT: ${{ inputs.release_commit }}
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/operations/production-release-preflight.mjs

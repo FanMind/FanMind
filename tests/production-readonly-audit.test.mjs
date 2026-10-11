@@ -1492,8 +1492,15 @@ test("Production deployment is detached from main and evidence-gated", async () 
   assert.match(trigger, /release_commit:[\s\S]*required: true/u);
   assert.match(trigger, /deploy-fanmind-production or rollback-fanmind-production/u);
   assert.match(deployment, /actions: read[\s\S]*contents: read/u);
-  assert.match(deployment, /preflight:[\s\S]*runs-on: ubuntu-24\.04/u);
+  assert.match(
+    deployment,
+    /preflight:[\s\S]*if: github\.ref == 'refs\/heads\/main'[\s\S]*runs-on: ubuntu-24\.04/u,
+  );
   assert.match(deployment, /production-release-preflight\.mjs/u);
+  assert.match(
+    deployment,
+    /FANMIND_PRODUCTION_CONTROL_COMMIT: \$\{\{ github\.sha \}\}/u,
+  );
   assert.match(deployment, /needs: preflight[\s\S]*environment:[\s\S]*name: production/u);
   assert.match(deployment, /EXPECTED_RELEASE_COMMIT: \$\{\{ needs\.preflight\.outputs\.release_commit \}\}/u);
 

@@ -117,6 +117,9 @@ async function main(environment = process.env) {
   const token = clean(environment.GITHUB_TOKEN);
   const mode = clean(environment.FANMIND_DEPLOYMENT_MODE);
   const confirmation = clean(environment.FANMIND_PRODUCTION_CONFIRMATION);
+  const controlCommit = clean(
+    environment.FANMIND_PRODUCTION_CONTROL_COMMIT,
+  ).toLowerCase();
   const releaseCommit = clean(environment.FANMIND_RELEASE_COMMIT).toLowerCase();
 
   if (repository !== "FanMind/FanMind" || !token) {
@@ -125,6 +128,9 @@ async function main(environment = process.env) {
 
   const branch = await githubJson("/branches/main", token, repository);
   const mainCommit = clean(branch?.commit?.sha).toLowerCase();
+  if (controlCommit !== mainCommit) {
+    throw new Error("deployment_control_not_current_main");
+  }
   let compareStatus = releaseCommit === mainCommit ? "identical" : "";
   if (mode === "rollback" && SHA_PATTERN.test(releaseCommit)) {
     const comparison = await githubJson(

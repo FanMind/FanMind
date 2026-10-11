@@ -51,7 +51,9 @@ The operator supplies:
   `rollback-fanmind-production`.
 
 A GitHub-hosted preflight runs before any Production runner or environment is
-entered. For a release it requires the exact current `main` SHA and successful
+entered. The dispatch and the executed control code must themselves come from
+the exact current `main` SHA. For a release it requires that same current
+`main` SHA and successful
 `FanMind CI` plus `FanMind CodeQL` push runs on that SHA. For a rollback it
 requires a commit reachable from current `main`, a prior successful
 `Deploy FanMind` run and successful `FanMind CodeQL` evidence on that SHA.
