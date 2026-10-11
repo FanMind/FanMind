@@ -182,8 +182,8 @@ der zweiten Variante:
   diese installierte Version aus;
 - nach einem erfolgreichen `Deploy FanMind` wird der exakt deployte Commit
   automatisch geprüft;
-- ein täglicher Lauf um 04:17 UTC ermittelt den tatsächlich laufenden
-  Production-Commit über `/api/version` und schafft ein weiteres stabiles
+- ein täglicher Lauf um 04:17 UTC liest den tatsächlich laufenden
+  Production-Commit aus `/api/version` und schafft ein weiteres stabiles
   Zeitfenster, auch wenn `main` bereits weitergelaufen ist;
 - ein manueller Lauf ist ausschließlich auf `main` mit
   `run-read-only-production-audit` und einem exakten 40-stelligen erwarteten

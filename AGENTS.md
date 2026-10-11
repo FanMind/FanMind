@@ -17,30 +17,24 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Environment file on server: `/var/www/fanmind/.env.production`
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
-- A merge or push to `main` never authorizes or starts a Production deployment.
-- Production deployment is manual, exact-SHA-bound, evidence-gated and protected by the GitHub `production` environment.
+- Pushes and merges to `main` do not trigger Production deployment.
+- The remaining manual workflow is intentionally sealed: its only reachable GitHub-hosted job fails, while the preserved Production job has a literal `if: false`.
+- No usable Production release or rollback controller exists in this transition.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-After the protected workflow has validated the requested release, the Exoscale
-runner deploys that exact commit with:
+The preserved, currently unreachable Production job contains the prior Exoscale deployment sequence:
 
 ```bash
 cd /var/www/fanmind
 git fetch --prune origin main
-RELEASE_COMMIT="<validated-40-character-main-commit>"
+RELEASE_COMMIT="$(git rev-parse origin/main)"
 export FANMIND_RELEASE_COMMIT="$RELEASE_COMMIT"
 FANMIND_SOURCE_DIR=/var/www/fanmind \
   bash scripts/operations/deploy-isolated-release.sh "$RELEASE_COMMIT"
 ```
-
-Normal releases require the exact current `main` SHA plus successful
-`FanMind CI` and `FanMind CodeQL` push runs on that SHA. Rollback targets
-must be ancestors of current `main` and must have successful historical
-`Deploy FanMind` and `FanMind CodeQL` evidence. See
-`docs/operations/CONTROLLED_RELEASES.md`.
 
 Do not commit secrets. Keep `.env.production`, `.env.local`, API keys, Supabase keys, OpenAI keys, Stripe keys, runner tokens, and snapshot URLs out of GitHub.
 

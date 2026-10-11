@@ -424,7 +424,7 @@ deshalb nicht als abgeschlossene Staging-Abnahme.
 - Sprache: TypeScript
 - Auth und Daten: Supabase Auth / Supabase PostgREST
 - KI: serverseitige OpenAI Responses API
-- Deployment: kontrollierte, SHA-gebundene Staging- und Production-Releases über GitHub Actions, Exoscale, PM2 und nginx
+- Deployment: Exoscale + PM2 + nginx; `.github/workflows/deploy-fanmind.yml` ist als Übergang gesperrt und wird nicht durch `main` ausgelöst
 - Produktionsdomain: `https://fanmind.ch`
 
 Installieren und lokal starten:
@@ -704,23 +704,15 @@ Nicht als aktiv bauen oder verkaufen, sofern nicht ausdrücklich freigegeben und
 
 ## Deployment
 
-Ein Merge nach `main` deployt nicht mehr nach Production. Er startet weiterhin
-die relevanten CI- und Sicherheitsprüfungen. Production wird ausschließlich über
-den manuellen, SHA-gebundenen und durch das GitHub-Environment `production`
-geschützten Workflow `.github/workflows/deploy-fanmind.yml` freigegeben.
-Staging bleibt ein eigener manueller beziehungsweise ausdrücklich
-wiederverwendbarer Pfad über `.github/workflows/deploy-staging.yml`.
+Merges und Pushes auf `main` lösen kein Production-Deployment aus.
+`.github/workflows/deploy-fanmind.yml` ist nur manuell startbar, führt dabei
+jedoch ausschließlich einen fehlschlagenden GitHub-hosted Sperrjob aus. Der
+bisherige Production-Job bleibt mit literal `if: false` unerreichbar. Ein
+kontrollierter Release- oder Rollbackweg ist noch nicht aktiviert.
 
-Ein normaler Production-Release akzeptiert nur den aktuellen `main`-Commit,
-wenn `FanMind CI` und `FanMind CodeQL` auf genau diesem SHA erfolgreich
-waren. Ein Rollback akzeptiert nur einen `main`-Ancestor mit einem früheren
-erfolgreichen Production-Deploy und erfolgreichem CodeQL-Nachweis. Die
-vollständige Steuerung, Evidence und Rollback-Prozedur beschreibt
-`docs/operations/CONTROLLED_RELEASES.md`.
+Der im gesperrten Job nur als Quellcode erhaltene isolierte Release-Pfad:
 
-Der auf Production aktive isolierte Release-Pfad:
-
-1. übernimmt den durch den Preflight bestätigten exakten 40-stelligen Commit;
+1. löst den exakten 40-stelligen Commit von `origin/main` auf;
 2. führt `scripts/operations/deploy-isolated-release.sh` commitgebunden in
    einem neuen unveränderlichen Release-Verzeichnis aus;
 3. prüft Product Truth, Lint, Operations-Tests, Next.js-Production-Build,
@@ -741,9 +733,6 @@ die zuvor root-owned installierten Auditdateien, prüft Release/Runtime,
 acht Health-Komponenten, PM2, nginx, Login, Hostressourcen, lokale und
 Offsite-Backup-Paare sowie Backup-Worker-Fehler und nimmt keine
 Service-, Datenbank-, Restore- oder Remote-Mutation vor.
-Der automatische und der tägliche Audit binden sich an den tatsächlich über
-`/api/version` gemeldeten Live-Commit, nicht an den eventuell bereits
-weitergelaufenen `main`-Stand.
 
 Das Admin Operations Center lädt seine serverseitigen Betriebsdaten nach einer
 erfolgreichen Job-Anforderung sofort neu. Solange ein Job `queued`, `claimed`

@@ -214,9 +214,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Efficiency intent: reduce repeated context loading and token cost by keeping ordinary work in one agent/run while preserving independent evidence only where it materially changes risk.
 - Repository continuity: implementation decisions, durable state changes, blockers and next actions are recorded in Project Memory; ordinary commit history stays in Git.
 
-## FM-DEC-030 — Merge and Production release separation
+
+## FM-DEC-030 — Sealed Production deployment transition
 - Date: 2026-10-11
 - Status: DECIDED_NOT_ACTIVATED
-- Decision: Merging or pushing to `main` establishes repository state and exact-SHA CI/security evidence but must not start a Production deployment. Staging and Production remain separate release paths. Production requires a manual, current-`main` control, an immutable target SHA, applicable successful evidence, an explicit action confirmation and the protected `production` environment; rollback is limited to an evidence-backed `main` ancestor.
-- Future automation boundary: a later R1/R2 release-candidate controller may consume the same exact-SHA evidence, but it must not bypass the Production environment, release authorization or protected-action controls. No automatic Production caller is activated by this decision.
-- Current boundary: the repository implementation is proposed but not merged, and no Production workflow was dispatched. Until the source change is accepted on `main`, the previously observed push-triggered Production path remains the live repository behavior.
+- Decision: Pushes and merges to `main` must not trigger Production deployment. During the transition, `.github/workflows/deploy-fanmind.yml` remains manually visible but has no inputs, always reaches only a GitHub-hosted failing seal job and keeps the preserved Production job unreachable behind literal `if: false`.
+- Audit boundary: only the daily read-only audit resolves the actually running Production SHA from `/api/version`; manual and successful-deployment audit bindings retain their exact existing contracts.
+- Boundary: no release or rollback controller is activated, no Production runner is reachable from the new workflow version, and no merge, dispatch, runner, Environment, secret, permission or Production action is authorized. Historical workflow versions are not neutralized by this source change; their runner access must be secured before a separately approved transition.

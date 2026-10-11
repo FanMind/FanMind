@@ -577,7 +577,7 @@ test("production deploy is pinned to the immutable triggering commit", async () 
     readFile("docs/operations/ISOLATED_RELEASE_DEPLOY.md", "utf8"),
   ]);
 
-  assert.match(workflow, /EXPECTED_RELEASE_COMMIT: \$\{\{ needs\.preflight\.outputs\.release_commit \}\}/u);
+  assert.match(workflow, /EXPECTED_RELEASE_COMMIT: \$\{\{ github\.sha \}\}/u);
   assert.match(workflow, /RELEASE_COMMIT="\$EXPECTED_RELEASE_COMMIT"/u);
   assert.match(
     workflow,
