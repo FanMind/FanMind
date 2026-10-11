@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       expected_commit:
-        description: Optional erwarteter Production-Commit
-        required: false
+        description: Exakter erwarteter Production-Commit
+        required: true
         type: string
 
 permissions:
@@ -20,21 +20,26 @@ jobs:
   public-readiness:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
     steps:
       - name: Resolve actual deployed release commit
         id: release
         env:
-          REQUESTED_COMMIT: ${{ inputs.expected_commit }}
+          REQUESTED_COMMIT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_commit }}
         run: |
           set -euo pipefail
+          if [[ ! "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Requested Production commit is invalid." >&2
+            exit 1
+          fi
           LIVE_COMMIT="$(curl -fsS --max-time 15 https://fanmind.ch/api/version | python3 -c 'import json,sys; print(json.load(sys.stdin).get("releaseCommit", ""))')"
           if [[ ! "$LIVE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Production returned no valid release commit." >&2
             exit 1
           fi
-          if [ -n "${REQUESTED_COMMIT:-}" ] && [ "$LIVE_COMMIT" != "$REQUESTED_COMMIT" ]; then
+          if [ "$LIVE_COMMIT" != "$REQUESTED_COMMIT" ]; then
             echo "Production commit $LIVE_COMMIT does not match requested commit $REQUESTED_COMMIT." >&2
             exit 1
           fi

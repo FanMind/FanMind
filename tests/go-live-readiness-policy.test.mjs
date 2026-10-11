@@ -14,6 +14,7 @@ const truthPolicyPath = "scripts/public-product-truth.mjs";
 const healthPolicyPath = "scripts/public-health-policy.mjs";
 const workflowPath = ".github/workflows/final-go-live-readiness.yml";
 const deployWorkflowPath = ".github/workflows/deploy-fanmind.yml";
+const isolatedDeployPath = "scripts/operations/deploy-isolated-release.sh";
 const runbookPath = "docs/operations/FINAL_GO_LIVE_SMOKE_TEST.md";
 const salesFiles = [
   "docs/sales/FANMIND_SALES_ONE_PAGER.md",
@@ -49,12 +50,13 @@ test("roadmap separates accepted staging from open end-to-end acceptance", async
 });
 
 test("go-live and deploy smoke gates share live truth and blocking-only health policies", async () => {
-  const [goLive, deploySmoke, truthPolicy, healthPolicy, deployWorkflow] = await Promise.all([
+  const [goLive, deploySmoke, truthPolicy, healthPolicy, deployWorkflow, isolatedDeploy] = await Promise.all([
     read(smokeScriptPath),
     read(deploySmokePath),
     read(truthPolicyPath),
     read(healthPolicyPath),
     read(deployWorkflowPath),
+    read(isolatedDeployPath),
   ]);
 
   assert.doesNotMatch(goLive, /method:\s*"(?:POST|PUT|PATCH|DELETE)"/u);
@@ -66,9 +68,11 @@ test("go-live and deploy smoke gates share live truth and blocking-only health p
   assert.match(deploySmoke, /\/api\/version/u);
   assert.match(deploySmoke, /\/api\/health/u);
   assert.match(deploySmoke, /live German product truth/u);
-  assert.match(deployWorkflow, /npm run smoke:public/u);
+  assert.match(deployWorkflow, /deploy-isolated-release\.sh/u);
+  assert.doesNotMatch(deployWorkflow, /legacy in-place|git reset --hard/u);
+  assert.match(isolatedDeploy, /npm run smoke:public/u);
   assert.match(
-    deployWorkflow,
+    isolatedDeploy,
     /FANMIND_EXPECTED_RUNTIME_ENVIRONMENT=production/u,
   );
   assert.match(healthPolicy, /OPTIONAL_PUBLIC_HEALTH_COMPONENTS/u);
@@ -144,6 +148,8 @@ test("final readiness workflow runs only after a successful deploy or manual dis
 
   assert.match(workflow, /workflows:\s*\n\s*- Deploy FanMind/);
   assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
+  assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'main'/);
+  assert.match(workflow, /github\.event\.workflow_run\.head_sha/u);
   assert.match(workflow, /FANMIND_EXPECTED_RUNTIME_ENVIRONMENT: production/u);
   assert.match(workflow, /npm run smoke:go-live:public/);
   assert.match(preflight, /payload\?\.runtimeEnvironment === expectedRuntimeEnvironment/u);

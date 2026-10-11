@@ -704,7 +704,7 @@ Nicht als aktiv bauen oder verkaufen, sofern nicht ausdrücklich freigegeben und
 
 ## Deployment
 
-Deployments auf `main` laufen über `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner:
+Ein Merge auf `main` löst kein Production-Deployment aus. Production-Releases laufen ausschließlich nach der commitgebundenen Freigabe in `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner; Voraussetzungen und erstmaliger Cutover sind in `docs/operations/PRODUCTION_RELEASE_CONTROL.md` beschrieben:
 
 Der auf Production aktive isolierte Release-Pfad:
 
