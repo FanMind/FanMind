@@ -213,3 +213,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Protected-state boundary: a merge never authorizes Production deployment, payment/Billing activation, provider activation, secrets/credentials, permission grants, destructive/irreversible data actions, Restore writes or other R3/R4 protected actions.
 - Efficiency intent: reduce repeated context loading and token cost by keeping ordinary work in one agent/run while preserving independent evidence only where it materially changes risk.
 - Repository continuity: implementation decisions, durable state changes, blockers and next actions are recorded in Project Memory; ordinary commit history stays in Git.
+
+## FM-DEC-030 — Merge and Production release separation
+- Date: 2026-10-11
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: Merging or pushing to `main` establishes repository state and exact-SHA CI/security evidence but must not start a Production deployment. Staging and Production remain separate release paths. Production requires a manual, current-`main` control, an immutable target SHA, applicable successful evidence, an explicit action confirmation and the protected `production` environment; rollback is limited to an evidence-backed `main` ancestor.
+- Future automation boundary: a later R1/R2 release-candidate controller may consume the same exact-SHA evidence, but it must not bypass the Production environment, release authorization or protected-action controls. No automatic Production caller is activated by this decision.
+- Current boundary: the repository implementation is proposed but not merged, and no Production workflow was dispatched. Until the source change is accepted on `main`, the previously observed push-triggered Production path remains the live repository behavior.
