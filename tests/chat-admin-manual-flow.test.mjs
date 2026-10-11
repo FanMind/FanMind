@@ -12,10 +12,12 @@ import {
   reserveManualFlowReceipt, authorizeReservedManualFlow,
   runManualBrowser, runManualFlowProbe,
   createManualFlowReceiptDataIds,
+  MANUAL_BROWSER_TIMEOUT_MS,
 } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, requireSuccessfulProbe, formatBrowserDiagnostic } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../e2e-chatadmin-staging/fixture-identity.mjs";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "../e2e-chatadmin-staging/network-boundary.mjs";
+import { assertReplyPriceEvidence, monetaryEvidence } from "../e2e-chatadmin-staging/offer-evidence.mjs";
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
 const keys = ["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
@@ -52,6 +54,24 @@ test("actual Playwright CLI collects the protected probe and imports its ESM dia
   assert.match(result.stdout,/Total: 1 test in 1 file/u);
 });
 
+test("the browser entry assertion matches the rendered page source",()=>{
+  const page=readFileSync(new URL("../src/app/chatadmin/page.tsx",import.meta.url),"utf8");
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  assert.match(page,/<h1>Creator-Building<\/h1>/u);
+  assert.match(browser,/getByRole\("heading",\{name:"Creator-Building",exact:true\}\)/u);
+  assert.doesNotMatch(browser,/getByRole\("heading",\{name:"ChatAdmin",exact:true\}\)/u);
+});
+
+test("all three browser suggestions require exact numeric offer evidence",()=>{
+  assert.deepEqual(monetaryEvidence("EUR 10,00 statt 110 EUR"),[{currency:"EUR",minor:1000},{currency:"EUR",minor:11000}]);
+  assert.doesNotThrow(()=>assertReplyPriceEvidence(["Foto für 10 EUR","EUR 10,00 für das Foto","Das Foto kostet €10"],{currency:"EUR",minor:1000}));
+  assert.throws(()=>assertReplyPriceEvidence(["Foto für 10 EUR","Foto für 110 EUR","Foto für 10 EUR"],{currency:"EUR",minor:1000}),/offer_price_mismatch/u);
+  assert.throws(()=>assertReplyPriceEvidence(["Video für 20 EUR","Character B Video für 61 EUR","Video für 20 EUR"],{currency:"EUR",minor:2000}),/offer_price_mismatch/u);
+  assert.throws(()=>assertReplyPriceEvidence(["Privates Foto für 25 EUR","Privates Foto für 999 EUR","Privates Foto für 25 EUR"],{currency:"EUR",minor:2500}),/offer_price_mismatch/u);
+  assert.doesNotThrow(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Dieses Angebot ist nicht verfügbar","Dazu kann ich nichts anbieten"],null));
+  assert.throws(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Doch für 71 EUR","Dazu kann ich nichts anbieten"],null),/unavailable_offer_price/u);
+});
+
 test("browser and SQL share strict fixture UUID normalization for the observed trailing carriage return",()=>{
   const rawOwner=`${env.FANMIND_CHAT_ADMIN_OWNER_ID}\r`;
   const validated=validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:rawOwner});
@@ -77,10 +97,14 @@ test("browser diagnostics reject private payloads and the parent never forwards 
     writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),source:"d".repeat(64)}));assert.throws(()=>requireSuccessfulProbe(current));
     writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),response:"private-token"}));assert.throws(()=>formatBrowserDiagnostic(current,"probe"));writeFileSync(probePath,saved);
     const output=[];
-    assert.throws(()=>runManualBrowser(current,"acceptance",()=>{
+    let browserOptions;
+    assert.throws(()=>runManualBrowser(current,"acceptance",(_command,_args,options)=>{
+      browserOptions=options;
       updateBrowserDiagnostic(current,"acceptance",{stage:"owner_token",status:"4xx",outcome:"failed",sessionCleanup:"passed"});
       return {status:1,stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token private-response",stderr:"private-password",error:undefined};
     },line=>output.push(line)),/browser/u);
+    assert.equal(browserOptions.timeout,MANUAL_BROWSER_TIMEOUT_MS);
+    assert.ok(MANUAL_BROWSER_TIMEOUT_MS>360_000,"outer runner must outlive the bounded Playwright test timeout");
     assert.ok(output.includes("CHAT_ADMIN_MANUAL_STAGE=owner_token"));
     assert.doesNotMatch(output.join("\n"),/private-token|private-response|private-password/u);
     assert.equal(readBrowserDiagnostic(current,"acceptance").outcome,"failed");
@@ -105,7 +129,7 @@ test("probe network policy blocks fixture and provider writes before route trans
 test("direct Playwright requests retain the same acceptance write allowlist",()=>{
   const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
   assert.ok(source.includes('if(!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_direct_write")'));
-  assert.doesNotMatch(source,/MODE===\"probe\"&&!chatAdminRequestAllowed/u);
+  assert.doesNotMatch(source,/MODE==="probe"&&!chatAdminRequestAllowed/u);
 });
 
 test("teardown never hides writes that acceptance mode would normally allow",async()=>{
@@ -236,6 +260,9 @@ test("committed fixtures and cleanup are marker/actor/target bound without upser
   assert.match(cleanup,/delete from public.chat_character_messages where/u);
   assert.match(cleanup,/delete from public.chat_character_conversations where/u);
   assert.match(cleanup,/delete from public.chat_character_fans where/u);
+  assert.match(cleanup,/chat_character_fans where \(id in \([^\n]+ or character_id in \(/u,"cleanup must reject every unowned fan attached to a reserved Character");
+  assert.match(cleanup,/chat_character_conversations where \(id in \([^\n]+ or character_id in \(/u,"cleanup must reject every unowned conversation below a reserved Character");
+  assert.match(cleanup,/chat_character_messages where \(character_id in \(/u,"cleanup must reject every unowned message below a reserved Character");
   assert.match(buildManualFlowSql("absence",env,receipt),/auth\.sessions/u);
   assert.doesNotMatch(cleanup,/auth\.sessions/u,"session residue must fail the independent absence proof without rolling back bounded data cleanup");
   assert.doesNotMatch(prepare,/exists\(select 1 from public\.chat_characters\)(?:\s|\)|or)/u,"unrelated rows must not block a run");
