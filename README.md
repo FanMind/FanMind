@@ -704,7 +704,7 @@ Nicht als aktiv bauen oder verkaufen, sofern nicht ausdrücklich freigegeben und
 
 ## Deployment
 
-Deployments auf `main` laufen über `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner:
+Ein Merge auf `main` löst kein Production-Deployment aus. Production-Releases laufen ausschließlich nach der commitgebundenen Freigabe in `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner; Voraussetzungen und erstmaliger Cutover sind in `docs/operations/PRODUCTION_RELEASE_CONTROL.md` beschrieben:
 
 Der auf Production aktive isolierte Release-Pfad:
 
@@ -719,8 +719,8 @@ Der auf Production aktive isolierte Release-Pfad:
    Kernrouten und eine lückenlose `200`-Verfügbarkeitsprobe;
 6. rollt bei einem Fehler auf das zuvor aktive Release zurück.
 
-Der frühere In-Place-Pfad ist nur noch ein ausdrücklich deaktivierbarer
-Notfall-Fallback. Der verbindliche Ablauf und die Rollback-Grenzen stehen in
+Der frühere In-Place-Pfad ist entfernt; ein Release bricht ab, wenn der
+isolierte Pfad nicht aktiviert ist. Der verbindliche Ablauf und die Rollback-Grenzen stehen in
 `docs/operations/ISOLATED_RELEASE_DEPLOY.md`.
 
 Nach jedem erfolgreichen Production-Deploy sowie täglich um 04:17 UTC läuft

@@ -1,21 +1,77 @@
 name: Deploy FanMind
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  repository_dispatch:
+    types: [fanmind-production-release]
 
 concurrency:
   group: fanmind-production-deploy
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
+  issues: read
+  pull-requests: read
 
 jobs:
+  authorize-release:
+    name: Verify exact release authorization and evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      release_commit: ${{ steps.control.outputs.release_commit }}
+      manifest_sha256: ${{ steps.control.outputs.manifest_sha256 }}
+      rollback_commit: ${{ steps.control.outputs.rollback_commit }}
+    steps:
+      - name: Reject untrusted event context before checkout
+        env:
+          EXPECTED_REPOSITORY: FanMind/FanMind
+          EVENT_ACTION: ${{ github.event.action }}
+          REQUESTED_RELEASE_COMMIT: ${{ github.event.client_payload.release_commit }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "repository_dispatch"
+          test "$EVENT_ACTION" = "fanmind-production-release"
+          test "$GITHUB_REPOSITORY" = "$EXPECTED_REPOSITORY"
+          test "$GITHUB_REF" = "refs/heads/main"
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$REQUESTED_RELEASE_COMMIT" = "$GITHUB_SHA"
+
+      - name: Checkout trusted default-branch control revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Verify owner authorization, review, CI and recovery evidence
+        id: control
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FANMIND_PRODUCTION_RELEASE_GATE_ENABLED: ${{ vars.FANMIND_PRODUCTION_RELEASE_GATE_ENABLED }}
+          FANMIND_PRODUCTION_OWNER_LOGIN: ${{ vars.FANMIND_PRODUCTION_OWNER_LOGIN }}
+          FANMIND_RELEASE_EVENT_ACTION: ${{ github.event.action }}
+          FANMIND_RELEASE_COMMIT: ${{ github.event.client_payload.release_commit }}
+          FANMIND_RELEASE_TASK_ID: ${{ github.event.client_payload.task_id }}
+          FANMIND_RELEASE_RISK: ${{ github.event.client_payload.risk }}
+          FANMIND_RELEASE_CONFIRMATION: ${{ github.event.client_payload.confirmation }}
+          FANMIND_AUTHORIZATION_COMMENT_ID: ${{ github.event.client_payload.authorization_comment_id }}
+          FANMIND_RECOVERY_AUDIT_RUN_ID: ${{ github.event.client_payload.recovery_audit_run_id }}
+        run: node scripts/operations/production-release-control.mjs
+
+      - name: Store sanitized release-control manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-production-release-control-${{ steps.control.outputs.release_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/fanmind-production-release-control.json
+          if-no-files-found: error
+          retention-days: 30
+
   deploy:
     name: Deploy to Exoscale production
+    needs: authorize-release
+    environment: production
+    timeout-minutes: 60
     runs-on:
       - self-hosted
       - fanmind-prod
@@ -26,7 +82,7 @@ jobs:
     steps:
       - name: Deploy on fanmind-prod-01
         env:
-          EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          EXPECTED_RELEASE_COMMIT: ${{ needs.authorize-release.outputs.release_commit }}
         run: |
           set -euo pipefail
 
@@ -70,63 +126,19 @@ jobs:
           # ChatAdmin fan runtime is still capability-gated in the database; Production has exactly one enabled workspace.
           export FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=true
 
-          ISOLATED_DEPLOY_ENABLED="false"
-          if grep -Eq '^[[:space:]]*FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY[[:space:]]*=[[:space:]]*true[[:space:]]*$' .env.production; then
-            ISOLATED_DEPLOY_ENABLED="true"
+          if ! grep -Eq '^[[:space:]]*FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY[[:space:]]*=[[:space:]]*true[[:space:]]*$' .env.production; then
+            echo "Production release blocked: isolated release deployment is not enabled." >&2
+            exit 1
           fi
 
-          if [ "$ISOLATED_DEPLOY_ENABLED" = "true" ]; then
-            echo "Using opt-in isolated release deployment."
-            DEPLOY_SCRIPT="$(mktemp /tmp/fanmind-isolated-deploy.XXXXXX.sh)"
-            trap 'rm -f "$DEPLOY_SCRIPT"' EXIT
-            git show "$RELEASE_COMMIT:scripts/operations/deploy-isolated-release.sh" > "$DEPLOY_SCRIPT"
-            chmod 0700 "$DEPLOY_SCRIPT"
-            FANMIND_SOURCE_DIR="$SOURCE_DIR" \
-              bash "$DEPLOY_SCRIPT" "$RELEASE_COMMIT"
-            rm -f "$DEPLOY_SCRIPT"
-            trap - EXIT
-          else
-            echo "Using legacy in-place deployment because isolated release deployment is disabled."
-            git reset --hard "$RELEASE_COMMIT"
-
-            npm ci --no-audit --no-fund
-            npm run verify:truth
-            npm run lint
-            npm run test:operations
-            npm run test:release-integrations
-            npm run build
-
-            pm2 delete fanmind >/dev/null 2>&1 || true
-            FANMIND_RELEASE_COMMIT="$RELEASE_COMMIT" \
-              FANMIND_RUNTIME_ENVIRONMENT=production \
-              NODE_ENV=production \
-              pm2 start npm --name fanmind --cwd "$SOURCE_DIR" -- start
-            pm2 save
-
-            sudo nginx -t
-
-            for attempt in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsSL --max-time 15 https://fanmind.ch/login -o /dev/null; then
-                echo "Health check passed."
-                break
-              fi
-
-              if [ "$attempt" = "10" ]; then
-                echo "Health check failed after 10 attempts." >&2
-                curl -I https://fanmind.ch/login || true
-                curl -L https://fanmind.ch/login -o /dev/null -w 'HTTP_STATUS=%{http_code}\n' || true
-                exit 1
-              fi
-
-              echo "Application not ready yet, retrying..."
-              sleep 3
-            done
-
-            FANMIND_SMOKE_BASE_URL="https://fanmind.ch" \
-              FANMIND_EXPECTED_RELEASE_COMMIT="$RELEASE_COMMIT" \
-              FANMIND_EXPECTED_RUNTIME_ENVIRONMENT=production \
-              npm run smoke:public
-          fi
+          DEPLOY_SCRIPT="$(mktemp /tmp/fanmind-isolated-deploy.XXXXXX.sh)"
+          trap 'rm -f "$DEPLOY_SCRIPT"' EXIT
+          git show "$RELEASE_COMMIT:scripts/operations/deploy-isolated-release.sh" > "$DEPLOY_SCRIPT"
+          chmod 0700 "$DEPLOY_SCRIPT"
+          FANMIND_SOURCE_DIR="$SOURCE_DIR" \
+            bash "$DEPLOY_SCRIPT" "$RELEASE_COMMIT"
+          rm -f "$DEPLOY_SCRIPT"
+          trap - EXIT
 
           cd "$SOURCE_DIR"
           if [ "$(git rev-parse HEAD)" != "$RELEASE_COMMIT" ]; then
@@ -226,3 +238,40 @@ jobs:
           fi
 
           echo "FanMind deployment finished successfully at $RELEASE_COMMIT."
+
+      - name: Write sanitized Production release result
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+          RELEASE_COMMIT: ${{ needs.authorize-release.outputs.release_commit }}
+          ROLLBACK_COMMIT: ${{ needs.authorize-release.outputs.rollback_commit }}
+          MANIFEST_SHA256: ${{ needs.authorize-release.outputs.manifest_sha256 }}
+          TASK_ID: ${{ github.event.client_payload.task_id }}
+          RISK: ${{ github.event.client_payload.risk }}
+        run: |
+          set -euo pipefail
+          RECEIPT="$RUNNER_TEMP/fanmind-production-release-result.json"
+          node - "$RECEIPT" <<'NODE'
+          const fs = require("node:fs");
+          const [path] = process.argv.slice(2);
+          const receipt = {
+            schema: "fanmind-production-release-result-v1",
+            task_id: process.env.TASK_ID,
+            risk: process.env.RISK,
+            release_commit: process.env.RELEASE_COMMIT,
+            rollback_commit: process.env.ROLLBACK_COMMIT,
+            control_manifest_sha256: process.env.MANIFEST_SHA256,
+            workflow_run: { id: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT },
+            result: process.env.RESULT,
+          };
+          fs.writeFileSync(path, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600 });
+          NODE
+
+      - name: Store sanitized Production release result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-production-release-result-${{ needs.authorize-release.outputs.release_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fanmind-production-release-result.json
+          if-no-files-found: error
+          retention-days: 30

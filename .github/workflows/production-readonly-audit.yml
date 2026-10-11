@@ -40,11 +40,27 @@ jobs:
     runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
     environment: production
     timeout-minutes: 15
-    env:
-      EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
     steps:
+      - name: Resolve the installed Production commit for scheduled audit
+        id: target
+        env:
+          REQUESTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_COMMIT="$REQUESTED_COMMIT"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            EXPECTED_COMMIT="$(curl -fsS --max-time 15 https://fanmind.ch/api/version | python3 -c 'import json,sys; print(json.load(sys.stdin).get("releaseCommit", ""))')"
+          fi
+          if [[ ! "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected Production commit is invalid." >&2
+            exit 1
+          fi
+          echo "commit=$EXPECTED_COMMIT" >> "$GITHUB_OUTPUT"
+
       - name: Run installed root-owned audit and verify redacted result
+        env:
+          EXPECTED_COMMIT: ${{ steps.target.outputs.commit }}
         shell: bash
         run: |
           set -euo pipefail
@@ -77,3 +93,22 @@ jobs:
             "$AUDIT_OUTPUT" \
             "$EXPECTED_COMMIT" \
             "$AUDIT_EXIT_CODE"
+
+      - name: Write sanitized audit receipt
+        env:
+          EXPECTED_COMMIT: ${{ steps.target.outputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RECEIPT="$RUNNER_TEMP/fanmind-production-audit-receipt.json"
+          printf '{"schema":"fanmind-production-audit-receipt-v1","release_commit":"%s","run_id":"%s","run_attempt":"%s","result":"success"}\n' \
+            "$EXPECTED_COMMIT" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$RECEIPT"
+          chmod 0600 "$RECEIPT"
+
+      - name: Store sanitized audit receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-production-audit-${{ steps.target.outputs.commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fanmind-production-audit-receipt.json
+          if-no-files-found: error
+          retention-days: 14
