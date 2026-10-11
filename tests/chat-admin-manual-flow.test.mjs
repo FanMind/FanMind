@@ -91,13 +91,15 @@ test("probe network policy blocks fixture and provider writes before route trans
   const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"probe"};
   let handler,transport=0,aborted=0;const reasons=[];
   await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
-  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/characters","POST"]]) {
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/conversations","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/characters","POST"]]) {
     const url=new URL(path,targets.appOrigin);assert.equal(chatAdminRequestAllowed(url,method,targets),false);
     await handler({request:()=>({url:()=>url.href,method:()=>method}),abort:async()=>{aborted++;},fetch:async()=>{transport++;}});
   }
-  assert.equal(transport,0);assert.equal(aborted,3);assert.deepEqual(reasons,["write","write","write"]);
+  assert.equal(transport,0);assert.equal(aborted,4);assert.deepEqual(reasons,["write","write","write","write"]);
   assert.equal(chatAdminRequestAllowed(new URL("/auth/v1/logout",targets.supabaseOrigin),"POST",targets),true);
   assert.equal(chatAdminRequestAllowed(new URL("/api/auth/session",targets.appOrigin),"POST",targets),true);
+  assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/conversations",targets.appOrigin),"POST",{...targets,mode:"acceptance"}),true);
+  assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/fans",targets.appOrigin),"POST",{...targets,mode:"acceptance"}),false);
 });
 
 test("teardown never hides writes that acceptance mode would normally allow",async()=>{
@@ -105,14 +107,14 @@ test("teardown never hides writes that acceptance mode would normally allow",asy
   let handler,fetches=0,aborts=0;const reasons=[];
   const boundary=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
   await boundary.stop();
-  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"]])await handler({
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/conversations","POST"],["/api/chatadmin/characters","PATCH"]])await handler({
     request:()=>({url:()=>`${targets.appOrigin}${path}`,method:()=>method}),
     fetch:async()=>{fetches++;},abort:async()=>{aborts++;},
   });
   assert.equal(fetches,0,"teardown must never forward a write");
-  assert.equal(aborts,2);
-  assert.equal(boundary(),2,"acceptance-authorized writes remain violations once teardown starts");
-  assert.deepEqual(reasons,["write","write"]);
+  assert.equal(aborts,3);
+  assert.equal(boundary(),3,"acceptance-authorized writes remain violations once teardown starts");
+  assert.deepEqual(reasons,["write","write","write"]);
 });
 
 test("probe dispatch calls only release verification and the browser probe without preparing fixtures",async()=>{
