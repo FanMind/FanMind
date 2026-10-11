@@ -433,7 +433,8 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,1,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
       insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
       select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,7) ordinal;
-      insert into public.ai_usage_events values('${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','2026-09-26T10:00:08Z');`);
+      insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
+      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','${receipt.startedAt}'::timestamptz+(((ordinal+7)::text||' seconds')::interval) from generate_series(1,2) ordinal;`);
     assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
 
     const attachedFan="dddddddd-dddd-4ddd-8ddd-dddddddddddd",attachedCreation="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
@@ -447,7 +448,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       assert.equal(sql(`select count(*) from public.chat_characters where id='${ids[6]}';`).trim(),"1","failed cleanup must preserve the reserved parent and all receipt rows");
     }
     sql(`delete from public.chat_character_fans where id='${attachedFan}';`);
-    sql(`insert into auth.sessions(user_id,created_at) values('${ids[2]}','2026-09-26T10:00:09Z');`);
+    sql(`insert into auth.sessions(user_id,created_at) values('${ids[2]}','2026-09-26T10:00:10Z');`);
     assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup must commit even while session absence still fails");
     assert.throws(()=>sql(buildManualFlowSql("absence",env,receipt)),"independent absence must reject a run-bound session");
     sql(`delete from auth.sessions where user_id='${ids[2]}' and created_at>='${receipt.startedAt}'::timestamptz;`);
