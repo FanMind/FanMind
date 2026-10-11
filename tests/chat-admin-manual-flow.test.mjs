@@ -104,7 +104,7 @@ test("probe network policy blocks fixture and provider writes before route trans
 
 test("direct Playwright requests retain the same acceptance write allowlist",()=>{
   const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
-  assert.match(source,/if\(!chatAdminRequestAllowed\(new URL\(url\),options\.method\?\?\"GET\",\{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE\}\)\)throw Error\(\"chat_admin_manual_direct_write\"\)/u);
+  assert.ok(source.includes('if(!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_direct_write")'));
   assert.doesNotMatch(source,/MODE===\"probe\"&&!chatAdminRequestAllowed/u);
 });
 
