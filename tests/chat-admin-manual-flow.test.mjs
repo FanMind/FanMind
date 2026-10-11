@@ -102,6 +102,12 @@ test("probe network policy blocks fixture and provider writes before route trans
   assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/fans",targets.appOrigin),"POST",{...targets,mode:"acceptance"}),false);
 });
 
+test("direct Playwright requests retain the same acceptance write allowlist",()=>{
+  const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  assert.match(source,/if\(!chatAdminRequestAllowed\(new URL\(url\),options\.method\?\?\"GET\",\{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE\}\)\)throw Error\(\"chat_admin_manual_direct_write\"\)/u);
+  assert.doesNotMatch(source,/MODE===\"probe\"&&!chatAdminRequestAllowed/u);
+});
+
 test("teardown never hides writes that acceptance mode would normally allow",async()=>{
   const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"acceptance"};
   let handler,fetches=0,aborts=0;const reasons=[];

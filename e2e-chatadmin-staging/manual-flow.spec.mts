@@ -15,7 +15,7 @@ type Session={token:string;anon:string};
 
 async function direct(request:APIRequestContext,url:string,options:Parameters<APIRequestContext["fetch"]>[1]={}) {
  if(![APP,SUPABASE].includes(new URL(url).origin))throw Error("chat_admin_manual_direct_origin");
- if(MODE==="probe"&&!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_probe_write");
+ if(!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_direct_write");
  return request.fetch(url,{...options,maxRedirects:0,timeout:45_000});
 }
 async function boundary(context:BrowserContext){const violations=await installChatAdminNetworkBoundary(context,{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE,onViolation:network=>updateBrowserDiagnostic(process.env,MODE,{network})});return {check:()=>expect(violations()).toBe(0),stop:()=>violations.stop()};}
