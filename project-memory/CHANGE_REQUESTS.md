@@ -605,3 +605,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
 - Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
 - Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
+
+## FM-CR-060 — Separate main merge from Production release
+- Date: 2026-10-11
+- Status: SOURCE_COMPLETE_PENDING_PR_CI_AND_CUTOVER
+- Task: FM-DEPLOYMENT-CONTROL-20261011-01
+- Risk: R4
+- Scope: remove Production deployment from `main` push and require an exact-main manual release bound to merged-PR review, complete exact-head PR/main CI, owner authorization, current recovery audit, protected `production` environment and isolated application rollback; keep Staging separate.
+- Boundary: repository preparation does not activate this control or authorize merge/deploy. Historical workflow reruns can retain the old privileged path, environment/runner protection is unproven and backup evidence is currently stale; a separately approved cutover must contain those external hazards before merge or release.
