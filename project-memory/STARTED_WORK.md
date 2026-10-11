@@ -1099,7 +1099,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Owner: FanMind Builder under the Owner's bounded secretary coordination.
 - Baseline: exact main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
-- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR pending publication.
+- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR #1296; implementation head before receipt `53d120758c8bcbd68b269fdcb28c3ec3e4ab7002`.
 - Prior completion: #1290/#1292 are merged; Staging schema runs `37972471467` and `37972797299` plus deploy `37977099722` succeeded on `61cf98f29f48d88b7112c06461b94cd255428b4f`. They are not repeated.
 - Scope: repository-only upgrade of the existing authenticated manual Staging flow to persist two separate synthetic fans, cover all four offers on each Character, generate exactly three bound suggestions for three messages, persist two used replies across reload, reject foreign/invented prices and prove scoped cleanup/absence without requiring globally empty tables.
 - Boundary: no merge, dispatch, deploy, live test, database, Production, credentials/secrets/permissions, provider or real-fan action. The consumed `FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926` is not reused.

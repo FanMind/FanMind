@@ -1089,7 +1089,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Risk: R3
 - Holder: FanMind Builder, secretary-coordinated bounded repository task 2026-10-11.
 - Baseline: exact main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
-- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR pending publication.
+- Branch/PR: `fix/adminchat-staging-harness-20261011` / Draft PR #1296; implementation head before receipt `53d120758c8bcbd68b269fdcb28c3ec3e4ab7002`.
 - Reconciliation: the prior source owner #1290 and migration repair #1292 are merged. Staging VERIFY `37972471467`, APPLY `37972797299` and deploy `37977099722` on `61cf98f29f48d88b7112c06461b94cd255428b4f` are successful historical evidence, not active writers or authority for this run.
 - Scope: update only the existing authenticated manual Staging acceptance harness for four Character-bound offer categories, two marker-bound synthetic fans, persisted conversations/messages/used markers, tenant isolation, bounded recovery/cleanup/absence and directly affected tests/runbook/receipt.
 - Required checks: focused harness and negative tests, TypeScript, lint, build, Browser E2E, native PostgreSQL 17, all applicable exact-head CI/security/governance gates, then independent R3 countercheck.
@@ -1199,5 +1199,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Postflight observation: Deploy `37346036758`, Readiness `37346205856` and read-only Audit `37346205878` observed the exact release; only the known backup-freshness finding remains. No protected or manual live action was taken.
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
-
 
