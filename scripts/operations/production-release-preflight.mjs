@@ -179,7 +179,7 @@ async function main(environment = process.env) {
         `- mode: ${mode}`,
         `- immutable release commit: ${releaseCommit}`,
         `- current main: ${mainCommit}`,
-        `- evidence run IDs: ${evidence.runs.map((run) => run.id).join(", ")}`,
+        `- required evidence: ${mode === "release" ? "FanMind CI and FanMind CodeQL" : "Deploy FanMind and FanMind CodeQL"}`,
         "- result: PASS; protected Production deployment still requires environment approval",
         "",
       ].join("\n"),
