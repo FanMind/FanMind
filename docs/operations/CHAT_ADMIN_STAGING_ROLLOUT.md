@@ -67,6 +67,10 @@ wiederverwendet. Dieser Repository-Stand führt keinen Dispatch, Deploy und kein
 Live-Test aus. Der spätere kontrollierte Lauf benötigt weiterhin `mode=acceptance`,
 `confirmation=run-chat-admin-manual-flow` und `reviewed_commit` gleich dem dann
 aktuellen, reviewten und nachweislich auf Staging bereitgestellten `main`-Commit.
+Die Owner-Anweisung vom 11. Oktober 2026, 13:26 UTC, hat jede zuvor erklärte
+Freigabe für diese spätere Staging-Abnahme ausdrücklich verbraucht. Selbst nach
+Merge und Deploy ist daher eine neue, exakt begrenzte Autorisierung erforderlich;
+ohne sie sind Probe, Acceptance, Deploy-, Datenbank- und Live-Aufrufe `BLOCKED`.
 
 Die Auth-Vorprüfung, das geschützte Environment `staging`, die feste Zieltrennung,
 TLS `verify-full`, die Concurrency-Gruppe `fanmind-chat-admin-staging-write` und die
@@ -93,6 +97,16 @@ Character-/Fan-fremder Aufruf muss vor Provider-Nutzung scheitern. Ein Vorschlag
 `Kopieren und verwenden` bestätigt; nach echtem Reload muss die persistente
 `Verwendeter KI-Vorschlag`-Markierung sichtbar sein. Es gibt keine HTML-Attrappe
 und keinen externen OnlyFans-/Social-Send.
+
+Der echte Browserlauf behält zusätzlich die bisherigen Zustands- und
+Autorisierungsnegative: stale Character-Revision (`409`), ein vorübergehend
+inaktiver und anschließend wieder aktivierter Character (`400`), untrusted Origin
+(`403`) sowie ein Reply-Aufruf der authentifizierten Secondary-Identität ohne
+Capability (`403`). Diese ergänzen Anonymous-/Admin-/Secondary-Character-GET,
+Cross-Character-Fan-Binding und direkte RLS-Reads. Sieben erfolgreiche Generationen
+erzeugen 29 laufgebundene Messages; Cross-Character-Binding und inaktiver Character
+erzeugen zusammen exakt zwei gebundene Error-Usage-Zeilen. Die übrigen Negative
+brechen vor der Usage-Erfassung ab.
 
 Prepare, Verify, Cleanup und Absence verlangen keine global leeren Tabellen mehr.
 Sie adressieren nur die reservierten Capability-, Character-, Fan-, Conversation-
