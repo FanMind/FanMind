@@ -7,6 +7,12 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
   "Erzeuge exakt drei kurze Antwortvorschläge in dieser Reihenfolge: empfohlen/natürlich, weicher/spielerischer, stärker/direkter.",
   "Verstehe zuerst Bedeutung, kommunikative Absicht und Ton der aktuellen Nachricht im Zusammenhang mit Character, Fanprofil, gelernten Angaben und gespeichertem Gesprächsverlauf. Reagiere nicht nur auf einzelne Schlüsselwörter.",
   "Alle drei Varianten beantworten die konkrete Nachricht und passen zur bisherigen Beziehungsdynamik. Eine stärkere Variante bleibt in derselben Character-Stimme und überschreitet keine Grenze.",
+  "Schreibe in der gespeicherten Character-Stimme: Schreibstil, Satzstil, Emoji-Stil, No-Gos und Beispiele bestimmen die Form. Beispiele und typische Phrasen sind Orientierung, keine wiederkehrenden Textbausteine; erfinde keine Tippfehler, Dialekte oder Kosenamen.",
+  "Ein kurzes Kompliment verdient zuerst eine kurze, passende Reaktion. Wiederhole nicht die Aussage des Fans als Selbstbeschreibung und lenke ein Kompliment nicht automatisch auf Angebote, Vorlieben oder einen Kauf.",
+  "Eine Antwort darf ohne Frage enden. Stelle höchstens eine Rückfrage, nur wenn sie zum aktuellen Gespräch passt oder wirklich eine fehlende Information klärt; keine routinemäßigen Auswahlfragen wie elegant oder frech.",
+  "Die drei Vorschläge sind alternative einzelne Antworten, kein dreiteiliger Dialog. Variiere die Nuance, nicht die Persona; mache die direkte Variante nicht automatisch verkäuferischer oder intimer.",
+  "Nutze gespeichertes Fanwissen nur, wenn es zur aktuellen Nachricht passt. Frage bekannte Angaben nicht erneut ab und zähle die Notizen nicht auf. recent_messages enthält nur Fan-Nachrichten und manuell verwendete Antworten; daraus folgt keine Liefer-, Kauf- oder Zahlungsbestätigung.",
+  "Biete nur bei erkennbarer Nachfrage oder passendem Gesprächsanlass etwas an. Ein vorhandenes requested_offer erlaubt den korrekten Preis, verpflichtet aber nicht zum Verkauf. Keine künstliche Dringlichkeit, Schuldgefühle, erfundene Exklusivität oder Liebesversprechen.",
   "Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung. Character-Grenzen, Fanbeziehung und Verlauf bestimmen den Ton.",
   "Weise eine Bitte nicht lediglich wegen ihrer Formulierung zurück. Wenn eine Grenze nötig ist, beantworte trotzdem die eigentliche Bitte klar und im Character-Kontext.",
   "Nutze Angebote und Preise ausschließlich aus sales_playbook.requested_offer. Wenn requested_offer null ist, nenne keinen Preis und erfinde kein Angebot, keinen Rabatt, keine Verfügbarkeit oder Zusage.",
@@ -105,7 +111,9 @@ export function buildChatAdminFanContext(character, fan, conversation, messages,
   const base = JSON.parse(buildChatAdminCharacterContext(character, incomingMessage));
   base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, summary: fan.summary, notes: fan.notes };
   base.conversation = { id: conversation.id, recent_messages: [] };
-  const candidates = messages.slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at }));
+  // Unused alternatives were never said by the Character. Keep them out of the
+  // model's dialogue while retaining the full history for persistence checks.
+  const candidates = messages.filter(({ direction }) => direction === "fan_inbound" || direction === "confirmed_reply").slice(-20).map(({ direction, content, created_at }) => ({ direction, content, created_at }));
   // Prefer the newest complete turns. Never cut a message in the middle: if the
   // fixed Character/Fan/incoming context itself is too large, the caller rejects it.
   for (let index = candidates.length - 1; index >= 0; index -= 1) {

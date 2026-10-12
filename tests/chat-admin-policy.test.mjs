@@ -65,6 +65,20 @@ test("persistent fan context retains newest complete history within the canonica
   assert.doesNotMatch(JSON.stringify(parsed.conversation.recent_messages),/message-0-/u);
 });
 
+test("unused drafts never become dialogue or displace confirmed replies in bounded context", () => {
+  const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+  const fan={id:"fan-a",workspace_id:"workspace-a",character_id:"character-a",status:"active",summary:"mag Katzen",notes:"keine Kaufzusage"};
+  const conversation={id:"conversation-a",workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a"};
+  const row={workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id,conversation_id:conversation.id,created_at:"2026-10-12T00:00:00Z"};
+  const messages=[{...row,direction:"fan_inbound",content:"Danke für die Bilder"},{...row,direction:"confirmed_reply",content:"freut mich 😊"},...Array.from({length:22},()=>({...row,direction:"suggested_reply",content:"UNUSED DRAFT "+"x".repeat(500)}))];
+  const context=JSON.parse(buildChatAdminFanContext(character,fan,conversation,messages,"hallo",1800));
+  assert.deepEqual(context.conversation.recent_messages.map(message=>message.content),["Danke für die Bilder","freut mich 😊"]);
+  assert.equal(context.fan.summary,"mag Katzen");
+  assert.doesNotMatch(JSON.stringify(context),/UNUSED DRAFT/u);
+  assert.equal(messages.length,24,"full history remains available for concurrency checks");
+  assert.throws(()=>buildChatAdminFanContext(character,fan,conversation,[{...row,character_id:"other",direction:"suggested_reply",content:"foreign draft"}],"hallo"),/message_context_mismatch/u);
+});
+
 test("reply strategy requires semantic intent, relationship context and three bounded variants", () => {
   for (const expected of [
     /Bedeutung, kommunikative Absicht und Ton/u,

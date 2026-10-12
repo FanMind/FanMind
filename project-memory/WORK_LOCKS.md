@@ -1216,3 +1216,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
 
+## LOCK-FM-CHATADMIN-NATURAL-CONTEXT-20261012
+- Task: FM-CHATADMIN-NATURAL-CONTEXT-20261012-01
+- Status: ACTIVE_SOURCE_PR
+- Risk: R3 repository-only; FM-CONTRACT-CHATADMIN-AI-001 sets the minimum risk for AI-context changes.
+- Holder: Codex, direct Owner continuation request on 2026-10-12.
+- Baseline: `613e452ced0105da4c718b3d4aafb30f77c88ff4`.
+- Scope: `src/lib/chatAdminPolicy.mjs`, `src/lib/chatAdminSalesPlaybook.mjs`, their policy/offer/API tests, `docs/CHAT_ADMIN_REPLY_STYLE.md`, README and Source of Truth. Reduce draft contamination, preserve confirmed dialogue and bound Fan knowledge, suppress price release for pure media compliments and retain one Character voice.
+- Coordination: no overlap with the separately retained Staging harness lock. No edits to its workflow, browser flow, runner, recovery logic or rollout runbook; no duplicate live run.
+- Evidence: focused behavior/API regression tests, lint, TypeScript/build, truth and God Mode checks plus an independent final-diff countercheck before merge.
+- Recovery: reviewed source revert. No schema, runtime, customer, capability, provider, Billing or Production mutation is part of this task.
+- Release condition: source PR has applicable green CI and independent review. Runtime acceptance remains separate; neither source tests nor merge prove live conversational quality.
