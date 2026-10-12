@@ -488,3 +488,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Source cause: native Character details menus stay open after Bearbeiten. The positioned dropdown has z-index 5 and overlaps the next Character card. The first menu is reopened for the reload check and remains open when selection moves to B, explaining the click timeout. Close the native menu before edit/deactivate/remove; add explicit live-browser assertions that edit/deactivate leave it closed. No price, AI, data, authorization or scroll-layout changes.
 - Recovery artifact 11770675534 / sha256:84982144a9034f580c8d770e901f27b6fd5961bccdd6558a66f3042dae374750 downloaded and digest verified. Independent read-only exact-receipt reconciliation again showed zero capability, Character, Fan, conversation, message, AI-usage and owner-session residue and zero active ChatAdmin writers. The artifact is retained; do not turn the failed workflow into PASS or delete its uncertainty receipt.
 - Next: exact-head required CI and reviewed UI diff, protected merge, exact Staging deployment and fresh full acceptance with cleanup. Production remains sealed; runners remain enabled.
+
+
+## FM-FAIL-CHATADMIN-EDITOR-CLOSE-DIAGNOSTIC-20261012
+- Date: 2026-10-12
+- Status: SOURCE_DIAGNOSTIC_AND_LOCATOR_REPAIR_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion.
+- Run 38302707934 on exact deployed `c397bf012a982ad4104512f4761c802fd2043d37` confirms native Character menus now close after Bearbeiten; prices again save/reload correctly. It still fails at offers_reload_close, so the open-menu defect was real but did not fully explain the acceptance failure. Retain that distinction; do not claim full root-cause closure or successful acceptance.
+- Repair: scope Abbrechen to the Character editor form and require the editor to disappear. Mark Character-B selection separately. Classify private child-process failure output into a fixed allowlist of locator/action/assertion kinds; never print raw Playwright output, error text, payloads or credentials. Redaction regressions remain mandatory.
+- Recovery artifact 11771247320 / sha256:03fe4feaa19aaf1515b90ada02cf1282e8b8faf2ee40bbf03f5f37719dbc08a7 was downloaded and hash/target/release/run verified. Read-only exact-receipt reconciliation again found all eight residue/active-writer counts zero. Keep the artifact and failed-run status; no additional DML was performed.
+- Next: exact-head CI, merge, exact Staging deployment and fresh diagnostic acceptance. Production remains sealed and runner availability unchanged.

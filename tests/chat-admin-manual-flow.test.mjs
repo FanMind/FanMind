@@ -1,3 +1,4 @@
+import { classifyManualBrowserFailure } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -353,4 +354,20 @@ test("offer diagnostics distinguish editor, submit, response and persisted reloa
     assert.ok(diagnostic.includes(`"${stage}"`));
   }
   assert.match(browser,/mark\("offers_saved_payload"\)[\s\S]*recommendedPriceMinor/);
+});
+
+
+test("browser failure classification emits only fixed kinds and cannot forward private error text",()=>{
+  for(const [text,kind] of [
+    ["strict mode violation: private-email@example.invalid","ambiguous_locator"],
+    ["private-value intercepts pointer events","pointer_interception"],
+    ["element is outside of the viewport: private-path","outside_viewport"],
+    ["element is not enabled private-token","disabled_element"],
+    ["element is not visible private-token","hidden_element"],
+    ["Timeout 15000ms exceeded private-response","action_timeout"],
+    ["Error: expect(locator) private-message","assertion"],
+    ["private-password private-token","unclassified"],
+  ]) assert.equal(classifyManualBrowserFailure({status:1,stderr:text}),kind);
+  assert.equal(classifyManualBrowserFailure({error:{code:"ETIMEDOUT",message:"private-secret"}}),"process_timeout");
+  assert.equal(classifyManualBrowserFailure({stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token"}),"unclassified");
 });
