@@ -1,9 +1,6 @@
 name: Deploy FanMind
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
@@ -14,8 +11,21 @@ permissions:
   contents: read
 
 jobs:
+  sealed:
+    name: Production deployment is sealed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    permissions: {}
+    steps:
+      - name: Reject Production deployment
+        shell: bash
+        run: |
+          echo "Production deployment sealed; separate reviewed release activation required"
+          exit 1
+
   deploy:
     name: Deploy to Exoscale production
+    if: false
     runs-on:
       - self-hosted
       - fanmind-prod

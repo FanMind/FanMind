@@ -17,12 +17,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Environment file on server: `/var/www/fanmind/.env.production`
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
+- Pushes and merges to `main` do not trigger Production deployment.
+- The remaining manual workflow is intentionally sealed: its only reachable GitHub-hosted job fails, while the preserved Production job has a literal `if: false`.
+- No usable Production release or rollback controller exists in this transition.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-The deployment workflow deploys `main` on the Exoscale server with:
+The preserved, currently unreachable Production job contains the prior Exoscale deployment sequence:
 
 ```bash
 cd /var/www/fanmind
