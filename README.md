@@ -424,7 +424,7 @@ deshalb nicht als abgeschlossene Staging-Abnahme.
 - Sprache: TypeScript
 - Auth und Daten: Supabase Auth / Supabase PostgREST
 - KI: serverseitige OpenAI Responses API
-- Deployment: Exoscale + PM2 + nginx über `.github/workflows/deploy-fanmind.yml`
+- Deployment: Exoscale + PM2 + nginx; `.github/workflows/deploy-fanmind.yml` ist als Übergang gesperrt und wird nicht durch `main` ausgelöst
 - Produktionsdomain: `https://fanmind.ch`
 
 Installieren und lokal starten:
@@ -704,9 +704,13 @@ Nicht als aktiv bauen oder verkaufen, sofern nicht ausdrücklich freigegeben und
 
 ## Deployment
 
-Deployments auf `main` laufen über `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner:
+Merges und Pushes auf `main` lösen kein Production-Deployment aus.
+`.github/workflows/deploy-fanmind.yml` ist nur manuell startbar, führt dabei
+jedoch ausschließlich einen fehlschlagenden GitHub-hosted Sperrjob aus. Der
+bisherige Production-Job bleibt mit literal `if: false` unerreichbar. Ein
+kontrollierter Release- oder Rollbackweg ist noch nicht aktiviert.
 
-Der auf Production aktive isolierte Release-Pfad:
+Der im gesperrten Job nur als Quellcode erhaltene isolierte Release-Pfad:
 
 1. löst den exakten 40-stelligen Commit von `origin/main` auf;
 2. führt `scripts/operations/deploy-isolated-release.sh` commitgebunden in

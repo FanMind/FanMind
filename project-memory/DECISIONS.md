@@ -213,3 +213,11 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Protected-state boundary: a merge never authorizes Production deployment, payment/Billing activation, provider activation, secrets/credentials, permission grants, destructive/irreversible data actions, Restore writes or other R3/R4 protected actions.
 - Efficiency intent: reduce repeated context loading and token cost by keeping ordinary work in one agent/run while preserving independent evidence only where it materially changes risk.
 - Repository continuity: implementation decisions, durable state changes, blockers and next actions are recorded in Project Memory; ordinary commit history stays in Git.
+
+
+## FM-DEC-030 — Sealed Production deployment transition
+- Date: 2026-10-11
+- Status: DECIDED_NOT_ACTIVATED
+- Decision: Pushes and merges to `main` must not trigger Production deployment. During the transition, `.github/workflows/deploy-fanmind.yml` remains manually visible but has no inputs, always reaches only a GitHub-hosted failing seal job and keeps the preserved Production job unreachable behind literal `if: false`.
+- Audit boundary: only the daily read-only audit resolves the actually running Production SHA from `/api/version`; manual and successful-deployment audit bindings retain their exact existing contracts.
+- Boundary: no release or rollback controller is activated, no Production runner is reachable from the new workflow version, and no merge, dispatch, runner, Environment, secret, permission or Production action is authorized. Historical workflow versions are not neutralized by this source change; their runner access must be secured before a separately approved transition.
