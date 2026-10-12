@@ -366,6 +366,10 @@ test("browser failure classification emits only fixed kinds and cannot forward p
     ["element is not visible private-token","hidden_element"],
     ["Timeout 15000ms exceeded private-response","action_timeout"],
     ["Error: expect(locator) private-message","assertion"],
+    ["Error: expect(locator).toHaveCount(expected) failed private-path","count_assertion"],
+    ["Error: expect(locator).toHaveValue(expected) failed private-value","value_assertion"],
+    ["Error: expect(locator).toBeChecked() failed private-value","checked_assertion"],
+    ["Error: expect(locator).toHaveJSProperty() failed private-value","menu_assertion"],
     ["private-password private-token","unclassified"],
   ]) assert.equal(classifyManualBrowserFailure({status:1,stderr:text}),kind);
   assert.equal(classifyManualBrowserFailure({error:{code:"ETIMEDOUT",message:"private-secret"}}),"process_timeout");
