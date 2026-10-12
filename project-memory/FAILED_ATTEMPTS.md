@@ -467,3 +467,14 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Do not repeat the unchanged failed workflow or apply SQL to resolve this verifier failure. Next: required exact-head CI/countercheck, protected PR merge, exact new-release Staging deploy, then fresh authorized acceptance with bound recovery/cleanup.
 
 - Merge-readiness follow-up for PR #1303: exact-head manual Supply Chain run 38298081519 passed, but the required check on the PR merge candidate stayed expected because the workflow filters PR paths. Remove only the PR path filter so the existing mandatory job runs on every main PR; retain all pins, permissions, audit/SBOM gates and push filtering. Add a regression for unconditional main PR registration. Do not bypass or weaken the required check.
+
+
+## FM-FAIL-CHATADMIN-OFFER-EDITOR-ACCEPTANCE-20261012
+- Date: 2026-10-12
+- Status: DIAGNOSTIC_REFINEMENT_IN_REVIEW
+- Task: continuation of FM-ADMINCHAT-STAGING-HARNESS-20261011-01.
+- Exact Staging release: `b8f1433c0fef62efbb6a2f4b3aadce1101289237`, deployment 38299156783 succeeded with 14 public routes and seven mandatory health components. PR #1303 merged after all required exact-head checks, including actual native PG17 regression.
+- Fresh acceptance 38299348100 / attempt 1 / job 114978210963 passed probe, schema, reservation and prepare, then failed at offers_save with HTTP 2xx, no network violation and successful session logout. The coarse stage includes edit/save/reload, so the exact assertion is not yet known; do not infer a product defect or runtime acceptance.
+- Recovery artifact 11769802609, digest sha256:28c68997284667a723dae1162053dbccbd15eda6c8f2bdd4407c5959ee99ac29, remains available. Cleanup SQL executed but correctly withheld final PASS because the receipt retained inFlightUncertain. No unchanged retry or receipt deletion.
+- Independent read-only Staging reconciliation using the exact downloaded/hash-verified run receipt: capability, reserved Characters, run Fans, reserved conversations, descendant messages, run-scoped AI usage and owner sessions all count zero; no active ChatAdmin writer. No additional DML/schema change was needed. This is a bounded absence snapshot, not a fabricated successful workflow or erasure of uncertainty.
+- Next repair: add allowlisted offer editor/field/submit/payload/reload checkpoints and assert exact persisted save-response prices before reload; retain output redaction, all browser negatives and fail-closed recovery. Fresh exact-head CI, merge, Staging deploy and acceptance are required.

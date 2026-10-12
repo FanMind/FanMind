@@ -343,3 +343,14 @@ test("workflow uploads only the bounded recovery receipt before writes and alway
   assert.match(workflow,/FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST: \$\{\{ steps.recovery.outputs.artifact-digest \}\}/u);
   assert.doesNotMatch(workflow,/SERVICE_ROLE|--apply|db push|member-credential/u);
 });
+
+
+test("offer diagnostics distinguish editor, submit, response and persisted reload without logging payloads",()=>{
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  const diagnostic=readFileSync(new URL("../e2e-chatadmin-staging/browser-diagnostic.mjs",import.meta.url),"utf8");
+  for(const stage of ["offers_editor","offers_fields","offers_submit","offers_saved_payload","offers_reload_editor","offers_reload_prices","offers_reload_active","offers_reload_close"]){
+    assert.ok(browser.includes(`mark("${stage}")`));
+    assert.ok(diagnostic.includes(`"${stage}"`));
+  }
+  assert.match(browser,/mark\("offers_saved_payload"\)[\s\S]*recommendedPriceMinor/);
+});
