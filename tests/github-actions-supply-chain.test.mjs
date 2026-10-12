@@ -440,3 +440,13 @@ test("completed one-off and patch workflows are absent", async () => {
     false,
   );
 });
+
+
+test("required supply-chain check runs for every main PR merge candidate", async () => {
+  const source = await readFile(".github/workflows/supply-chain-security.yml", "utf8");
+  const pullRequest = source.match(/\n  pull_request:\n[\s\S]*?(?=\n  push:)/u)?.[0];
+  assert.ok(pullRequest, "required check must retain the main PR trigger");
+  assert.match(pullRequest, /branches:\n\s+- main/u);
+  assert.doesNotMatch(pullRequest, /\bpaths(?:-ignore)?:/u);
+  assert.match(source, /name: Immutable Actions, dependency audit and CycloneDX SBOM/u);
+});
