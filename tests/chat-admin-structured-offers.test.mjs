@@ -46,6 +46,18 @@ test("private photo intent resolves only the bound Character price",()=>{
  assert.doesNotMatch(JSON.stringify(context.sales_playbook),/4000/u);
 });
 
+test("media compliments do not release prices, while explicit requests still do",()=>{
+ for(const incoming of ["hallo süße nette fotos hast du da","Deine Videos sind toll","Beautiful photos!","Really nice clips"]){
+  const result=resolveChatAdminRequestedOffer(playbook(),incoming);
+  assert.equal(result.requestedOffer,null,incoming);
+  assert.deepEqual(result.playbook.offers,[]);
+  assert.throws(()=>assertChatAdminReplySemantics(["Das Foto kostet 10 EUR","Danke dir","Freut mich"],incoming,result.requestedOffer),/reply_price_not_permitted/u);
+ }
+ for(const [incoming,category] of [["Schöne Fotos, was kosten sie?","photo"],["Ich möchte ein schönes privates Foto","private_photo"],["Kann ich ein schönes privates Foto haben?","private_photo"],["Darf ich deine schönen Fotos sehen?","photo"],["Nice video, how much is it?","video"],["Could I get a nice private video?","private_video"],["Send me a nice private video","private_video"],["privates Foto","private_photo"]]){
+  assert.equal(resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer.category,category,incoming);
+ }
+});
+
 test("different Characters retain different prices and foreign workspace context fails closed",()=>{
  const second=playbook();second.offers=second.offers.map(item=>item.category==="private_photo"?{...item,recommendedPriceMinor:6100,minimumPriceMinor:6100,maximumPriceMinor:6100}:item);
  assert.equal(resolveChatAdminRequestedOffer(character().sales_playbook,"privates Foto").requestedOffer.recommendedPriceMinor,2500);

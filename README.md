@@ -778,3 +778,13 @@ Ein getrenntes Staging wird ausschließlich manuell über `.github/workflows/dep
 ## Dokumentations-Synchronisierung
 
 Wenn Preise, Pakete, Referral-Logik, aktiver Scope, Demo-Pfad, Billing, KI-Leistungsstufen, Datenbank, Security, Mobile-Verträge oder öffentliche Versprechen geändert werden, müssen `docs/SOURCE_OF_TRUTH.md`, `README.md`, `AGENTS.md`, `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`, `docs/mobile/BETA_RELEASE.md` und die betroffenen Legal-/Pricing-Dateien im selben PR geprüft und synchronisiert werden.
+
+## ChatAdmin: Gesprächsstil und Kontext
+
+Der Character-Schreibstil, Satzstil, Emoji-Stil, Beispiele und No-Gos steuern
+alle drei Antwortalternativen. Kurze Komplimente sollen zunächst kurz beantwortet
+werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Reine Komplimente zu
+Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält nur
+Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
+Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:
+`docs/CHAT_ADMIN_REPLY_STYLE.md`. Diese Source-Änderung belegt keine Live-Abnahme.

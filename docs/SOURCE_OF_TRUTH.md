@@ -1345,3 +1345,17 @@ AI-Kapazität wird kundenbezogen als **verbleibender Prozentwert** angezeigt, ni
 Reservierte sowie indeterminate/reconciliation-required Beträge gelten bis zur Freigabe oder Abrechnung als nicht verfügbar. Die Anzeige wird konservativ abgerundet.
 
 Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Capacity-v2-KI-Aufrufe werden gesperrt, bis zusätzliche bezahlte Kapazität verfügbar ist oder der nächste autoritative Abrechnungszeitraum neues inkludiertes Guthaben gewährt. Es erfolgt kein automatisches Downgrade auf Schnell, um die Sperre zu umgehen.
+
+## ChatAdmin: natürliche Antwortalternativen
+
+Die serverseitigen Gesprächsregeln verwenden die bestehenden Character-Felder
+für Schreibstil, Satzstil, Emojis, Beispiele und No-Gos. Vorschläge reagieren
+zuerst auf die konkrete Nachricht, ohne routinemäßige Rückfrage oder Verkaufsdruck.
+Ein reines Kompliment über Medien berechtigt nicht zur Preisnennung; ausdrückliche
+Medien-/Preisanfragen behalten die gebundene Offer-Auflösung. Der KI-Verlauf enthält
+nur `fan_inbound` und `confirmed_reply`; unbenutzte `suggested_reply` bleiben
+gespeichert und Teil der atomaren History-Bindung, aber sind kein geführter Dialog.
+Fan-Zusammenfassung und Notizen werden weiter gebunden geladen. Eine verwendete
+Antwort beweist keine Lieferung, Zahlung oder Kaufzusage. Die Details stehen in
+`docs/CHAT_ADMIN_REPLY_STYLE.md`; Natürlichkeit und Gedächtniswirkung im echten
+Gespräch benötigen weiterhin eine gesonderte Runtime-Abnahme.

@@ -73,7 +73,7 @@ function harness(change) {
     sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, providerBody: null };
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, providerBody: null, persistedHistoryIds: null };
   const dependencies = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
@@ -83,9 +83,12 @@ function harness(change) {
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
-      listRecentChatMessages: async () => [{ id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" }],
+      listRecentChatMessages: async () => [
+        { id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" },
+        { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
+      ],
       getChatAdminGeneration: async () => [],
-      persistChatAdminGeneration: async (...args) => args.at(-1),
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => { calls.usage++; } },
@@ -128,6 +131,9 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(suppliedContext.fan.summary, "mag kurze Antworten");
   assert.equal(suppliedContext.fan.notes, "kein Druck");
   assert.equal(suppliedContext.conversation.recent_messages[0].content, "Unser letzter Insider");
+  assert.equal(suppliedContext.conversation.recent_messages.length, 1);
+  assert.doesNotMatch(h.calls.providerBody.input[1].content, /UNUSED MODEL DRAFT/u);
+  assert.deepEqual(Array.from(h.calls.persistedHistoryIds), ["history-1", "unused-1"], "atomic persistence still binds the full stored history");
   assert.equal(suppliedContext.sales_playbook.requested_offer.category,"private_photo");
   assert.equal(suppliedContext.sales_playbook.requested_offer.recommendedPriceMinor,2500);
 });
