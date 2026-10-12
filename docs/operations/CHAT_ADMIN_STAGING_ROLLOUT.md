@@ -187,3 +187,11 @@ Anwendung auf den letzten bekannten Commit zurückgesetzt; die ungenutzte Spalte
 bestehen bleiben. Ein `drop column`, Restore Write oder sonstiger destruktiver
 Rollback ist ein neues geschütztes Arbeitspaket und benötigt vorab Dateninventar,
 aktuelle Backup-/Restore-Evidence, eigenen SQL-Vertrag und eigene Autorisierung.
+
+### Zusammengesetzter aktueller Schema-Vertrag (12. Oktober 2026)
+
+Der echte Staging-Lauf `38294695807` auf `159d24020787683d6982dd5ba1326df44f13900d` bestand Auth-Probe und Session-Logout, scheiterte aber vor Reservation und Fixture-Mutation am veralteten exakten Basis-Postflight. Dieser erwartet die ursprünglichen Conversation-/Message-Spalten, Policies und Browser-Schreibrechte und kann den bereits installierten Fan-/Angebotsvertrag nicht bestätigen. Der Lauf ist fehlgeschlagen, keine Anwendungsabnahme.
+
+Die manuelle Abnahme prüft deshalb zuerst den unveränderten, vollständigen Fan-Postflight einschließlich Parent-Autorität und aktueller persistenter Conversations/Messages. Danach prüft eine fail-closed Projektion des ursprünglichen Basisvertrags weiterhin sämtliche ursprünglichen Capability-/Character-Spalten, Constraints, Policies, Privilegien, RLS und Autoritätshelper. Ausschließlich die gesondert geprüfte `sales_playbook`-Spalte und ihr exakt bekannter Constraint werden an den unveränderten Angebots-Postflight delegiert. Fehlende oder unerwartete Basis-SQL-Struktur sperrt die Projektion. Der eigenständige Legacy-Rollout-Postflight und alle drei kontrollierten SQL-Dateien bleiben unverändert.
+
+Native PostgreSQL-17-Regressionen prüfen den ursprünglichen Fehlalarm auf dem vollständigen Schema, den erfolgreichen aktuellen Basis-Postflight sowie die weiter rote Prüfung bei gelockerter Alters-Spalte, unbekannter Character-Spalte oder unerlaubtem Capability-UPDATE. Es wird keine Datenbankmigration, Rechteänderung oder Ersatz-PASS ausgeführt. Eine neue, exakt releasegebundene Browser-Abnahme nach Merge/Deploy bleibt erforderlich.
