@@ -10,13 +10,13 @@ if(target!=="https://staging.fanmind.ch" || env.FANMIND_TARGET_API_ORIGIN!==targ
    env.NEXT_PUBLIC_SUPABASE_URL!==`https://${ref}.supabase.co` ||
    !["probe","acceptance"].includes(env.FANMIND_CHAT_ADMIN_BROWSER_MODE??"") ||
    !/^[a-z0-9]{8,64}$/u.test(ref) || !/^[a-z0-9]{8,64}$/u.test(production) || ref===production ||
-   env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM!=="run-chat-admin-manual-flow" ||
+   env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM!=="run-chat-admin-manual-flow" || env.FANMIND_CHAT_ADMIN_TASK_ID!=="FM-ADMINCHAT-STAGING-HARNESS-20261011-01" ||
    env.FANMIND_ENABLE_NON_PRODUCTION_WRITES!=="true" || env.FANMIND_NON_PRODUCTION_WRITE_ACK!=="I_UNDERSTAND_NON_PRODUCTION_ONLY") {
   throw new Error("chat_admin_manual_browser_boundary");
 }
 export default defineConfig({
   testDir:"./e2e-chatadmin-staging", outputDir:"test-results/chatadmin-staging",
-  fullyParallel:false,forbidOnly:true,retries:0,workers:1,timeout:180_000,
+  fullyParallel:false,forbidOnly:true,retries:0,workers:1,timeout:360_000,
   expect:{timeout:15_000}, reporter:[["line"]],
   use:{...devices["Desktop Chrome"],baseURL:target,actionTimeout:15_000,navigationTimeout:30_000,
     trace:"off",screenshot:"off",video:"off",locale:"de-CH",timezoneId:"Europe/Zurich",

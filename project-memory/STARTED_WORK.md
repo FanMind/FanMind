@@ -1094,7 +1094,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
 - Date: 2026-10-07
-- Status: IN_PROGRESS
+- Status: ACCEPTED; source merged, prior Structured-Offers Staging prerequisites completed.
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Owner: FanMind Builder
@@ -1105,8 +1105,24 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
 - Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
 - Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
-- Exact next step: repair task-related CI/review findings on the same PR, obtain all exact-head gates and targeted independent countercheck, then stop before any separately authorized schema apply.
+- Completion: PR #1290 final head `48ae5ded06e18a466a5844d3d807db3a723a59f6` merged as `7a2fe438748b6940220d03562213548011c5bec5`; #1292 merged as `61cf98f29f48d88b7112c06461b94cd255428b4f`. Structured-Offers VERIFY `37972471467`, APPLY `37972797299` and Staging deploy `37977099722` succeeded on that exact release. The later four-offer authenticated browser acceptance remains distinct and unexecuted.
+- Exact next step: do not reopen this writer. Continue only through the separate `FM-ADMINCHAT-STAGING-HARNESS-20261011-01` preparation and its later independently authorized exact-head Staging action.
 - Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
+
+## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
+- Date: 2026-10-11
+- Status: IMPLEMENTED_FOR_DRAFT_PR
+- Risk: R3
+- Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
+- Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
+- Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`; no open PR overlaps this ChatAdmin harness scope.
+- Scope: repository-only upgrade of the existing authenticated manual-flow harness for two Characters, two isolated Fans, all four structured offer categories, distinct prices, actual server persistence/reload, seven persisted three-suggestion generations, Copy-and-use persistence, invented/inactive/cross-Character offer negatives, retained stale-revision/inactive-Character/untrusted-Origin/secondary-authority negatives and exact bounded recovery/cleanup/absence.
+- Gates retained: probe/acceptance mode, exact current-main reviewed commit, `run-chat-admin-manual-flow`, protected `staging`, target/Production separation, TLS, network boundary and `fanmind-chat-admin-staging-write` serialization.
+- Boundary: no merge, dispatch, deploy, live test, database/Production/provider/customer write, credential/secret/permission change or external send. The completed runs on `61cf98f...` are prerequisites, not evidence of this new browser acceptance.
+- Authorization state: Owner instruction at 2026-10-11T13:26:00Z explicitly consumed every earlier Staging acceptance permission. This repository-only Draft-PR work remains authorized; any later probe, acceptance, deploy, database or live action requires a new exact bounded authorization after all source prerequisites pass.
+- Evidence plan: focused static/behavioral negatives, exact SQL predicates for foreign-data preservation and interrupted runs, full exact-head CI/typecheck/lint/build/browser gates, diff inspection and independent R3 countercheck. Local dependency-backed Playwright/typecheck may remain unavailable under `CONNECT/registry 403`; CI must provide that evidence before handoff is considered countercheck-ready.
+- Recovery: reviewed repository revert only for this source task. Any later Staging run uses its pre-mutation recovery artifact and cannot claim absence while `inFlightUncertain=true`.
+- Exact next step: publish one Draft PR and await final-head CI plus independent R3 countercheck. Do not merge or dispatch the workflow in this run.
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046

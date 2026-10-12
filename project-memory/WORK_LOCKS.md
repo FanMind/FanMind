@@ -1085,7 +1085,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Task: FM-CHATADMIN-003
-- Status: ACTIVE_SOURCE_PR
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3
 - Holder: FanMind Builder, owner-requested structured Character-offer repair 2026-10-07.
 - Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
@@ -1096,6 +1096,22 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Forbidden: Staging-/Production-APPLY, capability/runtime activation, real customer/Creator/Fan mutation, Social/OnlyFans access, automatic send, Billing/Stripe, provider/secret/permission changes, Creator target transition or merge without a distinct applicable authorization.
 - Recovery: before any later apply, preserve a target-bound preflight and rollback that removes only `chat_characters.sales_playbook` and its check constraint if and only if no dependent runtime has been activated; repository recovery is a reviewed revert. This source run performs no external mutation.
 - Release condition: exact final PR head passes required checks and independent countercheck. Source completion does not authorize or prove any database apply or Production runtime availability.
+- Release evidence: PR #1290 final head `48ae5ded06e18a466a5844d3d807db3a723a59f6` merged as `7a2fe438748b6940220d03562213548011c5bec5`; follow-up #1292 merged as `61cf98f29f48d88b7112c06461b94cd255428b4f`. Protected Structured-Offers VERIFY run `37972471467`, APPLY run `37972797299` and exact-release Staging deploy `37977099722` completed successfully on `61cf98f29f48d88b7112c06461b94cd255428b4f`. These runs establish the prior schema/deploy prerequisites only; they do not perform or accept the new four-offer browser flow.
+- Ownership reconciliation: the source PR is merged and no writer remains under this lock. The distinct end-acceptance harness is serialized under `LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011`; this record is retained, not deleted or reused.
+
+## LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
+- Task: FM-ADMINCHAT-STAGING-HARNESS-20261011-01
+- Status: ACTIVE_SOURCE_PR
+- Risk: R3 repository-only preparation for later controlled Staging acceptance.
+- Holder: FanMind Builder, direct Owner/Secretary assignment 2026-10-11.
+- Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
+- Scope: update only the existing authenticated ChatAdmin manual-flow workflow, real Staging Playwright flow, run-bound recovery/prepare/verify/cleanup/absence runner, focused tests, rollout runbook and minimum coordination records for the four-offer end acceptance.
+- Prior state: #1290/#1292 source and the successful Structured-Offers VERIFY/APPLY/deploy runs on `61cf98f29f48d88b7112c06461b94cd255428b4f` are consumed prerequisites. The old `FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926` is consumed and cannot authorize a new execution.
+- Authorization state: Owner instruction at 2026-10-11T13:26:00Z explicitly consumed the previously stated later Staging-acceptance permission. No probe, acceptance, deploy, database or live call is authorized by this lock or by historical evidence.
+- Required checks: focused contract/negative tests, syntax, TypeScript, lint, build, Browser E2E, applicable CI/security/governance gates, complete diff inspection and a separate R3 countercheck on the final Draft-PR head.
+- Forbidden: merge/auto-merge, workflow dispatch, deployment, Staging/Production/database/provider/customer write, live test, secrets/credentials/permissions, external message send, new queue or general orchestrator.
+- Protected next action: after source prerequisites, independent R3 review, normal merge and exact reviewed-main Staging deployment are separately complete, obtain a new exactly bounded Owner authorization before any run. Only that fresh authorization may permit `mode=acceptance`, `confirmation=run-chat-admin-manual-flow` and `reviewed_commit=<that exact deployed main SHA>` in protected `staging`; missing authorization, fixture values, schema, release or access remain `BLOCKED`.
+- Recovery: repository recovery is a reviewed revert. A later live run must upload its sanitized exact recovery binding before mutation, remove only run-bound synthetic rows, retain interrupted receipts and prove independent absence before acceptance.
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-046
@@ -1199,5 +1215,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Postflight observation: Deploy `37346036758`, Readiness `37346205856` and read-only Audit `37346205878` observed the exact release; only the known backup-freshness finding remains. No protected or manual live action was taken.
 - Closeout: the lock is released and this final post-merge record requires no further receipt PR merely to record its own SHA.
 - Recovery: normal reviewed repository revert only; no external cleanup is required.
-
 
