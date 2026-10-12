@@ -265,13 +265,29 @@ export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
   try {await prepare();await run();await verify();} finally {await cleanup();}
 }
 
+export function classifyManualBrowserFailure(result = {}) {
+  if (result.error?.code === 'ETIMEDOUT') return 'process_timeout';
+  const output = [result.stdout,result.stderr].filter(value=>typeof value==='string').join('\n');
+  for (const [kind,pattern] of [
+    ['ambiguous_locator',/strict mode violation/iu],
+    ['pointer_interception',/intercepts pointer events/iu],
+    ['outside_viewport',/outside (?:of )?the viewport/iu],
+    ['disabled_element',/element is not enabled/iu],
+    ['hidden_element',/element is not visible/iu],
+    ['action_timeout',/timeout [0-9]+ms exceeded/iu],
+    ['assertion',/expect\(received\)|expect\(locator\)/iu],
+  ]) if(pattern.test(output)) return kind;
+  return 'unclassified';
+}
+
 export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) {
   initializeBrowserDiagnostic(env,mode);
   const browserEnv={...env,FANMIND_CHAT_ADMIN_BROWSER_MODE:mode};for(const key of Object.keys(browserEnv))if(key.startsWith('PG')||key.includes('DB_PASSWORD')||key.includes('SERVICE_ROLE'))delete browserEnv[key];
-  let passed=false;
+  let passed=false,failureKind="unclassified";
   try {
     const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:MANUAL_BROWSER_TIMEOUT_MS,maxBuffer:1024*1024});
     const diagnostic=readBrowserDiagnostic(env,mode);
+    failureKind=classifyManualBrowserFailure(result);
     passed=!result.error&&result.status===0&&diagnostic.stage==='complete'&&diagnostic.outcome==='passed'&&diagnostic.network==='none'&&diagnostic.sessionCleanup==='passed';
   } catch {
     passed=false;
@@ -281,7 +297,7 @@ export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) 
     try {if(!passed)updateBrowserDiagnostic(env,mode,{outcome:'failed'});for(const line of formatBrowserDiagnostic(env,mode))emit(line);}
     catch {passed=false;emit('CHAT_ADMIN_MANUAL_DIAGNOSTIC=INVALID');}
   }
-  if(!passed)fail('browser');
+  if(!passed){emit(`CHAT_ADMIN_MANUAL_FAILURE_KIND=${failureKind}`);fail('browser');}
   emit(mode==='probe'?'CHAT_ADMIN_MANUAL_PROBE=PASS':'CHAT_ADMIN_MANUAL_BROWSER=PASS');
 }
 export async function runManualFlowProbe(env,{verifyRelease=verifyManualFlowRelease,runBrowser=runManualBrowser}={}) {
