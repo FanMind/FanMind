@@ -194,9 +194,69 @@ function sqlMode(mode,env,receipt,emit=true) {
   if(!output.split(/\r?\n/u).some(line=>line.trim()===`CHAT_ADMIN_MANUAL_${mode.toUpperCase()}=PASS`))fail('database_result');
   if(emit)console.log(`CHAT_ADMIN_MANUAL_${mode.toUpperCase()}=PASS`);
 }
+
+/**
+ * Fan persistence replaces the legacy conversation/message columns, constraints
+ * and grants. Its pinned postflight verifies that complete contract separately.
+ * Retain the strict legacy comparisons for capabilities and Character fields;
+ * delegate only the checksum-pinned sales_playbook addition to the offers check.
+ * Standalone legacy rollout verification remains unchanged.
+ */
+export function buildCurrentChatAdminBasePostflight(base = CHAT_ADMIN_POSTFLIGHT_SQL) {
+  const parents = "table_name in ('workspace_chat_admin_capabilities','chat_characters')";
+  for (const [counter, actualScope] of [
+    ["schema_mismatch", parents + " and column_name <> 'sales_playbook'"],
+    ["constraint_valid", parents + " and not (table_name = 'chat_characters' and definition = 'checkjsonb_typeofsales_playbook=''object''andoctet_lengthsales_playbook<=18000')"],
+    ["privilege_mismatch", parents],
+  ]) {
+    const original = [
+      "  ), mismatch as (",
+      "    (select * from expected except select * from actual)",
+      "    union all",
+      "    (select * from actual except select * from expected)",
+      "  )",
+      `  select count(*) into ${counter} from mismatch;`,
+    ].join("\n");
+    const replacement = [
+      "  ), mismatch as (",
+      `    (select * from expected where ${parents} except select * from actual where ${actualScope})`,
+      "    union all",
+      `    (select * from actual where ${actualScope} except select * from expected where ${parents})`,
+      "  )",
+      `  select count(*) into ${counter} from mismatch;`,
+    ].join("\n");
+    if (base.split(original).length !== 2) fail('schema_contract');
+    base = base.replace(original, replacement);
+  }
+  const substitutions = [
+    [
+    "  where roles = '{authenticated}'::name[]\n    and (",
+    "  where roles = '{authenticated}'::name[]\n    and tablename in ('workspace_chat_admin_capabilities','chat_characters')\n    and ("
+  ],
+  [
+    "  select count(*) into policy_count\n  from pg_policies\n  where schemaname = 'public'\n    and tablename in (\n      'workspace_chat_admin_capabilities',\n      'chat_characters',\n      'chat_character_conversations',\n      'chat_character_messages'\n    );",
+    "  select count(*) into policy_count\n  from pg_policies\n  where schemaname = 'public'\n    and tablename in ('workspace_chat_admin_capabilities','chat_characters');"
+  ],
+  [
+    "or policy_count <> 4",
+    "or policy_count <> 2"
+  ],
+  [
+    "or policy_valid <> 4",
+    "or policy_valid <> 2"
+  ]
+  ];
+  for (const [original, replacement] of substitutions) {
+    if (base.split(original).length !== 2) fail('schema_contract');
+    base = base.replace(original, replacement);
+  }
+  return base;
+}
+export const CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL = buildCurrentChatAdminBasePostflight();
+
 function schema(env) {
   for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');
-  for(const [sql,marker,absent] of [[CHAT_ADMIN_POSTFLIGHT_SQL,'CHAT_ADMIN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_SCHEMA_STATE=ABSENT'],[FAN_POSTFLIGHT_SQL,'CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT'],[OFFERS_POSTFLIGHT_SQL,'CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=ABSENT']]){
+  for(const [sql,marker,absent] of [[FAN_POSTFLIGHT_SQL,'CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT'],[CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL,'CHAT_ADMIN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_SCHEMA_STATE=ABSENT'],[OFFERS_POSTFLIGHT_SQL,'CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=ABSENT']]){
     const output=database(sql,env);if(!output.includes(marker)||output.includes(absent))fail('schema');
   }
 }

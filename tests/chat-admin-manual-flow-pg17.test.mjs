@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { buildManualFlowSql, createManualFlowReceiptDataIds, MANUAL_FLOW_TASK_ID } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { buildManualFlowSql, createManualFlowReceiptDataIds, MANUAL_FLOW_TASK_ID, CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { CHAT_ADMIN_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-staging-runner.mjs";
 import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH } from "../scripts/operations/chat-admin-fan-staging-runner.mjs";
 import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH } from "../scripts/operations/chat-admin-structured-offers-staging-runner.mjs";
 
@@ -364,6 +365,27 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     });
     assert.equal(offersPostflight.status,0,offersPostflight.stderr||offersPostflight.stdout);
     assert.match(`${offersPostflight.stdout}${offersPostflight.stderr}`,/CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED/u);
+
+    const currentBaseCheck = query => spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:query,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    const legacyBase = currentBaseCheck(CHAT_ADMIN_POSTFLIGHT_SQL);
+    assert.notEqual(legacyBase.status,0,"the legacy exact base cannot verify the installed fan/offers schema");
+    assert.match(legacyBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=PARTIAL/u);
+    const currentBase = currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL);
+    assert.equal(currentBase.status,0,currentBase.stderr);
+    assert.match(currentBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=VERIFIED/u);
+    sql("alter table public.chat_characters alter column public_age drop not null;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"current verification must retain original Character column checks");
+    sql("alter table public.chat_characters alter column public_age set not null;");
+    sql("alter table public.chat_characters add column unreviewed_character_column text;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"only the separately verified sales_playbook addition is delegated");
+    sql("alter table public.chat_characters drop column unreviewed_character_column;");
+    sql("grant update on public.workspace_chat_admin_capabilities to authenticated;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"the capability must remain read-only for browser roles");
+    sql("revoke update on public.workspace_chat_admin_capabilities from authenticated;");
+    assert.equal(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0);
+
 
     const sentinelCharacter="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const sentinelFan="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";

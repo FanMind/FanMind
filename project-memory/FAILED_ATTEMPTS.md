@@ -453,3 +453,17 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Evidence: deployed Staging release `61cf98f29f48d88b7112c06461b94cd255428b4f` has public Demo start disabled by configuration; the bounded diagnostic is intentionally read-only and expects `POST /api/demo/start` to fail closed with HTTP 503 / `public_demo_disabled`.
 - Change boundary: add only a manually dispatchable GitHub Actions diagnostic bound to that exact Staging release. No deploy, DB/schema write, Billing action, secret access, Production change, or enabling of public Demo.
 - Next action: after required CI, merge the bounded diagnostic workflow, run it manually on main, and use its evidence to decide the separate controlled Staging-only prerequisite verification. Do not enable Demo or bypass the fail-closed guard from this task.
+
+
+## FM-FAIL-CHATADMIN-CURRENT-SCHEMA-POSTFLIGHT-20261012
+- Date: 2026-10-12
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: continuation of FM-ADMINCHAT-STAGING-HARNESS-20261011-01; source correction FM-CHATADMIN-CURRENT-SCHEMA-VERIFY-20261012-01 (R2 repository-only repair).
+- Owner authorized the existing merges and isolated Staging testing in this conversation. PRs #1298 and #1296 merged; exact Staging deployment run 38294472772 succeeded for main `159d24020787683d6982dd5ba1326df44f13900d`. Production deploy remains sealed by source and Actions policy; no runner was disabled.
+- Acceptance run 38294695807 passed authentication/probe, then failed before fixture reservation at schema validation with database_operation. Cleanup reported NOT_NEEDED; no acceptance fixtures or AI generations were created.
+- Read-only diagnosis on isolated Staging `vshyhvgcmrlagvfnvomc`: pinned full fan and offers postflights pass, while the legacy base verifier rejects the current extensions as PARTIAL. The composed parent/base SQL also passes read-only. This is verifier composition drift, not a missing migration.
+- PR #1303 retains strict capability/Character comparisons while delegating current conversations/messages to the unchanged pinned fan verifier and only the exact sales_playbook addition to the unchanged offers verifier. Standalone legacy checks, migration files/hashes and protected target boundaries remain unchanged.
+- Regression coverage: valid current schema, legacy false rejection, Character nullability, unexpected Character column and unauthorized capability mutation grant in native PostgreSQL 17. Required CI and fresh exact-release Staging acceptance are still pending; this record does not claim runtime acceptance.
+- Do not repeat the unchanged failed workflow or apply SQL to resolve this verifier failure. Next: required exact-head CI/countercheck, protected PR merge, exact new-release Staging deploy, then fresh authorized acceptance with bound recovery/cleanup.
+
+- Merge-readiness follow-up for PR #1303: exact-head manual Supply Chain run 38298081519 passed, but the required check on the PR merge candidate stayed expected because the workflow filters PR paths. Remove only the PR path filter so the existing mandatory job runs on every main PR; retain all pins, permissions, audit/SBOM gates and push filtering. Add a regression for unconditional main PR registration. Do not bypass or weaken the required check.
