@@ -1218,7 +1218,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CHATADMIN-NATURAL-CONTEXT-20261012
 - Task: FM-CHATADMIN-NATURAL-CONTEXT-20261012-01
-- Status: ACTIVE_SOURCE_PR
+- Status: RELEASED_SOURCE_COUNTERCHECKED
 - Risk: R3 repository-only; FM-CONTRACT-CHATADMIN-AI-001 sets the minimum risk for AI-context changes.
 - Holder: Codex, direct Owner continuation request on 2026-10-12.
 - Baseline: `613e452ced0105da4c718b3d4aafb30f77c88ff4`.
@@ -1227,3 +1227,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence: focused behavior/API regression tests, lint, TypeScript/build, truth and God Mode checks plus an independent final-diff countercheck before merge.
 - Recovery: reviewed source revert. No schema, runtime, customer, capability, provider, Billing or Production mutation is part of this task.
 - Release condition: source PR has applicable green CI and independent review. Runtime acceptance remains separate; neither source tests nor merge prove live conversational quality.
+- Source closeout: PR #1308, validated head `c55e372859d673e4ba63ea61fe989077b0e7060e`, tree `b69bbcacc48e734cdd3e014e05f4d3895c67086d`; all 14 observed exact-head checks are successful, no pending/failing checks or review threads. Independent Guardian PASS is tree-bound. No source writer remains; final merge status is recorded by GitHub. Runtime/Staging/Production acceptance is not claimed.
