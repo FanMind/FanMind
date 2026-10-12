@@ -366,25 +366,25 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.equal(offersPostflight.status,0,offersPostflight.stderr||offersPostflight.stdout);
     assert.match(`${offersPostflight.stdout}${offersPostflight.stderr}`,/CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED/u);
 
-    const postflight = query => spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+    const currentBaseCheck = query => spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
       input:query,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
     });
-    const legacyBase = postflight(CHAT_ADMIN_POSTFLIGHT_SQL);
+    const legacyBase = currentBaseCheck(CHAT_ADMIN_POSTFLIGHT_SQL);
     assert.notEqual(legacyBase.status,0,"the legacy exact base cannot verify the installed fan/offers schema");
     assert.match(legacyBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=PARTIAL/u);
-    const currentBase = postflight(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL);
+    const currentBase = currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL);
     assert.equal(currentBase.status,0,currentBase.stderr);
     assert.match(currentBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=VERIFIED/u);
     sql("alter table public.chat_characters alter column public_age drop not null;");
-    assert.notEqual(postflight(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"current verification must retain original Character column checks");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"current verification must retain original Character column checks");
     sql("alter table public.chat_characters alter column public_age set not null;");
     sql("alter table public.chat_characters add column unreviewed_character_column text;");
-    assert.notEqual(postflight(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"only the separately verified sales_playbook addition is delegated");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"only the separately verified sales_playbook addition is delegated");
     sql("alter table public.chat_characters drop column unreviewed_character_column;");
     sql("grant update on public.workspace_chat_admin_capabilities to authenticated;");
-    assert.notEqual(postflight(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"the capability must remain read-only for browser roles");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"the capability must remain read-only for browser roles");
     sql("revoke update on public.workspace_chat_admin_capabilities from authenticated;");
-    assert.equal(postflight(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0);
+    assert.equal(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0);
 
 
     const sentinelCharacter="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
