@@ -275,6 +275,10 @@ export function classifyManualBrowserFailure(result = {}) {
     ['disabled_element',/element is not enabled/iu],
     ['hidden_element',/element is not visible/iu],
     ['action_timeout',/timeout [0-9]+ms exceeded/iu],
+    ['count_assertion',/expect\(locator\)\.toHaveCount\(/iu],
+    ['value_assertion',/expect\(locator\)\.toHaveValue\(/iu],
+    ['checked_assertion',/expect\(locator\)\.toBeChecked\(/iu],
+    ['menu_assertion',/expect\(locator\)\.toHaveJSProperty\(/iu],
     ['assertion',/expect\(received\)|expect\(locator\)/iu],
   ]) if(pattern.test(output)) return kind;
   return 'unclassified';

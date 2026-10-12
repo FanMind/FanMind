@@ -498,3 +498,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Repair: scope Abbrechen to the Character editor form and require the editor to disappear. Mark Character-B selection separately. Classify private child-process failure output into a fixed allowlist of locator/action/assertion kinds; never print raw Playwright output, error text, payloads or credentials. Redaction regressions remain mandatory.
 - Recovery artifact 11771247320 / sha256:03fe4feaa19aaf1515b90ada02cf1282e8b8faf2ee40bbf03f5f37719dbc08a7 was downloaded and hash/target/release/run verified. Read-only exact-receipt reconciliation again found all eight residue/active-writer counts zero. Keep the artifact and failed-run status; no additional DML was performed.
 - Next: exact-head CI, merge, exact Staging deployment and fresh diagnostic acceptance. Production remains sealed and runner availability unchanged.
+
+
+## FM-FAIL-CHATADMIN-SCOPED-EDITOR-CLOSE-ASSERTION-20261012
+- Date: 2026-10-12
+- Status: SCOPED_ASSERTION_REPAIR_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion.
+- Run 38304590869 on exact deployed `a07dea5e34719154afb898b2f1d1b2f1967de2c8` passes setup and offer persistence again, then reports offers_reload_close / failure kind assertion. The global heading-count assertion cannot yet distinguish the named editor from another matching heading; do not infer a new data/price problem.
+- Use the same named form for both Abbrechen and disappearance proof; retain the requirement that it closes before B selection and every original persisted-price/AI/negative/cleanup assertion. Add fixed assertion-method subtypes to distinguish count/value/checkbox/menu failures without exposing private output.
+- Recovery artifact 11771714965 / sha256:f3078c8ba8484eac699f0eae7016bc259f1e9cabd589cb6290196d414dfdad45 downloaded and digest/run/release/target verified. Independent read-only exact-receipt reconciliation showed zero residue/active-writer counts again; preserve artifact and failed-run status.
+- Next: exact-head CI, merge, exact Staging deployment and fresh full acceptance. No product, schema or protected Production change.
