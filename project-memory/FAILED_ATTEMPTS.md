@@ -478,3 +478,13 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Recovery artifact 11769802609, digest sha256:28c68997284667a723dae1162053dbccbd15eda6c8f2bdd4407c5959ee99ac29, remains available. Cleanup SQL executed but correctly withheld final PASS because the receipt retained inFlightUncertain. No unchanged retry or receipt deletion.
 - Independent read-only Staging reconciliation using the exact downloaded/hash-verified run receipt: capability, reserved Characters, run Fans, reserved conversations, descendant messages, run-scoped AI usage and owner sessions all count zero; no active ChatAdmin writer. No additional DML/schema change was needed. This is a bounded absence snapshot, not a fabricated successful workflow or erasure of uncertainty.
 - Next repair: add allowlisted offer editor/field/submit/payload/reload checkpoints and assert exact persisted save-response prices before reload; retain output redaction, all browser negatives and fail-closed recovery. Fresh exact-head CI, merge, Staging deploy and acceptance are required.
+
+
+## FM-FAIL-CHATADMIN-CHARACTER-MENU-INTERCEPTION-20261012
+- Date: 2026-10-12
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion (R2 UI repair).
+- Diagnose run 38301161119 on deployed/reviewed `cbcb726a261a98d844a3259840fb0e4edc7219bf`: probe/schema/reservation/prepare passed. Exact four-offer response prices and persisted reload prices/active flags passed. Failure at offers_reload_close precedes reopening Character B, without HTTP failure or network violation; logout passed.
+- Source cause: native Character details menus stay open after Bearbeiten. The positioned dropdown has z-index 5 and overlaps the next Character card. The first menu is reopened for the reload check and remains open when selection moves to B, explaining the click timeout. Close the native menu before edit/deactivate/remove; add explicit live-browser assertions that edit/deactivate leave it closed. No price, AI, data, authorization or scroll-layout changes.
+- Recovery artifact 11770675534 / sha256:84982144a9034f580c8d770e901f27b6fd5961bccdd6558a66f3042dae374750 downloaded and digest verified. Independent read-only exact-receipt reconciliation again showed zero capability, Character, Fan, conversation, message, AI-usage and owner-session residue and zero active ChatAdmin writers. The artifact is retained; do not turn the failed workflow into PASS or delete its uncertainty receipt.
+- Next: exact-head required CI and reviewed UI diff, protected merge, exact Staging deployment and fresh full acceptance with cleanup. Production remains sealed; runners remain enabled.
