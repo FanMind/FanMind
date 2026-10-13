@@ -112,10 +112,31 @@ die bereits abgenommene Härtung von
 `public.trim_conversation_messages_to_latest_50()`: exakt diese parameterlose
 SECURITY-DEFINER-Triggerfunktion, ausschließlich
 `search_path=pg_catalog, pg_temp`, kein effektives EXECUTE für `anon` oder
-`authenticated`, EXECUTE für `service_role`. Gesamtzahl 13 und die zwölf
-geschützten Nicht-Triggerfunktionen bleiben verbindlich. Genau einer der
-beiden vollständigen Zustände muss vorliegen; Teilzustände, unklare Pfade oder
-abweichende Privilegien werden abgewiesen. Die Prüfung ändert selbst keine Rechte.
+`authenticated`, EXECUTE für `service_role`.
+
+Der historische Produktionsvertrag umfasst 13 öffentliche SECURITY-DEFINER-
+Funktionen, davon zwölf service-role-only Nicht-Trigger. Der aktuelle Vertrag
+umfasst 20 beziehungsweise 13. Die Differenz ist vollständig erklärt und wird
+nicht nur als Zahl akzeptiert:
+
+- Admin CRM ergänzt `admin_crm_read_allowed(uuid)` und
+  `current_admin_crm_access_state()` für `authenticated`/`service_role` sowie
+  die service-role-only Mutation
+  `admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)`.
+- Der ChatAdmin-Fan-Vertrag ergänzt den nicht direkt ausführbaren Trigger
+  `create_chat_admin_fan_conversation()` sowie die ausschließlich für
+  `authenticated` ausführbaren RPCs `create_chat_admin_fan(...)`,
+  `persist_chat_admin_generation(...)` und
+  `persist_chat_admin_confirmed_reply(...)`.
+
+Für alle sieben Funktionen prüft der Source-Guard exakte Signatur, Owner
+`postgres`, festen Funktions-`search_path`, die Admin-CRM-`row_security`-
+Konfiguration und die vollständige direkte EXECUTE-ACL einschließlich
+Grantor/Grant-Option. Genau der vollständige historische 13/12-Zustand oder
+der vollständige aktuelle 20/13-Zustand ist zulässig. Teilinstallationen,
+zusätzliche SECURITY-DEFINER-Funktionen, Overloads, Ownerwechsel,
+Grant-Options oder geänderte Browser-/Service-Role-Rechte werden abgewiesen.
+Die Prüfung ändert selbst keine Rechte.
 
 Der historische Legacy-Zustand bleibt für vorhandene Archive und ihre
 Restore-Prüfungen interpretierbar. Receipt-Schema 2, Kanonisierung und die
@@ -177,6 +198,55 @@ darf für sie jedoch keine privaten Restore-Ausgaben oder ein
 Full-Backup-Restore-Receipt erstellen. Ein neuer Full Backup nach Installation
 dieser Worker-Version ist deshalb Voraussetzung für den isolierten
 Restore-Drill.
+
+## Geschützte Installation von Worker 7
+
+Die Installation ist eine R4-Production-Aktion. Merge, grüne CI oder diese
+Anleitung autorisieren sie nicht. Sie darf erst nach separater Freigabe mit
+einem einzelnen 40-stelligen `REVIEWED_COMMIT` erfolgen. Dieser Commit muss
+auf `main` liegen und im Production-Checkout aktiv sein. Vor dem ersten
+Write müssen read-only bestätigt werden:
+
+1. `git -C /var/www/fanmind rev-parse HEAD` entspricht exakt
+   `REVIEWED_COMMIT`, der Checkout ist sauber und die erwarteten drei
+   Worker-Dateien stammen aus diesem Commit.
+2. Die aktuelle Production-Katalogabfrage ergibt ausschließlich den oben
+   beschriebenen 20/13-Vertrag; alle sieben Zusatzfunktionen bestehen ihre
+   Signatur-, Owner-, Config- und ACL-Prüfung. Es wird keine Berechtigung
+   geändert.
+3. `node --check` besteht für Worker, Authorization Contract und Verifier;
+   die installierte Unit besteht `systemd-analyze verify`.
+4. Der Worker ist vor dem Austausch gestoppt. Die aktuell installierten
+   Worker-Dateien und die bisherige `release.env` werden unter einem
+   root-only Rollback-Verzeichnis gebunden an den vorherigen Commit bewahrt.
+   Backup-Artefakte unter `/var/backups/fanmind` werden weder verschoben noch
+   gelöscht.
+
+Die freigegebene Installation kopiert ausschließlich
+`database-authorization-contract.mjs`,
+`verify-backup-artifact.mjs` und `backup-worker.mjs` aus dem exakt
+gebundenen Checkout mit `root:root`/0750, schreibt
+`FANMIND_RELEASE_COMMIT=REVIEWED_COMMIT` atomar, prüft die installierten
+SHA-256-Werte gegen den Checkout und startet nur den bereits vorhandenen
+Worker neu. Sie führt keine Migration und keine Datenbankänderung aus.
+
+Der unmittelbare Postflight muss Worker-Version
+`phase5-backup-worker-7`, aktiven systemd-Status, den exakten Release-Commit
+und einen erneut erfolgreichen read-only 20/13-Authorization-Contract
+bestätigen. Danach ist genau ein neuer kontrollierter Datenbank-Backup-Job
+zulässig. Dessen Manifest muss Contract Schema 2, den exakten Commit,
+`restricted_security_definer_function_count=13`, archivierte Rechte/Owner
+und einen erfolgreichen checksum-only Verify ausweisen. Bestehende Backups
+bleiben unverändert. Ein Full Backup und dessen Offsite-/Restore-Evidence sind
+getrennte nachgelagerte Schritte.
+
+Rollback: Worker stoppen, nur die drei zuvor bewahrten Programmdateien und die
+vorherige `release.env` atomar zurückinstallieren, SHA-256/Owner/Modus
+prüfen und den zuvor aktiven Service wieder starten. Keine Datenbankrechte
+zurückdrehen, keine Migration ausführen und keine bestehenden oder während
+des Postflights erzeugten Backup-Artefakte löschen. Anschließend alten Commit,
+alte Worker-Version und Service-Health read-only nachweisen; der 20/13-
+Katalogzustand bleibt dabei unverändert.
 
 ## Scheduling
 

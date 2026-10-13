@@ -445,6 +445,8 @@ async function restoreRunnerEnvironment(root, dumpPath, overrides = {}) {
       extension_contract_unsupported_class_count: 0,
       public_security_definer_function_count: 13,
       restricted_security_definer_function_count: 12,
+      approved_additional_security_definer_function_count: 0,
+      additional_security_definer_contract_violation_count: 7,
       exposed_security_definer_exception_count: 1,
       hardened_security_definer_exception_count: 0,
       unsupported_default_acl_type_count: 0,

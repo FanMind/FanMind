@@ -72,6 +72,8 @@ const AUTHORIZATION_PAYLOAD = Object.freeze({
   extension_recovery_invariant_violation_count: 0,
   public_security_definer_function_count: 13,
   restricted_security_definer_function_count: 12,
+  approved_additional_security_definer_function_count: 0,
+  additional_security_definer_contract_violation_count: 7,
   exposed_security_definer_exception_count: 1,
   hardened_security_definer_exception_count: 0,
   unsupported_default_acl_type_count: 0,
@@ -364,6 +366,68 @@ test("accepts the exact hardened trigger without changing the historical receipt
   } finally {
     await snapshot.close();
   }
+});
+
+test("accepts only the exact current security-definer expansion", async () => {
+  const options = connectionOptions();
+  options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({
+    ...AUTHORIZATION_PAYLOAD,
+    public_security_definer_function_count: 20,
+    restricted_security_definer_function_count: 13,
+    approved_additional_security_definer_function_count: 7,
+    additional_security_definer_contract_violation_count: 0,
+    exposed_security_definer_exception_count: 0,
+    hardened_security_definer_exception_count: 1,
+  });
+  const current = await captureDatabaseAuthorizationContract(options);
+  assert.equal(current.restrictedSecurityDefinerFunctionCount, 13);
+  assert.equal(
+    validateAuthorizationContract({
+      ...fullReceipt(),
+      databaseRestrictedSecurityDefinerFunctionCount: 13,
+    }).restrictedSecurityDefinerFunctionCount,
+    13,
+  );
+});
+
+test("rejects count-only, partial and permission-drifted expansions", async () => {
+  for (const overrides of [
+    {
+      public_security_definer_function_count: 20,
+      restricted_security_definer_function_count: 13,
+      approved_additional_security_definer_function_count: 0,
+      additional_security_definer_contract_violation_count: 7,
+    },
+    {
+      public_security_definer_function_count: 16,
+      restricted_security_definer_function_count: 13,
+      approved_additional_security_definer_function_count: 3,
+      additional_security_definer_contract_violation_count: 0,
+    },
+    {
+      public_security_definer_function_count: 20,
+      restricted_security_definer_function_count: 13,
+      approved_additional_security_definer_function_count: 7,
+      additional_security_definer_contract_violation_count: 1,
+    },
+  ]) {
+    const options = connectionOptions();
+    options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({
+      ...AUTHORIZATION_PAYLOAD,
+      ...overrides,
+    });
+    await assert.rejects(
+      captureDatabaseAuthorizationContract(options),
+      /authorization_security_definer_boundary_invalid/u,
+    );
+  }
+  assert.throws(
+    () => validateAuthorizationContract({
+      ...fullReceipt(),
+      databaseRestrictedSecurityDefinerFunctionCount: 14,
+    }),
+    /authorization_contract_security_definers_invalid/u,
+  );
 });
 
 test("rejects missing, partial, duplicate and malformed trigger boundary states", async () => {
@@ -674,6 +738,37 @@ test("SQL scope mirrors pg_dump ACL selection and fixed recovery guards", () => 
     DATABASE_AUTHORIZATION_CONTRACT_SQL,
     /rolname = 'service_role'[\s\S]+?'EXECUTE'/iu,
   );
+});
+
+test("SQL binds every approved additional privileged function and its ACL", () => {
+  for (const functionName of [
+    "admin_crm_read_allowed",
+    "current_admin_crm_access_state",
+    "admin_set_registered_user_crm_access",
+    "create_chat_admin_fan_conversation",
+    "create_chat_admin_fan",
+    "persist_chat_admin_generation",
+    "persist_chat_admin_confirmed_reply",
+  ]) {
+    assert.match(
+      DATABASE_AUTHORIZATION_CONTRACT_SQL,
+      new RegExp(functionName, "u"),
+    );
+  }
+  assert.match(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /additional_security_definer_contract_violation_count/u,
+  );
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /owner_name <> 'postgres'/u);
+  assert.match(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /function_result_actual is distinct from function_result/u,
+  );
+  assert.match(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /executors_actual is distinct from executors/u,
+  );
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /privilege\.is_grantable/u);
 });
 
 test("recovery inventory hash matches the runner's exact function inventory", async () => {
