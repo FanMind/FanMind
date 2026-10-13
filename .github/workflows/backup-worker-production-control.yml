@@ -1,0 +1,90 @@
+name: FanMind Protected Backup Worker Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [verify, install, rollback]
+        required: true
+        default: verify
+      reviewed_controller_commit:
+        description: Exact current main commit containing this controller
+        type: string
+        required: true
+      worker_source_commit:
+        description: Exact reviewed merge of PR1314
+        default: 8e5dcbdca844972fb2f133c188ecfee5d5252273
+        type: string
+        required: true
+      expected_application_commit:
+        description: Actual running application commit, preserved in release.env
+        default: 707d22702a784e3b9999d1c9ae9c1e11c096a1bc
+        type: string
+        required: true
+      confirmation:
+        description: backup-worker-verify, backup-worker-install or backup-worker-rollback
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  validate-protection:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Reject absent or unprotected environment before a privileged job
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REQUESTED_ACTION: ${{ inputs.action }}
+          REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_controller_commit }}
+          WORKER_SOURCE_COMMIT: ${{ inputs.worker_source_commit }}
+          EXPECTED_APPLICATION_COMMIT: ${{ inputs.expected_application_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: node scripts/operations/backup-worker-install-github-preflight.mjs
+
+  control:
+    needs: validate-protection
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: backup-production-recovery
+    timeout-minutes: 15
+    env:
+      ACTION: ${{ inputs.action }}
+      CONTROLLER_COMMIT: ${{ inputs.reviewed_controller_commit }}
+      WORKER_COMMIT: ${{ inputs.worker_source_commit }}
+      APP_COMMIT: ${{ inputs.expected_application_commit }}
+      ACTION_APPROVAL: ${{ vars.FANMIND_BACKUP_WORKER_ACTION_APPROVAL }}
+    steps:
+      - name: Run only the preinstalled root controller under exclusive host lock
+        shell: /usr/bin/bash --noprofile --norc -p -euo pipefail {0}
+        env:
+          BASH_ENV: ''
+          ENV: ''
+        run: |
+          [[ "$GITHUB_REPOSITORY" == FanMind/FanMind ]]
+          [[ "$GITHUB_REPOSITORY_ID" == 1259448985 ]]
+          [[ "$GITHUB_REF" == refs/heads/main && "$CONTROLLER_COMMIT" == "$GITHUB_SHA" ]]
+          [[ "$GITHUB_ACTOR_ID" == 270165082 ]]
+          [[ "$ACTION" == verify || "$ACTION" == install || "$ACTION" == rollback ]]
+          [[ "$WORKER_COMMIT" == 8e5dcbdca844972fb2f133c188ecfee5d5252273 ]]
+          [[ "$APP_COMMIT" == 707d22702a784e3b9999d1c9ae9c1e11c096a1bc ]]
+          [[ "$ACTION_APPROVAL" == "$CONTROLLER_COMMIT:$ACTION:$WORKER_COMMIT:$APP_COMMIT" ]]
+          # Bootstrap is deliberately not performed by this workflow. A missing
+          # root controller, bundle or authorization is a hard stop.
+          test -x /usr/local/sbin/fanmind-backup-worker-control
+          /usr/bin/sudo -n /usr/local/sbin/fanmind-backup-worker-control \
+            "$ACTION" "$CONTROLLER_COMMIT" "$WORKER_COMMIT" "$APP_COMMIT"
