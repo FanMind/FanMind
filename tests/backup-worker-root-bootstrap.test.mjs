@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {readFile,mkdtemp,lstat,rm} from 'node:fs/promises';
+import {readFile,mkdtemp,lstat,rm,open} from 'node:fs/promises';
 import {join} from 'node:path';
 import {FILES,SOURCE,WORKER,APP,input,metadata,sha,create} from '../scripts/operations/backup-worker-root-bootstrap.mjs';
 test('bootstrap allows only inspect/bootstrap for exact main-shaped commit and nonroot sudo invoker',()=>{
@@ -40,7 +40,7 @@ test('exclusive root create restores exact mode under umask0077 and preserves ex
  if(process.getuid?.()!==0){t.skip('root ownership I/O exercised by protected inspect; unprivileged CI');return;}
  // /root has safe ancestors, unlike world-writable /tmp.
  const dir=await mkdtemp('/root/fanmind-bootstrap-test-');const prior=process.umask(0o077);
- try{const path=join(dir,'worker');await create(path,Buffer.from('known'),0o750);assert.equal((await lstat(path)).mode&0o777,0o750);await assert.rejects(create(path,Buffer.from('foreign'),0o750),{code:'EEXIST'});assert.equal(await readFile(path,'utf8'),'known');
+ try{const path=join(dir,'worker');await create(path,Buffer.from('known'),0o750);await assert.rejects(create(path,Buffer.from('foreign'),0o750),{code:'EEXIST'});const fd=await open(path,'r');try{assert.equal((await fd.stat()).mode&0o777,0o750);assert.equal(await fd.readFile('utf8'),'known');}finally{await fd.close();}
  const failed=join(dir,'partial');const owned=[];await assert.rejects(create(failed,Buffer.from('known'),0o600,p=>{owned.push(p);throw Error('simulated interruption after exclusive open');}));assert.deepEqual(owned,[failed]);assert.equal((await lstat(failed)).size,0);
  }finally{process.umask(prior);await rm(dir,{recursive:true});}
 });
