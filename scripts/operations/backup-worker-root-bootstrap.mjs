@@ -5,13 +5,13 @@ import {dirname} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 
-export const SOURCE='d739797f25a883160f2fa4d4aabeeea8e289d219';
+export const SOURCE='e3cfbf73d2ed30b5a6ecd5ccfd3bff6aded0169f';
 export const WORKER='8e5dcbdca844972fb2f133c188ecfee5d5252273';
 export const APP='707d22702a784e3b9999d1c9ae9c1e11c096a1bc';
 const ROOT='/var/lib/fanmind-backup-install',OPS='/usr/local/lib/fanmind-ops';
 export const FILES=Object.freeze([
- ['scripts/operations/backup-worker-install-control.mjs',`${OPS}/backup-worker-install-control.mjs`,'93b7d8ed148c26f4ee062c8721d635f8a6919b22693480f24a9aabae6bab1a2a',SOURCE],
- ['scripts/operations/backup-worker-install-policy.mjs',`${OPS}/backup-worker-install-policy.mjs`,'f32e89813da65a4803dda638999138f5735da21691c50118e522dd58ad5f34a8',SOURCE],
+ ['scripts/operations/backup-worker-install-control.mjs',`${OPS}/backup-worker-install-control.mjs`,'db47a5bc6ccbba8bde7c6b9148596dbe4a33dfb58ff05545f749402f1a21021d',SOURCE],
+ ['scripts/operations/backup-worker-install-policy.mjs',`${OPS}/backup-worker-install-policy.mjs`,'9737770d05650efb1424efa60eb9f9feff3ea61c5d58f3e092a798cb1ac8f8c9',SOURCE],
  ['ops/fanmind-backup-worker-control','/usr/local/sbin/fanmind-backup-worker-control','cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',SOURCE],
  ['scripts/operations/database-authorization-contract.mjs',`${ROOT}/bundles/${WORKER}/database-authorization-contract.mjs`,'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de',WORKER],
  ['scripts/operations/verify-backup-artifact.mjs',`${ROOT}/bundles/${WORKER}/verify-backup-artifact.mjs`,'ded9bf771c8111056c9fbb1b0e4d1dbc81b467b0f233031687dcade05f5b44af',WORKER],
@@ -69,7 +69,7 @@ async function database(content){
   const env={...ENV,PGPASSFILE:`${privatePath}/pgpass`,PGSSLROOTCERT:`${privatePath}/ca.pem`,PGSSLMODE:'verify-full',PGGSSENCMODE:'disable',PGCONNECT_TIMEOUT:'10'};
   const c=await contract.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...connection,env});
   if(c.restrictedSecurityDefinerFunctionCount!==13)fail('current_contract_required');
-  const r=spawnSync('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--host',connection.host,'--port',connection.port,'--username',connection.username,'--dbname',connection.database],{env,input:"begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','running');rollback;",encoding:'utf8',timeout:30000,maxBuffer:4096});
+  const r=spawnSync('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--host',connection.host,'--port',connection.port,'--username',connection.username,'--dbname',connection.database],{env,input:policy.BACKUP_ACTIVE_JOBS_SQL,encoding:'utf8',timeout:30000,maxBuffer:4096});
   if(r.error||r.status!==0||r.stdout.trim()!=='0')fail('backup_jobs_active');
   const afterPass=await bytes(config.FANMIND_BACKUP_PGPASSFILE,0o600);try{if(sha(afterPass)!==passHash||sha(await bytes(config.FANMIND_BACKUP_DB_CA_CERT_PATH,0o644))!==caHash)fail('connection_changed');}finally{afterPass.fill(0);}
  }finally{
