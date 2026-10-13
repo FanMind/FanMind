@@ -1,0 +1,101 @@
+name: FanMind Protected Backup Worker Bootstrap
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, bootstrap]
+        default: inspect
+        required: true
+      reviewed_main_commit:
+        type: string
+        required: true
+      confirmation:
+        type: string
+        required: true
+        description: backup-worker-inspect or backup-worker-bootstrap
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Validate current main and existing protected environment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REQUESTED_ACTION: verify
+          REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_main_commit }}
+          WORKER_SOURCE_COMMIT: 8e5dcbdca844972fb2f133c188ecfee5d5252273
+          EXPECTED_APPLICATION_COMMIT: 707d22702a784e3b9999d1c9ae9c1e11c096a1bc
+          CONFIRMATION: backup-worker-verify
+        run: node scripts/operations/backup-worker-install-github-preflight.mjs
+  bootstrap:
+    needs: validate
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: backup-production-recovery
+    timeout-minutes: 15
+    env:
+      ACTION: ${{ inputs.action }}
+      CURRENT_MAIN: ${{ inputs.reviewed_main_commit }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      APPROVAL: ${{ vars.FANMIND_BACKUP_WORKER_BOOTSTRAP_APPROVAL }}
+    steps:
+      - name: Use existing sudo Node capability with frozen reviewed bootstrap bytes
+        shell: /usr/bin/bash --noprofile --norc -p -euo pipefail {0}
+        env:
+          BASH_ENV: ''
+          ENV: ''
+        run: |
+          [[ "$GITHUB_REPOSITORY" == FanMind/FanMind && "$GITHUB_REPOSITORY_ID" == 1259448985 ]]
+          [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$CURRENT_MAIN" ]]
+          [[ "$GITHUB_ACTOR_ID" == 270165082 && "$RUNNER_NAME" == fanmind-prod-01-exoscale ]]
+          [[ "$ACTION" == inspect || "$ACTION" == bootstrap ]]
+          [[ "$CONFIRMATION" == "backup-worker-$ACTION" ]]
+          [[ "$APPROVAL" == "$CURRENT_MAIN:$ACTION:8e5dcbdca844972fb2f133c188ecfee5d5252273:707d22702a784e3b9999d1c9ae9c1e11c096a1bc:admin-bypass-disabled" ]]
+          # Recheck mutable main after the Environment review wait, before root.
+          /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
+            https://api.github.com/repos/FanMind/FanMind/branches/main | \
+            /usr/bin/node -e 'let s="";process.stdin.on("data",b=>{s+=b;if(s.length>65536)process.exit(1)});process.stdin.on("end",()=>{const j=JSON.parse(s);if(j.commit?.sha!==process.argv[1]||j.protected!==true)process.exit(1)})' "$CURRENT_MAIN"
+          SOURCE_FILE="$(/usr/bin/mktemp "$RUNNER_TEMP/fanmind-bootstrap.XXXXXX")"
+          trap '/usr/bin/rm -f "$SOURCE_FILE"' EXIT
+          /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
+            "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/backup-worker-root-bootstrap.mjs" \
+            --output "$SOURCE_FILE"
+          /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
+            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 0133a0a0166f87f34198621ef3b5ce60379202650b804646e9be763eac7fe7fa "$ACTION" "$CURRENT_MAIN" <<'NODE'
+          const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
+          let fd;
+          try {
+            if(process.getuid()!==0||!Number.isSafeInteger(+process.env.SUDO_UID)||+process.env.SUDO_UID<=0)throw Error();
+            fd=fs.openSync(process.argv[2],fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+            const a=fs.fstatSync(fd);if(!a.isFile()||a.nlink!==1||a.size<1||a.size>131072)throw Error();
+            const b=fs.readFileSync(fd),z=fs.fstatSync(fd);
+            if(a.ino!==z.ino||a.dev!==z.dev||a.size!==z.size||a.mtimeMs!==z.mtimeMs||a.ctimeMs!==z.ctimeMs||crypto.createHash('sha256').update(b).digest('hex')!==process.argv[3])throw Error();
+            const env={PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C'};
+            const args=['--input-type=module','-',process.argv[4],process.argv[5],process.env.SUDO_UID];
+            let bin='/usr/bin/node',argv=args;
+            if(process.argv[4]==='bootstrap'){
+              const lock='/run/lock/fanmind-backup-worker-install.lock';
+              const lf=fs.openSync(lock,fs.constants.O_CREAT|fs.constants.O_RDWR|fs.constants.O_NOFOLLOW,0o600);
+              const st=fs.fstatSync(lf);fs.closeSync(lf);
+              if(!st.isFile()||st.uid!==0||st.gid!==0||st.nlink!==1||(st.mode&0o022))throw Error();
+              bin='/usr/bin/flock';argv=['--nonblock',lock,'/usr/bin/node',...args];
+            }
+            const r=cp.spawnSync(bin,argv,{input:b,env,stdio:['pipe','inherit','inherit'],timeout:600000});
+            process.exitCode=r.error||r.status!==0?1:0;
+          }catch{process.stderr.write('BACKUP_BOOTSTRAP_LAUNCHER=BLOCK\n');process.exitCode=1;}
+          finally{if(fd!==undefined)fs.closeSync(fd);}
+          NODE

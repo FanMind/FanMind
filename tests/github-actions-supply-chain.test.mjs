@@ -239,6 +239,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       .map((workflow) => workflow.file),
     [
       "backup-worker-production-control.yml",
+      "backup-worker-root-bootstrap.yml",
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
