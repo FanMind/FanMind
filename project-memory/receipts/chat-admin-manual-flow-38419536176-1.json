@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "taskId": "FM-ADMINCHAT-STAGING-HARNESS-20261011-01",
+  "sha": "1c991782526cbfba973a9e601e1f90cb22c80866",
+  "target": "vshyhvgcmrlagvfnvomc",
+  "run": "38419536176",
+  "attempt": "1",
+  "ids": {
+    "STAGING_WORKSPACE_ID": "58a18c7e-4af0-459d-b44d-7d924ee7ffe9",
+    "SECOND_WORKSPACE_ID": "ed7b908d-1dd9-4dc7-b217-648c4166aee5",
+    "OWNER_ID": "3abca6a2-c4f7-4ff7-b72d-915d19181ffc",
+    "MEMBER_ID": "212fbd03-d41c-4063-90b9-f292018d63b8",
+    "FOREIGN_OWNER_ID": "a1595194-a144-42c8-b8ad-19d24f88d6d9",
+    "CHARACTER_A_ID": "ca110001-2026-4a01-8000-000000000001",
+    "CHARACTER_B_ID": "ca110002-2026-4a02-8000-000000000002",
+    "CONVERSATION_A_ID": "ca220001-2026-4b01-8000-000000000001",
+    "CONVERSATION_B_ID": "ca220002-2026-4b02-8000-000000000002"
+  },
+  "dataIds": {
+    "FAN_A_ID": "a898d58f-4515-4b4c-8641-93672cb7e2cd",
+    "FAN_B_ID": "a74c3c4a-db85-4d94-8033-6040258f39f4",
+    "FAN_A_CREATION_ID": "610c636f-4017-4fa9-849d-88e8c0875d33",
+    "FAN_B_CREATION_ID": "5af0ab4c-3d27-4fc6-84e2-54eb5c12a47d",
+    "FOREIGN_CHARACTER_ID": "b351c202-217c-44d8-8a69-fc767eafe9d9"
+  },
+  "marker": "4dc2fb1e8541a06dda4727eb940c0312",
+  "startedAt": "2026-10-13T15:10:20.083Z",
+  "inFlightUncertain": true
+}

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { assertChatAdminCharacterInput, assertChatAdminReplySemantics, buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
+import { assertChatAdminCharacterInput, assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
 import { CHAT_ADMIN_OFFER_CATEGORIES, defaultChatAdminSalesPlaybook, normalizeChatAdminSalesPlaybook, resolveChatAdminRequestedOffer } from "../src/lib/chatAdminSalesPlaybook.mjs";
 
 const workspace="11111111-1111-4111-8111-111111111111";
@@ -56,6 +56,17 @@ test("media compliments do not release prices, while explicit requests still do"
  for(const [incoming,category] of [["Schöne Fotos, was kosten sie?","photo"],["Ich möchte ein schönes privates Foto","private_photo"],["Kann ich ein schönes privates Foto haben?","private_photo"],["Darf ich deine schönen Fotos sehen?","photo"],["Nice video, how much is it?","video"],["Could I get a nice private video?","private_video"],["Send me a nice private video","private_video"],["privates Foto","private_photo"]]){
   assert.equal(resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer.category,category,incoming);
  }
+});
+
+test("a fan-invented price stays untrusted while all three replies use the bound offer price",()=>{
+ const incoming="Ist dein privates Foto für 999 EUR erhältlich?";
+ const requested=resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer;
+ assert.equal(requested.recommendedPriceMinor,2500);
+ const context=JSON.parse(buildChatAdminCharacterContext(character(),incoming));
+ assert.equal(context.incoming_message,"Ist dein privates Foto für [vom Fan genannter, unbestätigter Preis] erhältlich?");
+ assert.doesNotMatch(context.incoming_message,/999|EUR/u);
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested));
+ assert.throws(()=>assertChatAdminReplySemantics(["Nicht für 999 EUR, sondern für 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested),error=>error?.code==="reply_price_not_permitted");
 });
 
 test("different Characters retain different prices and foreign workspace context fails closed",()=>{
@@ -130,6 +141,7 @@ test("existing Recommended/Softer/Stronger, combined use action and Character sc
   readFile(new URL("../src/app/chatadmin/chatadmin.module.css",import.meta.url),"utf8"),
  ]);
  assert.match(instructions.CHAT_ADMIN_REPLY_INSTRUCTIONS,/empfohlen\/natürlich, weicher\/spielerischer, stärker\/direkter/u);
+ assert.match(instructions.CHAT_ADMIN_REPLY_INSTRUCTIONS,/Wiederhole ihn in keiner Variante[\s\S]*in allen drei Varianten ausschließlich/u);
  assert.match(client,/Kopieren und verwenden/u);assert.doesNotMatch(client,/Als manuell gesendet bestätigen/u);
  assert.match(styles,/\.characterEditor\{min-height:0;max-height:calc\(100% - 32px\);overflow-y:auto/u);
 });
