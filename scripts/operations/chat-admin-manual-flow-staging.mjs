@@ -10,6 +10,7 @@ import { CHAT_ADMIN_POSTFLIGHT_SQL, SQL_PATH, SQL_SHA256 } from "./chat-admin-st
 import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH, SQL_SHA256 as FAN_SQL_SHA256 } from "./chat-admin-fan-staging-runner.mjs";
 import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH, SQL_SHA256 as OFFERS_SQL_SHA256 } from "./chat-admin-structured-offers-staging-runner.mjs";
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME } from "../../src/lib/stagingSyntheticFixturePolicy.mjs";
+import { POSTFLIGHT_SQL as TIER_POSTFLIGHT_SQL, SQL_PATH as TIER_SQL_PATH, SQL_SHA256 as TIER_SQL_SHA256 } from "./chat-admin-customer-tier-staging-runner.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, formatBrowserDiagnostic, requireSuccessfulProbe } from "../../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture-identity.mjs";
 
@@ -127,8 +128,8 @@ insert into public.chat_characters(id,workspace_id,created_by_user_id,display_na
 (${b}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character B',28,${marker},array['Deutsch'],'fröhlich und freundlich','fröhliche natürliche Sätze','sparsam','kurz','respektvoll','nur gespeicherte Angebote und Preise','active',${started}::timestamptz,${started}::timestamptz),
 (${foreignCharacter}::uuid,${second}::uuid,${foreignOwner}::uuid,'FM Synthetic Foreign Character',26,${marker},array['Deutsch'],'sachlich und freundlich','kurze sachliche Sätze','keine','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz);
 insert into public.chat_character_fans(id,workspace_id,character_id,display_name,handle,platform,language,status,summary,notes,creation_id,revision,created_at,updated_at) values
-(${fanA}::uuid,${ws}::uuid,${a}::uuid,'FM Synthetic Fan A','@fm-synthetic-a','OnlyFans','Deutsch','active','Laufgebundener Fan A',${marker},${creationA}::uuid,1,${started}::timestamptz,${started}::timestamptz),
-(${fanB}::uuid,${ws}::uuid,${b}::uuid,'FM Synthetic Fan B','@fm-synthetic-b','OnlyFans','Deutsch','active','Laufgebundener Fan B',${marker},${creationB}::uuid,1,${started}::timestamptz,${started}::timestamptz);
+(${fanA}::uuid,${ws}::uuid,${a}::uuid,'FM Synthetic Fan A','@fm-synthetic-a','OnlyFans','Deutsch','active','Lieblingsfarbe: türkis',${marker},${creationA}::uuid,1,${started}::timestamptz,${started}::timestamptz),
+(${fanB}::uuid,${ws}::uuid,${b}::uuid,'FM Synthetic Fan B','@fm-synthetic-b','OnlyFans','Deutsch','active','Lieblingsfarbe: orange',${marker},${creationB}::uuid,1,${started}::timestamptz,${started}::timestamptz);
 update public.chat_character_conversations set id=case fan_id when ${fanA}::uuid then ${conversationA}::uuid else ${conversationB}::uuid end,created_at=${started}::timestamptz,updated_at=${started}::timestamptz where workspace_id=${ws}::uuid and fan_id in (${fanA}::uuid,${fanB}::uuid);
 commit;
 select 'CHAT_ADMIN_MANUAL_PREPARE=PASS';`;
@@ -150,7 +151,8 @@ rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>29 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>7 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>2 then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>41 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>10 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>2 then raise exception 'runtime_effect_missing'; end if;
+  if not exists(select 1 from public.chat_character_fans where id=${fanA}::uuid and customer_tier='blue') or not exists(select 1 from public.chat_character_fans where id=${fanB}::uuid and customer_tier='green') then raise exception 'customer_tier_persistence_missing'; end if;
   if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid) and jsonb_array_length(sales_playbook->'offers')=4)<>2 or not exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages} and confirmed.direction='confirmed_reply' and exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) then raise exception 'persisted_offer_or_confirmation_missing'; end if;
 end $guard$;
 set local role authenticated;
@@ -255,8 +257,8 @@ export function buildCurrentChatAdminBasePostflight(base = CHAT_ADMIN_POSTFLIGHT
 export const CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL = buildCurrentChatAdminBasePostflight();
 
 function schema(env) {
-  for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');
-  for(const [sql,marker,absent] of [[FAN_POSTFLIGHT_SQL,'CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT'],[CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL,'CHAT_ADMIN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_SCHEMA_STATE=ABSENT'],[OFFERS_POSTFLIGHT_SQL,'CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=ABSENT']]){
+  for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256],[TIER_SQL_PATH,TIER_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');
+  for(const [sql,marker,absent] of [[FAN_POSTFLIGHT_SQL,'CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT'],[CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL,'CHAT_ADMIN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_SCHEMA_STATE=ABSENT'],[OFFERS_POSTFLIGHT_SQL,'CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=ABSENT'],[TIER_POSTFLIGHT_SQL,'CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT']]){
     const output=database(sql,env);if(!output.includes(marker)||output.includes(absent))fail('schema');
   }
 }
@@ -374,7 +376,7 @@ function cleanup(env) {
 
 async function main() {
   const mode=process.argv[2];if(process.argv.length!==3||!['--check','--probe','--reserve','--run','--cleanup'].includes(mode))fail('mode');
-  if(mode==='--check'){for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
+  if(mode==='--check'){for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256],[TIER_SQL_PATH,TIER_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
   const env=process.env;validateManualFlowEnvironment(env);
   if(mode==='--cleanup'){cleanup(env);return;}
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID ?? '')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT ?? ''))fail('run_identity');

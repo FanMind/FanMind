@@ -7,6 +7,8 @@ import { CHAT_ADMIN_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-stag
 import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH } from "../scripts/operations/chat-admin-fan-staging-runner.mjs";
 import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH } from "../scripts/operations/chat-admin-structured-offers-staging-runner.mjs";
 
+import { POSTFLIGHT_SQL as TIER_POSTFLIGHT_SQL, SQL_PATH as TIER_SQL_PATH, buildApplySql } from "../scripts/operations/chat-admin-customer-tier-staging-runner.mjs";
+
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
 const enabled=process.env.FANMIND_CREATOR_PG17_REQUIRED==="true";
 const database="fanmind_chatadmin_manual_ci";
@@ -387,6 +389,30 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     assert.equal(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0);
 
 
+    const tierSource=readFileSync(new URL(`../${TIER_SQL_PATH}`,import.meta.url),"utf8");
+    const tierAbsent=currentBaseCheck(TIER_POSTFLIGHT_SQL);
+    assert.equal(tierAbsent.status,0,tierAbsent.stderr);
+    assert.match(tierAbsent.stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT/u);
+    const badAtomic=currentBaseCheck(buildApplySql(tierSource).replace("do $verify$", "alter table public.chat_character_fans alter column customer_tier set default 'green';\ndo $verify$"));
+    assert.notEqual(badAtomic.status,0,"a wrong post-apply contract must abort before COMMIT");
+    assert.equal(sql("select count(*) from pg_attribute where attrelid='public.chat_character_fans'::regclass and attname='customer_tier' and not attisdropped;").trim(),"0","failed apply rolls back column and RPC replacement");
+    assert.match(currentBaseCheck(TIER_POSTFLIGHT_SQL).stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT/u);
+    sql(buildApplySql(tierSource));
+    const verifyTier=()=>{const result=currentBaseCheck(TIER_POSTFLIGHT_SQL);assert.equal(result.status,0,result.stderr);assert.match(result.stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=VERIFIED/u);};
+    verifyTier();
+    sql("alter table public.chat_character_fans alter column customer_tier set default 'green';");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans alter column customer_tier set default 'red';");verifyTier();
+    sql("alter table public.chat_character_fans rename constraint chat_character_fans_customer_tier_check to unreviewed_tier_check;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans rename constraint unreviewed_tier_check to chat_character_fans_customer_tier_check;");verifyTier();
+    sql("alter table public.chat_character_fans add column unreviewed_fan_extension text;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans drop column unreviewed_fan_extension;");verifyTier();
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_customer_tier_check;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans add constraint chat_character_fans_customer_tier_check check(customer_tier in ('red','blue','yellow','green'));");verifyTier();
+    sql("create or replace function public.create_chat_admin_fan(target_workspace_id uuid,target_character_id uuid,target_creation_id uuid,fan_data jsonb) returns setof public.chat_character_fans language plpgsql security definer set search_path='' as $$begin return; end$$;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0,"tier column with a different RPC is PARTIAL");sql("begin;\n"+tierSource.slice(tierSource.indexOf("create or replace function")));verifyTier();
+    sql("alter table public.chat_character_fans disable row level security;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0,"tier composition retains all original RLS checks");sql("alter table public.chat_character_fans enable row level security;");verifyTier();
+
     const sentinelCharacter="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const sentinelFan="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     const sentinelCreation="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -436,6 +462,11 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       update public.chat_characters set sales_playbook='${JSON.stringify(offersB)}'::jsonb,revision=2 where id='${ids[7]}';`);
 
     const fanA=receipt.dataIds.FAN_A_ID, fanB=receipt.dataIds.FAN_B_ID;
+    sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      update public.chat_character_fans set customer_tier='blue',revision=2 where id='${fanA}';
+      update public.chat_character_fans set customer_tier='green',revision=2 where id='${fanB}'; commit;`);
+    assert.throws(()=>sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true); update public.chat_character_fans set customer_tier='unknown' where id='${fanA}'; commit;`));
+    assert.equal(sql(`select customer_tier from public.chat_character_fans where id='${fanA}';`).trim(),'blue');
     const batches=[
       [ids[6],fanA,ids[8],"10101010-1010-4010-8010-101010101010","Foto fuer 10 EUR",["Foto A kostet 10 EUR","Gern das Foto fuer 10 EUR","Ich kann dir das Foto fuer 10 EUR senden"]],
       [ids[6],fanA,ids[8],"20202020-2020-4020-8020-202020202020","Privates Foto fuer 25 EUR",["Privates Foto A kostet 25 EUR","Das private Foto gibt es fuer 25 EUR","Gern fuer 25 EUR"]],
@@ -443,20 +474,23 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
       [ids[6],fanA,ids[8],"40404040-4040-4040-8040-404040404040","Character B Video fuer 61 EUR",["Mein Video kostet 20 EUR","Gern mein Video fuer 20 EUR","Ich biete mein Video fuer 20 EUR an"]],
       [ids[7],fanB,ids[9],"50505050-5050-4050-8050-505050505050","Video fuer 61 EUR",["Video B kostet 61 EUR","Gern das Video fuer 61 EUR","Ich sende das Video fuer 61 EUR"]],
       [ids[7],fanB,ids[9],"60606060-6060-4060-8060-606060606060","Privates Video fuer 91 EUR",["Privates Video B kostet 91 EUR","Das private Video gibt es fuer 91 EUR","Gern fuer 91 EUR"]],
+      [ids[6],fanA,ids[8],"81818181-8181-4181-8181-818181818181","Nettes Foto",["Danke dir","Freut mich","Lieb von dir"]],
+      [ids[6],fanA,ids[8],"82828282-8282-4282-8282-828282828282","Meine Lieblingsfarbe?",["Türkis","Du magst türkis","Deine Farbe ist türkis"]],
+      [ids[7],fanB,ids[9],"83838383-8383-4383-8383-838383838383","Meine Lieblingsfarbe?",["Orange","Du magst orange","Deine Farbe ist orange"]],
       [ids[7],fanB,ids[9],"70707070-7070-4070-8070-707070707070","Deaktiviertes privates Foto fuer 71 EUR",["Dazu ist kein aktives Angebot gespeichert","Dieses Angebot ist nicht verfügbar","Ich kann dazu nichts anbieten"]],
     ];
     for(const [character,fan,conversation,generation,inbound,suggestions] of batches) {
       sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
-        select public.persist_chat_admin_generation('${ids[0]}','${character}','${fan}','${conversation}',2,1,'${generation}',
+        select public.persist_chat_admin_generation('${ids[0]}','${character}','${fan}','${conversation}',2,2,'${generation}',
           coalesce((select array_agg(id order by sequence) from (select id,sequence from public.chat_character_messages where workspace_id='${ids[0]}' and character_id='${character}' and fan_id='${fan}' and conversation_id='${conversation}' order by sequence desc limit 20) recent),'{}'::uuid[]),
           '${inbound}',array[${suggestions.map((value)=>`'${value}'`).join(",")}]); commit;`);
     }
     sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
-      select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,1,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
+      select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,2,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
       insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
-      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,7) ordinal;
+      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,10) ordinal;
       insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
-      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','${receipt.startedAt}'::timestamptz+(((ordinal+7)::text||' seconds')::interval) from generate_series(1,2) ordinal;`);
+      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','${receipt.startedAt}'::timestamptz+(((ordinal+10)::text||' seconds')::interval) from generate_series(1,2) ordinal;`);
     assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
 
     const attachedFan="dddddddd-dddd-4ddd-8ddd-dddddddddddd",attachedCreation="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";

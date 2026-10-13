@@ -1101,7 +1101,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
 - Task: FM-ADMINCHAT-STAGING-HARNESS-20261011-01
-- Status: ACTIVE_SOURCE_PR
+- Status: ACTIVE_STAGING_COMPLETION
 - Risk: R3 repository-only preparation for later controlled Staging acceptance.
 - Holder: FanMind Builder, direct Owner/Secretary assignment 2026-10-11.
 - Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
@@ -1112,6 +1112,10 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Forbidden: merge/auto-merge, workflow dispatch, deployment, Staging/Production/database/provider/customer write, live test, secrets/credentials/permissions, external message send, new queue or general orchestrator.
 - Protected next action: after source prerequisites, independent R3 review, normal merge and exact reviewed-main Staging deployment are separately complete, obtain a new exactly bounded Owner authorization before any run. Only that fresh authorization may permit `mode=acceptance`, `confirmation=run-chat-admin-manual-flow` and `reviewed_commit=<that exact deployed main SHA>` in protected `staging`; missing authorization, fixture values, schema, release or access remain `BLOCKED`.
 - Recovery: repository recovery is a reviewed revert. A later live run must upload its sanitized exact recovery binding before mutation, remove only run-bound synthetic rows, retain interrupted receipts and prove independent absence before acceptance.
+- Continuation 2026-10-13: direct Owner instruction at 05:25 UTC resumes the completion proposed in this conversation: proven root-cause repair, review/green-CI merge, current Staging deployment and full synthetic acceptance. The standing necessary-database-change permission is used for the existing narrowly pinned customer-tier migration on Staging only; this scope interpretation grants no Production/provider/permission/billing action. Historical consumed authorizations above remain consumed.
+- Current holder: Codex. Baseline `4af32d8cd7fafb5a5f64c76e4143d7409098bfbe`; no overlapping open writer PR or active Staging workflow observed. The continuation reuses this serialized task, not a second parallel harness.
+- Evidence: fresh read-only catalog and composed full postflight confirm original Fan contract with tier ABSENT. Extend only the exact approved optional schema, atomic controlled Apply, explicit Fan/HTTP diagnostic phases and ten bounded synthetic memory/price/style generations. Before any target write, require independent review, exact-head CI and a fresh target-bound VERIFY; run-bound fixture/recovery/absence gates remain mandatory.
+
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-046

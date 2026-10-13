@@ -788,3 +788,13 @@ Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält 
 Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
 Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:
 `docs/CHAT_ADMIN_REPLY_STYLE.md`. Diese Source-Änderung belegt keine Live-Abnahme.
+
+## ChatAdmin: Kundenstatus und Staging-Abnahme — 13. Oktober 2026
+
+Die vorbereitete Kundenstatus-Erweiterung hat einen eigenen checksum-, exact-main-,
+TLS- und Staging-gebundenen Verify/Apply-Pfad. Der vollständige Fan-Postflight prüft
+entweder den originalen Vertrag oder genau die genehmigte Erweiterung; Mischzustände
+bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag und
+prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
+begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
+oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.

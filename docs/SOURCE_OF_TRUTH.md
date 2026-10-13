@@ -1359,3 +1359,13 @@ Fan-Zusammenfassung und Notizen werden weiter gebunden geladen. Eine verwendete
 Antwort beweist keine Lieferung, Zahlung oder Kaufzusage. Die Details stehen in
 `docs/CHAT_ADMIN_REPLY_STYLE.md`; Natürlichkeit und Gedächtniswirkung im echten
 Gespräch benötigen weiterhin eine gesonderte Runtime-Abnahme.
+
+## ChatAdmin: Kundenstatus und Staging-Abnahme — 13. Oktober 2026
+
+Die vorbereitete Kundenstatus-Erweiterung hat einen eigenen checksum-, exact-main-,
+TLS- und Staging-gebundenen Verify/Apply-Pfad. Der vollständige Fan-Postflight prüft
+entweder den originalen Vertrag oder genau die genehmigte Erweiterung; Mischzustände
+bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag und
+prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
+begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
+oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.
