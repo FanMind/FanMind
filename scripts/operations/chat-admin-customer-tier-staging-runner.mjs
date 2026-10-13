@@ -75,7 +75,7 @@ export function buildApplySql(source) {
   validateSqlSource(source, "apply");
   const verification = POSTFLIGHT_SQL.replace(/^\\set ON_ERROR_STOP on\nbegin;\nset transaction read only;\n/u, "").replace(/rollback;\s*$/u, "");
   if (verification === POSTFLIGHT_SQL || /set transaction read only/u.test(verification)) fail("postflight_composition");
-  return source.replace(/commit;\s*$/u, verification + "\ncommit;\n");
+  return source.replace(/commit;\s*$/u, () => verification + "\ncommit;\n");
 }
 
 export function validateEnvironment(mode, env) {

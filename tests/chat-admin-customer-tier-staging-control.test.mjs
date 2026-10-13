@@ -17,6 +17,8 @@ test("apply verifies the complete composed contract before the only COMMIT",()=>
  assert.ok(combined.indexOf("alter table public.chat_character_fans")<combined.indexOf("do $verify$"));
  assert.ok(combined.indexOf("exact_function_mismatch")<combined.lastIndexOf("commit;"));
  assert.equal((combined.match(/^commit;/gmu)||[]).length,1);
+ // SQL dollar quoting and apostrophes must survive JavaScript replacement verbatim.
+ assert.equal(combined.slice(combined.indexOf("do $verify$"),combined.lastIndexOf("\ncommit;")),POSTFLIGHT_SQL.slice(POSTFLIGHT_SQL.indexOf("do $verify$"),POSTFLIGHT_SQL.lastIndexOf("rollback;")).trimEnd()+"\n");
  assert.doesNotMatch(combined,/^rollback;|^set transaction read only;|^\\set/gmu);
  assert.throws(()=>buildApplySql(source.replace("default 'red'","default 'green'")),/checksum_mismatch/u);
  assert.match(POSTFLIGHT_SQL,/customer_tier_expected/u);
