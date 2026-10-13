@@ -110,9 +110,9 @@ async function main() {
     if (n !== '0') fail('backup_jobs_active');
   }
   async function stableRelease() { if (digest(await bytes(RELEASE,0o600,4096)) !== digest(releaseBytes)) fail('backup_application_binding_changed'); }
-  const module = await import(pathToFileURL(`${BUNDLE}/database-authorization-contract.mjs`).href);
+  const contractModule = await import(pathToFileURL(`${BUNDLE}/database-authorization-contract.mjs`).href);
   async function contract() {
-    const c = await module.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...db,env:pgEnv});
+    const c = await contractModule.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...db,env:pgEnv});
     if (c.restrictedSecurityDefinerFunctionCount !== 13) fail('current_contract_required');
   }
   async function persist(status) {

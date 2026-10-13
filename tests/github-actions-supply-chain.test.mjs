@@ -238,6 +238,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       .filter((workflow) => workflow.checkoutShas.length > 0)
       .map((workflow) => workflow.file),
     [
+      "backup-worker-production-control.yml",
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
@@ -249,6 +250,12 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       STAGING_PUSH_RUNTIME_WORKFLOW,
     ],
   );
+  const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
+  assert.deepEqual(backupControl?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  const privilegedBackupJob = backupControl.source.split("\n  control:")[1];
+  assert.ok(privilegedBackupJob);
+  assert.doesNotMatch(privilegedBackupJob, /actions\/(?:checkout|setup-node)@/u);
+  assert.match(privilegedBackupJob, /sudo -n \/usr\/local\/sbin\/fanmind-backup-worker-control/u);
   const restoreWorkflows = selfHostedWorkflows.filter((workflow) =>
     [RESTORE_DATABASE_WORKFLOW, RESTORE_HOST_WORKFLOW, RESTORE_WORKFLOW].includes(
       workflow.file,
