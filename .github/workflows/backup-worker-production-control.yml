@@ -85,6 +85,6 @@ jobs:
           [[ "$ACTION_APPROVAL" == "$CONTROLLER_COMMIT:$ACTION:$WORKER_COMMIT:$APP_COMMIT" ]]
           # Bootstrap is deliberately not performed by this workflow. A missing
           # root controller, bundle or authorization is a hard stop.
-          test -x /usr/local/sbin/fanmind-backup-worker-control
+          test -f /usr/local/sbin/fanmind-backup-worker-control
           /usr/bin/sudo -n /usr/local/sbin/fanmind-backup-worker-control \
             "$ACTION" "$CONTROLLER_COMMIT" "$WORKER_COMMIT" "$APP_COMMIT"
