@@ -1221,7 +1221,8 @@ test(
       HAS_SERVICE_CONTAINERS || REQUIRE_SERVICE_CONTAINERS
         ? false
         : `set ${SOURCE_CONTAINER_ENV} and ${TARGET_CONTAINER_ENV}`,
-    timeout: 300_000,
+    // Two complete legacy/current restore paths; individual commands remain bounded.
+    timeout: 600_000,
   },
   async (context) => {
     assert.match(SOURCE_CONTAINER_ID, CONTAINER_ID, SOURCE_CONTAINER_ENV);
@@ -2159,6 +2160,7 @@ revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,
 grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)
   to authenticated;
 `);
+    context.diagnostic("Legacy restore and recovery checks completed; starting current 20/13 proof.");
     const currentContract = await captureContract(sourcePsql, pgpassFile);
     assert.equal(currentContract.restrictedSecurityDefinerFunctionCount, 13);
 
@@ -2200,6 +2202,7 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     await dockerPsql(TARGET_CONTAINER_ID,password,"grant execute on function public.admin_crm_read_allowed(uuid) to service_role;",currentDatabase);
     assert.equal((await snapshotTargetDatabaseAuthorization(currentOptions)).fingerprintSha256,currentContract.fingerprintSha256);
 
+    context.diagnostic("Current 20/13 dump/restore, claimed queue and target ACL drift proof completed.");
     for (const [bad, repair] of [
       [
         "alter function public.admin_crm_read_allowed(uuid) set search_path = public;",
