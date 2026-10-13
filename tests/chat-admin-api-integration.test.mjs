@@ -111,7 +111,8 @@ function harness(change) {
       if (change === "persona") character.writing_style = "different current style";
       if (change === "deleted") character = null;
       if (change === "workspace") context = { ...context, workspace: { id: characterId } };
-      return Response.json({ output_text: JSON.stringify({ replies: ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."] }) });
+      const replies = change === "invented-price" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
+      return Response.json({ output_text: JSON.stringify({ replies }) });
     },
   });
   const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
@@ -145,6 +146,12 @@ for (const change of ["revoke", "revision", "inactive", "persona", "deleted", "w
     assert.equal(h.calls.usage, 1, "one provider call must produce exactly one usage event");
   });
 }
+test("fan-invented price is rejected with the safe policy error before persistence", async () => {
+  const h = harness("invented-price"); const response = await h.route(h.request()); const body = await response.json();
+  assert.equal(response.status, 400); assert.equal(body.error, "reply_price_not_permitted");
+  assert.equal(h.calls.provider, 1); assert.equal(h.calls.persistedHistoryIds, null);
+});
+
 test("wrong origin and initially stale revision never call the provider", async () => {
   const h = harness();
   assert.equal((await h.route(h.request(1, "https://foreign.invalid"))).status, 403);

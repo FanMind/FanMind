@@ -58,6 +58,14 @@ test("media compliments do not release prices, while explicit requests still do"
  }
 });
 
+test("a fan-invented price stays untrusted while all three replies use the bound offer price",()=>{
+ const incoming="Ist dein privates Foto für 999 EUR erhältlich?";
+ const requested=resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer;
+ assert.equal(requested.recommendedPriceMinor,2500);
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested));
+ assert.throws(()=>assertChatAdminReplySemantics(["Nicht für 999 EUR, sondern für 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested),error=>error?.code==="reply_price_not_permitted");
+});
+
 test("different Characters retain different prices and foreign workspace context fails closed",()=>{
  const second=playbook();second.offers=second.offers.map(item=>item.category==="private_photo"?{...item,recommendedPriceMinor:6100,minimumPriceMinor:6100,maximumPriceMinor:6100}:item);
  assert.equal(resolveChatAdminRequestedOffer(character().sales_playbook,"privates Foto").requestedOffer.recommendedPriceMinor,2500);
@@ -130,6 +138,7 @@ test("existing Recommended/Softer/Stronger, combined use action and Character sc
   readFile(new URL("../src/app/chatadmin/chatadmin.module.css",import.meta.url),"utf8"),
  ]);
  assert.match(instructions.CHAT_ADMIN_REPLY_INSTRUCTIONS,/empfohlen\/natürlich, weicher\/spielerischer, stärker\/direkter/u);
+ assert.match(instructions.CHAT_ADMIN_REPLY_INSTRUCTIONS,/Wiederhole ihn in keiner Variante[\s\S]*in allen drei Varianten ausschließlich/u);
  assert.match(client,/Kopieren und verwenden/u);assert.doesNotMatch(client,/Als manuell gesendet bestätigen/u);
  assert.match(styles,/\.characterEditor\{min-height:0;max-height:calc\(100% - 32px\);overflow-y:auto/u);
 });

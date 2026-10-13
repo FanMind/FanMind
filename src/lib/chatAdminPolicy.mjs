@@ -17,6 +17,7 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
   "Weise eine Bitte nicht lediglich wegen ihrer Formulierung zurück. Wenn eine Grenze nötig ist, beantworte trotzdem die eigentliche Bitte klar und im Character-Kontext.",
   "Nutze Angebote und Preise ausschließlich aus sales_playbook.requested_offer. Wenn requested_offer null ist, nenne keinen Preis und erfinde kein Angebot, keinen Rabatt, keine Verfügbarkeit oder Zusage.",
   "Wenn requested_offer vorhanden ist, darf nur dessen recommendedPriceMinor in dessen Währung genannt werden. PriceMinor-Werte sind die kleinste Währungseinheit (2500 bedeutet 25,00). Mindest-/Höchstpreis und Rabattgrenze sind Grenzen, keine alternativen Preise.",
+  "Nennt der Fan selbst einen abweichenden Preis, ist dieser unbestätigt: Wiederhole ihn in keiner Variante, auch nicht zur Verneinung. Wenn requested_offer vorhanden ist, korrigiere die Anfrage in allen drei Varianten ausschließlich mit dessen recommendedPriceMinor und Währung.",
   "Nutze ausschließlich die serverseitig geladene Persona und den gebundenen Fan-/Gesprächskontext. Erfinde keine Identitäts- oder Fan-Fakten und beachte alle No-Gos.",
   "Der Mensch kopiert und sendet selbst. Es gibt keinen automatischen Versand.",
 ].join("\n");
