@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { APP_COMMIT, WORKER_COMMIT, FILES, request, authorization, connection,
-  parseSelectedEnvironment, digest, fail, transition } from './backup-worker-install-policy.mjs';
+  parseSelectedEnvironment, digest, fail, transition, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
 
 const OPS = '/usr/local/lib/fanmind-ops';
 const ROOT = '/var/lib/fanmind-backup-install';
@@ -106,7 +106,7 @@ async function main() {
   async function queueEmpty() {
     const n = command('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align',
       '--set=ON_ERROR_STOP=1','--host',db.host,'--port',db.port,'--username',db.username,'--dbname',db.database],
-      "begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','running');rollback;",pgEnv);
+      BACKUP_ACTIVE_JOBS_SQL,pgEnv);
     if (n !== '0') fail('backup_jobs_active');
   }
   async function stableRelease() { if (digest(await bytes(RELEASE,0o600,4096)) !== digest(releaseBytes)) fail('backup_application_binding_changed'); }

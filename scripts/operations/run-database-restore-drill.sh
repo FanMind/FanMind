@@ -1212,7 +1212,7 @@ if ! authorization_postcheck_result="$(
 then
   fail "database_authorization_postcheck_query_failed"
 fi
-[[ "$authorization_postcheck_result" =~ ^authorization\|[0-9a-f]{64}\|[1-9][0-9]*\|[1-9][0-9]*\|120\|12\|[0-9a-f]{64}\|[1-9][0-9]*\|[0-9a-f]{64}\|[1-9][0-9]*$ ]] \
+[[ "$authorization_postcheck_result" =~ ^authorization\|[0-9a-f]{64}\|[1-9][0-9]*\|[1-9][0-9]*\|120\|(12|13)\|[0-9a-f]{64}\|[1-9][0-9]*\|[0-9a-f]{64}\|[1-9][0-9]*$ ]] \
   || fail "database_authorization_postcheck_result_invalid"
 
 FANMIND_RESTORE_POSTCHECKED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \

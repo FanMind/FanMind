@@ -4,6 +4,7 @@ export const APP_COMMIT = '707d22702a784e3b9999d1c9ae9c1e11c096a1bc';
 export const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 export const ENVIRONMENT = 'backup-production-recovery';
 export const OWNER_ID = 270165082;
+export const BACKUP_ACTIVE_JOBS_SQL = "begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running');rollback;";
 export const FILES = Object.freeze({
   'database-authorization-contract.mjs': 'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de',
   'verify-backup-artifact.mjs': 'ded9bf771c8111056c9fbb1b0e4d1dbc81b467b0f233031687dcade05f5b44af',
