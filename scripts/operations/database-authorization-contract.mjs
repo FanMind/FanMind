@@ -27,7 +27,7 @@ const MAX_PROCESS_OUTPUT_BYTES = 256 * 1024;
 const INITIAL_QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 10_000;
 const CORE_TABLE_APP_GRANT_TUPLE_COUNT = 120;
-const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNT = 12;
+const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13]);
 const MAX_RECEIPT_BYTES = 16 * 1024;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const FULL_BACKUP_BASENAME = /^fanmind-full-\d{13}\.tar\.gz\.age$/u;
@@ -2620,6 +2620,154 @@ public_security_definer_totals as (
   where namespace.nspname = 'public'
     and function_definition.prosecdef
 ),
+approved_additional_security_definers as (
+  select *
+  from (values
+    (
+      'admin_crm_read_allowed',
+      'p_workspace_id uuid',
+      array[
+        'search_path=pg_catalog, public, pg_temp',
+        'row_security=off'
+      ]::text[],
+      array['authenticated', 'postgres', 'service_role']::text[],
+      false, true, true
+    ),
+    (
+      'current_admin_crm_access_state',
+      '',
+      array[
+        'search_path=pg_catalog, public, pg_temp',
+        'row_security=off'
+      ]::text[],
+      array['authenticated', 'postgres', 'service_role']::text[],
+      false, true, true
+    ),
+    (
+      'admin_set_registered_user_crm_access',
+      'p_target_user_id uuid, p_admin_user_id uuid, p_admin_email text, p_mode text, p_expires_at timestamp with time zone',
+      array['search_path=pg_catalog, public, pg_temp']::text[],
+      array['postgres', 'service_role']::text[],
+      false, false, true
+    ),
+    (
+      'create_chat_admin_fan_conversation',
+      '',
+      array['search_path=""']::text[],
+      array['postgres']::text[],
+      false, false, false
+    ),
+    (
+      'create_chat_admin_fan',
+      'target_workspace_id uuid, target_character_id uuid, target_creation_id uuid, fan_data jsonb',
+      array['search_path=""']::text[],
+      array['authenticated', 'postgres']::text[],
+      false, true, false
+    ),
+    (
+      'persist_chat_admin_generation',
+      'target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_generation_id uuid, expected_history_ids uuid[], inbound_content text, suggested_contents text[]',
+      array['search_path=""']::text[],
+      array['authenticated', 'postgres']::text[],
+      false, true, false
+    ),
+    (
+      'persist_chat_admin_confirmed_reply',
+      'target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_confirmation_id uuid, reply_content text',
+      array['search_path=""']::text[],
+      array['authenticated', 'postgres']::text[],
+      false, true, false
+    )
+  ) as expected(
+    function_name,
+    identity_arguments,
+    function_config,
+    executors,
+    anon_execute,
+    authenticated_execute,
+    service_role_execute
+  )
+),
+installed_additional_security_definers as (
+  select
+    expected.function_name,
+    expected.identity_arguments,
+    expected.function_config,
+    expected.executors,
+    expected.anon_execute,
+    expected.authenticated_execute,
+    expected.service_role_execute,
+    function_definition.oid,
+    function_definition.proconfig,
+    pg_catalog.pg_get_userbyid(function_definition.proowner) as owner_name,
+    coalesce(pg_catalog.has_function_privilege(
+      (select oid from app_roles where rolname = 'anon'),
+      function_definition.oid,
+      'EXECUTE'
+    ), false) as anon_execute_actual,
+    coalesce(pg_catalog.has_function_privilege(
+      (select oid from app_roles where rolname = 'authenticated'),
+      function_definition.oid,
+      'EXECUTE'
+    ), false) as authenticated_execute_actual,
+    coalesce(pg_catalog.has_function_privilege(
+      (select oid from app_roles where rolname = 'service_role'),
+      function_definition.oid,
+      'EXECUTE'
+    ), false) as service_role_execute_actual,
+    coalesce((
+      select pg_catalog.array_agg(
+        case
+          when privilege.grantee = 0 then 'PUBLIC'
+          else pg_catalog.pg_get_userbyid(privilege.grantee)::text
+        end
+        order by case
+          when privilege.grantee = 0 then 'PUBLIC'
+          else pg_catalog.pg_get_userbyid(privilege.grantee)::text
+        end collate "C"
+      )
+      from pg_catalog.aclexplode(coalesce(
+        function_definition.proacl,
+        pg_catalog.acldefault('f'::"char", function_definition.proowner)
+      )) as privilege
+      where privilege.privilege_type = 'EXECUTE'
+        and not privilege.is_grantable
+        and privilege.grantor = function_definition.proowner
+    ), '{}'::text[]) as executors_actual,
+    coalesce((
+      select count(*)
+      from pg_catalog.aclexplode(coalesce(
+        function_definition.proacl,
+        pg_catalog.acldefault('f'::"char", function_definition.proowner)
+      )) as privilege
+      where privilege.privilege_type <> 'EXECUTE'
+         or privilege.is_grantable
+         or privilege.grantor <> function_definition.proowner
+    ), 0)::integer as invalid_acl_count
+  from approved_additional_security_definers as expected
+  left join pg_catalog.pg_proc as function_definition
+    on function_definition.pronamespace = 'public'::pg_catalog.regnamespace
+   and function_definition.prosecdef
+   and function_definition.proname = expected.function_name
+   and pg_catalog.pg_get_function_identity_arguments(
+     function_definition.oid
+   ) = expected.identity_arguments
+),
+additional_security_definer_contract as (
+  select
+    count(oid)::integer as installed_count,
+    count(*) filter (
+      where oid is null
+         or owner_name <> 'postgres'
+         or proconfig is distinct from function_config
+         or executors_actual is distinct from executors
+         or anon_execute_actual is distinct from anon_execute
+         or authenticated_execute_actual is distinct from authenticated_execute
+         or service_role_execute_actual is distinct from service_role_execute
+         or invalid_acl_count <> 0
+    )::integer as violation_count
+  from installed_additional_security_definers
+),
 restricted_security_definers as (
   select count(*)::integer as function_count
   from pg_catalog.pg_proc as function_definition
@@ -2792,6 +2940,10 @@ authorization_result as (
       security_definer_totals.function_count,
     'restricted_security_definer_function_count',
       restricted_functions.function_count,
+    'approved_additional_security_definer_function_count',
+      additional_security_definers.installed_count,
+    'additional_security_definer_contract_violation_count',
+      additional_security_definers.violation_count,
     'exposed_security_definer_exception_count',
       exposed_exception.function_count,
     'hardened_security_definer_exception_count',
@@ -2812,6 +2964,7 @@ authorization_result as (
   cross join extension_recovery_invariants as extension_invariants
   cross join public_security_definer_totals as security_definer_totals
   cross join restricted_security_definers as restricted_functions
+  cross join additional_security_definer_contract as additional_security_definers
   cross join exposed_security_definer_exception as exposed_exception
   cross join hardened_security_definer_exception as hardened_exception
   cross join unsupported_default_acl_types as unsupported
@@ -3378,8 +3531,9 @@ export function validateAuthorizationContract(value) {
     throw fixedError("authorization_contract_core_grants_invalid");
   }
   if (
-    restrictedSecurityDefinerFunctionCount !==
-    RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNT
+    !RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS.has(
+      restrictedSecurityDefinerFunctionCount,
+    )
   ) {
     throw fixedError("authorization_contract_security_definers_invalid");
   }
@@ -3438,8 +3592,17 @@ function contractFromDatabasePayload(value) {
   if (value.extension_contract_invariant_violation_count !== 0) {
     throw fixedError("authorization_extension_contract_invariant_invalid");
   }
+  const legacySecurityDefinerContract =
+    value.public_security_definer_function_count === 13 &&
+    value.restricted_security_definer_function_count === 12 &&
+    value.approved_additional_security_definer_function_count === 0;
+  const currentSecurityDefinerContract =
+    value.public_security_definer_function_count === 20 &&
+    value.restricted_security_definer_function_count === 13 &&
+    value.approved_additional_security_definer_function_count === 7 &&
+    value.additional_security_definer_contract_violation_count === 0;
   if (
-    value.public_security_definer_function_count !== 13 ||
+    !(legacySecurityDefinerContract || currentSecurityDefinerContract) ||
     !(
       (value.exposed_security_definer_exception_count === 1 &&
         value.hardened_security_definer_exception_count === 0) ||

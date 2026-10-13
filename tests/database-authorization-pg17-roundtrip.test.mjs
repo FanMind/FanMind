@@ -2087,5 +2087,106 @@ grant execute on function public.trim_conversation_messages_to_latest_50()
       }
       assert.deepEqual(await captureContract(sourcePsql, pgpassFile), hardenedContract);
     }
+
+    await dockerPsql(SOURCE_CONTAINER_ID, password, String.raw`
+create table public.chat_character_fans (id uuid);
+create table public.chat_character_messages (id uuid);
+
+create function public.admin_crm_read_allowed(p_workspace_id uuid)
+returns boolean language sql stable security definer
+set search_path = pg_catalog, public, pg_temp set row_security = off
+as 'select false';
+revoke all on function public.admin_crm_read_allowed(uuid) from public, anon;
+grant execute on function public.admin_crm_read_allowed(uuid) to authenticated, service_role;
+
+create function public.current_admin_crm_access_state()
+returns table(access_state text) language sql stable security definer
+set search_path = pg_catalog, public, pg_temp set row_security = off
+as 'select ''inactive''::text';
+revoke all on function public.current_admin_crm_access_state() from public, anon;
+grant execute on function public.current_admin_crm_access_state() to authenticated, service_role;
+
+create function public.admin_set_registered_user_crm_access(
+  p_target_user_id uuid, p_admin_user_id uuid, p_admin_email text,
+  p_mode text, p_expires_at timestamptz default null
+) returns boolean language sql security definer
+set search_path = pg_catalog, public, pg_temp
+as 'select false';
+revoke all on function public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)
+  from public, anon, authenticated;
+grant execute on function public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)
+  to service_role;
+
+create function public.create_chat_admin_fan_conversation()
+returns trigger language plpgsql security definer set search_path=''
+as 'begin return new; end';
+revoke all on function public.create_chat_admin_fan_conversation()
+  from public, anon, authenticated, service_role;
+
+create function public.create_chat_admin_fan(
+  target_workspace_id uuid, target_character_id uuid,
+  target_creation_id uuid, fan_data jsonb
+) returns setof public.chat_character_fans language sql security definer
+set search_path='' as 'select null::public.chat_character_fans where false';
+revoke all on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)
+  from public, anon, service_role;
+grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb)
+  to authenticated;
+
+create function public.persist_chat_admin_generation(
+  target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
+  target_conversation_id uuid, target_character_revision integer,
+  target_fan_revision integer, target_generation_id uuid,
+  expected_history_ids uuid[], inbound_content text, suggested_contents text[]
+) returns text[] language sql security definer set search_path=''
+as 'select array[]::text[]';
+revoke all on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])
+  from public, anon, service_role;
+grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[])
+  to authenticated;
+
+create function public.persist_chat_admin_confirmed_reply(
+  target_workspace_id uuid, target_character_id uuid, target_fan_id uuid,
+  target_conversation_id uuid, target_character_revision integer,
+  target_fan_revision integer, target_confirmation_id uuid, reply_content text
+) returns setof public.chat_character_messages language sql security definer
+set search_path='' as 'select null::public.chat_character_messages where false';
+revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)
+  from public, anon, service_role;
+grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)
+  to authenticated;
+`);
+    const currentContract = await captureContract(sourcePsql, pgpassFile);
+    assert.equal(currentContract.restrictedSecurityDefinerFunctionCount, 13);
+
+    for (const [bad, repair] of [
+      [
+        "alter function public.admin_crm_read_allowed(uuid) set search_path = public;",
+        "alter function public.admin_crm_read_allowed(uuid) set search_path = pg_catalog, public, pg_temp;",
+      ],
+      [
+        "grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to service_role;",
+        "revoke execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from service_role;",
+      ],
+      [
+        "grant execute on function public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz) to anon;",
+        "revoke execute on function public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz) from anon;",
+      ],
+      [
+        "create function public.unapproved_security_definer() returns integer language sql security definer as 'select 1';",
+        "drop function public.unapproved_security_definer();",
+      ],
+    ]) {
+      await dockerPsql(SOURCE_CONTAINER_ID, password, bad);
+      try {
+        await assert.rejects(
+          captureContract(sourcePsql, pgpassFile),
+          /authorization_security_definer_boundary_invalid/u,
+        );
+      } finally {
+        await dockerPsql(SOURCE_CONTAINER_ID, password, repair);
+      }
+      assert.deepEqual(await captureContract(sourcePsql, pgpassFile), currentContract);
+    }
   },
 );

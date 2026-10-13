@@ -39,6 +39,8 @@ const authorizationContractFrame = Buffer.from(JSON.stringify({
   extension_recovery_invariant_violation_count: 0,
   public_security_definer_function_count: 13,
   restricted_security_definer_function_count: 12,
+  approved_additional_security_definer_function_count: 0,
+  additional_security_definer_contract_violation_count: 7,
   exposed_security_definer_exception_count: 1,
   hardened_security_definer_exception_count: 0,
   unsupported_default_acl_type_count: 0,
@@ -167,7 +169,7 @@ test('database backup archives ownership and privileges from one frozen snapshot
     assert.match(args, /--no-password/u);
     assert.doesNotMatch(args, /--no-owner|--no-privileges/u);
     assert.equal(result.manifest.format_version, 2);
-    assert.equal(result.manifest.worker_version, 'phase5-backup-worker-6');
+    assert.equal(result.manifest.worker_version, 'phase5-backup-worker-7');
     assert.equal(result.manifest.privileges_archived, true);
     assert.equal(result.manifest.ownership_archived, true);
     assert.deepEqual(result.manifest.authorization_contract, {
