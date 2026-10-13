@@ -762,6 +762,10 @@ test("SQL binds every approved additional privileged function and its ACL", () =
   assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /owner_name <> 'postgres'/u);
   assert.match(
     DATABASE_AUTHORIZATION_CONTRACT_SQL,
+    /function_result_actual is distinct from function_result/u,
+  );
+  assert.match(
+    DATABASE_AUTHORIZATION_CONTRACT_SQL,
     /executors_actual is distinct from executors/u,
   );
   assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /privilege\.is_grantable/u);

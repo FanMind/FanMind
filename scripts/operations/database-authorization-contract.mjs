@@ -2626,6 +2626,7 @@ approved_additional_security_definers as (
     (
       'admin_crm_read_allowed',
       'p_workspace_id uuid',
+      null::text,
       array[
         'search_path=pg_catalog, public, pg_temp',
         'row_security=off'
@@ -2636,6 +2637,7 @@ approved_additional_security_definers as (
     (
       'current_admin_crm_access_state',
       '',
+      null::text,
       array[
         'search_path=pg_catalog, public, pg_temp',
         'row_security=off'
@@ -2646,6 +2648,7 @@ approved_additional_security_definers as (
     (
       'admin_set_registered_user_crm_access',
       'p_target_user_id uuid, p_admin_user_id uuid, p_admin_email text, p_mode text, p_expires_at timestamp with time zone',
+      null::text,
       array['search_path=pg_catalog, public, pg_temp']::text[],
       array['postgres', 'service_role']::text[],
       false, false, true
@@ -2653,6 +2656,7 @@ approved_additional_security_definers as (
     (
       'create_chat_admin_fan_conversation',
       '',
+      'trigger',
       array['search_path=""']::text[],
       array['postgres']::text[],
       false, false, false
@@ -2660,6 +2664,7 @@ approved_additional_security_definers as (
     (
       'create_chat_admin_fan',
       'target_workspace_id uuid, target_character_id uuid, target_creation_id uuid, fan_data jsonb',
+      null::text,
       array['search_path=""']::text[],
       array['authenticated', 'postgres']::text[],
       false, true, false
@@ -2667,6 +2672,7 @@ approved_additional_security_definers as (
     (
       'persist_chat_admin_generation',
       'target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_generation_id uuid, expected_history_ids uuid[], inbound_content text, suggested_contents text[]',
+      null::text,
       array['search_path=""']::text[],
       array['authenticated', 'postgres']::text[],
       false, true, false
@@ -2674,6 +2680,7 @@ approved_additional_security_definers as (
     (
       'persist_chat_admin_confirmed_reply',
       'target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_confirmation_id uuid, reply_content text',
+      null::text,
       array['search_path=""']::text[],
       array['authenticated', 'postgres']::text[],
       false, true, false
@@ -2681,6 +2688,7 @@ approved_additional_security_definers as (
   ) as expected(
     function_name,
     identity_arguments,
+    function_result,
     function_config,
     executors,
     anon_execute,
@@ -2692,12 +2700,16 @@ installed_additional_security_definers as (
   select
     expected.function_name,
     expected.identity_arguments,
+    expected.function_result,
     expected.function_config,
     expected.executors,
     expected.anon_execute,
     expected.authenticated_execute,
     expected.service_role_execute,
     function_definition.oid,
+    pg_catalog.pg_get_function_result(
+      function_definition.oid
+    ) as function_result_actual,
     function_definition.proconfig,
     pg_catalog.pg_get_userbyid(function_definition.proowner) as owner_name,
     coalesce(pg_catalog.has_function_privilege(
@@ -2759,6 +2771,10 @@ additional_security_definer_contract as (
     count(*) filter (
       where oid is null
          or owner_name <> 'postgres'
+         or (
+           function_result is not null
+           and function_result_actual is distinct from function_result
+         )
          or proconfig is distinct from function_config
          or executors_actual is distinct from executors
          or anon_execute_actual is distinct from anon_execute

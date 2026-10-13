@@ -2173,6 +2173,10 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         "revoke execute on function public.admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz) from anon;",
       ],
       [
+        "grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to authenticated with grant option;",
+        "revoke grant option for execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from authenticated;",
+      ],
+      [
         "create function public.unapproved_security_definer() returns integer language sql security definer as 'select 1';",
         "drop function public.unapproved_security_definer();",
       ],
