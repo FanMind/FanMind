@@ -2,7 +2,7 @@
 
 Production currently has the reviewed 20 public SECURITY DEFINER functions,
 including 13 restricted functions. Worker 7 already captures the complete
-signature, owner, configuration, ACL, definition and role/container/extension
+signature, owner, configuration, ACL and role/container/extension
 fingerprints. The former Full Receipt, aggregate evidence and shell postcheck
 consumers still rejected every restricted count except 12.
 
@@ -11,7 +11,7 @@ It does not approve an arbitrary catalog with either count. The unchanged
 `database-authorization-contract.mjs` must first validate the exact legacy
 13/12 or current 20/13 boundary and all seven reviewed additional functions.
 The restored catalog must equal the receipt-bound source fingerprint, including
-function definitions; counts alone are insufficient. Every private receipt
+ownership and ACLs; counts alone are insufficient. Every private receipt
 retains exact artifact, dump, commit, role, extension and prior-receipt hashes.
 Mixed 12/13 receipts, unknown counts, extra members and drift still fail closed.
 
@@ -19,7 +19,8 @@ The CI proof retains the legacy restore and adds a fresh database in the
 independent digest-pinned PostgreSQL 17 target container for the new current
 backup. It verifies empty-target and role/extension/container preflights,
 single-transaction restore and the complete current catalog fingerprint.
-Changing a function body while preserving the function count must be rejected.
+Changing a required EXECUTE ACL while preserving the function count must be rejected.
+This authorization proof does not validate public function bodies.
 The receipt tests exercise both full chains and mixed/invalid counts. These
 isolated CI checks are not a successful restore of a real Production backup.
 

@@ -2195,9 +2195,9 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     const restoredCurrent=await snapshotTargetDatabaseAuthorization(currentOptions);
     assert.equal(restoredCurrent.restrictedSecurityDefinerFunctionCount,13);
     assert.equal(restoredCurrent.fingerprintSha256,currentContract.fingerprintSha256);
-    await dockerPsql(TARGET_CONTAINER_ID,password,"create or replace function public.admin_crm_read_allowed(p_workspace_id uuid) returns boolean language sql stable security definer set search_path=pg_catalog,public,pg_temp set row_security=off as 'select true';",currentDatabase);
-    await assert.rejects(snapshotTargetDatabaseAuthorization(currentOptions),/authorization_target_contract_mismatch/u);
-    await dockerPsql(TARGET_CONTAINER_ID,password,"create or replace function public.admin_crm_read_allowed(p_workspace_id uuid) returns boolean language sql stable security definer set search_path=pg_catalog,public,pg_temp set row_security=off as 'select false';",currentDatabase);
+    await dockerPsql(TARGET_CONTAINER_ID,password,"revoke execute on function public.admin_crm_read_allowed(uuid) from service_role;",currentDatabase);
+    await assert.rejects(snapshotTargetDatabaseAuthorization(currentOptions),/authorization_security_definer_boundary_invalid/u);
+    await dockerPsql(TARGET_CONTAINER_ID,password,"grant execute on function public.admin_crm_read_allowed(uuid) to service_role;",currentDatabase);
     assert.equal((await snapshotTargetDatabaseAuthorization(currentOptions)).fingerprintSha256,currentContract.fingerprintSha256);
 
     for (const [bad, repair] of [
