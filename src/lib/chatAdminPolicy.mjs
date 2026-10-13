@@ -22,7 +22,7 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
   "Der Mensch kopiert und sendet selbst. Es gibt keinen automatischen Versand.",
 ].join("\n");
 
-const UNTRUSTED_INCOMING_PRICE = /(?:(?:\\b(?:EUR|CHF|USD|GBP)\\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\\.|[€$£])\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\b(?:EUR|CHF|USD|GBP)\\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\\.|[€$£]))/giu;
+const UNTRUSTED_INCOMING_PRICE = /(?:(?:\b(?:EUR|CHF|USD|GBP)\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\.|[€$£])\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\b(?:EUR|CHF|USD|GBP)\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\.|[€$£]))/giu;
 const modelSafeIncomingMessage = (value) => value.replace(UNTRUSTED_INCOMING_PRICE, "[vom Fan genannter, unbestätigter Preis]");
 
 export class ChatAdminPolicyError extends Error {
