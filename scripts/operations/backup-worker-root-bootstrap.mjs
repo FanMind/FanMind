@@ -62,8 +62,8 @@ async function database(content){
  try{
   pass=await bytes(config.FANMIND_BACKUP_PGPASSFILE,0o600);ca=await bytes(config.FANMIND_BACKUP_DB_CA_CERT_PATH,0o644);
   const passHash=sha(pass),caHash=sha(ca);
-  await directory('/run');privatePath=`/run/.fanmind-bootstrap-${randomUUID()}`;
-  await mkdir(privatePath,{mode:0o700});await directory(privatePath);
+  await directory('/run');const candidate=`/run/.fanmind-bootstrap-${randomUUID()}`;
+  await mkdir(candidate,{mode:0o700});privatePath=candidate;await directory(privatePath);
   for(const [name,data]of [['pgpass',pass],['ca.pem',ca]]){const path=`${privatePath}/${name}`;await create(path,data,0o600,path=>owned.push(path));}
   pass.fill(0);ca.fill(0);
   const env={...ENV,PGPASSFILE:`${privatePath}/pgpass`,PGSSLROOTCERT:`${privatePath}/ca.pem`,PGSSLMODE:'verify-full',PGGSSENCMODE:'disable',PGCONNECT_TIMEOUT:'10'};
