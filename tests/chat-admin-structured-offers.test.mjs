@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { assertChatAdminCharacterInput, assertChatAdminReplySemantics, buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
+import { assertChatAdminCharacterInput, assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
 import { CHAT_ADMIN_OFFER_CATEGORIES, defaultChatAdminSalesPlaybook, normalizeChatAdminSalesPlaybook, resolveChatAdminRequestedOffer } from "../src/lib/chatAdminSalesPlaybook.mjs";
 
 const workspace="11111111-1111-4111-8111-111111111111";
@@ -62,6 +62,9 @@ test("a fan-invented price stays untrusted while all three replies use the bound
  const incoming="Ist dein privates Foto für 999 EUR erhältlich?";
  const requested=resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer;
  assert.equal(requested.recommendedPriceMinor,2500);
+ const context=JSON.parse(buildChatAdminCharacterContext(character(),incoming));
+ assert.equal(context.incoming_message,"Ist dein privates Foto für [vom Fan genannter, unbestätigter Preis] erhältlich?");
+ assert.doesNotMatch(context.incoming_message,/999|EUR/u);
  assert.doesNotThrow(()=>assertChatAdminReplySemantics(["Das private Foto kostet 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested));
  assert.throws(()=>assertChatAdminReplySemantics(["Nicht für 999 EUR, sondern für 25 EUR.","Für 25 EUR ist es erhältlich.","Der Preis ist 25 EUR."],incoming,requested),error=>error?.code==="reply_price_not_permitted");
 });

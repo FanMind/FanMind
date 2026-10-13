@@ -22,6 +22,9 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
   "Der Mensch kopiert und sendet selbst. Es gibt keinen automatischen Versand.",
 ].join("\n");
 
+const UNTRUSTED_INCOMING_PRICE = /(?:(?:\\b(?:EUR|CHF|USD|GBP)\\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\\.|[€$£])\\s*\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s*(?:\\b(?:EUR|CHF|USD|GBP)\\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\\.|[€$£]))/giu;
+const modelSafeIncomingMessage = (value) => value.replace(UNTRUSTED_INCOMING_PRICE, "[vom Fan genannter, unbestätigter Preis]");
+
 export class ChatAdminPolicyError extends Error {
   constructor(code) {
     super(code);
@@ -73,7 +76,7 @@ export function buildChatAdminCharacterContext(character, incomingMessage, fanLa
     rules: { flirt: character.flirt_style, sales: character.sales_rules, examples: character.example_messages },
     sales_playbook: { ...salesPlaybook.playbook, requested_offer: salesPlaybook.requestedOffer },
     fan: fanLabel ? { user_provided_label: fanLabel.slice(0, 120) } : null,
-    incoming_message: incomingMessage.trim(),
+    incoming_message: modelSafeIncomingMessage(incomingMessage.trim()),
   };
   return JSON.stringify(context);
 }
