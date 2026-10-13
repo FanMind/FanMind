@@ -44,3 +44,8 @@ test('exclusive root create restores exact mode under umask0077 and preserves ex
  const failed=join(dir,'partial');const owned=[];await assert.rejects(create(failed,Buffer.from('known'),0o600,p=>{owned.push(p);throw Error('simulated interruption after exclusive open');}));assert.deepEqual(owned,[failed]);assert.equal((await lstat(failed)).size,0);
  }finally{process.umask(prior);await rm(dir,{recursive:true});}
 });
+
+test('bootstrap and install share the claimed-aware fixed queue guard',async()=>{
+ const [bootstrap,control,policy]=await Promise.all(['scripts/operations/backup-worker-root-bootstrap.mjs','scripts/operations/backup-worker-install-control.mjs','scripts/operations/backup-worker-install-policy.mjs'].map(x=>readFile(x,'utf8')));
+ assert.match(bootstrap,/input:policy\.BACKUP_ACTIVE_JOBS_SQL/u);assert.match(control,/BACKUP_ACTIVE_JOBS_SQL,pgEnv/u);assert.match(policy,/status in \('queued','claimed','running'\)/u);
+});

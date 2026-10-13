@@ -327,12 +327,12 @@ async function readPrivateRegularFile(path, encoding) {
   }
 }
 
-async function withReceiptSet(callback) {
+async function withReceiptSet(callback, restrictedCount = 12) {
   const root = await mkdtemp(join(tmpdir(), "fanmind-restore-evidence-"));
   try {
     await chmod(root, 0o700);
     const targetId = randomUUID();
-    const fullBytes = `${JSON.stringify(fullReceipt())}\n`;
+    const fullBytes = `${JSON.stringify(fullReceipt({databaseRestrictedSecurityDefinerFunctionCount:restrictedCount}))}\n`;
     const runnerBytes = `${JSON.stringify(
       runnerReceipt(fullBytes, targetId),
     )}\n`;
@@ -1051,4 +1051,23 @@ test("restore runbook requires receipt-bound schema v6 evidence", async () => {
   assert.match(source, /RESTORE_EVIDENCE_SHA256/u);
   assert.match(source, /coreSchemaChecks.*(?:manuell|manually)/su);
   assert.match(source, /rlsVerification.*(?:manuell|manually)/su);
+});
+
+for(const count of [12,13])test(`reviewed ${count} contract survives the full private receipt chain`,async()=>{
+ await withReceiptSet(async({paths})=>{
+  const full=await execFileAsync(process.execPath,[receiptVerifierPath,'--receipt',paths.full,'--dump',paths.dump]);assert.match(full.stdout,/FULL_BACKUP_RESTORE_RECEIPT=PASS/u);
+  const aggregate=await execFileAsync(process.execPath,verifierArguments(paths));assert.match(aggregate.stdout,/RESTORE_DRILL_EVIDENCE=PASS/u);
+ },count);
+});
+test('reviewed counts must match across full, runner, postcheck and aggregate receipts',async()=>{
+ for(const other of [12,14,0,null,'13'])await withReceiptSet(async({paths,fullBytes,runnerBytes,targetId})=>{
+  const changed=JSON.parse(runnerBytes);changed.databaseRestrictedSecurityDefinerFunctionCount=other;const rb=`${JSON.stringify(changed)}\n`;
+  await privateFile(paths.runner,rb);await privateFile(paths.postcheck,`${JSON.stringify(databasePostcheckReceipt(rb,targetId))}\n`);
+  const pb=await readFile(paths.postcheck,'utf8');await privateFile(paths.evidence,`${JSON.stringify(evidence(fullBytes,rb,pb,targetId))}\n`);
+  await assert.rejects(execFileAsync(process.execPath,verifierArguments(paths)));
+ },13);
+ for(const target of ['postcheck','evidence'])await withReceiptSet(async({paths})=>{
+  const value=JSON.parse(await readFile(paths[target],'utf8'));value.databaseRestrictedSecurityDefinerFunctionCount=12;await privateFile(paths[target],`${JSON.stringify(value)}\n`);
+  await assert.rejects(execFileAsync(process.execPath,verifierArguments(paths)));
+ },13);
 });

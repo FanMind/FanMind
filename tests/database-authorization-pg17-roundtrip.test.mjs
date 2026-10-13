@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { BACKUP_ACTIVE_JOBS_SQL } from "../scripts/operations/backup-worker-install-policy.mjs";
 import { createDatabase } from "../scripts/operations/backup-worker.mjs";
 import {
   analyzeAuthorizationToc,
@@ -752,7 +753,8 @@ function runCommand(command, args, { input, env } = {}) {
   });
 }
 
-async function dockerPsql(containerId, password, sql) {
+async function dockerPsql(containerId, password, sql, database = "postgres") {
+  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
   await runCommand(
     "docker",
     [
@@ -771,7 +773,7 @@ async function dockerPsql(containerId, password, sql) {
       "--username",
       "postgres",
       "--dbname",
-      "postgres",
+      database,
     ],
     { input: sql },
   );
@@ -781,8 +783,9 @@ async function dockerPsqlScalar(
   containerId,
   password,
   sql,
-  { readOnly = false } = {},
+  { readOnly = false, database = "postgres" } = {},
 ) {
+  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
   const result = await runCommand(
     "docker",
     [
@@ -811,7 +814,7 @@ async function dockerPsqlScalar(
       "--username",
       "postgres",
       "--dbname",
-      "postgres",
+      database,
     ],
     { input: sql },
   );
@@ -1218,7 +1221,8 @@ test(
       HAS_SERVICE_CONTAINERS || REQUIRE_SERVICE_CONTAINERS
         ? false
         : `set ${SOURCE_CONTAINER_ENV} and ${TARGET_CONTAINER_ENV}`,
-    timeout: 300_000,
+    // Two complete legacy/current restore paths; individual commands remain bounded.
+    timeout: 600_000,
   },
   async (context) => {
     assert.match(SOURCE_CONTAINER_ID, CONTAINER_ID, SOURCE_CONTAINER_ENV);
@@ -2156,9 +2160,49 @@ revoke all on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,
 grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uuid,uuid,integer,integer,uuid,text)
   to authenticated;
 `);
+    context.diagnostic("Legacy restore and recovery checks completed; starting current 20/13 proof.");
     const currentContract = await captureContract(sourcePsql, pgpassFile);
     assert.equal(currentContract.restrictedSecurityDefinerFunctionCount, 13);
 
+    // New 20/13 backups must pass a real dump/restore into a NEW empty CI database.
+    // The previous legacy target remains intact and is never silently reused.
+    const currentDirectory = join(temporaryRoot, "current-backup");
+    await mkdir(currentDirectory, { mode: 0o700 });
+    const currentBackup = await createDatabase(currentDirectory);
+    assert.deepEqual(validateAuthorizationContract(currentBackup.manifest.authorization_contract), currentContract);
+    const currentReceiptPath = join(temporaryRoot, "current-full-receipt.json");
+    await writeFile(currentReceiptPath, `${JSON.stringify(authorizationReceipt(currentBackup))}\n`, {flag:"wx",mode:0o600});
+    const currentDatabase = "fanmind_current_restore";
+    await dockerPsql(TARGET_CONTAINER_ID,password,`create database ${currentDatabase} template template0;`);
+    const baseline = "begin;\n" + ROLE_AND_CONTAINER_BASELINE_SQL.slice(ROLE_AND_CONTAINER_BASELINE_SQL.indexOf("revoke all privileges on database postgres"));
+    await dockerPsql(TARGET_CONTAINER_ID,password,baseline.replaceAll("database postgres",`database ${currentDatabase}`),currentDatabase);
+    assert.equal(await dockerPsqlScalar(TARGET_CONTAINER_ID,password,emptyTargetSql,{readOnly:true,database:currentDatabase}),"0");
+    const currentOptions={receiptPath:currentReceiptPath,psqlBin:targetPsql,host:"127.0.0.1",port:"5432",username:RESTORE_OPERATOR_ROLE,database:currentDatabase,env:{PATH:process.env.PATH??"/usr/bin:/bin",PGPASSFILE:pgpassFile}};
+    await assertDatabaseAuthorizationRoles(currentOptions);
+    const currentToc = await runCommand(sourcePgRestore,["--list",currentBackup.path]);
+    const currentTocPath=join(temporaryRoot,"current-restore.toc");
+    await writeFile(currentTocPath,filterExtensionsSchemaToc(currentToc.stdout),{flag:"wx",mode:0o600});
+    const currentContainerDump="/tmp/fanmind-current-contract.dump",currentContainerToc="/tmp/fanmind-current-contract.toc";
+    context.after(async()=>{await runCommand("docker",["exec","--user","0",TARGET_CONTAINER_ID,"rm","-f","--",currentContainerDump,currentContainerToc]).catch(()=>{});});
+    await runCommand("docker",["cp",currentBackup.path,`${TARGET_CONTAINER_ID}:${currentContainerDump}`]);
+    await runCommand("docker",["cp",currentTocPath,`${TARGET_CONTAINER_ID}:${currentContainerToc}`]);
+    await runCommand("docker",["exec","--user","0","-e",`PGPASSWORD=${RESTORE_OPERATOR_PASSWORD}`,TARGET_CONTAINER_ID,`${POSTGRES_BIN}/pg_restore`,"--exit-on-error","--single-transaction","--use-list",currentContainerToc,"--no-password","--host","127.0.0.1","--port","5432","--username",RESTORE_OPERATOR_ROLE,"--dbname",currentDatabase,currentContainerDump]);
+
+    // The real worker claim RPC has a claimed phase; it must block install.
+    await dockerPsql(TARGET_CONTAINER_ID,password,"create table public.admin_operation_jobs(job_type text,status text); insert into public.admin_operation_jobs values ('backup_database','claimed');",currentDatabase);
+    assert.equal(await dockerPsqlScalar(TARGET_CONTAINER_ID,password,BACKUP_ACTIVE_JOBS_SQL,{readOnly:true,database:currentDatabase}),"1");
+    await dockerPsql(TARGET_CONTAINER_ID,password,"update public.admin_operation_jobs set status='succeeded';",currentDatabase);
+    assert.equal(await dockerPsqlScalar(TARGET_CONTAINER_ID,password,BACKUP_ACTIVE_JOBS_SQL,{readOnly:true,database:currentDatabase}),"0");
+    await dockerPsql(TARGET_CONTAINER_ID,password,"drop table public.admin_operation_jobs;",currentDatabase);
+    const restoredCurrent=await snapshotTargetDatabaseAuthorization(currentOptions);
+    assert.equal(restoredCurrent.restrictedSecurityDefinerFunctionCount,13);
+    assert.equal(restoredCurrent.fingerprintSha256,currentContract.fingerprintSha256);
+    await dockerPsql(TARGET_CONTAINER_ID,password,"revoke execute on function public.admin_crm_read_allowed(uuid) from service_role;",currentDatabase);
+    await assert.rejects(snapshotTargetDatabaseAuthorization(currentOptions),/authorization_security_definer_boundary_invalid/u);
+    await dockerPsql(TARGET_CONTAINER_ID,password,"grant execute on function public.admin_crm_read_allowed(uuid) to service_role;",currentDatabase);
+    assert.equal((await snapshotTargetDatabaseAuthorization(currentOptions)).fingerprintSha256,currentContract.fingerprintSha256);
+
+    context.diagnostic("Current 20/13 dump/restore, claimed queue and target ACL drift proof completed.");
     for (const [bad, repair] of [
       [
         "alter function public.admin_crm_read_allowed(uuid) set search_path = public;",

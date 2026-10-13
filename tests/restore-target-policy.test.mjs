@@ -2548,7 +2548,7 @@ test("runbook and package scripts require the gated runner for pg_restore", asyn
   assert.match(runner, /snapshot-target/u);
   assert.match(
     runner,
-    /authorization\\\|\[0-9a-f\]\{64\}[\s\S]+?120\\\|12\\\|\[0-9a-f\]\{64\}[\s\S]+?\[0-9a-f\]\{64\}/u,
+    /authorization\\\|\[0-9a-f\]\{64\}[\s\S]+?120\\\|\(12\|13\)\\\|\[0-9a-f\]\{64\}[\s\S]+?\[0-9a-f\]\{64\}/u,
   );
   assert.match(runner, /fanmind_required_restore_tables/u);
   assert.match(runner, /pg_catalog\.pg_policy/u);

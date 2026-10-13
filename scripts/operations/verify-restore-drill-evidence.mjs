@@ -253,7 +253,7 @@ function parseRunnerReceipt(bytes) {
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
     receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
-    receipt.databaseRestrictedSecurityDefinerFunctionCount !== 12
+    ![12, 13].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError("runner_receipt_authorization_counts_invalid");
   }
@@ -351,7 +351,7 @@ function parseDatabasePostcheckReceipt(bytes) {
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
     receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
-    receipt.databaseRestrictedSecurityDefinerFunctionCount !== 12
+    ![12, 13].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError(
       "database_postcheck_receipt_authorization_counts_invalid",
@@ -432,7 +432,7 @@ function validateEvidence(evidence) {
     !Number.isSafeInteger(evidence.databaseAuthorizationExtensionRecordCount) ||
     evidence.databaseAuthorizationExtensionRecordCount <= 0 ||
     evidence.databaseCoreTableAppGrantTupleCount !== 120 ||
-    evidence.databaseRestrictedSecurityDefinerFunctionCount !== 12
+    ![12, 13].includes(evidence.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError("evidence_authorization_counts_invalid");
   }

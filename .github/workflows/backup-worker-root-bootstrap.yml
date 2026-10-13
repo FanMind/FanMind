@@ -75,7 +75,7 @@ jobs:
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/backup-worker-root-bootstrap.mjs" \
             --output "$SOURCE_FILE"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 0b01630b458ece460030ecd4c858a601ede456416e5316a649a6f23ec58d8aad "$ACTION" "$CURRENT_MAIN" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 30e7924e5ea46d7d1b666bb8cdec452e3a5b300adc3f4c7b7afc0ca88d304204 "$ACTION" "$CURRENT_MAIN" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {
