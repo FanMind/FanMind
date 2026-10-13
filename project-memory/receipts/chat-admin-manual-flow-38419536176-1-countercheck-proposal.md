@@ -1,12 +1,18 @@
 # Historical ChatAdmin recovery countercheck — 38419536176/1
 
-Status: **PROPOSED — RECONCILIATION_REQUIRED**
+Status: **COUNTERCHECKED — RECONCILED**
 Risk: R3 (evidence-only preparation; no runtime/DB/permission mutation).
 Task: FM-ADMINCHAT-STAGING-HARNESS-20261011-01.
 Owner authorization: direct instruction on 2026-10-13 to finish PR/recovery, and continue as far as safely possible.
 Baseline: `eb4e89845fb749432d655214b27b1b038d9f93a5` (PR #1312 merged; not deployed).
 
-This is a countercheck package, not a recovery completion receipt or an instruction to run another writing test.
+This is the reviewed countercheck package, not an instruction to run another writing test. The separate completion receipt is `project-memory/receipts/chat-admin-manual-flow-38419536176-1-reconciliation.json`; it preserves the original failed-run receipt and does not convert the failed acceptance into an accepted run.
+
+## Independent conclusion
+
+The documented evidence is sufficient to close the historical request uncertainty. The decisive evidence is the terminal 4xx received by the browser together with the exact historical route: provider body parsing and usage recording are awaited, the price-policy failure occurs before message persistence, and the path contains no detached after-response work. The boundary recorded neither a write nor transport violation, and three later receipt-scoped read-only checks independently found no residue.
+
+The diagnostic does not expose a separate drain/closure-success bit, so `sessionCleanup=passed` and `failureKind=assertion` are not treated as standalone proof. The strongest falsifier would be a detached server write or an unsettled allowed write transport; the exact historical source and terminal response exclude those conditions for this request. No cleanup, new writing acceptance, deployment or Production change is required or authorized.
 
 ## Immutable historical binding
 
@@ -73,14 +79,12 @@ There is no historical-run recovery mode in the current five ChatAdmin workflows
 The manual workflow accepts only probe/acceptance and current reviewed commit/confirmation. Its private cleanup receipt is bound to the current GITHUB_RUN_ID/GITHUB_RUN_ATTEMPT/GITHUB_SHA and requires mutationAttempted; the sanitized historical artifact is not that private receipt.
 Do not rerun the failed acceptance, manufacture its private receipt, reset its uncertainty flag or repurpose schema APPLY/ACCEPT as recovery.
 
-## Requested independent countercheck and smallest next action
+## Countercheck decision
 
-1. Review the exact source, original job diagnostics and receipt-bound read-only evidence.
-2. Decide whether terminal response + network boundary source + observed final network/session state prove no late writes for this exact attempt. Explicitly assess the diagnostic limitation above and strongest falsifier.
-3. If proven, write a separate reconciled completion receipt with the reasoning and fresh independent absence check. Preserve the original receipt and failed-run status. A deletion workflow is unnecessary when no uniquely bound residue exists.
-4. If not proven, prepare the smallest protected historical recovery/verification control needed to establish it: exact original run/attempt/commit/target/artifact digest; immutable original receipt; separate evidence; protected staging; shared write serialization; read-only reconciliation first; no generic SQL or unrelated data. Optional cleanup must remain separately gated, exact-identity-bound and followed by an independent absence/schema check.
-5. No Product, Production, Billing, secret/permission or migration scope. Do not broaden the test network allowance.
-6. After independent review and normal green-CI merge, expose the exact next executable step and any genuinely required platform approval. No new writing acceptance or deployment before historical recovery is closed.
+1. Preserve the original receipt and failed-run status unchanged.
+2. Use the separate reconciliation receipt as the historical closure record.
+3. Do not add a historical write/recovery workflow: no uniquely bound residue exists and the request path is terminally closed.
+4. No new writing acceptance, deployment, Product, Production, Billing, secret/permission or migration action is part of this reconciliation.
 
 ## What has already been completed
 
