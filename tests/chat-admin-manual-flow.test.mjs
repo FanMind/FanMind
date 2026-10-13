@@ -80,7 +80,7 @@ test("the authenticated browser keeps state authority, UI deactivation and origi
   for(const evidence of [
     'getByRole("button",{name:"Deaktivieren",exact:true}).click()',
     'getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(3)',
-    'getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true})).toHaveCount(3)',
+    'getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true})).toHaveCount(4)',
     'getByLabel("Neue eingehende Fan-Nachricht").fill("Synthetische Nachricht an deaktivierten Character B")',
     'getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeDisabled()',
     'getByText("Vorschlag 1",{exact:true})).toHaveCount(0)',

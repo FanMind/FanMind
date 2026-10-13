@@ -1111,7 +1111,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
 - Date: 2026-10-11
-- Status: IMPLEMENTED_FOR_DRAFT_PR
+- Status: IN_PROGRESS_STAGING_COMPLETION
 - Risk: R3
 - Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
 - Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
@@ -1123,6 +1123,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Evidence plan: focused static/behavioral negatives, exact SQL predicates for foreign-data preservation and interrupted runs, full exact-head CI/typecheck/lint/build/browser gates, diff inspection and independent R3 countercheck. Local dependency-backed Playwright/typecheck may remain unavailable under `CONNECT/registry 403`; CI must provide that evidence before handoff is considered countercheck-ready.
 - Recovery: reviewed repository revert only for this source task. Any later Staging run uses its pre-mutation recovery artifact and cannot claim absence while `inFlightUncertain=true`.
 - Exact next step: publish one Draft PR and await final-head CI plus independent R3 countercheck. Do not merge or dispatch the workflow in this run.
+- Continuation 2026-10-13: Owner resumed Staging completion at 05:25 UTC. Fresh target evidence identifies the missing customer_tier column, while listChatFans selects it; old offers_reload_close also covered unmarked subsequent Fan assertions. Original recovery receipt remains immutable; independent prior receipt-bound observation found zero data/usage/session residue.
+- Proposed correction: strict original-or-pinned-tier Fan postflight, new independent exact-main VERIFY/APPLY with in-transaction postflight, mandatory tier preflight before new fixtures, real classification reload, isolated stored-color memory probes, one bounded compliment probe and existing offer/authority negatives. Ten successful generations yield 41 messages plus two negative usage rows. No Production action is part of this continuation.
+- Local Chromium download failed in this execution environment; existing GitHub Browser CI remains the independent native browser test path. Full native PostgreSQL 17 composition/rollback/mixed-state proofs are required before target APPLY. Runtime acceptance is still pending.
+
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
