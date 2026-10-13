@@ -201,52 +201,13 @@ Restore-Drill.
 
 ## Geschützte Installation von Worker 7
 
-Die Installation ist eine R4-Production-Aktion. Merge, grüne CI oder diese
-Anleitung autorisieren sie nicht. Sie darf erst nach separater Freigabe mit
-einem einzelnen 40-stelligen `REVIEWED_COMMIT` erfolgen. Dieser Commit muss
-auf `main` liegen und im Production-Checkout aktiv sein. Vor dem ersten
-Write müssen read-only bestätigt werden:
-
-1. `git -C /var/www/fanmind rev-parse HEAD` entspricht exakt
-   `REVIEWED_COMMIT`, der Checkout ist sauber und die erwarteten drei
-   Worker-Dateien stammen aus diesem Commit.
-2. Die aktuelle Production-Katalogabfrage ergibt ausschließlich den oben
-   beschriebenen 20/13-Vertrag; alle sieben Zusatzfunktionen bestehen ihre
-   Signatur-, Owner-, Config- und ACL-Prüfung. Es wird keine Berechtigung
-   geändert.
-3. `node --check` besteht für Worker, Authorization Contract und Verifier;
-   die installierte Unit besteht `systemd-analyze verify`.
-4. Der Worker ist vor dem Austausch gestoppt. Die aktuell installierten
-   Worker-Dateien und die bisherige `release.env` werden unter einem
-   root-only Rollback-Verzeichnis gebunden an den vorherigen Commit bewahrt.
-   Backup-Artefakte unter `/var/backups/fanmind` werden weder verschoben noch
-   gelöscht.
-
-Die freigegebene Installation kopiert ausschließlich
-`database-authorization-contract.mjs`,
-`verify-backup-artifact.mjs` und `backup-worker.mjs` aus dem exakt
-gebundenen Checkout mit `root:root`/0750, schreibt
-`FANMIND_RELEASE_COMMIT=REVIEWED_COMMIT` atomar, prüft die installierten
-SHA-256-Werte gegen den Checkout und startet nur den bereits vorhandenen
-Worker neu. Sie führt keine Migration und keine Datenbankänderung aus.
-
-Der unmittelbare Postflight muss Worker-Version
-`phase5-backup-worker-7`, aktiven systemd-Status, den exakten Release-Commit
-und einen erneut erfolgreichen read-only 20/13-Authorization-Contract
-bestätigen. Danach ist genau ein neuer kontrollierter Datenbank-Backup-Job
-zulässig. Dessen Manifest muss Contract Schema 2, den exakten Commit,
-`restricted_security_definer_function_count=13`, archivierte Rechte/Owner
-und einen erfolgreichen checksum-only Verify ausweisen. Bestehende Backups
-bleiben unverändert. Ein Full Backup und dessen Offsite-/Restore-Evidence sind
-getrennte nachgelagerte Schritte.
-
-Rollback: Worker stoppen, nur die drei zuvor bewahrten Programmdateien und die
-vorherige `release.env` atomar zurückinstallieren, SHA-256/Owner/Modus
-prüfen und den zuvor aktiven Service wieder starten. Keine Datenbankrechte
-zurückdrehen, keine Migration ausführen und keine bestehenden oder während
-des Postflights erzeugten Backup-Artefakte löschen. Anschließend alten Commit,
-alte Worker-Version und Service-Health read-only nachweisen; der 20/13-
-Katalogzustand bleibt dabei unverändert.
+Der eigenständige Worker-Installationsweg und dessen Freigabegrenzen stehen in
+[BACKUP_WORKER_PROTECTED_INSTALL.md](BACKUP_WORKER_PROTECTED_INSTALL.md).
+Worker-Quellcommit und laufender App-Commit sind getrennte Bindungen:
+PR #1314 wurde als `8e5dcbdca844972fb2f133c188ecfee5d5252273` gemergt;
+die Installation darf die App-Metadaten in `release.env` nicht auf diesen
+Worker-Commit umschreiben. Merge und CI autorisieren keine Installation.
+Backup-Aufträge und Restore-Tests sind getrennte nachgelagerte Freigaben.
 
 ## Scheduling
 
