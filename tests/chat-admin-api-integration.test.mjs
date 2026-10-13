@@ -115,9 +115,9 @@ function harness(change) {
       return Response.json({ output_text: JSON.stringify({ replies }) });
     },
   });
-  const request = (revision = 1, origin = "https://fanmind.invalid") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
+  const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: "Ich will ein privates Foto von dir." }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: incomingMessage }),
   });
   return { calls, route: exports.POST, request };
 }
@@ -147,7 +147,7 @@ for (const change of ["revoke", "revision", "inactive", "persona", "deleted", "w
   });
 }
 test("fan-invented price is rejected with the safe policy error before persistence", async () => {
-  const h = harness("invented-price"); const response = await h.route(h.request()); const body = await response.json();
+  const h = harness("invented-price"); const response = await h.route(h.request(1, "https://fanmind.invalid", "Ist dein privates Foto für 999 EUR erhältlich?")); const body = await response.json();
   assert.equal(response.status, 400); assert.equal(body.error, "reply_price_not_permitted");
   assert.equal(h.calls.provider, 1); assert.equal(h.calls.persistedHistoryIds, null);
 });
