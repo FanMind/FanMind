@@ -1235,3 +1235,18 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert. No schema, runtime, customer, capability, provider, Billing or Production mutation is part of this task.
 - Release condition: source PR has applicable green CI and independent review. Runtime acceptance remains separate; neither source tests nor merge prove live conversational quality.
 - Source closeout: PR #1308, validated head `c55e372859d673e4ba63ea61fe989077b0e7060e`, tree `b69bbcacc48e734cdd3e014e05f4d3895c67086d`; all 14 observed exact-head checks are successful, no pending/failing checks or review threads. Independent Guardian PASS is tree-bound. No source writer remains; final merge status is recorded by GitHub. Runtime/Staging/Production acceptance is not claimed.
+
+
+## LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014
+- Task: FM-CHATADMIN-LIVE-REPAIR-20261014
+- Status: ACTIVE_SOURCE_REPAIR
+- Holder: Codex, direct Owner voice request.
+- Risk: R3 source; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-STORAGE-001.
+- Baseline: d166c04d78e43b9e5050e31ce2e9e9c3b2276094; draft PR #1322.
+- Scope: visible disabled pricing on failed readiness, natural reply guidance, bounded memory explanation and focused browser regression. No new sale categories.
+- Evidence: local build/lint/truth, 63 policy/API/knowledge/offer tests and God Mode checks passed. Local Chromium download was corrupt; PR CI owns real component browser tests. Independent R3 countercheck and exact-head CI remain required before merge.
+- Runtime finding: authenticated Production editor omits price controls. Read-only information_schema/pg_constraint check confirms both sales_playbook and chat_characters_sales_playbook_object absent. No DDL or customer data changed.
+- Coordination: no changes to retained Staging harness/workflow or former orchestration tasks. No parallel live writing test.
+- Source correction: avoid unnecessary canonical Product Truth drift; detailed bounded behavior remains in README and docs/CHAT_ADMIN_REPLY_STYLE.md.
+- Open: separately controlled Production schema prerequisite, true price save/reload and multi-turn AI/memory acceptance. The source PR is not a schema repair or live quality proof.
+- Recovery: reviewed source revert; preserve Fan notes and Character offers.
