@@ -145,3 +145,29 @@ test("existing Recommended/Softer/Stronger, combined use action and Character sc
  assert.match(client,/Kopieren und verwenden/u);assert.doesNotMatch(client,/Als manuell gesendet bestätigen/u);
  assert.match(styles,/\.characterEditor\{min-height:0;max-height:calc\(100% - 32px\);overflow-y:auto/u);
 });
+
+
+test("custom names resolve literally and only on requests; ambiguous offers expose no prices",()=>{
+ const custom=offer({id:"summer",name:"Sommerpaket (VIP+)",category:"custom"},3700);
+ const own=playbook({offers:[custom]});
+ assert.equal(resolveChatAdminRequestedOffer(own,"Was kostet Sommerpaket (VIP+)?").requestedOffer.id,"summer");
+ assert.equal(resolveChatAdminRequestedOffer(own,"Sommerpaket (VIP+)").requestedOffer.recommendedPriceMinor,3700);
+ for(const text of ["Mein Sommerpaket (VIP+) ist schon angekommen","Sommerpaket VIP","Sommerpaket (VIP+) ist toll"])
+  assert.equal(resolveChatAdminRequestedOffer(own,text).requestedOffer,null,text);
+ for(const patch of [{active:false},{requiresConfirmation:true}])
+  assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[{...custom,...patch}]}),"Was kostet Sommerpaket (VIP+)?").requestedOffer,null);
+ const duplicate={...custom,id:"summer_other",recommendedPriceMinor:3900,maximumPriceMinor:3900};
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[custom,duplicate]}),"Was kostet Sommerpaket (VIP+)?").requestedOffer,null);
+ const extra={...custom,id:"winter",name:"Winterpaket"};
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[custom,extra]}),"Was kosten Sommerpaket (VIP+) und Winterpaket?").requestedOffer,null);
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[custom,extra]}),"Was kostet ein Video?").requestedOffer,null);
+});
+
+test("generic media requests never substitute a public offer for private media or select among several prices",()=>{
+ const video=playbook().offers.find(item=>item.category==="video");
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[video]}),"Ich möchte ein privates Video").requestedOffer,null);
+ assert.equal(resolveChatAdminRequestedOffer(playbook(),"Was kosten Fotos und Videos?").requestedOffer,null);
+ const alternate={...video,id:"video_other",name:"Reiseclip"};
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[video,alternate]}),"Was kostet ein Clip?").requestedOffer,null);
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[video,alternate]}),"Was kostet Reiseclip?").requestedOffer.id,"video_other");
+});

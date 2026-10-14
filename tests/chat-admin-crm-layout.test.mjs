@@ -76,7 +76,9 @@ test("Creator-Building keeps the desktop shell fixed with three independent scro
   assert.match(source, /ref=\{conversationPaneRef\}/u);
   assert.match(source, /Kommunikation und Verkaufsregeln/u);
   assert.match(source, /Character-Angebote und Preise/u);
-  for (const offer of ["Foto","Video","Privates Foto","Privates Video"]) assert.match(source, new RegExp(`name:"${offer}"`, "u"));
+  assert.match(source, /Angebotsname/u);
+  assert.match(source, /\+ Angebot/u);
+  assert.match(source, /Angebot entfernen/u);
 });
 
 test("extended learning refreshes the canonical fan analysis before CRM reply generation", () => {
