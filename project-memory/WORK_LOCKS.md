@@ -1235,3 +1235,20 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert. No schema, runtime, customer, capability, provider, Billing or Production mutation is part of this task.
 - Release condition: source PR has applicable green CI and independent review. Runtime acceptance remains separate; neither source tests nor merge prove live conversational quality.
 - Source closeout: PR #1308, validated head `c55e372859d673e4ba63ea61fe989077b0e7060e`, tree `b69bbcacc48e734cdd3e014e05f4d3895c67086d`; all 14 observed exact-head checks are successful, no pending/failing checks or review threads. Independent Guardian PASS is tree-bound. No source writer remains; final merge status is recorded by GitHub. Runtime/Staging/Production acceptance is not claimed.
+
+
+## LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014
+- Task: FM-CHATADMIN-LIVE-REPAIR-20261014
+- Status: ACTIVE_SOURCE_REPAIR
+- Holder: Codex, direct Owner voice request.
+- Risk: R3 source; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-STORAGE-001.
+- Baseline: d166c04d78e43b9e5050e31ce2e9e9c3b2276094; draft PR #1322.
+- Scope: visible disabled pricing on failed readiness, natural reply guidance, bounded memory explanation and focused browser regression. No new sale categories.
+- Evidence: local build/lint/truth, 63 policy/API/knowledge/offer tests and God Mode checks passed. Local Chromium download was corrupt; PR CI owns real component browser tests. Independent R3 countercheck and exact-head CI remain required before merge.
+- Runtime finding and repair: authenticated Production editor omitted price controls; read-only catalog confirmed both sales_playbook and its constraint ABSENT. After parent/RLS postflight and fresh succeeded uploaded DB/full backups plus verification, direct Owner-authorized Supabase execution applied only the unchanged checksum-pinned SQL (01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421). Full postflight passed; Character count stayed 1 and offers remain empty. Authenticated reload now shows all four enabled price sections. No prior migration, existing content, grant or policy was changed. Actual price save/reload remains OPEN pending Owner-provided amounts or separate synthetic acceptance.
+- Coordination: no changes to retained Staging harness/workflow or former orchestration tasks. No parallel live writing test.
+- Source correction: avoid unnecessary canonical Product Truth drift; detailed bounded behavior remains in README and docs/CHAT_ADMIN_REPLY_STYLE.md.
+- Open: true price save/reload with Owner-provided amounts and fresh multi-turn AI/memory acceptance after code deployment. The Production schema prerequisite is closed by the independently verified runtime repair; the source PR is not itself a schema repair or live quality proof.
+- Recovery: reviewed source revert; preserve Fan notes and Character offers.
+
+- Independent Guardian: source PASS on 7c57c4b86a5040444da649ec730c46a9c4312a7e / tree 0894e8efd322813fef8ea32be46703b9840bf570; independently reran all 63 focused tests. No blocking product-code findings; actual model outputs and exact-head CI remain required.
