@@ -424,10 +424,10 @@ export function verifyProductionAuditOutput(source, expectedCommit) {
     "BACKUP_WORKER_STRUCTURED_EVENT_COUNT",
     { minimum: 1 },
   );
-  if (integer(values, "BACKUP_WORKER_24H_FAILURE_EVENT_COUNT") !== 0) {
+  if (integer(values, "BACKUP_WORKER_1H_FAILURE_EVENT_COUNT") !== 0) {
     fail("backup_worker_failures_present");
   }
-  if (single(values, "BACKUP_WORKER_24H_FAILURE_FREE") !== "true") {
+  if (single(values, "BACKUP_WORKER_1H_FAILURE_FREE") !== "true") {
     fail("backup_worker_failure_free_invalid");
   }
 
