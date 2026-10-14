@@ -963,8 +963,8 @@ function validAuditOutput(overrides = {}) {
     OFFSITE_ORPHAN_PAIR_COUNT: "0",
     OFFSITE_LATEST_FULL: "fanmind-full-redacted.tar.gz.age",
     BACKUP_WORKER_STRUCTURED_EVENT_COUNT: "40",
-    BACKUP_WORKER_24H_FAILURE_EVENT_COUNT: "0",
-    BACKUP_WORKER_24H_FAILURE_FREE: "true",
+    BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "0",
+    BACKUP_WORKER_1H_FAILURE_FREE: "true",
     AUDIT_RESULT: "success",
     ...overrides,
   };
@@ -1035,8 +1035,8 @@ function validAuditOutput(overrides = {}) {
     `OFFSITE_ORPHAN_PAIR_COUNT=${values.OFFSITE_ORPHAN_PAIR_COUNT}`,
     `OFFSITE_LATEST_FULL=${values.OFFSITE_LATEST_FULL}`,
     `BACKUP_WORKER_STRUCTURED_EVENT_COUNT=${values.BACKUP_WORKER_STRUCTURED_EVENT_COUNT}`,
-    `BACKUP_WORKER_24H_FAILURE_EVENT_COUNT=${values.BACKUP_WORKER_24H_FAILURE_EVENT_COUNT}`,
-    `BACKUP_WORKER_24H_FAILURE_FREE=${values.BACKUP_WORKER_24H_FAILURE_FREE}`,
+    `BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=${values.BACKUP_WORKER_1H_FAILURE_EVENT_COUNT}`,
+    `BACKUP_WORKER_1H_FAILURE_FREE=${values.BACKUP_WORKER_1H_FAILURE_FREE}`,
     `AUDIT_RESULT=${values.AUDIT_RESULT}`,
     "",
   ].join("\n");
@@ -1157,7 +1157,7 @@ test("actual workflow diagnoses a silent shell failure and cannot turn it into a
 
 test("actual workflow keeps backup and runtime validation failures fail-closed and redacted", async (t) => {
   for (const [override, code] of [
-    [{ BACKUP_WORKER_24H_FAILURE_EVENT_COUNT: "1" }, "backup_worker_failures_present"],
+    [{ BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "1" }, "backup_worker_failures_present"],
     [{ OFFSITE_ORPHAN_PAIR_COUNT: "1" }, "offsite_orphans_present"],
     [{ PM2_NODE_VERSION: "RAW_SECRET_CANARY" }, "pm2_node_version_invalid"],
     [{ PM2_EXEC_MODE: "fork_mode" }, "pm2_launch_contract_invalid"],
@@ -1435,7 +1435,7 @@ test("production audit output verifier fails closed on drift and degraded safegu
   assert.throws(
     () =>
       verifyProductionAuditOutput(
-        validAuditOutput({ BACKUP_WORKER_24H_FAILURE_EVENT_COUNT: "1" }),
+        validAuditOutput({ BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "1" }),
         expectedCommit,
       ),
     /production_audit_backup_worker_failures_present/u,
@@ -1572,16 +1572,52 @@ test("production audit uses stable timer properties instead of localized timer c
 test("production audit reports backup worker events by bounded time window without raw failures", async () => {
   const source = await readAuditScript();
 
+  assert.match(source, /\{ name: '1h', since:/u);
   assert.match(source, /\{ name: '24h', since:/u);
   assert.match(source, /\{ name: '14d', since:/u);
   assert.match(source, /BACKUP_WORKER_WINDOW=\$\{window\.name\}/u);
   assert.match(source, /BACKUP_WORKER_EVENT=\$\{window\.name\}\|\$\{event\}:/u);
-  assert.match(source, /BACKUP_WORKER_24H_FAILURE_EVENT_COUNT/u);
-  assert.match(source, /BACKUP_WORKER_24H_FAILURE_FREE/u);
+  assert.match(source, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT/u);
+  assert.match(source, /BACKUP_WORKER_1H_FAILURE_FREE/u);
 
   assert.doesNotMatch(source, /payload\.job_id/u);
   assert.doesNotMatch(source, /payload\.error/u);
   assert.doesNotMatch(source, /error_message/u);
+});
+
+test("worker release window counts the exact one-hour boundary and retains older diagnostic failures", async t => {
+  const source = await readAuditScript();
+  const collector = source.split("WORKER_LOG=\"$worker_log\" node <<'NODE'\n")[1].split("\nNODE")[0];
+  const root = await mkdtemp(join(tmpdir(), "fanmind-worker-window-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = join(root, "worker.log");
+  const now = Date.parse("2026-10-14T13:30:00Z");
+  const run = async ages => {
+    await writeFile(file, ages.map(age => JSON.stringify({
+      ts: new Date(now - age).toISOString(), event: "job_failed", error: "RAW_SECRET_CANARY",
+    })).join("\n"));
+    const result = await execFileAsync(process.execPath, ["-e", `Date.now = () => ${now};\n${collector}`], {
+      env: { ...process.env, WORKER_LOG: file },
+    });
+    assert.doesNotMatch(result.stdout, /RAW_SECRET_CANARY/u);
+    return result.stdout;
+  };
+  const old = await run([3_600_001]);
+  assert.match(old, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0/u);
+  assert.match(old, /BACKUP_WORKER_1H_FAILURE_FREE=true/u);
+  assert.match(old, /BACKUP_WORKER_EVENT=24h\|job_failed:1/u);
+  const recent = await run([3_600_000, 3_599_999]);
+  assert.match(recent, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=2/u);
+  assert.match(recent, /BACKUP_WORKER_1H_FAILURE_FREE=false/u);
+});
+
+test("one-hour release evidence cannot be replaced by legacy or contradictory counters", () => {
+  const valid = validAuditOutput();
+  for (const output of [
+    valid.replaceAll("BACKUP_WORKER_1H_", "BACKUP_WORKER_24H_"),
+    valid.replace("BACKUP_WORKER_1H_FAILURE_FREE=true", "BACKUP_WORKER_1H_FAILURE_FREE=false"),
+    `${valid}\nBACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0`,
+  ]) assert.throws(() => verifyProductionAuditOutput(output, expectedCommit));
 });
 
 test("production audit never logs backup configuration values or raw PM2 payloads", async () => {
