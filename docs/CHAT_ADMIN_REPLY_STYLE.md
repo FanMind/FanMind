@@ -56,3 +56,21 @@ Der separate Vier-Angebote-Staging-Harness wird in diesem Task nicht verändert.
 Sein Lauf `38306814508` auf `613e452ced0105da4c718b3d4aafb30f77c88ff4` scheiterte
 am 12. Oktober 2026 bei `offers_reload_close`; auch der automatische Recovery-Schritt
 war rot. Dies bleibt fehlgeschlagene Runtime-Evidence, keine erfolgreiche Abnahme.
+
+
+## ChatAdmin-Korrektur nach manuellem Production-Test — 14. Oktober 2026
+
+Der Character-Editor zeigt den Preisbereich auch bei fehlgeschlagener
+Serverprüfung an. In diesem Fall sind die Preise gesperrt und eine Meldung nennt
+die ausstehende Speicherverfügbarkeit; die Prüfung wird nicht umgangen.
+Bestehende Angebote werden beim Speichern anderer Character-Felder erhalten.
+Es werden keine neuen Verkaufskategorien oder automatisch erfundene Preise angelegt.
+Die Antwortanweisungen bevorzugen kurze Alltagssprache, erhalten passendes
+spielerisches Necken und verbieten routinemäßige Bewertungen der Fan-Formulierung
+sowie erfundene aktuelle Tageszeit-/Tätigkeitsbezüge. Historische Zeitstempel
+belegen keine aktuelle lokale Zeit. Automatisches Fanwissen bleibt auf explizite
+ausgewählte Interessen, Antwortvorlieben und Grenzen begrenzt; freie Angaben
+können manuell in Notizen gepflegt werden.
+Diese Quellkorrektur ist kein Nachweis funktionierender Production-Preisspeicherung
+oder natürlicher Modellantworten; dafür sind ein authentifizierter
+Server-/Schemaabgleich und anschließende echte manuelle Gesprächstests erforderlich.

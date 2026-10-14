@@ -37,7 +37,7 @@ const bundle = `(() => {
     if (!cache[name]) { cache[name] = {exports: {}}; modules[name](cache[name], cache[name].exports, require); }
     return cache[name].exports;
   }
-  window.mountCharacters = (characters) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled: true}));
+  window.mountCharacters = (characters, structuredOffersEnabled=true) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled}));
 })();`;
 
 const characterA = {
@@ -68,7 +68,7 @@ const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three
 let browser;
 before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
 after(async()=>{await browser?.close();});
-async function mount(t){
+async function mount(t,structuredOffersEnabled=true){
  const context=await browser.newContext({permissions:["clipboard-read","clipboard-write"]});t.after(()=>context.close());const page=await context.newPage();
  await page.route("**/*",route=>route.fulfill({contentType:"text/html",body:'<html><body><div id="root"></div></body></html>'}));await page.goto("http://localhost/chatadmin-client-test");
  await page.evaluate(({fansByCharacter,conversationFor,historyFor})=>{
@@ -79,7 +79,7 @@ async function mount(t){
    return new Promise((resolve,reject)=>window.testRequests.push({url,method,body:options.body?JSON.parse(options.body):null,resolve,reject}));
   };
  },{fansByCharacter,conversationFor,historyFor});
- await page.addScriptTag({content:bundle});await page.evaluate(characters=>window.mountCharacters(characters),[characterA,characterB]);await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();return page;
+ await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled})=>window.mountCharacters(characters,enabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled});await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();return page;
 }
 const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("heading",{name,exact:true})});
 const copies=page=>page.getByRole("button",{name:"Kopieren und verwenden",exact:true});
@@ -137,4 +137,15 @@ test("Fan customer classification is editable and remains independent from techn
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  },{...fanA1,customer_tier:"green",revision:2});
  await expect(page.getByTitle("Kundenstatus: green")).toHaveCount(1);
+});
+
+test("unavailable price storage stays visible and disabled without deleting existing offers",async t=>{
+ const page=await mount(t,false);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await expect(page.getByRole("alert")).toContainText("Preise können noch nicht gespeichert werden");
+ const price=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis");
+ await expect(price).toBeVisible();await expect(price).toBeDisabled();await expect(price).toHaveValue("25.00");
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0]);
+ assert.deepEqual(request.body.sales_playbook,characterA.sales_playbook);
 });

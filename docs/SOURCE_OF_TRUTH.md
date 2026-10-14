@@ -1369,3 +1369,21 @@ bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag u
 prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
 begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
 oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.
+
+
+## ChatAdmin-Korrektur nach manuellem Production-Test — 14. Oktober 2026
+
+Der Character-Editor zeigt den Preisbereich auch bei fehlgeschlagener
+Serverprüfung an. In diesem Fall sind die Preise gesperrt und eine Meldung nennt
+die ausstehende Speicherverfügbarkeit; die Prüfung wird nicht umgangen.
+Bestehende Angebote werden beim Speichern anderer Character-Felder erhalten.
+Es werden keine neuen Verkaufskategorien oder automatisch erfundene Preise angelegt.
+Die Antwortanweisungen bevorzugen kurze Alltagssprache, erhalten passendes
+spielerisches Necken und verbieten routinemäßige Bewertungen der Fan-Formulierung
+sowie erfundene aktuelle Tageszeit-/Tätigkeitsbezüge. Historische Zeitstempel
+belegen keine aktuelle lokale Zeit. Automatisches Fanwissen bleibt auf explizite
+ausgewählte Interessen, Antwortvorlieben und Grenzen begrenzt; freie Angaben
+können manuell in Notizen gepflegt werden.
+Diese Quellkorrektur ist kein Nachweis funktionierender Production-Preisspeicherung
+oder natürlicher Modellantworten; dafür sind ein authentifizierter
+Server-/Schemaabgleich und anschließende echte manuelle Gesprächstests erforderlich.
