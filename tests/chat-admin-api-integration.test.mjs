@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import * as modelPolicy from "../src/lib/chatAdminModelPolicy.mjs";
 import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import * as chatPolicy from "../src/lib/chatAdminPolicy.mjs";
 import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
@@ -75,7 +76,7 @@ function harness(change) {
     sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, providerBody: null, persistedHistoryIds: null, memoryWrites: [] };
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, persistedHistoryIds: null, memoryWrites: [] };
   const dependencies = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
@@ -94,8 +95,9 @@ function harness(change) {
       persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:10,content:args[8]}]; return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
+    "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
     "@/lib/chatAdminKnowledge.mjs": knowledgePolicy,
-    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => { calls.usage++; } },
+    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage++; calls.usageEvents.push(event); } },
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
     "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: true }) },
     "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
@@ -116,7 +118,7 @@ function harness(change) {
       if (change === "deleted") character = null;
       if (change === "workspace") context = { ...context, workspace: { id: characterId } };
       const replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
-      return Response.json({ output_text: JSON.stringify({ replies, memory: change === "learn" || change === "memory-race" ? [{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"}] : [] }) });
+      return Response.json({ usage:{input_tokens:1000,output_tokens:100,total_tokens:1100}, output_text: JSON.stringify({ replies, memory: change === "learn" || change === "memory-race" ? [{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"}] : [] }) });
     },
   });
   const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
@@ -132,6 +134,11 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(body.character_id, characterId); assert.equal(body.character_revision, 1);
   assert.equal(h.calls.providerBody.store, false);
   assert.equal(h.calls.providerBody.input[0].content, chatPolicy.CHAT_ADMIN_REPLY_INSTRUCTIONS);
+  assert.equal(h.calls.providerBody.model,modelPolicy.getChatAdminModelProfile().model);
+  assert.equal(h.calls.providerBody.reasoning.effort,"max");
+  assert.equal(h.calls.providerBody.service_tier,"default");
+  assert.equal(h.calls.providerBody.max_output_tokens,8192);
+  assert.equal(h.calls.providerBody.store,false);
   const suppliedContext = JSON.parse(h.calls.providerBody.input[1].content);
   assert.equal(suppliedContext.fan.summary, "mag kurze Antworten");
   assert.equal(suppliedContext.fan.notes, "kein Druck");
@@ -190,6 +197,7 @@ test("actual Fan route deletes only the revision-bound Fan in the authorized wor
           deleteChatFan: async (...args) => { calls.push(args); },
         },
         "@/lib/chatAdminPolicy.mjs": chatPolicy,
+    "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
     "@/lib/chatAdminKnowledge.mjs": knowledgePolicy,
         "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
         "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
@@ -223,4 +231,11 @@ test("same-generation retry repairs a partial knowledge save without a second pr
 test("authority loss detected during knowledge saving suppresses reply disclosure",async()=>{
  const h=harness("memory-revoked");const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
  assert.equal(response.status,403);assert.equal((await response.json()).replies,undefined);assert.equal(h.calls.provider,1);
+});
+
+
+test("rejected model output still records actual provider usage including reasoning",async()=>{
+ const h=harness("invalid-price-output");const response=await h.route(h.request(1,"https://fanmind.invalid","Was kostet ein privates Foto für 999 EUR?"));
+ assert.equal(response.status,400);assert.equal(h.calls.usageEvents.length,1);
+ assert.equal(h.calls.usageEvents[0].status,"error");assert.equal(h.calls.usageEvents[0].providerUsage.output_tokens,100);
 });
