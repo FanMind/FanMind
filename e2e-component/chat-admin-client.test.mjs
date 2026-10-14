@@ -158,8 +158,9 @@ test("own offers add, rename, reload and remove without resurrecting fixed categ
  await page.getByRole("button",{name:"+ Angebot",exact:true}).click();
  const added=page.getByRole("heading",{name:"Neues Angebot",exact:true}).locator("..");
  await added.getByLabel("Angebotsname",{exact:true}).fill("Sommerpaket (VIP+)");
- await added.getByLabel("Empfohlener Preis",{exact:true}).fill("37.50");
- await added.getByLabel("Währung",{exact:true}).selectOption("CHF");
+ const customRow=page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..");
+ await customRow.getByLabel("Empfohlener Preis",{exact:true}).fill("37.50");
+ await customRow.getByLabel("Währung",{exact:true}).selectOption("CHF");
  await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  const request=await page.evaluate(()=>window.testRequests[0]);const offers=request.body.sales_playbook.offers;
  assert.equal(offers.length,2);assert.equal(offers[0].id,"private_photo");assert.equal(offers[0].name,"Lieblingsfoto");assert.equal(offers[0].category,"custom");assert.equal(offers[0].recommendedPriceMinor,2500);
