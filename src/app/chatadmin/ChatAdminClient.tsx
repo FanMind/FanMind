@@ -20,7 +20,7 @@ function salesPlaybookFromForm(fd:FormData,current:CreatorPlaybook|undefined):Cr
   const name=String(fd.get(`offer_${id}_name`)??"").trim();
   const toMinor=(field:string,fallback:string)=>Math.round(Number((String(fd.get(field)??"").trim()||fallback).replace(",","."))*100);
   offers.push({
-   id,name,category:previous?.name===name?previous.category:"custom",description:previous?.description??"",
+   id,name,category:previous?.name===name?previous.category:"custom",description:String(fd.get(`offer_${id}_description`)??previous?.description??"").trim(),
    currency:String(fd.get(`offer_${id}_currency`)??previous?.currency??"EUR"),
    minimumPriceMinor:toMinor(`offer_${id}_minimum`,recommended),recommendedPriceMinor:toMinor(`offer_${id}_recommended`,recommended),
    maximumPriceMinor:toMinor(`offer_${id}_maximum`,recommended),maximumDiscountPercent:previous?.maximumDiscountPercent??0,
@@ -144,6 +144,7 @@ function StructuredOfferFields({playbook,disabled=false}:{playbook:CreatorPlaybo
  <div className={styles.offerGrid}>{rows.map(offer=><section className={styles.offerEditor} key={offer.id}>
  <h3>{offer.name||"Neues Angebot"}</h3><input type="hidden" name="offer_id" value={offer.id}/>
  <label>Angebotsname<input name={`offer_${offer.id}_name`} value={offer.name} maxLength={120} onChange={event=>setRows(current=>current.map(row=>row.id===offer.id?{...row,name:event.target.value}:row))}/></label>
+ <label>Beschreibung / enthaltene Leistung<textarea aria-label="Beschreibung / enthaltene Leistung" name={`offer_${offer.id}_description`} defaultValue={offer.description??""} maxLength={400} aria-describedby={`offer_${offer.id}_description_hint`} placeholder="Beschreibe, was enthalten ist: z. B. Anzahl, Motive und Umfang."/></label><small id={`offer_${offer.id}_description_hint`}>Die KI verwendet diese Angaben für Fragen zum Inhalt. Nicht beschriebene Leistungen bleiben offen. Maximal 400 Zeichen.</small>
  <label>Währung<select name={`offer_${offer.id}_currency`} defaultValue={offer.currency??"EUR"}><option>EUR</option><option>CHF</option><option>USD</option><option>GBP</option></select></label>
  <label>Empfohlener Preis<input name={`offer_${offer.id}_recommended`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer.recommendedPriceMinor)}/></label>
  <label>Mindestpreis<input name={`offer_${offer.id}_minimum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer.minimumPriceMinor)}/></label>

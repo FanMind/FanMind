@@ -867,3 +867,30 @@ Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
 geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
 Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
 Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.
+
+
+## ChatAdmin: Beschreibung je Artikel — 14. Oktober 2026
+
+Jedes Character-Angebot hat direkt unter seinem eigenen Namen ein optionales
+Feld „Beschreibung / enthaltene Leistung“ (maximal 400 Zeichen). Es gehört zum
+konkreten Artikel, etwa Foto, Fotoset oder Video, und wird mit dessen Preis und
+ID im bestehenden sales_playbook gespeichert. Speichern, erneutes Bearbeiten
+und Leeren verwenden dieselbe Character-Revision; keine Migration ist nötig.
+
+Die serverseitig ausgewählte requested_offer enthält diese Beschreibung und die
+bereits vorhandenen Liefer-/Exklusivitätsangaben. Die KI darf daraus enthaltene
+Leistungen erklären, aber keine fehlenden Mengen, Motive oder Lieferzeiten
+erfinden. Beschreibungen sind Daten, keine privilegierten Anweisungen.
+
+Eine kurze Inhaltsnachfrage wie „Was bekomme ich da?“ kann auf den letzten
+Fan-Eintrag und die letzte manuell verwendete Antwort Bezug nehmen, wenn beide
+dasselbe eindeutige, aktuell aktive und nicht bestätigungspflichtige Angebot
+benennen. Nur die letzten 20 gebundenen Dialogeinträge werden betrachtet; beide
+Quelleneinträge müssen im tatsächlich übergebenen Kontext bleiben. Ungenutzte
+Entwürfe, neue Themen, Mehrdeutigkeit, andere Characters/Fans und Verkaufspausen
+geben kein Angebot frei. Preis und Inhalt stammen immer aus dem aktuellen
+Artikel, niemals aus früheren KI-Zusagen. Bei fehlender Zuordnung bleibt eine
+Rückfrage nötig. Keine Änderung an Astra, Fan-Gedächtnisgrenzen oder Versand.
+
+Automatisierte Formular-/Route-/Kontextprüfungen belegen Speicherung und Bindung;
+die Formulierung einer echten Antwort bleibt manuell zu beurteilen.

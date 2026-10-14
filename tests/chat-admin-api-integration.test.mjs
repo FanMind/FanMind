@@ -73,7 +73,7 @@ function harness(change) {
     location: null, languages: ["Deutsch"], personality: "freundlich", writing_style: "kurz",
     emoji_style: "sparsam", sentence_style: "kurz", typical_phrases: [], forbidden_phrases: [],
     flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], profile_image_path: null,
-    sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
+    sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"5 persönlich ausgewählte Fotos im digitalen Set.",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, persistedHistoryIds: null, memoryWrites: [] };
@@ -86,7 +86,10 @@ function harness(change) {
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
-      listRecentChatMessages: async () => [
+      listRecentChatMessages: async () => change==="offer-follow-up" ? [
+        {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
+        {id:"offer-confirmed",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"confirmed_reply",content:"Private Fotos bekommst du für 25 EUR.",created_at:"2026-10-14T12:01:00Z"},
+      ] : [
         { id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" },
         { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
       ],
@@ -248,4 +251,14 @@ test("provider timeout is distinguishable and cannot persist replies or learned 
  assert.equal(h.calls.provider,1);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
  assert.equal(h.calls.usageEvents.length,1);assert.equal(h.calls.usageEvents[0].status,"error");
  assert.equal(h.calls.usageEvents[0].errorCode,"chat_admin_provider_timeout");
+});
+
+
+test("actual reply route forwards article contents for a confirmed content follow-up",async()=>{
+ const h=harness("offer-follow-up");const response=await h.route(h.request(1,"https://fanmind.invalid","Was bekomme ich da?"));
+ assert.equal(response.status,200);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.sales_playbook.requested_offer.description,"5 persönlich ausgewählte Fotos im digitalen Set.");
+ assert.equal(context.sales_playbook.requested_offer.recommendedPriceMinor,2500);
+ assert.deepEqual(Array.from(h.calls.persistedHistoryIds),["offer-inbound","offer-confirmed"]);
 });

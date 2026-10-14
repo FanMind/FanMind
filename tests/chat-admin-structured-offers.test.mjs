@@ -4,6 +4,8 @@ import test from "node:test";
 import { assertChatAdminCharacterInput, assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
 import { CHAT_ADMIN_OFFER_CATEGORIES, defaultChatAdminSalesPlaybook, normalizeChatAdminSalesPlaybook, resolveChatAdminRequestedOffer } from "../src/lib/chatAdminSalesPlaybook.mjs";
 
+import { writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
+
 const workspace="11111111-1111-4111-8111-111111111111";
 const otherWorkspace="22222222-2222-4222-8222-222222222222";
 const characterId="33333333-3333-4333-8333-333333333333";
@@ -170,4 +172,54 @@ test("generic media requests never substitute a public offer for private media o
  const alternate={...video,id:"video_other",name:"Reiseclip"};
  assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[video,alternate]}),"Was kostet ein Clip?").requestedOffer,null);
  assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[video,alternate]}),"Was kostet Reiseclip?").requestedOffer.id,"video_other");
+});
+
+
+test("article descriptions save, clear and reach only the selected server-owned offer",()=>{
+ const own=playbook();own.offers[0].description="5 Landschaftsfotos im digitalen Set.";
+ own.offers[1].description="VIDEO CONTENT MUST NOT LEAK";
+ const saved=assertChatAdminCharacterInput(character({sales_playbook:own}));
+ const reloaded=JSON.parse(JSON.stringify(saved.sales_playbook));
+ assert.equal(reloaded.offers[0].description,"5 Landschaftsfotos im digitalen Set.");
+ const context=JSON.parse(buildChatAdminCharacterContext(character({sales_playbook:reloaded}),"Ich möchte Fotos"));
+ assert.equal(context.sales_playbook.requested_offer.description,"5 Landschaftsfotos im digitalen Set.");
+ assert.doesNotMatch(JSON.stringify(context),/VIDEO CONTENT MUST NOT LEAK/u);
+ reloaded.offers[0].description="";assert.equal(normalizeChatAdminSalesPlaybook(reloaded).offers[0].description,"");
+ reloaded.offers[0].description="x".repeat(401);assert.throws(()=>normalizeChatAdminSalesPlaybook(reloaded));
+});
+
+function followUpFixture(){
+ const own=playbook();own.offers[0].description="5 Landschaftsfotos im digitalen Set.";
+ const c=character({sales_playbook:own});
+ const fan={id:fanId,workspace_id:workspace,character_id:characterId,status:"active",display_name:"Sam",notes:"",summary:""};
+ const conversation={id:conversationId,workspace_id:workspace,character_id:characterId,fan_id:fanId};
+ const row={workspace_id:workspace,character_id:characterId,fan_id:fanId,conversation_id:conversationId,created_at:"2026-10-14T12:00:00Z"};
+ const messages=[{...row,id:"inbound-photo",direction:"fan_inbound",content:"Bekomme ich Fotos von dir?"},{...row,id:"confirmed-photo",direction:"confirmed_reply",content:"Ja, Fotos bekommst du für 10 EUR."}];
+ const context=(incoming="Was bekomme ich da?",history=messages,max=80000)=>JSON.parse(buildChatAdminFanContext(c,fan,conversation,history,incoming,max));
+ return {own,c,fan,conversation,row,messages,context};
+}
+test("content follow-up uses the nearest confirmed photo exchange and current article details",()=>{
+ const f=followUpFixture();const context=f.context();
+ assert.equal(context.incoming_message,"Was bekomme ich da?");
+ assert.equal(context.sales_playbook.requested_offer.id,"photo");
+ assert.equal(context.sales_playbook.requested_offer.description,"5 Landschaftsfotos im digitalen Set.");
+ f.own.offers[0].recommendedPriceMinor=1500;f.own.offers[0].maximumPriceMinor=1500;
+ assert.equal(f.context().sales_playbook.requested_offer.recommendedPriceMinor,1500,"old conversation prices cannot override the current article");
+ const explicit=f.context("Ich möchte ein Video");assert.equal(explicit.sales_playbook.requested_offer.id,"video");
+});
+test("unused drafts, newer topics and ambiguous or unavailable articles cannot bind a follow-up",()=>{
+ const f=followUpFixture();
+ for(const history of [[],[f.messages[0],{...f.messages[1],direction:"suggested_reply"}],[...f.messages,{...f.row,id:"new-topic",direction:"fan_inbound",content:"Ich liebe Musik"}], [f.messages[0],{...f.messages[1],content:"Ich möchte ein Video anbieten"}]])assert.equal(f.context("Was bekomme ich da?",history).sales_playbook.requested_offer,null);
+ assert.equal(f.context("Wie war dein Tag?").sales_playbook.requested_offer,null);
+ f.own.offers.push({...f.own.offers[0],id:"other-photo",name:"Anderes Foto"});assert.equal(f.context().sales_playbook.requested_offer,null);
+ f.own.offers.pop();f.own.offers[0].requiresConfirmation=true;assert.equal(f.context().sales_playbook.requested_offer,null);
+ f.own.offers[0].requiresConfirmation=false;f.own.offers[0].active=false;assert.equal(f.context().sales_playbook.requested_offer,null);
+});
+test("follow-up preserves sales holds, tenant boundaries and the retained-history budget",()=>{
+ const f=followUpFixture();
+ f.fan.notes=writeChatAdminKnowledge({commercial:{salesHold:true}});assert.equal(f.context().sales_playbook.requested_offer,null);assert.equal(f.context().sales_strategy.sellNow,false);
+ f.fan.notes="";
+ assert.throws(()=>f.context("Was bekomme ich da?",[{...f.messages[0],fan_id:"foreign"},f.messages[1]]),/message_context_mismatch/u);
+ const full=f.context();const bounded=f.context("Was bekomme ich da?",f.messages,JSON.stringify(full).length-200);
+ assert.equal(bounded.sales_playbook.requested_offer,null,"excluded source turns cannot authorize an article");
 });
