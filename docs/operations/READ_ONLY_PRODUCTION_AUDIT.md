@@ -212,6 +212,36 @@ und Backup-Worker-Fehler im Ein-Stunden-Fenster ab.
 
 ## Diagnose bei Abbruch
 
+### Geschützte Installation der Ein-Stunden-Regel
+
+`FanMind Protected One-Hour Audit Policy Install` installiert ausschließlich die
+beiden per SHA-256 gebundenen Audit-Dateien aus dem geprüften Commit
+`935d1d806d09bd7291e89bcffb2250864dcf6739`. Es ersetzt nur das ebenfalls gepinnte
+alte Paar oder prüft ein bereits installiertes neues Paar. Ein gemischter oder
+unbekannter Stand bleibt blockiert. Keine Dienste werden neu gestartet und kein
+Anwendungsrelease wird geändert.
+
+Der Ablauf ist Owner-, current-main-, Host- und `backup-production-recovery`-
+gebunden. Die vorhandene Reviewer-/Branch-/Bypass-Policy wird vorab geprüft;
+nach dem Environment-Warten wird current main erneut gelesen. Die zusätzliche
+Environment-Variable `FANMIND_AUDIT_POLICY_INSTALL_APPROVAL` muss exakt enthalten:
+
+```text
+<reviewed-main>:install-audit-one-hour:935d1d806d09bd7291e89bcffb2250864dcf6739:707d22702a784e3b9999d1c9ae9c1e11c096a1bc:admin-bypass-disabled
+```
+
+Branch `main`, vollständigen `reviewed_main_commit` und Bestätigung
+`install-audit-one-hour` verwenden. Der fest gepinnte Root-Installer friert alle
+Eingabebytes ein, nutzt den bestehenden exklusiven Backup-Installationslock und
+prüft unveränderten Live-Commit vor/nach der Installation. Danach läuft der
+vollständige installierte Audit als `ubuntu`, einschließlich Backup-/Offsite-
+Prüfungen. Nur `PRODUCTION_AUDIT_POLICY=INSTALLED_AND_VERIFIED` gilt als Erfolg.
+Scheitert die Installation oder dieser Postcheck, werden beide alten Dateien
+wiederhergestellt. Private Audit-Rohdaten und stderr werden nicht veröffentlicht.
+
+Dieser einmalige Übergang ist an den bestehenden Release `707d2270...` gebunden.
+Ein neuer oder unbekannter Runtime-Stand verlangt einen separat geprüften Weg.
+
 Der Workflow ruft den Verifier auch nach einem fehlgeschlagenen Audit-Skript auf
 und übergibt dessen tatsächlichen Exit-Code als optionales drittes Argument.
 Ein von null verschiedener Code bleibt ein Fehler, selbst wenn die private

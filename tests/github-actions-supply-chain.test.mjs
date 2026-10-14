@@ -243,6 +243,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
+      "install-production-audit-policy.yml",
       DAILY_PRODUCTION_CONTROL_WORKFLOW,
       STAGING_PROVISION_WORKFLOW,
       RESTORE_DATABASE_WORKFLOW,
@@ -257,6 +258,12 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.ok(privilegedBackupJob);
   assert.doesNotMatch(privilegedBackupJob, /actions\/(?:checkout|setup-node)@/u);
   assert.match(privilegedBackupJob, /sudo -n \/usr\/local\/sbin\/fanmind-backup-worker-control/u);
+  const auditPolicy = selfHostedWorkflows.find(workflow => workflow.file === "install-production-audit-policy.yml");
+  assert.deepEqual(auditPolicy?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  const privilegedAuditJob = auditPolicy.source.split("\n  install:")[1];
+  assert.ok(privilegedAuditJob);
+  assert.doesNotMatch(privilegedAuditJob, /actions\/(?:checkout|setup-node)@/u);
+  assert.match(privilegedAuditJob, /FANMIND_AUDIT_POLICY_INSTALL_APPROVAL/u);
   const restoreWorkflows = selfHostedWorkflows.filter((workflow) =>
     [RESTORE_DATABASE_WORKFLOW, RESTORE_HOST_WORKFLOW, RESTORE_WORKFLOW].includes(
       workflow.file,
