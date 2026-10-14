@@ -192,3 +192,19 @@ test("offer addition respects twenty rows and storage readiness",async t=>{
  const unavailable=await mount(t,false);await manageCharacter(unavailable,"Synthetic Anna");await card(unavailable,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
  await expect(unavailable.getByRole("button",{name:"+ Angebot",exact:true})).toBeDisabled();await expect(unavailable.getByRole("button",{name:"Angebot entfernen",exact:true})).toBeDisabled();
 });
+
+
+test("confirmed conversation closure pauses generation until explicit per-Fan resumption",async t=>{
+ const page=await mount(t);const closureId="77777777-7777-4777-8777-777777777777";
+ await page.evaluate(({id,fanId})=>{window.fixture.historyFor[fanId]=[{id,direction:"confirmed_reply",content:"Ich antworte nicht weiter.",created_at:"2026-10-14T12:00:00Z"}];},{id:closureId,fanId:fanA1.id});
+ await openFan(page,"Fan A1");await page.getByLabel("Neue eingehende Fan-Nachricht").fill("Noch eine Nachricht");
+ await expect(page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeDisabled();
+ await expect(page.getByRole("button",{name:"Gespräch bewusst fortsetzen",exact:true})).toBeVisible();
+ assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+ await page.getByRole("button",{name:"Gespräch bewusst fortsetzen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0]);assert.equal(request.method,"PATCH");assert.equal(request.body.id,fanA1.id);assert.ok(request.body.notes.includes(closureId));
+ await page.evaluate(async fan=>{Object.assign(window.fixture.fansByCharacter[fan.character_id].find(value=>value.id===fan.id),fan);window.testRequests[0].resolve(Response.json({fan}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...request.body,revision:2});
+ await expect(page.getByRole("button",{name:"Gespräch bewusst fortsetzen",exact:true})).toHaveCount(0);
+ await page.getByLabel("Neue eingehende Fan-Nachricht").fill("Ich möchte Fotos");await expect(page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeEnabled();
+ await openFan(page,"Fan A2");await page.getByLabel("Neue eingehende Fan-Nachricht").fill("Hallo");await expect(page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeEnabled();
+});

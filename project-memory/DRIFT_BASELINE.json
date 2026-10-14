@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-10-14",
-  "last_source_of_truth_review": "2026-10-14 Owner-requested per-article description field and bounded content follow-up binding. Existing sales_playbook shape; no migration, model, memory, authorization or manual-send change. Synthetic UI/API proofs separate from manual reply quality.",
+  "last_source_of_truth_review": "2026-10-14 Owner-directed selling and repetition correction: article-grounded purchase decision, explicit confirmed closure pause, per-Fan reply-bound Owner resumption, call/media separation; no migration, sending or model change. Manual conversational quality remains distinct.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "d638c11a013e6b85312c7eb0e07cee73c9a3164f",
+    "docs/SOURCE_OF_TRUTH.md": "bbe1ff4fac3b4fd47e995d4f131ff7c775d385c8",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

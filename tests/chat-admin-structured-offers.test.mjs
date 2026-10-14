@@ -223,3 +223,11 @@ test("follow-up preserves sales holds, tenant boundaries and the retained-histor
  const full=f.context();const bounded=f.context("Was bekomme ich da?",f.messages,JSON.stringify(full).length-200);
  assert.equal(bounded.sales_playbook.requested_offer,null,"excluded source turns cannot authorize an article");
 });
+
+
+test("video calls never inherit a recorded video article or its price",()=>{
+ for(const request of ["Ich möchte Video telefonieren","Was kostet ein Video Telefonat?","Kann ich einen privaten Video Call bekommen?","Video Chat bitte"]){assert.equal(resolveChatAdminRequestedOffer(playbook(),request).requestedOffer,null,request);}
+ assert.equal(resolveChatAdminRequestedOffer(playbook(),"Ich möchte ein Video").requestedOffer.id,"video");
+ const own=playbook();own.offers.push(offer({id:"call",name:"Videoanruf",category:"custom"},5000));
+ assert.equal(resolveChatAdminRequestedOffer(own,"Ich möchte einen Videoanruf").requestedOffer.id,"call");
+});

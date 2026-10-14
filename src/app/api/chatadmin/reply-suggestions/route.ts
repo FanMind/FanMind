@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
+import { getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
 import { assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext, ChatAdminPolicyError } from "@/lib/chatAdminPolicy.mjs";
 import { recordAiUsageEvent } from "@/lib/aiUsage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
 import { AI_REPLY_INPUT_CHAR_LIMIT } from "@/lib/aiExecutionPolicy.mjs";
-import { extractChatAdminFacts, learnChatAdminKnowledge } from "@/lib/chatAdminKnowledge.mjs";
+import { deriveChatAdminReplyPause, extractChatAdminFacts, learnChatAdminKnowledge } from "@/lib/chatAdminKnowledge.mjs";
 import { getChatAdminModelProfile, buildChatAdminModelRequest, CHAT_ADMIN_MODEL_TIMEOUT_MS } from "@/lib/chatAdminModelPolicy.mjs";
 const URL="https://api.openai.com/v1/responses";
 export async function POST(request:NextRequest){
@@ -19,6 +19,8 @@ export async function POST(request:NextRequest){
   if(fanMode&&(typeof body.fan_id!=="string"||typeof body.conversation_id!=="string"||typeof body.generation_id!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(body.generation_id)))return NextResponse.json({error:"invalid_context_binding"},{status:400});
   const character=await getChatCharacter(workspace.id,body.character_id);if(character.revision!==body.character_revision)return NextResponse.json({error:"stale_character_revision"},{status:409});
   const fan=fanMode?await getChatFan(workspace.id,character.id,body.fan_id as string):null;const conversation=fanMode?await getChatConversation(workspace.id,character.id,fan!.id,body.conversation_id as string):null;const history=fanMode?await listRecentChatMessages(workspace.id,character.id,fan!.id,conversation!.id):[];
+  const lastConfirmed=fanMode?await getLatestChatAdminConfirmedReply(workspace.id,character.id,fan!.id,conversation!.id):null;
+  const replyPause=deriveChatAdminReplyPause(fan?.notes,lastConfirmed);if(replyPause.paused)return NextResponse.json({error:"conversation_paused",reply_pause:replyPause},{status:409});
   const context=fanMode?buildChatAdminFanContext(character,fan!,conversation!,history,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(character,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:"");inputChars=context.length;
   const requestedOffer=(JSON.parse(context) as {sales_playbook?:{requested_offer?:Record<string,unknown>|null}}).sales_playbook?.requested_offer??null;
   if(inputChars>AI_REPLY_INPUT_CHAR_LIMIT)return NextResponse.json({error:"input_too_large"},{status:400});
@@ -45,6 +47,9 @@ export async function POST(request:NextRequest){
   ) {
     return NextResponse.json({error:"stale_character_revision"},{status:409});
   }
+  const freshConfirmed=fanMode?await getLatestChatAdminConfirmedReply(workspaceId,character.id,fan!.id,conversation!.id):null;
+  const freshPause=deriveChatAdminReplyPause(currentFan?.notes,freshConfirmed);if(freshPause.paused)return NextResponse.json({error:"conversation_paused",reply_pause:freshPause},{status:409});
+  if(freshConfirmed?.id!==lastConfirmed?.id)return NextResponse.json({error:"stale_conversation"},{status:409});
   if(request.signal.aborted)return NextResponse.json({error:"request_cancelled"},{status:499});
   const persisted=fanMode?await persistChatAdminGeneration(workspaceId,character.id,fan!.id,conversation!.id,character.revision,currentFan!.revision,body.generation_id as string,currentHistory.map(message=>message.id),String(body.incoming_message).trim(),replies):replies;
   const memoryStatus = fanMode ? await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim()) : "unchanged";
