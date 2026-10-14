@@ -391,6 +391,7 @@ WORKER_LOG="$worker_log" node <<'NODE'
 const fs = require('node:fs');
 const now = Date.now();
 const windows = [
+  { name: '1h', since: now - 60 * 60 * 1000 },
   { name: '24h', since: now - 24 * 60 * 60 * 1000 },
   { name: '14d', since: now - 14 * 24 * 60 * 60 * 1000 },
 ];
@@ -428,11 +429,11 @@ for (const window of windows) {
     console.log(`BACKUP_WORKER_EVENT=${window.name}|${event}:${counts.get(event) || 0}`);
   }
 
-  if (window.name === '24h') {
+  if (window.name === '1h') {
     const failureCount = [...failureEvents]
       .reduce((total, event) => total + (counts.get(event) || 0), 0);
-    console.log(`BACKUP_WORKER_24H_FAILURE_EVENT_COUNT=${failureCount}`);
-    console.log(`BACKUP_WORKER_24H_FAILURE_FREE=${failureCount === 0}`);
+    console.log(`BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=${failureCount}`);
+    console.log(`BACKUP_WORKER_1H_FAILURE_FREE=${failureCount === 0}`);
   }
 }
 NODE
