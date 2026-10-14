@@ -24,7 +24,7 @@ Der Audit gibt ausschließlich die folgenden Kategorien aus:
 - Anzahl und Aktualität verschlüsselter Backup-/Prüfsummen-Paare;
 - checksum-only-Verifikation des neuesten verschlüsselten Vollbackups;
 - bei aktivierter Offsite-Konfiguration nur Erreichbarkeit, Objekt-/Paaranzahlen und der neueste Vollbackup-Dateiname;
-- ausschließlich erlaubte strukturierte Backup-Worker-Ereignisnamen und deren Anzahl, getrennt für die letzten 24 Stunden und 14 Tage.
+- ausschließlich erlaubte strukturierte Backup-Worker-Ereignisnamen und deren Anzahl, getrennt für die letzte Stunde, letzten 24 Stunden und 14 Tage.
 
 ## Harte Sicherheitsgrenzen
 
@@ -94,18 +94,22 @@ Die Timer-Ausgabe wird nicht aus lokalisierten Spalten von `systemctl list-timer
 SYSTEMD_TIMER=<unit>|next_realtime=<timestamp-or-unknown>|next_monotonic=<value-or-unknown>|last=<timestamp-or-unknown>
 ```
 
-Die Backup-Worker-Ausgabe verwendet eine feste Ereignis-Whitelist und zwei Zeitfenster:
+Die Backup-Worker-Ausgabe verwendet eine feste Ereignis-Whitelist und drei Zeitfenster:
 
 ```text
+BACKUP_WORKER_WINDOW=1h
+BACKUP_WORKER_EVENT=1h|job_failed:0
 BACKUP_WORKER_WINDOW=24h
 BACKUP_WORKER_EVENT=24h|job_failed:0
 BACKUP_WORKER_WINDOW=14d
 BACKUP_WORKER_EVENT=14d|job_failed:<count>
-BACKUP_WORKER_24H_FAILURE_EVENT_COUNT=0
-BACKUP_WORKER_24H_FAILURE_FREE=true
+BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0
+BACKUP_WORKER_1H_FAILURE_FREE=true
 ```
 
-Ältere, bereits behobene Fehler bleiben im 14-Tage-Fenster sichtbar, ohne den aktuellen 24-Stunden-Zustand zu verschleiern. Ausgegeben werden nur Zähler für `worker_start`, `worker_stop`, `sigterm_received`, `claim_failed`, `job_claimed`, `job_failed`, `job_rejected` und `fatal`.
+Owner-Entscheidung vom 14. Oktober 2026: Der Freigabe-Verifier verlangt eine fehlerfreie letzte Stunde statt 24 Stunden. Fehlende oder widersprüchliche Ein-Stunden-Messwerte bleiben blockierend. Frische verschlüsselte Backups, checksum-only-Prüfung und Offsite-Nachweise bleiben Pflicht. Die Änderung wird erst durch die gemeinsame geschützte Installation von Collector und Verifier wirksam; ein Repository-Merge allein aktualisiert den installierten Production-Audit nicht.
+
+Ältere, bereits behobene Fehler bleiben im 14-Tage-Fenster sichtbar, ohne den aktuellen Ein-Stunden-Zustand zu verschleiern. Ausgegeben werden nur Zähler für `worker_start`, `worker_stop`, `sigterm_received`, `claim_failed`, `job_claimed`, `job_failed`, `job_rejected` und `fatal`.
 
 ## Backup-Prüfung
 
@@ -156,7 +160,7 @@ Für einen belastbaren Operations-Pass müssen zusätzlich gelten:
 - keine verwaisten lokalen Backup-Paare;
 - das neueste Vollbackup besteht die checksum-only-Prüfung;
 - bei aktivierter Offsite-Sicherung ist das Remote erreichbar und enthält keine verwaisten Paare;
-- `BACKUP_WORKER_24H_FAILURE_FREE=true`.
+- `BACKUP_WORKER_1H_FAILURE_FREE=true`.
 
 Ein `REBOOT_REQUIRED=true` ist kein automatischer Neustartauftrag. Der Neustart benötigt einen eigenen kontrollierten Plan mit Backup-, Rollback- und anschließendem Smoke-Test.
 
@@ -204,7 +208,7 @@ npm run production:audit:verify -- \
 
 Er lehnt unter anderem Commit- oder Runtime-Drift, ungesunde Pflichtkomponenten,
 PM2-/nginx-Fehler, veraltete oder verwaiste Backup-Paare, Offsite-Abweichungen
-und Backup-Worker-Fehler im 24-Stunden-Fenster ab.
+und Backup-Worker-Fehler im Ein-Stunden-Fenster ab.
 
 ## Diagnose bei Abbruch
 
@@ -489,7 +493,7 @@ In #524 und #644 werden nur die redigierten Felder dokumentiert:
 - systemd-/Timer-Gesamtbild;
 - Backup-Paaranzahlen, Alter und checksum-only-Ergebnis;
 - Offsite-Erreichbarkeit/Paarstatus;
-- Backup-Worker-Zähler im 24-Stunden- und 14-Tage-Fenster;
+- Backup-Worker-Zähler im Ein-Stunden-, 24-Stunden- und 14-Tage-Fenster;
 - verbleibende Maßnahmen.
 
 Keine Rohkonfiguration, kein vollständiges Journal und keine Secret-bearing Artefakte werden an Issues angehängt.
