@@ -1477,27 +1477,14 @@ test("permanent Production audit runs installed root-owned code only", async () 
 
   const deployment = yaml.load(deploy);
   assert.deepEqual(Object.keys(deployment.on), ["workflow_dispatch"]);
-  assert.equal(deployment.on.workflow_dispatch, null);
-  assert.equal(deployment.jobs.deploy.if, false);
-  assert.equal(deployment.jobs.deploy.needs, undefined);
-  assert.equal(deployment.jobs.sealed["runs-on"], "ubuntu-24.04");
-  assert.deepEqual(deployment.jobs.sealed.permissions, {});
-  assert.equal(deployment.jobs.sealed.environment, undefined);
-  assert.equal(deployment.jobs.sealed.needs, undefined);
-  assert.equal(deployment.jobs.sealed.steps.length, 1);
-  assert.deepEqual(
-    Object.keys(deployment.jobs.sealed.steps[0]).sort(),
-    ["name", "run", "shell"],
-  );
-  assert.match(
-    deployment.jobs.sealed.steps[0].run,
-    /Production deployment sealed; separate reviewed release activation required/u,
-  );
-  assert.match(deployment.jobs.sealed.steps[0].run, /exit 1/u);
-  assert.doesNotMatch(
-    deployment.jobs.sealed.steps[0].run,
-    /checkout|secret|environment|artifact|curl|gh |api/u,
-  );
+  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit"]);
+  assert.equal(deployment.jobs.deploy.if, "github.ref == 'refs/heads/main'");
+  assert.equal(deployment.jobs.deploy.needs, "validate");
+  assert.equal(deployment.jobs.deploy.environment, "production");
+  assert.equal(deployment.jobs.validate["runs-on"], "ubuntu-24.04");
+  assert.equal(deployment.jobs.sealed, undefined);
+  assert.match(deploy, /production-release-preflight\.mjs/u);
+  assert.match(deploy, /EXPECTED_CURRENT_RELEASE/u);
   assert.match(
     readiness,
     /github\.event\.workflow_run\.conclusion == 'success'/u,
