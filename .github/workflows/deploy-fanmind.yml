@@ -2,6 +2,17 @@ name: Deploy FanMind
 
 on:
   workflow_dispatch:
+    inputs:
+      reviewed_main_commit:
+        type: string
+        required: true
+      confirmation:
+        type: string
+        required: true
+        description: deploy-reviewed-chatadmin
+      expected_current_release:
+        type: string
+        required: true
 
 concurrency:
   group: fanmind-production-deploy
@@ -11,21 +22,37 @@ permissions:
   contents: read
 
 jobs:
-  sealed:
-    name: Production deployment is sealed
+  validate:
+    name: Validate Owner-authorized exact main release
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 1
-    permissions: {}
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+      pull-requests: read
     steps:
-      - name: Reject Production deployment
-        shell: bash
-        run: |
-          echo "Production deployment sealed; separate reviewed release activation required"
-          exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Verify Owner, protected current main and completed checks
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REVIEWED_MAIN_COMMIT: ${{ inputs.reviewed_main_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: node scripts/operations/production-release-preflight.mjs
 
   deploy:
     name: Deploy to Exoscale production
-    if: false
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    timeout-minutes: 45
     runs-on:
       - self-hosted
       - fanmind-prod
@@ -36,7 +63,8 @@ jobs:
     steps:
       - name: Deploy on fanmind-prod-01
         env:
-          EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_main_commit }}
+          EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
         run: |
           set -euo pipefail
 
@@ -48,12 +76,21 @@ jobs:
             exit 1
           fi
           case "$(git remote get-url origin)" in
-            git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
             *)
               echo "Unexpected Production repository origin." >&2
               exit 1
               ;;
           esac
+
+          [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$EXPECTED_RELEASE_COMMIT" ]]
+          [[ "$EXPECTED_CURRENT_RELEASE" =~ ^[0-9a-f]{40}$ ]]
+          LIVE_RELEASE="$(curl -fsSL --max-time 15 https://fanmind.ch/api/version | node -e 'let s="";process.stdin.on("data",b=>s+=b);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).releaseCommit||""))')"
+          [[ "$LIVE_RELEASE" == "$EXPECTED_CURRENT_RELEASE" ]]
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$EXPECTED_RELEASE_COMMIT" ]]
+          # Require the existing isolated build/switch/rollback path.
+          grep -Eq '^[[:space:]]*FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY[[:space:]]*=[[:space:]]*true[[:space:]]*$' .env.production
 
           # Seed fail-closed runtime settings once. A Platform Admin may later
           # enable the manual Daily beta; deploys never overwrite that choice.
@@ -96,7 +133,8 @@ jobs:
             rm -f "$DEPLOY_SCRIPT"
             trap - EXIT
           else
-            echo "Using legacy in-place deployment because isolated release deployment is disabled."
+            echo "In-place deployment is not permitted for this release." >&2
+            exit 1
             git reset --hard "$RELEASE_COMMIT"
 
             npm ci --no-audit --no-fund

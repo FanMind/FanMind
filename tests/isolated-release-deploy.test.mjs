@@ -556,7 +556,7 @@ test("active and previous symlink targets are protected from rebuild and retenti
   );
 });
 
-test("production workflow keeps isolated deployment explicitly disabled by default", async () => {
+test("production workflow requires isolated deployment and refuses the legacy fallback", async () => {
   const workflow = await readFile(workflowPath, "utf8");
   assert.match(workflow, /ISOLATED_DEPLOY_ENABLED="false"/);
   assert.match(workflow, /FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY/);
@@ -564,7 +564,7 @@ test("production workflow keeps isolated deployment explicitly disabled by defau
   assert.match(workflow, /deploy-isolated-release\.sh/);
   assert.match(
     workflow,
-    /Using legacy in-place deployment because isolated release deployment is disabled/,
+    /In-place deployment is not permitted for this release/,
   );
   assert.match(workflow, /git reset --hard "\$RELEASE_COMMIT"/);
   assert.match(workflow, /pm2 start npm --name fanmind --cwd "\$SOURCE_DIR" -- start/);
@@ -577,7 +577,7 @@ test("production deploy is pinned to the immutable triggering commit", async () 
     readFile("docs/operations/ISOLATED_RELEASE_DEPLOY.md", "utf8"),
   ]);
 
-  assert.match(workflow, /EXPECTED_RELEASE_COMMIT: \$\{\{ github\.sha \}\}/u);
+  assert.match(workflow, /EXPECTED_RELEASE_COMMIT: \$\{\{ inputs\.reviewed_main_commit \}\}/u);
   assert.match(workflow, /RELEASE_COMMIT="\$EXPECTED_RELEASE_COMMIT"/u);
   assert.match(
     workflow,

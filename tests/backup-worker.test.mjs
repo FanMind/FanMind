@@ -442,7 +442,7 @@ test('deployment workflow records a verified release only after either deploymen
   };
 
   const expectedCommitIndex = indexOfRequired(
-    'EXPECTED_RELEASE_COMMIT: ${{ github.sha }}',
+    'EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_main_commit }}',
   );
   const commitValidationIndex = indexOfRequired('^[0-9a-f]{40}$');
   const fetchIndex = indexOfRequired('git fetch --prune origin main');
