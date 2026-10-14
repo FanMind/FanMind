@@ -1393,3 +1393,28 @@ kein stärkeres Modell und erweitert nicht das automatische Fan-Gedächtnis.
 
 Source-/CI-Nachweise ersetzen keine echte Production-Abnahme mit vom Nutzer
 gepflegten Preisen oder eine manuelle Bewertung der Antwortqualität.
+
+
+## ChatAdmin: stärkeres Modell — 14. Oktober 2026
+
+Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
+Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
+„Ausgewogen“ aus dem versionierten Provider-Katalog, einschließlich dessen
+Reasoning- und Standard-Verarbeitungswerten. Dies aktiviert keine allgemeinen
+bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
+Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
+
+Das gemeinsame Tokenlimit beträgt 4096 einschließlich Reasoning; die bestehenden
+kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
+auf 45 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
+Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
+Pfad. Fehlende Provider-Usage bleibt als Schätzung erkennbar.
+
+Vor dem Live-Wechsel prüft der geschützte isolierte Release-Weg den bestehenden
+Serverzugang durch genau eine begrenzte synthetische Responses-Anfrage mit
+store=false. Modellbindung, vollständiges Ergebnis, drei Antworten und Preiswächter
+müssen bestehen; sonst bleibt der bisherige Release aktiv. Es gibt keinen stillen
+Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
+geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
+Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
+Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.

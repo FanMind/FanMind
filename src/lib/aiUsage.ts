@@ -1,4 +1,6 @@
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
+import { calculateOpenAiProviderCostMicros } from "./aiCostEngine.mjs";
+import { getChatAdminModelProfile } from "./chatAdminModelPolicy.mjs";
 import { normalizeOpenAiResponseUsage } from "@/lib/aiUsageProviderMetrics.mjs";
 
 export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
@@ -58,6 +60,13 @@ export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promis
   const recordedTotalTokens =
     providerUsage?.totalTokens ?? recordedInputTokens + recordedOutputTokens;
 
+  const catalogCost = input.feature === "chat_admin_reply" && input.model === getChatAdminModelProfile().model
+    ? calculateOpenAiProviderCostMicros({
+      model: input.model, occurredAt: new Date().toISOString(),
+      usage: providerUsage ?? { inputTokens: recordedInputTokens, outputTokens: recordedOutputTokens, cachedInputTokens: 0, cacheWriteTokens: 0 },
+    }).costMicros / 10_000
+    : null;
+
   const body = {
     workspace_id: input.workspaceId,
     user_id: input.userId ?? null,
@@ -70,12 +79,12 @@ export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promis
     estimated_input_tokens: recordedInputTokens,
     estimated_output_tokens: recordedOutputTokens,
     estimated_total_tokens: recordedTotalTokens,
-    estimated_cost_cents: estimateAiCostCents(
+    estimated_cost_cents: catalogCost ?? estimateAiCostCents(
       recordedInputTokens,
       recordedOutputTokens,
       input.model,
     ),
-    currency: process.env.FANMIND_AI_USAGE_CURRENCY?.trim() || DEFAULT_CURRENCY,
+    currency: catalogCost === null ? process.env.FANMIND_AI_USAGE_CURRENCY?.trim() || DEFAULT_CURRENCY : "USD",
     status: input.status,
     error_code: input.errorCode ?? null,
     latency_ms: input.latencyMs == null ? null : Math.max(0, Math.round(input.latencyMs)),

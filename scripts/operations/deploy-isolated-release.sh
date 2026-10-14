@@ -372,6 +372,13 @@ fi
 verify_built_deployment_id "$RELEASE_DIR" "$RELEASE_COMMIT" \
   || fail "Next.js deployment ID is not bound to the release commit"
 
+# Owner-authorized ChatAdmin model activation requires a real provider contract
+# probe before the live symlink or process changes. No automatic model downgrade.
+if [[ -f "$RELEASE_DIR/scripts/operations/chat-admin-model-preflight.mjs" ]] && [[ "$PREVIOUS_LINK_TARGET" != "$RELEASE_DIR" ]]; then
+  node --env-file="$RELEASE_DIR/.env.production" "$RELEASE_DIR/scripts/operations/chat-admin-model-preflight.mjs" \
+    || fail "ChatAdmin model provider preflight blocked the release"
+fi
+
 sudo nginx -t
 
 start_availability_probe
