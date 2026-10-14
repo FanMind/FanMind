@@ -16,7 +16,7 @@ test("ChatAdmin reuses the prepared premium profile and leaves the CRM model res
  assert.equal(modelPolicy.getChatAdminModelProfile().id,"premium");
  const request=modelPolicy.buildChatAdminModelRequest("synthetic bounded context");
  assert.equal(request.model,modelPolicy.getChatAdminModelProfile().model);
- assert.equal(request.reasoning.effort,"max");assert.equal(request.service_tier,"default");
+ assert.equal(request.reasoning.effort,"medium");assert.equal(request.service_tier,"default");
  assert.equal(request.store,false);assert.equal(request.max_output_tokens,8192);
  assert.equal(request.text.format.schema.properties.replies.minItems,3);
  assert.match(readFileSync("src/lib/aiUsage.ts","utf8"),/FANMIND_AI_MODEL\?\.trim\(\) \|\| "gpt-5\.2"/u);
@@ -25,7 +25,12 @@ test("pre-switch provider probe is one synthetic no-storage request with no CRM 
  const probe=fakeProvider();await modelPolicy.verifyChatAdminModelProvider({apiKey:"synthetic-not-real",fetchImpl:probe.fetchImpl});
  assert.equal(probe.calls.length,1);assert.equal(probe.calls[0].url,"https://api.openai.com/v1/responses");
  const body=JSON.parse(probe.calls[0].init.body);assert.equal(body.store,false);assert.equal(body.model,valid.model);
- assert.doesNotMatch(probe.calls[0].init.body,/workspace_id|fan_id|conversation_id/u);
+ const context=JSON.parse(body.input[1].content);
+ assert.equal(context.character_id,"synthetic-character");assert.equal(context.fan.id,"synthetic-fan");
+ assert.equal(context.conversation.id,"synthetic-conversation");assert.equal(context.conversation.recent_messages.length,20);
+ assert.ok(body.input[1].content.length>6000,"probe exercises a complete conversation instead of a tiny greeting");
+ assert.equal(context.incoming_message,"Was hast du für Fotos für mich?");
+ assert.equal(modelPolicy.CHAT_ADMIN_MODEL_TIMEOUT_MS,55_000);
 });
 test("unavailable, incomplete, wrong-model and invented-price probe results block without fallback",async()=>{
  const probe=fakeProvider();await assert.rejects(()=>modelPolicy.verifyChatAdminModelProvider({apiKey:"",fetchImpl:probe.fetchImpl}));assert.equal(probe.calls.length,0);

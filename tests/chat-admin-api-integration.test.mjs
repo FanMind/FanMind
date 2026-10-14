@@ -111,6 +111,7 @@ function harness(change) {
     fetch: async (_url, init) => {
       calls.provider++;
       calls.providerBody=JSON.parse(init.body);
+      if(change==="timeout")throw Object.assign(new Error("synthetic timeout"),{name:"TimeoutError"});
       if (change === "revoke") revoked = true;
       if (change === "revision") character.revision++;
       if (change === "inactive") character.status = "inactive";
@@ -135,7 +136,7 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(h.calls.providerBody.store, false);
   assert.equal(h.calls.providerBody.input[0].content, chatPolicy.CHAT_ADMIN_REPLY_INSTRUCTIONS);
   assert.equal(h.calls.providerBody.model,modelPolicy.getChatAdminModelProfile().model);
-  assert.equal(h.calls.providerBody.reasoning.effort,"max");
+  assert.equal(h.calls.providerBody.reasoning.effort,"medium");
   assert.equal(h.calls.providerBody.service_tier,"default");
   assert.equal(h.calls.providerBody.max_output_tokens,8192);
   assert.equal(h.calls.providerBody.store,false);
@@ -238,4 +239,13 @@ test("rejected model output still records actual provider usage including reason
  const h=harness("invalid-price-output");const response=await h.route(h.request(1,"https://fanmind.invalid","Was kostet ein privates Foto für 999 EUR?"));
  assert.equal(response.status,400);assert.equal(h.calls.usageEvents.length,1);
  assert.equal(h.calls.usageEvents[0].status,"error");assert.equal(h.calls.usageEvents[0].providerUsage.output_tokens,100);
+});
+
+
+test("provider timeout is distinguishable and cannot persist replies or learned facts",async()=>{
+ const h=harness("timeout");const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
+ assert.equal(response.status,504);assert.equal((await response.json()).error,"reply_generation_timeout");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
+ assert.equal(h.calls.usageEvents.length,1);assert.equal(h.calls.usageEvents[0].status,"error");
+ assert.equal(h.calls.usageEvents[0].errorCode,"chat_admin_provider_timeout");
 });
