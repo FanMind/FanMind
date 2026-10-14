@@ -816,3 +816,27 @@ können manuell in Notizen gepflegt werden.
 Diese Quellkorrektur ist kein Nachweis funktionierender Production-Preisspeicherung
 oder natürlicher Modellantworten; dafür sind ein authentifizierter
 Server-/Schemaabgleich und anschließende echte manuelle Gesprächstests erforderlich.
+
+
+## ChatAdmin: eigene Angebote — 14. Oktober 2026
+
+Im Character-Editor kann der berechtigte Nutzer mit „+ Angebot“ bis zu 20 eigene
+Angebote anlegen, Namen bearbeiten und Angebote entfernen. Name und empfohlener
+Preis werden selbst gepflegt; leere Mindest-/Höchstpreise übernehmen den empfohlenen
+Preis. Währungen bleiben EUR/CHF/USD/GBP. Erst „Speichern“ übernimmt die Änderungen.
+Bestehende IDs, Flags und ergänzende Angebotsdaten bleiben erhalten. Umbenannte
+Standardangebote werden als eigene Kategorie geführt, damit der alte Medienname
+nicht versehentlich auf einen anderen Inhalt verweist. Leere Preiszeilen bleiben
+unveröffentlicht. Die vorhandene Character-gebundene JSON-Speicherung wird verwendet;
+keine neue Migration oder Zahlungs-/Upload-/Versandfunktion ist enthalten.
+
+Die KI erkennt wörtliche Angebotsnamen in ausdrücklichen Anfragen oder einer kurzen
+reinen Namensanfrage. Mehrere Treffer, doppelte Namen, bestätigungspflichtige oder
+inaktive Angebote geben keinen Preis frei. Standard-Medienkategorien bleiben
+kompatibel, aber ein öffentliches Video ersetzt keine private Videoanfrage. Bei
+fehlender Eindeutigkeit bleibt eine Rückfrage möglich. Preiswächter, Character-/Fan-
+Trennung und Speicherverfügbarkeit bleiben wirksam. Diese Erweiterung aktiviert
+kein stärkeres Modell und erweitert nicht das automatische Fan-Gedächtnis.
+
+Source-/CI-Nachweise ersetzen keine echte Production-Abnahme mit vom Nutzer
+gepflegten Preisen oder eine manuelle Bewertung der Antwortqualität.

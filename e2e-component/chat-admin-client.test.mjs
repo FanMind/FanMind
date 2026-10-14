@@ -149,3 +149,37 @@ test("unavailable price storage stays visible and disabled without deleting exis
  const request=await page.evaluate(()=>window.testRequests[0]);
  assert.deepEqual(request.body.sales_playbook,characterA.sales_playbook);
 });
+
+
+test("own offers add, rename, reload and remove without resurrecting fixed categories",async t=>{
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const original=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");
+ await original.getByLabel("Angebotsname",{exact:true}).fill("Lieblingsfoto");
+ await page.getByRole("button",{name:"+ Angebot",exact:true}).click();
+ const added=page.getByRole("heading",{name:"Neues Angebot",exact:true}).locator("..");
+ await added.getByLabel("Angebotsname",{exact:true}).fill("Sommerpaket (VIP+)");
+ const customRow=page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..");
+ await customRow.getByLabel("Empfohlener Preis",{exact:true}).fill("37.50");
+ await customRow.getByLabel("Währung").selectOption("CHF");
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0]);const offers=request.body.sales_playbook.offers;
+ assert.equal(offers.length,2);assert.equal(offers[0].id,"private_photo");assert.equal(offers[0].name,"Lieblingsfoto");assert.equal(offers[0].category,"custom");assert.equal(offers[0].recommendedPriceMinor,2500);
+ assert.match(offers[1].id,/^offer_[a-z0-9-]+$/u);
+ assert.deepEqual({name:offers[1].name,currency:offers[1].currency,min:offers[1].minimumPriceMinor,price:offers[1].recommendedPriceMinor,max:offers[1].maximumPriceMinor,active:offers[1].active},{name:"Sommerpaket (VIP+)",currency:"CHF",min:3750,price:3750,max:3750,active:true});
+ await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request.body,revision:2});
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Empfohlener Preis",{exact:true})).toHaveValue("37.50");
+ await page.getByRole("button",{name:"Angebot entfernen",exact:true}).first().click();await page.getByRole("button",{name:"Angebot entfernen",exact:true}).click();
+ await expect(page.getByText("Noch keine Angebote angelegt.", {exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ assert.deepEqual((await page.evaluate(()=>window.testRequests[1])).body.sales_playbook.offers,[]);
+});
+
+test("offer addition respects twenty rows and storage readiness",async t=>{
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ for(let count=1;count<20;count++)await page.getByRole("button",{name:"+ Angebot",exact:true}).click();
+ await expect(page.getByLabel("Angebotsname",{exact:true})).toHaveCount(20);await expect(page.getByRole("button",{name:"+ Angebot",exact:true})).toBeDisabled();
+ await page.getByRole("button",{name:"Angebot entfernen",exact:true}).last().click();await expect(page.getByRole("button",{name:"+ Angebot",exact:true})).toBeEnabled();
+ const unavailable=await mount(t,false);await manageCharacter(unavailable,"Synthetic Anna");await card(unavailable,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await expect(unavailable.getByRole("button",{name:"+ Angebot",exact:true})).toBeDisabled();await expect(unavailable.getByRole("button",{name:"Angebot entfernen",exact:true})).toBeDisabled();
+});

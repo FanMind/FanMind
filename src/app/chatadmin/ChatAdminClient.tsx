@@ -4,7 +4,6 @@ import type { ChatCharacter } from "@/lib/chatAdmin";
 import type { CreatorOffer, CreatorPlaybook } from "@/lib/creatorIntelligencePolicy.mjs";
 import { readChatAdminKnowledge, writeChatAdminKnowledge, type ChatAdminKnowledge } from "@/lib/chatAdminKnowledge.mjs";
 import styles from "./chatadmin.module.css";
-const CHAT_ADMIN_OFFER_CATEGORIES=[{id:"photo",name:"Foto",category:"photo"},{id:"video",name:"Video",category:"video"},{id:"private_photo",name:"Privates Foto",category:"private_photo"},{id:"private_video",name:"Privates Video",category:"private_video"}] as const;
 const defaultChatAdminSalesPlaybook=():CreatorPlaybook=>({positioning:"",offers:[],minimumHoursBetweenOffers:48,aftercareHours:48,contentBoundaries:[],confirmationRequired:[],noGos:[]});
 const empty:Partial<ChatCharacter>={display_name:"",profile_image_path:null,public_age:18,bio:"",location:"",languages:["Deutsch"],personality:"",writing_style:"",emoji_style:"sparsam",sentence_style:"kurz und natürlich",typical_phrases:[],forbidden_phrases:[],flirt_style:"respektvoll und innerhalb der definierten Grenzen",sales_rules:"kein Druck, keine falschen Versprechen",example_messages:[],status:"active"};
 const lines=(value:string)=>value.split("\n").map(v=>v.trim()).filter(Boolean);
@@ -12,21 +11,21 @@ const dismissCharacterMenu=(button:HTMLButtonElement)=>button.closest("details")
 const priceValue=(minor:number|undefined)=>minor===undefined?"":(minor/100).toFixed(2);
 function salesPlaybookFromForm(fd:FormData,current:CreatorPlaybook|undefined):CreatorPlaybook {
  const base=current??defaultChatAdminSalesPlaybook();
- const managed=new Set<string>(CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>definition.category));
- const offers:CreatorOffer[]=base.offers.filter(offer=>!managed.has(offer.category));
- for(const definition of CHAT_ADMIN_OFFER_CATEGORIES){
-  const recommended=String(fd.get(`offer_${definition.id}_recommended`)??"").trim();
+ const offers:CreatorOffer[]=[];
+ for(const entry of fd.getAll("offer_id")){
+  const id=String(entry);
+  const recommended=String(fd.get(`offer_${id}_recommended`)??"").trim();
   if(!recommended)continue;
-  const previous=base.offers.find(offer=>offer.category===definition.category);
-  const toMinor=(field:string,fallback:string)=>Math.round(Number(String(fd.get(field)??"").trim()||fallback.replace(",","."))*100);
-  const recommendedMinor=toMinor(`offer_${definition.id}_recommended`,recommended);
+  const previous=base.offers.find(offer=>offer.id===id);
+  const name=String(fd.get(`offer_${id}_name`)??"").trim();
+  const toMinor=(field:string,fallback:string)=>Math.round(Number((String(fd.get(field)??"").trim()||fallback).replace(",","."))*100);
   offers.push({
-   id:definition.id,name:definition.name,category:definition.category,description:previous?.description??"",
-   currency:String(fd.get(`offer_${definition.id}_currency`)??previous?.currency??"EUR"),
-   minimumPriceMinor:toMinor(`offer_${definition.id}_minimum`,recommended),recommendedPriceMinor:recommendedMinor,
-   maximumPriceMinor:toMinor(`offer_${definition.id}_maximum`,recommended),maximumDiscountPercent:previous?.maximumDiscountPercent??0,
+   id,name,category:previous?.name===name?previous.category:"custom",description:previous?.description??"",
+   currency:String(fd.get(`offer_${id}_currency`)??previous?.currency??"EUR"),
+   minimumPriceMinor:toMinor(`offer_${id}_minimum`,recommended),recommendedPriceMinor:toMinor(`offer_${id}_recommended`,recommended),
+   maximumPriceMinor:toMinor(`offer_${id}_maximum`,recommended),maximumDiscountPercent:previous?.maximumDiscountPercent??0,
    delivery:previous?.delivery??"",exclusivity:previous?.exclusivity??"",
-   active:fd.has(`offer_${definition.id}_active`),requiresConfirmation:fd.has(`offer_${definition.id}_confirmation`),
+   active:fd.has(`offer_${id}_active`),requiresConfirmation:fd.has(`offer_${id}_confirmation`),
   });
  }
  return {...base,offers};
@@ -46,7 +45,7 @@ const CHARACTER_VALIDATION_ERRORS:Record<string,{field:string|null;message:strin
  invalid_example_messages:{field:"example_messages",message:"Beispiele enthalten einen ungültigen Eintrag. Maximal 30 Einträge mit jeweils höchstens 500 Zeichen."},
  invalid_flirt_style:{field:"flirt_style",message:"Flirt-/Kommunikationsstil muss ausgefüllt sein und darf höchstens 4.000 Zeichen enthalten."},
  invalid_sales_rules:{field:"sales_rules",message:"Verkaufsregeln müssen ausgefüllt sein und dürfen höchstens 4.000 Zeichen enthalten."},
- invalid_sales_playbook:{field:null,message:"Angebotspreise sind ungültig. Prüfe Währung sowie Mindest-, empfohlenen und Höchstpreis."},
+ invalid_sales_playbook:{field:null,message:"Angebote sind ungültig. Prüfe Namen, Währung und Preise; höchstens 20 Angebote sind möglich."},
  invalid_character:{field:null,message:"Die Character-Daten sind unvollständig oder ungültig."},
  payload_too_large:{field:null,message:"Die Character-Daten sind insgesamt zu lang. Bitte kürze mehrere Eingaben und speichere erneut."},
 };
@@ -137,12 +136,26 @@ function ChatAdminKnowledgeFields({notes}:{notes:unknown}) {
  <label>Letztes tatsächlich gesendetes Angebot<input type="datetime-local" name="last_offer" defaultValue={local(commercial.lastOfferAt)}/></label>
  <label>Letzte bestätigte Angebotsablehnung<input type="datetime-local" name="last_declined" defaultValue={local(commercial.lastDeclinedAt)}/></label></>;
 }
+type OfferDraft=Partial<CreatorOffer>&{id:string;name:string};
 function StructuredOfferFields({playbook,disabled=false}:{playbook:CreatorPlaybook|undefined;disabled?:boolean}){
- const value=playbook??defaultChatAdminSalesPlaybook();
- return <fieldset disabled={disabled}><legend>Character-Angebote und Preise</legend><p className={styles.fieldHint}>Leere Preise bleiben unveröffentlicht. Die KI darf nur aktive Angebote dieses Characters verwenden.</p><div className={styles.offerGrid}>{CHAT_ADMIN_OFFER_CATEGORIES.map(definition=>{
-  const offer=value.offers.find(item=>item.category===definition.category);
-  return <section className={styles.offerEditor} key={definition.id}><h3>{definition.name}</h3><label>Währung<select name={`offer_${definition.id}_currency`} defaultValue={offer?.currency??"EUR"}><option>EUR</option><option>CHF</option><option>USD</option><option>GBP</option></select></label><label>Empfohlener Preis<input name={`offer_${definition.id}_recommended`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.recommendedPriceMinor)}/></label><label>Mindestpreis<input name={`offer_${definition.id}_minimum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.minimumPriceMinor)}/></label><label>Höchstpreis<input name={`offer_${definition.id}_maximum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer?.maximumPriceMinor)}/></label><label className={styles.checkLabel}><input name={`offer_${definition.id}_active`} type="checkbox" defaultChecked={offer?.active??true}/> Angebot aktiv</label><label className={styles.checkLabel}><input name={`offer_${definition.id}_confirmation`} type="checkbox" defaultChecked={offer?.requiresConfirmation??false}/> Vor Verwendung bestätigen</label></section>;
- })}</div></fieldset>;
+ const [rows,setRows]=useState<OfferDraft[]>(()=>playbook?.offers.map(offer=>({...offer}))??[]);
+ return <fieldset disabled={disabled}><legend>Character-Angebote und Preise</legend>
+ <p className={styles.fieldHint}>Lege eigene Angebote an und wähle Name und Preis selbst. Leere Preise bleiben unveröffentlicht. Die KI darf nur eindeutig angefragte aktive Angebote dieses Characters verwenden.</p>
+ <div className={styles.offerGrid}>{rows.map(offer=><section className={styles.offerEditor} key={offer.id}>
+ <h3>{offer.name||"Neues Angebot"}</h3><input type="hidden" name="offer_id" value={offer.id}/>
+ <label>Angebotsname<input name={`offer_${offer.id}_name`} value={offer.name} maxLength={120} onChange={event=>setRows(current=>current.map(row=>row.id===offer.id?{...row,name:event.target.value}:row))}/></label>
+ <label>Währung<select name={`offer_${offer.id}_currency`} defaultValue={offer.currency??"EUR"}><option>EUR</option><option>CHF</option><option>USD</option><option>GBP</option></select></label>
+ <label>Empfohlener Preis<input name={`offer_${offer.id}_recommended`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer.recommendedPriceMinor)}/></label>
+ <label>Mindestpreis<input name={`offer_${offer.id}_minimum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer.minimumPriceMinor)}/></label>
+ <label>Höchstpreis<input name={`offer_${offer.id}_maximum`} type="number" min="0.01" step="0.01" defaultValue={priceValue(offer.maximumPriceMinor)}/></label>
+ <label className={styles.checkLabel}><input name={`offer_${offer.id}_active`} type="checkbox" defaultChecked={offer.active??true}/> Angebot aktiv</label>
+ <label className={styles.checkLabel}><input name={`offer_${offer.id}_confirmation`} type="checkbox" defaultChecked={offer.requiresConfirmation??false}/> Vor Verwendung bestätigen</label>
+ <button type="button" className={styles.secondaryButton} onClick={()=>setRows(current=>current.filter(row=>row.id!==offer.id))}>Angebot entfernen</button>
+ </section>)}</div>
+ {!rows.length&&<p>Noch keine Angebote angelegt.</p>}
+ <button type="button" disabled={disabled||rows.length>=20} onClick={()=>setRows(current=>current.length>=20?current:[...current,{id:`offer_${crypto.randomUUID()}`,name:""}])}>+ Angebot</button>
+ <p className={styles.fieldHint}>Bis zu 20 Angebote. Nur der empfohlene Preis ist nötig; leere Mindest- und Höchstpreise übernehmen diesen Wert. Änderungen werden mit „Speichern“ übernommen.</p>
+ </fieldset>;
 }
 export function ChatAdminClient({initialCharacters,fanRuntimeEnabled=true,structuredOffersEnabled=false}:{initialCharacters:ChatCharacter[];fanRuntimeEnabled?:boolean;structuredOffersEnabled?:boolean}){
  const [characters,setCharacters]=useState(initialCharacters);const [selected,setSelected]=useState<ChatCharacter|null>(initialCharacters[0]??null);const [editing,setEditing]=useState<Partial<ChatCharacter>|null>(null);const [notice,setNotice]=useState("");const [invalidField,setInvalidField]=useState<string|null>(null);const [validationMessage,setValidationMessage]=useState("");

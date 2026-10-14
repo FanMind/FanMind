@@ -1369,3 +1369,27 @@ bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag u
 prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
 begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
 oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.
+
+
+## ChatAdmin: eigene Angebote — 14. Oktober 2026
+
+Im Character-Editor kann der berechtigte Nutzer mit „+ Angebot“ bis zu 20 eigene
+Angebote anlegen, Namen bearbeiten und Angebote entfernen. Name und empfohlener
+Preis werden selbst gepflegt; leere Mindest-/Höchstpreise übernehmen den empfohlenen
+Preis. Währungen bleiben EUR/CHF/USD/GBP. Erst „Speichern“ übernimmt die Änderungen.
+Bestehende IDs, Flags und ergänzende Angebotsdaten bleiben erhalten. Umbenannte
+Standardangebote werden als eigene Kategorie geführt, damit der alte Medienname
+nicht versehentlich auf einen anderen Inhalt verweist. Leere Preiszeilen bleiben
+unveröffentlicht. Die vorhandene Character-gebundene JSON-Speicherung wird verwendet;
+keine neue Migration oder Zahlungs-/Upload-/Versandfunktion ist enthalten.
+
+Die KI erkennt wörtliche Angebotsnamen in ausdrücklichen Anfragen oder einer kurzen
+reinen Namensanfrage. Mehrere Treffer, doppelte Namen, bestätigungspflichtige oder
+inaktive Angebote geben keinen Preis frei. Standard-Medienkategorien bleiben
+kompatibel, aber ein öffentliches Video ersetzt keine private Videoanfrage. Bei
+fehlender Eindeutigkeit bleibt eine Rückfrage möglich. Preiswächter, Character-/Fan-
+Trennung und Speicherverfügbarkeit bleiben wirksam. Diese Erweiterung aktiviert
+kein stärkeres Modell und erweitert nicht das automatische Fan-Gedächtnis.
+
+Source-/CI-Nachweise ersetzen keine echte Production-Abnahme mit vom Nutzer
+gepflegten Preisen oder eine manuelle Bewertung der Antwortqualität.
