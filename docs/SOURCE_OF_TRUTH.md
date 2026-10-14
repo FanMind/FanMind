@@ -1447,3 +1447,35 @@ Rückfrage nötig. Keine Änderung an Astra, Fan-Gedächtnisgrenzen oder Versand
 
 Automatisierte Formular-/Route-/Kontextprüfungen belegen Speicherung und Bindung;
 die Formulierung einer echten Antwort bleibt manuell zu beurteilen.
+
+
+## ChatAdmin: Verkauf und Ende ohne Antwortschleife — 14. Oktober 2026
+
+Bei einer eindeutigen aktiven Artikelanfrage führt die KI vom belegten Inhalt und
+Nutzen über den aktuellen Artikelpreis zu einer kurzen Kaufentscheidung. Kein
+Vertrösten durch eine spätere Beziehung, keinen Druck und keine erfundenen
+Leistungen. Aufgezeichnete Videos ersetzen niemals Videoanrufe; ein Anruf wird
+nur über ein eigenes eindeutig angefragtes aktives Angebot freigegeben.
+
+Eine klare, manuell verwendete Abschlussantwort pausiert weitere KI-Antworten.
+Die Route lädt dafür die letzte bestätigte Antwort mit exakter Workspace-,
+Character-, Fan- und Conversation-Bindung unabhängig vom 20-Zeilen-Verlauf.
+Fan-Nachrichten, ungenutzte Entwürfe, zitierte Beispiele und bedingte Warnungen
+lösen keine Pause aus. Die Oberfläche zeigt den Zustand; der Server prüft ihn
+vor dem Provideraufruf, vor der Rückgabe und vor weiteren Bestätigungen. Im
+pausierten Zustand werden keine neuen Vorschläge, Fan-Fakten oder KI-Aufrufe
+erzeugt. Eine während des Provideraufrufs verwendete Abschlussantwort sperrt die
+Rückgabe und Speicherung; tatsächlich verbrauchte Usage bleibt erfasst.
+
+Der Owner kann mit „Gespräch bewusst fortsetzen“ gezielt wieder freigeben. Die
+Freigabe ist an die bestätigte Antwort-ID gebunden, wird innerhalb des vorhandenen
+Fan-Notizformats mit Revision gespeichert und hebt bestehende Verkaufspausen
+oder Fan-Grenzen nicht auf. Notizen und gelerntes Fanwissen bleiben erhalten.
+Keine automatische Nachricht, kein Blockieren auf OnlyFans und keine Migration.
+Astra medium und das begrenzte Provider-Zeitbudget bleiben unverändert.
+
+Erkannt werden explizite Abschlussformulierungen wie „Das Gespräch ist beendet“
+oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jeder
+möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
+Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
+nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.

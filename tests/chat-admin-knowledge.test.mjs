@@ -74,3 +74,23 @@ test("replaying an older generation never replaces newer communication knowledge
  const replay=learnChatAdminKnowledge(first,[{kind:"communication",quote:"Ich mag kurze Antworten.",source:"old"}],[{id:"old",sequence:10,direction:"fan_inbound",content:"Ich mag kurze Antworten."}]);
  assert.equal(replay,first);
 });
+
+
+test("only explicit confirmed closures pause, never Fan text, drafts, warnings or quotes",async()=>{
+ const {deriveChatAdminReplyPause}=await import("../src/lib/chatAdminKnowledge.mjs");
+ const row={id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."};
+ for(const content of ["Drohungen akzeptiere ich nicht. Damit ist das Gespräch für mich beendet.","Ich antworte nicht weiter.","Das Gespräch bleibt beendet.","Bitte respektiere, dass ich keinen weiteren Kontakt möchte."]){assert.equal(deriveChatAdminReplyPause("",{...row,content}).paused,true,content);}
+ for(const content of ["Wenn du mich weiter beleidigst, beende ich das Gespräch.","Falls nötig: Ich beende das Gespräch.","Du schreibst: Das Gespräch ist beendet.","Das Gespräch ist beendet?",'"Das Gespräch ist beendet."',"Ich lerne dich hier im Chat kennen."]){assert.equal(deriveChatAdminReplyPause("",{...row,content}).paused,false,content);}
+ for(const direction of ["fan_inbound","suggested_reply"]){assert.equal(deriveChatAdminReplyPause("",{...row,direction}).paused,false);}
+});
+test("explicit resumption binds one confirmed reply and preserves notes, knowledge and sales holds",async()=>{
+ const {deriveChatAdminReplyPause,resumeChatAdminReplies}=await import("../src/lib/chatAdminKnowledge.mjs");
+ const row={id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Ich antworte nicht weiter."};
+ const initial=writeChatAdminKnowledge({manual:"Manuelle Notiz",facts:[{kind:"interest",quote:"Ich liebe Musik.",source:"synthetic"}],commercial:{salesHold:true}});
+ const resumed=resumeChatAdminReplies(initial,row.id);assert.equal(deriveChatAdminReplyPause(resumed,row).paused,false);
+ assert.equal(readChatAdminKnowledge(resumed).manual,"Manuelle Notiz");assert.equal(readChatAdminKnowledge(resumed).facts.length,1);assert.equal(readChatAdminKnowledge(resumed).commercial.salesHold,true);
+ assert.equal(deriveChatAdminReplyPause(resumed,{...row,id:"88888888-8888-4888-8888-888888888888"}).paused,true);
+ assert.throws(()=>resumeChatAdminReplies(initial,"unbound"));
+ const learned=learnChatAdminKnowledge(resumed,[{kind:"interest",quote:"Ich mag Katzen.",source:"new"}],[{id:"new",direction:"fan_inbound",content:"Ich mag Katzen."}]);
+ assert.equal(deriveChatAdminReplyPause(learned,row).paused,false);
+});

@@ -66,6 +66,7 @@ test("actual authority rejects a Member even when the capability store would ret
 });
 function harness(change) {
   let revoked = false;
+  let providerFinished=false;
   let persisted=[];
   let character = {
     id: characterId, workspace_id: workspaceId, revision: 1, status: "active",
@@ -85,6 +86,7 @@ function harness(change) {
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
+      getLatestChatAdminConfirmedReply: async()=>change==="closed"||(change==="close-during-provider"&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => change==="offer-follow-up" ? [
         {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
@@ -112,7 +114,7 @@ function harness(change) {
     process: { env: { OPENAI_API_KEY: "synthetic-no-provider", FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED: "true" } },
     require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
     fetch: async (_url, init) => {
-      calls.provider++;
+      calls.provider++;providerFinished=true;
       calls.providerBody=JSON.parse(init.body);
       if(change==="timeout")throw Object.assign(new Error("synthetic timeout"),{name:"TimeoutError"});
       if (change === "revoke") revoked = true;
@@ -261,4 +263,34 @@ test("actual reply route forwards article contents for a confirmed content follo
  assert.equal(context.sales_playbook.requested_offer.description,"5 persönlich ausgewählte Fotos im digitalen Set.");
  assert.equal(context.sales_playbook.requested_offer.recommendedPriceMinor,2500);
  assert.deepEqual(Array.from(h.calls.persistedHistoryIds),["offer-inbound","offer-confirmed"]);
+});
+
+
+test("confirmed closure stops provider calls, reply persistence and learning",async()=>{
+ const h=harness("closed");const response=await h.route(h.request());
+ assert.equal(response.status,409);assert.equal((await response.json()).error,"conversation_paused");
+ assert.equal(h.calls.provider,0);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,0);
+});
+test("closure confirmed during generation suppresses disclosure and persistence",async()=>{
+ const h=harness("close-during-provider");const response=await h.route(h.request());
+ assert.equal(response.status,409);assert.equal((await response.json()).error,"conversation_paused");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+test("actual conversation API exposes closure pause and rejects another confirmation",async()=>{
+ const compiled=ts.transpileModule(readFileSync("src/app/api/chatadmin/conversations/route.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ let confirmations=0;const api={};const row={id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Ich antworte nicht weiter."};
+ const dependencies={
+  "next/server":{NextResponse:{json:(body,init)=>Response.json(body,init)}},
+  "@/lib/chatAdmin":{requireChatAdminFanRuntime:()=>{},requireChatAdminCapability:async()=>({workspace:{id:workspaceId}}),getChatFan:async()=>({id:fanId,notes:""}),getFanConversation:async()=>({id:conversationId,fan_id:fanId}),listChatMessages:async()=>[],getLatestChatAdminConfirmedReply:async()=>row,persistChatAdminConfirmedReply:async()=>{confirmations++;return row;}},
+  "@/lib/chatAdminKnowledge.mjs":knowledgePolicy,
+  "@/lib/workspaceAuthorization":{WorkspaceAuthorizationError},
+  "@/lib/httpMutationPolicy.mjs":{...mutationPolicy,isTrustedFanMindMutationRequest:request=>mutationPolicy.isTrustedFanMindMutationRequest(request,{})},
+ };
+ runInNewContext(compiled,{exports:api,require:name=>{assert.ok(Object.hasOwn(dependencies,name),name);return dependencies[name];}});
+ const result=await api.GET({nextUrl:new URL(`https://fanmind.invalid/api/chatadmin/conversations?character_id=${characterId}&fan_id=${fanId}`)});
+ assert.equal(result.status,200);assert.equal((await result.json()).reply_pause.paused,true,"latest closure remains effective even outside displayed history");
+ const response=await api.POST(new Request("https://fanmind.invalid/api/chatadmin/conversations",{method:"POST",headers:{origin:"https://fanmind.invalid","content-type":"application/json"},body:JSON.stringify({character_id:characterId,fan_id:fanId,conversation_id:conversationId,character_revision:1,fan_revision:1,confirmation_id:"66666666-6666-4666-8666-666666666666",direction:"confirmed_reply",content:"Alte Antwort"})}));
+ assert.equal(response.status,409);assert.equal((await response.json()).error,"conversation_paused");assert.equal(confirmations,0);
 });

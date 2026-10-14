@@ -38,13 +38,14 @@ export function normalizeChatAdminCommercial(value = {}) {
   const stage = ["new", "familiar", "trusted"].includes(value.stage) ? value.stage : "new";
   const source = typeof value.source === "string" ? value.source.trim().slice(0, 160) : "";
   const date = key => typeof value[key] === "string" && Number.isFinite(Date.parse(value[key])) ? new Date(value[key]).toISOString() : null;
-  return { stage, salesHold: value.salesHold === true, source, lastPurchaseAt: source ? date("lastPurchaseAt") : null, lastOfferAt: source ? date("lastOfferAt") : null, lastDeclinedAt: source ? date("lastDeclinedAt") : null };
+  const resumeAfterReplyId = typeof value.resumeAfterReplyId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(value.resumeAfterReplyId) ? value.resumeAfterReplyId : "";
+  return { stage, resumeAfterReplyId, salesHold: value.salesHold === true, source, lastPurchaseAt: source ? date("lastPurchaseAt") : null, lastOfferAt: source ? date("lastOfferAt") : null, lastDeclinedAt: source ? date("lastDeclinedAt") : null };
 }
 
 export function writeChatAdminKnowledge({ manual = "", facts = [], commercial = {} }) {
   if(!Array.isArray(facts)||facts.length>8)throw new Error("invalid_knowledge");
   const normalized = normalizeChatAdminCommercial(commercial);
-  if (!facts.length && normalized.stage === "new" && !normalized.salesHold && !normalized.source) return manual;
+  if (!facts.length && normalized.stage === "new" && !normalized.salesHold && !normalized.source && !normalized.resumeAfterReplyId) return manual;
   const result = manual + MARKER + JSON.stringify({ version: 1, facts, commercial: normalized });
   if (result.length > 4_000) throw new Error("knowledge_too_large");
   return result;
@@ -87,5 +88,22 @@ export function deriveChatAdminStrategy(playbook, fan, requestedOffer, now = Dat
   const boundaryHold = knowledge.facts.some(fact => fact.kind === "boundary" && /angebot|verkauf|druck|offer|sales|pressure/iu.test(fact.quote));
   const blocked = commercial.salesHold || boundaryHold || strategy.state === "AFTERCARE" || latest("offer") || latest("offer_declined");
   const sellNow = !!requestedOffer && !blocked;
-  return { ...strategy, state: sellNow ? "OFFER" : strategy.state, reason: boundaryHold ? "fan_boundary" : sellNow ? "explicit_current_request" : blocked ? "sales_pause_or_aftercare" : strategy.reason, objective: sellNow ? "present_requested_offer" : "relationship_without_sales_pressure", sellNow, relationship_stage: commercial.stage ?? "new", customer_tier: fan.customer_tier ?? "red", variantGuidance: sellNow ? { recommended: "Beantworte die konkrete Anfrage natürlich.", softer: "Beantworte dieselbe Anfrage weicher und ohne Druck.", stronger: "Beantworte dieselbe Anfrage direkt, ohne zusätzliche Intimität oder Dringlichkeit." } : strategy.variantGuidance };
+  return { ...strategy, state: sellNow ? "OFFER" : strategy.state, reason: boundaryHold ? "fan_boundary" : sellNow ? "explicit_current_request" : blocked ? "sales_pause_or_aftercare" : strategy.reason, objective: sellNow ? "present_requested_offer" : "relationship_without_sales_pressure", sellNow, relationship_stage: commercial.stage ?? "new", customer_tier: fan.customer_tier ?? "red", variantGuidance: sellNow ? { recommended: "Erkläre den konkreten Nutzen und Inhalt des angefragten Artikels, nenne den hinterlegten Preis und frage passend nach der Kaufentscheidung.", softer: "Präsentiere denselben Artikel mit seinem hinterlegten Preis freundlich und ohne Druck; führe mit einer passenden kurzen Abschlussfrage zum Kauf.", stronger: "Biete denselben Artikel und Preis direkt an und frage klar nach der Kaufentscheidung, ohne zusätzliche Intimität oder künstliche Dringlichkeit." } : strategy.variantGuidance };
+}
+
+
+// Only a manually confirmed, explicit closure can pause replies. Fan text,
+// unused drafts, conditional warnings and quoted examples never set this state.
+export function deriveChatAdminReplyPause(notes, confirmed) {
+ const result = {paused:false,closing_reply_id:null};
+ if (!confirmed || confirmed.direction !== "confirmed_reply" || typeof confirmed.id !== "string" || typeof confirmed.content !== "string") return result;
+ const sentences=confirmed.content.split(/(?<=[.!?])\s+|\n/u).map(value=>value.trim().replace(/[.!]+$/u,""));
+ const closed=sentences.some(sentence=> /^(?:(?:Das|Dieses|Unser) Gespräch (?:ist|bleibt)(?: für mich)? beendet|(?:Damit )?ist (?:das|dieses|unser) Gespräch(?: für mich)? beendet|(?:Deshalb bleibt es dabei:\s*)?Ich beende (?:das|dieses|unser) Gespräch|Ich antworte nicht (?:weiter|mehr)|Ich werde nicht (?:weiter|mehr) antworten|Ich (?:möchte|will) keinen(?: weiteren)? Kontakt(?: mit dir)?|Bitte respektiere, dass ich keinen weiteren Kontakt möchte|(?:This|The) conversation is over|I will not reply anymore)$/iu.test(sentence));
+ if (!closed) return result;
+ return {paused:readChatAdminKnowledge(notes).commercial.resumeAfterReplyId!==confirmed.id,closing_reply_id:confirmed.id};
+}
+export function resumeChatAdminReplies(notes, confirmedReplyId) {
+ if (typeof confirmedReplyId!=="string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(confirmedReplyId)) throw new Error("invalid_reply_resume_binding");
+ const knowledge=readChatAdminKnowledge(notes);
+ return writeChatAdminKnowledge({...knowledge,commercial:{...knowledge.commercial,resumeAfterReplyId:confirmedReplyId}});
 }

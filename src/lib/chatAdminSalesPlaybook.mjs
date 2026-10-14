@@ -33,7 +33,8 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   // short category requests and explicit price/content requests as before.
   const appreciation = /\b(?:schön\w*|schoen\w*|nett\w*|toll\w*|hübsch\w*|huebsch\w*|süß\w*|suess\w*|nice|beautiful|lovely|great)\b/iu.test(incoming);
   const explicitRequest = /\b(?:will|möchte|moechte|hätte|haette|schick\w*|zeig\w*|kauf\w*|bestell\w*|bekomm\w*|kost\w*|preis\w*|wieviel|want|send|show|buy|order|cost\w*|price\w*)\b|\b(?:wie\s+viel|how\s+much)\b|\b(?:kann|könnte|koennte|darf)\s+ich\b.{0,100}\b(?:haben|sehen)\b|\b(?:can|could|may)\s+i\s+(?:get|have|see)\b/iu.test(incoming);
-  const category = appreciation && !explicitRequest ? null
+  const callRequest = /\b(?:video[ -]*(?:telefon(?:at|ieren)?|anruf|call|chat)|videotelefon(?:at|ieren)?|telefon(?:at|ieren)|anrufen|facetime)\b/iu.test(incoming);
+  const category = callRequest ? null : appreciation && !explicitRequest ? null
     : privateRequest && photoRequest ? "private_photo"
     : privateRequest && videoRequest ? "private_video"
     : photoRequest ? "photo"
@@ -51,6 +52,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const specific = nameMatches.filter(match => !nameMatches.some(other => other.start <= match.start && other.end >= match.end && other.end - other.start > match.end - match.start));
   const named = [...new Map(specific.map(match => [match.offer.id, match.offer])).values()].filter(offer => {
     const genericMediaName = /^(?:foto|photo|bild|pic|video|clip)s?$/iu.test(offer.name.trim());
+    if(callRequest && (genericMediaName || ["photo","video","private_photo","private_video"].includes(offer.category)))return false;
     return !(privateRequest && (genericMediaName || offer.category === "photo" || offer.category === "video"));
   });
   const byCategory = category ? activeOffers.filter(offer => offer.category === category) : [];
