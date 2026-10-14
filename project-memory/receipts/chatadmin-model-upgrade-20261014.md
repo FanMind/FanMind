@@ -3,7 +3,7 @@
 Owner explicitly requests stronger ChatAdmin intelligence for improved replies.
 R3 source / R4 controlled Production model activation. Boundaries:
 FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and existing controlled
-release. Reuses prepared balanced profile, not public paid-tier activation.
+release. Reuses prepared premium profile after owner explicitly requested the strongest model for internal ChatAdmin use, not public paid-tier activation.
 
 Existing general CRM model selection, memory bounds, authority checks, exact prices
 and manual sending remain. Canonical provider costs account for reasoning/cache.

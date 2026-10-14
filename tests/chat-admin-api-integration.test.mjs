@@ -135,9 +135,9 @@ test("actual ChatAdmin route returns exactly three suggestions bound to the curr
   assert.equal(h.calls.providerBody.store, false);
   assert.equal(h.calls.providerBody.input[0].content, chatPolicy.CHAT_ADMIN_REPLY_INSTRUCTIONS);
   assert.equal(h.calls.providerBody.model,modelPolicy.getChatAdminModelProfile().model);
-  assert.equal(h.calls.providerBody.reasoning.effort,"medium");
+  assert.equal(h.calls.providerBody.reasoning.effort,"max");
   assert.equal(h.calls.providerBody.service_tier,"default");
-  assert.equal(h.calls.providerBody.max_output_tokens,4096);
+  assert.equal(h.calls.providerBody.max_output_tokens,8192);
   assert.equal(h.calls.providerBody.store,false);
   const suppliedContext = JSON.parse(h.calls.providerBody.input[1].content);
   assert.equal(suppliedContext.fan.summary, "mag kurze Antworten");

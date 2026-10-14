@@ -12,11 +12,12 @@ function fakeProvider(payload=valid,status=200) {
  const calls=[];
  return {calls,fetchImpl:async(url,init)=>{calls.push({url,init});return Response.json(payload,{status});}};
 }
-test("ChatAdmin reuses the prepared balanced profile and leaves the CRM model resolver unchanged",()=>{
+test("ChatAdmin reuses the prepared premium profile and leaves the CRM model resolver unchanged",()=>{
+ assert.equal(modelPolicy.getChatAdminModelProfile().id,"premium");
  const request=modelPolicy.buildChatAdminModelRequest("synthetic bounded context");
  assert.equal(request.model,modelPolicy.getChatAdminModelProfile().model);
- assert.equal(request.reasoning.effort,"medium");assert.equal(request.service_tier,"default");
- assert.equal(request.store,false);assert.equal(request.max_output_tokens,4096);
+ assert.equal(request.reasoning.effort,"max");assert.equal(request.service_tier,"default");
+ assert.equal(request.store,false);assert.equal(request.max_output_tokens,8192);
  assert.equal(request.text.format.schema.properties.replies.minItems,3);
  assert.match(readFileSync("src/lib/aiUsage.ts","utf8"),/FANMIND_AI_MODEL\?\.trim\(\) \|\| "gpt-5\.2"/u);
 });
@@ -45,5 +46,5 @@ test("ChatAdmin costs include cached input and reasoning output using the canoni
  const compiledUsage={};const dependencies={"@/lib/supabase/config":{getSupabaseHeaders:()=>({}),getSupabaseRestUrl:()=>"https://synthetic.invalid/ai_usage_events"},"@/lib/aiUsageProviderMetrics.mjs":usagePolicy,"./aiCostEngine.mjs":costEngine,"./chatAdminModelPolicy.mjs":modelPolicy};
  runInNewContext(code,{exports:compiledUsage,process:{env:{SUPABASE_SERVICE_ROLE_KEY:"synthetic-not-real",FANMIND_AI_USAGE_CURRENCY:"EUR",FANMIND_AI_PRICE_INPUT_PER_MILLION_CENTS:"1"}},Date,fetch:async(_url,init)=>{event=JSON.parse(init.body);return new Response(null,{status:204});},require:name=>{assert.ok(Object.hasOwn(dependencies,name),name);return dependencies[name];}});
  await compiledUsage.recordAiUsageEvent({workspaceId:"synthetic",feature:"chat_admin_reply",model:valid.model,inputChars:4000,outputChars:40,status:"ok",providerUsage:{input_tokens:1000,output_tokens:100,total_tokens:1100,input_tokens_details:{cached_tokens:500},output_tokens_details:{reasoning_tokens:80}}});
- assert.equal(event.estimated_cost_cents,0.205);assert.equal(event.currency,"USD");assert.equal(event.estimated_output_tokens,100);
+ assert.equal(event.estimated_cost_cents,1.05);assert.equal(event.currency,"USD");assert.equal(event.estimated_output_tokens,100);
 });

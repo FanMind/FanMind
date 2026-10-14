@@ -3,7 +3,7 @@ import { CHAT_ADMIN_REPLY_INSTRUCTIONS, assertChatAdminReplySemantics } from "./
 
 // Owner-authorized ChatAdmin upgrade only; this is not a paid-tier entitlement.
 export function getChatAdminModelProfile() {
-  const profile = resolveFanMindAiQualityProfile("balanced");
+  const profile = resolveFanMindAiQualityProfile("premium");
   if (!profile) throw new Error("chat_admin_model_unavailable");
   return profile;
 }
@@ -21,7 +21,7 @@ export function buildChatAdminModelRequest(context) {
       properties: { replies: { type: "array", minItems: 3, maxItems: 3, items: { type: "string", minLength: 1 } } },
     } } },
     // Includes reasoning tokens; visible replies retain the existing short-output guard.
-    max_output_tokens: 4096,
+    max_output_tokens: 8192,
     store: false,
   };
 }

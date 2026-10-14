@@ -409,12 +409,12 @@ versionierten Preis, echte Provider-Usage und integerbasierte Geldwerte.
 
 Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
 Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
-„Ausgewogen“ aus dem versionierten Provider-Katalog, einschließlich dessen
+„Premium“ aus dem versionierten Provider-Katalog, einschließlich dessen
 Reasoning- und Standard-Verarbeitungswerten. Dies aktiviert keine allgemeinen
 bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
 Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
 
-Das gemeinsame Tokenlimit beträgt 4096 einschließlich Reasoning; die bestehenden
+Das gemeinsame Tokenlimit beträgt 8192 einschließlich Reasoning; die bestehenden
 kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
 auf 45 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
 Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
