@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-10-13",
-  "last_source_of_truth_review": "2026-10-13 ChatAdmin Staging completion: exact pinned optional customer-tier contract and separate controlled Staging action, unchanged production boundary; ten bounded memory/style/price generations remain runtime-unverified until actual acceptance.",
+  "captured": "2026-10-14",
+  "last_source_of_truth_review": "2026-10-14 owner-requested custom Character offers: add/rename/remove up to twenty existing canonical JSON records, literal name and ambiguity guard, unchanged price/authority/storage boundaries. No schema or provider activation; Production persistence and model quality require separate manual acceptance.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "c5209ac63a40d7fc77689ca837810e903032d895",
+    "docs/SOURCE_OF_TRUTH.md": "77f8b6942b8237f3c274e2924aef7ec90e6908f0",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
