@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import ts from "typescript";
 
 const require = createRequire(import.meta.url);
@@ -19,6 +20,7 @@ const compiled = ts.transpileModule(source, {
 function loadClient() {
   const clientModule = { exports: {} };
   const localRequire = (name) => {
+    if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;
     if (name === "./chatadmin.module.css") return new Proxy({}, { get: (_, key) => String(key) });
     return require(name);
   };
