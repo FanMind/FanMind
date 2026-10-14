@@ -161,18 +161,27 @@ test("own offers add, rename, reload and remove without resurrecting fixed categ
  const customRow=page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..");
  await customRow.getByLabel("Empfohlener Preis",{exact:true}).fill("37.50");
  await customRow.getByLabel("Währung").selectOption("CHF");
+ await customRow.getByLabel("Beschreibung / enthaltene Leistung",{exact:true}).fill("5 Landschaftsfotos im digitalen Set, keine persönliche Anfertigung.");
  await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  const request=await page.evaluate(()=>window.testRequests[0]);const offers=request.body.sales_playbook.offers;
  assert.equal(offers.length,2);assert.equal(offers[0].id,"private_photo");assert.equal(offers[0].name,"Lieblingsfoto");assert.equal(offers[0].category,"custom");assert.equal(offers[0].recommendedPriceMinor,2500);
+ assert.equal(offers[1].description,"5 Landschaftsfotos im digitalen Set, keine persönliche Anfertigung.");
  assert.match(offers[1].id,/^offer_[a-z0-9-]+$/u);
  assert.deepEqual({name:offers[1].name,currency:offers[1].currency,min:offers[1].minimumPriceMinor,price:offers[1].recommendedPriceMinor,max:offers[1].maximumPriceMinor,active:offers[1].active},{name:"Sommerpaket (VIP+)",currency:"CHF",min:3750,price:3750,max:3750,active:true});
  await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request.body,revision:2});
  await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
  await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Empfohlener Preis",{exact:true})).toHaveValue("37.50");
+ await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true})).toHaveValue("5 Landschaftsfotos im digitalen Set, keine persönliche Anfertigung.");
+ await page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true}).fill("");
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ const cleared=await page.evaluate(()=>window.testRequests[1].body);assert.equal(cleared.sales_playbook.offers[1].description,"");
+ await page.evaluate(async saved=>{window.testRequests[1].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...cleared,revision:3});
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true})).toHaveValue("");
  await page.getByRole("button",{name:"Angebot entfernen",exact:true}).first().click();await page.getByRole("button",{name:"Angebot entfernen",exact:true}).click();
  await expect(page.getByText("Noch keine Angebote angelegt.", {exact:true})).toBeVisible();
- await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
- assert.deepEqual((await page.evaluate(()=>window.testRequests[1])).body.sales_playbook.offers,[]);
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(3);
+ assert.deepEqual((await page.evaluate(()=>window.testRequests[2])).body.sales_playbook.offers,[]);
 });
 
 test("offer addition respects twenty rows and storage readiness",async t=>{
