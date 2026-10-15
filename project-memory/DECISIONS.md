@@ -221,3 +221,13 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: Pushes and merges to `main` must not trigger Production deployment. During the transition, `.github/workflows/deploy-fanmind.yml` remains manually visible but has no inputs, always reaches only a GitHub-hosted failing seal job and keeps the preserved Production job unreachable behind literal `if: false`.
 - Audit boundary: only the daily read-only audit resolves the actually running Production SHA from `/api/version`; manual and successful-deployment audit bindings retain their exact existing contracts.
 - Boundary: no release or rollback controller is activated, no Production runner is reachable from the new workflow version, and no merge, dispatch, runner, Environment, secret, permission or Production action is authorized. Historical workflow versions are not neutralized by this source change; their runner access must be secured before a separately approved transition.
+
+
+## FM-DEC-031 — Company-blocked work parked; software-only roadmap continues
+- Date: 2026-10-15
+- Status: ACTIVE
+- Source: Bernd explicitly directed FanMind to continue development while company registration is still unavailable.
+- Decision: Work that materially depends on company/legal owner data, paid Billing activation, external Social/provider onboarding or Mobile/store ownership stays parked without blocking independent product engineering. This includes live Billing/Tax/UID activation, Social provider/app connections, Android/Play and iOS/TestFlight release work, and equivalent external owner/company prerequisites.
+- ChatAdmin: treat the current Agent Chat / ChatAdmin product as the first functionally complete test surface. Keep it available for ongoing Owner testing and observation; do not expand it speculatively. Open a new bounded repair only from reproducible defects, regressions or explicitly approved improvements.
+- Active software-only direction: after ChatAdmin closeout, prioritize independent repository/product work that does not require those company/provider prerequisites, beginning with Segments & Lists, then Campaign Preparation, Website AI/Human Handoff software, privacy/control foundations, internal FanMind analytics, and later Team/Roles plus Multi-Workspace/Agency when their prerequisites are deliberately scoped.
+- Boundary: this reprioritization does not mark parked gates accepted, does not authorize provider/payment/store actions and does not weaken tenant isolation, manual-send/no-auto-send or protected Production boundaries.
