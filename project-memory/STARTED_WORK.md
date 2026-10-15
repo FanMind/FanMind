@@ -1188,6 +1188,10 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: source revert only; existing Production AI and billing remain unchanged.
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
 
+- 2026-10-15 continuation: explicit Owner repair request; isolated worktree on dc269fd8; original SQL compilation error independently reproduced on PostgreSQL 17.11. Repair includes atomic DB policy and server-owned entitlement revision binding, immutable lifecycle replay, real PG17 tests and Required CI registration. D3 Top-up/Refund, productive projection writer/Stripe mapping, target APPLY and route activation remain separate. Existing lock resumed; no competing open PR; audit #1330 remains independent.
+
+- Source verification: receipts/capacity-v2-lifecycle-repair-20261015.md binds the SQL hash, 48/48 focused/native tests, independent 22/22 PG17 execution, review and exact next protected action. Source is handed off for PR CI; aggregate FM-AI-001 remains IN_PROGRESS and no target acceptance is inferred.
+
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
 - Status: ACCEPTED
 - Risk: R4
@@ -1199,7 +1203,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
 
 ## FM-AI-001 / FM-CR-056 — Capacity-v2 approved budgets — 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
 - Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
@@ -1210,6 +1214,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: none for repository implementation; Production activation remains separately protected.
 - Recovery: Staging budget values can be restored to NULL while activation remains off; source changes are revertible.
 
+
+- 2026-10-15 reconciliation: the formerly pending source/merge is completed by PR #1248 / f0ec2518. Budget source and seed are consumed; only the separately resumed FM-CR-052 SQL lifecycle repair remains open.
 
 ## FM-AI-001 / FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck — 2026-09-30
 - Status: COUNTERCHECKED

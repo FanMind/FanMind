@@ -16,6 +16,7 @@ const requiredCiRoots = [
   "test:staging-stripe-webhook",
   "test:database-authorization:pg17",
   "test:creator-foundation-transition",
+  "test:ai-capacity",
 ];
 
 function referencedScripts(command) {

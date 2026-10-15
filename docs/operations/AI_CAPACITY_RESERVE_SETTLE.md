@@ -72,3 +72,73 @@ Spendable capacity excludes settled consumption and currently held reservations,
 The customer UI shows this as **AI-Kapazität: N %**. Raw provider prices, token categories and internal monetary values remain server/accounting details.
 
 At 25% and 10% the UI may warn that capacity is running low. At 0%, AI is blocked. There is no free or throttled fallback reserve and no automatic downgrade to a cheaper model.
+
+
+## Lifecycle repair — 15 October 2026
+
+FM-AI-001 / FM-CR-052 repairs the grant compilation error and puts policy
+revision/global/freeze/mode checks inside the workspace-serialized Reserve RPC.
+The dormant `ai_capacity_workspace_entitlements` projection is the authoritative
+workspace/contract/package/period/revision boundary. It has an existing-Workspace
+foreign key, RLS, inactive-by-default state, an explicit capacity_v2 discriminator
+and a source fingerprint. Browser roles have no access; service_role may only
+read it. No projection writer, Stripe mapping or runtime activation is provided.
+A separately reviewed canonical Billing projection must establish and maintain
+this snapshot (including suspension/revocation); the table alone is not proof of
+commercial entitlement and must not be populated from browser plan/amount data.
+
+Reserve requires `p_expected_entitlement_revision`, locks the entitlement and
+policy until transaction end, and rechecks current time after both lock waits.
+Missing/inactive/future/expired/contradictory entitlement, changed revision,
+disabled usage/mode or emergency freeze denies new reservation atomically.
+A same-key included grant must match exact package/start/end. Included grants
+must match the current approved budget on creation. Disabling new package sales
+does not cancel already entitled usage. Purchased-credit acquisition/refund
+business rules remain the separate audit D3 follow-up.
+
+Reservations retain policy/entitlement revision and provider/model/price/FX
+provenance. Reserve and settlement replays reject changed immutable evidence,
+including usage changes and zero-cost settlement. Settle/release acquire the
+Workspace lock before the reservation row lock. Existing obligations can still
+settle/release after freeze or entitlement revocation. Reconciliation of an
+indeterminate outcome uses the existing settle (actual validated usage) or
+release (proven non-billable failure) RPC; it is not an automatic retry.
+An actual amount above the held reservation persists reconciliation_required
+and keeps the hold. It cannot be silently released or overdrawn; a future
+reviewed monetary adjustment procedure remains separate.
+
+`npm run test:ai-capacity` reuses the existing policy/accounting tests (now
+.test.mjs) and the existing Docker/psql PostgreSQL-17 transport. The required
+PG17 CI job sets FANMIND_CAPACITY_PG17_REQUIRED=true and supplies its isolated
+source container. Missing/wrong container or wrong PostgreSQL major fails;
+normal Operations runs may skip only the database-dependent parent. Tests
+install the real controlled foundation, activation guard and lifecycle SQL in a
+fresh local database, execute real concurrent sessions and remove the database.
+They include an actual SQL guard mutation and lock-wait expiry/revocation tests.
+No real provider or Supabase target is contacted.
+
+## Next protected Staging action after reviewed merge
+
+The next target action is a NEW exact-main, Staging-only read-only preflight on
+vshyhvgcmrlagvfnvomc, explicitly different from Production drqkpdvtbbrrdwmtrodz.
+Bind the merged SQL SHA-256, current release/target, workspace parent contract,
+existing foundation and activation-gate object definitions/ACL/RLS, absent
+lifecycle RPCs (including absence of the old Reserve overload), absent new
+projection/columns, and zero reservations/allocations/ledger events. Verify the
+15/30/50 budgets and all activation switches OFF with emergency freeze ON.
+Do not read customer content. Any partial/drifted state blocks, not an APPLY.
+
+No Capacity-specific protected target verifier/apply controller currently exists
+in this package. Prepare/review that checksum-pinned control and its rollback
+contract before target execution; do not invent a generic db-push or direct-psql
+APPLY command. The shared rollout state does not yet classify this new family.
+An eventual APPLY is a different, freshly authorized transaction; the lifecycle
+SQL is first-install-only and deliberately refuses existing projection/column
+state rather than backfilling missing monetary provenance. Reconcile source,
+fixture cleanup, current backup/recovery and privacy/deletion inventory impacts
+before such rollout. No policy readiness, entitlement row, provider call,
+package/top-up sale or productive route is enabled by source merge or schema.
+
+Recovery for this repository package is an ordinary source revert. Future
+controlled target work must preserve the installed foundation and historical
+ledger, use transactional rollback, and never silently drop monetary history.

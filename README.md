@@ -1,5 +1,13 @@
 # FanMind
 
+Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt
+Grant-/Reserve-Policy und revisionsgebundene Workspace-/Periodenberechtigung.
+Echte PostgreSQL-17-Lifecycletests laufen im erforderlichen CI-Pfad. Das ist keine
+Staging-/Production-Installation oder Billingfreigabe; kanonische Entitlement-
+Projektion/Befüllung, Zielabnahme, Routeverdrahtung und Top-up-/Refund-Folgeumfang
+bleiben getrennt. Vertrag: `docs/operations/AI_CAPACITY_RESERVE_SETTLE.md`.
+
+
 Antwortqualität für ganz FanMind (15.10.2026): Allgemeines CRM, Creator,
 Copilot, Mobile-Backend und ChatAdmin teilen eine stilgebundene Grundlage mit
 originalen Beispielen und konservativem Wiederholungsschutz. Bei auffällig
