@@ -1,3 +1,4 @@
+import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -30,6 +31,7 @@ function authorityHarness(email, role = "owner") {
     require(name) { assert.ok(["next/navigation", "@/lib/supabase/server"].includes(name)); return {}; },
   });
   const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "@/lib/admin": admin,
     "next/headers": { cookies: async () => ({ get: () => ({ value: "synthetic-session" }) }) },
     "@/lib/supabase/config": { getSupabaseHeaders: () => ({}), getSupabaseRestUrl: path => `https://database.invalid/${path}`, SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic" },
@@ -65,7 +67,7 @@ test("actual authority rejects a Member even when the capability store would ret
   await assert.rejects(h.authority.requireChatAdminCapability(), error => error instanceof WorkspaceAuthorizationError && error.code === "resource_forbidden");
   assert.equal(h.calls.capability, 0);
 });
-function harness(change) {
+function harness(change, abortController) {
   let revoked = false;
   let providerFinished=false;
   let persisted=[];
@@ -78,8 +80,9 @@ function harness(change) {
     sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"5 persönlich ausgewählte Fotos im digitalen Set.",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, persistedHistoryIds: null, memoryWrites: [] };
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, memoryWrites: [] };
   const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
       isChatAdminFanRuntimeEnabled: () => true,
@@ -87,7 +90,7 @@ function harness(change) {
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
-      getLatestChatAdminConfirmedReply: async()=>change==="closed"||(change==="close-during-provider"&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
+      getLatestChatAdminConfirmedReply: async()=>change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => change==="offer-follow-up" ? [
         {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
@@ -105,7 +108,7 @@ function harness(change) {
     "@/lib/chatAdminKnowledge.mjs": knowledgePolicy,
     "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage++; calls.usageEvents.push(event); } },
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
-    "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: true }) },
+    "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: ++calls.rateLimitCalls===1 || change!=="quality-limit" }) },
     "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
     "@/lib/aiExecutionPolicy.mjs": { AI_REPLY_INPUT_CHAR_LIMIT: 80_000 },
   };
@@ -116,7 +119,7 @@ function harness(change) {
     require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
     fetch: async (_url, init) => {
       calls.provider++;providerFinished=true;
-      calls.providerBody=JSON.parse(init.body);
+      calls.providerBody=JSON.parse(init.body); calls.providerBodies.push(calls.providerBody); calls.providerSignals.push(init.signal);
       if(change==="timeout")throw Object.assign(new Error("synthetic timeout"),{name:"TimeoutError"});
       if (change === "revoke") revoked = true;
       if (change === "revision") character.revision++;
@@ -124,12 +127,16 @@ function harness(change) {
       if (change === "persona") character.writing_style = "different current style";
       if (change === "deleted") character = null;
       if (change === "workspace") context = { ...context, workspace: { id: characterId } };
-      const replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
+      let replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
+      if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
+      if (change === "quality-price" && calls.provider === 2) replies = ["Für 999 EUR.", "Das kostet 999 EUR.", "Der Preis ist 999 EUR."];
+      if (change === "quality-revoke") revoked = true;
+      if (change === "quality-abort") abortController.abort();
       return Response.json({ usage:{input_tokens:1000,output_tokens:100,total_tokens:1100}, output_text: JSON.stringify({ replies, memory: change === "learn" || change === "memory-race" ? [{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"}] : [] }) });
     },
   });
   const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
-    method: "POST", headers: { origin, "content-type": "application/json" },
+    method: "POST", signal: abortController?.signal, headers: { origin, "content-type": "application/json" },
     body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: incomingMessage }),
   });
   return { calls, route: exports.POST, request };
@@ -215,6 +222,7 @@ test("actual Fan route deletes only the revision-bound Fan in the authorized wor
     exports: route, Response, Request, URL,
     require(name) {
       const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
         "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
         "@/lib/chatAdmin": {
           createChatFan: async () => {}, listChatFans: async () => [], updateChatFan: async () => {},
@@ -313,4 +321,39 @@ test("actual conversation API exposes closure pause and rejects another confirma
  assert.equal(result.status,200);assert.equal((await result.json()).reply_pause.paused,true,"latest closure remains effective even outside displayed history");
  const response=await api.POST(new Request("https://fanmind.invalid/api/chatadmin/conversations",{method:"POST",headers:{origin:"https://fanmind.invalid","content-type":"application/json"},body:JSON.stringify({character_id:characterId,fan_id:fanId,conversation_id:conversationId,character_revision:1,fan_revision:1,confirmation_id:"66666666-6666-4666-8666-666666666666",direction:"confirmed_reply",content:"Alte Antwort"})}));
  assert.equal(response.status,409);assert.equal((await response.json()).error,"conversation_paused");assert.equal(confirmations,0);
+});
+
+
+test("ChatAdmin repairs once, retains one deadline and accounts for both actual provider calls", async () => {
+ const h=harness("quality-repair"); const response=await h.route(h.request()); const body=await response.json();
+ assert.equal(response.status,200); assert.equal(body.replies.length,3); assert.equal(h.calls.provider,2);
+ assert.equal(h.calls.providerSignals[0],h.calls.providerSignals[1]);
+ assert.deepEqual(h.calls.providerBodies[0].input,h.calls.providerBodies[1].input.slice(0,2));
+ assert.deepEqual(JSON.parse(h.calls.providerBodies[1].input[2].content).quality_revision.previous_drafts,["Hallo!","Hallo!","Hallo!"]);
+ assert.equal(h.calls.usageEvents.length,2); assert.deepEqual(h.calls.usageEvents.map(e=>e.status),["error","ok"]);
+ assert.equal(h.calls.usageEvents[0].providerUsage.input_tokens,1000); assert.equal(h.calls.usageEvents[1].providerUsage.output_tokens,100);
+ assert.notEqual(h.calls.persistedHistoryIds,null); assert.equal(h.calls.memoryWrites.length,0);
+});
+test("two repetitive ChatAdmin outputs never persist suggestions or learn incoming preferences", async () => {
+ const h=harness("quality-stuck"); const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
+ assert.equal(response.status,502); assert.equal((await response.json()).error,"reply_quality_rejected");
+ assert.equal(h.calls.provider,2); assert.equal(h.calls.usageEvents.length,2); assert.equal(h.calls.persistedHistoryIds,null); assert.equal(h.calls.memoryWrites.length,0);
+});
+test("rewrite still enforces current article prices and cannot trigger a third call", async () => {
+ const h=harness("quality-price"); const response=await h.route(h.request());
+ assert.equal(response.status,400); assert.equal((await response.json()).error,"reply_price_not_permitted");
+ assert.equal(h.calls.provider,2); assert.equal(h.calls.usageEvents.length,2); assert.equal(h.calls.persistedHistoryIds,null);
+});
+test("revocation, closure or request abort between quality attempts prevents the second provider call", async () => {
+ for(const change of ["quality-revoke","quality-close","quality-abort"]){
+  const controller=new AbortController(); const h=harness(change,controller); const response=await h.route(h.request());
+  assert.notEqual(response.status,200,change); assert.equal((await response.json()).replies,undefined);
+  assert.equal(h.calls.provider,1,change); assert.equal(h.calls.usageEvents.length,1,change); assert.equal(h.calls.persistedHistoryIds,null); assert.equal(h.calls.memoryWrites.length,0);
+ }
+});
+
+test("ChatAdmin correction consumes the existing per-call rate limit and cannot bypass it", async () => {
+ const h=harness("quality-limit"); const response=await h.route(h.request());
+ assert.equal(response.status,429); assert.equal(h.calls.provider,1); assert.equal(h.calls.rateLimitCalls,2);
+ assert.equal(h.calls.usageEvents.length,1); assert.equal(h.calls.persistedHistoryIds,null);
 });

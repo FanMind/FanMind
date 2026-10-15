@@ -204,6 +204,10 @@ function scaledContextCharLimit(baseLimit, messageLimit) {
   );
 }
 
+export function getReplyConversationContextCharLimit(messageLimit) {
+  return scaledContextCharLimit(AI_REPLY_CONVERSATION_CONTEXT_CHAR_LIMIT_PER_50_MESSAGES, messageLimit);
+}
+
 function fitRecentMessages(messages, messageLimit) {
   const normalizedMessageLimit = normalizeMessageLimit(messageLimit);
   const bounded = (Array.isArray(messages) ? messages : [])

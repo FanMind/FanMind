@@ -1,21 +1,33 @@
 # FanMind Source of Truth
 
-## ChatAdmin-Lehrbeispiele — 15. Oktober 2026
+## Antwortqualität für ganz FanMind — 15. Oktober 2026
 
-Owner-beauftragte Gesprächsführung: Acht originale synthetische Miniaturen in
-`src/lib/chatAdminDialogueGuidance.mjs` ergänzen die serverseitigen
-Antwortanweisungen. Ziel sind konkrete Antworten und weniger wiederholte
-Einstiege, Satzmuster und Verkaufsfragen anhand bestätigter Gesprächseinträge.
-Alle drei Vorschläge bleiben im selben Character-Stil und bei denselben
-belegten Fakten. Die Beispiele übertragen keine Fan-/Artikel-Fakten, Preise
-oder privaten ChatGPT-Einstellungen und überschreiben keine Character-Daten.
-Das ist Kontext-Anleitung je Anfrage, kein dauerhaftes Modelltraining.
-Der feste Zusatz unter 6.000 Zeichen erhöht Eingabetokens, aber nicht die Zahl
-der Provideraufrufe. Preiswächter, Gedächtnisbindung, Abschluss-Pause und manuelle
-Versandgrenze bleiben wirksam. Lokale synthetische Vertragsprüfungen sind keine
-Production- oder Qualitätsabnahme; neue Mehrturn-Modellantworten sind nach
-separatem Deployment manuell zu bewerten. Details und Rechercheabgrenzung:
-`docs/CHAT_ADMIN_REPLY_STYLE.md`.
+Der Owner erweitert den Auftrag ausdrücklich auf alle produktiven KI-Antworten,
+mit jeweils eigener freigegebener Creator-/Character- bzw. Workspace-Stimme.
+`src/lib/replyQualityPolicy.mjs` liefert gemeinsame Regeln, acht originale
+synthetische Miniaturen und einen konservativen Wiederholungswächter für die
+allgemeine Reply-Route (auch Copilot/Mobile) und ChatAdmin. Keine Übernahme
+privater ChatGPT-Einstellungen, kein fremder Chat-Import und kein dauerhaftes
+Modelltraining. Keine Aktivierung zurückgestellter Kanäle oder Creator-Pfade.
+
+Identische Varianten, sehr nahe lange Textkopien und bestimmte wiederkehrende
+Standard-Einstiege können höchstens einen Korrekturaufruf auslösen. Verglichen
+werden maximal sechs tatsächliche ausgehende Antworten im autorisierten,
+ans Modell übergebenen Verlauf, keine ungenutzten Entwürfe. Neueste vollständige
+CRM-Beiträge haben innerhalb des bestehenden Kontextbudgets Vorrang.
+
+Jeder tatsächlich gestartete Provideraufruf erhält Usage und benötigt einen
+Slot des bestehenden Ratenlimits. Beide Versuche teilen das ursprüngliche
+Provider-Zeitbudget; Kontext plus Korrekturfeedback bleibt unter dem bisherigen
+Zeichenlimit. Nach erneutem Qualitätsfehler keine Freigabe/Persistenz und kein
+Fanlernen aus der verworfenen Generation. Zugriff, Creator-Kontext, ChatAdmin-
+Abschlusszustand, Preisverträge und manuelle Versandgrenze bleiben verbindlich.
+Normale Aufrufe benötigen einen, Korrekturen höchstens zwei Provideraufrufe.
+
+Das ist ein technischer Mindestschutz, keine Garantie gegen semantisch ähnliche
+Antworten oder für Natürlichkeit. Neue Mehrturn-Modellantworten müssen nach
+separatem Deployment stilbezogen bewertet werden. Keine Modell-, Datenbank-,
+Entitlement- oder Stripe-Änderung. Details: `docs/AI_REPLY_QUALITY.md`.
 
 ## Administrativ gewährter Starter-CRM-Zugang — 15. September 2026
 

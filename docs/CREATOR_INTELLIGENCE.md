@@ -335,3 +335,14 @@ bisherige Character-Oberfläche ohne strukturierte Preisfelder funktionsfähig.
 Nach dem Apply werden dieselben Felder automatisch über den bestehenden
 Character-GET/POST/PATCH-Pfad gespeichert und erneut geladen. Ein normaler
 Deploy wendet das kontrollierte SQL niemals an.
+
+## Stilgebundene Antwortqualität — 15. Oktober 2026
+
+Der Owner-Auftrag gilt jetzt für ganz FanMind. Der produktive allgemeine Handler
+und ChatAdmin verwenden denselben Vertrag in [AI_REPLY_QUALITY.md](AI_REPLY_QUALITY.md).
+Alle Creator-Varianten bleiben in der jeweils freigegebenen Stimme. Beispiele
+und Korrekturfeedback ersetzen weder bestätigte Persona noch Memory, Artikel-
+Freigaben oder Strategie. Auch beim einzigen erlaubten Korrekturversuch gelten
+der bestehende Creator-Preisvertrag und die erneute Profilprüfung. Kein
+stilübergreifender Chat-Pool und kein automatisches Lernen aus Modell-Entwürfen.
+Diese Erweiterung aktiviert nicht den separat geschützten Creator-Rollout.

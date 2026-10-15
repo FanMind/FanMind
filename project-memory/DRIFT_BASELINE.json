@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-10-15",
-  "last_source_of_truth_review": "2026-10-15 Owner-directed dialogue-quality guidance: eight original synthetic teaching examples, confirmed-history repetition guidance and one Character voice. Independent R3 source review passed; context separation and price guards remain enforced. Additional input tokens, no extra provider call or migration. No runtime or conversational-quality acceptance inferred.",
+  "last_source_of_truth_review": "2026-10-15 Owner-expanded global reply quality: both productive providers, Creator-specific shared examples, conservative repetition guard and one bounded rewrite. Independent R4 source PASS, 200 tests and six route mutations detected. Every actual call consumes existing quota and usage; no schema/catalog/entitlement/Stripe change. No deployment or real-model quality acceptance.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "574f78d0e990473db777dccdee66e559d4302492",
+    "docs/SOURCE_OF_TRUTH.md": "bc5cab871d2d1849c108f11b7101ed184140a4ff",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

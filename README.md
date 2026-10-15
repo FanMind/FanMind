@@ -1,13 +1,13 @@
 # FanMind
 
-ChatAdmin-Schreibqualität (15.10.2026): Acht eigene synthetische Lehrbeispiele
-ergänzen die serverseitigen Anweisungen für konkrete Antworten, unterschiedliche
-Satzmuster und passende Artikelgespräche. Die Character-Stimme bleibt maßgeblich;
-Beispiele sind weder Fan-Fakten noch freigegebene Angebote. Kein dauerhaftes
-Modelltraining und keine Übernahme privater ChatGPT-Einstellungen. Der feste
-Zusatz benötigt Eingabetokens, keinen weiteren Modellaufruf. Technische Tests
-ersetzen weder Deployment noch eine manuelle Qualitätsbewertung neuer Dialoge.
-Details: [ChatAdmin-Gesprächsstil](docs/CHAT_ADMIN_REPLY_STYLE.md).
+Antwortqualität für ganz FanMind (15.10.2026): Allgemeines CRM, Creator,
+Copilot, Mobile-Backend und ChatAdmin teilen eine stilgebundene Grundlage mit
+originalen Beispielen und konservativem Wiederholungsschutz. Bei auffällig
+ähnlichen Vorschlägen ist höchstens eine kontrollierte Korrektur innerhalb
+desselben Zeitbudgets möglich; beide Aufrufe zählen zu Kosten und Ratenlimit.
+Freigegebene Creator-Stimme, Artikelregeln und manueller Versand bleiben
+maßgeblich. Technische Prüfungen sind keine Garantie für menschliche Sprache
+und keine Production-Abnahme. [Vertrag und Abnahme](docs/AI_REPLY_QUALITY.md).
 
 > **Billing-Zielmodell (30.09.2026):** FM-DEC-026 akzeptiert drei FanMind-Grundpakete zu **99 / 199 / 312 EUR pro Monat** mit monatlicher AI-Kapazität sowie **Schnell / Ausgewogen / Premium**. **Alle drei neuen Pakete haben 0 EUR Einrichtungs-/Setupgebühr.** Der Stripe-Live-Katalog für 99/199/312 wurde vorbereitet; historische 990-EUR-Setup-/Pilot-Produkte und der alte Starter-312-Katalogeintrag sind für Neugeschäft deaktiviert. Das frühere kundenbezogene KI-Plus/Ultra-Modell ist als Zielmodell superseded. **Noch nicht Production-aktiviert:** bestehende Legacy-Verträge bleiben bis zur kontrollierten Migration erhalten. Die Startbudgets sind festgelegt: **15 / 30 / 50 EUR** AI-Kostenbudget für die Pakete 99 / 199 / 312. Siehe `docs/operations/AI_CAPACITY_BILLING_V2.md`.
 

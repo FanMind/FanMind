@@ -1263,3 +1263,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence: focused technical regression plus independent source countercheck; real conversational quality remains unproven until separate new-dialogue evaluation.
 - Recovery: reviewed source revert; no external cleanup or customer-data change.
 - Independent source review: PASS; product-files SHA256 `40f6566eb3c52b5e0debaa0d0a45d16f1594987ee2da3b8387a612fa191f7b15`. Separate reviewer independently passed 84 focused tests. Disposable-copy omission of guidance made the actual-route test fail; an in-memory price-guard mutation was also detected. No provider calls or working-tree mutation by reviewer. CI and runtime/manual quality acceptance remain separate.
+
+## LOCK-FM-GLOBAL-REPLY-QUALITY-20261015
+- Task: FM-GLOBAL-REPLY-QUALITY-20261015
+- Status: RELEASED_SOURCE_COUNTERCHECKED
+- Holder: Codex, direct Owner expansion on 15 October 2026: natural, varied, Creator-specific replies throughout FanMind and ChatAdmin.
+- Risk: R4 source due to AI usage consumer; FM-CONTRACT-CREATOR-AI-001, FM-CONTRACT-CHATADMIN-AI-001, FM-CONTRACT-AI-BILLING-001 and their same-named FM-IGATE boundaries. Private-image storage/schema/entitlement/Stripe contracts unchanged.
+- Baseline: main 995ec6fb61fd26335bd39709e22ade0cdc1c8f02; extends existing unmerged PR #1328, previous head 663dc835a6e5d40086ae19caf5d5b6e4cc15b12a. No parallel current response-quality PR found.
+- Scope: common voice-aware examples, conservative repetition gate, one bounded rewrite in both productive reply routes, retained recent complete CRM turns, actual-attempt usage and rate limits, user notice, synthetic regressions and directly related docs. No live data/provider call, migration, rollout activation or workflow change.
+- Recovery: reviewed source revert. No external cleanup or customer-data mutation; incurred provider costs/usage are not undone. Technical tests/source review are not live quality or production evidence.
+- Independent R4 source review PASS; 19 product/test files aggregate SHA256 `0fd7e626927767016fa7828409e55587bdd2fc5150da630341dc5b413b08ee29`. Reviewer independently passed 200 tests and detected all six in-memory actual-route mutations (quality bypass, retry quota bypass and retry usage omission in both handlers). No provider invocation or reviewer file writes. Build/lint/truth passed locally; four existing lint warnings remain. Exact-head CI and clean-checkout migration tests remain separate. God Mode conservative baseline remains BLOCK; no runtime or model-quality acceptance is claimed.
