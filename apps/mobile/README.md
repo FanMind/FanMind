@@ -406,3 +406,15 @@ Die Produkt- und Release-Checkliste für diese Schritte steht in
 `docs/mobile/STORE_LISTING.md`, die portalnahe Datenschutzvorlage in
 `docs/mobile/STORE_PRIVACY_DECLARATIONS.md`; das Apple-Handoff steht in
 `docs/mobile/APP_STORE_HANDOFF.md`.
+
+## SDK-57-Patchabgleich — 15. Oktober 2026
+
+Der Mobile-Pflichtcheck des globalen Antwortqualitäts-PRs erkannte sieben
+veraltete Expo-Patchstände. Aktualisiert sind Expo 57.0.29, Constants 57.0.22,
+Dev Client 57.0.20, Linking 57.0.13, Notifications 57.0.23, Router 57.0.27
+und Splash Screen 57.0.10 einschließlich der npm-aufgelösten transitiven
+Abhängigkeiten. SDK 57, React 19.2.3, React Native 0.86.3, App-Identitäten,
+EAS-Profile und Berechtigungen bleiben unverändert. Die strikten Versionschecks
+für Dev Client/Splash wurden auf diese Stände abgeglichen, nicht abgeschaltet.
+Typecheck, Doctor, Store-/FCM-/Boundary-Checks und lokale Plattform-Bundles sind
+technische Vorbereitung; keine signierte App oder Store-Veröffentlichung.
