@@ -18,14 +18,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
 - Pushes and merges to `main` do not trigger Production deployment.
-- The remaining manual workflow is intentionally sealed: its only reachable GitHub-hosted job fails, while the preserved Production job has a literal `if: false`.
-- No usable Production release or rollback controller exists in this transition.
+- PR #1319 restored the manual Production release workflow on 2026-10-14. It requires the Owner, protected current main, exact reviewed commit, completed checks, expected current live release and the protected `production` environment.
+- Deployment uses the isolated build/switch/rollback path; the legacy in-place path remains disabled. Audit snapshot: `project-memory/MASTER_REALITY_CHECK_20261015.md`. This description grants no authorization to dispatch or deploy.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-The preserved, currently unreachable Production job contains the prior Exoscale deployment sequence:
+The manual Production job uses the existing Exoscale isolated-release sequence, with additional exact-reviewed-commit and expected-live-release guards in the current workflow:
 
 ```bash
 cd /var/www/fanmind
