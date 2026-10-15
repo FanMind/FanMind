@@ -99,13 +99,13 @@ Advisor-Erklärungen: [RLS ohne Policy](https://supabase.com/docs/guides/databas
 
 **Lösung:** im bestehenden FM-AI-001/FM-CR-052 exakt den Grant-/Reserve-Policyvertrag korrigieren; echte PostgreSQL-17-Installation und Aufruf prüfen, danach Concurrency, Freeze zwischen App-Read und RPC, Revision, Tenant, Included/Purchased-Split, Periodenende, Duplicate/Conflict, Missing Usage, Timeout, Over-Reservation, Reconcile und Release testen. Erst danach separate geschützte Staging-Abnahme. Keine generische Migration, kein unveränderter APPLY.
 
-### D2 Capacity-Tests fehlen im erforderlichen CI-Pfad
+### D2 Capacity nur indirekt erfasst; echter PostgreSQL-Lifecycle fehlt
 
-`tests/ai-capacity-policy.cases.mjs` (15 Fälle) und `tests/ai-capacity-reserve-settle.cases.mjs` (10 Fälle) sind nicht im package.json-Skriptgraphen referenziert. `tests/test-suite-coverage.test.mjs` inventarisiert ausschließlich `.test.mjs`. Das aktuelle PG17-Roundtrip-Testmodul enthält keinen Capacity-Verweis.
+`tests/ai-capacity-policy.cases.mjs` (15 Fälle) und `tests/ai-capacity-reserve-settle.cases.mjs` (10 Fälle) werden auf dem geprüften main bereits indirekt von `tests/ai-cost-engine.test.mjs` importiert und laufen dadurch in Required CI. Die ursprüngliche Auditfassung hatte diese Importkante übersehen. `tests/test-suite-coverage.test.mjs` inventarisiert die `.cases.mjs`-Dateien nicht eigenständig. Das entscheidende Defizit ist der fehlende echte PostgreSQL-Compile-/RPC-Lifecycle; keine fehlende Ausführung der vorhandenen Texttests.
 
 Beide Dateien bestehen lokal, obwohl D1 im SQL steht: ihre SQL-Prüfungen sind Textmuster, kein Compile-/RPC-Lifecycle. Die 8 Top-up-Tests spiegeln heutige Konstanten und prüfen keine Route-/Datenbankereignisfolge. **Grüne allgemeine CI beweist diese Verträge daher nicht.**
 
-Lösung: bestehende Tests in Required CI aufnehmen und um echte DB-/Routennegative ergänzen. Kein Test nur für den Auditbericht.
+Lösung: bestehende Capacity-Tests explizit im Required-CI-Pfad erfassen und um echte DB-/Routennegative ergänzen. Kein Test nur für den Auditbericht.
 
 ### D3 Top-up-Einheiten und Zahlungs-/Refund-Lifecycle unvollständig
 
