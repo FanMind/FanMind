@@ -1,5 +1,22 @@
 # FanMind Source of Truth
 
+## ChatAdmin-Lehrbeispiele — 15. Oktober 2026
+
+Owner-beauftragte Gesprächsführung: Acht originale synthetische Miniaturen in
+`src/lib/chatAdminDialogueGuidance.mjs` ergänzen die serverseitigen
+Antwortanweisungen. Ziel sind konkrete Antworten und weniger wiederholte
+Einstiege, Satzmuster und Verkaufsfragen anhand bestätigter Gesprächseinträge.
+Alle drei Vorschläge bleiben im selben Character-Stil und bei denselben
+belegten Fakten. Die Beispiele übertragen keine Fan-/Artikel-Fakten, Preise
+oder privaten ChatGPT-Einstellungen und überschreiben keine Character-Daten.
+Das ist Kontext-Anleitung je Anfrage, kein dauerhaftes Modelltraining.
+Der feste Zusatz unter 6.000 Zeichen erhöht Eingabetokens, aber nicht die Zahl
+der Provideraufrufe. Preiswächter, Gedächtnisbindung, Abschluss-Pause und manuelle
+Versandgrenze bleiben wirksam. Lokale synthetische Vertragsprüfungen sind keine
+Production- oder Qualitätsabnahme; neue Mehrturn-Modellantworten sind nach
+separatem Deployment manuell zu bewerten. Details und Rechercheabgrenzung:
+`docs/CHAT_ADMIN_REPLY_STYLE.md`.
+
 ## Administrativ gewährter Starter-CRM-Zugang — 15. September 2026
 
 Ein bestätigtes Registrierungskonto kann durch einen Platform-Admin einen

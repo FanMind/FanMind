@@ -1252,3 +1252,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert; preserve Fan notes and Character offers.
 
 - Independent Guardian: source PASS on 7c57c4b86a5040444da649ec730c46a9c4312a7e / tree 0894e8efd322813fef8ea32be46703b9840bf570; independently reran all 63 focused tests. No blocking product-code findings; actual model outputs and exact-head CI remain required.
+
+## LOCK-FM-CHATADMIN-DIALOGUE-QUALITY-20261015
+- Task: FM-CHATADMIN-DIALOGUE-QUALITY-20261015
+- Status: RELEASED_SOURCE_COUNTERCHECKED
+- Holder: Codex, direct Owner request on 15 October 2026 to teach better, varied responses using the researched structures and original examples.
+- Risk: R3; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001. Consumer: existing model request and authorized reply route; JSON/schema, authority and persistence contracts unchanged.
+- Baseline: main `995ec6fb61fd26335bd39709e22ade0cdc1c8f02`; no overlapping current source PR found. Historical live-repair lock refers to already merged #1322 and is not a new execution order.
+- Scope: one fixed server-side synthetic teaching block, existing policy import, real-route regression and reader documentation. No saved Character/Fan mutation, private chat corpus, workflow edit, provider invocation, deployment or migration.
+- Evidence: focused technical regression plus independent source countercheck; real conversational quality remains unproven until separate new-dialogue evaluation.
+- Recovery: reviewed source revert; no external cleanup or customer-data change.
+- Independent source review: PASS; product-files SHA256 `40f6566eb3c52b5e0debaa0d0a45d16f1594987ee2da3b8387a612fa191f7b15`. Separate reviewer independently passed 84 focused tests. Disposable-copy omission of guidance made the actual-route test fail; an in-memory price-guard mutation was also detected. No provider calls or working-tree mutation by reviewer. CI and runtime/manual quality acceptance remain separate.

@@ -6,6 +6,7 @@ import ts from "typescript";
 import * as modelPolicy from "../src/lib/chatAdminModelPolicy.mjs";
 import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import * as chatPolicy from "../src/lib/chatAdminPolicy.mjs";
+import { CHAT_ADMIN_DIALOGUE_GUIDANCE } from "../src/lib/chatAdminDialogueGuidance.mjs";
 import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
 import { WorkspaceAuthorizationError } from "../src/lib/workspaceAuthorizationPolicy.mjs";
 
@@ -133,6 +134,25 @@ function harness(change) {
   });
   return { calls, route: exports.POST, request };
 }
+
+test("real reply route includes bounded teaching examples without turning them into fan or article data", async () => {
+  const h = harness();
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Danke für die netten Fotos."));
+  assert.equal(response.status, 200);
+  assert.equal(h.calls.provider, 1, "guidance does not add a second provider request");
+  const [system, user] = h.calls.providerBody.input;
+  assert.equal(system.role, "system");
+  assert.ok(system.content.includes(CHAT_ADMIN_DIALOGUE_GUIDANCE));
+  assert.ok(CHAT_ADMIN_DIALOGUE_GUIDANCE.length < 6_000, "fixed input overhead stays bounded");
+  const context = JSON.parse(user.content);
+  assert.equal(context.sales_playbook.requested_offer, null, "a teaching offer never releases a real offer");
+  assert.equal(context.fan.id, fanId);
+  assert.equal(context.style.writing, "kurz");
+  assert.equal(context.rules.examples.length, 0, "the stored Character examples are not overwritten");
+  assert.deepEqual(context.conversation.recent_messages.map(message => message.content), ["Unser letzter Insider"]);
+  assert.doesNotMatch(user.content, /Stadtaufnahmen|bestandenen Prüfung|UNUSED MODEL DRAFT/u);
+  assert.throws(() => chatPolicy.assertChatAdminReplySemantics(["Für 25 EUR.", "Hallo", "Danke"], context.incoming_message, null), /reply_price_not_permitted/u);
+});
 
 test("actual ChatAdmin route returns exactly three suggestions bound to the current authorized Character", async () => {
   const h = harness(); const response = await h.route(h.request()); const body = await response.json();

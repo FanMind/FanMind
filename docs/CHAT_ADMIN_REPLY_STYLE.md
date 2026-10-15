@@ -1,5 +1,45 @@
 # ChatAdmin: natürliche Antworten mit gebundenem Kontext
 
+## Lehrbeispiele und Abwechslung — 15. Oktober 2026
+
+Der Owner hat eigene Lehrbeispiele und bessere Gesprächsführung beauftragt.
+`chatAdminDialogueGuidance.mjs` ergänzt die serverseitigen Antwortanweisungen
+um acht eigens geschriebene, synthetische Miniaturen: Kompliment, konkreter
+Anschluss, Erinnerung, Artikelinhalt, fehlende Details, Kaufabsage,
+Wiederholungs-Kritik und Anrufgrenze. Das sind keine echten Fan-Verläufe und
+keine übernommenen ChatGPT-Einstellungen oder privaten Modellanweisungen.
+Sie dienen bei jeder Anfrage als begrenzte Orientierung, nicht als dauerhaftes
+Modelltraining oder automatisch gelerntes Character-Wissen.
+
+Die KI soll die letzten bestätigten Antworten auf wiederkehrende Einstiege,
+Satzmuster und Schlussfragen prüfen und die neue Frage konkret beantworten.
+Die drei Varianten sollen sich in Satzbau und Schwerpunkt unterscheiden,
+bei gleichen belegten Fakten und derselben Character-Stimme. Notwendige
+Sachinformationen dürfen wiederholt werden; Abwechslung darf keine Fakten
+erfinden. Eine direkte Kaufanfrage braucht keine weitere Kennenlern-Runde.
+Ein Nein beendet das Angebot; ein anderes Angebot benötigt eigene Freigabe.
+
+Die Miniaturen stehen ausschließlich in den serverseitigen Anweisungen.
+Sie erweitern weder Fanwissen noch Artikeldaten, verändern keine gespeicherten
+Character-Beispiele und geben keinen Preis frei. Der feste Zusatz bleibt unter
+6.000 Zeichen; es gibt keinen zusätzlichen Provideraufruf, aber mehr Eingabetokens
+pro Anfrage. Tatsächliche Provider-Usage bleibt im vorhandenen Kostenpfad.
+
+Recherche als Strukturvergleich, nicht als kopierter Trainingskorpus:
+[OnModel](https://onmodelstudios.com/blog/onlyfans-chatting-scripts) kennzeichnet
+seine Beispiele ausdrücklich als geschriebene Demonstrationen;
+[Anlora](https://meetanlora.com/onlyfans-chat-scripts) stellt Szenario-Vorlagen vor.
+Deren Verkaufserfolge sind hier nicht unabhängig belegt. Private Chats und
+echte Fan-Testverläufe gehören nicht in Git.
+
+Die Route wird mit dem echten Request-Builder und einem synthetischen Provider
+auf Einbindung, genau einen Aufruf, unveränderte Kontexttrennung und die weiter
+wirksame Preissperre geprüft. Das beweist keine semantische Modellqualität.
+Nach einem gesonderten Deployment bleiben neue, nicht als Beispiele verwendete
+Mehrturn-Dialoge manuell zu bewerten: direkte Antworten, passende Artikel,
+Erinnerung, Wiederholungen und konsequentes Gesprächsende. Kein automatischer
+Versand, kein Datenbank-/Schemawechsel und keine Aktivierung anderer KI-Pfade.
+
 Ein kurzes Foto-Kompliment wurde bisher durch bloße Medien-Schlüsselwörter einem
 Verkaufsangebot zugeordnet. Außerdem enthielt der KI-Verlauf die drei unbenutzten
 Alternativen früherer Generationen. Das konnte Verkaufsdruck und Wiederholungen
