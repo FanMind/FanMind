@@ -1239,19 +1239,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014
 - Task: FM-CHATADMIN-LIVE-REPAIR-20261014
-- Status: ACTIVE_SOURCE_REPAIR
-- Holder: Codex, direct Owner voice request.
-- Risk: R3 source; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-STORAGE-001.
-- Baseline: d166c04d78e43b9e5050e31ce2e9e9c3b2276094; draft PR #1322.
-- Scope: visible disabled pricing on failed readiness, natural reply guidance, bounded memory explanation and focused browser regression. No new sale categories.
-- Evidence: local build/lint/truth, 63 policy/API/knowledge/offer tests and God Mode checks passed. Local Chromium download was corrupt; PR CI owns real component browser tests. Independent R3 countercheck and exact-head CI remain required before merge.
-- Runtime finding and repair: authenticated Production editor omitted price controls; read-only catalog confirmed both sales_playbook and its constraint ABSENT. After parent/RLS postflight and fresh succeeded uploaded DB/full backups plus verification, direct Owner-authorized Supabase execution applied only the unchanged checksum-pinned SQL (01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421). Full postflight passed; Character count stayed 1 and offers remain empty. Authenticated reload now shows all four enabled price sections. No prior migration, existing content, grant or policy was changed. Actual price save/reload remains OPEN pending Owner-provided amounts or separate synthetic acceptance.
-- Coordination: no changes to retained Staging harness/workflow or former orchestration tasks. No parallel live writing test.
-- Source correction: avoid unnecessary canonical Product Truth drift; detailed bounded behavior remains in README and docs/CHAT_ADMIN_REPLY_STYLE.md.
-- Open: true price save/reload with Owner-provided amounts and fresh multi-turn AI/memory acceptance after code deployment. The Production schema prerequisite is closed by the independently verified runtime repair; the source PR is not itself a schema repair or live quality proof.
-- Recovery: reviewed source revert; preserve Fan notes and Character offers.
-
-- Independent Guardian: source PASS on 7c57c4b86a5040444da649ec730c46a9c4312a7e / tree 0894e8efd322813fef8ea32be46703b9840bf570; independently reran all 63 focused tests. No blocking product-code findings; actual model outputs and exact-head CI remain required.
+- Status: RELEASED_TO_TEST_MODE
+- Holder: none; no active Builder worker.
+- Risk: R3 historical source/runtime repair; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-STORAGE-001.
+- Source closeout: the dialogue/offer/source follow-ups have converged through merged PRs #1326, #1327 and #1328; current main `dc269fd80407bfa2a3e1885e19e432b0ebaed68e` includes article descriptions, bounded sales/closure behavior and the shared voice-aware repetition/quality repair.
+- Runtime prerequisite already closed: the independently verified Owner-authorized Production schema repair restored the expected pricing sections without changing prior content, grants or policies.
+- Test-mode rule: ChatAdmin is now feature-frozen by default. Real Owner testing may continue to collect concrete conversation, pricing, memory and reply-quality observations. A new source task is opened only for a reproducible defect, a clearly approved improvement or a regression against the accepted manual/no-auto-send contract.
+- Remaining observation, not an active worker: actual price save/reload with Owner-provided values and fresh multi-turn model quality remain useful live checks. Their absence does not justify speculative feature work and does not reserve a Builder slot.
+- External boundary: no Social/provider automation, public/customer rollout, auto-send or new company-dependent integration is implied. Existing capability and manual-send boundaries remain unchanged.
+- Recovery: any future regression uses a new bounded task and reviewed source revert where appropriate; preserve Fan notes, offers and confirmed history.
 
 ## LOCK-FM-CHATADMIN-DIALOGUE-QUALITY-20261015
 - Task: FM-CHATADMIN-DIALOGUE-QUALITY-20261015
