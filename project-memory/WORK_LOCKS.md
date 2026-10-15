@@ -1252,3 +1252,25 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert; preserve Fan notes and Character offers.
 
 - Independent Guardian: source PASS on 7c57c4b86a5040444da649ec730c46a9c4312a7e / tree 0894e8efd322813fef8ea32be46703b9840bf570; independently reran all 63 focused tests. No blocking product-code findings; actual model outputs and exact-head CI remain required.
+
+## LOCK-FM-CHATADMIN-DIALOGUE-QUALITY-20261015
+- Task: FM-CHATADMIN-DIALOGUE-QUALITY-20261015
+- Status: RELEASED_SOURCE_COUNTERCHECKED
+- Holder: Codex, direct Owner request on 15 October 2026 to teach better, varied responses using the researched structures and original examples.
+- Risk: R3; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001. Consumer: existing model request and authorized reply route; JSON/schema, authority and persistence contracts unchanged.
+- Baseline: main `995ec6fb61fd26335bd39709e22ade0cdc1c8f02`; no overlapping current source PR found. Historical live-repair lock refers to already merged #1322 and is not a new execution order.
+- Scope: one fixed server-side synthetic teaching block, existing policy import, real-route regression and reader documentation. No saved Character/Fan mutation, private chat corpus, workflow edit, provider invocation, deployment or migration.
+- Evidence: focused technical regression plus independent source countercheck; real conversational quality remains unproven until separate new-dialogue evaluation.
+- Recovery: reviewed source revert; no external cleanup or customer-data change.
+- Independent source review: PASS; product-files SHA256 `40f6566eb3c52b5e0debaa0d0a45d16f1594987ee2da3b8387a612fa191f7b15`. Separate reviewer independently passed 84 focused tests. Disposable-copy omission of guidance made the actual-route test fail; an in-memory price-guard mutation was also detected. No provider calls or working-tree mutation by reviewer. CI and runtime/manual quality acceptance remain separate.
+
+## LOCK-FM-GLOBAL-REPLY-QUALITY-20261015
+- Task: FM-GLOBAL-REPLY-QUALITY-20261015
+- Status: RELEASED_SOURCE_COUNTERCHECKED
+- Holder: Codex, direct Owner expansion on 15 October 2026: natural, varied, Creator-specific replies throughout FanMind and ChatAdmin.
+- Risk: R4 source due to AI usage consumer; FM-CONTRACT-CREATOR-AI-001, FM-CONTRACT-CHATADMIN-AI-001, FM-CONTRACT-AI-BILLING-001 and their same-named FM-IGATE boundaries. Private-image storage/schema/entitlement/Stripe contracts unchanged.
+- Baseline: main 995ec6fb61fd26335bd39709e22ade0cdc1c8f02; extends existing unmerged PR #1328, previous head 663dc835a6e5d40086ae19caf5d5b6e4cc15b12a. No parallel current response-quality PR found.
+- Scope: common voice-aware examples, conservative repetition gate, one bounded rewrite in both productive reply routes, retained recent complete CRM turns, actual-attempt usage and rate limits, user notice, synthetic regressions and directly related docs. No live data/provider call, migration, rollout activation or workflow change.
+- Recovery: reviewed source revert. No external cleanup or customer-data mutation; incurred provider costs/usage are not undone. Technical tests/source review are not live quality or production evidence.
+- Independent R4 source review PASS; 19 product/test files aggregate SHA256 `0fd7e626927767016fa7828409e55587bdd2fc5150da630341dc5b413b08ee29`. Reviewer independently passed 200 tests and detected all six in-memory actual-route mutations (quality bypass, retry quota bypass and retry usage omission in both handlers). No provider invocation or reviewer file writes. Build/lint/truth passed locally; four existing lint warnings remain. Exact-head CI and clean-checkout migration tests remain separate. God Mode conservative baseline remains BLOCK; no runtime or model-quality acceptance is claimed.
+- Mobile CI prerequisite follow-up: head d2ad78e hit Expo Doctor's newer required SDK57 patch versions (job 116305511778), unrelated to response behavior. Seven direct SDK57 dependencies and npm-resolved transitives updated; 61 lockfile versions include allowed-range minor updates, no package nodes added/removed. Strict DevClient/Splash assertions advanced without disabling checks. Independent R4 SOURCE PASS, six-file aggregate `6c708b8d9470d550ea91ac45cb74f096994509dcb8ed3e63de9aac5b32d6048c`; 69 independent mobile tests, typecheck, FCM/store/boundary verified. Parent Doctor20/20, Android/iOS exports and native33-file prebuild pass. React/RN/SDK major, identities, EAS and permissions unchanged. No signed release or productive activation. Clean pre-follow-up Operations run passed 1833 tests, 6 skipped for separate database facilities; exact new-head CI remains required.

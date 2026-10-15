@@ -1,9 +1,12 @@
+import { FANMIND_REPLY_QUALITY_INSTRUCTIONS, ReplyQualityError, fitRecentDialogueContext, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { loadCreatorReplyContext, type CreatorContext } from "@/lib/creatorIntelligence";
 import { CREATOR_SYSTEM_INSTRUCTIONS, validateCreatorReplyOptions } from "@/lib/creatorIntelligencePolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAiTierConfig } from "@/config/aiTiers.mjs";
 import {
   AI_REPLY_OUTPUT_TOKEN_LIMIT,
+  AI_REPLY_INPUT_CHAR_LIMIT,
+  getReplyConversationContextCharLimit,
   AI_REPLY_RESPONSE_MODE_CHAR_LIMIT,
   buildBoundedReplySuggestionContext,
 } from "@/lib/aiExecutionPolicy.mjs";
@@ -356,7 +359,7 @@ export async function POST(request: NextRequest) {
     messages: messagesResult.messages,
     fanProfile: fanProfileResult.profile,
     voiceProfile: voiceProfileResult.profile,
-  });
+  }, getReplyConversationContextCharLimit(contextMessageLimit));
   let fanMemory = "";
   let conversationSummary = "";
   if (creatorContext) {
@@ -436,88 +439,66 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const { context: contactContext, inputChars } = boundedContext;
 
+  const systemPrompt = buildSystemPrompt(creatorContext !== null);
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(AI_TIMEOUT_MS)]);
+  // Compare only actual outbound text retained in the model's bounded context.
+  const recentReplies = messagesResult.messages
+    .filter(message => message.direction === "outbound")
+    .map(message => (message.content || message.original_text_excerpt || "").trim())
+    .filter(text => text && contactContext.conversationContext.includes(text)).slice(-6);
+  let providerAttemptStarted = false;
   try {
-    const openAiResponse = await fetch(OPENAI_RESPONSES_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    const generated = await runReplyQualityGate({
+      inputChars, inputLimit: AI_REPLY_INPUT_CHAR_LIMIT, recentReplies,
+      generate: async feedback => {
+        providerAttemptStarted = false;
+        signal.throwIfAborted();
+        if (feedback) {
+          const current = await requireContactInActiveAuthorizedWorkspace(contactId, accessToken);
+          if (current.workspace.id !== workspace.id || current.user.id !== user.id || current.contact.id !== contact.id || isWorkspaceArchivedAfterSubscriptionEnd(current.workspace)) throw new Error("reply_context_changed");
+          const currentCreator = await loadCreatorReplyContext(workspace.id, contact.id, accessToken);
+          if (JSON.stringify(currentCreator) !== JSON.stringify(creatorContext)) throw new Error("creator_context_changed");
+          const retryLimit = await consumeSharedRateLimit({ scope: "ai_reply_user_ip", subject: `${user.id}:${getClientIp(request)}`, maxRequests: AI_RATE_LIMIT_MAX, windowMs: AI_RATE_LIMIT_WINDOW_MS });
+          if (!retryLimit.allowed) throw Object.assign(new Error("rate_limited"), { publicStatus: 429 });
+        }
+        signal.throwIfAborted();
+        providerAttemptStarted = true;
+        const openAiResponse = await fetch(OPENAI_RESPONSES_URL, {
+          method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, store: false, max_output_tokens: AI_REPLY_OUTPUT_TOKEN_LIMIT,
+            input: [{ role: "system", content: systemPrompt }, { role: "user", content: JSON.stringify(contactContext) },
+              ...(feedback ? [{ role: "user", content: feedback }] : [])],
+            text: { format: { type: "json_schema", name: "fanmind_reply_suggestions", strict: true, schema: replySuggestionsSchema } },
+          }), signal,
+        });
+        return { body: await openAiResponse.json().catch(() => null) as OpenAiResponse | null,
+          ok: openAiResponse.ok, status: openAiResponse.status, suggestions: null as ReplySuggestionsResponse | null };
       },
-      body: JSON.stringify({
-        model,
-        store: false,
-        max_output_tokens: AI_REPLY_OUTPUT_TOKEN_LIMIT,
-        input: [
-          {
-            role: "system",
-            content: buildSystemPrompt(creatorContext !== null),
-          },
-          {
-            role: "user",
-            content: JSON.stringify(contactContext),
-          },
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "fanmind_reply_suggestions",
-            strict: true,
-            schema: replySuggestionsSchema,
-          },
-        },
-      }),
-      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      readReplies: result => {
+        if (!result.ok) throw Object.assign(new Error("provider_error"), { publicStatus: result.status >= 500 ? 502 : 400, usageCode: String(result.status) });
+        const text = extractOutputText(result.body);
+        if (!text) throw Object.assign(new Error("missing_output"), { publicStatus: 502, usageCode: "missing_output" });
+        const suggestions = JSON.parse(text) as ReplySuggestionsResponse;
+        if (creatorContext) suggestions.reply_options = validateCreatorReplyOptions(suggestions.reply_options, creatorContext);
+        result.suggestions = suggestions;
+        return suggestions.reply_options?.map(option => option.text);
+      },
+      onAttempt: async ({ result, error, feedback }) => {
+        if (!providerAttemptStarted) return;
+        providerAttemptStarted = false;
+        const responseBody = result?.body;
+        await recordAiUsageEvent({ workspaceId: workspace.id, userId: user.id, contactId: contact.id,
+          feature: "reply_suggestions", model, inputChars: inputChars + systemPrompt.length + (feedback?.length ?? 0),
+          outputChars: extractOutputText(result?.body ?? null).length,
+          status: error ? "error" : "ok", errorCode: error ? replyAttemptErrorCode(error) : undefined,
+          latencyMs: Date.now() - startedAt, sourceRoute: "/api/ai/reply-suggestions", providerUsage: responseBody?.usage,
+        });
+      },
     });
-
-    const responseBody = (await openAiResponse.json().catch(() => null)) as
-      | OpenAiResponse
-      | null;
-
-    if (!openAiResponse.ok) {
-      await recordAiUsageEvent({
-        workspaceId: workspace.id,
-        userId: user.id,
-        contactId: contact.id,
-        feature: "reply_suggestions",
-        model,
-        inputChars,
-        outputChars: 0,
-        status: "error",
-        errorCode: String(openAiResponse.status),
-        latencyMs: Date.now() - startedAt,
-        sourceRoute: "/api/ai/reply-suggestions",
-        providerUsage: responseBody?.usage,
-      });
-      return jsonError(
-        "Antwortvorschläge konnten gerade nicht erzeugt werden.",
-        openAiResponse.status >= 500 ? 502 : 400,
-      );
-    }
-
-    const outputText = extractOutputText(responseBody);
-
-    if (!outputText) {
-      await recordAiUsageEvent({
-        workspaceId: workspace.id,
-        userId: user.id,
-        contactId: contact.id,
-        feature: "reply_suggestions",
-        model,
-        inputChars,
-        outputChars: 0,
-        status: "error",
-        errorCode: "missing_output",
-        latencyMs: Date.now() - startedAt,
-        sourceRoute: "/api/ai/reply-suggestions",
-        providerUsage: responseBody?.usage,
-      });
-      return jsonError(
-        "Antwortvorschläge konnten gerade nicht erzeugt werden.",
-        502,
-      );
-    }
-
-    const suggestions = JSON.parse(outputText) as ReplySuggestionsResponse;
+    const suggestions = generated.suggestions!;
+    const finalAuthority = await requireContactInActiveAuthorizedWorkspace(contactId, accessToken);
+    if (finalAuthority.workspace.id !== workspace.id || finalAuthority.user.id !== user.id || finalAuthority.contact.id !== contact.id || isWorkspaceArchivedAfterSubscriptionEnd(finalAuthority.workspace)) throw new Error("reply_context_changed");
+    signal.throwIfAborted();
 
     if (creatorContext) {
       const currentCreator = await loadCreatorReplyContext(workspace.id, contact.id, accessToken);
@@ -528,45 +509,12 @@ export async function POST(request: NextRequest) {
       suggestions.creator_context = { name: creatorContext.persona.displayName, revision: creatorContext.revision, strategy: creatorContext.strategy };
     }
 
-    await recordAiUsageEvent({
-      workspaceId: workspace.id,
-      userId: user.id,
-      contactId: contact.id,
-      feature: "reply_suggestions",
-      model,
-      inputChars,
-      outputChars: outputText.length,
-      status: "ok",
-      latencyMs: Date.now() - startedAt,
-      sourceRoute: "/api/ai/reply-suggestions",
-      providerUsage: responseBody?.usage,
-    });
-
     return NextResponse.json(normalizeSuggestions(suggestions));
   } catch (error) {
-    await recordAiUsageEvent({
-      workspaceId: workspace.id,
-      userId: user.id,
-      contactId: contact.id,
-      feature: "reply_suggestions",
-      model,
-      inputChars,
-      outputChars: 0,
-      status: "error",
-      errorCode:
-        error instanceof SyntaxError
-          ? "invalid_json"
-          : error instanceof Error &&
-              (error.name === "AbortError" || error.name === "TimeoutError")
-            ? "timeout"
-            : "exception",
-      latencyMs: Date.now() - startedAt,
-      sourceRoute: "/api/ai/reply-suggestions",
-    });
-    return jsonError(
-      "Antwortvorschläge konnten gerade nicht erzeugt werden.",
-      500,
-    );
+    if (error instanceof ReplyQualityError) return jsonError("Die Vorschläge waren zu ähnlich. Bitte erneut erzeugen oder eine eigene Antwort schreiben.", 502);
+    return jsonError("Antwortvorschläge konnten gerade nicht erzeugt werden.",
+      error && typeof error === "object" && "publicStatus" in error && typeof error.publicStatus === "number" ? error.publicStatus : 500);
+
   }
 }
 
@@ -591,6 +539,7 @@ function buildSystemPrompt(hasCreator = false): string {
     "FanMind hat keine automatische Sendefunktion. Der Mensch prüft und sendet final selbst.",
     "Wähle die Sprache anhand von contact.language. Wenn keine klare Sprache vorhanden ist, antworte auf Deutsch.",
     "Stil: menschlich, professionell, hilfreich, nicht aufdringlich und ohne psychologische Manipulation.",
+    FANMIND_REPLY_QUALITY_INSTRUCTIONS,
     "Verkaufsorientierte Varianten dürfen nur vorsichtig sein und keinen künstlichen Zeitdruck erzeugen.",
     "suggested_memory enthält nur eine langfristig nützliche, im Kontext belegte Information; andernfalls bleibt content leer.",
     "suggested_followup wird nur empfohlen, wenn aus dem Verlauf ein nachvollziehbarer nächster Schritt entsteht.",
@@ -647,7 +596,7 @@ function buildStoredConversationContext(input: {
   messages: ConversationMessageRow[];
   fanProfile: ContactAiProfileRow | null;
   voiceProfile: WorkspaceVoiceProfileRow | null;
-}): string {
+}, maximumChars: number): string {
   const profileContext = [
     input.fanProfile
       ? `Fan-Profil: Sprache ${input.fanProfile.language ?? "unbekannt"}, Ton ${input.fanProfile.tone ?? "im Aufbau"}, Quellen ${input.fanProfile.source_message_count ?? 0}.`
@@ -658,7 +607,7 @@ function buildStoredConversationContext(input: {
   ]
     .filter(Boolean)
     .join("\n");
-  const messageContext = input.messages
+  const messageLines = input.messages
     .map((message) => {
       const text = (
         message.content ||
@@ -672,11 +621,18 @@ function buildStoredConversationContext(input: {
       const channel = message.source_platform ?? "manuell";
       return `${timestamp} · ${direction} · ${channel}: ${text}`;
     })
-    .filter(Boolean)
-    .join("\n");
-  return [profileContext, messageContext].filter(Boolean).join("\n\n");
+    .filter(Boolean);
+  return fitRecentDialogueContext(profileContext, messageLines, maximumChars);
 }
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
+}
+
+function replyAttemptErrorCode(error: unknown): string {
+  if (error instanceof ReplyQualityError) return error.code;
+  if (error instanceof SyntaxError) return "invalid_json";
+  if (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) return "timeout";
+  if (error && typeof error === "object" && "usageCode" in error && typeof error.usageCode === "string") return error.usageCode;
+  return "reply_validation_failed";
 }

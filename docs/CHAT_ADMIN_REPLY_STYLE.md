@@ -1,5 +1,23 @@
 # ChatAdmin: natürliche Antworten mit gebundenem Kontext
 
+## Gemeinsame Antwortqualität — 15. Oktober 2026
+
+Der Owner hat den ursprünglichen Lehrbeispiel-Auftrag auf ganz FanMind erweitert.
+ChatAdmin verwendet deshalb dieselbe stilgebundene Grundlage und denselben
+konservativen Wiederholungsschutz wie CRM, Creator, Copilot und Mobile-Backend.
+Die frühere ChatAdmin-Beispieldatei ist ein Kompatibilitätsalias. Der vollständige
+Vertrag, Rechercheabgrenzung, Kosten, Korrekturversuch und Abnahme stehen in
+[AI_REPLY_QUALITY.md](AI_REPLY_QUALITY.md).
+
+Verglichen werden nur tatsächlich im gebundenen Modellkontext enthaltene
+`confirmed_reply`-Texte. Ungenutzte Entwürfe sind keine Stil- oder Dialogquelle.
+Bei einem Qualitätsbefund höchstens ein Korrekturversuch, mit erneutem Zugriff-,
+Kontext-, Abschluss- und Ratenlimitcheck und demselben Provider-Zeitbudget.
+Beide gestarteten Versuche werden erfasst; bei erneutem Befund keine Generation
+persistieren oder aus der verworfenen Generation Fanwissen lernen. Preise und
+Character-Grenzen gelten bei jedem Versuch. Kein automatischer Versand und
+keine Änderung der gespeicherten Persona.
+
 Ein kurzes Foto-Kompliment wurde bisher durch bloße Medien-Schlüsselwörter einem
 Verkaufsangebot zugeordnet. Außerdem enthielt der KI-Verlauf die drei unbenutzten
 Alternativen früherer Generationen. Das konnte Verkaufsdruck und Wiederholungen

@@ -1,3 +1,4 @@
+import { ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
 import { assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext, ChatAdminPolicyError } from "@/lib/chatAdminPolicy.mjs";
@@ -11,7 +12,7 @@ import { getChatAdminModelProfile, buildChatAdminModelRequest, CHAT_ADMIN_MODEL_
 const URL="https://api.openai.com/v1/responses";
 export async function POST(request:NextRequest){
  if(!isTrustedFanMindMutationRequest(request))return NextResponse.json({error:"untrusted_origin"},{status:403});
- let workspaceId="",userId="",inputChars=0;let usageRecorded=false;let providerUsage:unknown;const model=getChatAdminModelProfile().model,started=Date.now();
+ let workspaceId="",userId="",inputChars=0;let usageRecorded=false;let providerAttemptStarted=false;let providerUsage:unknown;const model=getChatAdminModelProfile().model,started=Date.now();
  try{
   const fanMode=isChatAdminFanRuntimeEnabled();if(fanMode)requireChatAdminFanRuntime();const {workspace,user}=await requireChatAdminCapability();workspaceId=workspace.id;userId=user.id;
   const parsed=await readBoundedJsonRequest(request,16_000);if(!parsed.ok||!parsed.value||typeof parsed.value!=="object")return NextResponse.json({error:"invalid_body"},{status:400});
@@ -27,9 +28,53 @@ export async function POST(request:NextRequest){
   const previous=fanMode?await getChatAdminGeneration(workspace.id,character.id,fan!.id,conversation!.id,body.generation_id as string):[];if(previous.length){const inbound=previous.filter(message=>message.direction==="fan_inbound"),stored=previous.filter(message=>message.direction==="suggested_reply");if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());return NextResponse.json({memory_status:memoryStatus,replies:stored.map(message=>message.content),character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});}
   const limit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
   const key=process.env.OPENAI_API_KEY;if(!key)return NextResponse.json({error:"ai_unavailable"},{status:503});
-  const response=await fetch(URL,{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(buildChatAdminModelRequest(context)),signal:AbortSignal.any([request.signal,AbortSignal.timeout(CHAT_ADMIN_MODEL_TIMEOUT_MS)]),cache:"no-store"});
-  const payload=await response.json() as {output_text?:string;output?:Array<{content?:Array<{text?:string}>}>;usage?:unknown};providerUsage=payload.usage;if(!response.ok)throw new Error("provider_failed");const text=payload.output_text??payload.output?.flatMap(v=>v.content??[]).map(v=>v.text??"").join("")??"";const result=JSON.parse(text) as {replies:unknown};const replies=assertChatAdminReplySemantics(result.replies,body.incoming_message,requestedOffer);
-  await recordAiUsageEvent({workspaceId,userId,feature:"chat_admin_reply",model,inputChars,outputChars:replies.join("").length,status:"ok",latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage:payload.usage});usageRecorded=true;
+  const baseRequest=buildChatAdminModelRequest(context);
+  const signal=AbortSignal.any([request.signal,AbortSignal.timeout(CHAT_ADMIN_MODEL_TIMEOUT_MS)]);
+  const sentContext=JSON.parse(context) as {conversation?:{recent_messages?:Array<{direction:string;content:string}>}};
+  const recentReplies=(sentContext.conversation?.recent_messages??[]).filter(message=>message.direction==="confirmed_reply").map(message=>message.content).slice(-6);
+  const generated=await runReplyQualityGate({
+   inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies,
+   generate:async feedback=>{
+    providerAttemptStarted=false;
+    signal.throwIfAborted();
+    if(feedback){
+     const authority=await requireChatAdminCapability();
+     if(authority.workspace.id!==workspaceId||authority.user.id!==userId)throw new WorkspaceAuthorizationError("Kontext geändert","resource_forbidden");
+     const c=await getChatCharacter(workspaceId,character.id), f=fanMode?await getChatFan(workspaceId,c.id,fan!.id):null;
+     const conv=fanMode?await getChatConversation(workspaceId,c.id,f!.id,conversation!.id):null;
+     const messages=fanMode?await listRecentChatMessages(workspaceId,c.id,f!.id,conv!.id):[];
+     const confirmed=fanMode?await getLatestChatAdminConfirmedReply(workspaceId,c.id,f!.id,conv!.id):null;
+     if(deriveChatAdminReplyPause(f?.notes,confirmed).paused||confirmed?.id!==lastConfirmed?.id||
+       (fanMode?buildChatAdminFanContext(c,f!,conv!,messages,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(c,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:""))!==context)throw new ChatAdminPolicyError("reply_context_changed");
+     const retryLimit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});
+     if(!retryLimit.allowed)throw new ChatAdminPolicyError("rate_limited");
+    }
+    signal.throwIfAborted();
+    providerAttemptStarted=true;
+    const response=await fetch(URL,{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({...baseRequest,input:[...baseRequest.input,...(feedback?[{role:"user",content:feedback}]:[])]}),signal,cache:"no-store"});
+    const payload=await response.json() as {output_text?:string;output?:Array<{content?:Array<{text?:string}>}>;usage?:unknown};
+    return {payload,ok:response.ok,replies:null as string[]|null};
+   },
+   readReplies:result=>{
+    providerUsage=result.payload.usage;
+    if(!result.ok)throw new Error("provider_failed");
+    const payload=result.payload;
+    const text=payload.output_text??payload.output?.flatMap(v=>v.content??[]).map(v=>v.text??"").join("")??"";
+    result.replies=assertChatAdminReplySemantics(JSON.parse(text).replies,body.incoming_message,requestedOffer);
+    return result.replies;
+   },
+   onAttempt:async({result,error,feedback})=>{
+    if(!providerAttemptStarted)return;
+    providerAttemptStarted=false;
+    usageRecorded=true;
+    await recordAiUsageEvent({workspaceId,userId,feature:"chat_admin_reply",model,
+     inputChars:inputChars+baseRequest.input[0].content.length+(feedback?.length??0),
+     outputChars:result?.replies?.join("").length??0,status:error?"error":"ok",
+     errorCode:error instanceof ReplyQualityError?error.code:error&&typeof error==="object"&&"name" in error&&error.name==="TimeoutError"?"chat_admin_provider_timeout":error?"chat_admin_reply_failed":undefined,
+     latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage:result?.payload.usage});
+   },
+  });
+  const replies=generated.replies!;
   // A model call can outlive a capability, Workspace selection or Character edit.
   // Reload with the user's authority before returning any generated content.
   const currentAuthority = await requireChatAdminCapability();
@@ -54,7 +99,7 @@ export async function POST(request:NextRequest){
   const persisted=fanMode?await persistChatAdminGeneration(workspaceId,character.id,fan!.id,conversation!.id,character.revision,currentFan!.revision,body.generation_id as string,currentHistory.map(message=>message.id),String(body.incoming_message).trim(),replies):replies;
   const memoryStatus = fanMode ? await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim()) : "unchanged";
   return NextResponse.json({memory_status:memoryStatus,replies:persisted,character_id:character.id,character_revision:character.revision,...(fanMode?{fan_id:fan!.id,conversation_id:conversation!.id}:{}),safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
- }catch(error){const timedOut=typeof error==="object"&&error!==null&&"name" in error&&error.name==="TimeoutError";if(workspaceId&&!usageRecorded)await recordAiUsageEvent({workspaceId,userId,feature:"chat_admin_reply",model,inputChars,status:"error",errorCode:timedOut?"chat_admin_provider_timeout":"chat_admin_reply_failed",latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage});if(error instanceof WorkspaceAuthorizationError)return NextResponse.json({error:error.code},{status:error.code==="unauthenticated"?401:403});if(error instanceof ChatAdminPolicyError)return NextResponse.json({error:error.code},{status:400});if(timedOut)return NextResponse.json({error:"reply_generation_timeout"},{status:504});return NextResponse.json({error:"reply_generation_failed"},{status:503});}
+ }catch(error){const timedOut=typeof error==="object"&&error!==null&&"name" in error&&error.name==="TimeoutError";if(workspaceId&&!usageRecorded&&providerAttemptStarted)await recordAiUsageEvent({workspaceId,userId,feature:"chat_admin_reply",model,inputChars,status:"error",errorCode:timedOut?"chat_admin_provider_timeout":"chat_admin_reply_failed",latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage});if(error instanceof WorkspaceAuthorizationError)return NextResponse.json({error:error.code},{status:error.code==="unauthenticated"?401:403});if(error instanceof ReplyQualityError)return NextResponse.json({error:error.code},{status:502});if(error instanceof ChatAdminPolicyError)return NextResponse.json({error:error.code},{status:error.code==="rate_limited"?429:400});if(timedOut)return NextResponse.json({error:"reply_generation_timeout"},{status:504});return NextResponse.json({error:"reply_generation_failed"},{status:503});}
 }
 
 async function saveGenerationKnowledge(workspaceId:string,userId:string,characterId:string,characterRevision:number,fanId:string,conversationId:string,generationId:string,incoming:string):Promise<"unchanged"|"saved"|"not_saved"> {

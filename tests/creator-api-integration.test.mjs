@@ -1,3 +1,4 @@
+import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -29,9 +30,10 @@ function context() {
     voice: { ...bundle.voice, tone: "Warm and playful", avoidedPhrases: ["forbidden phrase"] }, playbook: bundle.playbook,
     strategy: creatorPolicy.deriveCreatorStrategy({ playbook: bundle.playbook }) };
 }
-function harness({ denied = false, owner = true, changed = false, summaryMismatch = false, enabled = true } = {}) {
-  const calls = { promptModes: [], ai: [], voices: 0, memories: 0, contexts: 0, saves: [] };
+function harness({ denied = false, owner = true, changed = false, summaryMismatch = false, enabled = true, creator = true, outputs = null, history = null, abortController = null, revokeAfterFirst = false, retryRateLimited = false } = {}) {
+  const calls = { promptModes: [], ai: [], voices: 0, memories: 0, contexts: 0, saves: [], signals: [], usage: [], rateLimitCalls: 0 };
   const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/creatorIntelligencePolicy.mjs": creatorPolicy,
     "@/lib/aiExecutionPolicy.mjs": executionPolicy,
@@ -40,10 +42,10 @@ function harness({ denied = false, owner = true, changed = false, summaryMismatc
     "@/config/aiTiers.mjs": { getAiTierConfig: () => ({ contextMessageLimit: 50 }) },
     "@/lib/requestAccessToken": { BearerAccessTokenError: class extends Error {}, getOptionalBearerAccessToken: () => undefined },
     "@/lib/rateLimit": { getClientIp: () => "192.0.2.1" },
-    "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: true }) },
+    "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: ++calls.rateLimitCalls===1 || !retryRateLimited }) },
     "@/lib/subscriptionCancellation": { isWorkspaceArchivedAfterSubscriptionEnd: () => false },
     "@/lib/workspaceAiTierEntitlements": { getResolvedWorkspaceAiTier: async () => ({ entitlement: { effectiveTierId: "starter" } }) },
-    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async () => {} },
+    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage.push(event); } },
     "@/lib/workspaceAiPrompts": { getWorkspaceAiPromptContext: async (_workspace, _profile, companyOnly) => { calls.promptModes.push(companyOnly); return { companyPrompt: "Agency rules", profileName: companyOnly ? "" : "Default", profilePrompt: companyOnly ? "" : "Follow approved rules" }; } },
     "@/lib/workspaceAuthorization": { ...authPolicy, requireContactInActiveAuthorizedWorkspace: async (id) => {
       if (denied || id !== contactId) throw new authPolicy.WorkspaceAuthorizationError("Denied", "resource_forbidden");
@@ -51,12 +53,12 @@ function harness({ denied = false, owner = true, changed = false, summaryMismatc
     } },
     "@/lib/creatorIntelligence": {
       creatorIntelligenceEnabled: () => enabled,
-      loadCreatorReplyContext: async (workspace, contact) => { assert.equal(workspace, workspaceId); assert.equal(contact, contactId); calls.contexts++; return changed && calls.contexts > 1 ? { ...context(), revision: 2 } : context(); },
+      loadCreatorReplyContext: async (workspace, contact) => { assert.equal(workspace, workspaceId); assert.equal(contact, contactId); calls.contexts++; if (!creator) return null; return changed && calls.contexts > 1 ? { ...context(), revision: 2 } : context(); },
       getCreatorFanData: async () => ({ configured: true, events: [], offers: [], commercial: {} }),
       saveCreatorFanReview: async (...args) => { calls.saves.push(args); creatorPolicy.normalizeCreatorFanReview(args[2]); },
     },
     "@/lib/supabase/server": {
-      getRecentContactConversationMessages: async () => ({ messages: [{ conversation_id: conversationId, direction: "inbound", content: "Wie geht es dir?" }], error: null }),
+      getRecentContactConversationMessages: async () => ({ messages: history ?? [{ conversation_id: conversationId, direction: "inbound", content: "Wie geht es dir?" }], error: null }),
       getFanAnalysisReport: async () => ({ report: null }), getContactAiProfile: async () => ({ profile: null }),
       getWorkspaceVoiceProfile: async () => { calls.voices++; return { profile: { tone: "Chatter voice" } }; },
       getRecentContactMemories: async (workspace, contact) => { assert.equal(workspace, workspaceId); assert.equal(contact, contactId); calls.memories++; return { memories: [{ content: "Synthetic fan likes hiking." }] }; },
@@ -66,8 +68,10 @@ function harness({ denied = false, owner = true, changed = false, summaryMismatc
   const runtime = {
     process: { env: { OPENAI_API_KEY: "synthetic-no-provider" } },
     fetch: async (_url, options) => {
-      calls.ai.push(JSON.parse(options.body));
-      return Response.json({ output_text: JSON.stringify({ reply_options: ["Hey!", "Schön von dir zu hören.", "Was machst du heute?"].map((text) => ({ text })), suggested_memory: { content: "", importance: "normal" }, suggested_followup: { recommended: false, in_days: null, reason: "" } }) });
+      calls.ai.push(JSON.parse(options.body)); calls.signals.push(options.signal);
+      if (calls.ai.length === 1 && revokeAfterFirst) denied = true;
+      if (calls.ai.length === 1 && abortController) abortController.abort();
+      return Response.json({ usage:{input_tokens:1000,output_tokens:100,total_tokens:1100}, output_text: JSON.stringify({ reply_options: (outputs?.[calls.ai.length - 1] ?? ["Hey!", "Schön von dir zu hören.", "Was machst du heute?"]).map((text) => ({ text })), suggested_memory: { content: "", importance: "normal" }, suggested_followup: { recommended: false, in_days: null, reason: "" } }) });
     },
   };
   return { calls, reply: evaluate(replyCode, dependencies, runtime), fan: evaluate(fanCode, dependencies, runtime) };
@@ -119,6 +123,7 @@ test("actual fan review route checks contact ownership, origin and rollout befor
 test("actual loader uses the user's JWT and Workspace filter, and disabled rollout makes zero requests", async () => {
   const calls = [];
   const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "server-only": {}, "next/headers": { cookies: async () => { throw new Error("bearer must not read cookies"); } },
     "@/lib/creatorIntelligencePolicy.mjs": creatorPolicy,
     "@/lib/supabase/config": { SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic", getSupabaseRestUrl: (table) => `https://supabase.invalid/rest/v1/${table}`, getSupabaseHeaders: (token) => ({ Authorization: `Bearer ${token}` }) },
@@ -150,4 +155,55 @@ test("actual prompt loader excludes default and explicitly selected legacy style
     assert.doesNotMatch(JSON.stringify(result), /OTHER STYLE|ALTERNATE STYLE/);
   }
   assert.match(JSON.stringify(await promptLoader.getWorkspaceAiPromptContext(workspaceId, creatorId, false)), /ALTERNATE STYLE/);
+});
+
+
+const duplicateQualityReplies=["Gerne", "Gerne!", "Gerne."];
+const variedQualityReplies=["Die Größe fehlt noch. Welche brauchst du?", "Gerne, schick mir bitte die gewünschte Größe.", "Welche Größe soll ich prüfen?"];
+test("Creator and ordinary FanMind both share quality guidance and repair with one absolute deadline", async () => {
+ for(const creator of [true,false]){
+  const h=harness({creator,outputs:[duplicateQualityReplies,variedQualityReplies]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId})); const body=await response.json();
+  assert.equal(response.status,200); assert.deepEqual(body.reply_options.map(o=>o.text),variedQualityReplies);
+  assert.equal(h.calls.ai.length,2); assert.equal(h.calls.signals[0],h.calls.signals[1]);
+  assert.ok(h.calls.ai[0].input[0].content.includes(replyQualityPolicy.FANMIND_REPLY_QUALITY_INSTRUCTIONS));
+  assert.deepEqual(h.calls.ai[0].input,h.calls.ai[1].input.slice(0,2));
+  assert.deepEqual(h.calls.usage.map(e=>e.status),["error","ok"]);
+  assert.equal(h.calls.usage[0].providerUsage.input_tokens,1000); assert.equal(h.calls.usage[1].providerUsage.output_tokens,100);
+  assert.equal(h.calls.voices,creator?0:1);
+ }
+});
+test("persistently repetitive replies and new prices in a Creator rewrite are never returned", async () => {
+ for(const second of [duplicateQualityReplies,["Für 20 EUR.","Das kostet 20 EUR.","Der Preis ist 20 EUR."]]){
+  const h=harness({outputs:[duplicateQualityReplies,second]}); const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+  assert.notEqual(response.status,200); assert.equal((await response.json()).reply_options,undefined);
+  assert.equal(h.calls.ai.length,2); assert.equal(h.calls.usage.length,2); assert.deepEqual(h.calls.usage.map(e=>e.status),["error","error"]);
+ }
+});
+test("profile change, permission loss or abort after a rejected draft prevent the second general provider call", async () => {
+ for(const options of [{changed:true},{revokeAfterFirst:true},{abortController:new AbortController()}]){
+  const h=harness({...options,outputs:[duplicateQualityReplies,variedQualityReplies]});
+  const baseRequest=post("/api/ai/reply-suggestions",{contactId});
+  const response=await h.reply.POST(options.abortController?new Request(baseRequest,{signal:options.abortController.signal}):baseRequest);
+  assert.notEqual(response.status,200); assert.equal(h.calls.ai.length,1); assert.equal(h.calls.usage.length,1);
+ }
+});
+test("general history guard compares real outbound only and keeps newest complete turns", async () => {
+ const copied="Vielen Dank für deine ausführliche Nachricht und dein Interesse, ich möchte gerne mit dir gemeinsam die nächsten Schritte in Ruhe besprechen.";
+ for(const direction of ["inbound","outbound"]){
+  const history=Array.from({length:30},(_,i)=>({conversation_id:conversationId,direction:"inbound",content:`old-${i}:`+"x".repeat(950)}));
+  history.push({conversation_id:conversationId,direction,content:copied});
+  const h=harness({creator:false,history,outputs:[[copied,...variedQualityReplies.slice(1)],variedQualityReplies]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId,incomingMessage:"Was ist der nächste Schritt?"}));
+  assert.equal(response.status,200); assert.equal(h.calls.ai.length,direction==="outbound"?2:1);
+  const sent=JSON.parse(h.calls.ai[0].input[1].content);
+  assert.ok(sent.conversationContext.includes(copied)); assert.ok(!sent.conversationContext.includes("old-0:"));
+  assert.ok(sent.conversationContext.length<=12000);
+ }
+});
+
+test("general correction must obtain a second rate-limit slot before a second billable call", async () => {
+ const h=harness({retryRateLimited:true,outputs:[duplicateQualityReplies,variedQualityReplies]});
+ const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+ assert.equal(response.status,429); assert.equal(h.calls.ai.length,1); assert.equal(h.calls.rateLimitCalls,2); assert.equal(h.calls.usage.length,1);
 });
