@@ -1161,7 +1161,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-052
-- Status: ACTIVE
+- Status: RELEASED_FOR_PR
 - Risk: R4
 - Holder: ChatGPT
 - Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3`.
@@ -1175,6 +1175,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source closeout: local/independent PG17 evidence and review are recorded in receipts/capacity-v2-lifecycle-repair-20261015.md. No running Builder remains after PR handoff; exact PR CI/review and any later target action remain separate. The open repair PR remains the only source continuation; do not start a competing scope.
 
 - 2026-10-16 bounded continuation by explicit Owner request: integrate the already reviewed preparation38c15520 in the existing protected read-only Staging rollout transport, on feat/capacity-v2-staging-readonly. PR1331 remains open at e9df302f; main dc269fd8. This dependent source increment does not modify/merge1331, create another task queue, dispatch workflows or reuse any target authorization. Existing lock resumed only for this source/test/CI work; D3 remains separate.
+
+- Source handoff: implementation5252d2f9 independently reviewed with31/31 new fault tests and20/20 existing rollout regressions; original28 native preparation tests passed separately. Receipt receipts/capacity-v2-staging-readonly-integration-20261016.md records the bounded source result. No running Builder after PR handoff; exact-head Required CI and dependency1331 remain distinct. No target/dispatch authorization exists in this continuation.
 
 ## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
 - Task: FM-AI-001

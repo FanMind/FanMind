@@ -1194,6 +1194,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 - 2026-10-16 Owner-requested source continuation: reuse preparation38c15520 and integrate Capacity in the existing staging-database-rollout-state workflow/transport. PR1331 is still open at e9df302f; current main dc269fd8. Explicit Capacity scope is read-only and returns only READONLY_BASELINE_MATCH or BLOCK. No merge, target request, dispatch, SQL apply or old authorization is used. Existing task/lock only; independent countercheck and Required CI are required for the dependent development PR.
 
+- Source handoff: receipts/capacity-v2-staging-readonly-integration-20261016.md records unchanged prepared SQL/original28 tests,31/31 new integration tests,20/20 generic regressions,28/28 native PG17 preparation tests and independent source review. Existing lock is RELEASED_FOR_PR; exact-head GitHub CI and merge remain separately observable. Aggregate AI/Billing remains PARTIAL; no protected target acceptance is inferred.
+
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
 - Status: ACCEPTED
 - Risk: R4
