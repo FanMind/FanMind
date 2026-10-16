@@ -58,22 +58,23 @@ and fresh protected-Staging approval. No placeholder or historical permission
 can supply that authorization; do not fill a future main SHA in advance.
 Any head/main/checksum/target change requires review of the affected evidence.
 
-Reuse `.github/workflows/staging-database-rollout-state.yml` and its protected
-`staging` environment/transport. Capacity is NOT yet a registered family there.
-The source integration must be separately reviewed before target execution:
-consume this emitter/query/evaluator through the existing exact-main read-only
-path, retain its serialization, private passfile snapshot and bounded redaction,
-and publish only `READONLY_BASELINE_MATCH` or `BLOCK`. Neither is `apply`, `skip`
-or activation. Do not infer Capacity acceptance from today's shared PASS.
-No executable target integration or workflow dispatch is part of this packet.
+The source integration now reuses `.github/workflows/staging-database-rollout-state.yml`
+and its protected `staging` environment/transport with explicit `scope=capacity`.
+It consumes this emitter/query/evaluator without the generic apply/skip derivation.
+Its only Capacity result is `READONLY_BASELINE_MATCH` or `BLOCK`. Neither implies
+activation. Source review/merge and a NEW protected authorization remain mandatory
+before dispatch. See `AI_CAPACITY_STAGING_READONLY_INTEGRATION.md`. No target run
+or workflow dispatch was performed by this source integration.
 
 The prepared emitter requires the existing shared policy inputs unchanged:
 
 - `GITHUB_REF=refs/heads/main`, `GITHUB_SHA` equal the fresh reviewed commit,
   `FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT` equal that SHA, and local
-  clean checkout `HEAD=origin/main`. It also verifies ancestry of the reviewed
-  lifecycle source. The future protected workflow must fetch/check current main
-  before use; a stale local tracking ref alone is not authoritative.
+  clean checkout `HEAD=origin/main`. Fixed hashes of the reviewed three SQL files
+  must match current files and committed HEAD blobs, including squash/shallow
+  checkouts; provenance does not require e9 to survive as a main ancestor.
+  The workflow AND Capacity runner fetch/check current main before credentials
+  or queries; a stale local tracking ref alone is not authoritative.
 - Staging runtime/app/API identity, exact target/Production refs above and the
   target's HTTPS Supabase URL. No Production app origin or project substitution.
 - Existing protected `FANMIND_STAGING_DB_HOST` session pooler on port5432,
@@ -81,7 +82,7 @@ The prepared emitter requires the existing shared policy inputs unchanged:
   `PGSSLMODE=verify-full` and the pinned Supabase root CA. The exact pooler host
   comes from the protected configuration, not an invented hostname in this file.
   Reject URL/libpq redirects, hostaddr, services and TLS overrides. Do not expose
-  password/passfile contents. The future wrapper must snapshot a private,
+  password/passfile contents. The existing wrapper now snapshots a private,
   identity-bound passfile, execute `psql -X -v ON_ERROR_STOP=1` without shell
   interpolation using a bounded allowlisted environment, and remove it finally.
 - `FANMIND_ENABLE_NON_PRODUCTION_WRITES=false`, empty write acknowledgement,
@@ -95,8 +96,9 @@ The query executes ONE repeatable-read READ ONLY transaction, with
 search_path and final ROLLBACK. It installs no temporary helper, changes no
 target object, calls no Capacity/admin RPC and reads no Workspace/customer rows.
 Only catalog structure, allowlisted singleton policy and existence/count
-aggregates are examined. A future transport must impose a whole-process timeout
-and discard/redact raw failures, including timeout/parse/missing-object errors.
+aggregates are examined. The transport imposes a45s whole-process hard timeout,
+64KiB stdout/stderr buffer bound and discards raw failures, including
+timeout/parse/missing-object errors. Connection timeout remains10s.
 
 Required observations, ALL conjunctive:
 
@@ -144,8 +146,8 @@ test proves unchanged catalog/policy/monetary state after such ROLLBACK. After
 COMMIT preserve history and use read-only reconciliation plus reviewed forward
 repair; no automatic down/drop or generic migration push is available.
 
-Next allowed source step: review/integrate this packet into the EXISTING protected
-read-only Staging path after #1331 merges. The next protected target step is then
+Next allowed source step: review/merge the dependent integration PR after #1331.
+The next protected target step is then
 a NEW authorized read-only Capacity preflight bound to its actual merged main,
 controller/query/recovery checksums and exact target. APPLY requires another
 separate current authorization and controller/postflight/backup/privacy review.

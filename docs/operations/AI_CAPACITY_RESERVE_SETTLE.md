@@ -128,10 +128,12 @@ projection/columns, and zero reservations/allocations/ledger events. Verify the
 15/30/50 budgets and all activation switches OFF with emergency freeze ON.
 Do not read customer content. Any partial/drifted state blocks, not an APPLY.
 
-No Capacity-specific protected target verifier/apply controller currently exists
-in this package. Prepare/review that checksum-pinned control and its rollback
-contract before target execution; do not invent a generic db-push or direct-psql
-APPLY command. The shared rollout state does not yet classify this new family.
+The existing protected staging-database-rollout-state workflow now has an explicit
+Capacity read-only scope reusing the pinned preparation query, evaluator and
+recovery contract. Its only Capacity result is READONLY_BASELINE_MATCH or BLOCK;
+it does not enter generic apply/skip classification. See
+AI_CAPACITY_STAGING_READONLY_INTEGRATION.md. No Capacity apply controller exists;
+do not invent a generic db-push or direct-psql APPLY command.
 An eventual APPLY is a different, freshly authorized transaction; the lifecycle
 SQL is first-install-only and deliberately refuses existing projection/column
 state rather than backfilling missing monetary provenance. Reconcile source,

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "preparationCommit": "38c15520376c35d3fedf8fd547b322221def755b",
+  "originalPreparationManifestSha256": "f81fd4e0f4bb1f3f0539805d9b90a9b54c6bf4ba63db07cf4251cc0439ba8725",
+  "transport": "scripts/operations/staging-database-rollout-state.mjs",
+  "workflow": ".github/workflows/staging-database-rollout-state.yml",
+  "apply": "disabled",
+  "timeoutMs": 45000,
+  "maxOutputBytes": 65536,
+  "sha256": {
+    "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
+    "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
+    "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "4f7dc3970dff241f9f2f09b4f797990a72b77002dc429f4842825db005c53e2b",
+    "scripts/operations/ai-capacity-staging-preflight-preparation.mjs": "8a97817f383393c14674cd7b189bfd7a5d9c979c2500faff9545cdd9af434b6d",
+    "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md": "97f1029afd1fb906dbec578f7b60032136022002c9030cb246776a012f1a5f65",
+    "src/lib/stagingDatabaseRolloutStatePolicy.mjs": "123dcae82803d3c33834e617006f28d854760384c2275cb214a4afe79fdcb463",
+    "src/lib/metaContentStagingMigrationPolicy.mjs": "ad6e72b6d050bcec058f4515ea21534b122ba866a7b9be8a1ce321a9d0b59a2c",
+    "src/lib/environmentBoundaryPolicy.mjs": "ca1cd97162cacb043fda84d76f5fc1a4f152b2f0488a9a5e66f3c063a36f066e",
+    "config/certificates/supabase-root-2021-ca.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7",
+    "tests/ai-capacity-staging-preflight.test.mjs": "54405080b83f97b816c1f996c96d171fa3c3c64523536d2ac43892556eec34f2",
+    "docs/operations/ai-capacity-staging-preparation.json": "9274d0f29771932211ca5c74177a658a3be5f4f95c88d8fde2c61667b7798720",
+    "scripts/operations/staging-database-rollout-state.mjs": "42a595521771ffd113fad6ed79a3d923ad09bf51c1e275a45dcd3cf0c909368b",
+    ".github/workflows/staging-database-rollout-state.yml": "a9a59ebd355a3caa71caa0778321c6adb78a421162a2eb606407a36f67ac3a8c",
+    "package.json": "08ebfb3daacdda0be46b6db1a73a93cfbd94eaa52b6b4559c43e4cfcf0e03991",
+    "tests/ai-capacity-staging-integration.test.mjs": "8006c9ce443001fcb7d1764166b74b3fce3f8b7867f537a6fd0c4b7abc41ffda"
+  }
+}

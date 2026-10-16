@@ -1192,6 +1192,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 - Source verification: receipts/capacity-v2-lifecycle-repair-20261015.md binds the SQL hash, 48/48 focused/native tests, independent 22/22 PG17 execution, review and exact next protected action. Source is handed off for PR CI; aggregate FM-AI-001 remains IN_PROGRESS and no target acceptance is inferred.
 
+- 2026-10-16 Owner-requested source continuation: reuse preparation38c15520 and integrate Capacity in the existing staging-database-rollout-state workflow/transport. PR1331 is still open at e9df302f; current main dc269fd8. Explicit Capacity scope is read-only and returns only READONLY_BASELINE_MATCH or BLOCK. No merge, target request, dispatch, SQL apply or old authorization is used. Existing task/lock only; independent countercheck and Required CI are required for the dependent development PR.
+
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
 - Status: ACCEPTED
 - Risk: R4

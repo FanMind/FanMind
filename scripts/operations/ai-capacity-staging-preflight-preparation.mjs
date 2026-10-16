@@ -13,6 +13,12 @@ const PRODUCTION = "drqkpdvtbbrrdwmtrodz";
 const CONTROL = "docs/operations/ai-capacity-staging-preparation.json";
 const QUERY = "scripts/operations/ai-capacity-staging-preflight.sql";
 const RECOVERY = "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md";
+// Reviewed content identities survive both squash merges and shallow checkouts.
+const REVIEWED_SOURCE_SHA256 = Object.freeze({
+  "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
+  "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
+  "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
+});
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 const fail = code => { throw new Error(`CAPACITY_PREFLIGHT_PREPARATION_ERROR=${code}`); };
 const git = (root, args) => execFileSync("git", ["-C", root, ...args], {
@@ -38,10 +44,10 @@ export function verifyPreparation(root = process.cwd()) {
     if (!/^[0-9a-f]{64}$/u.test(control.sha256[path] ?? "")) fail("required_checksum");
   }
   for (const path of sourcePaths) {
-    const reviewed = execFileSync("git", ["-C", root, "show", `${REVIEWED_HEAD}:${path}`]);
-    if (sha256(reviewed) !== control.sha256[path]) fail("reviewed_source");
+    const committed = execFileSync("git", ["-C", root, "show", `HEAD:${path}`]);
+    if (control.sha256[path] !== REVIEWED_SOURCE_SHA256[path]
+      || sha256(committed) !== REVIEWED_SOURCE_SHA256[path]) fail("reviewed_source");
   }
-  git(root, ["merge-base", "--is-ancestor", REVIEWED_HEAD, "HEAD"]);
   if (!/^[0-9a-f]{32}$/u.test(control.expectedObservation.schema_md5)) fail("reference_profile");
   return control;
 }

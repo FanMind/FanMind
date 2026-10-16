@@ -1161,7 +1161,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 ## LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-052
-- Status: RELEASED_FOR_PR
+- Status: ACTIVE
 - Risk: R4
 - Holder: ChatGPT
 - Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3`.
@@ -1173,6 +1173,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - 2026-10-15 resumed by the explicit Capacity v2 Lifecycle Repair request on main dc269fd80407bfa2a3e1885e19e432b0ebaed68e in fix/capacity-v2-lifecycle-repair. GitHub open PRs contain no competing Lifecycle scope; legacy source branch a0186476 is historical. This is the existing FM-AI-001 / FM-CR-052 continuation, repository/isolated-PG17 only. Budget work is consumed; D3 Top-up/Refund remains separate. Holder: Codex current repair run; independent R4 countercheck assigned. No target/provider authorization is reused.
 
 - Source closeout: local/independent PG17 evidence and review are recorded in receipts/capacity-v2-lifecycle-repair-20261015.md. No running Builder remains after PR handoff; exact PR CI/review and any later target action remain separate. The open repair PR remains the only source continuation; do not start a competing scope.
+
+- 2026-10-16 bounded continuation by explicit Owner request: integrate the already reviewed preparation38c15520 in the existing protected read-only Staging rollout transport, on feat/capacity-v2-staging-readonly. PR1331 remains open at e9df302f; main dc269fd8. This dependent source increment does not modify/merge1331, create another task queue, dispatch workflows or reuse any target authorization. Existing lock resumed only for this source/test/CI work; D3 remains separate.
 
 ## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
 - Task: FM-AI-001
