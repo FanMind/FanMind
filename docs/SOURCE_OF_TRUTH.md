@@ -18,7 +18,8 @@ vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
 ChatAdmin-Angebotsablehnung (17.10.2026): #1335–#1337 sind gemergt.
 Die neue Source-Ergänzung lässt nur vollständig begrenzte Preisfragen wie
 „Nicht schlecht, was kostet das Foto?“ bzw. „Not bad. How much is the photo?“
-durch das bestehende Negationsveto zur normalen Artikelprüfung. Weitere Sätze,
+durch das bestehende Negationsveto zur normalen Artikelprüfung. Erkannte Namen
+müssen zur abschließenden Medienbezeichnung gehören. Weitere Sätze,
 Ablehnungen und gemischte Wünsche bleiben gesperrt. Kein allgemeines NLP,
 keine persistente Verkaufspause; Phase7b und reale Zielabnahme bleiben offen.
 

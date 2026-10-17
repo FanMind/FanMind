@@ -414,7 +414,9 @@ offen. Firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.
 
 Ein enger ganzer Nachrichtentyp („Nicht schlecht“ / „Not bad“ plus eindeutige
 Preisfrage nach Foto/Video) darf die bisherige Artikelprüfung erreichen.
-Zusätzliche Ablehnungen/Sätze und unklare Negation bleiben gesperrt; der
+Erkannte Artikelnamen müssen zur abschließenden Medienbezeichnung gehören;
+Namenskollisionen im Präfix, zusätzliche Ablehnungen/Sätze und unklare Negation
+bleiben gesperrt; der
 Kategorienwortschatz wird nicht erweitert. Präziser Vertrag und Grenzen:
 [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#kontextbewusste-angebotsnegation--begrenzter-sourceumfang-17-oktober-2026).
 Keine Änderung an Creator-Reviews, Hold/Aftercare/Cooldown, gemeinsamem Preis-

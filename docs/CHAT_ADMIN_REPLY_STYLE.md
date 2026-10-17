@@ -263,8 +263,12 @@ photo/video?“ entsprechen. Groß-/Kleinschreibung und Leerraum sind unerheblic
 das abschließende Fragezeichen ist erforderlich. Es wird kein Nachrichtenteil
 entfernt und keine allgemeine Negationsreichweite geschätzt. Anschließend läuft
 die vollständige bisherige Namens-/Kategorie-/Mehrdeutigkeitsprüfung auf dem
-Originaltext. Nur ein bereits eindeutig auflösbarer, aktiver Artikel ohne
-Bestätigungspflicht kann freigegeben werden. Englisches „photo“ ist in diesem
+Originaltext. Bei dieser Ausnahme muss jeder erkannte aktive Artikelname
+innerhalb der abschließenden Medienbezeichnung beginnen und bis zum Mediennomen
+reichen. Ein Artikelname „Not bad“, „Was kostet das Foto“ oder nur „private“
+darf nicht die tatsächlich erfragten Medien ersetzen; solche Kollisionen bleiben
+konservativ gesperrt, auch bei nur einem aktiven Artikel. Nur ein bereits
+eindeutig auflösbarer, aktiver Artikel ohne Bestätigungspflicht wird freigegeben. Englisches „photo“ ist in diesem
 Testumfang ein gespeicherter Artikelname; der Kategorienwortschatz wird nicht
 erweitert. Eine Preisfrage allein erzeugt keinen Kauf oder Versand.
 

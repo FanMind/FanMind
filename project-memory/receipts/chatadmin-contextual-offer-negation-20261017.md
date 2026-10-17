@@ -26,9 +26,11 @@ Personas/Fans/articles and stubbed providers; no private corpus or real call.
 
 Whole-message token veto rejected “Nicht schlecht, was kostet das Foto?” and
 “Not bad. How much is the photo?” despite an otherwise resolvable saved article.
-Only two anchored grammar branches now exempt complete appreciation + single
-explicit media-price-question forms. Original text stays intact for all existing
-name/category/ambiguity checks. English photo uses a saved English name; existing
+Only two anchored grammar branches exempt complete appreciation + single
+explicit media-price-question forms. Every active literal name match in this
+exception must start inside the terminal media phrase and end at its noun;
+appreciation/question-wording names and modifier-only names stay blocked.
+Original text stays intact for all existing name/category/ambiguity checks. English photo uses a saved English name; existing
 category vocabulary is unchanged. No unknown/inactive/confirmation-required or
 duplicate article becomes eligible. Arbitrary prefix stripping was not used.
 
@@ -42,10 +44,10 @@ No API/schema/model/provider/rollout/workflow or persistent event change.
 
 ## Implementation verification
 
-- Standard Node runner:168/168 focused policy/offer/knowledge/actual ChatAdmin and
+- Standard Node runner:185/185 focused policy/offer/knowledge/actual ChatAdmin and
   Creator routes/Creator strategy/shared reply-quality cases PASS;0 failures/skips.
- 40 added tests:34 structured-offer and6 actual-route cases. Final combined
- resolver/actual ChatAdmin route result100/100 PASS (test-first91/100).
+ 57 added tests:50 structured-offer and7 actual-route cases. Final combined
+ resolver/actual ChatAdmin route result117/117 PASS (initial test-first91/100).
 - Production build incl TypeScript PASS; full ESLint PASS with4 existing warnings.
  Truth/referral/legal-structure/action-pins, memory quality, truth drift,
  accepted-state fingerprint, God Mode preflight and diff check PASS.
@@ -60,17 +62,34 @@ No API/schema/model/provider/rollout/workflow or persistent event change.
 
 ## Independent Guardian source evidence
 
-Separate reviewer, tracked files read-only:191/191 tests PASS (includes23 manual-
+Separate reviewer, tracked files read-only:208/208 tests PASS (includes23 manual-
 flow tests);216 independently constructed prefix/suffix refusal probes with
-DE/EN/FR/ES and six whitespace separators PASS; custom article named
-“Nicht schlecht” still triggers original-text ambiguity. Five independent in-memory
-mutants killed: missing start anchor, missing end anchor, missing veto, missing
-positive exception, missing1336 multiple-named guard. No blocking Source findings.
+DE/EN/FR/ES and six whitespace separators PASS again on repaired source. New535
+exhaustive contiguous word-substring article-name probes across four DE/EN
+public/private questions and five categories PASS: only names within terminal
+media phrase and ending at its noun may become eligible. Six final-source
+in-memory mutants killed: missing refusal veto, start-span bound, noun-end bound,
+whole span veto, positive exception and original1336 ambiguity. No blocking final
+Source findings. Final-source mutation evidence replaces the earlier five-mutant
+result, which did not exercise the later-proven collision.
+
+## Concrete countercheck findings corrected before completion
+
+Initial source4edc allowed a sole custom article named “Not bad”/“Nicht schlecht”
+to stand in for requested media. Separate Guardian confirmed P2; the initial
+source PASS was revoked and the Draft explicitly marked reopened. Test-only
+commit03e3ea7f first reproduced12/71 failing name-collision cases. An initial
+start-span bound then still admitted a modifier-only article named “private”;
+Guardian found it, test-only commite32fdc88 reproduced4/75 failures before the
+noun-end bound was added. Both proven defects are fixed on final source; the
+actual-route regression rejects a wrongly priced collision before persistence
+or learning. All new tests pass, with no unrelated scope expansion. Old-head CI
+is historical only and must never substitute for fresh final-head Required CI.
 
 SHA256 bindings:
-- Resolver: `5e1ec68e983e904eb7a279acf61038f672cbd9290549f8372246400a3cba293e`
-- Structured tests: `fdffb7427f6b7ebc35b5c24cb28adeb1710645e9b6aa0069940b5931a0f9c727`
-- Route tests: `b43e098e4d7fa83c7b800ec979352654ad91946cb003a248e50b8fe7efe50a0e`
+- Resolver: `615dbb79b5c9fe0fd3792ff7f37e1d1d14a02e8b75e23d21469f3862aaa175b0`
+- Structured tests: `6d98881e3b7f794b56de4e745d74804508cc28d60ba7b5486e3f5ccdc0661dfd`
+- Route tests: `7c8d5a93caae4c16ce8b1ad280b4ab209d8c3f3c0677a4e1122d0b1ad50fb51b`
 
 ## Recovery, remaining boundaries and next recommendation
 

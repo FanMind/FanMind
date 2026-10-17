@@ -57,6 +57,12 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
     const matcher = new RegExp(`(?<![\\p{L}\\p{N}])${name}(?![\\p{L}\\p{N}])`, "gu");
     return [...incoming.matchAll(matcher)].map(match => ({ offer, start: match.index, end: match.index + match[0].length }));
   });
+  // In the narrow exception, a stored name in the appreciation or question
+  // wording or just "private" cannot stand in for the requested media noun.
+  // Retain all matches for the original ambiguity guard as well.
+  const priceQuestionMediaStart = affirmativePriceQuestion ? incoming.search(/(?:private\s+)?(?:foto|photo|video)\?\s*$/iu) : -1;
+  const priceQuestionMediaEnd = affirmativePriceQuestion ? incoming.search(/\?\s*$/u) : -1;
+  const nameOutsideRequestedMedia = affirmativePriceQuestion && nameMatches.some(match => match.start < priceQuestionMediaStart || match.end !== priceQuestionMediaEnd);
   const specific = nameMatches.filter(match => !nameMatches.some(other => other.start <= match.start && other.end >= match.end && other.end - other.start > match.end - match.start));
   // Preserve ambiguity before category/private/call filters discard candidates.
   // A contained generic name is already removed above; repeated mentions of the
@@ -71,7 +77,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const candidates = named.length ? named : byCategory;
   const bareNamedRequest = named.length === 1 && incoming.trim().replace(/[?!.,]+$/u, "").trim() === named[0].name.toLocaleLowerCase();
   const customMentionWithoutRequest = named.some(offer => offer.category === "custom") && !explicitRequest && !bareNamedRequest;
-  const requested = multipleNamedOffers || (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
+  const requested = nameOutsideRequestedMedia || multipleNamedOffers || (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
     : candidates.length === 1 && !candidates[0].requiresConfirmation ? candidates[0] : null;
   return {
     playbook: { ...normalized, offers: requested ? [requested] : [] },
