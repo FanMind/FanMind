@@ -27,6 +27,11 @@ export function normalizeChatAdminSalesPlaybook(value) {
 export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const normalized = normalizeChatAdminSalesPlaybook(playbook);
   const incoming = typeof incomingMessage === "string" ? incomingMessage.toLocaleLowerCase() : "";
+  // Explicit negation vetoes this message's offer selection, including mixed
+  // wishes or unclear scope. Ask for clarification rather than infer consent;
+  // this does not persist a sales hold or a declined/purchased event.
+  const explicitRefusal = /(?<![\p{L}\p{N}])(?:kein(?:e[nmrs]?)?|keinerlei|nicht|nichts|ohne|no|not|never|don['’]?t|can['’]?t|cannot|won['’]?t)(?![\p{L}\p{N}])/iu.test(incoming);
+  if (explicitRefusal) return { playbook: { ...normalized, offers: [] }, requestedOffer: null };
   const privateRequest = /\b(?:privat(?:e[nsr]?|es)?|persönlich(?:e[nsr]?|es)?|exklusiv(?:e[nsr]?|es)?)\b/iu.test(incoming);
   const photoRequest = /\b(?:fotos?|bilder?|pics?|images?)\b/iu.test(incoming);
   const videoRequest = /\b(?:videos?|clips?)\b/iu.test(incoming);

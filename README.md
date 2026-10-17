@@ -8,6 +8,13 @@ vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
 [Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
 
 
+ChatAdmin-Angebotsablehnung (17.10.2026): Begrenzte deutsche/englische
+Negationstokens sperren die aktuelle Angebotsauswahl, auch bei gemischten
+Wünschen. Source und synthetische Tests sind vorhanden; Merge, Staging-Abnahme
+und produktive Aktivierung sind hier nicht erfolgt. Keine persistente
+Verkaufspause und keine allgemeine NLP-Abnahme. Phase 7b bleibt offen.
+
+
 Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt
 Grant-/Reserve-Policy und revisionsgebundene Workspace-/Periodenberechtigung.
 Echte PostgreSQL-17-Lifecycletests laufen im erforderlichen CI-Pfad. Das ist keine

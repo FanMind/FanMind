@@ -1305,3 +1305,10 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Gates: workspace/style/manual-send, revision/sales hold/aftercare and rollout remain unchanged. Independent review/Required CI pending; no target activation or live quality claim.
 
 - Source handoff:107/107 focused tests, local build/TypeScript/lint/truth and independent107/107 plus4/4 mutation negatives PASS; no open source findings. Existing bounded lock RELEASED_FOR_PR. Receipt receipts/creator-shared-price-guard-20261017.md; final head/Required CI recorded on the development PR. No aggregate completion, live quality or protected action claimed.
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — explicit current offer refusal — 2026-10-17
+- Owner-selected next bounded scope, Risk R3 under existing ChatAdmin AI contract/gate. Serial start after PR1336 final20415954 independently passed all12 required contexts (14runs) on maincb6; no merge inferred.
+- Separate source branch from maincb6, not stacked on or duplicating unmerged1336. Preserve existing confirmed refusal cooldown, sales holds, price guard, one Creator style, tenant boundary and manual send.
+- Evidence plan: reproduce current negation false selections, focused resolver/context/actual-route regressions, build/lint/Required CI and independent mutation/source/CI review. No live data, target query, provider, SQL, deploy or activation.
+
+- Source handoff:114 local focused cases and55 independent resolver/actual-route cases PASS,0 failures/skips; one veto-removal mutation caught by7 sensitive cases. Build/TypeScript/lint/truth/drift/quality PASS. Existing lock released for PR handoff. Receipt receipts/chatadmin-explicit-offer-refusal-20261017.md; final commit/Required CI and independent completion review recorded in Draft metadata. Source implemented/tested, not merged/Staging-accepted/productively activated; Phase7b remains open. No next independent implementation started.

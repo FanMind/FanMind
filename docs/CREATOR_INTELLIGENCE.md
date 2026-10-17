@@ -380,3 +380,18 @@ Freigaben oder Strategie. Auch beim einzigen erlaubten Korrekturversuch gelten
 der bestehende Creator-Preisvertrag und die erneute Profilprüfung. Kein
 stilübergreifender Chat-Pool und kein automatisches Lernen aus Modell-Entwürfen.
 Diese Erweiterung aktiviert nicht den separat geschützten Creator-Rollout.
+
+## Aktuelle Angebotsablehnung im ChatAdmin — 17. Oktober 2026
+
+Repository-Source und synthetische Tests ergänzen den vorhandenen
+ChatAdmin-Angebotsresolver um ein konservatives DE/EN-Negationsveto, auch bei
+widersprüchlichen positiven Wünschen. Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#explizite-aktuelle-angebotsablehnung--sourceumfang-17-oktober-2026).
+Keine Ablehnungs-/Kaufereignisse oder Verkaufspausen werden aus Freitext
+persistiert. Creator `deriveCreatorStrategy` verarbeitet weiterhin bestätigte
+manuelle Reviews/Ereignisse und freigegebene Artikel-IDs; sein Verkaufspausen-,
+Cooldown- und Aftercare-Vertrag wird nicht durch Textklassifizierung ersetzt.
+
+Source-/Testnachweis ist keine Merge-, Staging- oder produktive Abnahme.
+Phase 7b, reale Gesprächsqualität und alle bestehenden Target-Gates bleiben
+offen. Firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.

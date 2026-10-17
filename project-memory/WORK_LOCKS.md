@@ -1298,3 +1298,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert; no schema/customer/provider state changed. Independent R3 review and fresh exact-head Required CI before merge recommendation; no automatic merge. FM-DEC-031 company-dependent work stays deferred.
 
 - Source handoff:107 focused cases and independent107/107 plus4/4 in-memory mutation proofs pass. Build/lint/truth/memory pass; receipt receipts/creator-shared-price-guard-20261017.md. No active Builder reservation remains. Final exact head/Required CI and independent CI-check tracked in focused development PR; no target/merge authority.
+
+## LOCK-FM-CHATADMIN-EXPLICIT-REFUSAL-20261017
+- Task: FM-CREATOR-001 / FM-CHATADMIN-003; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 (FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001).
+- Base: main cb6ff77aefcaaa473c8ad5cd527f3504c0880161; branch fix/chatadmin-explicit-offer-refusal.
+- Scope: bounded current-message German/English explicit negation veto in offer resolution; synthetic actual-route/context regressions, directly related source truth. No inferred persistent refusal/purchase, API/price/schema/authority changes.
+- Serialization: PR1336 Source/CI complete on20415954 before this starts; no further writer there. Separate branch directly from main, no duplication of its unmerged ambiguity change. Historical target-completion lock remains separate and unexecuted; no competing current source PR.
+- Recovery: reviewed source revert; no external state cleanup. Required CI, negative proof and independent review mandatory. No merge/target/provider authorization; FM-DEC-031 deferred scope unchanged.
+
+- Source handoff:114/114 local and55/55 independent focused tests PASS; one in-memory mutation detected by7 previously selecting refusal cases. Build/TypeScript/lint/truth/drift/quality PASS. Exact-head Required CI and final independent documentation/CI review tracked on the separate Draft PR; no active source reservation remains.

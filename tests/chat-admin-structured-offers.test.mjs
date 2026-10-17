@@ -231,3 +231,40 @@ test("video calls never inherit a recorded video article or its price",()=>{
  const own=playbook();own.offers.push(offer({id:"call",name:"Videoanruf",category:"custom"},5000));
  assert.equal(resolveChatAdminRequestedOffer(own,"Ich möchte einen Videoanruf").requestedOffer.id,"call");
 });
+
+test("explicit current refusals never release an article or a price, including mixed wishes",()=>{
+ for(const incoming of ["Ich möchte kein Foto, nur reden.","Keine Videos bitte.","Ich möchte nichts kaufen.","Bitte keine Angebote mehr.",
+  "Kein privates Foto, aber ein normales Bild.","I don't want a video, just chat.","I don’t want a private photo.",
+  "Ich will nicht Privates Foto.","Privates Foto bitte nicht.","NO VIDEO PLEASE", "Ich möchte kein Foto. Was kostet Privates Foto?"]){
+  const result=resolveChatAdminRequestedOffer(playbook(),incoming);
+  assert.equal(result.requestedOffer,null,incoming);assert.deepEqual(result.playbook.offers,[],incoming);
+  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 25 EUR.","Gern.","Klar."],incoming,result.requestedOffer),/reply_price_not_permitted/u);
+ }
+ const custom=offer({id:"summer",name:"Sommerpaket",category:"custom"},3700);
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[custom]}),"Sommerpaket bitte nicht.").requestedOffer,null);
+ for(const [incoming,id] of [["Ich möchte ein Foto.","photo"],["Privates Foto","private_photo"],["Videos bitte.","video"]]){
+  assert.equal(resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer.id,id,incoming);
+ }
+ const nocturne=offer({id:"nocturne",name:"Nocturne",category:"custom"},3700);
+ assert.equal(resolveChatAdminRequestedOffer(playbook({offers:[nocturne]}),"Was kostet Nocturne?").requestedOffer.id,"nocturne");
+});
+
+test("current refusal overrides confirmed offer dialogue without inventing a persistent event",()=>{
+ const fan={id:fanId,workspace_id:workspace,character_id:characterId,status:"active",notes:"",display_name:"Synthetic"};
+ const conversation={id:conversationId,workspace_id:workspace,character_id:characterId,fan_id:fanId};
+ const rows=[{id:"request",direction:"fan_inbound",content:"Ich möchte ein privates Foto."},{id:"confirmed",direction:"confirmed_reply",content:"Privates Foto kostet 25 EUR."}];
+ const bind=items=>items.map(row=>({...row,workspace_id:workspace,character_id:characterId,fan_id:fanId,conversation_id:conversationId}));
+ for(const incoming of ["Privates Foto bitte nicht.","Kein privates Foto, aber ein normales Bild.","Bitte keine Angebote mehr."]){
+  for(const commercial of [{},{salesHold:true}]){
+   const currentFan={...fan,notes:writeChatAdminKnowledge({commercial})};
+   const context=JSON.parse(buildChatAdminFanContext(character(),currentFan,conversation,bind(rows),incoming));
+   assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
+   assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.style.writing,"kurz");
+   assert.equal(currentFan.notes,writeChatAdminKnowledge({commercial}));
+  }
+ }
+ const refused=bind([{id:"denied",direction:"fan_inbound",content:"Privates Foto bitte nicht."},{id:"bad-confirmed",direction:"confirmed_reply",content:"Privates Foto kostet 25 EUR."}]);
+ const later=JSON.parse(buildChatAdminFanContext(character(),fan,conversation,refused,"Was bekomme ich da?"));
+ assert.equal(later.sales_playbook.requested_offer,null);assert.equal(later.sales_strategy.sellNow,false);
+ assert.throws(()=>buildChatAdminFanContext(character(),{...fan,workspace_id:otherWorkspace},conversation,bind(rows),"Kein Foto"),/fan_unavailable/u);
+});

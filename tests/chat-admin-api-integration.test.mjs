@@ -128,6 +128,7 @@ function harness(change, abortController) {
       if (change === "deleted") character = null;
       if (change === "workspace") context = { ...context, workspace: { id: characterId } };
       let replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
+      if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
       if (change === "quality-price" && calls.provider === 2) replies = ["Für 999 EUR.", "Das kostet 999 EUR.", "Der Preis ist 999 EUR."];
       if (change === "quality-revoke") revoked = true;
@@ -356,4 +357,23 @@ test("ChatAdmin correction consumes the existing per-call rate limit and cannot 
  const h=harness("quality-limit"); const response=await h.route(h.request());
  assert.equal(response.status,429); assert.equal(h.calls.provider,1); assert.equal(h.calls.rateLimitCalls,2);
  assert.equal(h.calls.usageEvents.length,1); assert.equal(h.calls.persistedHistoryIds,null);
+});
+
+
+test("actual reply route withholds current refused offers and retains manual review", async () => {
+ for(const incoming of ["Ich möchte kein Foto, nur reden.","Keine Videos bitte.","Ich möchte nichts kaufen.","Bitte keine Angebote mehr.","Kein privates Foto, aber ein normales Bild.","I don't want a video, just chat.","Privates Foto bitte nicht."]){
+  const h=harness();const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+  assert.equal(response.status,200,incoming);const body=await response.json();assert.equal(body.replies.length,3);
+  const context=JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
+  assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.style.writing,"kurz");
+  assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);assert.equal(h.calls.memoryWrites.length,0);
+  assert.ok(h.calls.persistedHistoryIds);assert.match(body.safety_note,/manuell/u);
+ }
+});
+test("actual reply route rejects prices after explicit refusal without persistence or learning", async () => {
+ const h=harness("refusal-price");const response=await h.route(h.request(1,"https://fanmind.invalid","Privates Foto bitte nicht."));
+ assert.equal(response.status,400);const body=await response.json();assert.equal(body.error,"reply_price_not_permitted");
+ assert.equal(body.replies,undefined);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);
 });
