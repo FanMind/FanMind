@@ -376,3 +376,20 @@ test("contextual price question cannot override commercial holds or article read
  const own=playbook();own.offers.push({...own.offers[0],id:"duplicate"});
  assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
 });
+
+for(const [name,incoming] of [
+ ["Not bad","Not bad. How much is the photo?"],
+ ["bad","Not bad. How much is the photo?"],
+ ["How much is the photo","Not bad. How much is the photo?"],
+ ["Nicht schlecht","Nicht schlecht, was kostet das Foto?"],
+ ["schlecht","Nicht schlecht, was kostet das Foto?"],
+ ["was kostet das Foto","Nicht schlecht, was kostet das Foto?"],
+])for(const category of ["custom","photo"])test(`appreciation cannot name an unrelated ${category} article: ${name}`,()=>{
+ const unrelated=offer({id:"unrelated",name,category},3700);
+ const own=playbook({offers:[unrelated]});
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers.push(offer({id:"photo",name:incoming.startsWith("Not")?"Photo":"Foto",category:"photo"},1000));
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers[0].active=false;
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer?.id,"photo");
+});
