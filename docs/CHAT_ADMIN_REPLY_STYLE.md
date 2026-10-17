@@ -225,7 +225,7 @@ Kaufabsichts-/Negationserkennung, unbekannte/inaktive Artikel und semantische
 Modellantworten sind dadurch nicht vollständig klassifiziert. Insbesondere die
 aktuelle Negation bei einer einzelnen Anfrage („Ich möchte kein Foto, nur reden“)
 war beim Abschluss von #1336 ein separater Folgeumfang. Der folgende Abschnitt
-beschreibt dessen Source-Implementierung in #1337; dessen Merge bleibt offen.
+beschreibt dessen Source-Implementierung in #1337; #1335–#1337 sind inzwischen gemergt.
 Reale Modellqualität und geschützte Zielabnahme bleiben offen.
 
 ## Explizite aktuelle Angebotsablehnung — Sourceumfang 17. Oktober 2026
@@ -250,5 +250,33 @@ keinen Kauf. Bestehende bestätigte Holds, Cooldowns, Aftercare, Workspace- und
 Character-Bindung, Stil und manuelle Sendefreigabe bleiben unverändert. Eine
 spätere Inhaltsfrage kann eine vorher abgelehnte Anfrage nicht über den
 bestehenden Confirmed-Dialogue-Pfad freigeben. Source implementiert und
-synthetisch geprüft; Merge, Staging-Abnahme und produktive Aktivierung sind
-getrennte, hier nicht erfolgte Schritte. Phase 7b bleibt offen.
+synthetisch geprüft und in #1337 gemergt. Aktuelle Staging-Abnahme und produktive
+Aktivierung dieser Source sind damit nicht belegt. Phase 7b bleibt offen.
+
+
+## Kontextbewusste Angebotsnegation — begrenzter Sourceumfang 17. Oktober 2026
+
+Das Veto hat eine enge, deterministische Ausnahme: Die gesamte Nachricht muss
+„Nicht schlecht“ + Komma/Punkt/Ausrufezeichen + „Was kostet das [private]
+Foto/Video?“ oder „Not bad“ + denselben Trenner + „How much is the [private]
+photo/video?“ entsprechen. Groß-/Kleinschreibung und Leerraum sind unerheblich;
+das abschließende Fragezeichen ist erforderlich. Es wird kein Nachrichtenteil
+entfernt und keine allgemeine Negationsreichweite geschätzt. Anschließend läuft
+die vollständige bisherige Namens-/Kategorie-/Mehrdeutigkeitsprüfung auf dem
+Originaltext. Nur ein bereits eindeutig auflösbarer, aktiver Artikel ohne
+Bestätigungspflicht kann freigegeben werden. Englisches „photo“ ist in diesem
+Testumfang ein gespeicherter Artikelname; der Kategorienwortschatz wird nicht
+erweitert. Eine Preisfrage allein erzeugt keinen Kauf oder Versand.
+
+„Nicht schlecht“ ohne Preisfrage, zusätzliche oder zitierte Sätze, „Kein Video,
+aber ein Foto?“, „No thanks, just chat.“ und „Ich möchte nicht warten. Was kostet
+das Video?“ bleiben konservativ ohne Angebot. Auch angehängte Ablehnungen ohne
+bisher erkanntes Negationstoken („Ich lehne ab“, „I decline“, „Non merci“)
+passen nicht in die ganze Nachrichtenform und erhalten keine neue Freigabe.
+Andere Formulierungen/Sprachen werden nicht als vollständig verstanden behauptet.
+
+Gemeinsamer Preisvalidator, kommerzielle Reviews/Holds/Cooldowns/Aftercare,
+Workspace-/Character-/Fan-Bindung und manuelle Sendefreigabe bleiben unverändert.
+Die vorhandene gemeinsame Antwortqualitäts- und Wiederholungsprüfung bleibt der
+einzige Qualitätspfad. Synthetische Policy-/Route-Tests belegen diesen Source-Fix,
+keine neue reale Modell-, Staging- oder Production-Abnahme.

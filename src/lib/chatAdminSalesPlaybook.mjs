@@ -27,11 +27,13 @@ export function normalizeChatAdminSalesPlaybook(value) {
 export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const normalized = normalizeChatAdminSalesPlaybook(playbook);
   const incoming = typeof incomingMessage === "string" ? incomingMessage.toLocaleLowerCase() : "";
-  // Explicit negation vetoes this message's offer selection, including mixed
-  // wishes or unclear scope. Ask for clarification rather than infer consent;
-  // this does not persist a sales hold or a declined/purchased event.
+  // Only these complete appreciation + price-question forms have clear scope.
+  // Never strip a prefix: keep all original names for the ambiguity check below.
+  const affirmativePriceQuestion = /^\s*(?:nicht\s+schlecht[,.!]\s+was\s+kostet\s+das\s+(?:private\s+)?(?:foto|video)|not\s+bad[,.!]\s+how\s+much\s+is\s+the\s+(?:private\s+)?(?:photo|video))\?\s*$/iu.test(incoming);
+  // Every other negation still vetoes selection, including mixed/unclear wishes.
+  // This does not persist a sales hold or a declined/purchased event.
   const explicitRefusal = /(?<![\p{L}\p{N}])(?:kein(?:e[nmrs]?)?|keinerlei|nicht|nichts|ohne|no|not|never|don['’]?t|can['’]?t|cannot|won['’]?t)(?![\p{L}\p{N}])/iu.test(incoming);
-  if (explicitRefusal) return { playbook: { ...normalized, offers: [] }, requestedOffer: null };
+  if (explicitRefusal && !affirmativePriceQuestion) return { playbook: { ...normalized, offers: [] }, requestedOffer: null };
   const privateRequest = /\b(?:privat(?:e[nsr]?|es)?|persönlich(?:e[nsr]?|es)?|exklusiv(?:e[nsr]?|es)?)\b/iu.test(incoming);
   const photoRequest = /\b(?:fotos?|bilder?|pics?|images?)\b/iu.test(incoming);
   const videoRequest = /\b(?:videos?|clips?)\b/iu.test(incoming);
