@@ -1352,3 +1352,11 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — known Fan questions — 2026-10-17
+- Explicit Owner bounded task; mainf36e630c confirms1335-1340 integrated. Risk R3, existing ChatAdmin AI contract/gate; lock LOCK-FM-CHATADMIN-KNOWN-FACT-QUESTIONS-20261017.
+- Test-first known-vs-detail questions and source freshness under truncated history. Safe deterministic correction only if currentness and overblocking can be resolved without new lifecycle/provider calls; otherwise Owner-authorized evidence-only fallback. No protected action, no aggregate acceptance.
+- Source/independent evidence and receipt pending. Recovery: reviewed repository revert; company-dependent work deferred.
+
+- Known-Fan-question diagnostic handoff: Owner fallback used; no safe freshness distinction after clipping, productgap UNRESOLVED.297focused/298withcoverage and independent320/24collisions/4 diagnostic-existingguard mutations PASS; no runtime correction. Receipt receipts/chatadmin-known-fact-questions-20261017.md. Lock RELEASED_FOR_PR; exact Draft/head/CI follows in metadata.

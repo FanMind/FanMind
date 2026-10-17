@@ -143,3 +143,39 @@ keine neue Memory und kein zusätzlicher Provideraufruf. Vertrag und Grenzen:
 [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
 Synthetische Tests beweisen Kontextübergabe und Schutzregeln, keine semantische
 Befolgung durch ein reales Modell. Echte Mehrturn-Qualitätsabnahme bleibt offen.
+
+
+## Bekannte Fanangaben erneut erfragen — belegte Grenze, 17. Oktober 2026
+
+Befund-only gemäß Owner-Fallback, **keine neue Laufzeitprüfung implementiert**.
+Die vorhandene Anweisung verbietet unnötige Fragen nach bekannten Angaben und
+ungefragte Notizaufzählungen bereits. Der gemeinsame deterministische Wächter
+prüft jedoch Wiederholungen, nicht die Aktualität oder Bedeutung gespeicherter
+Interessen. Die tatsächliche ChatAdmin-Route akzeptiert in synthetischen Fällen
+„Magst du Musik?“, „Magst du Reisen?“ bzw. „Do you like music?“ trotz entsprechender
+`learned_preferences`. Dies ist eine nachgewiesene ungelöste Lücke, kein Nachweis,
+dass echte Modelle diese Fragen regelmäßig erzeugen.
+
+Eine kleine pauschale Interessen-/Fragen-Regex wäre unter den geforderten Grenzen
+nicht sicher: Der vorhandene Speicher lernt positive Interessen, aber keinen
+quellgebundenen Widerruf durch „Ich mag keine Musik mehr“ oder „Das stimmt inzwischen
+nicht mehr“. Nach späteren Themenwechseln oder Kontextkürzung kann dieser neuere
+Widerruf fehlen, während das alte positive Interesse weiterhin gespeichert ist.
+Tests erzeugen für gültige und widerrufene Interessen **bytegleiche Modellkontexte**
+mit derselben Quellenreferenz/Sequenz. Dieselben Eingaben erlauben keine sichere
+Unterscheidung zwischen redundanter Rückfrage und sinnvoller neuer Klärung.
+
+Deshalb bleiben Qualitätsprüfung, Provideranzahl und bestehende Retry-Grenze
+unverändert, ebenso CRM/Creator/Copilot/Mobile und deren gemeinsamer Contract.
+Detailfragen wie „Welche Musik hörst du gerne?“ bleiben zulässig. Manuelle Notizen,
+Zusammenfassungen und Vermutungen werden nicht zu bestätigten Interessen erklärt.
+Die bestehenden Quellen-, Isolations-, Stil-, Preis-, Angebots- und Versandgrenzen
+bleiben erhalten. Insbesondere wird die negative Aussage nicht durch eine erfundene
+aktuelle Präferenz ersetzt und altes Wissen nicht allein aufgrund eines Regex-
+Treffers als sicher aktuell behandelt.
+
+Der erste reine Testcommit hält die roten Soll-Erwartungen fest; finale Tests
+charakterisieren ausdrücklich die bestehende Akzeptanz und die Datengrenze. Ihre
+grünen Ergebnisse bedeuten **keine Umsetzung der Anti-Rückfrage-Funktion**. Kein
+zusätzliches Modell, kein neuer persistenter Zustand und keine zweite Architektur.
+Kanonischer Befund: `project-memory/receipts/chatadmin-known-fact-questions-20261017.md`.

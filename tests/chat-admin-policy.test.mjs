@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { learnChatAdminKnowledge, writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
+import { extractChatAdminFacts, readChatAdminKnowledge, learnChatAdminKnowledge, writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
 
 import {
   CHAT_ADMIN_ACCEPTANCE_CONFIRMATION,
@@ -557,4 +557,35 @@ test("manual customer tier is bounded to four classes and stays independent from
   assert.match(sql, /saved\.status <> coalesce\(fan_data->>'status','active'\)/u);
   assert.match(sql, /saved\.customer_tier <> coalesce\(fan_data->>'customer_tier','red'\)/u);
   assert.match(sql, /status,customer_tier,summary,notes/u);
+});
+
+
+// Evidence for the Owner-authorized findings-only fallback: fresh and superseded
+// interests cannot always be distinguished from the existing truncated inputs.
+for(const [positive,retraction] of [
+ ["Ich liebe Musik.","Ich mag keine Musik mehr."],
+ ["Ich mag Reisen.","Das stimmt inzwischen nicht mehr."],
+ ["I love music.","I do not like music anymore."],
+ ["I like travel.","That is no longer true."],
+])for(const allowance of [0,1000,10000])test(`current and retracted interests have identical bounded context (${retraction}, budget=${allowance})`,()=>{
+ const source={id:"original",memory_source:"confirmed-generation",sequence:10,direction:"fan_inbound",content:positive};
+ const current=learnChatAdminKnowledge("Manuell",extractChatAdminFacts(positive,source.id),[source]);
+ const revoked=extractChatAdminFacts(retraction,"newer");assert.deepEqual(revoked,[],"existing learning has no revocation fact");
+ const stale=learnChatAdminKnowledge(current,revoked,[{id:"newer",sequence:20,direction:"fan_inbound",content:retraction}]);
+ assert.equal(stale,current,"older positive remains stored even after the actual newer retraction");
+ const f=preferenceContextFixture(false,false);const fan={...f.fan,notes:current,summary:""};
+ const tuple={workspace_id:f.character.workspace_id,character_id:f.character.id,fan_id:fan.id,conversation_id:f.conversation.id};
+ const common=Array.from({length:21},(_,i)=>({...tuple,id:`topic-${i}`,sequence:30+i,direction:i%2?"confirmed_reply":"fan_inbound",content:`Anderes Thema Wochenende ${i}: ${"x".repeat(300)}`}));
+ const origin={...tuple,id:"original-row",generation_id:source.memory_source,sequence:10,direction:"fan_inbound",content:positive};
+ const freshHistory=[origin,...common];const staleHistory=[origin,{...tuple,id:"retraction",sequence:20,direction:"fan_inbound",content:retraction},...common];
+ const incoming="Was gefällt dir an meinem Profil?";
+ const base=buildChatAdminFanContext(f.character,fan,f.conversation,[],incoming);
+ const fresh=buildChatAdminFanContext(f.character,fan,f.conversation,freshHistory,incoming,base.length+allowance);
+ const superseded=buildChatAdminFanContext(f.character,{...fan,notes:stale},f.conversation,staleHistory,incoming,base.length+allowance);
+ assert.equal(fresh,superseded,"a deterministic guard of these same inputs cannot prove which interest is current");
+ assert.ok(fresh.length<=base.length+allowance);const context=JSON.parse(fresh);
+ assert.deepEqual(context.fan.learned_preferences,readChatAdminKnowledge(current).facts);
+ assert.equal(context.fan.learned_preferences[0].source,"confirmed-generation");assert.equal(context.fan.learned_preferences[0].source_sequence,10);
+ assert.ok(!context.conversation.recent_messages.some(row=>row.id==="original-row"||row.id==="retraction"));
+ assert.equal(context.style.writing,f.character.writing_style);assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.sellNow,false);
 });
