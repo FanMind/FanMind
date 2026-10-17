@@ -44,3 +44,14 @@ Immediate explicit negation remains separate: with one active Foto offer,
 reproduced on current source. The next bounded conversation-control increment
 should handle that scoped current denial without changing persistent confirmed
 holds. No C implementation or second task queue is created here.
+
+## Owner-requested reconciliation after #1334 merge
+
+Main `cb6ff77aefcaaa473c8ad5cd527f3504c0880161` independently confirms #1334
+merged. PR #1336 old head `f8fdd05c1cbe70bcb21ef8319ebe31b1b03ddd5b` was behind.
+Normal merge `7e4d8ba3` incorporates the exact Admin page and its receipt without
+rewriting history. No product/test/docs conflict or watched-source change arose;
+all #1334 bytes are retained and the existing Source-of-Truth fingerprint stays
+valid. Fresh focused regressions, exact-head Required CI and independent final
+Source/CI review are recorded in PR metadata. No merge authorization for #1336
+is inferred. The follow-up negation scope remains serial and separately reviewed.
