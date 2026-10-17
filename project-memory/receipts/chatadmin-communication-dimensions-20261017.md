@@ -57,9 +57,8 @@ remain unchanged. No API/schema/provider call or production data action.
 
 54 new tests:45 dimension/context/provenance/capacity cases and9 actual-route
 cases. Existing whole-replacement assertion updated to the intended partial-conflict
-contract.268/268 focused eight-suite regression PASS;269/269 including required
-suite-registration coverage PASS,0 failures/skips. New suite is registered in the
-existing Operations command, no workflow change.
+contract.268/268 focused seven-suite regression PASS;269/269 including required
+suite-registration coverage PASS,0 failures/skips. New cases live in the already registered Knowledge suite, no package/workflow change.
 
 Positive/negative DE/EN, both independent update orders, full/partial conflicts,
 equal-event order, stale/late retries, exact substring/source age, legacy v1,
@@ -90,8 +89,19 @@ rewritten, cross-kind boundary demotion, boundary-priority removed. No blocker.
 
 Final SHA256 bindings:
 - src/lib/chatAdminKnowledge.mjs: `19fe3dee693e6ff7951cede8523befba8df6c170b5ac947b30a2fe22964a7852`
-- tests/chat-admin-communication-dimensions.test.mjs: `773afa2184282848c777fd2ca4bc4fa2e992952fc32c6804fb41e70bb456c47d`
+- tests/chat-admin-knowledge.test.mjs: `fe9bd3a80e68b96b268d4a6e03e99206880c3ecc365ea0fd894d6834c9ecba64`
 - tests/chat-admin-api-integration.test.mjs: `915349c8a639b86635d4c0f23f5448f69ad741ca260668fe3fc6d536af149cc3`
+
+## CI registration correction
+
+The first exact-head push Truth job117470683978 on406c82d5 failed37 Capacity
+preflight cases with capacity_checksum_invalid: registering a separate suite in
+package.json changed an existing pinned Capacity source input. No Capacity pin,
+runner or protection was changed. Move the same45 new dimension cases into the
+already registered Knowledge suite and restore package.json byte-for-byte to
+main; the new test-only file disappears from the final diff. Focused269 cases
+and independent source/CI bindings are revalidated on the corrected final head.
+This failure is retained, never relabeled as successful final CI.
 
 ## Recovery, limits and handoff
 

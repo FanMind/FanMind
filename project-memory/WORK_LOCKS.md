@@ -1353,3 +1353,5 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Forbidden: merge/deploy/dispatch, Staging/Production/database/SQL/provider/payment/registration/Mobile action. Global God Mode and FM-DEC-031 deferrals unchanged.
 
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.

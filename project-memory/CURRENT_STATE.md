@@ -733,3 +733,5 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Sales hold, recent-purchase aftercare, offer fatigue and offer cooldown remain fail-closed. When sellNow is false, no variant may sell, negotiate, add urgency or invent an offer.
 - Sales-forward guidance remains limited to an explicitly requested, active, preapproved server-owned offer. Prices remain outside model free text and sending remains manual.
 - Focused policy tests cover permitted-offer guidance, fatigue suppression and aftercare suppression. Repository policy/tests only; no database, provider or Production mutation.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.

@@ -1350,3 +1350,5 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Implementation/independent Source+CI evidence and receipt pending. Recovery: reviewed source revert. Company-dependent steps remain deferred.
 
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
