@@ -15,11 +15,13 @@ vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
 [Creator Intelligence](CREATOR_INTELLIGENCE.md).
 
 
-ChatAdmin-Angebotsablehnung (17.10.2026): Begrenzte deutsche/englische
-Negationstokens sperren die aktuelle Angebotsauswahl, auch bei gemischten
-Wünschen. Source und synthetische Tests sind vorhanden; Merge, Staging-Abnahme
-und produktive Aktivierung sind hier nicht erfolgt. Keine persistente
-Verkaufspause und keine allgemeine NLP-Abnahme. Phase 7b bleibt offen.
+ChatAdmin-Angebotsablehnung (17.10.2026): #1335–#1337 sind gemergt.
+Die neue Source-Ergänzung lässt nur vollständig begrenzte Preisfragen wie
+„Nicht schlecht, was kostet das Foto?“ bzw. „Not bad. How much is the photo?“
+durch das bestehende Negationsveto zur normalen Artikelprüfung. Erkannte Namen
+müssen zur abschließenden Medienbezeichnung gehören. Weitere Sätze,
+Ablehnungen und gemischte Wünsche bleiben gesperrt. Kein allgemeines NLP,
+keine persistente Verkaufspause; Phase7b und reale Zielabnahme bleiben offen.
 
 
 Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt

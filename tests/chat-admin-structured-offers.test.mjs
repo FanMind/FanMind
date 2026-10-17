@@ -309,3 +309,96 @@ test("reconciled ambiguity and refusal guards keep mixed named wishes unresolved
  const resolved=resolveChatAdminRequestedOffer(playbook(),"Ich möchte Privates Foto.");
  assert.equal(resolved.requestedOffer.id,"private_photo");assert.equal(resolved.requestedOffer.recommendedPriceMinor,2500);
 });
+
+// Test-first Phase 7b cases: the exception must describe the whole message,
+// never discard a later refusal or guess the scope of another negation.
+for (const [incoming,id,english] of [
+ ["Nicht schlecht, was kostet das Foto?","photo",false],
+ ["Nicht schlecht. Was kostet das Video?","video",false],
+ ["NICHT SCHLECHT! Was kostet das private Foto?","private_photo",false],
+ ["Not bad. How much is the photo?","photo",true],
+ ["Not bad, how much is the video?","video",true],
+ ["NOT BAD! How much is the private photo?","private_photo",true],
+]) test(`bounded appreciation followed by a price question: ${incoming}`,()=>{
+ const own=playbook();
+ // Keep the existing vocabulary: English photo is an explicitly stored name.
+ if(english)own.offers=own.offers.map(item=>({...item,name:{photo:"Photo",video:"Video",private_photo:"Private Photo",private_video:"Private Video"}[item.id]}));
+ const before=JSON.stringify(own);
+ const result=resolveChatAdminRequestedOffer(own,incoming);
+ assert.equal(result.requestedOffer?.id,id);
+ assert.deepEqual(result.playbook.offers.map(item=>item.id),[id]);
+ assert.equal(JSON.stringify(own),before);
+ const price=prices[id]/100;
+ assert.doesNotThrow(()=>assertChatAdminReplySemantics([`Das kostet ${price} EUR.`,"Gern.","Klar."],incoming,result.requestedOffer));
+ assert.throws(()=>assertChatAdminReplySemantics([`Das kostet ${price+1} EUR.`,"Gern.","Klar."],incoming,result.requestedOffer),/reply_price_not_permitted/u);
+});
+
+for(const incoming of [
+ "Ich möchte kein Foto.","Ich will nichts kaufen.","Kein Video, aber ein Foto?",
+ "Ich möchte nicht warten. Was kostet das Video?","Don't send a video.","No thanks, just chat.",
+ "Nicht schlecht.","Not bad.","Nicht schlecht, Foto?","Not bad. Video?",
+ "Nicht schlecht, was kostet das Foto? Ich möchte es nicht.",
+ "Not bad. How much is the video? Don't send it.",
+ "Nicht schlecht, aber kein Foto. Was kostet das Video?",
+ "Nicht schlecht, was kostet kein Foto?","Not bad. How much is no video?",
+ "Nicht schlecht, was kostet das Foto oder das private Foto?",
+ "Not bad. How much is the video or private video?",
+ "Nicht schlecht, was kostet das Foto? Nein danke.",
+ "Not bad. How much is the video? I decline.",
+ "Nicht schlecht, was kostet das Foto? Ich lehne ab.",
+ "Nicht schlecht, was kostet das Foto? Non merci.",
+ "Not bad. How much is the video? No gracias.",
+ '„Nicht schlecht, was kostet das Foto?“',
+ '"Not bad. How much is the video?"',
+ "Nicht schlecht kaufen will ich das Foto.","Not badly. How much is the video?",
+ "Nicht schlecht, was kostet das Foto ohne Video?",
+])test(`contextual exception preserves conservative refusal: ${incoming}`,()=>{
+ const result=resolveChatAdminRequestedOffer(playbook(),incoming);
+ assert.equal(result.requestedOffer,null);assert.deepEqual(result.playbook.offers,[]);
+ assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 10 EUR.","Gern.","Klar."],incoming,result.requestedOffer),/reply_price_not_permitted/u);
+});
+
+test("contextual price question cannot override commercial holds or article readiness",()=>{
+ const f=followUpFixture();const incoming="Nicht schlecht, was kostet das Foto?";
+ assert.equal(f.context(incoming).sales_playbook.requested_offer?.id,"photo");
+ for(const commercial of [{salesHold:true},{source:"manual",lastPurchaseAt:new Date().toISOString()},{source:"manual",lastOfferAt:new Date().toISOString()},{source:"manual",lastDeclinedAt:new Date().toISOString()}]){
+  f.fan.notes=writeChatAdminKnowledge({commercial});
+  const before=f.fan.notes;const context=f.context(incoming);
+  assert.equal(context.sales_playbook.requested_offer,null);assert.equal(context.sales_strategy.sellNow,false);
+  assert.equal(f.fan.notes,before);
+ }
+ f.fan.notes=writeChatAdminKnowledge({facts:[{kind:"boundary",quote:"Bitte keine Angebote.",source:"confirmed-inbound"}]});
+ assert.equal(f.context(incoming).sales_playbook.requested_offer,null);
+ for(const patch of [{active:false},{requiresConfirmation:true}]){
+  const own=playbook();Object.assign(own.offers[0],patch);
+  assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ }
+ const own=playbook();own.offers.push({...own.offers[0],id:"duplicate"});
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+});
+
+for(const [name,incoming] of [
+ ["Not bad","Not bad. How much is the photo?"],
+ ["bad","Not bad. How much is the photo?"],
+ ["How much is the photo","Not bad. How much is the photo?"],
+ ["Nicht schlecht","Nicht schlecht, was kostet das Foto?"],
+ ["schlecht","Nicht schlecht, was kostet das Foto?"],
+ ["was kostet das Foto","Nicht schlecht, was kostet das Foto?"],
+])for(const category of ["custom","photo"])test(`appreciation cannot name an unrelated ${category} article: ${name}`,()=>{
+ const unrelated=offer({id:"unrelated",name,category},3700);
+ const own=playbook({offers:[unrelated]});
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers.push(offer({id:"photo",name:incoming.startsWith("Not")?"Photo":"Foto",category:"photo"},1000));
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers[0].active=false;
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer?.id,"photo");
+});
+
+for(const [incoming,name] of [["Nicht schlecht, was kostet das private Foto?","Privates Foto"],["Not bad. How much is the private photo?","Private Photo"]])for(const category of ["custom","private_photo"])test(`a modifier alone cannot name the requested ${category} media: ${incoming}`,()=>{
+ const own=playbook({offers:[offer({id:"modifier",name:"private",category},3700)]});
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers.push(offer({id:"private_photo",name,category:"private_photo"},2500));
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers[0].active=false;
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer?.id,"private_photo");
+});

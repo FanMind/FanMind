@@ -27,11 +27,13 @@ export function normalizeChatAdminSalesPlaybook(value) {
 export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const normalized = normalizeChatAdminSalesPlaybook(playbook);
   const incoming = typeof incomingMessage === "string" ? incomingMessage.toLocaleLowerCase() : "";
-  // Explicit negation vetoes this message's offer selection, including mixed
-  // wishes or unclear scope. Ask for clarification rather than infer consent;
-  // this does not persist a sales hold or a declined/purchased event.
+  // Only these complete appreciation + price-question forms have clear scope.
+  // Never strip a prefix: keep all original names for the ambiguity check below.
+  const affirmativePriceQuestion = /^\s*(?:nicht\s+schlecht[,.!]\s+was\s+kostet\s+das\s+(?:private\s+)?(?:foto|video)|not\s+bad[,.!]\s+how\s+much\s+is\s+the\s+(?:private\s+)?(?:photo|video))\?\s*$/iu.test(incoming);
+  // Every other negation still vetoes selection, including mixed/unclear wishes.
+  // This does not persist a sales hold or a declined/purchased event.
   const explicitRefusal = /(?<![\p{L}\p{N}])(?:kein(?:e[nmrs]?)?|keinerlei|nicht|nichts|ohne|no|not|never|don['’]?t|can['’]?t|cannot|won['’]?t)(?![\p{L}\p{N}])/iu.test(incoming);
-  if (explicitRefusal) return { playbook: { ...normalized, offers: [] }, requestedOffer: null };
+  if (explicitRefusal && !affirmativePriceQuestion) return { playbook: { ...normalized, offers: [] }, requestedOffer: null };
   const privateRequest = /\b(?:privat(?:e[nsr]?|es)?|persönlich(?:e[nsr]?|es)?|exklusiv(?:e[nsr]?|es)?)\b/iu.test(incoming);
   const photoRequest = /\b(?:fotos?|bilder?|pics?|images?)\b/iu.test(incoming);
   const videoRequest = /\b(?:videos?|clips?)\b/iu.test(incoming);
@@ -55,6 +57,12 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
     const matcher = new RegExp(`(?<![\\p{L}\\p{N}])${name}(?![\\p{L}\\p{N}])`, "gu");
     return [...incoming.matchAll(matcher)].map(match => ({ offer, start: match.index, end: match.index + match[0].length }));
   });
+  // In the narrow exception, a stored name in the appreciation or question
+  // wording or just "private" cannot stand in for the requested media noun.
+  // Retain all matches for the original ambiguity guard as well.
+  const priceQuestionMediaStart = affirmativePriceQuestion ? incoming.search(/(?:private\s+)?(?:foto|photo|video)\?\s*$/iu) : -1;
+  const priceQuestionMediaEnd = affirmativePriceQuestion ? incoming.search(/\?\s*$/u) : -1;
+  const nameOutsideRequestedMedia = affirmativePriceQuestion && nameMatches.some(match => match.start < priceQuestionMediaStart || match.end !== priceQuestionMediaEnd);
   const specific = nameMatches.filter(match => !nameMatches.some(other => other.start <= match.start && other.end >= match.end && other.end - other.start > match.end - match.start));
   // Preserve ambiguity before category/private/call filters discard candidates.
   // A contained generic name is already removed above; repeated mentions of the
@@ -69,7 +77,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const candidates = named.length ? named : byCategory;
   const bareNamedRequest = named.length === 1 && incoming.trim().replace(/[?!.,]+$/u, "").trim() === named[0].name.toLocaleLowerCase();
   const customMentionWithoutRequest = named.some(offer => offer.category === "custom") && !explicitRequest && !bareNamedRequest;
-  const requested = multipleNamedOffers || (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
+  const requested = nameOutsideRequestedMedia || multipleNamedOffers || (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
     : candidates.length === 1 && !candidates[0].requiresConfirmation ? candidates[0] : null;
   return {
     playbook: { ...normalized, offers: requested ? [requested] : [] },

@@ -1322,3 +1322,14 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Source handoff:114 local focused cases and55 independent resolver/actual-route cases PASS,0 failures/skips; one veto-removal mutation caught by7 sensitive cases. Build/TypeScript/lint/truth/drift/quality PASS. Existing lock released for PR handoff. Receipt receipts/chatadmin-explicit-offer-refusal-20261017.md; final commit/Required CI and independent completion review recorded in Draft metadata. Source implemented/tested, not merged/Staging-accepted/productively activated; Phase7b remains open. No next independent implementation started.
 
 - Reconciliation after Owner-accepted1336 merge: fresh maincab4; PR1337 regular main merge preserves ambiguity+negation and every existing test. Resolve appended docs/fixtures/lock conflicts by retaining both; bind combined Source-of-Truth hash. Combined regression only, no new feature. Fresh final-head local/Required CI and independent review tracked on1337. Phase7b/target gates/FM-DEC-031 remain open; no merge or external action.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — contextual offer negation — 2026-10-17
+- Owner-selected bounded Phase7b source increment; R3; lock LOCK-FM-CHATADMIN-CONTEXTUAL-NEGATION-20261017, baseline2bfbeb049f9cd5b49ba39a1b30410fec859216a1.
+- First change was synthetic tests only (3276ff30):100 cases,91 pass/9 expected failures establish unnecessary vetoes for whole-message Nicht schlecht/Not bad + explicit price questions. Existing explicit/mixed refusal tests pass.
+- Minimal whole-message exception under FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; Creator shared-price consumer retained. No new queue, NLP/quality architecture, target work or persistent inferred sales events. Existing1335-1337 merged guards remain.
+- Source validation, independent Guardian/CI countercheck and canonical receipt pending; Draft only. Company-dependent measures deferred by FM-DEC-031. Recovery: reviewed source revert.
+
+- Contextual-negation corrected source handoff:185/185 focused tests, independent208/208 +216 refusal/535 name-span probes/6 final-source mutations, production build/TypeScript/lint/truth/memory/God Mode PASS. No active source reservation remains; final exact-head Required CI/independent CI recorded in Draft metadata. Receipt receipts/chatadmin-contextual-offer-negation-20261017.md. Source only; Phase7b/target gates/FM-DEC-031 remain open.
+
+- Same bounded contextual-negation scope reopened after concrete countercheck found prefix-name and modifier-only article collisions; initial4edc PASS revoked. Test-only03e3ea7f/e32fdc88 reproduce12/71 and4/75 red before repair. Terminal-media span and noun-end bounds fix both. Independent final source208/208 +216 refusals/535 name probes/6 mutants PASS; source lock released for new exact-head CI/Draft handoff. No old-head CI carryover or external action.

@@ -391,8 +391,7 @@ Die normale Creator-Pipeline mit manuell geprüftem requestedOfferId und der
 bereits integrierte gemeinsame Preisvalidator aus #1335 bleiben unverändert.
 Synthetische Policy-/Kontext-/Route-Tests belegen diese begrenzte Sourcehärtung,
 keine globale Kaufabsichtserkennung oder Live-Qualitätsabnahme. Details und
-separater Negationsvertrag: CHAT_ADMIN_REPLY_STYLE.md (Source in #1337,
-Merge offen). FM-CREATOR-001 und
+separater Negationsvertrag: CHAT_ADMIN_REPLY_STYLE.md (#1335–#1337 gemergt). FM-CREATOR-001 und
 Phase7b bleiben in Arbeit; Firmenabhängigkeiten bleiben nach FM-DEC-031 pausiert.
 
 ## Aktuelle Angebotsablehnung im ChatAdmin — 17. Oktober 2026
@@ -409,3 +408,17 @@ Cooldown- und Aftercare-Vertrag wird nicht durch Textklassifizierung ersetzt.
 Source-/Testnachweis ist keine Merge-, Staging- oder produktive Abnahme.
 Phase 7b, reale Gesprächsqualität und alle bestehenden Target-Gates bleiben
 offen. Firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.
+
+
+## Kontextbewusste Angebotsnegation — 17. Oktober 2026
+
+Ein enger ganzer Nachrichtentyp („Nicht schlecht“ / „Not bad“ plus eindeutige
+Preisfrage nach Foto/Video) darf die bisherige Artikelprüfung erreichen.
+Erkannte Artikelnamen müssen zur abschließenden Medienbezeichnung gehören;
+Namenskollisionen im Präfix, zusätzliche Ablehnungen/Sätze und unklare Negation
+bleiben gesperrt; der
+Kategorienwortschatz wird nicht erweitert. Präziser Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#kontextbewusste-angebotsnegation--begrenzter-sourceumfang-17-oktober-2026).
+Keine Änderung an Creator-Reviews, Hold/Aftercare/Cooldown, gemeinsamem Preis-
+oder Antwortqualitätspfad, Isolation oder manuellem Versand. Source-/Testnachweis
+ist keine Modellqualitäts- oder Zielabnahme; Phase7b und FM-DEC-031 bleiben offen.
