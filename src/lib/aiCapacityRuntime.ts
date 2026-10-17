@@ -35,6 +35,7 @@ export async function prepareAiCapacityReservation(input: {
   workspaceId: string;
   generationKey: string;
   billingPeriodKey: string;
+  entitlementRevision: number;
   packageId: "capacity_99" | "capacity_199" | "capacity_312";
   qualityMode: "fast" | "balanced" | "premium";
   estimatedInputTokens: number;
@@ -78,6 +79,7 @@ export async function prepareAiCapacityReservation(input: {
     qualityMode: input.qualityMode,
     reservedEurMicrocents: estimate.reservedEurMicrocents,
     expectedPolicyRevision: Number(admin.revision),
+    expectedEntitlementRevision: input.entitlementRevision,
     provider: "openai",
     model: quality.model,
     pricingVersion: estimate.pricingVersion,

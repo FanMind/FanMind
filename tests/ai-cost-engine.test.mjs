@@ -1,6 +1,4 @@
-import "./ai-capacity-reserve-settle.cases.mjs";
 import "./openai-price-catalog.cases.mjs";
-import "./ai-capacity-policy.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { calculateOpenAiProviderCostMicros, calculateProviderCostMicros, evaluateMonthlyAiBudget, resolveVersionedProviderPrice } from "../src/lib/aiCostEngine.mjs";

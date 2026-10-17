@@ -241,6 +241,12 @@ jobs:
           FANMIND_PG17_REQUIRE_SERVICE_CONTAINERS: "true"
         run: npm run test:database-authorization:pg17
 
+      - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_CAPACITY_PG17_REQUIRED: "true"
+        run: npm run test:ai-capacity
+
       - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
         id: creator_pg17
         env:

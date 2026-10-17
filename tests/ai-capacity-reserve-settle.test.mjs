@@ -99,7 +99,7 @@ test("reserve/settle SQL is service-role-only, idempotent and preserves indeterm
   assert.match(sql, /ai_capacity_generation_not_replayable/u);
   assert.match(sql, /ai_capacity_policy_revision_conflict/u);
   assert.match(sql, /ai_capacity_admission_closed/u);
-  assert.match(sql, /g\.period_end > statement_timestamp\(\)/u);
+  assert.match(sql, /g\.period_end > clock_timestamp\(\)/u);
   assert.match(sql, /provider, model, pricing_version, fx_version, metadata/u);
   assert.match(sql, /ai_capacity_reconciliation_idempotency_conflict/u);
   assert.match(sql, /reservation_reconciliation_required/u);
@@ -160,5 +160,21 @@ test("capacity reservations consume included-period credit before purchased top-
   assert.ok(reserveStart >= 0 && settleStart > reserveStart);
   const reserveSql = sql.slice(reserveStart, settleStart);
   assert.match(reserveSql, /order by[\s\S]*case g\.grant_kind when 'included_period' then 0 else 1 end[\s\S]*g\.created_at[\s\S]*g\.id/u);
-  assert.match(reserveSql, /g\.grant_kind = 'included_period'[\s\S]*g\.period_end > statement_timestamp\(\)[\s\S]*g\.grant_kind = 'purchased'[\s\S]*g\.expires_at is null or g\.expires_at > statement_timestamp\(\)/u);
+  assert.match(reserveSql, /g\.grant_kind = 'included_period'[\s\S]*g\.period_end > clock_timestamp\(\)[\s\S]*g\.grant_kind = 'purchased'[\s\S]*g\.expires_at is null or g\.expires_at > clock_timestamp\(\)/u);
+});
+
+
+test("required PostgreSQL CI owns Capacity execution with no optional native step", () => {
+  const workflow = fs.readFileSync(".github/workflows/ci-fanmind.yml", "utf8");
+  const step = workflow.split("      - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17")[1]?.split("      - name:")[0];
+  assert.ok(step, "required native step must exist");
+  assert.match(step, /FANMIND_CAPACITY_PG17_REQUIRED: "true"/u);
+  assert.match(step, /FANMIND_CREATOR_PG17_CONTAINER_ID: \$\{\{ job\.services\.pg17_source\.id \}\}/u);
+  assert.match(step, /run: npm run test:ai-capacity/u);
+  assert.doesNotMatch(step, /continue-on-error:|\n\s+if:/u);
+  const scripts = JSON.parse(fs.readFileSync("package.json", "utf8")).scripts;
+  for (const path of ["tests/ai-capacity-policy.test.mjs", "tests/ai-capacity-reserve-settle.test.mjs", "tests/ai-capacity-lifecycle-pg17.test.mjs"]) {
+    assert.ok(scripts["test:ai-capacity"].includes(path));
+    assert.ok(scripts["test:operations"].includes(path));
+  }
 });

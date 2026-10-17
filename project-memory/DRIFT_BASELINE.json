@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-10-15",
-  "last_source_of_truth_review": "2026-10-15 Owner-expanded global reply quality: both productive providers, Creator-specific shared examples, conservative repetition guard and one bounded rewrite. Independent R4 source PASS, 200 tests and six route mutations detected. Every actual call consumes existing quota and usage; no schema/catalog/entitlement/Stripe change. No deployment or real-model quality acceptance.",
+  "last_source_of_truth_review": "2026-10-15 Capacity FM-CR-052 repository lifecycle repair: atomic policy/entitlement binding and real PG17 tests; no target APPLY, projection writer, route or Billing activation.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "bc5cab871d2d1849c108f11b7101ed184140a4ff",
+    "docs/SOURCE_OF_TRUTH.md": "1a304654e35211ed221d86b3aec7ec3876acad37",
     "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
