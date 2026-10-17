@@ -221,3 +221,10 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: Pushes and merges to `main` must not trigger Production deployment. During the transition, `.github/workflows/deploy-fanmind.yml` remains manually visible but has no inputs, always reaches only a GitHub-hosted failing seal job and keeps the preserved Production job unreachable behind literal `if: false`.
 - Audit boundary: only the daily read-only audit resolves the actually running Production SHA from `/api/version`; manual and successful-deployment audit bindings retain their exact existing contracts.
 - Boundary: no release or rollback controller is activated, no Production runner is reachable from the new workflow version, and no merge, dispatch, runner, Environment, secret, permission or Production action is authorized. Historical workflow versions are not neutralized by this source change; their runner access must be secured before a separately approved transition.
+
+
+## FM-DEC-031 — Company-dependent actions deferred; repository Phase 7b continues
+- Date: 2026-10-17; Status: CONFIRMED; Source: explicit Owner instruction in this session.
+- Decision: until complete company details including ATU/UID and necessary external registrations exist, defer every dependent action. No Mobile/Store approval, Stripe/Billing activation, external Social app registration, tax or company verification. Preserve tasks, accepted artifacts and all unfinished gates; do not delete or mark deferred work completed.
+- Scope: reinforces FM-DEC-021 and the paid-activation limits of FM-DEC-015; narrows earlier Social work permission only for company-dependent external registration/approval. Repository-based Creator Intelligence, ChatAdmin, Sales Playbooks and conversation-control completion continues with synthetic tests.
+- Boundaries: no live data/provider calls, protected deployments, migrations or automatic merges. This decision supplies no target/provider authorization and creates no second queue.

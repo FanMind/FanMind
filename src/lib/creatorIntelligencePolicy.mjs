@@ -1,3 +1,5 @@
+import { assertReplyPrices } from "./replyPricePolicy.mjs";
+
 // Shared validation and deterministic strategy; no provider calls or side effects.
 export const CREATOR_STATES = Object.freeze([
   "CONNECT", "ENGAGE", "BUILD_INTEREST", "QUALIFY", "TEASE", "OFFER",
@@ -246,7 +248,12 @@ export function validateCreatorReplyOptions(options, context) {
       requireCondition(!value.toLocaleLowerCase().includes(phrase.toLocaleLowerCase()), "creator_voice_violation");
     }
     // Prices/offers are displayed from the approved server record, outside free text.
-    requireCondition(!/[€$£]|\b(?:EUR|USD|GBP|CHF)\b/iu.test(value), "creator_price_in_free_text");
+    try { assertReplyPrices([value], null); } catch (error) {
+      if (error instanceof Error && error.message === "reply_price_not_permitted") {
+        throw new CreatorPolicyError("creator_price_in_free_text");
+      }
+      throw error;
+    }
     return { tone: labels[index].toLowerCase(), label: labels[index], text: value };
   });
 }

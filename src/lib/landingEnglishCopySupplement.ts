@@ -151,6 +151,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Phase 7b · jetzt in Arbeit": "Phase 7b · work started now",
   "Ein Creator · ein eigener Account und Workspace": "One creator · one dedicated account and workspace",
   "Strukturierte Profile · Umsetzung begonnen": "Structured profiles · implementation started",
+  "Creator-Entwicklung aktiv · externe Freigaben zurückgestellt": "Creator development active · external approvals deferred",
+  "Angebote und Verkaufspausen vorhanden · gemeinsamer Preisschutz synthetisch geprüft · Zielabnahme offen": "Offers and sales holds implemented · shared price guard tested synthetically · target acceptance pending",
   "Angebotsregeln und Gesprächszustände in Arbeit": "Offer rules and conversation states in development",
   "Datenmodell begonnen · Lernschleife folgt": "Data model started · learning loop follows",
   "Anbindung und Abnahme in Arbeit": "Connection and acceptance in progress",
