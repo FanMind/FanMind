@@ -77,6 +77,25 @@ export default async function AdminRoadmapPage() {
           </div>
         </section>
 
+        <section className={styles.heroCard} aria-label="Interne Projektpriorisierung ohne Firmendaten">
+          <div>
+            <span className={styles.eyebrow}>Interne Arbeitsregel · 17.10.2026</span>
+            <h2>Extern abhängige Freigaben bis zu den Firmendaten zurückgestellt</h2>
+            <p>
+              Mobile/Store-/Gerätefreigaben, Zahlungen und Steuer-/UID-/ATU-Themen sowie
+              externe Social-App-Registrierungen oder Providerfreigaben werden derzeit nicht
+              als nächste aktive Arbeit angestoßen. Bestehende Belege und offene Gates bleiben
+              erhalten und werden ausdrücklich nicht als abgeschlossen markiert.
+            </p>
+            <p>
+              Aktueller Fokus: unabhängige Roadmap-Produktentwicklung im bestehenden
+              Creator-/ChatAdmin-Umfang (insbesondere Playbooks, manuelle KI-Vorschläge
+              und Qualität), mit lokalen Fixtures, Isolationstests und reviewbaren PRs.
+              Keine automatische Sendung und keine Nutzung realer Kunden- oder Providerdaten.
+            </p>
+          </div>
+        </section>
+
         <div className={styles.phaseGrid}>
           {roadmapPhases.map((phase) => (
             <article className={styles.phaseCard} data-done={phase.availability === "done" ? "true" : undefined} key={phase.number}>
