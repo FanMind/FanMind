@@ -47,7 +47,7 @@ export default async function AdminRoadmapPage() {
         <section className={styles.heroCard} aria-label="Interner AI-Capacity-Abnahmestand">
           <div>
             <span className={styles.eyebrow}>Interner Betriebs- und Abnahmestand · 17.10.2026</span>
-            <h2>AI Capacity v2: Entwicklungsarbeit abgeschlossen, Staging-Abnahme blockiert</h2>
+            <h2>AI Capacity v2: Lifecycle- und Diagnose-Source geprüft, Staging-Abnahme blockiert</h2>
             <p>
               #1331 (SQL-Lifecycle), #1332 (geschützter Read-only-Pfad) und #1333 (sichere BLOCK-Diagnose)
               sind auf main gemergt. Das bestätigt nur Source und Tests, keine Installation oder Aktivierung
