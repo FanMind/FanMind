@@ -481,3 +481,38 @@ test("actual old-generation retry cannot overwrite a newer preference after topi
  const body=await response.json();assert.equal(response.status,200);assert.equal(body.memory_status,"unchanged");
  assert.equal(h.calls.provider,0);assert.equal(h.calls.usageEvents.length,0);assert.equal(h.calls.memoryWrites.length,0);
 });
+
+for(const [first,incoming,expected] of [
+ ["Ich mag kurze Antworten.","Ohne Emojis.",["Ich mag kurze Antworten.","Ohne Emojis."]],
+ ["I prefer friendly replies.","With emojis.",["I prefer friendly replies.","With emojis."]],
+ ["Ich mag kurze Antworten ohne Emojis.","Ich mag lange Antworten.",["ohne Emojis.","Ich mag lange Antworten."]],
+ ["I prefer short replies without emojis.","I prefer long replies.",["without emojis.","I prefer long replies."]],
+])test(`actual saved generation merges only its confirmed preference dimensions (${incoming})`,async()=>{
+ const notes=knowledgePolicy.learnChatAdminKnowledge("Manuell",knowledgePolicy.extractChatAdminFacts(first,"old"),[{id:"old",direction:"fan_inbound",sequence:5,content:first}]);
+ const h=harness(undefined,undefined,{notes});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));const body=await response.json();
+ assert.equal(response.status,200);assert.equal(body.replies.length,3);assert.equal(body.memory_status,"saved");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,1);
+ const saved=knowledgePolicy.readChatAdminKnowledge(h.calls.memoryWrites[0][4].notes);
+ assert.deepEqual(saved.facts.filter(f=>f.kind==="communication").map(f=>f.quote),expected);
+ assert.equal(saved.manual,"Manuell");assert.equal(saved.facts.at(-1).source_sequence,10);
+ assert.match(body.safety_note,/manuell/u);
+});
+
+test("actual context supplies multiple dimensions while keeping a confirmed sales refusal",async()=>{
+ let notes="";
+ for(const [i,quote] of ["Ich mag kurze Antworten.","Ohne Emojis.","Bitte keine Angebote."].entries())notes=knowledgePolicy.learnChatAdminKnowledge(notes,knowledgePolicy.extractChatAdminFacts(quote,`source-${i}`),[{id:`source-${i}`,sequence:20+i,direction:"fan_inbound",content:quote}]);
+ const h=harness("context-price",undefined,{notes});const response=await h.route(h.request(1,"https://fanmind.invalid","Ich möchte ein privates Foto."));
+ assert.equal(response.status,400);assert.equal((await response.json()).error,"reply_price_not_permitted");
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.deepEqual(context.fan.learned_preferences.filter(f=>f.kind==="communication").map(f=>f.quote),["Ich mag kurze Antworten.","Ohne Emojis."]);
+ assert.equal(context.sales_playbook.requested_offer,null);assert.equal(context.sales_strategy.sellNow,false);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+test("actual delayed composite generation cannot restore either superseded dimension",async()=>{
+ let notes=knowledgePolicy.learnChatAdminKnowledge("",knowledgePolicy.extractChatAdminFacts("Ich mag lange Antworten.","new-length"),[{id:"new-length",sequence:20,direction:"fan_inbound",content:"Ich mag lange Antworten."}]);
+ notes=knowledgePolicy.learnChatAdminKnowledge(notes,knowledgePolicy.extractChatAdminFacts("Mit Emojis.","new-emoji"),[{id:"new-emoji",sequence:30,direction:"fan_inbound",content:"Mit Emojis."}]);
+ const h=harness("retry-learning",undefined,{notes});const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"unchanged");
+ assert.equal(h.calls.provider,0);assert.equal(h.calls.usage,0);assert.equal(h.calls.memoryWrites.length,0);
+});
