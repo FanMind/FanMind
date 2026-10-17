@@ -1278,3 +1278,15 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Boundary: no live Persona overwrite, workflow dispatch, deployment, SQL apply, capability grant, provider call, message send or protected activation. Reviewable source completion is distinct from live acceptance.
 - Negative proof: removing the draft filter in an isolated in-memory module made the new context assertion fail as expected; no checkout or target was mutated.
 - Additional target evidence: full Structured-Offers read-only postflight on `vshyhvgcmrlagvfnvomc` returned VERIFIED. This proves its schema/privilege contract only, not Browser or conversation-quality acceptance.
+
+
+## FM-AI-001 / FM-CR-052 — safe Capacity BLOCK diagnostics — 2026-10-17
+
+Explicit Owner source-only continuation on main3fcf7c31. No competing open PR
+for this scope. Existing lock/task retained. Add fixed, internally authenticated
+checkpoint diagnostics and allowlisted baseline field identifiers to the existing
+read-only runner, with synthetic secret/negative/recovery tests. No baseline,
+SQL, workflow, target, TLS, passfile or timeout change; required existing
+integration pins follow only reviewed changed sources. Run39022404980 proves
+BLOCK, not its actual Staging cause. Independent review and exact-head Required
+CI remain mandatory; Draft PR only, no merge or protected target action.
