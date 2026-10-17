@@ -1,3 +1,11 @@
+Owner clarification 2026-10-17 / FM-DEC-031: all actions depending on complete
+company details including ATU/UID or required external registrations remain
+DEFERRED_BY_OWNER. This covers Mobile/Store approvals, Stripe/Billing activation,
+external Social-app registration and tax/company verification. Preserve existing
+tasks/artifacts and unfinished gates. Pure repository Creator/ChatAdmin completion
+may continue with synthetic tests; no live/provider/deployment/migration/merge
+permission follows. Existing action identities and resume approvals remain intact.
+
 ## FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 — Creator Feature-Arbeit nach ChatAdmin VERIFY/God Mode fortsetzen
 - Status: RESOLVED
 - Task: FM-CREATOR-001

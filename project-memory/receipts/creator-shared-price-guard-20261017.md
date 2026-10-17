@@ -43,7 +43,12 @@ node_modules symlink; local dependency files resolved it without product changes
 The first CI run correctly rejected a stale generated NEXT_BEST_ACTION roadmap
 status line. The existing generator refreshed only that text line; selection,
 SAFE_READY_SET and all gates are unchanged. Required fresh CI on the exact
-published head is recorded separately in PR metadata.
+published head is recorded separately in PR metadata. The required browser
+component harness then identified its missing new static policy dependency;
+register the actual transpiled shared module, retaining the deny-unknown loader
+and every existing browser/network-boundary assertion. No skip or product change.
+The corrected actual-client/network-boundary suite passes locally in Chromium:
+32/32,0fail/skip, in addition to the107 focused policy/route/roadmap cases.
 
 ## Independent countercheck
 
