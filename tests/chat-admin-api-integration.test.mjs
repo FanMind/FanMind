@@ -83,6 +83,7 @@ function harness(change, abortController) {
     character.sales_playbook.offers.unshift({...character.sales_playbook.offers[0],id:"photo",name:"Foto",category:"photo",
       minimumPriceMinor:1000,recommendedPriceMinor:1000,maximumPriceMinor:1000});
   }
+  if (change === "context-price-en") character.sales_playbook.offers[0].name = "Private Photo";
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, memoryWrites: [] };
   const dependencies = {
@@ -136,6 +137,7 @@ function harness(change, abortController) {
       if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
 
       if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
+      if (String(change).startsWith("context-price")) replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
       if (change === "quality-price" && calls.provider === 2) replies = ["Für 999 EUR.", "Das kostet 999 EUR.", "Der Preis ist 999 EUR."];
       if (change === "quality-revoke") revoked = true;
@@ -400,4 +402,23 @@ test("actual reply route rejects prices after explicit refusal without persisten
  assert.equal(response.status,400);const body=await response.json();assert.equal(body.error,"reply_price_not_permitted");
  assert.equal(body.replies,undefined);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);
+});
+
+for(const [change,incoming] of [["context-price","Nicht schlecht, was kostet das private Foto?"],["context-price-en","Not bad. How much is the private photo?"]])test(`actual route permits only the bound price for contextual appreciation: ${incoming}`,async()=>{
+ const h=harness(change);const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ const body=await response.json();assert.equal(response.status,200);assert.equal(body.replies.length,3);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.incoming_message,incoming);assert.equal(context.sales_playbook.requested_offer.id,"private_photo");
+ assert.equal(context.sales_playbook.requested_offer.recommendedPriceMinor,2500);assert.equal(context.sales_strategy.sellNow,true);
+ assert.equal(context.character_id,characterId);assert.equal(context.fan.id,fanId);assert.equal(context.style.writing,"kurz");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);assert.equal(h.calls.memoryWrites.length,0);
+ assert.ok(h.calls.persistedHistoryIds);assert.match(body.safety_note,/manuell/u);
+});
+
+for(const incoming of ["Nicht schlecht, was kostet das private Foto? Ich lehne ab.","Not bad. How much is the private photo? No thanks.","Ich möchte nicht warten. Was kostet das private Foto?", "Kein Video, aber ein privates Foto?"])test(`actual route retains the price veto for unclear or refused requests: ${incoming}`,async()=>{
+ const h=harness("context-price");const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ const body=await response.json();assert.equal(response.status,400);assert.equal(body.error,"reply_price_not_permitted");
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.sales_playbook.requested_offer,null);assert.equal(context.sales_strategy.sellNow,false);
+ assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,1);
 });
