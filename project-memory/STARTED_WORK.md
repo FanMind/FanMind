@@ -1290,3 +1290,9 @@ SQL, workflow, target, TLS, passfile or timeout change; required existing
 integration pins follow only reviewed changed sources. Run39022404980 proves
 BLOCK, not its actual Staging cause. Independent review and exact-head Required
 CI remain mandatory; Draft PR only, no merge or protected target action.
+
+Source handoff: implementation9b301a15 independently checked PASS,43/43 diagnostic
+tests and21 shared/inventory checks pass. Builder complete; no active source lock
+reservation remains. Draft PR final head/Required CI tracked in its metadata; no
+new queue or target authorization. Receipt:
+receipts/capacity-v2-safe-block-diagnostics-20261017.md.
