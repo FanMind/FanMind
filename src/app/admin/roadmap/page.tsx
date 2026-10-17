@@ -44,6 +44,39 @@ export default async function AdminRoadmapPage() {
           <Link className={styles.primaryLink} href="/#roadmap">Öffentliche Roadmap prüfen</Link>
         </section>
 
+        <section className={styles.heroCard} aria-label="Interner AI-Capacity-Abnahmestand">
+          <div>
+            <span className={styles.eyebrow}>Interner Betriebs- und Abnahmestand · 17.10.2026</span>
+            <h2>AI Capacity v2: Entwicklungsarbeit abgeschlossen, Staging-Abnahme blockiert</h2>
+            <p>
+              #1331 (SQL-Lifecycle), #1332 (geschützter Read-only-Pfad) und #1333 (sichere BLOCK-Diagnose)
+              sind auf main gemergt. Das bestätigt nur Source und Tests, keine Installation oder Aktivierung
+              in Staging bzw. Production.
+            </p>
+            <p>
+              Der erste geschützte Staging-Lauf 39022404980 endete mit BLOCK. Eine erfolgreiche
+              Datenbankverbindung, SQL-Ausführung oder passende Baseline ist dadurch nicht bewiesen.
+              Die Ursache bleibt offen; die neue Diagnosefunktion wurde seit dem Merge noch nicht
+              in einem erneut autorisierten Live-Lauf abgenommen.
+            </p>
+            <p>
+              <strong>Nächster Schritt:</strong> aktuelle Commit- und Checksum-Bindungen prüfen und erst
+              nach neuer exakter Owner-Freigabe einmalig read-only diagnostizieren. Kein Retry auf
+              alte Autorisierung, kein SQL-Apply. Top-up/Refund (D3), Entitlements, Legal und
+              Verkauf bleiben separat offen.
+            </p>
+            <p>
+              <Link href="https://github.com/FanMind/FanMind/actions/runs/39022404980">
+                Fehlgeschlagenen Staging-Lauf ansehen
+              </Link>
+              {" · "}
+              <Link href="https://github.com/FanMind/FanMind/pull/1333">
+                Diagnose-PR #1333
+              </Link>
+            </p>
+          </div>
+        </section>
+
         <div className={styles.phaseGrid}>
           {roadmapPhases.map((phase) => (
             <article className={styles.phaseCard} data-done={phase.availability === "done" ? "true" : undefined} key={phase.number}>
