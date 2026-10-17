@@ -180,6 +180,26 @@ test("persistently repetitive replies and new prices in a Creator rewrite are ne
   assert.equal(h.calls.ai.length,2); assert.equal(h.calls.usage.length,2); assert.deepEqual(h.calls.usage.map(e=>e.status),["error","error"]);
  }
 });
+
+test("actual Creator route rejects named, written, unsupported and bare prices before returning drafts",async()=>{
+  for(const price of ["Das kostet 20 Euro.","That costs twenty dollars.","Das kostet 25.–","Das kostet 100 JPY."]){
+    const h=harness({outputs:[[price,...variedQualityReplies.slice(1)]]});
+    const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+    const body=await response.json();
+    assert.notEqual(response.status,200);assert.equal(body.reply_options,undefined);
+    assert.equal(body.creator_context,undefined);assert.equal(h.calls.ai.length,1);
+    assert.equal(h.calls.usage.length,1);assert.equal(h.calls.usage[0].status,"error");
+    assert.equal(h.calls.saves.length,0);
+  }
+});
+
+test("a price introduced by the single corrective attempt is rejected with both usages retained",async()=>{
+  const h=harness({outputs:[duplicateQualityReplies,["Das kostet 20 Euro.",...variedQualityReplies.slice(1)]]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+  assert.notEqual(response.status,200);assert.equal((await response.json()).reply_options,undefined);
+  assert.equal(h.calls.ai.length,2);assert.deepEqual(h.calls.usage.map(event=>event.status),["error","error"]);
+  assert.equal(h.calls.saves.length,0);
+});
 test("profile change, permission loss or abort after a rejected draft prevent the second general provider call", async () => {
  for(const options of [{changed:true},{revokeAfterFirst:true},{abortController:new AbortController()}]){
   const h=harness({...options,outputs:[duplicateQualityReplies,variedQualityReplies]});

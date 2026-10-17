@@ -75,7 +75,7 @@ owner/platform action required
 - Planning/catalog gaps (never executable or send-authorized):
   - Phase 7 · Creator Intelligence & Sales Assistance (progress; Phase 7b · jetzt in Arbeit)
   - Phase 7 · Eigene Creator-Stimmen & automatischer Creator-Kontext (progress; Strukturierte Profile · Umsetzung begonnen)
-  - Phase 7 · Sales Playbooks & Gesprächssteuerung (progress; Angebotsregeln und Gesprächszustände in Arbeit)
+  - Phase 7 · Sales Playbooks & Gesprächssteuerung (progress; Angebote und Verkaufspausen vorhanden · gemeinsamer Preisschutz synthetisch geprüft · Zielabnahme offen)
   - Phase 9 · Geprüfte Kampagnen-Entwürfe (planned; Geplant)
   - Phase 9 · Manuelle Freigabe (planned; Pflicht)
   - Phase 9 · Kein Auto-Senden (planned; Guardrail)

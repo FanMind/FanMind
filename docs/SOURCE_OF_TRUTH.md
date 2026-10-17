@@ -1,5 +1,13 @@
 # FanMind Source of Truth
 
+Phase 7b (17.10.2026): Creator-Antworten verwenden den bestehenden ChatAdmin-
+Preisschutz mit ihrem strengeren Vertrag ohne Freitextpreise. Synthetische
+Policy-/Route-Prüfungen schließen diese Source-Lücke; reale Qualität und
+Zielabnahme bleiben offen. Firmenabhängige externe Freigaben bleiben bis zu
+vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
+[Creator Intelligence](CREATOR_INTELLIGENCE.md).
+
+
 Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt
 Grant-/Reserve-Policy und revisionsgebundene Workspace-/Periodenberechtigung.
 Echte PostgreSQL-17-Lifecycletests laufen im erforderlichen CI-Pfad. Das ist keine

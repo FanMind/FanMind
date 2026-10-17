@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-10-15",
-  "last_source_of_truth_review": "2026-10-15 Capacity FM-CR-052 repository lifecycle repair: atomic policy/entitlement binding and real PG17 tests; no target APPLY, projection writer, route or Billing activation.",
+  "captured": "2026-10-17",
+  "last_source_of_truth_review": "2026-10-17 FM-CREATOR-001 bounded shared price-guard completion; synthetically tested source only, Phase7b/target acceptance stays open; FM-DEC-031 company-dependent external actions deferred; no activation or Finishline change.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "1a304654e35211ed221d86b3aec7ec3876acad37",
-    "src/config/roadmap.ts": "94b6b93b3db085107e36bec5a5042faf54049b9c",
+    "docs/SOURCE_OF_TRUTH.md": "b2994110109657be481eb0ca60b25357cf18aedc",
+    "src/config/roadmap.ts": "08ffb0ff2d647db929e97b876f151a402b4b9c28",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",

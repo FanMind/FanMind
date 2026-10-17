@@ -24,11 +24,13 @@ const client = ts.transpileModule(readFileSync("src/app/chatadmin/ChatAdminClien
 }).outputText;
 const knowledgeClient = ts.transpileModule(readFileSync("src/lib/chatAdminKnowledge.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const creatorPolicyClient = ts.transpileModule(readFileSync("src/lib/creatorIntelligencePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const replyPricePolicyClient = ts.transpileModule(readFileSync("src/lib/replyPricePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const bundle = `(() => {
   const modules = {${moduleSources.join(",")},
     "./chatadmin.module.css": function(module) { module.exports = {__esModule: true, default: new Proxy({}, {get: (_, key) => String(key)})}; },
     "@/lib/chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
     "./creatorIntelligencePolicy.mjs": function(module,exports,require) {${creatorPolicyClient}},
+    "./replyPricePolicy.mjs": function(module,exports,require) {${replyPricePolicyClient}},
     client: function(module, exports, require) {${client}}
   };
   const cache = {};

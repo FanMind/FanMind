@@ -7,6 +7,40 @@ der Verkaufsübergabe (FM-DEC-013), ohne eine offene Abnahme abzuhaken.
 `FM-CREATOR-001` ist IN_PROGRESS; Phase 7b bleibt kein zusätzlicher Verkaufs-Gate.
 Weitere nicht beauftragte Phase-8-Arbeit bleibt zurückgestellt.
 
+## Repository-Abschluss: gemeinsamer Preisschutz — 17. Oktober 2026
+
+Der vorhandene ChatAdmin-Preisvalidator wird unverändert als gemeinsame reine
+Policy wiederverwendet. Die Creator-Validierung wendet ihn ohne freigegebenen
+Freitextpreis an: Auch „20 Euro“, ausgeschriebene Beträge, „25.–“ und „100 JPY“
+werden nun in jeder Variante verworfen. Ein eventuell zulässiger strukturierter
+Creator-Angebotspreis bleibt ausschließlich im serverseitigen UI-Datensatz.
+ChatAdmin behält dagegen seinen vorhandenen Vertrag: Nur der eindeutig
+angefragte aktuelle Artikel darf seinen exakt bestätigten Preis im Text nennen.
+Creator-Fehlercode und ChatAdmin-Kompatibilitätsexport bleiben erhalten.
+
+Lokale synthetische Policy- und echte Route-Harness-Tests prüfen auch den
+Korrekturversuch: Kein ungültiger Entwurf wird zurückgegeben oder als Kauf/
+Versand gespeichert; bereits entstandene Usage bleibt erfasst. Keine Änderung
+an Workspace-/Fan-/Character-Auflösung, Stil, Revision, Sales Hold, Aftercare,
+Versand oder Freigabeschaltern. Kein Provideraufruf, keine Migration/Installation.
+Das ist ein abgeschlossener Source-Teilumfang des bestehenden FM-CREATOR-001,
+keine vollständige semantische Preis-/Verkaufsprüfung oder reale Qualitätsabnahme.
+Die bestehende Heuristik erkennt nicht jede ungewöhnliche/verklebte Schreibweise
+(z.B. „kostet25.–“ oder „kostet100JPY“). Menschliche Prüfung bleibt erforderlich.
+
+Aktueller Entwicklungsstand: Persona-/Stil-/Playbook- und kommerzielle
+Grundlagen, deterministische Verkaufspausen/Aftercare, bestätigter Chat-Kontext,
+ChatAdmin-Artikelbindung und Antwortqualitätskontrolle liegen als Code/Tests vor.
+Aktuelle Ziel-/Lern-/Modellqualitätsabnahmen bleiben getrennt und offen; historische
+Staging-Nachweise sind keine aktuelle allgemeine Aktivierung.
+
+Owner-Klarstellung vom 17. Oktober: Bis vollständige Firmendaten einschließlich
+ATU/UID und notwendige externe Registrierungen vorliegen, bleiben davon
+abhängige Mobile-/Store-Freigaben, Stripe-/Billing-Aktivierung, externe
+Social-App-Registrierungen sowie Steuer-/Unternehmensverifikation zurückgestellt.
+Bestehende Aufgaben und Nachweise bleiben erhalten und unerledigte Gates offen.
+Repositorybasierte Creator-/ChatAdmin-Arbeit wird unabhängig fortgesetzt.
+
 ## Ein Creator = ein Account = ein Workspace
 
 Klarstellung FM-DEC-016 vom 11. September 2026: Ein normaler Nutzer ist der
