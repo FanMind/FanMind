@@ -70,3 +70,17 @@ test("different numbers and negations are not collapsed into the same long factu
  assert.deepEqual(assessReplyQuality([base+" ohne Zusatzkosten.",base+" mit Zusatzkosten.","Ich kläre die Kosten." ]),[]);
  assert.deepEqual(assessReplyQuality([base+" in 10 Tagen.",base+" in 20 Tagen.","Ich kläre den Termin." ]),[]);
 });
+
+
+for(const question of ["Magst du Musik?","Magst du Reisen?","Do you like music?","Welche Musik hörst du gerne?","What kind of music do you like?"])test(`existing shared quality characterizes questions without fact-currentness input (${question})`,()=>{
+ // This is the existing contract, not evidence of semantic appropriateness.
+ // Polar and legitimate detail questions are both outside its repetition checks.
+ const replies=[question,"Ich bin gerne draußen unterwegs.","Am Wochenende entspanne ich mich."];
+ assert.deepEqual(assessReplyQuality(replies),[]);
+ assert.deepEqual(assessReplyQuality(replies,["Ein anderer bestätigter Dialogbeitrag."]),[]);
+});
+
+test("known-interest diagnostics add no provider attempt to the existing shared gate",async()=>{
+ const replies=["Magst du Musik?","Ich bin gerne draußen unterwegs.","Am Wochenende entspanne ich mich."];
+ const h=gateHarness([replies]);assert.equal(await h.run(),replies);assert.equal(h.calls.length,1);assert.equal(h.events.length,1);assert.equal(h.events[0].error,null);
+});
