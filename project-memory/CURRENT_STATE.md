@@ -1,3 +1,18 @@
+## Read-only audit reconciliation — 2026-10-15
+
+Current evidence and limitations: [Master Reality Check](MASTER_REALITY_CHECK_20261015.md)
+and [25-area acceptance matrix](receipts/master-reality-check-20261015-matrix.csv).
+These are dated observations, not another task queue or protected-action authorization.
+
+- Audited main: `dc269fd80407bfa2a3e1885e19e432b0ebaed68e`; deployed by `38709309527`; installed Production audit `38711088856` passed on that release. PR #1319 restored manual controlled releases; older sealed-deploy descriptions below are historical.
+- GitHub currently reports `main.protected=true`; full protection settings remain NOT_VERIFIED because the connector receives HTTP 403. Older unprotected-main statements are superseded as current observations.
+- Backup Worker install `38562548105` and one-hour audit-policy install `38577578826` passed. Do not repeat the old worker repair without new drift. Complete Restore remains PARTIAL.
+- ChatAdmin Staging application acceptance `38432481036` passed on `f353f3e1`; today's read-only catalogs show five ChatAdmin RLS tables plus `customer_tier` and `sales_playbook` on both targets. This does not prove new model quality or general customer capability activation.
+- Capacity budgets 15/30/50 EUR remain confirmed on Staging revision 2, with capacity/modes/top-ups disabled and emergency freeze enabled. Reserve/settle RPCs are absent there; Capacity objects are absent on Production. The #1248 grant-source defect remains. Keep FM-AI-001 open; do not repeat budget work.
+- Sales remains false. Legal register has 27 pending controls; the existing selector reports Creator OWNER_ACTION_REQUIRED, empty SAFE READY SET, planning gaps and 3/3 occupied slots. Reconcile existing locks/catalog; do not treat this audit's recommended Capacity source package as a dispatch.
+- Root dependency audit reports zero findings; Mobile separately reports 32 findings, including 20 high and one critical, under deferred-owner enforcement. Preserve Mobile deferral and existing acceptance receipts.
+
+
 2026-10-13 — Blocker / Next Best Action: Production database backups remain blocked because the installed worker rejects the now-explained 20/13 SECURITY-DEFINER topology; the repository candidate binds the exact seven-function Admin-CRM/ChatAdmin expansion and keeps permission drift fail-closed. Production is unchanged. Next is green CI plus independent review, then merge and a separately authorized exact-commit worker installation with read-only pre/postflight and rollback. Evidence: the canonical migrations account exactly for +7 public and +1 restricted function, and PR #1314 carries the guarded contract and regression tests.
 
 2026-10-09 — Durable dependency: PR #1291 head `00127ed33dd048c27639cefbce8eac9f2e619d7f` removes the Root/Web supply-chain blocker by resolving `sharp` 0.35.5 and `source-map-js` 1.2.2; current `main` remains unchanged until merge, while FM-DEC-021 Mobile findings stay reported under `deferred-owner` and out of this Web fix. Evidence: FanMind Supply Chain Security run `37939640159` passed with Root total/high/critical `0/0/0` and separately reported Mobile `35` total (`1` critical, `23` high, `11` moderate).
