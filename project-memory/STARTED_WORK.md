@@ -1305,3 +1305,11 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Gates: workspace/style/manual-send, revision/sales hold/aftercare and rollout remain unchanged. Independent review/Required CI pending; no target activation or live quality claim.
 
 - Source handoff:107/107 focused tests, local build/TypeScript/lint/truth and independent107/107 plus4/4 mutation negatives PASS; no open source findings. Existing bounded lock RELEASED_FOR_PR. Receipt receipts/creator-shared-price-guard-20261017.md; final head/Required CI recorded on the development PR. No aggregate completion, live quality or protected action claimed.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — named offer ambiguity completion — 2026-10-17
+- Owner: explicit pasted Roadmap Continuation packagesA/B/C; base main1dac77ae. A updates existing1334 independently; B is a separate bounded source branch.
+- Finding: 'Was kostet Foto oder Privates Foto?' picked private_photo after the private filter removed another already matched active offer. Distinct named IDs are now counted before that filter; contained generic/repeated same-ID names remain unambiguous. No schema/API/error/price contract change.
+- Evidence:114 local policy/context/actual-route/Creator regressions pass,55 independently affected tests pass. One in-memory mutation is caught by5 negative cases. Final head/Required CI and independent live-CI confirmation recorded on the Draft PR; no aggregate completion/target claim.
+- C selection (not started, no new queue): immediate negation of a current single-offer request. 'Ich möchte kein Foto, nur reden' still resolves photo on source; separate reviewer reproduced it. Next bounded engineering should suppress offer release for explicit scoped denial without changing confirmed persistent holds or inventing purchases. No extra implementation in B.
+- External dependencies remain documented/open/deferred; no live data, provider call, DB/migration/dispatch/deploy/payment/store/registration/merge. Existing source lock released for PR handoff.

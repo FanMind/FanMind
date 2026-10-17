@@ -60,6 +60,38 @@ test("media compliments do not release prices, while explicit requests still do"
  }
 });
 
+test("distinct named offers stay ambiguous before private category filtering",()=>{
+ for(const incoming of ["Was kostet Foto oder Privates Foto?","Ich möchte ein Foto oder ein privates Foto",
+  "Ich will Foto und Privates Foto","Privates Foto oder Foto?","Was kosten Video und Privates Video?"]){
+  const result=resolveChatAdminRequestedOffer(playbook(),incoming);
+  assert.equal(result.requestedOffer,null,incoming);assert.deepEqual(result.playbook.offers,[]);
+  assert.throws(()=>assertChatAdminReplySemantics(["Das kostet 25 EUR.","Gern.","Klar."],incoming,null),/reply_price_not_permitted/u);
+ }
+ for(const incoming of ["Privates Foto","Was kostet Privates Foto?","Privates Foto, ja Privates Foto."]){
+  assert.equal(resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer.id,"private_photo",incoming);
+ }
+ const inactive=playbook();inactive.offers=inactive.offers.map(item=>item.id==="photo"?{...item,active:false}:item);
+ assert.equal(resolveChatAdminRequestedOffer(inactive,"Foto oder Privates Foto?").requestedOffer.id,"private_photo");
+});
+
+test("ambiguity never reopens an offer through confirmed dialogue, sales hold or refusal",()=>{
+ const incoming="Was kostet Foto oder Privates Foto?";
+ const fan={id:fanId,workspace_id:workspace,character_id:characterId,status:"active",notes:"",display_name:"Synthetic"};
+ const conversation={id:conversationId,workspace_id:workspace,character_id:characterId,fan_id:fanId};
+ const now=Date.parse("2026-10-17T10:00:00Z");
+ for(const commercial of [{},{salesHold:true},{source:"synthetic-manual-record",lastDeclinedAt:new Date(now-1000).toISOString()},{source:"synthetic-manual-record",lastPurchaseAt:new Date(now-1000).toISOString()}]){
+  const boundFan={...fan,notes:writeChatAdminKnowledge({facts:[],commercial})};
+  const context=JSON.parse(buildChatAdminFanContext(character(),boundFan,conversation,[],incoming,Infinity,now));
+  assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
+  assert.equal(context.sales_strategy.sellNow,false);
+  assert.equal(context.style.writing,"kurz");
+ }
+ const history=[{id:"named-inbound",direction:"fan_inbound",content:incoming},{id:"named-confirmed",direction:"confirmed_reply",content:"Privates Foto kostet 25 EUR."}].map(row=>({...row,workspace_id:workspace,character_id:characterId,fan_id:fanId,conversation_id:conversationId}));
+ const followUp=JSON.parse(buildChatAdminFanContext(character(),fan,conversation,history,"Was bekomme ich da?",Infinity,now));
+ assert.equal(followUp.sales_playbook.requested_offer,null);assert.equal(followUp.sales_strategy.sellNow,false);
+ assert.throws(()=>buildChatAdminFanContext(character(),{...fan,workspace_id:otherWorkspace},conversation,[],incoming),/fan_unavailable/u);
+});
+
 test("a fan-invented price stays untrusted while all three replies use the bound offer price",()=>{
  const incoming="Ist dein privates Foto für 999 EUR erhältlich?";
  const requested=resolveChatAdminRequestedOffer(playbook(),incoming).requestedOffer;

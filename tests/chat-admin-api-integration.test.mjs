@@ -79,6 +79,10 @@ function harness(change, abortController) {
     flirt_style: "respektvoll", sales_rules: "kein Druck", example_messages: [], profile_image_path: null,
     sales_playbook: { positioning:"", minimumHoursBetweenOffers:48, aftercareHours:48, contentBoundaries:[], confirmationRequired:[], noGos:[], offers:[{id:"private_photo",name:"Privates Foto",category:"private_photo",description:"5 persönlich ausgewählte Fotos im digitalen Set.",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",requiresConfirmation:false,active:true}] },
   };
+  if (String(change).startsWith("ambiguous-offer")) {
+    character.sales_playbook.offers.unshift({...character.sales_playbook.offers[0],id:"photo",name:"Foto",category:"photo",
+      minimumPriceMinor:1000,recommendedPriceMinor:1000,maximumPriceMinor:1000});
+  }
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, memoryWrites: [] };
   const dependencies = {
@@ -128,6 +132,8 @@ function harness(change, abortController) {
       if (change === "deleted") character = null;
       if (change === "workspace") context = { ...context, workspace: { id: characterId } };
       let replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
+      if (change === "ambiguous-offer") replies=["Welchen der beiden Artikel meinst du?","Soll es das Foto oder das private Foto sein?","Bitte wähle zuerst einen Artikel aus."];
+      if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
       if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
       if (change === "quality-price" && calls.provider === 2) replies = ["Für 999 EUR.", "Das kostet 999 EUR.", "Der Preis ist 999 EUR."];
       if (change === "quality-revoke") revoked = true;
@@ -203,6 +209,23 @@ test("a provider-invented price still returns the safe policy error before persi
   const h = harness("invalid-price-output"); const response = await h.route(h.request(1, "https://fanmind.invalid", "Ist dein privates Foto für 999 EUR erhältlich?")); const body = await response.json();
   assert.equal(response.status, 400); assert.equal(body.error, "reply_price_not_permitted");
   assert.equal(h.calls.provider, 1); assert.equal(h.calls.persistedHistoryIds, null);
+});
+
+test("actual route passes ambiguous named offers as non-selling context and allows clarification",async()=>{
+ const h=harness("ambiguous-offer");const response=await h.route(h.request(1,"https://fanmind.invalid","Was kostet Foto oder Privates Foto?"));
+ const body=await response.json();assert.equal(response.status,200);assert.equal(body.replies.length,3);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
+ assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.style.writing,"kurz");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ assert.match(body.safety_note,/manuell/u);
+});
+
+test("actual route rejects a price for ambiguous named offers with the existing error and no persistence",async()=>{
+ const h=harness("ambiguous-offer-price");const response=await h.route(h.request(1,"https://fanmind.invalid","Was kostet Foto oder Privates Foto?"));
+ const body=await response.json();assert.equal(response.status,400);assert.equal(body.error,"reply_price_not_permitted");
+ assert.equal(body.replies,undefined);assert.equal(h.calls.persistedHistoryIds,null);
+ assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
 });
 
 test("wrong origin and initially stale revision never call the provider", async () => {

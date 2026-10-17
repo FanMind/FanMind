@@ -1298,3 +1298,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert; no schema/customer/provider state changed. Independent R3 review and fresh exact-head Required CI before merge recommendation; no automatic merge. FM-DEC-031 company-dependent work stays deferred.
 
 - Source handoff:107 focused cases and independent107/107 plus4/4 in-memory mutation proofs pass. Build/lint/truth/memory pass; receipt receipts/creator-shared-price-guard-20261017.md. No active Builder reservation remains. Final exact head/Required CI and independent CI-check tracked in focused development PR; no target/merge authority.
+
+
+## LOCK-FM-CREATOR-OFFER-AMBIGUITY-20261017
+- Task: FM-CREATOR-001 / FM-CHATADMIN-003; Status: RELEASED_FOR_PR; Holder: Codex source handoff; Risk: R3.
+- Base: main1dac77aeb382117397e97b54bdb26dfc38b440b1; branch fix/chatadmin-ambiguous-offer-request.
+- Scope: preserve ambiguity among distinct named active offers before private/category/call filtering; existing policy/route tests and direct docs only. No changes to #1335 price guard, Creator strategy, public/Admin roadmap data or PR1334's Admin-only reconciliation.
+- Reconciliation: no competing source PR; historical ACTIVE_SOURCE_REPAIR refers to already merged1322, protected ACTIVE_STAGING_COMPLETION remains separate and unexecuted. Same existing tasks, no new queue/selector action. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; Creator consumer/regressions retained.
+- Verification:114 local focused cases,55 independent affected cases,1 in-memory mutation detected by5 negatives; final exact-head CI/review separately recorded. Source Builder released, no active reservation remains.
+- Recovery: reviewed source revert; no live/provider/SQL/deployment/migration/activation/merge action. Firm dependencies remain deferred by FM-DEC-031.

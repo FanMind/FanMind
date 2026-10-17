@@ -380,3 +380,16 @@ Freigaben oder Strategie. Auch beim einzigen erlaubten Korrekturversuch gelten
 der bestehende Creator-Preisvertrag und die erneute Profilprüfung. Kein
 stilübergreifender Chat-Pool und kein automatisches Lernen aus Modell-Entwürfen.
 Diese Erweiterung aktiviert nicht den separat geschützten Creator-Rollout.
+
+
+## Gesprächssteuerung: mehrdeutige ChatAdmin-Artikelanfragen — 17.10.2026
+
+Der vorhandene Character-Playbook-Resolver behält mehrere getrennt benannte
+aktive Artikel als Mehrdeutigkeit bei, statt nach dem Privat-/Kategoriefilter
+einen auszuwählen. Kein Angebot/Preis im Modellkontext; sichere Rückfrage möglich.
+Die normale Creator-Pipeline mit manuell geprüftem requestedOfferId und der
+bereits integrierte gemeinsame Preisvalidator aus #1335 bleiben unverändert.
+Synthetische Policy-/Kontext-/Route-Tests belegen diese begrenzte Sourcehärtung,
+keine globale Kaufabsichtserkennung oder Live-Qualitätsabnahme. Details und
+verbleibender Negationsumfang: CHAT_ADMIN_REPLY_STYLE.md. FM-CREATOR-001 und
+Phase7b bleiben in Arbeit; Firmenabhängigkeiten bleiben nach FM-DEC-031 pausiert.
