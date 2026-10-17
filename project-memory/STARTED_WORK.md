@@ -1333,3 +1333,12 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Contextual-negation corrected source handoff:185/185 focused tests, independent208/208 +216 refusal/535 name-span probes/6 final-source mutations, production build/TypeScript/lint/truth/memory/God Mode PASS. No active source reservation remains; final exact-head Required CI/independent CI recorded in Draft metadata. Receipt receipts/chatadmin-contextual-offer-negation-20261017.md. Source only; Phase7b/target gates/FM-DEC-031 remain open.
 
 - Same bounded contextual-negation scope reopened after concrete countercheck found prefix-name and modifier-only article collisions; initial4edc PASS revoked. Test-only03e3ea7f/e32fdc88 reproduce12/71 and4/75 red before repair. Terminal-media span and noun-end bounds fix both. Independent final source208/208 +216 refusals/535 name probes/6 mutants PASS; source lock released for new exact-head CI/Draft handoff. No old-head CI carryover or external action.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — confirmed preference under topic pressure — 2026-10-17
+- Owner-selected Phase7b bounded source task; baseline main2be45e2602d65e9c670c25975245f3fd406f2f9e confirms1338 merged. Risk R3; lock LOCK-FM-CHATADMIN-CONFIRMED-PREFERENCE-20261017.
+- Test-first d654c961 adds only synthetic tests:103 cases/86 pass/17 expected failures. Eight newer interests evict a prior communication fact, absent from bounded actual-route context and permitting an older-generation communication replay. Truncation alone is already safe; existing boundaries/isolation/no inferred purchase controls remain green.
+- Reuse existing eight-fact notes/knowledge, source order, context builder and shared reply quality; no second memory/output architecture or learning vocabulary expansion. Small retention-priority correction only; actual model-quality behavior is not proven by provider stubs.
+- Source verification, independent countercheck, exact-head Required CI and canonical receipt pending. No target/deploy/merge/provider/SQL actions; FM-DEC-031 company-dependent tasks deferred. Recovery: reviewed source revert.
+
+- Confirmed-preference source handoff:214/214 focused, independent237/237 +108 pressure/4 invalid-source probes/6 killed mutations PASS; build/TypeScript/lint/truth/memory/God Mode162 PASS. Source lock released; exact Draft/head/fresh Required CI and independent CI readback tracked in PR metadata. Receipt receipts/chatadmin-confirmed-preference-context-20261017.md. No new format/quality path/provider/target action; global release/FM-DEC-031 unchanged.

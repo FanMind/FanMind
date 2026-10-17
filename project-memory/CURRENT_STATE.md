@@ -1,3 +1,9 @@
+## Confirmed Fan preference retention — bounded source handoff — 2026-10-17
+- Tasks FM-CREATOR-001 / FM-CHATADMIN-003, Risk R3; baseline main2be45e2602d65e9c670c25975245f3fd406f2f9e confirms1338 merged. No competing current source writer.
+- Proven old eight-fact eviction lost communication/source age after interest accumulation. One retention expression keeps protective boundaries first, communication before newer interests, same format/limits/source/quality/offer/price/isolation/manual-send contracts.
+- Test-first d654c961:103 cases/86 pass/17 expected failures. Final214/214 focused; independent237/237 +108 pressure/4 negative probes/6 mutations PASS. Build/TypeScript/lint(4 existing warnings)/truth/memory/God Mode162 PASS; global release BLOCK unchanged.
+- Receipt: receipts/chatadmin-confirmed-preference-context-20261017.md. Exact Draft/head/Required CI and final independent CI binding recorded in PR metadata; no target/model-quality/merge acceptance. Phase7b and FM-DEC-031 company-dependent gates remain open/deferred.
+
 ## Contextual offer negation — bounded source handoff — 2026-10-17
 - Tasks FM-CREATOR-001 / FM-CHATADMIN-003, Risk R3; baseline main2bfbeb049f9cd5b49ba39a1b30410fec859216a1 confirms1335–1337 merged.
 - Whole-message “Nicht schlecht”/“Not bad” + single explicit media-price question may reach existing article resolution; literal names must belong to the terminal media phrase and reach its noun; all other negation/ambiguity/price/commercial/isolation/manual-send rules retained.

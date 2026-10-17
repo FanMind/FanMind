@@ -128,3 +128,16 @@ Recovery: geprüfter Source-Revert auf den vorherigen Stand, ohne Migration oder
 Kundendaten-Reparatur. Bereits angefallene Providerkosten und Usage-Ereignisse
 werden nicht rückgängig gemacht. Technische CI, Quellprüfung und Merge ersetzen
 weder ein Deployment noch die manuelle Modellbewertung.
+
+
+## Fanpräferenzen unter Speicherdruck — 17. Oktober 2026
+
+Die vorhandene ChatAdmin-Wissensretention hält jetzt nach den Schutzgrenzen die
+aktuelle quellbelegte Kommunikationspräferenz vor zusätzlichen Interessen fest.
+Das verhindert deren Verlust bei Themenwechseln vor der bereits bestehenden
+Kontextkürzung. Struktur, Limits, Quellenordnung, Character-Stimme und die gemeinsame
+Qualitäts-/Wiederholungsprüfung bleiben unverändert; kein zweiter Outputwächter,
+keine neue Memory und kein zusätzlicher Provideraufruf. Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
+Synthetische Tests beweisen Kontextübergabe und Schutzregeln, keine semantische
+Befolgung durch ein reales Modell. Echte Mehrturn-Qualitätsabnahme bleibt offen.

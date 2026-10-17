@@ -67,7 +67,9 @@ export function learnChatAdminKnowledge(notes, proposed, sources) {
     knowledge.facts.push({ kind: fact.kind, quote, source: source.memory_source ?? source.id, source_sequence: order });
     if(knowledge.facts.length>8){
       const boundaries=knowledge.facts.filter(old=>old.kind==="boundary");
-      const other=knowledge.facts.filter(old=>old.kind!=="boundary");
+      // Interests may age out; keep the current communication preference in
+      // the remaining slots after protective boundaries, with its source order.
+      const other=[...knowledge.facts.filter(old=>old.kind==="interest"),...knowledge.facts.filter(old=>old.kind==="communication")];
       const retained=boundaries.slice(-8);
       const slots=8-retained.length;
       knowledge.facts=[...retained,...(slots>0?other.slice(-slots):[])];

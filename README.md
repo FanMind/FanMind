@@ -1,5 +1,12 @@
 # FanMind
 
+ChatAdmin-Fanpräferenzen (17.10.2026): Beim bestehenden Acht-Fakten-Limit
+bleiben Schutzgrenzen zuerst und die aktuelle Kommunikationspräferenz vor
+weiteren Interessen erhalten. Format, Quellen und Limits bleiben gleich.
+Synthetisch geprüfte Sourcekorrektur; reale Antwortqualität und Zielabnahme
+bleiben offen. Keine neue Memory- oder Qualitätsarchitektur.
+
+
 ChatAdmin-Gesprächssteuerung (17.10.2026): Mehrere ausdrücklich benannte aktive
 Artikel bleiben ohne Angebots-/Preisfreigabe, auch wenn ein späterer Filter
 nur einen übrigließe. Begrenzte synthetisch geprüfte Sourcehärtung; kein Kauf-
