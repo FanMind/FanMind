@@ -87,6 +87,7 @@ else if(${JSON.stringify(mode)}==='oversize'){process.stdout.write('x'.repeat(10
 else if(${JSON.stringify(mode)}==='error'){process.stderr.write('private-diagnostic-and-password');process.exitCode=1;}
 else if(${JSON.stringify(mode)}==='connection'){process.stdout.write('secret-stdout-canary');process.stderr.write('secret-stderr-canary TLS password auth detail');process.exitCode=2;}
 else if(${JSON.stringify(mode)}==='sql-error'){process.stdout.write('secret-stdout-canary');process.stderr.write('ERROR: secret-SQLSTATE-and-customer-canary');process.exitCode=3;}
+else if(${JSON.stringify(mode)}==='signal'){process.stderr.write('secret-signal-canary');process.kill(process.pid,'SIGTERM');}
 else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.stringify(mode==="raw"?value:JSON.stringify(value))});}
 `;
     writeFileSync(join(bin,"psql"),body,{mode:0o700}); chmodSync(join(bin,"psql"),0o700);
@@ -123,7 +124,7 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       redirect:{PGHOSTADDR:"127.0.0.1"},writes:{FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true"},
     }))await t.test(`blocks ${name} before query`,()=>{fake();blocked(run(change),false,
       name==="otherCa"?"ENVIRONMENT_MAIN:CA_BINDING_REJECTED":
-        ["wrongSha","missingConfirmation"].includes(name)?"ENVIRONMENT_MAIN:MAIN_OR_CHECKOUT_REJECTED":"ENVIRONMENT_MAIN:ENVIRONMENT_REJECTED");});
+        name==="missingConfirmation"?"ENVIRONMENT_MAIN:MAIN_OR_CHECKOUT_REJECTED":"ENVIRONMENT_MAIN:ENVIRONMENT_REJECTED");});
     await t.test("fetch detects live-main advance, not stale origin/main",()=>{
       fake();const advanced=git(repo,["-c","user.name=CI","-c","user.email=ci@example.invalid","commit-tree",git(repo,["rev-parse","HEAD^{tree}"]),"-p",head,"-m","advanced main"]);
       git(repo,["update-ref","refs/heads/main",advanced]);try{blocked(run(),false,"ENVIRONMENT_MAIN:MAIN_OR_CHECKOUT_REJECTED");}finally{git(repo,["update-ref","refs/heads/main",head]);}
@@ -148,14 +149,18 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       ["extra-fields","match",{...observation,extra:true}],["schema-drift","match",{...observation,schema_md5:"0".repeat(32)}],
       ["error","error",null],["oversize","oversize",null],
       ["connection","connection",null],["sql-error","sql-error",null],
+      ["signal","signal",null],
       ["null","raw","null"],["secret-value","match",{...observation,policy:{...observation.policy,revision:"secret-policy-canary"}}],
+      ["secret-field","match",{...observation,"secret-customer-field-canary":true}],
+      ["multiple-secret-values","match",{...observation,schema_md5:"secret-schema-canary",policy:{...observation.policy,revision:"secret-policy-canary"}}],
     ])await t.test(`blocks ${name} output and removes snapshot`,()=>{
       const expected={empty:"RESPONSE_PARSING:RESPONSE_CARDINALITY",multiline:"RESPONSE_PARSING:RESPONSE_CARDINALITY",
-        malformed:"RESPONSE_PARSING:INVALID_JSON","extra-fields":"RESPONSE_PARSING:RESPONSE_SHAPE",null:"RESPONSE_PARSING:RESPONSE_SHAPE",
+        malformed:"RESPONSE_PARSING:INVALID_JSON","extra-fields":"RESPONSE_PARSING:RESPONSE_SHAPE",null:"RESPONSE_PARSING:RESPONSE_SHAPE","secret-field":"RESPONSE_PARSING:RESPONSE_SHAPE",
         "schema-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
-        error:"UNKNOWN_BLOCK:UNCLASSIFIED",oversize:"QUERY_EXECUTION:OUTPUT_LIMIT",connection:"CONNECTION_TLS:CONNECTION_FAILED",
+        "multiple-secret-values":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        error:"UNKNOWN_BLOCK:UNCLASSIFIED",signal:"UNKNOWN_BLOCK:UNCLASSIFIED",oversize:"QUERY_EXECUTION:OUTPUT_LIMIT",connection:"CONNECTION_TLS:CONNECTION_FAILED",
         "sql-error":"QUERY_EXECUTION:SQL_SCRIPT_FAILED"}[name]??"RESPONSE_BINDING:LABEL_MISMATCH";
-      const fields=name==="schema-drift"?["schema_md5"]:name==="secret-value"?["policy_revision"]:[];
+      const fields=name==="schema-drift"?["schema_md5"]:name==="secret-value"?["policy_revision"]:name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
       fake(mode,value);blocked(run(),true,expected,fields);
     });
     await t.test("unclassified manifest exception with secret canary stays unknown before credentials",()=>{
@@ -165,6 +170,9 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
     });
     await t.test("failed client version probe is bounded and never exposes child output",()=>{
       fake("version-error");blocked(run(),false,"CLIENT_PASSFILE:CLIENT_UNAVAILABLE");
+    });
+    await t.test("missing passfile blocks without a query",()=>{
+      fake();blocked(run({PGPASSFILE:""}),false,"CLIENT_PASSFILE:PASSFILE_REJECTED");
     });
     await t.test("failed live-main fetch has its own verified checkpoint",()=>{
       fake();git(repo,["remote","set-url","origin",join(scratch,"absent-local-origin")]);

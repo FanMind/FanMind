@@ -23,6 +23,6 @@
     "scripts/operations/staging-database-rollout-state.mjs": "215dcaf23bc2d8f28cd61bc4709ebebdebf49d15df97186f3e95c4d0ce2f5324",
     ".github/workflows/staging-database-rollout-state.yml": "a9a59ebd355a3caa71caa0778321c6adb78a421162a2eb606407a36f67ac3a8c",
     "package.json": "08ebfb3daacdda0be46b6db1a73a93cfbd94eaa52b6b4559c43e4cfcf0e03991",
-    "tests/ai-capacity-staging-integration.test.mjs": "3ac002957aee81fd7b29edbd57168ea90f90fdc2f92583138ce45ac3a61b5567"
+    "tests/ai-capacity-staging-integration.test.mjs": "db521e7356c0409efdf2f817fd936069c699f5654dc375093cb01ee6652d2773"
   }
 }
