@@ -2,13 +2,12 @@
 
 FM-AI-001 / FM-CR-052 source continuation, updated 17 October 2026. Reuses preparation
 38c15520376c35d3fedf8fd547b322221def755b; no new task queue or apply controller.
-PR #1331 is merged as fe1ef98e6dc70c0a4a27bcce81c8970002f3bade, the current
-main at reconciliation. Its reviewed head e9df302f1fd066e8396a385d875c1ff3f669f152
-has the identical source tree. PR #1332 incorporates this main through a normal
-merge update without rewriting history or changing protected implementation bytes.
-PR #1332 still needs its OWN Owner merge authorization after exact-head checks.
-Dispatch additionally requires this integration on main and a NEW exact protected
-Staging authorization. The #1331 authorization grants neither action.
+PR #1331 and #1332 are merged; reviewed main for this diagnostic increment is
+3fcf7c31e8b6d978e35c8920e1c3cddefeff4d2e. Its authorized preflight run39022404980
+returned BLOCK without a reason; the actual Staging cause remains unknown.
+This repository-only increment adds safe diagnostics, not a speculative repair.
+A future diagnostic run requires the increment reviewed/merged and a NEW exact
+protected Staging authorization. No previous merge or run authorization applies.
 
 ## Existing path, explicit scope
 
@@ -58,7 +57,7 @@ process overrides are not forwarded. Client execution has a45s SIGKILL deadline
 and64KiB output bound. The pinned query retains its own repeatable-read/read-only,
 row_security=off,10s statement/2s lock/15s idle limits and final ROLLBACK.
 
-The only Capacity result line is:
+The Capacity decision line remains:
 
 ```
 STAGING_DATABASE_ROLLOUT_CAPACITY=READONLY_BASELINE_MATCH
@@ -71,6 +70,61 @@ main, checksum failure, missing credentials/client, timeout and oversized output
 block. Raw SQL/diagnostics/IDs/passwords are never printed by this branch. Request
 labels bind the response to the request; project-qualified transport/TLS and
 protected configuration independently establish endpoint identity.
+
+## Safe BLOCK diagnostics
+
+A BLOCK additionally emits exactly one fixed diagnostic line:
+
+```
+STAGING_DATABASE_ROLLOUT_CAPACITY_DIAGNOSTIC=<STAGE>:<REASON>
+```
+
+| Stage | Fixed reasons and evidenced checkpoint |
+| --- | --- |
+| SOURCE_CHECK | SOURCE_REJECTED: a recognized source/hash/committed-blob control rejects |
+| ENVIRONMENT_MAIN | ENVIRONMENT_REJECTED, CA_BINDING_REJECTED, MAIN_FETCH_FAILED, MAIN_OR_CHECKOUT_REJECTED: the corresponding existing guard rejects |
+| CLIENT_PASSFILE | CLIENT_UNAVAILABLE, PASSFILE_REJECTED: version probe or private snapshot guard rejects |
+| CONNECTION_TLS | CONNECTION_FAILED: psql exits2, indicating failed/lost connection; NOT proof of a TLS, credential or network root cause |
+| QUERY_EXECUTION | SQL_SCRIPT_FAILED: psql exits3 with ON_ERROR_STOP; CLIENT_DEADLINE: whole-child timeout; OUTPUT_LIMIT: bounded capture exceeds limit |
+| RESPONSE_PARSING | RESPONSE_CARDINALITY, INVALID_JSON, RESPONSE_SHAPE: exact existing response checks reject |
+| RESPONSE_BINDING | LABEL_MISMATCH: existing main/target/lifecycle/recovery response binding rejects |
+| BASELINE_COMPARISON | BASELINE_MISMATCH: existing comparison rejects; no expected value changes |
+| UNKNOWN_BLOCK | UNCLASSIFIED: every unrecognized exception, signal/status or child failure |
+
+A stage identifies a verified local failure checkpoint, not the deepest cause.
+In particular client deadline/output-limit and UNKNOWN_BLOCK do not prove that
+SQL ran or that a connection succeeded. SQL_SCRIPT_FAILED does not distinguish
+permissions, RLS, missing objects or other script errors. CONNECTION_FAILED does
+not distinguish DNS, TLS, auth or a lost connection. No stderr pattern or dynamic
+SQLSTATE supplies classification. Earlier workflow guards can still fail before
+the runner; their existing logs remain the evidence for that boundary.
+
+Only BASELINE_MISMATCH may add:
+
+```
+STAGING_DATABASE_ROLLOUT_CAPACITY_FIELDS=<fixed field identifiers, comma-separated>
+```
+
+Identifiers are hardcoded in CAPACITY_BASELINE_FIELDS in the pinned runner:
+expectedObservation keys and expectedPolicy keys prefixed with policy_. The list
+is filtered and source-ordered, never taken verbatim from input. It contains no
+observed/expected values, row data, hashes, paths or arbitrary field names.
+Unknown errors cannot self-declare diagnostics through message, stage, reason,
+fields or stack properties. Only private internally created diagnostic records
+are rendered. Raw exceptions and child stdout/stderr remain suppressed.
+
+BLOCK still exits1; baseline match still emits only the original decision line.
+No retry, Skip, Apply or repair is added. Query, expected policy/monetary state,
+recovery, workflow, CA, limits and passfile transport remain byte-identical.
+Only runner/test pins in the existing integration manifest are refreshed.
+
+Before any future execution: review exact PR head and Required CI, independent
+countercheck, actual merged main, integration-manifest/controller/query/recovery
+checksums and exact protected Staging target. Obtain a NEW Owner/environment
+approval for a single read-only run on that binding. No dispatch/target query is
+part of this source task. Diagnose using the bounded code; retain BLOCK and seek
+separate review for any further needed evidence. Never learn the baseline from
+the unknown target, expose raw output or automatically repair/retry.
 
 ## Scope of proof and recovery
 

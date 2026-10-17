@@ -65,6 +65,66 @@ const CAPACITY_CONTROL_PATH = "docs/operations/ai-capacity-staging-integration.j
 const CAPACITY_TIMEOUT_MS = 45_000;
 const CAPACITY_MAX_OUTPUT_BYTES = 64 * 1024;
 
+// Only errors created at known control points carry diagnostic authority.
+// Never render exception text, child output, arbitrary object fields or SQLSTATEs.
+const capacityDiagnostics = new WeakMap();
+const CAPACITY_BASELINE_FIELDS = Object.freeze([
+  "version", "read_only", "schema_md5", "grants_empty", "ledger_empty",
+  "function_count", "postgres_major", "policy_row_count", "allocations_empty",
+  "projection_absent", "reservations_empty", "browser_role_boundary",
+  "foundation_table_count", "lifecycle_index_absent", "rls_filtering_disabled",
+  "workspace_parent_valid", "lifecycle_columns_absent", "lifecycle_functions_absent",
+  "browser_schema_create_denied", "unexpected_capacity_relations_absent",
+  "capacity_generic_migration_marker_absent", "policy_revision", "policy_fast_enabled",
+  "policy_singleton_id", "policy_premium_enabled", "policy_balanced_enabled",
+  "policy_top_up_sales_enabled", "policy_emergency_spend_freeze",
+  "policy_global_capacity_enabled", "policy_top_up_activation_ready",
+  "policy_package_99_sales_enabled", "policy_runtime_activation_ready",
+  "policy_package_199_sales_enabled", "policy_package_312_sales_enabled",
+  "policy_package_sales_activation_ready", "policy_package_99_budget_eur_microcents",
+  "policy_package_199_budget_eur_microcents", "policy_package_312_budget_eur_microcents",
+]);
+
+function capacityBlock(stage, reason, fields = []) {
+  const error = new Error("Capacity preflight blocked");
+  capacityDiagnostics.set(error, Object.freeze({ stage, reason,
+    fields: Object.freeze(CAPACITY_BASELINE_FIELDS.filter(field => fields.includes(field))) }));
+  throw error;
+}
+
+function capacityBlockDiagnostic(error) {
+  return capacityDiagnostics.get(error) ?? Object.freeze({
+    stage: "UNKNOWN_BLOCK", reason: "UNCLASSIFIED", fields: Object.freeze([]),
+  });
+}
+
+function writeCapacityBlock(error, log = console.log) {
+  const diagnostic = capacityBlockDiagnostic(error);
+  log("STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK");
+  log(`STAGING_DATABASE_ROLLOUT_CAPACITY_DIAGNOSTIC=${diagnostic.stage}:${diagnostic.reason}`);
+  if (diagnostic.fields.length) {
+    log(`STAGING_DATABASE_ROLLOUT_CAPACITY_FIELDS=${diagnostic.fields.join(",")}`);
+  }
+}
+
+function capacityKnownFailure(operation, stage, reason, messages) {
+  try { return operation(); } catch (error) {
+    if (error instanceof Error && messages.includes(error.message)) capacityBlock(stage, reason);
+    throw error;
+  }
+}
+
+function capacityProbeFailure(result) {
+  if (result.error?.code === "ETIMEDOUT") capacityBlock("QUERY_EXECUTION", "CLIENT_DEADLINE");
+  if (result.error?.code === "ENOBUFS") capacityBlock("QUERY_EXECUTION", "OUTPUT_LIMIT");
+  if (result.error?.code === "ENOENT") capacityBlock("CLIENT_PASSFILE", "CLIENT_UNAVAILABLE");
+  // psql exit 2 means a failed/lost connection; it does not prove a TLS or password cause.
+  if (!result.error && !result.signal && result.status === 2) capacityBlock("CONNECTION_TLS", "CONNECTION_FAILED");
+  // psql exit 3 with ON_ERROR_STOP is an SQL script error. No stderr is interpreted.
+  if (!result.error && !result.signal && result.status === 3) capacityBlock("QUERY_EXECUTION", "SQL_SCRIPT_FAILED");
+  capacityBlock("UNKNOWN_BLOCK", "UNCLASSIFIED");
+}
+
 function gitSource(root, args) {
   const result = spawnSync("git", ["-C", root, ...args], {
     encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 10_000,
@@ -693,33 +753,53 @@ function ensurePsqlAvailable(environment) {
 }
 
 function inspectCapacityDatabase(environment, root = process.cwd(), { timeoutMs = CAPACITY_TIMEOUT_MS } = {}) {
-  if (environment.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE !== "capacity") fail("capacity_scope_invalid");
-  const preparation = verifyCapacityIntegration(root, true);
+  if (environment.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE !== "capacity") capacityBlock("ENVIRONMENT_MAIN", "ENVIRONMENT_REJECTED");
+  const preparation = capacityKnownFailure(() => verifyCapacityIntegration(root, true),
+    "SOURCE_CHECK", "SOURCE_REJECTED", [
+      ...["capacity_source_invalid", "capacity_reviewed_package_changed", "capacity_control_invalid",
+        "capacity_checksum_invalid", "capacity_committed_source_invalid", "capacity_committed_control_invalid"]
+        .map(code => `STAGING_DATABASE_ROLLOUT_STATE_ERROR=${code}`),
+      ...["control_binding", "checksum", "required_checksum", "reviewed_source", "reference_profile"]
+        .map(code => `CAPACITY_PREFLIGHT_PREPARATION_ERROR=${code}`),
+    ]);
   // Fetch the live main ref before opening a password file or starting psql.
   // The emitter then binds HEAD, that freshly fetched ref and the dispatch SHA.
-  if (!evaluateStagingDatabaseRolloutStateEnvironment(environment).ok) fail("environment_invalid");
-  if (resolve(environment.PGSSLROOTCERT ?? "") !== resolve(root,"config/certificates/supabase-root-2021-ca.crt")) fail("capacity_ca_binding_invalid");
-  gitSource(root,["fetch","--no-tags","origin","+refs/heads/main:refs/remotes/origin/main"]);
-  const query = emitCapacityReadOnlySql(root, environment);
-  ensurePsqlAvailable(environment);
-  const {snapshotDirectory,snapshotPath} = privatePassfileSnapshot(environment,true);
+  if (!evaluateStagingDatabaseRolloutStateEnvironment(environment).ok) capacityBlock("ENVIRONMENT_MAIN", "ENVIRONMENT_REJECTED");
+  if (resolve(environment.PGSSLROOTCERT ?? "") !== resolve(root,"config/certificates/supabase-root-2021-ca.crt")) capacityBlock("ENVIRONMENT_MAIN", "CA_BINDING_REJECTED");
+  capacityKnownFailure(() => gitSource(root,["fetch","--no-tags","origin","+refs/heads/main:refs/remotes/origin/main"]),
+    "ENVIRONMENT_MAIN", "MAIN_FETCH_FAILED", ["STAGING_DATABASE_ROLLOUT_STATE_ERROR=capacity_source_invalid"]);
+  const query = capacityKnownFailure(() => emitCapacityReadOnlySql(root, environment),
+    "ENVIRONMENT_MAIN", "MAIN_OR_CHECKOUT_REJECTED", [
+      "CAPACITY_PREFLIGHT_PREPARATION_ERROR=environment_binding", "CAPACITY_PREFLIGHT_PREPARATION_ERROR=dirty_checkout",
+    ]);
+  capacityKnownFailure(() => ensurePsqlAvailable(environment), "CLIENT_PASSFILE", "CLIENT_UNAVAILABLE",
+    ["STAGING_DATABASE_ROLLOUT_STATE_ERROR=psql_unavailable"]);
+  const {snapshotDirectory,snapshotPath} = capacityKnownFailure(() => privatePassfileSnapshot(environment,true),
+    "CLIENT_PASSFILE", "PASSFILE_REJECTED", ["passfile_missing", "passfile_invalid", "passfile_read_failed",
+      "passfile_changed", "passfile_identity_invalid"].map(code => `STAGING_DATABASE_ROLLOUT_STATE_ERROR=${code}`));
   try {
     const result = runPsql(query,environment,snapshotPath,{capacity:true,timeoutMs});
-    if (result.error || result.status!==0 || result.signal) fail("capacity_probe_failed");
+    if (result.error || result.status!==0 || result.signal) capacityProbeFailure(result);
     const lines=probeLines(result.stdout);
-    if (lines.length!==1) fail("capacity_observation_invalid");
-    const observation=JSON.parse(lines[0]);
+    if (lines.length!==1) capacityBlock("RESPONSE_PARSING", "RESPONSE_CARDINALITY");
+    let observation;
+    try { observation=JSON.parse(lines[0]); } catch (error) {
+      if (error instanceof SyntaxError) capacityBlock("RESPONSE_PARSING", "INVALID_JSON");
+      throw error;
+    }
     const expectedKeys=[...Object.keys(preparation.expectedObservation),"policy",
       "requested_main_commit","requested_target_project","reviewed_lifecycle_commit","recovery_sha256"].sort();
     if (JSON.stringify(Object.keys(observation ?? {}).sort()) !== JSON.stringify(expectedKeys)
       || JSON.stringify(Object.keys(observation?.policy ?? {}).sort()) !== JSON.stringify(Object.keys(preparation.expectedPolicy).sort())) {
-      fail("capacity_observation_shape_invalid");
+      capacityBlock("RESPONSE_PARSING", "RESPONSE_SHAPE");
     }
     if (observation?.requested_main_commit!==environment.GITHUB_SHA
       || observation?.requested_target_project!==preparation.targetProject
       || observation?.reviewed_lifecycle_commit!==preparation.reviewedLifecycleHead
-      || observation?.recovery_sha256!==preparation.sha256[preparation.recoveryPath]) fail("capacity_observation_binding_invalid");
-    return evaluateCapacityObservation(observation,preparation).state;
+      || observation?.recovery_sha256!==preparation.sha256[preparation.recoveryPath]) capacityBlock("RESPONSE_BINDING", "LABEL_MISMATCH");
+    const comparison = evaluateCapacityObservation(observation,preparation);
+    if (comparison.state !== "READONLY_BASELINE_MATCH") capacityBlock("BASELINE_COMPARISON", "BASELINE_MISMATCH", comparison.failures);
+    return comparison.state;
   } finally {
     rmSync(snapshotDirectory,{recursive:true,force:true});
   }
@@ -1036,8 +1116,12 @@ async function main() {
   const mode = modeFromArguments(process.argv.slice(2));
   const scope=process.env.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE ?? "rollout";
   if (mode === "--run" && scope !== "rollout") {
-    let state="BLOCK";
-    try { state=inspectCapacityDatabase(process.env); } catch { /* fixed-enum, no raw diagnostics */ }
+    let state;
+    try { state=inspectCapacityDatabase(process.env); } catch (error) {
+      writeCapacityBlock(error);
+      process.exitCode=1;
+      return;
+    }
     console.log(`STAGING_DATABASE_ROLLOUT_CAPACITY=${state}`);
     if (state!=="READONLY_BASELINE_MATCH") process.exitCode=1;
     return;
@@ -1095,7 +1179,7 @@ if (
 ) {
   main().catch((error) => {
     if (process.env.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE === "capacity") {
-      console.log("STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK");
+      writeCapacityBlock(error);
       process.exitCode=1;
       return;
     }
@@ -1135,4 +1219,6 @@ export {
   verifyCapacityIntegration,
   runPsql,
   psqlEnvironment,
+  capacityBlockDiagnostic,
+  writeCapacityBlock,
 };
