@@ -1,11 +1,14 @@
 # Capacity v2 protected read-only Staging integration
 
-FM-AI-001 / FM-CR-052 source continuation,16 October2026. Reuses preparation
+FM-AI-001 / FM-CR-052 source continuation, updated 17 October 2026. Reuses preparation
 38c15520376c35d3fedf8fd547b322221def755b; no new task queue or apply controller.
-PR1331 is still open at e9df302f1fd066e8396a385d875c1ff3f669f152; current main
-dc269fd80407bfa2a3e1885e19e432b0ebaed68e. This dependent integration cannot be
-dispatched until the reviewed sources are merged and a NEW exact authorization
-is granted. No merge or target action is authorized by this implementation task.
+PR #1331 is merged as fe1ef98e6dc70c0a4a27bcce81c8970002f3bade, the current
+main at reconciliation. Its reviewed head e9df302f1fd066e8396a385d875c1ff3f669f152
+has the identical source tree. PR #1332 incorporates this main through a normal
+merge update without rewriting history or changing protected implementation bytes.
+PR #1332 still needs its OWN Owner merge authorization after exact-head checks.
+Dispatch additionally requires this integration on main and a NEW exact protected
+Staging authorization. The #1331 authorization grants neither action.
 
 ## Existing path, explicit scope
 

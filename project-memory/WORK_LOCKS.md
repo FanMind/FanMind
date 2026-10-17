@@ -1178,6 +1178,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 - Source handoff: implementation5252d2f9 independently reviewed with31/31 new fault tests and20/20 existing rollout regressions; original28 native preparation tests passed separately. Receipt receipts/capacity-v2-staging-readonly-integration-20261016.md records the bounded source result. No running Builder after PR handoff; exact-head Required CI and dependency1331 remain distinct. No target/dispatch authorization exists in this continuation.
 
+- 2026-10-17 Owner-requested PR #1332 reconciliation: dependency #1331 is MERGED as current main fe1ef98e6dc70c0a4a27bcce81c8970002f3bade. A normal main-into-existing-PR merge c1ad6f531aef9c45c33d18446bd71510ca167a3e preserves the entire b9b03319 tree. Only current status documentation is updated; historical evidence, protected logic and manifests remain unchanged. Same task/lock, no new queue or authorization. PR #1332 merge and any later Staging action still require their own separate Owner authorization. New-head CI/readiness are recorded separately; source remains handed off under RELEASED_FOR_PR.
+
 ## LOCK-FM-AI-CAPACITY-CATALOG-CUTOVER-20260930
 - Task: FM-AI-001
 - Change request: FM-CR-053
