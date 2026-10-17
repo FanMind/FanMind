@@ -207,6 +207,7 @@
 - Exact next step: keep the roadmap correction closed; follow the current finishline selector. FM-DEC-015 resumes FM-CREATOR-001 now; FM-DEC-021 supersedes the old Android timing and defers all remaining Mobile until company registration plus explicit owner resume.
 
 ## FM-CREATOR-001
+- 2026-10-17 bounded repository continuation: existing Creator price-output guard is completed through the unchanged ChatAdmin monetary validator; source regression and independent review recorded in the focused PR. Overall remains IN_PROGRESS; target/model-quality/learning gates remain open. FM-DEC-031 defers company-dependent external actions without deleting tasks/evidence.
 - Status: IN_PROGRESS
 - Owner clarification FM-DEC-016 / FM-CR-030 (2026-09-11): one normal user/Creator account, one text writing style, no audio. Future manager access supervises separate Creator accounts/channels using each selected account's own style and fan knowledge. Same-style reply variants and revisions do not create additional styles. Legacy prompt/UI conformance remains an explicit pre-activation check; manager functionality stays later.
 - Risk: R4

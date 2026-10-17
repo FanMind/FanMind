@@ -1296,3 +1296,12 @@ tests and21 shared/inventory checks pass. Builder complete; no active source loc
 reservation remains. Draft PR final head/Required CI tracked in its metadata; no
 new queue or target authorization. Receipt:
 receipts/capacity-v2-safe-block-diagnostics-20261017.md.
+
+
+## FM-CREATOR-001 — existing Sales Playbook price boundary completion — 2026-10-17
+- Baseline: main174eaa44; explicit Owner repository-only Phase7b continuation, company-dependent external work deferred by FM-DEC-031.
+- Finding: Creator free-text validation accepted normal forms such as20 Euro,twenty dollars,25.– and100 JPY while the existing ChatAdmin validator already rejected them without an allowed offer. Finish that integration without new sales logic, regex rules, schema or provider access.
+- Scope: shared unchanged monetary guard, strict Creator no-price contract, unchanged ChatAdmin authorized-price contract, synthetic policy/real-route tests, source-only roadmap/Admin status from existing central data. Existing task/lock only; Capacity docsPR1334 remains separate.
+- Gates: workspace/style/manual-send, revision/sales hold/aftercare and rollout remain unchanged. Independent review/Required CI pending; no target activation or live quality claim.
+
+- Source handoff:107/107 focused tests, local build/TypeScript/lint/truth and independent107/107 plus4/4 mutation negatives PASS; no open source findings. Existing bounded lock RELEASED_FOR_PR. Receipt receipts/creator-shared-price-guard-20261017.md; final head/Required CI recorded on the development PR. No aggregate completion, live quality or protected action claimed.

@@ -55,6 +55,8 @@ test("English landing uses the complete translation wrapper", async () => {
   assert.match(supplement, /combinedAiPriceGerman/);
   assert.match(supplement, /combinedAiPriceEnglish/);
   for (const roadmapTranslation of [
+    '"Creator-Entwicklung aktiv · externe Freigaben zurückgestellt": "Creator development active · external approvals deferred"',
+    '"Angebote und Verkaufspausen vorhanden · gemeinsamer Preisschutz synthetisch geprüft · Zielabnahme offen": "Offers and sales holds implemented · shared price guard tested synthetically · target acceptance pending"',
     '"Passwort-Reset und Kontaktbearbeitung": "Password reset and contact editing"',
     '"Im App-Kern vorhanden": "Available in the app core"',
     '"Antwort kopieren und nativ teilen": "Copy and natively share replies"',

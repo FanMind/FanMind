@@ -138,6 +138,25 @@ test("all three intensities retain the same voice and free text cannot supply pr
   }
 });
 
+test("Creator free text reuses the established monetary guard in every reply variant", () => {
+  const input=rows();input.playbook.rules.offers=[offer()];
+  input.commercial={...reviewed};
+  const context=buildCreatorReplyContext(input);
+  assert.equal(context.strategy.offer.priceMinor,2000);
+  const options=["Hey, wie war dein Tag?","Wenn du magst, erzähl mir davon.","Was war heute dein Highlight?"].map(text=>({text}));
+  for(const bad of ["Das kostet 20 Euro.","That costs twenty dollars.","Das kostet fünfundzwanzig Euro.",
+    "Das kostet 25.–","Das kostet 100 JPY.","For 20 GBP.","Das kostet 20 Franken."]){
+    for(let index=0;index<3;index++){
+      const changed=options.map((value,i)=>i===index?{text:bad}:value);
+      assert.throws(()=>validateCreatorReplyOptions(changed,context),error=>error?.code==="creator_price_in_free_text");
+    }
+  }
+  assert.equal(context.strategy.offer.priceMinor,2000,"server-owned recommendation is unchanged");
+  assert.doesNotThrow(()=>validateCreatorReplyOptions([
+    {text:"Ich habe zwei Ideen für dein Foto."},{text:"Let us try a different picture."},{text:"Mad about the new look?"},
+  ],context));
+});
+
 test("total budget includes the complete Creator policy and never truncates boundaries", () => {
   const context = buildCreatorReplyContext(rows());
   const result = buildBoundedReplySuggestionContext({ incomingMessage: "Test", creatorContext: context, fanMemory: "a".repeat(10000), conversationSummary: "b".repeat(10000) });
