@@ -96,6 +96,29 @@ export default async function AdminRoadmapPage() {
           </div>
         </section>
 
+        <section className={styles.heroCard} aria-label="Interner Phase-7b-Entwicklungsstand">
+          <div>
+            <span className={styles.eyebrow}>Phase 7b · geprüfter Source-Meilenstein</span>
+            <h2>Creator-Antworten: gemeinsamer Preisschutz integriert</h2>
+            <p>
+              PR #1335 ist auf main gemergt: Creator-Antwortvorschläge nutzen denselben
+              Preisvalidator wie ChatAdmin. Synthetische und Chromium-Tests wurden
+              für den geprüften PR-Head bestanden. Das ist eine abgeschlossene
+              Codeverbesserung, keine abgeschlossene Creator-/Staging-Abnahme.
+            </p>
+            <p>
+              Phase 7b bleibt in Arbeit. Als nächste firmenunabhängige Arbeit kommen
+              Gesprächssteuerung, Creator-Antwortqualität und synthetische Isolationstests
+              infrage; echte Provider-, Kunden- oder Zahlungsaktivierung bleibt ausgesetzt.
+            </p>
+            <p>
+              <Link href="https://github.com/FanMind/FanMind/pull/1335">
+                Entwicklungsnachweis PR #1335
+              </Link>
+            </p>
+          </div>
+        </section>
+
         <div className={styles.phaseGrid}>
           {roadmapPhases.map((phase) => (
             <article className={styles.phaseCard} data-done={phase.availability === "done" ? "true" : undefined} key={phase.number}>
