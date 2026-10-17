@@ -393,3 +393,12 @@ for(const [name,incoming] of [
  own.offers[0].active=false;
  assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer?.id,"photo");
 });
+
+for(const [incoming,name] of [["Nicht schlecht, was kostet das private Foto?","Privates Foto"],["Not bad. How much is the private photo?","Private Photo"]])for(const category of ["custom","private_photo"])test(`a modifier alone cannot name the requested ${category} media: ${incoming}`,()=>{
+ const own=playbook({offers:[offer({id:"modifier",name:"private",category},3700)]});
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers.push(offer({id:"private_photo",name,category:"private_photo"},2500));
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer,null);
+ own.offers[0].active=false;
+ assert.equal(resolveChatAdminRequestedOffer(own,incoming).requestedOffer?.id,"private_photo");
+});

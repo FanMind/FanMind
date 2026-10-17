@@ -84,6 +84,7 @@ function harness(change, abortController) {
       minimumPriceMinor:1000,recommendedPriceMinor:1000,maximumPriceMinor:1000});
   }
   if (change === "context-price-en") character.sales_playbook.offers[0].name = "Private Photo";
+  if (change === "context-price-collision") Object.assign(character.sales_playbook.offers[0], {id:"appreciation",name:"Nicht schlecht",category:"custom"});
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, memoryWrites: [] };
   const dependencies = {
@@ -420,5 +421,13 @@ for(const incoming of ["Nicht schlecht, was kostet das private Foto? Ich lehne a
  const body=await response.json();assert.equal(response.status,400);assert.equal(body.error,"reply_price_not_permitted");
  const context=JSON.parse(h.calls.providerBody.input[1].content);
  assert.equal(context.sales_playbook.requested_offer,null);assert.equal(context.sales_strategy.sellNow,false);
+ assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,1);
+});
+
+test("actual route rejects prices for an article named only by the appreciation",async()=>{
+ const h=harness("context-price-collision");const response=await h.route(h.request(1,"https://fanmind.invalid","Nicht schlecht, was kostet das Foto?"));
+ const body=await response.json();assert.equal(response.status,400);assert.equal(body.error,"reply_price_not_permitted");
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
  assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,1);
 });
