@@ -224,5 +224,31 @@ Abgeschlossen ist nur diese synthetisch geprüfte Auswahlgrenze. Allgemeine
 Kaufabsichts-/Negationserkennung, unbekannte/inaktive Artikel und semantische
 Modellantworten sind dadurch nicht vollständig klassifiziert. Insbesondere die
 aktuelle Negation bei einer einzelnen Anfrage („Ich möchte kein Foto, nur reden“)
-ist ein separat belegter nächster Sourceumfang, nicht durch diesen Fix erledigt.
+war beim Abschluss von #1336 ein separater Folgeumfang. Der folgende Abschnitt
+beschreibt dessen Source-Implementierung in #1337; dessen Merge bleibt offen.
 Reale Modellqualität und geschützte Zielabnahme bleiben offen.
+
+## Explizite aktuelle Angebotsablehnung — Sourceumfang 17. Oktober 2026
+
+Der bestehende ChatAdmin-Resolver behandelt alleinstehende deutsche/englische
+Negationstokens (z. B. kein/keine, nicht, nichts, ohne, no, not, don't/don’t,
+can't, won't) konservativ als Veto gegen jede Angebotsauswahl in dieser
+Nachricht. Auch eine nachgestellte Ablehnung und eigene benannte Artikel sind
+erfasst. `requested_offer` bleibt null, die erlaubte Artikelliste leer und
+Preise bleiben durch den unveränderten Preisvalidator gesperrt.
+
+Gemischte Wünsche wie „Kein privates Foto, aber ein normales Bild“ werden
+bewusst nicht in eine vermeintlich sichere Auswahl übersetzt: kein Angebot,
+gegebenenfalls Rückfrage. Wortteile wie „No“ in „Nocturne“ lösen kein Veto aus.
+Das ist eine begrenzte DE/EN-Tokenregel, keine allgemeine semantische
+Negationserkennung. Auch harmlose, zitierte oder anders bezogene Negationen
+können konservativ eine Rückfrage erforderlich machen. Formulierungen ohne
+diese Tokens und andere Sprachen sind damit nicht vollständig abgedeckt.
+
+Die Regel erzeugt keine persistente Verkaufspause, kein `offer_declined` und
+keinen Kauf. Bestehende bestätigte Holds, Cooldowns, Aftercare, Workspace- und
+Character-Bindung, Stil und manuelle Sendefreigabe bleiben unverändert. Eine
+spätere Inhaltsfrage kann eine vorher abgelehnte Anfrage nicht über den
+bestehenden Confirmed-Dialogue-Pfad freigeben. Source implementiert und
+synthetisch geprüft; Merge, Staging-Abnahme und produktive Aktivierung sind
+getrennte, hier nicht erfolgte Schritte. Phase 7b bleibt offen.

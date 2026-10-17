@@ -391,5 +391,21 @@ Die normale Creator-Pipeline mit manuell geprüftem requestedOfferId und der
 bereits integrierte gemeinsame Preisvalidator aus #1335 bleiben unverändert.
 Synthetische Policy-/Kontext-/Route-Tests belegen diese begrenzte Sourcehärtung,
 keine globale Kaufabsichtserkennung oder Live-Qualitätsabnahme. Details und
-verbleibender Negationsumfang: CHAT_ADMIN_REPLY_STYLE.md. FM-CREATOR-001 und
+separater Negationsvertrag: CHAT_ADMIN_REPLY_STYLE.md (Source in #1337,
+Merge offen). FM-CREATOR-001 und
 Phase7b bleiben in Arbeit; Firmenabhängigkeiten bleiben nach FM-DEC-031 pausiert.
+
+## Aktuelle Angebotsablehnung im ChatAdmin — 17. Oktober 2026
+
+Repository-Source und synthetische Tests ergänzen den vorhandenen
+ChatAdmin-Angebotsresolver um ein konservatives DE/EN-Negationsveto, auch bei
+widersprüchlichen positiven Wünschen. Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#explizite-aktuelle-angebotsablehnung--sourceumfang-17-oktober-2026).
+Keine Ablehnungs-/Kaufereignisse oder Verkaufspausen werden aus Freitext
+persistiert. Creator `deriveCreatorStrategy` verarbeitet weiterhin bestätigte
+manuelle Reviews/Ereignisse und freigegebene Artikel-IDs; sein Verkaufspausen-,
+Cooldown- und Aftercare-Vertrag wird nicht durch Textklassifizierung ersetzt.
+
+Source-/Testnachweis ist keine Merge-, Staging- oder produktive Abnahme.
+Phase 7b, reale Gesprächsqualität und alle bestehenden Target-Gates bleiben
+offen. Firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.

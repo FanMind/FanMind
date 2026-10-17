@@ -1307,3 +1307,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Reconciliation: no competing source PR; historical ACTIVE_SOURCE_REPAIR refers to already merged1322, protected ACTIVE_STAGING_COMPLETION remains separate and unexecuted. Same existing tasks, no new queue/selector action. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; Creator consumer/regressions retained.
 - Verification:114 local focused cases,55 independent affected cases,1 in-memory mutation detected by5 negatives; final exact-head CI/review separately recorded. Source Builder released, no active reservation remains.
 - Recovery: reviewed source revert; no live/provider/SQL/deployment/migration/activation/merge action. Firm dependencies remain deferred by FM-DEC-031.
+
+## LOCK-FM-CHATADMIN-EXPLICIT-REFUSAL-20261017
+- Task: FM-CREATOR-001 / FM-CHATADMIN-003; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 (FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001).
+- Base: main cb6ff77aefcaaa473c8ad5cd527f3504c0880161; branch fix/chatadmin-explicit-offer-refusal.
+- Scope: bounded current-message German/English explicit negation veto in offer resolution; synthetic actual-route/context regressions, directly related source truth. No inferred persistent refusal/purchase, API/price/schema/authority changes.
+- Serialization: PR1336 Source/CI complete on20415954 before this starts; no further writer there. Separate branch directly from main, no duplication of its unmerged ambiguity change. Historical target-completion lock remains separate and unexecuted; no competing current source PR.
+- Recovery: reviewed source revert; no external state cleanup. Required CI, negative proof and independent review mandatory. No merge/target/provider authorization; FM-DEC-031 deferred scope unchanged.
+
+- Source handoff:114/114 local and55/55 independent focused tests PASS; one in-memory mutation detected by7 previously selecting refusal cases. Build/TypeScript/lint/truth/drift/quality PASS. Exact-head Required CI and final independent documentation/CI review tracked on the separate Draft PR; no active source reservation remains.
+
+- Reconciliation continuation: explicit Owner PR1337-only instruction after confirmed1336 merge/maincab4. Same FM-CREATOR-001/FM-CHATADMIN-003 scope and released handoff lock, no second queue or competing source PR. Regular merge retains both guards/tests/docs; final exact-head local/CI/countercheck evidence recorded on1337. Historical target lock unexecuted, no merge/target authorization inferred.

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-10-17",
-  "last_source_of_truth_review": "2026-10-17 FM-CREATOR-001/FM-CHATADMIN-003 named-active-offer ambiguity source guard; only bounded synthetic selection proof, Phase7b/target/quality/negation remain open; FM-DEC-031 deferrals retained.",
+  "last_source_of_truth_review": "2026-10-17 PR1337 regular reconciliation with maincab4 after Owner merge1336: retain both named-offer ambiguity and explicit DE/EN negation veto, combined source/synthetic evidence only; no1337 merge/target/activation claim; Phase7b/FM-DEC-031 remain open.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "28113e77dadc909f005c6f7cbb4df527d16f4951",
+    "docs/SOURCE_OF_TRUTH.md": "42c4782aab710bf799064cc2992bc869610a6e00",
     "src/config/roadmap.ts": "08ffb0ff2d647db929e97b876f151a402b4b9c28",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
