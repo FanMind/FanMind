@@ -137,6 +137,7 @@ function harness(change, abortController, options = {}) {
       if (change === "ambiguous-offer") replies=["Welchen der beiden Artikel meinst du?","Soll es das Foto oder das private Foto sein?","Bitte wähle zuerst einen Artikel aus."];
       if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
 
+      if (options.replies) replies = options.replies;
       if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("context-price")) replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
@@ -522,4 +523,17 @@ for(const persistedSequence of [null,1.5,Number.MAX_SAFE_INTEGER+1])test(`actual
  const response=await h.route(h.request(1,"https://fanmind.invalid","Ohne Emojis."));
  assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+for(const [quote,incoming,question] of [
+ ["Ich liebe Musik.","Was machst du am Wochenende?","Magst du Musik?"],
+ ["Ich mag Reisen.","Was gefällt dir an meinem Profil?","Magst du Reisen?"],
+ ["I love music.","What do you do at the weekend?","Do you like music?"],
+])test(`known Fan question desired behavior before correction (${question})`,async()=>{
+ const notes=knowledgePolicy.learnChatAdminKnowledge("",knowledgePolicy.extractChatAdminFacts(quote,"known"),[{id:"known",direction:"fan_inbound",sequence:10,content:quote}]);
+ const h=harness(undefined,undefined,{notes,history:[],replies:[question,"Ich bin gerne draußen unterwegs.","Am Wochenende entspanne ich mich."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ assert.equal(response.status,502,"a known-only question should be rejected without another provider call");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.memoryWrites.length,0);
 });
