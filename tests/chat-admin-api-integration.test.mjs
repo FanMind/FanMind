@@ -67,7 +67,7 @@ test("actual authority rejects a Member even when the capability store would ret
   await assert.rejects(h.authority.requireChatAdminCapability(), error => error instanceof WorkspaceAuthorizationError && error.code === "resource_forbidden");
   assert.equal(h.calls.capability, 0);
 });
-function harness(change, abortController) {
+function harness(change, abortController, options = {}) {
   let revoked = false;
   let providerFinished=false;
   let persisted=[];
@@ -95,16 +95,16 @@ function harness(change, abortController) {
       requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
-      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:"mag kurze Antworten", notes:"kein Druck" }),
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:options.notes??"kein Druck", ...options.fan }),
       getLatestChatAdminConfirmedReply: async()=>change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
-      listRecentChatMessages: async () => change==="offer-follow-up" ? [
+      listRecentChatMessages: async () => options.history ?? (change==="offer-follow-up" ? [
         {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
         {id:"offer-confirmed",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"confirmed_reply",content:"Private Fotos bekommst du für 25 EUR.",created_at:"2026-10-14T12:01:00Z"},
       ] : [
         { id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" },
         { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
-      ],
+      ]),
       getChatAdminGeneration: async () => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persisted,
       updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); return {}; },
       persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:10,content:args[8]}]; return args.at(-1); },
@@ -430,4 +430,46 @@ test("actual route rejects prices for an article named only by the appreciation"
  const context=JSON.parse(h.calls.providerBody.input[1].content);
  assert.equal(context.sales_playbook.requested_offer,null);assert.deepEqual(context.sales_playbook.offers,[]);
  assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,1);
+});
+
+function topicPressureNotes(quote,boundary=false){
+ let notes=knowledgePolicy.learnChatAdminKnowledge("Fan kauft bestimmt morgen.",[{kind:"communication",quote,source:"preference"}],[{id:"preference",sequence:10,memory_source:"confirmed-preference",direction:"fan_inbound",content:quote}]);
+ if(boundary)notes=knowledgePolicy.learnChatAdminKnowledge(notes,[{kind:"boundary",quote:"Bitte keine Angebote.",source:"boundary"}],[{id:"boundary",sequence:11,direction:"fan_inbound",content:"Bitte keine Angebote."}]);
+ for(const [index,topic] of ["Katzen","Hunde","Sport","Reisen","Kochen","Musik","Fotos","Videos"].entries()){
+  const text=`Ich liebe ${topic}.`;notes=knowledgePolicy.learnChatAdminKnowledge(notes,[{kind:"interest",quote:text,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:20+index,direction:"fan_inbound",content:text}]);
+ }
+ return notes;
+}
+
+for(const quote of ["Ich mag kurze Antworten ohne Emojis.","I prefer short replies without emojis."])for(const boundary of [false,true])test(`actual route supplies retained communication after topic changes (${quote}, boundary=${boundary})`,async()=>{
+ const notes=topicPressureNotes(quote,boundary);
+ const row={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
+ const history=[{...row,id:"old-preference",direction:"fan_inbound",content:quote},...Array.from({length:22},(_,index)=>({...row,id:`recent-${index}`,direction:index%2?"confirmed_reply":"fan_inbound",content:`Wochenende ${index}: ${"x".repeat(3900)}`})),{...row,id:"unused-opposite",direction:"suggested_reply",content:"UNUSED LONG EMOJI DRAFT"}];
+ const h=harness(undefined,undefined,{notes,summary:"Unbestätigt: lange Antworten mit Emojis; kauft morgen.",history});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Wie geht es dir?"));const body=await response.json();
+ assert.equal(response.status,200);assert.equal(body.replies.length,3);
+ const raw=h.calls.providerBody.input[1].content;const context=JSON.parse(raw);
+ assert.ok(raw.length<=80000);assert.equal(context.fan.learned_preferences.find(item=>item.kind==="communication")?.quote,quote);
+ assert.equal(context.fan.learned_preferences.length,8);assert.equal(context.fan.notes,"Fan kauft bestimmt morgen.");
+ assert.ok(context.conversation.recent_messages.every(message=>message.content.length>quote.length));
+ assert.ok(!context.conversation.recent_messages.some(message=>message.id==="old-preference"));assert.doesNotMatch(raw,/UNUSED LONG EMOJI DRAFT/u);
+ assert.equal(context.style.writing,"kurz");assert.equal(context.style.emoji,"sparsam");assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.sellNow,false);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);assert.equal(h.calls.memoryWrites.length,0);assert.match(body.safety_note,/manuell/u);
+ assert.ok(h.calls.persistedHistoryIds.includes("old-preference"));assert.ok(h.calls.persistedHistoryIds.includes("unused-opposite"));
+});
+
+test("actual route keeps a stored sales refusal after topic pressure and rejects a provider price",async()=>{
+ const h=harness("context-price",undefined,{notes:topicPressureNotes("Ich mag kurze Antworten ohne Emojis.",true)});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich möchte ein privates Foto."));const body=await response.json();
+ assert.equal(response.status,400);assert.equal(body.error,"reply_price_not_permitted");
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.sales_playbook.requested_offer,null);
+ assert.ok(context.fan.learned_preferences.some(item=>item.quote==="Bitte keine Angebote."));
+ assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,1);
+});
+
+for(const field of ["workspace_id","character_id"])test(`actual route excludes foreign confirmed preference before provider (${field})`,async()=>{
+ const h=harness(undefined,undefined,{notes:topicPressureNotes("I prefer long replies with emojis."),fan:{[field]:"foreign"}});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Wie geht es dir?"));
+ assert.equal(response.status,400);assert.equal((await response.json()).error,"fan_unavailable");assert.equal(h.calls.provider,0);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
 });

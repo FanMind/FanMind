@@ -6,6 +6,48 @@ const now = Date.parse("2026-10-14T08:00:00Z");
 const playbook = { offers: [], minimumHoursBetweenOffers: 48, aftercareHours: 48 };
 const source = {id:"incoming",memory_source:"generation-a",direction:"fan_inbound",content:"Ich mag kurze Antworten ohne Emojis. Ich liebe Katzen."};
 
+const topicQuotes=["Ich liebe Katzen.","Ich liebe Hunde.","Ich liebe Sport.","Ich liebe Reisen.","Ich liebe Kochen.","Ich liebe Musik.","Ich liebe Fotos.","Ich liebe Videos."];
+function knowledgeAfterTopicChanges(quote="Ich mag kurze Antworten ohne Emojis.",boundary=false){
+ let notes=learnChatAdminKnowledge("Fan kauft bestimmt morgen.",[{kind:"communication",quote,source:"preference"}],[{id:"preference",memory_source:"confirmed-preference",sequence:10,direction:"fan_inbound",content:quote}]);
+ if(boundary)notes=learnChatAdminKnowledge(notes,[{kind:"boundary",quote:"Bitte keine Angebote.",source:"boundary"}],[{id:"boundary",sequence:11,direction:"fan_inbound",content:"Bitte keine Angebote."}]);
+ for(const [index,topic] of topicQuotes.entries())notes=learnChatAdminKnowledge(notes,[{kind:"interest",quote:topic,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:20+index,direction:"fan_inbound",content:topic}]);
+ return notes;
+}
+
+for(const quote of ["Ich mag kurze Antworten ohne Emojis.","I prefer short replies without emojis."])for(const boundary of [false,true])test(`topic accumulation retains confirmed communication (${quote}, boundary=${boundary})`,()=>{
+ const notes=knowledgeAfterTopicChanges(quote,boundary);const knowledge=readChatAdminKnowledge(notes);
+ assert.equal(knowledge.facts.length,8);
+ assert.deepEqual(knowledge.facts.filter(f=>f.kind==="communication"),[{kind:"communication",quote,source:"confirmed-preference",source_sequence:10}]);
+ assert.equal(knowledge.manual,"Fan kauft bestimmt morgen.");
+ assert.equal(knowledge.facts.filter(f=>f.kind==="interest").length,boundary?6:7);
+ assert.ok(!knowledge.facts.some(f=>f.quote===topicQuotes[0]),"an old interest may yield to a communication preference");
+ if(boundary)assert.ok(knowledge.facts.some(f=>f.quote==="Bitte keine Angebote."));
+ assert.equal(writeChatAdminKnowledge(knowledge),notes);
+ const strategy=deriveChatAdminStrategy(playbook,{notes,customer_tier:"red"},null,now);
+ assert.equal(strategy.purchaseIntent,null);assert.equal(strategy.relationship_stage,"new");assert.equal(strategy.sellNow,false);
+});
+
+test("an old-generation replay cannot regain authority after newer topics filled memory",()=>{
+ const notes=knowledgeAfterTopicChanges();
+ const replay=learnChatAdminKnowledge(notes,[{kind:"communication",quote:"Ich mag lange Antworten.",source:"old"}],[{id:"old",sequence:5,direction:"fan_inbound",content:"Ich mag lange Antworten."}]);
+ assert.equal(replay,notes);
+});
+
+test("summaries, unused drafts and unsupported claims cannot replace retained communication",()=>{
+ const notes=knowledgeAfterTopicChanges();
+ for(const [quote,direction] of [["I prefer long replies with emojis.","suggested_reply"],["Fan kauft bestimmt morgen.","fan_inbound"],["Ich mag kurze Antworten wegen meiner Religion.","fan_inbound"]]){
+  const result=learnChatAdminKnowledge(notes,[{kind:"communication",quote,source:"unconfirmed"}],[{id:"unconfirmed",sequence:100,direction,content:quote}]);
+  assert.equal(result,notes);
+ }
+ assert.equal(readChatAdminKnowledge(notes).facts.find(f=>f.kind==="communication")?.quote,"Ich mag kurze Antworten ohne Emojis.");
+});
+
+test("a communication update never displaces eight already stored protective boundaries",()=>{
+ const notes=writeChatAdminKnowledge({manual:"",facts:Array.from({length:8},(_,index)=>({kind:"boundary",quote:"Bitte keine Angebote.",source:`legacy-boundary-${index}`}))});
+ const next=learnChatAdminKnowledge(notes,[{kind:"communication",quote:"Ich mag kurze Antworten.",source:"new"}],[{id:"new",sequence:100,direction:"fan_inbound",content:"Ich mag kurze Antworten."}]);
+ assert.equal(next,notes);assert.equal(deriveChatAdminStrategy(playbook,{notes:next},{id:"photo"},now).sellNow,false);
+});
+
 test("explicit fan preferences survive reload without overwriting manual notes", () => {
   const learned = learnChatAdminKnowledge("Manuell geprüft",[{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"},{kind:"interest",quote:"Ich liebe Katzen.",source:"incoming"}],[source]);
   const knowledge = readChatAdminKnowledge(learned);

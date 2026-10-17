@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { learnChatAdminKnowledge, writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
 
 import {
   CHAT_ADMIN_ACCEPTANCE_CONFIRMATION,
@@ -40,6 +41,60 @@ const fixture = {
   example_messages: ["Hey du 😊"],
   status: "active",
 };
+
+function preferenceContextFixture(pressure,boundary){
+ const quote="Bitte kurze Antworten ohne Emojis.";
+ let notes=writeChatAdminKnowledge({manual:"Fan kauft bestimmt morgen.",facts:[{kind:"communication",quote,source:"confirmed-preference",source_sequence:10}]});
+ if(boundary)notes=learnChatAdminKnowledge(notes,[{kind:"boundary",quote:"Bitte keine Angebote.",source:"boundary"}],[{id:"boundary",sequence:11,direction:"fan_inbound",content:"Bitte keine Angebote."}]);
+ if(pressure)for(const [index,topic] of ["Katzen","Hunde","Sport","Reisen","Kochen","Musik","Fotos","Videos"].entries()){
+  const text=`Ich liebe ${topic}.`;notes=learnChatAdminKnowledge(notes,[{kind:"interest",quote:text,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:20+index,direction:"fan_inbound",content:text}]);
+ }
+ const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+ const fan={id:"fan-a",workspace_id:character.workspace_id,character_id:character.id,status:"active",display_name:"Synthetic Fan",summary:"Unbestätigte Notiz: lange Antworten mit Emojis; kauft morgen.",notes};
+ const conversation={id:"conversation-a",workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id};
+ const row={workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id,conversation_id:conversation.id};
+ const history=[{...row,id:"preference-inbound",direction:"fan_inbound",content:quote},...Array.from({length:8},(_,index)=>({...row,id:`weekend-${index}`,direction:index%2?"confirmed_reply":"fan_inbound",content:`Neues Thema Wochenende ${index}: ${"x".repeat(350)}`})),{...row,id:"unused",direction:"suggested_reply",content:"UNUSED OPPOSITE PREFERENCE: lange Antworten mit Emojis"}];
+ return {character,fan,conversation,history,quote};
+}
+
+for(const pressure of [false,true])for(const boundary of [false,true])for(const allowance of [0,1200,10000])test(`confirmed preference reaches bounded context (topics=${pressure}, boundary=${boundary}, allowance=${allowance})`,()=>{
+ const f=preferenceContextFixture(pressure,boundary);const incoming="Wie geht es dir?";
+ const base=buildChatAdminFanContext(f.character,f.fan,f.conversation,[],incoming);
+ const maximum=base.length+allowance;
+ const raw=buildChatAdminFanContext(f.character,f.fan,f.conversation,f.history,incoming,maximum);const context=JSON.parse(raw);
+ assert.ok(raw.length<=maximum);
+ assert.deepEqual(context.fan.learned_preferences.filter(item=>item.kind==="communication"),[{kind:"communication",quote:f.quote,source:"confirmed-preference",source_sequence:10}]);
+ assert.equal(context.fan.notes,"Fan kauft bestimmt morgen.");assert.equal(context.fan.summary,f.fan.summary);
+ assert.equal(context.style.writing,f.character.writing_style);assert.equal(context.style.emoji,f.character.emoji_style);
+ assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.relationship_stage,"new");
+ if(boundary)assert.ok(context.fan.learned_preferences.some(item=>item.quote==="Bitte keine Angebote."));
+ assert.doesNotMatch(JSON.stringify(context.conversation),/UNUSED OPPOSITE PREFERENCE/u);
+ if(allowance===0)assert.deepEqual(context.conversation.recent_messages,[]);
+});
+
+test("different bound Fans retain their own communication and Character style",()=>{
+ const f=preferenceContextFixture(true,false);
+ const otherCharacter={...f.character,id:"character-b",workspace_id:"workspace-b",writing_style:"förmlich"};
+ const otherFan={...f.fan,id:"fan-b",workspace_id:otherCharacter.workspace_id,character_id:otherCharacter.id,notes:writeChatAdminKnowledge({manual:"",facts:[{kind:"communication",quote:"I prefer long replies with emojis.",source:"other-confirmed"}]})};
+ const otherConversation={id:"conversation-b",workspace_id:otherCharacter.workspace_id,character_id:otherCharacter.id,fan_id:otherFan.id};
+ const first=JSON.parse(buildChatAdminFanContext(f.character,f.fan,f.conversation,[],"Wie geht es dir?"));
+ const second=JSON.parse(buildChatAdminFanContext(otherCharacter,otherFan,otherConversation,[],"How are you?"));
+ assert.equal(first.fan.learned_preferences.find(item=>item.kind==="communication")?.quote,f.quote);
+ assert.equal(second.fan.learned_preferences[0].quote,"I prefer long replies with emojis.");
+ assert.equal(first.style.writing,f.character.writing_style);assert.equal(second.style.writing,"förmlich");
+ assert.doesNotMatch(JSON.stringify(first.fan.learned_preferences),/other-confirmed/u);assert.doesNotMatch(JSON.stringify(second.fan.learned_preferences),/confirmed-preference/u);
+});
+
+test("foreign preference/history tuples fail before trimming, including unused drafts",()=>{
+ const f=preferenceContextFixture(true,true);
+ assert.throws(()=>buildChatAdminFanContext(f.character,{...f.fan,workspace_id:"foreign"},f.conversation,[],"Hallo",1),/fan_unavailable/u);
+ assert.throws(()=>buildChatAdminFanContext(f.character,{...f.fan,character_id:"foreign"},f.conversation,[],"Hallo",1),/fan_unavailable/u);
+ assert.throws(()=>buildChatAdminFanContext(f.character,f.fan,{...f.conversation,fan_id:"foreign"},[],"Hallo",1),/conversation_unavailable/u);
+ for(const field of ["workspace_id","character_id","fan_id","conversation_id"]){
+  const foreign={...f.history.at(-1),[field]:"foreign"};
+  assert.throws(()=>buildChatAdminFanContext(f.character,f.fan,f.conversation,[foreign],"Hallo",1),/message_context_mismatch/u);
+ }
+});
 
 test("persistent fan context is bound to the exact Character, conversation and message history", () => {
   const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
