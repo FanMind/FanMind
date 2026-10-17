@@ -40,7 +40,10 @@ truth drift, reviewed watched-file drift, next-action/v8 and GodMode registry/
 release-policy checks pass. Global release decision remains BLOCK, no target
 activation. Initial build failed solely because Turbopack rejects an external
 node_modules symlink; local dependency files resolved it without product changes.
-Required fresh CI on the exact published head is recorded separately in PR metadata.
+The first CI run correctly rejected a stale generated NEXT_BEST_ACTION roadmap
+status line. The existing generator refreshed only that text line; selection,
+SAFE_READY_SET and all gates are unchanged. Required fresh CI on the exact
+published head is recorded separately in PR metadata.
 
 ## Independent countercheck
 
@@ -48,7 +51,7 @@ Separate capacity_countercheck reviewer independently ran107/107 corresponding
 cases,0fail/skip; confirmed exact original ChatAdmin functionbody after rename,
 no import cycle/side effects, unchanged ChatAdmin allowed prices, strict Creator
 null policy/error code, workspace/style/send boundaries and honest deferred/source
-status. Four in-memory guard-removal mutations made the four normal-form negative
+status. One in-memory guard-removal mutation made all four normal-form negative
 cases accept, detecting the missing protection; no repository or target mutation.
 Docs/EN/Truthguard source review PASS, no open findings. Final head, two reviewed
 watched-source fingerprints and CI are separately checked in PR metadata.
