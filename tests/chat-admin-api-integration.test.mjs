@@ -432,11 +432,11 @@ test("actual route rejects prices for an article named only by the appreciation"
  assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.usageEvents.length,1);
 });
 
-function topicPressureNotes(quote,boundary=false){
- let notes=knowledgePolicy.learnChatAdminKnowledge("Fan kauft bestimmt morgen.",[{kind:"communication",quote,source:"preference"}],[{id:"preference",sequence:10,memory_source:"confirmed-preference",direction:"fan_inbound",content:quote}]);
+function topicPressureNotes(quote,boundary=false,preferenceSequence=10){
+ let notes=knowledgePolicy.learnChatAdminKnowledge("Fan kauft bestimmt morgen.",[{kind:"communication",quote,source:"preference"}],[{id:"preference",sequence:preferenceSequence,memory_source:"confirmed-preference",direction:"fan_inbound",content:quote}]);
  if(boundary)notes=knowledgePolicy.learnChatAdminKnowledge(notes,[{kind:"boundary",quote:"Bitte keine Angebote.",source:"boundary"}],[{id:"boundary",sequence:11,direction:"fan_inbound",content:"Bitte keine Angebote."}]);
  for(const [index,topic] of ["Katzen","Hunde","Sport","Reisen","Kochen","Musik","Fotos","Videos"].entries()){
-  const text=`Ich liebe ${topic}.`;notes=knowledgePolicy.learnChatAdminKnowledge(notes,[{kind:"interest",quote:text,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:20+index,direction:"fan_inbound",content:text}]);
+  const text=`Ich liebe ${topic}.`;notes=knowledgePolicy.learnChatAdminKnowledge(notes,[{kind:"interest",quote:text,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:preferenceSequence+10+index,direction:"fan_inbound",content:text}]);
  }
  return notes;
 }
@@ -472,4 +472,12 @@ for(const field of ["workspace_id","character_id"])test(`actual route excludes f
  const h=harness(undefined,undefined,{notes:topicPressureNotes("I prefer long replies with emojis."),fan:{[field]:"foreign"}});
  const response=await h.route(h.request(1,"https://fanmind.invalid","Wie geht es dir?"));
  assert.equal(response.status,400);assert.equal((await response.json()).error,"fan_unavailable");assert.equal(h.calls.provider,0);assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+test("actual old-generation retry cannot overwrite a newer preference after topic pressure",async()=>{
+ const notes=topicPressureNotes("Ich mag lange Antworten.",false,20);
+ const h=harness("retry-learning",undefined,{notes});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
+ const body=await response.json();assert.equal(response.status,200);assert.equal(body.memory_status,"unchanged");
+ assert.equal(h.calls.provider,0);assert.equal(h.calls.usageEvents.length,0);assert.equal(h.calls.memoryWrites.length,0);
 });

@@ -422,3 +422,15 @@ Kategorienwortschatz wird nicht erweitert. Präziser Vertrag und Grenzen:
 Keine Änderung an Creator-Reviews, Hold/Aftercare/Cooldown, gemeinsamem Preis-
 oder Antwortqualitätspfad, Isolation oder manuellem Versand. Source-/Testnachweis
 ist keine Modellqualitäts- oder Zielabnahme; Phase7b und FM-DEC-031 bleiben offen.
+
+
+## Fanwissen im bestehenden ChatAdmin-Kontext — 17. Oktober 2026
+
+Beim vorhandenen Acht-Fakten-Limit bleibt nach Schutzgrenzen die aktuelle
+Kommunikationspräferenz vor weiteren Interessen erhalten. Synthetisch belegter
+Fix für verlorenes Fanwissen und dadurch wieder mögliche ältere Generation-Replays;
+keine Änderung der Creator-Pipeline, Notizstruktur, Quellenordnung oder Freigaben.
+Kontextkürzung und gemeinsame Antwortqualität bleiben bestehende Pfade.
+Details: [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
+Source-Tests sind keine reale Modell-/Zielabnahme. Phase7b bleibt offen und
+firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.

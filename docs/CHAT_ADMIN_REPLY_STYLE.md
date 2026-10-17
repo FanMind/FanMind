@@ -284,3 +284,41 @@ Workspace-/Character-/Fan-Bindung und manuelle Sendefreigabe bleiben unveränder
 Die vorhandene gemeinsame Antwortqualitäts- und Wiederholungsprüfung bleibt der
 einzige Qualitätspfad. Synthetische Policy-/Route-Tests belegen diesen Source-Fix,
 keine neue reale Modell-, Staging- oder Production-Abnahme.
+
+
+## Bestätigte Kommunikationspräferenzen bei Themenwechseln — 17. Oktober 2026
+
+Der bestehende Wissensspeicher verwendet weiterhin denselben Marker in den
+Fan-Notizen, höchstens acht Fakten, 4.000 Zeichen und dieselben Quellen-/Sequenz-
+prüfungen. Ein belegter Retentionsfehler ließ acht neuere Interessen die ältere
+Kommunikationspräferenz verdrängen. Dann fehlte sie in `fan.learned_preferences`
+auch bei korrekt gekürztem Verlauf; ein älterer Generation-Retry konnte mangels
+neuerer gespeicherter Sequenz wieder eine alte Kommunikationspräferenz eintragen.
+
+Nur die vorhandene Platzvergabe ändert sich: Schutzgrenzen behalten ihren bisherigen
+Vorrang; in den übrigen Plätzen kommt die aktuelle Kommunikationspräferenz vor den
+neuesten Interessen. Alter, Quelle und `source_sequence` werden nicht umgeschrieben.
+Interessen dürfen bei Platzmangel altern, eine neuere belegte Kommunikationsaussage
+ersetzt die bisherige weiterhin nach den bestehenden Sequenzregeln. Acht bereits
+gespeicherte Schutzgrenzen werden auch für eine neue Kommunikationspräferenz nicht
+verdrängt. Bereits früher verlorenes Wissen wird nicht rekonstruiert.
+
+Die Verlaufskürzung selbst hielt gespeichertes Fanwissen bereits separat vor;
+dieser Vertrag bleibt unverändert. Synthetische Tests prüfen leeren, teilweise
+und vollständig erhaltenen Verlauf, Themenwechsel, DE/EN, widersprechende manuelle
+Notizen/Zusammenfassungen, alte/ungeeignete Quellen und fremde Bindungen. Die echte
+Reply-Route erhält die bewahrte Präferenz auch nach Wegfall ihrer Ursprungsnachricht.
+Die vollständigen History-IDs bleiben für die atomare Persistenzprüfung erhalten.
+
+Interessen werden durch die bestehenden Promptregeln nur passend zur neuen Frage
+verwendet; dieser Fix führt keine neue Relevanzklassifikation ein. Zusammenfassung
+und manuelle Notizen bleiben getrennte untrusted Daten, keine Kaufbestätigung oder
+automatische Fan-Einstufung. Die kleine Lernwortliste wird nicht erweitert.
+
+Character-Stimme, Preis-/Angebotswächter, Holds/Cooldowns/Aftercare, Isolation,
+manuelle Freigabe und der gemeinsame Wiederholungs-/Qualitätspfad bleiben gleich.
+Keine zusätzlichen Provideraufrufe, kein neues Kontextfeld oder größeres Limit,
+keine Migration und keine Änderung produktiver Notizen. Tests mit Providerersatz
+belegen Erhalt und Übergabe des Wissens, keine allgemeine Garantie für kurze,
+emoji-freie oder semantisch natürliche echte Modellantworten. Dafür bleibt die
+separate reale Mehrturn-Bewertung nach autorisiertem Deployment erforderlich.
