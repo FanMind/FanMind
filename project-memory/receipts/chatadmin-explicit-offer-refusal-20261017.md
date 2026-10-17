@@ -54,3 +54,26 @@ Recovery is a reviewed source revert; no external state was mutated and no
 external cleanup is required. No protected dispatch, target query, provider
 call, SQL/migration, deployment, payment, activation or automatic merge.
 No new task queue or third independent implementation is created.
+
+## Reconciliation after Owner merge of #1336 — 2026-10-17
+
+Fresh main `cab4df076dc42fcd4b030da5962a8e404125070d` confirms #1336 merged
+from exact reviewed head `20415954f869230ac2511a3a0d727fa51336a35f`.
+This supersedes only the historical unmerged #1336 state above. #1337 old head
+`86dec94ece4e2f2168ad211236bd1f4b84845ff7` was dirty against that main.
+
+A regular non-forced main merge preserves both guards unchanged: explicit
+current negation veto first, distinct named active-offer ambiguity before
+category filtering thereafter. No new product behavior, API or error contract.
+Git auto-merged the resolver and structured-offer tests; actual conflicts were
+parallel appended docs/locks/started-work records, the test harness response
+branches and the two Source-of-Truth fingerprints/review notes. Retain both
+sets of test fixtures/records/contracts and recompute the fingerprint of the
+combined source document. Existing historical receipts remain intact.
+
+One bounded combined-guard regression checks unnegated ambiguity, mixed named
+refusal, single-offer refusal and the unchanged affirmative private-offer price.
+All existing positive/negative tests from both PRs remain. Final local results,
+exact head/Required CI and independent Source/CI findings are recorded in PR
+metadata, without carrying old green results forward. No #1337 merge or target
+acceptance is claimed; source revert remains the recovery path.

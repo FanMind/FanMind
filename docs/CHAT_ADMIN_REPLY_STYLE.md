@@ -203,6 +203,31 @@ möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantis
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
 
+
+## Mehrere ausdrücklich benannte Artikel — 17. Oktober 2026
+
+Nennt die aktuelle Anfrage mehrere unterschiedliche aktive Artikel, gibt der
+Server keinen Artikel/Preis frei, auch wenn ein späterer Privat-/Kategorie-/
+Anruffilter nur einen übriglassen würde. Beispiel: „Was kostet Foto oder
+Privates Foto?“ bleibt mehrdeutig. requested_offer=null und offers=[] lassen
+eine sichere Rückfrage zu; ein dennoch erzeugter Preis wird mit dem vorhandenen
+reply_price_not_permitted verworfen, bevor Vorschläge persistiert werden.
+
+Die Zählung verwendet die bestehenden literalen, wortgebundenen Namen desselben
+Character-Playbooks. Enthaltene generische Namen (Foto in Privates Foto) zählen
+nicht doppelt; Wiederholung desselben Artikels bleibt eindeutig. Eindeutige
+Anfragen, Preise aus dem aktuellen Serverdatensatz, Verkaufspausen, Ablehnungs-
+Cooldown, Aftercare, historische Quellenbindung, Stil und manuelles Senden
+behalten ihre Verträge. Kein Kauf-/Interesse-Score oder Bestätigung wird erzeugt.
+
+Abgeschlossen ist nur diese synthetisch geprüfte Auswahlgrenze. Allgemeine
+Kaufabsichts-/Negationserkennung, unbekannte/inaktive Artikel und semantische
+Modellantworten sind dadurch nicht vollständig klassifiziert. Insbesondere die
+aktuelle Negation bei einer einzelnen Anfrage („Ich möchte kein Foto, nur reden“)
+war beim Abschluss von #1336 ein separater Folgeumfang. Der folgende Abschnitt
+beschreibt dessen Source-Implementierung in #1337; dessen Merge bleibt offen.
+Reale Modellqualität und geschützte Zielabnahme bleiben offen.
+
 ## Explizite aktuelle Angebotsablehnung — Sourceumfang 17. Oktober 2026
 
 Der bestehende ChatAdmin-Resolver behandelt alleinstehende deutsche/englische

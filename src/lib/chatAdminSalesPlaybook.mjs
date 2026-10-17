@@ -56,6 +56,10 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
     return [...incoming.matchAll(matcher)].map(match => ({ offer, start: match.index, end: match.index + match[0].length }));
   });
   const specific = nameMatches.filter(match => !nameMatches.some(other => other.start <= match.start && other.end >= match.end && other.end - other.start > match.end - match.start));
+  // Preserve ambiguity before category/private/call filters discard candidates.
+  // A contained generic name is already removed above; repeated mentions of the
+  // same offer are not multiple offers. Never choose among distinct named IDs.
+  const multipleNamedOffers = new Set(specific.map(match => match.offer.id)).size > 1;
   const named = [...new Map(specific.map(match => [match.offer.id, match.offer])).values()].filter(offer => {
     const genericMediaName = /^(?:foto|photo|bild|pic|video|clip)s?$/iu.test(offer.name.trim());
     if(callRequest && (genericMediaName || ["photo","video","private_photo","private_video"].includes(offer.category)))return false;
@@ -65,7 +69,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   const candidates = named.length ? named : byCategory;
   const bareNamedRequest = named.length === 1 && incoming.trim().replace(/[?!.,]+$/u, "").trim() === named[0].name.toLocaleLowerCase();
   const customMentionWithoutRequest = named.some(offer => offer.category === "custom") && !explicitRequest && !bareNamedRequest;
-  const requested = (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
+  const requested = multipleNamedOffers || (appreciation && !explicitRequest) || (photoRequest && videoRequest) || customMentionWithoutRequest ? null
     : candidates.length === 1 && !candidates[0].requiresConfirmation ? candidates[0] : null;
   return {
     playbook: { ...normalized, offers: requested ? [requested] : [] },

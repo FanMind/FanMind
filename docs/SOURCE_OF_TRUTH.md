@@ -1,5 +1,12 @@
 # FanMind Source of Truth
 
+ChatAdmin-Gesprächssteuerung (17.10.2026): Mehrere ausdrücklich benannte aktive
+Artikel bleiben ohne Angebots-/Preisfreigabe, auch wenn ein späterer Filter
+nur einen übrigließe. Begrenzte synthetisch geprüfte Sourcehärtung; kein Kauf-
+oder Versandnachweis und keine vollständige Absichts-/Negationserkennung.
+Phase7b und reale Ziel-/Qualitätsabnahme bleiben offen.
+
+
 Phase 7b (17.10.2026): Creator-Antworten verwenden den bestehenden ChatAdmin-
 Preisschutz mit ihrem strengeren Vertrag ohne Freitextpreise. Synthetische
 Policy-/Route-Prüfungen schließen diese Source-Lücke; reale Qualität und
