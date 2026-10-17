@@ -1342,3 +1342,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Verification/recovery: focused positive/negative/multiturn/budget/isolation/actual-route tests, build/TypeScript/lint/truth/governance, independent Guardian/mutation/CI check and exact-head Required CI. Recovery: reviewed source revert; no customer data or external state changed. Draft only; no merge/deploy/SQL/provider/dispatch; FM-DEC-031 dependencies remain deferred.
 
 - Confirmed-preference source handoff:214/214 focused, independent237/237 +108 pressure/4 invalid-source probes/6 killed mutations PASS; build/TypeScript/lint/truth/memory/God Mode162 PASS. Source lock released; exact Draft/head/fresh Required CI and independent CI readback tracked in PR metadata. Receipt receipts/chatadmin-confirmed-preference-context-20261017.md. No new format/quality path/provider/target action; global release/FM-DEC-031 unchanged.
+
+
+## LOCK-FM-CHATADMIN-COMMUNICATION-DIMENSIONS-20261017
+- Task: FM-CREATOR-001 / FM-CHATADMIN-003; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 source.
+- Base: main `cb57239b5e1a3bec12c4a1599243c60bc1175f0d`; branch fix/chatadmin-communication-dimensions. PR1339 merged and consumed; no competing source PR.
+- Scope: existing bounded knowledge path only; synthetic tests first for independent/conflicting communication dimensions, exact-source provenance/replay, eight-fact priority and isolated actual-route context. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; image-storage unchanged.
+- Serialization: historical merged live-repair source is consumed; retained Staging harness/target locks grant no target authority here. No harness/workflow/target overlap.
+- Recovery: reviewed source revert, no external mutation or migration. Existing notes format, protection priority, commercial/quality/manual-send rules retained. Independent Guardian and final exact-head Required CI mandatory.
+- Forbidden: merge/deploy/dispatch, Staging/Production/database/SQL/provider/payment/registration/Mobile action. Global God Mode and FM-DEC-031 deferrals unchanged.
+
+- Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.

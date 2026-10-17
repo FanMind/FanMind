@@ -2,9 +2,9 @@
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
   "captured": "2026-10-17",
-  "last_source_of_truth_review": "2026-10-17 confirmed preference retention on main2be45 after merged1338: same eight-fact notes store keeps boundaries first then current communication before interests, original source order/limits/quality/offer/price/isolation/manual-send unchanged. Synthetic source proof only; global release/Phase7b/target/FM-DEC-031 unchanged.",
+  "last_source_of_truth_review": "2026-10-17 communication dimensions on maincb572 after merged1339: existing source-backed length/style/emoji semantics merge by dimension, literal residual quotes keep original provenance; same v1 fields/eight facts/4000 chars, boundaries first, interests yield; same global replay veto, commercial/quality/isolation/manual-send gates. Source-only, global release/target/FM-DEC-031 unchanged.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "078a103318d59e6d6d2d09539112acd2a009f775",
+    "docs/SOURCE_OF_TRUTH.md": "97b2e483453e289c5308a740c73f4abaa12a211b",
     "src/config/roadmap.ts": "08ffb0ff2d647db929e97b876f151a402b4b9c28",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

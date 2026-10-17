@@ -1342,3 +1342,13 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Source verification, independent countercheck, exact-head Required CI and canonical receipt pending. No target/deploy/merge/provider/SQL actions; FM-DEC-031 company-dependent tasks deferred. Recovery: reviewed source revert.
 
 - Confirmed-preference source handoff:214/214 focused, independent237/237 +108 pressure/4 invalid-source probes/6 killed mutations PASS; build/TypeScript/lint/truth/memory/God Mode162 PASS. Source lock released; exact Draft/head/fresh Required CI and independent CI readback tracked in PR metadata. Receipt receipts/chatadmin-confirmed-preference-context-20261017.md. No new format/quality path/provider/target action; global release/FM-DEC-031 unchanged.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — communication dimensions — 2026-10-17
+- Explicit Owner bounded Phase7b assignment; main cb57239b confirms PR1339 merged. Risk R3 under ChatAdmin AI contract/gate; lock LOCK-FM-CHATADMIN-COMMUNICATION-DIMENSIONS-20261017.
+- Test-first independent/conflicting dimensions, composite residual provenance, source order/replay, capacity/priority/isolation; no second memory/quality architecture. Source-only, no protected action or aggregate acceptance.
+- Implementation/independent Source+CI evidence and receipt pending. Recovery: reviewed source revert. Company-dependent steps remain deferred.
+
+- Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.

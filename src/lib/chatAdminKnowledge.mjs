@@ -5,10 +5,21 @@ const KINDS = ["communication", "interest", "boundary"];
 // Learn only complete statements from a small non-sensitive vocabulary.
 // Free-form personal/sensitive conclusions remain outside automatic learning.
 const SUPPORTED = {
- communication: /^(?:(?:ich (?:mag|bevorzuge)|bitte (?:schreibe|schreib)) (?:(?:kurze|lange|direkte|lockere|freundliche) (?:antworten|nachrichten))(?: (?:ohne|mit) emojis)?|(?:bitte )?(?:keine|ohne) emojis|i prefer (?:short|long|direct|casual|friendly) (?:replies|messages)(?: (?:with|without) emojis)?)[.!]?$/iu,
+ communication: /^(?:(?:ich (?:mag|bevorzuge)|bitte (?:schreibe|schreib)) (?:(?:kurze|lange|direkte|lockere|freundliche) (?:antworten|nachrichten))(?: (?:ohne|mit) emojis)?|(?:bitte )?(?:keine|ohne|mit) emojis|(?:with|without) emojis|i prefer (?:short|long|direct|casual|friendly) (?:replies|messages)(?: (?:with|without) emojis)?)[.!]?$/iu,
  interest: /^(?:ich (?:mag|liebe|bevorzuge)|i (?:like|love|prefer)) (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music)(?: (?:und|and) (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music))*[.!]?$/iu,
  boundary: /^(?:(?:bitte keine|ich (?:will|möchte) keine) (?:angebote|verkaufsgespräche|nachfragen|emojis)|(?:please no|i do not want) (?:offers|sales|questions|emojis))[.!]?$/iu,
 };
+
+// Dimensions come only from the bounded communication grammar above. On a
+// partial replacement, retain literal source clauses, never a rewritten quote.
+function communicationParts(quote) {
+ if (!SUPPORTED.communication.test(quote)) return [];
+ if (/^(?:(?:bitte )?(?:keine|ohne|mit)|with|without) emojis[.!]?$/iu.test(quote)) return [{ dimension: "emoji", quote }];
+ const emoji = quote.match(/(?:ohne|mit|without|with) emojis[.!]?$/iu);
+ const head = emoji ? quote.slice(0, emoji.index).trimEnd() : quote;
+ const dimension = /\b(?:kurze|lange|short|long)\b/iu.test(head) ? "length" : "style";
+ return [{ dimension, quote: head }, ...(emoji ? [{ dimension: "emoji", quote: emoji[0] }] : [])];
+}
 
 export function extractChatAdminFacts(content, source) {
  if (typeof content !== "string") return [];
@@ -61,13 +72,21 @@ export function learnChatAdminKnowledge(notes, proposed, sources) {
     const order=Number.isSafeInteger(source.sequence)?source.sequence:0;
     if (!quote || quote.length > 240 || !source.content.includes(quote) || !SUPPORTED[fact.kind].test(quote)) continue;
     if(fact.kind==="communication" && knowledge.facts.some(old=>old.kind==="communication" && (old.source_sequence??0)>order))continue;
-    // Latest communication statement wins; independent boundaries are retained.
+    // Newer communication replaces only overlapping dimensions. Opaque legacy
+    // statements keep the previous conservative whole-statement replacement.
+    const dimensions = fact.kind === "communication" ? communicationParts(quote).map(part => part.dimension) : [];
+    if (fact.kind === "communication") knowledge.facts = knowledge.facts.flatMap(old => {
+      if (old.kind !== "communication") return [old];
+      const parts = communicationParts(old.quote);
+      const remaining = parts.filter(part => !dimensions.includes(part.dimension));
+      return remaining.length === parts.length && parts.length ? [old] : remaining.map(part => ({ ...old, quote: part.quote }));
+    });
     const boundaryKey=text=>/angebot|verkauf|offer|sales/iu.test(text)?"sales":/emoji/iu.test(text)?"emoji":"questions";
-    knowledge.facts = knowledge.facts.filter(old => old.quote !== quote && (fact.kind !== "communication" || old.kind !== fact.kind) && !(fact.kind==="boundary" && old.kind==="boundary" && boundaryKey(old.quote)===boundaryKey(quote)));
+    knowledge.facts = knowledge.facts.filter(old => (old.quote !== quote || old.kind !== fact.kind) && !(fact.kind==="boundary" && old.kind==="boundary" && boundaryKey(old.quote)===boundaryKey(quote)));
     knowledge.facts.push({ kind: fact.kind, quote, source: source.memory_source ?? source.id, source_sequence: order });
     if(knowledge.facts.length>8){
       const boundaries=knowledge.facts.filter(old=>old.kind==="boundary");
-      // Interests may age out; keep the current communication preference in
+      // Interests may age out; keep current communication preferences in
       // the remaining slots after protective boundaries, with its source order.
       const other=[...knowledge.facts.filter(old=>old.kind==="interest"),...knowledge.facts.filter(old=>old.kind==="communication")];
       const retained=boundaries.slice(-8);

@@ -434,3 +434,13 @@ Kontextkürzung und gemeinsame Antwortqualität bleiben bestehende Pfade.
 Details: [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
 Source-Tests sind keine reale Modell-/Zielabnahme. Phase7b bleibt offen und
 firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.
+
+
+## Bestätigte Kommunikationsdimensionen — 17. Oktober 2026
+
+ChatAdmin führt im vorhandenen Acht-Fakten-Speicher unabhängige Längen-, Stil- und
+Emoji-Präferenzen zusammen. Neue Bestätigungen ersetzen nur betroffene Dimensionen;
+wörtliche Restklauseln behalten die alte Quelle/Sequenz. Schutzgrenzen bleiben vor
+Kommunikation und Interessen priorisiert. Keine zweite Memory/Qualitätsarchitektur,
+kein zusätzliches Providerbudget und keine Creator-/Target-Aktivierung. Details und
+Speichergrenzen: [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#kommunikationspräferenzen-zusammenführen--17-oktober-2026).
