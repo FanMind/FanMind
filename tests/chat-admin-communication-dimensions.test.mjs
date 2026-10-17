@@ -123,3 +123,28 @@ test("separate bound Fans and Characters keep their own merged preferences",()=>
  assert.throws(()=>buildChatAdminFanContext(first.c,second.fan,second.conversation,[],"Hallo"),/fan_unavailable/u);
  assert.throws(()=>buildChatAdminFanContext(first.c,first.fan,second.conversation,[],"Hallo"),/conversation_unavailable/u);
 });
+
+test("legacy composites keep the v1 format and only confirmed partial updates residualize",()=>{
+ const quote="I prefer short replies without emojis.";
+ const fact={kind:"communication",quote,source:"legacy"};
+ const initial=writeChatAdminKnowledge({manual:"Manuell",facts:[fact]});
+ assert.equal(writeChatAdminKnowledge(readChatAdminKnowledge(initial)),initial);
+ const notes=learn(initial,"I prefer long replies.",20);
+ assert.deepEqual(communications(notes)[0],{...fact,quote:"without emojis."});
+ assert.equal(readChatAdminKnowledge(notes).manual,"Manuell");
+});
+
+test("standalone emoji clauses do not admit negated, quoted, sensitive or unrelated text",()=>{
+ for(const content of ['Nicht ohne Emojis.','Not without emojis.','"With emojis."','With emojis because of my diagnosis.','Mit Emojis und Religion.','Bitte nicht mit Emojis.','I dislike emojis.']){
+  assert.deepEqual(extractChatAdminFacts(content,"source"),[]);
+  assert.equal(learn("Manuell",content,20),"Manuell");
+ }
+});
+
+test("identical communication wording cannot demote a stored protective emoji boundary",()=>{
+ const boundary={kind:"boundary",quote:"Bitte keine Emojis.",source:"legacy-protection",source_sequence:1};
+ let notes=writeChatAdminKnowledge({facts:[boundary]});
+ notes=learn(notes,"Bitte keine Emojis.",20);
+ notes=learn(notes,"Mit Emojis.",30);
+ assert.deepEqual(readChatAdminKnowledge(notes).facts.filter(f=>f.kind==="boundary"),[boundary]);
+});

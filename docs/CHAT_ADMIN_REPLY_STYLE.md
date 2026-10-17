@@ -295,6 +295,9 @@ Kommunikationspräferenz verdrängen. Dann fehlte sie in `fan.learned_preference
 auch bei korrekt gekürztem Verlauf; ein älterer Generation-Retry konnte mangels
 neuerer gespeicherter Sequenz wieder eine alte Kommunikationspräferenz eintragen.
 
+Der folgende Absatz beschreibt den Retentionsstand aus #1339. Die anschließende
+Dimensionserweiterung ersetzt dessen bisherige Ganzsatz-Ersetzung.
+
 Nur die vorhandene Platzvergabe ändert sich: Schutzgrenzen behalten ihren bisherigen
 Vorrang; in den übrigen Plätzen kommt die aktuelle Kommunikationspräferenz vor den
 neuesten Interessen. Alter, Quelle und `source_sequence` werden nicht umgeschrieben.
@@ -322,3 +325,52 @@ keine Migration und keine Änderung produktiver Notizen. Tests mit Providerersat
 belegen Erhalt und Übergabe des Wissens, keine allgemeine Garantie für kurze,
 emoji-freie oder semantisch natürliche echte Modellantworten. Dafür bleibt die
 separate reale Mehrturn-Bewertung nach autorisiertem Deployment erforderlich.
+
+
+## Kommunikationspräferenzen zusammenführen — 17. Oktober 2026
+
+Der vorhandene Lernpfad unterscheidet innerhalb seiner begrenzten DE/EN-Grammatik
+Länge (kurz/lang), Stil (direkt/locker/freundlich) und Emojis (mit/ohne).
+Unabhängige Dimensionen bleiben gemeinsam bestehen; innerhalb einer Dimension
+ersetzt die neuere bestätigte Aussage die bisherige. Die Stilwerte gehören zum
+bestehenden einzelnen Adjektivplatz und gelten hier als gegenseitige Updates,
+nicht als allgemeine sprachwissenschaftliche Gegensätze.
+
+Ein Teilkonflikt verwirft nicht mehr den gesamten früheren Satz. Aus
+„Ich mag kurze Antworten ohne Emojis.“ und später „Ich mag lange Antworten.“
+bleibt „ohne Emojis.“ mit unveränderter alter Quelle/Sequenz erhalten; daneben
+steht die neu bestätigte Längenpräferenz. Wird nur die Emoji-Präferenz geändert,
+bleibt der wörtliche Präfix „Ich mag kurze Antworten“ ohne erfundenen Schlusspunkt.
+Dasselbe gilt für englische Quellen. Vollständig unabhängige Fakten bleiben
+unverändert. Es werden keine Sätze zusammengesetzt, Quellen umgebunden oder neuen
+Dimensionen aus Freitext erschlossen. Die bestehende v1-Struktur erhält kein Feld.
+
+Die eng verankerte Wortliste unterstützt dafür zusätzlich die eigenständigen
+Klauseln „Mit Emojis“, „With emojis“ und „Without emojis“; diese Bedeutungen waren
+bereits in zusammengesetzten Aussagen unterstützt. Keine freie Paraphrase,
+Negation oder sensible Begründung wird dadurch lernbar. Nicht von dieser
+Grammatik abgedeckte gespeicherte Altsätze behalten bei einem bestätigten Update
+die bisherige konservative Ganzsatz-Ersetzung; keine erfundene Teilinterpretation.
+
+Der globale ältere-Kommunikation-Veto bleibt bestehen: Ein älteres Ereignis wird
+auch dann nicht nachgetragen, wenn es eine bislang fehlende Dimension enthalten
+könnte. Restzitate behalten deshalb ihre ursprüngliche Sequenz. Fehlende oder
+ungeeignete Quellen, abweichende Zitate und Entwürfe erzeugen kein Wissen. Die
+reale Route verlangt weiterhin eine gespeicherte passende Inbound-Nachricht mit
+sicherer Sequenz, erneute Autorisierung und revisionsgebundene Speicherung.
+
+Schutzgrenzen behalten Vorrang. Selbst identischer Kommunikationstext darf eine
+bestehende Schutzgrenze nicht durch Entdoppelung in Kommunikation umwandeln.
+Danach bleiben Kommunikationsfakten vor Interessen erhalten. Bei sieben bereits
+gespeicherten Schutzgrenzen passt nur ein Kommunikationsfakt; bei acht keiner.
+Reicht der Platz nicht für getrennt belegte Dimensionen, bleibt die bestehende
+Begrenzung mit den zuletzt gehaltenen Kommunikationsfakten maßgeblich. Es werden
+keine Quellen verschmolzen, keine Grenzen geopfert und keine Fakten außerhalb
+des Acht-Fakten-/4.000-Zeichen-Limits gespeichert. Bereits verlorenes Wissen wird
+nicht rekonstruiert. v1-Notizen sind ohne Migration lesbar und schreibbar.
+
+Character-Stimme, Kontextfelder/-limits, Quellenbindung/Isolation, manuelle
+Versandfreigabe, gemeinsamer Qualitäts-/Wiederholungsschutz und sämtliche Preis-,
+Angebots-, Hold-, Cooldown- und Aftercare-Regeln bleiben erhalten. Keine zusätzlichen
+Provideraufrufe oder Datenbankaktionen. Synthetische Tests belegen die deterministische
+Zusammenführung und Kontextübergabe; reale Modellbefolgung bleibt separat offen.

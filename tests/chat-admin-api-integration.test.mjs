@@ -107,7 +107,7 @@ function harness(change, abortController, options = {}) {
       ]),
       getChatAdminGeneration: async () => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persisted,
       updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:10,content:args[8]}]; return args.at(-1); },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:args[8]}]; return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -515,4 +515,11 @@ test("actual delayed composite generation cannot restore either superseded dimen
  const h=harness("retry-learning",undefined,{notes});const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag kurze Antworten ohne Emojis."));
  assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"unchanged");
  assert.equal(h.calls.provider,0);assert.equal(h.calls.usage,0);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const persistedSequence of [null,1.5,Number.MAX_SAFE_INTEGER+1])test(`actual learning rejects an unbound saved source sequence (${persistedSequence})`,async()=>{
+ const h=harness(undefined,undefined,{persistedSequence});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ohne Emojis."));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
 });

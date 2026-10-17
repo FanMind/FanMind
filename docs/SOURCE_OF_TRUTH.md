@@ -1,8 +1,10 @@
 # FanMind Source of Truth
 
 ChatAdmin-Fanpräferenzen (17.10.2026): Beim bestehenden Acht-Fakten-Limit
-bleiben Schutzgrenzen zuerst und die aktuelle Kommunikationspräferenz vor
-weiteren Interessen erhalten. Format, Quellen und Limits bleiben gleich.
+bleiben Schutzgrenzen zuerst und bestätigte Kommunikationspräferenzen vor
+weiteren Interessen erhalten. Länge, Stil und Emojis werden getrennt
+zusammengeführt; neuere Aussagen ersetzen nur betroffene Dimensionen. Wörtliche
+Restzitate behalten Quelle/Sequenz. Format und Limits bleiben gleich.
 Synthetisch geprüfte Sourcekorrektur; reale Antwortqualität und Zielabnahme
 bleiben offen. Keine neue Memory- oder Qualitätsarchitektur.
 

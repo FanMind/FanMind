@@ -71,11 +71,11 @@ test("bounded learning preserves long manual notes and retains the previous vali
   assert.equal(learnChatAdminKnowledge(notes,[{kind:"interest",quote:"Ich liebe Katzen.",source:"incoming"}],[source]),notes);
   assert.equal(readChatAdminKnowledge("legacy\n\n[FanMind-Kontaktwissen v1]\ninvalid").manual,"legacy\n\n[FanMind-Kontaktwissen v1]\ninvalid");
 });
-test("latest explicit communication preference replaces the old one, not manual knowledge", () => {
+test("new length preference replaces old length while preserving the independent emoji clause", () => {
   const first=learnChatAdminKnowledge("Manuell",[{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"}],[source]);
   const second=learnChatAdminKnowledge(first,[{kind:"communication",quote:"Ich mag lange Antworten.",source:"next"}],[{id:"next",direction:"fan_inbound",content:"Ich mag lange Antworten."}]);
-  assert.equal(readChatAdminKnowledge(second).facts.length,1);
-  assert.equal(readChatAdminKnowledge(second).facts[0].quote,"Ich mag lange Antworten.");
+  assert.deepEqual(readChatAdminKnowledge(second).facts.map(f=>f.quote),["ohne Emojis.","Ich mag lange Antworten."]);
+  assert.equal(readChatAdminKnowledge(second).manual,"Manuell");
 });
 test("customer tier is context, never a purchase or automatic progression", () => {
   const s=deriveChatAdminStrategy(playbook,{notes:"",customer_tier:"green"},null,now);

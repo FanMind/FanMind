@@ -1,3 +1,8 @@
+## Communication dimensions — source handoff — 2026-10-17
+- Base main cb57239b confirms1339 merged. Existing ChatAdmin v1 knowledge now merges independent length/style/emoji dimensions; partial conflicts retain only literal source clauses with original sequence. Cross-kind dedup cannot demote a protective boundary.
+- 54 new tests;268 focused/269 with required-suite coverage PASS. Independent291/291 +1296 pair/stale/current retry probes/9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Same8facts/4000chars, boundaries first, commercial/quality/isolation/manual-send gates unchanged.
+- Receipt: receipts/chatadmin-communication-dimensions-20261017.md; source lock released for Draft handoff. Final exact head/Required CI/independent CI in PR metadata. No target/model-quality/merge acceptance. Phase7b/FM-DEC-031 company-dependent work remains open/deferred; global BLOCK unchanged.
+
 ## Confirmed Fan preference retention — bounded source handoff — 2026-10-17
 - Tasks FM-CREATOR-001 / FM-CHATADMIN-003, Risk R3; baseline main2be45e2602d65e9c670c25975245f3fd406f2f9e confirms1338 merged. No competing current source writer.
 - Proven old eight-fact eviction lost communication/source age after interest accumulation. One retention expression keeps protective boundaries first, communication before newer interests, same format/limits/source/quality/offer/price/isolation/manual-send contracts.
