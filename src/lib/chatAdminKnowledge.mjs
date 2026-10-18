@@ -10,6 +10,16 @@ const SUPPORTED = {
  boundary: /^(?:(?:bitte keine|ich (?:will|möchte) keine) (?:angebote|verkaufsgespräche|nachfragen|emojis)|(?:please no|i do not want) (?:offers|sales|questions|emojis))[.!]?$/iu,
 };
 
+// Explicit withdrawals use the same sourced interest fact slot. A negative
+// quote is retained verbatim so an old positive generation cannot resurrect it
+// after the dialogue window is truncated. No generic/ambiguous revocations.
+const INTEREST_REVOCATION = /^(?:ich mag (?:keine (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) mehr|(?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) nicht mehr)|i (?:don't like (?:photos|videos|cats|dogs|sports|travel|cooking|music) anymore|no longer like (?:photos|videos|cats|dogs|sports|travel|cooking|music)))[.!]?$/iu;
+const INTEREST_TOKENS = /\b(?:fotos|photos|videos|katzen|cats|hunde|dogs|sport|sports|reisen|travel|kochen|cooking|musik|music)\b/giu;
+const INTEREST_NAMES = { fotos:"photos", photos:"photos", videos:"videos", katzen:"cats", cats:"cats", hunde:"dogs", dogs:"dogs", sport:"sports", sports:"sports", reisen:"travel", travel:"travel", kochen:"cooking", cooking:"cooking", musik:"music", music:"music" };
+function interestTopics(quote) {
+ return new Set([...quote.matchAll(INTEREST_TOKENS)].map(match => INTEREST_NAMES[match[0].toLowerCase()]));
+}
+
 // Dimensions come only from the bounded communication grammar above. On a
 // partial replacement, retain literal source clauses, never a rewritten quote.
 function communicationParts(quote) {
@@ -25,7 +35,7 @@ export function extractChatAdminFacts(content, source) {
  if (typeof content !== "string") return [];
  return content.split(/(?<=[.!?])\s+|\n/u).flatMap(sentence => {
    const quote = sentence.trim();
-   const kind = KINDS.find(key => SUPPORTED[key].test(quote));
+   const kind = INTEREST_REVOCATION.test(quote) ? "interest" : KINDS.find(key => SUPPORTED[key].test(quote));
    return kind ? [{kind,quote,source}] : [];
  }).slice(0,3);
 }
@@ -70,7 +80,18 @@ export function learnChatAdminKnowledge(notes, proposed, sources) {
     if (!source || !KINDS.includes(fact.kind) || typeof fact.quote !== "string") continue;
     const quote = fact.quote.trim();
     const order=Number.isSafeInteger(source.sequence)?source.sequence:0;
-    if (!quote || quote.length > 240 || !source.content.includes(quote) || !SUPPORTED[fact.kind].test(quote)) continue;
+    const withdrawn = fact.kind === "interest" && INTEREST_REVOCATION.test(quote);
+    if (!quote || quote.length > 240 || !source.content.includes(quote) || !(SUPPORTED[fact.kind].test(quote) || withdrawn)) continue;
+    // A withdrawal must be ordered against the original confirmed source.
+    if (withdrawn && (!Number.isSafeInteger(source.sequence) || source.sequence <= 0)) continue;
+    if (fact.kind === "interest") {
+      const topics = interestTopics(quote);
+      const overlapping = knowledge.facts.filter(old => old.kind === "interest" && [...interestTopics(old.quote)].some(topic => topics.has(topic)));
+      if (overlapping.some(old => (old.source_sequence ?? 0) >= order)) continue;
+      // Compound old positives are removed as a whole rather than rewriting
+      // a statement the fan never made. Other independent facts survive.
+      knowledge.facts = knowledge.facts.filter(old => !overlapping.includes(old));
+    }
     if(fact.kind==="communication" && knowledge.facts.some(old=>old.kind==="communication" && (old.source_sequence??0)>order))continue;
     // Newer communication replaces only overlapping dimensions. Opaque legacy
     // statements keep the previous conservative whole-statement replacement.
@@ -88,7 +109,7 @@ export function learnChatAdminKnowledge(notes, proposed, sources) {
       const boundaries=knowledge.facts.filter(old=>old.kind==="boundary");
       // Interests may age out; keep current communication preferences in
       // the remaining slots after protective boundaries, with its source order.
-      const other=[...knowledge.facts.filter(old=>old.kind==="interest"),...knowledge.facts.filter(old=>old.kind==="communication")];
+      const other=[...knowledge.facts.filter(old=>old.kind==="interest" && !INTEREST_REVOCATION.test(old.quote)),...knowledge.facts.filter(old=>old.kind==="interest" && INTEREST_REVOCATION.test(old.quote)),...knowledge.facts.filter(old=>old.kind==="communication")];
       const retained=boundaries.slice(-8);
       const slots=8-retained.length;
       knowledge.facts=[...retained,...(slots>0?other.slice(-slots):[])];
