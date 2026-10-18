@@ -45,7 +45,8 @@ policy has no collector branch in the present executable.
 ## Files and security binding
 
 Only new workflow, two operations modules, fixed policy JSON, focused cases,
-runbook, this receipt/minimum memory and one static readiness-suite import.
+runbook, this task-only receipt, one static readiness-suite import and one exact
+Self-hosted workflow inventory registration in the existing supply-chain test.
 No other workflow/runtime/SQL/backup worker/package/controller changes. The four
 large historical Memory files are unchanged in the published candidate.
 
@@ -149,3 +150,23 @@ Canonical publication remains incomplete, not silently waived by green CI.
 - Next: review this safe Draft and its exact CI; resolve required publication
   approval separately. Independently resolve private-channel, Environment and
   runner evidence before any functioning collector or administrator dispatch.
+
+
+## Same-task CI inventory correction
+
+The first Truth/Operations CI on source3cfb4b79 found exactly one failure:
+`hosted checkout uses v7 while the isolated restore runner stays on v4`, because
+the exact Self-hosted workflow inventory lacked the new authorized filename.
+Independent Guardian confirmed the cause and no active source-lock overlap before
+editing tests/github-actions-supply-chain.test.mjs. One literal filename is added
+at its sorted position; the strict equality assertion, pins, restore exceptions
+and all negative tests remain unchanged. No existing executable workflow/controller
+is changed. This is a required registration correction, not a rule relaxation.
+New source remains the same task, protected operations BLOCKED and canonical
+publication PARTIAL. Final corrected head and fresh CI are bound in PR/issue metadata.
+
+Corrected local combined Supplychain+Readiness suite25/25 PASS,0fail/0skip;
+independent Guardian rerun25/25 PASS with exact one-line inventory diff and no
+assertion/pin/restore-exception change. Supplychain test SHA256
+`87c092e74e202115296d3f5136600f9f1d6247b96861810d4dd9b731a957b297`.
+No concrete correction blocker; final corrected source still needs fresh exact CI.
