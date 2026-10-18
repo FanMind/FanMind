@@ -65,3 +65,51 @@ test("withdrawal survives historical message trimming because it is in durable f
  assert.deepEqual(knowledge.facts.map(f=>f.quote),["Ich mag Musik nicht mehr."]);
  assert.equal(knowledge.facts.some(f=>f.quote==="Ich liebe Musik."),false);
 });
+
+for (const quote of ["I do not like music anymore.", "I don’t like music anymore.", "Ich liebe Musik nicht mehr."]) test(`explicit literal negation is supported: ${quote}`,()=>{
+ const notes=apply(apply("",inbound("old",10,"Ich mag Musik.")),inbound("new",20,quote));
+ assert.deepEqual(learned(notes).map(f=>f.quote),[quote]);
+});
+
+test("later clauses within one generation resolve the topic without losing retry idempotency",()=>{
+ for(const content of ["Ich mag Musik. Ich mag Musik nicht mehr.","Ich mag Musik nicht mehr. Ich mag Musik."]){
+  const event=inbound("generation",20,content);const notes=apply("",event);
+  assert.deepEqual(learned(notes).map(f=>f.quote),[content.split(". ").at(-1)]);
+  assert.equal(apply(notes,event),notes);
+ }
+});
+
+test("explicit withdrawal is not discarded behind three unrelated positive sentences",()=>{
+ const notes=apply(apply("",inbound("old",10,"Ich mag Musik.")),inbound("new",20,"Ich mag Katzen. Ich mag Hunde. Ich mag Reisen. Ich mag Musik nicht mehr."));
+ assert.ok(learned(notes).some(f=>f.quote==="Ich mag Musik nicht mehr."));
+ assert.ok(!learned(notes).some(f=>f.quote==="Ich mag Musik."));
+});
+
+test("an evicted withdrawal does not allow an older interest generation back into full memory",()=>{
+ let notes="";
+ for(const [i,topic] of ["Musik","Fotos","Videos","Katzen","Hunde","Sport","Reisen","Kochen"].entries())notes=apply(notes,inbound(`withdraw-${i}`,20+i,`Ich mag ${topic} nicht mehr.`));
+ notes=apply(notes,inbound("communication",30,"Ich mag kurze Antworten."));
+ notes=apply(notes,inbound("renew",40,"Ich mag Fotos."));
+ assert.equal(apply(notes,inbound("old",10,"Ich mag Musik.")),notes);
+ assert.equal(learned(notes).length,8);
+ assert.ok(learned(notes).some(f=>f.quote==="Ich mag kurze Antworten."));
+});
+
+test("interest provenance requires a full literal source statement, never a substring",()=>{
+ const first=apply("",inbound("old",10,"Ich mag Musik."));
+ const next=learnChatAdminKnowledge(first,[{kind:"interest",quote:"Ich mag Musik nicht mehr.",source:"new"}],[inbound("new",20,"Wenn ich sage: Ich mag Musik nicht mehr.")]);
+ assert.equal(next,first);
+});
+
+test("insufficient space for a withdrawal is explicit and preserves the original notes",()=>{
+ const notes=apply("x".repeat(3711),inbound("old",10,"Ich mag Musik."));
+ assert.ok(notes.length<=4000);
+ assert.throws(()=>apply(notes,inbound("new",20,"Ich mag Musik nicht mehr.")),/knowledge_too_large/u);
+ assert.equal(readChatAdminKnowledge(notes).manual.length,3711);
+});
+
+for(const [positive,negative] of [["I love sports.","Ich mag Sport nicht mehr."],["Ich mag Reisen.","I no longer like travel."]])test(`topic aliases use one source ordering: ${positive}`,()=>{
+ const first=apply("",inbound("old",10,positive));assert.equal(learned(first).length,1);
+ const notes=apply(first,inbound("new",20,negative));assert.deepEqual(learned(notes).map(f=>f.quote),[negative]);
+ assert.equal(apply(notes,inbound("old",10,positive)),notes);
+});
