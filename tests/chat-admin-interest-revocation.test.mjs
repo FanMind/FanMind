@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { extractChatAdminFacts, learnChatAdminKnowledge, readChatAdminKnowledge, writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
-import { buildChatAdminFanContext } from "../src/lib/chatAdminPolicy.mjs";
 
 const inbound = (id, sequence, content, direction = "fan_inbound") => ({ id, sequence, content, direction });
 const apply = (notes, event) => learnChatAdminKnowledge(notes, extractChatAdminFacts(event.content, event.id), [event]);
