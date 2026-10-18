@@ -374,3 +374,12 @@ Versandfreigabe, gemeinsamer Qualitäts-/Wiederholungsschutz und sämtliche Prei
 Angebots-, Hold-, Cooldown- und Aftercare-Regeln bleiben erhalten. Keine zusätzlichen
 Provideraufrufe oder Datenbankaktionen. Synthetische Tests belegen die deterministische
 Zusammenführung und Kontextübergabe; reale Modellbefolgung bleibt separat offen.
+
+
+## Expliziter Widerruf gelernter Interessen — 18. Oktober 2026 (Draft, noch nicht abgenommen)
+
+Eine eindeutig zuordenbare neue Fan-Aussage wie „Ich mag Musik nicht mehr.“ oder „I don't like music anymore.“ wird im bestehenden v1-Kontaktwissen als quellengestützte, datierte Reihenfolge-Aussage gespeichert. Der ältere positive Eintrag für dasselbe Thema wird im bestehenden acht Fakten umfassenden Speicher verdrängt; der originale negative Wortlaut bleibt als aktuellere Aussage erhalten. Die echte ChatAdmin-Route lernt weiterhin erst nach erfolgreicher Antwortgenerierung, autorisierter Speicherung der zugehörigen eingehenden Nachricht und erneuter Quellen-/Workspace-/Character-/Fan-Prüfung. Kein zweiter Speicher und keine Schemaänderung.
+
+Nur ausdrücklich benannte, im bisherigen engen Interessenvokabular enthaltene Themen werden erkannt. „Das stimmt inzwischen nicht mehr“ ohne Bezug wird nicht automatisch ausgelegt. Verspätete ältere Generationswiederholungen dürfen neuere widersprechende Interessen nicht wiederherstellen. Ein späteres eindeutiges neues positives Interesse kann eine ältere negative Aussage ablösen. Ein zusammengesetzter alter Interessen-Fakt wird bei Teilwiderruf vorsichtshalber ganz entfernt, statt eine niemals so geäußerte Restbehauptung zu erfinden. Kommunikationspräferenzen und Schutzgrenzen bleiben unabhängig. Bei Überfüllung gilt weiterhin das acht-Fakten-Limit; ältere positive Fakten werden vor expliziten Widerrufen und Kommunikationspräferenzen entfernt. Mehr als acht konkurrierende schutzwürdige Einträge können nicht unbegrenzt vorgehalten werden.
+
+Test-first: isolierter Regressionstest-Commit auf eigenem Branch vor Laufzeitänderung. Die unabhängige vollständige API-/CI-/Runtime-Abnahme steht bis zur Veröffentlichung und Prüfung des PR-Heads ausdrücklich aus. Keine Aussage über echte Modellhäufigkeit, keine Anti-Rückfrage-Featureabnahme von PR #1341, kein Auto-Senden, Provideraufruf, Merge, Deploy oder Datenbank-Apply. Recovery: geprüfter Repository-Revert vor einer späteren Freigabe.
