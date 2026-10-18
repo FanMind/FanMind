@@ -481,3 +481,37 @@ test("input current-facts collection stays untouched; only bounded topics and im
 });
 
 }
+
+// Adversarial review of PR1345, before durable-store integration.
+{
+ const tuple={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+ const src=(sequence,content)=>({...tuple,id:`message-${sequence}`,generation_id:`generation-${sequence}`,sequence,content,direction:"fan_inbound"});
+ const claim=(s,quote=s.content)=>({...tuple,topic:"music",quote,source_message_id:s.id,source_sequence:s.sequence,source_statement_index:0});
+ const row=(sequence,quote="Ich mag Musik.")=>({...tuple,topic:"music",quote,polarity:quote.includes("nicht")?"negative":"positive",source_message_id:`message-${sequence}`,source_sequence:sequence,source_statement_index:0});
+ test("offline contract rejects duplicate current topics before a stale update",()=>{
+  const source=src(20,"Ich mag Musik.");
+  assert.throws(()=>applyCurrentInterestAssertion([row(10),row(100,"Ich mag Musik nicht mehr.")],claim(source),source,tuple),/interest_order_conflict/u);
+ });
+ test("offline contract accepts only the last validated statement for a topic",()=>{
+  const source=src(20,"Ich mag Musik. Ich mag Musik nicht mehr.");
+  assert.throws(()=>applyCurrentInterestAssertion([],claim(source,"Ich mag Musik."),source,tuple),/invalid_interest_claim/u);
+ });
+ test("offline contract rejects cross-tenant proposed and current records",()=>{
+  const source=src(20,"Ich mag Musik.");
+  for(const key of Object.keys(tuple)){
+   assert.throws(()=>applyCurrentInterestAssertion([],{...claim(source),[key]:"foreign"},source,tuple),/invalid_interest_source/u);
+   assert.throws(()=>applyCurrentInterestAssertion([{...row(10),[key]:"foreign"}],claim(source),source,tuple),/interest_order_conflict/u);
+  }
+ });
+ test("offline contract rejects malformed existing facts rather than legitimizing them",()=>{
+  const source=src(20,"Ich mag Musik.");
+  for(const bad of [{source_sequence:-1},{polarity:"unknown"},{quote:"Vielleicht mag er Musik."},{topic:"private-medical-inference"}])assert.throws(()=>applyCurrentInterestAssertion([{...row(10),...bad}],claim(source),source,tuple),/interest_order_conflict/u);
+ });
+}
+
+test("offline current facts refuse quoted and hypothetical multi-line assertions",()=>{
+ const content='Wenn ich einmal sage:\nIch mag Musik nicht mehr.\nmeine ich das hypothetisch.';
+ const tuple={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+ const src={...tuple,id:"new",generation_id:"generation",direction:"fan_inbound",sequence:20,content};
+ assert.throws(()=>applyCurrentInterestAssertion([],{...tuple,topic:"music",quote:"Ich mag Musik nicht mehr.",source_message_id:"new",source_sequence:20,source_statement_index:1},src,tuple),/invalid_interest_claim/u);
+});
