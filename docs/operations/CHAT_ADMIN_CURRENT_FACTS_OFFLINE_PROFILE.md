@@ -9,9 +9,9 @@ source result; live installation and activation remain BLOCKED.
 - Controlled SQL, unchanged: `supabase/controlled/chat_admin_current_facts.sql`.
   SHA256 `a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947`.
 - Read-only catalog query: `scripts/operations/chat-admin-current-facts-catalog.sql`.
-  SHA256 `93591f3662f389f6984206cccb94be8d6d9cf04641fbaeab2a8ef2d834344644`.
+  SHA256 `7db4480ceb0af094bc91ae8d910782321961b191293d767d6a9a565fa6792f0c`.
 - Fixed synthetic reference: `docs/operations/chat-admin-current-facts-profile-reference.json`.
-  SHA256 `85cb0ddba33b69e8990e5c64ebddd2a3b5c300117be836dab9488529fa075e72`.
+  SHA256 `86a00c2039c841dbde3cd8d28f64a8bec1d8c889621b6e04e9ba6c2e234ed5ab`.
 - Verifier: `scripts/operations/chat-admin-current-facts-profile.mjs`.
   It validates all source/query/reference checksums before comparing the entire
   logical catalog. It has no connection, executor, apply, flag or reference-learning
@@ -38,7 +38,7 @@ indexes, triggers and enabled state, sequence definition, RLS and policies,
 function identity/result/language/owner/full-definition hash/ACL, private schema
 contents and dependent views/rules/objects. It also checks table/column/schema
 ACLs including grant options, schema ownership, effective schema USAGE/CREATE,
-database owner/encoding/locale, relevant default privileges, transitive role
+database owner/encoding/provider/locale/ICU rules/collation version, relevant default privileges, transitive role
 membership in both directions and role/database defaults. Extra scoped objects
 or changes fail comparison. Function bodies, SECURITY DEFINER, volatility and
 search_path are covered by the full pg_get_functiondef hash. The private six
@@ -73,7 +73,12 @@ the existing required `tests/chat-admin-structured-offers-pg17.test.mjs` suite.
 No package, workflow or legacy suite registration was changed.
 
 The native test creates two fresh containers with `--pull=never --network none`,
-no published ports or host bind mounts, and disposable PGDATA volumes. Source and
+no published ports or host bind mounts, and disposable PGDATA volumes. Its
+initialization exactly matches the existing PG17 architecture fixture:
+`--encoding=UTF8 --locale-provider=icu --icu-locale=en-US --locale=en_US.UTF-8`.
+Provider i, locale en-US, ICU collation version 153.128 and null custom rules are
+fixed reference facts. ICU-locale, rules and collation-version tampering each fail
+a native rollback-only negative test. Source and
 target are distinct containers. It creates only synthetic data: a fan with exactly
 4000 manual note characters, positive then negative music statements, persisted
 source generations, drafts, revision/authority markers and an independent fan.
@@ -88,7 +93,7 @@ state, then the entire catalog. After restore it verifies private/public ACLs,
 foreign-owner and cross-fan denial, denied direct writes, protected source and
 marker updates, late/replayed generation rejection, later explicit replacement,
 4000 unchanged notes, Fan/Character/Workspace cascade and independent-fan survival.
-All 37 native mutations must execute successfully and then be rejected by the
+All 40 native mutations must execute successfully and then be rejected by the
 verifier; a syntax error cannot count as a successful rejection. Parent failure
 counts prevent a PASS diagnostic after any failed child test. Mutation and cascade
 probes roll back before checking that the restored data/catalog remain unchanged.

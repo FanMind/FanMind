@@ -20,8 +20,8 @@ export const PROFILE_PINS=Object.freeze({
  "scripts/operations/database-authorization-contract.mjs":"b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de",
 });
 // Fixed reviewed reference; never learn/approve a catalog from a checked target.
-const REFERENCE_SHA256="85cb0ddba33b69e8990e5c64ebddd2a3b5c300117be836dab9488529fa075e72";
-const CATALOG_SHA256="93591f3662f389f6984206cccb94be8d6d9cf04641fbaeab2a8ef2d834344644";
+const REFERENCE_SHA256="86a00c2039c841dbde3cd8d28f64a8bec1d8c889621b6e04e9ba6c2e234ed5ab";
+const CATALOG_SHA256="7db4480ceb0af094bc91ae8d910782321961b191293d767d6a9a565fa6792f0c";
 export function loadCurrentFactsProfile(read=path=>readFileSync(new URL(path,root))){
  for(const [path,sha] of Object.entries(PROFILE_PINS))if(hash(read(path))!==sha)throw new Error("current_facts_profile_source_checksum");
  const query=read("scripts/operations/chat-admin-current-facts-catalog.sql");

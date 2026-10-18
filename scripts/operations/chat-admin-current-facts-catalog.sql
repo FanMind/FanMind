@@ -32,7 +32,7 @@ reachable(roleid) as (
  union select case when m.member=r.roleid then m.roleid else m.member end from reachable r join pg_auth_members m on m.member=r.roleid or m.roleid=r.roleid
 ),
 records(record) as (
- select jsonb_build_object('kind','database','owner',pg_get_userbyid(d.datdba),'encoding',pg_encoding_to_char(d.encoding),'localeProvider',d.datlocprovider,'collate',d.datcollate,'ctype',d.datctype) from pg_database d where d.datname=current_database()
+ select jsonb_build_object('kind','database','owner',pg_get_userbyid(d.datdba),'encoding',pg_encoding_to_char(d.encoding),'localeProvider',d.datlocprovider,'collate',d.datcollate,'ctype',d.datctype,'locale',d.datlocale,'icuRules',d.daticurules,'collationVersion',d.datcollversion) from pg_database d where d.datname=current_database()
  union all
  select jsonb_build_object('kind','schemaPrivilege','schema',n.nspname,'role',r.rolname,'usage',has_schema_privilege(r.oid,n.oid,'USAGE'),'create',has_schema_privilege(r.oid,n.oid,'CREATE')) from pg_namespace n cross join pg_roles r where n.nspname in ('public','fanmind_chat_knowledge') and r.rolname in ('anon','authenticated','service_role')
  union all

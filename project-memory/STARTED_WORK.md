@@ -1375,4 +1375,4 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 ## FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
 - Explicit Owner bounded offline continuation on1345; coordination recorded in matching work lock. New strict profile and full synthetic dump/restore plus mutations, preserving all previous verifier source files and pinned SQL. Host/autogrant/real-backup blockers remain separate; no remote database connection authorized.
 
-- Offline handoff: OFFLINE_PROFILE_READY, native41/41 registered and Guardian42/42 with40 mutations PASS. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.
+- Offline handoff: OFFLINE_PROFILE_READY, native44/44 registered under canonical ICU and independent full recovery recorded in receipt. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.

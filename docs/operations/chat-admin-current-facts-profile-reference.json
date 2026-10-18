@@ -4395,11 +4395,14 @@
       },
       {
         "kind": "database",
-        "ctype": "en_US.utf8",
+        "ctype": "en_US.UTF-8",
         "owner": "postgres",
-        "collate": "en_US.utf8",
+        "locale": "en-US",
+        "collate": "en_US.UTF-8",
         "encoding": "UTF8",
-        "localeProvider": "c"
+        "icuRules": null,
+        "localeProvider": "i",
+        "collationVersion": "153.128"
       },
       {
         "kind": "dependentObject",
@@ -10983,11 +10986,14 @@
       },
       {
         "kind": "database",
-        "ctype": "en_US.utf8",
+        "ctype": "en_US.UTF-8",
         "owner": "postgres",
-        "collate": "en_US.utf8",
+        "locale": "en-US",
+        "collate": "en_US.UTF-8",
         "encoding": "UTF8",
-        "localeProvider": "c"
+        "icuRules": null,
+        "localeProvider": "i",
+        "collationVersion": "153.128"
       },
       {
         "kind": "dependentObject",

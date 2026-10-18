@@ -81,13 +81,13 @@ Required CI are bound in the existing PR description after publication.
 - Controlled SQL unchanged:
   `a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947`.
 - Read-only catalog SQL:
-  `93591f3662f389f6984206cccb94be8d6d9cf04641fbaeab2a8ef2d834344644`.
+  `7db4480ceb0af094bc91ae8d910782321961b191293d767d6a9a565fa6792f0c`.
 - Fixed golden JSON:
-  `85cb0ddba33b69e8990e5c64ebddd2a3b5c300117be836dab9488529fa075e72`.
+  `86a00c2039c841dbde3cd8d28f64a8bec1d8c889621b6e04e9ba6c2e234ed5ab`.
 - Verifier source:
-  `094adc5b462b4240adabea5e82ef23c25fa98cc6f66b4d527ea76b97c9d3b920`.
+  `050f87a28edc0f1948e563e605d6118c87b361a91c8afe954319dd2e0f8ab71f`.
 - Native/unit cases source:
-  `03220573f7ff9ca3c2e42766a453a015f75d24d90eeeefc2fec132995f67d4f0`.
+  `1841e8794d564179f99581b97c3cd73ceb6b2ea0bfab598b613d121af303e5dd`.
 
 The pure offline verifier pins four canonical parents, all four existing verifier
 modules, composed Base, existing backup authorization contract and original
@@ -101,6 +101,12 @@ operations profile for exact boundary and narrowly accepted PG17 CHECK rendering
 
 ### Executed native evidence
 
+Final run follows the existing unmodified FanMind PG17 ICU initialization exactly:
+`--encoding=UTF8 --locale-provider=icu --icu-locale=en-US --locale=en_US.UTF-8`.
+Pinned provider i, locale en-US, null custom ICU rules and collation version153.128;
+locale/rules/version mutation tests fail closed. Earlier successful libc-image
+default runs are superseded for architecture binding. No hosted locale was read.
+
 Pinned PostgreSQL17.11 image digest
 `e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449`.
 Two distinct fresh containers, network none, no published ports/host mounts;
@@ -112,17 +118,12 @@ current catalog passes. A second empty restore copy removes only known extension
 objects with RESTRICT and executes all four literal unchanged read-only original
 postflights, then matches baseline328. Actual restored extended state remains intact.
 
-- New standalone cases:39/39 PASS,0fail/0skip;37 native mutation cases.
-  Dump SHA256 `8d4f9b7916cf900e1748dd2f4d5f732f35c03b8c6f9b6e803f8c8f8557504e08`.
-- Existing registered suite, including both unchanged native tests:41/41 PASS,
-  0fail/0skip. Dump SHA256
-  `de52176347d708847f4c5b9b0490bcd8366c2ca0e51abb945eb9c437d674349c`.
-- Independent Guardian regenerated golden from canonical fixture+four parents+
-  pinned SQL in its own disposable PG17: exactly328/413, query/reference equal.
-  Own complete run42/42 PASS,0fail/0skip,40 native mutations (three additional
-  independent cases: Character RLS USINGtrue, public CREATE anon, neutral view/rule).
-  Independent dump SHA256
-  `9561b8bf2a87af36b5b40e4ecc3bde24dfb1f6c53defbaf6ff8db51c226180fd`.
+- Final registered native suite, including both unchanged native tests:44/44 PASS,
+  0fail/0skip;40 native mutations. Dump SHA256
+  `1bc7e11f93bdb6b6c69f2dbad0cf661c8326d3d0645461f6af45b40de767cb58`.
+- Independent final ICU review and archive digest are recorded in the closeout
+  below. Guardian regenerates the fixed reference separately and adds three own
+  Character RLS/public-CREATE/neutral-view-rule probes to the complete final source.
 
 Archive hashes differ between independently created synthetic databases/runs;
 each individual run verifies the exact bytes it restores. No hash is represented
@@ -133,7 +134,7 @@ owner/cross-Fan/direct write, private ACL/body identity, immutable source and ma
 late/replayed no-op, newer positive replacement, Fan/Character/Workspace cascades
 and unrelated Fan preservation. Constraint deferral is forced before cascade PASS.
 
-All37 native profile mutations are successful DDL followed by explicit verifier
+All40 native profile mutations are successful DDL followed by explicit verifier
 rejection and full rollback checks. They cover new/altered relations/columns,
 constraints, triggers, indexes, RLS, routines/signatures/bodies/owners/search_path,
 ACLs/grant options/column grants/defaults, schema/database ownership, role bypass
@@ -166,3 +167,18 @@ Local closeout checks: suite-registration1/1 and God-Mode unittest discovery123/
 PASS; Project Memory quality, Truth Drift, NBA manager/check, Memoryv8 and product/
 referral/legal/action-pin truth verification PASS. Expected negative God-Mode unit
 fixtures still print BLOCK; the global release decision was not changed.
+
+
+### Final canonical ICU independent closeout
+
+Independent Guardian final run45/45 PASS,0fail/0skip,43 native mutations (40final
+source plus3 own probes), full cross-container dump/restore, separate inverse copy
+and all4 original postflights, post-restore RPC/4000notes/replay/marker/cascades PASS.
+Independent archive SHA256
+`617d5dba925b5e6e64f92bdf6974d0abdb07c1f486dac718ea5453ee181afb7b`.
+Independent golden regeneration exactly328/413 under the canonical ICU arguments;
+query7db4480c/ref86a00c20/checker050f87a2/tests1841e879 match the full hashes above.
+No remaining concrete blocker in the bounded offline profile. Final exact-head CI
+must bind this ICU correction, not the preceding libc-only source commitf826a651.
+Work-lock released only for the existing DraftPR; no target lock or protected gate
+released. Status OFFLINE_PROFILE_READY; actual host/backup/install remains BLOCKED.

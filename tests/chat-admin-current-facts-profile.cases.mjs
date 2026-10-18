@@ -40,7 +40,7 @@ test("PG17 offline Current-Facts strict profile survives full dump/restore and r
   return docker(["exec","-i",container,"psql","-X","-qAt","-U","postgres","-d",db,"-v","ON_ERROR_STOP=1"],{input});
  };
  const start=async label=>{
-  const id=docker(["run","--pull=never","-d","--name",`fanmind-facts-${label}-${randomUUID()}`,"--network","none","-e","POSTGRES_HOST_AUTH_METHOD=trust",image]).trim();
+  const id=docker(["run","--pull=never","-d","--name",`fanmind-facts-${label}-${randomUUID()}`,"--network","none","-e","POSTGRES_HOST_AUTH_METHOD=trust","-e","POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale-provider=icu --icu-locale=en-US --locale=en_US.UTF-8",image]).trim();
   containers.push(id);
   const state=JSON.parse(docker(["inspect",id]))[0];
   assert.equal(state.HostConfig.NetworkMode,"none");assert.ok(state.Mounts.every(m=>m.Type==="volume"&&m.Destination==="/var/lib/postgresql/data"&&m.RW===true),"only disposable image PGDATA volumes, no host mounts");assert.ok(!state.HostConfig.PortBindings||Object.keys(state.HostConfig.PortBindings).length===0);
@@ -142,6 +142,9 @@ test("PG17 offline Current-Facts strict profile survives full dump/restore and r
    ["column ACL","grant select(quote) on public.chat_character_current_facts to anon"],
    ["public schema create ACL","grant create on schema public to authenticated"],
    ["database owner",`alter database ${targetDb} owner to authenticated`],
+   ["ICU locale","update pg_catalog.pg_database set datlocale='de-DE' where datname=current_database()"],
+   ["ICU rules","update pg_catalog.pg_database set daticurules='&a<b' where datname=current_database()"],
+   ["ICU collation version","update pg_catalog.pg_database set datcollversion='unexpected' where datname=current_database()"],
    ["schema create ACL","grant create on schema fanmind_chat_knowledge to authenticated"],
    ["schema owner","alter schema fanmind_chat_knowledge owner to authenticated"],
    ["function owner","alter function fanmind_chat_knowledge.guard_source() owner to authenticated"],
