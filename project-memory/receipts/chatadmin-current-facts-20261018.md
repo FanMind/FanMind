@@ -63,3 +63,106 @@ Fresh tests actually run for this continuation: Knowledge+actual API integration
 Terminal state BLOCKED for installation preparation, not INSTALL_PREPARED. Owner instruction says stop if prerequisites cannot be verified; therefore no new install architecture, no profile weakening, target mutation or substitute protected task is attempted. The bounded task stops with evidence/Runbook/Project Memory reconciliation.
 
 Next: first obtain/read existing protected host evidence for exact release, preview/autogrant exclusion and isolation, coordinate locks, then complete separately reviewed exact extension/backup/restore admission preparation. Current Owner task already authorizes suitable read-only inspection; technical access/evidence is missing, not an inferred need to reauthorize the same SELECTs. Only after all prerequisites and exact-main/source/target binding are green would a fresh explicit one-time Staging-only install authorization be appropriate, with protected environment approval, immediate exclusion recheck, verified backup and independent pre/postflight. That later authorization must exclude activation/provider/Production writes; changing a flag/capability or restoring data needs its own exact protected scope. No such authorization is requested or implied now.
+
+## Offline profile and synthetic full recovery — 2026-10-18
+
+Task FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018; R3. Status
+OFFLINE_PROFILE_READY; real installation and activation remain BLOCKED.
+Existing Draft1345 only, continuation parent3471b1d6e80fc38679e0914d572a9de6976f417a;
+mainf36e630c73d3820a61aef593a705d241600e7f47. Preflight re-read GitHub head,
+AGENTS, Execution Policy v6, Project Memory and all locks. No competing source
+writer in new Current-Facts files; same-holder continuation and independent
+Guardian established narrow boundary before writing. Retained Harness/Live-Repair
+locks and protected old source remain unchanged. Final immutable commit and
+Required CI are bound in the existing PR description after publication.
+
+### Source/checksum contract
+
+- Controlled SQL unchanged:
+  `a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947`.
+- Read-only catalog SQL:
+  `93591f3662f389f6984206cccb94be8d6d9cf04641fbaeab2a8ef2d834344644`.
+- Fixed golden JSON:
+  `85cb0ddba33b69e8990e5c64ebddd2a3b5c300117be836dab9488529fa075e72`.
+- Verifier source:
+  `094adc5b462b4240adabea5e82ef23c25fa98cc6f66b4d527ea76b97c9d3b920`.
+- Native/unit cases source:
+  `03220573f7ff9ca3c2e42766a453a015f75d24d90eeeefc2fec132995f67d4f0`.
+
+The pure offline verifier pins four canonical parents, all four existing verifier
+modules, composed Base, existing backup authorization contract and original
+synthetic fixture. All these files remain byte-identical. Static import in the
+already registered PG17 suite owns new cases; package/workflows are unchanged.
+Fixed baseline328 and current413 records include every canonical parent/new scoped
+object, complete definitions and ACLs, private topology and database/schema/role
+privilege facts. Unknown scoped additions and changed properties fail closed.
+No actual-target catalog becomes its own expected reference. See the dedicated
+operations profile for exact boundary and narrowly accepted PG17 CHECK rendering.
+
+### Executed native evidence
+
+Pinned PostgreSQL17.11 image digest
+`e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449`.
+Two distinct fresh containers, network none, no published ports/host mounts;
+anonymous PGDATA volumes removed with containers. Synthetic fixture only.
+Full custom pg_dump, unfiltered owner/ACL/schema/data, same archive restored by
+pg_restore exit-on-error/single-transaction into an empty different container.
+Restored complete rows and sequence state compare exactly to source; strict
+current catalog passes. A second empty restore copy removes only known extension
+objects with RESTRICT and executes all four literal unchanged read-only original
+postflights, then matches baseline328. Actual restored extended state remains intact.
+
+- New standalone cases:39/39 PASS,0fail/0skip;37 native mutation cases.
+  Dump SHA256 `8d4f9b7916cf900e1748dd2f4d5f732f35c03b8c6f9b6e803f8c8f8557504e08`.
+- Existing registered suite, including both unchanged native tests:41/41 PASS,
+  0fail/0skip. Dump SHA256
+  `de52176347d708847f4c5b9b0490bcd8366c2ca0e51abb945eb9c437d674349c`.
+- Independent Guardian regenerated golden from canonical fixture+four parents+
+  pinned SQL in its own disposable PG17: exactly328/413, query/reference equal.
+  Own complete run42/42 PASS,0fail/0skip,40 native mutations (three additional
+  independent cases: Character RLS USINGtrue, public CREATE anon, neutral view/rule).
+  Independent dump SHA256
+  `9561b8bf2a87af36b5b40e4ecc3bde24dfb1f6c53defbaf6ff8db51c226180fd`.
+
+Archive hashes differ between independently created synthetic databases/runs;
+each individual run verifies the exact bytes it restores. No hash is represented
+as a real Staging backup artifact. Temporary archives stay in process memory.
+Post-restore behavior proves negative music replaces positive beside4000unchanged
+manual notes, old source persists, authority/revision state persists, denied foreign
+owner/cross-Fan/direct write, private ACL/body identity, immutable source and marker,
+late/replayed no-op, newer positive replacement, Fan/Character/Workspace cascades
+and unrelated Fan preservation. Constraint deferral is forced before cascade PASS.
+
+All37 native profile mutations are successful DDL followed by explicit verifier
+rejection and full rollback checks. They cover new/altered relations/columns,
+constraints, triggers, indexes, RLS, routines/signatures/bodies/owners/search_path,
+ACLs/grant options/column grants/defaults, schema/database ownership, role bypass
+and transitive membership, neutral disclosures, CHECK changes and sequence drift.
+Unit mutations additionally reject changed source/query/reference checksums,
+missing/extra catalog entries, wrong PG major and caller-supplied fake reference.
+Independent native findings were reproduced RED and corrected: neutral views,
+incoming role grants, public CREATE/DBowner and singular-prefix Character omission.
+No syntax error or child-test failure is accepted as successful mutation rejection.
+
+### Honest remaining boundary
+
+No Staging/Production connection in this continuation; no target SQL apply, real
+fan rows, real capability/flag writes, deploy, merge, workflow dispatch or provider
+call. Capability fixture writes exist solely in synthetic throwaway databases.
+This profile proves a logical offline contract, not entire hosted role topology or
+unrelated dynamic SQL. Existing backup-worker implementation is unchanged.
+
+Still required before any later protected installation: current deployed host/
+release and sustained preview/autogrant/capability exclusion; exact hosted role/
+owner/default acceptance; applicable retained lock coordination; protected install
+and installed worker/private-function authorization integration; actual current
+backup artifact provenance/retention and independent full recovery evidence for
+that actual backup. Historical target observations above were not refreshed here.
+No claim that actual Staging backups or running host configuration were tested.
+Global release BLOCK and FM-DEC-031 remain unchanged. Recovery here is source
+revert and removal of owned disposable containers only.
+
+Local closeout checks: suite-registration1/1 and God-Mode unittest discovery123/123
+PASS; Project Memory quality, Truth Drift, NBA manager/check, Memoryv8 and product/
+referral/legal/action-pin truth verification PASS. Expected negative God-Mode unit
+fixtures still print BLOCK; the global release decision was not changed.

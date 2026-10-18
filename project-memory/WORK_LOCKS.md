@@ -1377,3 +1377,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - No target SQL apply, temporary DB fixtures, runtime/flag/capability write, model/provider call, workflow dispatch, merge or deploy. Disposable local PG17 synthetic testing only. Unknown prerequisites mean BLOCKED; recovery here is source revert only.
 
 - Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 offline only.
+- Owner explicitly requests strict checksum-bound profile and synthetic disposable PG17 dump/restore on existing1345 only. Baseline3471b1d6e80fc38679e0914d572a9de6976f417a; SQL a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947 unchanged.
+- Coordination before writes: Current-Facts holder is this Codex continuation; separate Guardian confirms no concrete overlap for new scripts/operations/chat-admin-current-facts-* artifacts, profile reference, separate cases/fixture and one static cases import in our existing current-facts PG17 suite. Existing Harness/LIVE-REPAIR source holders remain Codex; their reserved files/contracts/runtime are excluded and not edited. Existing Base/Fan/Offers/Tier/Harness/Backup-Contract/SQL/package/workflow files remain byte-identical. No old lock released or protected permission reused.
+- Offline catalog/reference verification and isolated full dump/restore only. No Staging/Production connection, target SQL APPLY, deployment, merge, workflow dispatch, capability/flag write or real Fan data. New profile does not attest real host/backup state. Recovery: source revert and remove disposable synthetic test containers. Independent adversarial review and exact-head CI required.
+
+- Handoff: OFFLINE_PROFILE_READY; registered native41/41 and independent42/42 with40 mutations plus independent golden regeneration PASS. Existing target locks untouched; exact final CI/commit binding remains on existing Draft1345. No live installation permission.

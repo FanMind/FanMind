@@ -1370,3 +1370,9 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Owner requests preparation only, no install or activation. Fresh main/1342–1345 unchanged; final1345 source checksum and14 terminal success records confirmed. Read-only Staging identity/catalog/count assessment plus isolated tests and independent review; exact prerequisites may block installation preparation.
 
 - Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Explicit Owner bounded offline continuation on1345; coordination recorded in matching work lock. New strict profile and full synthetic dump/restore plus mutations, preserving all previous verifier source files and pinned SQL. Host/autogrant/real-backup blockers remain separate; no remote database connection authorized.
+
+- Offline handoff: OFFLINE_PROFILE_READY, native41/41 registered and Guardian42/42 with40 mutations PASS. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.

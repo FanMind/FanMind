@@ -155,3 +155,15 @@ changed, installed or activated. Existing isolated native behavior tests are gre
 they do not close the absent installation/backup/runtime proofs. Old-binary rollback
 still requires capability/autogrant exclusion first and preservation of new facts.
 See the dated install-preparation continuation in the existing source receipt.
+
+## Offline prerequisite continuation — 2026-10-18
+
+The offline profile and complete synthetic PG17 dump/restore are now documented
+in [the checksum-bound offline profile](CHAT_ADMIN_CURRENT_FACTS_OFFLINE_PROFILE.md).
+They close the source-only catalog/private-topology and synthetic-recovery evidence
+gaps above. All four previous postflights remain unchanged; canonical SQL still
+has SHA256 a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947.
+OFFLINE_PROFILE_READY does not change the BLOCKED installation/activation status:
+real host/autogrant exclusion, hosted ownership/roles, installed backup worker,
+actual backup artifacts/recovery and retained target-lock reconciliation remain
+unverified. No remote database connection occurred during this continuation.

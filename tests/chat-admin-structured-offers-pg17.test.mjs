@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import "./chat-admin-current-facts-profile.cases.mjs";
 import { execFileSync, spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
