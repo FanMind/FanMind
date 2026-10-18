@@ -1361,3 +1361,11 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Existing PR #1342 / branch fix/chatadmin-interest-revocation-20261018; live baseline cb01c2ee8923b94829a010baf5448625bd8b9899, main f36e630c73d3820a61aef593a705d241600e7f47. Separate1341 is diagnostic only; no duplicate source writer found. Retained target locks are unexecuted.
 - Scope: existing v1 interest path, deterministic and synthetic actual-route regressions, directly related docs/memory. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-STORAGE-001. Existing notes/revision/auth/tenant/manual-send and8/4000 limits remain.
 - Recovery: reviewed source revert; no external data, SQL, provider, workflow, merge or deploy action. Separate Guardian and final exact-head CI required. Global BLOCK and FM-DEC-031 deferrals retained.
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-20261018; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 source-only.
+- Owner request: independent PR1345 helper review, then additive durable current facts independent of manual4000 notes. Existing1345branch only; headff38d5e93e781ad144aca039dcb5c43c25bb7503, stacked1344->1343->1342, mainf36e630c73d3820a61aef593a705d241600e7f47. Tree/blob identities verified; source no competing reservation; historical protected target locks unexecuted.
+- Missing tail of Owner message: Owner says derive from existing tests; use1343product contract+1344storage design and existing schema as scope. No real DB apply, runtime activation, merge/deploy/provider or other deferred actions.
+- FM-CONTRACT-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-AI-001/STORAGE-001; disclosure/delete consumers must follow same scoped rows. Recovery source revert only. Independent Guardian mandatory; no JavaScript-only DB-security claim.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.

@@ -1359,3 +1359,9 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - No external/runtime/model-quality acceptance or activation; reviewed revert is recovery.
 
 - Source handoff:306/306 focused, independent204/204 +7/7 own probes and killed in-memory sequence mutation. Lock released for existing Draft PARTIAL handoff. Storage-overflow stale-positive and max3/8 limitations remain; final exact-head CI tracked in PR1342. No protected action.
+
+## FM-CHATADMIN-CURRENT-FACTS-20261018
+- Explicit Owner durable-storage task on existing1345branch. Canonical main and allfourPRheads unchanged as freshly read; stacked dependencies preserved. Preflight baseline167/167 Knowledge+API testsPASS.
+- Independent Helper review finds duplicate-topic replay, missing full-source ordinal/tenantbinding and incompletecurrent validation; tests first. Additive storage requires nativePG17,RLS/grants,atomic provenance/order and fan cascade/export. No live target authorization.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.

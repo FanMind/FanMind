@@ -1,10 +1,11 @@
+import type { CurrentInterest } from "@/lib/chatAdminCurrentFactsPolicy.mjs";
 import { cookies } from "next/headers";
 import { getSupabaseHeaders, getSupabaseRestUrl, SUPABASE_ACCESS_TOKEN_COOKIE } from "@/lib/supabase/config";
 import { requireActiveAuthorizedWorkspace, WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
 import type { CreatorPlaybook } from "@/lib/creatorIntelligencePolicy.mjs";
 
 export type ChatCharacter = { id:string; workspace_id:string; display_name:string; profile_image_path:string|null; public_age:number; bio:string; location:string|null; languages:string[]; personality:string; writing_style:string; emoji_style:string; sentence_style:string; typical_phrases:string[]; forbidden_phrases:string[]; flirt_style:string; sales_rules:string; sales_playbook?:CreatorPlaybook; example_messages:string[]; status:"active"|"inactive"; revision:number; created_at:string; updated_at:string };
-export type ChatCharacterFan = { id:string; workspace_id:string; character_id:string; display_name:string; handle:string|null; platform:string; language:string|null; status:"active"|"inactive"; customer_tier:"red"|"blue"|"yellow"|"green"; summary:string; notes:string; revision:number; created_at:string; updated_at:string };
+export type ChatCharacterFan = { current_facts_version?:0|1; current_facts?:CurrentInterest[]; id:string; workspace_id:string; character_id:string; display_name:string; handle:string|null; platform:string; language:string|null; status:"active"|"inactive"; customer_tier:"red"|"blue"|"yellow"|"green"; summary:string; notes:string; revision:number; created_at:string; updated_at:string };
 export type ChatCharacterConversation = { id:string; workspace_id:string; character_id:string; fan_id:string; fan_reference:string; created_at:string; updated_at:string };
 export type ChatCharacterMessage = { id:string; workspace_id:string; character_id:string; fan_id:string; conversation_id:string; generation_id:string|null; direction:"fan_inbound"|"suggested_reply"|"confirmed_reply"; content:string; character_revision:number; sequence:number; created_at:string };
 
@@ -78,7 +79,12 @@ export async function updateChatCharacter(workspaceId:string,id:string,revision:
 export async function deleteChatCharacter(workspaceId:string,id:string,revision:number) { const rows=await rest<Array<{id:string}>>(`chat_characters?workspace_id=eq.${encodeURIComponent(workspaceId)}&id=eq.${encodeURIComponent(id)}&revision=eq.${revision}`,{method:"DELETE",headers:{Prefer:"return=representation"}}); if(rows.length!==1) throw new WorkspaceAuthorizationError("Character nicht freigegeben.","resource_forbidden"); }
 export type ChatCharacterFanListItem = Pick<ChatCharacterFan,"id"|"character_id"|"display_name"|"handle"|"platform"|"status"|"customer_tier"|"revision">;
 export async function listChatFans(workspaceId:string,characterId:string,offset:number,limit:number) { return rest<ChatCharacterFanListItem[]>(`chat_character_fans?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&select=id,character_id,display_name,handle,platform,status,customer_tier,revision&order=display_name.asc,id.asc&offset=${offset}&limit=${limit}`); }
-export async function getChatFan(workspaceId:string,characterId:string,fanId:string) { const rows=await rest<ChatCharacterFan[]>(`chat_character_fans?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&id=eq.${encodeURIComponent(fanId)}&select=*&limit=2`); if(rows.length!==1) throw new WorkspaceAuthorizationError("Fan nicht freigegeben.","resource_forbidden"); return rows[0]; }
+export async function getChatFan(workspaceId:string,characterId:string,fanId:string) { const rows=await rest<ChatCharacterFan[]>(`chat_character_fans?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&id=eq.${encodeURIComponent(fanId)}&select=*&limit=2`); if(rows.length!==1) throw new WorkspaceAuthorizationError("Fan nicht freigegeben.","resource_forbidden");
+ if(rows[0].current_facts_version===1 && !isChatAdminCurrentFactsEnabled())throw new Error("current_facts_cutover_required");
+ if(isChatAdminCurrentFactsEnabled()) {
+  rows[0].current_facts=await rest<CurrentInterest[]>(`chat_character_current_facts?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&fan_id=eq.${encodeURIComponent(fanId)}&select=*&order=topic.asc&limit=9`);
+ }
+ return rows[0]; }
 export async function createChatFan(workspaceId:string,characterId:string,creationId:string,data:Record<string,unknown>) { await getChatCharacter(workspaceId,characterId); const rows=await rest<ChatCharacterFan[]>("rpc/create_chat_admin_fan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target_workspace_id:workspaceId,target_character_id:characterId,target_creation_id:creationId,fan_data:data})}); if(rows.length!==1)throw new Error("fan_create_failed"); return rows[0]; }
 export async function updateChatFan(workspaceId:string,characterId:string,fanId:string,revision:number,data:Record<string,unknown>) { const rows=await rest<ChatCharacterFan[]>(`chat_character_fans?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&id=eq.${encodeURIComponent(fanId)}&revision=eq.${revision}`,{method:"PATCH",headers:{"Content-Type":"application/json",Prefer:"return=representation"},body:JSON.stringify({...data,revision:revision+1,updated_at:new Date().toISOString()})}); if(rows.length!==1)throw new WorkspaceAuthorizationError("Fan-Revision ungültig.","resource_forbidden"); return rows[0]; }
 export async function deleteChatFan(workspaceId:string,characterId:string,fanId:string,revision:number) { const rows=await rest<Array<{id:string}>>(`chat_character_fans?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&id=eq.${encodeURIComponent(fanId)}&revision=eq.${revision}`,{method:"DELETE",headers:{Prefer:"return=representation"}}); if(rows.length!==1)throw new WorkspaceAuthorizationError("Fan nicht freigegeben.","resource_forbidden"); }
@@ -94,4 +100,13 @@ export async function getLatestChatAdminConfirmedReply(workspaceId:string,charac
  const rows=await rest<ChatCharacterMessage[]>(`chat_character_messages?workspace_id=eq.${encodeURIComponent(workspaceId)}&character_id=eq.${encodeURIComponent(characterId)}&fan_id=eq.${encodeURIComponent(fanId)}&conversation_id=eq.${encodeURIComponent(conversationId)}&direction=eq.confirmed_reply&select=*&order=sequence.desc&limit=1`);
  if(rows.length>1||rows.some(row=>row.workspace_id!==workspaceId||row.character_id!==characterId||row.fan_id!==fanId||row.conversation_id!==conversationId||row.direction!=="confirmed_reply"))throw new WorkspaceAuthorizationError("Antwortkontext nicht freigegeben.","resource_forbidden");
  return rows[0]??null;
+}
+
+// Default off: installing this source never installs SQL or activates a reader.
+export function isChatAdminCurrentFactsEnabled(){return process.env.FANMIND_CHAT_ADMIN_CURRENT_FACTS_ENABLED==="true";}
+export async function applyChatAdminCurrentInterests(workspaceId:string,characterId:string,fanId:string,conversationId:string,characterRevision:number,fanRevision:number,generationId:string){
+ if(!isChatAdminCurrentFactsEnabled())throw new Error("current_facts_disabled");
+ const result=await rest<boolean>("rpc/apply_chat_admin_current_interests",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target_workspace_id:workspaceId,target_character_id:characterId,target_fan_id:fanId,target_conversation_id:conversationId,target_character_revision:characterRevision,target_fan_revision:fanRevision,target_generation_id:generationId})});
+ if(typeof result!=="boolean")throw new Error("current_facts_result_invalid");
+ return result;
 }

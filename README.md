@@ -1,5 +1,17 @@
 # FanMind
 
+ChatAdmin aktuelles Fanwissen (18.10.2026, vorbereitete Source-Erweiterung): Ein
+separater, standardmäßig deaktivierter Speicher hält je Fan/Thema genau eine
+aktuelle, wörtlich belegte Interessenaussage. Native isolierte PostgreSQL-17-Tests
+belegen Ersetzung neben unveränderten 4.000 Zeichen manueller Notizen, Quellen- und
+Revisionsbindung sowie Race-/Replay-Schutz. Bestehende unabhängige Legacy-Themen
+bleiben im Reader ausdrücklich als Legacy-Provenienz erhalten; neuere Themenzeilen
+ersetzen nur ihr Thema. Keine automatische Konvertierung alter Quellen.
+Kontrolliertes SQL ist nicht auf Staging/Production installiert. Aktivierung,
+Legacy-/Rollback-Freigabe und reale Ziel-/Modellabnahme bleiben getrennt offen.
+Details: docs/operations/CHAT_ADMIN_CURRENT_FACTS.md.
+
+
 ChatAdmin-Interessenwiderruf (18.10.2026, Draft/PARTIAL): Explizite deutsche/englische
 Widerrufe werden im vorhandenen v1-Fanwissen quellengeordnet gespeichert und nach
 History-Kürzung an den Modellkontext übergeben. Ältere Interessen-Generationen werden

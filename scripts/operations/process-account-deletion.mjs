@@ -472,6 +472,7 @@ const WORKSPACE_DELETION_TABLES = [
   "workspace_chat_admin_capabilities",
   "chat_characters",
   "chat_character_fans",
+  "chat_character_current_facts",
   "chat_character_conversations",
   "chat_character_messages",
 ];
@@ -486,6 +487,7 @@ const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
   "workspace_chat_admin_capabilities",
   "chat_characters",
   "chat_character_fans",
+  "chat_character_current_facts",
   "chat_character_conversations",
   "chat_character_messages",
 ]);

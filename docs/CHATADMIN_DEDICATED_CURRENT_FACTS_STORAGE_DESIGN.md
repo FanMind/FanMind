@@ -83,3 +83,15 @@ Required: targeted RED then GREEN locally, native PG17 policy/privilege roundtri
 - Recovery for this source-only document is deletion/revert of this file; no external target changes have been made.
 
 **Current output:** reviewable proposed design only. No migrations, SQL execution, code changes, new provider calls, live model tests, Staging/Production access or acceptance claims.
+
+
+## Implementation continuation — 2026-10-18, same PR1345 branch
+The design-only status above records the original1344 artifact. Owner continuation
+now implements a source-only additive current-interest relation, private checked
+writer/public invoker RPC, full composite saved-message identity, immutable source,
+per-topic order and same-source statement ordinal. The SQL is a controlled artifact,
+not a generic migration, and remains unapplied outside disposable local/CI PG17.
+Native tests execute the actual reviewed parent SQL and new SQL; no JavaScript-only
+security claim. Operational install, old strict parent-verifier extension profiles,
+backup/restore topology reconciliation, protected activation and old-binary rollback
+remain explicit admission gates in operations/CHAT_ADMIN_CURRENT_FACTS.md.

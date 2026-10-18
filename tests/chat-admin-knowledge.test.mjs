@@ -1,4 +1,4 @@
-import { applyCurrentInterestAssertion } from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
+import { applyCurrentInterestAssertion as applyBoundCurrentInterestAssertion } from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { extractChatAdminFacts, readChatAdminKnowledge, writeChatAdminKnowledge, learnChatAdminKnowledge, deriveChatAdminStrategy } from "../src/lib/chatAdminKnowledge.mjs";
@@ -412,9 +412,11 @@ test("independent delayed interests are conservatively declined after newer reta
 });
 
 // Offline storage projection contract; not wired to production.
+const currentBinding={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+const applyCurrentInterestAssertion=(current,proposed,saved,binding=currentBinding)=>applyBoundCurrentInterestAssertion(current,proposed,saved,binding);
 {
-const source=(id,sequence,content,direction="fan_inbound")=>({id,sequence,content,direction});
-const claim=(quote,src,topic="music")=>({topic,quote,source_message_id:src.id,source_sequence:src.sequence});
+const source=(id,sequence,content,direction="fan_inbound")=>({...currentBinding,id,generation_id:`generation-${id}`,sequence,content,direction});
+const claim=(quote,src,topic="music")=>({...currentBinding,topic,quote,source_message_id:src.id,source_sequence:src.sequence,source_statement_index:src.content.split(/(?<=[.!?])\s+|\n/u).map(s=>s.trim()).filter(Boolean).indexOf(quote)});
 
 test("newer explicitly sourced withdrawal replaces one current topic, not appends",()=>{
  const old=source("older",10,"Ich liebe Musik.");
@@ -473,7 +475,7 @@ test("a current fact without valid order cannot be silently superseded",()=>{
 
 test("input current-facts collection stays untouched; only bounded topics and immutable original claims",()=>{
  const event=source("new",100,"I do not like music anymore.");
- const old=Object.freeze([{topic:"cats",quote:"Ich liebe Katzen.",polarity:"positive",source_message_id:"cat",source_sequence:4}]);
+ const old=Object.freeze([{...currentBinding,source_statement_index:0,topic:"cats",quote:"Ich liebe Katzen.",polarity:"positive",source_message_id:"cat",source_sequence:4}]);
  const newFacts=applyCurrentInterestAssertion(old,claim(event.content,event),event);
  assert.equal(old.length,1);
  assert.equal(newFacts.length,2);
@@ -514,4 +516,11 @@ test("offline current facts refuse quoted and hypothetical multi-line assertions
  const tuple={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
  const src={...tuple,id:"new",generation_id:"generation",direction:"fan_inbound",sequence:20,content};
  assert.throws(()=>applyCurrentInterestAssertion([],{...tuple,topic:"music",quote:"Ich mag Musik nicht mehr.",source_message_id:"new",source_sequence:20,source_statement_index:1},src,tuple),/invalid_interest_claim/u);
+});
+
+test("dedicated current-facts SQL remains checksum-bound, default-off and unapplied", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const result = spawnSync(process.execPath, ["scripts/operations/chat-admin-current-facts-check.mjs"], { cwd: new URL("..", import.meta.url), encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "CHAT_ADMIN_CURRENT_FACTS_CHECK=verified_unapplied");
 });
