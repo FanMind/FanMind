@@ -6,14 +6,14 @@ const KINDS = ["communication", "interest", "boundary"];
 // Free-form personal/sensitive conclusions remain outside automatic learning.
 const SUPPORTED = {
  communication: /^(?:(?:ich (?:mag|bevorzuge)|bitte (?:schreibe|schreib)) (?:(?:kurze|lange|direkte|lockere|freundliche) (?:antworten|nachrichten))(?: (?:ohne|mit) emojis)?|(?:bitte )?(?:keine|ohne|mit) emojis|(?:with|without) emojis|i prefer (?:short|long|direct|casual|friendly) (?:replies|messages)(?: (?:with|without) emojis)?)[.!]?$/iu,
- interest: /^(?:ich (?:mag|liebe|bevorzuge)|i (?:like|love|prefer)) (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music)(?: (?:und|and) (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music))*[.!]?$/iu,
+ interest: /^(?:ich (?:mag|liebe|bevorzuge)|i (?:like|love|prefer)) (?:fotos|videos|katzen|hunde|sport|sports|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music)(?: (?:und|and) (?:fotos|videos|katzen|hunde|sport|sports|reisen|kochen|musik|photos|cats|dogs|travel|cooking|music))*[.!]?$/iu,
  boundary: /^(?:(?:bitte keine|ich (?:will|möchte) keine) (?:angebote|verkaufsgespräche|nachfragen|emojis)|(?:please no|i do not want) (?:offers|sales|questions|emojis))[.!]?$/iu,
 };
 
 // Explicit withdrawals use the same sourced interest fact slot. A negative
 // quote is retained verbatim so an old positive generation cannot resurrect it
 // after the dialogue window is truncated. No generic/ambiguous revocations.
-const INTEREST_REVOCATION = /^(?:ich mag (?:keine (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) mehr|(?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) nicht mehr)|i (?:don't like (?:photos|videos|cats|dogs|sports|travel|cooking|music) anymore|no longer like (?:photos|videos|cats|dogs|sports|travel|cooking|music)))[.!]?$/iu;
+const INTEREST_REVOCATION = /^(?:ich (?:mag|liebe|bevorzuge) (?:keine (?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) mehr|(?:fotos|videos|katzen|hunde|sport|reisen|kochen|musik) nicht mehr)|i (?:(?:do not|don['’]t) like (?:photos|videos|cats|dogs|sport|sports|travel|cooking|music) anymore|no longer like (?:photos|videos|cats|dogs|sport|sports|travel|cooking|music)))[.!]?$/iu;
 const INTEREST_TOKENS = /\b(?:fotos|photos|videos|katzen|cats|hunde|dogs|sport|sports|reisen|travel|kochen|cooking|musik|music)\b/giu;
 const INTEREST_NAMES = { fotos:"photos", photos:"photos", videos:"videos", katzen:"cats", cats:"cats", hunde:"dogs", dogs:"dogs", sport:"sports", sports:"sports", reisen:"travel", travel:"travel", kochen:"cooking", cooking:"cooking", musik:"music", music:"music" };
 function interestTopics(quote) {
@@ -33,11 +33,18 @@ function communicationParts(quote) {
 
 export function extractChatAdminFacts(content, source) {
  if (typeof content !== "string") return [];
- return content.split(/(?<=[.!?])\s+|\n/u).flatMap(sentence => {
+ const facts = content.split(/(?<=[.!?])\s+|\n/u).flatMap(sentence => {
    const quote = sentence.trim();
    const kind = INTEREST_REVOCATION.test(quote) ? "interest" : KINDS.find(key => SUPPORTED[key].test(quote));
    return kind ? [{kind,quote,source}] : [];
- }).slice(0,3);
+ });
+ // Preserve source order while reserving the bounded proposal slots for
+ // explicit withdrawals before unrelated positive statements.
+ const protective = facts.filter(fact => fact.kind === "boundary").slice(0,3);
+ const withdrawals = facts.filter(fact => INTEREST_REVOCATION.test(fact.quote)).slice(0,3-protective.length);
+ const priority = [...protective,...withdrawals];
+ const selected = new Set([...priority, ...facts.filter(fact => !priority.includes(fact)).slice(0,3-priority.length)]);
+ return facts.filter(fact => selected.has(fact));
 }
 
 // Reuse the existing Fan notes row, its RLS, export and deletion lifecycle.
@@ -75,22 +82,35 @@ export function writeChatAdminKnowledge({ manual = "", facts = [], commercial = 
 export function learnChatAdminKnowledge(notes, proposed, sources) {
   if (!Array.isArray(proposed) || proposed.length > 3) return notes;
   const knowledge = readChatAdminKnowledge(notes);
-  for (const fact of [...proposed].sort((a,b) => sources.findIndex(row => row.id === a?.source) - sources.findIndex(row => row.id === b?.source))) {
+  if (!Array.isArray(sources)) return notes;
+  // A source can contain successive corrections to one interest. Keep only
+  // its last literal statement per overlapping topic, so retries stay stable.
+  const candidates = proposed.filter((fact,index) => fact?.kind !== "interest" || typeof fact.quote !== "string" || !proposed.slice(index+1).some(later => later?.kind === "interest" && later.source === fact.source && typeof later.quote === "string" && [...interestTopics(later.quote)].some(topic => interestTopics(fact.quote).has(topic))));
+  const sequence = fact => sources.find(row => row.id === fact?.source)?.sequence;
+  const cutoff = Math.max(0,...knowledge.facts.map(fact => Number.isSafeInteger(fact.source_sequence) ? fact.source_sequence : 0));
+  let withdrawalChanged = false;
+  for (const fact of [...candidates].sort((a,b) => (sequence(a)??0) - (sequence(b)??0))) {
     const source = sources.find(row => row.id === fact?.source && row.direction === "fan_inbound");
     if (!source || !KINDS.includes(fact.kind) || typeof fact.quote !== "string") continue;
     const quote = fact.quote.trim();
     const order=Number.isSafeInteger(source.sequence)?source.sequence:0;
     const withdrawn = fact.kind === "interest" && INTEREST_REVOCATION.test(quote);
-    if (!quote || quote.length > 240 || !source.content.includes(quote) || !(SUPPORTED[fact.kind].test(quote) || withdrawn)) continue;
+    if (!quote || quote.length > 240 || typeof source.content !== "string" || !source.content.includes(quote) || !(SUPPORTED[fact.kind].test(quote) || withdrawn)) continue;
     // A withdrawal must be ordered against the original confirmed source.
     if (withdrawn && (!Number.isSafeInteger(source.sequence) || source.sequence <= 0)) continue;
     if (fact.kind === "interest") {
+      // Once a topic is evicted, its previous value is unknown. Conservatively
+      // decline all older interest generations using the existing facts' order;
+      // this may also decline an unrelated delayed positive, never invent one.
+      if (order < cutoff) continue;
+      if (!extractChatAdminFacts(source.content,source.id).some(candidate => candidate.kind === "interest" && candidate.quote === quote)) continue;
       const topics = interestTopics(quote);
       const overlapping = knowledge.facts.filter(old => old.kind === "interest" && [...interestTopics(old.quote)].some(topic => topics.has(topic)));
       if (overlapping.some(old => (old.source_sequence ?? 0) >= order)) continue;
       // Compound old positives are removed as a whole rather than rewriting
       // a statement the fan never made. Other independent facts survive.
       knowledge.facts = knowledge.facts.filter(old => !overlapping.includes(old));
+      if (withdrawn) withdrawalChanged = true;
     }
     if(fact.kind==="communication" && knowledge.facts.some(old=>old.kind==="communication" && (old.source_sequence??0)>order))continue;
     // Newer communication replaces only overlapping dimensions. Opaque legacy
@@ -115,7 +135,12 @@ export function learnChatAdminKnowledge(notes, proposed, sources) {
       knowledge.facts=[...retained,...(slots>0?other.slice(-slots):[])];
     }
   }
-  try { return writeChatAdminKnowledge(knowledge); } catch { return notes; }
+  try { return writeChatAdminKnowledge(knowledge); } catch (error) {
+    // A failed withdrawal must never masquerade as a successful no-op.
+    // Preserve manual notes; the route reports the recoverable storage limit.
+    if (withdrawalChanged) throw error;
+    return notes;
+  }
 }
 
 export function deriveChatAdminStrategy(playbook, fan, requestedOffer, now = Date.now()) {

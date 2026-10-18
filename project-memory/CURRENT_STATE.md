@@ -1,3 +1,9 @@
+## Explicit interest withdrawal — PR1342 PARTIAL — 2026-10-18
+- Existing branch only; baseline cb01c2ee8923b94829a010baf5448625bd8b9899, current GitHub main f36e630c73d3820a61aef593a705d241600e7f47. Separate1341 remains diagnostic, not merged or duplicated.
+- Narrow existing v1 path repaired with observed RED/GREEN tests and separate Guardian: extraction priority, same-source corrections, DE/EN negation, literal provenance, conservative stale-interest cutoff after eviction, honest overflow not_saved. Exact persisted negative reaches next actual-route model context without history.
+- PARTIAL: 4000-char capacity may leave old positive knowledge unchanged; maximum3 learned facts per message and8 stored facts remain. No universal persistence or real model-quality acceptance. Global BLOCK, Phase7b and FM-DEC-031 boundaries retained.
+- Receipt: receipts/chatadmin-interest-revocation-draft-20261018.md. Final exact head/Required CI belongs to existing Draft1342 metadata; no merge/deploy/provider/SQL/target action.
+
 ## Communication dimensions — source handoff — 2026-10-17
 - Base main cb57239b confirms1339 merged. Existing ChatAdmin v1 knowledge now merges independent length/style/emoji dimensions; partial conflicts retain only literal source clauses with original sequence. Cross-kind dedup cannot demote a protective boundary.
 - 54 new tests;268 focused/269 with required-suite coverage PASS. Independent291/291 +1296 pair/stale/current retry probes/9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Same8facts/4000chars, boundaries first, commercial/quality/isolation/manual-send gates unchanged.

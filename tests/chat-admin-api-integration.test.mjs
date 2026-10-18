@@ -70,7 +70,8 @@ test("actual authority rejects a Member even when the capability store would ret
 function harness(change, abortController, options = {}) {
   let revoked = false;
   let providerFinished=false;
-  let persisted=[];
+  let persisted=options.previous??[];
+  let fanNotes=options.notes??"kein Druck";
   let character = {
     id: characterId, workspace_id: workspaceId, revision: 1, status: "active",
     display_name: "Synthetic Ada", public_age: 25, bio: "Synthetische Testpersona",
@@ -95,7 +96,7 @@ function harness(change, abortController, options = {}) {
       requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
-      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:options.notes??"kein Druck", ...options.fan }),
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:fanNotes, ...options.fan }),
       getLatestChatAdminConfirmedReply: async()=>change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => options.history ?? (change==="offer-follow-up" ? [
@@ -106,8 +107,8 @@ function harness(change, abortController, options = {}) {
         { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
       ]),
       getChatAdminGeneration: async () => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persisted,
-      updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:args[8]}]; return args.at(-1); },
+      updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); fanNotes=args[4].notes; return {}; },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))]; return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -522,4 +523,55 @@ for(const persistedSequence of [null,1.5,Number.MAX_SAFE_INTEGER+1])test(`actual
  const response=await h.route(h.request(1,"https://fanmind.invalid","Ohne Emojis."));
  assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+function positiveMusicNotes(manual="") {
+ const quote="Ich mag Musik.";
+ return knowledgePolicy.learnChatAdminKnowledge(manual,knowledgePolicy.extractChatAdminFacts(quote,"old"),[{id:"old",direction:"fan_inbound",sequence:5,content:quote}]);
+}
+for(const quote of ["Ich mag Musik nicht mehr.","I do not like music anymore.","Ich mag Katzen. Ich mag Hunde. Ich mag Reisen. Ich mag Musik nicht mehr."])test(`actual route persists explicit withdrawal then supplies it without old dialogue: ${quote}`,async()=>{
+ const h=harness(undefined,undefined,{notes:positiveMusicNotes(),history:[]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",quote));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"saved");
+ assert.equal(h.calls.memoryWrites.length,1);const args=h.calls.memoryWrites[0];
+ assert.deepEqual(args.slice(0,4),[workspaceId,characterId,fanId,1]);
+ const facts=knowledgePolicy.readChatAdminKnowledge(args[4].notes).facts;
+ assert.ok(facts.some(f=>/nicht mehr|not like/u.test(f.quote)));assert.ok(!facts.some(f=>f.quote==="Ich mag Musik."));
+ assert.ok(facts.every(f=>f.source==="66666666-6666-4666-8666-666666666666"&&f.source_sequence===10));
+ // A different request sends persisted knowledge with no historical dialogue.
+ const next=harness(undefined,undefined,{notes:args[4].notes,history:[]});
+ assert.equal((await next.route(next.request(1,"https://fanmind.invalid","Wie geht es dir?"))).status,200);
+ const context=JSON.parse(next.calls.providerBody.input[1].content);
+ assert.deepEqual(context.fan.learned_preferences,facts);assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ // Same saved generation retries without provider or further notes mutation.
+ const retry=await h.route(h.request(1,"https://fanmind.invalid",quote));
+ assert.equal(retry.status,200);assert.equal((await retry.json()).memory_status,"unchanged");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.memoryWrites.length,1);
+});
+
+for(const [change,options,status] of [
+ ["persist-failed",{},503], ["memory-race",{},200],
+ [undefined,{persistedSequence:null},200], [undefined,{persistedSequence:1.5},200],
+ [undefined,{savedDirection:"suggested_reply"},200], [undefined,{savedContent:"foreign content"},200],
+ [undefined,{notes:positiveMusicNotes("x".repeat(3711))},200],
+])test(`actual withdrawal reports unsuccessful storage (${change??JSON.stringify(options)})`,async()=>{
+ const h=harness(change,undefined,{notes:positiveMusicNotes(),...options});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.equal(response.status,status);const body=await response.json();
+ if(status===200)assert.equal(body.memory_status,"not_saved");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ assert.equal(h.calls.memoryWrites.length,change==="memory-race"?1:0);
+});
+for(const change of ["revoke","revision","workspace","memory-revoked","quality-stuck"])test(`withdrawal respects existing authority and quality rejection: ${change}`,async()=>{
+ const h=harness(change,undefined,{notes:positiveMusicNotes()});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.notEqual(response.status,200);assert.equal((await response.json()).replies,undefined);
+ assert.equal(h.calls.memoryWrites.length,change==="memory-revoked"?1:0);
+});
+for(const [field,value] of [["workspace_id","foreign"],["character_id","foreign"],["id","foreign"]])test(`withdrawal cannot learn into foreign fan context: ${field}`,async()=>{
+ const h=harness(undefined,undefined,{notes:positiveMusicNotes(),fan:{[field]:value}});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.notEqual(response.status,200);assert.equal(h.calls.provider,0);assert.equal(h.calls.memoryWrites.length,0);
 });

@@ -383,3 +383,29 @@ Eine eindeutig zuordenbare neue Fan-Aussage wie „Ich mag Musik nicht mehr.“ 
 Nur ausdrücklich benannte, im bisherigen engen Interessenvokabular enthaltene Themen werden erkannt. „Das stimmt inzwischen nicht mehr“ ohne Bezug wird nicht automatisch ausgelegt. Verspätete ältere Generationswiederholungen dürfen neuere widersprechende Interessen nicht wiederherstellen. Ein späteres eindeutiges neues positives Interesse kann eine ältere negative Aussage ablösen. Ein zusammengesetzter alter Interessen-Fakt wird bei Teilwiderruf vorsichtshalber ganz entfernt, statt eine niemals so geäußerte Restbehauptung zu erfinden. Kommunikationspräferenzen und Schutzgrenzen bleiben unabhängig. Bei Überfüllung gilt weiterhin das acht-Fakten-Limit; ältere positive Fakten werden vor expliziten Widerrufen und Kommunikationspräferenzen entfernt. Mehr als acht konkurrierende schutzwürdige Einträge können nicht unbegrenzt vorgehalten werden.
 
 Test-first: isolierter Regressionstest-Commit auf eigenem Branch vor Laufzeitänderung. Die unabhängige vollständige API-/CI-/Runtime-Abnahme steht bis zur Veröffentlichung und Prüfung des PR-Heads ausdrücklich aus. Keine Aussage über echte Modellhäufigkeit, keine Anti-Rückfrage-Featureabnahme von PR #1341, kein Auto-Senden, Provideraufruf, Merge, Deploy oder Datenbank-Apply. Recovery: geprüfter Repository-Revert vor einer späteren Freigabe.
+
+
+### Fortgeschriebene Gegenprüfung — 18. Oktober 2026
+
+Die frühere Draft-Beschreibung oben ist keine Abnahme. PR #1342 bleibt PARTIAL:
+`I do not like music anymore`, typografisches `don’t` und explizites deutsches
+`liebe/bevorzuge ... nicht mehr` werden zusätzlich erkannt. Spätere Sätze desselben
+Quellereignisses lösen überlappende frühere Aussagen ab, ohne Teilzitate zu erfinden.
+Die drei Extractor-Plätze priorisieren Schutzgrenzen und danach Widerrufe vor
+weiteren Aussagen, behalten dabei die ursprüngliche Satzreihenfolge. Mehr als drei
+konkurrierende Fakten/Widerrufe derselben Nachricht werden nicht vollständig gelernt.
+
+Gegen Wiederauferstehung eines verdrängten Widerrufs werden Interessenupdates unter
+der höchsten erhaltenen Faktensequenz konservativ abgewiesen. Dadurch können auch
+verspätete neue unabhängige Interessen entfallen. Dies ist keine unbegrenzte Historie.
+Bei 4.000-Zeichen-Überlauf bleibt der alte Stand unverändert, die Route meldet
+`not_saved`. Manuelle Notizen werden niemals automatisch gekürzt; ein Widerruf kann
+in diesem Zustand weiterhin fehlen. Ohne weiteren freigegebenen Speicherkonflikt-
+Entscheid ist die universelle Persistenzanforderung nicht erfüllt.
+
+Tests laufen direkt in der bereits verpflichtend registrierten Knowledge-Suite;
+der separate Testdateiname wird entfernt, package.json bleibt bytegleich zum
+frisch überprüften GitHub-main. Geschützte Capacity-Prüfsummen/Workflows bleiben
+unverändert. Synthetische tatsächliche Routeprüfungen belegen autorisierte
+Persistenz, Replay/CAS/Fehlerpfade und den nächsten Modellkontext ohne History.
+Sie belegen keine tatsächliche Modellbefolgung oder Production-/Staging-Abnahme.

@@ -1352,3 +1352,10 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## FM-CHATADMIN-INTEREST-REVOCATION-20261018 — PR1342 continuation
+- Owner-selected existing Draft only; R3 source; lock LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018. Current GitHub main/head verified, five blobs and complete tree reconstructed identically through Connector after shell proxy failed.
+- Baseline174/174 focused tests PASS. New independently reproduced overflow, extraction-cap and eviction/replay failures require narrow correction. Separate Guardian active. Capacity checksum failure caused by package.json registration; use the already registered Knowledge suite without modifying protected controls.
+- No external/runtime/model-quality acceptance or activation; reviewed revert is recovery.
+
+- Source handoff:306/306 focused, independent204/204 +7/7 own probes and killed in-memory sequence mutation. Lock released for existing Draft PARTIAL handoff. Storage-overflow stale-positive and max3/8 limitations remain; final exact-head CI tracked in PR1342. No protected action.

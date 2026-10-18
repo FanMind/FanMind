@@ -508,3 +508,10 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Use the same named form for both Abbrechen and disappearance proof; retain the requirement that it closes before B selection and every original persisted-price/AI/negative/cleanup assertion. Add fixed assertion-method subtypes to distinguish count/value/checkbox/menu failures without exposing private output.
 - Recovery artifact 11771714965 / sha256:f3078c8ba8484eac699f0eae7016bc259f1e9cabd589cb6290196d414dfdad45 downloaded and digest/run/release/target verified. Independent read-only exact-receipt reconciliation showed zero residue/active-writer counts again; preserve artifact and failed-run status.
 - Next: exact-head CI, merge, exact Staging deployment and fresh full acceptance. No product, schema or protected Production change.
+
+
+## FM-FAIL-CHATADMIN-INTEREST-REGISTRATION-20261018
+- Existing PR1342 cb01c2ee registered its standalone test by changing checksum-pinned package.json. Both current Required Truth and PG17 jobs fail capacity_checksum_invalid (117653064810 /117653065071), not a need to loosen the controls.
+- Correction: consolidate the executed revocation regressions into existing registered tests/chat-admin-knowledge.test.mjs and restore package.json from live GitHub main f36e630c (SHA25608ebfb3daacdda0be46b6db1a73a93cfbd94eaa52b6b4559c43e4cfcf0e03991). No control/pin/workflow edits. Local origin/main was older d739797; it was not used as current truth. Fresh GitHub main content and final registration test verified.
+- Independent failures: fourth-clause withdrawal lost, same-source later correction ignored, eviction+old replay resurrected interest, overflow reported unchanged. Regressions now cover the repairs; overflow is honest not_saved, with remaining functional persistence gap. Do not claim full acceptance from green tests.
+- Local environment: Node child-process spawnSync returns EPERM/empty output. Build compiles then TypeScript --showConfig fails; manual-flow child CLI assertions similarly unavailable. Use final exact-head GitHub CI, never label those local checks passed.

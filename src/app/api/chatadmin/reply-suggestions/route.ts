@@ -117,7 +117,9 @@ async function saveGenerationKnowledge(workspaceId:string,userId:string,characte
  const saved=await getChatAdminGeneration(workspaceId,characterId,fanId,conversationId,generationId);
  const inbound=saved.find(message=>message.direction==="fan_inbound" && message.content===incoming);
  if(!inbound || !Number.isSafeInteger(inbound.sequence))return "not_saved";
- const notes=learnChatAdminKnowledge(fan.notes,proposed,[{id:generationId,direction:"fan_inbound",content:incoming,sequence:inbound.sequence}]);
+ let notes:string;
+ try { notes=learnChatAdminKnowledge(fan.notes,proposed,[{id:generationId,direction:"fan_inbound",content:incoming,sequence:inbound.sequence}]); }
+ catch { return "not_saved"; }
  if(notes===fan.notes)return "unchanged";
  let status:"saved"|"not_saved"="saved";
  try { await updateChatFan(workspaceId,characterId,fanId,fan.revision,{notes}); }
