@@ -1369,3 +1369,11 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - FM-CONTRACT-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-AI-001/STORAGE-001; disclosure/delete consumers must follow same scoped rows. Recovery source revert only. Independent Guardian mandatory; no JavaScript-only DB-security claim.
 
 - Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018; Status: BLOCKED_HANDOFF; Holder: Codex; Risk: R3.
+- Explicit Owner task: fresh GitHub/source/CI binding, existing canonical Staging read-only capability/schema/data/install-profile/backup/restore assessment; no new implementation PR or architecture. Existing1345 branch only, head a7db84654b422262bee4fd81f68e432c7b34851c, main f36e630c73d3820a61aef593a705d241600e7f47.
+- Target: only FanMind Staging vshyhvgcmrlagvfnvomc. Metadata and aggregate counts only; no message contents, contact notes or Production database query. Historical harness/live-repair locks must be reconciled before any later writer. Independent Guardian required.
+- No target SQL apply, temporary DB fixtures, runtime/flag/capability write, model/provider call, workflow dispatch, merge or deploy. Disposable local PG17 synthetic testing only. Unknown prerequisites mean BLOCKED; recovery here is source revert only.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.

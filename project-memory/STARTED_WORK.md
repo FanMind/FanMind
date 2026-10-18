@@ -1365,3 +1365,8 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Independent Helper review finds duplicate-topic replay, missing full-source ordinal/tenantbinding and incompletecurrent validation; tests first. Additive storage requires nativePG17,RLS/grants,atomic provenance/order and fan cascade/export. No live target authorization.
 
 - Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Owner requests preparation only, no install or activation. Fresh main/1342–1345 unchanged; final1345 source checksum and14 terminal success records confirmed. Read-only Staging identity/catalog/count assessment plus isolated tests and independent review; exact prerequisites may block installation preparation.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.

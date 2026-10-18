@@ -524,3 +524,9 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Guardian found equal opaque legacy order could be overwritten during first cutover. Existing legacy cutoff now includes equality; native regression preserves the negative legacy state with no invented FK/positive.
 - Whole-message validation must still allow already supported boundary/communication companions. Dual-read must retain valid independent legacy topics; never concatenate contradictory topic states or drop all unrelated legacy interests silently.
 - No target apply/runtime activation. Old strict parent verifier/backup topology and old-binary rollback need separate protected rollout reconciliation; a green local/CI SQL test is not target approval.
+
+
+## FM-BLOCK-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Fresh read-only empty Staging tables/capabilities do not prove installation safety: configured Staging preview can automatically recreate a capability on authenticated access. Appflagoff is not a direct-RPC gate; protected deployed-release/preview exclusion proof is missing.
+- Existing strict Fan profile rejects new source objects; do not patch counts or bypass the locked composed harness. Backup captures private schema generally, but explicit definer safety checks filter public, leaving new private functions without a dedicated topology admission proof. No native full backup/restore contract roundtrip or verified target backup is claimed.
+- Source and isolated tests remain green; status BLOCKED for install preparation. Stop at the unknown protected prerequisites, preserve active historical locks and original SQL; no target write or unchanged failed workflow retry.

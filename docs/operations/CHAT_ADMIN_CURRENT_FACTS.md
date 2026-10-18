@@ -111,3 +111,47 @@ proves all eight topics, notes preservation, grants/RLS/CAS, concurrent opposite
 updates, concurrent source mutation, idempotence, rollback, source immutability,
 opaque legacy equal order and cascade. Protected target/runtime acceptance remains
 separate. Exact final test/CI evidence is recorded in the existing PR metadata.
+
+
+## Install-preparation assessment — 2026-10-18 — BLOCKED
+
+The next-phase Owner task authorizes observation/preparation only, not installation.
+Fresh Staging project identity is vshyhvgcmrlagvfnvomc (separate Supabase project;
+the documented Web service shares the Production host with separate service/user).
+Read-only observations at15:15–15:20UTC found all five parent tables present and
+empty, zero capabilities and active ChatAdmin RPC sessions, all parent RLS enabled,
+Offers/Tier columns installed, and the new relation/marker/private schema/RPC absent.
+The existing composed base, Fan, Offers and Tier catalog postflights completed
+without exception; no temporary helper or fixture was installed. This is a snapshot,
+not proof of ongoing capability exclusion or of Web-runtime isolation.
+
+IMPORTANT: ensureStagingChatAdminCapability in src/lib/chatAdmin.ts can automatically
+upsert a capability for the configured preview Workspace/User. Zero stored capability
+rows does NOT prove that this path is disabled. Before installation, independently
+prove exact deployed release, target binding and preview/autogrant exclusion with a
+protected host/configuration readback, and serialize all capability writers. The
+managed environment currently provides no host credentials/readback for that proof.
+Do not log preview IDs, secrets, passfiles or configuration contents.
+
+A complete executable install profile is NOT prepared. The existing strict Fan
+postflight rejects the added current_facts_version column/check, message source
+unique index and two parent triggers. It must be composed with an exact opt-in
+extension profile, preserving all existing parent checks and rejecting other extras;
+locked harness/rollout paths must not be weakened or silently changed.
+
+The existing pg_dump includes application schemas, so the new private schema is not
+inherently omitted. The authorization contract's explicit definer topology checks
+filter public, however. The three private definers apply_generation, guard_source,
+and guard_authority_marker need exact owner/search_path/body/grant/signature coverage,
+as do the three private invokers and public wrapper. No generic namespace/count
+allowlist is sufficient. A native full dump/restore plus authorization roundtrip of
+this extended profile, including source FK/data/marker/RLS/ACLs, remains unproven.
+The Staging backup_runs ledger has zero staging-tagged DB/Full/verification receipts;
+external artifacts were not examined. This does not assert that no backup exists.
+
+The active historical Harness and Live-Repair locks remain unchanged. They require
+explicit coordination before overlapping protected writes. No current-Facts SQL was
+changed, installed or activated. Existing isolated native behavior tests are green;
+they do not close the absent installation/backup/runtime proofs. Old-binary rollback
+still requires capability/autogrant exclusion first and preservation of new facts.
+See the dated install-preparation continuation in the existing source receipt.
