@@ -1358,7 +1358,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 
 ## LOCK-FM-STAGING-HOST-EVIDENCE-SOURCE-20261018
-- Task: FM-STAGING-HOST-EVIDENCE-SOURCE-20261018; Status: RELEASED_FOR_PR; Holder: FanMind Builder/Codex; Risk: R3 source only.
+- Task: FM-STAGING-HOST-EVIDENCE-SOURCE-20261018; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 source only.
 - Acquired locally before source edits2026-10-18 under explicit Owner assignment; independent Guardian confirmed no concrete Harness/Live-Repair overlap. Closed locally after StartedWork and receipt update; canonical upload was blocked and is not represented as earlier publication. No active source writer remains.
 - Reactivated 2026-10-19 by explicit Owner task only for the administrator evidence-intake instructions and PASS/FAIL/UNKNOWN contract in the existing runbook. No workflow, collector, policy, tests, target, permission or external-state change; PR1345 and all retained Harness/Live-Repair scopes remain untouched.
 - Documentation slice completed at commit 7644e2808b72a4148c0e08dadeb76fef0ffb9469 and lock released for PR/CI. Administrator evidence remains external and unaccepted; no collector release or protected action follows from this documentation.
