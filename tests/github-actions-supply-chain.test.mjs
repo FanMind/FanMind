@@ -249,6 +249,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,
       STAGING_BILLING_CAPTURE_WORKFLOW,
+      "staging-host-evidence.yml",
       STAGING_PUSH_RUNTIME_WORKFLOW,
     ],
   );

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "status": "BLOCKED",
+  "repository": "FanMind/FanMind",
+  "repositoryId": "1259448985",
+  "environment": "staging",
+  "runnerLabels": ["self-hosted", "fanmind-staging", "exoscale", "linux", "x64"],
+  "runnerName": "fanmind-staging-01-exoscale",
+  "stagingProjectRef": "vshyhvgcmrlagvfnvomc",
+  "privateChannel": null,
+  "environmentProtectionVerified": false,
+  "runnerScopeVerified": false,
+  "hostCollectionEnabled": false,
+  "blockers": [
+    "private_channel_unverified",
+    "environment_protection_unverified",
+    "runner_scope_unverified"
+  ],
+  "requiredProtectedReceiptSections": [
+    "source_and_running_release_binding",
+    "host_boot_timestamp_and_service_process_identity",
+    "staging_project_ref_only",
+    "allowlisted_security_setting_presence_unset",
+    "preview_autogrant_writers_and_exclusion_evidence",
+    "backup_artifact_metadata_without_contents",
+    "backup_verification_retention_and_isolated_restore_authority",
+    "worker_timer_cron_inventory",
+    "dated_lock_holder_coordination"
+  ]
+}

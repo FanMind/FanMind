@@ -1,0 +1,66 @@
+name: FanMind Staging Host Evidence (blocked preparation)
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact independently reviewed current main commit (40 lowercase hex characters)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type collect-staging-host-evidence-readonly; this preparation remains BLOCKED'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  admission:
+    if: >-
+      github.repository == 'FanMind/FanMind' &&
+      github.repository_id == '1259448985' &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.workflow_ref == 'FanMind/FanMind/.github/workflows/staging-host-evidence.yml@refs/heads/main' &&
+      inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == 'collect-staging-host-evidence-readonly'
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 3
+    steps:
+      - name: Checkout the exact reviewed source without retained credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+          clean: true
+      - name: Fail closed before any host collection or evidence transfer
+        shell: /usr/bin/bash --noprofile --norc -p -euo pipefail {0}
+        env:
+          FANMIND_EVIDENCE_ENVIRONMENT: staging
+          FANMIND_EVIDENCE_CONFIRMATION: ${{ inputs.confirmation }}
+          FANMIND_EVIDENCE_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        run: |
+          /usr/bin/env -i \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+            GITHUB_REPOSITORY_ID="$GITHUB_REPOSITORY_ID" \
+            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" \
+            GITHUB_REF="$GITHUB_REF" \
+            GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_WORKFLOW_REF="$GITHUB_WORKFLOW_REF" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" \
+            GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            RUNNER_ENVIRONMENT="$RUNNER_ENVIRONMENT" \
+            RUNNER_NAME="$RUNNER_NAME" \
+            RUNNER_OS="$RUNNER_OS" \
+            RUNNER_ARCH="$RUNNER_ARCH" \
+            FANMIND_EVIDENCE_ENVIRONMENT="$FANMIND_EVIDENCE_ENVIRONMENT" \
+            FANMIND_EVIDENCE_CONFIRMATION="$FANMIND_EVIDENCE_CONFIRMATION" \
+            FANMIND_EVIDENCE_REVIEWED_COMMIT="$FANMIND_EVIDENCE_REVIEWED_COMMIT" \
+            /usr/bin/node scripts/operations/staging-host-evidence-preflight.mjs
