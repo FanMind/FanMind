@@ -1,3 +1,9 @@
+## Known Fan questions — findings-only handoff — 2026-10-17
+- Base mainf36e630c confirms1335-1340 integrated. Outcome COUNTERCHECKED_DIAGNOSTIC_NOT_FIXED: actual-route stub questions reask known music/travel and are accepted. Product request UNRESOLVED; no new guard.
+- Test-only87536c35:62 API cases/59PASS/3RED. Existing interests have no revocation lifecycle; after trimming, valid and retracted histories produce byte-identical context. Adding a fact-question regex cannot safely infer currentness under the requested constraints. Owner-authorized conservative fallback taken.
+- 29 new diagnostic/control cases;297 focused/298 with suitecoverage PASS. Independent320 plus24 collision probes/4 diagnostic-existingguard mutations PASS. No production src/package/Capacitypin/workflow/schema/API/provider/retry change.
+- Canonical receipt: receipts/chatadmin-known-fact-questions-20261017.md. Source lock released for Draft handoff; exact final head/RequiredCI and independent CI in PR metadata. Phase7b, real quality and currentness gap remain open; globalBLOCK/FM-DEC-031 deferrals unchanged.
+
 ## Communication dimensions — source handoff — 2026-10-17
 - Base main cb57239b confirms1339 merged. Existing ChatAdmin v1 knowledge now merges independent length/style/emoji dimensions; partial conflicts retain only literal source clauses with original sequence. Cross-kind dedup cannot demote a protective boundary.
 - 54 new tests;268 focused/269 with required-suite coverage PASS. Independent291/291 +1296 pair/stale/current retry probes/9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Same8facts/4000chars, boundaries first, commercial/quality/isolation/manual-send gates unchanged.

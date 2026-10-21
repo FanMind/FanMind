@@ -374,3 +374,19 @@ Versandfreigabe, gemeinsamer Qualitäts-/Wiederholungsschutz und sämtliche Prei
 Angebots-, Hold-, Cooldown- und Aftercare-Regeln bleiben erhalten. Keine zusätzlichen
 Provideraufrufe oder Datenbankaktionen. Synthetische Tests belegen die deterministische
 Zusammenführung und Kontextübergabe; reale Modellbefolgung bleibt separat offen.
+
+
+## Bekannte Angaben: ungelöster Qualitätsbefund — 17. Oktober 2026
+
+Die vorhandenen Prompts sagen bereits, bekannte Angaben nicht erneut zu erfragen
+und alte Interessen nur passend aufzugreifen. Synthetische echte Routefälle zeigen
+aber, dass der mechanische Qualitätswächter eine erneute Grundsatzfrage nach einem
+gespeicherten Interesse noch akzeptiert. Es wird hier **kein neuer Produktwächter**
+behauptet oder aktiviert: Positive Interessen haben im bestehenden Lernpfad keinen
+sicheren Widerruf/Aktualitätsnachweis. Nach Verlust eines neueren Widerrufs kann
+der Kontext exakt demjenigen mit weiterhin gültigem Interesse entsprechen.
+
+Der Owner-autorisierte konservative Fallback hält daher Source und gemeinsame
+Qualität unverändert. Detailfragen bleiben zulässig; keine Preis-/Verkaufs-/Stil-
+oder Versandgrenze ändert sich. Tests und Grenzen stehen in
+[AI Reply Quality](AI_REPLY_QUALITY.md#bekannte-fanangaben-erneut-erfragen--belegte-grenze-17-oktober-2026).

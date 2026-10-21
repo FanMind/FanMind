@@ -137,6 +137,7 @@ function harness(change, abortController, options = {}) {
       if (change === "ambiguous-offer") replies=["Welchen der beiden Artikel meinst du?","Soll es das Foto oder das private Foto sein?","Bitte wähle zuerst einen Artikel aus."];
       if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
 
+      if (options.replies) replies = options.replies;
       if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("context-price")) replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("quality-") && (calls.provider === 1 || change === "quality-stuck")) replies = ["Hallo!", "Hallo!", "Hallo!"];
@@ -522,4 +523,51 @@ for(const persistedSequence of [null,1.5,Number.MAX_SAFE_INTEGER+1])test(`actual
  const response=await h.route(h.request(1,"https://fanmind.invalid","Ohne Emojis."));
  assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+for(const [quote,incoming,question] of [
+ ["Ich liebe Musik.","Was machst du am Wochenende?","Magst du Musik?"],
+ ["Ich mag Reisen.","Was gefällt dir an meinem Profil?","Magst du Reisen?"],
+ ["I love music.","What do you do at the weekend?","Do you like music?"],
+])test(`documents UNRESOLVED known Fan question acceptance (${question})`,async()=>{
+ const notes=knowledgePolicy.learnChatAdminKnowledge("",knowledgePolicy.extractChatAdminFacts(quote,"known"),[{id:"known",direction:"fan_inbound",sequence:10,content:quote}]);
+ const h=harness(undefined,undefined,{notes,history:[],replies:[question,"Ich bin gerne draußen unterwegs.","Am Wochenende entspanne ich mich."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ // Characterization of the unresolved gap, NOT a corrected acceptance test.
+ // Original red expectation is preserved in test-only commit87536c35.
+ assert.equal(response.status,200,"existing route still accepts the redundant question; finding remains open");
+ const body=await response.json();assert.equal(body.replies[0],question);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.ok(context.fan.learned_preferences.some(f=>f.quote===quote));assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);assert.match(body.safety_note,/manuell/u);
+});
+
+
+for(const [notes,question] of [
+ ["Ich mag Musik.","Welche Musik hörst du gerne?"],
+ ["Vielleicht mag der Fan Musik.","Magst du Musik?"],
+ ["Unbestätigt: Fan kauft bestimmt morgen.","Magst du Reisen?"],
+])test(`manual or uncertain notes do not become confirmed interest authority (${question})`,async()=>{
+ const h=harness(undefined,undefined,{notes,summary:"Unbestätigte Vermutung: mag Musik.",replies:[question,"Ich bin gerne draußen unterwegs.","Am Wochenende entspanne ich mich."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.deepEqual(context.fan.learned_preferences,[]);assert.equal(context.fan.notes,notes);
+ assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.sellNow,false);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const question of ["Welche Musik hörst du gerne?","Welche Musikrichtung magst du?","What kind of music do you like?"])test(`actual route permits an unknown detail of a confirmed broad interest (${question})`,async()=>{
+ const quote="Ich liebe Musik.";
+ const notes=knowledgePolicy.learnChatAdminKnowledge("",knowledgePolicy.extractChatAdminFacts(quote,"known"),[{id:"known",direction:"fan_inbound",sequence:10,content:quote}]);
+ const h=harness(undefined,undefined,{notes,history:[],replies:[question,"Welche Künstler hörst du am liebsten?","Hast du gerade ein Lieblingslied?"]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const field of ["workspace_id","character_id"])test(`foreign known-interest context cannot reach provider (${field})`,async()=>{
+ const quote="Ich liebe Musik.";const notes=knowledgePolicy.learnChatAdminKnowledge("",knowledgePolicy.extractChatAdminFacts(quote,"known"),[{id:"known",sequence:10,direction:"fan_inbound",content:quote}]);
+ const h=harness(undefined,undefined,{notes,fan:{[field]:"foreign"},replies:["Magst du Musik?","Wie geht es dir?","Hallo!"]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,400);assert.equal((await response.json()).error,"fan_unavailable");assert.equal(h.calls.provider,0);assert.equal(h.calls.memoryWrites.length,0);
 });

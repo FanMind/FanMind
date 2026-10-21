@@ -1355,3 +1355,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+
+## LOCK-FM-CHATADMIN-KNOWN-FACT-QUESTIONS-20261017
+- Task: FM-CREATOR-001 / FM-CHATADMIN-003; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 source.
+- Base: main `f36e630c73d3820a61aef593a705d241600e7f47`; branch fix/chatadmin-known-fact-questions. PR1335-1340 merged; prior source handoffs consumed; no competing current source PR.
+- Scope: test-first known-interest redundant-question proof, meaningful detail-question controls, stale/uncertain-source and bounded-context/isolation counterexamples. Reuse existing Knowledge/Policy/shared Quality; correction only if robust under existing data, otherwise documented findings-only fallback per Owner.
+- Contracts: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; inspect shared Creator/CRM/Copilot/Mobile consumers; no storage/schema/authority boundary change.
+- Serialization: retained harness/target locks grant no execution here; historical live-repair source merged, no source overlap. No second queue or worker scope.
+- Recovery: reviewed test/docs/source revert; no external state change. Final independent Source/CI, negative proof and canonical receipt mandatory.
+- Forbidden: merge/deploy/dispatch, target/database/SQL/provider/Stripe/Social/Mobile action, new persistence or extra model calls. Global BLOCK and FM-DEC-031 deferrals unchanged.
+
+- Findings-only handoff: productgap UNRESOLVED, no production correction.297focused/298withcoverage, independent320 +24collisions/4 diagnostic-existingguard mutations PASS. Receipt receipts/chatadmin-known-fact-questions-20261017.md. Exact Draft/head/fresh RequiredCI and independentCI in PR metadata; no active source worker reservation remains.
