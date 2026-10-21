@@ -6,6 +6,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # FanMind production, product truth and Codex guardrails
 
+## Product boundaries: FanMind vs. ChatAdmin (Owner decision 2026-10-21)
+
+- **Planning and presentation are separate, not code or access.** FanMind is the public product; its public Landing/roadmap must show only FanMind product features. ChatAdmin is tracked in a separate **internal** development roadmap; do not surface its feature progress or completion checks on the public FanMind roadmap.
+- **Preserve shared technical access and contracts.** Both workstreams remain in this repository and may reuse existing backend, CRM data contracts, utilities and authorized integrations. Do not split repositories, move source files, alter permissions, duplicate shared code, or break integrations merely because roadmaps are separate.
+- **Agent routing:** For FanMind changes consult `docs/SOURCE_OF_TRUTH.md`, `src/config/roadmap.ts`, and the relevant feature contracts. For ChatAdmin changes consult `src/lib/chatAdmin.ts`, `src/app/chatadmin/`, and the ChatAdmin contracts and acceptance evidence. For cross-cutting changes, inspect both consumers and test regression in both; identify any real technical dependency explicitly.
+- **Completion evidence:** Track implemented, tested, deployed/activated and sales-ready separately. Do not infer Production readiness from merged code or CI. Mark public FanMind items done only with FanMind-specific evidence. ChatAdmin evidence never creates public FanMind checkmarks.
+- **Reference:** `docs/roadmaps/PRODUCT_ROADMAP_SEPARATION_2026-10-21.md`. This is a documentation/work-allocation rule, not a migration or Production activation approval.
+
+
 ## Current production environment
 
 - Production domain: `https://fanmind.ch`
